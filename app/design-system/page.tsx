@@ -15,6 +15,10 @@ const SECTIONS = [
             { href: "/design-system/shadows", label: "Shadows" },
         ],
     },
+    {
+        title: "Components",
+        links: [{ href: "/design-system/components/button", label: "Button" }],
+    },
 ];
 
 export default function Page() {

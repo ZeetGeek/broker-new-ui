@@ -5,16 +5,18 @@ import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
     `
-      group/button inline-flex shrink-0 items-center justify-center rounded-4xl border
+      group/button inline-flex shrink-0 items-center justify-center rounded-control border
       border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all
+      duration-160 ease-out
       outline-none select-none
       focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
-      active:not-aria-[haspopup]:translate-y-px
+      active:not-aria-[haspopup]:translate-y-px active:not-aria-[haspopup]:scale-[0.97]
       disabled:pointer-events-none disabled:opacity-50
       aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20
       dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40
       [&_svg]:pointer-events-none [&_svg]:shrink-0
       [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
+      data-loading:pointer-events-none data-loading:opacity-80
     `,
     {
         variants: {
@@ -49,23 +51,23 @@ const buttonVariants = cva(
             },
             size: {
                 default: `
-                  gap-1.5 px-3 block-9 inline-9
+                  gap-1.5 px-3 block-9 inline-auto min-inline-9
                   has-data-[icon=inline-end]:pe-2.5
                   has-data-[icon=inline-start]:ps-2.5
                 `,
                 xs: `
-                  gap-1 px-2.5 text-xs block-6
+                  gap-1 px-2.5 text-xs block-6 inline-auto min-inline-6
                   has-data-[icon=inline-end]:pe-2
                   has-data-[icon=inline-start]:ps-2
                   [&_svg:not([class*='size-'])]:block-3 [&_svg:not([class*='size-'])]:inline-3
                 `,
                 sm: `
-                  gap-1 px-3 block-8
+                  gap-1 px-3 block-8 inline-auto min-inline-8
                   has-data-[icon=inline-end]:pe-2
                   has-data-[icon=inline-start]:ps-2
                 `,
                 lg: `
-                  gap-1.5 px-4 block-10
+                  gap-1.5 px-4 block-10 inline-auto min-inline-10
                   has-data-[icon=inline-end]:pe-3
                   has-data-[icon=inline-start]:ps-3
                 `,
@@ -85,18 +87,55 @@ const buttonVariants = cva(
     },
 );
 
+function ButtonSpinner({ className }: { className?: string }) {
+    return (
+        <svg
+            className={cn("size-4 animate-spin", className)}
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+        >
+            <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="3"
+            />
+            <path
+                className="opacity-90"
+                d="M22 12a10 10 0 0 0-10-10"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+            />
+        </svg>
+    );
+}
+
 function Button({
     className,
     variant = "default",
     size = "default",
+    loading = false,
+    disabled,
+    children,
     ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props &
+    VariantProps<typeof buttonVariants> & { loading?: boolean }) {
     return (
         <ButtonPrimitive
             data-slot="button"
+            data-loading={loading || undefined}
+            disabled={disabled ?? loading}
+            aria-busy={loading || undefined}
             className={cn(buttonVariants({ variant, size, className }))}
             {...props}
-        />
+        >
+            {loading && <ButtonSpinner />}
+            {children}
+        </ButtonPrimitive>
     );
 }
 
