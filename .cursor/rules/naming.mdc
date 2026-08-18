@@ -1,0 +1,36 @@
+---
+description: Naming conventions — files, folders, functions, variables, types
+globs:
+  - "app/**/*.ts"
+  - "app/**/*.tsx"
+  - "components/**/*.ts"
+  - "components/**/*.tsx"
+  - "lib/**/*.ts"
+  - "hooks/**/*.ts"
+  - "types/**/*.ts"
+alwaysApply: false
+---
+
+# Naming
+
+Read `docs/NAMING.md` before naming a file, folder, function, variable, or
+type. It is the authority.
+
+Five rules restated here because they are the expensive ones:
+
+1. **Never a bare `brokerId` or `ownerId`.** This project's `broker_id` means
+   `users.id` on some tables and `brokers.id` on others. Always write
+   `brokerUserId` / `brokerProfileId`, `ownerUserId` / `ownerProfileId`. A bare
+   name here is how the wrong broker sees another broker's data.
+2. **Components are `PascalCase`; plain functions are `camelCase`.** The
+   capital letter is how React tells a component from a value in JSX.
+3. **All filenames are lowercase `kebab-case`** — `property-card.tsx` exporting
+   `PropertyCard`. Windows hides case mistakes; the Linux build does not.
+4. **Units go in the name.** `salePriceInr`, `areaSqft`, `noticePeriodDays`.
+   Never a bare `price`, `area`, or `duration` — this domain has several of
+   each.
+5. **`snake_case` only inside `lib/api/`.** Convert at that boundary once. If
+   it reaches a component, the boundary has leaked.
+
+Everything else — folder patterns, boolean prefixes, `handle`/`on` handlers,
+date suffixes, acronym casing, the domain glossary — is in `docs/NAMING.md`.
