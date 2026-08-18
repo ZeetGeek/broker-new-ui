@@ -1,4 +1,6 @@
 import betterTailwind from "eslint-plugin-better-tailwindcss";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import unusedImports from "eslint-plugin-unused-imports";
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
@@ -9,6 +11,44 @@ const eslintConfig = defineConfig([
 
     globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 
+    {
+        name: "yesbroker/imports",
+        files: ["**/*.{js,jsx,ts,tsx}"],
+        plugins: {
+            "simple-import-sort": simpleImportSort,
+            "unused-imports": unusedImports,
+        },
+        rules: {
+            "simple-import-sort/imports": [
+                "warn",
+                {
+                    groups: [
+                        ["^\\u0000"],
+                        ["^react", "^next"],
+                        ["^@?\\w"],
+                        ["^@/types", "^@/lib", "^@/hooks"],
+                        ["^@/components"],
+                        ["^@/"],
+                        ["^\\.\\.(?!/?$)", "^\\.\\./?$"],
+                        ["^\\./(?=.*/)(?!/?$)", "^\\.(?!/?$)", "^\\./?$"],
+                        ["^.+\\.s?css$"],
+                    ],
+                },
+            ],
+            "simple-import-sort/exports": "warn",
+            "unused-imports/no-unused-imports": "warn",
+            "unused-imports/no-unused-vars": [
+                "warn",
+                {
+                    vars: "all",
+                    varsIgnorePattern: "^_",
+                    args: "after-used",
+                    argsIgnorePattern: "^_",
+                },
+            ],
+            "@typescript-eslint/no-unused-vars": "off",
+        },
+    },
     {
         name: "yesbroker/tailwind",
         files: ["**/*.{js,jsx,ts,tsx}"],
