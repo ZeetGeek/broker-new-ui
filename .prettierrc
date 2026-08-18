@@ -1,0 +1,23 @@
+{
+    "semi": true,
+    "singleQuote": false,
+    "jsxSingleQuote": false,
+    "quoteProps": "as-needed",
+    "trailingComma": "all",
+    "tabWidth": 4,
+    "useTabs": false,
+    "printWidth": 100,
+    "bracketSpacing": true,
+    "bracketSameLine": false,
+    "arrowParens": "always",
+    "endOfLine": "lf",
+    "overrides": [
+        {
+            "files": "*.md",
+            "options": {
+                "proseWrap": "preserve",
+                "printWidth": 120
+            }
+        }
+    ]
+}
