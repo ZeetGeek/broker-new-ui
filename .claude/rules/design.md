@@ -1,0 +1,46 @@
+---
+paths:
+  - "app/**/*.{ts,tsx}"
+  - "components/**/*.{ts,tsx}"
+  - "app/globals.css"
+  - "tailwind.config.{ts,js,mjs}"
+---
+
+# Design
+
+Read `docs/DESIGN.md` before writing any component, style, or layout code. It is the
+authority on the colour system, type scale, spacing, and the component patterns this
+project holds itself to.
+
+Token definitions live in `app/globals.css` under `@theme`. Never hardcode a hex value
+in a component — if a colour is missing, add it to `@theme` and to `docs/DESIGN.md`.
+
+Six rules restated here because they are the expensive ones to get wrong:
+
+1. **The canvas is warm cream `#EFEAE0`, not white.** Cards are white on top of it.
+   All separation comes from that contrast, which is why there are no shadows anywhere.
+   Turning the canvas white breaks every card boundary on the site.
+2. **One hue family only — green, at three depths.** `brand-ink` for primary buttons,
+   `brand-deep` for dark attention cards, `brand` for prices and active states. No blue,
+   no purple, no second brand colour.
+3. **`urgent` orange means a deadline, `danger` red means a destructive action.**
+   Neither is ever decorative. Lime `highlight` marks one thing per card, maximum, and
+   never appears as text on a light surface.
+4. **Headings are Bricolage Grotesque (`font-display`), everything else is DM Sans
+   (`font-sans`).** Display sizes need tight tracking (-0.02em to -0.03em) or they read
+   as a fallback font. Prices and table columns use tabular figures.
+5. **Buttons and badges are fully pill-shaped, cards are 20px radius.** Never
+   `rounded-md` or `rounded-lg` on a control. Minimum tap target 48px on mobile.
+6. **Every screen is composed at 360px first.** Single column, bottom nav, what the user
+   must act on above the fold. Three-column grids and the drag-and-drop Kanban are
+   desktop-only enhancements, never the starting layout.
+
+Assume the user is on a cheap Android phone on Indian mobile data. If a screen was only
+ever checked on a laptop, it has not been checked.
+
+All money is `₹85 L` / `₹1.25 Cr`, dates are `dd/mm/yyyy`, phones are `+91 XXXXX XXXXX`.
+Formatting goes through `lib/format.ts` — never inline. The string `USA` and the locale
+`en-US` must not appear in this codebase.
+
+Everything else — full token values, component anatomy, empty-state copy, UI language
+rules, and the anti-pattern list — is in `docs/DESIGN.md`.

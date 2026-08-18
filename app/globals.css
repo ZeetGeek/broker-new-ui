@@ -37,6 +37,34 @@
     --sidebar-accent-foreground: oklch(0.228 0.013 107.4);
     --sidebar-border: oklch(0.93 0.007 106.5);
     --sidebar-ring: oklch(0.737 0.021 106.9);
+
+    /* YesBroker product palette — see docs/DESIGN.md §1 */
+    --color-canvas: #efeae0;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f7f4ee;
+    --color-border-warm: #e4ded2;
+
+    --color-ink: #191c1a;
+    --color-ink-muted: #86867e;
+    --color-ink-subtle: #a9a79d;
+
+    --color-brand-ink: #0b1f17;
+    --color-brand-deep: #0f3d2e;
+    --color-brand: #1b7a5a;
+    --color-brand-soft: #e3f2ea;
+    --color-brand-text: #0b5a41;
+
+    --color-highlight: #c9f24d;
+    --color-highlight-ink: #1e3a05;
+
+    --color-urgent: #c2410c;
+    --color-urgent-soft: #fbebe0;
+    --color-danger: #b42318;
+    --color-danger-soft: #fdecea;
+
+    --radius-card: 20px;
+    --radius-inner: 14px;
+    --radius-control: 9999px;
 }
 
 .dark {
@@ -108,6 +136,26 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
+
+    --color-canvas: var(--color-canvas);
+    --color-surface: var(--color-surface);
+    --color-surface-muted: var(--color-surface-muted);
+    --color-border-warm: var(--color-border-warm);
+    --color-ink: var(--color-ink);
+    --color-ink-muted: var(--color-ink-muted);
+    --color-ink-subtle: var(--color-ink-subtle);
+    --color-brand-ink: var(--color-brand-ink);
+    --color-brand-deep: var(--color-brand-deep);
+    --color-brand: var(--color-brand);
+    --color-brand-soft: var(--color-brand-soft);
+    --color-brand-text: var(--color-brand-text);
+    --color-highlight: var(--color-highlight);
+    --color-highlight-ink: var(--color-highlight-ink);
+    --color-urgent: var(--color-urgent);
+    --color-urgent-soft: var(--color-urgent-soft);
+    --color-danger: var(--color-danger);
+    --color-danger-soft: var(--color-danger-soft);
+
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -115,6 +163,10 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+
+    --radius-card: var(--radius-card);
+    --radius-inner: var(--radius-inner);
+    --radius-control: var(--radius-control);
 }
 
 @layer base {
@@ -139,4 +191,8 @@
     h6 {
         @apply font-heading;
     }
+}
+
+.tabular {
+    font-variant-numeric: tabular-nums;
 }

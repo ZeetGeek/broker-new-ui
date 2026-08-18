@@ -1,0 +1,192 @@
+export type ColorToken = {
+    name: string;
+    variable: string;
+    hex: string;
+    className: string;
+    usage: string;
+    onDark?: boolean;
+};
+
+export type ColorGroup = {
+    title: string;
+    description: string;
+    tokens: ColorToken[];
+};
+
+export const COLOR_GROUPS: ColorGroup[] = [
+    {
+        title: "Warm neutral",
+        description:
+            "Page canvas and card surfaces. ~60–70% of every screen. Never pure white or cool gray.",
+        tokens: [
+            {
+                name: "Canvas",
+                variable: "--color-canvas",
+                hex: "#EFEAE0",
+                className: "bg-canvas",
+                usage: "Page background",
+            },
+            {
+                name: "Surface",
+                variable: "--color-surface",
+                hex: "#FFFFFF",
+                className: "bg-surface",
+                usage: "Cards, sitting on canvas",
+            },
+            {
+                name: "Surface muted",
+                variable: "--color-surface-muted",
+                hex: "#F7F4EE",
+                className: "bg-surface-muted",
+                usage: "Inset strips inside a card",
+            },
+            {
+                name: "Border",
+                variable: "--color-border-warm",
+                hex: "#E4DED2",
+                className: "bg-border-warm",
+                usage: "Hairline dividers, 1px",
+            },
+        ],
+    },
+    {
+        title: "Ink",
+        description: "Text. Near-black with a green cast, never a neutral gray.",
+        tokens: [
+            {
+                name: "Ink",
+                variable: "--color-ink",
+                hex: "#191C1A",
+                className: "bg-ink",
+                usage: "Primary text",
+                onDark: true,
+            },
+            {
+                name: "Ink muted",
+                variable: "--color-ink-muted",
+                hex: "#86867E",
+                className: "bg-ink-muted",
+                usage: "Secondary text, second line of a two-tone headline",
+                onDark: true,
+            },
+            {
+                name: "Ink subtle",
+                variable: "--color-ink-subtle",
+                hex: "#A9A79D",
+                className: "bg-ink-subtle",
+                usage: "Captions, metadata, placeholder — contrast floor",
+            },
+        ],
+    },
+    {
+        title: "Brand green",
+        description:
+            "One hue family at three depths. ~30% combined. No blue, no purple, no second brand colour, ever.",
+        tokens: [
+            {
+                name: "Brand ink",
+                variable: "--color-brand-ink",
+                hex: "#0B1F17",
+                className: "bg-brand-ink",
+                usage: "Primary button fill — reads black, is green",
+                onDark: true,
+            },
+            {
+                name: "Brand deep",
+                variable: "--color-brand-deep",
+                hex: "#0F3D2E",
+                className: "bg-brand-deep",
+                usage: "Dark attention cards, progress strip",
+                onDark: true,
+            },
+            {
+                name: "Brand",
+                variable: "--color-brand",
+                hex: "#1B7A5A",
+                className: "bg-brand",
+                usage: "Prices, match %, active nav state, links",
+                onDark: true,
+            },
+            {
+                name: "Brand soft",
+                variable: "--color-brand-soft",
+                hex: "#E3F2EA",
+                className: "bg-brand-soft",
+                usage: "Badge and pill backgrounds",
+            },
+            {
+                name: "Brand text",
+                variable: "--color-brand-text",
+                hex: "#0B5A41",
+                className: "bg-brand-text",
+                usage: "Text sitting on brand-soft",
+                onDark: true,
+            },
+        ],
+    },
+    {
+        title: "Highlight",
+        description:
+            "Lime. One per card, maximum — marks the single most important thing. Never as text on a light surface.",
+        tokens: [
+            {
+                name: "Highlight",
+                variable: "--color-highlight",
+                hex: "#C9F24D",
+                className: "bg-highlight",
+                usage: "Current bar in a chart, open count, active stage dot",
+            },
+            {
+                name: "Highlight ink",
+                variable: "--color-highlight-ink",
+                hex: "#1E3A05",
+                className: "bg-highlight-ink",
+                usage: "Text sitting on highlight fill",
+                onDark: true,
+            },
+        ],
+    },
+    {
+        title: "Signal — urgent",
+        description:
+            "Deadline approaching or passed. Never decorative, never on a heading, border, or icon.",
+        tokens: [
+            {
+                name: "Urgent",
+                variable: "--color-urgent",
+                hex: "#C2410C",
+                className: "bg-urgent",
+                usage: "Expiring listing, overdue follow-up, showing starting now",
+                onDark: true,
+            },
+            {
+                name: "Urgent soft",
+                variable: "--color-urgent-soft",
+                hex: "#FBEBE0",
+                className: "bg-urgent-soft",
+                usage: "Badge background paired with urgent text",
+            },
+        ],
+    },
+    {
+        title: "Signal — danger",
+        description: "Destroys or denies something. Reject, delete, remove — nothing else.",
+        tokens: [
+            {
+                name: "Danger",
+                variable: "--color-danger",
+                hex: "#B42318",
+                className: "bg-danger",
+                usage: "Reject a request, delete a listing, remove a member",
+                onDark: true,
+            },
+            {
+                name: "Danger soft",
+                variable: "--color-danger-soft",
+                hex: "#FDECEA",
+                className: "bg-danger-soft",
+                usage: "Badge background paired with danger text",
+            },
+        ],
+    },
+];
