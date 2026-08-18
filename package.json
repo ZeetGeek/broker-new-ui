@@ -13,7 +13,17 @@
         "format:check": "prettier --check .",
         "typecheck": "tsc --noEmit",
         "check": "npm run lint && npm run format:check && npm run typecheck",
-        "fix": "npm run lint:fix && npm run format"
+        "fix": "npm run lint:fix && npm run format",
+        "prepare": "husky"
+    },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx}": [
+            "eslint --fix",
+            "prettier --write"
+        ],
+        "*.{json,css,md}": [
+            "prettier --write"
+        ]
     },
     "dependencies": {
         "@base-ui/react": "^1.7.0",
@@ -39,6 +49,8 @@
         "eslint-plugin-better-tailwindcss": "^4.7.0",
         "eslint-plugin-simple-import-sort": "^14.0.0",
         "eslint-plugin-unused-imports": "^4.4.1",
+        "husky": "^9.1.7",
+        "lint-staged": "^17.3.0",
         "prettier": "^3.8.3",
         "tailwindcss": "^4",
         "typescript": "^5"
