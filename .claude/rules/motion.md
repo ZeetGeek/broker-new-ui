@@ -1,0 +1,44 @@
+---
+paths:
+  - "app/**/*.{ts,tsx}"
+  - "components/**/*.{ts,tsx}"
+  - "features/**/*.{ts,tsx}"
+  - "lib/motion/**/*.ts"
+---
+
+# Motion
+
+Read `docs/MOTION.md` before writing any animation, hover state, transition, or
+micro-interaction. It is the authority on durations, easing, spring presets, and which
+Motion primitives to reach for.
+
+Library is **Motion** (`motion/react`), latest major — not `framer-motion`, the
+predecessor package. Duration/easing tokens live in `lib/motion/tokens.ts`; never inline
+a bare number like `transition={{ duration: 0.3 }}` in a component.
+
+Six rules restated here because they are the expensive ones to get wrong:
+
+1. **Motion explains a state change, it doesn't manufacture liveliness.** If you can't
+   name the state change an animation communicates, cut it. This is a CRM used all day,
+   not a marketing site — restraint beats delight at this usage frequency.
+2. **Hover uses `--duration-fast` (160ms), tap/active uses `--duration-instant` (100ms).**
+   Scale stays small: 1.00–1.02 on buttons, 0.90–0.97 on press. Card hover is
+   `shadow-sm → shadow-md` plus `y: -2px`, using the shadow tokens already in
+   `app/globals.css`.
+3. **Focus rings never animate their appearance.** They snap in at full opacity, 2px,
+   `brand` colour. A fading ring is invisible to a keyboard user for the exact duration
+   that matters.
+4. **Animate `transform` and `opacity` only.** Never `width`, `height`, `top`/`left`, or
+   `box-shadow` colour stops directly — use Motion's `layout` prop for size/position
+   changes. This is the single biggest performance rule for cheap Android phones.
+5. **Every `AnimatePresence`-wrapped element needs an `exit` variant.** No exit means it
+   pops out of the DOM instead of animating — worse than not wrapping it.
+6. **Reduced motion is set once, at the root**, via `<MotionConfig reducedMotion="user">`.
+   Never hand-roll `matchMedia` checks per component.
+
+Bouncy spring (`spring.bouncy`) is reserved for genuine success/completion states — a
+closed deal, an approved request. Never on a checkbox, toggle, or nav item.
+
+Everything else — the full token file, the hover/tap/focus table, layout/layoutId,
+AnimatePresence patterns, stagger limits, and the anti-pattern list — is in
+`docs/MOTION.md`.
