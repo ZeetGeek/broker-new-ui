@@ -18,7 +18,8 @@ in a component — if a colour is missing, add it to `@theme` and to `docs/DESIG
 Six rules restated here because they are the expensive ones to get wrong:
 
 1. **The canvas is warm cream `#EFEAE0`, not white.** Cards are white on top of it.
-   All separation comes from that contrast, which is why there are no shadows anywhere.
+   Separation comes primarily from that contrast; the five `--shadow-*` tokens (ink-tinted,
+   layered, low-opacity) are a secondary signal on top of it, not a replacement for it.
    Turning the canvas white breaks every card boundary on the site.
 2. **One hue family only — green, at three depths.** `brand-ink` for primary buttons,
    `brand-deep` for dark attention cards, `brand` for prices and active states. No blue,

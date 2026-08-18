@@ -12,6 +12,7 @@ const SECTIONS = [
         links: [
             { href: "/design-system/colors", label: "Colors" },
             { href: "/design-system/typography", label: "Typography" },
+            { href: "/design-system/shadows", label: "Shadows" },
         ],
     },
 ];

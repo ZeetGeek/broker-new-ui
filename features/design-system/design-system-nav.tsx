@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const THEME_LINKS = [
     { href: "/design-system/colors", label: "Colors" },
     { href: "/design-system/typography", label: "Typography" },
+    { href: "/design-system/shadows", label: "Shadows" },
 ];
 
 export function DesignSystemNav() {

@@ -219,17 +219,33 @@ its radius is 0.
 
 ### 3.3 Elevation
 
-**No shadows.** Not on cards, not on buttons, not on dropdowns.
+Separation comes primarily from surface contrast: white cards on warm cream canvas,
+dark panels against both. Shadows are a secondary, sparingly-used signal on top of
+that contrast, never a replacement for it — the canvas staying off-white is still
+what keeps card boundaries legible.
 
-Separation comes from surface contrast: white cards on warm cream canvas, dark panels
-against both. This is why the canvas colour cannot become white — if it does, every
-card boundary disappears and shadows have to be reintroduced to compensate.
+Five smooth elevation steps, ink-tinted (never pure black) and layered — a tight
+near shadow plus a soft diffuse one, both at low opacity so they read as depth, not
+as a drop shadow:
 
-The only permitted `box-shadow` is a focus ring:
+```
+--shadow-xs   0 1px 2px -1px ink/6%                                    inputs, chips
+--shadow-sm   0 1px 2px -1px ink/5%,  0 3px 8px -2px  ink/6%           resting card
+--shadow-md   0 2px 4px -2px ink/5%,  0 8px 16px -4px ink/8%           raised card, hover
+--shadow-lg   0 4px 8px -4px ink/6%,  0 16px 32px -8px ink/10%         dropdowns, popovers
+--shadow-xl   0 8px 16px -6px ink/8%, 0 28px 56px -12px ink/14%        modals, sheets
+```
+
+Default resting cards use `shadow-sm` or no shadow at all — reach for `md` only on
+hover/press feedback, `lg`/`xl` only for content that floats above the page (menus,
+popovers, dialogs). Dark attention cards (`brand-deep`, `brand-ink`) never carry a
+shadow; they already separate through fill contrast.
+
+The focus ring remains the one non-elevation `box-shadow`:
 `0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-brand)`.
 
-Borders are 1px `border`. Cards may carry no border at all when the surface contrast
-is doing the work; add one only where a card sits on `surface` rather than `canvas`.
+Borders are 1px `border`. A card may combine a hairline border with a shadow when it
+sits on `surface` rather than `canvas`, but never stack more than one shadow step at once.
 
 ---
 
@@ -446,7 +462,9 @@ Things that will be rejected in review:
 
 - Pure white page background, or a cool gray canvas
 - A second brand hue — blue links, purple charts, a teal badge
-- Shadows on cards or buttons
+- A shadow that isn't one of the five ink-tinted `--shadow-*` tokens (no default browser
+  shadow, no pure-black shadow, no shadow on a dark attention card)
+- Stacking more than one shadow step on the same element
 - Gradients anywhere, including on photo overlays
 - Orange used decoratively rather than for a deadline
 - Lime appearing more than once per card, or as text on a light surface
