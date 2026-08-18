@@ -1,0 +1,23 @@
+---
+description: Project sources of truth — always read AGENTS.md
+alwaysApply: true
+---
+
+# Sources of truth
+
+Project context is NOT in this file. It lives in `AGENTS.md`.
+
+| File | Covers | When to read |
+|---|---|---|
+| `AGENTS.md` (root) | What the product is, the core loop, roles, domain terms, scope | Read at the start of any task |
+| `app/AGENTS.md` | SEO, indexing policy, metadata, semantic HTML | Read before creating or editing anything under `app/` |
+
+Rules of engagement:
+
+- These files are the authority. If something here or in chat contradicts them,
+  the AGENTS files win.
+- Do not duplicate their content into other files. One source, many readers.
+- If you learn something durable about this project, propose adding it to
+  `AGENTS.md` rather than keeping it in the conversation.
+- Anything marked "open question" in `AGENTS.md` is genuinely undecided — ask,
+  do not pick an answer.

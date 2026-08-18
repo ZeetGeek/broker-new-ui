@@ -1,0 +1,36 @@
+---
+description: Performance rules for Next.js 16 rendering, lists, and images
+globs:
+  - "app/**/*.ts"
+  - "app/**/*.tsx"
+  - "components/**/*.ts"
+  - "components/**/*.tsx"
+  - "lib/**/*.ts"
+  - "next.config.ts"
+alwaysApply: false
+---
+
+# Performance
+
+Read `docs/PERFORMANCE.md` before writing rendering, list, or image code. It is
+the authority on the Next.js 16 caching model and the budgets this project
+holds itself to.
+
+Four rules restated here because they are the expensive ones to get wrong:
+
+1. **Cursor pagination, never `OFFSET`.** This is a property catalog that will
+   grow. `OFFSET` is fine at 50 rows and unusable at 50,000, and the failure is
+   silent until it isn't.
+2. **Never serve a camera-resolution image.** Owner uploads are 4–8 MB.
+   Derivatives are generated at upload time and served from the CDN.
+3. **`"use client"` belongs on leaves**, never on a page or layout. Marking a
+   page client-side pulls its whole import tree into the bundle.
+4. **Never `use cache` anything user-scoped** — client lists, contact details,
+   representation state.
+
+Assume the user is on a cheap Android phone on Indian mobile data. If a change
+was only ever checked on a laptop, it has not been checked.
+
+Everything else — PPR splits, `cacheTag` invalidation, virtualization,
+`proxy.ts` limits, React Compiler guidance, how to measure now that
+`next build` no longer reports bundle size — is in `docs/PERFORMANCE.md`.
