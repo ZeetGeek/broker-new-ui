@@ -69,9 +69,9 @@ const buttonVariants = cva(
                   has-data-[icon=inline-start]:ps-2
                 `,
                 lg: `
-                  gap-1.5 px-4 block-10 inline-auto min-inline-10
-                  has-data-[icon=inline-end]:pe-3
-                  has-data-[icon=inline-start]:ps-3
+                  gap-1.5 px-5 block-10 inline-auto min-inline-10
+                  has-data-[icon=inline-end]:pe-4
+                  has-data-[icon=inline-start]:ps-4
                 `,
                 icon: `block-9 inline-9`,
                 "icon-xs": `
