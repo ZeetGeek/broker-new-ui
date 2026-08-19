@@ -238,6 +238,29 @@ like `p-[13px]`.
 - Gap between a label and its value: 4px
 - Gap between related rows: 12px
 
+### 3.1a Control height
+
+One height scale drives every interactive control — button, input, select
+trigger, and anything else that sits in a form row. Five steps, `xs`→`xl`,
+`calc(var(--spacing) * n)` off Tailwind's base unit so they stay on the 4px
+grid:
+
+```
+--size-control-xs   24px   dense icon-only controls (icon-xs button)
+--size-control-sm   32px   dense contexts — filters, tables, toolbars
+--size-control-md   36px   default — most buttons and form fields
+--size-control-lg   44px   desktop tap-target minimum
+--size-control-xl   48px   mobile tap-target minimum — primary mobile actions/forms
+```
+
+Applied via `block-control-{step}` / `inline-control-{step}` (logical-property
+utilities Tailwind generates from the `--size-control-*` tokens in
+`app/globals.css`). Never a bare `block-9` or an arbitrary height on a control
+— use the step name, so button, input, and select trigger stay the same
+height at the same step without coordinating by hand. New form controls
+(select trigger, textarea, checkbox/radio hit area) consume this same scale
+instead of inventing their own heights.
+
 ### 3.2 Radius
 
 The design is generously rounded. Sharp corners look wrong in it.
@@ -327,9 +350,11 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 | Destructive       | transparent, 1px `danger`    | `danger`        | Reject, Delete                                                                                                                                              |
 | Ghost             | none                         | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
 
-All are pill-shaped. Minimum height 44px on desktop, **48px on mobile**. Minimum
-horizontal padding 20px. Label is sentence case, verb first, one to three words, no
-terminal punctuation.
+All are pill-shaped. Height comes from the control-height scale (§3.1a):
+`xs`/`sm`/`default`/`lg` map to `control-xs`/`control-sm`/`control-md`/`control-lg`
+(44px) — `lg` is the one that meets the desktop/mobile tap-target minimum, so
+use it on primary mobile actions. Minimum horizontal padding 20px. Label is
+sentence case, verb first, one to three words, no terminal punctuation.
 
 **Loading state** uses the `loading` prop on `components/ui/button.tsx`. The spinner is
 `Tailspin` from `ldrs/react` (`import { Tailspin } from 'ldrs/react'`), `size="16"
@@ -443,8 +468,11 @@ placeholder and lives in `config/site.ts` only.
 ### 4.10 Input
 
 One base-ui primitive, wrapped once in `components/ui/input.tsx`. Three
-sizes (`sm` / `default` / `lg`), an optional icon in either end slot, and
-error/success/loading states that share one wiring instead of three.
+sizes (`sm` / `default` / `lg`) off the control-height scale (§3.1a) —
+`control-sm` / `control-md` / `control-xl` (48px, the mobile tap-target
+minimum — `lg` is the primary-mobile-form size) — an optional icon in either
+end slot, and error/success/loading states that share one wiring instead of
+three.
 
 ```
 ┌──────────────────────────────┐

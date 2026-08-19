@@ -200,11 +200,31 @@
     --radius-inner: var(--radius-inner);
     --radius-control: var(--radius-control);
 
+    --size-control-xs: var(--size-control-xs);
+    --size-control-sm: var(--size-control-sm);
+    --size-control-md: var(--size-control-md);
+    --size-control-lg: var(--size-control-lg);
+    --size-control-xl: var(--size-control-xl);
+
     --shadow-xs: var(--shadow-xs);
     --shadow-sm: var(--shadow-sm);
     --shadow-md: var(--shadow-md);
     --shadow-lg: var(--shadow-lg);
     --shadow-xl: var(--shadow-xl);
+}
+
+/* Control height utilities — Tailwind's block/inline logical-size utilities
+   only read the --spacing scale, not named --size- tokens, so the
+   size-control steps (app/globals.css :root) need explicit @utility rules
+   to become classes. See docs/DESIGN.md §3.1a. */
+@utility block-control-* {
+    block-size: --value(--size-control-*);
+}
+@utility inline-control-* {
+    inline-size: --value(--size-control-*);
+}
+@utility min-inline-control-* {
+    min-inline-size: --value(--size-control-*);
 }
 
 @layer base {

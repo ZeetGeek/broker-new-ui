@@ -1,7 +1,11 @@
 export const INPUT_SIZES = [
-    { name: "sm", label: "SM", note: "Dense contexts — filters, tables." },
-    { name: "default", label: "Default", note: "Most forms." },
-    { name: "lg", label: "LG", note: "48px tap target — primary mobile forms." },
+    { name: "sm", label: "SM", note: "32px — control-sm. Dense contexts — filters, tables." },
+    { name: "default", label: "Default", note: "36px — control-md. Most forms." },
+    {
+        name: "lg",
+        label: "LG",
+        note: "48px — control-xl, mobile tap target. Primary mobile forms.",
+    },
 ] as const;
 
 export const INPUT_STATES = [

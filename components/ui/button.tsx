@@ -59,33 +59,33 @@ const buttonVariants = cva(
             },
             size: {
                 default: `
-                  gap-1.5 px-3 block-9 inline-auto min-inline-9
+                  gap-1.5 px-3 block-control-md inline-auto min-inline-control-md
                   has-data-[icon=inline-end]:pe-2.5
                   has-data-[icon=inline-start]:ps-2.5
                 `,
                 xs: `
-                  gap-1 px-2.5 text-xs block-6 inline-auto min-inline-6
+                  gap-1 px-2.5 text-xs block-control-xs inline-auto min-inline-control-xs
                   has-data-[icon=inline-end]:pe-2
                   has-data-[icon=inline-start]:ps-2
                   [&_svg:not([class*='size-'])]:block-3 [&_svg:not([class*='size-'])]:inline-3
                 `,
                 sm: `
-                  gap-1 px-3 block-8 inline-auto min-inline-8
+                  gap-1 px-3 block-control-sm inline-auto min-inline-control-sm
                   has-data-[icon=inline-end]:pe-2
                   has-data-[icon=inline-start]:ps-2
                 `,
                 lg: `
-                  gap-1.5 px-5 block-10 inline-auto min-inline-10
+                  gap-1.5 px-5 block-control-lg inline-auto min-inline-control-lg
                   has-data-[icon=inline-end]:pe-4
                   has-data-[icon=inline-start]:ps-4
                 `,
-                icon: `block-9 inline-9`,
+                icon: `block-control-md inline-control-md`,
                 "icon-xs": `
-                  block-6 inline-6
+                  block-control-xs inline-control-xs
                   [&_svg:not([class*='size-'])]:block-3 [&_svg:not([class*='size-'])]:inline-3
                 `,
-                "icon-sm": `block-8 inline-8`,
-                "icon-lg": `block-10 inline-10`,
+                "icon-sm": `block-control-sm inline-control-sm`,
+                "icon-lg": `block-control-lg inline-control-lg`,
             },
         },
         defaultVariants: {

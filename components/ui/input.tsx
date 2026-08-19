@@ -47,9 +47,9 @@ const inputVariants = cva(
     {
         variants: {
             size: {
-                sm: "px-3 text-[13px] block-8",
-                default: "px-3.5 block-9 md:block-9",
-                lg: "px-4 text-base block-11 md:block-10",
+                sm: "px-3 text-[13px] block-control-sm",
+                default: "px-3.5 block-control-md",
+                lg: "px-4 text-base block-control-xl",
             },
             hasStartSlot: {
                 true: "",

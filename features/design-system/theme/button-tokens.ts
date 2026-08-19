@@ -19,10 +19,10 @@ export const BUTTON_VARIANTS = [
 ] as const;
 
 export const BUTTON_SIZES = [
-    { name: "xs", label: "XS" },
-    { name: "sm", label: "SM" },
-    { name: "default", label: "Default" },
-    { name: "lg", label: "LG" },
+    { name: "xs", label: "XS", note: "24px — control-xs" },
+    { name: "sm", label: "SM", note: "32px — control-sm" },
+    { name: "default", label: "Default", note: "36px — control-md" },
+    { name: "lg", label: "LG", note: "44px — control-lg, tap-target minimum" },
 ] as const;
 
 export const BUTTON_ICON_SIZES = [
