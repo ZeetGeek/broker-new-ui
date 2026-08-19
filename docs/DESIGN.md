@@ -151,16 +151,29 @@ Two values per step: mobile first, then the desktop value after the `md:` breakp
 
 | Step | Mobile | Desktop | Weight | Tracking | Leading |
 |---|---|---|---|---|---|
-| Display | 32px | 52px | 700 | -0.03em | 1.02 |
+| Display 1 | 44px | 72px | 700 | -0.03em | 1.0 |
+| Display 2 | 38px | 60px | 700 | -0.03em | 1.0 |
+| Display 3 | 32px | 48px | 700 | -0.02em | 1.02 |
 | h1 | 28px | 40px | 700 | -0.02em | 1.08 |
-| h2 | 22px | 28px | 600 | -0.02em | 1.15 |
-| h3 | 18px | 20px | 600 | -0.01em | 1.25 |
-| Body | 15px | 16px | 400 | 0 | 1.55 |
-| Small | 13px | 13px | 400 | 0 | 1.45 |
-| Eyebrow | 11px | 11px | 500 | 0.08em | 1.2 |
+| h2 | 24px | 34px | 600 | -0.02em | 1.15 |
+| h3 | 22px | 28px | 600 | -0.01em | 1.2 |
+| h4 | 20px | 24px | 600 | -0.01em | 1.25 |
+| h5 | 18px | 22px | 600 | 0 | 1.3 |
+| h6 | 16px | 20px | 600 | 0 | 1.35 |
+| Body large | 16px | 18px | 400 | 0 | 1.55 |
+| Body | 14px | 16px | 400 | 0 | 1.55 |
+| Body small | 12px | 14px | 400 | 0 | 1.45 |
+| Body extra small | 12px | 12px | 400 | 0 | 1.4 |
+| Eyebrow | 12px | 12px | 500 | 0.08em | 1.2 |
 
 Tight tracking on display sizes is not optional — it is what makes Bricolage Grotesque
 look intentional rather than default. Loose tracking at 52px reads as a fallback font.
+
+Headings never go below 20px desktop (h6 floor) — that floor is what keeps a heading
+reading as a heading rather than body copy. Body never goes above 18px desktop (Body
+large ceiling) for the same reason in reverse. The two scales are read by face and
+weight first, size second — h5/h6 stay display face + 600 weight even where their size
+sits close to a body step's.
 
 Eyebrow labels are uppercase, `ink-subtle`, and sit directly above the value they
 describe: `NEXT SHOWING`, `LOOKING FOR`, `NEEDS ATTENTION`. This is the only place
@@ -364,6 +377,32 @@ primary button.
 - Owner, no requests: **No broker requests yet** · Requests appear here when a broker wants to represent your property.
 
 Never `Nothing here yet.` Never an illustration.
+
+### 4.9 Logo
+
+The mark is a house with a plus cut out of the centre. One path, one fill,
+`currentColor`. Colour comes from the surface it sits on. The plus is negative
+space, not a second colour.
+
+| Surface | Fill | Use |
+|---|---|---|
+| `canvas` | `brand-ink` | Default. Headers, auth, wordmark. |
+| `surface` | `ink` | On white cards, matching body text. |
+| `canvas` | `brand` | Active state. Same green as prices and nav. |
+| `brand-deep` / `brand-ink` | `canvas` | Inverse on dark attention cards. Cream, not white. |
+| `brand-deep` / `brand-ink` | `highlight` | App icon, splash. Lime never sits on cream. |
+| `brand-soft` | `brand-ink` | Quiet chip. Profile, settings header. |
+
+Never `urgent` or `danger` on the mark. Those colours mean a deadline or a
+destroy. Never rotate, outline, add a drop shadow, or sit it on a gradient.
+
+Source files live in `public/logo/`. In the app, inline via `LogoMark` in
+`features/design-system/theme/logo-mark.tsx` so the fill can follow the theme.
+Minimum size 32px; below that the plus collapses.
+
+Wordmark is the mark plus Bricolage Grotesque (`font-display`), tight tracking,
+same optical size. The product name is a placeholder and lives in
+`config/site.ts` only.
 
 ---
 
