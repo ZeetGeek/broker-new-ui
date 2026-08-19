@@ -11,9 +11,7 @@ import { INPUT_SIZES } from "@/features/design-system/theme/input-tokens";
 
 function Swatch({ label, children }: { label: string; children: React.ReactNode }) {
     return (
-        <div
-            className="flex flex-col items-start gap-3 rounded-card bg-surface-muted p-5"
-        >
+        <div className="flex flex-col items-start gap-3 rounded-card bg-surface-muted p-5">
             <p className="text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase">
                 {label}
             </p>
