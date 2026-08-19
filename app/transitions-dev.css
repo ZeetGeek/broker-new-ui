@@ -87,7 +87,7 @@
 
 .t-icon-swap {
     position: relative;
-    display: inline-grid;
+    display: grid;
     place-items: center;
 }
 .t-icon-swap .t-icon {

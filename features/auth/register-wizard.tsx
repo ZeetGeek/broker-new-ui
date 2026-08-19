@@ -1,41 +1,43 @@
 "use client";
 
 import * as React from "react";
-
-import {
-    Call02Icon,
-    CheckmarkCircle02Icon,
-    Mail01Icon,
-    SquareLock02Icon,
-    User03Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
+
+import { Mail01Icon, SquareLock02Icon } from "@hugeicons/core-free-icons";
+import { addCollection, Icon } from "@iconify/react/offline";
+
+import { cn } from "@/lib/utils";
 
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+import brands from "./thesvg-color-brands.json";
+
+addCollection(brands as Parameters<typeof addCollection>[0]);
+
 type Portal = "owner" | "broker";
 
-const PORTAL_OPTIONS: {
-    value: Portal;
-    label: string;
-    description: string;
-}[] = [
-    { value: "owner", label: "I'm an owner", description: "List a property to sell or rent" },
-    { value: "broker", label: "I'm a broker", description: "Find buyers and tenants" },
+const PORTAL_OPTIONS: { value: Portal; label: string }[] = [
+    { value: "owner", label: "As an owner" },
+    { value: "broker", label: "As a broker" },
 ];
 
-function PortalPicker({
-    value,
-    onChange,
-}: {
-    value: Portal | null;
-    onChange: (portal: Portal) => void;
-}) {
+const PILL_FIELD = "rounded-control!";
+
+function BrandIcon({ icon }: { icon: "thesvg-color:google" | "thesvg-color:apple-light" }) {
     return (
-        <div role="radiogroup" aria-label="Account type" className="grid grid-cols-2 gap-3">
+        <Icon icon={icon} width={20} height={20} className="block-5 inline-5" aria-hidden="true" />
+    );
+}
+
+function PortalPicker({ value, onChange }: { value: Portal; onChange: (portal: Portal) => void }) {
+    return (
+        <div
+            role="radiogroup"
+            aria-label="Sign up as"
+            className="flex items-center justify-center gap-8"
+        >
             {PORTAL_OPTIONS.map((option) => {
                 const selected = value === option.value;
                 return (
@@ -45,27 +47,22 @@ function PortalPicker({
                         role="radio"
                         aria-checked={selected}
                         onClick={() => onChange(option.value)}
-                        className={`
-                          rounded-inner border-2 p-4 text-start transition-colors duration-160
-                          ${
-                              selected
-                                  ? "border-brand-ink bg-brand-soft"
-                                  : "border-border-warm bg-surface hover:border-ink-subtle"
-                          }
-                        `}
+                        className="flex items-center gap-2 py-3"
                     >
-                        <span className="flex items-center justify-between">
-                            <span className="h6 text-ink">{option.label}</span>
+                        <span
+                            className={cn(
+                                `
+                                  flex items-center justify-center rounded-full border-2 block-5
+                                  inline-5
+                                `,
+                                selected ? "border-brand bg-brand" : "border-ink-subtle bg-surface",
+                            )}
+                        >
                             {selected ? (
-                                <HugeiconsIcon
-                                    icon={CheckmarkCircle02Icon}
-                                    className="block-4.5 inline-4.5 text-brand"
-                                />
+                                <span className="rounded-full bg-surface block-2 inline-2" />
                             ) : null}
                         </span>
-                        <span className="body-sm mt-1 block text-ink-muted">
-                            {option.description}
-                        </span>
+                        <span className="body font-medium text-ink">{option.label}</span>
                     </button>
                 );
             })}
@@ -73,66 +70,115 @@ function PortalPicker({
     );
 }
 
-export function RegisterWizard() {
-    const [portal, setPortal] = React.useState<Portal | null>(null);
+function SocialButton({ children, mark }: { children: React.ReactNode; mark: React.ReactNode }) {
+    return (
+        <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="
+              gap-3 border-border-warm bg-surface font-medium text-ink shadow-sm block-control-xl
+              inline-full
+              hover:bg-surface-muted
+            "
+        >
+            {mark}
+            {children}
+        </Button>
+    );
+}
+
+export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Portal }) {
+    const [portal, setPortal] = React.useState<Portal>(initialPortal);
+
+    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+    }
 
     return (
-        <div className="flex items-center justify-center px-4 py-10 block-full sm:px-8">
-            <div className="mx-auto flex flex-col gap-8 inline-full max-inline-105">
+        <div className="mx-auto flex flex-col gap-6 inline-full max-inline-96">
+            <div className="flex flex-col items-center gap-6 text-center">
                 <Logo />
 
-                <div className="flex flex-col gap-1.5">
-                    <h1 className="h2 text-ink">Create your account.</h1>
-                    <p className="body text-ink-muted">Free to join. Takes about two minutes.</p>
+                <div className="flex flex-col gap-2">
+                    <h1 className="h1 text-ink">Sign up</h1>
+                    <p className="body text-ink-muted">Enter your details to continue.</p>
                 </div>
 
-                <form className="flex flex-col gap-5">
-                    <div className="flex flex-col gap-2">
-                        <span className="eyebrow">Account type</span>
-                        <PortalPicker value={portal} onChange={setPortal} />
-                    </div>
+                <PortalPicker value={portal} onChange={setPortal} />
+            </div>
 
+            <div className="flex flex-col gap-3">
+                <SocialButton mark={<BrandIcon icon="thesvg-color:google" />}>
+                    Sign up with Google
+                </SocialButton>
+                <SocialButton mark={<BrandIcon icon="thesvg-color:apple-light" />}>
+                    Sign up with Apple
+                </SocialButton>
+            </div>
+
+            <div className="flex items-center gap-4">
+                <span className="grow bg-border-warm block-px" />
+                <span className="body-sm text-ink-subtle">OR</span>
+                <span className="grow bg-border-warm block-px" />
+            </div>
+
+            <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+                <input type="hidden" name="portal" value={portal} />
+                <div className="flex flex-col gap-2">
+                    <label htmlFor="register-email" className="body font-medium text-ink">
+                        Email{" "}
+                        <span className="text-brand" aria-hidden="true">
+                            *
+                        </span>
+                    </label>
                     <Input
-                        size="lg"
-                        type="text"
-                        placeholder="Full name"
-                        startIcon={User03Icon}
-                        autoComplete="name"
-                    />
-                    <Input
-                        size="lg"
-                        type="tel"
-                        placeholder="+91 98765 43210"
-                        startIcon={Call02Icon}
-                        autoComplete="tel"
-                    />
-                    <Input
+                        id="register-email"
                         size="lg"
                         type="email"
+                        required
+                        autoComplete="email"
                         placeholder="you@example.com"
                         startIcon={Mail01Icon}
-                        autoComplete="email"
+                        className={PILL_FIELD}
                     />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                    <label htmlFor="register-password" className="body font-medium text-ink">
+                        Password{" "}
+                        <span className="text-brand" aria-hidden="true">
+                            *
+                        </span>
+                    </label>
                     <Input
+                        id="register-password"
                         size="lg"
                         type="password"
-                        placeholder="Create a password"
-                        startIcon={SquareLock02Icon}
+                        required
                         autoComplete="new-password"
+                        placeholder="Enter password"
+                        startIcon={SquareLock02Icon}
+                        className={PILL_FIELD}
                     />
+                </div>
 
-                    <Button size="lg" variant="default" type="submit" disabled={!portal}>
-                        Create account
-                    </Button>
-                </form>
+                <Button
+                    size="lg"
+                    variant="accent"
+                    type="submit"
+                    className="block-control-xl inline-full"
+                >
+                    Sign up
+                </Button>
+            </form>
 
-                <p className="body-sm text-center text-ink-muted">
-                    Already have an account?{" "}
-                    <Link href="/login" className="font-medium text-brand hover:underline">
-                        Log in
-                    </Link>
-                </p>
-            </div>
+            <p className="body-sm text-center text-ink-muted">
+                Already have an account?{" "}
+                <Link href="/login" className="font-medium text-brand underline">
+                    Log in
+                </Link>
+            </p>
         </div>
     );
 }

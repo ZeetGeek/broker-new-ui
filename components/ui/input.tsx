@@ -75,7 +75,10 @@ const inputVariants = cva(
 );
 
 const iconSlotVariants = cva(
-    `pointer-events-none absolute inset-y-0 z-10 flex items-center text-ink-subtle`,
+    `
+      pointer-events-none absolute inset-y-0 z-10 flex items-center text-ink-subtle
+      [&_svg]:block
+    `,
     {
         variants: {
             size: {
@@ -394,7 +397,8 @@ function Input({
                                 tabIndex={-1}
                                 onClick={() => setRevealed((r) => !r)}
                                 className="
-                                  pointer-events-auto text-ink-subtle transition-colors duration-160
+                                  pointer-events-auto inline-flex items-center justify-center
+                                  leading-none text-ink-subtle transition-colors duration-160
                                   hover:text-ink
                                 "
                                 aria-label={revealed ? "Hide password" : "Show password"}
