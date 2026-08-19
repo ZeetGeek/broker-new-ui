@@ -317,12 +317,15 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 
 ### 4.3 Buttons
 
-| Variant     | Fill                      | Text        | Use                                                         |
-| ----------- | ------------------------- | ----------- | ----------------------------------------------------------- |
-| Primary     | `brand-ink`               | white       | One per screen. Request to represent, Approve, Add property |
-| Secondary   | transparent, 1px `border` | `ink`       | Reschedule, Cancel, Map view                                |
-| Destructive | transparent, 1px `danger` | `danger`    | Reject, Delete                                              |
-| Ghost       | none                      | `ink-muted` | Tertiary, inside cards                                      |
+| Variant           | Fill                         | Text            | Use                                                                                                                                                         |
+| ----------------- | ---------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary           | `brand-ink`                  | white           | One per screen. Request to represent, Approve, Add property                                                                                                 |
+| Accent            | `brand`                      | `canvas`        | One per screen, marketing/hero CTAs only. Not for in-app screens — `Primary` owns those                                                                     |
+| Highlight         | `highlight`                  | `highlight-ink` | Dark surfaces only (`brand-deep`/`brand-ink` cards). One per screen, max — the one action that leads on a dark attention card. Never on `canvas`/`surface`. |
+| Highlight outline | transparent, 1px `highlight` | `highlight-ink` | Same dark-surface restriction as Highlight, lower emphasis.                                                                                                 |
+| Secondary         | transparent, 1px `border`    | `ink`           | Reschedule, Cancel, Map view                                                                                                                                |
+| Destructive       | transparent, 1px `danger`    | `danger`        | Reject, Delete                                                                                                                                              |
+| Ghost             | none                         | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
 
 All are pill-shaped. Minimum height 44px on desktop, **48px on mobile**. Minimum
 horizontal padding 20px. Label is sentence case, verb first, one to three words, no

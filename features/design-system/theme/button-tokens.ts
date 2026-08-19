@@ -1,5 +1,16 @@
 export const BUTTON_VARIANTS = [
     { name: "default", label: "Default", note: "Primary action. One per screen." },
+    { name: "accent", label: "Accent", note: "Marketing/hero CTA. One per screen." },
+    {
+        name: "highlight",
+        label: "Highlight",
+        note: "Dark surfaces only. One per screen, max.",
+    },
+    {
+        name: "highlight-outline",
+        label: "Highlight outline",
+        note: "Dark surfaces only. One per screen, max.",
+    },
     { name: "outline", label: "Outline", note: "Secondary action." },
     { name: "secondary", label: "Secondary", note: "Alternate fill." },
     { name: "ghost", label: "Ghost", note: "Tertiary, inside cards." },

@@ -72,6 +72,15 @@
     --radius-inner: 14px;
     --radius-control: 9999px;
 
+    /* Control height — the single source for button/input/select-trigger height.
+       lg (44px) and xl (48px) are the desktop/mobile tap-target minimums from
+       docs/DESIGN.md §4.3. See docs/DESIGN-SYSTEM-SYNC.md before editing. */
+    --size-control-xs: calc(var(--spacing) * 6);
+    --size-control-sm: calc(var(--spacing) * 8);
+    --size-control-md: calc(var(--spacing) * 9);
+    --size-control-lg: calc(var(--spacing) * 11);
+    --size-control-xl: calc(var(--spacing) * 12);
+
     /* Smooth elevation — ink-tinted, layered, low opacity. See docs/DESIGN.md §3.3 */
     --shadow-xs: 0 1px 2px -1px oklch(0.153 0.02 155 / 0.06);
     --shadow-sm:

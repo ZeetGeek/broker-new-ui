@@ -34,21 +34,8 @@ export function HomeHero() {
             >
                 <Logo variant="accent" />
                 <nav className="flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        className="text-canvas hover:bg-white/10 hover:text-canvas"
-                    >
-                        Login
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="
-                          border-white/30 bg-transparent text-canvas
-                          hover:bg-white/10 hover:text-canvas
-                        "
-                    >
-                        Sign up
-                    </Button>
+                    <Button variant="link">Login</Button>
+                    <Button variant="highlight">Get started</Button>
                 </nav>
             </header>
 
@@ -79,25 +66,10 @@ export function HomeHero() {
                 </p>
 
                 <div className="flex flex-col gap-2.5 inline-full sm:flex-row sm:inline-auto">
-                    <Button
-                        size="lg"
-                        className="
-                          bg-canvas text-brand-ink block-12 inline-full
-                          hover:bg-canvas/85
-                          sm:inline-auto
-                        "
-                    >
+                    <Button size="lg" variant="highlight">
                         List my property free
                     </Button>
-                    <Button
-                        variant="outline"
-                        size="lg"
-                        className="
-                          border-canvas/40 bg-transparent text-canvas block-12 inline-full
-                          hover:bg-white/10 hover:text-canvas
-                          sm:inline-auto
-                        "
-                    >
+                    <Button size="lg" variant="highlight-outline">
                         I&apos;m a broker
                         <HugeiconsIcon icon={ArrowRight02Icon} data-icon="inline-end" />
                     </Button>

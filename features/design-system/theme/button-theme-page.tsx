@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
 import { swapText } from "@/lib/motion/swap-text";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 
@@ -13,14 +14,23 @@ import {
     BUTTON_VARIANTS,
 } from "@/features/design-system/theme/button-tokens";
 
-function Swatch({ label, children }: { label: string; children: React.ReactNode }) {
+function Swatch({
+    label,
+    dark = false,
+    children,
+}: {
+    label: string;
+    dark?: boolean;
+    children: React.ReactNode;
+}) {
     return (
         <div
-            className="
-              flex flex-col items-start gap-3 rounded-card border border-border-warm bg-surface p-5
-            "
+            className={cn(
+                "flex flex-col items-start gap-3 rounded-card border p-5",
+                dark ? "border-transparent bg-brand-deep" : "border-border-warm bg-surface",
+            )}
         >
-            <p className="eyebrow">{label}</p>
+            <p className={cn("eyebrow", dark && "text-highlight")}>{label}</p>
             {children}
         </div>
     );
@@ -57,7 +67,7 @@ export function ButtonThemePage() {
         <DesignSystemShell
             eyebrow="Components"
             title="Button."
-            description="One shadcn primitive, wrapped once in components/ui/button.tsx. Six variants, four sizes, four icon sizes, loading state built in via the loading prop. See docs/DESIGN.md §4.3."
+            description="One shadcn primitive, wrapped once in components/ui/button.tsx. Nine variants, four sizes, four icon sizes, loading state built in via the loading prop. See docs/DESIGN.md §4.3."
         >
             <div className="space-y-10">
                 <section>
@@ -67,12 +77,22 @@ export function ButtonThemePage() {
                         destructive — never decorative.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {BUTTON_VARIANTS.map((v) => (
-                            <Swatch key={v.name} label={v.label}>
-                                <Button variant={v.name}>{v.label}</Button>
-                                <p className="body-xs text-ink-subtle">{v.note}</p>
-                            </Swatch>
-                        ))}
+                        {BUTTON_VARIANTS.map((v) => {
+                            const dark = v.name === "highlight" || v.name === "highlight-outline";
+                            return (
+                                <Swatch key={v.name} label={v.label} dark={dark}>
+                                    <Button variant={v.name}>{v.label}</Button>
+                                    <p
+                                        className={cn(
+                                            "body-xs",
+                                            dark ? "text-[#B8CFC4]" : "text-ink-subtle",
+                                        )}
+                                    >
+                                        {v.note}
+                                    </p>
+                                </Swatch>
+                            );
+                        })}
                     </div>
                 </section>
 
@@ -193,6 +213,11 @@ export function ButtonThemePage() {
                         <li>
                             `loading` keeps the label, adds a spinner, and disables the control — it
                             never removes the label.
+                        </li>
+                        <li>
+                            `highlight` / `highlight-outline` only sit on dark cards
+                            (`brand-deep`/`brand-ink`), one per screen max — never on `canvas` or
+                            `surface`.
                         </li>
                     </ul>
                 </section>

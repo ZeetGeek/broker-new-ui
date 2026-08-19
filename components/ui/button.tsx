@@ -50,6 +50,12 @@ const buttonVariants = cva(
                   dark:focus-visible:ring-destructive/40
                 `,
                 link: `text-primary underline-offset-4 hover:underline`,
+                accent: `bg-brand text-canvas hover:bg-brand/85`,
+                highlight: `bg-highlight text-highlight-ink hover:bg-highlight/85`,
+                "highlight-outline": `
+                  border-highlight bg-transparent text-highlight
+                  hover:bg-highlight/5
+                `,
             },
             size: {
                 default: `
