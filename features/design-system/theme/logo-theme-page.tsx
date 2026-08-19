@@ -203,7 +203,7 @@ export function LogoThemePage() {
                     <div className="mbs-4 space-y-3">
                         <div
                             className="
-                              flex items-center gap-3 rounded-card border border-border-warm
+                              flex items-center gap-2 rounded-card border border-border-warm
                               bg-surface px-4 block-14
                             "
                         >
@@ -218,7 +218,7 @@ export function LogoThemePage() {
                         </div>
                         <div
                             className="
-                              flex items-center gap-3 rounded-card bg-brand-deep px-4 block-14
+                              flex items-center gap-2 rounded-card bg-brand-deep px-4 block-14
                             "
                         >
                             <LogoMark size={32} className="text-highlight" decorative />
