@@ -18,7 +18,10 @@ const SECTIONS = [
     },
     {
         title: "Components",
-        links: [{ href: "/design-system/components/button", label: "Button" }],
+        links: [
+            { href: "/design-system/components/button", label: "Button" },
+            { href: "/design-system/components/input", label: "Input" },
+        ],
     },
 ];
 
@@ -31,9 +34,10 @@ export default function Page() {
                 </p>
                 <h1
                     className="
-                  mbs-2 font-display text-[28px] leading-[1.08] font-bold tracking-tight text-ink
-                  md:text-[40px]
-                "
+                      mbs-2 font-display text-[28px] leading-[1.08] font-bold tracking-tight
+                      text-ink
+                      md:text-[40px]
+                    "
                 >
                     <span className="text-ink">Design system.</span>{" "}
                     <span className="text-ink-muted">Tokens, one source of truth.</span>
@@ -44,8 +48,8 @@ export default function Page() {
                         <section key={section.title}>
                             <h2
                                 className="
-                              font-display text-[20px] font-semibold tracking-tight text-ink
-                            "
+                                  font-display text-[20px] font-semibold tracking-tight text-ink
+                                "
                             >
                                 {section.title}
                             </h2>

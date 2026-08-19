@@ -398,11 +398,11 @@ destroy. Never rotate, outline, add a drop shadow, or sit it on a gradient.
 Source files live in `public/logo/`. In the app, use `Logo` from
 `components/shared/logo.tsx`. Switch colour with the `variant` prop:
 
-| `variant` | Mark | Wordmark | Surface |
-|---|---|---|---|
-| `default` | `brand-ink` | `ink` | Light chrome, headers, auth |
-| `inverse` | `canvas` | `canvas` | Dark chrome, quiet |
-| `accent` | `highlight` | white | Dark chrome, the one that leads |
+| `variant` | Mark        | Wordmark | Surface                         |
+| --------- | ----------- | -------- | ------------------------------- |
+| `default` | `brand-ink` | `ink`    | Light chrome, headers, auth     |
+| `inverse` | `canvas`    | `canvas` | Dark chrome, quiet              |
+| `accent`  | `highlight` | white    | Dark chrome, the one that leads |
 
 ```tsx
 <Logo />
@@ -412,6 +412,64 @@ Source files live in `public/logo/`. In the app, use `Logo` from
 
 Minimum size 32px; below that the plus collapses. The product name is a
 placeholder and lives in `config/site.ts` only.
+
+### 4.10 Input
+
+One base-ui primitive, wrapped once in `components/ui/input.tsx`. Three
+sizes (`sm` / `default` / `lg`), an optional icon in either end slot, and
+error/success/loading states that share one wiring instead of three.
+
+```
+┌──────────────────────────────┐
+│ 🔍  Search locality       ✕  │  start icon · value · clear
+├──────────────────────────────┤
+│ ✉️  you@example.com       ✓  │  success — data-success, brand border
+├──────────────────────────────┤
+│ 👤  Broker name          ◌   │  loading — Tailspin in the end slot
+├──────────────────────────────┤
+│    395                    ⚠  │  error — danger border + ring
+│ PIN code must be 6 digits    │  message region, danger text
+└──────────────────────────────┘
+```
+
+14px radius (`rounded-inner`), 1px `border-warm`, `surface` fill. Rest state
+carries no shadow — `shadow-xs` is reserved for the rare case an input sits
+directly on `canvas` rather than inside a card that already separates it.
+
+**Icon slots.** `startIcon` and `endIcon` accept a Hugeicons free-icon export
+via `@hugeicons/react`'s `HugeiconsIcon`. Only one thing occupies the end
+slot at a time — `loading`, `success`, `clearable`, and `type="password"`
+each claim it automatically, in that priority order, ahead of a plain
+`endIcon`. Never render two end affordances at once.
+
+**Error and success** are driven the same way `aria-invalid` already worked
+on the bare shadcn primitive: pass `errorText` (a string, not a boolean) and
+the border, focus ring, inline alert glyph, and the message region below the
+field all switch together. `success` sets `data-success` and a `brand`
+border plus a checkmark in the end slot — it is suppressed whenever the
+field is also invalid, so a field never shows both signals. Success reuses
+the existing `brand` token (the same green that marks "verified" elsewhere
+per §1.3) rather than introducing a new colour.
+
+**Loading** disables the field, sets `aria-busy`, and swaps the end slot for
+the same `Tailspin` spinner as `components/ui/button.tsx` (`size="16"
+stroke="2" speed="0.9" color="currentColor"`) — one spinner, one place,
+never a second loader component.
+
+**Helper and error text** live in one region below the field and cross-fade
+via `AnimatePresence` (`--duration-fast`, `ease-in-out`) per docs/MOTION.md
+§3.3 — never stacked, never popped in/out with no exit animation. Error
+text also gets `role="alert"` so it's announced without the user having to
+find it.
+
+**Password fields** get a reveal toggle in the end slot automatically —
+`type="password"` is enough, no extra prop. **Clearable** fields
+(`clearable`) get a `✕` once they have a value; both toggles are
+`tabIndex={-1}` so they never enter the regular tab order ahead of the
+field's own value.
+
+Placeholder text is `ink-subtle`, sentence case, describes what to enter
+(`Search locality`) rather than repeating a visible label (`Locality`).
 
 ---
 
@@ -531,6 +589,8 @@ Things that will be rejected in review:
 - A tap target under 48px on mobile
 - Currency formatted with `en-US`, or the string `USA` anywhere
 - A spinner where a skeleton belongs
+- An input showing both an error and a success signal at once, or two end-slot
+  affordances stacked (e.g. a clear button next to a loading spinner)
 - An empty state that says "No data"
 - Meaning carried by colour alone with no text label
 - Desktop-first layouts that stack awkwardly instead of being composed mobile-first

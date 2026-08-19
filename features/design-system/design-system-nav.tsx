@@ -11,6 +11,7 @@ const THEME_LINKS = [
     { href: "/design-system/shadows", label: "Shadows" },
     { href: "/design-system/logo", label: "Logo" },
     { href: "/design-system/components/button", label: "Button" },
+    { href: "/design-system/components/input", label: "Input" },
 ];
 
 export function DesignSystemNav() {

@@ -15,8 +15,8 @@ function Swatch({ label, children }: { label: string; children: React.ReactNode 
     return (
         <div
             className="
-          flex flex-col items-start gap-3 rounded-card border border-border-warm bg-surface p-5
-        "
+              flex flex-col items-start gap-3 rounded-card border border-border-warm bg-surface p-5
+            "
         >
             <p className="text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase">
                 {label}
@@ -71,9 +71,9 @@ export function ButtonThemePage() {
                     </p>
                     <div
                         className="
-                      mbs-4 flex flex-wrap items-end gap-4 rounded-card border border-border-warm
-                      bg-surface p-5
-                    "
+                          mbs-4 flex flex-wrap items-end gap-4 rounded-card border
+                          border-border-warm bg-surface p-5
+                        "
                     >
                         {BUTTON_SIZES.map((s) => (
                             <div key={s.name} className="flex flex-col items-center gap-2">
@@ -90,9 +90,9 @@ export function ButtonThemePage() {
                     </h2>
                     <div
                         className="
-                      mbs-4 flex flex-wrap items-end gap-4 rounded-card border border-border-warm
-                      bg-surface p-5
-                    "
+                          mbs-4 flex flex-wrap items-end gap-4 rounded-card border
+                          border-border-warm bg-surface p-5
+                        "
                     >
                         {BUTTON_ICON_SIZES.map((s) => (
                             <div key={s.name} className="flex flex-col items-center gap-2">
@@ -129,9 +129,9 @@ export function ButtonThemePage() {
                             >
                                 <p
                                     className="
-                                  text-[11px] font-medium tracking-[0.08em] text-ink-subtle
-                                  uppercase
-                                "
+                                      text-[11px] font-medium tracking-[0.08em] text-ink-subtle
+                                      uppercase
+                                    "
                                 >
                                     {variant}
                                 </p>
@@ -180,15 +180,15 @@ export function ButtonThemePage() {
                 <section className="rounded-card bg-brand-deep p-5 md:p-6">
                     <p
                         className="
-                      text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
-                    "
+                          text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
+                        "
                     >
                         Rules
                     </p>
                     <ul
                         className="
-                      mbs-3 list-disc space-y-2 ps-5 text-[13px] leading-[1.45] text-[#B8CFC4]
-                    "
+                          mbs-3 list-disc space-y-2 ps-5 text-[13px] leading-[1.45] text-[#B8CFC4]
+                        "
                     >
                         <li>One primary (`default`) button per screen. Never two.</li>
                         <li>

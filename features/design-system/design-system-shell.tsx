@@ -21,17 +21,18 @@ export function DesignSystemShell({
                 </p>
                 <h1
                     className="
-                  mbs-2 font-display text-[28px] leading-[1.08] font-bold tracking-tight text-ink
-                  md:text-[40px]
-                "
+                      mbs-2 font-display text-[28px] leading-[1.08] font-bold tracking-tight
+                      text-ink
+                      md:text-[40px]
+                    "
                 >
                     {title}
                 </h1>
                 <p
                     className="
-                  mbs-2 text-[15px] leading-[1.55] text-ink-muted max-inline-[65ch]
-                  md:text-base
-                "
+                      mbs-2 text-[15px] leading-[1.55] text-ink-muted max-inline-[65ch]
+                      md:text-base
+                    "
                 >
                     {description}
                 </p>

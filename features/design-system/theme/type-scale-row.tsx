@@ -9,10 +9,10 @@ export function TypeScaleRow({ step }: { step: TypeScaleStep }) {
     return (
         <div
             className="
-          grid grid-cols-1 gap-3 border-be border-border-warm py-5
-          last:border-be-0
-          md:grid-cols-[140px_1fr] md:gap-6
-        "
+              grid grid-cols-1 gap-3 border-be border-border-warm py-5
+              last:border-be-0
+              md:grid-cols-[140px_1fr] md:gap-6
+            "
         >
             <div>
                 <p className="text-[13px] font-medium text-ink">{step.name}</p>

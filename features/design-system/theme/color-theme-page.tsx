@@ -14,26 +14,26 @@ export function ColorThemePage() {
                     <section key={group.title}>
                         <h2
                             className="
-                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
-                          text-ink
-                          md:text-[22px]
-                        "
+                              font-display text-[20px] leading-[1.15] font-semibold tracking-tight
+                              text-ink
+                              md:text-[22px]
+                            "
                         >
                             {group.title}
                         </h2>
                         <p
                             className="
-                          mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]
-                        "
+                              mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]
+                            "
                         >
                             {group.description}
                         </p>
                         <div
                             className="
-                          mbs-4 grid grid-cols-2 gap-3
-                          md:grid-cols-3 md:gap-4
-                          lg:grid-cols-5
-                        "
+                              mbs-4 grid grid-cols-2 gap-3
+                              md:grid-cols-3 md:gap-4
+                              lg:grid-cols-5
+                            "
                         >
                             {group.tokens.map((token) => (
                                 <ColorSwatch key={token.variable} token={token} />
@@ -45,8 +45,8 @@ export function ColorThemePage() {
                 <section className="rounded-card bg-brand-deep p-5 md:p-6">
                     <p
                         className="
-                      text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
-                    "
+                          text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
+                        "
                     >
                         Proportion
                     </p>

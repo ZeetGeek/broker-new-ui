@@ -19,8 +19,8 @@ export function ShadowThemePage() {
                 <section className="rounded-card bg-brand-deep p-5 md:p-6">
                     <p
                         className="
-                      text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
-                    "
+                          text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
+                        "
                     >
                         When to use which
                     </p>
@@ -45,8 +45,8 @@ export function ShadowThemePage() {
                             >
                                 <span
                                     className="
-                                  shrink-0 text-[13px] font-medium text-white inline-24
-                                "
+                                      shrink-0 text-[13px] font-medium text-white inline-24
+                                    "
                                 >
                                     {row.step}
                                 </span>
@@ -61,15 +61,15 @@ export function ShadowThemePage() {
                 <section className="rounded-card border border-border-warm bg-surface p-5 md:p-6">
                     <p
                         className="
-                      text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase
-                    "
+                          text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase
+                        "
                     >
                         Rules
                     </p>
                     <ul
                         className="
-                      mbs-3 list-disc space-y-2 ps-5 text-[13px] leading-[1.45] text-ink-muted
-                    "
+                          mbs-3 list-disc space-y-2 ps-5 text-[13px] leading-[1.45] text-ink-muted
+                        "
                     >
                         <li>
                             Ink-tinted, never pure black — matches the rest of the neutral system.
