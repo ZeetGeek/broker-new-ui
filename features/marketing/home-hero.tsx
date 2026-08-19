@@ -76,7 +76,7 @@ export function HomeHero() {
                     variant="brand"
                     className="
                       body-sm border border-canvas/25 bg-canvas/10 px-3.5 py-1.5 text-canvas
-                      backdrop-blur-md
+                      backdrop-blur-lg
                       [&_svg:not([class*='size-'])]:block-3.5
                       [&_svg:not([class*='size-'])]:inline-3.5
                     "
@@ -109,7 +109,7 @@ export function HomeHero() {
                     <Button
                         size="lg"
                         variant="highlight-outline"
-                        className="bg-canvas/10 backdrop-blur-md hover:bg-canvas/15"
+                        className="bg-canvas/10 backdrop-blur-lg hover:bg-canvas/15"
                     >
                         I&apos;m a broker
                         <HugeiconsIcon icon={ArrowRight02Icon} data-icon="inline-end" />
@@ -126,8 +126,8 @@ export function HomeHero() {
                         <li key={label} className="flex items-center gap-2 sm:px-5">
                             <span
                                 className="
-                                  flex items-center justify-center rounded-full bg-canvas/20
-                                  backdrop-blur-md block-6 inline-6
+                                  flex items-center justify-center rounded-full border
+                                  border-canvas/25 bg-canvas/10 backdrop-blur-md block-6 inline-6
                                 "
                             >
                                 <HugeiconsIcon icon={icon} className="block-3.5 inline-3.5" />
