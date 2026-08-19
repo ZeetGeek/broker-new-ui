@@ -42,7 +42,7 @@ export function HomeHero() {
             <div
                 className="
                   relative z-10 mx-auto flex flex-col items-center justify-center gap-6 px-4
-                  text-center block-full max-inline-[620px]
+                  text-center block-full max-inline-[800px]
                 "
             >
                 <Badge
@@ -61,7 +61,7 @@ export function HomeHero() {
                     Sell your property through a broker you trust.
                 </h1>
 
-                <p className="body text-canvas/80 max-inline-[430px]">
+                <p className="body text-canvas/80 max-inline-[420px]">
                     List it free. Verified brokers ask to sell it. You approve the one you like.
                 </p>
 
