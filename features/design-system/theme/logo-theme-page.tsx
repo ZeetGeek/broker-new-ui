@@ -24,13 +24,7 @@ export function LogoThemePage() {
         >
             <div className="space-y-10">
                 <section className="rounded-card bg-surface p-8 md:p-12">
-                    <p
-                        className="
-                          text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase
-                        "
-                    >
-                        Preferred
-                    </p>
+                    <p className="eyebrow">Preferred</p>
                     <div
                         className="
                           mbs-6 flex flex-col items-center gap-6
@@ -39,20 +33,8 @@ export function LogoThemePage() {
                     >
                         <LogoMark size={200} className="text-brand-ink" />
                         <div className="text-center md:text-start">
-                            <p
-                                className="
-                                  font-display text-[28px] leading-[1.08] font-bold tracking-tight
-                                  text-ink
-                                  md:text-[40px]
-                                "
-                            >
-                                {SITE_NAME}
-                            </p>
-                            <p
-                                className="
-                                  mbs-2 text-[13px] leading-[1.45] text-ink-muted max-inline-[40ch]
-                                "
-                            >
+                            <p className="h1 text-ink">{SITE_NAME}</p>
+                            <p className="body-sm mbs-2 text-ink-muted max-inline-[40ch]">
                                 Brand-ink on canvas. Reads black, is green. This is the default for
                                 headers, auth, and the wordmark.
                             </p>
@@ -61,16 +43,8 @@ export function LogoThemePage() {
                 </section>
 
                 <section>
-                    <h2
-                        className="
-                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
-                          text-ink
-                          md:text-[22px]
-                        "
-                    >
-                        Colour
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
+                    <h2 className="h4 text-ink">Colour</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Five fills, all from the existing palette. The plus is a cutout: the surface
                         shows through. That is the second colour. Do not paint it.
                     </p>
@@ -89,16 +63,8 @@ export function LogoThemePage() {
                 </section>
 
                 <section>
-                    <h2
-                        className="
-                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
-                          text-ink
-                          md:text-[22px]
-                        "
-                    >
-                        App icon
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
+                    <h2 className="h4 text-ink">App icon</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Square field, card radius. Highlight on brand-deep is the default. Lime on
                         cream fails contrast, so that pairing does not exist.
                     </p>
@@ -117,13 +83,8 @@ export function LogoThemePage() {
                                     fillClassName={icon.fillClass}
                                 />
                                 <div className="text-center">
-                                    <p className="text-[15px] font-medium text-ink">{icon.name}</p>
-                                    <p
-                                        className="
-                                          mbs-1 text-[12px] leading-[1.4] text-ink-muted
-                                          max-inline-[18ch]
-                                        "
-                                    >
+                                    <p className="body font-medium text-ink">{icon.name}</p>
+                                    <p className="body-xs mbs-1 text-ink-muted max-inline-[18ch]">
                                         {icon.usage}
                                     </p>
                                 </div>
@@ -133,16 +94,8 @@ export function LogoThemePage() {
                 </section>
 
                 <section>
-                    <h2
-                        className="
-                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
-                          text-ink
-                          md:text-[22px]
-                        "
-                    >
-                        Size
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
+                    <h2 className="h4 text-ink">Size</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Floor is {LOGO_MIN_SIZE_PX}px. Below that the plus collapses into the walls.
                         Nav and header use 32. Auth uses 64 or larger.
                     </p>
@@ -156,26 +109,18 @@ export function LogoThemePage() {
                         {LOGO_SIZES_PX.map((size) => (
                             <div key={size} className="flex flex-col items-center gap-2">
                                 <LogoMark size={size} className="text-brand-ink" decorative />
-                                <span className="tabular text-[11px] text-ink-subtle">{size}</span>
+                                <span className="body-xs tabular text-ink-subtle">{size}</span>
                             </div>
                         ))}
                     </div>
                 </section>
 
                 <section>
-                    <h2
-                        className="
-                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
-                          text-ink
-                          md:text-[22px]
-                        "
-                    >
-                        Component
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
-                        <code className="text-[12px]">components/shared/logo.tsx</code>. Change
-                        colour with <code className="text-[12px]">variant</code>. Inverse is the
-                        quiet dark option. Accent is the one that leads on dark chrome.
+                    <h2 className="h4 text-ink">Component</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
+                        <code className="body-xs">components/shared/logo.tsx</code>. Change colour
+                        with <code className="body-xs">variant</code>. Inverse is the quiet dark
+                        option. Accent is the one that leads on dark chrome.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 md:grid-cols-3">
                         {LOGO_COMPONENT_VARIANTS.map((item) => (
@@ -189,12 +134,10 @@ export function LogoThemePage() {
                                     <Logo variant={item.name} size="lg" decorative />
                                 </div>
                                 <div className="space-y-1">
-                                    <code className="text-[13px] text-ink">
+                                    <code className="body-sm text-ink">
                                         variant=&quot;{item.name}&quot;
                                     </code>
-                                    <p className="text-[13px] leading-[1.45] text-ink-muted">
-                                        {item.note}
-                                    </p>
+                                    <p className="body-sm text-ink-muted">{item.note}</p>
                                 </div>
                             </div>
                         ))}
@@ -202,22 +145,12 @@ export function LogoThemePage() {
                 </section>
 
                 <section>
-                    <h2
-                        className="
-                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
-                          text-ink
-                          md:text-[22px]
-                        "
-                    >
-                        Source
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
-                        Static SVGs for <code className="text-[12px]">&lt;img&gt;</code> and
-                        favicons. Prefer{" "}
-                        <code className="text-[12px]">
-                            &lt;Logo variant=&quot;default&quot; /&gt;
-                        </code>{" "}
-                        from <code className="text-[12px]">components/shared/logo.tsx</code>.
+                    <h2 className="h4 text-ink">Source</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
+                        Static SVGs for <code className="body-xs">&lt;img&gt;</code> and favicons.
+                        Prefer{" "}
+                        <code className="body-xs">&lt;Logo variant=&quot;default&quot; /&gt;</code>{" "}
+                        from <code className="body-xs">components/shared/logo.tsx</code>.
                     </p>
                     <ul
                         className="
@@ -227,8 +160,8 @@ export function LogoThemePage() {
                     >
                         {LOGO_SOURCE_FILES.map((source) => (
                             <li key={source.file} className="px-5 py-4">
-                                <code className="text-[13px] text-ink">{source.file}</code>
-                                <p className="mbs-1 text-[13px] text-ink-muted">
+                                <code className="body-sm text-ink">{source.file}</code>
+                                <p className="body-sm mbs-1 text-ink-muted">
                                     {source.fill}. {source.usage}
                                 </p>
                             </li>
@@ -237,18 +170,8 @@ export function LogoThemePage() {
                 </section>
 
                 <section className="rounded-card bg-brand-deep p-5 md:p-6">
-                    <p
-                        className="
-                          text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
-                        "
-                    >
-                        Rules
-                    </p>
-                    <ul
-                        className="
-                          mbs-3 list-disc space-y-2 ps-5 text-[13px] leading-[1.45] text-[#B8CFC4]
-                        "
-                    >
+                    <p className="eyebrow text-highlight">Rules</p>
+                    <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-[#B8CFC4]">
                         <li>One fill. The plus is negative space, not a second colour.</li>
                         <li>
                             Brand-ink on canvas is the default. Highlight only on brand-deep or

@@ -79,7 +79,7 @@ export function DesignSystemNav() {
                         <Link
                             key={link.href}
                             href={link.href}
-                            className="t-tab text-sm font-medium no-underline"
+                            className="t-tab body font-medium no-underline"
                             aria-current={isActive ? "page" : undefined}
                         >
                             {link.label}

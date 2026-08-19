@@ -9,7 +9,7 @@ import "ldrs/react/Tailspin.css";
 const buttonVariants = cva(
     `
       group/button inline-flex shrink-0 items-center justify-center rounded-control border
-      border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all
+      border-transparent bg-clip-padding text-sm font-semibold whitespace-nowrap transition-all
       duration-160 ease-out outline-none select-none
       focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
       active:not-aria-[haspopup]:translate-y-px active:not-aria-[haspopup]:scale-[0.97]

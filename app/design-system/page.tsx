@@ -29,16 +29,8 @@ export default function Page() {
     return (
         <div className="bg-canvas min-block-screen">
             <div className="mx-auto px-4 py-8 max-inline-[1280px] md:px-8 md:py-12">
-                <p className="text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase">
-                    Internal
-                </p>
-                <h1
-                    className="
-                      mbs-2 font-display text-[28px] leading-[1.08] font-bold tracking-tight
-                      text-ink
-                      md:text-[40px]
-                    "
-                >
+                <p className="eyebrow">Internal</p>
+                <h1 className="h1 mbs-2">
                     <span className="text-ink">Design system.</span>{" "}
                     <span className="text-ink-muted">Tokens, one source of truth.</span>
                 </h1>
@@ -46,21 +38,15 @@ export default function Page() {
                 <div className="mbs-8 space-y-8">
                     {SECTIONS.map((section) => (
                         <section key={section.title}>
-                            <h2
-                                className="
-                                  font-display text-[20px] font-semibold tracking-tight text-ink
-                                "
-                            >
-                                {section.title}
-                            </h2>
+                            <h2 className="h4 text-ink">{section.title}</h2>
                             <div className="mbs-3 flex flex-wrap gap-3">
                                 {section.links.map((link) => (
                                     <Link
                                         key={link.href}
                                         href={link.href}
                                         className="
-                                          rounded-card border border-border-warm bg-surface px-5
-                                          py-4 text-[15px] font-medium text-ink
+                                          body rounded-card border border-border-warm bg-surface
+                                          px-5 py-4 font-medium text-ink
                                           hover:bg-surface-muted
                                         "
                                     >

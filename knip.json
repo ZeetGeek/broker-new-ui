@@ -1,5 +1,5 @@
 {
     "$schema": "https://unpkg.com/knip@5/schema.json",
-    "ignoreDependencies": ["tailwindcss", "@tailwindcss/postcss", "eslint-config-next"],
+    "ignoreDependencies": ["tailwindcss", "@tailwindcss/postcss", "eslint-config-next", "sass"],
     "ignore": ["components/ui/**"]
 }

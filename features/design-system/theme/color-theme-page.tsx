@@ -12,20 +12,8 @@ export function ColorThemePage() {
             <div className="space-y-10">
                 {COLOR_GROUPS.map((group) => (
                     <section key={group.title}>
-                        <h2
-                            className="
-                              font-display text-[20px] leading-[1.15] font-semibold tracking-tight
-                              text-ink
-                              md:text-[22px]
-                            "
-                        >
-                            {group.title}
-                        </h2>
-                        <p
-                            className="
-                              mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]
-                            "
-                        >
+                        <h2 className="h4 text-ink">{group.title}</h2>
+                        <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                             {group.description}
                         </p>
                         <div
@@ -43,13 +31,7 @@ export function ColorThemePage() {
                 ))}
 
                 <section className="rounded-card bg-brand-deep p-5 md:p-6">
-                    <p
-                        className="
-                          text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
-                        "
-                    >
-                        Proportion
-                    </p>
+                    <p className="eyebrow text-highlight">Proportion</p>
                     <div className="mbs-3 grid grid-cols-2 gap-4 md:grid-cols-4">
                         {[
                             { share: "60–70%", label: "Warm neutral" },
@@ -58,10 +40,8 @@ export function ColorThemePage() {
                             { share: "<5%", label: "Highlight + urgent" },
                         ].map((row) => (
                             <div key={row.label}>
-                                <p className="tabular font-display text-[22px] font-bold text-white">
-                                    {row.share}
-                                </p>
-                                <p className="text-[13px] text-[#B8CFC4]">{row.label}</p>
+                                <p className="h3 tabular text-white">{row.share}</p>
+                                <p className="body-sm text-[#B8CFC4]">{row.label}</p>
                             </div>
                         ))}
                     </div>

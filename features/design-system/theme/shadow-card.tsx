@@ -11,16 +11,16 @@ export function ShadowCard({ token }: { token: ShadowToken }) {
                     token.className,
                 )}
             >
-                <span className="text-[13px] font-medium text-ink-muted">Aa</span>
+                <span className="body-sm font-medium text-ink-muted">Aa</span>
             </div>
             <div className="space-y-1 text-start inline-full">
                 <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[15px] font-medium text-ink">{token.name}</span>
-                    <code className="text-[13px] text-brand">{token.className}</code>
+                    <span className="body font-medium text-ink">{token.name}</span>
+                    <code className="body-sm text-brand">{token.className}</code>
                 </div>
-                <code className="block text-[13px] text-ink-muted">{token.variable}</code>
-                <p className="pbs-1 text-[13px] leading-[1.45] text-ink-muted">{token.css}</p>
-                <p className="pbs-1 text-[13px] leading-[1.45] text-ink-subtle">{token.usage}</p>
+                <code className="body-sm block text-ink-muted">{token.variable}</code>
+                <p className="body-sm pbs-1 text-ink-muted">{token.css}</p>
+                <p className="body-sm pbs-1 text-ink-subtle">{token.usage}</p>
             </div>
         </div>
     );

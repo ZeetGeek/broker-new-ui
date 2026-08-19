@@ -1,0 +1,41 @@
+---
+paths:
+    - "app/**/*.{ts,tsx,css,scss}"
+    - "components/**/*.{ts,tsx}"
+    - "features/**/*.{ts,tsx}"
+    - "lib/format/**/*.ts"
+---
+
+# Reuse
+
+Read `docs/REUSE.md` before writing styles or a new component. It is the
+authority on tokens, typography, and what gets made common.
+
+Pick the **lowest** layer that solves the problem:
+
+```
+A value used everywhere        → @theme token in app/globals.css
+A type step used everywhere    → class in app/common.scss
+Any other style combo          → @utility in app/globals.css
+Markup + behaviour             → React component
+A rule used everywhere         → lib/ function or hook
+```
+
+Five rules restated because they are the ones that create duplication:
+
+1. **Type steps live in `app/common.scss`. Nothing else does.** Do not add
+   more SCSS files or CSS Modules. Tailwind v4 in `app/globals.css` is the
+   rest of the styling system.
+2. **No `@apply` piling utilities into a class.** That recreates the
+   unmaintainable CSS Tailwind exists to avoid. If it needs markup, make a
+   component.
+3. **Never format a price, phone, or date inline.** Use `<Price>`,
+   `<PhoneNumber>`, `<DateDisplay>`. Contact masking in particular is a product
+   rule — hand-written masking is a data leak waiting to happen.
+4. **No raw hex or arbitrary values.** `bg-[#2563eb]` is a token that escaped.
+   Name colours by meaning: `--color-danger`, never `--color-red`.
+5. **Rule of three.** First use is a component. Second is a coincidence. Third
+   is a pattern — abstract then, not before.
+
+Everything else — the token set, the type scale, domain components, CVA
+variants, shared zod schemas, and when NOT to abstract — is in `docs/REUSE.md`.

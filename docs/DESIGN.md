@@ -160,22 +160,35 @@ each other in a list.
 
 Two values per step: mobile first, then the desktop value after the `md:` breakpoint.
 
-| Step             | Mobile | Desktop | Weight | Tracking | Leading |
-| ---------------- | ------ | ------- | ------ | -------- | ------- |
-| Display 1        | 44px   | 72px    | 700    | -0.03em  | 1.0     |
-| Display 2        | 38px   | 60px    | 700    | -0.03em  | 1.0     |
-| Display 3        | 32px   | 48px    | 700    | -0.02em  | 1.02    |
-| h1               | 28px   | 40px    | 700    | -0.02em  | 1.08    |
-| h2               | 24px   | 34px    | 600    | -0.02em  | 1.15    |
-| h3               | 22px   | 28px    | 600    | -0.01em  | 1.2     |
-| h4               | 20px   | 24px    | 600    | -0.01em  | 1.25    |
-| h5               | 18px   | 22px    | 600    | 0        | 1.3     |
-| h6               | 16px   | 20px    | 600    | 0        | 1.35    |
-| Body large       | 16px   | 18px    | 400    | 0        | 1.55    |
-| Body             | 14px   | 16px    | 400    | 0        | 1.55    |
-| Body small       | 12px   | 14px    | 400    | 0        | 1.45    |
-| Body extra small | 12px   | 12px    | 400    | 0        | 1.4     |
-| Eyebrow          | 12px   | 12px    | 500    | 0.08em   | 1.2     |
+Each step is **one class** in `app/common.scss`. Apply that class plus a colour
+utility (`text-ink`, `text-white`, `text-ink-muted`). Do not restack
+`text-[28px] md:text-[40px] font-bold tracking-tight leading-[1.08]` — that is
+what the class is for. Colour stays out of the class so the same step works on
+cream and on `brand-deep`. `.eyebrow` is the exception: uppercase + `ink-subtle`
+are part of the pattern.
+
+```tsx
+<h1 className="h1 text-ink">12 requests. 3 waiting on you.</h1>
+<p className="body text-ink-muted">Owners in your area are listing now.</p>
+<p className="eyebrow">Next showing</p>
+```
+
+| Step             | Class        | Mobile | Desktop | Weight | Tracking | Leading |
+| ---------------- | ------------ | ------ | ------- | ------ | -------- | ------- |
+| Display 1        | `.display-1` | 44px   | 72px    | 700    | -0.03em  | 1.0     |
+| Display 2        | `.display-2` | 38px   | 60px    | 700    | -0.03em  | 1.0     |
+| Display 3        | `.display-3` | 32px   | 48px    | 700    | -0.02em  | 1.02    |
+| h1               | `.h1`        | 28px   | 40px    | 700    | -0.02em  | 1.08    |
+| h2               | `.h2`        | 24px   | 34px    | 600    | -0.02em  | 1.15    |
+| h3               | `.h3`        | 22px   | 28px    | 600    | -0.01em  | 1.2     |
+| h4               | `.h4`        | 20px   | 24px    | 600    | -0.01em  | 1.25    |
+| h5               | `.h5`        | 18px   | 22px    | 600    | 0        | 1.3     |
+| h6               | `.h6`        | 16px   | 20px    | 600    | 0        | 1.35    |
+| Body large       | `.body-lg`   | 16px   | 18px    | 400    | 0        | 1.55    |
+| Body             | `.body`      | 14px   | 16px    | 400    | 0        | 1.55    |
+| Body small       | `.body-sm`   | 12px   | 14px    | 400    | 0        | 1.45    |
+| Body extra small | `.body-xs`   | 12px   | 12px    | 400    | 0        | 1.4     |
+| Eyebrow          | `.eyebrow`   | 12px   | 12px    | 500    | 0.08em   | 1.2     |
 
 Tight tracking on display sizes is not optional — it is what makes Bricolage Grotesque
 look intentional rather than default. Loose tracking at 52px reads as a fallback font.
@@ -196,7 +209,7 @@ Every top-level screen opens with one headline split across two colours at the s
 size and weight. The first clause states the fact; the second states what it means.
 
 ```tsx
-<h1 className="font-display text-[28px] md:text-[40px] font-bold tracking-tight leading-[1.08]">
+<h1 className="h1">
     <span className="text-ink">34 properties.</span> <span className="text-ink-muted">₹24.8 Cr on the market.</span>
 </h1>
 ```

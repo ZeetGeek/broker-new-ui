@@ -20,9 +20,7 @@ function Swatch({ label, children }: { label: string; children: React.ReactNode 
               flex flex-col items-start gap-3 rounded-card border border-border-warm bg-surface p-5
             "
         >
-            <p className="text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase">
-                {label}
-            </p>
+            <p className="eyebrow">{label}</p>
             {children}
         </div>
     );
@@ -63,10 +61,8 @@ export function ButtonThemePage() {
         >
             <div className="space-y-10">
                 <section>
-                    <h2 className="font-display text-[20px] font-semibold tracking-tight text-ink">
-                        Variants
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
+                    <h2 className="h4 text-ink">Variants</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Primary once per screen. Everything else is secondary, tertiary, or
                         destructive — never decorative.
                     </p>
@@ -74,19 +70,15 @@ export function ButtonThemePage() {
                         {BUTTON_VARIANTS.map((v) => (
                             <Swatch key={v.name} label={v.label}>
                                 <Button variant={v.name}>{v.label}</Button>
-                                <p className="text-[12px] leading-[1.4] text-ink-subtle">
-                                    {v.note}
-                                </p>
+                                <p className="body-xs text-ink-subtle">{v.note}</p>
                             </Swatch>
                         ))}
                     </div>
                 </section>
 
                 <section>
-                    <h2 className="font-display text-[20px] font-semibold tracking-tight text-ink">
-                        Sizes
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
+                    <h2 className="h4 text-ink">Sizes</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Default and lg meet the 44px/48px minimum tap target. xs/sm are dense
                         contexts only — tables, toolbars — never a primary mobile action.
                     </p>
@@ -99,16 +91,14 @@ export function ButtonThemePage() {
                         {BUTTON_SIZES.map((s) => (
                             <div key={s.name} className="flex flex-col items-center gap-2">
                                 <Button size={s.name}>{s.label}</Button>
-                                <span className="text-[11px] text-ink-subtle">{s.name}</span>
+                                <span className="body-xs text-ink-subtle">{s.name}</span>
                             </div>
                         ))}
                     </div>
                 </section>
 
                 <section>
-                    <h2 className="font-display text-[20px] font-semibold tracking-tight text-ink">
-                        Icon-only
-                    </h2>
+                    <h2 className="h4 text-ink">Icon-only</h2>
                     <div
                         className="
                           mbs-4 flex flex-wrap items-end gap-4 rounded-card border
@@ -128,17 +118,15 @@ export function ButtonThemePage() {
                                         <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                                     </svg>
                                 </Button>
-                                <span className="text-[11px] text-ink-subtle">{s.name}</span>
+                                <span className="body-xs text-ink-subtle">{s.name}</span>
                             </div>
                         ))}
                     </div>
                 </section>
 
                 <section>
-                    <h2 className="font-display text-[20px] font-semibold tracking-tight text-ink">
-                        States
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
+                    <h2 className="h4 text-ink">States</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Rest, disabled, and loading, across the two variants that carry real weight
                         in the product.
                     </p>
@@ -148,32 +136,23 @@ export function ButtonThemePage() {
                                 key={variant}
                                 className="rounded-card border border-border-warm bg-surface p-5"
                             >
-                                <p
-                                    className="
-                                      text-[11px] font-medium tracking-[0.08em] text-ink-subtle
-                                      uppercase
-                                    "
-                                >
-                                    {variant}
-                                </p>
+                                <p className="eyebrow">{variant}</p>
                                 <div className="mbs-3 flex flex-wrap items-center gap-3">
                                     <div className="flex flex-col items-center gap-2">
                                         <Button variant={variant}>Rest</Button>
-                                        <span className="text-[11px] text-ink-subtle">rest</span>
+                                        <span className="body-xs text-ink-subtle">rest</span>
                                     </div>
                                     <div className="flex flex-col items-center gap-2">
                                         <Button variant={variant} disabled>
                                             Disabled
                                         </Button>
-                                        <span className="text-[11px] text-ink-subtle">
-                                            disabled
-                                        </span>
+                                        <span className="body-xs text-ink-subtle">disabled</span>
                                     </div>
                                     <div className="flex flex-col items-center gap-2">
                                         <Button variant={variant} loading>
                                             Loading
                                         </Button>
-                                        <span className="text-[11px] text-ink-subtle">loading</span>
+                                        <span className="body-xs text-ink-subtle">loading</span>
                                     </div>
                                 </div>
                             </div>
@@ -182,14 +161,12 @@ export function ButtonThemePage() {
                 </section>
 
                 <section>
-                    <h2 className="font-display text-[20px] font-semibold tracking-tight text-ink">
-                        Loading — live demo
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
-                        <code className="text-[12px]">loading</code> disables the button, sets{" "}
-                        <code className="text-[12px]">aria-busy</code>, and swaps in a spinner ahead
-                        of the label. Label stays on screen — never replaced by the spinner alone,
-                        so the action keeps its name through the flow per docs/DESIGN.md §7.
+                    <h2 className="h4 text-ink">Loading — live demo</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
+                        <code className="body-xs">loading</code> disables the button, sets{" "}
+                        <code className="body-xs">aria-busy</code>, and swaps in a spinner ahead of
+                        the label. Label stays on screen — never replaced by the spinner alone, so
+                        the action keeps its name through the flow per docs/DESIGN.md §7.
                     </p>
                     <div className="mbs-4 rounded-card border border-border-warm bg-surface p-5">
                         <Button onClick={handleDemoClick} loading={demoLoading}>
@@ -199,18 +176,8 @@ export function ButtonThemePage() {
                 </section>
 
                 <section className="rounded-card bg-brand-deep p-5 md:p-6">
-                    <p
-                        className="
-                          text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
-                        "
-                    >
-                        Rules
-                    </p>
-                    <ul
-                        className="
-                          mbs-3 list-disc space-y-2 ps-5 text-[13px] leading-[1.45] text-[#B8CFC4]
-                        "
-                    >
+                    <p className="eyebrow text-highlight">Rules</p>
+                    <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-[#B8CFC4]">
                         <li>One primary (`default`) button per screen. Never two.</li>
                         <li>
                             Label is sentence case, verb first, one to three words, no terminal

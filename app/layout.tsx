@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
+import "./common.scss";
 
 export default function RootLayout({
     children,

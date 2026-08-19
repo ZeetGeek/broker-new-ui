@@ -138,7 +138,7 @@ const BODY_SAMPLE =
 
 export const BODY_SCALE: TypeScaleStep[] = [
     {
-        token: "text-lg",
+        token: "body-lg",
         name: "Body large",
         mobilePx: 16,
         desktopPx: 18,
@@ -150,7 +150,7 @@ export const BODY_SCALE: TypeScaleStep[] = [
         element: "p",
     },
     {
-        token: "text-base",
+        token: "body",
         name: "Body",
         mobilePx: 14,
         desktopPx: 16,
@@ -162,7 +162,7 @@ export const BODY_SCALE: TypeScaleStep[] = [
         element: "p",
     },
     {
-        token: "text-sm",
+        token: "body-sm",
         name: "Body small",
         mobilePx: 12,
         desktopPx: 14,
@@ -174,7 +174,7 @@ export const BODY_SCALE: TypeScaleStep[] = [
         element: "p",
     },
     {
-        token: "text-xs",
+        token: "body-xs",
         name: "Body extra small",
         mobilePx: 12,
         desktopPx: 12,
@@ -183,6 +183,21 @@ export const BODY_SCALE: TypeScaleStep[] = [
         leading: "1.4",
         face: "sans",
         sample: BODY_SAMPLE,
+        element: "p",
+    },
+];
+
+export const SPECIAL_SCALE: TypeScaleStep[] = [
+    {
+        token: "eyebrow",
+        name: "Eyebrow",
+        mobilePx: 12,
+        desktopPx: 12,
+        weight: 500,
+        tracking: "0.08em",
+        leading: "1.2",
+        face: "sans",
+        sample: "NEXT SHOWING",
         element: "p",
     },
 ];

@@ -22,6 +22,7 @@ broker-new-ui/
 │   ├── property/[id]/            # public share page — indexable
 │   ├── layout.tsx
 │   ├── globals.css               # Tailwind v4 config lives here
+│   ├── common.scss               # type classes: display-*, h1–h6, body-*
 │   ├── robots.ts
 │   └── sitemap.ts
 │

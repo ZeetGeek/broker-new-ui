@@ -1,0 +1,83 @@
+// Type scale — apply one class. Do not copy font-size / weight / tracking /
+// leading utilities. Colour is not included (except .eyebrow).
+// Values: docs/DESIGN.md §2.2. Breakpoint matches Tailwind `md` (48rem).
+
+$md: 48rem;
+
+@mixin type-step($font, $mobile, $desktop, $weight, $tracking, $leading) {
+    font-family: $font;
+    font-size: $mobile;
+    font-weight: $weight;
+    letter-spacing: $tracking;
+    line-height: $leading;
+
+    @if $mobile != $desktop {
+        @media (min-width: $md) {
+            font-size: $desktop;
+        }
+    }
+}
+
+@layer components {
+    // Display — Bricolage Grotesque. Bigger than h1.
+    .display-1 {
+        @include type-step(var(--font-heading), 44px, 72px, 700, -0.03em, 1);
+    }
+
+    .display-2 {
+        @include type-step(var(--font-heading), 38px, 60px, 700, -0.03em, 1);
+    }
+
+    .display-3 {
+        @include type-step(var(--font-heading), 32px, 48px, 700, -0.02em, 1.02);
+    }
+
+    // Headings — Bricolage Grotesque. Visual size is independent of the tag.
+    .h1 {
+        @include type-step(var(--font-heading), 28px, 40px, 700, -0.02em, 1.08);
+    }
+
+    .h2 {
+        @include type-step(var(--font-heading), 24px, 34px, 600, -0.02em, 1.15);
+    }
+
+    .h3 {
+        @include type-step(var(--font-heading), 22px, 28px, 600, -0.01em, 1.2);
+    }
+
+    .h4 {
+        @include type-step(var(--font-heading), 20px, 24px, 600, -0.01em, 1.25);
+    }
+
+    .h5 {
+        @include type-step(var(--font-heading), 18px, 22px, 600, 0, 1.3);
+    }
+
+    .h6 {
+        @include type-step(var(--font-heading), 16px, 20px, 600, 0, 1.35);
+    }
+
+    // Body — DM Sans. Named body-* so they do not collide with Tailwind text-*.
+    .body-lg {
+        @include type-step(var(--font-sans), 16px, 18px, 400, 0, 1.55);
+    }
+
+    .body {
+        @include type-step(var(--font-sans), 14px, 16px, 400, 0, 1.55);
+    }
+
+    .body-sm {
+        @include type-step(var(--font-sans), 12px, 14px, 400, 0, 1.45);
+    }
+
+    .body-xs {
+        @include type-step(var(--font-sans), 12px, 12px, 400, 0, 1.4);
+    }
+
+    // Eyebrow — the only uppercase in the system. Colour is part of the pattern.
+    .eyebrow {
+        @include type-step(var(--font-sans), 12px, 12px, 500, 0.08em, 1.2);
+        color: var(--color-ink-subtle);
+        text-transform: uppercase;
+    }
+}

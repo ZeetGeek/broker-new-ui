@@ -30,6 +30,11 @@ one is how the reference page lies about what the app actually renders.
 4. docs/DESIGN.md          the human-readable rule: what it means, when to use it
 ```
 
+**Type steps are the exception.** Size, weight, tracking, and leading live as
+named classes in `app/common.scss` (`.display-1`, `.h1`, `.body`, …), not as
+`@theme` variables. Adding a type step still updates `type-scale.ts` and
+`docs/DESIGN.md` §2.2 — see below.
+
 **Step 2 needs no file edit** — Tailwind v4 generates the utility class
 automatically from the `@theme` variable name. It is listed because it is the
 step that silently fails if step 1 is named wrong, which is exactly what
@@ -59,18 +64,25 @@ var(--color-{name});`). Tailwind v4 only generates utilities for variables
 
 ## Adding a type step
 
-1. `app/globals.css` — type steps are Tailwind arbitrary values and inline
-   styles in this codebase (see `type-scale-row.tsx`), not CSS variables. No
-   globals.css edit for a new _step_. A new **face** (a third font beyond
+1. `app/common.scss` — add the class (`.display-*`, `.h1`–`.h6`, `.body-*`,
+   `.eyebrow`). Face, size, weight, tracking, and leading live here. Colour
+   does not, except on `.eyebrow`. `app/layout.tsx` already imports this file;
+   no extra import for a new _step_. A new **face** (a third font beyond
    Bricolage Grotesque / DM Sans) does need a globals.css change — see below.
 2. `features/design-system/theme/type-scale.ts` — add a `TypeScaleStep` to
-   `HEADING_SCALE`, `BODY_SCALE`, or `SPECIAL_SCALE`. Every field is required:
+   `DISPLAY_SCALE`, `HEADING_SCALE`, `BODY_SCALE`, or `SPECIAL_SCALE`. `token`
+   must match the class name (`h1`, `body-lg`). Every field is required:
    `mobilePx`/`desktopPx` (mobile-first, always both), `tracking` (negative on
    display sizes, per DESIGN.md §2.2), `face` (`"display"` or `"sans"` — there
    are only two).
 3. `docs/DESIGN.md` §2.2 — add the row to the scale table with the same
-   numbers. They must match exactly; this table is what a developer reads
-   before touching a font-size anywhere in the app.
+   numbers and the class name. They must match `common.scss` exactly; this
+   table is what a developer reads before touching a font-size anywhere in
+   the app.
+
+Do not recreate a type step with Tailwind arbitrary values
+(`text-[28px] md:text-[40px] …`). If the class does not exist yet, add it
+here first.
 
 ### Adding a new font (rare, high-friction on purpose)
 
@@ -148,9 +160,9 @@ route itself) is the only real proof.
 
 ## Anti-patterns
 
-- ❌ Adding a Tailwind utility usage (`font-display`, `bg-warm-gray`, whatever)
-  without first confirming the backing `--variable` exists in `@theme` /
-  `@theme inline`. This is exactly how the `font-display` bug happened.
+- ❌ Recreating a type step with Tailwind arbitrary values (`text-[28px]
+md:text-[40px] font-bold tracking-[-0.02em] leading-[1.08]`) instead of the
+  class in `app/common.scss`. If the class is missing, add it there first.
 - ❌ Editing `features/design-system/theme/*.ts` with a value that doesn't
   match `globals.css` — the reference page becomes a second, competing
   source of truth instead of a mirror of one.

@@ -17,13 +17,7 @@ export function ShadowThemePage() {
                 </section>
 
                 <section className="rounded-card bg-brand-deep p-5 md:p-6">
-                    <p
-                        className="
-                          text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
-                        "
-                    >
-                        When to use which
-                    </p>
+                    <p className="eyebrow text-highlight">When to use which</p>
                     <div className="mbs-4 space-y-3">
                         {[
                             {
@@ -43,34 +37,18 @@ export function ShadowThemePage() {
                                 key={row.step}
                                 className="flex flex-col gap-1 sm:flex-row sm:gap-4"
                             >
-                                <span
-                                    className="
-                                      shrink-0 text-[13px] font-medium text-white inline-24
-                                    "
-                                >
+                                <span className="body-sm shrink-0 font-medium text-white inline-24">
                                     {row.step}
                                 </span>
-                                <span className="text-[13px] leading-[1.45] text-[#B8CFC4]">
-                                    {row.rule}
-                                </span>
+                                <span className="body-sm text-[#B8CFC4]">{row.rule}</span>
                             </div>
                         ))}
                     </div>
                 </section>
 
                 <section className="rounded-card border border-border-warm bg-surface p-5 md:p-6">
-                    <p
-                        className="
-                          text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase
-                        "
-                    >
-                        Rules
-                    </p>
-                    <ul
-                        className="
-                          mbs-3 list-disc space-y-2 ps-5 text-[13px] leading-[1.45] text-ink-muted
-                        "
-                    >
+                    <p className="eyebrow">Rules</p>
+                    <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-ink-muted">
                         <li>
                             Ink-tinted, never pure black — matches the rest of the neutral system.
                         </li>

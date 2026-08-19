@@ -12,9 +12,7 @@ import { INPUT_SIZES } from "@/features/design-system/theme/input-tokens";
 function Swatch({ label, children }: { label: string; children: React.ReactNode }) {
     return (
         <div className="flex flex-col items-start gap-3 rounded-card bg-surface-muted p-5">
-            <p className="text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase">
-                {label}
-            </p>
+            <p className="eyebrow">{label}</p>
             {children}
         </div>
     );
@@ -95,36 +93,30 @@ export function InputThemePage() {
         >
             <div className="space-y-10">
                 <section>
-                    <h2 className="font-display text-[20px] font-semibold tracking-tight text-ink">
-                        Sizes
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
+                    <h2 className="h4 text-ink">Sizes</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Default meets the 44px desktop minimum. Use{" "}
-                        <code className="text-[12px]">size=&quot;lg&quot;</code> for the primary
-                        mobile form — it clears the 48px tap-target floor.
+                        <code className="body-xs">size=&quot;lg&quot;</code> for the primary mobile
+                        form — it clears the 48px tap-target floor.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         {INPUT_SIZES.map((s) => (
                             <Swatch key={s.name} label={s.label}>
                                 <Input size={s.name} placeholder="Property title" />
-                                <p className="text-[12px] leading-[1.4] text-ink-subtle">
-                                    {s.note}
-                                </p>
+                                <p className="body-xs text-ink-subtle">{s.note}</p>
                             </Swatch>
                         ))}
                     </div>
                 </section>
 
                 <section>
-                    <h2 className="font-display text-[20px] font-semibold tracking-tight text-ink">
-                        Icon slots
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
-                        <code className="text-[12px]">startIcon</code> and{" "}
-                        <code className="text-[12px]">endIcon</code> accept any Hugeicons free icon.
+                    <h2 className="h4 text-ink">Icon slots</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
+                        <code className="body-xs">startIcon</code> and{" "}
+                        <code className="body-xs">endIcon</code> accept any Hugeicons free icon.
                         Only one end affordance shows at a time — loading, success, clear, and the
                         password toggle all claim that slot automatically and take priority over a
-                        plain <code className="text-[12px]">endIcon</code>.
+                        plain <code className="body-xs">endIcon</code>.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Swatch label="Start icon">
@@ -141,13 +133,11 @@ export function InputThemePage() {
                 </section>
 
                 <section>
-                    <h2 className="font-display text-[20px] font-semibold tracking-tight text-ink">
-                        States — live demo
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
+                    <h2 className="h4 text-ink">States — live demo</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Type in each field. Error and success read{" "}
-                        <code className="text-[12px]">aria-invalid</code> /{" "}
-                        <code className="text-[12px]">data-success</code> off real validation, not a
+                        <code className="body-xs">aria-invalid</code> /{" "}
+                        <code className="body-xs">data-success</code> off real validation, not a
                         hardcoded prop — the same wiring a form would use.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -167,9 +157,7 @@ export function InputThemePage() {
                 </section>
 
                 <section>
-                    <h2 className="font-display text-[20px] font-semibold tracking-tight text-ink">
-                        Static states
-                    </h2>
+                    <h2 className="h4 text-ink">Static states</h2>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <Swatch label="Disabled">
                             <Input
@@ -192,37 +180,27 @@ export function InputThemePage() {
                 </section>
 
                 <section className="rounded-card bg-brand-deep p-5 md:p-6">
-                    <p
-                        className="
-                          text-[11px] font-medium tracking-[0.08em] text-highlight uppercase
-                        "
-                    >
-                        Rules
-                    </p>
-                    <ul
-                        className="
-                          mbs-3 list-disc space-y-2 ps-5 text-[13px] leading-[1.45] text-[#B8CFC4]
-                        "
-                    >
+                    <p className="eyebrow text-highlight">Rules</p>
+                    <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-[#B8CFC4]">
                         <li>
-                            Pass <code className="text-[12px]">errorText</code> rather than setting{" "}
-                            <code className="text-[12px]">aria-invalid</code> by hand — it drives
-                            the border, the ring, the inline alert icon, and the message region
+                            Pass <code className="body-xs">errorText</code> rather than setting{" "}
+                            <code className="body-xs">aria-invalid</code> by hand — it drives the
+                            border, the ring, the inline alert icon, and the message region
                             together.
                         </li>
                         <li>
-                            <code className="text-[12px]">success</code> is suppressed whenever the
+                            <code className="body-xs">success</code> is suppressed whenever the
                             field is also invalid — never show both signals on one field.
                         </li>
                         <li>
-                            <code className="text-[12px]">loading</code> disables the field and
-                            swaps the end slot for the same Tailspin spinner as the button, so the
-                            two never disagree.
+                            <code className="body-xs">loading</code> disables the field and swaps
+                            the end slot for the same Tailspin spinner as the button, so the two
+                            never disagree.
                         </li>
                         <li>
                             Helper and error text share one region and cross-fade via{" "}
-                            <code className="text-[12px]">AnimatePresence</code> — never stack both
-                            at once.
+                            <code className="body-xs">AnimatePresence</code> — never stack both at
+                            once.
                         </li>
                         <li>
                             14px radius via `rounded-inner`, matching inset image containers per

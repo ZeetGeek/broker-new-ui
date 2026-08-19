@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 import type { TypeScaleStep } from "@/features/design-system/theme/type-scale";
 
 export function TypeScaleRow({ step }: { step: TypeScaleStep }) {
-    const isEyebrow = step.token === "eyebrow";
     const Tag = step.element;
+    const isEyebrow = step.token === "eyebrow";
 
     return (
         <div
@@ -15,31 +15,16 @@ export function TypeScaleRow({ step }: { step: TypeScaleStep }) {
             "
         >
             <div>
-                <p className="text-[13px] font-medium text-ink">{step.name}</p>
-                <code className="text-[13px] text-brand">{step.token}</code>
-                <p className="tabular text-[13px] text-ink-subtle">
+                <p className="body-sm font-medium text-ink">{step.name}</p>
+                <code className="body-sm text-brand">{step.token}</code>
+                <p className="body-sm tabular text-ink-subtle">
                     {step.mobilePx}px / {step.desktopPx}px
                 </p>
-                <p className="text-[13px] text-ink-subtle">
+                <p className="body-sm text-ink-subtle">
                     weight {step.weight} · tracking {step.tracking}
                 </p>
             </div>
-            <Tag
-                className={cn(
-                    step.face === "display" ? "font-display" : "font-sans",
-                    isEyebrow && "text-ink-subtle uppercase",
-                )}
-                style={{
-                    fontSize: `clamp(${step.mobilePx}px, ${step.mobilePx}px + 1vw, ${step.desktopPx}px)`,
-                    fontWeight: step.weight,
-                    letterSpacing: step.tracking,
-                    lineHeight: step.leading,
-                    color: isEyebrow ? undefined : "var(--color-ink)",
-                    margin: 0,
-                }}
-            >
-                {step.sample}
-            </Tag>
+            <Tag className={cn("m-0", step.token, !isEyebrow && "text-ink")}>{step.sample}</Tag>
         </div>
     );
 }

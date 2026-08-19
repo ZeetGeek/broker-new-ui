@@ -11,11 +11,11 @@ export function ColorSwatch({ token }: { token: ColorToken }) {
             />
             <div className="space-y-1 p-4">
                 <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[15px] font-medium text-ink">{token.name}</span>
-                    <span className="tabular text-[13px] text-ink-subtle">{token.hex}</span>
+                    <span className="body font-medium text-ink">{token.name}</span>
+                    <span className="body-sm tabular text-ink-subtle">{token.hex}</span>
                 </div>
-                <code className="block text-[13px] text-ink-muted">{token.variable}</code>
-                <p className="pbs-1 text-[13px] leading-[1.45] text-ink-muted">{token.usage}</p>
+                <code className="body-sm block text-ink-muted">{token.variable}</code>
+                <p className="body-sm pbs-1 text-ink-muted">{token.usage}</p>
             </div>
         </div>
     );
