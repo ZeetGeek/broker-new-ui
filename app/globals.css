@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./transitions-dev.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -58,9 +59,14 @@
     --color-highlight-ink: #1e3a05;
 
     --color-urgent: #c2410c;
+    --color-urgent-mid: #e8895a;
     --color-urgent-soft: #fbebe0;
     --color-danger: #b42318;
+    --color-danger-mid: #e2725f;
     --color-danger-soft: #fdecea;
+    --color-success: #1b7a5a;
+    --color-success-mid: #7bb89e;
+    --color-success-soft: #e3f2ea;
 
     --radius-card: 20px;
     --radius-inner: 14px;
@@ -164,9 +170,14 @@
     --color-highlight: var(--color-highlight);
     --color-highlight-ink: var(--color-highlight-ink);
     --color-urgent: var(--color-urgent);
+    --color-urgent-mid: var(--color-urgent-mid);
     --color-urgent-soft: var(--color-urgent-soft);
     --color-danger: var(--color-danger);
+    --color-danger-mid: var(--color-danger-mid);
     --color-danger-soft: var(--color-danger-soft);
+    --color-success: var(--color-success);
+    --color-success-mid: var(--color-success-mid);
+    --color-success-soft: var(--color-success-soft);
 
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);

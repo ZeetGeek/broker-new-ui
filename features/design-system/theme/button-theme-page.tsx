@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+
+import { swapText } from "@/lib/motion/swap-text";
 
 import { Button } from "@/components/ui/button";
 
@@ -28,11 +30,30 @@ function Swatch({ label, children }: { label: string; children: React.ReactNode 
 
 export function ButtonThemePage() {
     const [demoLoading, setDemoLoading] = useState(false);
+    const demoLabel = demoLoading ? "Saving" : "Save changes";
+    const demoLabelRef = useRef<HTMLSpanElement>(null);
+    const previousDemoLabel = useRef(demoLabel);
 
     function handleDemoClick() {
         setDemoLoading(true);
         window.setTimeout(() => setDemoLoading(false), 1800);
     }
+
+    useLayoutEffect(() => {
+        const element = demoLabelRef.current;
+        if (!element) {
+            return;
+        }
+        if (!element.textContent) {
+            element.textContent = demoLabel;
+            previousDemoLabel.current = demoLabel;
+            return;
+        }
+        if (previousDemoLabel.current !== demoLabel) {
+            swapText(element, demoLabel);
+            previousDemoLabel.current = demoLabel;
+        }
+    }, [demoLabel]);
 
     return (
         <DesignSystemShell
@@ -172,7 +193,7 @@ export function ButtonThemePage() {
                     </p>
                     <div className="mbs-4 rounded-card border border-border-warm bg-surface p-5">
                         <Button onClick={handleDemoClick} loading={demoLoading}>
-                            {demoLoading ? "Saving" : "Save changes"}
+                            <span ref={demoLabelRef} className="t-text-swap" />
                         </Button>
                     </div>
                 </section>

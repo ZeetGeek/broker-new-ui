@@ -160,6 +160,13 @@ export const COLOR_GROUPS: ColorGroup[] = [
                 onDark: true,
             },
             {
+                name: "Urgent mid",
+                variable: "--color-urgent-mid",
+                hex: "#E8895A",
+                className: "bg-urgent-mid",
+                usage: "Icon or accent between urgent and urgent-soft, still on a warm surface",
+            },
+            {
                 name: "Urgent soft",
                 variable: "--color-urgent-soft",
                 hex: "#FBEBE0",
@@ -181,11 +188,47 @@ export const COLOR_GROUPS: ColorGroup[] = [
                 onDark: true,
             },
             {
+                name: "Danger mid",
+                variable: "--color-danger-mid",
+                hex: "#E2725F",
+                className: "bg-danger-mid",
+                usage: "Icon or accent between danger and danger-soft, still on a warm surface",
+            },
+            {
                 name: "Danger soft",
                 variable: "--color-danger-soft",
                 hex: "#FDECEA",
                 className: "bg-danger-soft",
                 usage: "Badge background paired with danger text",
+            },
+        ],
+    },
+    {
+        title: "Signal — success",
+        description:
+            "Confirms something completed. Approved request, closed deal, verified step — nothing else.",
+        tokens: [
+            {
+                name: "Success",
+                variable: "--color-success",
+                hex: "#1B7A5A",
+                className: "bg-success",
+                usage: "Approved representation, closed deal, completed step",
+                onDark: true,
+            },
+            {
+                name: "Success mid",
+                variable: "--color-success-mid",
+                hex: "#7BB89E",
+                className: "bg-success-mid",
+                usage: "Icon or accent between success and success-soft, still on a warm surface",
+            },
+            {
+                name: "Success soft",
+                variable: "--color-success-soft",
+                hex: "#E3F2EA",
+                className: "bg-success-soft",
+                usage: "Badge background paired with success text",
             },
         ],
     },

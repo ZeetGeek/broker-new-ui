@@ -32,7 +32,7 @@ because of restraint, not because of decoration. Three consequences drive every 
 
 ### 1.1 The rule
 
-One hue family (green) at three depths, one warm neutral family, and two reserved
+One hue family (green) at three depths, one warm neutral family, and three reserved
 signal colours. Nothing else. No blue, no purple, no second brand colour, ever.
 
 Rough on-screen proportion, excluding photos:
@@ -81,9 +81,14 @@ highlight-ink   #1E3A05   text sitting on highlight
 
 ```
 urgent          #C2410C   time pressure only
+urgent-mid      #E8895A   icon/accent between urgent and urgent-soft
 urgent-soft     #FBEBE0
 danger          #B42318   destructive and reject actions only
+danger-mid      #E2725F   icon/accent between danger and danger-soft
 danger-soft     #FDECEA
+success         #1B7A5A   confirms completion only — same value as `brand`
+success-mid     #7BB89E   icon/accent between success and success-soft
+success-soft    #E3F2EA   same value as `brand-soft`
 ```
 
 ### 1.3 Reserved meanings — do not dilute
@@ -99,6 +104,12 @@ deadline is close" and "you are about to reject this broker" are not the same me
 
 `highlight` marks **the one thing that matters most in a single card**. The current bar
 in a chart, an open count, the currently active stage. Never two per card.
+
+`success` means **this specific action just completed**. Representation approved, deal
+closed, verification step done. It shares its hex value with `brand` on purpose — this
+is not a fourth hue, it is a semantic alias so approval/completion moments stay
+distinguishable in code and copy from routine brand usage (prices, active nav) without
+adding a colour to the palette.
 
 ### 1.4 Contrast
 
@@ -456,11 +467,13 @@ the same `Tailspin` spinner as `components/ui/button.tsx` (`size="16"
 stroke="2" speed="0.9" color="currentColor"`) — one spinner, one place,
 never a second loader component.
 
-**Helper and error text** live in one region below the field and cross-fade
-via `AnimatePresence` (`--duration-fast`, `ease-in-out`) per docs/MOTION.md
-§3.3 — never stacked, never popped in/out with no exit animation. Error
-text also gets `role="alert"` so it's announced without the user having to
-find it.
+**Helper and error text** live in one region below the field and swap in
+place via `t-text-swap` (blurred rise, `--text-swap-dur`). The field
+itself shakes once on the rising edge of `aria-invalid` (`t-input`
+`.is-shaking`). Empty messages unmount with no height tween. Error text
+also gets `role="alert"` so it's announced without the user having to
+find it. While `loading`, helper copy uses `t-shimmer` so the in-progress
+label stays alive without a second spinner.
 
 **Password fields** get a reveal toggle in the end slot automatically —
 `type="password"` is enough, no extra prop. **Clearable** fields

@@ -1,9 +1,24 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { cn } from "@/lib/utils";
+function movePill(pill: HTMLElement, tab: HTMLElement, animate: boolean) {
+    const nextTransform = `translateX(${tab.offsetLeft}px)`;
+    const nextWidth = `${tab.offsetWidth}px`;
+    if (!animate) {
+        const previous = pill.style.transition;
+        pill.style.transition = "none";
+        pill.style.transform = nextTransform;
+        pill.style.width = nextWidth;
+        void pill.offsetWidth;
+        pill.style.transition = previous;
+        return;
+    }
+    pill.style.transform = nextTransform;
+    pill.style.width = nextWidth;
+}
 
 const THEME_LINKS = [
     { href: "/design-system/colors", label: "Colors" },
@@ -16,26 +31,62 @@ const THEME_LINKS = [
 
 export function DesignSystemNav() {
     const pathname = usePathname();
+    const barRef = useRef<HTMLDivElement>(null);
+    const pillRef = useRef<HTMLSpanElement>(null);
+    const hasPainted = useRef(false);
+
+    useLayoutEffect(() => {
+        const bar = barRef.current;
+        const pill = pillRef.current;
+        if (!bar || !pill) {
+            return;
+        }
+        const active =
+            bar.querySelector<HTMLElement>('[aria-current="page"]') ??
+            bar.querySelector<HTMLElement>(".t-tab");
+        if (!active) {
+            return;
+        }
+        movePill(pill, active, hasPainted.current);
+        hasPainted.current = true;
+    }, [pathname]);
+
+    useLayoutEffect(() => {
+        function onResize() {
+            const bar = barRef.current;
+            const pill = pillRef.current;
+            if (!bar || !pill) {
+                return;
+            }
+            const active =
+                bar.querySelector<HTMLElement>('[aria-current="page"]') ??
+                bar.querySelector<HTMLElement>(".t-tab");
+            if (active) {
+                movePill(pill, active, false);
+            }
+        }
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
 
     return (
-        <nav className="flex flex-wrap gap-2">
-            {THEME_LINKS.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                    <Link
-                        key={link.href}
-                        href={link.href}
-                        className={cn(
-                            "rounded-control border px-5 py-2 text-sm font-medium transition-colors",
-                            isActive
-                                ? "border-brand-ink bg-brand-ink text-white"
-                                : "border-border-warm bg-surface text-ink-muted hover:text-ink",
-                        )}
-                    >
-                        {link.label}
-                    </Link>
-                );
-            })}
+        <nav className="overflow-x-auto max-inline-full">
+            <div ref={barRef} className="t-tabs">
+                <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" />
+                {THEME_LINKS.map((link) => {
+                    const isActive = pathname === link.href;
+                    return (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            className="t-tab text-sm font-medium no-underline"
+                            aria-current={isActive ? "page" : undefined}
+                        >
+                            {link.label}
+                        </Link>
+                    );
+                })}
+            </div>
         </nav>
     );
 }
