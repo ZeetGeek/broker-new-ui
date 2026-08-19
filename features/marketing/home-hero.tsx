@@ -22,7 +22,7 @@ const TRUST_ITEMS = [
 
 export function HomeHero() {
     return (
-        <section className="relative overflow-hidden rounded-card block-full">
+        <section className="relative overflow-hidden rounded-lg block-full">
             <div className="absolute inset-0 bg-brand-ink" aria-hidden="true">
                 <HeroBg />
 
@@ -68,74 +68,92 @@ export function HomeHero() {
 
             <div
                 className="
-                  relative z-10 mx-auto flex flex-col items-center justify-center gap-6 px-4
-                  text-center block-full max-inline-[800px]
+                  relative z-10 mx-auto flex items-center justify-center px-4 block-full
+                  max-inline-[800px]
                 "
             >
-                <Badge
-                    variant="brand"
-                    className="
-                      body-sm border border-canvas/25 bg-canvas/10 px-3.5 py-1.5 text-canvas
-                      backdrop-blur-lg
-                      [&_svg:not([class*='size-'])]:block-3.5
-                      [&_svg:not([class*='size-'])]:inline-3.5
-                    "
-                >
-                    <HugeiconsIcon icon={RocketIcon} />
-                    Now onboarding brokers and owners
-                </Badge>
+                <div className="relative flex flex-col items-center gap-6 p-6 text-center md:p-8">
+                    <div
+                        aria-hidden="true"
+                        className="
+                          pointer-events-none absolute -inset-x-4 -inset-y-6 rounded-card
+                          bg-radial from-brand-ink/45 from-20% via-brand-ink/25 via-50%
+                          to-transparent to-75%
+                          md:-inset-x-10 md:-inset-y-8
+                        "
+                    />
 
-                <h1
-                    className="
-                      display-2 text-canvas [text-shadow:0_2px_24px_var(--color-brand-ink)]
-                    "
-                >
-                    Sell your property through a broker you trust.
-                </h1>
-
-                <p
-                    className="
-                      body text-canvas/90 [text-shadow:0_1px_16px_var(--color-brand-ink)]
-                      max-inline-[420px]
-                    "
-                >
-                    List it free. Verified brokers ask to sell it. You approve the one you like.
-                </p>
-
-                <div className="flex flex-col gap-2.5 inline-full sm:flex-row sm:inline-auto">
-                    <Button size="lg" variant="highlight">
-                        List my property free
-                    </Button>
-                    <Button
-                        size="lg"
-                        variant="highlight-outline"
-                        className="bg-canvas/10 backdrop-blur-lg hover:bg-canvas/15"
+                    <Badge
+                        variant="brand"
+                        className="
+                          relative body-sm border border-canvas/25 bg-canvas/10 px-3.5 py-1.5
+                          text-canvas backdrop-blur-lg
+                          [&_svg:not([class*='size-'])]:block-3.5
+                          [&_svg:not([class*='size-'])]:inline-3.5
+                        "
                     >
-                        I&apos;m a broker
-                        <HugeiconsIcon icon={ArrowRight02Icon} data-icon="inline-end" />
-                    </Button>
-                </div>
+                        <HugeiconsIcon icon={RocketIcon} />
+                        Now onboarding brokers and owners
+                    </Badge>
 
-                <ul
-                    className="
-                      body-sm flex flex-col items-center gap-3 text-canvas/90
-                      sm:flex-row sm:gap-0 sm:divide-x sm:divide-canvas/15
-                    "
-                >
-                    {TRUST_ITEMS.map(({ icon, label }) => (
-                        <li key={label} className="flex items-center gap-2 sm:px-5">
-                            <span
-                                className="
-                                  flex items-center justify-center rounded-full border
-                                  border-canvas/25 bg-canvas/10 backdrop-blur-md block-6 inline-6
-                                "
-                            >
-                                <HugeiconsIcon icon={icon} className="block-3.5 inline-3.5" />
-                            </span>
-                            {label}
-                        </li>
-                    ))}
-                </ul>
+                    <h1
+                        className="
+                          relative display-2 text-canvas
+                          [text-shadow:0_2px_24px_var(--color-brand-ink)]
+                        "
+                    >
+                        Sell your property through a broker you trust.
+                    </h1>
+
+                    <p
+                        className="
+                          relative body text-canvas/90
+                          [text-shadow:0_1px_16px_var(--color-brand-ink)] max-inline-[420px]
+                        "
+                    >
+                        List it free. Verified brokers ask to sell it. You approve the one you like.
+                    </p>
+
+                    <div
+                        className="
+                          relative flex flex-col gap-2.5 inline-full sm:flex-row sm:inline-auto
+                        "
+                    >
+                        <Button size="lg" variant="highlight">
+                            List my property free
+                        </Button>
+                        <Button
+                            size="lg"
+                            variant="highlight-outline"
+                            className="bg-canvas/10 backdrop-blur-lg hover:bg-canvas/15"
+                        >
+                            I&apos;m a broker
+                            <HugeiconsIcon icon={ArrowRight02Icon} data-icon="inline-end" />
+                        </Button>
+                    </div>
+
+                    <ul
+                        className="
+                          relative body-sm flex flex-col items-center gap-3 text-canvas/90
+                          sm:flex-row sm:gap-0 sm:divide-x sm:divide-canvas/15
+                        "
+                    >
+                        {TRUST_ITEMS.map(({ icon, label }) => (
+                            <li key={label} className="flex items-center gap-2 sm:px-5">
+                                <span
+                                    className="
+                                      flex items-center justify-center rounded-full border
+                                      border-canvas/25 bg-canvas/10 backdrop-blur-md block-6
+                                      inline-6
+                                    "
+                                >
+                                    <HugeiconsIcon icon={icon} className="block-3.5 inline-3.5" />
+                                </span>
+                                {label}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             </div>
         </section>
     );
