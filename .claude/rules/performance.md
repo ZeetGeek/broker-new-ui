@@ -1,9 +1,9 @@
 ---
 paths:
-  - "app/**/*.{ts,tsx}"
-  - "components/**/*.{ts,tsx}"
-  - "lib/**/*.ts"
-  - "next.config.{ts,js,mjs}"
+    - "app/**/*.{ts,tsx}"
+    - "components/**/*.{ts,tsx}"
+    - "lib/**/*.ts"
+    - "next.config.{ts,js,mjs}"
 ---
 
 # Performance

@@ -37,12 +37,12 @@ signal colours. Nothing else. No blue, no purple, no second brand colour, ever.
 
 Rough on-screen proportion, excluding photos:
 
-| Band | Share | What |
-|---|---|---|
-| Warm neutral | ~60–70% | Page canvas, card surfaces, body text |
-| Dark green / ink | ~20% | Primary buttons, attention cards, progress strip |
-| Mid green | ~10% | Prices, match scores, verified badges, active nav |
-| Highlight + urgent | <5% | One highlight per card maximum; urgency only |
+| Band               | Share   | What                                              |
+| ------------------ | ------- | ------------------------------------------------- |
+| Warm neutral       | ~60–70% | Page canvas, card surfaces, body text             |
+| Dark green / ink   | ~20%    | Primary buttons, attention cards, progress strip  |
+| Mid green          | ~10%    | Prices, match scores, verified badges, active nav |
+| Highlight + urgent | <5%     | One highlight per card maximum; urgency only      |
 
 The 60-30-10 rule is the starting scaffold. The bright end runs tighter than 10% here
 on purpose — a lime chip that appears twice on a screen means nothing.
@@ -115,11 +115,11 @@ in a chart, an open count, the currently active stage. Never two per card.
 
 ### 2.1 Faces
 
-| Role | Face | Token | Applies to |
-|---|---|---|---|
-| Display | Bricolage Grotesque | `--font-display` | `h1`–`h6` |
-| Body | DM Sans | `--font-sans` | `p`, `span`, `a`, `li`, `label`, `button`, `input`, everything else |
-| Data | DM Sans, tabular figures | `.tabular` | Prices, areas, dates, match %, table columns |
+| Role    | Face                     | Token            | Applies to                                                          |
+| ------- | ------------------------ | ---------------- | ------------------------------------------------------------------- |
+| Display | Bricolage Grotesque      | `--font-display` | `h1`–`h6`                                                           |
+| Body    | DM Sans                  | `--font-sans`    | `p`, `span`, `a`, `li`, `label`, `button`, `input`, everything else |
+| Data    | DM Sans, tabular figures | `.tabular`       | Prices, areas, dates, match %, table columns                        |
 
 Load both through `next/font/google` in `app/layout.tsx` with `display: "swap"` and
 variable font axes. Never load them via a `<link>` to Google's CDN — it costs a
@@ -129,15 +129,15 @@ round trip on 4G and blocks first paint.
 import { Bricolage_Grotesque, DM_Sans } from "next/font/google";
 
 const display = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
+    subsets: ["latin"],
+    variable: "--font-display",
+    display: "swap",
 });
 
 const sans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
+    subsets: ["latin"],
+    variable: "--font-sans",
+    display: "swap",
 });
 ```
 
@@ -149,22 +149,22 @@ each other in a list.
 
 Two values per step: mobile first, then the desktop value after the `md:` breakpoint.
 
-| Step | Mobile | Desktop | Weight | Tracking | Leading |
-|---|---|---|---|---|---|
-| Display 1 | 44px | 72px | 700 | -0.03em | 1.0 |
-| Display 2 | 38px | 60px | 700 | -0.03em | 1.0 |
-| Display 3 | 32px | 48px | 700 | -0.02em | 1.02 |
-| h1 | 28px | 40px | 700 | -0.02em | 1.08 |
-| h2 | 24px | 34px | 600 | -0.02em | 1.15 |
-| h3 | 22px | 28px | 600 | -0.01em | 1.2 |
-| h4 | 20px | 24px | 600 | -0.01em | 1.25 |
-| h5 | 18px | 22px | 600 | 0 | 1.3 |
-| h6 | 16px | 20px | 600 | 0 | 1.35 |
-| Body large | 16px | 18px | 400 | 0 | 1.55 |
-| Body | 14px | 16px | 400 | 0 | 1.55 |
-| Body small | 12px | 14px | 400 | 0 | 1.45 |
-| Body extra small | 12px | 12px | 400 | 0 | 1.4 |
-| Eyebrow | 12px | 12px | 500 | 0.08em | 1.2 |
+| Step             | Mobile | Desktop | Weight | Tracking | Leading |
+| ---------------- | ------ | ------- | ------ | -------- | ------- |
+| Display 1        | 44px   | 72px    | 700    | -0.03em  | 1.0     |
+| Display 2        | 38px   | 60px    | 700    | -0.03em  | 1.0     |
+| Display 3        | 32px   | 48px    | 700    | -0.02em  | 1.02    |
+| h1               | 28px   | 40px    | 700    | -0.02em  | 1.08    |
+| h2               | 24px   | 34px    | 600    | -0.02em  | 1.15    |
+| h3               | 22px   | 28px    | 600    | -0.01em  | 1.2     |
+| h4               | 20px   | 24px    | 600    | -0.01em  | 1.25    |
+| h5               | 18px   | 22px    | 600    | 0        | 1.3     |
+| h6               | 16px   | 20px    | 600    | 0        | 1.35    |
+| Body large       | 16px   | 18px    | 400    | 0        | 1.55    |
+| Body             | 14px   | 16px    | 400    | 0        | 1.55    |
+| Body small       | 12px   | 14px    | 400    | 0        | 1.45    |
+| Body extra small | 12px   | 12px    | 400    | 0        | 1.4     |
+| Eyebrow          | 12px   | 12px    | 500    | 0.08em   | 1.2     |
 
 Tight tracking on display sizes is not optional — it is what makes Bricolage Grotesque
 look intentional rather than default. Loose tracking at 52px reads as a fallback font.
@@ -186,8 +186,7 @@ size and weight. The first clause states the fact; the second states what it mea
 
 ```tsx
 <h1 className="font-display text-[28px] md:text-[40px] font-bold tracking-tight leading-[1.08]">
-  <span className="text-ink">34 properties.</span>{" "}
-  <span className="text-ink-muted">₹24.8 Cr on the market.</span>
+    <span className="text-ink">34 properties.</span> <span className="text-ink-muted">₹24.8 Cr on the market.</span>
 </h1>
 ```
 
@@ -294,12 +293,12 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 
 ### 4.3 Buttons
 
-| Variant | Fill | Text | Use |
-|---|---|---|---|
-| Primary | `brand-ink` | white | One per screen. Request to represent, Approve, Add property |
-| Secondary | transparent, 1px `border` | `ink` | Reschedule, Cancel, Map view |
-| Destructive | transparent, 1px `danger` | `danger` | Reject, Delete |
-| Ghost | none | `ink-muted` | Tertiary, inside cards |
+| Variant     | Fill                      | Text        | Use                                                         |
+| ----------- | ------------------------- | ----------- | ----------------------------------------------------------- |
+| Primary     | `brand-ink`               | white       | One per screen. Request to represent, Approve, Add property |
+| Secondary   | transparent, 1px `border` | `ink`       | Reschedule, Cancel, Map view                                |
+| Destructive | transparent, 1px `danger` | `danger`    | Reject, Delete                                              |
+| Ghost       | none                      | `ink-muted` | Tertiary, inside cards                                      |
 
 All are pill-shaped. Minimum height 44px on desktop, **48px on mobile**. Minimum
 horizontal padding 20px. Label is sentence case, verb first, one to three words, no
@@ -318,12 +317,12 @@ label with the spinner alone.
 Soft background plus the matching dark text from the same family. Never white text
 on a soft fill, never `ink` on a coloured fill.
 
-| Meaning | Background | Text |
-|---|---|---|
-| Verified, approved, active | `brand-soft` | `brand-text` |
-| Expiring, overdue, due now | `urgent-soft` | `urgent` |
-| Rejected, inactive | `danger-soft` | `danger` |
-| Neutral status, filters | `surface-muted` | `ink-muted` |
+| Meaning                    | Background      | Text         |
+| -------------------------- | --------------- | ------------ |
+| Verified, approved, active | `brand-soft`    | `brand-text` |
+| Expiring, overdue, due now | `urgent-soft`   | `urgent`     |
+| Rejected, inactive         | `danger-soft`   | `danger`     |
+| Neutral status, filters    | `surface-muted` | `ink-muted`  |
 
 12px, weight 500, `4px 10px` padding, pill radius.
 
@@ -384,14 +383,14 @@ The mark is a house with a plus cut out of the centre. One path, one fill,
 `currentColor`. Colour comes from the surface it sits on. The plus is negative
 space, not a second colour.
 
-| Surface | Fill | Use |
-|---|---|---|
-| `canvas` | `brand-ink` | Default. Headers, auth, wordmark. |
-| `surface` | `ink` | On white cards, matching body text. |
-| `canvas` | `brand` | Active state. Same green as prices and nav. |
-| `brand-deep` / `brand-ink` | `canvas` | Inverse on dark attention cards. Cream, not white. |
-| `brand-deep` / `brand-ink` | `highlight` | App icon, splash. Lime never sits on cream. |
-| `brand-soft` | `brand-ink` | Quiet chip. Profile, settings header. |
+| Surface                    | Fill        | Use                                                |
+| -------------------------- | ----------- | -------------------------------------------------- |
+| `canvas`                   | `brand-ink` | Default. Headers, auth, wordmark.                  |
+| `surface`                  | `ink`       | On white cards, matching body text.                |
+| `canvas`                   | `brand`     | Active state. Same green as prices and nav.        |
+| `brand-deep` / `brand-ink` | `canvas`    | Inverse on dark attention cards. Cream, not white. |
+| `brand-deep` / `brand-ink` | `highlight` | App icon, splash. Lime never sits on cream.        |
+| `brand-soft`               | `brand-ink` | Quiet chip. Profile, settings header.              |
 
 Never `urgent` or `danger` on the mark. Those colours mean a deadline or a
 destroy. Never rotate, outline, add a drop shadow, or sit it on a gradient.
@@ -420,11 +419,11 @@ dashboard it is today's site visits.
 
 ### 5.2 Breakpoints
 
-| | Width | Columns | Nav |
-|---|---|---|---|
-| Mobile | <768px | 1 | Bottom bar, 5 items |
-| Tablet | 768–1023px | 2 | Bottom bar |
-| Desktop | ≥1024px | 3 | Top bar |
+|         | Width      | Columns | Nav                 |
+| ------- | ---------- | ------- | ------------------- |
+| Mobile  | <768px     | 1       | Bottom bar, 5 items |
+| Tablet  | 768–1023px | 2       | Bottom bar          |
+| Desktop | ≥1024px    | 3       | Top bar             |
 
 Content max-width 1280px, centred, 16px page gutter on mobile and 32px on desktop.
 
@@ -456,18 +455,18 @@ subtle pulse, wrapped in `@media (prefers-reduced-motion: no-preference)`.
 These are display rules and are non-negotiable — a price rendered as `4500000` is a
 bug, not a style preference.
 
-| Thing | Format | Example |
-|---|---|---|
-| Price ≥ 1 crore | `₹X.XX Cr` | `₹1.25 Cr` |
-| Price 1 lakh – 1 crore | `₹XX L` | `₹85 L` |
-| Price < 1 lakh (rent) | `₹XX,XXX` Indian grouping | `₹45,000` |
-| Rent | append `/mo` | `₹45,000/mo` |
-| Area | `X,XXX sq ft` Indian grouping | `1,450 sq ft` |
-| Date | `dd/mm/yyyy` | `18/08/2026` |
-| Date, conversational | `18 Aug` or `Today, 9:30 AM` | |
-| Phone | `+91 XXXXX XXXXX` | `+91 98765 43210` |
-| PIN code | 6 digits, no space | `395007` |
-| Configuration | `X BHK`, never `X bedroom` | `3 BHK` |
+| Thing                  | Format                        | Example           |
+| ---------------------- | ----------------------------- | ----------------- |
+| Price ≥ 1 crore        | `₹X.XX Cr`                    | `₹1.25 Cr`        |
+| Price 1 lakh – 1 crore | `₹XX L`                       | `₹85 L`           |
+| Price < 1 lakh (rent)  | `₹XX,XXX` Indian grouping     | `₹45,000`         |
+| Rent                   | append `/mo`                  | `₹45,000/mo`      |
+| Area                   | `X,XXX sq ft` Indian grouping | `1,450 sq ft`     |
+| Date                   | `dd/mm/yyyy`                  | `18/08/2026`      |
+| Date, conversational   | `18 Aug` or `Today, 9:30 AM`  |                   |
+| Phone                  | `+91 XXXXX XXXXX`             | `+91 98765 43210` |
+| PIN code               | 6 digits, no space            | `395007`          |
+| Configuration          | `X BHK`, never `X bedroom`    | `3 BHK`           |
 
 One rupee helper formats all of these. It lives in `lib/format.ts` and no component
 formats currency inline.
@@ -485,14 +484,14 @@ Locale for `Intl` calls is `en-IN`. Currency is `INR`. There is no `en-US` and n
 Users are not technical and many are reading their second or third language. Plain
 words, short sentences, sentence case everywhere.
 
-| Do not write | Write |
-|---|---|
-| Request to represent | Ask to sell this property |
-| Representation approved | You approved Rajesh |
-| Pending representations | Brokers waiting for your answer |
-| Submit | Send request |
-| Error: failed to save | Couldn't save. Check your connection and try again. |
-| Property listing created successfully! | Property added |
+| Do not write                           | Write                                               |
+| -------------------------------------- | --------------------------------------------------- |
+| Request to represent                   | Ask to sell this property                           |
+| Representation approved                | You approved Rajesh                                 |
+| Pending representations                | Brokers waiting for your answer                     |
+| Submit                                 | Send request                                        |
+| Error: failed to save                  | Couldn't save. Check your connection and try again. |
+| Property listing created successfully! | Property added                                      |
 
 No exclamation marks. No "please". No "simply", "just", or "easy". No first person —
 the interface is the product speaking, not a person.

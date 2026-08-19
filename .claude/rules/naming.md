@@ -1,10 +1,10 @@
 ---
 paths:
-  - "app/**/*.{ts,tsx}"
-  - "components/**/*.{ts,tsx}"
-  - "lib/**/*.ts"
-  - "hooks/**/*.ts"
-  - "types/**/*.ts"
+    - "app/**/*.{ts,tsx}"
+    - "components/**/*.{ts,tsx}"
+    - "lib/**/*.ts"
+    - "hooks/**/*.ts"
+    - "types/**/*.ts"
 ---
 
 # Naming

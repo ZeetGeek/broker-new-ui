@@ -14,23 +14,33 @@ export function DesignSystemShell({
     children: ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-canvas">
-            <div className="mx-auto max-w-[1280px] px-4 py-8 md:px-8 md:py-12">
-                <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-ink-subtle">
+        <div className="bg-canvas min-block-screen">
+            <div className="mx-auto px-4 py-8 max-inline-[1280px] md:px-8 md:py-12">
+                <p className="text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase">
                     {eyebrow}
                 </p>
-                <h1 className="mt-2 font-display text-[28px] font-bold leading-[1.08] tracking-tight text-ink md:text-[40px]">
+                <h1
+                    className="
+                  mbs-2 font-display text-[28px] leading-[1.08] font-bold tracking-tight text-ink
+                  md:text-[40px]
+                "
+                >
                     {title}
                 </h1>
-                <p className="mt-2 max-w-[65ch] text-[15px] leading-[1.55] text-ink-muted md:text-base">
+                <p
+                    className="
+                  mbs-2 text-[15px] leading-[1.55] text-ink-muted max-inline-[65ch]
+                  md:text-base
+                "
+                >
                     {description}
                 </p>
 
-                <div className="mt-6">
+                <div className="mbs-6">
                     <DesignSystemNav />
                 </div>
 
-                <div className="mt-8 md:mt-10">{children}</div>
+                <div className="mbs-8 md:mbs-10">{children}</div>
             </div>
         </div>
     );

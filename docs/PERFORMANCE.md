@@ -28,14 +28,14 @@ Two consequences that drive every rule below:
 
 Treat these as build-blocking, not aspirational.
 
-| Metric | Target | Measured on |
-|---|---|---|
-| LCP | ≤ 2.5s | Moto G-class Android, 4G throttled |
-| INP | ≤ 200ms | same |
-| CLS | ≤ 0.1 | same |
-| Client JS on a listing page | ≤ 150 KB gzipped | — |
-| Largest property image delivered | ≤ 200 KB | — |
-| Property list API response | ≤ 50 KB per page of 20 | — |
+| Metric                           | Target                 | Measured on                        |
+| -------------------------------- | ---------------------- | ---------------------------------- |
+| LCP                              | ≤ 2.5s                 | Moto G-class Android, 4G throttled |
+| INP                              | ≤ 200ms                | same                               |
+| CLS                              | ≤ 0.1                  | same                               |
+| Client JS on a listing page      | ≤ 150 KB gzipped       | —                                  |
+| Largest property image delivered | ≤ 200 KB               | —                                  |
+| Property list API response       | ≤ 50 KB per page of 20 | —                                  |
 
 If a change pushes past a budget, it needs a stated reason, not a shrug.
 
@@ -70,23 +70,23 @@ just because one part of it is personalized.
 ```tsx
 // app/property/[id]/page.tsx
 export default async function Page({ params }) {
-  const { id } = await params;              // params is a Promise in Next 15+
-  return (
-    <>
-      <PropertyDetails id={id} />           {/* cached — static shell */}
-      <Suspense fallback={<ContactSkeleton />}>
-        <BrokerContact id={id} />           {/* dynamic — streams in */}
-      </Suspense>
-    </>
-  );
+    const { id } = await params; // params is a Promise in Next 15+
+    return (
+        <>
+            <PropertyDetails id={id} /> {/* cached — static shell */}
+            <Suspense fallback={<ContactSkeleton />}>
+                <BrokerContact id={id} /> {/* dynamic — streams in */}
+            </Suspense>
+        </>
+    );
 }
 ```
 
-| Part of the page | Treatment | Why |
-|---|---|---|
-| Photos, price, BHK, locality, description, amenities | `use cache` | Changes rarely; identical for every visitor |
-| Broker contact panel, "you already requested this" state | Dynamic, in `<Suspense>` | Per-user |
-| View count, availability | Dynamic or short `cacheLife` | Changes often |
+| Part of the page                                         | Treatment                    | Why                                         |
+| -------------------------------------------------------- | ---------------------------- | ------------------------------------------- |
+| Photos, price, BHK, locality, description, amenities     | `use cache`                  | Changes rarely; identical for every visitor |
+| Broker contact panel, "you already requested this" state | Dynamic, in `<Suspense>`     | Per-user                                    |
+| View count, availability                                 | Dynamic or short `cacheLife` | Changes often                               |
 
 The user sees photos and price in well under a second. The personalized strip
 fills in after. Never block the whole page on the slow part.
@@ -306,7 +306,7 @@ Development request logs in Next 16 now break down where time is spent
 - ❌ `"use client"` on a page or layout to "make it work"
 - ❌ Fetching all properties then filtering in the browser
 - ❌ Blocking the whole page on a slow personalized query instead of
-      `<Suspense>`
+  `<Suspense>`
 - ❌ `use cache` on anything containing user or contact data
 - ❌ Images without `width`/`height` or `fill` + `sizes`
 - ❌ A `<link>` to Google Fonts

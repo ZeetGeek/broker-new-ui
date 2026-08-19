@@ -1,6 +1,6 @@
 ---
 paths:
-  - "app/**/*.{ts,tsx}"
+    - "app/**/*.{ts,tsx}"
 ---
 
 # Working under `app/`

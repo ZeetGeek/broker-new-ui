@@ -41,7 +41,7 @@ happened with `font-display`/`font-heading`.
 
 1. `app/globals.css` — add `--color-{name}: #HEX;` inside `:root`, **and** a
    matching passthrough line inside `@theme inline` (`--color-{name}:
-   var(--color-{name});`). Tailwind v4 only generates utilities for variables
+var(--color-{name});`). Tailwind v4 only generates utilities for variables
    registered in `@theme` / `@theme inline`, not bare `:root` custom
    properties. This project's colours are declared in `:root` then re-declared
    in `@theme inline` — miss the second one and `bg-{name}` silently doesn't
@@ -61,7 +61,7 @@ happened with `font-display`/`font-heading`.
 
 1. `app/globals.css` — type steps are Tailwind arbitrary values and inline
    styles in this codebase (see `type-scale-row.tsx`), not CSS variables. No
-   globals.css edit for a new *step*. A new **face** (a third font beyond
+   globals.css edit for a new _step_. A new **face** (a third font beyond
    Bricolage Grotesque / DM Sans) does need a globals.css change — see below.
 2. `features/design-system/theme/type-scale.ts` — add a `TypeScaleStep` to
    `HEADING_SCALE`, `BODY_SCALE`, or `SPECIAL_SCALE`. Every field is required:
@@ -75,7 +75,7 @@ happened with `font-display`/`font-heading`.
 ### Adding a new font (rare, high-friction on purpose)
 
 1. `lib/fonts.ts` — add the `next/font/google` import and a `variable:
-   "--font-{name}"` — this is the only place a font is imported. Never a
+"--font-{name}"` — this is the only place a font is imported. Never a
    `<link>` tag, never a second `next/font` call elsewhere.
 2. `app/globals.css` `@theme inline` — add `--font-{name}: var(--font-{name});`
    so the `font-{name}` Tailwind utility exists. If the new face is meant to

@@ -7,7 +7,13 @@ export function TypeScaleRow({ step }: { step: TypeScaleStep }) {
     const Tag = step.element;
 
     return (
-        <div className="grid grid-cols-1 gap-3 border-b border-border-warm py-5 md:grid-cols-[140px_1fr] md:gap-6 last:border-b-0">
+        <div
+            className="
+          grid grid-cols-1 gap-3 border-be border-border-warm py-5
+          last:border-be-0
+          md:grid-cols-[140px_1fr] md:gap-6
+        "
+        >
             <div>
                 <p className="text-[13px] font-medium text-ink">{step.name}</p>
                 <code className="text-[13px] text-brand">{step.token}</code>
@@ -21,7 +27,7 @@ export function TypeScaleRow({ step }: { step: TypeScaleStep }) {
             <Tag
                 className={cn(
                     step.face === "display" ? "font-display" : "font-sans",
-                    isEyebrow && "uppercase text-ink-subtle",
+                    isEyebrow && "text-ink-subtle uppercase",
                 )}
                 style={{
                     fontSize: `clamp(${step.mobilePx}px, ${step.mobilePx}px + 1vw, ${step.desktopPx}px)`,

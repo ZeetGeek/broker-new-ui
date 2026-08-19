@@ -3,7 +3,7 @@
 Read `docs/STRUCTURE.md` before creating any new file or folder. It is the
 authority on where code lives.
 
-No `paths:` frontmatter here on purpose — this rule must be loaded *before* a
+No `paths:` frontmatter here on purpose — this rule must be loaded _before_ a
 file is created, not after one is opened.
 
 Five rules restated because they are the ones that decay a codebase quietly:

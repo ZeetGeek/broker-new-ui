@@ -82,18 +82,18 @@ JSX tree, that content belongs in `features/`.
 import { BrowseProperties } from "@/features/properties/browse-properties";
 
 export default function Page() {
-  return <BrowseProperties />;
+    return <BrowseProperties />;
 }
 ```
 
 ### Route folder conventions
 
-| Pattern | Meaning |
-|---|---|
-| `browse-properties/` | Route segment — becomes the URL |
-| `[id]/` | Dynamic segment |
-| `(auth)/` | Route group — organizes without affecting the URL |
-| `_components/` | Private — excluded from routing entirely |
+| Pattern              | Meaning                                           |
+| -------------------- | ------------------------------------------------- |
+| `browse-properties/` | Route segment — becomes the URL                   |
+| `[id]/`              | Dynamic segment                                   |
+| `(auth)/`            | Route group — organizes without affecting the URL |
+| `_components/`       | Private — excluded from routing entirely          |
 
 Route groups earn their place here. `(auth)` lets login and signup share a
 centred, logo-only layout without adding `/auth` to the URL. `(marketing)`
@@ -142,13 +142,13 @@ directory, not hunting through `components/`, `hooks/`, `utils/`, and `types/`.
 
 ### Current features
 
-| Feature | Owns |
-|---|---|
-| `properties/` | Listing wizard, cards, filters, browse, detail |
+| Feature            | Owns                                               |
+| ------------------ | -------------------------------------------------- |
+| `properties/`      | Listing wizard, cards, filters, browse, detail     |
 | `representations/` | Request to represent, approve/reject, active links |
-| `clients/` | Broker CRM — pipeline, client detail, activities |
-| `site-visits/` | Scheduling, slots, calendar |
-| `team/` | Organization member management |
+| `clients/`         | Broker CRM — pipeline, client detail, activities   |
+| `site-visits/`     | Scheduling, slots, calendar                        |
+| `team/`            | Organization member management                     |
 
 Add a feature when a new domain appears — not for every screen.
 
@@ -177,11 +177,11 @@ Not urgent today. Add it before a second developer joins.
 
 ## `components/` — three folders, distinct purposes
 
-| Folder | Contains | Rule |
-|---|---|---|
-| `ui/` | shadcn primitives | **Never edit.** Regenerating overwrites changes. Knip ignores it. |
-| `layout/` | Portal shells, top nav, mobile bottom bar | Structural, not domain |
-| `shared/` | `EmptyState`, `PriceDisplay`, `PhotoGallery` | Only if **3+** features use it |
+| Folder    | Contains                                     | Rule                                                              |
+| --------- | -------------------------------------------- | ----------------------------------------------------------------- |
+| `ui/`     | shadcn primitives                            | **Never edit.** Regenerating overwrites changes. Knip ignores it. |
+| `layout/` | Portal shells, top nav, mobile bottom bar    | Structural, not domain                                            |
+| `shared/` | `EmptyState`, `PriceDisplay`, `PhotoGallery` | Only if **3+** features use it                                    |
 
 **The rule of three:** a component lives in the feature that owns it until a
 third feature needs it. Two uses is a coincidence; three is a pattern.

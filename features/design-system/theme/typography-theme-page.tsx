@@ -18,16 +18,16 @@ export function TypographyThemePage() {
                     <div className="rounded-card border border-border-warm bg-surface p-5 md:p-6">
                         <p
                             className="
-                          text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase
-                        "
+                              text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase
+                            "
                         >
                             Display — headings
                         </p>
                         <p
                             className="
-                          mbs-3 font-display text-[36px] leading-[1.02] font-bold tracking-[-0.03em]
-                          text-ink
-                        "
+                              mbs-3 font-display text-[36px] leading-[1.02] font-bold
+                              tracking-[-0.03em] text-ink
+                            "
                         >
                             Bricolage Grotesque
                         </p>
@@ -42,8 +42,8 @@ export function TypographyThemePage() {
                     <div className="rounded-card border border-border-warm bg-surface p-5 md:p-6">
                         <p
                             className="
-                          text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase
-                        "
+                              text-[11px] font-medium tracking-[0.08em] text-ink-subtle uppercase
+                            "
                         >
                             Body — everything else
                         </p>
@@ -63,9 +63,10 @@ export function TypographyThemePage() {
                 <section>
                     <h2
                         className="
-                      font-display text-[20px] leading-[1.15] font-semibold tracking-tight text-ink
-                      md:text-[22px]
-                    "
+                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
+                          text-ink
+                          md:text-[22px]
+                        "
                     >
                         Display
                     </h2>
@@ -76,9 +77,9 @@ export function TypographyThemePage() {
                     </p>
                     <div
                         className="
-                      mbs-4 rounded-card border border-border-warm bg-surface px-5
-                      md:px-6
-                    "
+                          mbs-4 rounded-card border border-border-warm bg-surface px-5
+                          md:px-6
+                        "
                     >
                         {DISPLAY_SCALE.map((step) => (
                             <TypeScaleRow key={step.token} step={step} />
@@ -89,9 +90,10 @@ export function TypographyThemePage() {
                 <section>
                     <h2
                         className="
-                      font-display text-[20px] leading-[1.15] font-semibold tracking-tight text-ink
-                      md:text-[22px]
-                    "
+                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
+                          text-ink
+                          md:text-[22px]
+                        "
                     >
                         Headings
                     </h2>
@@ -102,9 +104,9 @@ export function TypographyThemePage() {
                     </p>
                     <div
                         className="
-                      mbs-4 rounded-card border border-border-warm bg-surface px-5
-                      md:px-6
-                    "
+                          mbs-4 rounded-card border border-border-warm bg-surface px-5
+                          md:px-6
+                        "
                     >
                         {HEADING_SCALE.map((step) => (
                             <TypeScaleRow key={step.token} step={step} />
@@ -115,22 +117,23 @@ export function TypographyThemePage() {
                 <section>
                     <h2
                         className="
-                      font-display text-[20px] leading-[1.15] font-semibold tracking-tight text-ink
-                      md:text-[22px]
-                    "
+                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
+                          text-ink
+                          md:text-[22px]
+                        "
                     >
                         Body text
                     </h2>
                     <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
                         text-lg through text-xs, DM Sans. Body large tops out at 18px desktop;
                         text-base is the default paragraph size — 14px on mobile, 16px on desktop.
-                        Body never grows past a heading's floor.
+                        Body never grows past a heading&apos;s floor.
                     </p>
                     <div
                         className="
-                      mbs-4 rounded-card border border-border-warm bg-surface px-5
-                      md:px-6
-                    "
+                          mbs-4 rounded-card border border-border-warm bg-surface px-5
+                          md:px-6
+                        "
                     >
                         {BODY_SCALE.map((step) => (
                             <TypeScaleRow key={step.token} step={step} />
@@ -141,9 +144,10 @@ export function TypographyThemePage() {
                 <section>
                     <h2
                         className="
-                      font-display text-[20px] leading-[1.15] font-semibold tracking-tight text-ink
-                      md:text-[22px]
-                    "
+                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
+                          text-ink
+                          md:text-[22px]
+                        "
                     >
                         The two-tone headline
                     </h2>
@@ -155,10 +159,10 @@ export function TypographyThemePage() {
                     <div className="mbs-4 rounded-card bg-brand-deep p-6 md:p-8">
                         <h3
                             className="
-                          font-display text-[28px] leading-[1.08] font-bold tracking-[-0.02em]
-                          text-white
-                          md:text-[40px]
-                        "
+                              font-display text-[28px] leading-[1.08] font-bold tracking-[-0.02em]
+                              text-white
+                              md:text-[40px]
+                            "
                         >
                             <span>34 listings.</span>{" "}
                             <span className="text-[#B8CFC4]">₹24.8 Cr on the market.</span>

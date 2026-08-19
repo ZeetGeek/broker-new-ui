@@ -1,9 +1,9 @@
 ---
 paths:
-  - "app/globals.css"
-  - "features/design-system/**/*.{ts,tsx}"
-  - "docs/DESIGN.md"
-  - "lib/fonts.ts"
+    - "app/globals.css"
+    - "features/design-system/**/*.{ts,tsx}"
+    - "docs/DESIGN.md"
+    - "lib/fonts.ts"
 ---
 
 # Design system sync

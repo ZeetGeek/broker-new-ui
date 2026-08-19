@@ -6,7 +6,7 @@ export function ColorSwatch({ token }: { token: ColorToken }) {
     return (
         <div className="overflow-hidden rounded-card border border-border-warm bg-surface">
             <div
-                className={cn("h-20 w-full", token.className)}
+                className={cn("block-20 inline-full", token.className)}
                 style={{ backgroundColor: token.hex }}
             />
             <div className="space-y-1 p-4">
@@ -15,7 +15,7 @@ export function ColorSwatch({ token }: { token: ColorToken }) {
                     <span className="tabular text-[13px] text-ink-subtle">{token.hex}</span>
                 </div>
                 <code className="block text-[13px] text-ink-muted">{token.variable}</code>
-                <p className="pt-1 text-[13px] leading-[1.45] text-ink-muted">{token.usage}</p>
+                <p className="pbs-1 text-[13px] leading-[1.45] text-ink-muted">{token.usage}</p>
             </div>
         </div>
     );

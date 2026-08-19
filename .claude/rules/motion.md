@@ -1,9 +1,9 @@
 ---
 paths:
-  - "app/**/*.{ts,tsx}"
-  - "components/**/*.{ts,tsx}"
-  - "features/**/*.{ts,tsx}"
-  - "lib/motion/**/*.ts"
+    - "app/**/*.{ts,tsx}"
+    - "components/**/*.{ts,tsx}"
+    - "features/**/*.{ts,tsx}"
+    - "lib/motion/**/*.ts"
 ---
 
 # Motion

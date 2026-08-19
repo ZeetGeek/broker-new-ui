@@ -7,23 +7,23 @@ point here.
 
 ## Quick reference
 
-| Thing | Case | Example |
-|---|---|---|
-| Folders | `kebab-case` | `browse-properties/` |
-| Files | `kebab-case` | `property-card.tsx` |
-| Next.js special files | `lowercase` (fixed) | `page.tsx`, `layout.tsx`, `route.ts` |
-| React components | `PascalCase` | `PropertyCard` |
-| Regular functions | `camelCase` | `formatPrice` |
-| Hooks | `camelCase`, `use` prefix | `useRepresentation` |
-| Variables | `camelCase` | `activeListings` |
-| Booleans | `camelCase`, verb prefix | `isVerified`, `hasPhotos` |
-| Module constants | `SCREAMING_SNAKE_CASE` | `MAX_PHOTOS_PER_PROPERTY` |
-| Types & interfaces | `PascalCase` | `Property`, `BrokerProfile` |
-| Type unions | `PascalCase` type, values match API | `type Status = "pending" \| "accepted"` |
-| Generics | `PascalCase`, descriptive | `TProperty`, not `T` |
-| Env vars | `SCREAMING_SNAKE_CASE` | `NEXT_PUBLIC_SITE_URL` |
-| API / DB fields | `snake_case` (external only) | `property_id` |
-| CSS custom properties | `--kebab-case` | `--color-brand` |
+| Thing                 | Case                                | Example                                 |
+| --------------------- | ----------------------------------- | --------------------------------------- |
+| Folders               | `kebab-case`                        | `browse-properties/`                    |
+| Files                 | `kebab-case`                        | `property-card.tsx`                     |
+| Next.js special files | `lowercase` (fixed)                 | `page.tsx`, `layout.tsx`, `route.ts`    |
+| React components      | `PascalCase`                        | `PropertyCard`                          |
+| Regular functions     | `camelCase`                         | `formatPrice`                           |
+| Hooks                 | `camelCase`, `use` prefix           | `useRepresentation`                     |
+| Variables             | `camelCase`                         | `activeListings`                        |
+| Booleans              | `camelCase`, verb prefix            | `isVerified`, `hasPhotos`               |
+| Module constants      | `SCREAMING_SNAKE_CASE`              | `MAX_PHOTOS_PER_PROPERTY`               |
+| Types & interfaces    | `PascalCase`                        | `Property`, `BrokerProfile`             |
+| Type unions           | `PascalCase` type, values match API | `type Status = "pending" \| "accepted"` |
+| Generics              | `PascalCase`, descriptive           | `TProperty`, not `T`                    |
+| Env vars              | `SCREAMING_SNAKE_CASE`              | `NEXT_PUBLIC_SITE_URL`                  |
+| API / DB fields       | `snake_case` (external only)        | `property_id`                           |
+| CSS custom properties | `--kebab-case`                      | `--color-brand`                         |
 
 ---
 
@@ -90,12 +90,12 @@ Sticking to all-lowercase filenames avoids the entire class of bug.
 
 ### Folder naming
 
-| Pattern | Meaning | Example |
-|---|---|---|
-| `kebab-case/` | Normal route segment (becomes the URL) | `app/browse-properties/` |
-| `[param]/` | Dynamic segment | `app/property/[id]/` |
-| `(group)/` | Route group — organizes without affecting the URL | `app/(auth)/login/` |
-| `_folder/` | Private — excluded from routing entirely | `app/_components/` |
+| Pattern       | Meaning                                           | Example                  |
+| ------------- | ------------------------------------------------- | ------------------------ |
+| `kebab-case/` | Normal route segment (becomes the URL)            | `app/browse-properties/` |
+| `[param]/`    | Dynamic segment                                   | `app/property/[id]/`     |
+| `(group)/`    | Route group — organizes without affecting the URL | `app/(auth)/login/`      |
+| `_folder/`    | Private — excluded from routing entirely          | `app/_components/`       |
 
 Route folder names become URLs, so they are user-visible. `browse-properties`
 reads correctly; `browseProperties` and `Browse_Properties` do not.
@@ -106,17 +106,17 @@ reads correctly; `browseProperties` and `Browse_Properties` do not.
 
 Start with a verb. The name should say what it does, not what it is about.
 
-| Prefix | Use for | Example |
-|---|---|---|
-| `get` | Retrieve, cheap or cached | `getProperty` |
-| `fetch` | Network call | `fetchBrokerProfile` |
-| `create` / `update` / `delete` | Mutations | `createRepresentation` |
-| `format` | Value → display string | `formatPrice` |
-| `parse` | String → structured value | `parsePriceInput` |
-| `validate` | Returns boolean or throws | `validateReraNumber` |
-| `to` | Type conversion | `toPropertySummary` |
-| `handle` | Event handler inside a component | `handleSubmit` |
-| `on` | Event handler passed as a prop | `onApprove` |
+| Prefix                         | Use for                          | Example                |
+| ------------------------------ | -------------------------------- | ---------------------- |
+| `get`                          | Retrieve, cheap or cached        | `getProperty`          |
+| `fetch`                        | Network call                     | `fetchBrokerProfile`   |
+| `create` / `update` / `delete` | Mutations                        | `createRepresentation` |
+| `format`                       | Value → display string           | `formatPrice`          |
+| `parse`                        | String → structured value        | `parsePriceInput`      |
+| `validate`                     | Returns boolean or throws        | `validateReraNumber`   |
+| `to`                           | Type conversion                  | `toPropertySummary`    |
+| `handle`                       | Event handler inside a component | `handleSubmit`         |
+| `on`                           | Event handler passed as a prop   | `onApprove`            |
 
 The `handle` / `on` pair matters:
 
@@ -135,12 +135,12 @@ function ApprovalPanel() {
 
 Booleans always read as a question with an obvious yes/no:
 
-| Prefix | Meaning | Example |
-|---|---|---|
-| `is` | State | `isVerified`, `isLoading` |
-| `has` | Possession | `hasPhotos`, `hasActiveRepresentation` |
-| `can` | Permission | `canEditProperty` |
-| `should` | Conditional behaviour | `shouldShowContactDetails` |
+| Prefix   | Meaning               | Example                                |
+| -------- | --------------------- | -------------------------------------- |
+| `is`     | State                 | `isVerified`, `isLoading`              |
+| `has`    | Possession            | `hasPhotos`, `hasActiveRepresentation` |
+| `can`    | Permission            | `canEditProperty`                      |
+| `should` | Conditional behaviour | `shouldShowContactDetails`             |
 
 Never name a boolean `status`, `flag`, `check`, or `verified` alone — none of
 those tell you what `true` means.
@@ -156,8 +156,8 @@ Avoid meaningless names: `data`, `item`, `temp`, `result`, `obj`, `arr`, `val`.
 `data` is the worst offender — every API response is data.
 
 ```ts
-const data = await fetchProperty(id);       // ❌
-const property = await fetchProperty(id);   // ✅
+const data = await fetchProperty(id); // ❌
+const property = await fetchProperty(id); // ✅
 ```
 
 ---
@@ -172,12 +172,12 @@ is dangerously ambiguous.**
 **Never write a bare `brokerId` or `ownerId` in this codebase.** Always say
 which id it is:
 
-| ❌ Ambiguous | ✅ Explicit | Refers to |
-|---|---|---|
-| `brokerId` | `brokerUserId` | `users.id` |
-| `brokerId` | `brokerProfileId` | `brokers.id` |
-| `ownerId` | `ownerUserId` | `users.id` |
-| `ownerId` | `ownerProfileId` | `owners.id` |
+| ❌ Ambiguous | ✅ Explicit       | Refers to    |
+| ------------ | ----------------- | ------------ |
+| `brokerId`   | `brokerUserId`    | `users.id`   |
+| `brokerId`   | `brokerProfileId` | `brokers.id` |
+| `ownerId`    | `ownerUserId`     | `users.id`   |
+| `ownerId`    | `ownerProfileId`  | `owners.id`  |
 
 ```ts
 // ❌ Correct or catastrophic — you cannot tell, and neither can a reviewer
@@ -207,15 +207,15 @@ variable called `price` is a bug waiting to happen — sale price, monthly rent,
 deposit, and maintenance are all "price."
 
 ```ts
-salePriceInr          // not price
-monthlyRentInr        // not rent
-securityDepositInr
-maintenanceChargesInr
-areaSqft              // not area, not size
-carpetAreaSqft        // carpet vs built-up is a real distinction in India
-minimumStayMonths     // not minStay
-noticePeriodDays      // not notice
-commissionRatePercent // not commission — is 2 a percent or a multiplier?
+salePriceInr; // not price
+monthlyRentInr; // not rent
+securityDepositInr;
+maintenanceChargesInr;
+areaSqft; // not area, not size
+carpetAreaSqft; // carpet vs built-up is a real distinction in India
+minimumStayMonths; // not minStay
+noticePeriodDays; // not notice
+commissionRatePercent; // not commission — is 2 a percent or a multiplier?
 ```
 
 Rule: **if a number could be read in more than one unit, the unit goes in the
@@ -225,11 +225,11 @@ name.** Currency is always `Inr`, never `Amount` or `Value`.
 
 ## Dates and times
 
-| Suffix | Meaning | Type |
-|---|---|---|
-| `At` | Exact moment | timestamp — `createdAt`, `approvedAt` |
-| `On` / `Date` | Calendar day, no time | date — `availableFrom`, `visitDate` |
-| `Days` / `Months` | Duration | number — `noticePeriodDays` |
+| Suffix            | Meaning               | Type                                  |
+| ----------------- | --------------------- | ------------------------------------- |
+| `At`              | Exact moment          | timestamp — `createdAt`, `approvedAt` |
+| `On` / `Date`     | Calendar day, no time | date — `availableFrom`, `visitDate`   |
+| `Days` / `Months` | Duration              | number — `noticePeriodDays`           |
 
 Store and pass ISO strings or `Date` objects. dd/mm/yyyy is a **display**
 format only — never a variable's value. A variable holding `"18/08/2026"` is a
@@ -296,12 +296,12 @@ Everything else is spelled out. `prop` is not `property`. `req` is not
 Use the product's own words — these mean specific things and appear across the
 whole system. See root `AGENTS.md` for the full glossary.
 
-| Concept | Use | Do not use |
-|---|---|---|
+| Concept                             | Use                     | Do not use                    |
+| ----------------------------------- | ----------------------- | ----------------------------- |
 | Broker asks to represent a property | `representationRequest` | `application`, `bid`, `offer` |
-| Approved owner ↔ broker link | `representation` | `assignment`, `listing` |
-| Person in a broker's CRM | `client` | `lead`, `customer`, `contact` |
-| A scheduled property visit | `siteVisit` | `showing`, `viewing`, `tour` |
+| Approved owner ↔ broker link        | `representation`        | `assignment`, `listing`       |
+| Person in a broker's CRM            | `client`                | `lead`, `customer`, `contact` |
+| A scheduled property visit          | `siteVisit`             | `showing`, `viewing`, `tour`  |
 
 The last row is worth care: the codebase inherited `showings` from a US-built
 template, but Indian brokers say "site visit." New code uses `siteVisit`.

@@ -1,24 +1,24 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tailspin } from "ldrs/react";
-import "ldrs/react/Tailspin.css";
 
 import { cn } from "@/lib/utils";
+
+import "ldrs/react/Tailspin.css";
 
 const buttonVariants = cva(
     `
       group/button inline-flex shrink-0 items-center justify-center rounded-control border
       border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all
-      duration-160 ease-out
-      outline-none select-none
+      duration-160 ease-out outline-none select-none
       focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
       active:not-aria-[haspopup]:translate-y-px active:not-aria-[haspopup]:scale-[0.97]
       disabled:pointer-events-none disabled:opacity-50
       aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20
+      data-loading:pointer-events-none data-loading:opacity-80
       dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40
       [&_svg]:pointer-events-none [&_svg]:shrink-0
       [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
-      data-loading:pointer-events-none data-loading:opacity-80
     `,
     {
         variants: {
@@ -91,7 +91,7 @@ const buttonVariants = cva(
 
 function ButtonSpinner({ className }: { className?: string }) {
     return (
-        <span className={cn("inline-flex size-4 shrink-0", className)} aria-hidden="true">
+        <span className={cn("inline-flex shrink-0 block-4 inline-4", className)} aria-hidden="true">
             <Tailspin size="16" stroke="2" speed="0.9" color="currentColor" />
         </span>
     );
@@ -105,8 +105,7 @@ function Button({
     disabled,
     children,
     ...props
-}: ButtonPrimitive.Props &
-    VariantProps<typeof buttonVariants> & { loading?: boolean }) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & { loading?: boolean }) {
     return (
         <ButtonPrimitive
             data-slot="button"

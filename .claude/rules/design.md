@@ -1,9 +1,9 @@
 ---
 paths:
-  - "app/**/*.{ts,tsx}"
-  - "components/**/*.{ts,tsx}"
-  - "app/globals.css"
-  - "tailwind.config.{ts,js,mjs}"
+    - "app/**/*.{ts,tsx}"
+    - "components/**/*.{ts,tsx}"
+    - "app/globals.css"
+    - "tailwind.config.{ts,js,mjs}"
 ---
 
 # Design

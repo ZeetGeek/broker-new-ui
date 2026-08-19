@@ -51,10 +51,10 @@ If a feature seems to need one, it does not — re-read this section.
 
 Account type is a **flag on the account**, not a role:
 
-| `account_type` | Chosen at signup as | Can manage a team? |
-|---|---|---|
-| `individual` | Independent Owner / Independent Broker | No |
-| `organization` | Builder Company / Broker Agency | Yes |
+| `account_type` | Chosen at signup as                    | Can manage a team? |
+| -------------- | -------------------------------------- | ------------------ |
+| `individual`   | Independent Owner / Independent Broker | No                 |
+| `organization` | Builder Company / Broker Agency        | Yes                |
 
 Organization accounts can create and manage a **team** — add members, set
 configurable access, define assignment rules, suspend or remove members. Team
@@ -67,13 +67,13 @@ Broker; being on a team is not a third role.
 
 Use these exact terms. They mean specific things.
 
-| Term | Meaning |
-|---|---|
-| **Representation** | The consent-gated relationship between an owner and a broker for a specific property. Created by request + approval. |
-| **Request to represent** | A broker asking an owner for permission to represent a property. Not a purchase, not an inquiry. |
-| **Broker property lead** | An owner-facing mirror of a broker's CRM client record. Denormalized on purpose. |
-| **Portal** | The owner-side vs broker-side split of the app. A user sees one portal, never both. |
-| **Pipeline** | The broker's CRM stages a client moves through toward a closed deal. |
+| Term                     | Meaning                                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| **Representation**       | The consent-gated relationship between an owner and a broker for a specific property. Created by request + approval. |
+| **Request to represent** | A broker asking an owner for permission to represent a property. Not a purchase, not an inquiry.                     |
+| **Broker property lead** | An owner-facing mirror of a broker's CRM client record. Denormalized on purpose.                                     |
+| **Portal**               | The owner-side vs broker-side split of the app. A user sees one portal, never both.                                  |
+| **Pipeline**             | The broker's CRM stages a client moves through toward a closed deal.                                                 |
 
 Note on user-facing language: internal terms are not always the right words to
 show users. "Request to represent" reads better to an owner as something like
@@ -134,5 +134,5 @@ These are genuinely undecided. Do not invent an answer — ask.
 
 ---
 
-*Sections for UI conventions, SEO, and code style will be added to this file
-later. They are intentionally absent for now.*
+_Sections for UI conventions, SEO, and code style will be added to this file
+later. They are intentionally absent for now._

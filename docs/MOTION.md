@@ -21,7 +21,7 @@ serves the design system, it does not set its own rules for those.
    here is judged first on whether it survives a ₹8,000 phone, not whether it
    looks good in a recording on a MacBook.
 2. **The owner-approval screen is the highest-stakes click in the product.**
-   Motion there must feel *certain* — a confirmed action should look
+   Motion there must feel _certain_ — a confirmed action should look
    confirmed. Playful bounce belongs on a badge, never on a consent action.
 3. **This is a CRM, not a marketing site.** Brokers use this all day. Motion
    that is charming once and annoying on the 400th click is a net loss.
@@ -67,22 +67,22 @@ intent. Put the real values in one TS file so both Motion and any manual
 ```ts
 // lib/motion/tokens.ts
 export const spring = {
-  snappy: { type: "spring", stiffness: 500, damping: 30 },
-  gentle: { type: "spring", stiffness: 260, damping: 26 },
-  bouncy: { type: "spring", stiffness: 400, damping: 17 },
+    snappy: { type: "spring", stiffness: 500, damping: 30 },
+    gentle: { type: "spring", stiffness: 260, damping: 26 },
+    bouncy: { type: "spring", stiffness: 400, damping: 17 },
 } as const;
 
 export const duration = {
-  instant: 0.1,
-  fast: 0.16,
-  base: 0.22,
-  slow: 0.32,
+    instant: 0.1,
+    fast: 0.16,
+    base: 0.22,
+    slow: 0.32,
 } as const;
 
 export const ease = {
-  out: [0.16, 1, 0.3, 1],
-  in: [0.7, 0, 0.84, 0],
-  inOut: [0.65, 0, 0.35, 1],
+    out: [0.16, 1, 0.3, 1],
+    in: [0.7, 0, 0.84, 0],
+    inOut: [0.65, 0, 0.35, 1],
 } as const;
 ```
 
@@ -95,16 +95,16 @@ across forty components is how a codebase ends up with eleven different
 
 ## 2. Defaults — what every interactive element gets, no exceptions
 
-| Element | Rest → Hover | Rest → Active/Tap | Focus-visible |
-|---|---|---|---|
-| Primary button | `scale: 1 → 1.02`, `--duration-fast`, `ease-out` | `scale: 0.97`, `--duration-instant` | 2px ring, `brand`, no animation on the ring itself — it snaps in |
-| Secondary/ghost button | background fade only, `--duration-fast` | `scale: 0.97` | same ring |
-| Card (clickable) | `shadow-sm → shadow-md`, `y: 0 → -2px`, `--duration-fast` | `scale: 0.99` | ring on the card, not inside it |
-| Icon button | background fade to `surface-muted`, `--duration-fast` | `scale: 0.9` | ring |
-| Input / textarea | border colour fade to `ink-subtle`, `--duration-fast` | — | border colour fade to `brand`, ring, `--duration-fast` |
-| Checkbox / switch | — | `spring.snappy` on the thumb/check position | ring |
-| Nav item (bottom bar / sidebar) | icon `scale: 1 → 1.08` on the active one only | `scale: 0.95` | ring |
-| Link (inline text) | underline fade in, `--duration-fast` | — | ring, 2px offset |
+| Element                         | Rest → Hover                                              | Rest → Active/Tap                           | Focus-visible                                                    |
+| ------------------------------- | --------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------- |
+| Primary button                  | `scale: 1 → 1.02`, `--duration-fast`, `ease-out`          | `scale: 0.97`, `--duration-instant`         | 2px ring, `brand`, no animation on the ring itself — it snaps in |
+| Secondary/ghost button          | background fade only, `--duration-fast`                   | `scale: 0.97`                               | same ring                                                        |
+| Card (clickable)                | `shadow-sm → shadow-md`, `y: 0 → -2px`, `--duration-fast` | `scale: 0.99`                               | ring on the card, not inside it                                  |
+| Icon button                     | background fade to `surface-muted`, `--duration-fast`     | `scale: 0.9`                                | ring                                                             |
+| Input / textarea                | border colour fade to `ink-subtle`, `--duration-fast`     | —                                           | border colour fade to `brand`, ring, `--duration-fast`           |
+| Checkbox / switch               | —                                                         | `spring.snappy` on the thumb/check position | ring                                                             |
+| Nav item (bottom bar / sidebar) | icon `scale: 1 → 1.08` on the active one only             | `scale: 0.95`                               | ring                                                             |
+| Link (inline text)              | underline fade in, `--duration-fast`                      | —                                           | ring, 2px offset                                                 |
 
 Rules that generalize the table:
 
@@ -133,12 +133,12 @@ Rules that generalize the table:
 import { duration, ease } from "./tokens";
 
 export const fadeUp = {
-  hidden: { opacity: 0, y: 8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: duration.base, ease: ease.out },
-  },
+    hidden: { opacity: 0, y: 8 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: duration.base, ease: ease.out },
+    },
 };
 ```
 
@@ -171,7 +171,7 @@ interpolates the rest.
 
 ### 3.3 `AnimatePresence` for anything that unmounts
 
-Any conditionally-rendered element that should animate *out* — a toast, a
+Any conditionally-rendered element that should animate _out_ — a toast, a
 validation error under a field, a removed pipeline card, a closed modal —
 must be wrapped in `AnimatePresence` with an `exit` variant. Popping
 something out of the DOM with no exit animation is the single most common
@@ -179,16 +179,16 @@ motion bug: it looks fine until you test the removal path.
 
 ```tsx
 <AnimatePresence>
-  {error && (
-    <motion.p
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: duration.fast, ease: ease.inOut }}
-    >
-      {error}
-    </motion.p>
-  )}
+    {error && (
+        <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: duration.fast, ease: ease.inOut }}
+        >
+            {error}
+        </motion.p>
+    )}
 </AnimatePresence>
 ```
 
@@ -199,9 +199,9 @@ gesture props exist precisely so hover/tap/focus don't need component state:
 
 ```tsx
 <motion.button
-  whileHover={{ scale: 1.02 }}
-  whileTap={{ scale: 0.97 }}
-  transition={{ duration: duration.fast, ease: ease.out }}
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.97 }}
+    transition={{ duration: duration.fast, ease: ease.out }}
 />
 ```
 
@@ -215,7 +215,7 @@ viewport's worth does.
 
 ```tsx
 export const staggerContainer = {
-  visible: { transition: { staggerChildren: 0.05 } },
+    visible: { transition: { staggerChildren: 0.05 } },
 };
 ```
 
@@ -254,9 +254,7 @@ animations to instant, not off-and-broken:
 // app/layout.tsx or a MotionConfig provider
 import { MotionConfig } from "motion/react";
 
-<MotionConfig reducedMotion="user">
-  {children}
-</MotionConfig>
+<MotionConfig reducedMotion="user">{children}</MotionConfig>;
 ```
 
 `reducedMotion="user"` makes Motion automatically shorten every animation to
@@ -269,7 +267,7 @@ Additional rules:
 - Focus rings, error states, and any animation that **carries information**
   (not just polish) must still be visible even at reduced motion — Motion
   handles this by collapsing duration, not opacity, so state is preserved.
-- Never animate something whose *only* affordance is the animation itself
+- Never animate something whose _only_ affordance is the animation itself
   (e.g., a "new" badge that only appears via a fade with nothing else
   marking it as new). Motion is a reinforcement layer, not the sole carrier
   of meaning.
@@ -313,7 +311,7 @@ This is the section that matters most for this product specifically.
   (deal closed, request approved). Bounce on a checkbox or nav item reads
   as toy-like, not delightful.
 - ❌ Animating in every single element on a dashboard on mount. Data
-  screens should feel *present*, not performed. Reserve entrance animation
+  screens should feel _present_, not performed. Reserve entrance animation
   for content that's genuinely new (a toast, a newly-added card after a
   user action) — not the whole page loading for the first time.
 - ❌ Different easing curves for conceptually similar interactions. If two
