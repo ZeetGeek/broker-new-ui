@@ -11,6 +11,8 @@ import { Logo } from "@/components/shared/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { HeroBg } from "./hero-bg";
+
 const TRUST_ITEMS = [
     { icon: Shield01Icon, label: "RERA-verified brokers" },
     { icon: RupeeIcon, label: "No listing fee" },
@@ -21,9 +23,7 @@ export function HomeHero() {
     return (
         <section className="relative overflow-hidden rounded-card block-full">
             <div className="absolute inset-0 bg-brand-ink" aria-hidden="true">
-                {/* Background photo goes here — Indian mid-rise residential building at
-                    dusk, or an empty flat interior. next/image, priority, blur placeholder. */}
-                <div className="absolute inset-0 bg-brand-ink/75" />
+                <HeroBg />
             </div>
 
             <header
@@ -77,12 +77,20 @@ export function HomeHero() {
 
                 <ul
                     className="
-                      body-sm flex flex-wrap items-center justify-center gap-5 text-canvas/70
+                      body-sm flex flex-col items-center gap-3 text-canvas/80
+                      sm:flex-row sm:gap-0 sm:divide-x sm:divide-canvas/15
                     "
                 >
                     {TRUST_ITEMS.map(({ icon, label }) => (
-                        <li key={label} className="flex items-center gap-2">
-                            <HugeiconsIcon icon={icon} className="block-4 inline-4" />
+                        <li key={label} className="flex items-center gap-2 sm:px-5">
+                            <span
+                                className="
+                                  flex items-center justify-center rounded-full bg-canvas/10 block-6
+                                  inline-6
+                                "
+                            >
+                                <HugeiconsIcon icon={icon} className="block-3.5 inline-3.5" />
+                            </span>
                             {label}
                         </li>
                     ))}

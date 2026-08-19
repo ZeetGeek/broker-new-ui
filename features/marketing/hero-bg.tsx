@@ -1,0 +1,37 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+export function HeroBg() {
+    const [desktop, setDesktop] = useState(false);
+
+    useEffect(() => {
+        const mq = window.matchMedia("(min-width: 768px)");
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+        setDesktop(mq.matches && !reduced.matches);
+    }, []);
+
+    return (
+        <>
+            <img
+                src="/video/hero-poster.webp"
+                alt=""
+                className="absolute inset-0 size-full object-cover"
+            />
+            {desktop && (
+                <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="none"
+                    poster="/video/hero-poster.webp"
+                    className="absolute inset-0 size-full object-cover"
+                >
+                    <source src="/video/hero.mp4" type="video/mp4" />
+                </video>
+            )}
+            <div className="absolute inset-0 bg-brand-ink/75" />
+        </>
+    );
+}
