@@ -1,5 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Tailspin } from "ldrs/react";
+import "ldrs/react/Tailspin.css";
 
 import { cn } from "@/lib/utils";
 
@@ -89,28 +91,9 @@ const buttonVariants = cva(
 
 function ButtonSpinner({ className }: { className?: string }) {
     return (
-        <svg
-            className={cn("size-4 animate-spin", className)}
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-        >
-            <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="3"
-            />
-            <path
-                className="opacity-90"
-                d="M22 12a10 10 0 0 0-10-10"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-            />
-        </svg>
+        <span className={cn("inline-flex size-4 shrink-0", className)} aria-hidden="true">
+            <Tailspin size="16" stroke="2" speed="0.9" color="currentColor" />
+        </span>
     );
 }
 

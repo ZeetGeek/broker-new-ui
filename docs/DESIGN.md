@@ -292,6 +292,14 @@ All are pill-shaped. Minimum height 44px on desktop, **48px on mobile**. Minimum
 horizontal padding 20px. Label is sentence case, verb first, one to three words, no
 terminal punctuation.
 
+**Loading state** uses the `loading` prop on `components/ui/button.tsx`. The spinner is
+`Tailspin` from `ldrs/react` (`import { Tailspin } from 'ldrs/react'`), `size="16"
+stroke="2" speed="0.9" color="currentColor"`, so it inherits the button's text colour
+in every variant. Never a hand-rolled SVG spinner, never a different loader component —
+one spinner, one place, `components/ui/button.tsx`. `loading` disables the control, sets
+`aria-busy`, and keeps the label on screen next to the spinner — it never replaces the
+label with the spinner alone.
+
 ### 4.4 Badges and pills
 
 Soft background plus the matching dark text from the same family. Never white text
