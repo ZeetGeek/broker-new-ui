@@ -6,6 +6,7 @@ import {
     SquareLock02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import Link from "next/link";
 
 import { ProgressiveBlur } from "@/components/motion-primitives/progressive-blur";
 import { Logo } from "@/components/shared/logo";
@@ -22,7 +23,7 @@ const TRUST_ITEMS = [
 
 export function HomeHero() {
     return (
-        <section className="relative overflow-hidden rounded-lg block-full">
+        <section className="relative overflow-hidden rounded-card block-full">
             <div className="absolute inset-0 bg-brand-ink" aria-hidden="true">
                 <HeroBg />
 
@@ -61,8 +62,16 @@ export function HomeHero() {
             >
                 <Logo variant="accent" />
                 <nav className="flex items-center gap-2">
-                    <Button variant="link">Login</Button>
-                    <Button variant="highlight">Get started</Button>
+                    <Button
+                        variant="link"
+                        className="text-canvas hover:text-canvas"
+                        render={<Link href="/login" />}
+                    >
+                        Login
+                    </Button>
+                    <Button variant="highlight" render={<Link href="/register" />}>
+                        Get started
+                    </Button>
                 </nav>
             </header>
 
@@ -76,9 +85,8 @@ export function HomeHero() {
                     <div
                         aria-hidden="true"
                         className="
-                          pointer-events-none absolute -inset-x-4 -inset-y-6 rounded-card
-                          bg-radial from-brand-ink/45 from-20% via-brand-ink/25 via-50%
-                          to-transparent to-75%
+                          pointer-events-none absolute -inset-x-4 -inset-y-6 rounded-card bg-radial
+                          from-brand-ink/45 from-20% via-brand-ink/25 via-50% to-transparent to-75%
                           md:-inset-x-10 md:-inset-y-8
                         "
                     />
@@ -86,7 +94,7 @@ export function HomeHero() {
                     <Badge
                         variant="brand"
                         className="
-                          relative body-sm border border-canvas/25 bg-canvas/10 px-3.5 py-1.5
+                          body-sm relative border border-canvas/25 bg-canvas/10 px-3.5 py-1.5
                           text-canvas backdrop-blur-lg
                           [&_svg:not([class*='size-'])]:block-3.5
                           [&_svg:not([class*='size-'])]:inline-3.5
@@ -98,7 +106,7 @@ export function HomeHero() {
 
                     <h1
                         className="
-                          relative display-2 text-canvas
+                          display-2 relative text-canvas
                           [text-shadow:0_2px_24px_var(--color-brand-ink)]
                         "
                     >
@@ -107,7 +115,7 @@ export function HomeHero() {
 
                     <p
                         className="
-                          relative body text-canvas/90
+                          body relative text-canvas/90
                           [text-shadow:0_1px_16px_var(--color-brand-ink)] max-inline-[420px]
                         "
                     >
@@ -116,16 +124,22 @@ export function HomeHero() {
 
                     <div
                         className="
-                          relative flex flex-col gap-2.5 inline-full sm:flex-row sm:inline-auto
+                          relative flex flex-col gap-2.5 inline-full
+                          sm:flex-row sm:inline-auto
                         "
                     >
-                        <Button size="lg" variant="highlight">
+                        <Button
+                            size="lg"
+                            variant="highlight"
+                            render={<Link href="/register?portal=owner" />}
+                        >
                             List my property free
                         </Button>
                         <Button
                             size="lg"
                             variant="highlight-outline"
                             className="bg-canvas/10 backdrop-blur-lg hover:bg-canvas/15"
+                            render={<Link href="/register?portal=broker" />}
                         >
                             I&apos;m a broker
                             <HugeiconsIcon icon={ArrowRight02Icon} data-icon="inline-end" />
@@ -134,7 +148,7 @@ export function HomeHero() {
 
                     <ul
                         className="
-                          relative body-sm flex flex-col items-center gap-3 text-canvas/90
+                          body-sm relative flex flex-col items-center gap-3 text-canvas/90
                           sm:flex-row sm:gap-0 sm:divide-x sm:divide-canvas/15
                         "
                     >
