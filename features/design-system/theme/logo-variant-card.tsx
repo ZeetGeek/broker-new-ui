@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 
-import { LogoMark } from "@/features/design-system/theme/logo-mark";
+import { LogoMark } from "@/components/shared/logo";
+
 import type { LogoColorVariant } from "@/features/design-system/theme/logo-tokens";
 
 export function LogoVariantCard({ variant }: { variant: LogoColorVariant }) {

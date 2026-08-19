@@ -395,13 +395,23 @@ space, not a second colour.
 Never `urgent` or `danger` on the mark. Those colours mean a deadline or a
 destroy. Never rotate, outline, add a drop shadow, or sit it on a gradient.
 
-Source files live in `public/logo/`. In the app, inline via `LogoMark` in
-`features/design-system/theme/logo-mark.tsx` so the fill can follow the theme.
-Minimum size 32px; below that the plus collapses.
+Source files live in `public/logo/`. In the app, use `Logo` from
+`components/shared/logo.tsx`. Switch colour with the `variant` prop:
 
-Wordmark is the mark plus Bricolage Grotesque (`font-display`), tight tracking,
-same optical size. The product name is a placeholder and lives in
-`config/site.ts` only.
+| `variant` | Mark | Wordmark | Surface |
+|---|---|---|---|
+| `default` | `brand-ink` | `ink` | Light chrome, headers, auth |
+| `inverse` | `canvas` | `canvas` | Dark chrome, quiet |
+| `accent` | `highlight` | white | Dark chrome, the one that leads |
+
+```tsx
+<Logo />
+<Logo variant="inverse" />
+<Logo variant="accent" />
+```
+
+Minimum size 32px; below that the plus collapses. The product name is a
+placeholder and lives in `config/site.ts` only.
 
 ---
 

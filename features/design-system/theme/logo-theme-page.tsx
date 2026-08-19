@@ -1,9 +1,14 @@
+import { cn } from "@/lib/utils";
+
+import { Logo, LogoMark } from "@/components/shared/logo";
+
 import { SITE_NAME } from "@/config/site";
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
-import { LogoAppIcon, LogoLockup, LogoMark } from "@/features/design-system/theme/logo-mark";
+import { LogoAppIcon } from "@/features/design-system/theme/logo-mark";
 import {
     LOGO_APP_ICONS,
     LOGO_COLOR_VARIANTS,
+    LOGO_COMPONENT_VARIANTS,
     LOGO_MIN_SIZE_PX,
     LOGO_SIZES_PX,
     LOGO_SOURCE_FILES,
@@ -165,71 +170,34 @@ export function LogoThemePage() {
                           md:text-[22px]
                         "
                     >
-                        Wordmark
+                        Component
                     </h2>
                     <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
-                        Mark plus Bricolage Grotesque, tight tracking, same optical size. The
-                        product name is a placeholder: change it in{" "}
-                        <code className="text-[12px]">config/site.ts</code> only.
+                        <code className="text-[12px]">components/shared/logo.tsx</code>. Change
+                        colour with <code className="text-[12px]">variant</code>. Inverse is the
+                        quiet dark option. Accent is the one that leads on dark chrome.
                     </p>
-                    <div className="mbs-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                        <div
-                            className="
-                              flex items-center rounded-card border border-border-warm bg-surface
-                              px-5 py-6
-                            "
-                        >
-                            <LogoLockup size={40} className="text-brand-ink" decorative />
-                        </div>
-                        <div className="flex items-center rounded-card bg-brand-deep px-5 py-6">
-                            <LogoLockup size={40} className="text-canvas" decorative />
-                        </div>
-                    </div>
-                </section>
-
-                <section>
-                    <h2
-                        className="
-                          font-display text-[20px] leading-[1.15] font-semibold tracking-tight
-                          text-ink
-                          md:text-[22px]
-                        "
-                    >
-                        In place
-                    </h2>
-                    <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
-                        How the mark sits in chrome. Header is 56px, same as the bottom nav.
-                    </p>
-                    <div className="mbs-4 space-y-3">
-                        <div
-                            className="
-                              flex items-center gap-2 rounded-card border border-border-warm
-                              bg-surface px-4 block-14
-                            "
-                        >
-                            <LogoMark size={32} className="text-brand-ink" decorative />
-                            <span
-                                className="
-                                  font-display text-[20px] font-semibold tracking-tight text-ink
-                                "
-                            >
-                                {SITE_NAME}
-                            </span>
-                        </div>
-                        <div
-                            className="
-                              flex items-center gap-2 rounded-card bg-brand-deep px-4 block-14
-                            "
-                        >
-                            <LogoMark size={32} className="text-highlight" decorative />
-                            <span
-                                className="
-                                  font-display text-[20px] font-semibold tracking-tight text-white
-                                "
-                            >
-                                {SITE_NAME}
-                            </span>
-                        </div>
+                    <div className="mbs-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                        {LOGO_COMPONENT_VARIANTS.map((item) => (
+                            <div key={item.name} className="flex flex-col gap-3">
+                                <div
+                                    className={cn(
+                                        "flex items-center rounded-card px-5 py-6",
+                                        item.surfaceClass,
+                                    )}
+                                >
+                                    <Logo variant={item.name} size="lg" decorative />
+                                </div>
+                                <div className="space-y-1">
+                                    <code className="text-[13px] text-ink">
+                                        variant=&quot;{item.name}&quot;
+                                    </code>
+                                    <p className="text-[13px] leading-[1.45] text-ink-muted">
+                                        {item.note}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </section>
 
@@ -245,8 +213,11 @@ export function LogoThemePage() {
                     </h2>
                     <p className="mbs-1 text-[13px] leading-[1.45] text-ink-muted max-inline-[65ch]">
                         Static SVGs for <code className="text-[12px]">&lt;img&gt;</code> and
-                        favicons. Prefer <code className="text-[12px]">LogoMark</code> in the app so
-                        the fill can follow the theme.
+                        favicons. Prefer{" "}
+                        <code className="text-[12px]">
+                            &lt;Logo variant=&quot;default&quot; /&gt;
+                        </code>{" "}
+                        from <code className="text-[12px]">components/shared/logo.tsx</code>.
                     </p>
                     <ul
                         className="
