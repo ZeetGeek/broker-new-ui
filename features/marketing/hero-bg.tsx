@@ -16,7 +16,7 @@ export function HeroBg() {
             <img
                 src="/video/hero-poster.webp"
                 alt=""
-                className="absolute inset-0 size-full object-cover"
+                className="absolute inset-0 object-cover block-full inline-full"
             />
             {desktop && (
                 <video
@@ -26,12 +26,11 @@ export function HeroBg() {
                     playsInline
                     preload="none"
                     poster="/video/hero-poster.webp"
-                    className="absolute inset-0 size-full object-cover"
+                    className="absolute inset-0 object-cover block-full inline-full"
                 >
                     <source src="/video/hero.mp4" type="video/mp4" />
                 </video>
             )}
-            <div className="absolute inset-0 bg-brand-ink/75" />
         </>
     );
 }

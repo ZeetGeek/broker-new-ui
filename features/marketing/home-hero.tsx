@@ -7,6 +7,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
+import { ProgressiveBlur } from "@/components/motion-primitives/progressive-blur";
 import { Logo } from "@/components/shared/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,32 @@ export function HomeHero() {
         <section className="relative overflow-hidden rounded-card block-full">
             <div className="absolute inset-0 bg-brand-ink" aria-hidden="true">
                 <HeroBg />
+
+                <ProgressiveBlur
+                    className="
+                      pointer-events-none absolute inset-x-0 inset-bs-0 block-1/5
+                      md:block-1/4
+                    "
+                    direction="top"
+                    blurLayers={4}
+                    blurIntensity={2}
+                />
+                <ProgressiveBlur
+                    className="
+                      pointer-events-none absolute inset-x-0 inset-be-0 block-1/5
+                      md:block-1/4
+                    "
+                    direction="bottom"
+                    blurLayers={4}
+                    blurIntensity={2}
+                />
+
+                <div
+                    className="
+                      absolute inset-0 bg-linear-to-b from-brand-ink/40 via-brand-ink/58
+                      to-brand-ink/75
+                    "
+                />
             </div>
 
             <header
@@ -48,7 +75,8 @@ export function HomeHero() {
                 <Badge
                     variant="brand"
                     className="
-                      body-sm border border-brand/30 bg-brand/15 px-3.5 py-1.5 text-canvas
+                      body-sm border border-canvas/25 bg-canvas/10 px-3.5 py-1.5 text-canvas
+                      backdrop-blur-md
                       [&_svg:not([class*='size-'])]:block-3.5
                       [&_svg:not([class*='size-'])]:inline-3.5
                     "
@@ -57,11 +85,20 @@ export function HomeHero() {
                     Now onboarding brokers and owners
                 </Badge>
 
-                <h1 className="display-2 text-canvas">
+                <h1
+                    className="
+                      display-2 text-canvas [text-shadow:0_2px_24px_var(--color-brand-ink)]
+                    "
+                >
                     Sell your property through a broker you trust.
                 </h1>
 
-                <p className="body text-canvas/80 max-inline-[420px]">
+                <p
+                    className="
+                      body text-canvas/90 [text-shadow:0_1px_16px_var(--color-brand-ink)]
+                      max-inline-[420px]
+                    "
+                >
                     List it free. Verified brokers ask to sell it. You approve the one you like.
                 </p>
 
@@ -69,7 +106,11 @@ export function HomeHero() {
                     <Button size="lg" variant="highlight">
                         List my property free
                     </Button>
-                    <Button size="lg" variant="highlight-outline">
+                    <Button
+                        size="lg"
+                        variant="highlight-outline"
+                        className="bg-canvas/10 backdrop-blur-md hover:bg-canvas/15"
+                    >
                         I&apos;m a broker
                         <HugeiconsIcon icon={ArrowRight02Icon} data-icon="inline-end" />
                     </Button>
@@ -77,7 +118,7 @@ export function HomeHero() {
 
                 <ul
                     className="
-                      body-sm flex flex-col items-center gap-3 text-canvas/80
+                      body-sm flex flex-col items-center gap-3 text-canvas/90
                       sm:flex-row sm:gap-0 sm:divide-x sm:divide-canvas/15
                     "
                 >
@@ -85,8 +126,8 @@ export function HomeHero() {
                         <li key={label} className="flex items-center gap-2 sm:px-5">
                             <span
                                 className="
-                                  flex items-center justify-center rounded-full bg-canvas/10 block-6
-                                  inline-6
+                                  flex items-center justify-center rounded-full bg-canvas/20
+                                  backdrop-blur-md block-6 inline-6
                                 "
                             >
                                 <HugeiconsIcon icon={icon} className="block-3.5 inline-3.5" />
