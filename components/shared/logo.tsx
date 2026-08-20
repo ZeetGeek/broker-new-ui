@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
+import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
@@ -70,6 +71,7 @@ const logoVariants = cva("flex items-center gap-2", {
 export type LogoProps = VariantProps<typeof logoVariants> & {
     className?: string;
     decorative?: boolean;
+    href?: string | false;
 };
 
 export function LogoMark({
@@ -107,17 +109,36 @@ export function Logo({
     size = "md",
     className,
     decorative = false,
+    href = "/",
 }: LogoProps) {
     const markSize = MARK_PX[size ?? "md"];
     const title = SITE_NAME;
+
+    const content = (
+        <>
+            <LogoMark size={markSize} className={markColor({ variant })} decorative />
+            <span className={wordColor({ variant, size })}>{title}</span>
+        </>
+    );
+
+    if (href && !decorative) {
+        return (
+            <Link
+                href={href}
+                aria-label={title}
+                className={cn(logoVariants({ variant, size }), className)}
+            >
+                {content}
+            </Link>
+        );
+    }
 
     return (
         <div
             className={cn(logoVariants({ variant, size }), className)}
             aria-hidden={decorative || undefined}
         >
-            <LogoMark size={markSize} className={markColor({ variant })} decorative />
-            <span className={wordColor({ variant, size })}>{title}</span>
+            {content}
         </div>
     );
 }

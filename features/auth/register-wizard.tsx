@@ -4,89 +4,17 @@ import * as React from "react";
 import Link from "next/link";
 
 import { Mail01Icon, SquareLock02Icon } from "@hugeicons/core-free-icons";
-import { addCollection, Icon } from "@iconify/react/offline";
 
-import { cn } from "@/lib/utils";
-
-import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import brands from "./thesvg-color-brands.json";
-
-addCollection(brands as Parameters<typeof addCollection>[0]);
-
-type Portal = "owner" | "broker";
-
-const PORTAL_OPTIONS: { value: Portal; label: string }[] = [
-    { value: "owner", label: "As an owner" },
-    { value: "broker", label: "As a broker" },
-];
+import { AuthBackLink, AuthFormFrame } from "./auth-back-link";
+import { OrDivider } from "./or-divider";
+import { type Portal } from "./portal";
+import { PortalPicker } from "./portal-picker";
+import { SocialAuthButtons } from "./social-auth-buttons";
 
 const PILL_FIELD = "rounded-control!";
-
-function BrandIcon({ icon }: { icon: "thesvg-color:google" | "thesvg-color:apple-light" }) {
-    return (
-        <Icon icon={icon} width={20} height={20} className="block-5 inline-5" aria-hidden="true" />
-    );
-}
-
-function PortalPicker({ value, onChange }: { value: Portal; onChange: (portal: Portal) => void }) {
-    return (
-        <div
-            role="radiogroup"
-            aria-label="Sign up as"
-            className="flex items-center justify-center gap-8"
-        >
-            {PORTAL_OPTIONS.map((option) => {
-                const selected = value === option.value;
-                return (
-                    <button
-                        key={option.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => onChange(option.value)}
-                        className="flex items-center gap-2 py-3"
-                    >
-                        <span
-                            className={cn(
-                                `
-                                  flex items-center justify-center rounded-full border-2 block-5
-                                  inline-5
-                                `,
-                                selected ? "border-brand bg-brand" : "border-ink-subtle bg-surface",
-                            )}
-                        >
-                            {selected ? (
-                                <span className="rounded-full bg-surface block-2 inline-2" />
-                            ) : null}
-                        </span>
-                        <span className="body font-medium text-ink">{option.label}</span>
-                    </button>
-                );
-            })}
-        </div>
-    );
-}
-
-function SocialButton({ children, mark }: { children: React.ReactNode; mark: React.ReactNode }) {
-    return (
-        <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="
-              gap-3 border-border-warm bg-surface font-medium text-ink shadow-sm block-control-xl
-              inline-full
-              hover:bg-surface-muted
-            "
-        >
-            {mark}
-            {children}
-        </Button>
-    );
-}
 
 export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Portal }) {
     const [portal, setPortal] = React.useState<Portal>(initialPortal);
@@ -96,32 +24,21 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
     }
 
     return (
-        <div className="mx-auto flex flex-col gap-6 inline-full max-inline-96">
+        <AuthFormFrame>
+            <AuthBackLink href="/">Back to home</AuthBackLink>
+            <div className="mx-auto flex flex-col gap-6 inline-full max-inline-96">
             <div className="flex flex-col items-center gap-6 text-center">
-                <Logo />
-
                 <div className="flex flex-col gap-2">
                     <h1 className="h1 text-ink">Sign up</h1>
                     <p className="body text-ink-muted">Enter your details to continue.</p>
                 </div>
 
-                <PortalPicker value={portal} onChange={setPortal} />
+                <PortalPicker value={portal} onChange={setPortal} ariaLabel="Sign up as" />
             </div>
 
-            <div className="flex flex-col gap-3">
-                <SocialButton mark={<BrandIcon icon="thesvg-color:google" />}>
-                    Sign up with Google
-                </SocialButton>
-                <SocialButton mark={<BrandIcon icon="thesvg-color:apple-light" />}>
-                    Sign up with Apple
-                </SocialButton>
-            </div>
+            <SocialAuthButtons action="Sign up" />
 
-            <div className="flex items-center gap-4">
-                <span className="grow bg-border-warm block-px" />
-                <span className="body-sm text-ink-subtle">OR</span>
-                <span className="grow bg-border-warm block-px" />
-            </div>
+            <OrDivider />
 
             <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
                 <input type="hidden" name="portal" value={portal} />
@@ -173,12 +90,16 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                 </Button>
             </form>
 
-            <p className="body-sm text-center text-ink-muted">
+            <p className="body text-center text-ink-muted">
                 Already have an account?{" "}
-                <Link href="/login" className="font-medium text-brand underline">
+                <Link
+                    href="/login"
+                    className="body font-medium text-brand underline underline-offset-4"
+                >
                     Log in
                 </Link>
             </p>
-        </div>
+            </div>
+        </AuthFormFrame>
     );
 }
