@@ -22,7 +22,7 @@ export const BUTTON_SIZES = [
     { name: "xs", label: "XS", note: "24px — control-xs" },
     { name: "sm", label: "SM", note: "32px — control-sm" },
     { name: "default", label: "Default", note: "36px — control-md" },
-    { name: "lg", label: "LG", note: "44px — control-lg, tap-target minimum" },
+    { name: "lg", label: "LG", note: "48px — control-xl, same as input lg" },
 ] as const;
 
 export const BUTTON_ICON_SIZES = [

@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 
 import { AuthBackLink, AuthFormFrame } from "./auth-back-link";
 
-const PILL_FIELD = "rounded-control!";
 const RESEND_WAIT_SEC = 30;
 
 const pane = {
@@ -109,7 +108,6 @@ export function ForgotPasswordForm() {
                                     autoComplete="email"
                                     placeholder="you@example.com"
                                     startIcon={Mail01Icon}
-                                    className={PILL_FIELD}
                                     value={email}
                                     onValueChange={(value) => setEmail(value)}
                                 />
@@ -123,7 +121,7 @@ export function ForgotPasswordForm() {
                                 variant="accent"
                                 type="submit"
                                 loading={isSending}
-                                className="block-control-xl inline-full"
+                                className="inline-full"
                             >
                                 Send reset link
                             </Button>
@@ -172,9 +170,7 @@ export function ForgotPasswordForm() {
                                 loading={isSending}
                                 disabled={secondsLeft > 0}
                                 onClick={() => void sendReset()}
-                                className="
-                                  border-border-warm bg-surface block-control-xl inline-full
-                                "
+                                className="border-border-warm bg-surface inline-full"
                             >
                                 {secondsLeft > 0
                                     ? `Resend in ${secondsLeft}s`
@@ -185,7 +181,7 @@ export function ForgotPasswordForm() {
                                 variant="ghost"
                                 type="button"
                                 onClick={handleUseDifferentEmail}
-                                className="block-control-xl inline-full"
+                                className="inline-full"
                             >
                                 Use a different email
                             </Button>

@@ -27,7 +27,7 @@ import "ldrs/react/Tailspin.css";
 
 const inputVariants = cva(
     `
-      peer rounded-inner border-2 border-border-warm bg-surface text-[15px] text-ink
+      peer rounded-control border-2 border-border-warm bg-surface text-[15px] text-ink
       transition-[border-color,box-shadow] outline-none inline-full min-inline-0
       file:inline-flex file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-ink
       file:block-7
@@ -316,7 +316,10 @@ function Input({
 
     return (
         <div ref={wrapRef} className={cn("t-input-wrap inline-full", wrapperClassName)}>
-            <div ref={fieldRef} className={cn("relative", clearable && "t-clear")}>
+            <div
+                ref={fieldRef}
+                className={cn("relative rounded-control", clearable && "t-clear")}
+            >
                 {startIcon ? (
                     <span
                         className={cn(iconSlotVariants({ side: "start", size }))}

@@ -75,7 +75,7 @@ const buttonVariants = cva(
                   has-data-[icon=inline-start]:ps-2
                 `,
                 lg: `
-                  gap-1.5 px-5 block-control-lg inline-auto min-inline-control-lg
+                  gap-1.5 px-5 block-control-xl inline-auto min-inline-control-xl
                   has-data-[icon=inline-end]:pe-4
                   has-data-[icon=inline-start]:ps-4
                 `,
@@ -85,7 +85,7 @@ const buttonVariants = cva(
                   [&_svg:not([class*='size-'])]:block-3 [&_svg:not([class*='size-'])]:inline-3
                 `,
                 "icon-sm": `block-control-sm inline-control-sm`,
-                "icon-lg": `block-control-lg inline-control-lg`,
+                "icon-lg": `block-control-xl inline-control-xl`,
             },
         },
         defaultVariants: {

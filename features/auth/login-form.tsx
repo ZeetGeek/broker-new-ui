@@ -12,8 +12,6 @@ import { AuthBackLink, AuthFormFrame } from "./auth-back-link";
 import { OrDivider } from "./or-divider";
 import { SocialAuthButtons } from "./social-auth-buttons";
 
-const PILL_FIELD = "rounded-control!";
-
 export function LoginForm() {
     function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -50,7 +48,6 @@ export function LoginForm() {
                             autoComplete="email"
                             placeholder="you@example.com"
                             startIcon={Mail01Icon}
-                            className={PILL_FIELD}
                         />
                     </div>
 
@@ -80,7 +77,6 @@ export function LoginForm() {
                             autoComplete="current-password"
                             placeholder="Enter password"
                             startIcon={SquareLock02Icon}
-                            className={PILL_FIELD}
                         />
                     </div>
 
@@ -88,7 +84,7 @@ export function LoginForm() {
                         size="lg"
                         variant="accent"
                         type="submit"
-                        className="block-control-xl inline-full"
+                        className="inline-full"
                     >
                         Sign in
                     </Button>

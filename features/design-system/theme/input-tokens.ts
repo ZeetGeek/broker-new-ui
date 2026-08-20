@@ -4,7 +4,7 @@ export const INPUT_SIZES = [
     {
         name: "lg",
         label: "LG",
-        note: "48px — control-xl, mobile tap target. Primary mobile forms.",
+        note: "48px — control-xl, same as button lg. Primary mobile forms.",
     },
 ] as const;
 

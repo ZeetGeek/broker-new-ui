@@ -89,15 +89,15 @@ export function InputThemePage() {
         <DesignSystemShell
             eyebrow="Components"
             title="Input."
-            description="One base-ui primitive, wrapped once in components/ui/input.tsx. Three sizes, icon slots on either edge, a built-in password toggle, clearable, loading, and error/success states — all sharing the same aria-invalid and data-success wiring so a form only sets props, never inline styles."
+            description="One base-ui primitive, wrapped once in components/ui/input.tsx. Pill-shaped like buttons via rounded-control. Three sizes, icon slots on either edge, a built-in password toggle, clearable, loading, and error/success states — all sharing the same aria-invalid and data-success wiring so a form only sets props, never inline styles."
         >
             <div className="space-y-10">
                 <section>
                     <h2 className="h4 text-ink">Sizes</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        Default meets the 44px desktop minimum. Use{" "}
+                        Default is 36px, same as button default. Use{" "}
                         <code className="body-xs">size=&quot;lg&quot;</code> for the primary mobile
-                        form — it clears the 48px tap-target floor.
+                        form — 48px, matching button <code className="body-xs">lg</code>.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         {INPUT_SIZES.map((s) => (
@@ -203,8 +203,8 @@ export function InputThemePage() {
                             once.
                         </li>
                         <li>
-                            14px radius via `rounded-inner`, matching inset image containers per
-                            docs/DESIGN.md §3.2.
+                            Pill-shaped via `rounded-control`, same as buttons and badges. Never
+                            `rounded-md`, `rounded-lg`, or `rounded-inner` on a field.
                         </li>
                     </ul>
                 </section>

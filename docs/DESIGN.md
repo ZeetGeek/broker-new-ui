@@ -267,11 +267,11 @@ The design is generously rounded. Sharp corners look wrong in it.
 
 ```
 --radius-card    20px   cards, photo containers, dark panels
---radius-inner   14px   inset strips, images inside cards, inputs
---radius-control  9999px  buttons, badges, pills, filter chips, tabs
+--radius-inner   14px   inset strips, images inside cards
+--radius-control  9999px  buttons, badges, inputs, pills, filter chips, tabs
 ```
 
-Buttons and badges are fully pill-shaped. Not `rounded-md`. Not `rounded-lg`.
+Buttons, badges, and inputs are fully pill-shaped. Not `rounded-md`. Not `rounded-lg`. Not `rounded-inner` on a field.
 
 Never apply a radius to a single-sided border. If a row uses `border-l` as an accent,
 its radius is 0.
@@ -351,9 +351,10 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 | Ghost             | none                         | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
 
 All are pill-shaped. Height comes from the control-height scale (§3.1a):
-`xs`/`sm`/`default`/`lg` map to `control-xs`/`control-sm`/`control-md`/`control-lg`
-(44px) — `lg` is the one that meets the desktop/mobile tap-target minimum, so
-use it on primary mobile actions. Minimum horizontal padding 20px. Label is
+`xs`/`sm`/`default`/`lg` map to `control-xs`/`control-sm`/`control-md`/`control-xl`
+(48px). Button `lg` and input `lg` are the same height — never mix steps in one
+form row. `lg` is the one that meets the 48px mobile tap-target floor, so use
+it on primary mobile actions. Minimum horizontal padding 20px. Label is
 sentence case, verb first, one to three words, no terminal punctuation.
 
 **Loading state** uses the `loading` prop on `components/ui/button.tsx`. The spinner is
@@ -469,8 +470,8 @@ placeholder and lives in `config/site.ts` only.
 
 One base-ui primitive, wrapped once in `components/ui/input.tsx`. Three
 sizes (`sm` / `default` / `lg`) off the control-height scale (§3.1a) —
-`control-sm` / `control-md` / `control-xl` (48px, the mobile tap-target
-minimum — `lg` is the primary-mobile-form size) — an optional icon in either
+`control-sm` / `control-md` / `control-xl` (48px). Input `lg` and button `lg`
+share that height — `lg` is the primary-mobile-form size — an optional icon in either
 end slot, and error/success/loading states that share one wiring instead of
 three.
 
@@ -487,7 +488,7 @@ three.
 └──────────────────────────────┘
 ```
 
-14px radius (`rounded-inner`), 1px `border-warm`, `surface` fill. Rest state
+Pill radius (`rounded-control`), 2px `border-warm`, `surface` fill. Rest state
 carries no shadow — `shadow-xs` is reserved for the rare case an input sits
 directly on `canvas` rather than inside a card that already separates it.
 
@@ -639,7 +640,7 @@ Things that will be rejected in review:
 - Gradients anywhere, including on photo overlays
 - Orange used decoratively rather than for a deadline
 - Lime appearing more than once per card, or as text on a light surface
-- `rounded-md` or `rounded-lg` on a button
+- `rounded-md` or `rounded-lg` on a button, badge, or input
 - Title Case or ALL CAPS outside the eyebrow label
 - Arbitrary spacing values (`p-[13px]`, `gap-[7px]`)
 - Emoji in production UI

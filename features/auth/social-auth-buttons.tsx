@@ -23,8 +23,7 @@ function SocialButton({ children, mark }: { children: ReactNode; mark: ReactNode
             variant="outline"
             size="lg"
             className="
-              gap-3 border-border-warm bg-surface font-medium text-ink shadow-sm block-control-xl
-              inline-full
+              gap-3 border-border-warm bg-surface font-medium text-ink shadow-sm inline-full
               hover:bg-surface-muted
             "
         >

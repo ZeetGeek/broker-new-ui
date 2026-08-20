@@ -99,8 +99,8 @@ export function ButtonThemePage() {
                 <section>
                     <h2 className="h4 text-ink">Sizes</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        Default and lg meet the 44px/48px minimum tap target. xs/sm are dense
-                        contexts only — tables, toolbars — never a primary mobile action.
+                        `lg` is 48px (`control-xl`), the same height as input `lg`. xs/sm are
+                        dense contexts only — tables, toolbars — never a primary mobile action.
                     </p>
                     <div
                         className="
@@ -207,8 +207,8 @@ export function ButtonThemePage() {
                             Pill-shaped via `rounded-control`. Never `rounded-md` or `rounded-lg`.
                         </li>
                         <li>
-                            Minimum tap target 44px desktop, 48px mobile — use `size=&quot;lg&quot;`
-                            on primary mobile actions.
+                            `lg` is 48px (`control-xl`), matching input `lg`. Use it on primary
+                            mobile actions. Never a height override.
                         </li>
                         <li>
                             `loading` keeps the label, adds a spinner, and disables the control — it

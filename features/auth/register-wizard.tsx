@@ -14,8 +14,6 @@ import { type Portal } from "./portal";
 import { PortalPicker } from "./portal-picker";
 import { SocialAuthButtons } from "./social-auth-buttons";
 
-const PILL_FIELD = "rounded-control!";
-
 export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Portal }) {
     const [portal, setPortal] = React.useState<Portal>(initialPortal);
 
@@ -57,7 +55,6 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                         autoComplete="email"
                         placeholder="you@example.com"
                         startIcon={Mail01Icon}
-                        className={PILL_FIELD}
                     />
                 </div>
 
@@ -76,7 +73,6 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                         autoComplete="new-password"
                         placeholder="Enter password"
                         startIcon={SquareLock02Icon}
-                        className={PILL_FIELD}
                     />
                 </div>
 
@@ -84,7 +80,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                     size="lg"
                     variant="accent"
                     type="submit"
-                    className="block-control-xl inline-full"
+                    className="inline-full"
                 >
                     Sign up
                 </Button>

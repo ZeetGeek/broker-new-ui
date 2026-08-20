@@ -33,7 +33,7 @@ Six rules restated here because they are the expensive ones to get wrong:
 4. **Headings are Bricolage Grotesque (`font-display`), everything else is DM Sans
    (`font-sans`).** Display sizes need tight tracking (-0.02em to -0.03em) or they read
    as a fallback font. Prices and table columns use tabular figures.
-5. **Buttons and badges are fully pill-shaped, cards are 20px radius.** Never
+5. **Buttons, badges, and inputs are fully pill-shaped, cards are 20px radius.** Never
    `rounded-md` or `rounded-lg` on a control. Minimum tap target 48px on mobile.
 6. **Every screen is composed at 360px first.** Single column, bottom nav, what the user
    must act on above the fold. Three-column grids and the drag-and-drop Kanban are
