@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
+import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail01Icon } from "@hugeicons/core-free-icons";
@@ -180,6 +181,16 @@ export function ForgotPasswordForm() {
                                 Send reset link
                             </Button>
                         </form>
+
+                        <p className="body text-center text-ink-muted">
+                            Remember your password?{" "}
+                            <Link
+                                href="/login"
+                                className="body font-medium text-brand underline underline-offset-4"
+                            >
+                                Log in
+                            </Link>
+                        </p>
                     </section>
 
                     <section

@@ -78,14 +78,14 @@ function PasswordRequirements({ password }: { password: string }) {
                             <li
                                 key={requirement.id}
                                 className={cn(
-                                    "body-sm flex items-center gap-2",
-                                    met ? "text-success-mid" : "text-ink-muted",
+                                    "body flex items-center gap-2",
+                                    met ? "text-success" : "text-ink-muted",
                                 )}
                                 aria-label={`${met ? "Met" : "Needed"}: ${requirement.label}`}
                             >
                                 <HugeiconsIcon
                                     icon={met ? CheckmarkCircle02Icon : CircleIcon}
-                                    className="shrink-0 block-3.5 inline-3.5"
+                                    className="shrink-0 block-4 inline-4"
                                     strokeWidth={2}
                                     aria-hidden="true"
                                 />

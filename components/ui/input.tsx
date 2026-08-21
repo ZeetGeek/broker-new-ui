@@ -183,11 +183,11 @@ function InputMessage({
             role={tone === "error" ? "alert" : undefined}
             data-text={shimmer ? text : undefined}
             className={cn(
-                "t-text-swap mbs-1.5 text-[12px] leading-[1.4]",
+                "t-text-swap body-sm mbs-1.5",
                 tone === "error"
-                    ? "text-danger-mid"
+                    ? "text-danger"
                     : tone === "success"
-                      ? "text-success-mid"
+                      ? "text-success"
                       : "text-ink-subtle",
                 shimmer && "t-shimmer",
             )}
@@ -389,7 +389,7 @@ function Input({
                                 <span className="t-icon" data-icon="b">
                                     <HugeiconsIcon
                                         icon={CheckmarkCircle02Icon}
-                                        className="text-success-mid"
+                                        className="text-success"
                                         aria-hidden="true"
                                     />
                                 </span>
