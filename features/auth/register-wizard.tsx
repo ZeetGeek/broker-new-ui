@@ -68,10 +68,10 @@ function PasswordRequirements({ password }: { password: string }) {
                     key="password-requirements"
                     aria-label="Password requirements"
                     className="flex flex-col gap-1.5 overflow-hidden"
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: duration.fast, ease: ease.out }}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: duration.base, ease: ease.inOut }}
                 >
                     {PASSWORD_REQUIREMENTS.map((requirement) => {
                         const met = requirement.test(password);
