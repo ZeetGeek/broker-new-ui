@@ -3,12 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 
-import { Mail01Icon, SquareLock02Icon, Tick02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Mail01Icon, SquareLock02Icon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 
 import { AuthBackLink, AuthFormFrame } from "./auth-back-link";
 import { AuthHeading } from "./auth-heading";
@@ -74,71 +73,53 @@ export function LoginForm() {
                         />
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between gap-3">
-                            <label htmlFor="login-password" className="body font-medium text-ink">
-                                Password{" "}
-                                <span className="text-brand" aria-hidden="true">
-                                    *
-                                </span>
-                            </label>
-                            <Link
-                                href="/forgot-password"
-                                className="
-                                  body-sm font-medium text-brand underline-offset-4
-                                  hover:underline
-                                "
-                            >
-                                Forgot password?
-                            </Link>
+                    <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-between gap-3">
+                                <label
+                                    htmlFor="login-password"
+                                    className="body font-medium text-ink"
+                                >
+                                    Password{" "}
+                                    <span className="text-brand" aria-hidden="true">
+                                        *
+                                    </span>
+                                </label>
+                                <Link
+                                    href="/forgot-password"
+                                    className="
+                                      body-sm font-medium text-brand underline-offset-4
+                                      hover:underline
+                                    "
+                                >
+                                    Forgot password?
+                                </Link>
+                            </div>
+                            <Input
+                                id="login-password"
+                                name="password"
+                                size="lg"
+                                type="password"
+                                required
+                                autoComplete="current-password"
+                                placeholder="Enter password"
+                                startIcon={SquareLock02Icon}
+                            />
                         </div>
-                        <Input
-                            id="login-password"
-                            name="password"
-                            size="lg"
-                            type="password"
-                            required
-                            autoComplete="current-password"
-                            placeholder="Enter password"
-                            startIcon={SquareLock02Icon}
-                        />
-                    </div>
 
-                    <label
-                        htmlFor="login-remember"
-                        className="flex cursor-pointer items-center gap-2.5 self-start block-control-xl"
-                    >
-                        <input
-                            id="login-remember"
-                            name="rememberMe"
-                            type="checkbox"
-                            checked={rememberMe}
-                            onChange={(event) => setRememberMe(event.target.checked)}
-                            className="peer sr-only"
-                        />
-                        <span
-                            aria-hidden="true"
-                            className={cn(
-                                `
-                                  flex items-center justify-center rounded-sm border-2 block-5
-                                  inline-5
-                                  peer-focus-visible:border-ring peer-focus-visible:ring-3
-                                  peer-focus-visible:ring-ring/30
-                                `,
-                                rememberMe
-                                    ? "border-brand bg-brand text-surface"
-                                    : "border-ink-subtle bg-surface",
-                            )}
+                        <label
+                            htmlFor="login-remember"
+                            className="flex cursor-pointer items-center gap-2 self-start"
                         >
-                            {rememberMe ? (
-                                <HugeiconsIcon
-                                    icon={Tick02Icon}
-                                    className="block-3.5 inline-3.5"
-                                />
-                            ) : null}
-                        </span>
-                        <span className="body font-medium text-ink">Remember me</span>
-                    </label>
+                            <Checkbox
+                                id="login-remember"
+                                name="rememberMe"
+                                checked={rememberMe}
+                                onCheckedChange={(checked) => setRememberMe(checked === true)}
+                            />
+                            <span className="body text-ink">Remember me</span>
+                        </label>
+                    </div>
 
                     <Button
                         size="lg"
