@@ -15,6 +15,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "motion/react";
 
+import { generatePassword } from "@/lib/auth/generate-password";
 import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 import {
@@ -163,6 +164,20 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
         setStep("role");
     }
 
+    function handleGeneratePassword() {
+        const nextPassword = generatePassword();
+        setValue("password", nextPassword, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+        });
+        setValue("confirmPassword", nextPassword, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+        });
+    }
+
     function onSubmit(_values: RegisterValues) {
         // API wiring comes later
     }
@@ -276,15 +291,27 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                 control={control}
                                 render={({ field, fieldState }) => (
                                     <div className="flex flex-col gap-2">
-                                        <label
-                                            htmlFor="register-password"
-                                            className="body font-medium text-ink"
-                                        >
-                                            Password{" "}
-                                            <span className="text-brand" aria-hidden="true">
-                                                *
-                                            </span>
-                                        </label>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <label
+                                                htmlFor="register-password"
+                                                className="body font-medium text-ink"
+                                            >
+                                                Password{" "}
+                                                <span className="text-brand" aria-hidden="true">
+                                                    *
+                                                </span>
+                                            </label>
+                                            <Button
+                                                type="button"
+                                                variant="link"
+                                                onClick={handleGeneratePassword}
+                                                className="
+                                                  body-sm px-0 font-medium text-brand block-auto
+                                                "
+                                            >
+                                                Generate password
+                                            </Button>
+                                        </div>
                                         <Input
                                             id="register-password"
                                             size="lg"
