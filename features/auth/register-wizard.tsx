@@ -93,17 +93,19 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                 <AuthBackLink onClick={goToRole}>Back</AuthBackLink>
             )}
 
-            <div className="mx-auto flex flex-col gap-8 inline-full max-inline-100">
+            <div className="mx-auto flex flex-col gap-8 inline-full max-inline-140">
                 <div ref={slideRef} className="t-page-slide" data-page={pageId}>
                     <section className="t-page flex flex-col gap-8" data-page-id="1">
-                        <AuthHeading
-                            title="Pick a role"
-                            description="This account is for one role. Choose owner or broker."
-                        />
+                        <div className="mx-auto inline-full max-inline-96">
+                            <AuthHeading
+                                title="Pick a role"
+                                description="This account is for one role. Choose owner or broker."
+                            />
+                        </div>
 
                         <PortalPicker value={portal} onChange={setPortal} ariaLabel="Sign up as" />
 
-                        <div className="flex flex-col gap-6">
+                        <div className="mx-auto flex flex-col gap-6 inline-full max-inline-96">
                             <Button
                                 size="lg"
                                 variant="accent"
@@ -117,35 +119,35 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                         </div>
                     </section>
 
-                    <section className="t-page flex flex-col gap-6" data-page-id="2">
-                        <AuthHeading
-                            title="Sign up"
-                            description="Enter your details to continue."
-                        />
-
-                        <button
-                            type="button"
-                            onClick={goToRole}
-                            className="
-                              mx-auto flex cursor-pointer items-center gap-2.5 rounded-control
-                              border border-border-warm bg-surface px-3 block-control-xl
-                              hover:border-ink-subtle
-                              focus-visible:border-ring focus-visible:ring-3
-                              focus-visible:ring-ring/30 focus-visible:outline-none
-                            "
-                        >
-                            <Image
-                                src={selected.avatarSrc}
-                                alt=""
-                                width={32}
-                                height={32}
-                                unoptimized
-                                draggable={false}
-                                className="pointer-events-none block-8 inline-8"
+                    <section
+                        className="t-page mx-auto flex flex-col gap-6 inline-full max-inline-100"
+                        data-page-id="2"
+                    >
+                        <div className="flex flex-col items-center gap-4">
+                            <button
+                                type="button"
+                                onClick={goToRole}
+                                aria-label={`Signed up as ${selected.label}. Change role`}
+                                className="
+                                  rounded-full focus-visible:ring-3 focus-visible:ring-ring/30
+                                  focus-visible:outline-none
+                                "
+                            >
+                                <Image
+                                    src={selected.avatarSrc}
+                                    alt=""
+                                    width={96}
+                                    height={96}
+                                    unoptimized
+                                    draggable={false}
+                                    className="pointer-events-none rounded-full block-24 inline-24"
+                                />
+                            </button>
+                            <AuthHeading
+                                title="Sign up"
+                                description="Enter your details to continue."
                             />
-                            <span className="body font-medium text-ink">{selected.label}</span>
-                            <span className="body-sm font-medium text-brand">Change</span>
-                        </button>
+                        </div>
 
                         <SocialAuthButtons action="Sign up" />
 

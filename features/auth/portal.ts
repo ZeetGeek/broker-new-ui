@@ -11,7 +11,7 @@ export const PORTAL_OPTIONS: {
     {
         value: "owner",
         label: "Owner",
-        description: "You have a property to sell or rent.",
+        description: "You have a property ready to sell or rent.",
         helper: "You'll add properties. Brokers ask you for permission to sell or rent them.",
         rolePhrase: "an owner",
         avatarSrc: "/avatars/owner.svg",
