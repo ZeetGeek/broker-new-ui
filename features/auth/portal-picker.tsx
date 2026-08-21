@@ -18,12 +18,12 @@ export function PortalPicker({
     const selected = PORTAL_OPTIONS.find((option) => option.value === value) ?? PORTAL_OPTIONS[0];
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
             <div
                 role="radiogroup"
                 aria-label={ariaLabel}
                 aria-describedby="portal-picker-helper"
-                className="flex flex-row gap-3"
+                className="flex flex-row gap-5"
             >
                 {PORTAL_OPTIONS.map((option) => {
                     const isSelected = value === option.value;

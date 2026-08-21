@@ -136,11 +136,11 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                 <Image
                                     src={selected.avatarSrc}
                                     alt=""
-                                    width={96}
-                                    height={96}
+                                    width={120}
+                                    height={120}
                                     unoptimized
                                     draggable={false}
-                                    className="pointer-events-none rounded-full block-24 inline-24"
+                                    className="pointer-events-none rounded-full block-30 inline-30"
                                 />
                             </button>
                             <AuthHeading
