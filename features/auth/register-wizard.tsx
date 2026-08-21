@@ -1,15 +1,32 @@
 "use client";
 
 import * as React from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import Image from "next/image";
 import Link from "next/link";
 
-import { Mail01Icon, SquareLock02Icon } from "@hugeicons/core-free-icons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+    CheckmarkCircle02Icon,
+    CircleIcon,
+    Mail01Icon,
+    SquareLock02Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AnimatePresence, motion } from "motion/react";
+
+import { duration, ease } from "@/lib/motion/tokens";
+import { cn } from "@/lib/utils";
+import {
+    PASSWORD_REQUIREMENTS,
+    registerSchema,
+    type RegisterValues,
+} from "@/lib/validation/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { AuthBackLink, AuthFormFrame } from "./auth-back-link";
+import { AuthFormFrame } from "./auth-back-link";
 import { AuthHeading } from "./auth-heading";
 import { OrDivider } from "./or-divider";
 import { type Portal, PORTAL_OPTIONS } from "./portal";
@@ -23,17 +40,7 @@ function syncSlideHeight(slide: HTMLElement, pageId: "1" | "2") {
     if (!active) {
         return;
     }
-    const previousPosition = active.style.position;
-    const previousInset = active.style.inset;
-    const previousHeight = active.style.height;
-    slide.style.height = "auto";
-    active.style.position = "relative";
-    active.style.inset = "auto";
-    active.style.height = "auto";
-    slide.style.height = `${active.offsetHeight}px`;
-    active.style.position = previousPosition;
-    active.style.inset = previousInset;
-    active.style.height = previousHeight;
+    slide.style.height = `${Math.ceil(active.getBoundingClientRect().height)}px`;
 }
 
 function RegisterLoginHint() {
@@ -50,12 +57,77 @@ function RegisterLoginHint() {
     );
 }
 
+function PasswordRequirements({ password }: { password: string }) {
+    const visible = password.length > 0;
+
+    return (
+        <AnimatePresence initial={false}>
+            {visible ? (
+                <motion.ul
+                    key="password-requirements"
+                    aria-label="Password requirements"
+                    className="flex flex-col gap-1.5 overflow-hidden"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: duration.fast, ease: ease.out }}
+                >
+                    {PASSWORD_REQUIREMENTS.map((requirement) => {
+                        const met = requirement.test(password);
+                        return (
+                            <li
+                                key={requirement.id}
+                                className={cn(
+                                    "body-sm flex items-center gap-2",
+                                    met ? "text-success-mid" : "text-ink-muted",
+                                )}
+                                aria-label={`${met ? "Met" : "Needed"}: ${requirement.label}`}
+                            >
+                                <HugeiconsIcon
+                                    icon={met ? CheckmarkCircle02Icon : CircleIcon}
+                                    className="shrink-0 block-3.5 inline-3.5"
+                                    strokeWidth={2}
+                                    aria-hidden="true"
+                                />
+                                <span aria-hidden="true">{requirement.label}</span>
+                            </li>
+                        );
+                    })}
+                </motion.ul>
+            ) : null}
+        </AnimatePresence>
+    );
+}
+
 export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Portal }) {
     const [portal, setPortal] = React.useState<Portal>(initialPortal);
     const [step, setStep] = React.useState<Step>("role");
     const slideRef = React.useRef<HTMLDivElement>(null);
     const pageId = step === "role" ? "1" : "2";
     const selected = PORTAL_OPTIONS.find((option) => option.value === portal) ?? PORTAL_OPTIONS[0];
+
+    const {
+        control,
+        handleSubmit,
+        setValue,
+        formState: { isSubmitting, errors },
+    } = useForm<RegisterValues>({
+        resolver: zodResolver(registerSchema),
+        mode: "onTouched",
+        reValidateMode: "onChange",
+        defaultValues: {
+            portal: initialPortal,
+            email: "",
+            password: "",
+            confirmPassword: "",
+        },
+    });
+
+    const password = useWatch({ control, name: "password" }) ?? "";
+
+    React.useEffect(() => {
+        setValue("portal", portal);
+    }, [portal, setValue]);
 
     React.useLayoutEffect(() => {
         const slide = slideRef.current;
@@ -71,7 +143,17 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
             slide.style.setProperty("--page-exit-enabled", "1");
             slide.dataset.exitsReady = "true";
         }
-    }, [pageId, portal]);
+
+        const active = slide.querySelector<HTMLElement>(`.t-page[data-page-id="${pageId}"]`);
+        if (!active || typeof ResizeObserver === "undefined") {
+            return;
+        }
+        const observer = new ResizeObserver(() => {
+            syncSlideHeight(slide, pageId);
+        });
+        observer.observe(active);
+        return () => observer.disconnect();
+    }, [pageId, portal, password, errors]);
 
     function goToAccount() {
         setStep("account");
@@ -81,18 +163,12 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
         setStep("role");
     }
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+    function onSubmit(_values: RegisterValues) {
+        // API wiring comes later
     }
 
     return (
         <AuthFormFrame>
-            {step === "role" ? (
-                <AuthBackLink href="/">Back to home</AuthBackLink>
-            ) : (
-                <AuthBackLink onClick={goToRole}>Back</AuthBackLink>
-            )}
-
             <div className="mx-auto flex flex-col gap-8 inline-full max-inline-140">
                 <div ref={slideRef} className="t-page-slide" data-page={pageId}>
                     <section className="t-page flex flex-col gap-8" data-page-id="1">
@@ -129,7 +205,8 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                 onClick={goToRole}
                                 aria-label={`Signed up as ${selected.label}. Change role`}
                                 className="
-                                  rounded-full focus-visible:ring-3 focus-visible:ring-ring/30
+                                  rounded-full
+                                  focus-visible:ring-3 focus-visible:ring-ring/30
                                   focus-visible:outline-none
                                 "
                             >
@@ -153,57 +230,121 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
 
                         <OrDivider />
 
-                        <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-                            <input type="hidden" name="portal" value={portal} />
-                            <div className="flex flex-col gap-2">
-                                <label
-                                    htmlFor="register-email"
-                                    className="body font-medium text-ink"
-                                >
-                                    Email{" "}
-                                    <span className="text-brand" aria-hidden="true">
-                                        *
-                                    </span>
-                                </label>
-                                <Input
-                                    id="register-email"
-                                    name="email"
-                                    size="lg"
-                                    type="email"
-                                    required
-                                    autoComplete="email"
-                                    placeholder="you@example.com"
-                                    startIcon={Mail01Icon}
-                                />
-                            </div>
+                        <form
+                            className="flex flex-col gap-5"
+                            onSubmit={handleSubmit(onSubmit)}
+                            noValidate
+                        >
+                            <Controller
+                                name="email"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2">
+                                        <label
+                                            htmlFor="register-email"
+                                            className="body font-medium text-ink"
+                                        >
+                                            Email{" "}
+                                            <span className="text-brand" aria-hidden="true">
+                                                *
+                                            </span>
+                                        </label>
+                                        <Input
+                                            id="register-email"
+                                            size="lg"
+                                            type="email"
+                                            autoComplete="email"
+                                            placeholder="you@example.com"
+                                            startIcon={Mail01Icon}
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            name={field.name}
+                                            errorText={fieldState.error?.message}
+                                            success={
+                                                fieldState.isTouched &&
+                                                !fieldState.invalid &&
+                                                field.value.length > 0
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            />
 
-                            <div className="flex flex-col gap-2">
-                                <label
-                                    htmlFor="register-password"
-                                    className="body font-medium text-ink"
-                                >
-                                    Password{" "}
-                                    <span className="text-brand" aria-hidden="true">
-                                        *
-                                    </span>
-                                </label>
-                                <Input
-                                    id="register-password"
-                                    name="password"
-                                    size="lg"
-                                    type="password"
-                                    required
-                                    autoComplete="new-password"
-                                    placeholder="Enter password"
-                                    startIcon={SquareLock02Icon}
-                                />
-                            </div>
+                            <Controller
+                                name="password"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2">
+                                        <label
+                                            htmlFor="register-password"
+                                            className="body font-medium text-ink"
+                                        >
+                                            Password{" "}
+                                            <span className="text-brand" aria-hidden="true">
+                                                *
+                                            </span>
+                                        </label>
+                                        <Input
+                                            id="register-password"
+                                            size="lg"
+                                            type="password"
+                                            autoComplete="new-password"
+                                            placeholder="Create a password"
+                                            startIcon={SquareLock02Icon}
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            name={field.name}
+                                            errorText={fieldState.error?.message}
+                                        />
+                                        <PasswordRequirements password={field.value} />
+                                    </div>
+                                )}
+                            />
+
+                            <Controller
+                                name="confirmPassword"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2">
+                                        <label
+                                            htmlFor="register-confirm-password"
+                                            className="body font-medium text-ink"
+                                        >
+                                            Confirm password{" "}
+                                            <span className="text-brand" aria-hidden="true">
+                                                *
+                                            </span>
+                                        </label>
+                                        <Input
+                                            id="register-confirm-password"
+                                            size="lg"
+                                            type="password"
+                                            autoComplete="new-password"
+                                            placeholder="Re-enter password"
+                                            startIcon={SquareLock02Icon}
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            name={field.name}
+                                            errorText={fieldState.error?.message}
+                                            success={
+                                                fieldState.isTouched &&
+                                                !fieldState.invalid &&
+                                                field.value.length > 0
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            />
 
                             <Button
                                 size="lg"
                                 variant="accent"
                                 type="submit"
                                 className="inline-full"
+                                loading={isSubmitting}
                             >
                                 Sign up
                             </Button>

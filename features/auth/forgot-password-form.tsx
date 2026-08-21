@@ -1,13 +1,20 @@
 "use client";
 
 import * as React from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail01Icon } from "@hugeicons/core-free-icons";
+
+import {
+    forgotPasswordSchema,
+    type ForgotPasswordValues,
+} from "@/lib/validation/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { AuthBackLink, AuthFormFrame } from "./auth-back-link";
+import { AuthFormFrame } from "./auth-back-link";
 import { AuthHeading } from "./auth-heading";
 import { AuthSuccessCheck } from "./auth-success-check";
 
@@ -34,12 +41,28 @@ function syncSlideHeight(slide: HTMLElement, pageId: "1" | "2") {
 }
 
 export function ForgotPasswordForm() {
-    const [email, setEmail] = React.useState("");
     const [step, setStep] = React.useState<Step>("request");
     const [isSending, setIsSending] = React.useState(false);
     const [secondsLeft, setSecondsLeft] = React.useState(0);
+    const [sentEmail, setSentEmail] = React.useState("");
     const slideRef = React.useRef<HTMLDivElement>(null);
     const pageId = step === "request" ? "1" : "2";
+
+    const {
+        control,
+        handleSubmit,
+        getValues,
+        formState: { isSubmitting, errors },
+    } = useForm<ForgotPasswordValues>({
+        resolver: zodResolver(forgotPasswordSchema),
+        mode: "onTouched",
+        reValidateMode: "onChange",
+        defaultValues: {
+            email: "",
+        },
+    });
+
+    const emailValue = useWatch({ control, name: "email" }) ?? "";
 
     React.useEffect(() => {
         if (secondsLeft <= 0) {
@@ -63,19 +86,19 @@ export function ForgotPasswordForm() {
             slide.style.setProperty("--page-exit-enabled", "1");
             slide.dataset.exitsReady = "true";
         }
-    }, [pageId, email, isSending, secondsLeft]);
+    }, [pageId, emailValue, isSending, secondsLeft, sentEmail, errors]);
 
-    async function sendReset() {
+    async function sendReset(email: string) {
         setIsSending(true);
         await new Promise((resolve) => window.setTimeout(resolve, 720));
+        setSentEmail(email);
         setIsSending(false);
         setStep("sent");
         setSecondsLeft(RESEND_WAIT_SEC);
     }
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        void sendReset();
+    function onSubmit(values: ForgotPasswordValues) {
+        void sendReset(values.email);
     }
 
     function handleUseDifferentEmail() {
@@ -83,54 +106,75 @@ export function ForgotPasswordForm() {
         setSecondsLeft(0);
     }
 
+    function handleResend() {
+        const email = sentEmail || getValues("email");
+        if (!email) {
+            return;
+        }
+        void sendReset(email);
+    }
+
     return (
         <AuthFormFrame>
-            <AuthBackLink href="/login">Back to sign in</AuthBackLink>
-
             <div className="mx-auto flex flex-col gap-6 inline-full max-inline-96">
-                <div
-                    ref={slideRef}
-                    className="t-page-slide"
-                    data-page={pageId}
-                >
+                <div ref={slideRef} className="t-page-slide" data-page={pageId}>
                     <section className="t-page flex flex-col gap-6" data-page-id="1">
                         <AuthHeading
                             title="Reset password"
                             description="Enter the email on the account. A reset link is sent to that address."
                         />
 
-                        <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-                            <div className="flex flex-col gap-2">
-                                <label
-                                    htmlFor="forgot-password-email"
-                                    className="body font-medium text-ink"
-                                >
-                                    Email{" "}
-                                    <span className="text-brand" aria-hidden="true">
-                                        *
-                                    </span>
-                                </label>
-                                <Input
-                                    id="forgot-password-email"
-                                    size="lg"
-                                    type="email"
-                                    required
-                                    autoComplete="email"
-                                    placeholder="you@example.com"
-                                    startIcon={Mail01Icon}
-                                    value={email}
-                                    onValueChange={(value) => setEmail(value)}
-                                />
-                                <p className="body-sm text-ink-muted">
-                                    The email used at sign up.
-                                </p>
-                            </div>
+                        <form
+                            className="flex flex-col gap-5"
+                            onSubmit={handleSubmit(onSubmit)}
+                            noValidate
+                        >
+                            <Controller
+                                name="email"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2">
+                                        <label
+                                            htmlFor="forgot-password-email"
+                                            className="body font-medium text-ink"
+                                        >
+                                            Email{" "}
+                                            <span className="text-brand" aria-hidden="true">
+                                                *
+                                            </span>
+                                        </label>
+                                        <Input
+                                            id="forgot-password-email"
+                                            size="lg"
+                                            type="email"
+                                            autoComplete="email"
+                                            placeholder="you@example.com"
+                                            startIcon={Mail01Icon}
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            name={field.name}
+                                            errorText={fieldState.error?.message}
+                                            helperText={
+                                                fieldState.error
+                                                    ? undefined
+                                                    : "The email used at sign up."
+                                            }
+                                            success={
+                                                fieldState.isTouched &&
+                                                !fieldState.invalid &&
+                                                field.value.length > 0
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            />
 
                             <Button
                                 size="lg"
                                 variant="accent"
                                 type="submit"
-                                loading={isSending}
+                                loading={isSending || isSubmitting}
                                 className="inline-full"
                             >
                                 Send reset link
@@ -150,8 +194,8 @@ export function ForgotPasswordForm() {
                             <h1 className="h1 text-ink">Check your email</h1>
                             <p className="body text-ink-muted">
                                 If an account exists for{" "}
-                                <span className="font-medium text-ink">{email}</span>, a reset
-                                link is on its way. Look in spam if it is not in the inbox.
+                                <span className="font-medium text-ink">{sentEmail}</span>, a
+                                reset link is on its way. Look in spam if it is not in the inbox.
                             </p>
                         </div>
 
@@ -162,7 +206,7 @@ export function ForgotPasswordForm() {
                                 type="button"
                                 loading={isSending}
                                 disabled={secondsLeft > 0}
-                                onClick={() => void sendReset()}
+                                onClick={handleResend}
                                 className="border-border-warm bg-surface inline-full"
                             >
                                 {secondsLeft > 0
