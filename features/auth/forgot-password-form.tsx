@@ -2,43 +2,44 @@
 
 import * as React from "react";
 
-import {
-    CheckmarkCircle02Icon,
-    Mail01Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { AnimatePresence, motion } from "motion/react";
-
-import { duration, ease, spring } from "@/lib/motion/tokens";
+import { Mail01Icon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { AuthBackLink, AuthFormFrame } from "./auth-back-link";
+import { AuthHeading } from "./auth-heading";
+import { AuthSuccessCheck } from "./auth-success-check";
 
 const RESEND_WAIT_SEC = 30;
 
-const pane = {
-    initial: { opacity: 0, y: 8 },
-    animate: {
-        opacity: 1,
-        y: 0,
-        transition: { duration: duration.base, ease: ease.out },
-    },
-    exit: {
-        opacity: 0,
-        y: -8,
-        transition: { duration: duration.fast, ease: ease.in },
-    },
-};
-
 type Step = "request" | "sent";
+
+function syncSlideHeight(slide: HTMLElement, pageId: "1" | "2") {
+    const active = slide.querySelector<HTMLElement>(`.t-page[data-page-id="${pageId}"]`);
+    if (!active) {
+        return;
+    }
+    const previousPosition = active.style.position;
+    const previousInset = active.style.inset;
+    const previousHeight = active.style.height;
+    slide.style.height = "auto";
+    active.style.position = "relative";
+    active.style.inset = "auto";
+    active.style.height = "auto";
+    slide.style.height = `${active.offsetHeight}px`;
+    active.style.position = previousPosition;
+    active.style.inset = previousInset;
+    active.style.height = previousHeight;
+}
 
 export function ForgotPasswordForm() {
     const [email, setEmail] = React.useState("");
     const [step, setStep] = React.useState<Step>("request");
     const [isSending, setIsSending] = React.useState(false);
     const [secondsLeft, setSecondsLeft] = React.useState(0);
+    const slideRef = React.useRef<HTMLDivElement>(null);
+    const pageId = step === "request" ? "1" : "2";
 
     React.useEffect(() => {
         if (secondsLeft <= 0) {
@@ -47,6 +48,22 @@ export function ForgotPasswordForm() {
         const timer = window.setTimeout(() => setSecondsLeft((value) => value - 1), 1000);
         return () => window.clearTimeout(timer);
     }, [secondsLeft]);
+
+    React.useLayoutEffect(() => {
+        const slide = slideRef.current;
+        if (!slide) {
+            return;
+        }
+        if (slide.dataset.exitsReady !== "true") {
+            slide.style.setProperty("--page-exit-enabled", "0");
+        }
+        syncSlideHeight(slide, pageId);
+        if (slide.dataset.exitsReady !== "true") {
+            void slide.offsetWidth;
+            slide.style.setProperty("--page-exit-enabled", "1");
+            slide.dataset.exitsReady = "true";
+        }
+    }, [pageId, email, isSending, secondsLeft]);
 
     async function sendReset() {
         setIsSending(true);
@@ -71,23 +88,16 @@ export function ForgotPasswordForm() {
             <AuthBackLink href="/login">Back to sign in</AuthBackLink>
 
             <div className="mx-auto flex flex-col gap-6 inline-full max-inline-96">
-            <AnimatePresence mode="wait">
-                {step === "request" ? (
-                    <motion.div
-                        key="request"
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        variants={pane}
-                        className="flex flex-col gap-6"
-                    >
-                        <div className="flex flex-col gap-2 text-center">
-                            <h1 className="h1 text-ink">Reset password</h1>
-                            <p className="body text-ink-muted">
-                                Enter the email on the account. A reset link is sent to that
-                                address.
-                            </p>
-                        </div>
+                <div
+                    ref={slideRef}
+                    className="t-page-slide"
+                    data-page={pageId}
+                >
+                    <section className="t-page flex flex-col gap-6" data-page-id="1">
+                        <AuthHeading
+                            title="Reset password"
+                            description="Enter the email on the account. A reset link is sent to that address."
+                        />
 
                         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
                             <div className="flex flex-col gap-2">
@@ -126,32 +136,15 @@ export function ForgotPasswordForm() {
                                 Send reset link
                             </Button>
                         </form>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="sent"
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        variants={pane}
-                        className="flex flex-col items-center gap-6 text-center"
+                    </section>
+
+                    <section
+                        className="t-page flex flex-col items-center gap-6 text-center"
+                        data-page-id="2"
                         role="status"
                         aria-live="polite"
                     >
-                        <motion.span
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={spring.snappy}
-                            className="
-                              flex items-center justify-center rounded-full bg-brand-soft
-                              text-brand-text block-16 inline-16
-                            "
-                        >
-                            <HugeiconsIcon
-                                icon={CheckmarkCircle02Icon}
-                                className="block-8 inline-8"
-                            />
-                        </motion.span>
+                        {step === "sent" ? <AuthSuccessCheck /> : null}
 
                         <div className="flex flex-col gap-2">
                             <h1 className="h1 text-ink">Check your email</h1>
@@ -186,9 +179,8 @@ export function ForgotPasswordForm() {
                                 Use a different email
                             </Button>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </section>
+                </div>
             </div>
         </AuthFormFrame>
     );

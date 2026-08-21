@@ -8,17 +8,29 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 import { Button } from "@/components/ui/button";
 
-export function AuthBackLink({ href, children }: { href: string; children: ReactNode }) {
+type AuthBackLinkProps = {
+    children: ReactNode;
+} & ({ href: string; onClick?: never } | { href?: never; onClick: () => void });
+
+export function AuthBackLink({ href, onClick, children }: AuthBackLinkProps) {
+    const className = `
+      body absolute inset-s-0 inset-bs-0 z-10 gap-2 px-0 font-medium text-ink-muted
+      hover:text-ink
+    `;
+    const icon = <HugeiconsIcon icon={ArrowLeft02Icon} className="block-4 inline-4" />;
+
+    if (href) {
+        return (
+            <Button variant="link" render={<Link href={href} />} className={className}>
+                {icon}
+                {children}
+            </Button>
+        );
+    }
+
     return (
-        <Button
-            variant="link"
-            render={<Link href={href} />}
-            className="
-              body absolute inset-s-0 inset-bs-0 z-10 gap-2 px-0 font-medium text-ink-muted
-              hover:text-ink
-            "
-        >
-            <HugeiconsIcon icon={ArrowLeft02Icon} className="block-4 inline-4" />
+        <Button variant="link" type="button" onClick={onClick} className={className}>
+            {icon}
             {children}
         </Button>
     );

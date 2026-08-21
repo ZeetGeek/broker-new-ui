@@ -1,4 +1,4 @@
-/* transitions-dev — semantic tokens + the six installed recipes. */
+/* transitions-dev — semantic tokens + the installed recipes. */
 
 :root {
     /* Text states swap */
@@ -45,6 +45,36 @@
     --tabs-text-active: var(--color-surface);
     --tabs-bar-bg: var(--color-surface);
     --tabs-pill-bg: var(--color-brand-ink);
+    /* Page side-by-side */
+    --page-slide-dur: 250ms;
+    --page-fade-dur: 250ms;
+    --page-slide-distance: 8px;
+    --page-blur: 3px;
+    --page-stagger: 0ms;
+    --page-exit-enabled: 1;
+    --page-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --page-fade-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Success check */
+    --check-opacity-dur: 500ms;
+    --check-rotate-dur: 500ms;
+    --check-rotate-from: 80deg;
+    --check-bob-dur: 500ms;
+    --check-y-amount: 40px;
+    --check-blur-dur: 500ms;
+    --check-blur-from: 10px;
+    --check-path-dur: 500ms;
+    --check-path-delay: 80ms;
+    --check-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --check-ease-opacity: cubic-bezier(0.22, 1, 0.36, 1);
+    --check-ease-rotate: cubic-bezier(0.22, 1, 0.36, 1);
+    --check-ease-bob: cubic-bezier(0.34, 1.35, 0.64, 1);
+    --check-ease-path: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Texts reveal */
+    --stagger-dur: 500ms;
+    --stagger-distance: 12px;
+    --stagger-stagger: 40ms;
+    --stagger-blur: 3px;
+    --stagger-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .dark {
@@ -374,4 +404,163 @@
 }
 .t-tab:not([aria-current="page"]):hover {
     color: var(--color-ink);
+}
+
+/* --- 08 page side-by-side --- */
+
+.t-page-slide {
+    position: relative;
+    overflow: hidden;
+}
+.t-page-slide .t-page[data-page-id="1"] {
+    --t-page-from-x: calc(var(--page-slide-distance) * -1);
+}
+.t-page-slide .t-page[data-page-id="2"] {
+    --t-page-from-x: var(--page-slide-distance);
+}
+.t-page-slide .t-page {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 0;
+    height: fit-content;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(calc(var(--t-page-from-x, 0px) * var(--page-exit-enabled)));
+    filter: blur(calc(var(--page-blur) * var(--page-exit-enabled)));
+    transition:
+        opacity var(--page-fade-dur) var(--page-fade-ease),
+        transform var(--page-slide-dur) var(--page-slide-ease),
+        filter var(--page-slide-dur) var(--page-slide-ease);
+    will-change: opacity, transform, filter;
+}
+.t-page-slide[data-page="1"] .t-page[data-page-id="1"],
+.t-page-slide[data-page="2"] .t-page[data-page-id="2"] {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+    filter: blur(0);
+    transition-delay: var(--page-stagger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-page-slide .t-page {
+        transition: none !important;
+    }
+}
+
+/* --- 10 success check --- */
+
+.t-success-check {
+    display: inline-block;
+    transform-origin: center;
+    opacity: 0;
+    will-change: transform, opacity, filter;
+}
+.t-success-check svg {
+    display: block;
+    overflow: visible;
+}
+.t-success-check svg path {
+    stroke-dasharray: 20;
+    stroke-dashoffset: 20;
+}
+
+.t-success-check[data-state="in"] {
+    animation:
+        t-check-fade var(--check-opacity-dur) var(--check-ease-opacity) forwards,
+        t-check-rotate var(--check-rotate-dur) var(--check-ease-rotate) forwards,
+        t-check-blur var(--check-blur-dur) var(--check-ease-out) forwards,
+        t-check-bob var(--check-bob-dur) var(--check-ease-bob) forwards;
+}
+.t-success-check[data-state="in"] svg path {
+    animation: t-check-draw var(--check-path-dur) var(--check-ease-path)
+        var(--check-path-delay, 0ms) forwards;
+}
+
+@keyframes t-check-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+@keyframes t-check-rotate {
+    from {
+        transform: rotate(var(--check-rotate-from));
+    }
+    to {
+        transform: rotate(0deg);
+    }
+}
+@keyframes t-check-blur {
+    from {
+        filter: blur(var(--check-blur-from));
+    }
+    to {
+        filter: blur(0);
+    }
+}
+@keyframes t-check-bob {
+    from {
+        translate: 0 var(--check-y-amount);
+    }
+    to {
+        translate: 0 0;
+    }
+}
+@keyframes t-check-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-success-check {
+        animation: none !important;
+        opacity: 1;
+    }
+    .t-success-check svg path {
+        animation: none !important;
+        stroke-dashoffset: 0 !important;
+    }
+}
+
+/* --- 18 texts reveal --- */
+
+.t-stagger-line {
+    display: block;
+    opacity: 0;
+    transform: translateY(var(--stagger-distance));
+    filter: blur(var(--stagger-blur));
+    transition:
+        opacity var(--stagger-dur) var(--stagger-ease),
+        transform var(--stagger-dur) var(--stagger-ease),
+        filter var(--stagger-dur) var(--stagger-ease);
+    will-change: transform, opacity, filter;
+}
+.t-stagger-line--2 {
+    transition-delay: var(--stagger-stagger);
+}
+
+.t-stagger.is-shown .t-stagger-line {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+}
+.t-stagger.is-hiding .t-stagger-line {
+    opacity: 0;
+    transform: translateY(0);
+    filter: blur(0);
+    transition:
+        opacity 200ms ease,
+        transform 0s linear,
+        filter 0s linear;
+    transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-stagger-line {
+        transition: none !important;
+    }
 }
