@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { Home01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -9,7 +10,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 
+import { AuthFormEnter } from "./auth-form-enter";
+
 export function AuthFormFrame({ children }: { children: ReactNode }) {
+    const pathname = usePathname();
+
     return (
         <div className="relative min-block-svh">
             <div className="fixed inset-s-4 inset-bs-4 z-20 sm:inset-s-8 sm:inset-bs-8">
@@ -19,10 +24,7 @@ export function AuthFormFrame({ children }: { children: ReactNode }) {
                 <Button
                     variant="link"
                     render={<Link href="/" />}
-                    className="
-                      body gap-2 px-0 font-medium text-ink-muted
-                      hover:text-ink
-                    "
+                    className="body gap-2 px-0 font-medium text-ink-muted hover:text-ink"
                 >
                     <HugeiconsIcon icon={Home01Icon} className="block-4 inline-4" />
                     Go to home
@@ -34,7 +36,7 @@ export function AuthFormFrame({ children }: { children: ReactNode }) {
                   sm:px-8
                 "
             >
-                {children}
+                <AuthFormEnter key={pathname}>{children}</AuthFormEnter>
             </div>
         </div>
     );

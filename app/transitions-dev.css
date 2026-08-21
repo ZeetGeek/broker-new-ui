@@ -448,6 +448,29 @@
     }
 }
 
+/* --- auth form enter (route switch) --- */
+
+.t-auth-enter {
+    opacity: 0;
+    transform: translateY(var(--page-slide-distance));
+    transition:
+        opacity var(--page-fade-dur) var(--page-fade-ease),
+        transform var(--page-slide-dur) var(--page-slide-ease);
+    will-change: opacity, transform;
+}
+.t-auth-enter.is-shown {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-auth-enter {
+        opacity: 1;
+        transform: none;
+        transition: none !important;
+    }
+}
+
 /* --- 10 success check --- */
 
 .t-success-check {
