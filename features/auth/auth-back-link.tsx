@@ -14,8 +14,9 @@ type AuthBackLinkProps = {
 
 export function AuthBackLink({ href, onClick, children }: AuthBackLinkProps) {
     const className = `
-      body absolute inset-s-0 inset-bs-0 z-10 gap-2 px-0 font-medium text-ink-muted
+      body absolute inset-s-4 inset-bs-4 z-10 gap-2 px-0 font-medium text-ink-muted
       hover:text-ink
+      sm:inset-s-8 sm:inset-bs-8
     `;
     const icon = <HugeiconsIcon icon={ArrowLeft02Icon} className="block-4 inline-4" />;
 
@@ -38,7 +39,12 @@ export function AuthBackLink({ href, onClick, children }: AuthBackLinkProps) {
 
 export function AuthFormFrame({ children }: { children: ReactNode }) {
     return (
-        <div className="relative flex flex-col items-center justify-center self-stretch block-full inline-full">
+        <div
+            className="
+              absolute inset-0 flex flex-col items-center justify-center overflow-y-auto px-4 py-16
+              sm:px-8
+            "
+        >
             {children}
         </div>
     );
