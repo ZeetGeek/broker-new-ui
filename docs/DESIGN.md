@@ -169,7 +169,7 @@ Each step is **one class** in `app/common.scss`. Apply that class plus a colour
 utility (`text-ink`, `text-white`, `text-ink-muted`). Do not restack
 `text-[28px] md:text-[40px] font-bold tracking-tight leading-[1.08]` — that is
 what the class is for. Colour stays out of the class so the same step works on
-cream and on `brand-deep`. `.eyebrow` is the exception: uppercase + `ink-subtle`
+cream and on `brand-deep`. `.eyebrow` is the exception: uppercase + `ink-muted`
 are part of the pattern.
 
 ```tsx
@@ -193,7 +193,7 @@ are part of the pattern.
 | Body             | `.body`      | 14px   | 16px    | 400    | 0        | 1.55    |
 | Body small       | `.body-sm`   | 12px   | 14px    | 400    | 0        | 1.45    |
 | Body extra small | `.body-xs`   | 12px   | 12px    | 400    | 0        | 1.4     |
-| Eyebrow          | `.eyebrow`   | 12px   | 12px    | 500    | 0.08em   | 1.2     |
+| Eyebrow          | `.eyebrow`   | 12px   | 12px    | 600    | 0.1em    | 1.2     |
 
 Tight tracking on display sizes is not optional — it is what makes Bricolage Grotesque
 look intentional rather than default. Loose tracking at 52px reads as a fallback font.
@@ -204,7 +204,7 @@ large ceiling) for the same reason in reverse. The two scales are read by face a
 weight first, size second — h5/h6 stay display face + 600 weight even where their size
 sits close to a body step's.
 
-Eyebrow labels are uppercase, `ink-subtle`, and sit directly above the value they
+Eyebrow labels are uppercase, `ink-muted`, and sit directly above the value they
 describe: `NEXT SHOWING`, `LOOKING FOR`, `NEEDS ATTENTION`. This is the only place
 uppercase is allowed. Everything else is sentence case, including buttons and headings.
 
@@ -322,7 +322,7 @@ badge at top-right, then content.
 
 ```
 ┌──────────────────────────────┐
-│ NEXT SHOWING      [Confirmed]│  eyebrow ink-subtle · badge brand-soft
+│ ● NEXT SHOWING    [Confirmed]│  brand mark · eyebrow ink-muted · badge brand-soft
 │                              │
 │ Today, 9:30 AM               │  h2, ink
 │ Vesu · meet at the gate      │  small, ink-muted

@@ -122,7 +122,7 @@ export function DashboardHeader({
             </div>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <div className="-mbe-4.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <div className="-mbe-3.5 flex flex-wrap items-center gap-x-3 gap-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                         <ReraStatusChip status={reraStatus} />
                         {activityStreakDays > 0 ? (

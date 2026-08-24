@@ -75,9 +75,10 @@ $md: 48rem;
     }
 
     // Eyebrow — the only uppercase in the system. Colour is part of the pattern.
+    // Slightly stronger weight + tracking so section labels hold the corner of a card.
     .eyebrow {
-        @include type-step(var(--font-sans), 12px, 12px, 500, 0.08em, 1.2);
-        color: var(--color-ink-subtle);
+        @include type-step(var(--font-sans), 12px, 12px, 600, 0.1em, 1.2);
+        color: var(--color-ink-muted);
         text-transform: uppercase;
     }
 }

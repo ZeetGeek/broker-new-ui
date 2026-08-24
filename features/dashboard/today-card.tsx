@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 
+import { CardLabel } from "./card-label";
 import type { SiteVisitItem } from "./mock-data";
 
 export type TodayCardProps = {
@@ -9,8 +10,10 @@ export type TodayCardProps = {
 
 export function TodayCard({ visits, className }: TodayCardProps) {
     return (
-        <section className={cn("flex flex-col rounded-card bg-surface p-4 md:p-5", className)}>
-            <p className="eyebrow">Today</p>
+        <section
+            className={cn("flex flex-col rounded-card bg-surface p-4 shadow-sm md:p-5", className)}
+        >
+            <CardLabel>Today</CardLabel>
 
             {visits.length === 0 ? (
                 <p className="body mbs-4 text-ink-muted">No site visits scheduled for today.</p>

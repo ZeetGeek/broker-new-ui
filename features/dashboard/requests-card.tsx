@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 
+import { CardLabel } from "./card-label";
 import type { RequestCounts } from "./mock-data";
 
 export type RequestsCardProps = {
@@ -35,8 +36,10 @@ function RequestRow({
 
 export function RequestsCard({ counts, className }: RequestsCardProps) {
     return (
-        <section className={cn("flex flex-col rounded-card bg-surface p-4 md:p-5", className)}>
-            <p className="eyebrow">Your requests</p>
+        <section
+            className={cn("flex flex-col rounded-card bg-surface p-4 shadow-sm md:p-5", className)}
+        >
+            <CardLabel>Your requests</CardLabel>
 
             <div className="mbs-3 flex flex-col divide-y divide-border-warm">
                 <RequestRow label="Waiting on owner" count={counts.waitingOnOwner} />

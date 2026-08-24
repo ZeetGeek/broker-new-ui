@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 
 import { PIPELINE_STAGES } from "@/config/constants";
 
+import { CardLabel } from "./card-label";
 import type { PipelineStageCount } from "./mock-data";
 
 export type PipelineCardProps = {
@@ -15,9 +16,11 @@ export function PipelineCard({ activeClientCount, stages, className }: PipelineC
     const countById = new Map(stages.map((s) => [s.stageId, s.count]));
 
     return (
-        <section className={cn("flex flex-col rounded-card bg-surface p-4 md:p-5", className)}>
+        <section
+            className={cn("flex flex-col rounded-card bg-surface p-4 shadow-sm md:p-5", className)}
+        >
             <div className="flex items-baseline justify-between gap-3">
-                <p className="eyebrow">Pipeline</p>
+                <CardLabel>Pipeline</CardLabel>
                 <p className="body-sm tabular font-medium text-ink-muted">
                     {activeClientCount} active clients
                 </p>

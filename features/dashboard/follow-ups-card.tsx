@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
+import { CardLabel } from "./card-label";
 import type { FollowUpItem } from "./mock-data";
 
 export type FollowUpsCardProps = {
@@ -38,7 +39,7 @@ export function FollowUpsCard({ items, overdueCount, className }: FollowUpsCardP
             )}
         >
             <div className="flex items-center justify-between gap-3">
-                <p className="eyebrow text-white/55">Follow-ups</p>
+                <CardLabel tone="dark">Follow-ups</CardLabel>
                 {overdueCount > 0 ? (
                     <Badge variant="urgent" className="border-0">
                         {overdueCount} overdue
