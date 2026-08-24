@@ -130,7 +130,7 @@ export function DashboardHeader({
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2">
                 <ProfileMetaChips
                     reraStatus={reraStatus}
                     activityStreakDays={activityStreakDays}
@@ -138,7 +138,11 @@ export function DashboardHeader({
                     email={email}
                 />
 
-                <ServiceAreaChips areas={serviceAreas} />
+                <span aria-hidden className="hidden bg-border-warm block-4 inline-px sm:block" />
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="body-sm font-medium text-ink-muted">Working in</span>
+                    <ServiceAreaChips areas={serviceAreas} />
+                </div>
             </div>
         </div>
     );

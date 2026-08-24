@@ -94,7 +94,13 @@ export function PortalHeader({
                             >
                                 <Search aria-hidden="true" />
                                 <span className="body-sm hidden font-medium md:inline">Search</span>
-                                <Kbd className="-me-1 hidden group-hover:text-ink md:inline-flex">
+                                <Kbd
+                                    className="
+                                      ms-1 -me-1 hidden border
+                                      group-hover:text-ink
+                                      md:inline-flex
+                                    "
+                                >
                                     Ctrl + K
                                 </Kbd>
                             </Button>
