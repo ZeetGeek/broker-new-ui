@@ -11,9 +11,9 @@ export const OWNER_NAV_ITEMS: NavItem[] = [
 ];
 
 export const BROKER_NAV_ITEMS: NavItem[] = [
-    { label: "Overview", href: "/broker" },
-    { label: "Pipeline", href: "/broker/pipeline" },
-    { label: "Listings", href: "/broker/listings" },
-    { label: "Transactions", href: "/broker/transactions" },
-    { label: "Calendar", href: "/broker/calendar" },
+    { label: "Dashboard", href: "/broker/dashboard" },
+    { label: "Properties", href: "/broker/properties" },
+    { label: "Clients", href: "/broker/clients" },
+    { label: "Visits", href: "/broker/visits" },
+    { label: "Referrals & Credits", href: "/broker/referrals" },
 ];
