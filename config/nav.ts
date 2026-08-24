@@ -15,5 +15,5 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
     { label: "Properties", href: "/broker/properties" },
     { label: "Clients", href: "/broker/clients" },
     { label: "Visits", href: "/broker/visits" },
-    { label: "Referrals & Credits", href: "/broker/referrals" },
+    { label: "Referrals", href: "/broker/referrals" },
 ];

@@ -4,26 +4,29 @@ import { dashboardMock } from "./mock-data";
 import { NewInAreas } from "./new-in-areas";
 import { PipelineCard } from "./pipeline-card";
 import { RequestsCard } from "./requests-card";
-import { ReraBanner } from "./rera-banner";
+import { ReraBanner } from "./rera-status";
 import { TodayCard } from "./today-card";
-
-function weekdayLabelFor(date: Date): string {
-    return new Intl.DateTimeFormat("en-IN", { weekday: "long" }).format(date);
-}
 
 export function BrokerDashboard() {
     const data = dashboardMock;
-    const weekdayLabel = weekdayLabelFor(new Date());
+    const now = new Date();
 
     return (
         <div className="flex flex-col gap-6 md:gap-8">
-            <DashboardHeader
-                weekdayLabel={weekdayLabel}
-                siteVisitCount={data.siteVisitCount}
-                requestsWaitingCount={data.requestsWaitingCount}
-            />
+            <header className="flex flex-col gap-4">
+                <DashboardHeader
+                    now={now}
+                    siteVisitCount={data.siteVisitCount}
+                    requestsWaitingCount={data.requestsWaitingCount}
+                    reraStatus={data.reraStatus}
+                    serviceAreas={data.serviceAreas}
+                    activityStreakDays={data.activityStreakDays}
+                    phoneDigits={data.phoneDigits}
+                    email={data.email}
+                />
 
-            {data.reraVerifying ? <ReraBanner /> : null}
+                <ReraBanner status={data.reraStatus} />
+            </header>
 
             {/*
               Mobile priority: Today → Follow-ups → Requests → Pipeline

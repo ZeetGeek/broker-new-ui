@@ -36,10 +36,25 @@ export type AreaPropertyItem = {
     brokerRequestCount: number;
 };
 
+export type ReraStatus = "profile_incomplete" | "verifying" | "verified";
+
+export type FirstWeekItem = {
+    id: string;
+    label: string;
+    href: string;
+    isComplete: boolean;
+};
+
 export type DashboardMock = {
     siteVisitCount: number;
     requestsWaitingCount: number;
-    reraVerifying: boolean;
+    reraStatus: ReraStatus;
+    serviceAreas: string[];
+    activityStreakDays: number;
+    phoneDigits: string;
+    email: string;
+    daysSinceSignup: number;
+    firstWeekItems: FirstWeekItem[];
     todayVisits: SiteVisitItem[];
     requestCounts: RequestCounts;
     activeClientCount: number;
@@ -49,10 +64,43 @@ export type DashboardMock = {
     newInAreas: AreaPropertyItem[];
 };
 
+export const FIRST_WEEK_DAYS = 7;
+
 export const dashboardMock: DashboardMock = {
     siteVisitCount: 2,
     requestsWaitingCount: 3,
-    reraVerifying: true,
+    reraStatus: "verifying",
+    serviceAreas: ["Vesu", "Adajan", "Pal"],
+    activityStreakDays: 5,
+    phoneDigits: "9876543210",
+    email: "zeet.patel@gmail.com",
+    daysSinceSignup: 2,
+    firstWeekItems: [
+        {
+            id: "rera",
+            label: "Add your RERA number",
+            href: "/broker/profile/edit",
+            isComplete: true,
+        },
+        {
+            id: "areas",
+            label: "Set your service areas",
+            href: "/broker/profile/edit",
+            isComplete: true,
+        },
+        {
+            id: "browse",
+            label: "Browse properties in your areas",
+            href: "/broker/properties",
+            isComplete: false,
+        },
+        {
+            id: "request",
+            label: "Send your first request",
+            href: "/broker/properties",
+            isComplete: false,
+        },
+    ],
     todayVisits: [
         {
             id: "visit-1",

@@ -24,7 +24,7 @@ export type PortalHeaderProps = {
 };
 
 const headerControlClass = `
-  border-2 border-border-warm bg-transparent!
+  border-2 border-border-warm bg-surface!
   hover:border-ink-subtle
 `;
 
