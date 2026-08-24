@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { Bell, Search } from "lucide-react";
+import { Bell, ChevronDown, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -126,20 +126,29 @@ export function PortalHeader({
                             )}
 
                             <Button
-                                variant="outline"
-                                size="icon-md"
+                                variant="ghost"
+                                size="md"
                                 nativeButton={false}
                                 render={<Link href={profileHref ?? "#"} />}
                                 aria-label={userName}
-                                className={cn(
-                                    headerControlClass,
-                                    `
-                                      scale-[0.98] overflow-hidden border-none border-transparent!
-                                      p-0 outline-none
-                                    `,
-                                )}
+                                className="
+                                  scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
+                                  hover:bg-transparent hover:text-ink
+                                "
                             >
-                                <UserAvatar name={userName} imageUrl={userAvatarUrl} size="fill" />
+                                <span
+                                    className="
+                                      overflow-hidden rounded-full block-control-lg
+                                      inline-control-lg
+                                    "
+                                >
+                                    <UserAvatar
+                                        name={userName}
+                                        imageUrl={userAvatarUrl}
+                                        size="fill"
+                                    />
+                                </span>
+                                <ChevronDown aria-hidden="true" />
                             </Button>
                         </div>
                     </div>
