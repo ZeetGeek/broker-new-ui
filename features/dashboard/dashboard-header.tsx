@@ -45,21 +45,17 @@ function ServiceAreaChips({ areas }: { areas: string[] }) {
                     No service areas
                 </Badge>
             )}
-            <Link
-                href="/broker/profile/edit"
+            <Button
+                variant="link"
+                size="sm"
+                nativeButton={false}
+                render={<Link href="/broker/profile/edit" />}
                 aria-label={areas.length > 0 ? "Edit service areas" : "Add service areas"}
-                className={`
-                  relative inline-flex items-center gap-1 rounded-control px-2.5 py-1
-                  ${META_TEXT}
-                  outline-none
-                  after:absolute after:-inset-2
-                  hover:text-ink
-                  focus-visible:ring-3 focus-visible:ring-ring/30
-                `}
+                className="body-sm gap-1 p-0 font-medium text-ink-muted block-auto hover:text-ink"
             >
                 <Pencil aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                 {areas.length > 0 ? "Edit" : "Add"}
-            </Link>
+            </Button>
         </>
     );
 }

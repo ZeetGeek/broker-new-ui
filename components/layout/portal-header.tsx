@@ -105,10 +105,7 @@ export function PortalHeader({
 
                         <TooltipProvider>
                             <div className="flex shrink-0 items-center gap-4">
-                                <HeaderTooltip
-                                    label="Search"
-                                    shortcut={<Kbd>Ctrl + K</Kbd>}
-                                >
+                                <HeaderTooltip label="Find properties, clients, and visits">
                                     <Button
                                         type="button"
                                         variant="outline"
