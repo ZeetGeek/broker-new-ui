@@ -37,7 +37,8 @@ export type ReraStatusChipProps = {
 export function ReraStatusChip({ status }: ReraStatusChipProps) {
     const chip = CHIP[status];
     const Icon = chip.icon;
-    const className = badgeVariants({ variant: chip.variant });
+    const surfaceOutline = chip.variant === "outline" ? "bg-surface" : undefined;
+    const className = cn(badgeVariants({ variant: chip.variant }), surfaceOutline);
 
     const content = (
         <>
@@ -60,7 +61,11 @@ export function ReraStatusChip({ status }: ReraStatusChipProps) {
         );
     }
 
-    return <Badge variant={chip.variant}>{content}</Badge>;
+    return (
+        <Badge variant={chip.variant} className={surfaceOutline}>
+            {content}
+        </Badge>
+    );
 }
 
 export type ReraBannerProps = {

@@ -67,7 +67,7 @@ function ProfileMetaChips({
         <div className="flex flex-wrap items-center gap-2 min-inline-0">
             <ReraStatusChip status={reraStatus} />
             {activityStreakDays > 0 ? (
-                <Badge variant="outline">
+                <Badge variant="outline" className="bg-surface">
                     <Flame aria-hidden strokeWidth={2} />
                     {streakLabel}
                 </Badge>
@@ -105,8 +105,23 @@ export function DashboardHeader({
                         {siteVisitCount} {visitWord}, {requestsWaitingCount} {requestWord} waiting.
                     </span>
                 </h1>
+            </div>
 
-                <div className="flex shrink-0 items-center gap-2">
+            <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2">
+                <ProfileMetaChips
+                    reraStatus={reraStatus}
+                    activityStreakDays={activityStreakDays}
+                    phoneDigits={phoneDigits}
+                    email={email}
+                />
+
+                <span aria-hidden className="hidden bg-border-warm block-4 inline-px sm:block" />
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="body-sm font-medium text-ink-muted">Working in</span>
+                    <ServiceAreaChips areas={serviceAreas} />
+                </div>
+
+                <div className="ms-auto flex shrink-0 items-center gap-2">
                     <Button
                         variant="outline-dark"
                         size="lg"
@@ -127,21 +142,6 @@ export function DashboardHeader({
                         <UserRoundPlus aria-hidden strokeWidth={1.75} />
                         <span className="hidden md:inline">Add client</span>
                     </Button>
-                </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2">
-                <ProfileMetaChips
-                    reraStatus={reraStatus}
-                    activityStreakDays={activityStreakDays}
-                    phoneDigits={phoneDigits}
-                    email={email}
-                />
-
-                <span aria-hidden className="hidden bg-border-warm block-4 inline-px sm:block" />
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="body-sm font-medium text-ink-muted">Working in</span>
-                    <ServiceAreaChips areas={serviceAreas} />
                 </div>
             </div>
         </div>
