@@ -351,11 +351,13 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 | Ghost             | none                         | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
 
 All are pill-shaped. Height comes from the control-height scale (§3.1a):
-`xs`/`sm`/`default`/`lg` map to `control-xs`/`control-sm`/`control-md`/`control-xl`
-(48px). Button `lg` and input `lg` are the same height — never mix steps in one
-form row. `lg` is the one that meets the 48px mobile tap-target floor, so use
-it on primary mobile actions. Minimum horizontal padding 20px. Label is
-sentence case, verb first, one to three words, no terminal punctuation.
+`xs`/`sm`/`default`/`md`/`lg` map to `control-xs`/`control-sm`/`control-md`/
+`control-lg`/`control-xl`. Icon sizes follow the same steps (`icon-xs` through
+`icon-lg`). Button `lg` and input `lg` are the same height — never mix steps in
+one form row. `md` (44px) is the desktop tap-target; `lg` (48px) is the mobile
+tap-target floor, so use it on primary mobile actions. Minimum horizontal
+padding 20px. Label is sentence case, verb first, one to three words, no
+terminal punctuation.
 
 **Loading state** uses the `loading` prop on `components/ui/button.tsx`. The spinner is
 `Tailspin` from `ldrs/react` (`import { Tailspin } from 'ldrs/react'`), `size="16"

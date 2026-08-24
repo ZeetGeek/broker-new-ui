@@ -67,7 +67,7 @@ export function ButtonThemePage() {
         <DesignSystemShell
             eyebrow="Components"
             title="Button."
-            description="One shadcn primitive, wrapped once in components/ui/button.tsx. Nine variants, four sizes, four icon sizes, loading state built in via the loading prop. See docs/DESIGN.md §4.3."
+            description="One shadcn primitive, wrapped once in components/ui/button.tsx. Nine variants, five sizes, five icon sizes, loading state built in via the loading prop. See docs/DESIGN.md §4.3."
         >
             <div className="space-y-10">
                 <section>
@@ -99,8 +99,9 @@ export function ButtonThemePage() {
                 <section>
                     <h2 className="h4 text-ink">Sizes</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        `lg` is 48px (`control-xl`), the same height as input `lg`. xs/sm are dense
-                        contexts only — tables, toolbars — never a primary mobile action.
+                        `md` is 44px (`control-lg`), the desktop tap-target. `lg` is 48px
+                        (`control-xl`), the same height as input `lg`. xs/sm are dense contexts
+                        only — tables, toolbars — never a primary mobile action.
                     </p>
                     <div
                         className="

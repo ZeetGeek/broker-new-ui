@@ -3,9 +3,12 @@ import Link from "next/link";
 
 import { Bell, Search } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+
 import { PortalNav } from "@/components/layout/portal-nav";
 import { Logo } from "@/components/shared/logo";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { Button } from "@/components/ui/button";
 
 import type { NavItem } from "@/config/nav";
 
@@ -15,13 +18,33 @@ export type PortalHeaderProps = {
     userAvatarUrl?: string;
     notificationsHref?: string;
     profileHref?: string;
+    unreadCount?: number;
     children?: ReactNode;
 };
 
-// const iconButtonClass =
-//     "relative flex items-center justify-center rounded-full border border-border-warm  text-ink-muted transition-colors duration-160 hover:text-ink block-control-md inline-control-md";
+const headerControlClass = `
+  border-2 border-border-warm bg-transparent!
+  hover:border-ink-subtle
+`;
 
-const iconButtonClass = "text-ink-muted hover:text-ink relative";
+function UnreadBadge({ count }: { count: number }) {
+    if (count <= 0) {
+        return null;
+    }
+
+    return (
+        <span
+            aria-hidden
+            className="
+              tabular body-xs absolute -inset-e-1 -inset-bs-1 flex items-center justify-center
+              rounded-full bg-brand px-1 font-semibold text-canvas ring-2 ring-surface-muted block-5
+              min-inline-5
+            "
+        >
+            {count > 9 ? "9+" : count}
+        </span>
+    );
+}
 
 export function PortalHeader({
     navItems,
@@ -29,9 +52,19 @@ export function PortalHeader({
     userAvatarUrl,
     notificationsHref,
     profileHref,
+    unreadCount = 0,
     children,
 }: PortalHeaderProps) {
     const homeHref = navItems[0]?.href ?? "/";
+    const notificationsLabel =
+        unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications";
+
+    const notificationIcon = (
+        <>
+            <Bell aria-hidden="true" />
+            <UnreadBadge count={unreadCount} />
+        </>
+    );
 
     return (
         <div className="bg-surface-muted min-block-screen">
@@ -43,48 +76,71 @@ export function PortalHeader({
                             <PortalNav items={navItems} />
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-6">
-                            <button type="button" aria-label="Search" className={iconButtonClass}>
-                                <Search className="block-4 inline-4" aria-hidden="true" />
-                            </button>
+                        <div className="flex shrink-0 items-center gap-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon-md"
+                                aria-label="Search"
+                                className={cn(
+                                    headerControlClass,
+                                    `
+                                      text-ink-muted
+                                      hover:text-ink
+                                      md:justify-start md:gap-2 md:px-4 md:inline-auto
+                                      md:min-inline-40
+                                    `,
+                                )}
+                            >
+                                <Search aria-hidden="true" />
+                                <span className="body-sm hidden font-medium md:inline">Search</span>
+                            </Button>
+
                             {notificationsHref ? (
-                                <Link
-                                    href={notificationsHref}
-                                    aria-label="Notifications"
-                                    className={iconButtonClass}
+                                <Button
+                                    variant="outline"
+                                    size="icon-md"
+                                    nativeButton={false}
+                                    render={<Link href={notificationsHref} />}
+                                    aria-label={notificationsLabel}
+                                    className={cn(
+                                        headerControlClass,
+                                        "relative text-ink-muted hover:text-ink",
+                                    )}
                                 >
-                                    <Bell
-                                        className="block-4 inline-4"
-                                        strokeWidth={2}
-                                        aria-hidden="true"
-                                    />
-                                    <span
-                                        aria-hidden
-                                        className="
-                                          absolute -inset-e-1 -inset-bs-1 rounded-full bg-brand
-                                          ring-2 ring-surface-muted block-1.5 inline-1.5
-                                        "
-                                    />
-                                </Link>
+                                    {notificationIcon}
+                                </Button>
                             ) : (
-                                <button
+                                <Button
                                     type="button"
-                                    aria-label="Notifications"
-                                    className={iconButtonClass}
+                                    variant="outline"
+                                    size="icon-md"
+                                    aria-label={notificationsLabel}
+                                    className={cn(
+                                        headerControlClass,
+                                        "relative text-ink-muted hover:text-ink",
+                                    )}
                                 >
-                                    <Bell strokeWidth={2} aria-hidden="true" />
-                                    <span
-                                        aria-hidden
-                                        className="
-                                          absolute -inset-e-1 -inset-bs-1 rounded-full bg-brand
-                                          ring-2 ring-surface-muted block-1.5 inline-1.5
-                                        "
-                                    />
-                                </button>
+                                    {notificationIcon}
+                                </Button>
                             )}
-                            <Link href={profileHref ?? "#"} aria-label={userName}>
-                                <UserAvatar name={userName} imageUrl={userAvatarUrl} />
-                            </Link>
+
+                            <Button
+                                variant="outline"
+                                size="icon-md"
+                                nativeButton={false}
+                                render={<Link href={profileHref ?? "#"} />}
+                                aria-label={userName}
+                                className={cn(
+                                    headerControlClass,
+                                    `
+                                      scale-[0.98] overflow-hidden border-none border-transparent!
+                                      p-0 outline-none
+                                    `,
+                                )}
+                            >
+                                <UserAvatar name={userName} imageUrl={userAvatarUrl} size="fill" />
+                            </Button>
                         </div>
                     </div>
                 </header>

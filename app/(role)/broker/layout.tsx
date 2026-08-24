@@ -11,6 +11,7 @@ export default function BrokerLayout({ children }: { children: ReactNode }) {
             userName="Zeet Patel"
             notificationsHref="/broker/notifications"
             profileHref="/broker/profile"
+            unreadCount={3}
         >
             {children}
         </PortalHeader>
