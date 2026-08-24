@@ -9,6 +9,7 @@ import { PortalNav } from "@/components/layout/portal-nav";
 import { Logo } from "@/components/shared/logo";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 
 import type { NavItem } from "@/config/nav";
 
@@ -85,15 +86,17 @@ export function PortalHeader({
                                 className={cn(
                                     headerControlClass,
                                     `
-                                      text-ink-muted
-                                      hover:text-ink
+                                      group text-ink-muted
+                                      group-hover:text-ink
                                       md:justify-start md:gap-2 md:px-4 md:inline-auto
-                                      md:min-inline-40
                                     `,
                                 )}
                             >
                                 <Search aria-hidden="true" />
                                 <span className="body-sm hidden font-medium md:inline">Search</span>
+                                <Kbd className="-me-1 hidden group-hover:text-ink md:inline-flex">
+                                    Ctrl + K
+                                </Kbd>
                             </Button>
 
                             {notificationsHref ? (

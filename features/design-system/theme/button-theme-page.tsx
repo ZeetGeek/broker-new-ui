@@ -100,8 +100,8 @@ export function ButtonThemePage() {
                     <h2 className="h4 text-ink">Sizes</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         `md` is 44px (`control-lg`), the desktop tap-target. `lg` is 48px
-                        (`control-xl`), the same height as input `lg`. xs/sm are dense contexts
-                        only — tables, toolbars — never a primary mobile action.
+                        (`control-xl`), the same height as input `lg`. xs/sm are dense contexts only
+                        — tables, toolbars — never a primary mobile action.
                     </p>
                     <div
                         className="
