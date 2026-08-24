@@ -31,16 +31,6 @@ const CHIP: Record<
     },
 };
 
-function LoadingDots() {
-    return (
-        <span className="t-dots" aria-hidden>
-            <span>.</span>
-            <span>.</span>
-            <span>.</span>
-        </span>
-    );
-}
-
 export type ReraStatusChipProps = {
     status: ReraStatus;
 };
@@ -57,8 +47,7 @@ export function ReraStatusChip({ status }: ReraStatusChipProps) {
                             aria-label={`RERA verifying. ${VERIFY_WAIT_COPY}.`}
                         >
                             <Clock aria-hidden className="block-3 inline-3" strokeWidth={1.75} />
-                            RERA verifying
-                            <LoadingDots />
+                            RERA verifying...
                         </Badge>
                     }
                 />

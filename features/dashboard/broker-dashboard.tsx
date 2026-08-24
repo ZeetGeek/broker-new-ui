@@ -1,10 +1,6 @@
 import { DashboardHeader } from "./dashboard-header";
-import { FollowUpsCard } from "./follow-ups-card";
 import { dashboardMock } from "./mock-data";
-import { NewInAreas } from "./new-in-areas";
-import { PipelineCard } from "./pipeline-card";
-import { RequestsCard } from "./requests-card";
-import { TodayCard } from "./today-card";
+import { PlaceholderCard } from "./placeholder-card";
 
 export function BrokerDashboard() {
     const data = dashboardMock;
@@ -25,26 +21,26 @@ export function BrokerDashboard() {
                 />
             </header>
 
-            {/*
-              Mobile priority: Today → Follow-ups → Requests → Pipeline
-              Desktop 2×2: Today | Requests / Pipeline | Follow-ups
-            */}
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                <TodayCard visits={data.todayVisits} className="order-1" />
-                <FollowUpsCard
-                    items={data.followUps}
-                    overdueCount={data.overdueFollowUpCount}
-                    className="order-2 md:order-4"
-                />
-                <RequestsCard counts={data.requestCounts} className="order-3 md:order-2" />
-                <PipelineCard
-                    activeClientCount={data.activeClientCount}
-                    stages={data.pipeline}
-                    className="order-4 md:order-3"
-                />
+            <div className="row gx-3 gy-3 md:gx-4 md:gy-4">
+                <div className="col-12 md:col-5">
+                    <PlaceholderCard title="Next Showing" />
+                </div>
+                <div className="col-12 md:col-4">
+                    <PlaceholderCard title="Today" />
+                </div>
+                <div className="col-12 md:col-3">
+                    <PlaceholderCard title="Your Requests" />
+                </div>
+                <div className="col-12 md:col-3">
+                    <PlaceholderCard title="Pipeline" />
+                </div>
+                <div className="col-12 md:col-4">
+                    <PlaceholderCard title="Follow-ups" />
+                </div>
+                <div className="col-12 md:col-5">
+                    <PlaceholderCard title="Activity" />
+                </div>
             </div>
-
-            <NewInAreas properties={data.newInAreas} />
         </div>
     );
 }

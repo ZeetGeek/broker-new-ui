@@ -2,6 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "./transitions-dev.css";
+@plugin "tailwind-bootstrap-grid" {
+    /* Bootstrap gutter steps so gx-3 / gy-4 etc. exist. */
+    grid_gutters: 0, 0, 1, 0.25rem, 2, 0.5rem, 3, 1rem, 4, 1.5rem, 5, 3rem;
+}
 
 @custom-variant dark (&:is(.dark *));
 
