@@ -10,6 +10,10 @@ import { Button } from "@/components/ui/button";
 import type { ReraStatus } from "./mock-data";
 import { ReraStatusChip } from "./rera-status";
 
+const CHIP_SURFACE = "bg-surface";
+const ICON_CLASS = "block-3 inline-3";
+const META_TEXT = "body-sm font-medium text-ink-muted";
+
 export type DashboardHeaderProps = {
     now: Date;
     siteVisitCount: number;
@@ -26,68 +30,54 @@ function ServiceAreaChips({ areas }: { areas: string[] }) {
         <>
             {areas.length > 0 ? (
                 areas.map((area) => (
-                    <Badge key={area} variant="outline">
+                    <Badge key={area} variant="outline" className={CHIP_SURFACE}>
                         {area}
                     </Badge>
                 ))
             ) : (
-                <Badge variant="outline">No service areas</Badge>
+                <Badge variant="outline" className={CHIP_SURFACE}>
+                    No service areas
+                </Badge>
             )}
             <Link
                 href="/broker/profile/edit"
                 aria-label={areas.length > 0 ? "Edit service areas" : "Add service areas"}
-                className="
-                  body-sm inline-flex items-center gap-1.5 rounded-control px-2 font-semibold
-                  text-ink-muted outline-none block-12
+                className={`
+                  relative inline-flex items-center gap-1 rounded-control px-2.5 py-1
+                  ${META_TEXT}
+                  outline-none
+                  after:absolute after:-inset-2
                   hover:text-ink
                   focus-visible:ring-3 focus-visible:ring-ring/30
-                "
+                `}
             >
-                <Pencil aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                <Pencil aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                 {areas.length > 0 ? "Edit" : "Add"}
             </Link>
         </>
     );
 }
 
-function ProfileMetaChips({
-    reraStatus,
-    activityStreakDays,
-    phoneDigits,
-    email,
-}: {
-    reraStatus: ReraStatus;
-    activityStreakDays: number;
-    phoneDigits: string;
-    email: string;
-}) {
-    const streakLabel = `${activityStreakDays}-day streak`;
+function ContactLine({ phoneDigits, email }: { phoneDigits: string; email: string }) {
     const phoneHref = `tel:+91${phoneDigits.replace(/\D/g, "").slice(-10)}`;
-    const contactLinkClass = `
-      body-sm inline-flex items-center gap-1.5 text-ink-muted outline-none
+    const linkClass = `
+      inline-flex items-center gap-1 ${META_TEXT} outline-none
       hover:text-ink
       focus-visible:ring-3 focus-visible:ring-ring/30
     `;
 
     return (
-        <div className="flex flex-wrap items-center gap-2 min-inline-0">
-            <ReraStatusChip status={reraStatus} />
-            {activityStreakDays > 0 ? (
-                <Badge variant="outline" className="bg-surface">
-                    <Flame aria-hidden strokeWidth={2} />
-                    {streakLabel}
-                </Badge>
-            ) : null}
-            <a href={phoneHref} className={contactLinkClass}>
-                <Phone aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+        <div className={`inline-flex items-center gap-2 ${META_TEXT}`}>
+            <a href={phoneHref} className={linkClass}>
                 <PhoneNumber phoneDigits={phoneDigits} />
+                <Phone aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
             </a>
-            <span aria-hidden className="body-sm text-ink-subtle">
+            <span aria-hidden className="text-ink-subtle">
                 ·
             </span>
-            <a href={`mailto:${email}`} className={contactLinkClass}>
-                <Mail aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+            <a href={`mailto:${email}`} className={linkClass}>
                 <span className="truncate max-inline-[28ch]">{email}</span>
+                <Mail aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
             </a>
         </div>
     );
@@ -116,23 +106,8 @@ export function DashboardHeader({
                         {siteVisitCount} {visitWord}, {requestsWaitingCount} {requestWord} waiting.
                     </span>
                 </h1>
-            </div>
 
-            <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2">
-                <ProfileMetaChips
-                    reraStatus={reraStatus}
-                    activityStreakDays={activityStreakDays}
-                    phoneDigits={phoneDigits}
-                    email={email}
-                />
-
-                <span aria-hidden className="hidden bg-border-warm block-4 inline-px sm:block" />
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="body-sm font-medium text-ink-muted">Working in</span>
-                    <ServiceAreaChips areas={serviceAreas} />
-                </div>
-
-                <div className="ms-auto flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                     <Button
                         variant="outline-dark"
                         size="lg"
@@ -153,6 +128,30 @@ export function DashboardHeader({
                         <UserRoundPlus aria-hidden strokeWidth={1.75} />
                         <span className="hidden md:inline">Add client</span>
                     </Button>
+                </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <ReraStatusChip status={reraStatus} />
+                    {activityStreakDays > 0 ? (
+                        <Badge variant="outline" className={CHIP_SURFACE}>
+                            <Flame aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                            {`${activityStreakDays}-day streak`}
+                        </Badge>
+                    ) : null}
+                </div>
+
+                <ContactLine phoneDigits={phoneDigits} email={email} />
+
+                <span
+                    aria-hidden
+                    className="hidden self-center bg-border-warm sm:block block-3.5 inline-px"
+                />
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className={META_TEXT}>Working in</span>
+                    <ServiceAreaChips areas={serviceAreas} />
                 </div>
             </div>
         </div>

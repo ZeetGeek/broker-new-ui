@@ -42,7 +42,7 @@ export function ReraStatusChip({ status }: ReraStatusChipProps) {
 
     const content = (
         <>
-            <Icon aria-hidden strokeWidth={2} />
+            <Icon aria-hidden className="block-3 inline-3" strokeWidth={1.75} />
             {chip.label}
         </>
     );
