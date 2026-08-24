@@ -14,7 +14,9 @@ export default function Page() {
             </div>
             <Link
                 href="/broker/profile/edit"
-                className="body-sm rounded-full border border-border-warm px-4 py-2 font-semibold text-ink"
+                className="
+                  body-sm rounded-full border border-border-warm px-4 py-2 font-semibold text-ink
+                "
             >
                 Edit profile
             </Link>

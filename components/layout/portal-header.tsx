@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 import { PortalNav } from "@/components/layout/portal-nav";
 import { Logo } from "@/components/shared/logo";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 import type { NavItem } from "@/config/nav";
 
@@ -19,7 +20,7 @@ export type PortalHeaderProps = {
 };
 
 const iconButtonClass =
-    "relative flex items-center justify-center rounded-full border border-border-warm bg-surface text-ink-muted transition-colors duration-160 hover:text-ink block-control-md inline-control-md";
+    "relative flex items-center justify-center rounded-full border border-border-warm  text-ink-muted transition-colors duration-160 hover:text-ink block-control-md inline-control-md";
 
 export function PortalHeader({
     navItems,
@@ -41,7 +42,7 @@ export function PortalHeader({
                             <PortalNav items={navItems} />
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-2">
+                        <div className="flex shrink-0 items-center gap-3">
                             <button type="button" aria-label="Search" className={iconButtonClass}>
                                 <HugeiconsIcon icon={Search01Icon} className="block-4 inline-4" />
                             </button>
@@ -83,27 +84,7 @@ export function PortalHeader({
                                 </button>
                             )}
                             <Link href={profileHref ?? "#"} aria-label={userName}>
-                                {userAvatarUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                        src={userAvatarUrl}
-                                        alt={userName}
-                                        className="
-                                          rounded-full object-cover ring-1 ring-border-warm
-                                          block-control-md inline-control-md
-                                        "
-                                    />
-                                ) : (
-                                    <div
-                                        className="
-                                          flex items-center justify-center rounded-full bg-surface
-                                          font-sans text-sm font-medium text-ink ring-1
-                                          ring-border-warm block-control-md inline-control-md
-                                        "
-                                    >
-                                        {userName.charAt(0).toUpperCase()}
-                                    </div>
-                                )}
+                                <UserAvatar name={userName} imageUrl={userAvatarUrl} />
                             </Link>
                         </div>
                     </div>

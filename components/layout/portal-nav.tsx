@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 
 import { duration, ease } from "@/lib/motion/tokens";
@@ -41,7 +42,10 @@ export function PortalNav({ items }: PortalNavProps) {
                             href={item.href}
                             aria-current={isActive ? "page" : undefined}
                             className={cn(
-                                "body-sm relative px-0.5 py-1 font-semibold transition-colors duration-160",
+                                `
+                                  body-sm relative px-0.5 py-1 font-semibold transition-colors
+                                  duration-160
+                                `,
                                 isActive ? "text-ink" : "text-ink-muted hover:text-ink",
                             )}
                         >
@@ -50,7 +54,10 @@ export function PortalNav({ items }: PortalNavProps) {
                                 <motion.span
                                     layoutId="portal-nav-underline"
                                     aria-hidden
-                                    className="absolute inset-x-0 -inset-be-0.5 mx-auto rounded-full bg-ink block-0.5 inline-5"
+                                    className="
+                                      absolute inset-x-0 -inset-be-0.5 mx-auto rounded-full bg-ink
+                                      block-0.5 inline-5
+                                    "
                                     transition={
                                         reduceMotion
                                             ? { duration: 0 }
