@@ -155,10 +155,7 @@ export function HomeHero() {
                                       inline-6
                                     "
                                 >
-                                    <Icon
-                                        aria-hidden="true"
-                                        className="block-3.5 inline-3.5"
-                                    />
+                                    <Icon aria-hidden="true" className="block-3.5 inline-3.5" />
                                 </span>
                                 {label}
                             </li>

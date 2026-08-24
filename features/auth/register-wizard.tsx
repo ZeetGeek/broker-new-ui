@@ -12,11 +12,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { generatePassword } from "@/lib/auth/generate-password";
 import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
-import {
-    PASSWORD_REQUIREMENTS,
-    registerSchema,
-    type RegisterValues,
-} from "@/lib/validation/auth";
+import { PASSWORD_REQUIREMENTS, registerSchema, type RegisterValues } from "@/lib/validation/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

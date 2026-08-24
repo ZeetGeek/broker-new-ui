@@ -7,10 +7,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail } from "lucide-react";
 
-import {
-    forgotPasswordSchema,
-    type ForgotPasswordValues,
-} from "@/lib/validation/auth";
+import { forgotPasswordSchema, type ForgotPasswordValues } from "@/lib/validation/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -205,8 +202,8 @@ export function ForgotPasswordForm() {
                             <h1 className="h1 text-ink">Check your email</h1>
                             <p className="body text-ink-muted">
                                 If an account exists for{" "}
-                                <span className="font-medium text-ink">{sentEmail}</span>, a
-                                reset link is on its way. Look in spam if it is not in the inbox.
+                                <span className="font-medium text-ink">{sentEmail}</span>, a reset
+                                link is on its way. Look in spam if it is not in the inbox.
                             </p>
                         </div>
 
@@ -220,9 +217,7 @@ export function ForgotPasswordForm() {
                                 onClick={handleResend}
                                 className="border-border-warm bg-surface inline-full"
                             >
-                                {secondsLeft > 0
-                                    ? `Resend in ${secondsLeft}s`
-                                    : "Resend link"}
+                                {secondsLeft > 0 ? `Resend in ${secondsLeft}s` : "Resend link"}
                             </Button>
                             <Button
                                 size="lg"

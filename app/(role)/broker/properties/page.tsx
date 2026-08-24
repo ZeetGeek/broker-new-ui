@@ -8,11 +8,7 @@ export const metadata: Metadata = {
 
 const VALID_TABS: PropertiesTab[] = ["browse", "requests", "mine"];
 
-export default async function Page({
-    searchParams,
-}: {
-    searchParams: Promise<{ tab?: string }>;
-}) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
     const { tab } = await searchParams;
     const activeTab = VALID_TABS.includes(tab as PropertiesTab) ? (tab as PropertiesTab) : "browse";
 

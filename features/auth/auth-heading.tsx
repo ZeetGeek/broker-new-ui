@@ -1,12 +1,6 @@
 import type { ReactNode } from "react";
 
-export function AuthHeading({
-    title,
-    description,
-}: {
-    title: string;
-    description: ReactNode;
-}) {
+export function AuthHeading({ title, description }: { title: string; description: ReactNode }) {
     return (
         <div className="flex flex-col gap-2 text-center">
             <h1 className="h1 text-ink">{title}</h1>

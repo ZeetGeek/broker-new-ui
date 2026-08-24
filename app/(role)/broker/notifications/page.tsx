@@ -8,7 +8,9 @@ export default function Page() {
     return (
         <>
             <h1 className="display-md">Notifications</h1>
-            <p className="body text-ink-muted">Full notification list — opened from the bell icon.</p>
+            <p className="body text-ink-muted">
+                Full notification list — opened from the bell icon.
+            </p>
         </>
     );
 }

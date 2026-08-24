@@ -38,7 +38,10 @@ export function PropertiesTabs({ activeTab }: { activeTab: PropertiesTab }) {
             <div className="flex items-center gap-2 border-be border-border-warm">
                 {TABS.map((tab) => {
                     const isActive = tab.value === activeTab;
-                    const href = tab.value === "browse" ? "/broker/properties" : `/broker/properties?tab=${tab.value}`;
+                    const href =
+                        tab.value === "browse"
+                            ? "/broker/properties"
+                            : `/broker/properties?tab=${tab.value}`;
 
                     return (
                         <Link

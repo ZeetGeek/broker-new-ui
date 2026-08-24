@@ -113,10 +113,10 @@ export function InputThemePage() {
                     <h2 className="h4 text-ink">Icon slots</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         <code className="body-xs">startIcon</code> and{" "}
-                        <code className="body-xs">endIcon</code> accept any Lucide icon.
-                        Only one end affordance shows at a time — loading, success, clear, and the
-                        password toggle all claim that slot automatically and take priority over a
-                        plain <code className="body-xs">endIcon</code>.
+                        <code className="body-xs">endIcon</code> accept any Lucide icon. Only one
+                        end affordance shows at a time — loading, success, clear, and the password
+                        toggle all claim that slot automatically and take priority over a plain{" "}
+                        <code className="body-xs">endIcon</code>.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Swatch label="Start icon">

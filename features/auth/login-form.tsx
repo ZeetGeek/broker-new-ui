@@ -7,7 +7,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Mail } from "lucide-react";
 
-import { loginSchema,type LoginValues } from "@/lib/validation/auth";
+import { loginSchema, type LoginValues } from "@/lib/validation/auth";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -69,20 +69,13 @@ export function LoginForm() {
 
                 <OrDivider />
 
-                <form
-                    className="flex flex-col gap-5"
-                    onSubmit={handleSubmit(onSubmit)}
-                    noValidate
-                >
+                <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
                     <Controller
                         name="email"
                         control={control}
                         render={({ field, fieldState }) => (
                             <div className="flex flex-col gap-2">
-                                <label
-                                    htmlFor="login-email"
-                                    className="body font-medium text-ink"
-                                >
+                                <label htmlFor="login-email" className="body font-medium text-ink">
                                     Email{" "}
                                     <span className="text-brand" aria-hidden="true">
                                         *
@@ -94,7 +87,7 @@ export function LoginForm() {
                                     type="email"
                                     autoComplete="email"
                                     placeholder="you@example.com"
-                                        startIcon={Mail}
+                                    startIcon={Mail}
                                     value={field.value}
                                     onValueChange={field.onChange}
                                     onBlur={field.onBlur}

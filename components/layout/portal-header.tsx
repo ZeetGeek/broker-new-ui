@@ -21,7 +21,7 @@ export type PortalHeaderProps = {
 // const iconButtonClass =
 //     "relative flex items-center justify-center rounded-full border border-border-warm  text-ink-muted transition-colors duration-160 hover:text-ink block-control-md inline-control-md";
 
-const iconButtonClass = "text-ink-muted hover:text-ink";
+const iconButtonClass = "text-ink-muted hover:text-ink relative";
 
 export function PortalHeader({
     navItems,
@@ -61,8 +61,8 @@ export function PortalHeader({
                                     <span
                                         aria-hidden
                                         className="
-                                          absolute inset-e-2 inset-bs-2 rounded-full bg-brand ring-2
-                                          ring-surface-muted block-1.5 inline-1.5
+                                          absolute -inset-e-1 -inset-bs-1 rounded-full bg-brand
+                                          ring-2 ring-surface-muted block-1.5 inline-1.5
                                         "
                                     />
                                 </Link>
@@ -72,16 +72,12 @@ export function PortalHeader({
                                     aria-label="Notifications"
                                     className={iconButtonClass}
                                 >
-                                    <Bell
-                                        className="block-4 inline-4"
-                                        strokeWidth={2}
-                                        aria-hidden="true"
-                                    />
+                                    <Bell strokeWidth={2} aria-hidden="true" />
                                     <span
                                         aria-hidden
                                         className="
-                                          absolute inset-e-2 inset-bs-2 rounded-full bg-brand ring-2
-                                          ring-surface-muted block-1.5 inline-1.5
+                                          absolute -inset-e-1 -inset-bs-1 rounded-full bg-brand
+                                          ring-2 ring-surface-muted block-1.5 inline-1.5
                                         "
                                     />
                                 </button>

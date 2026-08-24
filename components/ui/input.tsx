@@ -314,10 +314,7 @@ function Input({
 
     return (
         <div ref={wrapRef} className={cn("t-input-wrap inline-full", wrapperClassName)}>
-            <div
-                ref={fieldRef}
-                className={cn("relative rounded-control", clearable && "t-clear")}
-            >
+            <div ref={fieldRef} className={cn("relative rounded-control", clearable && "t-clear")}>
                 {startIcon ? (
                     <span
                         className={cn(iconSlotVariants({ side: "start", size }))}

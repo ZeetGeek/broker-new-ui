@@ -15,8 +15,9 @@ export function UserAvatar({ name, imageUrl, className }: UserAvatarProps) {
         <Avatar
             className={cn(
                 `
-                  overflow-hidden rounded-full pbs-1 ring-1 ring-border-warm block-control-md
-                  inline-control-md
+                  overflow-hidden rounded-full bg-linear-to-b from-brand-ink/20 via-brand/15
+                  to-brand-deep/20 p-[2px] pbs-[5px] ring-1 ring-border-warm block-control-sm
+                  inline-control-sm
                 `,
                 className,
             )}
@@ -27,7 +28,7 @@ export function UserAvatar({ name, imageUrl, className }: UserAvatarProps) {
                 className="block-full inline-full"
                 facehashProps={{
                     className: "size-full text-ink",
-                    variant: "solid",
+                    variant: "gradient",
                     intensity3d: "none",
                     enableBlink: true,
                 }}
