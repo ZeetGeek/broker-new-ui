@@ -75,10 +75,7 @@ const inputVariants = cva(
 );
 
 const iconSlotVariants = cva(
-    `
-      pointer-events-none absolute inset-y-0 z-10 flex items-center text-ink-subtle
-      [&_svg]:block
-    `,
+    `pointer-events-none absolute inset-y-0 z-10 flex items-center text-ink-subtle [&_svg]:block`,
     {
         variants: {
             size: {

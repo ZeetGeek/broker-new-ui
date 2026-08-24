@@ -49,7 +49,7 @@ const wordColor = cva("font-display leading-none font-semibold tracking-tight", 
     },
 });
 
-const logoVariants = cva("flex items-center gap-2", {
+const logoVariants = cva("flex items-center gap-2.5", {
     variants: {
         variant: {
             default: "",

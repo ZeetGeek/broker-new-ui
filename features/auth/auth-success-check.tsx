@@ -24,8 +24,8 @@ export function AuthSuccessCheck() {
     return (
         <span
             className="
-              flex items-center justify-center rounded-full bg-brand-soft text-brand-text
-              block-16 inline-16
+              flex items-center justify-center rounded-full bg-brand-soft text-brand-text block-16
+              inline-16
             "
         >
             <span ref={checkRef} className="t-success-check" data-state="out" aria-hidden="true">

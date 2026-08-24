@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
     ArrowRight02Icon,
     RocketIcon,
@@ -6,7 +8,6 @@ import {
     SquareLock02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Link from "next/link";
 
 import { ProgressiveBlur } from "@/components/motion-primitives/progressive-blur";
 import { Logo } from "@/components/shared/logo";
