@@ -122,34 +122,39 @@ export function DashboardHeader({
             </div>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                    <ReraStatusChip status={reraStatus} />
-                    {activityStreakDays > 0 ? (
-                        <Badge variant="outline" className={CHIP_SURFACE}>
-                            <StreakFireEmoji />
-                            {`${activityStreakDays}-day streak`}
-                        </Badge>
-                    ) : null}
-                </div>
+                <div className="-mbe-4.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <ReraStatusChip status={reraStatus} />
+                        {activityStreakDays > 0 ? (
+                            <Badge
+                                variant="outline"
+                                className={`${CHIP_SURFACE} font-semibold text-urgent`}
+                            >
+                                <StreakFireEmoji />
+                                {`${activityStreakDays}-day streak`}
+                            </Badge>
+                        ) : null}
+                    </div>
 
-                <ContactLine phoneDigits={phoneDigits} email={email} />
+                    <ContactLine phoneDigits={phoneDigits} email={email} />
 
-                <span
-                    aria-hidden
-                    className="hidden self-center bg-border-warm block-3.5 inline-px sm:block"
-                />
+                    <span
+                        aria-hidden
+                        className="hidden self-center bg-border-warm block-3.5 inline-px sm:block"
+                    />
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
-                        <MapPin aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Working in
-                    </span>
-                    <ServiceAreaChips areas={serviceAreas} />
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
+                            <MapPin aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                            Working in
+                        </span>
+                        <ServiceAreaChips areas={serviceAreas} />
+                    </div>
                 </div>
                 <div className="ms-auto flex shrink-0 items-center gap-2">
                     <Button
                         variant="outline-dark"
-                        size="lg"
+                        size="md"
                         nativeButton={false}
                         render={<Link href="/broker/properties" />}
                         aria-label="Browse properties"
@@ -159,7 +164,7 @@ export function DashboardHeader({
                     </Button>
                     <Button
                         variant="default"
-                        size="lg"
+                        size="md"
                         nativeButton={false}
                         render={<Link href="/broker/clients" />}
                         aria-label="Add client"

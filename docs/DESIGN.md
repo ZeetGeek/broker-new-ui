@@ -83,6 +83,7 @@ highlight-ink   #1E3A05   text sitting on highlight
 urgent          #C2410C   time pressure only
 urgent-mid      #E8895A   icon/accent between urgent and urgent-soft
 urgent-soft     #FBEBE0
+pending         #92650A   wait state — in progress, no action required. Dark yellow.
 danger          #B42318   destructive and reject actions only
 danger-mid      #E2725F   icon/accent between danger and danger-soft
 danger-soft     #FDECEA
@@ -110,6 +111,10 @@ closed, verification step done. It shares its hex value with `brand` on purpose 
 is not a fourth hue, it is a semantic alias so approval/completion moments stay
 distinguishable in code and copy from routine brand usage (prices, active nav) without
 adding a colour to the palette.
+
+`pending` means **a process is in flight and the user cannot speed it up**. RERA
+number submitted, waiting on verification. It is dark yellow so it does not steal
+`urgent` orange. Never use it for a deadline.
 
 ### 1.4 Contrast
 

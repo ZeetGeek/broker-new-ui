@@ -1,18 +1,20 @@
 import Link from "next/link";
 
-import { Shield, ShieldAlert, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Clock, Shield, ShieldAlert, ShieldCheck, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { ReraStatus } from "./mock-data";
 
 const PROFILE_EDIT_HREF = "/broker/profile/edit";
+const VERIFY_WAIT_COPY = "Usually within 24 hours";
 
 const CHIP: Record<
-    ReraStatus,
+    Exclude<ReraStatus, "verifying">,
     {
         label: string;
         variant: "brand" | "neutral" | "urgent" | "outline";
@@ -21,7 +23,6 @@ const CHIP: Record<
     }
 > = {
     verified: { label: "RERA verified", variant: "brand", icon: ShieldCheck },
-    verifying: { label: "RERA verifying", variant: "outline", icon: Shield },
     profile_incomplete: {
         label: "Add RERA",
         variant: "urgent",
@@ -30,11 +31,42 @@ const CHIP: Record<
     },
 };
 
+function LoadingDots() {
+    return (
+        <span className="t-dots" aria-hidden>
+            <span>.</span>
+            <span>.</span>
+            <span>.</span>
+        </span>
+    );
+}
+
 export type ReraStatusChipProps = {
     status: ReraStatus;
 };
 
 export function ReraStatusChip({ status }: ReraStatusChipProps) {
+    if (status === "verifying") {
+        return (
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <Badge
+                            variant="outline"
+                            className="bg-surface font-semibold text-pending"
+                            aria-label={`RERA verifying. ${VERIFY_WAIT_COPY}.`}
+                        >
+                            <Clock aria-hidden className="block-3 inline-3" strokeWidth={1.75} />
+                            RERA verifying
+                            <LoadingDots />
+                        </Badge>
+                    }
+                />
+                <TooltipContent side="bottom">{VERIFY_WAIT_COPY}</TooltipContent>
+            </Tooltip>
+        );
+    }
+
     const chip = CHIP[status];
     const Icon = chip.icon;
     const surfaceOutline = chip.variant === "outline" ? "bg-surface" : undefined;

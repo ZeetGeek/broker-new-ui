@@ -176,6 +176,21 @@ export const COLOR_GROUPS: ColorGroup[] = [
         ],
     },
     {
+        title: "Signal — pending",
+        description:
+            "Waiting on a process. No action required. Distinct from urgent (a deadline) so verifying does not look overdue.",
+        tokens: [
+            {
+                name: "Pending",
+                variable: "--color-pending",
+                hex: "#92650A",
+                className: "bg-pending",
+                usage: "RERA verification in flight, other wait states with no deadline",
+                onDark: true,
+            },
+        ],
+    },
+    {
         title: "Signal — danger",
         description: "Destroys or denies something. Reject, delete, remove — nothing else.",
         tokens: [

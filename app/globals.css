@@ -61,6 +61,7 @@
     --color-urgent: #c2410c;
     --color-urgent-mid: #e8895a;
     --color-urgent-soft: #fbebe0;
+    --color-pending: #92650a;
     --color-danger: #b42318;
     --color-danger-mid: #e2725f;
     --color-danger-soft: #fdecea;
@@ -181,6 +182,7 @@
     --color-urgent: var(--color-urgent);
     --color-urgent-mid: var(--color-urgent-mid);
     --color-urgent-soft: var(--color-urgent-soft);
+    --color-pending: var(--color-pending);
     --color-danger: var(--color-danger);
     --color-danger-mid: var(--color-danger-mid);
     --color-danger-soft: var(--color-danger-soft);

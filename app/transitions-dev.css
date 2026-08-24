@@ -38,6 +38,9 @@
     --shimmer-highlight: var(--color-ink);
     --shimmer-band: 400%;
     --shimmer-ease: linear;
+    /* Loading ellipsis — wait states, opacity only */
+    --dots-dur: 1200ms;
+    --dots-ease: ease-in-out;
     /* Tabs sliding — mapped to brand-ink / surface */
     --tabs-dur: 250ms;
     --tabs-ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -345,6 +348,44 @@
 @media (prefers-reduced-motion: reduce) {
     .t-shimmer::before {
         animation: none !important;
+    }
+}
+
+/* --- loading dots (wait states) --- */
+
+.t-dots {
+    display: inline-flex;
+    inline-size: 1em;
+}
+
+.t-dots span {
+    opacity: 0.2;
+    animation: t-dots-fade var(--dots-dur) var(--dots-ease) infinite;
+}
+
+.t-dots span:nth-child(2) {
+    animation-delay: calc(var(--dots-dur) / 6);
+}
+
+.t-dots span:nth-child(3) {
+    animation-delay: calc(var(--dots-dur) / 3);
+}
+
+@keyframes t-dots-fade {
+    0%,
+    80%,
+    100% {
+        opacity: 0.2;
+    }
+    40% {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-dots span {
+        animation: none;
+        opacity: 1;
     }
 }
 
