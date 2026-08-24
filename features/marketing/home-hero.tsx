@@ -1,13 +1,6 @@
 import Link from "next/link";
 
-import {
-    ArrowRight02Icon,
-    RocketIcon,
-    RupeeIcon,
-    Shield01Icon,
-    SquareLock02Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight, IndianRupee, Lock, Rocket, ShieldCheck } from "lucide-react";
 
 import { ProgressiveBlur } from "@/components/motion-primitives/progressive-blur";
 import { Logo } from "@/components/shared/logo";
@@ -17,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import { HeroBg } from "./hero-bg";
 
 const TRUST_ITEMS = [
-    { icon: Shield01Icon, label: "RERA-verified brokers" },
-    { icon: RupeeIcon, label: "No listing fee" },
-    { icon: SquareLock02Icon, label: "Your number stays private" },
+    { icon: ShieldCheck, label: "RERA-verified brokers" },
+    { icon: IndianRupee, label: "No listing fee" },
+    { icon: Lock, label: "Your number stays private" },
 ];
 
 export function HomeHero() {
@@ -101,7 +94,7 @@ export function HomeHero() {
                           [&_svg:not([class*='size-'])]:inline-3.5
                         "
                     >
-                        <HugeiconsIcon icon={RocketIcon} />
+                        <Rocket aria-hidden="true" />
                         Now onboarding brokers and owners
                     </Badge>
 
@@ -143,7 +136,7 @@ export function HomeHero() {
                             render={<Link href="/register?portal=broker" />}
                         >
                             I&apos;m a broker
-                            <HugeiconsIcon icon={ArrowRight02Icon} data-icon="inline-end" />
+                            <ArrowRight aria-hidden="true" data-icon="inline-end" />
                         </Button>
                     </div>
 
@@ -153,7 +146,7 @@ export function HomeHero() {
                           sm:flex-row sm:gap-0 sm:divide-x sm:divide-canvas/15
                         "
                     >
-                        {TRUST_ITEMS.map(({ icon, label }) => (
+                        {TRUST_ITEMS.map(({ icon: Icon, label }) => (
                             <li key={label} className="flex items-center gap-2 sm:px-5">
                                 <span
                                     className="
@@ -162,7 +155,10 @@ export function HomeHero() {
                                       inline-6
                                     "
                                 >
-                                    <HugeiconsIcon icon={icon} className="block-3.5 inline-3.5" />
+                                    <Icon
+                                        aria-hidden="true"
+                                        className="block-3.5 inline-3.5"
+                                    />
                                 </span>
                                 {label}
                             </li>

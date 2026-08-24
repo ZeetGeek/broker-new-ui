@@ -5,7 +5,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail01Icon } from "@hugeicons/core-free-icons";
+import { Mail } from "lucide-react";
 
 import {
     forgotPasswordSchema,
@@ -150,7 +150,7 @@ export function ForgotPasswordForm() {
                                             type="email"
                                             autoComplete="email"
                                             placeholder="you@example.com"
-                                            startIcon={Mail01Icon}
+                                            startIcon={Mail}
                                             value={field.value}
                                             onValueChange={field.onChange}
                                             onBlur={field.onBlur}

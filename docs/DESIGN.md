@@ -492,8 +492,8 @@ Pill radius (`rounded-control`), 2px `border-warm`, `surface` fill. Rest state
 carries no shadow — `shadow-xs` is reserved for the rare case an input sits
 directly on `canvas` rather than inside a card that already separates it.
 
-**Icon slots.** `startIcon` and `endIcon` accept a Hugeicons free-icon export
-via `@hugeicons/react`'s `HugeiconsIcon`. Only one thing occupies the end
+**Icon slots.** `startIcon` and `endIcon` accept a Lucide icon component.
+Only one thing occupies the end
 slot at a time — `loading`, `success`, `clearable`, and `type="password"`
 each claim it automatically, in that priority order, ahead of a plain
 `endIcon`. Never render two end affordances at once.

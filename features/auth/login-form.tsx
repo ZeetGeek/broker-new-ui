@@ -5,7 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail01Icon, SquareLock02Icon } from "@hugeicons/core-free-icons";
+import { Lock, Mail } from "lucide-react";
 
 import { loginSchema,type LoginValues } from "@/lib/validation/auth";
 
@@ -94,7 +94,7 @@ export function LoginForm() {
                                     type="email"
                                     autoComplete="email"
                                     placeholder="you@example.com"
-                                    startIcon={Mail01Icon}
+                                        startIcon={Mail}
                                     value={field.value}
                                     onValueChange={field.onChange}
                                     onBlur={field.onBlur}
@@ -142,7 +142,7 @@ export function LoginForm() {
                                         type="password"
                                         autoComplete="current-password"
                                         placeholder="Enter password"
-                                        startIcon={SquareLock02Icon}
+                                        startIcon={Lock}
                                         value={field.value}
                                         onValueChange={field.onChange}
                                         onBlur={field.onBlur}

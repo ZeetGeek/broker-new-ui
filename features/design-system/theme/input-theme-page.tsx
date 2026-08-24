@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { CallIcon, Mail01Icon, Search01Icon, UserIcon } from "@hugeicons/core-free-icons";
+import { Mail, Phone, Search, User } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 
@@ -25,7 +25,7 @@ function EmailDemo() {
 
     return (
         <Input
-            startIcon={Mail01Icon}
+            startIcon={Mail}
             placeholder="you@example.com"
             value={value}
             onValueChange={setValue}
@@ -53,7 +53,7 @@ function ClearableDemo() {
     const [value, setValue] = useState("Vesu, Surat");
     return (
         <Input
-            startIcon={Search01Icon}
+            startIcon={Search}
             clearable
             placeholder="Search locality"
             value={value}
@@ -74,7 +74,7 @@ function LoadingDemo() {
 
     return (
         <Input
-            startIcon={UserIcon}
+            startIcon={User}
             placeholder="Broker name"
             value={value}
             onValueChange={handleChange}
@@ -113,19 +113,19 @@ export function InputThemePage() {
                     <h2 className="h4 text-ink">Icon slots</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         <code className="body-xs">startIcon</code> and{" "}
-                        <code className="body-xs">endIcon</code> accept any Hugeicons free icon.
+                        <code className="body-xs">endIcon</code> accept any Lucide icon.
                         Only one end affordance shows at a time — loading, success, clear, and the
                         password toggle all claim that slot automatically and take priority over a
                         plain <code className="body-xs">endIcon</code>.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Swatch label="Start icon">
-                            <Input startIcon={UserIcon} placeholder="Full name" />
+                            <Input startIcon={User} placeholder="Full name" />
                         </Swatch>
                         <Swatch label="Start + end icon">
                             <Input
-                                startIcon={CallIcon}
-                                endIcon={Search01Icon}
+                                startIcon={Phone}
+                                endIcon={Search}
                                 placeholder="+91 98765 43210"
                             />
                         </Swatch>

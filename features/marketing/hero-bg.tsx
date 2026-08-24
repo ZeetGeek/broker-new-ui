@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export function HeroBg() {
-    const [desktop, setDesktop] = useState(false);
-
-    useEffect(() => {
+    const [desktop] = useState(() => {
+        if (typeof window === "undefined") {
+            return false;
+        }
         const mq = window.matchMedia("(min-width: 768px)");
         const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-        setDesktop(mq.matches && !reduced.matches);
-    }, []);
+        return mq.matches && !reduced.matches;
+    });
 
     return (
         <>

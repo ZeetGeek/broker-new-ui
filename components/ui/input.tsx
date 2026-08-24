@@ -3,16 +3,9 @@
 import * as React from "react";
 
 import { Input as InputPrimitive } from "@base-ui/react/input";
-import {
-    AlertCircleIcon,
-    CancelCircleIcon,
-    CheckmarkCircle02Icon,
-    EyeIcon,
-    EyeOffIcon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tailspin } from "ldrs/react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff, XCircle } from "lucide-react";
 
 import {
     copyInputTypeMetrics,
@@ -99,18 +92,23 @@ const iconSlotVariants = cva(
     },
 );
 
-type IconSvgElement = React.ComponentProps<typeof HugeiconsIcon>["icon"];
+type LucideIconProps = React.SVGProps<SVGSVGElement> & {
+    size?: number | string;
+    strokeWidth?: number;
+    color?: string;
+};
+type LucideIconComponent = React.ComponentType<LucideIconProps>;
 
 export type InputProps = Omit<React.ComponentProps<typeof InputPrimitive>, "size"> &
     VariantProps<typeof inputVariants> & {
         /** Icon rendered at the reading-start edge (left in LTR). Purely decorative. */
-        startIcon?: IconSvgElement;
+        startIcon?: LucideIconComponent;
         /**
          * Icon rendered at the reading-end edge. Suppressed automatically when `loading`,
          * `clearable`, or `type="password"` claim that slot — only one end affordance shows
          * at a time.
          */
-        endIcon?: IconSvgElement;
+        endIcon?: LucideIconComponent;
         /** Disables the control, shows a spinner in the end slot, sets `aria-busy`. */
         loading?: boolean;
         /** data-success and a checkmark in the end slot. Never combine with `aria-invalid`. */
@@ -238,6 +236,9 @@ function Input({
     const resolvedEndIcon = showPasswordToggle || showClear ? undefined : endIcon;
     const hasEndSlot =
         showStatusSwap || showClear || showPasswordToggle || Boolean(resolvedEndIcon);
+    // Narrow optional icon props for TS while still rendering safely inside guards.
+    const StartIcon = startIcon!;
+    const EndIcon = resolvedEndIcon!;
 
     React.useEffect(() => {
         const wrap = wrapRef.current;
@@ -322,7 +323,7 @@ function Input({
                         className={cn(iconSlotVariants({ side: "start", size }))}
                         aria-hidden="true"
                     >
-                        <HugeiconsIcon icon={startIcon} />
+                        <StartIcon />
                     </span>
                 ) : null}
 
@@ -384,11 +385,7 @@ function Input({
                                     />
                                 </span>
                                 <span className="t-icon" data-icon="b">
-                                    <HugeiconsIcon
-                                        icon={CheckmarkCircle02Icon}
-                                        className="text-success"
-                                        aria-hidden="true"
-                                    />
+                                    <CheckCircle2 className="text-success" aria-hidden="true" />
                                 </span>
                             </span>
                         ) : showPasswordToggle ? (
@@ -405,10 +402,10 @@ function Input({
                             >
                                 <span className="t-icon-swap" data-state={revealed ? "b" : "a"}>
                                     <span className="t-icon" data-icon="a">
-                                        <HugeiconsIcon icon={EyeIcon} />
+                                        <Eye />
                                     </span>
                                     <span className="t-icon" data-icon="b">
-                                        <HugeiconsIcon icon={EyeOffIcon} />
+                                        <EyeOff />
                                     </span>
                                 </span>
                             </button>
@@ -429,10 +426,10 @@ function Input({
                                 "
                                 aria-label="Clear"
                             >
-                                <HugeiconsIcon icon={CancelCircleIcon} />
+                                <XCircle />
                             </button>
                         ) : resolvedEndIcon ? (
-                            <HugeiconsIcon icon={resolvedEndIcon} aria-hidden="true" />
+                            <EndIcon aria-hidden="true" />
                         ) : null}
                     </span>
                 ) : null}
@@ -442,7 +439,7 @@ function Input({
                         className={cn(iconSlotVariants({ side: "end", size }))}
                         aria-hidden="true"
                     >
-                        <HugeiconsIcon icon={AlertCircleIcon} className="text-danger-mid" />
+                        <AlertCircle className="text-danger-mid" />
                     </span>
                 ) : null}
             </div>

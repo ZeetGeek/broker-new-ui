@@ -8,7 +8,7 @@ export default function BrokerLayout({ children }: { children: ReactNode }) {
     return (
         <PortalHeader
             navItems={BROKER_NAV_ITEMS}
-            userName="Jeet Patel"
+            userName="Zeet Patel"
             notificationsHref="/broker/notifications"
             profileHref="/broker/profile"
         >

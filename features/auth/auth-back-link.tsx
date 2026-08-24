@@ -4,8 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Home01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Home } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,7 @@ export function AuthFormFrame({ children }: { children: ReactNode }) {
                     render={<Link href="/" />}
                     className="body gap-2 px-0 font-medium text-ink-muted hover:text-ink"
                 >
-                    <HugeiconsIcon icon={Home01Icon} className="block-4 inline-4" />
+                    <Home className="block-4 inline-4" aria-hidden="true" />
                     Go to home
                 </Button>
             </div>

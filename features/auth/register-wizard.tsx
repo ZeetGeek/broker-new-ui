@@ -6,13 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-    CheckmarkCircle02Icon,
-    CircleIcon,
-    Mail01Icon,
-    SquareLock02Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { CheckCircle2, Circle, Lock, Mail } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { generatePassword } from "@/lib/auth/generate-password";
@@ -75,6 +69,7 @@ function PasswordRequirements({ password }: { password: string }) {
                 >
                     {PASSWORD_REQUIREMENTS.map((requirement) => {
                         const met = requirement.test(password);
+                        const RequirementIcon = met ? CheckCircle2 : Circle;
                         return (
                             <li
                                 key={requirement.id}
@@ -84,8 +79,7 @@ function PasswordRequirements({ password }: { password: string }) {
                                 )}
                                 aria-label={`${met ? "Met" : "Needed"}: ${requirement.label}`}
                             >
-                                <HugeiconsIcon
-                                    icon={met ? CheckmarkCircle02Icon : CircleIcon}
+                                <RequirementIcon
                                     className="shrink-0 block-4 inline-4"
                                     strokeWidth={2}
                                     aria-hidden="true"
@@ -270,7 +264,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                             type="email"
                                             autoComplete="email"
                                             placeholder="you@example.com"
-                                            startIcon={Mail01Icon}
+                                            startIcon={Mail}
                                             value={field.value}
                                             onValueChange={field.onChange}
                                             onBlur={field.onBlur}
@@ -318,7 +312,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                             type="password"
                                             autoComplete="new-password"
                                             placeholder="Create a password"
-                                            startIcon={SquareLock02Icon}
+                                            startIcon={Lock}
                                             value={field.value}
                                             onValueChange={field.onChange}
                                             onBlur={field.onBlur}
@@ -350,7 +344,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                             type="password"
                                             autoComplete="new-password"
                                             placeholder="Re-enter password"
-                                            startIcon={SquareLock02Icon}
+                                            startIcon={Lock}
                                             value={field.value}
                                             onValueChange={field.onChange}
                                             onBlur={field.onBlur}

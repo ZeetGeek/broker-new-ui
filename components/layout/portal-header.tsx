@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { Notification03Icon, Search01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Bell, Search } from "lucide-react";
 
 import { PortalNav } from "@/components/layout/portal-nav";
 import { Logo } from "@/components/shared/logo";
@@ -19,8 +18,10 @@ export type PortalHeaderProps = {
     children?: ReactNode;
 };
 
-const iconButtonClass =
-    "relative flex items-center justify-center rounded-full border border-border-warm  text-ink-muted transition-colors duration-160 hover:text-ink block-control-md inline-control-md";
+// const iconButtonClass =
+//     "relative flex items-center justify-center rounded-full border border-border-warm  text-ink-muted transition-colors duration-160 hover:text-ink block-control-md inline-control-md";
+
+const iconButtonClass = "text-ink-muted hover:text-ink";
 
 export function PortalHeader({
     navItems,
@@ -42,9 +43,9 @@ export function PortalHeader({
                             <PortalNav items={navItems} />
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-3">
+                        <div className="flex shrink-0 items-center gap-6">
                             <button type="button" aria-label="Search" className={iconButtonClass}>
-                                <HugeiconsIcon icon={Search01Icon} className="block-4 inline-4" />
+                                <Search className="block-4 inline-4" aria-hidden="true" />
                             </button>
                             {notificationsHref ? (
                                 <Link
@@ -52,9 +53,10 @@ export function PortalHeader({
                                     aria-label="Notifications"
                                     className={iconButtonClass}
                                 >
-                                    <HugeiconsIcon
-                                        icon={Notification03Icon}
+                                    <Bell
                                         className="block-4 inline-4"
+                                        strokeWidth={2}
+                                        aria-hidden="true"
                                     />
                                     <span
                                         aria-hidden
@@ -70,9 +72,10 @@ export function PortalHeader({
                                     aria-label="Notifications"
                                     className={iconButtonClass}
                                 >
-                                    <HugeiconsIcon
-                                        icon={Notification03Icon}
+                                    <Bell
                                         className="block-4 inline-4"
+                                        strokeWidth={2}
+                                        aria-hidden="true"
                                     />
                                     <span
                                         aria-hidden
