@@ -1,0 +1,184 @@
+import Link from "next/link";
+
+import { Navigation, Phone } from "lucide-react";
+
+import { Price } from "@/components/shared/price";
+import { UserAvatar } from "@/components/shared/user-avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
+import { cn } from "@/lib/utils";
+
+import { CardLabel } from "./card-label";
+import type { NextShowingStatus } from "./mock-data";
+
+const STARTING_SOON_MINUTES = 30;
+
+export type NextShowing = {
+    id: string;
+    scheduledAt: Date;
+    configLabel: string;
+    locality: string;
+    amountInr: number;
+    isRent: boolean;
+    meetNote: string;
+    status: NextShowingStatus;
+    clientName: string;
+    clientPhoneDigits: string;
+};
+
+export type NextShowingCardProps = {
+    showing: NextShowing | null;
+    now: Date;
+    className?: string;
+};
+
+function statusBadge(status: NextShowingStatus, isStartingSoon: boolean, isPast: boolean) {
+    if (isPast) {
+        return <Badge variant="neutral">Started</Badge>;
+    }
+    if (isStartingSoon) {
+        return <Badge variant="urgent">Starting soon</Badge>;
+    }
+    if (status === "confirmed") {
+        return <Badge variant="brand">Confirmed</Badge>;
+    }
+    return <Badge variant="neutral">Awaiting owner</Badge>;
+}
+
+function mapsSearchUrl(locality: string, configLabel: string): string {
+    const query = encodeURIComponent(`${configLabel}, ${locality}, Surat`);
+    return `https://www.google.com/maps/search/?api=1&query=${query}`;
+}
+
+function EmptyNextShowing({ className }: { className?: string }) {
+    return (
+        <section
+            className={cn(
+                "flex flex-col rounded-card bg-surface p-4 shadow-sm md:h-full md:p-5",
+                className,
+            )}
+        >
+            <CardLabel>Next showing</CardLabel>
+            <div className="mbs-4 flex flex-1 flex-col">
+                <p className="h5 text-ink">Nothing on the calendar.</p>
+                <p className="body mbs-1 text-ink-muted">
+                    Schedule a site visit when a client is ready to see a property.
+                </p>
+                <div className="mbs-auto pts-5">
+                    <Button
+                        variant="default"
+                        size="md"
+                        nativeButton={false}
+                        render={<Link href="/broker/visits/new" />}
+                    >
+                        Schedule a visit
+                    </Button>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+export function NextShowingCard({ showing, now, className }: NextShowingCardProps) {
+    if (!showing) {
+        return <EmptyNextShowing className={className} />;
+    }
+
+    const whenLabel = formatShowingWhen(showing.scheduledAt, now);
+    const duration = formatDurationUntil(showing.scheduledAt, now);
+    const isStartingSoon =
+        !duration.isPast && duration.minutesRemaining > 0 && duration.minutesRemaining <= STARTING_SOON_MINUTES;
+    const phoneHref = `tel:+91${showing.clientPhoneDigits.replace(/\D/g, "").slice(-10)}`;
+    const directionsHref = mapsSearchUrl(showing.locality, showing.configLabel);
+
+    return (
+        <section
+            className={cn(
+                "flex flex-col rounded-card bg-surface p-4 shadow-sm md:h-full md:p-5",
+                className,
+            )}
+            aria-labelledby={`next-showing-${showing.id}`}
+        >
+            <div className="flex items-start justify-between gap-3">
+                <CardLabel>Next showing</CardLabel>
+                {statusBadge(showing.status, isStartingSoon, duration.isPast)}
+            </div>
+
+            <div className="mbs-4 flex flex-1 flex-col gap-5">
+                <div>
+                    <h2
+                        id={`next-showing-${showing.id}`}
+                        className="h2 text-ink"
+                    >
+                        <time dateTime={showing.scheduledAt.toISOString()}>{whenLabel}</time>
+                    </h2>
+                    <p
+                        className={cn(
+                            "body-sm mbs-1 font-medium tabular",
+                            isStartingSoon ? "text-urgent" : "text-ink-muted",
+                        )}
+                    >
+                        {duration.label}
+                    </p>
+                </div>
+
+                <div>
+                    <p className="h5 text-ink">
+                        {showing.configLabel} · {showing.locality}
+                    </p>
+                    <p className="body-sm mbs-1 text-ink-muted">
+                        <Price amountInr={showing.amountInr} isRent={showing.isRent} />
+                        <span aria-hidden> · </span>
+                        <span>{showing.meetNote}</span>
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-inner bg-surface-muted px-3 py-3">
+                    <UserAvatar name={showing.clientName} size="sm" />
+                    <div className="min-inline-0 flex-1">
+                        <p className="body font-medium text-ink">{showing.clientName}</p>
+                        <p className="body-xs text-ink-subtle">Client</p>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        nativeButton={false}
+                        render={<a href={phoneHref} />}
+                        aria-label={`Call ${showing.clientName}`}
+                        className="shrink-0 text-ink-muted hover:text-ink"
+                    >
+                        <Phone aria-hidden strokeWidth={1.75} />
+                        Call
+                    </Button>
+                </div>
+
+                <div className="mbs-auto flex flex-wrap gap-2 pts-1">
+                    <Button
+                        variant="default"
+                        size="md"
+                        nativeButton={false}
+                        render={
+                            <a
+                                href={directionsHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            />
+                        }
+                    >
+                        <Navigation aria-hidden strokeWidth={1.75} />
+                        Directions
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="md"
+                        nativeButton={false}
+                        render={<Link href={`/broker/visits/new?reschedule=${showing.id}`} />}
+                    >
+                        Reschedule
+                    </Button>
+                </div>
+            </div>
+        </section>
+    );
+}

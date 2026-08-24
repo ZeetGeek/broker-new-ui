@@ -45,6 +45,22 @@ export type FirstWeekItem = {
     isComplete: boolean;
 };
 
+export type NextShowingStatus = "confirmed" | "awaiting_owner";
+
+/** Static fields for the next showing; `scheduledAt` is derived from `now` + `minutesUntil`. */
+export type NextShowingMock = {
+    id: string;
+    minutesUntil: number;
+    configLabel: string;
+    locality: string;
+    amountInr: number;
+    isRent: boolean;
+    meetNote: string;
+    status: NextShowingStatus;
+    clientName: string;
+    clientPhoneDigits: string;
+};
+
 export type DashboardMock = {
     siteVisitCount: number;
     requestsWaitingCount: number;
@@ -55,6 +71,7 @@ export type DashboardMock = {
     email: string;
     daysSinceSignup: number;
     firstWeekItems: FirstWeekItem[];
+    nextShowing: NextShowingMock | null;
     todayVisits: SiteVisitItem[];
     requestCounts: RequestCounts;
     activeClientCount: number;
@@ -101,6 +118,18 @@ export const dashboardMock: DashboardMock = {
             isComplete: false,
         },
     ],
+    nextShowing: {
+        id: "visit-1",
+        minutesUntil: 134,
+        configLabel: "3 BHK",
+        locality: "Vesu",
+        amountInr: 11_500_000,
+        isRent: false,
+        meetNote: "Meet at the gate",
+        status: "confirmed",
+        clientName: "Rahul Mehta",
+        clientPhoneDigits: "9876501234",
+    },
     todayVisits: [
         {
             id: "visit-1",

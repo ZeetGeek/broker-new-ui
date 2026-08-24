@@ -1,10 +1,25 @@
 import { DashboardHeader } from "./dashboard-header";
 import { dashboardMock } from "./mock-data";
+import { NextShowingCard } from "./next-showing-card";
 import { PlaceholderCard } from "./placeholder-card";
 
 export function BrokerDashboard() {
     const data = dashboardMock;
     const now = new Date();
+    const nextShowing = data.nextShowing
+        ? {
+              id: data.nextShowing.id,
+              scheduledAt: new Date(now.getTime() + data.nextShowing.minutesUntil * 60_000),
+              configLabel: data.nextShowing.configLabel,
+              locality: data.nextShowing.locality,
+              amountInr: data.nextShowing.amountInr,
+              isRent: data.nextShowing.isRent,
+              meetNote: data.nextShowing.meetNote,
+              status: data.nextShowing.status,
+              clientName: data.nextShowing.clientName,
+              clientPhoneDigits: data.nextShowing.clientPhoneDigits,
+          }
+        : null;
 
     return (
         <div className="flex min-h-[calc(100dvh-5rem)] flex-col gap-6 md:gap-8">
@@ -27,7 +42,7 @@ export function BrokerDashboard() {
                   md:grid-cols-12 md:grid-rows-3 md:gap-5
                 "
             >
-                <PlaceholderCard title="Next Showing" className="md:col-span-5" />
+                <NextShowingCard showing={nextShowing} now={now} className="md:col-span-5" />
                 <PlaceholderCard title="Today" className="md:col-span-4" />
                 <PlaceholderCard title="Your Requests" className="md:col-span-3" />
                 <PlaceholderCard title="Pipeline" className="md:col-span-3" />
