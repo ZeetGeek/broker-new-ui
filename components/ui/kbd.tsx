@@ -10,9 +10,8 @@ function Kbd({ className, ...props }: React.ComponentProps<"kbd">) {
                   bg-muted px-1.5 font-sans text-xs font-medium text-muted-foreground select-none
                   block-5.5 inline-fit min-inline-5.5
                   in-data-[slot=input-group]:bg-input
-                  in-data-[slot=tooltip-content]:bg-background/20
-                  in-data-[slot=tooltip-content]:text-background
-                  dark:in-data-[slot=tooltip-content]:bg-background/10
+                  in-data-[slot=tooltip-content]:bg-canvas/15
+                  in-data-[slot=tooltip-content]:text-canvas
                   [&_svg:not([class*='size-'])]:block-3 [&_svg:not([class*='size-'])]:inline-3
                 `,
                 className,

@@ -75,6 +75,15 @@
     --stagger-stagger: 40ms;
     --stagger-blur: 3px;
     --stagger-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Tooltip open/close — transitions.dev 17-tooltip, themed to DESIGN.md */
+    --tt-in-dur: 150ms;
+    --tt-out-dur: 50ms;
+    --tt-scale: 0.98;
+    --tt-delay: 80ms;
+    --tt-in-ease: ease-out;
+    --tt-out-ease: ease-out;
+    --tt-bg: var(--color-ink);
+    --tt-fg: var(--color-canvas);
 }
 
 .dark {
@@ -584,6 +593,49 @@
 
 @media (prefers-reduced-motion: reduce) {
     .t-stagger-line {
+        transition: none !important;
+    }
+}
+
+/* --- 17 tooltip open/close ---
+   Fade + scale. Intent delay is Provider `delay` (--tt-delay), not CSS.
+   Leave is faster and never delayed. Base UI drives enter/exit via
+   data-starting-style / data-ending-style. */
+
+.t-tooltip {
+    transform-origin: var(--transform-origin);
+    background: var(--tt-bg);
+    color: var(--tt-fg);
+    opacity: 1;
+    transform: scale(1);
+    transition:
+        opacity var(--tt-in-dur) var(--tt-in-ease),
+        transform var(--tt-in-dur) var(--tt-in-ease);
+    will-change: opacity, transform;
+}
+
+.t-tooltip[data-starting-style],
+.t-tooltip[data-ending-style] {
+    opacity: 0;
+    transform: scale(var(--tt-scale));
+}
+
+.t-tooltip[data-ending-style] {
+    transition-duration: var(--tt-out-dur);
+    transition-timing-function: var(--tt-out-ease);
+}
+
+.t-tooltip[data-instant] {
+    transition: none;
+}
+
+.t-tooltip-arrow {
+    fill: var(--tt-bg);
+    background: var(--tt-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-tooltip {
         transition: none !important;
     }
 }

@@ -10,6 +10,10 @@ export const duration = {
     base: 0.22,
     /** Tabs / nav underline slide — matches transitions-dev `--tabs-dur` */
     tabs: 0.25,
+    /** Tooltip appear — matches transitions-dev `--tt-in-dur` / `--duration-quick` */
+    tooltipIn: 0.15,
+    /** Tooltip leave — matches transitions-dev `--tt-out-dur` (faster than open) */
+    tooltipOut: 0.05,
     slow: 0.32,
 } as const;
 

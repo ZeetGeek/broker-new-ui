@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Compass, Flame, Pencil, UserRoundPlus } from "lucide-react";
+import { Compass, Flame, Mail, Pencil, Phone, UserRoundPlus } from "lucide-react";
 
 import { DateDisplay } from "@/components/shared/date-display";
 import { PhoneNumber } from "@/components/shared/phone-number";
@@ -62,6 +62,12 @@ function ProfileMetaChips({
     email: string;
 }) {
     const streakLabel = `${activityStreakDays}-day streak`;
+    const phoneHref = `tel:+91${phoneDigits.replace(/\D/g, "").slice(-10)}`;
+    const contactLinkClass = `
+      body-sm inline-flex items-center gap-1.5 text-ink-muted outline-none
+      hover:text-ink
+      focus-visible:ring-3 focus-visible:ring-ring/30
+    `;
 
     return (
         <div className="flex flex-wrap items-center gap-2 min-inline-0">
@@ -72,12 +78,17 @@ function ProfileMetaChips({
                     {streakLabel}
                 </Badge>
             ) : null}
-            <Badge variant="outline">
+            <a href={phoneHref} className={contactLinkClass}>
+                <Phone aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
                 <PhoneNumber phoneDigits={phoneDigits} />
-            </Badge>
-            <Badge variant="outline" className="truncate max-inline-[28ch]">
-                {email}
-            </Badge>
+            </a>
+            <span aria-hidden className="body-sm text-ink-subtle">
+                ·
+            </span>
+            <a href={`mailto:${email}`} className={contactLinkClass}>
+                <Mail aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                <span className="truncate max-inline-[28ch]">{email}</span>
+            </a>
         </div>
     );
 }
