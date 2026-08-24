@@ -4,7 +4,6 @@ import { dashboardMock } from "./mock-data";
 import { NewInAreas } from "./new-in-areas";
 import { PipelineCard } from "./pipeline-card";
 import { RequestsCard } from "./requests-card";
-import { ReraBanner } from "./rera-status";
 import { TodayCard } from "./today-card";
 
 export function BrokerDashboard() {
@@ -24,8 +23,6 @@ export function BrokerDashboard() {
                     phoneDigits={data.phoneDigits}
                     email={data.email}
                 />
-
-                <ReraBanner status={data.reraStatus} />
             </header>
 
             {/*

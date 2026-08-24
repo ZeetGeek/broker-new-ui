@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import Link from "next/link";
 
 import { Bell, ChevronDown, Search } from "lucide-react";
@@ -10,6 +10,12 @@ import { Logo } from "@/components/shared/logo";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import type { NavItem } from "@/config/nav";
 
@@ -27,6 +33,26 @@ const headerControlClass = `
   border-2 border-border-warm bg-surface!
   hover:border-ink-subtle
 `;
+
+function HeaderTooltip({
+    label,
+    shortcut,
+    children,
+}: {
+    label: string;
+    shortcut?: ReactNode;
+    children: ReactElement;
+}) {
+    return (
+        <Tooltip>
+            <TooltipTrigger render={children} />
+            <TooltipContent side="bottom">
+                {label}
+                {shortcut}
+            </TooltipContent>
+        </Tooltip>
+    );
+}
 
 function UnreadBadge({ count }: { count: number }) {
     if (count <= 0) {
@@ -77,89 +103,92 @@ export function PortalHeader({
                             <PortalNav items={navItems} />
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="icon-md"
-                                aria-label="Search"
-                                className={cn(
-                                    headerControlClass,
-                                    `
-                                      group text-ink-muted
-                                      group-hover:text-ink
-                                      md:justify-start md:gap-2 md:px-4 md:inline-auto
-                                    `,
-                                )}
-                            >
-                                <Search aria-hidden="true" />
-                                <span className="body-sm hidden font-medium md:inline">Search</span>
-                                <Kbd
-                                    className="
-                                      ms-1 -me-1 hidden border
-                                      group-hover:text-ink
-                                      md:inline-flex
-                                    "
+                        <TooltipProvider>
+                            <div className="flex shrink-0 items-center gap-4">
+                                <HeaderTooltip
+                                    label="Search"
+                                    shortcut={<Kbd>Ctrl + K</Kbd>}
                                 >
-                                    Ctrl + K
-                                </Kbd>
-                            </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon-md"
+                                        aria-label="Search"
+                                        className={cn(
+                                            headerControlClass,
+                                            `
+                                              group text-ink-muted
+                                              group-hover:text-ink
+                                              md:justify-start md:gap-2 md:px-4 md:inline-auto
+                                            `,
+                                        )}
+                                    >
+                                        <Search aria-hidden="true" />
+                                        <span className="body-sm hidden font-medium md:inline">
+                                            Search
+                                        </span>
+                                        <Kbd
+                                            className="
+                                              ms-1 -me-1 hidden border
+                                              group-hover:text-ink
+                                              md:inline-flex
+                                            "
+                                        >
+                                            Ctrl + K
+                                        </Kbd>
+                                    </Button>
+                                </HeaderTooltip>
 
-                            {notificationsHref ? (
-                                <Button
-                                    variant="outline"
-                                    size="icon-md"
-                                    nativeButton={false}
-                                    render={<Link href={notificationsHref} />}
-                                    aria-label={notificationsLabel}
-                                    className={cn(
-                                        headerControlClass,
-                                        "relative text-ink-muted hover:text-ink",
-                                    )}
-                                >
-                                    {notificationIcon}
-                                </Button>
-                            ) : (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon-md"
-                                    aria-label={notificationsLabel}
-                                    className={cn(
-                                        headerControlClass,
-                                        "relative text-ink-muted hover:text-ink",
-                                    )}
-                                >
-                                    {notificationIcon}
-                                </Button>
-                            )}
+                                <HeaderTooltip label="Notifications">
+                                    <Button
+                                        type={notificationsHref ? undefined : "button"}
+                                        variant="outline"
+                                        size="icon-md"
+                                        nativeButton={notificationsHref ? false : undefined}
+                                        render={
+                                            notificationsHref ? (
+                                                <Link href={notificationsHref} />
+                                            ) : undefined
+                                        }
+                                        aria-label={notificationsLabel}
+                                        className={cn(
+                                            headerControlClass,
+                                            "relative text-ink-muted hover:text-ink",
+                                        )}
+                                    >
+                                        {notificationIcon}
+                                    </Button>
+                                </HeaderTooltip>
 
-                            <Button
-                                variant="ghost"
-                                size="md"
-                                nativeButton={false}
-                                render={<Link href={profileHref ?? "#"} />}
-                                aria-label={userName}
-                                className="
-                                  scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
-                                  hover:bg-transparent hover:text-ink
-                                "
-                            >
-                                <span
-                                    className="
-                                      overflow-hidden rounded-full block-control-lg
-                                      inline-control-lg
-                                    "
-                                >
-                                    <UserAvatar
-                                        name={userName}
-                                        imageUrl={userAvatarUrl}
-                                        size="fill"
-                                    />
-                                </span>
-                                <ChevronDown aria-hidden="true" />
-                            </Button>
-                        </div>
+                                <HeaderTooltip label="Profile">
+                                    <Button
+                                        variant="ghost"
+                                        size="md"
+                                        nativeButton={false}
+                                        render={<Link href={profileHref ?? "#"} />}
+                                        aria-label={userName}
+                                        className="
+                                          scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
+                                          hover:bg-transparent hover:text-ink
+                                        "
+                                    >
+                                        <span
+                                            className="
+                                              overflow-hidden rounded-full block-control-lg
+                                              inline-control-lg
+                                            "
+                                        >
+                                            <UserAvatar
+                                                name={userName}
+                                                imageUrl={userAvatarUrl}
+                                                size="fill"
+                                            />
+                                        </span>
+                                        <ChevronDown aria-hidden="true" />
+                                    </Button>
+                                </HeaderTooltip>
+                            </div>
+                        </TooltipProvider>
                     </div>
                 </header>
 
