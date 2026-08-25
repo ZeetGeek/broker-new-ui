@@ -1,13 +1,12 @@
 import Link from "next/link";
 
-import { CircleCheck, MapPin, Phone } from "lucide-react";
-
 import { formatDateIso, formatDateShort, formatTimeIn } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { TodayAgenda, TodayItem } from "./mock-data";
+import { TodayTimeline } from "./today-timeline";
 
 const TODAY_INFO = "Your full day as a timeline: what's done, what's left, and where you are now.";
 
@@ -20,29 +19,21 @@ const LINK_CLASS = cn(
     "focus-visible:ring-3 focus-visible:ring-ring/30",
 );
 
-const SCROLL_HIDE = `
-  overflow-y-auto overscroll-contain
-  [scrollbar-width:none]
-  [-ms-overflow-style:none]
-  [&::-webkit-scrollbar]:hidden
-`;
-
 export type TodayCardProps = {
     agenda: TodayAgenda;
     now: Date;
     className?: string;
 };
 
-type TimelineEntry =
-    | { type: "now"; key: string; label: string }
-    | { type: "item"; key: string; item: TodayItem; showDivider: boolean };
-
 function sortByTime(items: TodayItem[]): TodayItem[] {
     return [...items].sort((a, b) => a.time.localeCompare(b.time));
 }
 
-function buildTimeline(items: TodayItem[], nowLabel: string): TimelineEntry[] {
-    const entries: TimelineEntry[] = [];
+function buildTimeline(items: TodayItem[], nowLabel: string) {
+    const entries: Array<
+        | { type: "now"; key: string; label: string }
+        | { type: "item"; key: string; item: TodayItem; showDivider: boolean }
+    > = [];
     let nowPlaced = false;
 
     items.forEach((item, index) => {
@@ -61,90 +52,6 @@ function buildTimeline(items: TodayItem[], nowLabel: string): TimelineEntry[] {
     });
 
     return entries;
-}
-
-function ItemIcon({ item }: { item: TodayItem }) {
-    const className = cn(
-        "shrink-0 block-4 inline-4",
-        item.state === "done" && "text-brand",
-        item.state !== "done" && item.isNext && "text-brand",
-        item.state !== "done" && !item.isNext && "text-ink-subtle",
-    );
-
-    if (item.state === "done") {
-        return <CircleCheck aria-hidden className={className} strokeWidth={1.75} />;
-    }
-    if (item.kind === "call") {
-        return <Phone aria-hidden className={className} strokeWidth={1.75} />;
-    }
-    return <MapPin aria-hidden className={className} strokeWidth={1.75} />;
-}
-
-function TimelineRow({ item, showDivider }: { item: TodayItem; showDivider: boolean }) {
-    const isDone = item.state === "done";
-    const isNext = Boolean(item.isNext) && !isDone;
-    const isBlocked = item.state === "blocked";
-
-    return (
-        <li className={cn(showDivider && "border-bs border-border-warm")}>
-            <Link
-                href={item.href}
-                className={`
-                  grid grid-cols-[auto_auto_1fr] items-start gap-x-4 py-3.5 outline-none
-                  focus-visible:ring-3 focus-visible:ring-ring/30
-                `}
-            >
-                <time
-                    className={cn(
-                        "body tabular shrink-0 whitespace-nowrap min-inline-18",
-                        isDone && "font-medium text-ink-subtle",
-                        isNext && "font-semibold text-ink",
-                        !isDone && !isNext && "font-medium text-ink-muted",
-                    )}
-                >
-                    {item.timeLabel}
-                </time>
-                <span className="mbs-0.5 flex items-center justify-center block-5 inline-5">
-                    <ItemIcon item={item} />
-                </span>
-                <div className="min-inline-0">
-                    <p
-                        className={cn(
-                            "body",
-                            isDone && "font-medium text-ink-subtle line-through",
-                            isNext && "font-semibold text-ink",
-                            !isDone && !isNext && "font-medium text-ink",
-                        )}
-                    >
-                        {item.title}
-                    </p>
-                    <p
-                        className={cn(
-                            "body-sm mbs-0.5",
-                            isBlocked
-                                ? "text-urgent"
-                                : isDone
-                                  ? "text-ink-subtle"
-                                  : "text-ink-muted",
-                        )}
-                    >
-                        {item.subtitle}
-                    </p>
-                </div>
-            </Link>
-        </li>
-    );
-}
-
-function NowMarker({ label }: { label: string }) {
-    return (
-        <li className="flex items-center gap-3 py-1" aria-label={`Now, ${label}`}>
-            <p className="body-sm shrink-0 font-semibold whitespace-nowrap text-urgent">
-                Now · {label}
-            </p>
-            <span className="flex-1 bg-urgent/70 block-px min-inline-0" aria-hidden />
-        </li>
-    );
 }
 
 function EmptyToday({ now, className }: { now: Date; className?: string }) {
@@ -212,23 +119,12 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                 </p>
             </div>
 
-            <div className="relative mbs-1 flex-1 min-block-0">
-                <div className={cn("absolute inset-0", SCROLL_HIDE)}>
-                    <ul className={cn("flex flex-col", showFade && "pbe-7")}>
-                        {timeline.map((entry) => {
-                            if (entry.type === "now") {
-                                return <NowMarker key={entry.key} label={entry.label} />;
-                            }
-                            return (
-                                <TimelineRow
-                                    key={entry.key}
-                                    item={entry.item}
-                                    showDivider={entry.showDivider}
-                                />
-                            );
-                        })}
-                    </ul>
-                </div>
+            <div className="relative mbs-2 flex-1 min-block-0">
+                <TodayTimeline
+                    timeline={timeline}
+                    doneCount={agenda.doneCount}
+                    showFade={showFade}
+                />
 
                 <div
                     className="
