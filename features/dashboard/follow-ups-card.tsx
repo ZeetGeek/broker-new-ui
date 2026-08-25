@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 import { CardLabel } from "./card-label";
-import { DASHBOARD_CARD_HEIGHT } from "./card-shell";
+import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { FollowUp, FollowUpDue, FollowUpsData } from "./mock-data";
 
 const FOLLOW_UPS_INFO =
@@ -26,15 +26,15 @@ const UNDO_MS = 5000;
 const STRIKE_HOLD_MS = duration.instant * 1000;
 
 const LINK_CLASS = cn(
-    "body-sm inline-flex items-center gap-1 font-semibold text-stage-1 outline-none",
-    "hover:text-brand-soft",
+    "body-sm inline-flex items-center gap-1 font-semibold text-brand outline-none",
+    "hover:text-brand-text",
     "focus-visible:ring-3 focus-visible:ring-ring/30",
 );
 
 const DUE_CLASS: Record<FollowUpDue, string> = {
-    overdue: "text-urgent-mid",
-    today: "text-stage-1",
-    upcoming: "text-success-mid",
+    overdue: "text-urgent",
+    today: "text-brand",
+    upcoming: "text-ink-muted",
 };
 
 const listVariants = {
@@ -82,10 +82,10 @@ function ChannelAction({ item }: { item: FollowUp }) {
 
     const className = cn(
         `
-          relative inline-flex shrink-0 items-center justify-center rounded-control
-          text-success-mid outline-none
+          relative inline-flex shrink-0 items-center justify-center rounded-control text-brand
+          outline-none
           after:absolute after:-inset-3
-          hover:text-stage-1
+          hover:text-brand-text
           focus-visible:ring-2 focus-visible:ring-ring
         `,
         "block-4.5 inline-4.5",
@@ -120,12 +120,10 @@ function ChannelAction({ item }: { item: FollowUp }) {
 
 function FollowUpRow({
     item,
-    isLast,
     completing,
     onMarkDone,
 }: {
     item: FollowUp;
-    isLast: boolean;
     completing: boolean;
     onMarkDone: (id: string) => void;
 }) {
@@ -138,7 +136,6 @@ function FollowUpRow({
             exit="exit"
             className={cn(
                 "flex items-start gap-3 overflow-hidden py-3",
-                !isLast && "border-bs border-stage-1/20",
                 completing && "opacity-40",
             )}
         >
@@ -148,8 +145,8 @@ function FollowUpRow({
                 className={cn(
                     `
                       mbs-0.5 flex shrink-0 items-center justify-center rounded-[5px] border-[1.5px]
-                      border-success-mid bg-transparent outline-none
-                      hover:border-stage-1
+                      border-brand bg-transparent outline-none
+                      hover:border-brand-text
                       focus-visible:ring-2 focus-visible:ring-ring
                     `,
                     "relative block-4.25 inline-4.25 after:absolute after:-inset-3",
@@ -171,13 +168,13 @@ function FollowUpRow({
                 <div className="flex-1 min-inline-0">
                     <p
                         className={cn(
-                            "body truncate font-medium text-brand-soft",
+                            "body truncate font-semibold text-ink",
                             completing && "line-through",
                         )}
                     >
                         {item.title}
                     </p>
-                    <p className="body-sm mbs-0.5 truncate text-success-mid">{item.context}</p>
+                    <p className="body-sm mbs-0.5 truncate text-ink-muted">{item.context}</p>
                 </div>
 
                 <span className={cn("body-sm shrink-0 whitespace-nowrap", DUE_CLASS[item.due])}>
@@ -193,7 +190,7 @@ function FollowUpRow({
 function EmptyFollowUps() {
     return (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
-            <p className="body text-brand-soft">Nothing due. Nice.</p>
+            <p className="body text-ink">Nothing due. Nice.</p>
             <Link href="/broker/clients" className={LINK_CLASS}>
                 Add a follow-up
                 <span aria-hidden>→</span>
@@ -215,6 +212,7 @@ export function FollowUpsCard({
 
     const overdueCount = items.filter((item) => item.due === "overdue").length;
     const isEmpty = items.length === 0;
+    const showFade = items.length >= 3 || data.remainingThisWeek > 0;
 
     function restoreItem(id: string) {
         const removed = removedRef.current.get(id);
@@ -279,17 +277,11 @@ export function FollowUpsCard({
 
     return (
         <section
-            className={cn(
-                `
-                  flex flex-col overflow-hidden rounded-card bg-brand-deep p-8 text-brand-soft
-                  ${DASHBOARD_CARD_HEIGHT}
-                `,
-                className,
-            )}
+            className={cn(DASHBOARD_CARD_SHELL, className)}
             aria-labelledby="follow-ups-card-heading"
         >
-            <div className="flex shrink-0 items-center justify-between gap-3 mbe-3.5">
-                <CardLabel tone="dark" info={FOLLOW_UPS_INFO} className="text-stage-1">
+            <div className="flex shrink-0 items-center justify-between gap-3">
+                <CardLabel info={FOLLOW_UPS_INFO}>
                     <span id="follow-ups-card-heading">Follow-ups</span>
                 </CardLabel>
                 {overdueCount > 0 ? (
@@ -306,43 +298,58 @@ export function FollowUpsCard({
             {isEmpty ? (
                 <EmptyFollowUps />
             ) : (
-                <>
-                    <motion.ul
-                        className="flex flex-1 flex-col min-block-0"
-                        initial="hidden"
-                        animate="visible"
-                        variants={listVariants}
+                <div className="relative mbs-2 flex-1 min-block-0">
+                    <div
+                        className="
+                          absolute inset-0 scrollbar-none overflow-y-auto overscroll-contain
+                          [-ms-overflow-style:none]
+                          [&::-webkit-scrollbar]:hidden
+                        "
                     >
-                        <AnimatePresence initial={false}>
-                            {items.map((item, index) => (
-                                <FollowUpRow
-                                    key={item.id}
-                                    item={item}
-                                    isLast={index === items.length - 1}
-                                    completing={completingIds.has(item.id)}
-                                    onMarkDone={handleMarkDone}
-                                />
-                            ))}
-                        </AnimatePresence>
-                    </motion.ul>
+                        <motion.ul
+                            className={cn(
+                                "flex flex-col divide-y divide-border-warm",
+                                showFade && "pbe-7",
+                            )}
+                            initial="hidden"
+                            animate="visible"
+                            variants={listVariants}
+                        >
+                            <AnimatePresence initial={false}>
+                                {items.map((item) => (
+                                    <FollowUpRow
+                                        key={item.id}
+                                        item={item}
+                                        completing={completingIds.has(item.id)}
+                                        onMarkDone={handleMarkDone}
+                                    />
+                                ))}
+                            </AnimatePresence>
+                        </motion.ul>
+                    </div>
 
                     <div
-                        className={cn(
-                            "flex shrink-0 items-center justify-between gap-3 border-ts border-stage-1/20 pts-3",
-                            data.remainingThisWeek === 0 && "justify-end",
-                        )}
+                        className="
+                          absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end block-14
+                        "
                     >
-                        {data.remainingThisWeek > 0 ? (
-                            <p className="body-sm text-success-mid">
-                                +{data.remainingThisWeek} more this week
-                            </p>
+                        {showFade ? (
+                            <div
+                                aria-hidden
+                                className={`
+                                  pointer-events-none absolute inset-0 bg-linear-to-t from-surface
+                                  from-40% via-surface/90 to-transparent
+                                `}
+                            />
                         ) : null}
-                        <Link href="/broker/clients?filter=followups" className={LINK_CLASS}>
-                            View all
-                            <span aria-hidden>→</span>
-                        </Link>
+                        <div className="relative flex justify-center">
+                            <Link href="/broker/clients?filter=followups" className={LINK_CLASS}>
+                                View all follow-ups
+                                <span aria-hidden>→</span>
+                            </Link>
+                        </div>
                     </div>
-                </>
+                </div>
             )}
         </section>
     );

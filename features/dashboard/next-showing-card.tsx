@@ -79,29 +79,42 @@ function mapsSearchUrl(address: string): string {
     return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
-/** Static Uber-style route stroke — no map fill, no card chrome. */
+/** Static Uber-style route stroke — location pins at each end. */
 function RouteLine({ className }: { className?: string }) {
     return (
-        <svg viewBox="0 0 88 56" className={cn("block", className)} aria-hidden focusable="false">
+        <svg viewBox="0 0 120 88" className={cn("block", className)} aria-hidden focusable="false">
             <path
-                d="M72 10 C64 16, 54 28, 46 32 C34 38, 24 34, 16 40 C10 44, 8 50, 6 54"
+                d="M92 22 C82 30, 68 46, 56 52 C40 60, 28 54, 18 62 C12 66, 10 74, 12 80"
                 fill="none"
                 stroke="var(--color-ink)"
-                strokeWidth="2.5"
+                strokeWidth="3.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
-            {/* Origin circle */}
-            <circle
-                cx="72"
-                cy="10"
-                r="5"
-                fill="var(--color-surface)"
-                stroke="var(--color-ink)"
-                strokeWidth="2.5"
-            />
-            {/* Destination square */}
-            <rect x="1" y="48" width="10" height="10" fill="var(--color-ink)" />
+
+            {/* Origin pin (top-right) */}
+            <g transform="translate(82.2 5.2) scale(0.7)">
+                <path
+                    d="M14 2C7.4 2 2 7.4 2 14c0 9.5 12 22 12 22s12-12.5 12-22C26 7.4 20.6 2 14 2Z"
+                    fill="var(--color-surface)"
+                    stroke="var(--color-ink)"
+                    strokeWidth="2.5"
+                    strokeLinejoin="round"
+                />
+                <circle cx="14" cy="14" r="3.5" fill="var(--color-ink)" />
+            </g>
+
+            {/* Destination pin (bottom-left) */}
+            <g transform="translate(2.2 63.2) scale(0.7)">
+                <path
+                    d="M14 2C7.4 2 2 7.4 2 14c0 9.5 12 22 12 22s12-12.5 12-22C26 7.4 20.6 2 14 2Z"
+                    fill="var(--color-ink)"
+                    stroke="var(--color-ink)"
+                    strokeWidth="2.5"
+                    strokeLinejoin="round"
+                />
+                <circle cx="14" cy="14" r="3.5" fill="var(--color-surface)" />
+            </g>
         </svg>
     );
 }
@@ -109,10 +122,10 @@ function RouteLine({ className }: { className?: string }) {
 function TripAside({ distanceKm }: { distanceKm: number }) {
     return (
         <aside
-            className="flex shrink-0 flex-col items-end gap-2 text-end min-inline-32"
+            className="flex shrink-0 flex-col items-end gap-2 text-end min-inline-36"
             aria-label="Travel details"
         >
-            <RouteLine className="block-20 inline-48" />
+            <RouteLine className="block-34 inline-56" />
             <p className="tabular h1 text-ink">{formatDistanceKm(distanceKm)}</p>
         </aside>
     );
