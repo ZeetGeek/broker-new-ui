@@ -139,7 +139,7 @@ export function DashboardHeader({
                         <ServiceAreaChips areas={serviceAreas} />
                     </div>
                 </div>
-                <div className="ms-auto flex shrink-0 items-center gap-2">
+                <div className="ms-auto flex shrink-0 items-center gap-3">
                     <Button
                         variant="outline-dark"
                         size="md"

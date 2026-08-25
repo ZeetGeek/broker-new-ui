@@ -119,7 +119,7 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                 {statusBadge(showing.status, isStartingSoon, duration.isPast)}
             </div>
 
-            <div className="mbs-3 flex flex-1 flex-col gap-3 min-block-0 overflow-hidden">
+            <div className="mbs-3 flex flex-1 flex-col gap-3 overflow-hidden min-block-0">
                 <div className="shrink-0">
                     <h2 id={`next-showing-${showing.id}`} className="h2 text-ink">
                         <time dateTime={showing.scheduledAt.toISOString()}>{whenLabel}</time>
@@ -145,8 +145,12 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                     </p>
                 </div>
 
-                <div className="pts-1 mbs-auto flex flex-wrap items-center justify-between gap-3 min-block-0">
-                    <div className="flex flex-wrap gap-2">
+                <div
+                    className="
+                      pts-1 mbs-auto flex flex-wrap items-center justify-between gap-3 min-block-0
+                    "
+                >
+                    <div className="flex flex-wrap gap-3">
                         <Button
                             variant="default"
                             size="md"

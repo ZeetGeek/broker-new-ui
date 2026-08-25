@@ -112,7 +112,7 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                         <time dateTime={dateIso}>{dateLabel}</time>
                     </span>
                 </CardLabel>
-                <p className="body-sm shrink-0 font-medium text-ink-muted">
+                <p className="eyebrow shrink-0 text-ink-muted">
                     {agenda.doneCount} done
                     <span aria-hidden> · </span>
                     {agenda.remainingCount} left
@@ -125,6 +125,16 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                     doneCount={agenda.doneCount}
                     showFade={showFade}
                 />
+
+                {agenda.doneCount > 0 ? (
+                    <div
+                        aria-hidden
+                        className={`
+                          pointer-events-none absolute inset-x-0 inset-bs-0 z-10 bg-linear-to-b
+                          from-surface from-25% via-surface/80 to-transparent block-6
+                        `}
+                    />
+                ) : null}
 
                 <div
                     className="
