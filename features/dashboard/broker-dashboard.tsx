@@ -1,5 +1,8 @@
+"use client";
+
 import { ActivityCard } from "./activity-card";
 import { DashboardHeader } from "./dashboard-header";
+import { DashEnter } from "./dash-enter";
 import { FollowUpsCard } from "./follow-ups-card";
 import { dashboardMock } from "./mock-data";
 import { NewInAreas } from "./new-in-areas";
@@ -45,33 +48,32 @@ export function BrokerDashboard() {
             </header>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-5">
-                <NextShowingCard
-                    showing={nextShowing}
-                    now={now}
-                    className="md:col-span-5 md:row-start-1"
-                />
-                <div className="grid grid-cols-1 gap-4 md:col-span-7 md:row-start-1 md:grid-cols-2 md:gap-5">
+                <DashEnter index={0} className="md:col-span-5 md:row-start-1">
+                    <NextShowingCard showing={nextShowing} now={now} />
+                </DashEnter>
+                <DashEnter
+                    index={1}
+                    className="grid grid-cols-1 gap-4 md:col-span-7 md:row-start-1 md:grid-cols-2 md:gap-5"
+                >
                     <TodayCard agenda={data.today} now={now} />
                     <RequestsCard data={data.requests} serviceAreas={data.serviceAreas} />
-                </div>
-                <div className="grid grid-cols-1 gap-4 md:col-span-7 md:row-start-2 md:grid-cols-2 md:gap-5">
+                </DashEnter>
+                <DashEnter
+                    index={2}
+                    className="grid grid-cols-1 gap-4 md:col-span-7 md:row-start-2 md:grid-cols-2 md:gap-5"
+                >
                     <PipelineCard data={data.pipelineCard} />
                     <FollowUpsCard data={data.followUps} />
-                </div>
-                <YouRepresentCard
-                    data={data.youRepresent}
-                    className="md:col-span-6 md:col-start-1 md:row-start-3"
-                />
-                <ActivityCard
-                    data={data.activity}
-                    now={now}
-                    className="md:col-span-5 md:col-start-8 md:row-start-2"
-                />
-                <NewInAreas
-                    properties={data.newInAreas}
-                    serviceAreas={data.serviceAreas}
-                    className="md:col-span-6 md:col-start-7 md:row-start-3"
-                />
+                </DashEnter>
+                <DashEnter index={3} className="md:col-span-6 md:col-start-1 md:row-start-3">
+                    <YouRepresentCard data={data.youRepresent} />
+                </DashEnter>
+                <DashEnter index={4} className="md:col-span-5 md:col-start-8 md:row-start-2">
+                    <ActivityCard data={data.activity} now={now} />
+                </DashEnter>
+                <DashEnter index={5} className="md:col-span-6 md:col-start-7 md:row-start-3">
+                    <NewInAreas properties={data.newInAreas} serviceAreas={data.serviceAreas} />
+                </DashEnter>
             </div>
         </div>
     );

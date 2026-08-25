@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import { Compass, Mail, MapPin, Pencil, Phone, UserRoundPlus } from "lucide-react";
@@ -8,8 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { DigitPopIn } from "./digit-pop-in";
 import type { ReraStatus } from "./mock-data";
 import { ReraStatusChip } from "./rera-status";
+import { StaggerReveal } from "./stagger-reveal";
 
 const CHIP_SURFACE = "bg-surface";
 const ICON_CLASS = "block-3 inline-3";
@@ -109,13 +113,16 @@ export function DashboardHeader({
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-4">
-                <h1 className="h1 min-inline-0">
-                    <DateDisplay date={now} variant="weekday" className="text-ink" />
-                    <span className="text-ink">.</span>{" "}
-                    <span className="text-ink-muted">
-                        {siteVisitCount} {visitWord}, {requestsWaitingCount} {requestWord} waiting.
+                <StaggerReveal className="h1 min-inline-0">
+                    <span className="t-stagger-line t-stagger-line--1">
+                        <DateDisplay date={now} variant="weekday" className="text-ink" />
+                        <span className="text-ink">.</span>
                     </span>
-                </h1>
+                    <span className="t-stagger-line t-stagger-line--2 text-ink-muted">
+                        <DigitPopIn value={siteVisitCount} /> {visitWord},{" "}
+                        <DigitPopIn value={requestsWaitingCount} /> {requestWord} waiting.
+                    </span>
+                </StaggerReveal>
             </div>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">

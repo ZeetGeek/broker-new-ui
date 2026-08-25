@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
+import { DigitPopIn } from "./digit-pop-in";
 import type { RequestAttentionItem, RequestsData } from "./mock-data";
 import { TextLinkButton } from "./text-link-button";
 
@@ -40,9 +41,10 @@ function MetricCell({
     return (
         <div className="flex flex-1 flex-col items-start gap-0.5 px-3 min-inline-0">
             <span className="body-xs font-medium text-ink-muted">{label}</span>
-            <span className={cn("tabular h5 font-semibold", valueClassName ?? "text-ink")}>
-                {value}
-            </span>
+            <DigitPopIn
+                value={value}
+                className={cn("tabular h5 font-semibold", valueClassName ?? "text-ink")}
+            />
         </div>
     );
 }

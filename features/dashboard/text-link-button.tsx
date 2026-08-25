@@ -12,8 +12,8 @@ type TextLinkButtonProps = {
 };
 
 /**
- * Brand text link with trailing arrow. Hover underline sits on the label only —
- * the arrow stays undecorated.
+ * Brand text link with transitions.dev learn-more chevron.
+ * Hover underline sits on the label only — the chevron stays undecorated.
  */
 export function TextLinkButton({ href, children, className }: TextLinkButtonProps) {
     return (
@@ -24,14 +24,31 @@ export function TextLinkButton({ href, children, className }: TextLinkButtonProp
             render={<Link href={href} />}
             className={cn(
                 `
-                  body-sm gap-1 p-0 font-semibold text-brand block-auto
+                  t-learn body-sm gap-1 p-0 font-semibold text-brand block-auto
                   hover:text-brand-text hover:no-underline
                 `,
                 className,
             )}
         >
             <span className="underline-offset-4 group-hover/button:underline">{children}</span>
-            <span aria-hidden>→</span>
+            <span className="t-learn-chevron" aria-hidden>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                        className="t-learn-arm t-learn-arm-top"
+                        d="M6 4L10 8"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                        strokeLinecap="round"
+                    />
+                    <path
+                        className="t-learn-arm t-learn-arm-bot"
+                        d="M10 8L6 12"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                        strokeLinecap="round"
+                    />
+                </svg>
+            </span>
         </Button>
     );
 }

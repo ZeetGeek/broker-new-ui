@@ -11,7 +11,9 @@ import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
+import { DigitPopIn } from "./digit-pop-in";
 import type { PipelineData, PipelineStage, PipelineStageKey } from "./mock-data";
+import { TextLinkButton } from "./text-link-button";
 
 const PIPELINE_INFO = "Your active clients and which deal stage each one is in.";
 
@@ -29,12 +31,6 @@ const STAGE_COUNT_CLASS: Record<PipelineStageKey, string> = {
     site_visit: "text-white",
     negotiation: "text-white",
 };
-
-const LINK_CLASS = cn(
-    "body-sm inline-flex items-center gap-1 font-semibold text-brand outline-none",
-    "hover:text-brand-text",
-    "focus-visible:ring-3 focus-visible:ring-ring/30",
-);
 
 export type PipelineCardProps = {
     data: PipelineData;
@@ -85,14 +81,13 @@ function PipelineSegmentedBar({ stages }: { stages: PipelineStage[] }) {
                                 isLast && "rounded-e-md",
                             )}
                         >
-                            <span
+                            <DigitPopIn
+                                value={stage.count}
                                 className={cn(
                                     "text-sm font-semibold tabular-nums",
                                     STAGE_COUNT_CLASS[stage.key],
                                 )}
-                            >
-                                {stage.count}
-                            </span>
+                            />
                         </Link>
                     </li>
                 );
@@ -180,14 +175,14 @@ function MonthFooter({ won, lost }: { won: number; lost: number }) {
                 aria-label={`${wonLabel}, ${lostLabel}`}
             >
                 <Badge variant="brand" className="gap-1 border-0 px-2.5 font-semibold tabular-nums">
-                    <span>{won}</span>
+                    <DigitPopIn value={won} />
                     <span className="font-semibold opacity-90">Won</span>
                 </Badge>
                 <Badge
                     variant="danger"
                     className="gap-1 border-0 px-2.5 font-semibold tabular-nums"
                 >
-                    <span>{lost}</span>
+                    <DigitPopIn value={lost} />
                     <span className="font-semibold opacity-90">Lost</span>
                 </Badge>
             </div>
@@ -210,10 +205,9 @@ function EmptyPipeline({ className }: { className?: string }) {
                     Add a buyer or tenant to start tracking deals through your pipeline.
                 </p>
                 <div className="pts-3 mbs-auto">
-                    <Link href="/broker/clients/new" className={LINK_CLASS}>
+                    <TextLinkButton href="/broker/clients/new">
                         Add your first buyer or tenant
-                        <span aria-hidden>→</span>
-                    </Link>
+                    </TextLinkButton>
                 </div>
             </div>
         </section>
