@@ -1,11 +1,29 @@
 import type { PipelineStageId } from "@/config/constants";
 
-export type SiteVisitItem = {
+export type TodayItemKind = "site_visit" | "call";
+export type TodayItemState = "done" | "upcoming" | "blocked";
+
+export type TodayItem = {
     id: string;
+    kind: TodayItemKind;
+    /** 24h `HH:mm` for sorting. */
+    time: string;
     timeLabel: string;
     title: string;
-    clientName: string;
-    statusLabel: string;
+    subtitle: string;
+    state: TodayItemState;
+    /** Marks the next upcoming item after "now" — stronger type treatment. */
+    isNext?: boolean;
+    clientId?: string;
+    propertyId?: string;
+    href: string;
+};
+
+export type TodayAgenda = {
+    date: string;
+    doneCount: number;
+    remainingCount: number;
+    items: TodayItem[];
 };
 
 export type RequestCounts = {
@@ -66,13 +84,12 @@ export type DashboardMock = {
     requestsWaitingCount: number;
     reraStatus: ReraStatus;
     serviceAreas: string[];
-    activityStreakDays: number;
     phoneDigits: string;
     email: string;
     daysSinceSignup: number;
     firstWeekItems: FirstWeekItem[];
     nextShowing: NextShowingMock | null;
-    todayVisits: SiteVisitItem[];
+    today: TodayAgenda;
     requestCounts: RequestCounts;
     activeClientCount: number;
     pipeline: PipelineStageCount[];
@@ -83,12 +100,67 @@ export type DashboardMock = {
 
 export const FIRST_WEEK_DAYS = 7;
 
+export const TODAY_PLACEHOLDER: TodayAgenda = {
+    date: "2026-08-25",
+    doneCount: 1,
+    remainingCount: 3,
+    items: [
+        {
+            id: "visit_01",
+            kind: "site_visit",
+            time: "10:00",
+            timeLabel: "10:00 AM",
+            title: "Site visit · 2 BHK, Adajan",
+            subtitle: "Priya Shah · marked done",
+            state: "done",
+            clientId: "cl_002",
+            propertyId: "pr_114",
+            href: "/broker/visits/visit_01",
+        },
+        {
+            id: "visit_02",
+            kind: "site_visit",
+            time: "14:11",
+            timeLabel: "2:11 PM",
+            title: "Site visit · 3 BHK, Vesu",
+            subtitle: "Milan Vamja · confirmed",
+            state: "upcoming",
+            isNext: true,
+            clientId: "cl_001",
+            propertyId: "pr_108",
+            href: "/broker/visits/visit_02",
+        },
+        {
+            id: "visit_03",
+            kind: "site_visit",
+            time: "16:30",
+            timeLabel: "4:30 PM",
+            title: "Site visit · 2 BHK rent, Pal",
+            subtitle: "Awaiting owner slot confirmation",
+            state: "blocked",
+            clientId: "cl_004",
+            propertyId: "pr_121",
+            href: "/broker/visits/visit_03",
+        },
+        {
+            id: "task_09",
+            kind: "call",
+            time: "18:00",
+            timeLabel: "6:00 PM",
+            title: "Call · Rahul Mehta",
+            subtitle: "Discuss Vesu feedback",
+            state: "upcoming",
+            clientId: "cl_003",
+            href: "/broker/clients/cl_003",
+        },
+    ],
+};
+
 export const dashboardMock: DashboardMock = {
     siteVisitCount: 2,
     requestsWaitingCount: 3,
     reraStatus: "verifying",
     serviceAreas: ["Vesu", "Adajan", "Pal"],
-    activityStreakDays: 5,
     phoneDigits: "9876543210",
     email: "zeet.patel@gmail.com",
     daysSinceSignup: 2,
@@ -119,7 +191,7 @@ export const dashboardMock: DashboardMock = {
         },
     ],
     nextShowing: {
-        id: "visit-1",
+        id: "visit_02",
         minutesUntil: 134,
         configLabel: "3 BHK",
         locality: "Vesu",
@@ -130,22 +202,7 @@ export const dashboardMock: DashboardMock = {
         clientName: "Milan Vamja",
         clientPhoneDigits: "9876501234",
     },
-    todayVisits: [
-        {
-            id: "visit-1",
-            timeLabel: "11:00 am",
-            title: "Site visit · 3 BHK, Vesu",
-            clientName: "Milan Vamja",
-            statusLabel: "confirmed",
-        },
-        {
-            id: "visit-2",
-            timeLabel: "4:30 pm",
-            title: "Site visit · 2 BHK, Adajan",
-            clientName: "Priya Shah",
-            statusLabel: "awaiting owner slot",
-        },
-    ],
+    today: TODAY_PLACEHOLDER,
     requestCounts: {
         waitingOnOwner: 3,
         approved: 1,

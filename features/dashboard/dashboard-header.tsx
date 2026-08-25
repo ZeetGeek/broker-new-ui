@@ -10,7 +10,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import type { ReraStatus } from "./mock-data";
 import { ReraStatusChip } from "./rera-status";
-import { StreakFireEmoji } from "./streak-fire-emoji";
 
 const CHIP_SURFACE = "bg-surface";
 const ICON_CLASS = "block-3 inline-3";
@@ -22,7 +21,6 @@ export type DashboardHeaderProps = {
     requestsWaitingCount: number;
     reraStatus: ReraStatus;
     serviceAreas: string[];
-    activityStreakDays: number;
     phoneDigits: string;
     email: string;
 };
@@ -102,7 +100,6 @@ export function DashboardHeader({
     requestsWaitingCount,
     reraStatus,
     serviceAreas,
-    activityStreakDays,
     phoneDigits,
     email,
 }: DashboardHeaderProps) {
@@ -125,15 +122,6 @@ export function DashboardHeader({
                 <div className="-mbe-3.5 flex flex-wrap items-center gap-x-3 gap-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                         <ReraStatusChip status={reraStatus} />
-                        {activityStreakDays > 0 ? (
-                            <Badge
-                                variant="outline"
-                                className={`${CHIP_SURFACE} font-semibold text-urgent`}
-                            >
-                                <StreakFireEmoji />
-                                {`${activityStreakDays}-day streak`}
-                            </Badge>
-                        ) : null}
                     </div>
 
                     <ContactLine phoneDigits={phoneDigits} email={email} />

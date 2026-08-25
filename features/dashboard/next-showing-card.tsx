@@ -38,18 +38,28 @@ export type NextShowingCardProps = {
 
 function statusBadge(status: NextShowingStatus, isStartingSoon: boolean, isPast: boolean) {
     if (isPast) {
-        return <Badge variant="brand">Started</Badge>;
+        return (
+            <Badge variant="brand" className="font-semibold">
+                Started
+            </Badge>
+        );
     }
     if (isStartingSoon) {
-        return <Badge variant="urgent">Starting soon</Badge>;
+        return (
+            <Badge variant="urgent" className="font-semibold">
+                Starting soon
+            </Badge>
+        );
     }
     if (status === "confirmed") {
         return (
-            <Badge className="border-transparent bg-highlight text-highlight-ink">Confirmed</Badge>
+            <Badge className="border-transparent bg-highlight font-semibold text-highlight-ink">
+                Confirmed
+            </Badge>
         );
     }
     return (
-        <Badge variant="outline" className="bg-surface text-pending">
+        <Badge variant="outline" className="bg-surface font-semibold text-pending">
             Awaiting owner
         </Badge>
     );

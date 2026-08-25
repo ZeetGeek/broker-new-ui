@@ -44,12 +44,12 @@ export function formatWeekdayDate(date: Date): string {
     }).format(date);
 }
 
-/** Wall-clock time as `11:00 am`. */
+/** Wall-clock time as `11:00 AM`. */
 export function formatTimeIn(date: Date): string {
     const parts = partsFor(date, { hour: "numeric", minute: "2-digit", hour12: true });
     const hour = part(parts, "hour");
     const minute = part(parts, "minute");
-    const dayPeriod = part(parts, "dayPeriod").toLowerCase();
+    const dayPeriod = part(parts, "dayPeriod").toUpperCase();
     return `${hour}:${minute} ${dayPeriod}`;
 }
 

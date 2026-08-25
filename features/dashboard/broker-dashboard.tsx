@@ -2,6 +2,7 @@ import { DashboardHeader } from "./dashboard-header";
 import { dashboardMock } from "./mock-data";
 import { NextShowingCard } from "./next-showing-card";
 import { PlaceholderCard } from "./placeholder-card";
+import { TodayCard } from "./today-card";
 
 export function BrokerDashboard() {
     const data = dashboardMock;
@@ -30,7 +31,6 @@ export function BrokerDashboard() {
                     requestsWaitingCount={data.requestsWaitingCount}
                     reraStatus={data.reraStatus}
                     serviceAreas={data.serviceAreas}
-                    activityStreakDays={data.activityStreakDays}
                     phoneDigits={data.phoneDigits}
                     email={data.email}
                 />
@@ -38,11 +38,7 @@ export function BrokerDashboard() {
 
             <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-12 md:grid-rows-3 md:gap-5">
                 <NextShowingCard showing={nextShowing} now={now} className="md:col-span-5" />
-                <PlaceholderCard
-                    title="Today"
-                    info="Site visits scheduled for today — times, properties, and clients."
-                    className="md:col-span-4"
-                />
+                <TodayCard agenda={data.today} now={now} className="md:col-span-4" />
                 <PlaceholderCard
                     title="Your Requests"
                     info="Requests you've sent to owners to represent their properties, and where each one stands."
