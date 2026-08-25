@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { Compass, Mail, MapPin, Pencil, Phone, UserRoundPlus } from "lucide-react";
+import { motion } from "motion/react";
 
 import { DateDisplay } from "@/components/shared/date-display";
 import { PhoneNumber } from "@/components/shared/phone-number";
@@ -12,8 +13,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import { DigitPopIn } from "./digit-pop-in";
 import type { ReraStatus } from "./mock-data";
+import { dashboardMetaContainer, dashboardMetaItem } from "./motion";
 import { ReraStatusChip } from "./rera-status";
-import { StaggerReveal } from "./stagger-reveal";
+import { StaggerLine, StaggerReveal } from "./stagger-reveal";
 
 const CHIP_SURFACE = "bg-surface";
 const ICON_CLASS = "block-3 inline-3";
@@ -114,39 +116,55 @@ export function DashboardHeader({
         <div className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-4">
                 <StaggerReveal className="h1 min-inline-0">
-                    <span className="t-stagger-line t-stagger-line--1">
+                    <StaggerLine>
                         <DateDisplay date={now} variant="weekday" className="text-ink" />
                         <span className="text-ink">.</span>
-                    </span>
-                    <span className="t-stagger-line t-stagger-line--2 text-ink-muted">
+                    </StaggerLine>
+                    <StaggerLine className="text-ink-muted">
                         <DigitPopIn value={siteVisitCount} /> {visitWord},{" "}
                         <DigitPopIn value={requestsWaitingCount} /> {requestWord} waiting.
-                    </span>
+                    </StaggerLine>
                 </StaggerReveal>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <div className="-mbe-3.5 flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <ReraStatusChip status={reraStatus} />
-                    </div>
+            <motion.div
+                className="flex flex-wrap items-center gap-x-3 gap-y-2"
+                variants={dashboardMetaContainer}
+                initial="hidden"
+                animate="visible"
+            >
+                <motion.div
+                    className="flex flex-wrap items-center gap-2"
+                    variants={dashboardMetaItem}
+                >
+                    <ReraStatusChip status={reraStatus} />
+                </motion.div>
 
+                <motion.div variants={dashboardMetaItem}>
                     <ContactLine phoneDigits={phoneDigits} email={email} />
+                </motion.div>
 
-                    <span
-                        aria-hidden
-                        className="hidden self-center bg-border-warm block-3.5 inline-px sm:block"
-                    />
+                <motion.span
+                    aria-hidden
+                    variants={dashboardMetaItem}
+                    className="hidden self-center bg-border-warm block-3.5 inline-px sm:block"
+                />
 
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
-                            <MapPin aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                            Working in
-                        </span>
-                        <ServiceAreaChips areas={serviceAreas} />
-                    </div>
-                </div>
-                <div className="ms-auto flex shrink-0 items-center gap-3">
+                <motion.div
+                    className="-mbe-3.5 flex flex-wrap items-center gap-2"
+                    variants={dashboardMetaItem}
+                >
+                    <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
+                        <MapPin aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        Working in
+                    </span>
+                    <ServiceAreaChips areas={serviceAreas} />
+                </motion.div>
+
+                <motion.div
+                    className="ms-auto flex shrink-0 items-center gap-3"
+                    variants={dashboardMetaItem}
+                >
                     <Button
                         variant="outline-dark"
                         size="md"
@@ -167,8 +185,8 @@ export function DashboardHeader({
                         <UserRoundPlus aria-hidden strokeWidth={1.75} />
                         <span className="hidden md:inline">Add client</span>
                     </Button>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
         </div>
     );
 }

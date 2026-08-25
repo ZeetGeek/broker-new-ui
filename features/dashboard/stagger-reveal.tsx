@@ -1,29 +1,43 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { motion } from "motion/react";
+import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+
+import { dashboardHeaderContainer, dashboardHeaderLine } from "./motion";
 
 export type StaggerRevealProps = {
     children: ReactNode;
     className?: string;
 };
 
-/** transitions.dev texts reveal — add `.is-shown` after mount. */
+/**
+ * On-load greeting reveal — Motion mount trigger
+ * (`initial="hidden"` → `animate="visible"` with staggered lines).
+ */
 export function StaggerReveal({ children, className }: StaggerRevealProps) {
-    const ref = useRef<HTMLHeadingElement>(null);
-
-    useLayoutEffect(() => {
-        const node = ref.current;
-        if (!node) return;
-        node.classList.remove("is-hiding", "is-shown");
-        void node.offsetHeight;
-        node.classList.add("is-shown");
-    }, []);
-
     return (
-        <h1 ref={ref} className={cn("t-stagger", className)}>
+        <motion.h1
+            className={cn(className)}
+            variants={dashboardHeaderContainer}
+            initial="hidden"
+            animate="visible"
+        >
             {children}
-        </h1>
+        </motion.h1>
+    );
+}
+
+export type StaggerLineProps = {
+    children: ReactNode;
+    className?: string;
+};
+
+export function StaggerLine({ children, className }: StaggerLineProps) {
+    return (
+        <motion.span className={cn("block", className)} variants={dashboardHeaderLine}>
+            {children}
+        </motion.span>
     );
 }

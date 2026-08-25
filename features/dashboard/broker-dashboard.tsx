@@ -1,10 +1,12 @@
 "use client";
 
+import { motion } from "motion/react";
+
 import { ActivityCard } from "./activity-card";
 import { DashboardHeader } from "./dashboard-header";
-import { DashEnter } from "./dash-enter";
 import { FollowUpsCard } from "./follow-ups-card";
 import { dashboardMock } from "./mock-data";
+import { dashboardLoadContainer, dashboardLoadItem } from "./motion";
 import { NewInAreas } from "./new-in-areas";
 import { NextShowingCard } from "./next-showing-card";
 import { PipelineCard } from "./pipeline-card";
@@ -47,34 +49,48 @@ export function BrokerDashboard() {
                 />
             </header>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-5">
-                <DashEnter index={0} className="md:col-span-5 md:row-start-1">
+            <motion.div
+                className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-5"
+                variants={dashboardLoadContainer}
+                initial="hidden"
+                animate="visible"
+            >
+                <motion.div className="md:col-span-5 md:row-start-1" variants={dashboardLoadItem}>
                     <NextShowingCard showing={nextShowing} now={now} />
-                </DashEnter>
-                <DashEnter
-                    index={1}
+                </motion.div>
+                <motion.div
                     className="grid grid-cols-1 gap-4 md:col-span-7 md:row-start-1 md:grid-cols-2 md:gap-5"
+                    variants={dashboardLoadItem}
                 >
                     <TodayCard agenda={data.today} now={now} />
                     <RequestsCard data={data.requests} serviceAreas={data.serviceAreas} />
-                </DashEnter>
-                <DashEnter
-                    index={2}
+                </motion.div>
+                <motion.div
                     className="grid grid-cols-1 gap-4 md:col-span-7 md:row-start-2 md:grid-cols-2 md:gap-5"
+                    variants={dashboardLoadItem}
                 >
                     <PipelineCard data={data.pipelineCard} />
                     <FollowUpsCard data={data.followUps} />
-                </DashEnter>
-                <DashEnter index={3} className="md:col-span-6 md:col-start-1 md:row-start-3">
+                </motion.div>
+                <motion.div
+                    className="md:col-span-6 md:col-start-1 md:row-start-3"
+                    variants={dashboardLoadItem}
+                >
                     <YouRepresentCard data={data.youRepresent} />
-                </DashEnter>
-                <DashEnter index={4} className="md:col-span-5 md:col-start-8 md:row-start-2">
+                </motion.div>
+                <motion.div
+                    className="md:col-span-5 md:col-start-8 md:row-start-2"
+                    variants={dashboardLoadItem}
+                >
                     <ActivityCard data={data.activity} now={now} />
-                </DashEnter>
-                <DashEnter index={5} className="md:col-span-6 md:col-start-7 md:row-start-3">
+                </motion.div>
+                <motion.div
+                    className="md:col-span-6 md:col-start-7 md:row-start-3"
+                    variants={dashboardLoadItem}
+                >
                     <NewInAreas properties={data.newInAreas} serviceAreas={data.serviceAreas} />
-                </DashEnter>
-            </div>
+                </motion.div>
+            </motion.div>
         </div>
     );
 }

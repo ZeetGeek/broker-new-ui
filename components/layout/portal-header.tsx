@@ -1,8 +1,12 @@
+"use client";
+
 import type { ReactElement, ReactNode } from "react";
 import Link from "next/link";
 
 import { Bell, ChevronDown, Search } from "lucide-react";
+import { motion } from "motion/react";
 
+import { loadContainer, loadItemFromTop } from "@/lib/motion/variants";
 import { cn } from "@/lib/utils";
 
 import { PortalNav } from "@/components/layout/portal-nav";
@@ -92,14 +96,27 @@ export function PortalHeader({
         <div className="bg-surface-muted min-block-screen">
             <div className="overflow-x-hidden px-4 md:px-8">
                 <header className="border-be border-border-warm">
-                    <div className="flex items-center justify-between gap-8 py-5">
-                        <div className="flex flex-1 items-center gap-10 min-inline-0">
-                            <Logo href={homeHref} />
-                            <PortalNav items={navItems} />
-                        </div>
+                    <TooltipProvider>
+                        <motion.div
+                            className="flex items-center gap-10 py-5"
+                            variants={loadContainer}
+                            initial="hidden"
+                            animate="visible"
+                        >
+                            <motion.div variants={loadItemFromTop} className="shrink-0">
+                                <Logo href={homeHref} />
+                            </motion.div>
+                            <motion.div
+                                variants={loadItemFromTop}
+                                className="hidden flex-1 min-inline-0 md:block"
+                            >
+                                <PortalNav items={navItems} />
+                            </motion.div>
 
-                        <TooltipProvider>
-                            <div className="flex shrink-0 items-center gap-4">
+                            <motion.div
+                                className="ms-auto flex shrink-0 items-center gap-4"
+                                variants={loadItemFromTop}
+                            >
                                 <HeaderTooltip label="Find properties, clients, and visits">
                                     <Button
                                         type="button"
@@ -179,9 +196,9 @@ export function PortalHeader({
                                         <ChevronDown aria-hidden="true" />
                                     </Button>
                                 </HeaderTooltip>
-                            </div>
-                        </TooltipProvider>
-                    </div>
+                            </motion.div>
+                        </motion.div>
+                    </TooltipProvider>
                 </header>
 
                 {children ? <main className="py-6">{children}</main> : null}
