@@ -22,7 +22,7 @@ export function BrokerDashboard() {
         : null;
 
     return (
-        <div className="flex flex-col gap-6 min-block-[calc(100dvh-5rem)] md:gap-8">
+        <div className="flex flex-col gap-6 min-block-[calc(100dvh-5rem)] md:gap-6">
             <header className="flex shrink-0 flex-col gap-4">
                 <DashboardHeader
                     now={now}
@@ -36,9 +36,7 @@ export function BrokerDashboard() {
                 />
             </header>
 
-            <div
-                className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-12 md:grid-rows-3 md:gap-5"
-            >
+            <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-12 md:grid-rows-3 md:gap-5">
                 <NextShowingCard showing={nextShowing} now={now} className="md:col-span-5" />
                 <PlaceholderCard
                     title="Today"
