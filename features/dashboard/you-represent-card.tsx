@@ -82,12 +82,12 @@ function PropertyRow({
     const activity = activityLabel(property);
 
     return (
-        <li className={cn("flex items-start gap-3 sm:gap-4", className)}>
+        <li className={cn("flex items-center gap-3 sm:gap-4", className)}>
             <PropertyThumb />
 
             <div
                 className="
-                  flex flex-1 flex-col gap-3 min-inline-0 sm:flex-row sm:items-start
+                  flex flex-1 flex-col gap-3 min-inline-0 sm:flex-row sm:items-center
                   sm:justify-between sm:gap-4
                 "
             >

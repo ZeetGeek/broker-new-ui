@@ -96,12 +96,12 @@ function PropertyRow({
     const competition = competitionCopy(property.brokerRequestCount);
 
     return (
-        <li className={cn("flex items-start gap-3 sm:gap-4", className)}>
+        <li className={cn("flex items-center gap-3 sm:gap-4", className)}>
             <PropertyThumb />
 
             <div
                 className="
-                  flex flex-1 flex-col gap-3 min-inline-0 sm:flex-row sm:items-start
+                  flex flex-1 flex-col gap-3 min-inline-0 sm:flex-row sm:items-center
                   sm:justify-between sm:gap-4
                 "
             >
@@ -140,6 +140,19 @@ function PropertyRow({
                     <Button
                         type="button"
                         variant="outline"
+                        size="sm"
+                        disabled={state.hasRequested}
+                        onClick={onRequest}
+                        className={cn(
+                            "border-2 border-border-warm",
+                            state.hasRequested && "opacity-60",
+                        )}
+                    >
+                        {state.hasRequested ? "Requested" : "Request"}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
                         size="icon-sm"
                         aria-label={
                             state.isBookmarked
@@ -158,19 +171,6 @@ function PropertyRow({
                             )}
                             strokeWidth={1.75}
                         />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={state.hasRequested}
-                        onClick={onRequest}
-                        className={cn(
-                            "border-2 border-border-warm",
-                            state.hasRequested && "opacity-60",
-                        )}
-                    >
-                        {state.hasRequested ? "Requested" : "Request"}
                     </Button>
                 </div>
             </div>
