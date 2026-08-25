@@ -36,7 +36,7 @@ export function BrokerDashboard() {
                 />
             </header>
 
-            <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-12 md:grid-rows-3 md:gap-5">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-5">
                 <NextShowingCard showing={nextShowing} now={now} className="md:col-span-5" />
                 <TodayCard agenda={data.today} now={now} className="md:col-span-4" />
                 <PlaceholderCard

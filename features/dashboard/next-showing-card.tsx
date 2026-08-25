@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
+import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { NextShowingStatus } from "./mock-data";
 
 const STARTING_SOON_MINUTES = 30;
@@ -72,23 +73,14 @@ function mapsSearchUrl(locality: string, configLabel: string): string {
 
 function EmptyNextShowing({ className }: { className?: string }) {
     return (
-        <section
-            className={cn(
-                `
-                  flex flex-col overflow-visible rounded-card border border-border-warm bg-surface
-                  p-8 shadow-sm
-                  md:block-full
-                `,
-                className,
-            )}
-        >
+        <section className={cn(DASHBOARD_CARD_SHELL, className)}>
             <CardLabel info={NEXT_SHOWING_INFO}>Next showing</CardLabel>
-            <div className="mbs-4 flex flex-1 flex-col">
+            <div className="mbs-4 flex flex-1 flex-col min-block-0">
                 <p className="h5 text-ink">Nothing on the calendar.</p>
                 <p className="body mbs-1 text-ink-muted">
                     Schedule a site visit when a client is ready to see a property.
                 </p>
-                <div className="pts-5 mbs-auto">
+                <div className="pts-3 mbs-auto">
                     <Button
                         variant="default"
                         size="md"
@@ -119,23 +111,16 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
 
     return (
         <section
-            className={cn(
-                `
-                  flex flex-col overflow-visible rounded-card border border-border-warm bg-surface
-                  p-8 shadow-sm
-                  md:block-full
-                `,
-                className,
-            )}
+            className={cn(DASHBOARD_CARD_SHELL, className)}
             aria-labelledby={`next-showing-${showing.id}`}
         >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex shrink-0 items-start justify-between gap-3">
                 <CardLabel info={NEXT_SHOWING_INFO}>Next showing</CardLabel>
                 {statusBadge(showing.status, isStartingSoon, duration.isPast)}
             </div>
 
-            <div className="mbs-4 flex flex-1 flex-col gap-5">
-                <div>
+            <div className="mbs-3 flex flex-1 flex-col gap-3 min-block-0 overflow-hidden">
+                <div className="shrink-0">
                     <h2 id={`next-showing-${showing.id}`} className="h2 text-ink">
                         <time dateTime={showing.scheduledAt.toISOString()}>{whenLabel}</time>
                     </h2>
@@ -149,7 +134,7 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                     </p>
                 </div>
 
-                <div>
+                <div className="shrink-0">
                     <p className="h5 text-ink">
                         {showing.configLabel} · {showing.locality}
                     </p>
@@ -160,7 +145,7 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                     </p>
                 </div>
 
-                <div className="pts-1 mbs-auto flex flex-wrap items-center justify-between gap-3">
+                <div className="pts-1 mbs-auto flex flex-wrap items-center justify-between gap-3 min-block-0">
                     <div className="flex flex-wrap gap-2">
                         <Button
                             variant="default"

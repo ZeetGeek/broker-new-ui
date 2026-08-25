@@ -5,27 +5,27 @@ import { CircleCheck, MapPin, Phone } from "lucide-react";
 import { formatDateIso, formatDateShort, formatTimeIn } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
-
 import { CardLabel } from "./card-label";
+import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { TodayAgenda, TodayItem } from "./mock-data";
 
 const TODAY_INFO = "Your full day as a timeline: what's done, what's left, and where you are now.";
 
 /** Soft cap inside the scroll list; overflow goes to "View all visits". */
-const MAX_SCROLL_ROWS = 5;
-
-const CARD_SHELL = `
-  flex flex-col overflow-hidden rounded-card border border-border-warm bg-surface
-  p-8 shadow-sm
-  md:block-full
-`;
+const MAX_SCROLL_ROWS = 8;
 
 const LINK_CLASS = cn(
     "body-sm inline-flex items-center gap-1 font-semibold text-brand outline-none",
     "hover:text-brand-text",
     "focus-visible:ring-3 focus-visible:ring-ring/30",
 );
+
+const SCROLL_HIDE = `
+  overflow-y-auto overscroll-contain
+  [scrollbar-width:none]
+  [-ms-overflow-style:none]
+  [&::-webkit-scrollbar]:hidden
+`;
 
 export type TodayCardProps = {
     agenda: TodayAgenda;
@@ -140,7 +140,7 @@ function NowMarker({ label }: { label: string }) {
     return (
         <li className="flex items-center gap-3 py-1" aria-label={`Now, ${label}`}>
             <p className="body-sm shrink-0 font-semibold whitespace-nowrap text-urgent">
-                now · {label}
+                Now · {label}
             </p>
             <span className="flex-1 bg-urgent/70 block-px min-inline-0" aria-hidden />
         </li>
@@ -152,7 +152,10 @@ function EmptyToday({ now, className }: { now: Date; className?: string }) {
     const dateIso = formatDateIso(now);
 
     return (
-        <section className={cn(CARD_SHELL, className)} aria-labelledby="today-card-heading">
+        <section
+            className={cn(DASHBOARD_CARD_SHELL, className)}
+            aria-labelledby="today-card-heading"
+        >
             <CardLabel info={TODAY_INFO}>
                 <span id="today-card-heading">
                     Today
@@ -160,12 +163,12 @@ function EmptyToday({ now, className }: { now: Date; className?: string }) {
                     <time dateTime={dateIso}>{dateLabel}</time>
                 </span>
             </CardLabel>
-            <div className="mbs-5 flex flex-1 flex-col">
+            <div className="mbs-4 flex flex-1 flex-col min-block-0">
                 <p className="h5 text-ink">Nothing scheduled today.</p>
                 <p className="body mbs-1 text-ink-muted">
                     A free day is fine. Book a visit when a client is ready.
                 </p>
-                <div className="pts-5 mbs-auto">
+                <div className="pts-3 mbs-auto">
                     <Link href="/broker/visits/new" className={LINK_CLASS}>
                         Book a site visit
                         <span aria-hidden>→</span>
@@ -190,7 +193,10 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
     const showFade = scrollItems.length > 3;
 
     return (
-        <section className={cn(CARD_SHELL, className)} aria-labelledby="today-card-heading">
+        <section
+            className={cn(DASHBOARD_CARD_SHELL, className)}
+            aria-labelledby="today-card-heading"
+        >
             <div className="flex shrink-0 items-start justify-between gap-3">
                 <CardLabel info={TODAY_INFO}>
                     <span id="today-card-heading">
@@ -206,9 +212,9 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                 </p>
             </div>
 
-            <div className="relative mbs-1 flex-1 min-block-52">
-                <ScrollArea className="absolute inset-0 **:data-[slot=scroll-area-scrollbar]:hidden">
-                    <ul className={cn("flex flex-col", showFade && "pbe-14")}>
+            <div className="relative mbs-1 flex-1 min-block-0">
+                <div className={cn("absolute inset-0", SCROLL_HIDE)}>
+                    <ul className={cn("flex flex-col", showFade && "pbe-7")}>
                         {timeline.map((entry) => {
                             if (entry.type === "now") {
                                 return <NowMarker key={entry.key} label={entry.label} />;
@@ -222,23 +228,23 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                             );
                         })}
                     </ul>
-                </ScrollArea>
+                </div>
 
                 <div
-                    className={cn(
-                        "absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end block-16",
-                    )}
+                    className="
+                      absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end block-14
+                    "
                 >
                     {showFade ? (
                         <div
                             aria-hidden
                             className={`
                               pointer-events-none absolute inset-0 bg-linear-to-t from-surface
-                              from-35% via-surface/85 to-transparent
+                              from-40% via-surface/90 to-transparent
                             `}
                         />
                     ) : null}
-                    <div className="relative flex justify-center pbe-0.5">
+                    <div className="relative flex justify-center">
                         <Link href="/broker/visits" className={LINK_CLASS}>
                             View all visits
                             <span aria-hidden>→</span>

@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 
 import { CardLabel } from "./card-label";
+import { DASHBOARD_CARD_SHELL } from "./card-shell";
 
 export type PlaceholderCardProps = {
     title: string;
@@ -11,16 +12,7 @@ export type PlaceholderCardProps = {
 
 export function PlaceholderCard({ title, info, className }: PlaceholderCardProps) {
     return (
-        <section
-            className={cn(
-                `
-                  flex min-h-[22rem] flex-col overflow-visible rounded-card border
-                  border-border-warm bg-surface p-8 shadow-sm
-                  md:h-full
-                `,
-                className,
-            )}
-        >
+        <section className={cn(DASHBOARD_CARD_SHELL, className)}>
             <CardLabel info={info}>{title}</CardLabel>
         </section>
     );

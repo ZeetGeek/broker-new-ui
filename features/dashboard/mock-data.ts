@@ -102,9 +102,21 @@ export const FIRST_WEEK_DAYS = 7;
 
 export const TODAY_PLACEHOLDER: TodayAgenda = {
     date: "2026-08-25",
-    doneCount: 1,
-    remainingCount: 3,
+    doneCount: 2,
+    remainingCount: 5,
     items: [
+        {
+            id: "visit_00",
+            kind: "site_visit",
+            time: "08:30",
+            timeLabel: "8:30 AM",
+            title: "Site visit · 1 BHK, Pal",
+            subtitle: "Amit Desai · marked done",
+            state: "done",
+            clientId: "cl_006",
+            propertyId: "pr_099",
+            href: "/broker/visits/visit_00",
+        },
         {
             id: "visit_01",
             kind: "site_visit",
@@ -152,6 +164,29 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             state: "upcoming",
             clientId: "cl_003",
             href: "/broker/clients/cl_003",
+        },
+        {
+            id: "visit_04",
+            kind: "site_visit",
+            time: "19:00",
+            timeLabel: "7:00 PM",
+            title: "Site visit · 4 BHK, Vesu",
+            subtitle: "Neha Patel · confirmed",
+            state: "upcoming",
+            clientId: "cl_007",
+            propertyId: "pr_130",
+            href: "/broker/visits/visit_04",
+        },
+        {
+            id: "task_10",
+            kind: "call",
+            time: "20:15",
+            timeLabel: "8:15 PM",
+            title: "Call · Kavita Joshi",
+            subtitle: "Share Pal options",
+            state: "upcoming",
+            clientId: "cl_008",
+            href: "/broker/clients/cl_008",
         },
     ],
 };
