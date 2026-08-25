@@ -136,6 +136,8 @@ export type AreaPropertyItem = {
     brokerRequestCount: number;
     hasRequested: boolean;
     isBookmarked: boolean;
+    /** Primary photo URL — public path for mock data. */
+    imageSrc: string;
 };
 
 /** Property the broker already has approval to represent. */
@@ -159,6 +161,8 @@ export type RepresentedPropertyItem = {
     negotiationClientName?: string;
     shareHref: string;
     bookVisitHref: string;
+    /** Primary photo URL — public path for mock data. */
+    imageSrc: string;
 };
 
 export type YouRepresentData = {
@@ -624,6 +628,7 @@ export const dashboardMock: DashboardMock = {
                 isStale: true,
                 shareHref: "https://wa.me/?text=3%20BHK%20%C2%B7%20Pal",
                 bookVisitHref: "/broker/visits/new?propertyId=pr_092",
+                imageSrc: "/properties/1.jpg",
             },
             {
                 id: "pr_088",
@@ -640,6 +645,7 @@ export const dashboardMock: DashboardMock = {
                 isStale: false,
                 shareHref: "https://wa.me/?text=2%20BHK%20%C2%B7%20Piplod",
                 bookVisitHref: "/broker/visits/new?propertyId=pr_088",
+                imageSrc: "/properties/2.jpg",
             },
             {
                 id: "pr_095",
@@ -658,6 +664,7 @@ export const dashboardMock: DashboardMock = {
                 negotiationClientName: "Hetal Modi",
                 shareHref: "https://wa.me/?text=4%20BHK%20%C2%B7%20Vesu",
                 bookVisitHref: "/broker/visits/new?propertyId=pr_095",
+                imageSrc: "/properties/3.jpg",
             },
         ],
     },
@@ -675,6 +682,7 @@ export const dashboardMock: DashboardMock = {
             brokerRequestCount: 0,
             hasRequested: false,
             isBookmarked: false,
+            imageSrc: "/properties/4.jpg",
         },
         {
             id: "prop-2",
@@ -689,6 +697,7 @@ export const dashboardMock: DashboardMock = {
             brokerRequestCount: 1,
             hasRequested: false,
             isBookmarked: true,
+            imageSrc: "/properties/5.jpg",
         },
         {
             id: "prop-3",
@@ -703,6 +712,7 @@ export const dashboardMock: DashboardMock = {
             brokerRequestCount: 3,
             hasRequested: true,
             isBookmarked: false,
+            imageSrc: "/properties/6.jpg",
         },
     ],
 };

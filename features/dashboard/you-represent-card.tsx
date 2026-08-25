@@ -1,11 +1,12 @@
 import Link from "next/link";
 
-import { AlertTriangle, Building2, MessageCircle } from "lucide-react";
+import { AlertTriangle, MessageCircle } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { cn } from "@/lib/utils";
 
 import { Price } from "@/components/shared/price";
+import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -59,20 +60,6 @@ function activityLabel(property: RepresentedPropertyItem): string {
     return `${visitsDone} · ${interested} · ${lastActivity}`;
 }
 
-function PropertyThumb() {
-    return (
-        <span
-            className="
-              flex shrink-0 items-center justify-center rounded-inner bg-surface-muted
-              text-ink-muted block-12 inline-16 sm:block-16 sm:inline-20
-            "
-            aria-hidden
-        >
-            <Building2 className="block-5 inline-5" strokeWidth={1.75} />
-        </span>
-    );
-}
-
 function PropertyRow({
     property,
     className,
@@ -84,7 +71,10 @@ function PropertyRow({
 
     return (
         <li className={cn("flex items-center gap-3 sm:gap-4", className)}>
-            <PropertyThumb />
+            <PropertyThumb
+                src={property.imageSrc}
+                alt={`${property.configLabel} in ${property.locality}`}
+            />
 
             <div
                 className="
