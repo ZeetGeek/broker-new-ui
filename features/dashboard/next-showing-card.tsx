@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Navigation, Phone } from "lucide-react";
+import { CalendarClock, Navigation, Phone } from "lucide-react";
 
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -180,6 +180,7 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                         nativeButton={false}
                         render={<Link href={`/broker/visits/new?reschedule=${showing.id}`} />}
                     >
+                        <CalendarClock aria-hidden strokeWidth={1.75} />
                         Reschedule
                     </Button>
                 </div>

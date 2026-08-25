@@ -10,12 +10,7 @@ import { Logo } from "@/components/shared/logo";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { NavItem } from "@/config/nav";
 
@@ -126,7 +121,7 @@ export function PortalHeader({
                                         </span>
                                         <Kbd
                                             className="
-                                              ms-1 -me-1 hidden border
+                                              ms-2 -me-1 hidden border
                                               group-hover:text-ink
                                               md:inline-flex
                                             "
