@@ -26,10 +26,45 @@ export type TodayAgenda = {
     items: TodayItem[];
 };
 
+export type RequestAttentionType = "approved_untouched" | "pending_stale";
+
 export type RequestCounts = {
-    waitingOnOwner: number;
     approved: number;
-    notAccepted: number;
+    pending: number;
+    declined: number;
+};
+
+export type RequestQuota = {
+    limit: number;
+    used: number;
+    remaining: number;
+    /** ISO date — when the weekly quota resets. */
+    resetsOn: string;
+};
+
+export type RequestAttentionItem = {
+    id: string;
+    type: RequestAttentionType;
+    propertyId: string;
+    title: string;
+    amountInr: number;
+    isRent: boolean;
+    note: string;
+    action: { label: string; href: string };
+    /** Present when type is `approved_untouched`. */
+    approvedAt?: string;
+    daysSince?: number;
+    /** Present when type is `pending_stale`. */
+    requestedAt?: string;
+    daysWaiting?: number;
+    /** False = owner never opened; true + daysWaiting = stop waiting. */
+    ownerSeen?: boolean;
+};
+
+export type RequestsData = {
+    counts: RequestCounts;
+    quota: RequestQuota;
+    attention: RequestAttentionItem[];
 };
 
 export type PipelineStageCount = {
@@ -90,7 +125,7 @@ export type DashboardMock = {
     firstWeekItems: FirstWeekItem[];
     nextShowing: NextShowingMock | null;
     today: TodayAgenda;
-    requestCounts: RequestCounts;
+    requests: RequestsData;
     activeClientCount: number;
     pipeline: PipelineStageCount[];
     followUps: FollowUpItem[];
@@ -191,9 +226,66 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
     ],
 };
 
+export const REQUESTS_PLACEHOLDER: RequestsData = {
+    counts: { approved: 2, pending: 4, declined: 2 },
+    quota: { limit: 10, used: 8, remaining: 2, resetsOn: "2026-08-31" },
+    attention: [
+        {
+            id: "req_042",
+            type: "approved_untouched",
+            propertyId: "pr_108",
+            title: "3 BHK · Vesu",
+            amountInr: 11_500_000,
+            isRent: false,
+            approvedAt: "2026-08-23T09:10:00+05:30",
+            daysSince: 2,
+            note: "Approved 2 days ago · no client added yet",
+            action: { label: "Open", href: "/broker/properties/pr_108" },
+        },
+        {
+            id: "req_039",
+            type: "approved_untouched",
+            propertyId: "pr_099",
+            title: "1 BHK · Pal",
+            amountInr: 4_200_000,
+            isRent: false,
+            approvedAt: "2026-08-24T14:00:00+05:30",
+            daysSince: 1,
+            note: "Approved yesterday · no client added yet",
+            action: { label: "Open", href: "/broker/properties/pr_099" },
+        },
+        {
+            id: "req_047",
+            type: "pending_stale",
+            propertyId: "pr_121",
+            title: "2 BHK rent · Adajan",
+            amountInr: 22_000,
+            isRent: true,
+            requestedAt: "2026-08-19T16:40:00+05:30",
+            daysWaiting: 6,
+            ownerSeen: false,
+            note: "Waiting 6 days · owner hasn't opened",
+            action: { label: "Nudge", href: "/broker/properties/pr_121?nudge=1" },
+        },
+        {
+            id: "req_051",
+            type: "pending_stale",
+            propertyId: "pr_130",
+            title: "4 BHK · Pal",
+            amountInr: 18_500_000,
+            isRent: false,
+            requestedAt: "2026-08-18T11:20:00+05:30",
+            daysWaiting: 7,
+            ownerSeen: true,
+            note: "Waiting 7 days · owner saw it 4 days ago",
+            action: { label: "View", href: "/broker/properties/pr_130" },
+        },
+    ],
+};
+
 export const dashboardMock: DashboardMock = {
     siteVisitCount: 2,
-    requestsWaitingCount: 3,
+    requestsWaitingCount: 4,
     reraStatus: "verifying",
     serviceAreas: ["Vesu", "Adajan", "Pal"],
     phoneDigits: "9876543210",
@@ -238,11 +330,7 @@ export const dashboardMock: DashboardMock = {
         clientPhoneDigits: "9876501234",
     },
     today: TODAY_PLACEHOLDER,
-    requestCounts: {
-        waitingOnOwner: 3,
-        approved: 1,
-        notAccepted: 2,
-    },
+    requests: REQUESTS_PLACEHOLDER,
     activeClientCount: 14,
     pipeline: [
         { stageId: "new", count: 5 },

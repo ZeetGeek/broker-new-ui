@@ -2,6 +2,7 @@ import { DashboardHeader } from "./dashboard-header";
 import { dashboardMock } from "./mock-data";
 import { NextShowingCard } from "./next-showing-card";
 import { PlaceholderCard } from "./placeholder-card";
+import { RequestsCard } from "./requests-card";
 import { TodayCard } from "./today-card";
 
 export function BrokerDashboard() {
@@ -37,12 +38,12 @@ export function BrokerDashboard() {
             </header>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-5">
-                <NextShowingCard showing={nextShowing} now={now} className="md:col-span-5" />
+                <NextShowingCard showing={nextShowing} now={now} className="md:col-span-4" />
                 <TodayCard agenda={data.today} now={now} className="md:col-span-4" />
-                <PlaceholderCard
-                    title="Your Requests"
-                    info="Requests you've sent to owners to represent their properties, and where each one stands."
-                    className="md:col-span-3"
+                <RequestsCard
+                    data={data.requests}
+                    serviceAreas={data.serviceAreas}
+                    className="md:col-span-4"
                 />
                 <PlaceholderCard
                     title="Pipeline"
