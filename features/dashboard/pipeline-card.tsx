@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Navigation } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -155,11 +155,12 @@ function StalledRow({ stalled }: { stalled: NonNullable<PipelineData["stalled"]>
                 size="sm"
                 nativeButton={false}
                 className="
-                  body-sm shrink-0 self-center p-0 font-semibold text-brand block-auto
+                  body-sm shrink-0 self-center gap-1 p-0 font-semibold text-brand block-auto
                   hover:text-brand-text
                 "
                 render={<Link href={stalled.href} />}
             >
+                <Navigation aria-hidden strokeWidth={1.75} />
                 Review
             </Button>
         </div>

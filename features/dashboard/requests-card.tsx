@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Check, Clock } from "lucide-react";
+import { Check, Clock, Navigation } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -97,11 +97,12 @@ function AttentionRow({ item }: { item: RequestAttentionItem }) {
                 size="sm"
                 nativeButton={false}
                 className="
-                  body-sm shrink-0 self-center p-0 font-semibold text-brand block-auto
+                  body-sm shrink-0 self-center gap-1 p-0 font-semibold text-brand block-auto
                   hover:text-brand-text
                 "
                 render={<Link href={item.action.href} />}
             >
+                <Navigation aria-hidden strokeWidth={1.75} />
                 {item.action.label}
             </Button>
         </li>
