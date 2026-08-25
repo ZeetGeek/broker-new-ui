@@ -6,7 +6,7 @@ import { AppImage } from "./app-image";
 
 const THUMB_FRAME = `
   relative shrink-0 overflow-hidden rounded-inner bg-surface-muted
-  block-12 inline-16 sm:block-16 sm:inline-20
+  block-14 inline-18 sm:block-18 sm:inline-22
 `;
 
 export type PropertyThumbProps = {
@@ -44,7 +44,7 @@ export function PropertyThumb({ src, alt, className, priority = false }: Propert
                 src={src}
                 alt={alt}
                 fill
-                sizes="(max-width: 640px) 64px, 80px"
+                sizes="(max-width: 640px) 72px, 88px"
                 priority={priority}
             />
         </span>
