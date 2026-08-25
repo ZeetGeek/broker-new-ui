@@ -81,7 +81,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
     {
         title: "Brand green",
         description:
-            "One hue family at three depths. ~30% combined. No blue, no purple, no second brand colour, ever.",
+            "One hue family at four pipeline depths plus brand. ~30% combined. No blue, no purple, no second brand colour, ever.",
         tokens: [
             {
                 name: "Brand ink",
@@ -120,6 +120,36 @@ export const COLOR_GROUPS: ColorGroup[] = [
                 hex: "#0B5A41",
                 className: "bg-brand-text",
                 usage: "Text sitting on brand-soft",
+                onDark: true,
+            },
+            {
+                name: "Stage 1",
+                variable: "--color-stage-1",
+                hex: "#7FD9B9",
+                className: "bg-stage-1",
+                usage: "Pipeline bar — New",
+            },
+            {
+                name: "Stage 2",
+                variable: "--color-stage-2",
+                hex: "#2FAE85",
+                className: "bg-stage-2",
+                usage: "Pipeline bar — Contacted",
+            },
+            {
+                name: "Stage 3",
+                variable: "--color-stage-3",
+                hex: "#0F6E56",
+                className: "bg-stage-3",
+                usage: "Pipeline bar — Site visit",
+                onDark: true,
+            },
+            {
+                name: "Stage 4",
+                variable: "--color-stage-4",
+                hex: "#04342C",
+                className: "bg-stage-4",
+                usage: "Pipeline bar — Negotiation",
                 onDark: true,
             },
         ],

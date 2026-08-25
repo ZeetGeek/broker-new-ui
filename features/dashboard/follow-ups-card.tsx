@@ -1,103 +1,349 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
+import Link from "next/link";
+
+import { MessageCircle, Phone } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import toast from "react-hot-toast";
+
+import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import { CardLabel } from "./card-label";
-import type { FollowUpItem } from "./mock-data";
+import { DASHBOARD_CARD_HEIGHT } from "./card-shell";
+import type { FollowUp, FollowUpDue, FollowUpsData } from "./mock-data";
+
+const FOLLOW_UPS_INFO =
+    "Untimed tasks to chase — tick them done here, or jump straight into WhatsApp.";
+
+const MAX_ROWS = 4;
+const UNDO_MS = 5000;
+/** Brief beat so strike-through reads before the row collapses. */
+const STRIKE_HOLD_MS = duration.instant * 1000;
+
+const LINK_CLASS = cn(
+    "body-sm inline-flex items-center gap-1 font-semibold text-stage-1 outline-none",
+    "hover:text-brand-soft",
+    "focus-visible:ring-3 focus-visible:ring-ring/30",
+);
+
+const DUE_CLASS: Record<FollowUpDue, string> = {
+    overdue: "text-urgent-mid",
+    today: "text-stage-1",
+    upcoming: "text-success-mid",
+};
+
+const listVariants = {
+    visible: {
+        transition: { staggerChildren: 0.04 },
+    },
+};
+
+const rowVariants = {
+    hidden: { opacity: 0, y: 4 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: duration.base, ease: ease.out },
+    },
+    exit: {
+        opacity: 0.4,
+        height: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        borderBottomWidth: 0,
+        transition: { duration: duration.tabs, ease: ease.in },
+    },
+};
 
 export type FollowUpsCardProps = {
-    items: FollowUpItem[];
-    overdueCount: number;
+    data: FollowUpsData;
+    /** Persist completion. Animation starts immediately — do not await this. */
+    onComplete?: (id: string) => Promise<void>;
     className?: string;
 };
 
-export function FollowUpsCard({ items, overdueCount, className }: FollowUpsCardProps) {
-    const [doneIds, setDoneIds] = useState<Set<string>>(() => new Set());
+async function defaultComplete(_id: string) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+}
 
-    function toggle(id: string, checked: boolean) {
-        setDoneIds((prev) => {
+function waMeUrl(phoneE164: string) {
+    return `https://wa.me/${phoneE164.replace(/\D/g, "")}`;
+}
+
+function ChannelAction({ item }: { item: FollowUp }) {
+    if (item.channel === "none") return null;
+
+    const className = cn(
+        `
+          relative inline-flex shrink-0 items-center justify-center rounded-control
+          text-success-mid outline-none
+          after:absolute after:-inset-3
+          hover:text-stage-1
+          focus-visible:ring-2 focus-visible:ring-ring
+        `,
+        "block-4.5 inline-4.5",
+    );
+
+    if (item.channel === "whatsapp") {
+        return (
+            <a
+                href={waMeUrl(item.clientPhone)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`WhatsApp ${item.clientName}`}
+                className={className}
+                onClick={(event) => event.stopPropagation()}
+            >
+                <MessageCircle aria-hidden className="block-4.5 inline-4.5" strokeWidth={1.75} />
+            </a>
+        );
+    }
+
+    return (
+        <a
+            href={`tel:${item.clientPhone}`}
+            aria-label={`Call ${item.clientName}`}
+            className={className}
+            onClick={(event) => event.stopPropagation()}
+        >
+            <Phone aria-hidden className="block-4.5 inline-4.5" strokeWidth={1.75} />
+        </a>
+    );
+}
+
+function FollowUpRow({
+    item,
+    isLast,
+    completing,
+    onMarkDone,
+}: {
+    item: FollowUp;
+    isLast: boolean;
+    completing: boolean;
+    onMarkDone: (id: string) => void;
+}) {
+    return (
+        <motion.li
+            layout
+            variants={rowVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className={cn(
+                "flex items-start gap-3 overflow-hidden py-3",
+                !isLast && "border-bs border-stage-1/20",
+                completing && "opacity-40",
+            )}
+        >
+            <button
+                type="button"
+                aria-label={`Mark ${item.title} as done`}
+                className={cn(
+                    `
+                      mbs-0.5 flex shrink-0 items-center justify-center rounded-[5px] border-[1.5px]
+                      border-success-mid bg-transparent outline-none
+                      hover:border-stage-1
+                      focus-visible:ring-2 focus-visible:ring-ring
+                    `,
+                    "relative block-4.25 inline-4.25 after:absolute after:-inset-3",
+                )}
+                onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onMarkDone(item.id);
+                }}
+            />
+
+            <Link
+                href={item.href}
+                className="
+                  flex min-inline-0 flex-1 items-start gap-2.5 rounded-inner outline-none
+                  focus-visible:ring-2 focus-visible:ring-ring
+                "
+            >
+                <div className="flex-1 min-inline-0">
+                    <p
+                        className={cn(
+                            "body truncate font-medium text-brand-soft",
+                            completing && "line-through",
+                        )}
+                    >
+                        {item.title}
+                    </p>
+                    <p className="body-sm mbs-0.5 truncate text-success-mid">{item.context}</p>
+                </div>
+
+                <span className={cn("body-sm shrink-0 whitespace-nowrap", DUE_CLASS[item.due])}>
+                    {item.dueLabel}
+                </span>
+            </Link>
+
+            <ChannelAction item={item} />
+        </motion.li>
+    );
+}
+
+function EmptyFollowUps() {
+    return (
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
+            <p className="body text-brand-soft">Nothing due. Nice.</p>
+            <Link href="/broker/clients" className={LINK_CLASS}>
+                Add a follow-up
+                <span aria-hidden>→</span>
+            </Link>
+        </div>
+    );
+}
+
+type RemovedEntry = { item: FollowUp; index: number };
+
+export function FollowUpsCard({
+    data,
+    onComplete = defaultComplete,
+    className,
+}: FollowUpsCardProps) {
+    const [items, setItems] = useState(() => data.items.slice(0, MAX_ROWS));
+    const [completingIds, setCompletingIds] = useState<Set<string>>(() => new Set());
+    const removedRef = useRef<Map<string, RemovedEntry>>(new Map());
+
+    const overdueCount = items.filter((item) => item.due === "overdue").length;
+    const isEmpty = items.length === 0;
+
+    function restoreItem(id: string) {
+        const removed = removedRef.current.get(id);
+        if (!removed) return;
+        removedRef.current.delete(id);
+        setCompletingIds((prev) => {
             const next = new Set(prev);
-            if (checked) {
-                next.add(id);
-            } else {
-                next.delete(id);
-            }
+            next.delete(id);
             return next;
         });
+        setItems((prev) => {
+            if (prev.some((item) => item.id === id)) return prev;
+            const next = [...prev];
+            next.splice(Math.min(removed.index, next.length), 0, removed.item);
+            return next.slice(0, MAX_ROWS);
+        });
+    }
+
+    function handleMarkDone(id: string) {
+        const index = items.findIndex((item) => item.id === id);
+        const target = items[index];
+        if (!target || completingIds.has(id)) return;
+
+        setCompletingIds((prev) => new Set(prev).add(id));
+        removedRef.current.set(id, { item: target, index });
+
+        window.setTimeout(() => {
+            setItems((prev) => prev.filter((item) => item.id !== id));
+            setCompletingIds((prev) => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }, STRIKE_HOLD_MS);
+
+        void onComplete(id)
+            .then(() => {
+                toast(
+                    (t) => (
+                        <span className="flex items-center gap-3">
+                            <span>Marked done</span>
+                            <button
+                                type="button"
+                                className="font-semibold text-brand underline-offset-2 hover:underline"
+                                onClick={() => {
+                                    restoreItem(id);
+                                    toast.dismiss(t.id);
+                                }}
+                            >
+                                Undo
+                            </button>
+                        </span>
+                    ),
+                    { duration: UNDO_MS, id: `followup-done-${id}` },
+                );
+            })
+            .catch(() => {
+                restoreItem(id);
+                toast.error("Couldn't mark done. Try again.");
+            });
     }
 
     return (
         <section
             className={cn(
-                "flex flex-col rounded-card bg-brand-ink p-8 text-white",
+                `
+                  flex flex-col overflow-hidden rounded-card bg-brand-deep p-8 text-brand-soft
+                  ${DASHBOARD_CARD_HEIGHT}
+                `,
                 className,
             )}
+            aria-labelledby="follow-ups-card-heading"
         >
-            <div className="flex items-center justify-between gap-3">
-                <CardLabel
-                    tone="dark"
-                    info="People you need to call or message next — overdue items show first."
-                >
-                    Follow-ups
+            <div className="flex shrink-0 items-center justify-between gap-3 mbe-3.5">
+                <CardLabel tone="dark" info={FOLLOW_UPS_INFO} className="text-stage-1">
+                    <span id="follow-ups-card-heading">Follow-ups</span>
                 </CardLabel>
                 {overdueCount > 0 ? (
-                    <Badge variant="urgent" className="border-0">
+                    <Badge
+                        variant="urgent"
+                        className="border-0"
+                        aria-label={`${overdueCount} overdue follow-ups`}
+                    >
                         {overdueCount} overdue
                     </Badge>
                 ) : null}
             </div>
 
-            <ul className="mbs-2 flex flex-col">
-                {items.map((item, index) => {
-                    const checked = doneIds.has(item.id);
+            {isEmpty ? (
+                <EmptyFollowUps />
+            ) : (
+                <>
+                    <motion.ul
+                        className="flex flex-1 flex-col min-block-0"
+                        initial="hidden"
+                        animate="visible"
+                        variants={listVariants}
+                    >
+                        <AnimatePresence initial={false}>
+                            {items.map((item, index) => (
+                                <FollowUpRow
+                                    key={item.id}
+                                    item={item}
+                                    isLast={index === items.length - 1}
+                                    completing={completingIds.has(item.id)}
+                                    onMarkDone={handleMarkDone}
+                                />
+                            ))}
+                        </AnimatePresence>
+                    </motion.ul>
 
-                    return (
-                        <li
-                            key={item.id}
-                            className={cn(
-                                "flex items-start gap-3 py-3",
-                                index > 0 && "border-bs border-white/10",
-                            )}
-                        >
-                            <Checkbox
-                                checked={checked}
-                                onCheckedChange={(nextChecked) => toggle(item.id, nextChecked)}
-                                aria-label={item.title}
-                                className="
-                                  mbs-0.5 border-white/35 bg-transparent
-                                  hover:border-white/60
-                                  data-checked:border-highlight data-checked:bg-highlight
-                                  data-checked:text-highlight-ink
-                                  data-checked:hover:border-highlight
-                                "
-                            />
-                            <div className="flex-1 min-inline-0">
-                                <p
-                                    className={cn(
-                                        "body font-medium text-white",
-                                        checked && "line-through opacity-60",
-                                    )}
-                                >
-                                    {item.title}
-                                </p>
-                                <p
-                                    className={cn(
-                                        "body-sm mbs-0.5",
-                                        item.isOverdue ? "text-urgent-mid" : "text-brand",
-                                    )}
-                                >
-                                    {item.dueLabel}
-                                </p>
-                            </div>
-                        </li>
-                    );
-                })}
-            </ul>
+                    <div
+                        className={cn(
+                            "flex shrink-0 items-center justify-between gap-3 border-ts border-stage-1/20 pts-3",
+                            data.remainingThisWeek === 0 && "justify-end",
+                        )}
+                    >
+                        {data.remainingThisWeek > 0 ? (
+                            <p className="body-sm text-success-mid">
+                                +{data.remainingThisWeek} more this week
+                            </p>
+                        ) : null}
+                        <Link href="/broker/clients?filter=followups" className={LINK_CLASS}>
+                            View all
+                            <span aria-hidden>→</span>
+                        </Link>
+                    </div>
+                </>
+            )}
         </section>
     );
 }

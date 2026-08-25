@@ -72,11 +72,53 @@ export type PipelineStageCount = {
     count: number;
 };
 
-export type FollowUpItem = {
+/** Active CRM stages shown on the dashboard pipeline card (excludes won/lost). */
+export type PipelineStageKey = "new" | "contacted" | "site_visit" | "negotiation";
+
+export type PipelineStage = {
+    key: PipelineStageKey;
+    label: string;
+    count: number;
+};
+
+export type PipelineData = {
+    /** Excludes won/lost. */
+    activeTotal: number;
+    /** Always 4 stages, always New → Contacted → Site visit → Negotiation. */
+    stages: PipelineStage[];
+    stalled: { count: number; thresholdDays: number; href: string } | null;
+    thisMonth: { won: number; lost: number };
+};
+
+export type FollowUpDue = "overdue" | "today" | "upcoming";
+export type FollowUpChannel = "whatsapp" | "phone" | "none";
+
+export type FollowUp = {
     id: string;
+    /** The action, e.g. "Call Rahul Mehta". */
     title: string;
+    /** Client + why, e.g. "After Vesu site visit · 3 BHK". */
+    context: string;
+    due: FollowUpDue;
+    /** "2d over" | "Today" | "Tomorrow" | "Fri". */
     dueLabel: string;
-    isOverdue: boolean;
+    /** 0 when not overdue. */
+    daysOverdue: number;
+    clientId: string;
+    /** Display name for a11y labels on channel actions. */
+    clientName: string;
+    /** E.164, e.g. "+919876543210". */
+    clientPhone: string;
+    channel: FollowUpChannel;
+    href: string;
+};
+
+export type FollowUpsData = {
+    overdueCount: number;
+    /** Pre-sorted by the server. */
+    items: FollowUp[];
+    /** Items not shown in the card. */
+    remainingThisWeek: number;
 };
 
 export type AreaPropertyItem = {
@@ -106,9 +148,15 @@ export type NextShowingMock = {
     minutesUntil: number;
     configLabel: string;
     locality: string;
+    /** Full property address for the visit. */
+    address: string;
     amountInr: number;
     isRent: boolean;
     meetNote: string;
+    /** Approximate travel distance to the property, in kilometres. */
+    distanceKm: number;
+    /** Extra visit note the broker shared with the client. */
+    brokerNote: string;
     status: NextShowingStatus;
     clientName: string;
     clientPhoneDigits: string;
@@ -128,8 +176,8 @@ export type DashboardMock = {
     requests: RequestsData;
     activeClientCount: number;
     pipeline: PipelineStageCount[];
-    followUps: FollowUpItem[];
-    overdueFollowUpCount: number;
+    pipelineCard: PipelineData;
+    followUps: FollowUpsData;
     newInAreas: AreaPropertyItem[];
 };
 
@@ -283,6 +331,77 @@ export const REQUESTS_PLACEHOLDER: RequestsData = {
     ],
 };
 
+export const PIPELINE_PLACEHOLDER: PipelineData = {
+    activeTotal: 12,
+    stages: [
+        { key: "new", label: "New", count: 5 },
+        { key: "contacted", label: "Contacted", count: 3 },
+        { key: "site_visit", label: "Site visit", count: 3 },
+        { key: "negotiation", label: "Negotiation", count: 1 },
+    ],
+    stalled: { count: 2, thresholdDays: 14, href: "/broker/clients?filter=stalled" },
+    thisMonth: { won: 1, lost: 2 },
+};
+
+export const FOLLOWUPS_PLACEHOLDER: FollowUpsData = {
+    overdueCount: 2,
+    remainingThisWeek: 2,
+    items: [
+        {
+            id: "fu_01",
+            title: "Call Rahul Mehta",
+            context: "After Vesu site visit · 3 BHK",
+            due: "overdue",
+            dueLabel: "2d over",
+            daysOverdue: 2,
+            clientId: "cl_003",
+            clientName: "Rahul Mehta",
+            clientPhone: "+919876543210",
+            channel: "whatsapp",
+            href: "/broker/clients/cl_003",
+        },
+        {
+            id: "fu_02",
+            title: "Send Adajan options",
+            context: "Priya Shah · budget ₹20–25 L",
+            due: "overdue",
+            dueLabel: "1d over",
+            daysOverdue: 1,
+            clientId: "cl_002",
+            clientName: "Priya Shah",
+            clientPhone: "+919876500011",
+            channel: "whatsapp",
+            href: "/broker/clients/cl_002",
+        },
+        {
+            id: "fu_03",
+            title: "Confirm owner slot · Pal",
+            context: "Visit booked — chase confirmation",
+            due: "today",
+            dueLabel: "Today",
+            daysOverdue: 0,
+            clientId: "cl_004",
+            clientName: "Pal visit",
+            clientPhone: "+919876500022",
+            channel: "phone",
+            href: "/broker/clients/cl_004",
+        },
+        {
+            id: "fu_04",
+            title: "Share Piplod listing",
+            context: "Nisha Desai · asked on WhatsApp",
+            due: "upcoming",
+            dueLabel: "Tomorrow",
+            daysOverdue: 0,
+            clientId: "cl_005",
+            clientName: "Nisha Desai",
+            clientPhone: "+919876500033",
+            channel: "whatsapp",
+            href: "/broker/clients/cl_005",
+        },
+    ],
+};
+
 export const dashboardMock: DashboardMock = {
     siteVisitCount: 2,
     requestsWaitingCount: 4,
@@ -322,9 +441,12 @@ export const dashboardMock: DashboardMock = {
         minutesUntil: 134,
         configLabel: "3 BHK",
         locality: "Vesu",
+        address: "12, Green Park Society, Vesu, Surat 395007",
         amountInr: 11_500_000,
         isRent: false,
         meetNote: "Meet at the gate",
+        distanceKm: 4.2,
+        brokerNote: "Share gate code 4821 — parking in basement 2.",
         status: "confirmed",
         clientName: "Milan Vamja",
         clientPhoneDigits: "9876501234",
@@ -339,27 +461,8 @@ export const dashboardMock: DashboardMock = {
         { stageId: "negotiation", count: 1 },
         { stageId: "closed_won", count: 1 },
     ],
-    followUps: [
-        {
-            id: "fu-1",
-            title: "Call Milan Vamja",
-            dueLabel: "2 days over",
-            isOverdue: true,
-        },
-        {
-            id: "fu-2",
-            title: "Send Adajan options · Priya",
-            dueLabel: "1 day over",
-            isOverdue: true,
-        },
-        {
-            id: "fu-3",
-            title: "Confirm owner slot · Vesu",
-            dueLabel: "Today",
-            isOverdue: false,
-        },
-    ],
-    overdueFollowUpCount: 2,
+    pipelineCard: PIPELINE_PLACEHOLDER,
+    followUps: FOLLOWUPS_PLACEHOLDER,
     newInAreas: [
         {
             id: "prop-1",

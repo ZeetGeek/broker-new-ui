@@ -28,11 +28,6 @@
     --border: oklch(0.93 0.007 106.5);
     --input: oklch(0.93 0.007 106.5);
     --ring: oklch(0.737 0.021 106.9);
-    --chart-1: oklch(0.88 0.011 106.6);
-    --chart-2: oklch(0.58 0.031 107.3);
-    --chart-3: oklch(0.466 0.025 107.3);
-    --chart-4: oklch(0.394 0.023 107.4);
-    --chart-5: oklch(0.286 0.016 107.4);
     --radius: 0.625rem;
     --sidebar: oklch(0.988 0.003 106.5);
     --sidebar-foreground: oklch(0.153 0.006 107.1);
@@ -72,6 +67,19 @@
     --color-success: #1b7a5a;
     --color-success-mid: #7bb89e;
     --color-success-soft: #e3f2ea;
+
+    /* Pipeline funnel — four depths within the brand green family */
+    --color-stage-1: #7fd9b9;
+    --color-stage-2: #2fae85;
+    --color-stage-3: #0f6e56;
+    --color-stage-4: #04342c;
+
+    /* shadcn chart tokens mapped onto the pipeline greens */
+    --chart-1: var(--color-stage-1);
+    --chart-2: var(--color-stage-2);
+    --chart-3: var(--color-stage-3);
+    --chart-4: var(--color-stage-4);
+    --chart-5: var(--color-brand-ink);
 
     --radius-card: 20px;
     --radius-inner: 14px;
@@ -117,11 +125,11 @@
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.58 0.031 107.3);
-    --chart-1: oklch(0.88 0.011 106.6);
-    --chart-2: oklch(0.58 0.031 107.3);
-    --chart-3: oklch(0.466 0.025 107.3);
-    --chart-4: oklch(0.394 0.023 107.4);
-    --chart-5: oklch(0.286 0.016 107.4);
+    --chart-1: var(--color-stage-1);
+    --chart-2: var(--color-stage-2);
+    --chart-3: var(--color-stage-3);
+    --chart-4: var(--color-stage-4);
+    --chart-5: var(--color-brand-ink);
     --sidebar: oklch(0.228 0.013 107.4);
     --sidebar-foreground: oklch(0.988 0.003 106.5);
     --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -193,6 +201,10 @@
     --color-success: var(--color-success);
     --color-success-mid: var(--color-success-mid);
     --color-success-soft: var(--color-success-soft);
+    --color-stage-1: var(--color-stage-1);
+    --color-stage-2: var(--color-stage-2);
+    --color-stage-3: var(--color-stage-3);
+    --color-stage-4: var(--color-stage-4);
 
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);

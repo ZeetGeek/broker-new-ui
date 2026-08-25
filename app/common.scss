@@ -67,7 +67,7 @@ $md: 48rem;
     }
 
     .body-sm {
-        @include type-step(var(--font-sans), 12px, 14px, 400, 0, 1.45);
+        @include type-step(var(--font-sans), 12px, 14px, 500, 0, 1.45);
     }
 
     .body-xs {

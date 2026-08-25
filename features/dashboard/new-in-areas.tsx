@@ -19,10 +19,7 @@ export function NewInAreas({ properties, className }: NewInAreasProps) {
     return (
         <section
             className={cn(
-                `
-                  flex flex-col rounded-card border border-border-warm bg-surface p-8
-                  shadow-sm
-                `,
+                `flex flex-col rounded-card border border-border-warm bg-surface p-8 shadow-sm`,
                 className,
             )}
         >

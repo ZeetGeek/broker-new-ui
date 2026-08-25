@@ -75,6 +75,13 @@ brand-text      #0B5A41   text sitting on brand-soft
 ```
 
 ```
+stage-1         #7FD9B9   pipeline bar — New
+stage-2         #2FAE85   pipeline bar — Contacted
+stage-3         #0F6E56   pipeline bar — Site visit
+stage-4         #04342C   pipeline bar — Negotiation
+```
+
+```
 highlight       #C9F24D   lime. One per card, maximum. Never as text on cream.
 highlight-ink   #1E3A05   text sitting on highlight
 ```
@@ -115,6 +122,10 @@ adding a colour to the palette.
 `pending` means **a process is in flight and the user cannot speed it up**. RERA
 number submitted, waiting on verification. It is dark yellow so it does not steal
 `urgent` orange. Never use it for a deadline.
+
+`stage-1` … `stage-4` are **pipeline funnel fills only** — New → Contacted → Site
+visit → Negotiation. They deepen within the brand green family. Do not use them
+for buttons, badges, or any surface outside the pipeline bar / its legend.
 
 ### 1.4 Contrast
 

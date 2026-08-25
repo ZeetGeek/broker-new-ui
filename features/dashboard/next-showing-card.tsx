@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CalendarClock, Navigation, Phone, User } from "lucide-react";
+import { CalendarClock, IndianRupee, MapPin, Navigation, Phone, User } from "lucide-react";
 
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -23,9 +23,12 @@ export type NextShowing = {
     scheduledAt: Date;
     configLabel: string;
     locality: string;
+    address: string;
     amountInr: number;
     isRent: boolean;
     meetNote: string;
+    distanceKm: number;
+    brokerNote: string;
     status: NextShowingStatus;
     clientName: string;
     clientPhoneDigits: string;
@@ -36,6 +39,11 @@ export type NextShowingCardProps = {
     now: Date;
     className?: string;
 };
+
+function formatDistanceKm(distanceKm: number): string {
+    const rounded = Number.isInteger(distanceKm) ? distanceKm.toFixed(0) : distanceKm.toFixed(1);
+    return `${rounded} km`;
+}
 
 function statusBadge(status: NextShowingStatus, isStartingSoon: boolean, isPast: boolean) {
     if (isPast) {
@@ -66,9 +74,48 @@ function statusBadge(status: NextShowingStatus, isStartingSoon: boolean, isPast:
     );
 }
 
-function mapsSearchUrl(locality: string, configLabel: string): string {
-    const query = encodeURIComponent(`${configLabel}, ${locality}, Surat`);
+function mapsSearchUrl(address: string): string {
+    const query = encodeURIComponent(address);
     return `https://www.google.com/maps/search/?api=1&query=${query}`;
+}
+
+/** Static Uber-style route stroke — no map fill, no card chrome. */
+function RouteLine({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 88 56" className={cn("block", className)} aria-hidden focusable="false">
+            <path
+                d="M72 10 C64 16, 54 28, 46 32 C34 38, 24 34, 16 40 C10 44, 8 50, 6 54"
+                fill="none"
+                stroke="var(--color-ink)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            {/* Origin circle */}
+            <circle
+                cx="72"
+                cy="10"
+                r="5"
+                fill="var(--color-surface)"
+                stroke="var(--color-ink)"
+                strokeWidth="2.5"
+            />
+            {/* Destination square */}
+            <rect x="1" y="48" width="10" height="10" fill="var(--color-ink)" />
+        </svg>
+    );
+}
+
+function TripAside({ distanceKm }: { distanceKm: number }) {
+    return (
+        <aside
+            className="flex shrink-0 flex-col items-end gap-2 text-end min-inline-32"
+            aria-label="Travel details"
+        >
+            <RouteLine className="block-20 inline-48" />
+            <p className="tabular h1 text-ink">{formatDistanceKm(distanceKm)}</p>
+        </aside>
+    );
 }
 
 function EmptyNextShowing({ className }: { className?: string }) {
@@ -107,7 +154,7 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
         duration.minutesRemaining > 0 &&
         duration.minutesRemaining <= STARTING_SOON_MINUTES;
     const phoneHref = `tel:+91${showing.clientPhoneDigits.replace(/\D/g, "").slice(-10)}`;
-    const directionsHref = mapsSearchUrl(showing.locality, showing.configLabel);
+    const directionsHref = mapsSearchUrl(showing.address);
 
     return (
         <section
@@ -120,29 +167,70 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
             </div>
 
             <div className="mbs-3 flex flex-1 flex-col gap-3 overflow-hidden min-block-0">
-                <div className="shrink-0">
-                    <h2 id={`next-showing-${showing.id}`} className="h2 text-ink">
-                        <time dateTime={showing.scheduledAt.toISOString()}>{whenLabel}</time>
-                    </h2>
-                    <p
-                        className={cn(
-                            "body-sm tabular mbs-1 font-medium",
-                            isStartingSoon ? "text-urgent" : "text-ink-muted",
-                        )}
-                    >
-                        {duration.label}
-                    </p>
-                </div>
+                <div className="flex flex-1 items-start justify-between gap-4 min-block-0">
+                    <div className="flex flex-1 flex-col gap-3 min-inline-0">
+                        <div className="shrink-0">
+                            <h2 id={`next-showing-${showing.id}`} className="h2 text-ink">
+                                <time dateTime={showing.scheduledAt.toISOString()}>
+                                    {whenLabel}
+                                </time>
+                            </h2>
+                            <p
+                                className={cn(
+                                    "body-sm tabular mbs-1 font-medium",
+                                    isStartingSoon ? "text-urgent" : "text-ink-muted",
+                                )}
+                            >
+                                {duration.label}
+                            </p>
+                        </div>
 
-                <div className="shrink-0">
-                    <p className="h5 text-ink">
-                        {showing.configLabel} · {showing.locality}
-                    </p>
-                    <p className="body-sm mbs-1 text-ink-muted">
-                        <Price amountInr={showing.amountInr} isRent={showing.isRent} />
-                        <span aria-hidden> · </span>
-                        <span>{showing.meetNote}</span>
-                    </p>
+                        <div className="shrink-0">
+                            <p className="h5 text-ink">
+                                {showing.configLabel} · {showing.locality}
+                            </p>
+                            <p
+                                className="
+                                  body-sm mbs-1.5 flex items-center gap-1.5 text-ink-muted
+                                  max-inline-100
+                                "
+                            >
+                                <MapPin
+                                    aria-hidden
+                                    className="shrink-0 block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
+                                <span className="text-pretty min-inline-0">{showing.address}</span>
+                            </p>
+                            <Badge
+                                className="
+                                  body-sm mbs-5! inline-flex items-center gap-1.5 border-border-warm
+                                  bg-transparent px-3 py-1.5 font-medium whitespace-normal
+                                  text-ink-muted max-inline-100
+                                "
+                            >
+                                <IndianRupee
+                                    aria-hidden
+                                    className="shrink-0 text-brand block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
+                                <span className="leading-0 text-pretty min-inline-0">
+                                    <Price
+                                        amountInr={showing.amountInr}
+                                        isRent={showing.isRent}
+                                        className="font-semibold text-brand"
+                                    />
+                                    <span aria-hidden className="text-ink-subtle">
+                                        {" "}
+                                        ·{" "}
+                                    </span>
+                                    <span>{showing.meetNote}</span>
+                                </span>
+                            </Badge>
+                        </div>
+                    </div>
+
+                    <TripAside distanceKm={showing.distanceKm} />
                 </div>
 
                 <div

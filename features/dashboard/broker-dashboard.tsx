@@ -1,6 +1,8 @@
 import { DashboardHeader } from "./dashboard-header";
+import { FollowUpsCard } from "./follow-ups-card";
 import { dashboardMock } from "./mock-data";
 import { NextShowingCard } from "./next-showing-card";
+import { PipelineCard } from "./pipeline-card";
 import { PlaceholderCard } from "./placeholder-card";
 import { RequestsCard } from "./requests-card";
 import { TodayCard } from "./today-card";
@@ -14,9 +16,12 @@ export function BrokerDashboard() {
               scheduledAt: new Date(now.getTime() + data.nextShowing.minutesUntil * 60_000),
               configLabel: data.nextShowing.configLabel,
               locality: data.nextShowing.locality,
+              address: data.nextShowing.address,
               amountInr: data.nextShowing.amountInr,
               isRent: data.nextShowing.isRent,
               meetNote: data.nextShowing.meetNote,
+              distanceKm: data.nextShowing.distanceKm,
+              brokerNote: data.nextShowing.brokerNote,
               status: data.nextShowing.status,
               clientName: data.nextShowing.clientName,
               clientPhoneDigits: data.nextShowing.clientPhoneDigits,
@@ -43,16 +48,10 @@ export function BrokerDashboard() {
                     <TodayCard agenda={data.today} now={now} />
                     <RequestsCard data={data.requests} serviceAreas={data.serviceAreas} />
                 </div>
-                <PlaceholderCard
-                    title="Pipeline"
-                    info="Your active clients and which deal stage each one is in."
-                    className="md:col-span-3"
-                />
-                <PlaceholderCard
-                    title="Follow-ups"
-                    info="People you need to call or message next — overdue items show first."
-                    className="md:col-span-4"
-                />
+                <div className="grid grid-cols-1 gap-4 md:col-span-7 md:grid-cols-2 md:gap-5">
+                    <PipelineCard data={data.pipelineCard} />
+                    <FollowUpsCard data={data.followUps} />
+                </div>
                 <PlaceholderCard
                     title="Activity"
                     info="Recent updates across your properties, clients, and visits."

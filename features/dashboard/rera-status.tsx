@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Clock, Shield, ShieldAlert, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Clock, type LucideIcon,Shield, ShieldAlert, ShieldCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 

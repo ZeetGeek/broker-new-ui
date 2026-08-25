@@ -57,7 +57,7 @@ function AttentionIcon({ type }: { type: RequestAttentionItem["type"] }) {
         return (
             <Check
                 aria-hidden
-                className="mbs-0.5 shrink-0 block-4 inline-4 text-success"
+                className="mbs-0.5 shrink-0 text-success block-4 inline-4"
                 strokeWidth={1.75}
             />
         );
@@ -66,7 +66,7 @@ function AttentionIcon({ type }: { type: RequestAttentionItem["type"] }) {
     return (
         <Clock
             aria-hidden
-            className="mbs-0.5 shrink-0 block-4 inline-4 text-urgent"
+            className="mbs-0.5 shrink-0 text-urgent block-4 inline-4"
             strokeWidth={1.75}
         />
     );
@@ -101,7 +101,10 @@ function AttentionRow({ item }: { item: RequestAttentionItem }) {
                 variant="link"
                 size="sm"
                 nativeButton={false}
-                className="body-sm shrink-0 p-0 font-semibold text-brand block-auto hover:text-brand-text"
+                className="
+                  body-sm shrink-0 self-center p-0 font-semibold text-brand block-auto
+                  hover:text-brand-text
+                "
                 render={<Link href={item.action.href} />}
             >
                 {item.action.label}
@@ -117,8 +120,7 @@ function EmptyRequests({
     serviceAreas: string[];
     className?: string;
 }) {
-    const areasLabel =
-        serviceAreas.length > 0 ? serviceAreas.join(", ") : "your areas";
+    const areasLabel = serviceAreas.length > 0 ? serviceAreas.join(", ") : "your areas";
 
     return (
         <section
@@ -151,9 +153,7 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
 
     const attention = data.attention.slice(0, MAX_ATTENTION_ROWS);
     const remainingLabel =
-        data.quota.remaining === 1
-            ? "1 left this week"
-            : `${data.quota.remaining} left this week`;
+        data.quota.remaining === 1 ? "1 left this week" : `${data.quota.remaining} left this week`;
     const showFade = attention.length >= 3 || data.attention.length > MAX_ATTENTION_ROWS;
 
     return (
@@ -180,13 +180,13 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                     value={data.counts.approved}
                     valueClassName="text-success"
                 />
-                <div className="w-px shrink-0 self-stretch bg-border" aria-hidden />
+                <div className="shrink-0 self-stretch bg-border inline-px" aria-hidden />
                 <MetricCell
                     label="Waiting"
                     value={data.counts.pending}
                     valueClassName="text-pending"
                 />
-                <div className="w-px shrink-0 self-stretch bg-border" aria-hidden />
+                <div className="shrink-0 self-stretch bg-border inline-px" aria-hidden />
                 <MetricCell
                     label="Declined"
                     value={data.counts.declined}
@@ -198,8 +198,8 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                 {attention.length > 0 ? (
                     <div
                         className="
-                          absolute inset-0 overflow-y-auto overscroll-contain
-                          [scrollbar-width:none] [-ms-overflow-style:none]
+                          absolute inset-0 scrollbar-none overflow-y-auto overscroll-contain
+                          [-ms-overflow-style:none]
                           [&::-webkit-scrollbar]:hidden
                         "
                     >

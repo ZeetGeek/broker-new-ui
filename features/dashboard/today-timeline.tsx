@@ -1,7 +1,7 @@
 "use client";
 
+import { type RefObject, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useEffect, useRef, type RefObject } from "react";
 
 import { CircleCheck, MapPin, Phone } from "lucide-react";
 
@@ -24,7 +24,9 @@ export type TimelineEntry =
 const COMPLETED_PEEK_PX = 52;
 
 function elementScrollTop(container: HTMLElement, el: HTMLElement) {
-    return el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+    return (
+        el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop
+    );
 }
 
 /** Pin Now at top when nothing is done; otherwise leave a small done-row peek above it. */
@@ -85,10 +87,9 @@ function TimelineRow({ item, showDivider }: { item: TodayItem; showDivider: bool
                 <div className="min-inline-0">
                     <p
                         className={cn(
-                            "body",
-                            isDone && "font-medium text-ink-subtle line-through",
-                            isNext && "font-semibold text-ink",
-                            !isDone && !isNext && "font-medium text-ink",
+                            "body font-semibold",
+                            isDone && "text-ink-subtle line-through",
+                            !isDone && "text-ink",
                         )}
                     >
                         {item.title}
@@ -111,13 +112,15 @@ function TimelineRow({ item, showDivider }: { item: TodayItem; showDivider: bool
     );
 }
 
-function NowMarker({ label, markerRef }: { label: string; markerRef: RefObject<HTMLLIElement | null> }) {
+function NowMarker({
+    label,
+    markerRef,
+}: {
+    label: string;
+    markerRef: RefObject<HTMLLIElement | null>;
+}) {
     return (
-        <li
-            ref={markerRef}
-            className="flex items-center gap-3 py-1"
-            aria-label={`Now, ${label}`}
-        >
+        <li ref={markerRef} className="flex items-center gap-3 py-1" aria-label={`Now, ${label}`}>
             <p className="body-sm shrink-0 font-semibold whitespace-nowrap text-urgent">
                 Now · {label}
             </p>
