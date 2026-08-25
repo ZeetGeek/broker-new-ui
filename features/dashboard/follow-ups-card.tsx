@@ -322,7 +322,8 @@ export function FollowUpsCard({
 
                     <div
                         className="
-                          absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end block-14
+                          absolute inset-x-0 inset-be-[-0.5rem] z-10 flex flex-col justify-end
+                          block-14
                         "
                     >
                         {showFade ? (
