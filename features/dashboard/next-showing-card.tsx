@@ -1,10 +1,11 @@
 import Link from "next/link";
 
-import { CalendarClock, Navigation, Phone } from "lucide-react";
+import { CalendarClock, Navigation, Phone, User } from "lucide-react";
 
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -58,8 +59,8 @@ function EmptyNextShowing({ className }: { className?: string }) {
         <section
             className={cn(
                 `
-                  flex flex-col overflow-visible rounded-card border border-border-warm
-                  bg-surface p-8 shadow-sm
+                  flex flex-col overflow-visible rounded-card border border-border-warm bg-surface
+                  p-8 shadow-sm
                   md:block-full
                 `,
                 className,
@@ -104,8 +105,8 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
         <section
             className={cn(
                 `
-                  flex flex-col overflow-visible rounded-card border border-border-warm
-                  bg-surface p-8 shadow-sm
+                  flex flex-col overflow-visible rounded-card border border-border-warm bg-surface
+                  p-8 shadow-sm
                   md:block-full
                 `,
                 className,
@@ -143,46 +144,73 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                     </p>
                 </div>
 
-                <div className="hidden items-center gap-3 rounded-inner bg-surface-muted p-3">
-                    <UserAvatar name={showing.clientName} size="sm" />
-                    <div className="flex-1 min-inline-0">
-                        <p className="body font-medium text-ink">{showing.clientName}</p>
-                        <p className="body-xs text-ink-subtle">Client</p>
+                <div className="pts-1 mbs-auto flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            variant="default"
+                            size="md"
+                            nativeButton={false}
+                            render={
+                                <a
+                                    href={directionsHref}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                />
+                            }
+                        >
+                            <Navigation aria-hidden strokeWidth={1.75} />
+                            Directions
+                        </Button>
+                        <Button
+                            variant="outline-dark"
+                            size="md"
+                            nativeButton={false}
+                            render={<Link href={`/broker/visits/new?reschedule=${showing.id}`} />}
+                        >
+                            <CalendarClock aria-hidden strokeWidth={1.75} />
+                            Reschedule
+                        </Button>
                     </div>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        nativeButton={false}
-                        render={<a href={phoneHref} />}
-                        aria-label={`Call ${showing.clientName}`}
-                        className="shrink-0 text-ink-muted hover:text-ink"
-                    >
-                        <Phone aria-hidden strokeWidth={1.75} />
-                        Call
-                    </Button>
-                </div>
 
-                <div className="pts-1 mbs-auto flex flex-wrap gap-2">
-                    <Button
-                        variant="default"
-                        size="md"
-                        nativeButton={false}
-                        render={
-                            <a href={directionsHref} target="_blank" rel="noopener noreferrer" />
-                        }
-                    >
-                        <Navigation aria-hidden strokeWidth={1.75} />
-                        Directions
-                    </Button>
-                    <Button
-                        variant="outline-dark"
-                        size="md"
-                        nativeButton={false}
-                        render={<Link href={`/broker/visits/new?reschedule=${showing.id}`} />}
-                    >
-                        <CalendarClock aria-hidden strokeWidth={1.75} />
-                        Reschedule
-                    </Button>
+                    <div className="flex items-center gap-2.5 min-inline-0">
+                        <UserAvatar name={showing.clientName} size="md" />
+                        <div className="min-inline-0">
+                            <p className="body truncate font-medium text-ink">
+                                {showing.clientName}
+                            </p>
+                            <p
+                                className="
+                                  body-sm inline-flex items-center gap-1.5 font-medium
+                                  text-ink-muted
+                                "
+                            >
+                                <span className="inline-flex items-center gap-1">
+                                    <User
+                                        aria-hidden
+                                        className="block-4 inline-4"
+                                        strokeWidth={2}
+                                    />
+                                    Client
+                                </span>
+                                <span aria-hidden>·</span>
+                                <a
+                                    href={phoneHref}
+                                    className={`
+                                      inline-flex items-center gap-1 outline-none
+                                      hover:text-ink
+                                      focus-visible:ring-3 focus-visible:ring-ring/30
+                                    `}
+                                >
+                                    <Phone
+                                        aria-hidden
+                                        className="block-3.5 inline-3.5"
+                                        strokeWidth={2}
+                                    />
+                                    <PhoneNumber phoneDigits={showing.clientPhoneDigits} />
+                                </a>
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
