@@ -1,23 +1,16 @@
-import Link from "next/link";
-
 import { formatDateIso, formatDateShort, formatTimeIn } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { TodayAgenda, TodayItem } from "./mock-data";
+import { TextLinkButton } from "./text-link-button";
 import { TodayTimeline } from "./today-timeline";
 
 const TODAY_INFO = "Your full day as a timeline: what's done, what's left, and where you are now.";
 
 /** Soft cap inside the scroll list; overflow goes to "View all visits". */
 const MAX_SCROLL_ROWS = 8;
-
-const LINK_CLASS = cn(
-    "body-sm inline-flex items-center gap-1 font-semibold text-brand outline-none",
-    "hover:text-brand-text",
-    "focus-visible:ring-3 focus-visible:ring-ring/30",
-);
 
 export type TodayCardProps = {
     agenda: TodayAgenda;
@@ -76,10 +69,7 @@ function EmptyToday({ now, className }: { now: Date; className?: string }) {
                     A free day is fine. Book a visit when a client is ready.
                 </p>
                 <div className="pts-3 mbs-auto">
-                    <Link href="/broker/visits/new" className={LINK_CLASS}>
-                        Book a site visit
-                        <span aria-hidden>→</span>
-                    </Link>
+                    <TextLinkButton href="/broker/visits/new">Book a site visit</TextLinkButton>
                 </div>
             </div>
         </section>
@@ -151,10 +141,7 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                         />
                     ) : null}
                     <div className="relative flex justify-center">
-                        <Link href="/broker/visits" className={LINK_CLASS}>
-                            View all visits
-                            <span aria-hidden>→</span>
-                        </Link>
+                        <TextLinkButton href="/broker/visits">View all visits</TextLinkButton>
                     </div>
                 </div>
             </div>

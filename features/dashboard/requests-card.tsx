@@ -10,17 +10,12 @@ import { Button } from "@/components/ui/button";
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { RequestAttentionItem, RequestsData } from "./mock-data";
+import { TextLinkButton } from "./text-link-button";
 
 const REQUESTS_INFO =
     "Requests you've sent to owners to represent their properties, and where each one stands.";
 
 const MAX_ATTENTION_ROWS = 3;
-
-const LINK_CLASS = cn(
-    "body-sm inline-flex items-center gap-1 font-semibold text-brand outline-none",
-    "hover:text-brand-text",
-    "focus-visible:ring-3 focus-visible:ring-ring/30",
-);
 
 export type RequestsCardProps = {
     data: RequestsData;
@@ -136,10 +131,7 @@ function EmptyRequests({
                     Browse properties in {areasLabel} to send your first request.
                 </p>
                 <div className="pts-3 mbs-auto">
-                    <Link href="/broker/properties" className={LINK_CLASS}>
-                        Browse properties
-                        <span aria-hidden>→</span>
-                    </Link>
+                    <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
                 </div>
             </div>
         </section>
@@ -233,10 +225,9 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                         />
                     ) : null}
                     <div className="relative flex justify-center">
-                        <Link href="/broker/properties?tab=requests" className={LINK_CLASS}>
+                        <TextLinkButton href="/broker/properties?tab=requests">
                             View all requests
-                            <span aria-hidden>→</span>
-                        </Link>
+                        </TextLinkButton>
                     </div>
                 </div>
             </div>

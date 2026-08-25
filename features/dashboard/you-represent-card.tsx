@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL_AUTO } from "./card-shell";
 import type { RepresentedPropertyItem, YouRepresentData } from "./mock-data";
+import { TextLinkButton } from "./text-link-button";
 
 const YOU_REPRESENT_INFO =
     "Properties owners have approved you to represent — share them or book a visit before they go stale.";
@@ -184,16 +185,7 @@ export function YouRepresentCard({ data, className }: YouRepresentCardProps) {
                 <CardLabel info={YOU_REPRESENT_INFO}>
                     <span id="you-represent-heading">{heading}</span>
                 </CardLabel>
-                <Button
-                    variant="link"
-                    size="sm"
-                    nativeButton={false}
-                    render={<Link href="/broker/properties?mine=1" />}
-                    className="body-sm p-0 font-semibold text-brand block-auto"
-                >
-                    View all
-                    <span aria-hidden>→</span>
-                </Button>
+                <TextLinkButton href="/broker/properties?mine=1">View all</TextLinkButton>
             </div>
 
             {rows.length === 0 ? (
@@ -203,16 +195,9 @@ export function YouRepresentCard({ data, className }: YouRepresentCardProps) {
                         Owners in your area are listing now.
                     </p>
                     <div className="pts-3 mbs-auto">
-                        <Button
-                            variant="link"
-                            size="sm"
-                            nativeButton={false}
-                            render={<Link href="/broker/properties" />}
-                            className="body-sm p-0 font-semibold text-brand block-auto"
-                        >
+                        <TextLinkButton href="/broker/properties">
                             Browse available properties
-                            <span aria-hidden>→</span>
-                        </Button>
+                        </TextLinkButton>
                     </div>
                 </div>
             ) : (

@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 
-import Link from "next/link";
-
 import { Bookmark, Building2 } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
@@ -16,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL_AUTO } from "./card-shell";
 import type { AreaPropertyItem } from "./mock-data";
+import { TextLinkButton } from "./text-link-button";
 
 const NEW_IN_AREAS_INFO =
     "Fresh listings in the localities you cover — ready to request representation.";
@@ -228,16 +227,9 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
                         <p className="body-sm text-ink-subtle">{serviceAreas.join(" · ")}</p>
                     ) : null}
                 </div>
-                <Button
-                    variant="link"
-                    size="sm"
-                    nativeButton={false}
-                    render={<Link href="/broker/properties" />}
-                    className="body-sm shrink-0 p-0 font-semibold text-brand block-auto"
-                >
+                <TextLinkButton href="/broker/properties" className="shrink-0">
                     Browse all
-                    <span aria-hidden>→</span>
-                </Button>
+                </TextLinkButton>
             </div>
 
             {rows.length === 0 ? (

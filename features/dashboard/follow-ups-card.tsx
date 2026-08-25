@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { FollowUp, FollowUpDue, FollowUpsData } from "./mock-data";
+import { TextLinkButton } from "./text-link-button";
 
 const FOLLOW_UPS_INFO =
     "Untimed tasks to chase — tick them done here, or jump straight into WhatsApp.";
@@ -24,12 +25,6 @@ const MAX_ROWS = 4;
 const UNDO_MS = 5000;
 /** Brief beat so strike-through reads before the row collapses. */
 const STRIKE_HOLD_MS = duration.instant * 1000;
-
-const LINK_CLASS = cn(
-    "body-sm inline-flex items-center gap-1 font-semibold text-brand outline-none",
-    "hover:text-brand-text",
-    "focus-visible:ring-3 focus-visible:ring-ring/30",
-);
 
 const DUE_CLASS: Record<FollowUpDue, string> = {
     overdue: "text-urgent",
@@ -191,10 +186,7 @@ function EmptyFollowUps() {
     return (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
             <p className="body text-ink">Nothing due. Nice.</p>
-            <Link href="/broker/clients" className={LINK_CLASS}>
-                Add a follow-up
-                <span aria-hidden>→</span>
-            </Link>
+            <TextLinkButton href="/broker/clients">Add a follow-up</TextLinkButton>
         </div>
     );
 }
@@ -343,10 +335,9 @@ export function FollowUpsCard({
                             />
                         ) : null}
                         <div className="relative flex justify-center">
-                            <Link href="/broker/clients?filter=followups" className={LINK_CLASS}>
+                            <TextLinkButton href="/broker/clients?filter=followups">
                                 View all follow-ups
-                                <span aria-hidden>→</span>
-                            </Link>
+                            </TextLinkButton>
                         </div>
                     </div>
                 </div>
