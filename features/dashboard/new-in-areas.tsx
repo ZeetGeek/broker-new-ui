@@ -48,18 +48,18 @@ function competitionStatus(count: number): { text: string; className: string } {
     if (count === 0) {
         return {
             text: "Open — no requests yet",
-            className: "bg-emerald-50 text-emerald-800",
+            className: "font-medium text-emerald-700",
         };
     }
     if (count === 1) {
         return {
             text: "1 broker already requested",
-            className: "bg-orange-50 text-orange-800",
+            className: "font-medium text-orange-700",
         };
     }
     return {
         text: `${count} brokers requested`,
-        className: "bg-stone-100 text-stone-700",
+        className: "text-stone-500",
     };
 }
 
@@ -141,7 +141,7 @@ function PropertyRow({
                         </span>
                         <span
                             className={cn(
-                                "body-sm inline-flex items-center gap-1 rounded-control px-2 py-1 font-medium",
+                                "body-sm inline-flex items-center gap-1",
                                 competition.className,
                             )}
                         >

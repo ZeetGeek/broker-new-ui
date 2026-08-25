@@ -213,7 +213,7 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
 
                 <div
                     className="
-                      absolute inset-x-0 inset-be-[-0.5rem] z-10 flex flex-col justify-end
+                      absolute inset-x-0 inset-be-[-1rem] z-10 flex flex-col justify-end
                       block-14
                     "
                 >

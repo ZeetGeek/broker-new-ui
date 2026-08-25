@@ -42,7 +42,7 @@ function activityStatus(property: RepresentedPropertyItem): {
                   : `${property.visitCount} visits`;
         return {
             label: `No activity in ${property.daysSinceActivity} days · ${visitPart}`,
-            className: "bg-red-50 text-red-700",
+            className: "font-medium text-red-700",
             showWarning: true,
         };
     }
@@ -55,7 +55,7 @@ function activityStatus(property: RepresentedPropertyItem): {
     if (property.stageLabel && property.negotiationClientName) {
         return {
             label: `${visitsDone} · ${property.negotiationClientName} at offer stage`,
-            className: "bg-amber-50 text-amber-900",
+            className: "font-medium text-amber-800",
             showWarning: false,
         };
     }
@@ -74,7 +74,7 @@ function activityStatus(property: RepresentedPropertyItem): {
 
     return {
         label: `${visitsDone} · ${interested} · ${lastActivity}`,
-        className: "bg-emerald-50 text-emerald-800",
+        className: "font-medium text-emerald-700",
         showWarning: false,
     };
 }
@@ -142,7 +142,7 @@ function PropertyRow({
 
                     <p
                         className={cn(
-                            "body-sm inline-flex max-inline-full items-start gap-1.5 self-start rounded-control px-2 py-1 font-medium",
+                            "body-sm flex items-start gap-1.5",
                             activity.className,
                         )}
                     >
