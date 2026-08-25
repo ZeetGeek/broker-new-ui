@@ -38,15 +38,21 @@ export type NextShowingCardProps = {
 
 function statusBadge(status: NextShowingStatus, isStartingSoon: boolean, isPast: boolean) {
     if (isPast) {
-        return <Badge variant="neutral">Started</Badge>;
+        return <Badge variant="brand">Started</Badge>;
     }
     if (isStartingSoon) {
         return <Badge variant="urgent">Starting soon</Badge>;
     }
     if (status === "confirmed") {
-        return <Badge variant="brand">Confirmed</Badge>;
+        return (
+            <Badge className="border-transparent bg-highlight text-highlight-ink">Confirmed</Badge>
+        );
     }
-    return <Badge variant="neutral">Awaiting owner</Badge>;
+    return (
+        <Badge variant="outline" className="bg-surface text-pending">
+            Awaiting owner
+        </Badge>
+    );
 }
 
 function mapsSearchUrl(locality: string, configLabel: string): string {
