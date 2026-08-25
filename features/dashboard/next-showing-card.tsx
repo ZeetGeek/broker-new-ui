@@ -40,11 +40,6 @@ export type NextShowingCardProps = {
     className?: string;
 };
 
-function formatDistanceKm(distanceKm: number): string {
-    const rounded = Number.isInteger(distanceKm) ? distanceKm.toFixed(0) : distanceKm.toFixed(1);
-    return `${rounded} km`;
-}
-
 function statusBadge(status: NextShowingStatus, isStartingSoon: boolean, isPast: boolean) {
     if (isPast) {
         return (
@@ -74,18 +69,31 @@ function statusBadge(status: NextShowingStatus, isStartingSoon: boolean, isPast:
     );
 }
 
+function formatDistanceKm(distanceKm: number): string {
+    const rounded = Number.isInteger(distanceKm) ? distanceKm.toFixed(0) : distanceKm.toFixed(1);
+    return `${rounded} km`;
+}
+
 function mapsSearchUrl(address: string): string {
     const query = encodeURIComponent(address);
     return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
-function TripAside({ distanceKm }: { distanceKm: number }) {
+/** Empty map slot — swap in a real map later. Distance sits below. */
+function MapPlaceholder({ distanceKm }: { distanceKm: number }) {
     return (
         <aside
-            className="flex shrink-0 flex-col items-end text-end min-inline-28"
+            className="mbs-4 flex hidden shrink-0 flex-col items-center gap-3 pe-5"
             aria-label="Travel details"
         >
-            <p className="tabular h1 text-ink">{formatDistanceKm(distanceKm)}</p>
+            <div
+                className="
+                  overflow-hidden rounded-inner border border-border-warm bg-surface-muted block-32
+                  inline-32
+                "
+                aria-hidden
+            />
+            <p className="tabular h3 text-ink">{formatDistanceKm(distanceKm)}</p>
         </aside>
     );
 }
@@ -202,7 +210,7 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                         </div>
                     </div>
 
-                    <TripAside distanceKm={showing.distanceKm} />
+                    <MapPlaceholder distanceKm={showing.distanceKm} />
                 </div>
 
                 <div

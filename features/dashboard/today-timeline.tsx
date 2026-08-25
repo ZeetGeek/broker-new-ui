@@ -81,31 +81,33 @@ function TimelineRow({ item, showDivider }: { item: TodayItem; showDivider: bool
                 >
                     {item.timeLabel}
                 </time>
-                <span className="mbs-0.5 flex items-center justify-center block-5 inline-5">
-                    <ItemIcon item={item} />
-                </span>
-                <div className="min-inline-0">
-                    <p
-                        className={cn(
-                            "body font-semibold",
-                            isDone && "text-ink-subtle line-through",
-                            !isDone && "text-ink",
-                        )}
-                    >
-                        {item.title}
-                    </p>
-                    <p
-                        className={cn(
-                            "body-sm mbs-0.5",
-                            isBlocked
-                                ? "text-urgent"
-                                : isDone
-                                  ? "text-ink-subtle"
-                                  : "text-ink-muted",
-                        )}
-                    >
-                        {item.subtitle}
-                    </p>
+                <div className="flex items-start gap-3">
+                    <span className="mbs-0.5 flex items-center justify-center block-5 inline-5">
+                        <ItemIcon item={item} />
+                    </span>
+                    <div className="min-inline-0">
+                        <p
+                            className={cn(
+                                "body font-semibold",
+                                isDone && "text-ink-subtle line-through",
+                                !isDone && "text-ink",
+                            )}
+                        >
+                            {item.title}
+                        </p>
+                        <p
+                            className={cn(
+                                "body-sm mbs-0.5",
+                                isBlocked
+                                    ? "text-urgent"
+                                    : isDone
+                                      ? "text-ink-subtle"
+                                      : "text-ink-muted",
+                            )}
+                        >
+                            {item.subtitle}
+                        </p>
+                    </div>
                 </div>
             </Link>
         </li>

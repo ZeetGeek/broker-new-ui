@@ -1,34 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { AlertCircle } from "lucide-react";
-import { Bar, BarChart, Cell, LabelList, XAxis, YAxis } from "recharts";
 
 import { cn } from "@/lib/utils";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-    type ChartConfig,
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-} from "@/components/ui/chart";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { PipelineData, PipelineStage, PipelineStageKey } from "./mock-data";
 
 const PIPELINE_INFO = "Your active clients and which deal stage each one is in.";
-
-const STAGE_COLOR_VAR: Record<PipelineStageKey, string> = {
-    new: "var(--color-stage-1)",
-    contacted: "var(--color-stage-2)",
-    site_visit: "var(--color-stage-3)",
-    negotiation: "var(--color-stage-4)",
-};
 
 const STAGE_SWATCH_CLASS: Record<PipelineStageKey, string> = {
     new: "bg-stage-1",
@@ -37,29 +22,19 @@ const STAGE_SWATCH_CLASS: Record<PipelineStageKey, string> = {
     negotiation: "bg-stage-4",
 };
 
-/** Shorter X-axis ticks so four stages fit at 360px. */
-const AXIS_LABEL: Record<PipelineStageKey, string> = {
-    new: "New",
-    contacted: "Contacted",
-    site_visit: "Visit",
-    negotiation: "Deal",
+/** Light fills need dark ink; deep fills need light ink. */
+const STAGE_COUNT_CLASS: Record<PipelineStageKey, string> = {
+    new: "text-ink",
+    contacted: "text-ink",
+    site_visit: "text-white",
+    negotiation: "text-white",
 };
-
-const SEGMENT_ANIMATION_MS = 400;
 
 const LINK_CLASS = cn(
     "body-sm inline-flex items-center gap-1 font-semibold text-brand outline-none",
     "hover:text-brand-text",
     "focus-visible:ring-3 focus-visible:ring-ring/30",
 );
-
-type ChartRow = {
-    key: PipelineStageKey;
-    label: string;
-    axisLabel: string;
-    count: number;
-    fill: string;
-};
 
 export type PipelineCardProps = {
     data: PipelineData;
@@ -70,122 +45,67 @@ function stageHref(key: PipelineStageKey) {
     return `/broker/clients?stage=${key}`;
 }
 
-function toChartRows(stages: PipelineStage[]): ChartRow[] {
-    return stages
-        .filter((stage) => stage.count > 0)
-        .map((stage) => ({
-            key: stage.key,
-            label: stage.label,
-            axisLabel: AXIS_LABEL[stage.key],
-            count: stage.count,
-            fill: STAGE_COLOR_VAR[stage.key],
-        }));
+function visibleStages(stages: PipelineStage[]): PipelineStage[] {
+    return stages.filter((stage) => stage.count > 0);
 }
 
-function buildChartConfig(rows: ChartRow[]): ChartConfig {
-    return {
-        count: { label: "Clients" },
-        ...Object.fromEntries(rows.map((row) => [row.key, { label: row.label, color: row.fill }])),
-    } satisfies ChartConfig;
-}
-
-function pipelineAriaLabel(rows: ChartRow[]): string {
-    const parts = rows.map((row) => `${row.count} ${row.label.toLowerCase()}`);
+function pipelineAriaLabel(stages: PipelineStage[]): string {
+    const parts = stages.map((stage) => `${stage.count} ${stage.label.toLowerCase()}`);
     return `Pipeline: ${parts.join(", ")}`;
 }
 
-function PipelineBarChart({ stages }: { stages: PipelineStage[] }) {
-    const router = useRouter();
-    const rows = toChartRows(stages);
-    const chartConfig = buildChartConfig(rows);
-    const maxCount = Math.max(...rows.map((row) => row.count), 1);
+function PipelineSegmentedBar({ stages }: { stages: PipelineStage[] }) {
+    const rows = visibleStages(stages);
 
     return (
-        <div
-            role="img"
-            aria-label={pipelineAriaLabel(rows)}
-            className="relative flex-1 inline-full min-block-0"
-        >
-            <ChartContainer
-                config={chartConfig}
-                className="absolute inset-0 aspect-auto justify-stretch"
-                initialDimension={{ width: 320, height: 200 }}
-            >
-                <BarChart
-                    accessibilityLayer
-                    data={rows}
-                    margin={{ top: 28, right: 4, left: 4, bottom: 4 }}
-                    barCategoryGap="18%"
-                >
-                    <XAxis
-                        dataKey="axisLabel"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={10}
-                        interval={0}
-                        tick={{
-                            fill: "var(--color-ink-muted)",
-                            fontSize: 12,
-                            fontWeight: 500,
-                        }}
-                    />
-                    <YAxis hide domain={[0, maxCount]} allowDecimals={false} />
-                    <ChartTooltip
-                        cursor={{ fill: "var(--color-surface-muted)" }}
-                        content={
-                            <ChartTooltipContent
-                                hideIndicator
-                                labelFormatter={(_value, payload) => {
-                                    const row = payload?.[0]?.payload as ChartRow | undefined;
-                                    return row?.label ?? String(_value);
-                                }}
-                            />
-                        }
-                    />
-                    <Bar
-                        dataKey="count"
-                        radius={[10, 10, 6, 6]}
-                        maxBarSize={56}
-                        cursor="pointer"
-                        className="
-                          outline-none
-                          [&_.recharts-rectangle]:transition-[filter]
-                          [&_.recharts-rectangle]:duration-160
-                          hover:[&_.recharts-rectangle]:brightness-110
-                        "
-                        isAnimationActive
-                        animationDuration={SEGMENT_ANIMATION_MS}
-                        animationEasing="ease-out"
-                        onClick={(item) => {
-                            const payload = item?.payload as ChartRow | undefined;
-                            if (payload?.key) router.push(stageHref(payload.key));
-                        }}
+        <ul aria-label={pipelineAriaLabel(rows)} className="flex gap-1 block-full inline-full">
+            {rows.map((stage, index) => {
+                const isFirst = index === 0;
+                const isLast = index === rows.length - 1;
+
+                return (
+                    <li
+                        key={stage.key}
+                        className="flex min-inline-0"
+                        style={{ flexGrow: stage.count, flexBasis: 0 }}
                     >
-                        {rows.map((row) => (
-                            <Cell
-                                key={row.key}
-                                fill={row.fill}
-                                aria-label={`${row.count} clients in ${row.label}`}
-                            />
-                        ))}
-                        <LabelList
-                            dataKey="count"
-                            position="top"
-                            offset={8}
-                            className="fill-ink text-sm font-semibold tabular-nums"
-                        />
-                    </Bar>
-                </BarChart>
-            </ChartContainer>
-        </div>
+                        <Link
+                            href={stageHref(stage.key)}
+                            aria-label={`${stage.count} clients in ${stage.label}`}
+                            className={cn(
+                                "flex flex-1 items-center justify-center outline-none",
+                                "transition-[filter] duration-160",
+                                "hover:brightness-110",
+                                `
+                                  focus-visible:relative focus-visible:z-1 focus-visible:ring-3
+                                  focus-visible:ring-ring/30
+                                `,
+                                STAGE_SWATCH_CLASS[stage.key],
+                                isFirst && "rounded-s-md",
+                                isLast && "rounded-e-md",
+                            )}
+                        >
+                            <span
+                                className={cn(
+                                    "text-sm font-semibold tabular-nums",
+                                    STAGE_COUNT_CLASS[stage.key],
+                                )}
+                            >
+                                {stage.count}
+                            </span>
+                        </Link>
+                    </li>
+                );
+            })}
+        </ul>
     );
 }
 
 function PipelineLegend({ stages, className }: { stages: PipelineStage[]; className?: string }) {
-    const visible = stages.filter((stage) => stage.count > 0);
+    const visible = visibleStages(stages);
 
     return (
-        <ul className={cn("flex flex-wrap gap-x-4 gap-y-2 pbe-3", className)}>
+        <ul className={cn("flex flex-wrap gap-x-4 gap-y-2", className)}>
             {visible.map((stage) => (
                 <li key={stage.key}>
                     <Link
@@ -199,7 +119,7 @@ function PipelineLegend({ stages, className }: { stages: PipelineStage[]; classN
                         <span
                             aria-hidden
                             className={cn(
-                                "shrink-0 rounded-[3px] block-2.25 inline-2.25",
+                                "shrink-0 rounded-full block-2.25 inline-2.25",
                                 STAGE_SWATCH_CLASS[stage.key],
                             )}
                         />
@@ -251,7 +171,7 @@ function MonthFooter({ won, lost }: { won: number; lost: number }) {
     const lostLabel = lost === 1 ? "1 deal lost" : `${lost} deals lost`;
 
     return (
-        <div className="flex items-center justify-between gap-3 pbs-3">
+        <div className="flex items-center justify-between gap-3 pbs-3.5">
             <p className="body-sm font-medium text-ink-muted">This month</p>
             <div
                 className="flex items-center gap-1.5"
@@ -319,8 +239,10 @@ export function PipelineCard({ data, className }: PipelineCardProps) {
             </div>
 
             <div className="mbs-4 flex flex-1 flex-col min-block-0">
-                <PipelineBarChart stages={data.stages} />
-                <PipelineLegend stages={data.stages} className="mbs-1 shrink-0" />
+                <div className="flex flex-1 flex-col justify-center gap-3.5 pbe-3.5 min-block-0">
+                    <PipelineSegmentedBar stages={data.stages} />
+                    <PipelineLegend stages={data.stages} />
+                </div>
 
                 <div className="shrink-0 inline-full">
                     <div

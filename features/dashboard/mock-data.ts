@@ -131,6 +131,24 @@ export type AreaPropertyItem = {
     brokerRequestCount: number;
 };
 
+/** Property the broker already has approval to represent. */
+export type RepresentedPropertyItem = {
+    id: string;
+    configLabel: string;
+    locality: string;
+    amountInr: number;
+    isRent: boolean;
+    /** e.g. "2 visits · 1 interested" or "No activity in 16 days". */
+    statusLabel: string;
+    /** When true, status uses the urgent colour (stale / quiet listing). */
+    isStale?: boolean;
+};
+
+export type YouRepresentData = {
+    totalCount: number;
+    properties: RepresentedPropertyItem[];
+};
+
 export type ReraStatus = "profile_incomplete" | "verifying" | "verified";
 
 export type FirstWeekItem = {
@@ -178,6 +196,7 @@ export type DashboardMock = {
     pipeline: PipelineStageCount[];
     pipelineCard: PipelineData;
     followUps: FollowUpsData;
+    youRepresent: YouRepresentData;
     newInAreas: AreaPropertyItem[];
 };
 
@@ -463,6 +482,28 @@ export const dashboardMock: DashboardMock = {
     ],
     pipelineCard: PIPELINE_PLACEHOLDER,
     followUps: FOLLOWUPS_PLACEHOLDER,
+    youRepresent: {
+        totalCount: 4,
+        properties: [
+            {
+                id: "pr_092",
+                configLabel: "3 BHK",
+                locality: "Pal",
+                amountInr: 9_200_000,
+                isRent: false,
+                statusLabel: "No activity in 16 days",
+                isStale: true,
+            },
+            {
+                id: "pr_088",
+                configLabel: "2 BHK",
+                locality: "Vesu",
+                amountInr: 7_800_000,
+                isRent: false,
+                statusLabel: "2 visits · 1 interested",
+            },
+        ],
+    },
     newInAreas: [
         {
             id: "prop-1",
@@ -470,7 +511,7 @@ export const dashboardMock: DashboardMock = {
             locality: "Vesu",
             amountInr: 11_500_000,
             isRent: false,
-            listedLabel: "Listed 2 hours ago",
+            listedLabel: "2 hours ago",
             brokerRequestCount: 0,
         },
         {
@@ -479,7 +520,7 @@ export const dashboardMock: DashboardMock = {
             locality: "Adajan",
             amountInr: 22_000,
             isRent: true,
-            listedLabel: "Listed 5 hours ago",
+            listedLabel: "Yesterday",
             brokerRequestCount: 1,
         },
     ],
