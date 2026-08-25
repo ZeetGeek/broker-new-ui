@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { AlertTriangle, MessageCircle } from "lucide-react";
+import { AlertTriangle, MessageCircle, UserRound } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { cn } from "@/lib/utils";
@@ -20,12 +20,19 @@ const YOU_REPRESENT_INFO =
 
 const MAX_ROWS = 3;
 
+const META_CHIP =
+    "inline-flex items-center rounded-control bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-700";
+
 export type YouRepresentCardProps = {
     data: YouRepresentData;
     className?: string;
 };
 
-function activityLabel(property: RepresentedPropertyItem): string {
+function activityStatus(property: RepresentedPropertyItem): {
+    label: string;
+    className: string;
+    showWarning: boolean;
+} {
     if (property.isStale) {
         const visitPart =
             property.visitCount === 0
@@ -33,7 +40,11 @@ function activityLabel(property: RepresentedPropertyItem): string {
                 : property.visitCount === 1
                   ? "1 visit"
                   : `${property.visitCount} visits`;
-        return `No activity in ${property.daysSinceActivity} days · ${visitPart}`;
+        return {
+            label: `No activity in ${property.daysSinceActivity} days · ${visitPart}`,
+            className: "bg-red-50 text-red-700",
+            showWarning: true,
+        };
     }
 
     const visitsDone =
@@ -42,7 +53,11 @@ function activityLabel(property: RepresentedPropertyItem): string {
             : `${property.visitCount} visits done`;
 
     if (property.stageLabel && property.negotiationClientName) {
-        return `${visitsDone} · ${property.negotiationClientName} at offer stage`;
+        return {
+            label: `${visitsDone} · ${property.negotiationClientName} at offer stage`,
+            className: "bg-amber-50 text-amber-900",
+            showWarning: false,
+        };
     }
 
     const interested =
@@ -57,7 +72,11 @@ function activityLabel(property: RepresentedPropertyItem): string {
               ? "last activity 1 day ago"
               : `last activity ${property.daysSinceActivity} days ago`;
 
-    return `${visitsDone} · ${interested} · ${lastActivity}`;
+    return {
+        label: `${visitsDone} · ${interested} · ${lastActivity}`,
+        className: "bg-emerald-50 text-emerald-800",
+        showWarning: false,
+    };
 }
 
 function PropertyRow({
@@ -67,7 +86,7 @@ function PropertyRow({
     property: RepresentedPropertyItem;
     className?: string;
 }) {
-    const activity = activityLabel(property);
+    const activity = activityStatus(property);
 
     return (
         <li className={cn("flex items-center gap-3 sm:gap-4", className)}>
@@ -82,7 +101,7 @@ function PropertyRow({
                   sm:justify-between sm:gap-4
                 "
             >
-                <div className="flex flex-col gap-0.5 min-inline-0">
+                <div className="flex flex-col gap-1.5 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <p className="body font-semibold text-ink">
                             {property.configLabel} · {property.locality}
@@ -108,30 +127,33 @@ function PropertyRow({
                         ) : null}
                     </div>
 
-                    <p className="body-sm text-ink-muted">
-                        {formatAreaSqft(property.areaSqft)} · {property.furnishingLabel}
-                        <span className="hidden sm:inline">
-                            {" "}
-                            · Owner: {property.ownerFirstName}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <span className={META_CHIP}>{formatAreaSqft(property.areaSqft)}</span>
+                        <span className={META_CHIP}>{property.furnishingLabel}</span>
+                        <span className={cn(META_CHIP, "hidden gap-1 sm:inline-flex")}>
+                            <UserRound
+                                aria-hidden
+                                className="block-3 inline-3"
+                                strokeWidth={2}
+                            />
+                            {property.ownerFirstName}
                         </span>
-                    </p>
+                    </div>
 
                     <p
                         className={cn(
-                            "body-sm flex items-start gap-1.5",
-                            property.isStale
-                                ? "font-medium text-urgent"
-                                : "text-ink-muted",
+                            "body-sm inline-flex max-inline-full items-start gap-1.5 self-start rounded-control px-2 py-1 font-medium",
+                            activity.className,
                         )}
                     >
-                        {property.isStale ? (
+                        {activity.showWarning ? (
                             <AlertTriangle
                                 aria-hidden
                                 className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
                                 strokeWidth={2}
                             />
                         ) : null}
-                        <span>{activity}</span>
+                        <span>{activity.label}</span>
                     </p>
                 </div>
 

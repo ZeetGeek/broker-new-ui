@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Bookmark } from "lucide-react";
+import { Bookmark, Clock3, Users } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { cn } from "@/lib/utils";
@@ -35,33 +35,31 @@ type RowState = {
 };
 
 function listedLabel(listedHoursAgo: number): string {
-    if (listedHoursAgo < 1) return "Listed just now";
+    if (listedHoursAgo < 1) return "Just now";
     if (listedHoursAgo < 24) {
-        return listedHoursAgo === 1
-            ? "Listed 1 hour ago"
-            : `Listed ${listedHoursAgo} hours ago`;
+        return listedHoursAgo === 1 ? "1 hour ago" : `${listedHoursAgo} hours ago`;
     }
     const days = Math.floor(listedHoursAgo / 24);
-    if (days === 1) return "Listed yesterday";
-    return `Listed ${days} days ago`;
+    if (days === 1) return "Yesterday";
+    return `${days} days ago`;
 }
 
-function competitionCopy(count: number): { text: string; className: string } {
+function competitionStatus(count: number): { text: string; className: string } {
     if (count === 0) {
         return {
-            text: "no broker has requested yet",
-            className: "font-medium text-brand",
+            text: "Open — no requests yet",
+            className: "bg-emerald-50 text-emerald-800",
         };
     }
     if (count === 1) {
         return {
             text: "1 broker already requested",
-            className: "font-medium text-urgent",
+            className: "bg-orange-50 text-orange-800",
         };
     }
     return {
         text: `${count} brokers requested`,
-        className: "text-ink-muted",
+        className: "bg-stone-100 text-stone-700",
     };
 }
 
@@ -79,7 +77,7 @@ function PropertyRow({
     className?: string;
 }) {
     const isNew = property.listedHoursAgo < NEW_BADGE_HOURS;
-    const competition = competitionCopy(property.brokerRequestCount);
+    const competition = competitionStatus(property.brokerRequestCount);
 
     return (
         <li className={cn("flex items-center gap-3 sm:gap-4", className)}>
@@ -94,7 +92,7 @@ function PropertyRow({
                   sm:justify-between sm:gap-4
                 "
             >
-                <div className="flex flex-col gap-0.5 min-inline-0">
+                <div className="flex flex-col gap-1.5 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <p className="body font-semibold text-ink">
                             {property.configLabel} · {property.locality}
@@ -118,21 +116,43 @@ function PropertyRow({
                         ) : null}
                     </div>
 
-                    <p className="body-sm text-ink-muted">
-                        {formatAreaSqft(property.areaSqft)} · {property.furnishingLabel}
+                    <p className="body-sm text-stone-500">
+                        <span className="font-medium text-stone-700">
+                            {formatAreaSqft(property.areaSqft)}
+                        </span>
+                        <span className="text-stone-300"> · </span>
+                        {property.furnishingLabel}
                         {property.detailLabel ? (
                             <span className="hidden sm:inline">
-                                {" "}
-                                · {property.detailLabel}
+                                <span className="text-stone-300"> · </span>
+                                {property.detailLabel}
                             </span>
                         ) : null}
                     </p>
 
-                    <p className="body-sm text-ink-muted">
-                        {listedLabel(property.listedHoursAgo)}
-                        {" · "}
-                        <span className={competition.className}>{competition.text}</span>
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="body-sm inline-flex items-center gap-1 text-stone-500">
+                            <Clock3
+                                aria-hidden
+                                className="block-3.5 inline-3.5"
+                                strokeWidth={2}
+                            />
+                            {listedLabel(property.listedHoursAgo)}
+                        </span>
+                        <span
+                            className={cn(
+                                "body-sm inline-flex items-center gap-1 rounded-control px-2 py-1 font-medium",
+                                competition.className,
+                            )}
+                        >
+                            <Users
+                                aria-hidden
+                                className="block-3.5 inline-3.5"
+                                strokeWidth={2}
+                            />
+                            {competition.text}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
