@@ -127,7 +127,7 @@ export const dashboardMock: DashboardMock = {
         isRent: false,
         meetNote: "Meet at the gate",
         status: "confirmed",
-        clientName: "Rahul Mehta",
+        clientName: "Milan Vamja",
         clientPhoneDigits: "9876501234",
     },
     todayVisits: [
@@ -135,7 +135,7 @@ export const dashboardMock: DashboardMock = {
             id: "visit-1",
             timeLabel: "11:00 am",
             title: "Site visit · 3 BHK, Vesu",
-            clientName: "Rahul Mehta",
+            clientName: "Milan Vamja",
             statusLabel: "confirmed",
         },
         {
@@ -162,7 +162,7 @@ export const dashboardMock: DashboardMock = {
     followUps: [
         {
             id: "fu-1",
-            title: "Call Rahul Mehta",
+            title: "Call Milan Vamja",
             dueLabel: "2 days over",
             isOverdue: true,
         },
