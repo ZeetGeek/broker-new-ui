@@ -38,13 +38,11 @@ export function BrokerDashboard() {
             </header>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-5">
-                <NextShowingCard showing={nextShowing} now={now} className="md:col-span-4" />
-                <TodayCard agenda={data.today} now={now} className="md:col-span-4" />
-                <RequestsCard
-                    data={data.requests}
-                    serviceAreas={data.serviceAreas}
-                    className="md:col-span-4"
-                />
+                <NextShowingCard showing={nextShowing} now={now} className="md:col-span-5" />
+                <div className="grid grid-cols-1 gap-4 md:col-span-7 md:grid-cols-2 md:gap-5">
+                    <TodayCard agenda={data.today} now={now} />
+                    <RequestsCard data={data.requests} serviceAreas={data.serviceAreas} />
+                </div>
                 <PlaceholderCard
                     title="Pipeline"
                     info="Your active clients and which deal stage each one is in."
