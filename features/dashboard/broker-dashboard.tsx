@@ -1,10 +1,10 @@
+import { ActivityCard } from "./activity-card";
 import { DashboardHeader } from "./dashboard-header";
 import { FollowUpsCard } from "./follow-ups-card";
 import { dashboardMock } from "./mock-data";
 import { NewInAreas } from "./new-in-areas";
 import { NextShowingCard } from "./next-showing-card";
 import { PipelineCard } from "./pipeline-card";
-import { PlaceholderCard } from "./placeholder-card";
 import { RequestsCard } from "./requests-card";
 import { TodayCard } from "./today-card";
 import { YouRepresentCard } from "./you-represent-card";
@@ -45,27 +45,33 @@ export function BrokerDashboard() {
             </header>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-5">
-                <NextShowingCard showing={nextShowing} now={now} className="md:col-span-5" />
-                <div className="grid grid-cols-1 gap-4 md:col-span-7 md:grid-cols-2 md:gap-5">
+                <NextShowingCard
+                    showing={nextShowing}
+                    now={now}
+                    className="md:col-span-5 md:row-start-1"
+                />
+                <div className="grid grid-cols-1 gap-4 md:col-span-7 md:row-start-1 md:grid-cols-2 md:gap-5">
                     <TodayCard agenda={data.today} now={now} />
                     <RequestsCard data={data.requests} serviceAreas={data.serviceAreas} />
                 </div>
-                <div className="grid grid-cols-1 gap-4 md:col-span-7 md:grid-cols-2 md:gap-5">
+                <div className="grid grid-cols-1 gap-4 md:col-span-7 md:row-start-2 md:grid-cols-2 md:gap-5">
                     <PipelineCard data={data.pipelineCard} />
                     <FollowUpsCard data={data.followUps} />
                 </div>
-                <PlaceholderCard
-                    title="Activity"
-                    info="Recent updates across your properties, clients, and visits."
-                    className="md:col-span-5"
+                <YouRepresentCard
+                    data={data.youRepresent}
+                    className="md:col-span-6 md:col-start-1 md:row-start-3"
                 />
-                <div className="grid grid-cols-1 gap-4 md:col-span-12 md:grid-cols-2 md:gap-5">
-                    <YouRepresentCard data={data.youRepresent} />
-                    <NewInAreas
-                        properties={data.newInAreas}
-                        serviceAreas={data.serviceAreas}
-                    />
-                </div>
+                <ActivityCard
+                    data={data.activity}
+                    now={now}
+                    className="md:col-span-5 md:col-start-8 md:row-start-2"
+                />
+                <NewInAreas
+                    properties={data.newInAreas}
+                    serviceAreas={data.serviceAreas}
+                    className="md:col-span-6 md:col-start-7 md:row-start-3"
+                />
             </div>
         </div>
     );

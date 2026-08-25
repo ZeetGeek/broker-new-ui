@@ -4,18 +4,18 @@ import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
     `
-      inline-flex shrink-0 items-center gap-1 rounded-control border border-transparent px-2.5 py-1
-      text-[12px] font-medium whitespace-nowrap
+      inline-flex shrink-0 items-center gap-1 rounded-control border px-2.5 py-1
+      text-[12px] font-semibold whitespace-nowrap
       [&_svg]:pointer-events-none [&_svg]:shrink-0
       [&_svg:not([class*='size-'])]:block-3 [&_svg:not([class*='size-'])]:inline-3
     `,
     {
         variants: {
             variant: {
-                brand: "bg-brand-soft text-brand-text",
-                urgent: "bg-urgent-soft text-urgent",
-                danger: "bg-danger-soft text-danger",
-                neutral: "bg-surface-muted text-ink-muted",
+                brand: "border-brand/20 bg-brand-soft text-brand-text",
+                urgent: "border-urgent/25 bg-urgent-soft text-urgent",
+                danger: "border-danger/25 bg-danger-soft text-danger",
+                neutral: "border-border-warm bg-surface-muted text-ink",
                 outline: "border-border-warm bg-transparent text-ink-muted",
             },
         },

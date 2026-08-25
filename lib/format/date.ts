@@ -103,3 +103,51 @@ export function formatDurationUntil(target: Date, now: Date): DurationUntil {
 
     return { label, minutesRemaining, isPast: false };
 }
+
+/**
+ * Compact past relative for activity feeds: `12m`, `2h`, `1d`.
+ * Uses Asia/Kolkata calendar days once the event is not same-day.
+ */
+export function formatCompactRelative(occurredAt: Date, now: Date): string {
+    const elapsedMs = Math.max(0, now.getTime() - occurredAt.getTime());
+    const minutes = Math.floor(elapsedMs / 60_000);
+
+    if (minutes < 60) {
+        return `${Math.max(1, minutes)}m`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    if (calendarDayKey(occurredAt) === calendarDayKey(now)) {
+        return `${hours}h`;
+    }
+
+    const occurredDay = calendarDayKey(occurredAt);
+    const todayDay = calendarDayKey(now);
+    const occurredUtc = Date.UTC(
+        Number(occurredDay.slice(0, 4)),
+        Number(occurredDay.slice(5, 7)) - 1,
+        Number(occurredDay.slice(8, 10)),
+    );
+    const todayUtc = Date.UTC(
+        Number(todayDay.slice(0, 4)),
+        Number(todayDay.slice(5, 7)) - 1,
+        Number(todayDay.slice(8, 10)),
+    );
+    const dayDiff = Math.max(1, Math.round((todayUtc - occurredUtc) / 86_400_000));
+    return `${dayDiff}d`;
+}
+
+export type ActivityDayGroup = "today" | "yesterday" | "this_week";
+
+/** Bucket an event into Today / Yesterday / This week (Asia/Kolkata calendar). */
+export function activityDayGroup(occurredAt: Date, now: Date): ActivityDayGroup {
+    const occurredDay = calendarDayKey(occurredAt);
+    const todayDay = calendarDayKey(now);
+    if (occurredDay === todayDay) return "today";
+
+    // India has no DST — one day back is a stable calendar yesterday for bucketing.
+    const yesterdayDay = calendarDayKey(new Date(now.getTime() - 86_400_000));
+    if (occurredDay === yesterdayDay) return "yesterday";
+
+    return "this_week";
+}

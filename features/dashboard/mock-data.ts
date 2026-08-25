@@ -166,6 +166,37 @@ export type YouRepresentData = {
     properties: RepresentedPropertyItem[];
 };
 
+/** Who caused the event — never the viewing broker in Phase 1. */
+export type ActivityActorKind = "owner" | "buyer" | "system" | "team_member";
+
+export type ActivityEventType =
+    | "request_approved"
+    | "request_declined"
+    | "request_viewed"
+    | "share_link_opened"
+    | "property_unavailable"
+    | "price_changed"
+    | "verification_approved"
+    /** Reserved for organization team feed — not rendered in Phase 1. */
+    | "team_listing_added"
+    | "team_visit_booked";
+
+/** Inbound ambient event — things that happened while the broker was away. */
+export type ActivityItem = {
+    id: string;
+    type: ActivityEventType;
+    /** ISO timestamp. */
+    occurredAt: string;
+    href: string;
+    title: string;
+    subtitle: string;
+    actorKind: ActivityActorKind;
+};
+
+export type ActivityData = {
+    items: ActivityItem[];
+};
+
 export type ReraStatus = "profile_incomplete" | "verifying" | "verified";
 
 export type FirstWeekItem = {
@@ -213,8 +244,83 @@ export type DashboardMock = {
     pipeline: PipelineStageCount[];
     pipelineCard: PipelineData;
     followUps: FollowUpsData;
+    activity: ActivityData;
     youRepresent: YouRepresentData;
     newInAreas: AreaPropertyItem[];
+};
+
+/** Build an ISO time `hours` ago from module load — keeps day groups stable in a session. */
+function hoursAgoIso(hours: number): string {
+    return new Date(Date.now() - hours * 3_600_000).toISOString();
+}
+
+const ACTIVITY_PLACEHOLDER: ActivityData = {
+    items: [
+        {
+            id: "act_001",
+            type: "request_approved",
+            occurredAt: hoursAgoIso(2),
+            href: "/broker/properties/pr_101",
+            title: "Jayesh P. approved your request",
+            subtitle: "1 BHK · Pal · ₹42 L",
+            actorKind: "owner",
+        },
+        {
+            id: "act_002",
+            type: "share_link_opened",
+            occurredAt: hoursAgoIso(4),
+            href: "/broker/properties/pr_088",
+            title: "Your Piplod link was opened 6 times",
+            subtitle: "2 BHK rent · shared on WhatsApp",
+            actorKind: "buyer",
+        },
+        {
+            id: "act_003",
+            type: "request_viewed",
+            occurredAt: hoursAgoIso(6),
+            href: "/broker/requests/req_044",
+            title: "Meera S. viewed your request",
+            subtitle: "3 BHK · Vesu · not answered yet",
+            actorKind: "owner",
+        },
+        {
+            id: "act_004",
+            type: "property_unavailable",
+            occurredAt: hoursAgoIso(26),
+            href: "/broker/properties/pr_095",
+            title: "Ramesh T. marked a property unavailable",
+            subtitle: "4 BHK · Vesu · you were representing this",
+            actorKind: "owner",
+        },
+        {
+            id: "act_005",
+            type: "price_changed",
+            occurredAt: hoursAgoIso(28),
+            href: "/broker/properties/pr_092",
+            title: "Price reduced on 3 BHK · Pal",
+            subtitle: "₹98 L → ₹92 L · owner lowered by ₹6 L",
+            actorKind: "owner",
+        },
+        {
+            id: "act_006",
+            type: "request_declined",
+            occurredAt: hoursAgoIso(30),
+            href: "/broker/requests/req_031",
+            title: "Kavita J. declined your request",
+            subtitle: "2 BHK · Adajan · no reason given",
+            actorKind: "owner",
+        },
+        // Type coverage — card caps at 6 so this stays off-screen in the dashboard.
+        {
+            id: "act_007",
+            type: "verification_approved",
+            occurredAt: hoursAgoIso(72),
+            href: "/broker/profile",
+            title: "Your RERA verification was approved",
+            subtitle: "Profile now shows as verified",
+            actorKind: "system",
+        },
+    ],
 };
 
 export const FIRST_WEEK_DAYS = 7;
@@ -499,6 +605,7 @@ export const dashboardMock: DashboardMock = {
     ],
     pipelineCard: PIPELINE_PLACEHOLDER,
     followUps: FOLLOWUPS_PLACEHOLDER,
+    activity: ACTIVITY_PLACEHOLDER,
     youRepresent: {
         totalCount: 4,
         properties: [
