@@ -34,12 +34,17 @@ export function FollowUpsCard({ items, overdueCount, className }: FollowUpsCardP
     return (
         <section
             className={cn(
-                "flex flex-col rounded-card bg-brand-ink p-4 text-white md:p-5",
+                "flex flex-col rounded-card bg-brand-ink p-8 text-white",
                 className,
             )}
         >
             <div className="flex items-center justify-between gap-3">
-                <CardLabel tone="dark">Follow-ups</CardLabel>
+                <CardLabel
+                    tone="dark"
+                    info="People you need to call or message next — overdue items show first."
+                >
+                    Follow-ups
+                </CardLabel>
                 {overdueCount > 0 ? (
                     <Badge variant="urgent" className="border-0">
                         {overdueCount} overdue

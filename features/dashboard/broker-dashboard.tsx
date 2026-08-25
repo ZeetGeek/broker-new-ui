@@ -22,7 +22,7 @@ export function BrokerDashboard() {
         : null;
 
     return (
-        <div className="flex min-h-[calc(100dvh-5rem)] flex-col gap-6 md:gap-8">
+        <div className="flex flex-col gap-6 min-block-[calc(100dvh-5rem)] md:gap-8">
             <header className="flex shrink-0 flex-col gap-4">
                 <DashboardHeader
                     now={now}
@@ -37,18 +37,39 @@ export function BrokerDashboard() {
             </header>
 
             <div
-                className="
-                  grid flex-1 grid-cols-1 gap-4
-                  md:grid-cols-12 md:grid-rows-3 md:gap-5
-                "
+                className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-12 md:grid-rows-3 md:gap-5"
             >
                 <NextShowingCard showing={nextShowing} now={now} className="md:col-span-5" />
-                <PlaceholderCard title="Today" className="md:col-span-4" />
-                <PlaceholderCard title="Your Requests" className="md:col-span-3" />
-                <PlaceholderCard title="Pipeline" className="md:col-span-3" />
-                <PlaceholderCard title="Follow-ups" className="md:col-span-4" />
-                <PlaceholderCard title="Activity" className="md:col-span-5" />
-                <PlaceholderCard title="New in your areas" className="md:col-span-12" />
+                <PlaceholderCard
+                    title="Today"
+                    info="Site visits scheduled for today — times, properties, and clients."
+                    className="md:col-span-4"
+                />
+                <PlaceholderCard
+                    title="Your Requests"
+                    info="Requests you've sent to owners to represent their properties, and where each one stands."
+                    className="md:col-span-3"
+                />
+                <PlaceholderCard
+                    title="Pipeline"
+                    info="Your active clients and which deal stage each one is in."
+                    className="md:col-span-3"
+                />
+                <PlaceholderCard
+                    title="Follow-ups"
+                    info="People you need to call or message next — overdue items show first."
+                    className="md:col-span-4"
+                />
+                <PlaceholderCard
+                    title="Activity"
+                    info="Recent updates across your properties, clients, and visits."
+                    className="md:col-span-5"
+                />
+                <PlaceholderCard
+                    title="New in your areas"
+                    info="Fresh listings in the localities you cover — ready to request representation."
+                    className="md:col-span-12"
+                />
             </div>
         </div>
     );

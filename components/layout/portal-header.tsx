@@ -95,7 +95,7 @@ export function PortalHeader({
 
     return (
         <div className="bg-surface-muted min-block-screen">
-            <div className="overflow-hidden px-4 md:px-8">
+            <div className="overflow-x-hidden px-4 md:px-8">
                 <header className="border-be border-border-warm">
                     <div className="flex items-center justify-between gap-8 py-5">
                         <div className="flex flex-1 items-center gap-10 min-inline-0">

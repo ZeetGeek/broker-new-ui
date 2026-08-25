@@ -11,9 +11,11 @@ export type TodayCardProps = {
 export function TodayCard({ visits, className }: TodayCardProps) {
     return (
         <section
-            className={cn("flex flex-col rounded-card bg-surface p-4 shadow-sm md:p-5", className)}
+            className={cn("flex flex-col rounded-card bg-surface p-8 shadow-sm", className)}
         >
-            <CardLabel>Today</CardLabel>
+            <CardLabel info="Site visits scheduled for today — times, properties, and clients.">
+                Today
+            </CardLabel>
 
             {visits.length === 0 ? (
                 <p className="body mbs-4 text-ink-muted">No site visits scheduled for today.</p>

@@ -20,15 +20,16 @@ export function NewInAreas({ properties, className }: NewInAreasProps) {
         <section
             className={cn(
                 `
-                  flex flex-col rounded-card border border-border-warm bg-surface p-4
+                  flex flex-col rounded-card border border-border-warm bg-surface p-8
                   shadow-sm
-                  md:p-5
                 `,
                 className,
             )}
         >
             <div className="flex items-center justify-between gap-3">
-                <CardLabel>New in your areas</CardLabel>
+                <CardLabel info="Fresh listings in the localities you cover — ready to request representation.">
+                    New in your areas
+                </CardLabel>
                 <Button
                     variant="link"
                     size="sm"

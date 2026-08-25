@@ -2,17 +2,19 @@ import Link from "next/link";
 
 import { Navigation, Phone } from "lucide-react";
 
+import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
+import { cn } from "@/lib/utils";
+
 import { Price } from "@/components/shared/price";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
-import { cn } from "@/lib/utils";
 
 import { CardLabel } from "./card-label";
 import type { NextShowingStatus } from "./mock-data";
 
 const STARTING_SOON_MINUTES = 30;
+const NEXT_SHOWING_INFO = "Your next scheduled site visit — when, where, and who you're meeting.";
 
 export type NextShowing = {
     id: string;
@@ -55,17 +57,21 @@ function EmptyNextShowing({ className }: { className?: string }) {
     return (
         <section
             className={cn(
-                "flex flex-col rounded-card bg-surface p-4 shadow-sm md:h-full md:p-5",
+                `
+                  flex flex-col overflow-visible rounded-card border border-border-warm
+                  bg-surface p-8 shadow-sm
+                  md:block-full
+                `,
                 className,
             )}
         >
-            <CardLabel>Next showing</CardLabel>
+            <CardLabel info={NEXT_SHOWING_INFO}>Next showing</CardLabel>
             <div className="mbs-4 flex flex-1 flex-col">
                 <p className="h5 text-ink">Nothing on the calendar.</p>
                 <p className="body mbs-1 text-ink-muted">
                     Schedule a site visit when a client is ready to see a property.
                 </p>
-                <div className="mbs-auto pts-5">
+                <div className="pts-5 mbs-auto">
                     <Button
                         variant="default"
                         size="md"
@@ -88,34 +94,37 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
     const whenLabel = formatShowingWhen(showing.scheduledAt, now);
     const duration = formatDurationUntil(showing.scheduledAt, now);
     const isStartingSoon =
-        !duration.isPast && duration.minutesRemaining > 0 && duration.minutesRemaining <= STARTING_SOON_MINUTES;
+        !duration.isPast &&
+        duration.minutesRemaining > 0 &&
+        duration.minutesRemaining <= STARTING_SOON_MINUTES;
     const phoneHref = `tel:+91${showing.clientPhoneDigits.replace(/\D/g, "").slice(-10)}`;
     const directionsHref = mapsSearchUrl(showing.locality, showing.configLabel);
 
     return (
         <section
             className={cn(
-                "flex flex-col rounded-card bg-surface p-4 shadow-sm md:h-full md:p-5",
+                `
+                  flex flex-col overflow-visible rounded-card border border-border-warm
+                  bg-surface p-8 shadow-sm
+                  md:block-full
+                `,
                 className,
             )}
             aria-labelledby={`next-showing-${showing.id}`}
         >
             <div className="flex items-start justify-between gap-3">
-                <CardLabel>Next showing</CardLabel>
+                <CardLabel info={NEXT_SHOWING_INFO}>Next showing</CardLabel>
                 {statusBadge(showing.status, isStartingSoon, duration.isPast)}
             </div>
 
             <div className="mbs-4 flex flex-1 flex-col gap-5">
                 <div>
-                    <h2
-                        id={`next-showing-${showing.id}`}
-                        className="h2 text-ink"
-                    >
+                    <h2 id={`next-showing-${showing.id}`} className="h2 text-ink">
                         <time dateTime={showing.scheduledAt.toISOString()}>{whenLabel}</time>
                     </h2>
                     <p
                         className={cn(
-                            "body-sm mbs-1 font-medium tabular",
+                            "body-sm tabular mbs-1 font-medium",
                             isStartingSoon ? "text-urgent" : "text-ink-muted",
                         )}
                     >
@@ -134,9 +143,9 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-inner bg-surface-muted px-3 py-3">
+                <div className="hidden items-center gap-3 rounded-inner bg-surface-muted p-3">
                     <UserAvatar name={showing.clientName} size="sm" />
-                    <div className="min-inline-0 flex-1">
+                    <div className="flex-1 min-inline-0">
                         <p className="body font-medium text-ink">{showing.clientName}</p>
                         <p className="body-xs text-ink-subtle">Client</p>
                     </div>
@@ -153,24 +162,20 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                     </Button>
                 </div>
 
-                <div className="mbs-auto flex flex-wrap gap-2 pts-1">
+                <div className="pts-1 mbs-auto flex flex-wrap gap-2">
                     <Button
                         variant="default"
                         size="md"
                         nativeButton={false}
                         render={
-                            <a
-                                href={directionsHref}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            />
+                            <a href={directionsHref} target="_blank" rel="noopener noreferrer" />
                         }
                     >
                         <Navigation aria-hidden strokeWidth={1.75} />
                         Directions
                     </Button>
                     <Button
-                        variant="outline"
+                        variant="outline-dark"
                         size="md"
                         nativeButton={false}
                         render={<Link href={`/broker/visits/new?reschedule=${showing.id}`} />}

@@ -37,9 +37,11 @@ function RequestRow({
 export function RequestsCard({ counts, className }: RequestsCardProps) {
     return (
         <section
-            className={cn("flex flex-col rounded-card bg-surface p-4 shadow-sm md:p-5", className)}
+            className={cn("flex flex-col rounded-card bg-surface p-8 shadow-sm", className)}
         >
-            <CardLabel>Your requests</CardLabel>
+            <CardLabel info="Requests you've sent to owners to represent their properties, and where each one stands.">
+                Your requests
+            </CardLabel>
 
             <div className="mbs-3 flex flex-col divide-y divide-border-warm">
                 <RequestRow label="Waiting on owner" count={counts.waitingOnOwner} />

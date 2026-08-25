@@ -17,10 +17,12 @@ export function PipelineCard({ activeClientCount, stages, className }: PipelineC
 
     return (
         <section
-            className={cn("flex flex-col rounded-card bg-surface p-4 shadow-sm md:p-5", className)}
+            className={cn("flex flex-col rounded-card bg-surface p-8 shadow-sm", className)}
         >
             <div className="flex items-baseline justify-between gap-3">
-                <CardLabel>Pipeline</CardLabel>
+                <CardLabel info="Your active clients and which deal stage each one is in.">
+                    Pipeline
+                </CardLabel>
                 <p className="body-sm tabular font-medium text-ink-muted">
                     {activeClientCount} active clients
                 </p>
