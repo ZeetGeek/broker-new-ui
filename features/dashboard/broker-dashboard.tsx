@@ -61,7 +61,10 @@ export function BrokerDashboard() {
                 />
                 <div className="grid grid-cols-1 gap-4 md:col-span-12 md:grid-cols-2 md:gap-5">
                     <YouRepresentCard data={data.youRepresent} />
-                    <NewInAreas properties={data.newInAreas} />
+                    <NewInAreas
+                        properties={data.newInAreas}
+                        serviceAreas={data.serviceAreas}
+                    />
                 </div>
             </div>
         </div>

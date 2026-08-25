@@ -127,8 +127,15 @@ export type AreaPropertyItem = {
     locality: string;
     amountInr: number;
     isRent: boolean;
-    listedLabel: string;
+    areaSqft: number;
+    furnishingLabel: string;
+    /** Floor / society snippet, e.g. "5th floor". Hidden on small screens. */
+    detailLabel?: string;
+    /** Hours since listed — drives "New" badge (< 6h) and "Listed X ago". */
+    listedHoursAgo: number;
     brokerRequestCount: number;
+    hasRequested: boolean;
+    isBookmarked: boolean;
 };
 
 /** Property the broker already has approval to represent. */
@@ -138,10 +145,20 @@ export type RepresentedPropertyItem = {
     locality: string;
     amountInr: number;
     isRent: boolean;
-    /** e.g. "2 visits · 1 interested" or "No activity in 16 days". */
-    statusLabel: string;
-    /** When true, status uses the urgent colour (stale / quiet listing). */
-    isStale?: boolean;
+    areaSqft: number;
+    furnishingLabel: string;
+    ownerFirstName: string;
+    visitCount: number;
+    interestedCount: number;
+    daysSinceActivity: number;
+    /** Quiet listing — activity line uses urgent colour. */
+    isStale: boolean;
+    /** Only when a client on this property is past Site visit. */
+    stageLabel?: string;
+    /** Client name shown on negotiation activity lines. */
+    negotiationClientName?: string;
+    shareHref: string;
+    bookVisitHref: string;
 };
 
 export type YouRepresentData = {
@@ -491,16 +508,49 @@ export const dashboardMock: DashboardMock = {
                 locality: "Pal",
                 amountInr: 9_200_000,
                 isRent: false,
-                statusLabel: "No activity in 16 days",
+                areaSqft: 1340,
+                furnishingLabel: "Semi-furnished",
+                ownerFirstName: "Jayesh",
+                visitCount: 0,
+                interestedCount: 0,
+                daysSinceActivity: 16,
                 isStale: true,
+                shareHref: "https://wa.me/?text=3%20BHK%20%C2%B7%20Pal",
+                bookVisitHref: "/broker/visits/new?propertyId=pr_092",
             },
             {
                 id: "pr_088",
                 configLabel: "2 BHK",
+                locality: "Piplod",
+                amountInr: 28_000,
+                isRent: true,
+                areaSqft: 980,
+                furnishingLabel: "Furnished",
+                ownerFirstName: "Nisha",
+                visitCount: 2,
+                interestedCount: 1,
+                daysSinceActivity: 2,
+                isStale: false,
+                shareHref: "https://wa.me/?text=2%20BHK%20%C2%B7%20Piplod",
+                bookVisitHref: "/broker/visits/new?propertyId=pr_088",
+            },
+            {
+                id: "pr_095",
+                configLabel: "4 BHK",
                 locality: "Vesu",
-                amountInr: 7_800_000,
+                amountInr: 24_000_000,
                 isRent: false,
-                statusLabel: "2 visits · 1 interested",
+                areaSqft: 2100,
+                furnishingLabel: "Semi-furnished",
+                ownerFirstName: "Ravi",
+                visitCount: 4,
+                interestedCount: 1,
+                daysSinceActivity: 1,
+                isStale: false,
+                stageLabel: "In negotiation",
+                negotiationClientName: "Hetal Modi",
+                shareHref: "https://wa.me/?text=4%20BHK%20%C2%B7%20Vesu",
+                bookVisitHref: "/broker/visits/new?propertyId=pr_095",
             },
         ],
     },
@@ -511,17 +561,41 @@ export const dashboardMock: DashboardMock = {
             locality: "Vesu",
             amountInr: 11_500_000,
             isRent: false,
-            listedLabel: "2 hours ago",
+            areaSqft: 1250,
+            furnishingLabel: "Semi-furnished",
+            detailLabel: "5th floor",
+            listedHoursAgo: 2,
             brokerRequestCount: 0,
+            hasRequested: false,
+            isBookmarked: false,
         },
         {
             id: "prop-2",
-            configLabel: "2 BHK rent",
+            configLabel: "2 BHK",
             locality: "Adajan",
             amountInr: 22_000,
             isRent: true,
-            listedLabel: "Yesterday",
+            areaSqft: 890,
+            furnishingLabel: "Unfurnished",
+            detailLabel: "3rd floor",
+            listedHoursAgo: 26,
             brokerRequestCount: 1,
+            hasRequested: false,
+            isBookmarked: true,
+        },
+        {
+            id: "prop-3",
+            configLabel: "3 BHK",
+            locality: "Pal",
+            amountInr: 8_500_000,
+            isRent: false,
+            areaSqft: 1180,
+            furnishingLabel: "Furnished",
+            detailLabel: "Green Park Society",
+            listedHoursAgo: 48,
+            brokerRequestCount: 3,
+            hasRequested: true,
+            isBookmarked: false,
         },
     ],
 };
