@@ -147,7 +147,7 @@ function EmptyRequests({
 }
 
 export function RequestsCard({ data, serviceAreas, className }: RequestsCardProps) {
-    if (totalRequests(data.attention.length) === 0) {
+    if (totalRequests(data.counts) === 0) {
         return <EmptyRequests serviceAreas={serviceAreas} className={className} />;
     }
 
