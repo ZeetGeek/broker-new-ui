@@ -1,11 +1,15 @@
 "use client";
 
 import type { ReactNode } from "react";
+import toast from "react-hot-toast";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
+import { authApi } from "@/lib/api/auth";
+
 import { Button } from "@/components/ui/button";
 
+import type { Portal } from "./portal";
 import brands from "./thesvg-color-brands.json";
 
 addCollection(brands as Parameters<typeof addCollection>[0]);
@@ -16,12 +20,21 @@ function BrandIcon({ icon }: { icon: "thesvg-color:google" | "thesvg-color:apple
     );
 }
 
-function SocialButton({ children, mark }: { children: ReactNode; mark: ReactNode }) {
+function SocialButton({
+    children,
+    mark,
+    onClick,
+}: {
+    children: ReactNode;
+    mark: ReactNode;
+    onClick?: () => void;
+}) {
     return (
         <Button
             type="button"
             variant="outline"
             size="lg"
+            onClick={onClick}
             className="
               gap-3 border-border-warm bg-surface font-medium text-ink shadow-sm inline-full
               hover:bg-surface-muted
@@ -33,13 +46,30 @@ function SocialButton({ children, mark }: { children: ReactNode; mark: ReactNode
     );
 }
 
-export function SocialAuthButtons({ action }: { action: "Sign in" | "Sign up" }) {
+export function SocialAuthButtons({
+    action,
+    role = "broker",
+}: {
+    action: "Sign in" | "Sign up";
+    role?: Portal;
+}) {
+    function handleGoogle() {
+        window.location.href = authApi.googleStartUrl({ role });
+    }
+
+    function handleApple() {
+        toast("Apple sign-in is coming soon");
+    }
+
     return (
         <div className="flex flex-col gap-3">
-            <SocialButton mark={<BrandIcon icon="thesvg-color:google" />}>
+            <SocialButton mark={<BrandIcon icon="thesvg-color:google" />} onClick={handleGoogle}>
                 {action} with Google
             </SocialButton>
-            <SocialButton mark={<BrandIcon icon="thesvg-color:apple-light" />}>
+            <SocialButton
+                mark={<BrandIcon icon="thesvg-color:apple-light" />}
+                onClick={handleApple}
+            >
                 {action} with Apple
             </SocialButton>
         </div>

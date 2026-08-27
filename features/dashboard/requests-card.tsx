@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Check, Clock, Navigation } from "lucide-react";
+import { Check, Clock, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -9,14 +9,18 @@ import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
-import { DigitPopIn } from "./digit-pop-in";
-import type { RequestAttentionItem, RequestsData } from "./mock-data";
-import { TextLinkButton } from "./text-link-button";
+import type { RequestRowItem, RequestsData } from "./mock-data";
 
 const REQUESTS_INFO =
     "Requests you've sent to owners to represent their properties, and where each one stands.";
 
-const MAX_ATTENTION_ROWS = 3;
+const MAX_REQUEST_ROWS = 5;
+
+const LINK_CLASS = cn(
+    "body-sm inline-flex items-center gap-1 font-semibold text-brand outline-none",
+    "hover:text-brand-text",
+    "focus-visible:ring-3 focus-visible:ring-ring/30",
+);
 
 export type RequestsCardProps = {
     data: RequestsData;
@@ -41,16 +45,15 @@ function MetricCell({
     return (
         <div className="flex flex-1 flex-col items-start gap-0.5 px-3 min-inline-0">
             <span className="body-xs font-medium text-ink-muted">{label}</span>
-            <DigitPopIn
-                value={value}
-                className={cn("tabular h5 font-semibold", valueClassName ?? "text-ink")}
-            />
+            <span className={cn("tabular h5 font-semibold", valueClassName ?? "text-ink")}>
+                {value}
+            </span>
         </div>
     );
 }
 
-function AttentionIcon({ type }: { type: RequestAttentionItem["type"] }) {
-    if (type === "approved_untouched") {
+function RequestIcon({ type }: { type: RequestRowItem["type"] }) {
+    if (type === "approved" || type === "approved_untouched") {
         return (
             <Check
                 aria-hidden
@@ -60,21 +63,34 @@ function AttentionIcon({ type }: { type: RequestAttentionItem["type"] }) {
         );
     }
 
+    if (type === "declined") {
+        return (
+            <X
+                aria-hidden
+                className="mbs-0.5 shrink-0 text-danger block-4 inline-4"
+                strokeWidth={1.75}
+            />
+        );
+    }
+
     return (
         <Clock
             aria-hidden
-            className="mbs-0.5 shrink-0 text-urgent block-4 inline-4"
+            className={cn(
+                "mbs-0.5 shrink-0 block-4 inline-4",
+                type === "pending_stale" ? "text-urgent" : "text-pending",
+            )}
             strokeWidth={1.75}
         />
     );
 }
 
-function AttentionRow({ item }: { item: RequestAttentionItem }) {
-    const isStale = item.type === "pending_stale";
+function RequestRow({ item }: { item: RequestRowItem }) {
+    const isUrgent = item.type === "pending_stale";
 
     return (
         <li className="flex items-start gap-3 py-3">
-            <AttentionIcon type={item.type} />
+            <RequestIcon type={item.type} />
             <div className="flex-1 min-inline-0">
                 <p className="body truncate font-semibold text-ink">
                     {item.title}
@@ -88,7 +104,7 @@ function AttentionRow({ item }: { item: RequestAttentionItem }) {
                 <p
                     className={cn(
                         "body-sm mbs-0.5 truncate",
-                        isStale ? "text-urgent" : "text-ink-muted",
+                        isUrgent ? "text-urgent" : "text-ink-muted",
                     )}
                 >
                     {item.note}
@@ -99,12 +115,11 @@ function AttentionRow({ item }: { item: RequestAttentionItem }) {
                 size="sm"
                 nativeButton={false}
                 className="
-                  body-sm shrink-0 self-center gap-1 p-0 font-semibold text-brand block-auto
+                  body-sm shrink-0 self-center p-0 font-semibold text-brand block-auto
                   hover:text-brand-text
                 "
                 render={<Link href={item.action.href} />}
             >
-                <Navigation aria-hidden strokeWidth={1.75} />
                 {item.action.label}
             </Button>
         </li>
@@ -134,7 +149,10 @@ function EmptyRequests({
                     Browse properties in {areasLabel} to send your first request.
                 </p>
                 <div className="pts-3 mbs-auto">
-                    <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
+                    <Link href="/broker/properties" className={LINK_CLASS}>
+                        Browse properties
+                        <span aria-hidden>→</span>
+                    </Link>
                 </div>
             </div>
         </section>
@@ -146,10 +164,10 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
         return <EmptyRequests serviceAreas={serviceAreas} className={className} />;
     }
 
-    const attention = data.attention.slice(0, MAX_ATTENTION_ROWS);
+    const rows = data.items.slice(0, MAX_REQUEST_ROWS);
     const remainingLabel =
         data.quota.remaining === 1 ? "1 left this week" : `${data.quota.remaining} left this week`;
-    const showFade = attention.length >= 3 || data.attention.length > MAX_ATTENTION_ROWS;
+    const showFade = rows.length >= 3 || data.items.length > MAX_REQUEST_ROWS;
 
     return (
         <section
@@ -190,7 +208,7 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
             </div>
 
             <div className="relative mbs-2 flex-1 min-block-0">
-                {attention.length > 0 ? (
+                {rows.length > 0 ? (
                     <div
                         className="
                           absolute inset-0 scrollbar-none overflow-y-auto overscroll-contain
@@ -200,23 +218,22 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                     >
                         <ul
                             className={cn(
-                                "flex flex-col divide-y divide-border-warm/50",
+                                "flex flex-col divide-y divide-border-warm",
                                 showFade && "pbe-7",
                             )}
                         >
-                            {attention.map((item) => (
-                                <AttentionRow key={item.id} item={item} />
+                            {rows.map((item) => (
+                                <RequestRow key={item.id} item={item} />
                             ))}
                         </ul>
                     </div>
                 ) : (
-                    <p className="body text-ink-muted">Nothing needs attention right now.</p>
+                    <p className="body text-ink-muted">No request details to show yet.</p>
                 )}
 
                 <div
                     className="
-                      absolute inset-x-0 inset-be-[-1rem] z-10 flex flex-col justify-end
-                      block-14
+                      absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end block-14
                     "
                 >
                     {showFade ? (
@@ -229,9 +246,10 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                         />
                     ) : null}
                     <div className="relative flex justify-center">
-                        <TextLinkButton href="/broker/properties?tab=requests">
+                        <Link href="/broker/properties?tab=requests" className={LINK_CLASS}>
                             View all requests
-                        </TextLinkButton>
+                            <span aria-hidden>→</span>
+                        </Link>
                     </div>
                 </div>
             </div>

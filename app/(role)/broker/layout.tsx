@@ -1,19 +1,13 @@
 import type { ReactNode } from "react";
 
-import { PortalHeader } from "@/components/layout/portal-header";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
-import { BROKER_NAV_ITEMS } from "@/config/nav";
+import { BrokerPortalShell } from "@/features/dashboard/broker-portal-shell";
 
 export default function BrokerLayout({ children }: { children: ReactNode }) {
     return (
-        <PortalHeader
-            navItems={BROKER_NAV_ITEMS}
-            userName="Zeet Patel"
-            notificationsHref="/broker/notifications"
-            profileHref="/broker/profile"
-            unreadCount={3}
-        >
-            {children}
-        </PortalHeader>
+        <AuthGuard>
+            <BrokerPortalShell>{children}</BrokerPortalShell>
+        </AuthGuard>
     );
 }

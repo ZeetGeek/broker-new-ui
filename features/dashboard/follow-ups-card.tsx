@@ -1,12 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-
+import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { MessageCircle, Phone } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import toast from "react-hot-toast";
 
 import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
@@ -156,7 +155,7 @@ function FollowUpRow({
             <Link
                 href={item.href}
                 className="
-                  flex min-inline-0 flex-1 items-start gap-2.5 rounded-inner outline-none
+                  flex flex-1 items-start gap-2.5 rounded-inner outline-none min-inline-0
                   focus-visible:ring-2 focus-visible:ring-ring
                 "
             >
@@ -248,7 +247,10 @@ export function FollowUpsCard({
                             <span>Marked done</span>
                             <button
                                 type="button"
-                                className="font-semibold text-brand underline-offset-2 hover:underline"
+                                className="
+                                  font-semibold text-brand underline-offset-2
+                                  hover:underline
+                                "
                                 onClick={() => {
                                     restoreItem(id);
                                     toast.dismiss(t.id);
@@ -322,8 +324,7 @@ export function FollowUpsCard({
 
                     <div
                         className="
-                          absolute inset-x-0 inset-be-[-1rem] z-10 flex flex-col justify-end
-                          block-14
+                          absolute inset-x-0 -inset-be-4 z-10 flex flex-col justify-end block-14
                         "
                     >
                         {showFade ? (

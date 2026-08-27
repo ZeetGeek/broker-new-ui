@@ -2,11 +2,14 @@
 
 import * as React from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
+import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail } from "lucide-react";
 
+import { authApi } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
 import { forgotPasswordSchema, type ForgotPasswordValues } from "@/lib/validation/auth";
 
 import { Button } from "@/components/ui/button";
@@ -88,11 +91,18 @@ export function ForgotPasswordForm() {
 
     async function sendReset(email: string) {
         setIsSending(true);
-        await new Promise((resolve) => window.setTimeout(resolve, 720));
-        setSentEmail(email);
-        setIsSending(false);
-        setStep("sent");
-        setSecondsLeft(RESEND_WAIT_SEC);
+        try {
+            await authApi.forgotPassword(email.trim());
+            setSentEmail(email.trim());
+            setStep("sent");
+            setSecondsLeft(RESEND_WAIT_SEC);
+        } catch (err: unknown) {
+            toast.error(
+                err instanceof ApiError ? err.message : "Could not send password reset email",
+            );
+        } finally {
+            setIsSending(false);
+        }
     }
 
     function onSubmit(values: ForgotPasswordValues) {

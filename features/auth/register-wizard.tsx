@@ -2,13 +2,17 @@
 
 import * as React from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
+import toast from "react-hot-toast";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Circle, Lock, Mail } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
+import { authApi } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
 import { generatePassword } from "@/lib/auth/generate-password";
 import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
@@ -91,6 +95,7 @@ function PasswordRequirements({ password }: { password: string }) {
 }
 
 export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Portal }) {
+    const router = useRouter();
     const [portal, setPortal] = React.useState<Portal>(initialPortal);
     const [step, setStep] = React.useState<Step>("role");
     const slideRef = React.useRef<HTMLDivElement>(null);
@@ -168,8 +173,26 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
         });
     }
 
-    function onSubmit(_values: RegisterValues) {
-        // API wiring comes later
+    function onSubmit(values: RegisterValues) {
+        void (async () => {
+            try {
+                await authApi.register({
+                    email: values.email.trim(),
+                    password: values.password,
+                    role: values.portal,
+                });
+                toast.success("Account created. Check your email to verify.");
+                router.push(`/verify-pending?email=${encodeURIComponent(values.email.trim())}`);
+            } catch (err: unknown) {
+                toast.error(
+                    err instanceof ApiError
+                        ? err.message
+                        : err instanceof Error
+                          ? err.message
+                          : "Registration failed",
+                );
+            }
+        })();
     }
 
     return (
@@ -231,7 +254,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                             />
                         </div>
 
-                        <SocialAuthButtons action="Sign up" />
+                        <SocialAuthButtons action="Sign up" role={portal} />
 
                         <OrDivider />
 

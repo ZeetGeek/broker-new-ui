@@ -26,7 +26,11 @@ export type TodayAgenda = {
     items: TodayItem[];
 };
 
-export type RequestAttentionType = "approved_untouched" | "pending_stale";
+export type RequestRowType =
+    "approved_untouched" | "approved" | "pending_stale" | "pending" | "declined";
+
+/** @deprecated Prefer RequestRowType — kept for older call sites. */
+export type RequestAttentionType = Extract<RequestRowType, "approved_untouched" | "pending_stale">;
 
 export type RequestCounts = {
     approved: number;
@@ -42,29 +46,33 @@ export type RequestQuota = {
     resetsOn: string;
 };
 
-export type RequestAttentionItem = {
+export type RequestRowItem = {
     id: string;
-    type: RequestAttentionType;
+    type: RequestRowType;
     propertyId: string;
     title: string;
     amountInr: number;
     isRent: boolean;
     note: string;
     action: { label: string; href: string };
-    /** Present when type is `approved_untouched`. */
+    /** Present when type is approved / approved_untouched. */
     approvedAt?: string;
     daysSince?: number;
-    /** Present when type is `pending_stale`. */
+    /** Present when type is pending / pending_stale. */
     requestedAt?: string;
     daysWaiting?: number;
     /** False = owner never opened; true + daysWaiting = stop waiting. */
     ownerSeen?: boolean;
 };
 
+/** @deprecated Prefer RequestRowItem. */
+export type RequestAttentionItem = RequestRowItem;
+
 export type RequestsData = {
     counts: RequestCounts;
     quota: RequestQuota;
-    attention: RequestAttentionItem[];
+    /** Recent requests across all statuses, newest first. */
+    items: RequestRowItem[];
 };
 
 export type PipelineStageCount = {
@@ -423,7 +431,7 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
 export const REQUESTS_PLACEHOLDER: RequestsData = {
     counts: { approved: 2, pending: 4, declined: 2 },
     quota: { limit: 10, used: 8, remaining: 2, resetsOn: "2026-08-31" },
-    attention: [
+    items: [
         {
             id: "req_042",
             type: "approved_untouched",
@@ -438,14 +446,14 @@ export const REQUESTS_PLACEHOLDER: RequestsData = {
         },
         {
             id: "req_039",
-            type: "approved_untouched",
+            type: "approved",
             propertyId: "pr_099",
             title: "1 BHK · Pal",
             amountInr: 4_200_000,
             isRent: false,
             approvedAt: "2026-08-24T14:00:00+05:30",
             daysSince: 1,
-            note: "Approved yesterday · no client added yet",
+            note: "Approved · 1 client attached",
             action: { label: "Open", href: "/broker/properties/pr_099" },
         },
         {
@@ -463,16 +471,26 @@ export const REQUESTS_PLACEHOLDER: RequestsData = {
         },
         {
             id: "req_051",
-            type: "pending_stale",
+            type: "pending",
             propertyId: "pr_130",
             title: "4 BHK · Pal",
             amountInr: 18_500_000,
             isRent: false,
-            requestedAt: "2026-08-18T11:20:00+05:30",
-            daysWaiting: 7,
+            requestedAt: "2026-08-25T11:20:00+05:30",
+            daysWaiting: 1,
             ownerSeen: true,
-            note: "Waiting 7 days · owner saw it 4 days ago",
+            note: "Waiting on owner",
             action: { label: "View", href: "/broker/properties/pr_130" },
+        },
+        {
+            id: "req_033",
+            type: "declined",
+            propertyId: "pr_088",
+            title: "2 BHK · Vesu",
+            amountInr: 6_800_000,
+            isRent: false,
+            note: "Owner declined",
+            action: { label: "View", href: "/broker/properties/pr_088" },
         },
     ],
 };
