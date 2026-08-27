@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { Toaster } from "react-hot-toast";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 import { MotionConfig } from "motion/react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { Toaster } from "react-hot-toast";
 
 function ThemeProvider({ children, ...props }: React.ComponentProps<typeof NextThemesProvider>) {
     return (

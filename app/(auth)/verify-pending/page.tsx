@@ -4,12 +4,12 @@ import { Suspense } from "react";
 
 import { LoadingCenter } from "@/components/shared/loading-spinner";
 
-import { LoginForm } from "@/features/auth/login-form";
+import { VerifyPendingPanel } from "@/features/auth/verify-pending-panel";
 
 export default function Page() {
     return (
         <Suspense fallback={<LoadingCenter />}>
-            <LoginForm />
+            <VerifyPendingPanel />
         </Suspense>
     );
 }

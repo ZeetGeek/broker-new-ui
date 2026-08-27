@@ -1,13 +1,13 @@
 import type { ReactElement, ReactNode } from "react";
 import Link from "next/link";
 
-import { Bell, ChevronDown, Search } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 import { PortalNav } from "@/components/layout/portal-nav";
+import { PortalProfileMenu } from "@/components/layout/portal-profile-menu";
 import { Logo } from "@/components/shared/logo";
-import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -17,9 +17,13 @@ import type { NavItem } from "@/config/nav";
 export type PortalHeaderProps = {
     navItems: NavItem[];
     userName?: string;
+    userEmail?: string;
     userAvatarUrl?: string;
     notificationsHref?: string;
     profileHref?: string;
+    referralsHref?: string;
+    roleLabel?: string;
+    orgName?: string | null;
     unreadCount?: number;
     children?: ReactNode;
 };
@@ -71,9 +75,13 @@ function UnreadBadge({ count }: { count: number }) {
 export function PortalHeader({
     navItems,
     userName = "User",
+    userEmail,
     userAvatarUrl,
     notificationsHref,
-    profileHref,
+    profileHref = "#",
+    referralsHref,
+    roleLabel,
+    orgName,
     unreadCount = 0,
     children,
 }: PortalHeaderProps) {
@@ -152,33 +160,16 @@ export function PortalHeader({
                                     </Button>
                                 </HeaderTooltip>
 
-                                <HeaderTooltip label="Profile">
-                                    <Button
-                                        variant="ghost"
-                                        size="md"
-                                        nativeButton={false}
-                                        render={<Link href={profileHref ?? "#"} />}
-                                        aria-label={userName}
-                                        className="
-                                          scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
-                                          hover:bg-transparent hover:text-ink
-                                        "
-                                    >
-                                        <span
-                                            className="
-                                              overflow-hidden rounded-full block-control-lg
-                                              inline-control-lg
-                                            "
-                                        >
-                                            <UserAvatar
-                                                name={userName}
-                                                imageUrl={userAvatarUrl}
-                                                size="fill"
-                                            />
-                                        </span>
-                                        <ChevronDown aria-hidden="true" />
-                                    </Button>
-                                </HeaderTooltip>
+                                <PortalProfileMenu
+                                    userName={userName}
+                                    userEmail={userEmail}
+                                    userAvatarUrl={userAvatarUrl}
+                                    profileHref={profileHref}
+                                    referralsHref={referralsHref}
+                                    notificationsHref={notificationsHref}
+                                    roleLabel={roleLabel}
+                                    orgName={orgName}
+                                />
                             </div>
                         </TooltipProvider>
                     </div>
