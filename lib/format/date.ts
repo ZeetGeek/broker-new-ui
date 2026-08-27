@@ -81,6 +81,39 @@ export type DurationUntil = {
     isPast: boolean;
 };
 
+/** Relative past as `Just now` / `12m ago` / `3h ago` / `Yesterday` / `4d ago` / `24 Aug`. */
+export function formatRelativePast(date: Date, now: Date): string {
+    const minutesAgo = Math.round((now.getTime() - date.getTime()) / 60_000);
+
+    if (minutesAgo < 0) {
+        return formatDateShort(date);
+    }
+
+    if (minutesAgo < 1) {
+        return "Just now";
+    }
+
+    if (minutesAgo < 60) {
+        return `${minutesAgo}m ago`;
+    }
+
+    const hoursAgo = Math.round(minutesAgo / 60);
+    if (hoursAgo < 24) {
+        return `${hoursAgo}h ago`;
+    }
+
+    const daysAgo = Math.round(hoursAgo / 24);
+    if (daysAgo === 1) {
+        return "Yesterday";
+    }
+
+    if (daysAgo < 7) {
+        return `${daysAgo}d ago`;
+    }
+
+    return formatDateShort(date);
+}
+
 /** Relative wait until a showing: `in 2h 14m`, `in 18m`, or `Started`. */
 export function formatDurationUntil(target: Date, now: Date): DurationUntil {
     const minutesRemaining = Math.round((target.getTime() - now.getTime()) / 60_000);

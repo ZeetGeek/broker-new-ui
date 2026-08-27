@@ -1,11 +1,11 @@
 import type { ReactElement, ReactNode } from "react";
-import Link from "next/link";
 
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 import { PortalNav } from "@/components/layout/portal-nav";
+import { PortalNotificationsMenu } from "@/components/layout/portal-notifications-menu";
 import { PortalProfileMenu } from "@/components/layout/portal-profile-menu";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,11 @@ export type PortalHeaderProps = {
     userName?: string;
     userEmail?: string;
     userAvatarUrl?: string;
-    notificationsHref?: string;
+    notificationsHref: string;
     profileHref?: string;
     referralsHref?: string;
     roleLabel?: string;
     orgName?: string | null;
-    unreadCount?: number;
     children?: ReactNode;
 };
 
@@ -53,25 +52,6 @@ function HeaderTooltip({
     );
 }
 
-function UnreadBadge({ count }: { count: number }) {
-    if (count <= 0) {
-        return null;
-    }
-
-    return (
-        <span
-            aria-hidden
-            className="
-              tabular body-xs absolute -inset-e-1 -inset-bs-1 flex items-center justify-center
-              rounded-full bg-brand px-1 font-semibold text-canvas ring-2 ring-surface-muted block-5
-              min-inline-5
-            "
-        >
-            {count > 9 ? "9+" : count}
-        </span>
-    );
-}
-
 export function PortalHeader({
     navItems,
     userName = "User",
@@ -82,19 +62,9 @@ export function PortalHeader({
     referralsHref,
     roleLabel,
     orgName,
-    unreadCount = 0,
     children,
 }: PortalHeaderProps) {
     const homeHref = navItems[0]?.href ?? "/";
-    const notificationsLabel =
-        unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications";
-
-    const notificationIcon = (
-        <>
-            <Bell aria-hidden="true" />
-            <UnreadBadge count={unreadCount} />
-        </>
-    );
 
     return (
         <div className="bg-surface-muted min-block-screen">
@@ -139,26 +109,13 @@ export function PortalHeader({
                                     </Button>
                                 </HeaderTooltip>
 
-                                <HeaderTooltip label="Notifications">
-                                    <Button
-                                        type={notificationsHref ? undefined : "button"}
-                                        variant="outline"
-                                        size="icon-md"
-                                        nativeButton={notificationsHref ? false : undefined}
-                                        render={
-                                            notificationsHref ? (
-                                                <Link href={notificationsHref} />
-                                            ) : undefined
-                                        }
-                                        aria-label={notificationsLabel}
-                                        className={cn(
-                                            headerControlClass,
-                                            "relative text-ink-muted hover:text-ink",
-                                        )}
-                                    >
-                                        {notificationIcon}
-                                    </Button>
-                                </HeaderTooltip>
+                                <PortalNotificationsMenu
+                                    viewAllHref={notificationsHref}
+                                    triggerClassName={cn(
+                                        headerControlClass,
+                                        "relative text-ink-muted hover:text-ink",
+                                    )}
+                                />
 
                                 <PortalProfileMenu
                                     userName={userName}

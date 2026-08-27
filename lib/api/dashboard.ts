@@ -24,16 +24,42 @@ export type DashboardOwnerInvite = {
     createdAt: string;
 };
 
+export type DashboardBrokerRequestAction = {
+    label: string;
+    href: string;
+};
+
 export type DashboardBrokerRequest = {
     id: string;
-    status: string;
-    statusLabel: string;
     propertyId: string;
     propertyTitle: string;
-    createdAt: string;
-    decidedAt: string;
+    configLabel: string;
+    locality: string;
+    city: string | null;
+    amountInr: number;
+    isRent: boolean;
+    transactionType: string | null;
     ownerName: string;
     ownerVerified: boolean;
+    status: string;
+    statusLabel: string;
+    message: string | null;
+    createdAt: string;
+    decidedAt: string | null;
+    daysWaiting: number | null;
+    daysSinceDecision: number | null;
+    clientCount: number;
+    hasClient: boolean;
+    attentionType: "approved_untouched" | "pending_stale" | null;
+    note: string;
+    action: DashboardBrokerRequestAction;
+};
+
+export type DashboardRequestQuota = {
+    limit: number;
+    used: number;
+    remaining: number;
+    resetsOn: string;
 };
 
 export type PipelineFunnelStage = {
@@ -46,7 +72,7 @@ export type DashboardResponse = {
     portal: "owner" | "broker";
     greeting: { firstName: string; fullName: string };
     dayStreak: number;
-    summary: Record<string, number | string>;
+    summary: Record<string, number | string | DashboardRequestQuota>;
     quickActions: Array<{ key: string; label: string }>;
     charts: {
         leadsTrend?: unknown;

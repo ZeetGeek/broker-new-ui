@@ -12,6 +12,7 @@ import type {
     NextShowingMock,
     PipelineData,
     PipelineStageKey,
+    RequestRowItem,
     RequestsData,
     ReraStatus,
     TodayAgenda,
@@ -164,39 +165,89 @@ function mapTodayAgenda(visits: DashboardVisit[], now: Date): TodayAgenda {
     };
 }
 
+function mapRequestRow(request: DashboardBrokerRequest, now: Date): RequestRowItem {
+    const title =
+        [request.configLabel, request.locality].filter(Boolean).join(" · ") ||
+        request.propertyTitle;
+    const base = {
+        id: request.id,
+        propertyId: request.propertyId,
+        title,
+        amountInr: request.amountInr,
+        isRent: request.isRent,
+        note: request.note || request.statusLabel,
+        action: request.action,
+    };
+
+    if (request.attentionType === "approved_untouched") {
+        return {
+            ...base,
+            type: "approved_untouched",
+            approvedAt: request.decidedAt ?? request.createdAt,
+            daysSince: request.daysSinceDecision ?? 0,
+        };
+    }
+
+    if (request.attentionType === "pending_stale") {
+        return {
+            ...base,
+            type: "pending_stale",
+            requestedAt: request.createdAt,
+            daysWaiting: request.daysWaiting ?? daysBetween(new Date(request.createdAt), now),
+            ownerSeen: false,
+        };
+    }
+
+    const status = request.status.toLowerCase();
+    if (status === "declined" || status === "rejected") {
+        return { ...base, type: "declined" };
+    }
+
+    if (status === "approved" || status === "accepted") {
+        return {
+            ...base,
+            type: "approved",
+            approvedAt: request.decidedAt ?? request.createdAt,
+            daysSince: request.daysSinceDecision ?? undefined,
+        };
+    }
+
+    return {
+        ...base,
+        type: "pending",
+        requestedAt: request.createdAt,
+        daysWaiting: request.daysWaiting ?? daysBetween(new Date(request.createdAt), now),
+    };
+}
+
 function mapRequests(
-    summary: Record<string, number | string>,
+    summary: DashboardResponse["summary"],
     requests: DashboardBrokerRequest[],
     now: Date,
 ): RequestsData {
-    console.log("summary===>", summary);
-    console.log("requests===>", requests);
-    const approved = Number(summary.approvedBrokerRequests ?? requests.length) || 0;
-    const pending = Number(summary.pendingBrokerRequests ?? requests.length) || 0;
-    const declined = Number(summary.declinedBrokerRequests ?? requests.length) || 0;
-    const attention = requests.slice(0, 5).map((request) => {
-        const createdAt = new Date(request.createdAt);
-        const daysWaiting = Number.isNaN(createdAt.getTime()) ? 0 : daysBetween(createdAt, now);
-        return {
-            id: request.id,
-            type: "pending_stale" as const,
-            propertyId: request.propertyId,
-            title: request.propertyTitle,
-            amountInr: 0,
-            isRent: false,
-            requestedAt: request.createdAt,
-            daysWaiting,
-            ownerSeen: false,
-            note:
-                daysWaiting > 0
-                    ? `Waiting ${daysWaiting} day${daysWaiting === 1 ? "" : "s"} · from ${request.ownerName}`
-                    : `New request from ${request.ownerName}`,
-            action: {
-                label: "View",
-                href: `/broker/properties/${request.propertyId}`,
-            },
-        };
-    });
+    const approved = Number(summary.approvedBrokerRequests ?? 0) || 0;
+    const pending = Number(summary.pendingBrokerRequests ?? 0) || 0;
+    const declined = Number(summary.declinedBrokerRequests ?? 0) || 0;
+    const quotaFromApi = summary.requestQuota;
+    const quota =
+        typeof quotaFromApi === "object" && quotaFromApi !== null
+            ? {
+                  limit: Number(quotaFromApi.limit) || 10,
+                  used: Number(quotaFromApi.used) || 0,
+                  remaining: Number(quotaFromApi.remaining) || 0,
+                  resetsOn: String(quotaFromApi.resetsOn || formatDateIso(now)),
+              }
+            : {
+                  limit: 10,
+                  used: Math.min(10, approved + pending + declined),
+                  remaining: Math.max(0, 10 - (approved + pending + declined)),
+                  resetsOn: formatDateIso(now),
+              };
+
+    const items = [...requests]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 8)
+        .map((request) => mapRequestRow(request, now));
 
     return {
         counts: {
@@ -204,13 +255,8 @@ function mapRequests(
             pending,
             declined,
         },
-        quota: {
-            limit: Math.max(pending, 10),
-            used: pending,
-            remaining: Math.max(0, 10 - pending),
-            resetsOn: formatDateIso(now),
-        },
-        attention,
+        quota,
+        items,
     };
 }
 
@@ -247,10 +293,9 @@ export function mapBrokerDashboardView(
     const fullName =
         profile?.fullName?.trim() || data?.greeting?.fullName?.trim() || profile?.email || "Broker";
 
-    console.log("data", data);
     return {
         siteVisitCount: todayVisits.length,
-        requestsWaitingCount: Number(data?.summary?.pendingRequests ?? 0) || 0,
+        requestsWaitingCount: Number(data?.summary?.pendingBrokerRequests ?? 0) || 0,
         reraStatus: mapReraStatus(profile),
         serviceAreas: profile?.broker?.serviceAreas ?? [],
         phoneDigits: phoneDigits(profile?.phone),
