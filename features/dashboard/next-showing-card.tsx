@@ -266,13 +266,15 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                                     Client
                                 </span>
                                 <span aria-hidden>·</span>
-                                <a
-                                    href={phoneHref}
-                                    className={`
-                                      inline-flex items-center gap-1 outline-none
-                                      hover:text-ink
-                                      focus-visible:ring-3 focus-visible:ring-ring/30
-                                    `}
+                                <Button
+                                    variant="link"
+                                    size="sm"
+                                    nativeButton={false}
+                                    render={<a href={phoneHref} />}
+                                    className="
+                                      body-sm gap-1 p-0 font-medium text-ink-muted block-auto
+                                      hover:text-ink hover:underline
+                                    "
                                 >
                                     <Phone
                                         aria-hidden
@@ -280,7 +282,7 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                                         strokeWidth={2}
                                     />
                                     <PhoneNumber phoneDigits={showing.clientPhoneDigits} />
-                                </a>
+                                </Button>
                             </p>
                         </div>
                     </div>

@@ -236,7 +236,7 @@ export function ActivityCard({ data, now, className }: ActivityCardProps) {
                             {groups.map(({ group, items: groupItems }) => (
                                 <div key={group}>
                                     <DayGroupLabel group={group} now={now} />
-                                    <ul className="flex flex-col">
+                                    <ul className="flex flex-col divide-y divide-border-warm">
                                         {groupItems.map((item) => (
                                             <ActivityRow key={item.id} item={item} now={now} />
                                         ))}

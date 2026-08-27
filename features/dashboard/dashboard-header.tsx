@@ -78,24 +78,35 @@ function ServiceAreaChips({ areas }: { areas: string[] }) {
 function ContactLine({ phoneDigits, email }: { phoneDigits: string; email: string }) {
     const phoneHref = `tel:+91${phoneDigits.replace(/\D/g, "").slice(-10)}`;
     const linkClass = `
-      inline-flex items-center gap-1 ${META_TEXT} outline-none
-      hover:text-ink
-      focus-visible:ring-3 focus-visible:ring-ring/30
+      body-sm gap-1 p-0 font-medium text-ink-muted block-auto
+      hover:text-ink hover:underline
     `;
 
     return (
         <div className={`inline-flex items-center gap-2 ${META_TEXT}`}>
-            <a href={phoneHref} className={linkClass}>
+            <Button
+                variant="link"
+                size="sm"
+                nativeButton={false}
+                render={<a href={phoneHref} />}
+                className={linkClass}
+            >
                 <Phone aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                 <PhoneNumber phoneDigits={phoneDigits} />
-            </a>
+            </Button>
             <span aria-hidden className="text-ink-subtle">
                 ·
             </span>
-            <a href={`mailto:${email}`} className={linkClass}>
+            <Button
+                variant="link"
+                size="sm"
+                nativeButton={false}
+                render={<a href={`mailto:${email}`} />}
+                className={linkClass}
+            >
                 <Mail aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                 <span className="truncate max-inline-[28ch]">{email}</span>
-            </a>
+            </Button>
         </div>
     );
 }
@@ -118,11 +129,12 @@ export function DashboardHeader({
                 <StaggerReveal className="h1 min-inline-0">
                     <StaggerLine>
                         <DateDisplay date={now} variant="weekday" className="text-ink" />
-                        <span className="text-ink">.</span>
-                    </StaggerLine>
-                    <StaggerLine className="text-ink-muted">
-                        <DigitPopIn value={siteVisitCount} /> {visitWord},{" "}
-                        <DigitPopIn value={requestsWaitingCount} /> {requestWord} waiting.
+                        <span className="text-ink">.</span>{" "}
+                        <span className="text-ink-muted">
+                            <DigitPopIn value={siteVisitCount} /> {visitWord},{" "}
+                            <DigitPopIn value={requestsWaitingCount} /> {requestWord}{" "}
+                            waiting.
+                        </span>
                     </StaggerLine>
                 </StaggerReveal>
             </div>
@@ -151,7 +163,7 @@ export function DashboardHeader({
                 />
 
                 <motion.div
-                    className="-mbe-3.5 flex flex-wrap items-center gap-2"
+                    className="flex flex-wrap items-center gap-2"
                     variants={dashboardMetaItem}
                 >
                     <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
