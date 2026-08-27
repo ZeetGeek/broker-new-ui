@@ -1,5 +1,7 @@
 import type {
+    DashboardActivity,
     DashboardBrokerRequest,
+    DashboardFollowUps,
     DashboardResponse,
     DashboardVisit,
     PipelineFunnelStage,
@@ -7,7 +9,9 @@ import type {
 import type { UserProfile } from "@/lib/api/profile";
 import { formatDateIso } from "@/lib/format/date";
 
+import type { ActivityData } from "./activity-card";
 import type {
+    FollowUp,
     FollowUpsData,
     NextShowingMock,
     PipelineData,
@@ -45,6 +49,7 @@ export type BrokerDashboardView = {
     requests: RequestsData;
     pipelineCard: PipelineData;
     followUps: FollowUpsData;
+    activity: ActivityData;
     userName: string;
     avatarUrl?: string;
     unreadCount: number;
@@ -260,6 +265,54 @@ function mapRequests(
     };
 }
 
+function mapFollowUps(followUps: DashboardFollowUps | undefined): FollowUpsData {
+    if (!followUps) {
+        return {
+            overdueCount: 0,
+            remainingThisWeek: 0,
+            items: [],
+        };
+    }
+
+    const items: FollowUp[] = (followUps.items ?? []).map((item) => ({
+        id: item.id,
+        title: item.title,
+        context: item.context,
+        due: item.due,
+        dueLabel: item.dueLabel,
+        daysOverdue: item.daysOverdue ?? 0,
+        clientId: item.clientId,
+        clientName: item.clientName,
+        clientPhone: item.clientPhone || "",
+        channel: item.channel,
+        href: item.href,
+    }));
+
+    return {
+        overdueCount: followUps.overdueCount ?? items.filter((i) => i.due === "overdue").length,
+        remainingThisWeek: followUps.remainingThisWeek ?? 0,
+        items,
+    };
+}
+
+function mapActivity(activity: DashboardActivity | undefined): ActivityData {
+    if (!activity) {
+        return { items: [], remainingCount: 0 };
+    }
+
+    return {
+        items: (activity.items ?? []).map((item) => ({
+            id: item.id,
+            title: item.title,
+            detail: item.detail,
+            whenLabel: item.whenLabel,
+            href: item.href,
+            category: item.category,
+        })),
+        remainingCount: activity.remainingCount ?? 0,
+    };
+}
+
 function mapPipeline(funnel: PipelineFunnelStage[] | undefined): PipelineData {
     const byStage = new Map((funnel ?? []).map((row) => [row.stage, row.count]));
     const stages = PIPELINE_KEYS.map((key) => ({
@@ -304,11 +357,8 @@ export function mapBrokerDashboardView(
         today: mapTodayAgenda(visits, now),
         requests: mapRequests(data?.summary ?? {}, data?.brokerRequests ?? [], now),
         pipelineCard: mapPipeline(data?.charts?.pipelineFunnel),
-        followUps: {
-            overdueCount: 0,
-            remainingThisWeek: 0,
-            items: [],
-        },
+        followUps: mapFollowUps(data?.followUps),
+        activity: mapActivity(data?.activity),
         userName: fullName,
         avatarUrl: profile?.avatarUrl ?? undefined,
         unreadCount: profile?.notifications?.unreadCount ?? 0,

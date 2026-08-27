@@ -62,6 +62,53 @@ export type DashboardRequestQuota = {
     resetsOn: string;
 };
 
+export type DashboardFollowUp = {
+    id: string;
+    leadId: string;
+    stage: string;
+    title: string;
+    context: string;
+    due: "overdue" | "today" | "upcoming";
+    dueLabel: string;
+    daysOverdue: number;
+    daysStuck?: number;
+    clientId: string;
+    clientName: string;
+    clientPhone: string;
+    channel: "whatsapp" | "phone" | "none";
+    href: string;
+    propertyId?: string | null;
+    updatedAt?: string | null;
+};
+
+export type DashboardFollowUps = {
+    overdueCount: number;
+    remainingThisWeek: number;
+    items: DashboardFollowUp[];
+    allCount?: number;
+};
+
+export type DashboardActivityItem = {
+    id: string;
+    category: string;
+    action: string;
+    title: string;
+    detail: string | null;
+    entityType: string | null;
+    entityId: string | null;
+    createdAt: string;
+    whenLabel: string;
+    href: string;
+    actorName: string | null;
+    actorAvatarUrl: string | null;
+};
+
+export type DashboardActivity = {
+    items: DashboardActivityItem[];
+    remainingCount: number;
+    totalCount: number;
+};
+
 export type PipelineFunnelStage = {
     stage: string;
     label: string;
@@ -83,6 +130,8 @@ export type DashboardResponse = {
     upcomingVisits?: DashboardVisit[];
     ownerInvites?: DashboardOwnerInvite[];
     brokerRequests?: DashboardBrokerRequest[];
+    followUps?: DashboardFollowUps;
+    activity?: DashboardActivity;
 };
 
 export const dashboardApi = {

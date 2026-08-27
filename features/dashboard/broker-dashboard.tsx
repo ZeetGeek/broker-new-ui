@@ -8,6 +8,7 @@ import { mapBrokerDashboardView } from "@/features/dashboard/map-dashboard";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
+import { ActivityCard } from "./activity-card";
 import { DashboardHeader } from "./dashboard-header";
 import { FollowUpsCard } from "./follow-ups-card";
 import { NextShowingCard } from "./next-showing-card";
@@ -28,8 +29,9 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
     return (
         <div
             className="
-          flex flex-col items-center justify-center gap-4 text-center min-block-[calc(100dvh-5rem)]
-        "
+              flex flex-col items-center justify-center gap-4 text-center
+              min-block-[calc(100dvh-5rem)]
+            "
         >
             <p className="h5 text-ink">Could not load your dashboard</p>
             <p className="body text-ink-muted max-inline-96">{message}</p>
@@ -96,11 +98,7 @@ export function BrokerDashboard() {
                     <PipelineCard data={view.pipelineCard} />
                     <FollowUpsCard data={view.followUps} />
                 </div>
-                <PlaceholderCard
-                    title="Activity"
-                    info="Recent updates across your properties, clients, and visits."
-                    className="md:col-span-5"
-                />
+                <ActivityCard data={view.activity} className="md:col-span-5" />
                 <PlaceholderCard
                     title="New in your areas"
                     info="Fresh listings in the localities you cover — ready to request representation."
