@@ -271,7 +271,7 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
                                 onRequest={() => requestProperty(property.id)}
                                 className={
                                     index > 0
-                                        ? "mbs-3 border-bs border-border-warm pbs-3"
+                                        ? "mbs-3 border-bs border-border-warm/50 pbs-3"
                                         : "mbs-4"
                                 }
                             />

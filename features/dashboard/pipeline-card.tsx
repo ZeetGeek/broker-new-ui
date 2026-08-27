@@ -242,7 +242,7 @@ export function PipelineCard({ data, className }: PipelineCardProps) {
                 <div className="shrink-0 inline-full">
                     <div
                         className="
-                          flex flex-col divide-y divide-border-warm border-bs border-border-warm
+                          flex flex-col divide-y divide-border-warm/50 border-bs border-border-warm/50
                         "
                     >
                         {showStalled && data.stalled ? <StalledRow stalled={data.stalled} /> : null}

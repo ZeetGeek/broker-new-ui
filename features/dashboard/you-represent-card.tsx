@@ -230,7 +230,7 @@ export function YouRepresentCard({ data, className }: YouRepresentCardProps) {
                             property={property}
                             className={
                                 index > 0
-                                    ? "mbs-3 border-bs border-border-warm pbs-3"
+                                    ? "mbs-3 border-bs border-border-warm/50 pbs-3"
                                     : "mbs-4"
                             }
                         />

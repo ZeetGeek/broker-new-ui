@@ -200,7 +200,7 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                     >
                         <ul
                             className={cn(
-                                "flex flex-col divide-y divide-border-warm",
+                                "flex flex-col divide-y divide-border-warm/50",
                                 showFade && "pbe-7",
                             )}
                         >

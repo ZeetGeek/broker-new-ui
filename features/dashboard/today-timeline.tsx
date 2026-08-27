@@ -63,7 +63,7 @@ function TimelineRow({ item, showDivider }: { item: TodayItem; showDivider: bool
     const isBlocked = item.state === "blocked";
 
     return (
-        <li className={cn(showDivider && "border-bs border-border-warm")}>
+        <li className={cn(showDivider && "border-bs border-border-warm/50")}>
             <Link
                 href={item.href}
                 className={`

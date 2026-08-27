@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { ComponentType, ReactNode } from "react";
+import Link from "next/link";
 
 import {
     AlertCircle,
@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 
 import {
-    activityDayGroup,
     type ActivityDayGroup,
+    activityDayGroup,
     formatCompactRelative,
     formatDateIso,
     formatDateShort,
@@ -115,7 +115,7 @@ function ActivityRow({ item, now }: { item: ActivityItem; now: Date }) {
             <Link
                 href={item.href}
                 className={cn(
-                    "flex w-full items-start gap-3 py-2.5 outline-none",
+                    "flex items-start gap-3 py-2.5 outline-none inline-full",
                     "focus-visible:ring-2 focus-visible:ring-ring",
                 )}
             >
@@ -126,10 +126,12 @@ function ActivityRow({ item, now }: { item: ActivityItem; now: Date }) {
                 />
                 <div className="flex-1 min-inline-0">
                     <div className="flex items-start gap-2">
-                        <p className="body min-inline-0 flex-1 font-semibold text-ink">{item.title}</p>
+                        <p className="body flex-1 font-semibold text-ink min-inline-0">
+                            {item.title}
+                        </p>
                         <time
                             dateTime={item.occurredAt}
-                            className="body-xs shrink-0 tabular text-ink-subtle"
+                            className="body-xs tabular shrink-0 text-ink-subtle"
                         >
                             {relative}
                         </time>
@@ -144,9 +146,7 @@ function ActivityRow({ item, now }: { item: ActivityItem; now: Date }) {
 }
 
 function EmptyActivity() {
-    return (
-        <p className="body mbs-4 text-ink-muted">Nothing new since you last opened.</p>
-    );
+    return <p className="body mbs-4 text-ink-muted">Nothing new since you last opened.</p>;
 }
 
 function groupItems(
@@ -175,8 +175,7 @@ function DayGroupLabel({ group, now }: { group: ActivityDayGroup; now: Date }) {
 
     let heading: ReactNode = label;
     if (group === "today" || group === "yesterday") {
-        const date =
-            group === "today" ? now : new Date(now.getTime() - 86_400_000);
+        const date = group === "today" ? now : new Date(now.getTime() - 86_400_000);
         const dateLabel = formatDateShort(date);
         const dateIso = formatDateIso(date);
         heading = (
@@ -236,7 +235,7 @@ export function ActivityCard({ data, now, className }: ActivityCardProps) {
                             {groups.map(({ group, items: groupItems }) => (
                                 <div key={group}>
                                     <DayGroupLabel group={group} now={now} />
-                                    <ul className="flex flex-col divide-y divide-border-warm">
+                                    <ul className="flex flex-col divide-y divide-border-warm/50">
                                         {groupItems.map((item) => (
                                             <ActivityRow key={item.id} item={item} now={now} />
                                         ))}
@@ -248,8 +247,7 @@ export function ActivityCard({ data, now, className }: ActivityCardProps) {
 
                     <div
                         className="
-                          absolute inset-x-0 inset-be-[-1rem] z-10 flex flex-col justify-end
-                          block-14
+                          absolute inset-x-0 -inset-be-4 z-10 flex flex-col justify-end block-14
                         "
                     >
                         {showFade ? (
