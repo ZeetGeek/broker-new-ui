@@ -272,7 +272,7 @@ export function DashboardHeader({
                         aria-label="Add client"
                     >
                         <UserRoundPlus aria-hidden strokeWidth={1.75} />
-                        <span className="hidden md:inline">Add client</span>
+                        <span className="hidden md:inline">Add clients</span>
                     </Button>
                 </motion.div>
             </motion.div>

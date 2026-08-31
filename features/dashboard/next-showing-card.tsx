@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CalendarClock, IndianRupee, MapPin, Navigation, Phone, User } from "lucide-react";
+import { CalendarClock, CalendarPlus, IndianRupee, MapPin, Navigation, Phone, User } from "lucide-react";
 
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
-import { DASHBOARD_CARD_SHELL } from "./card-shell";
+import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { NextShowingStatus } from "./mock-data";
 
 const STARTING_SOON_MINUTES = 30;
@@ -100,23 +100,37 @@ function MapPlaceholder({ distanceKm }: { distanceKm: number }) {
 
 function EmptyNextShowing({ className }: { className?: string }) {
     return (
-        <section className={cn(DASHBOARD_CARD_SHELL, className)}>
+        <section
+            className={cn(DASHBOARD_CARD_SHELL_EMPTY, className)}
+            aria-labelledby="next-showing-empty-heading"
+        >
             <CardLabel info={NEXT_SHOWING_INFO}>Next showing</CardLabel>
-            <div className="mbs-4 flex flex-1 flex-col min-block-0">
-                <p className="h5 text-ink">Nothing on the calendar.</p>
-                <p className="body mbs-1 text-ink-muted">
-                    Schedule a site visit when a client is ready to see a property.
-                </p>
-                <div className="pts-3 mbs-auto">
-                    <Button
-                        variant="default"
-                        size="md"
-                        nativeButton={false}
-                        render={<Link href="/broker/visits/new" />}
-                    >
-                        Schedule a visit
-                    </Button>
+
+            <div
+                className="
+                  flex flex-1 flex-col items-center justify-center gap-4 text-center
+                  min-block-0 px-1
+                "
+                aria-live="polite"
+            >
+                <div className="flex max-w-prose flex-col gap-1.5">
+                    <h2 id="next-showing-empty-heading" className="h5 text-ink">
+                        No visits booked
+                    </h2>
+                    <p className="body-sm text-pretty text-ink-muted">
+                        Schedule one when a client is ready to see a property.
+                    </p>
                 </div>
+
+                <Button
+                    variant="default"
+                    size="md"
+                    nativeButton={false}
+                    render={<Link href="/broker/visits/new" />}
+                >
+                    <CalendarPlus aria-hidden strokeWidth={1.75} />
+                    Schedule a visit
+                </Button>
             </div>
         </section>
     );

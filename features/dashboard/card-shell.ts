@@ -12,3 +12,12 @@ export const DASHBOARD_CARD_SHELL = `
 
 /** Bottom-row cards with denser property lists — height follows content. */
 export const DASHBOARD_CARD_SHELL_AUTO = DASHBOARD_CARD_FRAME;
+
+/** Empty dashboard cards — collapse to content; no fixed loaded-state height. */
+const DASHBOARD_CARD_FRAME_EMPTY = `
+  flex flex-col overflow-hidden rounded-card border border-border-warm bg-surface p-8
+`;
+
+export const DASHBOARD_CARD_SHELL_EMPTY = `
+  ${DASHBOARD_CARD_FRAME_EMPTY} min-block-[180px]
+`;
