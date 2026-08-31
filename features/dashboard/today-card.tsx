@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 
+import { ShortcutTooltip } from "@/features/shortcuts/shortcut-tooltip";
+
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { TodayAgenda, TodayItem } from "./mock-data";
@@ -144,7 +146,9 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                         />
                     ) : null}
                     <div className="relative flex justify-center">
-                        <TextLinkButton href="/broker/visits">View all visits</TextLinkButton>
+                        <ShortcutTooltip shortcutId="visits">
+                            <TextLinkButton href="/broker/visits">View all visits</TextLinkButton>
+                        </ShortcutTooltip>
                     </div>
                 </div>
             </div>

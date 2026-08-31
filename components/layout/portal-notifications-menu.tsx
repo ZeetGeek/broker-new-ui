@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 import type { NotificationItem } from "@/lib/api/notifications";
-import { formatDateIso, formatNotificationWhen, formatRelativePast } from "@/lib/format/date";
+import { formatDateIso, formatNotificationDayTime, formatRelativePast } from "@/lib/format/date";
 import {
     countByTab,
     filterNotificationsByTab,
@@ -42,6 +42,7 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -62,20 +63,29 @@ const menuSurfaceClass = `
   data-closed:animate-none!
   data-open:animate-none!
    min-inline-[22rem] max-inline-96
-  **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
-  **:data-[slot$=-item]:data-highlighted:text-ink!
-  **:data-[slot$=-item]:focus:bg-surface-muted!
-  **:data-[slot$=-item]:focus:text-ink!
+  **:data-[slot$=-item]:data-highlighted:bg-transparent!
+  **:data-[slot$=-item]:focus:bg-transparent!
+  **:data-[slot$=-item]:hover:bg-transparent!
 `;
 
 const notificationsScrollClass = `
   block-full overflow-hidden
-  [&_[data-slot=scroll-area-viewport]]:pe-2
 `;
 
 const itemClass = `
-  flex inline-full cursor-pointer items-start gap-3 rounded-inner px-1 py-3 body-sm font-normal
-  text-ink
+  flex inline-full cursor-pointer items-start gap-3 !rounded-md p-0! body-sm font-normal text-ink
+  data-highlighted:bg-transparent!
+  focus:bg-transparent!
+  hover:bg-transparent!
+  focus:text-ink!
+  data-highlighted:text-ink!
+  hover:[&_[data-notification-title]]:underline
+  data-highlighted:[&_[data-notification-title]]:underline
+  data-highlighted:[&_[data-notification-title]]:underline-offset-2
+  data-highlighted:[&_[data-notification-title]]:decoration-ink/35
+  data-highlighted:[&_[data-notification-title]]:!text-ink
+  data-highlighted:[&_[data-notification-body]]:!text-ink-muted
+  data-highlighted:[&_[data-notification-meta]]:!text-ink-subtle
 `;
 
 const notificationLeadClass = "flex shrink-0 items-center justify-center block-6 inline-6";
@@ -157,35 +167,35 @@ function getNotificationVisual(
     const key = `${type ?? ""} ${title} ${body ?? ""}`.toLowerCase();
 
     if (key.includes("referral")) {
-        return { Icon: Gift, colorClass: "text-urgent-mid" };
+        return { Icon: Gift, colorClass: "!text-urgent-mid" };
     }
 
     if (key.includes("message") || key.includes("chat")) {
-        return { Icon: MessageCircle, colorClass: "text-brand-deep" };
+        return { Icon: MessageCircle, colorClass: "!text-brand-deep" };
     }
 
     if (key.includes("visit") || key.includes("showing") || key.includes("schedule")) {
         return {
             Icon: CalendarClock,
             colorClass:
-                key.includes("approv") || key.includes("accept") ? "text-brand" : "text-urgent",
+                key.includes("approv") || key.includes("accept") ? "!text-brand" : "!text-urgent",
         };
     }
 
     if (key.includes("invite") || key.includes("property") || key.includes("listing")) {
-        return { Icon: Building2, colorClass: "text-brand" };
+        return { Icon: Building2, colorClass: "!text-brand" };
     }
 
     if (key.includes("reject") || key.includes("declin") || key.includes("cancel")) {
-        return { Icon: XCircle, colorClass: "text-danger" };
+        return { Icon: XCircle, colorClass: "!text-danger" };
     }
 
     if (key.includes("approv") || key.includes("accepted") || key.includes("qualified")) {
-        return { Icon: BadgeCheck, colorClass: "text-brand" };
+        return { Icon: BadgeCheck, colorClass: "!text-brand" };
     }
 
     if (key.includes("represent") || key.includes("request")) {
-        return { Icon: Send, colorClass: "text-brand-deep" };
+        return { Icon: Send, colorClass: "!text-brand-deep" };
     }
 
     if (
@@ -194,22 +204,22 @@ function getNotificationVisual(
         key.includes("follow up") ||
         key.includes("due")
     ) {
-        return { Icon: BellRing, colorClass: "text-urgent" };
+        return { Icon: BellRing, colorClass: "!text-urgent" };
     }
 
     if (key.includes("client") || key.includes("lead")) {
-        return { Icon: UserPlus, colorClass: "text-brand-text" };
+        return { Icon: UserPlus, colorClass: "!text-brand-text" };
     }
 
     if (key.includes("verif") || key.includes("rera")) {
-        return { Icon: ShieldCheck, colorClass: "text-brand-text" };
+        return { Icon: ShieldCheck, colorClass: "!text-brand-text" };
     }
 
     if (key.includes("announce") || key.includes("update") || key.includes("system")) {
-        return { Icon: Bell, colorClass: "text-brand" };
+        return { Icon: Bell, colorClass: "!text-brand" };
     }
 
-    return { Icon: Bell, colorClass: "text-brand" };
+    return { Icon: Bell, colorClass: "!text-brand" };
 }
 
 function NotificationTypeIcon({
@@ -224,11 +234,9 @@ function NotificationTypeIcon({
     const { Icon, colorClass } = getNotificationVisual(type, title, body);
 
     return (
-        <Icon
-            aria-hidden
-            className={cn("block-6 inline-6", colorClass)}
-            strokeWidth={1.75}
-        />
+        <span data-notification-icon className={cn("inline-flex shrink-0", colorClass)}>
+            <Icon aria-hidden className="block-6 inline-6 text-current" strokeWidth={1.75} />
+        </span>
     );
 }
 
@@ -320,27 +328,22 @@ function NotificationsHeader({
     onTabChange: (tab: NotificationTab) => void;
 }) {
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col">
             <div className="flex items-center justify-between gap-3">
                 <h2 className="body font-display font-semibold text-ink">Notifications</h2>
-                <Tooltip>
-                    <TooltipTrigger
-                        render={
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label="Mark all as read"
-                                disabled={unreadCount === 0}
-                                onClick={onMarkAllRead}
-                            >
-                                <CheckCheck aria-hidden strokeWidth={1.75} />
-                            </Button>
-                        }
-                    />
-                    <TooltipContent side="bottom">Mark all as read</TooltipContent>
-                </Tooltip>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={unreadCount === 0}
+                    onClick={onMarkAllRead}
+                    className="body-xs shrink-0 gap-1.5 font-medium text-ink-muted hover:text-ink"
+                >
+                    Mark all read
+                    <CheckCheck aria-hidden strokeWidth={1.75} className="block-4 inline-4" />
+                </Button>
             </div>
+            <DropdownMenuSeparator className="mx-0! my-2.5 bg-border-warm inline-full" />
             <NotificationFilterTabs
                 activeTab={activeTab}
                 tabCounts={tabCounts}
@@ -381,11 +384,22 @@ function RequestActions() {
     }
 
     return (
-        <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={handlePlaceholder}>
+        <div data-notification-actions className="flex flex-wrap items-center gap-2">
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="!text-ink hover:!text-ink hover:!bg-background"
+                onClick={handlePlaceholder}
+            >
                 Decline
             </Button>
-            <Button type="button" size="sm" onClick={handlePlaceholder}>
+            <Button
+                type="button"
+                size="sm"
+                className="!text-primary-foreground hover:!text-primary-foreground hover:!bg-primary/80"
+                onClick={handlePlaceholder}
+            >
                 Accept
             </Button>
         </div>
@@ -399,13 +413,13 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
     const showActions = isActionableRequest(item);
 
     return (
-        <div className="flex inline-full items-start gap-3 min-inline-0">
+        <div className="flex items-start gap-3 inline-full min-inline-0">
             {actor ? (
                 <NotificationLeadMedia>
                     <UserAvatar
                         name={actor.name}
                         imageUrl={actor.avatarUrl ?? undefined}
-                        className="block-full inline-full pbs-0"
+                        className="pbs-0 block-full inline-full"
                     />
                 </NotificationLeadMedia>
             ) : (
@@ -415,59 +429,71 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
             )}
 
             <div className="flex flex-1 flex-col gap-2 min-inline-0">
-                <div className="flex inline-full flex-wrap items-start gap-3 min-inline-0">
-                    <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
-                        <span
-                            className={cn(
-                                "body-sm line-clamp-2 text-pretty",
-                                item.isRead ? "font-medium text-ink" : "font-semibold text-ink",
-                            )}
-                        >
-                            {item.title}
-                        </span>
-                        {item.body ? (
-                            <span className="body-xs line-clamp-2 text-pretty text-ink-muted">
-                                {item.body}
-                            </span>
-                        ) : null}
-                        {occurredAt ? (
-                            <time
-                                dateTime={formatDateIso(occurredAt)}
-                                className="tabular body-xs text-ink-subtle"
-                            >
-                                {formatNotificationWhen(occurredAt)}
-                            </time>
-                        ) : null}
-                    </div>
+                <span
+                    data-notification-title
+                    className={cn(
+                        "body-sm line-clamp-2 text-pretty underline-offset-2",
+                        item.isRead ? "font-medium text-ink!" : "font-semibold text-ink!",
+                    )}
+                >
+                    {item.title}
+                </span>
 
-                    <div className="flex shrink-0 flex-col items-end gap-3 overflow-visible">
-                        {!item.isRead ? (
+                <div className="flex flex-col gap-1.5 min-inline-0">
+                    {item.body ? (
+                        <span
+                            data-notification-body
+                            className="body-xs line-clamp-2 text-pretty text-ink-muted!"
+                        >
+                            {item.body}
+                        </span>
+                    ) : null}
+
+                    {occurredAt ? (
+                        <div className="flex items-center gap-2 min-inline-0 pie-1">
+                            <time
+                                data-notification-meta
+                                dateTime={formatDateIso(occurredAt)}
+                                className="tabular body-xs whitespace-nowrap text-ink-subtle!"
+                            >
+                                {formatRelativePast(occurredAt, now)}
+                            </time>
+                            <time
+                                data-notification-meta
+                                dateTime={formatDateIso(occurredAt)}
+                                className="tabular body-xs whitespace-nowrap text-ink-subtle!"
+                            >
+                                {formatNotificationDayTime(occurredAt)}
+                            </time>
+                            {!item.isRead ? (
+                                <span
+                                    aria-hidden
+                                    className="t-unread-dot ms-auto shrink-0 rounded-full block-2.5 inline-2.5"
+                                />
+                            ) : null}
+                        </div>
+                    ) : !item.isRead ? (
+                        <div className="flex justify-end pie-1">
                             <span
                                 aria-hidden
                                 className="t-unread-dot shrink-0 rounded-full block-2.5 inline-2.5"
                             />
-                        ) : (
-                            <span aria-hidden className="shrink-0 block-2.5 inline-2.5" />
-                        )}
-                        {occurredAt ? (
-                            <time
-                                dateTime={formatDateIso(occurredAt)}
-                                className="tabular body-xs whitespace-nowrap text-ink-subtle"
-                            >
-                                {formatRelativePast(occurredAt, now)}
-                            </time>
-                        ) : null}
-                    </div>
+                        </div>
+                    ) : null}
                 </div>
 
                 {propertyLabel ? (
                     <span
+                        data-notification-body
                         className="
-                          body-xs inline-flex inline-fit items-center gap-1 rounded-full bg-surface-muted
-                          px-2.5 py-1 font-medium text-ink-muted
+                          body-xs inline-flex items-center gap-1 rounded-full bg-surface-muted
+                          px-2.5 py-1 font-medium text-ink-muted! inline-fit
                         "
                     >
-                        <Building2 aria-hidden className="shrink-0 block-3 inline-3" />
+                        <Building2
+                            aria-hidden
+                            className="shrink-0 !text-ink-muted block-3 inline-3"
+                        />
                         {propertyLabel}
                     </span>
                 ) : null}
@@ -482,30 +508,26 @@ function NotificationRow({
     viewAllHref,
     now,
     onMarkRead,
-    isLast,
 }: {
     item: NotificationItem;
     viewAllHref: string;
     now: Date;
     onMarkRead: (id: string) => void;
-    isLast: boolean;
 }) {
     const href = item.href || viewAllHref;
     const actionable = isActionableRequest(item);
 
-    const rowClass = cn(itemClass, !isLast && "border-be border-dashed border-border-warm");
-
     if (actionable) {
         return (
-            <div className={rowClass}>
+            <DropdownMenuItem className={itemClass}>
                 <NotificationRowContent item={item} now={now} />
-            </div>
+            </DropdownMenuItem>
         );
     }
 
     return (
         <DropdownMenuItem
-            className={rowClass}
+            className={itemClass}
             render={<Link href={href} />}
             onClick={() => {
                 if (!item.isRead) onMarkRead(item.id);
@@ -593,14 +615,19 @@ export function PortalNotificationsMenu({
                                 )}
                             >
                                 {filteredItems.map((item, index) => (
-                                    <NotificationRow
-                                        key={item.id}
-                                        item={item}
-                                        viewAllHref={viewAllHref}
-                                        now={now}
-                                        onMarkRead={(id) => void markRead(id)}
-                                        isLast={index === filteredItems.length - 1}
-                                    />
+                                    <Fragment key={item.id}>
+                                        <NotificationRow
+                                            item={item}
+                                            viewAllHref={viewAllHref}
+                                            now={now}
+                                            onMarkRead={(id) => void markRead(id)}
+                                        />
+                                        {index < filteredItems.length - 1 ? (
+                                            <DropdownMenuSeparator
+                                                className="mx-0! my-2.5 bg-border-warm inline-full"
+                                            />
+                                        ) : null}
+                                    </Fragment>
                                 ))}
                             </DropdownMenuGroup>
                         </ScrollArea>

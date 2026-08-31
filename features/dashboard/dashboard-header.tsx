@@ -15,6 +15,8 @@ import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { ShortcutTooltip } from "@/features/shortcuts/shortcut-tooltip";
+
 import { DigitPopIn } from "./digit-pop-in";
 import type { ReraStatus } from "./mock-data";
 import { dashboardMetaContainer, dashboardMetaItem } from "./motion";
@@ -332,26 +334,30 @@ export function DashboardHeader({
                         className="ms-auto flex shrink-0 items-center gap-3"
                         variants={dashboardMetaItem}
                     >
-                        <Button
-                            variant="outline-dark"
-                            size="md"
-                            nativeButton={false}
-                            render={<Link href="/broker/properties" />}
-                            aria-label="Browse properties"
-                        >
-                            <Search aria-hidden strokeWidth={1.75} />
-                            <span className="hidden md:inline">Browse properties</span>
-                        </Button>
-                        <Button
-                            variant="accent"
-                            size="md"
-                            nativeButton={false}
-                            render={<Link href="/broker/clients" />}
-                            aria-label="Add client"
-                        >
-                            <UserRoundPlus aria-hidden strokeWidth={1.75} />
-                            <span className="hidden md:inline">Add clients</span>
-                        </Button>
+                        <ShortcutTooltip shortcutId="properties" label="Properties">
+                            <Button
+                                variant="outline-dark"
+                                size="md"
+                                nativeButton={false}
+                                render={<Link href="/broker/properties" />}
+                                aria-label="Browse properties"
+                            >
+                                <Search aria-hidden strokeWidth={1.75} />
+                                <span className="hidden md:inline">Browse properties</span>
+                            </Button>
+                        </ShortcutTooltip>
+                        <ShortcutTooltip shortcutId="clients" label="Clients">
+                            <Button
+                                variant="accent"
+                                size="md"
+                                nativeButton={false}
+                                render={<Link href="/broker/clients" />}
+                                aria-label="Add client"
+                            >
+                                <UserRoundPlus aria-hidden strokeWidth={1.75} />
+                                <span className="hidden md:inline">Add clients</span>
+                            </Button>
+                        </ShortcutTooltip>
                     </motion.div>
                 </div>
             </motion.div>

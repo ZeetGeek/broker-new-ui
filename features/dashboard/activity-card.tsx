@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/empty-state";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 
+import { ShortcutTooltip } from "@/features/shortcuts/shortcut-tooltip";
+
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
 
@@ -129,9 +131,11 @@ export function ActivityCard({ data, className }: ActivityCardProps) {
                             />
                         ) : null}
                         <div className="relative flex justify-center">
-                            <TextLinkButton href="/broker/notifications">
-                                View all activity
-                            </TextLinkButton>
+                            <ShortcutTooltip shortcutId="notifications">
+                                <TextLinkButton href="/broker/notifications">
+                                    View all activity
+                                </TextLinkButton>
+                            </ShortcutTooltip>
                         </div>
                     </div>
                 </div>

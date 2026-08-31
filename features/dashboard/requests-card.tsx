@@ -9,6 +9,8 @@ import { Price } from "@/components/shared/price";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 import { Button } from "@/components/ui/button";
 
+import { ShortcutTooltip } from "@/features/shortcuts/shortcut-tooltip";
+
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { RequestRowItem, RequestsData } from "./mock-data";
@@ -230,9 +232,11 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                         />
                     ) : null}
                     <div className="relative flex justify-center">
-                        <TextLinkButton href="/broker/properties?tab=requests">
-                            View all requests
-                        </TextLinkButton>
+                        <ShortcutTooltip shortcutId="properties" label="Properties">
+                            <TextLinkButton href="/broker/properties?tab=requests">
+                                View all requests
+                            </TextLinkButton>
+                        </ShortcutTooltip>
                     </div>
                 </div>
             </div>

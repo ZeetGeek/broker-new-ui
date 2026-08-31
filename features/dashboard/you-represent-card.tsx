@@ -11,6 +11,8 @@ import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { ShortcutTooltip } from "@/features/shortcuts/shortcut-tooltip";
+
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL_AUTO, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { RepresentedPropertyItem, YouRepresentData } from "./mock-data";
@@ -223,7 +225,9 @@ export function YouRepresentCard({ data, className }: YouRepresentCardProps) {
                     <span id="you-represent-heading">{heading}</span>
                 </CardLabel>
                 {!isEmpty ? (
-                    <TextLinkButton href="/broker/properties?mine=1">View all</TextLinkButton>
+                    <ShortcutTooltip shortcutId="properties" label="Properties">
+                        <TextLinkButton href="/broker/properties?mine=1">View all</TextLinkButton>
+                    </ShortcutTooltip>
                 ) : null}
             </div>
 

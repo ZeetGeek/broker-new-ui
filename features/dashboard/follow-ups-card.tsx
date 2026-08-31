@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 
+import { ShortcutTooltip } from "@/features/shortcuts/shortcut-tooltip";
+
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { FollowUp, FollowUpDue, FollowUpsData } from "./mock-data";
@@ -341,9 +343,11 @@ export function FollowUpsCard({
                             />
                         ) : null}
                         <div className="relative flex justify-center">
-                            <TextLinkButton href="/broker/clients?filter=followups">
-                                View all follow-ups
-                            </TextLinkButton>
+                            <ShortcutTooltip shortcutId="clients" label="Clients">
+                                <TextLinkButton href="/broker/clients?filter=followups">
+                                    View all follow-ups
+                                </TextLinkButton>
+                            </ShortcutTooltip>
                         </div>
                     </div>
                 </div>
