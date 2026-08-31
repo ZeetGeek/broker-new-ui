@@ -56,25 +56,41 @@ const menuSurfaceClass = `
   **:data-[slot$=-item]:focus:text-ink!
 `;
 
-// ScrollArea scrollbar is absolutely positioned inside the root. Keep the root
-// inside the dropdown padding (no negative margin) and reserve end padding on the
-// viewport so list content and hover states do not sit under the track.
+// Reserve viewport end space so content does not sit under the scrollbar thumb.
 const notificationsScrollClass = `
-  block-100 shrink-0 overflow-hidden
-  [&_[data-slot=scroll-area-scrollbar]]:border-s-border-warm!
-  [&_[data-slot=scroll-area-scrollbar]]:bg-border-warm/70
-  [&_[data-slot=scroll-area-scrollbar]]:p-0
-  [&_[data-slot=scroll-area-thumb]]:bg-ink-subtle
+  block-full overflow-hidden
+  [&_[data-slot=scroll-area-viewport]]:pe-2
 `;
 
 const itemClass = `
   cursor-pointer items-start gap-2.5 rounded-inner py-2.5 body-sm font-normal text-ink
 `;
 
-function NotificationsFooter({ viewAllHref }: { viewAllHref: string }) {
+function NotificationsFooter({
+    viewAllHref,
+    showFade,
+}: {
+    viewAllHref: string;
+    showFade: boolean;
+}) {
     return (
-        <div className="mbs-3 flex shrink-0 justify-center">
-            <TextLinkButton href={viewAllHref}>View all notifications</TextLinkButton>
+        <div
+            className="
+              absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end px-3 block-18
+            "
+        >
+            {showFade ? (
+                <div
+                    aria-hidden
+                    className="
+                      pointer-events-none absolute inset-0 bg-linear-to-t from-surface from-40%
+                      via-surface/90 to-transparent
+                    "
+                />
+            ) : null}
+            <div className="relative flex justify-center pbe-2 pbs-1">
+                <TextLinkButton href={viewAllHref}>View all notifications</TextLinkButton>
+            </div>
         </div>
     );
 }
@@ -352,9 +368,14 @@ export function PortalNotificationsMenu({
                         <NotificationsEmpty viewAllHref={viewAllHref} />
                     </div>
                 ) : (
-                    <>
+                    <div className="relative block-72 min-block-0 shrink-0">
                         <ScrollArea className={cn(notificationsScrollClass)}>
-                            <DropdownMenuGroup className="flex flex-col gap-0.5 p-3 pbe-1">
+                            <DropdownMenuGroup
+                                className={cn(
+                                    "flex flex-col gap-0.5 px-3",
+                                    items.length >= 3 ? "pbe-9" : "pbe-1",
+                                )}
+                            >
                                 {items.map((item) => (
                                     <NotificationRow
                                         key={item.id}
@@ -367,8 +388,11 @@ export function PortalNotificationsMenu({
                             </DropdownMenuGroup>
                         </ScrollArea>
 
-                        <NotificationsFooter viewAllHref={viewAllHref} />
-                    </>
+                        <NotificationsFooter
+                            viewAllHref={viewAllHref}
+                            showFade={items.length >= 3}
+                        />
+                    </div>
                 )}
             </DropdownMenuContent>
         </DropdownMenu>
