@@ -56,6 +56,8 @@ export type BrokerProfileMenuProps = {
     broker: BrokerProfileMenuBroker;
     onShortcutsOpen?: () => void;
     tooltipLabel?: string;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 };
 
 const PROFILE_HREF = "/broker/profile";
@@ -100,7 +102,7 @@ function ShortcutHint({
 
     return (
         <KbdGroup className="ms-auto hidden gap-0.5 sm:inline-flex">
-            {shortcut.keys.map((key) => (
+            {shortcut.displayKeys.map((key) => (
                 <Kbd
                     variant="surface"
                     key={key}
@@ -256,7 +258,13 @@ function MobileProfileLink({ broker }: { broker: BrokerProfileMenuBroker }) {
     );
 }
 
-function DesktopProfileDropdown({ broker, onShortcutsOpen, tooltipLabel }: BrokerProfileMenuProps) {
+function DesktopProfileDropdown({
+    broker,
+    onShortcutsOpen,
+    tooltipLabel,
+    open,
+    onOpenChange,
+}: BrokerProfileMenuProps) {
     const { handleLogout, isLoggingOut } = useLogoutHandler();
 
     const publicProfileUrl = broker.publicSlug ? brokerPublicProfileUrl(broker.publicSlug) : null;
@@ -287,7 +295,7 @@ function DesktopProfileDropdown({ broker, onShortcutsOpen, tooltipLabel }: Broke
 
     return (
         <div className="hidden sm:block">
-            <DropdownMenu>
+            <DropdownMenu open={open} onOpenChange={onOpenChange}>
                 {tooltipLabel ? (
                     <Tooltip>
                         <TooltipTrigger render={trigger} />

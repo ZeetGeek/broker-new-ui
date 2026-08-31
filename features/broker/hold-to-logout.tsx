@@ -24,7 +24,7 @@ function LogoutShortcutHint() {
 
     return (
         <KbdGroup className="ms-auto hidden gap-0.5 sm:inline-flex">
-            {shortcut.keys.map((key) => (
+            {shortcut.displayKeys.map((key) => (
                 <Kbd
                     key={key}
                     variant="surface"

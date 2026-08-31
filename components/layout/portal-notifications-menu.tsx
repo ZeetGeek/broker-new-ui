@@ -32,6 +32,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { useNotifications } from "@/providers/notification-provider";
@@ -43,20 +44,31 @@ export type PortalNotificationsMenuProps = {
 };
 
 const menuSurfaceClass = `
-  t-dropdown t-profile-menu animate-none! flex flex-col overflow-hidden rounded-inner border
+  t-dropdown t-profile-menu animate-none! flex flex-col overflow-hidden! rounded-inner border
   border-border-warm bg-surface p-0 text-ink ring-0
   before:backdrop-blur-none
   data-closed:animate-none!
   data-open:animate-none!
-  p-3 min-inline-[22rem] max-inline-96
+   min-inline-[22rem] max-inline-96
   **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
   **:data-[slot$=-item]:data-highlighted:text-ink!
   **:data-[slot$=-item]:focus:bg-surface-muted!
   **:data-[slot$=-item]:focus:text-ink!
 `;
 
+// ScrollArea scrollbar is absolutely positioned inside the root. Keep the root
+// inside the dropdown padding (no negative margin) and reserve end padding on the
+// viewport so list content and hover states do not sit under the track.
+const notificationsScrollClass = `
+  block-100 shrink-0 overflow-hidden
+  [&_[data-slot=scroll-area-scrollbar]]:border-s-border-warm!
+  [&_[data-slot=scroll-area-scrollbar]]:bg-border-warm/70
+  [&_[data-slot=scroll-area-scrollbar]]:p-0
+  [&_[data-slot=scroll-area-thumb]]:bg-ink-subtle
+`;
+
 const itemClass = `
-  cursor-pointer items-start gap-2.5 rounded-inner px-3 py-2.5 body-sm font-normal text-ink
+  cursor-pointer items-start gap-2.5 rounded-inner py-2.5 body-sm font-normal text-ink
 `;
 
 function NotificationsFooter({ viewAllHref }: { viewAllHref: string }) {
@@ -112,9 +124,7 @@ function getNotificationVisual(
         return {
             Icon: CalendarClock,
             colorClass:
-                key.includes("approv") || key.includes("accept")
-                    ? "!text-brand"
-                    : "!text-urgent",
+                key.includes("approv") || key.includes("accept") ? "!text-brand" : "!text-urgent",
         };
     }
 
@@ -318,32 +328,33 @@ export function PortalNotificationsMenu({
             )}
 
             <DropdownMenuContent align="end" sideOffset={14} className={cn(menuSurfaceClass)}>
-                <DropdownMenuGroup className="shrink-0 pbs-1 pbe-3">
+                <DropdownMenuGroup className="shrink-0 p-3">
                     <NotificationsHeader
                         unreadCount={unreadCount}
                         onMarkAllRead={() => void markAllRead()}
                     />
                 </DropdownMenuGroup>
 
-                <DropdownMenuSeparator className="mx-0! my-0 shrink-0 bg-border-warm inline-full!" />
+                <div className="px-3">
+                    <DropdownMenuSeparator
+                        className="
+                      mx-0! my-0 shrink-0 bg-border-warm inline-full!
+                    "
+                    />
+                </div>
 
                 {loading && items.length === 0 ? (
-                    <p className="body-sm mbs-2 shrink-0 px-2 py-6 text-center text-ink-muted">
+                    <p className="body-sm shrink-0 px-3 py-10 text-center text-ink-muted">
                         Loading notifications…
                     </p>
                 ) : items.length === 0 ? (
-                    <div className="mbs-2">
+                    <div className="mx-auto px-3 max-inline-80">
                         <NotificationsEmpty viewAllHref={viewAllHref} />
                     </div>
                 ) : (
                     <>
-                        <div
-                            className="
-                              -mx-1 mbs-2 overflow-x-hidden overflow-y-auto overscroll-contain px-1
-                              max-block-80 min-block-0
-                            "
-                        >
-                            <DropdownMenuGroup className="flex flex-col gap-0.5 p-0">
+                        <ScrollArea className={cn(notificationsScrollClass)}>
+                            <DropdownMenuGroup className="flex flex-col gap-0.5 p-3 pbe-1">
                                 {items.map((item) => (
                                     <NotificationRow
                                         key={item.id}
@@ -354,7 +365,7 @@ export function PortalNotificationsMenu({
                                     />
                                 ))}
                             </DropdownMenuGroup>
-                        </div>
+                        </ScrollArea>
 
                         <NotificationsFooter viewAllHref={viewAllHref} />
                     </>
