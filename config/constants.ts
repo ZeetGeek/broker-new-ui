@@ -11,3 +11,8 @@ export const PIPELINE_STAGES = [
 ] as const;
 
 export type PipelineStageId = (typeof PIPELINE_STAGES)[number]["id"];
+
+/** WhatsApp support line — replace when a real number is assigned. */
+export const SUPPORT_WHATSAPP_E164 = "919824000000";
+
+export const SUPPORT_WHATSAPP_URL = `https://wa.me/${SUPPORT_WHATSAPP_E164}`;

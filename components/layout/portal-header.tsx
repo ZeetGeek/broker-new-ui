@@ -16,10 +16,12 @@ import type { NavItem } from "@/config/nav";
 
 export type PortalHeaderProps = {
     navItems: NavItem[];
+    notificationsHref: string;
+    /** When set, replaces the default portal profile menu (e.g. broker profile dropdown). */
+    profileMenu?: ReactNode;
     userName?: string;
     userEmail?: string;
     userAvatarUrl?: string;
-    notificationsHref: string;
     profileHref?: string;
     referralsHref?: string;
     roleLabel?: string;
@@ -54,10 +56,11 @@ function HeaderTooltip({
 
 export function PortalHeader({
     navItems,
+    notificationsHref,
+    profileMenu,
     userName = "User",
     userEmail,
     userAvatarUrl,
-    notificationsHref,
     profileHref = "#",
     referralsHref,
     roleLabel,
@@ -115,17 +118,19 @@ export function PortalHeader({
                                     )}
                                 />
 
-                                <PortalProfileMenu
-                                    userName={userName}
-                                    userEmail={userEmail}
-                                    userAvatarUrl={userAvatarUrl}
-                                    profileHref={profileHref}
-                                    referralsHref={referralsHref}
-                                    notificationsHref={notificationsHref}
-                                    roleLabel={roleLabel}
-                                    orgName={orgName}
-                                    tooltipLabel="Account"
-                                />
+                                {profileMenu ?? (
+                                    <PortalProfileMenu
+                                        userName={userName}
+                                        userEmail={userEmail}
+                                        userAvatarUrl={userAvatarUrl}
+                                        profileHref={profileHref}
+                                        referralsHref={referralsHref}
+                                        notificationsHref={notificationsHref}
+                                        roleLabel={roleLabel}
+                                        orgName={orgName}
+                                        tooltipLabel="Account"
+                                    />
+                                )}
                             </div>
                         </TooltipProvider>
                     </div>

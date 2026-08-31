@@ -4,6 +4,9 @@ import type { ReactNode } from "react";
 
 import { PortalHeader } from "@/components/layout/portal-header";
 
+import { BrokerProfileMenu } from "@/features/broker/profile-menu";
+import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
+
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
 
 import { BROKER_NAV_ITEMS } from "@/config/nav";
@@ -20,18 +23,19 @@ export function BrokerPortalShell({ children }: { children: ReactNode }) {
         authProvider: profile?.authProvider ?? user?.authProvider,
     });
 
+    const broker = mapBrokerProfileMenuBroker(profile, userName);
+    if (avatarUrl) {
+        broker.avatarUrl = avatarUrl;
+    }
+
     return (
         <NotificationProvider>
             <PortalHeader
                 navItems={BROKER_NAV_ITEMS}
-                userName={userName}
-                userEmail={user?.email ?? profile?.email ?? undefined}
-                userAvatarUrl={avatarUrl}
                 notificationsHref="/broker/notifications"
-                profileHref="/broker/profile"
-                referralsHref="/broker/referrals"
-                roleLabel={profile?.accountLabel ?? user?.role ?? "Broker"}
-                orgName={profile?.orgName ?? user?.orgName ?? null}
+                profileMenu={
+                    <BrokerProfileMenu broker={broker} tooltipLabel="Account" />
+                }
             >
                 {children}
             </PortalHeader>
