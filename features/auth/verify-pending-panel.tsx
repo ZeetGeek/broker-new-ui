@@ -50,8 +50,8 @@ export function VerifyPendingPanel() {
         <AuthFormFrame>
             <div
                 className="
-              mx-auto flex flex-col items-center gap-6 text-center inline-full max-inline-96
-            "
+                  mx-auto flex flex-col items-center gap-6 text-center inline-full max-inline-96
+                "
             >
                 <AuthSuccessCheck />
                 <AuthHeading
@@ -72,9 +72,11 @@ export function VerifyPendingPanel() {
                         onClick={() => void handleResend()}
                         className="border-border-warm bg-surface inline-full"
                     >
-                        {secondsLeft > 0
-                            ? `Resend in ${secondsLeft}s`
-                            : "Resend verification email"}
+                        {isSending
+                            ? "Sending"
+                            : secondsLeft > 0
+                              ? `Resend in ${secondsLeft}s`
+                              : "Resend verification email"}
                     </Button>
                     <Button
                         size="lg"

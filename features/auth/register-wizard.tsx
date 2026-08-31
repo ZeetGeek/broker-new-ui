@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { AuthFormFrame } from "./auth-back-link";
+import { AuthBusyState } from "./auth-busy-state";
 import { AuthHeading } from "./auth-heading";
 import { OrDivider } from "./or-divider";
 import { type Portal, PORTAL_OPTIONS } from "./portal";
@@ -98,6 +99,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
     const router = useRouter();
     const [portal, setPortal] = React.useState<Portal>(initialPortal);
     const [step, setStep] = React.useState<Step>("role");
+    const [isRedirecting, setIsRedirecting] = React.useState(false);
     const slideRef = React.useRef<HTMLDivElement>(null);
     const pageId = step === "role" ? "1" : "2";
     const selected = PORTAL_OPTIONS.find((option) => option.value === portal) ?? PORTAL_OPTIONS[0];
@@ -173,26 +175,42 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
         });
     }
 
-    function onSubmit(values: RegisterValues) {
-        void (async () => {
-            try {
-                await authApi.register({
-                    email: values.email.trim(),
-                    password: values.password,
-                    role: values.portal,
-                });
-                toast.success("Account created. Check your email to verify.");
-                router.push(`/verify-pending?email=${encodeURIComponent(values.email.trim())}`);
-            } catch (err: unknown) {
-                toast.error(
-                    err instanceof ApiError
-                        ? err.message
-                        : err instanceof Error
-                          ? err.message
-                          : "Registration failed",
-                );
-            }
-        })();
+    async function onSubmit(values: RegisterValues) {
+        try {
+            await authApi.register({
+                email: values.email.trim(),
+                password: values.password,
+                role: values.portal,
+            });
+            toast.success("Account created. Check your email to verify.");
+            setIsRedirecting(true);
+            router.push(`/verify-pending?email=${encodeURIComponent(values.email.trim())}`);
+        } catch (err: unknown) {
+            toast.error(
+                err instanceof ApiError
+                    ? err.message
+                    : err instanceof Error
+                      ? err.message
+                      : "Registration failed",
+            );
+        }
+    }
+
+    const isBusy = isSubmitting || isRedirecting;
+
+    if (isBusy) {
+        return (
+            <AuthFormFrame>
+                <AuthBusyState
+                    title={isRedirecting ? "Account created" : "Creating your account"}
+                    description={
+                        isRedirecting
+                            ? "Taking you to verify your email."
+                            : "Saving your details. This can take a few seconds."
+                    }
+                />
+            </AuthFormFrame>
+        );
     }
 
     return (
@@ -386,7 +404,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                 className="inline-full"
                                 loading={isSubmitting}
                             >
-                                Sign up
+                                {isSubmitting ? "Creating account" : "Sign up"}
                             </Button>
                         </form>
 

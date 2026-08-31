@@ -22,6 +22,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { login } from "@/store/slices/auth-slice";
 
 import { AuthFormFrame } from "./auth-back-link";
+import { AuthBusyState } from "./auth-busy-state";
 import { AuthHeading } from "./auth-heading";
 import { OrDivider } from "./or-divider";
 import { SocialAuthButtons } from "./social-auth-buttons";
@@ -34,6 +35,7 @@ export function LoginForm() {
     const dispatch = useAppDispatch();
     const [unverifiedEmail, setUnverifiedEmail] = React.useState<string | null>(null);
     const [isResending, setIsResending] = React.useState(false);
+    const [isRedirecting, setIsRedirecting] = React.useState(false);
 
     const {
         control,
@@ -81,6 +83,7 @@ export function LoginForm() {
             const result = await dispatch(
                 login({ email: values.email.trim(), password: values.password }),
             ).unwrap();
+            setIsRedirecting(true);
             toast.success("Signed in successfully");
             const next = searchParams.get("next");
             const destination =
@@ -111,6 +114,23 @@ export function LoginForm() {
         } finally {
             setIsResending(false);
         }
+    }
+
+    const isBusy = isSubmitting || isRedirecting;
+
+    if (isBusy) {
+        return (
+            <AuthFormFrame>
+                <AuthBusyState
+                    title={isRedirecting ? "Signed in" : "Signing in"}
+                    description={
+                        isRedirecting
+                            ? "Taking you to your dashboard."
+                            : "Checking your email and password."
+                    }
+                />
+            </AuthFormFrame>
+        );
     }
 
     return (
@@ -228,8 +248,9 @@ export function LoginForm() {
                     {unverifiedEmail ? (
                         <div
                             className="
-                          flex flex-col gap-3 rounded-inner border border-border-warm bg-surface p-4
-                        "
+                              flex flex-col gap-3 rounded-inner border border-border-warm bg-surface
+                              p-4
+                            "
                         >
                             <p className="body-sm text-ink-muted">
                                 This account is not verified yet. Resend the verification email to{" "}
@@ -242,7 +263,7 @@ export function LoginForm() {
                                 loading={isResending}
                                 onClick={() => void handleResendVerification()}
                             >
-                                Resend verification email
+                                {isResending ? "Sending" : "Resend verification email"}
                             </Button>
                         </div>
                     ) : null}
@@ -254,7 +275,7 @@ export function LoginForm() {
                         className="inline-full"
                         loading={isSubmitting}
                     >
-                        Sign in
+                        {isSubmitting ? "Signing in" : "Sign in"}
                     </Button>
                 </form>
 

@@ -7,10 +7,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { Button } from "@/components/ui/button";
 
 import { AuthFormFrame } from "./auth-back-link";
+import { AuthBusyState } from "./auth-busy-state";
 import { AuthHeading } from "./auth-heading";
 import { AuthSuccessCheck } from "./auth-success-check";
 
@@ -22,7 +22,7 @@ export function VerifyEmailPanel() {
     const token = searchParams.get("token")?.trim() ?? "";
     const [status, setStatus] = React.useState<Status>(token ? "loading" : "error");
     const [message, setMessage] = React.useState(
-        token ? "Verifying your email..." : "This verification link is missing or incomplete.",
+        token ? "Verifying your email." : "This verification link is missing or incomplete.",
     );
 
     React.useEffect(() => {
@@ -57,36 +57,35 @@ export function VerifyEmailPanel() {
         return () => window.clearTimeout(timer);
     }, [status, router]);
 
+    if (status === "loading") {
+        return (
+            <AuthFormFrame>
+                <AuthBusyState title="Verifying your email" description={message} />
+            </AuthFormFrame>
+        );
+    }
+
     return (
         <AuthFormFrame>
             <div
                 className="
-              mx-auto flex flex-col items-center gap-6 text-center inline-full max-inline-96
-            "
+                  mx-auto flex flex-col items-center gap-6 text-center inline-full max-inline-96
+                "
             >
                 {status === "success" ? <AuthSuccessCheck /> : null}
-                {status === "loading" ? <LoadingSpinner label="Verifying" /> : null}
                 <AuthHeading
-                    title={
-                        status === "success"
-                            ? "Email verified"
-                            : status === "loading"
-                              ? "Verifying"
-                              : "Verification failed"
-                    }
+                    title={status === "success" ? "Email verified" : "Verification failed"}
                     description={message}
                 />
-                {status !== "loading" ? (
-                    <Button
-                        size="lg"
-                        variant="accent"
-                        nativeButton={false}
-                        render={<Link href="/login" />}
-                        className="inline-full"
-                    >
-                        Continue to sign in
-                    </Button>
-                ) : null}
+                <Button
+                    size="lg"
+                    variant="accent"
+                    nativeButton={false}
+                    render={<Link href="/login" />}
+                    className="inline-full"
+                >
+                    Continue to sign in
+                </Button>
             </div>
         </AuthFormFrame>
     );

@@ -1,0 +1,47 @@
+---
+description: Message copy — errors, empty states, validation, success, not-found
+globs:
+  - "app/**/*.ts"
+  - "app/**/*.tsx"
+  - "components/**/*.ts"
+  - "components/**/*.tsx"
+  - "features/**/*.ts"
+  - "features/**/*.tsx"
+  - "lib/validation/**/*.ts"
+  - "config/messages.ts"
+alwaysApply: false
+---
+
+# Messages
+
+Read `docs/MESSAGES.md` before writing any user-facing text — errors, empty
+states, validation, success, not-found. It is the authority.
+
+Every message answers **what happened → what now.** If it only does the first,
+it isn't finished.
+
+Six rules restated because they are the ones that make an app feel unfinished:
+
+1. **Never show a status code, stack trace, endpoint, or table name.** Map HTTP
+   failures to plain sentences. 500 is our fault and should say so.
+2. **Toasts are for transient success only.** Never for errors, never for
+   anything the user must act on. They vanish and get missed on a phone.
+3. **Three kinds of empty state, not one.** First-run teaches ("Add your first
+   property"). Filtered offers escape ("No properties match these filters —
+   clear filters"). Showing the first to someone who has data and a filter on
+   is a bug.
+4. **A sold or unpublished property is not a generic 404.** The user followed a
+   real WhatsApp link. Say "This property is no longer available" and offer to
+   browse similar.
+5. **Validation fires on blur, never before the field is touched**, and says
+   what's expected: "Enter a 10-digit mobile number", not "Invalid input".
+6. **Never lose form input on a failed submit.** Losing a half-finished listing
+   is how someone stops using the app.
+
+No internal vocabulary in anything a user reads. "Request to represent" shows
+as "Broker wants to sell your property". No "oops" or "whoops" — cute error
+copy reads as unserious when a listing just failed to save.
+
+Everything else — the full status-code map, India-specific validation rules,
+success/no-success table, destructive confirmations, the jargon list, and where
+strings live — is in `docs/MESSAGES.md`.

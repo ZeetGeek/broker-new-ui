@@ -17,10 +17,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { AuthFormFrame } from "./auth-back-link";
+import { AuthBusyState } from "./auth-busy-state";
 import { AuthHeading } from "./auth-heading";
 
 export function ResetPasswordForm({ token }: { token: string }) {
     const router = useRouter();
+    const [isRedirecting, setIsRedirecting] = React.useState(false);
     const {
         control,
         handleSubmit,
@@ -39,6 +41,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         try {
             const res = await authApi.resetPassword(token, values.password);
             toast.success(res.message || "Password reset successfully");
+            setIsRedirecting(true);
             router.replace("/login");
         } catch (err: unknown) {
             toast.error(
@@ -67,6 +70,21 @@ export function ResetPasswordForm({ token }: { token: string }) {
                         Request a new link
                     </Button>
                 </div>
+            </AuthFormFrame>
+        );
+    }
+
+    const isBusy = isSubmitting || isRedirecting;
+
+    if (isBusy) {
+        return (
+            <AuthFormFrame>
+                <AuthBusyState
+                    title={isRedirecting ? "Password updated" : "Saving your password"}
+                    description={
+                        isRedirecting ? "Taking you to sign in." : "This can take a few seconds."
+                    }
+                />
             </AuthFormFrame>
         );
     }
@@ -149,7 +167,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
                         className="inline-full"
                         loading={isSubmitting}
                     >
-                        Reset password
+                        {isSubmitting ? "Saving password" : "Reset password"}
                     </Button>
                 </form>
 

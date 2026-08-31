@@ -1,4 +1,10 @@
+"use client";
+
+import { Tailspin } from "ldrs/react";
+
 import { cn } from "@/lib/utils";
+
+import "ldrs/react/Tailspin.css";
 
 export function LoadingSpinner({
     label = "Loading",
@@ -8,16 +14,13 @@ export function LoadingSpinner({
     className?: string;
 }) {
     return (
-        <div
-            className={cn(
-                `
-                  animate-spin rounded-full border-2 border-border-warm border-bs-brand block-8
-                  inline-8
-                `,
-                className,
-            )}
+        <span
+            className={cn("inline-flex shrink-0 text-brand block-8 inline-8", className)}
+            role="status"
             aria-label={label}
-        />
+        >
+            <Tailspin size="32" stroke="3" speed="0.9" color="currentColor" />
+        </span>
     );
 }
 
@@ -29,8 +32,17 @@ export function LoadingCenter({
     className?: string;
 }) {
     return (
-        <div className={cn("flex items-center justify-center min-block-64", className)}>
+        <div
+            className={cn(
+                "flex flex-col items-center justify-center gap-4 min-block-64",
+                className,
+            )}
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+        >
             <LoadingSpinner label={label} />
+            <p className="body text-ink-muted">{label}</p>
         </div>
     );
 }

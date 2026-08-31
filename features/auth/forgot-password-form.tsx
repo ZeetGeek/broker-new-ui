@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { AuthFormFrame } from "./auth-back-link";
+import { AuthBusyState } from "./auth-busy-state";
 import { AuthHeading } from "./auth-heading";
 import { AuthSuccessCheck } from "./auth-success-check";
 
@@ -105,8 +106,8 @@ export function ForgotPasswordForm() {
         }
     }
 
-    function onSubmit(values: ForgotPasswordValues) {
-        void sendReset(values.email);
+    async function onSubmit(values: ForgotPasswordValues) {
+        await sendReset(values.email);
     }
 
     function handleUseDifferentEmail() {
@@ -120,6 +121,19 @@ export function ForgotPasswordForm() {
             return;
         }
         void sendReset(email);
+    }
+
+    const isRequestBusy = (isSending || isSubmitting) && step === "request";
+
+    if (isRequestBusy) {
+        return (
+            <AuthFormFrame>
+                <AuthBusyState
+                    title="Sending reset link"
+                    description="This can take a few seconds."
+                />
+            </AuthFormFrame>
+        );
     }
 
     return (
@@ -185,7 +199,9 @@ export function ForgotPasswordForm() {
                                 loading={isSending || isSubmitting}
                                 className="inline-full"
                             >
-                                Send reset link
+                                {isSending || isSubmitting
+                                    ? "Sending reset link"
+                                    : "Send reset link"}
                             </Button>
                         </form>
 
@@ -227,7 +243,11 @@ export function ForgotPasswordForm() {
                                 onClick={handleResend}
                                 className="border-border-warm bg-surface inline-full"
                             >
-                                {secondsLeft > 0 ? `Resend in ${secondsLeft}s` : "Resend link"}
+                                {isSending
+                                    ? "Sending"
+                                    : secondsLeft > 0
+                                      ? `Resend in ${secondsLeft}s`
+                                      : "Resend link"}
                             </Button>
                             <Button
                                 size="lg"

@@ -22,8 +22,16 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     if (!hydrated || !isAuthenticated) {
         return (
-            <div className="flex items-center justify-center bg-surface-muted min-block-screen">
-                <LoadingSpinner />
+            <div
+                className="
+                  flex flex-col items-center justify-center gap-4 bg-surface-muted min-block-screen
+                "
+                role="status"
+                aria-live="polite"
+                aria-busy="true"
+            >
+                <LoadingSpinner label="Loading your account" />
+                <p className="body text-ink-muted">Loading your account</p>
             </div>
         );
     }

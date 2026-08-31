@@ -3,8 +3,7 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { LoadingCenter } from "@/components/shared/loading-spinner";
-
+import { AuthPageFallback } from "@/features/auth/auth-busy-state";
 import { ResetPasswordForm } from "@/features/auth/reset-password-form";
 
 function ResetPasswordInner() {
@@ -15,7 +14,7 @@ function ResetPasswordInner() {
 
 export default function Page() {
     return (
-        <Suspense fallback={<LoadingCenter />}>
+        <Suspense fallback={<AuthPageFallback title="Loading" description="Please wait." />}>
             <ResetPasswordInner />
         </Suspense>
     );

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import * as React from "react";
 import toast from "react-hot-toast";
 
 import { addCollection, Icon } from "@iconify/react/offline";
@@ -24,10 +25,14 @@ function SocialButton({
     children,
     mark,
     onClick,
+    loading = false,
+    disabled = false,
 }: {
     children: ReactNode;
     mark: ReactNode;
     onClick?: () => void;
+    loading?: boolean;
+    disabled?: boolean;
 }) {
     return (
         <Button
@@ -35,12 +40,14 @@ function SocialButton({
             variant="outline"
             size="lg"
             onClick={onClick}
+            loading={loading}
+            disabled={disabled}
             className="
               gap-3 border-border-warm bg-surface font-medium text-ink shadow-sm inline-full
               hover:bg-surface-muted
             "
         >
-            {mark}
+            {loading ? null : mark}
             {children}
         </Button>
     );
@@ -53,7 +60,10 @@ export function SocialAuthButtons({
     action: "Sign in" | "Sign up";
     role?: Portal;
 }) {
+    const [isOpeningGoogle, setIsOpeningGoogle] = React.useState(false);
+
     function handleGoogle() {
+        setIsOpeningGoogle(true);
         window.location.href = authApi.googleStartUrl({ role });
     }
 
@@ -63,12 +73,18 @@ export function SocialAuthButtons({
 
     return (
         <div className="flex flex-col gap-3">
-            <SocialButton mark={<BrandIcon icon="thesvg-color:google" />} onClick={handleGoogle}>
-                {action} with Google
+            <SocialButton
+                mark={<BrandIcon icon="thesvg-color:google" />}
+                onClick={handleGoogle}
+                loading={isOpeningGoogle}
+                disabled={isOpeningGoogle}
+            >
+                {isOpeningGoogle ? "Opening Google" : `${action} with Google`}
             </SocialButton>
             <SocialButton
                 mark={<BrandIcon icon="thesvg-color:apple-light" />}
                 onClick={handleApple}
+                disabled={isOpeningGoogle}
             >
                 {action} with Apple
             </SocialButton>
