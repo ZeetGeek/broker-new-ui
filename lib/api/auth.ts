@@ -95,6 +95,14 @@ export const authApi = {
         }).catch(() => undefined);
     },
 
+    completeGoogleRole(role: "owner" | "broker") {
+        return apiFetch<LoginResponse>("/auth/google/complete-role", {
+            method: "POST",
+            body: JSON.stringify({ role }),
+            credentials: "include",
+        });
+    },
+
     /**
      * Full-page redirect start URL for Google OAuth.
      * For new sign-ups, pass role + accountType (and orgName when organization).

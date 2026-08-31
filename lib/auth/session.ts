@@ -1,3 +1,5 @@
+export const GOOGLE_ONBOARDING_KEY = "google_onboarding_pending";
+
 export type AuthUser = {
     id: string;
     email: string;
