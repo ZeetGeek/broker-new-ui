@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -78,6 +78,12 @@ const itemClass = `
   text-ink
 `;
 
+const notificationLeadClass = "flex shrink-0 items-center justify-center block-6 inline-6";
+
+function NotificationLeadMedia({ children }: { children: ReactNode }) {
+    return <span className={notificationLeadClass}>{children}</span>;
+}
+
 function movePill(pill: HTMLElement, tab: HTMLElement, animate: boolean) {
     const nextTransform = `translateX(${tab.offsetLeft}px)`;
     const nextWidth = `${tab.offsetWidth}px`;
@@ -137,8 +143,6 @@ function UnreadBadge({ count }: { count: number }) {
         </span>
     );
 }
-
-const iconBaseClass = "shrink-0 block-4 inline-4";
 
 type NotificationVisual = {
     Icon: LucideIcon;
@@ -222,7 +226,7 @@ function NotificationTypeIcon({
     return (
         <Icon
             aria-hidden
-            className={cn("shrink-0 block-8 inline-8", colorClass)}
+            className={cn("block-6 inline-6", colorClass)}
             strokeWidth={1.75}
         />
     );
@@ -397,14 +401,17 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
     return (
         <div className="flex inline-full items-start gap-3 min-inline-0">
             {actor ? (
-                <UserAvatar
-                    name={actor.name}
-                    imageUrl={actor.avatarUrl ?? undefined}
-                    size="sm"
-                    className="shrink-0"
-                />
+                <NotificationLeadMedia>
+                    <UserAvatar
+                        name={actor.name}
+                        imageUrl={actor.avatarUrl ?? undefined}
+                        className="block-full inline-full pbs-0"
+                    />
+                </NotificationLeadMedia>
             ) : (
-                <NotificationTypeIcon type={item.type} title={item.title} body={item.body} />
+                <NotificationLeadMedia>
+                    <NotificationTypeIcon type={item.type} title={item.title} body={item.body} />
+                </NotificationLeadMedia>
             )}
 
             <div className="flex flex-1 flex-col gap-2 min-inline-0">
