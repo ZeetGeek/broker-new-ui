@@ -80,6 +80,12 @@ export function BrokerDashboard() {
                     now={now}
                     siteVisitCount={view.siteVisitCount}
                     requestsWaitingCount={view.requestsWaitingCount}
+                    pipelineActiveTotal={view.pipelineCard.activeTotal}
+                    followUpsOverdueCount={view.followUps.overdueCount}
+                    followUpsRemainingCount={view.followUps.remainingThisWeek}
+                    activityCount={
+                        view.activity.items.length + (view.activity.remainingCount ?? 0)
+                    }
                     reraStatus={view.reraStatus}
                     serviceAreas={view.serviceAreas}
                     phoneDigits={view.phoneDigits}

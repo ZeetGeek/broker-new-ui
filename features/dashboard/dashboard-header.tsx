@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import { Mail, MapPin, Pencil, Phone, Search, UserRoundPlus } from "lucide-react";
 import { motion } from "motion/react";
 
 import { cn } from "@/lib/utils";
 
+import { TextLoop } from "@/components/motion-primitives/text-loop";
 import { DateDisplay } from "@/components/shared/date-display";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Badge, badgeVariants } from "@/components/ui/badge";
@@ -19,10 +21,17 @@ import { dashboardMetaContainer, dashboardMetaItem } from "./motion";
 import { ReraStatusChip } from "./rera-status";
 import { StaggerLine, StaggerReveal } from "./stagger-reveal";
 
-export type DashboardHeaderProps = {
-    now: Date;
+export type DashboardSummaryStats = {
     siteVisitCount: number;
     requestsWaitingCount: number;
+    pipelineActiveTotal: number;
+    followUpsOverdueCount: number;
+    followUpsRemainingCount: number;
+    activityCount: number;
+};
+
+export type DashboardHeaderProps = DashboardSummaryStats & {
+    now: Date;
     reraStatus: ReraStatus;
     serviceAreas: string[];
     phoneDigits: string;
@@ -44,40 +53,95 @@ function hasPhoneNumber(phoneDigits: string) {
     return phoneDigits.replace(/\D/g, "").slice(-10).length === 10;
 }
 
-function DashboardGreetingSummary({
-    siteVisitCount,
-    requestsWaitingCount,
-}: {
-    siteVisitCount: number;
-    requestsWaitingCount: number;
-}) {
-    if (siteVisitCount === 0 && requestsWaitingCount === 0) {
-        return <span className="text-ink-muted">No visits booked. No requests waiting.</span>;
+const SUMMARY_LOOP_INTERVAL_S = 6.5;
+
+function countPhrase(count: number, singular: string, plural: string) {
+    if (count === 0) {
+        return null;
     }
 
-    const visitPart =
-        siteVisitCount === 0 ? (
-            "No visits booked"
-        ) : (
-            <>
-                <DigitPopIn value={siteVisitCount} />{" "}
-                {siteVisitCount === 1 ? "site visit" : "site visits"}
-            </>
-        );
+    return (
+        <>
+            <DigitPopIn value={count} /> {count === 1 ? singular : plural}
+        </>
+    );
+}
 
-    const requestPart =
-        requestsWaitingCount === 0 ? (
-            "No requests waiting"
+function buildSummaryLines({
+    siteVisitCount,
+    requestsWaitingCount,
+    pipelineActiveTotal,
+    followUpsOverdueCount,
+    followUpsRemainingCount,
+    activityCount,
+}: DashboardSummaryStats) {
+    const followUpCount = followUpsOverdueCount + followUpsRemainingCount;
+
+    return [
+        siteVisitCount === 0 ? (
+            "Your calendar is clear today"
         ) : (
             <>
-                <DigitPopIn value={requestsWaitingCount} />{" "}
-                {requestsWaitingCount === 1 ? "request" : "requests"} waiting
+                You have {countPhrase(siteVisitCount, "site visit today", "site visits today")}
             </>
-        );
+        ),
+        requestsWaitingCount === 0 ? (
+            "No owner replies waiting on you"
+        ) : (
+            <>
+                {countPhrase(
+                    requestsWaitingCount,
+                    "owner hasn't replied yet",
+                    "owners haven't replied yet",
+                )}
+            </>
+        ),
+        pipelineActiveTotal === 0 ? (
+            "Add a client when a deal comes in"
+        ) : (
+            <>
+                You&apos;re working{" "}
+                {countPhrase(pipelineActiveTotal, "client right now", "clients right now")}
+            </>
+        ),
+        followUpCount === 0 ? (
+            <>You&apos;re all caught up on follow-ups</>
+        ) : followUpsOverdueCount > 0 ? (
+            <>
+                {countPhrase(followUpsOverdueCount, "client waiting for your call", "clients waiting for your call")}
+            </>
+        ) : (
+            <>
+                {countPhrase(followUpCount, "follow-up coming up this week", "follow-ups coming up this week")}
+            </>
+        ),
+        activityCount === 0 ? (
+            "Updates will show here as things happen"
+        ) : (
+            <>
+                {countPhrase(activityCount, "update since you last checked", "updates since you last checked")}
+            </>
+        ),
+    ];
+}
+
+function DashboardGreetingSummary(stats: DashboardSummaryStats) {
+    const [isPaused, setIsPaused] = useState(false);
+    const lines = buildSummaryLines(stats);
 
     return (
-        <span className="text-ink-muted">
-            {visitPart}. {requestPart}.
+        <span
+            aria-live="polite"
+            aria-atomic="true"
+            className="text-ink-muted"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+        >
+            <TextLoop interval={SUMMARY_LOOP_INTERVAL_S} trigger={!isPaused}>
+                {lines.map((line, index) => (
+                    <span key={index}>{line}</span>
+                ))}
+            </TextLoop>
         </span>
     );
 }
@@ -190,6 +254,10 @@ export function DashboardHeader({
     now,
     siteVisitCount,
     requestsWaitingCount,
+    pipelineActiveTotal,
+    followUpsOverdueCount,
+    followUpsRemainingCount,
+    activityCount,
     reraStatus,
     serviceAreas,
     phoneDigits,
@@ -207,6 +275,10 @@ export function DashboardHeader({
                         <DashboardGreetingSummary
                             siteVisitCount={siteVisitCount}
                             requestsWaitingCount={requestsWaitingCount}
+                            pipelineActiveTotal={pipelineActiveTotal}
+                            followUpsOverdueCount={followUpsOverdueCount}
+                            followUpsRemainingCount={followUpsRemainingCount}
+                            activityCount={activityCount}
                         />
                     </StaggerLine>
                 </StaggerReveal>
