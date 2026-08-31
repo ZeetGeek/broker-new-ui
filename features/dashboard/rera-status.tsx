@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Clock, type LucideIcon,Shield, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Clock, type LucideIcon, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,11 @@ import type { ReraStatus } from "./mock-data";
 
 const PROFILE_EDIT_HREF = "/broker/profile/edit";
 const VERIFY_WAIT_COPY = "Usually within 24 hours";
+const ADD_RERA_TOOLTIP =
+    "Add your RERA number to get verified. Owners approve verified brokers far more often.";
+const SETUP_CHIP_TOOLTIP_CLASS = "block w-max max-w-74! text-pretty";
+const ACTIONABLE_CHIP_HOVER =
+    "transition-colors duration-160 hover:brightness-95 active:brightness-90";
 
 const CHIP: Record<
     Exclude<ReraStatus, "verifying">,
@@ -70,15 +75,26 @@ export function ReraStatusChip({ status }: ReraStatusChipProps) {
 
     if (chip.href) {
         return (
-            <Link
-                href={chip.href}
-                className={cn(
-                    className,
-                    "outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
-                )}
-            >
-                {content}
-            </Link>
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <Link
+                            href={chip.href}
+                            aria-label="Add your RERA number to get verified"
+                            className={cn(
+                                className,
+                                ACTIONABLE_CHIP_HOVER,
+                                "outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
+                            )}
+                        >
+                            {content}
+                        </Link>
+                    }
+                />
+                <TooltipContent side="inline-end" className={SETUP_CHIP_TOOLTIP_CLASS}>
+                    {ADD_RERA_TOOLTIP}
+                </TooltipContent>
+            </Tooltip>
         );
     }
 
