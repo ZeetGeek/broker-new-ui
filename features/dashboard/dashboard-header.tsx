@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { Compass, Mail, MapPin, Pencil, Phone, UserRoundPlus } from "lucide-react";
+import { Mail, MapPin, Pencil, Phone, Search, UserRoundPlus } from "lucide-react";
 import { motion } from "motion/react";
 
 import { DateDisplay } from "@/components/shared/date-display";
@@ -132,8 +132,7 @@ export function DashboardHeader({
                         <span className="text-ink">.</span>{" "}
                         <span className="text-ink-muted">
                             <DigitPopIn value={siteVisitCount} /> {visitWord},{" "}
-                            <DigitPopIn value={requestsWaitingCount} /> {requestWord}{" "}
-                            waiting.
+                            <DigitPopIn value={requestsWaitingCount} /> {requestWord} waiting.
                         </span>
                     </StaggerLine>
                 </StaggerReveal>
@@ -184,8 +183,8 @@ export function DashboardHeader({
                         render={<Link href="/broker/properties" />}
                         aria-label="Browse properties"
                     >
-                        <Compass aria-hidden strokeWidth={1.75} />
-                        <span className="hidden md:inline">Browse</span>
+                        <Search aria-hidden strokeWidth={1.75} />
+                        <span className="hidden md:inline">Browse properties</span>
                     </Button>
                     <Button
                         variant="default"
