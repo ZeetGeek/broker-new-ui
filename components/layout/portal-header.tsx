@@ -98,11 +98,8 @@ export function PortalHeader({
                                             Search
                                         </span>
                                         <Kbd
-                                            className="
-                                              ms-2 -me-1 hidden
-                                              group-hover:text-ink
-                                              md:inline-flex
-                                            "
+                                            variant="surface"
+                                            className="ms-2 -me-1 hidden md:inline-flex"
                                         >
                                             Ctrl + K
                                         </Kbd>

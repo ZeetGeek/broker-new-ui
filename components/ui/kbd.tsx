@@ -6,7 +6,7 @@ const kbdVariants = cva(
     `
       pointer-events-none inline-flex select-none items-center justify-center gap-1.5
       rounded-sm border text-xs tracking-tight text-nowrap font-sans font-medium
-      text-ink dark:text-foreground
+      text-ink-muted
       border-border-warm/50 dark:border-border/20
       [box-shadow:hsl(218,13%,50%,0.1)_0_-2px_0_0_inset]
       dark:[box-shadow:hsl(218,13%,70%,0.08)_0_-2px_0_0_inset]
