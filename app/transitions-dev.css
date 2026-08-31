@@ -101,8 +101,8 @@
     --tt-delay: 80ms;
     --tt-in-ease: ease-out;
     --tt-out-ease: ease-out;
-    --tt-bg: var(--color-ink);
-    --tt-fg: var(--color-canvas);
+    --tt-bg: var(--color-surface);
+    --tt-fg: var(--color-ink);
 }
 
 .dark {
@@ -649,11 +649,6 @@
 
 .t-tooltip[data-instant] {
     transition: none;
-}
-
-.t-tooltip-arrow {
-    fill: var(--tt-bg);
-    background: var(--tt-bg);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -73,8 +73,8 @@ function TooltipContent({
                     data-slot="tooltip-content"
                     className={cn(
                         `
-                          t-tooltip body-xs z-50 inline-flex items-center gap-1.5 rounded-inner px-3
-                          py-1.5 font-medium shadow-lg inline-fit max-inline-xs
+                          t-tooltip body-xs z-50 inline-flex items-center gap-1.5 rounded-md border
+                          border-border-warm px-3 py-1.5 font-medium shadow-sm inline-fit max-inline-xs
                           has-data-[slot=kbd]:pe-1.5
                           **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate
                           **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-lg
@@ -84,28 +84,6 @@ function TooltipContent({
                     {...props}
                 >
                     {children}
-                    <TooltipPrimitive.Arrow
-                        className={`
-                          t-tooltip-arrow z-50 translate-y-[calc(-50%-2px)] rotate-45 rounded-[2px]
-                          block-2.5 inline-2.5
-                          data-[side=bottom]:inset-bs-1
-                          data-[side=inline-end]:-inset-s-1 data-[side=inline-end]:inset-bs-1/2!
-                          data-[side=inline-end]:translate-x-[1.5px]
-                          data-[side=inline-end]:-translate-y-1/2
-                          data-[side=inline-start]:-inset-e-1 data-[side=inline-start]:inset-bs-1/2!
-                          data-[side=inline-start]:translate-x-[-1.5px]
-                          data-[side=inline-start]:-translate-y-1/2
-                          data-[side=left]:-inset-e-1 data-[side=left]:inset-bs-1/2!
-                          data-[side=left]:translate-x-[-1.5px] data-[side=left]:-translate-y-1/2
-                          data-[side=right]:-inset-s-1 data-[side=right]:inset-bs-1/2!
-                          data-[side=right]:translate-x-[1.5px] data-[side=right]:-translate-y-1/2
-                          data-[side=top]:-inset-be-2.5
-                          rtl:data-[side=inline-end]:translate-x-[-1.5px]
-                          rtl:data-[side=inline-start]:translate-x-[1.5px]
-                          rtl:data-[side=left]:translate-x-[1.5px]
-                          rtl:data-[side=right]:translate-x-[-1.5px]
-                        `}
-                    />
                 </TooltipPrimitive.Popup>
             </TooltipPrimitive.Positioner>
         </TooltipPrimitive.Portal>
