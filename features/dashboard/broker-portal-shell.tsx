@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 
 import { PortalHeader } from "@/components/layout/portal-header";
 
+import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
+
 import { BROKER_NAV_ITEMS } from "@/config/nav";
 import { NotificationProvider } from "@/providers/notification-provider";
 import { useAppSelector } from "@/store/hooks";
@@ -13,7 +15,10 @@ export function BrokerPortalShell({ children }: { children: ReactNode }) {
     const profile = useAppSelector((state) => state.dashboard.profile);
 
     const userName = profile?.fullName?.trim() || user?.fullName?.trim() || user?.email || "Broker";
-    const avatarUrl = profile?.avatarUrl ?? user?.avatarUrl ?? undefined;
+    const avatarUrl = resolveUserAvatarImageUrl({
+        avatarUrl: profile?.avatarUrl ?? user?.avatarUrl,
+        authProvider: profile?.authProvider ?? user?.authProvider,
+    });
 
     return (
         <NotificationProvider>
@@ -21,7 +26,7 @@ export function BrokerPortalShell({ children }: { children: ReactNode }) {
                 navItems={BROKER_NAV_ITEMS}
                 userName={userName}
                 userEmail={user?.email ?? profile?.email ?? undefined}
-                userAvatarUrl={avatarUrl ?? undefined}
+                userAvatarUrl={avatarUrl}
                 notificationsHref="/broker/notifications"
                 profileHref="/broker/profile"
                 referralsHref="/broker/referrals"

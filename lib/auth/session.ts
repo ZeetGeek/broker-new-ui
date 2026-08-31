@@ -8,6 +8,7 @@ export type AuthUser = {
     accountType: string | null;
     orgName: string | null;
     avatarUrl: string | null;
+    authProvider?: string | null;
     isEmailVerified: boolean | null;
     createdAt?: string | null;
 };

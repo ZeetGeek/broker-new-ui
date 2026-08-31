@@ -3,41 +3,10 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { Avatar, AvatarFallback, AvatarImage } from "facehash";
 
+import { normalizeAvatarUrl } from "@/lib/auth/avatar";
 import { cn } from "@/lib/utils";
 
-const AVATAR_BG_COLORS = [
-    "bg-red-400",
-    "bg-orange-400",
-    "bg-amber-400",
-    "bg-yellow-400",
-    "bg-lime-400",
-    "bg-green-400",
-    "bg-emerald-400",
-    "bg-teal-400",
-    "bg-cyan-400",
-    "bg-sky-400",
-    "bg-blue-400",
-    "bg-indigo-400",
-    "bg-violet-400",
-    "bg-purple-400",
-    "bg-fuchsia-400",
-    "bg-pink-400",
-    "bg-rose-400",
-] as const;
-
-function avatarBgFromName(name: string): (typeof AVATAR_BG_COLORS)[number] {
-    const normalized = name.trim().toLowerCase();
-    let hash = 0;
-
-    for (let i = 0; i < normalized.length; i++) {
-        hash = (hash << 5) - hash + normalized.charCodeAt(i);
-        hash |= 0;
-    }
-
-    return AVATAR_BG_COLORS[Math.abs(hash) % AVATAR_BG_COLORS.length];
-}
-
-const avatarVariants = cva("overflow-hidden rounded-full px-1 pbs-[2px]", {
+const avatarVariants = cva("relative overflow-hidden rounded-full", {
     variants: {
         size: {
             sm: "block-control-sm inline-control-sm",
@@ -51,6 +20,8 @@ const avatarVariants = cva("overflow-hidden rounded-full px-1 pbs-[2px]", {
     },
 });
 
+const avatarMediaClass = "block-full inline-full object-cover object-center";
+
 export type UserAvatarProps = VariantProps<typeof avatarVariants> & {
     name: string;
     imageUrl?: string;
@@ -58,14 +29,19 @@ export type UserAvatarProps = VariantProps<typeof avatarVariants> & {
 };
 
 export function UserAvatar({ name, imageUrl, size, className }: UserAvatarProps) {
+    const resolvedImageUrl = normalizeAvatarUrl(imageUrl);
+    const hasPhoto = Boolean(resolvedImageUrl);
+
     return (
-        <Avatar className={cn(avatarVariants({ size }), avatarBgFromName(name), className)}>
-            {imageUrl ? <AvatarImage src={imageUrl} alt={name} className="object-cover" /> : null}
+        <Avatar className={cn(avatarVariants({ size }), className)}>
+            {hasPhoto ? (
+                <AvatarImage src={resolvedImageUrl} alt={name} className={avatarMediaClass} />
+            ) : null}
             <AvatarFallback
                 name={name}
-                className="pbs-1 block-full inline-full"
+                className={avatarMediaClass}
                 facehashProps={{
-                    className: "size-full text-ink",
+                    className: "size-full scale-110 text-ink",
                     variant: "solid",
                     intensity3d: "dramatic",
                     enableBlink: true,

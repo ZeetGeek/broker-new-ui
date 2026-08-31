@@ -18,6 +18,7 @@ export type UserProfile = {
     accountType?: string | null;
     orgName?: string | null;
     avatarUrl?: string | null;
+    authProvider?: string | null;
     memberSince?: string | null;
     isEmailVerified?: boolean;
     notifications?: NotificationPreferences;
