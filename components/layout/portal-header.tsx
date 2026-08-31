@@ -99,7 +99,7 @@ export function PortalHeader({
                                         </span>
                                         <Kbd
                                             className="
-                                              ms-2 -me-1 hidden border
+                                              ms-2 -me-1 hidden
                                               group-hover:text-ink
                                               md:inline-flex
                                             "

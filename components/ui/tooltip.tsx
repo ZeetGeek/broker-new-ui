@@ -78,7 +78,7 @@ function TooltipContent({
                           max-inline-xs
                           has-data-[slot=kbd]:pe-1.5
                           **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate
-                          **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-lg
+                          **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm
                         `,
                         className,
                     )}
