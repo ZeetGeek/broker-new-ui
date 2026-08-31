@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 
-import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
+import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
@@ -191,7 +191,7 @@ function EmptyFollowUps() {
             heading="No follow-ups yet"
             description="Set a reminder to call a client back, and it'll show here."
         >
-            <TextLinkButton href="/broker/clients">Add a follow-up</TextLinkButton>
+            <ShortcutKbdMessage shortcutId="clients">to add a follow-up</ShortcutKbdMessage>
         </EmptyState>
     );
 }

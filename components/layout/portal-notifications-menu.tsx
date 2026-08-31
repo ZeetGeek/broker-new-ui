@@ -67,15 +67,17 @@ const menuSurfaceClass = `
   **:data-[slot$=-item]:focus:bg-surface-muted!
 `;
 
+const notificationsListClass = "relative block-136 shrink-0 min-block-0";
+
 const notificationsScrollClass = `
-  block-120 max-block-120 min-block-0 shrink-0 overflow-hidden
+  block-full overflow-hidden
   [&_[data-slot=scroll-area-thumb]]:bg-brand/55
   hover:[&_[data-slot=scroll-area-thumb]]:bg-brand/75
 `;
 
 const itemClass = `
   group/notification relative flex inline-full cursor-pointer items-start gap-3.5 rounded-inner
-  px-3 py-4 body-sm font-normal text-ink transition-colors duration-160
+  px-2.5 py-3 body-sm font-normal text-ink transition-colors duration-160
   focus:text-ink!
   data-highlighted:text-ink!
   data-highlighted:[&_[data-notification-actions]_button:first-child]:border-border-warm!
@@ -91,6 +93,7 @@ const itemClass = `
 `;
 
 const listDividerClass = "mx-1 my-1 border-be border-border-warm/80";
+const headerSectionDividerClass = "mx-3.5 border-be border-border-warm/80";
 
 const declineActionClass = `
   rounded-inner! font-medium
@@ -173,8 +176,15 @@ function scrollNotificationTabIntoView(
 
 function NotificationsFooter({ viewAllHref }: { viewAllHref: string }) {
     return (
-        <div className="shrink-0 border-be border-border-warm px-4 py-2.5">
-            <div className="flex justify-center">
+        <div className="absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end block-14">
+            <div
+                aria-hidden
+                className="
+                  pointer-events-none absolute inset-0 bg-linear-to-t from-surface from-45%
+                  via-surface/95 to-transparent
+                "
+            />
+            <div className="relative flex justify-center px-4 pbs-1 pbe-2.5">
                 <TextLinkButton href={viewAllHref}>View all notifications</TextLinkButton>
             </div>
         </div>
@@ -615,8 +625,7 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
                 <NotificationLeadMedia>
                     <span
                         className="
-                          inline-flex items-center justify-center rounded-full bg-surface-muted
-                          block-8 inline-8
+                          inline-flex items-center justify-center rounded-full block-8 inline-8
                         "
                     >
                         <NotificationTypeIcon type={item.type} title={item.title} body={item.body} />
@@ -662,7 +671,7 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
             {!item.isRead ? (
                 <span
                     aria-hidden
-                    className="t-unread-dot absolute inset-bs-2 inset-e-3.5 rounded-full block-2 inline-2"
+                    className="t-unread-dot absolute inset-bs-2 inset-e-2 rounded-full block-2 inline-2"
                 />
             ) : null}
         </div>
@@ -751,7 +760,7 @@ export function PortalNotificationsMenu({
             )}
 
             <DropdownMenuContent align="end" sideOffset={14} className={cn(menuSurfaceClass)}>
-                <div className="shrink-0 border-be border-border-warm px-4 py-3.5">
+                <div className="shrink-0 px-4 py-3.5">
                     <NotificationsHeader
                         unreadCount={unreadCount}
                         activeTab={activeTab}
@@ -760,6 +769,8 @@ export function PortalNotificationsMenu({
                         onTabChange={setActiveTab}
                     />
                 </div>
+
+                <div aria-hidden className={headerSectionDividerClass} role="separator" />
 
                 {loading && items.length === 0 ? (
                     <p className="body-sm shrink-0 px-4 py-12 text-center text-ink-muted">
@@ -774,9 +785,9 @@ export function PortalNotificationsMenu({
                         <NotificationsEmpty viewAllHref={viewAllHref} filtered />
                     </div>
                 ) : (
-                    <>
+                    <div className={notificationsListClass}>
                         <ScrollArea className={notificationsScrollClass}>
-                            <DropdownMenuGroup className="flex flex-col px-3 py-2.5">
+                            <DropdownMenuGroup className="flex flex-col px-2.5 py-2 pbe-14">
                                 {filteredItems.map((item, index) => (
                                     <Fragment key={item.id}>
                                         <NotificationRow
@@ -798,7 +809,7 @@ export function PortalNotificationsMenu({
                         </ScrollArea>
 
                         <NotificationsFooter viewAllHref={viewAllHref} />
-                    </>
+                    </div>
                 )}
             </DropdownMenuContent>
         </DropdownMenu>

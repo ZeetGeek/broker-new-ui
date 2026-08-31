@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/empty-state";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 
-import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
+import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
@@ -40,7 +40,7 @@ function EmptyActivity() {
             heading="Nothing yet"
             description="Owner approvals, views, and updates will appear here."
         >
-            <TextLinkButton href="/broker/notifications">View all activity</TextLinkButton>
+            <ShortcutKbdMessage shortcutId="notifications">to view all activity</ShortcutKbdMessage>
         </EmptyState>
     );
 }

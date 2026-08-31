@@ -11,7 +11,7 @@ import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
+import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL_AUTO, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
@@ -204,9 +204,7 @@ function EmptyYouRepresent() {
             heading="Not representing any properties yet"
             description="Once an owner approves your request, the property appears here."
         >
-            <ShortcutTooltip shortcutId="properties" label="Properties">
-                <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
-            </ShortcutTooltip>
+            <ShortcutKbdMessage shortcutId="properties">to browse properties</ShortcutKbdMessage>
         </EmptyState>
     );
 }
