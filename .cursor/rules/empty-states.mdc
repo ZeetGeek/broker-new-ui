@@ -1,0 +1,46 @@
+---
+description: Empty state design and copy — first-run, filtered, cleared
+globs:
+  - "app/**/*.ts"
+  - "app/**/*.tsx"
+  - "components/**/*.ts"
+  - "components/**/*.tsx"
+  - "features/**/*.ts"
+  - "features/**/*.tsx"
+alwaysApply: false
+---
+
+# Empty states
+
+Read `docs/EMPTY_STATES.md` before building any view that can be empty. It is
+the authority on both the design and the copy.
+
+An empty state is not a missing-data notice. It is the **first thing a new user
+reads**. Three jobs, in order: reassure, explain, direct.
+
+Seven rules restated because they are the ones that make a product feel dead:
+
+1. **Never a literal `0` as a standalone count.** "No visits booked", not "0
+   site visits". A zero inside a ratio ("0 of 5 photos") is fine — the
+   denominator gives it meaning. When every count is zero, stop counting and
+   say something useful instead.
+2. **Three kinds, and they look different.** First-run teaches with a primary
+   button. Filtered offers `Clear filters` and must never say "add your
+   first…". Cleared is quiet, positive, and has no button.
+3. **Empty cards collapse to their content.** Never reserve the height of the
+   loaded state — that is what turns one empty screen into three.
+4. **Never two adjacent empty cards saying the same thing.** When both are
+   empty, render one.
+5. **Exactly one primary button per screen.** Everything else is a text link.
+   Six competing CTAs means the user picks none.
+6. **Never a CTA the user cannot complete yet.** If RERA or service areas are
+   missing, the empty state asks for *those*, not for the goal.
+7. **No large illustrations.** A 40px line icon, or a faded ghost row of the
+   real content. Bytes cost money on mobile data.
+
+Tone: plain and warm, never cute. No "oops". Consistent punctuation — no full
+stop on a headline fragment. No orange; that is reserved for time pressure.
+
+Everything else — the anatomy spec, ghost-preview pattern, per-surface copy
+table, blocked-state handling, and the dashboard rewrite — is in
+`docs/EMPTY_STATES.md`.
