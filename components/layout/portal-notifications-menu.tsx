@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type CSSProperties, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -74,8 +74,8 @@ const notificationsScrollClass = `
 `;
 
 const itemClass = `
-  group/notification relative flex inline-full cursor-pointer items-start gap-3 rounded-inner
-  px-2.5 py-3 body-sm font-normal text-ink transition-colors duration-160
+  group/notification relative flex inline-full cursor-pointer items-start gap-3.5 rounded-inner
+  px-3 py-4 body-sm font-normal text-ink transition-colors duration-160
   focus:text-ink!
   data-highlighted:text-ink!
   data-highlighted:[&_[data-notification-actions]_button:first-child]:border-border-warm!
@@ -89,6 +89,8 @@ const itemClass = `
   focus:[&_[data-notification-actions]_button:last-child]:bg-primary!
   focus:[&_[data-notification-actions]_button:last-child]:text-primary-foreground!
 `;
+
+const listDividerClass = "mx-1 my-1 border-be border-border-warm/80";
 
 const declineActionClass = `
   rounded-inner! font-medium
@@ -105,10 +107,10 @@ const acceptActionClass = `
 `;
 
 const unreadItemClass = `
-  bg-brand-soft/35
-  hover:bg-brand-soft/50!
-  data-highlighted:bg-brand-soft/50!
-  focus:bg-brand-soft/50!
+  border border-brand-soft/60 bg-brand-soft/30
+  hover:border-brand-soft/80 hover:bg-brand-soft/45!
+  data-highlighted:border-brand-soft/80 data-highlighted:bg-brand-soft/45!
+  focus:border-brand-soft/80 focus:bg-brand-soft/45!
 `;
 
 const notificationLeadClass =
@@ -486,7 +488,7 @@ function RequestActions() {
     return (
         <div
             data-notification-actions
-            className="mbs-0.5 flex flex-wrap items-center gap-1.5"
+            className="mbs-1 flex flex-wrap items-center gap-2"
             onClick={(event) => event.stopPropagation()}
         >
             <Button
@@ -574,7 +576,7 @@ function NotificationTimestamp({ occurredAt, now }: { occurredAt: Date; now: Dat
     const metaIconClass = "shrink-0 self-center text-ink-subtle block-2.5 inline-2.5";
 
     return (
-        <div className="mbs-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 min-inline-0">
+        <div className="mbs-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 min-inline-0">
             <time
                 data-notification-meta
                 dateTime={dateTime}
@@ -622,7 +624,7 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
                 </NotificationLeadMedia>
             )}
 
-            <div className="flex flex-1 flex-col gap-1.5 min-inline-0 pie-6">
+            <div className="flex flex-1 flex-col gap-2 min-inline-0 pie-6">
                 <span
                     data-notification-title
                     className={cn(
@@ -660,7 +662,7 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
             {!item.isRead ? (
                 <span
                     aria-hidden
-                    className="t-unread-dot absolute inset-bs-5 inset-e-3 rounded-full block-2 inline-2"
+                    className="t-unread-dot absolute inset-bs-2 inset-e-3.5 rounded-full block-2 inline-2"
                 />
             ) : null}
         </div>
@@ -774,15 +776,23 @@ export function PortalNotificationsMenu({
                 ) : (
                     <>
                         <ScrollArea className={notificationsScrollClass}>
-                            <DropdownMenuGroup className="flex flex-col gap-0.5 px-2 py-1.5">
-                                {filteredItems.map((item) => (
-                                    <NotificationRow
-                                        key={item.id}
-                                        item={item}
-                                        viewAllHref={viewAllHref}
-                                        now={now}
-                                        onMarkRead={(id) => void markRead(id)}
-                                    />
+                            <DropdownMenuGroup className="flex flex-col px-3 py-2.5">
+                                {filteredItems.map((item, index) => (
+                                    <Fragment key={item.id}>
+                                        <NotificationRow
+                                            item={item}
+                                            viewAllHref={viewAllHref}
+                                            now={now}
+                                            onMarkRead={(id) => void markRead(id)}
+                                        />
+                                        {index < filteredItems.length - 1 ? (
+                                            <div
+                                                aria-hidden
+                                                className={listDividerClass}
+                                                role="separator"
+                                            />
+                                        ) : null}
+                                    </Fragment>
                                 ))}
                             </DropdownMenuGroup>
                         </ScrollArea>

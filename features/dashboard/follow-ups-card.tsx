@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 
-import { ShortcutTooltip } from "@/features/shortcuts/shortcut-tooltip";
+import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";

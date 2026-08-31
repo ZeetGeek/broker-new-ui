@@ -9,6 +9,7 @@ import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
 import type { NavItem } from "@/config/nav";
+import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 export type PortalNavProps = {
     items: NavItem[];
@@ -36,7 +37,7 @@ export function PortalNav({ items }: PortalNavProps) {
             <nav className="hidden items-center gap-8 md:flex" aria-label="Portal">
                 {items.map((item) => {
                     const isActive = item.href === activeHref;
-                    return (
+                    const link = (
                         <Link
                             key={item.href}
                             href={item.href}
@@ -69,6 +70,20 @@ export function PortalNav({ items }: PortalNavProps) {
                                 />
                             ) : null}
                         </Link>
+                    );
+
+                    if (!item.shortcutId) {
+                        return link;
+                    }
+
+                    return (
+                        <ShortcutTooltip
+                            key={item.href}
+                            shortcutId={item.shortcutId}
+                            label="Press to navigate"
+                        >
+                            {link}
+                        </ShortcutTooltip>
                     );
                 })}
             </nav>

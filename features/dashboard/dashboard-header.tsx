@@ -15,7 +15,7 @@ import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { ShortcutTooltip } from "@/features/shortcuts/shortcut-tooltip";
+import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 import { DigitPopIn } from "./digit-pop-in";
 import type { ReraStatus } from "./mock-data";

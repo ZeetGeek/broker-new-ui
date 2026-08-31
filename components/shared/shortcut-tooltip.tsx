@@ -17,9 +17,9 @@ export type ShortcutTooltipProps = {
 };
 
 /**
- * Wraps a dashboard trigger with a tooltip naming the keyboard shortcut that
- * lands on the same page. Only use this where the shortcut's route and the
- * trigger's destination genuinely match — see docs/SHORTCUTS.md discoverability.
+ * Wraps a trigger with a tooltip naming the keyboard shortcut that lands on
+ * the same page. Only use this where the shortcut's route and the trigger's
+ * destination genuinely match — see docs/SHORTCUTS.md discoverability.
  */
 export function ShortcutTooltip({ shortcutId, label, side = "bottom", children }: ShortcutTooltipProps) {
     const shortcut = getShortcut(shortcutId);
