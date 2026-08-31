@@ -2,7 +2,7 @@ import { formatDateIso, formatDateShort, formatTimeIn } from "@/lib/format/date"
 import { cn } from "@/lib/utils";
 
 import { CardLabel } from "./card-label";
-import { DASHBOARD_CARD_SHELL } from "./card-shell";
+import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { TodayAgenda, TodayItem } from "./mock-data";
 import { TextLinkButton } from "./text-link-button";
 import { TodayTimeline } from "./today-timeline";
@@ -53,7 +53,7 @@ function EmptyToday({ now, className }: { now: Date; className?: string }) {
 
     return (
         <section
-            className={cn(DASHBOARD_CARD_SHELL, className)}
+            className={cn(DASHBOARD_CARD_SHELL_EMPTY, className)}
             aria-labelledby="today-card-heading"
         >
             <CardLabel info={TODAY_INFO}>
@@ -63,14 +63,22 @@ function EmptyToday({ now, className }: { now: Date; className?: string }) {
                     <time dateTime={dateIso}>{dateLabel}</time>
                 </span>
             </CardLabel>
-            <div className="mbs-4 flex flex-1 flex-col min-block-0">
-                <p className="h5 text-ink">Nothing scheduled today.</p>
-                <p className="body mbs-1 text-ink-muted">
-                    A free day is fine. Book a visit when a client is ready.
-                </p>
-                <div className="pts-3 mbs-auto">
-                    <TextLinkButton href="/broker/visits/new">Book a site visit</TextLinkButton>
+
+            <div
+                className="
+                  flex flex-1 flex-col items-center justify-center gap-4 text-center
+                  min-block-0 px-1
+                "
+                aria-live="polite"
+            >
+                <div className="flex max-w-prose flex-col gap-1.5">
+                    <h2 className="h5 text-ink">Nothing booked today</h2>
+                    <p className="body-sm text-pretty text-ink-muted">
+                        Visits you schedule will appear here.
+                    </p>
                 </div>
+
+                <TextLinkButton href="/broker/visits/new">Book a site visit</TextLinkButton>
             </div>
         </section>
     );

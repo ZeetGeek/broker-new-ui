@@ -8,8 +8,9 @@ import { Price } from "@/components/shared/price";
 import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
-import { DASHBOARD_CARD_SHELL } from "./card-shell";
+import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { RequestRowItem, RequestsData } from "./mock-data";
+import { TextLinkButton } from "./text-link-button";
 
 const REQUESTS_INFO =
     "Requests you've sent to owners to represent their properties, and where each one stands.";
@@ -126,34 +127,31 @@ function RequestRow({ item }: { item: RequestRowItem }) {
     );
 }
 
-function EmptyRequests({
-    serviceAreas,
-    className,
-}: {
-    serviceAreas: string[];
-    className?: string;
-}) {
-    const areasLabel = serviceAreas.length > 0 ? serviceAreas.join(", ") : "your areas";
-
+function EmptyRequests({ className }: { className?: string }) {
     return (
         <section
-            className={cn(DASHBOARD_CARD_SHELL, className)}
+            className={cn(DASHBOARD_CARD_SHELL_EMPTY, className)}
             aria-labelledby="requests-card-heading"
         >
             <CardLabel info={REQUESTS_INFO}>
                 <span id="requests-card-heading">Your requests</span>
             </CardLabel>
-            <div className="mbs-4 flex flex-1 flex-col min-block-0">
-                <p className="h5 text-ink">No requests yet</p>
-                <p className="body mbs-1 text-ink-muted">
-                    Browse properties in {areasLabel} to send your first request.
-                </p>
-                <div className="pts-3 mbs-auto">
-                    <Link href="/broker/properties" className={LINK_CLASS}>
-                        Browse properties
-                        <span aria-hidden>→</span>
-                    </Link>
+
+            <div
+                className="
+                  flex flex-1 flex-col items-center justify-center gap-4 text-center
+                  min-block-0 px-1
+                "
+                aria-live="polite"
+            >
+                <div className="flex max-w-prose flex-col gap-1.5">
+                    <h2 className="h5 text-ink">No requests sent yet</h2>
+                    <p className="body-sm text-pretty text-ink-muted">
+                        Find a property you&apos;d like to sell and ask the owner.
+                    </p>
                 </div>
+
+                <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
             </div>
         </section>
     );
@@ -161,7 +159,7 @@ function EmptyRequests({
 
 export function RequestsCard({ data, serviceAreas, className }: RequestsCardProps) {
     if (totalRequests(data.counts) === 0) {
-        return <EmptyRequests serviceAreas={serviceAreas} className={className} />;
+        return <EmptyRequests className={className} />;
     }
 
     const rows = data.items.slice(0, MAX_REQUEST_ROWS);

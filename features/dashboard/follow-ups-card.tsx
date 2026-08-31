@@ -183,8 +183,20 @@ function FollowUpRow({
 
 function EmptyFollowUps() {
     return (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
-            <p className="body text-ink">Nothing due. Nice.</p>
+        <div
+            className="
+              flex flex-1 flex-col items-center justify-center gap-4 text-center
+              min-block-0 px-1
+            "
+            aria-live="polite"
+        >
+            <div className="flex max-w-prose flex-col gap-1.5">
+                <h2 className="h5 text-ink">No follow-ups yet</h2>
+                <p className="body-sm text-pretty text-ink-muted">
+                    Set a reminder to call a client back, and it&apos;ll show here.
+                </p>
+            </div>
+
             <TextLinkButton href="/broker/clients">Add a follow-up</TextLinkButton>
         </div>
     );

@@ -34,11 +34,19 @@ export type ActivityCardProps = {
 
 function EmptyActivity() {
     return (
-        <div className="mbs-4 flex flex-1 flex-col min-block-0">
-            <p className="h5 text-ink">No recent activity</p>
-            <p className="body mbs-1 text-ink-muted">
-                Updates from requests, clients, and visits will show up here.
-            </p>
+        <div
+            className="
+              flex flex-1 flex-col items-center justify-center text-center
+              min-block-0 px-1
+            "
+            aria-live="polite"
+        >
+            <div className="flex max-w-prose flex-col gap-1.5">
+                <h2 className="h5 text-ink">Nothing yet</h2>
+                <p className="body-sm text-pretty text-ink-muted">
+                    Owner approvals, views, and updates will appear here.
+                </p>
+            </div>
         </div>
     );
 }

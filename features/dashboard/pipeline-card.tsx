@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
-import { DASHBOARD_CARD_SHELL } from "./card-shell";
+import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import { DigitPopIn } from "./digit-pop-in";
 import type { PipelineData, PipelineStage, PipelineStageKey } from "./mock-data";
 import { TextLinkButton } from "./text-link-button";
@@ -193,22 +193,28 @@ function MonthFooter({ won, lost }: { won: number; lost: number }) {
 function EmptyPipeline({ className }: { className?: string }) {
     return (
         <section
-            className={cn(DASHBOARD_CARD_SHELL, className)}
+            className={cn(DASHBOARD_CARD_SHELL_EMPTY, className)}
             aria-labelledby="pipeline-card-heading"
         >
             <CardLabel info={PIPELINE_INFO}>
                 <span id="pipeline-card-heading">Pipeline</span>
             </CardLabel>
-            <div className="mbs-4 flex flex-1 flex-col min-block-0">
-                <p className="h5 text-ink">No clients yet.</p>
-                <p className="body mbs-1 text-ink-muted">
-                    Add a buyer or tenant to start tracking deals through your pipeline.
-                </p>
-                <div className="pts-3 mbs-auto">
-                    <TextLinkButton href="/broker/clients/new">
-                        Add your first buyer or tenant
-                    </TextLinkButton>
+
+            <div
+                className="
+                  flex flex-1 flex-col items-center justify-center gap-4 text-center
+                  min-block-0 px-1
+                "
+                aria-live="polite"
+            >
+                <div className="flex max-w-prose flex-col gap-1.5">
+                    <h2 className="h5 text-ink">No clients yet</h2>
+                    <p className="body-sm text-pretty text-ink-muted">
+                        Add a buyer or tenant to start tracking deals.
+                    </p>
                 </div>
+
+                <TextLinkButton href="/broker/clients/new">Add client</TextLinkButton>
             </div>
         </section>
     );
