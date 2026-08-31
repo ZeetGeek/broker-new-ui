@@ -59,7 +59,12 @@ export function UserAvatar({ name, imageUrl, size, className }: UserAvatarProps)
 
     return (
         <Avatar
-            className={cn(avatarVariants({ size }), getAvatarColorClass(name), className, `pbs-1`)}
+            className={cn(
+                avatarVariants({ size }),
+                !hasPhoto && getAvatarColorClass(name),
+                !hasPhoto && "pbs-1",
+                className,
+            )}
         >
             {hasPhoto ? (
                 <AvatarImage src={resolvedImageUrl} alt={name} className={avatarMediaClass} />
