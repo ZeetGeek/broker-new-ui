@@ -1,6 +1,14 @@
 import Link from "next/link";
 
-import { CalendarClock, CalendarPlus, IndianRupee, MapPin, Navigation, Phone, User } from "lucide-react";
+import {
+    CalendarClock,
+    CalendarPlus,
+    IndianRupee,
+    MapPin,
+    Navigation,
+    Phone,
+    User,
+} from "lucide-react";
 
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -8,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
+import { TextLinkButton } from "@/components/shared/text-link-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -113,15 +122,15 @@ function EmptyNextShowing({ className }: { className?: string }) {
                 heading="No visits booked"
                 description="Schedule one when a client is ready to see a property."
             >
-                <Button
+                <TextLinkButton href="/broker/visits/new">Schedule a visit</TextLinkButton>
+                {/* <Button
                     variant="accent"
                     size="md"
                     nativeButton={false}
                     render={<Link href="/broker/visits/new" />}
                 >
                     <CalendarPlus aria-hidden strokeWidth={1.75} />
-                    Schedule a visit
-                </Button>
+                </Button> */}
             </EmptyState>
         </section>
     );

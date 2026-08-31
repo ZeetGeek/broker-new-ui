@@ -1,5 +1,6 @@
-import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+
+import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -28,8 +29,8 @@ export function EmptyState({
         <div
             className={cn(
                 `
-                  flex flex-1 flex-col items-center justify-center gap-4 text-center
-                  min-block-0 px-1
+                  flex flex-1 flex-col items-center justify-center gap-4 px-1 text-center
+                  min-block-0
                 `,
                 className,
             )}
@@ -39,11 +40,11 @@ export function EmptyState({
                 <span
                     aria-hidden
                     className="
-                      flex items-center justify-center rounded-full bg-surface-muted text-ink-muted
-                      block-12 inline-12
+                      flex items-center justify-center rounded-full text-ink-subtle block-12
+                      inline-12
                     "
                 >
-                    <Icon className="block-6 inline-6" strokeWidth={1.75} />
+                    <Icon className="block-7 inline-7" strokeWidth={1.75} />
                 </span>
 
                 <div className="flex flex-col gap-1.5">
