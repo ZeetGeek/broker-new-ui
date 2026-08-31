@@ -205,7 +205,9 @@ function EmptyNewInAreas() {
             heading="Nothing new this week"
             description="We'll show properties added in the areas you work in."
         >
-            <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
+            <ShortcutTooltip shortcutId="properties" label="Properties">
+                <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
+            </ShortcutTooltip>
         </EmptyState>
     );
 }

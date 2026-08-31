@@ -10,6 +10,8 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { ShortcutTooltip } from "@/features/shortcuts/shortcut-tooltip";
+
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import { DigitPopIn } from "./digit-pop-in";
@@ -232,10 +234,12 @@ export function PipelineCard({ data, className }: PipelineCardProps) {
             </div>
 
             <div className="mbs-4 flex flex-1 flex-col min-block-0">
-                <div className="flex flex-1 flex-col justify-center gap-3.5 pbe-3.5 min-block-0">
-                    <PipelineSegmentedBar stages={data.stages} />
-                    <PipelineLegend stages={data.stages} />
-                </div>
+                <ShortcutTooltip shortcutId="clients" label="Clients">
+                    <div className="flex flex-1 flex-col justify-center gap-3.5 pbe-3.5 min-block-0">
+                        <PipelineSegmentedBar stages={data.stages} />
+                        <PipelineLegend stages={data.stages} />
+                    </div>
+                </ShortcutTooltip>
 
                 <div className="shrink-0 inline-full">
                     <div

@@ -13,8 +13,9 @@ const kbdVariants = cva(
       hover:[box-shadow:none] dark:hover:[box-shadow:none]
       px-2 py-0.5
       in-data-[slot=input-group]:bg-input
-      in-data-[slot=tooltip-content]:bg-canvas/15
-      in-data-[slot=tooltip-content]:text-canvas
+      in-data-[slot=tooltip-content]:border-border-warm
+      in-data-[slot=tooltip-content]:bg-surface-muted
+      in-data-[slot=tooltip-content]:text-ink-muted
       [&_svg:not([class*='size-'])]:block-3 [&_svg:not([class*='size-'])]:inline-3
     `,
     {

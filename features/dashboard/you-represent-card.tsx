@@ -204,7 +204,9 @@ function EmptyYouRepresent() {
             heading="Not representing any properties yet"
             description="Once an owner approves your request, the property appears here."
         >
-            <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
+            <ShortcutTooltip shortcutId="properties" label="Properties">
+                <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
+            </ShortcutTooltip>
         </EmptyState>
     );
 }

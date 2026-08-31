@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -12,6 +12,7 @@ import {
     Building2,
     CalendarClock,
     CheckCheck,
+    Clock3,
     Gift,
     MessageCircle,
     Send,
@@ -42,7 +43,6 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -58,37 +58,61 @@ export type PortalNotificationsMenuProps = {
 
 const menuSurfaceClass = `
   t-dropdown t-profile-menu animate-none! flex flex-col overflow-hidden! rounded-inner border
-  border-border-warm bg-surface p-0 text-ink ring-0
+  border-border-warm bg-surface p-0 text-ink shadow-md ring-0
   before:backdrop-blur-none
   data-closed:animate-none!
   data-open:animate-none!
-   min-inline-[22rem] max-inline-96
-  **:data-[slot$=-item]:data-highlighted:bg-transparent!
-  **:data-[slot$=-item]:focus:bg-transparent!
-  **:data-[slot$=-item]:hover:bg-transparent!
+  min-inline-[22rem] max-inline-[28rem]
+  **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
+  **:data-[slot$=-item]:focus:bg-surface-muted!
 `;
 
 const notificationsScrollClass = `
-  block-full overflow-hidden
+  block-120 max-block-120 min-block-0 shrink-0 overflow-hidden
+  [&_[data-slot=scroll-area-thumb]]:bg-brand/55
+  hover:[&_[data-slot=scroll-area-thumb]]:bg-brand/75
 `;
 
 const itemClass = `
-  flex inline-full cursor-pointer items-start gap-3 !rounded-md p-0! body-sm font-normal text-ink
-  data-highlighted:bg-transparent!
-  focus:bg-transparent!
-  hover:bg-transparent!
+  group/notification relative flex inline-full cursor-pointer items-start gap-3 rounded-inner
+  px-2.5 py-3 body-sm font-normal text-ink transition-colors duration-160
   focus:text-ink!
   data-highlighted:text-ink!
-  hover:[&_[data-notification-title]]:underline
-  data-highlighted:[&_[data-notification-title]]:underline
-  data-highlighted:[&_[data-notification-title]]:underline-offset-2
-  data-highlighted:[&_[data-notification-title]]:decoration-ink/35
-  data-highlighted:[&_[data-notification-title]]:!text-ink
-  data-highlighted:[&_[data-notification-body]]:!text-ink-muted
-  data-highlighted:[&_[data-notification-meta]]:!text-ink-subtle
+  data-highlighted:[&_[data-notification-actions]_button:first-child]:border-border-warm!
+  data-highlighted:[&_[data-notification-actions]_button:first-child]:bg-surface!
+  data-highlighted:[&_[data-notification-actions]_button:first-child]:text-ink!
+  data-highlighted:[&_[data-notification-actions]_button:last-child]:bg-primary!
+  data-highlighted:[&_[data-notification-actions]_button:last-child]:text-primary-foreground!
+  focus:[&_[data-notification-actions]_button:first-child]:border-border-warm!
+  focus:[&_[data-notification-actions]_button:first-child]:bg-surface!
+  focus:[&_[data-notification-actions]_button:first-child]:text-ink!
+  focus:[&_[data-notification-actions]_button:last-child]:bg-primary!
+  focus:[&_[data-notification-actions]_button:last-child]:text-primary-foreground!
 `;
 
-const notificationLeadClass = "flex shrink-0 items-center justify-center block-6 inline-6";
+const declineActionClass = `
+  rounded-inner! font-medium
+  border-border-warm! bg-surface! text-ink!
+  hover:border-border-warm! hover:bg-surface-muted! hover:text-ink!
+  focus-visible:border-border-warm! focus-visible:bg-surface! focus-visible:text-ink!
+`;
+
+const acceptActionClass = `
+  rounded-inner! font-medium
+  bg-primary! text-primary-foreground!
+  hover:bg-primary! hover:text-primary-foreground!
+  focus-visible:bg-primary! focus-visible:text-primary-foreground!
+`;
+
+const unreadItemClass = `
+  bg-brand-soft/35
+  hover:bg-brand-soft/50!
+  data-highlighted:bg-brand-soft/50!
+  focus:bg-brand-soft/50!
+`;
+
+const notificationLeadClass =
+    "flex shrink-0 items-start justify-center block-8 inline-8 pbs-0.5";
 
 function NotificationLeadMedia({ children }: { children: ReactNode }) {
     return <span className={notificationLeadClass}>{children}</span>;
@@ -97,6 +121,7 @@ function NotificationLeadMedia({ children }: { children: ReactNode }) {
 function movePill(pill: HTMLElement, tab: HTMLElement, animate: boolean) {
     const nextTransform = `translateX(${tab.offsetLeft}px)`;
     const nextWidth = `${tab.offsetWidth}px`;
+
     if (!animate) {
         const previous = pill.style.transition;
         pill.style.transition = "none";
@@ -106,29 +131,48 @@ function movePill(pill: HTMLElement, tab: HTMLElement, animate: boolean) {
         pill.style.transition = previous;
         return;
     }
+
     pill.style.transform = nextTransform;
     pill.style.width = nextWidth;
 }
 
-function NotificationsFooter({
-    viewAllHref,
-    showFade,
-}: {
-    viewAllHref: string;
-    showFade: boolean;
-}) {
+function paintNotificationFilterPill(
+    bar: HTMLDivElement,
+    pill: HTMLSpanElement,
+    animate: boolean,
+) {
+    const active = bar.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (!active) return;
+    movePill(pill, active, animate);
+}
+
+function scrollNotificationTabIntoView(
+    scrollEl: HTMLElement,
+    tabEl: HTMLElement,
+    animate: boolean,
+) {
+    const maxScroll = scrollEl.scrollWidth - scrollEl.clientWidth;
+    if (maxScroll <= 0) return;
+
+    const prefersReducedMotion =
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const anchorRatio = 0.36;
+    const tabStart = tabEl.offsetLeft;
+    const tabWidth = tabEl.offsetWidth;
+    const targetScroll = tabStart + tabWidth / 2 - scrollEl.clientWidth * anchorRatio;
+
+    scrollEl.scrollTo({
+        left: Math.max(0, Math.min(maxScroll, targetScroll)),
+        behavior: animate && !prefersReducedMotion ? "smooth" : "auto",
+    });
+}
+
+function NotificationsFooter({ viewAllHref }: { viewAllHref: string }) {
     return (
-        <div className="absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end px-3 block-18">
-            {showFade ? (
-                <div
-                    aria-hidden
-                    className="
-                      pointer-events-none absolute inset-0 bg-linear-to-t from-surface from-40%
-                      via-surface/90 to-transparent
-                    "
-                />
-            ) : null}
-            <div className="relative flex justify-center pbs-1 pbe-2">
+        <div className="shrink-0 border-be border-border-warm px-4 py-2.5">
+            <div className="flex justify-center">
                 <TextLinkButton href={viewAllHref}>View all notifications</TextLinkButton>
             </div>
         </div>
@@ -249,46 +293,91 @@ function NotificationFilterTabs({
     tabCounts: Record<NotificationTab, number>;
     onTabChange: (tab: NotificationTab) => void;
 }) {
+    const scrollRef = useRef<HTMLDivElement>(null);
     const barRef = useRef<HTMLDivElement>(null);
     const pillRef = useRef<HTMLSpanElement>(null);
     const hasPainted = useRef(false);
+
+    function syncActiveTabScroll(animate: boolean) {
+        const scrollEl = scrollRef.current;
+        const bar = barRef.current;
+        if (!scrollEl || !bar) return;
+
+        const tabEl = bar.querySelector<HTMLElement>(`[data-tab-value="${activeTab}"]`);
+        if (!tabEl) return;
+
+        scrollNotificationTabIntoView(scrollEl, tabEl, animate);
+    }
 
     useLayoutEffect(() => {
         const bar = barRef.current;
         const pill = pillRef.current;
         if (!bar || !pill) return;
 
-        const active = bar.querySelector<HTMLElement>('[aria-selected="true"]');
-        if (!active) return;
-
-        movePill(pill, active, hasPainted.current);
+        paintNotificationFilterPill(bar, pill, hasPainted.current);
+        syncActiveTabScroll(hasPainted.current);
         hasPainted.current = true;
     }, [activeTab, tabCounts]);
 
     useLayoutEffect(() => {
-        function onResize() {
-            const bar = barRef.current;
-            const pill = pillRef.current;
-            if (!bar || !pill) return;
+        const bar = barRef.current;
+        const pill = pillRef.current;
+        if (!bar || !pill) return;
 
-            const active = bar.querySelector<HTMLElement>('[aria-selected="true"]');
-            if (active) {
-                movePill(pill, active, false);
+        function syncPill(animate: boolean) {
+            const currentBar = barRef.current;
+            const currentPill = pillRef.current;
+            if (!currentBar || !currentPill) return;
+            paintNotificationFilterPill(currentBar, currentPill, animate);
+        }
+
+        function onResize() {
+            syncPill(false);
+            syncActiveTabScroll(false);
+        }
+
+        const observer = new ResizeObserver(() => onResize());
+        observer.observe(bar);
+        window.addEventListener("resize", onResize);
+
+        requestAnimationFrame(() => {
+            syncPill(false);
+            syncActiveTabScroll(false);
+        });
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("resize", onResize);
+        };
+    }, [activeTab]);
+
+    function handleTabChange(tab: NotificationTab) {
+        const bar = barRef.current;
+        const pill = pillRef.current;
+        const scrollEl = scrollRef.current;
+
+        if (bar && pill) {
+            const next = bar.querySelector<HTMLElement>(`[data-tab-value="${tab}"]`);
+            if (next) {
+                movePill(pill, next, hasPainted.current);
+                if (scrollEl) {
+                    scrollNotificationTabIntoView(scrollEl, next, hasPainted.current);
+                }
             }
         }
 
-        window.addEventListener("resize", onResize);
-        return () => window.removeEventListener("resize", onResize);
-    }, []);
+        onTabChange(tab);
+    }
 
     return (
         <div
-            className="overflow-x-auto max-inline-full"
+            ref={scrollRef}
+            className="scrollbar-none scroll-smooth overflow-x-auto max-inline-full"
             role="tablist"
             aria-label="Filter notifications"
         >
-            <div ref={barRef} className="t-tabs">
-                <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" />
+            <div ref={barRef} className="t-notif-filter-tabs">
+                <span ref={pillRef} className="t-notif-filter-tabs-pill" aria-hidden="true" />
                 {NOTIFICATION_TABS.map((tab) => {
                     const count = tabCounts[tab.value];
                     const isActive = activeTab === tab.value;
@@ -299,12 +388,18 @@ function NotificationFilterTabs({
                             type="button"
                             role="tab"
                             aria-selected={isActive}
-                            className="t-tab body-xs inline-flex items-center gap-1.5 font-medium"
-                            onClick={() => onTabChange(tab.value)}
+                            data-tab-value={tab.value}
+                            className="t-notif-filter-tab body-xs"
+                            onClick={() => handleTabChange(tab.value)}
                         >
-                            <span>{tab.label}</span>
+                            <span className="t-notif-filter-tab-label">{tab.label}</span>
                             {count > 0 ? (
-                                <span className="tabular text-ink-subtle">{count}</span>
+                                <span
+                                    className="t-notif-filter-tab-count body-xs"
+                                    data-badge={isActive ? undefined : "true"}
+                                >
+                                    {count}
+                                </span>
                             ) : null}
                         </button>
                     );
@@ -328,22 +423,27 @@ function NotificationsHeader({
     onTabChange: (tab: NotificationTab) => void;
 }) {
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
-                <h2 className="body font-display font-semibold text-ink">Notifications</h2>
+                <h2 className="body font-display font-semibold tracking-tight text-ink">
+                    Notifications
+                </h2>
                 <Button
                     type="button"
-                    variant="ghost"
+                    variant="link"
                     size="sm"
                     disabled={unreadCount === 0}
                     onClick={onMarkAllRead}
-                    className="body-xs shrink-0 gap-1.5 font-medium text-ink-muted hover:text-ink"
+                    className="
+                      body-xs shrink-0 gap-1.5 p-0 font-medium text-brand block-auto
+                      hover:text-brand-text hover:underline
+                      disabled:text-ink-subtle disabled:no-underline
+                    "
                 >
                     Mark all read
-                    <CheckCheck aria-hidden strokeWidth={1.75} className="block-4 inline-4" />
+                    <CheckCheck aria-hidden strokeWidth={1.75} className="block-3.5 inline-3.5" />
                 </Button>
             </div>
-            <DropdownMenuSeparator className="mx-0! my-2.5 bg-border-warm inline-full" />
             <NotificationFilterTabs
                 activeTab={activeTab}
                 tabCounts={tabCounts}
@@ -384,24 +484,52 @@ function RequestActions() {
     }
 
     return (
-        <div data-notification-actions className="flex flex-wrap items-center gap-2">
+        <div
+            data-notification-actions
+            className="mbs-0.5 flex flex-wrap items-center gap-1.5"
+            onClick={(event) => event.stopPropagation()}
+        >
             <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="!text-ink hover:!text-ink hover:!bg-background"
+                size="xs"
+                className={declineActionClass}
                 onClick={handlePlaceholder}
             >
                 Decline
             </Button>
             <Button
                 type="button"
-                size="sm"
-                className="!text-primary-foreground hover:!text-primary-foreground hover:!bg-primary/80"
+                size="xs"
+                className={acceptActionClass}
                 onClick={handlePlaceholder}
             >
                 Accept
             </Button>
+        </div>
+    );
+}
+
+function NotificationTimestamp({ occurredAt, now }: { occurredAt: Date; now: Date }) {
+    const dateTime = formatDateIso(occurredAt);
+    const metaTimeClass =
+        "tabular body-xs inline-flex items-center gap-1 leading-none whitespace-nowrap text-ink-muted";
+    const metaIconClass = "shrink-0 self-center text-ink-subtle block-2.5 inline-2.5";
+
+    return (
+        <div className="mbs-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 min-inline-0">
+            <time
+                data-notification-meta
+                dateTime={dateTime}
+                className={cn(metaTimeClass, "font-medium")}
+            >
+                <Clock3 aria-hidden className={metaIconClass} strokeWidth={1.5} />
+                {formatRelativePast(occurredAt, now)}
+            </time>
+            <time data-notification-meta dateTime={dateTime} className={metaTimeClass}>
+                <CalendarClock aria-hidden className={metaIconClass} strokeWidth={1.5} />
+                {formatNotificationDayTime(occurredAt)}
+            </time>
         </div>
     );
 }
@@ -416,89 +544,75 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
         <div className="flex items-start gap-3 inline-full min-inline-0">
             {actor ? (
                 <NotificationLeadMedia>
-                    <UserAvatar
-                        name={actor.name}
-                        imageUrl={actor.avatarUrl ?? undefined}
-                        className="pbs-0 block-full inline-full"
-                    />
+                    <span className="overflow-hidden rounded-full block-8 inline-8">
+                        <UserAvatar
+                            name={actor.name}
+                            imageUrl={actor.avatarUrl ?? undefined}
+                            size="fill"
+                        />
+                    </span>
                 </NotificationLeadMedia>
             ) : (
                 <NotificationLeadMedia>
-                    <NotificationTypeIcon type={item.type} title={item.title} body={item.body} />
+                    <span
+                        className="
+                          inline-flex items-center justify-center rounded-full bg-surface-muted
+                          block-8 inline-8
+                        "
+                    >
+                        <NotificationTypeIcon type={item.type} title={item.title} body={item.body} />
+                    </span>
                 </NotificationLeadMedia>
             )}
 
-            <div className="flex flex-1 flex-col gap-2 min-inline-0">
+            <div className="flex flex-1 flex-col gap-1.5 min-inline-0 pie-6">
                 <span
                     data-notification-title
                     className={cn(
-                        "body-sm line-clamp-2 text-pretty underline-offset-2",
-                        item.isRead ? "font-medium text-ink!" : "font-semibold text-ink!",
+                        "body-sm line-clamp-2 text-pretty text-ink",
+                        item.isRead ? "font-medium" : "font-semibold",
                     )}
                 >
                     {item.title}
                 </span>
 
-                <div className="flex flex-col gap-1.5 min-inline-0">
-                    {item.body ? (
-                        <span
-                            data-notification-body
-                            className="body-xs line-clamp-2 text-pretty text-ink-muted!"
-                        >
-                            {item.body}
-                        </span>
-                    ) : null}
-
-                    {occurredAt ? (
-                        <div className="flex items-center gap-2 min-inline-0 pie-1">
-                            <time
-                                data-notification-meta
-                                dateTime={formatDateIso(occurredAt)}
-                                className="tabular body-xs whitespace-nowrap text-ink-subtle!"
-                            >
-                                {formatRelativePast(occurredAt, now)}
-                            </time>
-                            <time
-                                data-notification-meta
-                                dateTime={formatDateIso(occurredAt)}
-                                className="tabular body-xs whitespace-nowrap text-ink-subtle!"
-                            >
-                                {formatNotificationDayTime(occurredAt)}
-                            </time>
-                            {!item.isRead ? (
-                                <span
-                                    aria-hidden
-                                    className="t-unread-dot ms-auto shrink-0 rounded-full block-2.5 inline-2.5"
-                                />
-                            ) : null}
-                        </div>
-                    ) : !item.isRead ? (
-                        <div className="flex justify-end pie-1">
-                            <span
-                                aria-hidden
-                                className="t-unread-dot shrink-0 rounded-full block-2.5 inline-2.5"
-                            />
-                        </div>
-                    ) : null}
-                </div>
+                {item.body ? (
+                    <span
+                        data-notification-body
+                        className="body-sm line-clamp-2 text-pretty text-ink-muted"
+                    >
+                        {item.body}
+                    </span>
+                ) : null}
 
                 {propertyLabel ? (
                     <span
                         data-notification-body
                         className="
-                          body-xs inline-flex items-center gap-1 rounded-full bg-surface-muted
-                          px-2.5 py-1 font-medium text-ink-muted! inline-fit
+                          body-xs inline-flex items-center gap-1 rounded-full border
+                          border-border-warm bg-surface-muted/80 px-2 py-0.5 font-medium
+                          text-ink-muted inline-fit
                         "
                     >
                         <Building2
                             aria-hidden
-                            className="shrink-0 !text-ink-muted block-3 inline-3"
+                            className="shrink-0 text-ink-muted block-3 inline-3"
                         />
-                        {propertyLabel}
+                        <span className="truncate">{propertyLabel}</span>
                     </span>
                 ) : null}
+
                 {showActions ? <RequestActions /> : null}
+
+                {occurredAt ? <NotificationTimestamp occurredAt={occurredAt} now={now} /> : null}
             </div>
+
+            {!item.isRead ? (
+                <span
+                    aria-hidden
+                    className="t-unread-dot absolute inset-bs-5 inset-e-3 rounded-full block-2 inline-2"
+                />
+            ) : null}
         </div>
     );
 }
@@ -517,9 +631,11 @@ function NotificationRow({
     const href = item.href || viewAllHref;
     const actionable = isActionableRequest(item);
 
+    const rowClass = cn(itemClass, !item.isRead && unreadItemClass);
+
     if (actionable) {
         return (
-            <DropdownMenuItem className={itemClass}>
+            <DropdownMenuItem className={rowClass}>
                 <NotificationRowContent item={item} now={now} />
             </DropdownMenuItem>
         );
@@ -527,7 +643,7 @@ function NotificationRow({
 
     return (
         <DropdownMenuItem
-            className={itemClass}
+            className={rowClass}
             render={<Link href={href} />}
             onClick={() => {
                 if (!item.isRead) onMarkRead(item.id);
@@ -583,7 +699,7 @@ export function PortalNotificationsMenu({
             )}
 
             <DropdownMenuContent align="end" sideOffset={14} className={cn(menuSurfaceClass)}>
-                <DropdownMenuGroup className="shrink-0 p-3">
+                <div className="shrink-0 border-be border-border-warm px-4 py-3.5">
                     <NotificationsHeader
                         unreadCount={unreadCount}
                         activeTab={activeTab}
@@ -591,52 +707,38 @@ export function PortalNotificationsMenu({
                         onMarkAllRead={() => void markAllRead()}
                         onTabChange={setActiveTab}
                     />
-                </DropdownMenuGroup>
+                </div>
 
                 {loading && items.length === 0 ? (
-                    <p className="body-sm shrink-0 px-3 py-10 text-center text-ink-muted">
+                    <p className="body-sm shrink-0 px-4 py-12 text-center text-ink-muted">
                         Loading notifications…
                     </p>
                 ) : items.length === 0 ? (
-                    <div className="mx-auto px-3 max-inline-80">
+                    <div className="mx-auto px-4 max-inline-80">
                         <NotificationsEmpty viewAllHref={viewAllHref} />
                     </div>
                 ) : filteredItems.length === 0 ? (
-                    <div className="mx-auto px-3 max-inline-80">
+                    <div className="mx-auto px-4 max-inline-80">
                         <NotificationsEmpty viewAllHref={viewAllHref} filtered />
                     </div>
                 ) : (
-                    <div className="relative shrink-0 block-132 min-block-0">
-                        <ScrollArea className={cn(notificationsScrollClass)}>
-                            <DropdownMenuGroup
-                                className={cn(
-                                    "flex flex-col px-3",
-                                    filteredItems.length >= 3 ? "pbe-9" : "pbe-1",
-                                )}
-                            >
-                                {filteredItems.map((item, index) => (
-                                    <Fragment key={item.id}>
-                                        <NotificationRow
-                                            item={item}
-                                            viewAllHref={viewAllHref}
-                                            now={now}
-                                            onMarkRead={(id) => void markRead(id)}
-                                        />
-                                        {index < filteredItems.length - 1 ? (
-                                            <DropdownMenuSeparator
-                                                className="mx-0! my-2.5 bg-border-warm inline-full"
-                                            />
-                                        ) : null}
-                                    </Fragment>
+                    <>
+                        <ScrollArea className={notificationsScrollClass}>
+                            <DropdownMenuGroup className="flex flex-col gap-0.5 px-2 py-1.5">
+                                {filteredItems.map((item) => (
+                                    <NotificationRow
+                                        key={item.id}
+                                        item={item}
+                                        viewAllHref={viewAllHref}
+                                        now={now}
+                                        onMarkRead={(id) => void markRead(id)}
+                                    />
                                 ))}
                             </DropdownMenuGroup>
                         </ScrollArea>
 
-                        <NotificationsFooter
-                            viewAllHref={viewAllHref}
-                            showFade={filteredItems.length >= 3}
-                        />
-                    </div>
+                        <NotificationsFooter viewAllHref={viewAllHref} />
+                    </>
                 )}
             </DropdownMenuContent>
         </DropdownMenu>

@@ -32,7 +32,9 @@ export function ShortcutTooltip({ shortcutId, label, side = "bottom", children }
                 {label ?? shortcut.label}
                 <KbdGroup className="gap-0.5">
                     {shortcut.displayKeys.map((key) => (
-                        <Kbd key={key}>{key}</Kbd>
+                        <Kbd key={key} className="min-inline-4 px-1.5 text-[10px]">
+                            {key}
+                        </Kbd>
                     ))}
                 </KbdGroup>
             </TooltipContent>

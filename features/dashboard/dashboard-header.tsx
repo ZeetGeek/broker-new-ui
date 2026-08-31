@@ -185,31 +185,28 @@ function ServiceAreaChips({ areas }: { areas: string[] }) {
                     {area}
                 </Badge>
             ))}
-            <Button
-                variant="link"
-                size="sm"
-                nativeButton={false}
-                render={<Link href={PROFILE_EDIT_HREF} />}
-                aria-label="Edit profile"
-                className="
-                  body-sm gap-1 p-0 font-medium text-ink-muted block-auto
-                  hover:text-ink hover:underline
-                "
-            >
-                <Pencil aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                Edit profile
-            </Button>
+            <ShortcutTooltip shortcutId="profile" label="Edit profile">
+                <Button
+                    variant="link"
+                    size="sm"
+                    nativeButton={false}
+                    render={<Link href={PROFILE_EDIT_HREF} />}
+                    aria-label="Edit profile"
+                    className="
+                      body-sm gap-1 p-0 font-medium text-ink-muted block-auto
+                      hover:text-ink hover:underline
+                    "
+                >
+                    <Pencil aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                    Edit profile
+                </Button>
+            </ShortcutTooltip>
         </>
     );
 }
 
 function ContactLine({ phoneDigits, email }: { phoneDigits: string; email: string }) {
     const showPhone = hasPhoneNumber(phoneDigits);
-    const phoneHref = `tel:+91${phoneDigits.replace(/\D/g, "").slice(-10)}`;
-    const linkClass = `
-      body-sm gap-1 p-0 font-medium text-ink-muted block-auto
-      hover:text-ink hover:underline
-    `;
 
     if (!showPhone && !email) {
         return null;
@@ -219,16 +216,17 @@ function ContactLine({ phoneDigits, email }: { phoneDigits: string; email: strin
         <div className={`inline-flex items-center gap-2 ${META_TEXT}`}>
             {showPhone ? (
                 <>
-                    <Button
-                        variant="link"
-                        size="sm"
-                        nativeButton={false}
-                        render={<a href={phoneHref} />}
-                        className={linkClass}
-                    >
-                        <Phone aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        <PhoneNumber phoneDigits={phoneDigits} />
-                    </Button>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <span className="inline-flex items-center gap-1">
+                                    <Phone aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                                    <PhoneNumber phoneDigits={phoneDigits} />
+                                </span>
+                            }
+                        />
+                        <TooltipContent side="bottom">Your phone number</TooltipContent>
+                    </Tooltip>
                     {email ? (
                         <span aria-hidden className="text-ink-subtle">
                             ·
@@ -237,16 +235,17 @@ function ContactLine({ phoneDigits, email }: { phoneDigits: string; email: strin
                 </>
             ) : null}
             {email ? (
-                <Button
-                    variant="link"
-                    size="sm"
-                    nativeButton={false}
-                    render={<a href={`mailto:${email}`} />}
-                    className={linkClass}
-                >
-                    <Mail aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                    <span className="truncate max-inline-[28ch]">{email}</span>
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <span className="inline-flex items-center gap-1">
+                                <Mail aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                                <span className="truncate max-inline-[28ch]">{email}</span>
+                            </span>
+                        }
+                    />
+                    <TooltipContent side="bottom">Your email</TooltipContent>
+                </Tooltip>
             ) : null}
         </div>
     );

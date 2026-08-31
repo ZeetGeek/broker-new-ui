@@ -38,13 +38,26 @@
     --shimmer-highlight: var(--color-ink);
     --shimmer-band: 400%;
     --shimmer-ease: linear;
-    /* Tabs sliding — mapped to brand-ink / surface */
-    --tabs-dur: 250ms;
-    --tabs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Tabs sliding — transitions.dev 16, symmetric 250ms (--duration-fast) */
+    --duration-fast: 250ms;
+    --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --tabs-dur: var(--duration-fast);
+    --tabs-ease: var(--ease-smooth-out);
     --tabs-text-muted: var(--color-ink-muted);
     --tabs-text-active: var(--color-surface);
     --tabs-bar-bg: var(--color-surface);
     --tabs-pill-bg: var(--color-brand-ink);
+    /* Notification filter tabs — segmented control on surface-muted track */
+    --notif-tabs-dur: var(--tabs-dur);
+    --notif-tabs-ease: var(--tabs-ease);
+    --notif-tabs-bar-bg: var(--color-surface-muted);
+    --notif-tabs-pill-bg: var(--color-surface);
+    --notif-tabs-text-muted: var(--color-ink-muted);
+    --notif-tabs-text-active: var(--color-ink);
+    --notif-tabs-pill-shadow: var(--shadow-xs);
+    --notif-tabs-pill-radius: calc(var(--radius-inner) - 3px);
+    --notif-tabs-tab-height: 32px;
+    --notif-tabs-track-padding: 4px;
     /* Page side-by-side */
     --page-slide-dur: 250ms;
     --page-fade-dur: 250ms;
@@ -449,6 +462,91 @@
 }
 .t-tab:not([aria-current="page"]):hover {
     color: var(--color-ink);
+}
+
+/* Notification filter — transitions.dev 16-tabs-sliding, light track + white pill. */
+.t-notif-filter-tabs {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: var(--notif-tabs-track-padding);
+    border-radius: var(--radius-inner);
+    background: var(--notif-tabs-bar-bg);
+    min-inline-size: 100%;
+    inline-size: max-content;
+}
+.t-notif-filter-tab {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    flex: 1 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-inline-size: 5.25rem;
+    block-size: var(--notif-tabs-tab-height);
+    padding: 4px 10px;
+    border: 0;
+    border-radius: var(--notif-tabs-pill-radius);
+    background: transparent;
+    color: var(--notif-tabs-text-muted);
+    font-weight: 500;
+    cursor: pointer;
+    appearance: none;
+    transition: color var(--notif-tabs-dur) var(--notif-tabs-ease);
+}
+.t-notif-filter-tab:not([aria-selected="true"]):hover {
+    color: var(--notif-tabs-text-active);
+}
+.t-notif-filter-tab[aria-selected="true"] {
+    color: var(--notif-tabs-text-active);
+}
+.t-notif-filter-tab-label {
+    font-weight: 500;
+    transition: font-weight var(--notif-tabs-dur) var(--notif-tabs-ease);
+}
+.t-notif-filter-tab[aria-selected="true"] .t-notif-filter-tab-label {
+    font-weight: 600;
+}
+.t-notif-filter-tab-count {
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    color: var(--notif-tabs-text-muted);
+    transition:
+        color var(--notif-tabs-dur) var(--notif-tabs-ease),
+        background-color var(--notif-tabs-dur) var(--notif-tabs-ease);
+}
+.t-notif-filter-tab-count[data-badge="true"] {
+    border-radius: 6px;
+    background: color-mix(in oklch, var(--color-canvas) 88%, var(--color-surface-muted));
+    padding: 1px 6px;
+}
+.t-notif-filter-tabs-pill {
+    position: absolute;
+    top: var(--notif-tabs-track-padding);
+    left: 0;
+    z-index: 0;
+    block-size: var(--notif-tabs-tab-height);
+    inline-size: 0;
+    border-radius: var(--notif-tabs-pill-radius);
+    background: var(--notif-tabs-pill-bg);
+    box-shadow: var(--notif-tabs-pill-shadow);
+    transform: translateX(0);
+    transition:
+        transform var(--notif-tabs-dur) var(--notif-tabs-ease),
+        width var(--notif-tabs-dur) var(--notif-tabs-ease);
+    will-change: transform, width;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-notif-filter-tabs-pill,
+    .t-notif-filter-tab,
+    .t-notif-filter-tab-label,
+    .t-notif-filter-tab-count {
+        transition: none !important;
+    }
 }
 
 /* --- 08 page side-by-side --- */
