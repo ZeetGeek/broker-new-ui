@@ -58,6 +58,12 @@
     --notif-tabs-pill-radius: calc(var(--radius-inner) - 3px);
     --notif-tabs-tab-height: 32px;
     --notif-tabs-track-padding: 4px;
+    /* Notification body marquee — hover to scroll truncated description */
+    --notif-marquee-fade: 1.25rem;
+    --notif-marquee-ease: linear;
+    --notif-marquee-min-dur: 4s;
+    --notif-marquee-max-dur: 14s;
+    --notif-marquee-px-per-sec: 32;
     /* Page side-by-side */
     --page-slide-dur: 250ms;
     --page-fade-dur: 250ms;
@@ -546,6 +552,91 @@
     .t-notif-filter-tab-label,
     .t-notif-filter-tab-count {
         transition: none !important;
+    }
+}
+
+/* Notification description — single-line ellipsis + hover marquee (ChatGPT sidebar style). */
+.t-notif-body-marquee {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    min-inline-size: 0;
+}
+
+.t-notif-body-marquee[data-overflow="true"] {
+    -webkit-mask-image: linear-gradient(
+        to right,
+        #000 0%,
+        #000 calc(100% - var(--notif-marquee-fade)),
+        transparent 100%
+    );
+    mask-image: linear-gradient(
+        to right,
+        #000 0%,
+        #000 calc(100% - var(--notif-marquee-fade)),
+        transparent 100%
+    );
+}
+
+.t-notif-body-marquee-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.t-notif-body-marquee[data-overflow="true"]:hover .t-notif-body-marquee-text,
+.group\/notification:hover .t-notif-body-marquee[data-overflow="true"] .t-notif-body-marquee-text,
+.group\/notification[data-highlighted] .t-notif-body-marquee[data-overflow="true"] .t-notif-body-marquee-text {
+    display: inline-block;
+    inline-size: max-content;
+    max-inline-size: none;
+    overflow: visible;
+    text-overflow: clip;
+    animation: t-notif-body-marquee var(--notif-marquee-dur, 6s) var(--notif-marquee-ease) infinite;
+    -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        #000 var(--notif-marquee-fade),
+        #000 calc(100% - var(--notif-marquee-fade)),
+        transparent 100%
+    );
+    mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        #000 var(--notif-marquee-fade),
+        #000 calc(100% - var(--notif-marquee-fade)),
+        transparent 100%
+    );
+    will-change: transform;
+}
+
+.t-notif-body-marquee[data-overflow="true"]:hover,
+.group\/notification:hover .t-notif-body-marquee[data-overflow="true"],
+.group\/notification[data-highlighted] .t-notif-body-marquee[data-overflow="true"] {
+    -webkit-mask-image: none;
+    mask-image: none;
+}
+
+@keyframes t-notif-body-marquee {
+    0%,
+    12% {
+        transform: translateX(0);
+    }
+    88%,
+    100% {
+        transform: translateX(calc(-1 * var(--notif-marquee-distance, 0px)));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-notif-body-marquee[data-overflow="true"]:hover .t-notif-body-marquee-text,
+    .group\/notification:hover .t-notif-body-marquee[data-overflow="true"] .t-notif-body-marquee-text,
+    .group\/notification[data-highlighted]
+        .t-notif-body-marquee[data-overflow="true"]
+        .t-notif-body-marquee-text {
+        animation: none !important;
+        transform: none !important;
     }
 }
 

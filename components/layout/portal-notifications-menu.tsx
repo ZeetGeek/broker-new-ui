@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -510,6 +510,63 @@ function RequestActions() {
     );
 }
 
+function measureMarqueeDuration(distancePx: number): number {
+    const seconds = distancePx / 32;
+    return Math.min(14, Math.max(4, seconds));
+}
+
+function NotificationDescription({ text }: { text: string }) {
+    const containerRef = useRef<HTMLSpanElement>(null);
+    const textRef = useRef<HTMLSpanElement>(null);
+    const [marquee, setMarquee] = useState({ overflows: false, distance: 0, duration: 6 });
+
+    useLayoutEffect(() => {
+        const container = containerRef.current;
+        const label = textRef.current;
+        if (!container || !label) return;
+
+        function measure() {
+            const currentContainer = containerRef.current;
+            const currentLabel = textRef.current;
+            if (!currentContainer || !currentLabel) return;
+
+            const distance = Math.max(0, currentLabel.scrollWidth - currentContainer.clientWidth);
+            setMarquee({
+                overflows: distance > 4,
+                distance,
+                duration: measureMarqueeDuration(distance),
+            });
+        }
+
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(container);
+        return () => observer.disconnect();
+    }, [text]);
+
+    const marqueeStyle = marquee.overflows
+        ? ({
+              "--notif-marquee-distance": `${marquee.distance}px`,
+              "--notif-marquee-dur": `${marquee.duration}s`,
+          } as CSSProperties)
+        : undefined;
+
+    return (
+        <span
+            ref={containerRef}
+            data-notification-body
+            data-overflow={marquee.overflows ? "true" : undefined}
+            title={marquee.overflows ? text : undefined}
+            className="t-notif-body-marquee body-sm text-ink-muted"
+            style={marqueeStyle}
+        >
+            <span ref={textRef} className="t-notif-body-marquee-text">
+                {text}
+            </span>
+        </span>
+    );
+}
+
 function NotificationTimestamp({ occurredAt, now }: { occurredAt: Date; now: Date }) {
     const dateTime = formatDateIso(occurredAt);
     const metaTimeClass =
@@ -576,14 +633,7 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
                     {item.title}
                 </span>
 
-                {item.body ? (
-                    <span
-                        data-notification-body
-                        className="body-sm line-clamp-2 text-pretty text-ink-muted"
-                    >
-                        {item.body}
-                    </span>
-                ) : null}
+                {item.body ? <NotificationDescription text={item.body} /> : null}
 
                 {propertyLabel ? (
                     <span

@@ -185,7 +185,7 @@ function ServiceAreaChips({ areas }: { areas: string[] }) {
                     {area}
                 </Badge>
             ))}
-            <ShortcutTooltip shortcutId="profile" label="Edit profile">
+            <ShortcutTooltip shortcutId="profile" label="Press to navigate">
                 <Button
                     variant="link"
                     size="sm"
