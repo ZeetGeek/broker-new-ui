@@ -2,19 +2,33 @@
 
 import Link from "next/link";
 
-import { Bell } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+    BadgeCheck,
+    Bell,
+    BellRing,
+    Building2,
+    CalendarClock,
+    Gift,
+    MessageCircle,
+    Send,
+    ShieldCheck,
+    UserPlus,
+    XCircle,
+} from "lucide-react";
 
+import type { NotificationItem } from "@/lib/api/notifications";
 import { formatDateIso, formatRelativePast } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
-import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/shared/empty-state";
+import { TextLinkButton } from "@/components/shared/text-link-button";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -27,6 +41,31 @@ export type PortalNotificationsMenuProps = {
     triggerClassName?: string;
     tooltipLabel?: string;
 };
+
+const menuSurfaceClass = `
+  t-dropdown t-profile-menu animate-none! flex flex-col overflow-hidden rounded-inner border
+  border-border-warm bg-surface p-0 text-ink ring-0
+  before:backdrop-blur-none
+  data-closed:animate-none!
+  data-open:animate-none!
+  p-3 min-inline-[22rem] max-inline-96
+  **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
+  **:data-[slot$=-item]:data-highlighted:text-ink!
+  **:data-[slot$=-item]:focus:bg-surface-muted!
+  **:data-[slot$=-item]:focus:text-ink!
+`;
+
+const itemClass = `
+  cursor-pointer items-start gap-2.5 rounded-inner px-3 py-2.5 body-sm font-normal text-ink
+`;
+
+function NotificationsFooter({ viewAllHref }: { viewAllHref: string }) {
+    return (
+        <div className="mbs-3 flex shrink-0 justify-center">
+            <TextLinkButton href={viewAllHref}>View all notifications</TextLinkButton>
+        </div>
+    );
+}
 
 function UnreadBadge({ count }: { count: number }) {
     if (count <= 0) {
@@ -47,15 +86,197 @@ function UnreadBadge({ count }: { count: number }) {
     );
 }
 
-function NotificationsEmpty() {
+const iconBaseClass = "shrink-0 block-4 inline-4 mbs-0.5";
+
+type NotificationVisual = {
+    Icon: LucideIcon;
+    colorClass: string;
+};
+
+function getNotificationVisual(
+    type: string | null,
+    title: string,
+    body: string | null,
+): NotificationVisual {
+    const key = `${type ?? ""} ${title} ${body ?? ""}`.toLowerCase();
+
+    if (key.includes("referral")) {
+        return { Icon: Gift, colorClass: "!text-urgent-mid" };
+    }
+
+    if (key.includes("message") || key.includes("chat")) {
+        return { Icon: MessageCircle, colorClass: "!text-brand-deep" };
+    }
+
+    if (key.includes("visit") || key.includes("showing") || key.includes("schedule")) {
+        return {
+            Icon: CalendarClock,
+            colorClass:
+                key.includes("approv") || key.includes("accept")
+                    ? "!text-brand"
+                    : "!text-urgent",
+        };
+    }
+
+    if (key.includes("invite") || key.includes("property") || key.includes("listing")) {
+        return { Icon: Building2, colorClass: "!text-brand" };
+    }
+
+    if (key.includes("reject") || key.includes("declin") || key.includes("cancel")) {
+        return { Icon: XCircle, colorClass: "!text-danger" };
+    }
+
+    if (key.includes("approv") || key.includes("accepted") || key.includes("qualified")) {
+        return { Icon: BadgeCheck, colorClass: "!text-brand" };
+    }
+
+    if (key.includes("represent") || key.includes("request")) {
+        return { Icon: Send, colorClass: "!text-brand-deep" };
+    }
+
+    if (
+        key.includes("reminder") ||
+        key.includes("follow-up") ||
+        key.includes("follow up") ||
+        key.includes("due")
+    ) {
+        return { Icon: BellRing, colorClass: "!text-urgent" };
+    }
+
+    if (key.includes("client") || key.includes("lead")) {
+        return { Icon: UserPlus, colorClass: "!text-brand-text" };
+    }
+
+    if (key.includes("verif") || key.includes("rera")) {
+        return { Icon: ShieldCheck, colorClass: "!text-brand-text" };
+    }
+
+    if (key.includes("announce") || key.includes("update") || key.includes("system")) {
+        return { Icon: Bell, colorClass: "!text-brand" };
+    }
+
+    return { Icon: Bell, colorClass: "!text-brand" };
+}
+
+function NotificationTypeIcon({
+    type,
+    title,
+    body,
+}: {
+    type: string | null;
+    title: string;
+    body: string | null;
+}) {
+    const { Icon, colorClass } = getNotificationVisual(type, title, body);
+
+    return <Icon aria-hidden className={cn(iconBaseClass, colorClass)} strokeWidth={1.75} />;
+}
+
+function NotificationsHeader({
+    unreadCount,
+    onMarkAllRead,
+}: {
+    unreadCount: number;
+    onMarkAllRead: () => void;
+}) {
     return (
-        <div className="flex flex-col items-center gap-1 px-6 py-8 text-center">
-            <Bell aria-hidden className="text-ink-subtle block-5 inline-5" strokeWidth={1.75} />
-            <p className="body-sm font-medium text-ink">You&apos;re up to date</p>
-            <p className="body-xs text-ink-muted">
-                When something needs your attention, it shows up here.
-            </p>
+        <div className="flex items-start justify-between gap-3">
+            <div className="eyebrow flex items-center gap-2 text-ink-muted">
+                <span aria-hidden className="shrink-0 rounded-full bg-brand block-1.5 inline-1.5" />
+                <span>Notifications</span>
+            </div>
+            {unreadCount > 0 && (
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                    <p className="eyebrow text-ink-muted">{unreadCount} unread</p>
+                    <button
+                        type="button"
+                        className="
+                          eyebrow font-semibold text-brand transition-colors duration-160 ease-out
+                          hover:text-brand-text
+                        "
+                        onClick={onMarkAllRead}
+                    >
+                        Mark all read
+                    </button>
+                </div>
+            )}
         </div>
+    );
+}
+
+function NotificationsEmpty({ viewAllHref }: { viewAllHref: string }) {
+    return (
+        <EmptyState
+            icon={Bell}
+            heading="Nothing yet"
+            description="When something needs your attention, it shows up here."
+            className="gap-3 px-2 py-14 [&>div]:gap-1"
+        >
+            <TextLinkButton href={viewAllHref}>View all notifications</TextLinkButton>
+        </EmptyState>
+    );
+}
+
+function NotificationRow({
+    item,
+    viewAllHref,
+    now,
+    onMarkRead,
+}: {
+    item: NotificationItem;
+    viewAllHref: string;
+    now: Date;
+    onMarkRead: (id: string) => void;
+}) {
+    const occurredAt = item.createdAt ? new Date(item.createdAt) : null;
+    const href = item.href || viewAllHref;
+
+    return (
+        <DropdownMenuItem
+            className={itemClass}
+            render={<Link href={href} />}
+            onClick={() => {
+                if (!item.isRead) onMarkRead(item.id);
+            }}
+        >
+            <NotificationTypeIcon type={item.type} title={item.title} body={item.body} />
+
+            <span className="flex flex-1 gap-1.5 min-inline-0">
+                {!item.isRead ? (
+                    <span
+                        aria-hidden
+                        className="mbs-1.5 shrink-0 rounded-full bg-brand block-1.5 inline-1.5"
+                    />
+                ) : null}
+
+                <span className="flex flex-1 flex-col gap-0.5 min-inline-0">
+                    <span className="flex items-start gap-2">
+                        <span
+                            className={cn(
+                                "body-sm line-clamp-1 flex-1 min-inline-0",
+                                item.isRead ? "font-medium text-ink" : "font-semibold text-ink",
+                            )}
+                        >
+                            {item.title}
+                        </span>
+                    </span>
+                    {item.body ? (
+                        <span className="body-xs line-clamp-2 text-pretty text-ink-muted">
+                            {item.body}
+                        </span>
+                    ) : null}
+                </span>
+
+                {occurredAt ? (
+                    <time
+                        dateTime={formatDateIso(occurredAt)}
+                        className="tabular body-xs ms-auto shrink-0 pbs-0.5 text-ink-subtle"
+                    >
+                        {formatRelativePast(occurredAt, now)}
+                    </time>
+                ) : null}
+            </span>
+        </DropdownMenuItem>
     );
 }
 
@@ -80,7 +301,7 @@ export function PortalNotificationsMenu({
                 />
             }
         >
-            <Bell aria-hidden="true" />
+            <Bell aria-hidden="true" strokeWidth={1.75} />
             <UnreadBadge count={unreadCount} />
         </DropdownMenuTrigger>
     );
@@ -96,138 +317,48 @@ export function PortalNotificationsMenu({
                 trigger
             )}
 
-            <DropdownMenuContent
-                align="end"
-                sideOffset={8}
-                className={cn(
-                    `
-                      flex flex-col overflow-hidden rounded-inner border border-border-warm
-                      bg-surface p-0 text-ink shadow-lg ring-0 inline-80
-                      before:backdrop-blur-none
-                      dark:bg-surface dark:text-ink
-                    `,
-                )}
-            >
-                <DropdownMenuGroup className="shrink-0">
-                    <DropdownMenuLabel className="flex items-center justify-between gap-3 px-4 py-3">
-                        <span className="h6 text-ink">Notifications</span>
-                        <span className="flex items-center gap-3">
-                            {unreadCount > 0 ? (
-                                <button
-                                    type="button"
-                                    className="body-xs font-semibold text-brand"
-                                    onClick={() => void markAllRead()}
-                                >
-                                    Mark all read
-                                </button>
-                            ) : null}
-                            {unreadCount > 0 ? (
-                                <span className="body-xs font-medium text-ink-muted">
-                                    {unreadCount} unread
-                                </span>
-                            ) : null}
-                        </span>
-                    </DropdownMenuLabel>
+            <DropdownMenuContent align="end" sideOffset={14} className={cn(menuSurfaceClass)}>
+                <DropdownMenuGroup className="shrink-0 pbs-1 pbe-3">
+                    <NotificationsHeader
+                        unreadCount={unreadCount}
+                        onMarkAllRead={() => void markAllRead()}
+                    />
                 </DropdownMenuGroup>
 
-                <DropdownMenuSeparator className="shrink-0 bg-border-warm" />
+                <DropdownMenuSeparator className="mx-0! my-0 shrink-0 bg-border-warm inline-full!" />
 
                 {loading && items.length === 0 ? (
-                    <p className="body-sm shrink-0 px-6 py-8 text-center text-ink-muted">
-                        Loading…
+                    <p className="body-sm mbs-2 shrink-0 px-2 py-6 text-center text-ink-muted">
+                        Loading notifications…
                     </p>
                 ) : items.length === 0 ? (
-                    <NotificationsEmpty />
-                ) : (
-                    <div
-                        className="
-                          overflow-x-hidden overflow-y-auto overscroll-contain max-block-80
-                          min-block-0
-                        "
-                    >
-                        <DropdownMenuGroup className="p-1.5">
-                            {items.map((item) => {
-                                const occurredAt = item.createdAt ? new Date(item.createdAt) : null;
-                                const href = item.href || viewAllHref;
-
-                                return (
-                                    <DropdownMenuItem
-                                        key={item.id}
-                                        className={cn(
-                                            `
-                                              cursor-pointer items-start gap-3 rounded-inner p-3
-                                              font-normal
-                                              focus:bg-surface-muted focus:text-ink
-                                            `,
-                                            !item.isRead && "bg-surface-muted/70",
-                                        )}
-                                        render={<Link href={href} />}
-                                        onClick={() => {
-                                            if (!item.isRead) void markRead(item.id);
-                                        }}
-                                    >
-                                        <span
-                                            className="
-                                              flex shrink-0 items-center justify-center rounded-full
-                                              bg-surface-muted text-brand block-9 inline-9
-                                            "
-                                        >
-                                            <Bell
-                                                aria-hidden
-                                                className="block-4 inline-4"
-                                                strokeWidth={1.75}
-                                            />
-                                        </span>
-                                        <span className="flex flex-col gap-0.5 min-inline-0">
-                                            <span className="flex items-start gap-2">
-                                                <span className="body-sm font-medium text-ink">
-                                                    {item.title}
-                                                </span>
-                                                {!item.isRead ? (
-                                                    <Badge
-                                                        variant="brand"
-                                                        className="ms-auto shrink-0 px-2 py-0.5"
-                                                    >
-                                                        New
-                                                    </Badge>
-                                                ) : null}
-                                            </span>
-                                            {item.body ? (
-                                                <span
-                                                    className="body-xs line-clamp-2 text-ink-muted"
-                                                >
-                                                    {item.body}
-                                                </span>
-                                            ) : null}
-                                            {occurredAt ? (
-                                                <time
-                                                    dateTime={formatDateIso(occurredAt)}
-                                                    className="tabular body-xs text-ink-subtle"
-                                                >
-                                                    {formatRelativePast(occurredAt, now)}
-                                                </time>
-                                            ) : null}
-                                        </span>
-                                    </DropdownMenuItem>
-                                );
-                            })}
-                        </DropdownMenuGroup>
+                    <div className="mbs-2">
+                        <NotificationsEmpty viewAllHref={viewAllHref} />
                     </div>
-                )}
+                ) : (
+                    <>
+                        <div
+                            className="
+                              -mx-1 mbs-2 overflow-x-hidden overflow-y-auto overscroll-contain px-1
+                              max-block-80 min-block-0
+                            "
+                        >
+                            <DropdownMenuGroup className="flex flex-col gap-0.5 p-0">
+                                {items.map((item) => (
+                                    <NotificationRow
+                                        key={item.id}
+                                        item={item}
+                                        viewAllHref={viewAllHref}
+                                        now={now}
+                                        onMarkRead={(id) => void markRead(id)}
+                                    />
+                                ))}
+                            </DropdownMenuGroup>
+                        </div>
 
-                <DropdownMenuSeparator className="shrink-0 bg-border-warm" />
-                <DropdownMenuGroup className="shrink-0 p-1.5">
-                    <DropdownMenuItem
-                        className="
-                          body-sm cursor-pointer justify-center rounded-inner px-3 py-2
-                          font-semibold text-brand
-                          focus:bg-surface-muted focus:text-brand
-                        "
-                        render={<Link href={viewAllHref} />}
-                    >
-                        View all
-                    </DropdownMenuItem>
-                </DropdownMenuGroup>
+                        <NotificationsFooter viewAllHref={viewAllHref} />
+                    </>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );
