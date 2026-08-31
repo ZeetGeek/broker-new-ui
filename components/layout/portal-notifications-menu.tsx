@@ -18,12 +18,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { useNotifications } from "@/providers/notification-provider";
 
 export type PortalNotificationsMenuProps = {
     viewAllHref: string;
     triggerClassName?: string;
+    tooltipLabel?: string;
 };
 
 function UnreadBadge({ count }: { count: number }) {
@@ -60,27 +62,39 @@ function NotificationsEmpty() {
 export function PortalNotificationsMenu({
     viewAllHref,
     triggerClassName,
+    tooltipLabel,
 }: PortalNotificationsMenuProps) {
     const { items, unreadCount, loading, markRead, markAllRead } = useNotifications();
     const now = new Date();
     const label = unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications";
 
+    const trigger = (
+        <DropdownMenuTrigger
+            render={
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-md"
+                    aria-label={label}
+                    className={triggerClassName}
+                />
+            }
+        >
+            <Bell aria-hidden="true" />
+            <UnreadBadge count={unreadCount} />
+        </DropdownMenuTrigger>
+    );
+
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-md"
-                        aria-label={label}
-                        className={triggerClassName}
-                    />
-                }
-            >
-                <Bell aria-hidden="true" />
-                <UnreadBadge count={unreadCount} />
-            </DropdownMenuTrigger>
+            {tooltipLabel ? (
+                <Tooltip>
+                    <TooltipTrigger render={trigger} />
+                    <TooltipContent side="bottom">{tooltipLabel}</TooltipContent>
+                </Tooltip>
+            ) : (
+                trigger
+            )}
 
             <DropdownMenuContent
                 align="end"

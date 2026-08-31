@@ -111,6 +111,7 @@ export function PortalHeader({
 
                                 <PortalNotificationsMenu
                                     viewAllHref={notificationsHref}
+                                    tooltipLabel="Notifications"
                                     triggerClassName={cn(
                                         headerControlClass,
                                         "relative text-ink-muted hover:text-ink",
@@ -126,6 +127,7 @@ export function PortalHeader({
                                     notificationsHref={notificationsHref}
                                     roleLabel={roleLabel}
                                     orgName={orgName}
+                                    tooltipLabel="Account"
                                 />
                             </div>
                         </TooltipProvider>

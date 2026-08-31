@@ -20,6 +20,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { useAppDispatch } from "@/store/hooks";
 import { logout } from "@/store/slices/auth-slice";
@@ -34,6 +35,7 @@ export type PortalProfileMenuProps = {
     notificationsHref?: string;
     roleLabel?: string;
     orgName?: string | null;
+    tooltipLabel?: string;
 };
 
 const itemClass = `
@@ -50,6 +52,7 @@ export function PortalProfileMenu({
     notificationsHref,
     roleLabel,
     orgName,
+    tooltipLabel,
 }: PortalProfileMenuProps) {
     const router = useRouter();
     const dispatch = useAppDispatch();
@@ -72,27 +75,38 @@ export function PortalProfileMenu({
         }
     }
 
+    const trigger = (
+        <DropdownMenuTrigger
+            render={
+                <Button
+                    variant="ghost"
+                    size="md"
+                    aria-label={`${userName} menu`}
+                    className="
+                      scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
+                      hover:bg-transparent hover:text-ink
+                      data-popup-open:text-ink
+                    "
+                />
+            }
+        >
+            <span className="overflow-hidden rounded-full block-control-lg inline-control-lg">
+                <UserAvatar name={userName} imageUrl={userAvatarUrl} size="fill" />
+            </span>
+            <ChevronDown aria-hidden="true" />
+        </DropdownMenuTrigger>
+    );
+
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <Button
-                        variant="ghost"
-                        size="md"
-                        aria-label={`${userName} menu`}
-                        className="
-                          scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
-                          hover:bg-transparent hover:text-ink
-                          data-popup-open:text-ink
-                        "
-                    />
-                }
-            >
-                <span className="overflow-hidden rounded-full block-control-lg inline-control-lg">
-                    <UserAvatar name={userName} imageUrl={userAvatarUrl} size="fill" />
-                </span>
-                <ChevronDown aria-hidden="true" />
-            </DropdownMenuTrigger>
+            {tooltipLabel ? (
+                <Tooltip>
+                    <TooltipTrigger render={trigger} />
+                    <TooltipContent side="bottom">{tooltipLabel}</TooltipContent>
+                </Tooltip>
+            ) : (
+                trigger
+            )}
 
             <DropdownMenuContent
                 align="end"
