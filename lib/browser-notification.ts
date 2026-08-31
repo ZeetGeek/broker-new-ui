@@ -19,6 +19,7 @@ export function requestBrowserNotificationPermission() {
 }
 
 function presentNotification(notice: BrowserNotice) {
+    console.log("notice", notice);
     const title = notice.title?.trim() || "New notification";
     const notification = new Notification(title, {
         body: notice.body?.trim() || undefined,

@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { authApi } from "@/lib/api/auth";
-import { clearSession, portalHomeForRole } from "@/lib/auth/session";
+import { clearSession, GOOGLE_ONBOARDING_KEY, portalHomeForRole } from "@/lib/auth/session";
 
 import { AuthFormFrame } from "@/features/auth/auth-back-link";
 import { AuthBusyState } from "@/features/auth/auth-busy-state";
@@ -32,6 +32,15 @@ export function AuthCallbackPanel() {
                 const user = await authApi.profile(token);
                 if (cancelled) return;
                 dispatch(establishSession({ accessToken: token, user }));
+
+                const isNewUser = searchParams.get("isNewUser") === "1";
+                if (isNewUser) {
+                    sessionStorage.setItem(GOOGLE_ONBOARDING_KEY, "1");
+                    setMessage("Almost there. Pick how you want to use YesBroker.");
+                    router.replace("/auth/choose-role");
+                    return;
+                }
+
                 setMessage("Signed in. Taking you to your dashboard.");
                 router.replace(portalHomeForRole(user.role));
             } catch {
