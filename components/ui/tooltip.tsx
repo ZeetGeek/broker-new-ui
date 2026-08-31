@@ -74,7 +74,8 @@ function TooltipContent({
                     className={cn(
                         `
                           t-tooltip body-xs z-50 inline-flex items-center gap-1.5 rounded-md border
-                          border-border-warm px-3 py-1.5 font-medium shadow-sm inline-fit max-inline-xs
+                          border-border-warm px-3 py-1.5 font-medium shadow-sm inline-fit
+                          max-inline-xs
                           has-data-[slot=kbd]:pe-1.5
                           **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate
                           **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-lg

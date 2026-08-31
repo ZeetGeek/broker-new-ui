@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import Link from "next/link";
 
 import { Mail, MapPin, Pencil, Phone, Search, UserRoundPlus } from "lucide-react";
 import { motion } from "motion/react";

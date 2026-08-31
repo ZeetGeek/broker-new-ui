@@ -47,7 +47,7 @@ export function EmptyState({
                 </span>
 
                 <div className="flex flex-col gap-1.5">
-                    <h2 id={headingId} className="h5 text-ink">
+                    <h2 id={headingId} className="h6 text-ink">
                         {heading}
                     </h2>
                     <p className="body-sm text-pretty text-ink-muted">{description}</p>
