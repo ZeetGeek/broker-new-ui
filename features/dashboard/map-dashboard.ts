@@ -317,6 +317,59 @@ function mapActivity(activity: DashboardActivity | undefined): ActivityData {
     };
 }
 
+function mapYouRepresent(youRepresent: DashboardResponse["youRepresent"]): YouRepresentData {
+    if (!youRepresent) {
+        return { totalCount: 0, properties: [] };
+    }
+
+    return {
+        totalCount: youRepresent.totalCount ?? 0,
+        properties: (youRepresent.properties ?? []).map((property) => ({
+            id: property.id,
+            configLabel: property.configLabel,
+            locality: property.locality,
+            amountInr: property.amountInr,
+            isRent: property.isRent,
+            areaSqft: property.areaSqft,
+            furnishingLabel: property.furnishingLabel,
+            ownerFirstName: property.ownerFirstName,
+            visitCount: property.visitCount,
+            interestedCount: property.interestedCount,
+            daysSinceActivity: property.daysSinceActivity,
+            isStale: property.isStale,
+            ...(property.stageLabel ? { stageLabel: property.stageLabel } : {}),
+            ...(property.negotiationClientName
+                ? { negotiationClientName: property.negotiationClientName }
+                : {}),
+            shareHref: property.shareHref,
+            bookVisitHref: property.bookVisitHref,
+            imageSrc: property.imageSrc,
+        })),
+    };
+}
+
+function mapNewInAreas(newInAreas: DashboardResponse["newInAreas"]): AreaPropertyItem[] {
+    if (!newInAreas?.length) {
+        return [];
+    }
+
+    return newInAreas.map((property) => ({
+        id: property.id,
+        configLabel: property.configLabel,
+        locality: property.locality,
+        amountInr: property.amountInr,
+        isRent: property.isRent,
+        areaSqft: property.areaSqft,
+        furnishingLabel: property.furnishingLabel,
+        ...(property.detailLabel ? { detailLabel: property.detailLabel } : {}),
+        listedHoursAgo: property.listedHoursAgo,
+        brokerRequestCount: property.brokerRequestCount,
+        hasRequested: property.hasRequested,
+        isBookmarked: property.isBookmarked,
+        imageSrc: property.imageSrc,
+    }));
+}
+
 function mapPipeline(funnel: PipelineFunnelStage[] | undefined): PipelineData {
     const byStage = new Map((funnel ?? []).map((row) => [row.stage, row.count]));
     const stages = PIPELINE_KEYS.map((key) => ({
@@ -363,8 +416,8 @@ export function mapBrokerDashboardView(
         pipelineCard: mapPipeline(data?.charts?.pipelineFunnel),
         followUps: mapFollowUps(data?.followUps),
         activity: mapActivity(data?.activity),
-        youRepresent: { totalCount: 0, properties: [] },
-        newInAreas: [],
+        youRepresent: mapYouRepresent(data?.youRepresent),
+        newInAreas: mapNewInAreas(data?.newInAreas),
         userName: fullName,
         avatarUrl: profile?.avatarUrl ?? undefined,
         unreadCount: profile?.notifications?.unreadCount ?? 0,

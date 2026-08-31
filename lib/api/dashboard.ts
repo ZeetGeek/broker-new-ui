@@ -109,6 +109,47 @@ export type DashboardActivity = {
     totalCount: number;
 };
 
+export type DashboardRepresentedProperty = {
+    id: string;
+    configLabel: string;
+    locality: string;
+    amountInr: number;
+    isRent: boolean;
+    areaSqft: number;
+    furnishingLabel: string;
+    ownerFirstName: string;
+    visitCount: number;
+    interestedCount: number;
+    daysSinceActivity: number;
+    isStale: boolean;
+    stageLabel?: string;
+    negotiationClientName?: string;
+    shareHref: string;
+    bookVisitHref: string;
+    imageSrc: string;
+};
+
+export type DashboardYouRepresent = {
+    totalCount: number;
+    properties: DashboardRepresentedProperty[];
+};
+
+export type DashboardAreaProperty = {
+    id: string;
+    configLabel: string;
+    locality: string;
+    amountInr: number;
+    isRent: boolean;
+    areaSqft: number;
+    furnishingLabel: string;
+    detailLabel?: string;
+    listedHoursAgo: number;
+    brokerRequestCount: number;
+    hasRequested: boolean;
+    isBookmarked: boolean;
+    imageSrc: string;
+};
+
 export type PipelineFunnelStage = {
     stage: string;
     label: string;
@@ -132,6 +173,8 @@ export type DashboardResponse = {
     brokerRequests?: DashboardBrokerRequest[];
     followUps?: DashboardFollowUps;
     activity?: DashboardActivity;
+    youRepresent?: DashboardYouRepresent;
+    newInAreas?: DashboardAreaProperty[];
 };
 
 export const dashboardApi = {

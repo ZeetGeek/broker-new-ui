@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 import { Bookmark, Clock3, MapPin, Users } from "lucide-react";
 
+import { ApiError } from "@/lib/api/client";
+import { representativeApi } from "@/lib/api/representative";
 import { formatAreaSqft } from "@/lib/format/area";
 import { cn } from "@/lib/utils";
 
@@ -67,12 +70,14 @@ function competitionStatus(count: number): { text: string; className: string } {
 function PropertyRow({
     property,
     state,
+    isRequesting,
     onToggleBookmark,
     onRequest,
     className,
 }: {
     property: AreaPropertyItem;
     state: RowState;
+    isRequesting: boolean;
     onToggleBookmark: () => void;
     onRequest: () => void;
     className?: string;
@@ -133,11 +138,7 @@ function PropertyRow({
 
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="body-sm inline-flex items-center gap-1 text-stone-500">
-                            <Clock3
-                                aria-hidden
-                                className="block-3.5 inline-3.5"
-                                strokeWidth={2}
-                            />
+                            <Clock3 aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
                             {listedLabel(property.listedHoursAgo)}
                         </span>
                         <span
@@ -146,11 +147,7 @@ function PropertyRow({
                                 competition.className,
                             )}
                         >
-                            <Users
-                                aria-hidden
-                                className="block-3.5 inline-3.5"
-                                strokeWidth={2}
-                            />
+                            <Users aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
                             {competition.text}
                         </span>
                     </div>
@@ -161,7 +158,8 @@ function PropertyRow({
                         type="button"
                         variant="outline"
                         size="sm"
-                        disabled={state.hasRequested}
+                        disabled={state.hasRequested || isRequesting}
+                        loading={isRequesting}
                         onClick={onRequest}
                         className={cn(
                             "border-2 border-border-warm",
@@ -224,6 +222,7 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
             ]),
         ),
     );
+    const [requestingId, setRequestingId] = useState<string | null>(null);
 
     function toggleBookmark(id: string) {
         setRowState((prev) => {
@@ -236,20 +235,31 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
         });
     }
 
-    function requestProperty(id: string) {
-        setRowState((prev) => {
-            const current = prev[id];
-            if (!current || current.hasRequested) return prev;
-            return {
+    async function requestProperty(id: string) {
+        const current = rowState[id];
+        if (!current || current.hasRequested || requestingId) return;
+
+        setRequestingId(id);
+        try {
+            await representativeApi.requestRepresentation(id);
+            setRowState((prev) => ({
                 ...prev,
                 [id]: { ...current, hasRequested: true },
-            };
-        });
+            }));
+            toast.success("Request sent to the owner");
+        } catch (err: unknown) {
+            toast.error(err instanceof ApiError ? err.message : "Could not send request");
+        } finally {
+            setRequestingId(null);
+        }
     }
 
     return (
         <section
-            className={cn(isEmpty ? DASHBOARD_CARD_SHELL_EMPTY : DASHBOARD_CARD_SHELL_AUTO, className)}
+            className={cn(
+                isEmpty ? DASHBOARD_CARD_SHELL_EMPTY : DASHBOARD_CARD_SHELL_AUTO,
+                className,
+            )}
             aria-labelledby="new-in-areas-heading"
         >
             <div className="flex shrink-0 items-start justify-between gap-3">
@@ -283,8 +293,9 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
                                 key={property.id}
                                 property={property}
                                 state={state}
+                                isRequesting={requestingId === property.id}
                                 onToggleBookmark={() => toggleBookmark(property.id)}
-                                onRequest={() => requestProperty(property.id)}
+                                onRequest={() => void requestProperty(property.id)}
                                 className={
                                     index > 0
                                         ? "mbs-3 border-bs border-border-warm/50 pbs-3"
