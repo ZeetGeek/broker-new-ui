@@ -2,16 +2,12 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
+import { TextLinkButton } from "@/components/shared/text-link-button";
+
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
 
 const ACTIVITY_INFO = "Recent updates across your properties, clients, and visits.";
-
-const LINK_CLASS = cn(
-    "body-sm inline-flex items-center gap-1 font-semibold text-brand outline-none",
-    "hover:text-brand-text",
-    "focus-visible:ring-3 focus-visible:ring-ring/30",
-);
 
 export type ActivityItem = {
     id: string;
@@ -137,10 +133,9 @@ export function ActivityCard({ data, className }: ActivityCardProps) {
                             />
                         ) : null}
                         <div className="relative flex justify-center">
-                            <Link href="/broker/notifications" className={LINK_CLASS}>
+                            <TextLinkButton href="/broker/notifications">
                                 View all activity
-                                <span aria-hidden>→</span>
-                            </Link>
+                            </TextLinkButton>
                         </div>
                     </div>
                 </div>

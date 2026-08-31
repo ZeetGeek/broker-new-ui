@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
-import { DASHBOARD_CARD_SHELL_AUTO } from "./card-shell";
+import { DASHBOARD_CARD_SHELL_AUTO, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { AreaPropertyItem } from "./mock-data";
 import { TextLinkButton } from "./text-link-button";
 
@@ -197,8 +197,30 @@ function PropertyRow({
     );
 }
 
+function EmptyNewInAreas() {
+    return (
+        <div
+            className="
+              flex flex-1 flex-col items-center justify-center gap-4 text-center
+              min-block-0 px-1
+            "
+            aria-live="polite"
+        >
+            <div className="flex max-w-prose flex-col gap-1.5">
+                <h2 className="h5 text-ink">Nothing new this week</h2>
+                <p className="body-sm text-pretty text-ink-muted">
+                    We&apos;ll show properties added in the areas you work in.
+                </p>
+            </div>
+
+            <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
+        </div>
+    );
+}
+
 export function NewInAreas({ properties, serviceAreas, className }: NewInAreasProps) {
     const rows = properties.slice(0, MAX_ROWS);
+    const isEmpty = rows.length === 0;
     const [rowState, setRowState] = useState<Record<string, RowState>>(() =>
         Object.fromEntries(
             properties.map((property) => [
@@ -235,7 +257,7 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
 
     return (
         <section
-            className={cn(DASHBOARD_CARD_SHELL_AUTO, className)}
+            className={cn(isEmpty ? DASHBOARD_CARD_SHELL_EMPTY : DASHBOARD_CARD_SHELL_AUTO, className)}
             aria-labelledby="new-in-areas-heading"
         >
             <div className="flex shrink-0 items-start justify-between gap-3">
@@ -243,17 +265,19 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
                     <CardLabel info={NEW_IN_AREAS_INFO}>
                         <span id="new-in-areas-heading">New in your areas</span>
                     </CardLabel>
-                    {serviceAreas.length > 0 ? (
+                    {!isEmpty && serviceAreas.length > 0 ? (
                         <p className="body-sm text-ink-subtle">{serviceAreas.join(" · ")}</p>
                     ) : null}
                 </div>
-                <TextLinkButton href="/broker/properties" className="shrink-0">
-                    Browse all
-                </TextLinkButton>
+                {!isEmpty ? (
+                    <TextLinkButton href="/broker/properties" className="shrink-0">
+                        Browse all
+                    </TextLinkButton>
+                ) : null}
             </div>
 
-            {rows.length === 0 ? (
-                <p className="body mbs-4 text-ink-muted">No new listings in your areas yet.</p>
+            {isEmpty ? (
+                <EmptyNewInAreas />
             ) : (
                 <ul className="mbs-1 flex flex-col">
                     {rows.map((property, index) => {

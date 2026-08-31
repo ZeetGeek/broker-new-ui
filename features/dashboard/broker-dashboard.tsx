@@ -11,11 +11,12 @@ import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 import { ActivityCard } from "./activity-card";
 import { DashboardHeader } from "./dashboard-header";
 import { FollowUpsCard } from "./follow-ups-card";
+import { NewInAreas } from "./new-in-areas";
 import { NextShowingCard } from "./next-showing-card";
 import { PipelineCard } from "./pipeline-card";
-import { PlaceholderCard } from "./placeholder-card";
 import { RequestsCard } from "./requests-card";
 import { TodayCard } from "./today-card";
+import { YouRepresentCard } from "./you-represent-card";
 
 function DashboardLoading() {
     return (
@@ -97,11 +98,13 @@ export function BrokerDashboard() {
                     <FollowUpsCard data={view.followUps} />
                 </div>
                 <ActivityCard data={view.activity} className="md:col-span-5" />
-                <PlaceholderCard
-                    title="New in your areas"
-                    info="Fresh listings in the localities you cover — ready to request representation."
-                    className="md:col-span-12"
-                />
+                <div className="grid grid-cols-1 gap-4 md:col-span-12 md:grid-cols-2 md:gap-5">
+                    <YouRepresentCard data={view.youRepresent} />
+                    <NewInAreas
+                        properties={view.newInAreas}
+                        serviceAreas={view.serviceAreas}
+                    />
+                </div>
             </div>
         </div>
     );

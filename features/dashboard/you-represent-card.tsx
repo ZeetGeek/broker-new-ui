@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
-import { DASHBOARD_CARD_SHELL_AUTO } from "./card-shell";
+import { DASHBOARD_CARD_SHELL_AUTO, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { RepresentedPropertyItem, YouRepresentData } from "./mock-data";
 import { TextLinkButton } from "./text-link-button";
 
@@ -193,35 +193,51 @@ function PropertyRow({
     );
 }
 
+function EmptyYouRepresent() {
+    return (
+        <div
+            className="
+              flex flex-1 flex-col items-center justify-center gap-4 text-center
+              min-block-0 px-1
+            "
+            aria-live="polite"
+        >
+            <div className="flex max-w-prose flex-col gap-1.5">
+                <h2 id="you-represent-empty-heading" className="h5 text-ink">
+                    Not representing any properties yet
+                </h2>
+                <p className="body-sm text-pretty text-ink-muted">
+                    Once an owner approves your request, the property appears here.
+                </p>
+            </div>
+
+            <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
+        </div>
+    );
+}
+
 export function YouRepresentCard({ data, className }: YouRepresentCardProps) {
     const { totalCount, properties } = data;
     const rows = properties.slice(0, MAX_ROWS);
-    const heading = `You represent · ${totalCount}`;
+    const isEmpty = totalCount === 0 || properties.length === 0;
+    const heading = isEmpty ? "You represent" : `You represent · ${totalCount}`;
 
     return (
         <section
-            className={cn(DASHBOARD_CARD_SHELL_AUTO, className)}
-            aria-labelledby="you-represent-heading"
+            className={cn(isEmpty ? DASHBOARD_CARD_SHELL_EMPTY : DASHBOARD_CARD_SHELL_AUTO, className)}
+            aria-labelledby={isEmpty ? "you-represent-empty-heading" : "you-represent-heading"}
         >
             <div className="flex shrink-0 items-center justify-between gap-3">
                 <CardLabel info={YOU_REPRESENT_INFO}>
                     <span id="you-represent-heading">{heading}</span>
                 </CardLabel>
-                <TextLinkButton href="/broker/properties?mine=1">View all</TextLinkButton>
+                {!isEmpty ? (
+                    <TextLinkButton href="/broker/properties?mine=1">View all</TextLinkButton>
+                ) : null}
             </div>
 
-            {rows.length === 0 ? (
-                <div className="mbs-4 flex flex-1 flex-col min-block-0">
-                    <p className="h5 text-ink">No properties yet.</p>
-                    <p className="body mbs-1 text-ink-muted">
-                        Owners in your area are listing now.
-                    </p>
-                    <div className="pts-3 mbs-auto">
-                        <TextLinkButton href="/broker/properties">
-                            Browse available properties
-                        </TextLinkButton>
-                    </div>
-                </div>
+            {isEmpty ? (
+                <EmptyYouRepresent />
             ) : (
                 <ul className="mbs-1 flex flex-col">
                     {rows.map((property, index) => (

@@ -11,6 +11,7 @@ import { formatDateIso } from "@/lib/format/date";
 
 import type { ActivityData } from "./activity-card";
 import type {
+    AreaPropertyItem,
     FollowUp,
     FollowUpsData,
     NextShowingMock,
@@ -21,6 +22,7 @@ import type {
     ReraStatus,
     TodayAgenda,
     TodayItem,
+    YouRepresentData,
 } from "./mock-data";
 
 export type BrokerDashboardView = {
@@ -50,6 +52,8 @@ export type BrokerDashboardView = {
     pipelineCard: PipelineData;
     followUps: FollowUpsData;
     activity: ActivityData;
+    youRepresent: YouRepresentData;
+    newInAreas: AreaPropertyItem[];
     userName: string;
     avatarUrl?: string;
     unreadCount: number;
@@ -359,6 +363,8 @@ export function mapBrokerDashboardView(
         pipelineCard: mapPipeline(data?.charts?.pipelineFunnel),
         followUps: mapFollowUps(data?.followUps),
         activity: mapActivity(data?.activity),
+        youRepresent: { totalCount: 0, properties: [] },
+        newInAreas: [],
         userName: fullName,
         avatarUrl: profile?.avatarUrl ?? undefined,
         unreadCount: profile?.notifications?.unreadCount ?? 0,

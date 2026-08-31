@@ -5,23 +5,17 @@ import { Check, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { Price } from "@/components/shared/price";
+import { TextLinkButton } from "@/components/shared/text-link-button";
 import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { RequestRowItem, RequestsData } from "./mock-data";
-import { TextLinkButton } from "./text-link-button";
 
 const REQUESTS_INFO =
     "Requests you've sent to owners to represent their properties, and where each one stands.";
 
 const MAX_REQUEST_ROWS = 5;
-
-const LINK_CLASS = cn(
-    "body-sm inline-flex items-center gap-1 font-semibold text-brand outline-none",
-    "hover:text-brand-text",
-    "focus-visible:ring-3 focus-visible:ring-ring/30",
-);
 
 export type RequestsCardProps = {
     data: RequestsData;
@@ -244,10 +238,9 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                         />
                     ) : null}
                     <div className="relative flex justify-center">
-                        <Link href="/broker/properties?tab=requests" className={LINK_CLASS}>
+                        <TextLinkButton href="/broker/properties?tab=requests">
                             View all requests
-                            <span aria-hidden>→</span>
-                        </Link>
+                        </TextLinkButton>
                     </div>
                 </div>
             </div>
