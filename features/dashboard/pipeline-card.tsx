@@ -150,7 +150,7 @@ function StalledRow({ stalled }: { stalled: NonNullable<PipelineData["stalled"]>
                 size="sm"
                 nativeButton={false}
                 className="
-                  body-sm shrink-0 self-center gap-1 p-0 font-semibold text-brand block-auto
+                  body-sm shrink-0 gap-1 self-center p-0 font-semibold text-brand block-auto
                   hover:text-brand-text
                 "
                 render={<Link href={stalled.href} />}
@@ -242,7 +242,8 @@ export function PipelineCard({ data, className }: PipelineCardProps) {
                 <div className="shrink-0 inline-full">
                     <div
                         className="
-                          flex flex-col divide-y divide-border-warm/50 border-bs border-border-warm/50
+                          flex flex-col divide-y divide-border-warm/50 border-bs
+                          border-border-warm/50
                         "
                     >
                         {showStalled && data.stalled ? <StalledRow stalled={data.stalled} /> : null}

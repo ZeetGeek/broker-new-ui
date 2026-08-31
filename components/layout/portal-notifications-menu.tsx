@@ -174,9 +174,7 @@ export function PortalNotificationsMenu({
                                             </span>
                                             {item.body ? (
                                                 <span
-                                                    className="
-                                                  body-xs line-clamp-2 text-ink-muted
-                                                "
+                                                    className="body-xs line-clamp-2 text-ink-muted"
                                                 >
                                                     {item.body}
                                                 </span>

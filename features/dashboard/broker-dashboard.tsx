@@ -70,9 +70,7 @@ export function BrokerDashboard() {
     }
 
     const now = new Date();
-    console.log("data===>", data);
     const view = mapBrokerDashboardView(data, profile, now);
-    console.log("view", view);
 
     return (
         <div className="flex flex-col gap-6 min-block-[calc(100dvh-5rem)] md:gap-6">

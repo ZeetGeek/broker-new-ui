@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "motion/react";
 import type { ReactNode } from "react";
+
+import { motion } from "motion/react";
 
 import { cn } from "@/lib/utils";
 
