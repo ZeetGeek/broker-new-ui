@@ -114,7 +114,7 @@ function EmptyNextShowing({ className }: { className?: string }) {
                 description="Schedule one when a client is ready to see a property."
             >
                 <Button
-                    variant="default"
+                    variant="accent"
                     size="md"
                     nativeButton={false}
                     render={<Link href="/broker/visits/new" />}

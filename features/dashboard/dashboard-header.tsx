@@ -265,7 +265,7 @@ export function DashboardHeader({
                         <span className="hidden md:inline">Browse properties</span>
                     </Button>
                     <Button
-                        variant="default"
+                        variant="accent"
                         size="md"
                         nativeButton={false}
                         render={<Link href="/broker/clients" />}
