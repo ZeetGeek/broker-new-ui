@@ -1,9 +1,10 @@
 import Link from "next/link";
 
-import { Check, Clock, X } from "lucide-react";
+import { Check, Clock, Send, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 import { Button } from "@/components/ui/button";
@@ -131,22 +132,13 @@ function EmptyRequests({ className }: { className?: string }) {
                 <span id="requests-card-heading">Your requests</span>
             </CardLabel>
 
-            <div
-                className="
-                  flex flex-1 flex-col items-center justify-center gap-4 text-center
-                  min-block-0 px-1
-                "
-                aria-live="polite"
+            <EmptyState
+                icon={Send}
+                heading="No requests sent yet"
+                description="Find a property you'd like to sell and ask the owner."
             >
-                <div className="flex max-w-prose flex-col gap-1.5">
-                    <h2 className="h5 text-ink">No requests sent yet</h2>
-                    <p className="body-sm text-pretty text-ink-muted">
-                        Find a property you&apos;d like to sell and ask the owner.
-                    </p>
-                </div>
-
                 <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
-            </div>
+            </EmptyState>
         </section>
     );
 }

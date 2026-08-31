@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 
-import { Bookmark, Clock3, Users } from "lucide-react";
+import { Bookmark, Clock3, MapPin, Users } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";
@@ -199,22 +200,13 @@ function PropertyRow({
 
 function EmptyNewInAreas() {
     return (
-        <div
-            className="
-              flex flex-1 flex-col items-center justify-center gap-4 text-center
-              min-block-0 px-1
-            "
-            aria-live="polite"
+        <EmptyState
+            icon={MapPin}
+            heading="Nothing new this week"
+            description="We'll show properties added in the areas you work in."
         >
-            <div className="flex max-w-prose flex-col gap-1.5">
-                <h2 className="h5 text-ink">Nothing new this week</h2>
-                <p className="body-sm text-pretty text-ink-muted">
-                    We&apos;ll show properties added in the areas you work in.
-                </p>
-            </div>
-
             <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
-        </div>
+        </EmptyState>
     );
 }
 

@@ -1,10 +1,11 @@
 import Link from "next/link";
 
-import { AlertTriangle, MessageCircle, UserRound } from "lucide-react";
+import { AlertTriangle, KeyRound, MessageCircle, UserRound } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";
@@ -195,24 +196,14 @@ function PropertyRow({
 
 function EmptyYouRepresent() {
     return (
-        <div
-            className="
-              flex flex-1 flex-col items-center justify-center gap-4 text-center
-              min-block-0 px-1
-            "
-            aria-live="polite"
+        <EmptyState
+            icon={KeyRound}
+            headingId="you-represent-empty-heading"
+            heading="Not representing any properties yet"
+            description="Once an owner approves your request, the property appears here."
         >
-            <div className="flex max-w-prose flex-col gap-1.5">
-                <h2 id="you-represent-empty-heading" className="h5 text-ink">
-                    Not representing any properties yet
-                </h2>
-                <p className="body-sm text-pretty text-ink-muted">
-                    Once an owner approves your request, the property appears here.
-                </p>
-            </div>
-
             <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
-        </div>
+        </EmptyState>
     );
 }
 

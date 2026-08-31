@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 
-import { AlertCircle, Navigation } from "lucide-react";
+import { AlertCircle, Navigation, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -200,22 +201,13 @@ function EmptyPipeline({ className }: { className?: string }) {
                 <span id="pipeline-card-heading">Pipeline</span>
             </CardLabel>
 
-            <div
-                className="
-                  flex flex-1 flex-col items-center justify-center gap-4 text-center
-                  min-block-0 px-1
-                "
-                aria-live="polite"
+            <EmptyState
+                icon={Users}
+                heading="No clients yet"
+                description="Add a buyer or tenant to start tracking deals."
             >
-                <div className="flex max-w-prose flex-col gap-1.5">
-                    <h2 className="h5 text-ink">No clients yet</h2>
-                    <p className="body-sm text-pretty text-ink-muted">
-                        Add a buyer or tenant to start tracking deals.
-                    </p>
-                </div>
-
                 <TextLinkButton href="/broker/clients/new">Add client</TextLinkButton>
-            </div>
+            </EmptyState>
         </section>
     );
 }

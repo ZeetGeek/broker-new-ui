@@ -1,5 +1,9 @@
+import { CalendarDays } from "lucide-react";
+
 import { formatDateIso, formatDateShort, formatTimeIn } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
+
+import { EmptyState } from "@/components/shared/empty-state";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
@@ -64,22 +68,13 @@ function EmptyToday({ now, className }: { now: Date; className?: string }) {
                 </span>
             </CardLabel>
 
-            <div
-                className="
-                  flex flex-1 flex-col items-center justify-center gap-4 text-center
-                  min-block-0 px-1
-                "
-                aria-live="polite"
+            <EmptyState
+                icon={CalendarDays}
+                heading="Nothing booked today"
+                description="Visits you schedule will appear here."
             >
-                <div className="flex max-w-prose flex-col gap-1.5">
-                    <h2 className="h5 text-ink">Nothing booked today</h2>
-                    <p className="body-sm text-pretty text-ink-muted">
-                        Visits you schedule will appear here.
-                    </p>
-                </div>
-
                 <TextLinkButton href="/broker/visits/new">Book a site visit</TextLinkButton>
-            </div>
+            </EmptyState>
         </section>
     );
 }

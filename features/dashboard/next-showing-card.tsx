@@ -5,6 +5,7 @@ import { CalendarClock, CalendarPlus, IndianRupee, MapPin, Navigation, Phone, Us
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/shared/empty-state";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -106,22 +107,12 @@ function EmptyNextShowing({ className }: { className?: string }) {
         >
             <CardLabel info={NEXT_SHOWING_INFO}>Next showing</CardLabel>
 
-            <div
-                className="
-                  flex flex-1 flex-col items-center justify-center gap-4 text-center
-                  min-block-0 px-1
-                "
-                aria-live="polite"
+            <EmptyState
+                icon={CalendarPlus}
+                headingId="next-showing-empty-heading"
+                heading="No visits booked"
+                description="Schedule one when a client is ready to see a property."
             >
-                <div className="flex max-w-prose flex-col gap-1.5">
-                    <h2 id="next-showing-empty-heading" className="h5 text-ink">
-                        No visits booked
-                    </h2>
-                    <p className="body-sm text-pretty text-ink-muted">
-                        Schedule one when a client is ready to see a property.
-                    </p>
-                </div>
-
                 <Button
                     variant="default"
                     size="md"
@@ -131,7 +122,7 @@ function EmptyNextShowing({ className }: { className?: string }) {
                     <CalendarPlus aria-hidden strokeWidth={1.75} />
                     Schedule a visit
                 </Button>
-            </div>
+            </EmptyState>
         </section>
     );
 }
