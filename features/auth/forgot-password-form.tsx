@@ -93,7 +93,11 @@ export function ForgotPasswordForm() {
     async function sendReset(email: string) {
         setIsSending(true);
         try {
-            await authApi.forgotPassword(email.trim());
+            const result = await authApi.forgotPassword(email.trim());
+            if (result.message.includes("Continue with Google")) {
+                toast.error(result.message);
+                return;
+            }
             setSentEmail(email.trim());
             setStep("sent");
             setSecondsLeft(RESEND_WAIT_SEC);

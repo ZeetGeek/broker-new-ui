@@ -18,7 +18,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { useNotifications } from "@/providers/notification-provider";
 
@@ -88,14 +87,14 @@ export function PortalNotificationsMenu({
                 sideOffset={8}
                 className={cn(
                     `
-                      rounded-inner border border-border-warm bg-surface p-0 text-ink shadow-lg
-                      ring-0 inline-80
+                      flex flex-col overflow-hidden rounded-inner border border-border-warm
+                      bg-surface p-0 text-ink shadow-lg ring-0 inline-80
                       before:backdrop-blur-none
                       dark:bg-surface dark:text-ink
                     `,
                 )}
             >
-                <DropdownMenuGroup>
+                <DropdownMenuGroup className="shrink-0">
                     <DropdownMenuLabel className="flex items-center justify-between gap-3 px-4 py-3">
                         <span className="h6 text-ink">Notifications</span>
                         <span className="flex items-center gap-3">
@@ -117,14 +116,21 @@ export function PortalNotificationsMenu({
                     </DropdownMenuLabel>
                 </DropdownMenuGroup>
 
-                <DropdownMenuSeparator className="bg-border-warm" />
+                <DropdownMenuSeparator className="shrink-0 bg-border-warm" />
 
                 {loading && items.length === 0 ? (
-                    <p className="body-sm px-6 py-8 text-center text-ink-muted">Loading…</p>
+                    <p className="body-sm shrink-0 px-6 py-8 text-center text-ink-muted">
+                        Loading…
+                    </p>
                 ) : items.length === 0 ? (
                     <NotificationsEmpty />
                 ) : (
-                    <ScrollArea className="max-block-80">
+                    <div
+                        className="
+                          overflow-x-hidden overflow-y-auto overscroll-contain max-block-80
+                          min-block-0
+                        "
+                    >
                         <DropdownMenuGroup className="p-1.5">
                             {items.map((item) => {
                                 const occurredAt = item.createdAt ? new Date(item.createdAt) : null;
@@ -174,7 +180,9 @@ export function PortalNotificationsMenu({
                                             </span>
                                             {item.body ? (
                                                 <span
-                                                    className="body-xs line-clamp-2 text-ink-muted"
+                                                    className="
+                                                  body-xs line-clamp-2 text-ink-muted
+                                                "
                                                 >
                                                     {item.body}
                                                 </span>
@@ -192,11 +200,11 @@ export function PortalNotificationsMenu({
                                 );
                             })}
                         </DropdownMenuGroup>
-                    </ScrollArea>
+                    </div>
                 )}
 
-                <DropdownMenuSeparator className="bg-border-warm" />
-                <DropdownMenuGroup className="p-1.5">
+                <DropdownMenuSeparator className="shrink-0 bg-border-warm" />
+                <DropdownMenuGroup className="shrink-0 p-1.5">
                     <DropdownMenuItem
                         className="
                           body-sm cursor-pointer justify-center rounded-inner px-3 py-2
