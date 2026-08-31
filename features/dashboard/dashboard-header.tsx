@@ -213,68 +213,75 @@ export function DashboardHeader({
             </div>
 
             <motion.div
-                className="flex flex-wrap items-center gap-x-3 gap-y-2"
                 variants={dashboardMetaContainer}
                 initial="hidden"
                 animate="visible"
+                className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2"
             >
-                <motion.div
-                    className="flex flex-wrap items-center gap-2"
-                    variants={dashboardMetaItem}
-                >
-                    <ReraStatusChip status={reraStatus} />
-                </motion.div>
-
-                {showContact ? (
-                    <motion.div variants={dashboardMetaItem}>
-                        <ContactLine phoneDigits={phoneDigits} email={email} />
-                    </motion.div>
-                ) : null}
-
-                {showContact ? (
-                    <motion.span
-                        aria-hidden
+                <div className="-mbe-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <motion.div
+                        className="flex flex-wrap items-center gap-2"
                         variants={dashboardMetaItem}
-                        className="hidden self-center bg-border-warm block-3.5 inline-px sm:block"
-                    />
-                ) : null}
-
-                <motion.div
-                    className="flex flex-wrap items-center gap-2"
-                    variants={dashboardMetaItem}
-                >
-                    <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
-                        <MapPin aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Working in
-                    </span>
-                    <ServiceAreaChips areas={serviceAreas} />
-                </motion.div>
-
-                <motion.div
-                    className="ms-auto flex shrink-0 items-center gap-3"
-                    variants={dashboardMetaItem}
-                >
-                    <Button
-                        variant="outline-dark"
-                        size="md"
-                        nativeButton={false}
-                        render={<Link href="/broker/properties" />}
-                        aria-label="Browse properties"
                     >
-                        <Search aria-hidden strokeWidth={1.75} />
-                        <span className="hidden md:inline">Browse properties</span>
-                    </Button>
-                    <Button
-                        variant="accent"
-                        size="md"
-                        nativeButton={false}
-                        render={<Link href="/broker/clients" />}
-                        aria-label="Add client"
+                        <ReraStatusChip status={reraStatus} />
+                    </motion.div>
+
+                    {showContact ? (
+                        <motion.div variants={dashboardMetaItem}>
+                            <ContactLine phoneDigits={phoneDigits} email={email} />
+                        </motion.div>
+                    ) : null}
+
+                    {showContact ? (
+                        <motion.span
+                            aria-hidden
+                            variants={dashboardMetaItem}
+                            className="
+                              hidden self-center bg-border-warm block-3.5 inline-px
+                              sm:block
+                            "
+                        />
+                    ) : null}
+
+                    <motion.div
+                        className="flex flex-wrap items-center gap-2"
+                        variants={dashboardMetaItem}
                     >
-                        <UserRoundPlus aria-hidden strokeWidth={1.75} />
-                        <span className="hidden md:inline">Add clients</span>
-                    </Button>
-                </motion.div>
+                        <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
+                            <MapPin aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                            Working in
+                        </span>
+                        <ServiceAreaChips areas={serviceAreas} />
+                    </motion.div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <motion.div
+                        className="ms-auto flex shrink-0 items-center gap-3"
+                        variants={dashboardMetaItem}
+                    >
+                        <Button
+                            variant="outline-dark"
+                            size="md"
+                            nativeButton={false}
+                            render={<Link href="/broker/properties" />}
+                            aria-label="Browse properties"
+                        >
+                            <Search aria-hidden strokeWidth={1.75} />
+                            <span className="hidden md:inline">Browse properties</span>
+                        </Button>
+                        <Button
+                            variant="accent"
+                            size="md"
+                            nativeButton={false}
+                            render={<Link href="/broker/clients" />}
+                            aria-label="Add client"
+                        >
+                            <UserRoundPlus aria-hidden strokeWidth={1.75} />
+                            <span className="hidden md:inline">Add clients</span>
+                        </Button>
+                    </motion.div>
+                </div>
             </motion.div>
         </div>
     );

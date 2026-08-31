@@ -37,7 +37,9 @@ function EmptyActivity() {
             icon={Activity}
             heading="Nothing yet"
             description="Owner approvals, views, and updates will appear here."
-        />
+        >
+            <TextLinkButton href="/broker/notifications">View all activity</TextLinkButton>
+        </EmptyState>
     );
 }
 
