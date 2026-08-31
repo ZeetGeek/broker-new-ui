@@ -1,19 +1,20 @@
 "use client";
 
-import { useCallback, useState, type ReactNode } from "react";
-
-import { PortalHeader } from "@/components/layout/portal-header";
-
-import { BrokerProfileMenu } from "@/features/broker/profile-menu";
-import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
-import { ShortcutsCheatsheet } from "@/features/shortcuts/shortcuts-cheatsheet";
-import { useGlobalShortcuts } from "@/features/shortcuts/use-global-shortcuts";
+import { type ReactNode,useCallback, useState } from "react";
 
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
 
+import { PortalHeader } from "@/components/layout/portal-header";
+
 import { BROKER_NAV_ITEMS } from "@/config/nav";
+import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
+import { BrokerProfileMenu } from "@/features/broker/profile-menu";
+import { ShortcutsCheatsheet } from "@/features/shortcuts/shortcuts-cheatsheet";
+import { useGlobalShortcuts } from "@/features/shortcuts/use-global-shortcuts";
 import { NotificationProvider } from "@/providers/notification-provider";
 import { useAppSelector } from "@/store/hooks";
+
+const BROKER_NOTIFICATIONS_HREF = "/broker/notifications";
 
 const BROKER_SHORTCUT_ROUTES = {
     dashboard: "/broker/dashboard",
@@ -21,6 +22,7 @@ const BROKER_SHORTCUT_ROUTES = {
     clients: "/broker/clients",
     visits: "/broker/visits",
     referrals: "/broker/referrals",
+    notifications: BROKER_NOTIFICATIONS_HREF,
     profile: "/broker/profile",
     settings: "/broker/settings",
 };
@@ -60,7 +62,7 @@ export function BrokerPortalShell({ children }: { children: ReactNode }) {
         <NotificationProvider>
             <PortalHeader
                 navItems={BROKER_NAV_ITEMS}
-                notificationsHref="/broker/notifications"
+                notificationsHref={BROKER_NOTIFICATIONS_HREF}
                 profileMenu={
                     <BrokerProfileMenu
                         broker={broker}

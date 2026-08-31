@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 import { tinykeys } from "tinykeys";
 
 function isEditable(el: EventTarget | null): boolean {
@@ -30,6 +31,7 @@ export type GlobalShortcutRoutes = {
     clients: string;
     visits: string;
     referrals: string;
+    notifications: string;
     profile: string;
     settings: string;
 };
@@ -56,6 +58,7 @@ export function useGlobalShortcuts({ routes, onShortcutsOpen, onLogoutFocus }: U
             "g c": guarded(() => router.push(routes.clients)),
             "g v": guarded(() => router.push(routes.visits)),
             "g r": guarded(() => router.push(routes.referrals)),
+            "g n": guarded(() => router.push(routes.notifications)),
             "g m": guarded(() => router.push(routes.profile)),
             "g s": guarded(() => router.push(routes.settings)),
             "Shift+Slash": guarded(() => onShortcutsOpen()),

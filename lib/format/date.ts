@@ -44,6 +44,15 @@ export function formatWeekdayDate(date: Date): string {
     }).format(date);
 }
 
+/** Notification detail line as `Friday 3:04 PM`. */
+export function formatNotificationWhen(date: Date): string {
+    const weekday = new Intl.DateTimeFormat(LOCALE, {
+        timeZone: TIME_ZONE,
+        weekday: "long",
+    }).format(date);
+    return `${weekday} ${formatTimeIn(date)}`;
+}
+
 /** Wall-clock time as `11:00 AM`. */
 export function formatTimeIn(date: Date): string {
     const parts = partsFor(date, { hour: "numeric", minute: "2-digit", hour12: true });

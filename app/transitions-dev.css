@@ -912,3 +912,48 @@
         transition: none !important;
     }
 }
+
+/* --- notification unread dot --- */
+
+:root {
+    --unread-dot-ring-dur: 2.4s;
+    --unread-dot-ring-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --unread-dot-fill: var(--color-success-mid);
+    --unread-dot-ring: color-mix(in oklch, var(--color-brand) 28%, white);
+}
+
+@keyframes t-unread-dot-ring {
+    0% {
+        transform: scale(1);
+        opacity: 0.55;
+    }
+    70%,
+    100% {
+        transform: scale(2.75);
+        opacity: 0;
+    }
+}
+
+.t-unread-dot {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--unread-dot-fill);
+}
+
+.t-unread-dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background-color: var(--unread-dot-ring);
+    animation: t-unread-dot-ring var(--unread-dot-ring-dur) var(--unread-dot-ring-ease) infinite;
+    will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-unread-dot::before {
+        animation: none;
+        opacity: 0;
+    }
+}

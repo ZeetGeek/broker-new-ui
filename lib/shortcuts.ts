@@ -4,6 +4,7 @@ export type ShortcutId =
     | "clients"
     | "visits"
     | "referrals"
+    | "notifications"
     | "profile"
     | "settings"
     | "shortcuts_cheatsheet"
@@ -75,6 +76,14 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
         keys: "g r",
         displayKeys: ["G", "R"],
         label: "Referrals",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "notifications",
+        keys: "g n",
+        displayKeys: ["G", "N"],
+        label: "Notifications",
         group: "Go to",
         scope: "global",
     },

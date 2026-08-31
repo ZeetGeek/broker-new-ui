@@ -29,7 +29,7 @@ function DialogBackdrop({ className, ...props }: DialogPrimitive.Backdrop.Props)
             data-slot="dialog-backdrop"
             className={cn(
                 `
-                  fixed inset-0 z-50 bg-ink/40 duration-150
+                  fixed inset-0 z-50 bg-ink/45 backdrop-blur-[2px] duration-150
                   data-open:animate-in data-open:fade-in-0
                   data-closed:animate-out data-closed:fade-out-0
                 `,
@@ -48,9 +48,9 @@ function DialogPopup({ className, children, ...props }: DialogPrimitive.Popup.Pr
                 data-slot="dialog-popup"
                 className={cn(
                     `
-                      fixed top-1/2 left-1/2 z-50 grid w-full max-w-md -translate-x-1/2
-                      -translate-y-1/2 gap-4 rounded-3xl border border-border-warm bg-surface p-6
-                      shadow-lg duration-150 outline-none
+                      fixed inset-s-1/2 inset-bs-1/2 z-50 grid -translate-1/2 gap-4 rounded-3xl
+                      border border-border-warm bg-surface p-6 shadow-xl duration-150 outline-none
+                      inline-full max-inline-md
                       data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95
                       data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95
                     `,
@@ -61,12 +61,13 @@ function DialogPopup({ className, children, ...props }: DialogPrimitive.Popup.Pr
                 {children}
                 <DialogClose
                     className="
-                    absolute inset-block-start-4 inset-inline-end-4 rounded-full p-1
-                    text-ink-muted opacity-70 outline-none
-                    hover:bg-surface-muted hover:opacity-100
-                  "
+                      inset-block-start-4 inset-inline-end-4 absolute flex items-center
+                      justify-center rounded-full text-ink-muted transition-colors duration-160
+                      outline-none block-8 inline-8
+                      hover:bg-surface-muted hover:text-ink
+                    "
                 >
-                    <XIcon className="block-4 inline-4" />
+                    <XIcon className="block-4 inline-4" strokeWidth={1.75} />
                     <span className="sr-only">Close</span>
                 </DialogClose>
             </DialogPrimitive.Popup>
