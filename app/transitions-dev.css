@@ -103,6 +103,15 @@
     --tt-out-ease: ease-out;
     --tt-bg: var(--color-surface);
     --tt-fg: var(--color-ink);
+    /* Menu dropdown — transitions.dev 05-menu-dropdown */
+    --dropdown-open-dur: 220ms;
+    --dropdown-close-dur: 130ms;
+    --dropdown-opacity-open-dur: 250ms;
+    --dropdown-opacity-close-dur: 170ms;
+    --dropdown-pre-scale: 0.98;
+    --dropdown-closing-scale: 0.99;
+    --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --dropdown-opacity-ease: ease-out;
 }
 
 .dark {
@@ -653,6 +662,56 @@
 
 @media (prefers-reduced-motion: reduce) {
     .t-tooltip {
+        transition: none !important;
+    }
+}
+
+/* --- 05 menu dropdown ---
+   Origin-aware scale + opacity fade. Opacity leads (longer, ease-out);
+   scale is subtle support. Asymmetric open / close. Base UI drives
+   enter/exit via data-starting-style / data-ending-style and sets
+   --transform-origin on the popup. */
+
+.t-dropdown {
+    transform-origin: var(--transform-origin);
+    opacity: 1;
+    transform: scale(1);
+    transition:
+        opacity var(--dropdown-opacity-open-dur) var(--dropdown-opacity-ease),
+        transform var(--dropdown-open-dur) var(--dropdown-ease);
+    will-change: transform, opacity;
+}
+
+.t-dropdown[data-starting-style],
+.t-dropdown[data-ending-style],
+.t-dropdown[data-closed] {
+    opacity: 0;
+}
+
+.t-dropdown[data-starting-style] {
+    transform: scale(var(--dropdown-pre-scale));
+}
+
+.t-dropdown[data-ending-style] {
+    transform: scale(var(--dropdown-closing-scale));
+    transition:
+        opacity var(--dropdown-opacity-close-dur) var(--dropdown-opacity-ease),
+        transform var(--dropdown-close-dur) var(--dropdown-ease);
+}
+
+@starting-style {
+    .t-dropdown[data-open] {
+        opacity: 0;
+        transform: scale(var(--dropdown-pre-scale));
+    }
+}
+
+.t-dropdown[data-instant] {
+    transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-dropdown {
         transition: none !important;
     }
 }
