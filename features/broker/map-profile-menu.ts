@@ -36,6 +36,7 @@ export function computeBrokerProfileCompletion(profile: UserProfile | null): num
 export function mapBrokerProfileMenuBroker(
     profile: UserProfile | null,
     fallbackName: string,
+    fallbackEmail?: string,
 ): BrokerProfileMenuBroker {
     const phoneDigits = profile?.phone?.replace(/\D/g, "") ?? "";
     const tenDigit = phoneDigits.slice(-10);
@@ -43,6 +44,7 @@ export function mapBrokerProfileMenuBroker(
     return {
         name: profile?.fullName?.trim() || fallbackName,
         phone: tenDigit.length === 10 ? tenDigit : phoneDigits,
+        email: profile?.email?.trim() || fallbackEmail?.trim() || undefined,
         avatarUrl: profile?.avatarUrl ?? undefined,
         verificationState: mapBrokerVerificationState(profile),
         profileCompletion: computeBrokerProfileCompletion(profile),

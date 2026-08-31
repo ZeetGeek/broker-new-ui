@@ -1,26 +1,21 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
     BadgeCheck,
-    Check,
     ChevronDown,
     Command,
     ExternalLink,
     LifeBuoy,
-    Link2,
-    LogOut,
     Settings,
     ShieldCheck,
     User,
 } from "lucide-react";
 
-import { SUPPORT_WHATSAPP_URL } from "@/config/constants";
-import { SITE_URL } from "@/config/index";
 import { formatPhoneIn } from "@/lib/format/phone";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
@@ -36,10 +31,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { SUPPORT_WHATSAPP_URL } from "@/config/constants";
+import { SITE_URL } from "@/config/index";
+import { HoldToLogout } from "@/features/broker/hold-to-logout";
 import type { BrokerVerificationState } from "@/features/broker/map-profile-menu";
-
 import { useAppDispatch } from "@/store/hooks";
 import { logout } from "@/store/slices/auth-slice";
 import { resetDashboard } from "@/store/slices/dashboard-slice";
@@ -47,6 +45,7 @@ import { resetDashboard } from "@/store/slices/dashboard-slice";
 export type BrokerProfileMenuBroker = {
     name: string;
     phone: string;
+    email?: string;
     avatarUrl?: string;
     verificationState: BrokerVerificationState;
     profileCompletion: number;
@@ -60,50 +59,60 @@ export type BrokerProfileMenuProps = {
 };
 
 const PROFILE_HREF = "/broker/profile";
+const PROFILE_EDIT_HREF = "/broker/profile/edit";
 const SETTINGS_HREF = "/broker/settings";
 const VERIFICATION_HREF = "/broker/verification";
 
 const itemClass = `
   h-9 cursor-pointer gap-2.5 rounded-inner px-3 body-sm font-medium text-ink
-  focus:bg-surface-muted focus:text-ink
 `;
 
 const menuSurfaceClass = `
-  t-dropdown animate-none! min-inline-[16.25rem] rounded-inner border border-border-warm
-  bg-surface p-0 text-ink shadow-none ring-0
+  t-dropdown t-profile-menu animate-none! min-inline-[16.25rem] rounded-inner border
+  border-border-warm bg-surface p-0 text-ink ring-0
   before:backdrop-blur-none
   data-closed:animate-none!
   data-open:animate-none!
+  p-3
+  **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
+  **:data-[slot$=-item]:data-highlighted:text-ink!
+  **:data-[slot$=-item]:focus:bg-surface-muted!
+  **:data-[slot$=-item]:focus:text-ink!
+  **:data-[variant=destructive]:data-highlighted:bg-danger-soft!
+  **:data-[variant=destructive]:data-highlighted:text-danger!
+  **:data-[variant=destructive]:focus:bg-danger-soft!
+  **:data-[variant=destructive]:focus:text-danger!
 `;
 
 function brokerPublicProfileUrl(slug: string) {
     return `${SITE_URL.replace(/\/$/, "")}/b/${slug}`;
 }
 
-function MenuKbd({ children }: { children: ReactNode }) {
-    return (
-        <kbd
-            className="
-              inline-flex min-inline-4 items-center justify-center rounded-sm border
-              border-border-warm bg-surface-muted px-1.5 py-0.5 font-sans text-[10px] font-medium
-              tracking-normal text-ink-muted
-            "
-        >
-            {children}
-        </kbd>
-    );
-}
-
-function ShortcutHint({ shortcutId }: { shortcutId: ShortcutId }) {
+function ShortcutHint({
+    shortcutId,
+    destructive = false,
+}: {
+    shortcutId: ShortcutId;
+    destructive?: boolean;
+}) {
     const shortcut = getShortcut(shortcutId);
     if (!shortcut?.showInProfileMenu) return null;
 
     return (
-        <span className="ms-auto hidden items-center gap-0.5 sm:inline-flex">
+        <KbdGroup className="ms-auto hidden gap-0.5 sm:inline-flex">
             {shortcut.keys.map((key) => (
-                <MenuKbd key={key}>{key}</MenuKbd>
+                <Kbd
+                    variant="surface"
+                    key={key}
+                    className={cn(
+                        "px-1.5 text-[10px] tracking-normal",
+                        destructive && "border-danger/30 text-danger",
+                    )}
+                >
+                    {key}
+                </Kbd>
             ))}
-        </span>
+        </KbdGroup>
     );
 }
 
@@ -118,11 +127,11 @@ function VerificationStatus({
         return (
             <div
                 className="
-                  flex items-center gap-1.5 rounded-inner bg-surface-muted px-2.5 py-1.5 body-xs
-                  font-medium text-brand
+                  body-xs flex items-center gap-1.5 rounded-full border border-brand-soft
+                  bg-brand-soft/60 px-3 py-1.5 font-medium text-brand-text
                 "
             >
-                <BadgeCheck aria-hidden className="block-4 inline-4" strokeWidth={2} />
+                <BadgeCheck aria-hidden className="text-brand block-3 inline-3" strokeWidth={2} />
                 Verified
             </div>
         );
@@ -132,7 +141,8 @@ function VerificationStatus({
         return (
             <div
                 className="
-                  rounded-inner bg-surface-muted px-2.5 py-1.5 body-xs font-medium text-ink-muted
+                  body-xs rounded-full border border-border-warm bg-surface-muted/80 px-3 py-1.5
+                  font-medium text-ink-muted
                 "
             >
                 Under review
@@ -143,13 +153,21 @@ function VerificationStatus({
     const clamped = Math.min(100, Math.max(0, profileCompletion));
 
     return (
-        <div className="rounded-inner bg-surface-muted px-2.5 py-2">
-            <div className="flex items-center justify-between gap-2 body-xs font-medium text-ink">
-                <span>Complete your profile</span>
-                <span className="tabular text-ink-muted">{clamped}%</span>
+        <Link
+            href={PROFILE_EDIT_HREF}
+            className="
+              group/chip block overflow-hidden rounded-inner border border-brand-soft
+              bg-linear-to-br from-brand-soft/70 to-surface-muted/50 px-3 py-2.5
+              transition-[background-color,box-shadow] duration-160 ease-out
+              hover:border-brand/25 hover:shadow-xs
+            "
+        >
+            <div className="flex items-center justify-between gap-2">
+                <span className="body-xs font-semibold text-brand-text">Complete your profile</span>
+                <span className="tabular body-xs font-semibold text-brand">{clamped}%</span>
             </div>
             <div
-                className="mbs-1.5 overflow-hidden rounded-full bg-border-warm block-1"
+                className="mbs-2 overflow-hidden rounded-full bg-canvas/60 block-1"
                 role="progressbar"
                 aria-valuenow={clamped}
                 aria-valuemin={0}
@@ -157,11 +175,13 @@ function VerificationStatus({
                 aria-label={`Profile ${clamped}% complete`}
             >
                 <div
-                    className="h-full rounded-full bg-brand transition-[width] duration-300 ease-out"
+                    className="
+                      rounded-full bg-brand transition-[width] duration-500 ease-out block-full
+                    "
                     style={{ width: `${clamped}%` }}
                 />
             </div>
-        </div>
+        </Link>
     );
 }
 
@@ -172,17 +192,20 @@ function ProfileMenuHeader({ broker }: { broker: BrokerProfileMenuBroker }) {
             : broker.phone;
 
     return (
-        <DropdownMenuLabel className="flex flex-col gap-2.5 p-3 font-normal text-ink">
-            <div className="flex items-center gap-2.5">
-                <span className="overflow-hidden rounded-full block-10 inline-10 shrink-0">
+        <DropdownMenuLabel className="flex flex-col gap-3 p-0! font-normal text-ink">
+            <div className="flex items-center gap-2">
+                <span className="shrink-0 overflow-hidden rounded-full block-8 inline-8">
                     <UserAvatar name={broker.name} imageUrl={broker.avatarUrl} size="fill" />
                 </span>
-                <div className="min-inline-0">
+                <div className="flex flex-col gap-0.5 min-inline-0">
                     <p className="truncate font-display text-sm font-medium text-ink capitalize">
                         {broker.name}
                     </p>
+                    {broker.email ? (
+                        <p className="body-xs truncate text-ink-muted">{broker.email}</p>
+                    ) : null}
                     {phoneDisplay ? (
-                        <p className="tabular truncate body-xs text-ink-muted">{phoneDisplay}</p>
+                        <p className="tabular body-xs truncate text-ink-subtle">{phoneDisplay}</p>
                     ) : null}
                 </div>
             </div>
@@ -224,10 +247,7 @@ function MobileProfileLink({ broker }: { broker: BrokerProfileMenuBroker }) {
         <Link
             href={PROFILE_HREF}
             aria-label="Profile"
-            className="
-              flex scale-[0.96] items-center gap-1 ps-0 pe-1 text-ink-muted
-              sm:hidden
-            "
+            className="flex scale-[0.96] items-center gap-1 ps-0 pe-1 text-ink-muted sm:hidden"
         >
             <span className="overflow-hidden rounded-full block-control-lg inline-control-lg">
                 <UserAvatar name={broker.name} imageUrl={broker.avatarUrl} size="fill" />
@@ -236,54 +256,33 @@ function MobileProfileLink({ broker }: { broker: BrokerProfileMenuBroker }) {
     );
 }
 
-function DesktopProfileDropdown({
-    broker,
-    onShortcutsOpen,
-    tooltipLabel,
-}: BrokerProfileMenuProps) {
+function DesktopProfileDropdown({ broker, onShortcutsOpen, tooltipLabel }: BrokerProfileMenuProps) {
     const { handleLogout, isLoggingOut } = useLogoutHandler();
-    const [linkCopied, setLinkCopied] = useState(false);
 
-    const publicProfileUrl = broker.publicSlug
-        ? brokerPublicProfileUrl(broker.publicSlug)
-        : null;
-
-    async function handleCopyProfileLink() {
-        if (!publicProfileUrl) {
-            toast.error("Public profile link is not ready yet");
-            return;
-        }
-
-        try {
-            await navigator.clipboard.writeText(publicProfileUrl);
-            setLinkCopied(true);
-            toast.success("Profile link copied");
-            window.setTimeout(() => setLinkCopied(false), 1500);
-        } catch {
-            toast.error("Could not copy link");
-        }
-    }
+    const publicProfileUrl = broker.publicSlug ? brokerPublicProfileUrl(broker.publicSlug) : null;
 
     const trigger = (
-        <DropdownMenuTrigger
-            render={
-                <Button
-                    variant="ghost"
-                    size="md"
-                    aria-label="Account menu"
-                    className="
-                      scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
-                      hover:bg-transparent hover:text-ink
-                      data-popup-open:text-ink
-                    "
-                />
-            }
-        >
-            <span className="overflow-hidden rounded-full block-control-lg inline-control-lg">
-                <UserAvatar name={broker.name} imageUrl={broker.avatarUrl} size="fill" />
-            </span>
-            <ChevronDown aria-hidden="true" className="block-4 inline-4" strokeWidth={1.75} />
-        </DropdownMenuTrigger>
+        <div className="flex items-center justify-center">
+            <DropdownMenuTrigger
+                render={
+                    <Button
+                        variant="ghost"
+                        size="md"
+                        aria-label="Account menu"
+                        className="
+                          scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
+                          hover:bg-transparent hover:text-ink
+                          data-popup-open:text-ink
+                        "
+                    />
+                }
+            >
+                <span className="overflow-hidden rounded-full block-control-lg inline-control-lg">
+                    <UserAvatar name={broker.name} imageUrl={broker.avatarUrl} size="fill" />
+                </span>
+                <ChevronDown aria-hidden="true" className="block-4 inline-4" strokeWidth={1.75} />
+            </DropdownMenuTrigger>
+        </div>
     );
 
     return (
@@ -298,17 +297,24 @@ function DesktopProfileDropdown({
                     trigger
                 )}
 
-                <DropdownMenuContent align="end" sideOffset={8} className={cn(menuSurfaceClass)}>
+                <DropdownMenuContent align="end" sideOffset={14} className={cn(menuSurfaceClass)}>
                     <DropdownMenuGroup>
                         <ProfileMenuHeader broker={broker} />
                     </DropdownMenuGroup>
 
-                    <DropdownMenuSeparator className="bg-border-warm" />
+                    <DropdownMenuSeparator className="mx-0! my-2.5 bg-border-warm inline-full!" />
 
-                    <DropdownMenuGroup className="p-1.5">
-                        <DropdownMenuItem className={itemClass} render={<Link href={PROFILE_HREF} />}>
-                            <User aria-hidden className="block-4 inline-4 shrink-0" strokeWidth={1.75} />
-                            <span className="min-inline-0 flex-1">My profile</span>
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem
+                            className={itemClass}
+                            render={<Link href={PROFILE_HREF} />}
+                        >
+                            <User
+                                aria-hidden
+                                className="shrink-0 block-4 inline-4"
+                                strokeWidth={1.75}
+                            />
+                            <span className="flex-1 min-inline-0">My profile</span>
                             <ShortcutHint shortcutId="profile" />
                         </DropdownMenuItem>
 
@@ -325,33 +331,12 @@ function DesktopProfileDropdown({
                             >
                                 <ExternalLink
                                     aria-hidden
-                                    className="block-4 inline-4 shrink-0"
+                                    className="shrink-0 block-4 inline-4"
                                     strokeWidth={1.75}
                                 />
-                                <span className="min-inline-0 flex-1">Preview public profile</span>
+                                <span className="flex-1 min-inline-0">Preview public profile</span>
                             </DropdownMenuItem>
                         ) : null}
-
-                        <DropdownMenuItem
-                            className={itemClass}
-                            disabled={!publicProfileUrl}
-                            onClick={() => void handleCopyProfileLink()}
-                        >
-                            {linkCopied ? (
-                                <Check
-                                    aria-hidden
-                                    className="block-4 inline-4 shrink-0 text-brand"
-                                    strokeWidth={1.75}
-                                />
-                            ) : (
-                                <Link2
-                                    aria-hidden
-                                    className="block-4 inline-4 shrink-0"
-                                    strokeWidth={1.75}
-                                />
-                            )}
-                            <span className="min-inline-0 flex-1">Copy profile link</span>
-                        </DropdownMenuItem>
 
                         {broker.verificationState !== "VERIFIED" ? (
                             <DropdownMenuItem
@@ -360,41 +345,41 @@ function DesktopProfileDropdown({
                             >
                                 <ShieldCheck
                                     aria-hidden
-                                    className="block-4 inline-4 shrink-0"
+                                    className="shrink-0 block-4 inline-4"
                                     strokeWidth={1.75}
                                 />
-                                <span className="min-inline-0 flex-1">Verification & RERA</span>
+                                <span className="flex-1 min-inline-0">Verification & RERA</span>
                             </DropdownMenuItem>
                         ) : null}
                     </DropdownMenuGroup>
 
-                    <DropdownMenuSeparator className="bg-border-warm" />
+                    <DropdownMenuSeparator className="mx-0! my-2.5 bg-border-warm inline-full!" />
 
-                    <DropdownMenuGroup className="p-1.5">
-                        <DropdownMenuItem className={itemClass} render={<Link href={SETTINGS_HREF} />}>
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem
+                            className={itemClass}
+                            render={<Link href={SETTINGS_HREF} />}
+                        >
                             <Settings
                                 aria-hidden
-                                className="block-4 inline-4 shrink-0"
+                                className="shrink-0 block-4 inline-4"
                                 strokeWidth={1.75}
                             />
-                            <span className="min-inline-0 flex-1">Settings</span>
+                            <span className="flex-1 min-inline-0">Settings</span>
                             <ShortcutHint shortcutId="settings" />
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
 
-                    <DropdownMenuSeparator className="bg-border-warm" />
+                    <DropdownMenuSeparator className="mx-0! my-2.5 bg-border-warm inline-full!" />
 
-                    <DropdownMenuGroup className="p-1.5">
-                        <DropdownMenuItem
-                            className={itemClass}
-                            onClick={() => onShortcutsOpen?.()}
-                        >
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem className={itemClass} onClick={() => onShortcutsOpen?.()}>
                             <Command
                                 aria-hidden
-                                className="block-4 inline-4 shrink-0"
+                                className="shrink-0 block-4 inline-4"
                                 strokeWidth={1.75}
                             />
-                            <span className="min-inline-0 flex-1">Keyboard shortcuts</span>
+                            <span className="flex-1 min-inline-0">Keyboard shortcuts</span>
                             <ShortcutHint shortcutId="shortcuts_cheatsheet" />
                         </DropdownMenuItem>
 
@@ -410,32 +395,17 @@ function DesktopProfileDropdown({
                         >
                             <LifeBuoy
                                 aria-hidden
-                                className="block-4 inline-4 shrink-0"
+                                className="shrink-0 block-4 inline-4"
                                 strokeWidth={1.75}
                             />
-                            <span className="min-inline-0 flex-1">Help & support</span>
+                            <span className="flex-1 min-inline-0">Help & support</span>
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
 
-                    <DropdownMenuSeparator className="bg-border-warm" />
+                    <DropdownMenuSeparator className="mx-0! my-2.5 bg-border-warm inline-full!" />
 
-                    <DropdownMenuGroup className="p-1.5">
-                        <DropdownMenuItem
-                            className={cn(itemClass, "text-danger focus:text-danger")}
-                            variant="destructive"
-                            disabled={isLoggingOut}
-                            onClick={() => void handleLogout()}
-                        >
-                            <LogOut
-                                aria-hidden
-                                className="block-4 inline-4 shrink-0"
-                                strokeWidth={1.75}
-                            />
-                            <span className="min-inline-0 flex-1">
-                                {isLoggingOut ? "Signing out…" : "Log out"}
-                            </span>
-                            <ShortcutHint shortcutId="logout" />
-                        </DropdownMenuItem>
+                    <DropdownMenuGroup>
+                        <HoldToLogout disabled={isLoggingOut} onComplete={handleLogout} />
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>

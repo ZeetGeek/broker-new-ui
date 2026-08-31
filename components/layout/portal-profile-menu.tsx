@@ -113,12 +113,12 @@ export function PortalProfileMenu({
                 sideOffset={8}
                 className={cn(
                     `
-                      t-dropdown animate-none! rounded-inner border border-border-warm bg-surface p-0
-                      text-ink shadow-md ring-0 min-inline-56
+                      t-dropdown animate-none! rounded-inner border border-border-warm bg-surface
+                      p-0 text-ink shadow-md ring-0 min-inline-56
                       before:backdrop-blur-none
-                      data-closed:animate-none!
-                      data-open:animate-none!
                       dark:bg-surface dark:text-ink
+                      data-open:animate-none!
+                      data-closed:animate-none!
                     `,
                 )}
             >

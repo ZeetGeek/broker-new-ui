@@ -112,6 +112,14 @@
     --dropdown-closing-scale: 0.99;
     --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --dropdown-opacity-ease: ease-out;
+    /* Menu item hover — transitions-polish: fast in, smooth-out easing */
+    --menu-item-hover-dur: 160ms;
+    --menu-item-hover-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Hold to logout — press-and-hold destructive action */
+    --hold-logout-dur: 900ms;
+    --hold-logout-reset-dur: 220ms;
+    --hold-logout-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --hold-logout-fill: color-mix(in oklch, var(--color-danger-mid) 35%, var(--color-danger-soft));
 }
 
 .dark {
@@ -712,6 +720,95 @@
 
 @media (prefers-reduced-motion: reduce) {
     .t-dropdown {
+        transition: none !important;
+    }
+}
+
+/* --- Menu item hover (profile dropdown) ---
+   Light warm tint on white surface; quick ease-smooth-out transition. */
+
+.t-profile-menu [data-slot="dropdown-menu-item"] {
+    transition:
+        background-color var(--menu-item-hover-dur) var(--menu-item-hover-ease),
+        color var(--menu-item-hover-dur) var(--menu-item-hover-ease);
+}
+
+.t-profile-menu [data-slot="dropdown-menu-item"][data-highlighted],
+.t-profile-menu [data-slot="dropdown-menu-item"]:focus {
+    background-color: var(--color-surface-muted);
+    color: var(--color-ink);
+}
+
+.t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"][data-highlighted],
+.t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"]:focus {
+    background-color: var(--color-danger-soft);
+    color: var(--color-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-profile-menu [data-slot="dropdown-menu-item"] {
+        transition: none !important;
+    }
+}
+
+/* --- Hold to logout ---
+   Light danger-soft track; fill grows left-to-right while pressed. */
+
+.t-hold-logout {
+    position: relative;
+    display: flex;
+    min-block-size: 2.25rem;
+    cursor: pointer;
+    overflow: hidden;
+    background-color: var(--color-danger-soft);
+    user-select: none;
+    touch-action: none;
+    outline: none;
+}
+
+.t-hold-logout:focus-visible {
+    box-shadow: 0 0 0 2px var(--color-brand);
+}
+
+.t-hold-logout-fill {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 0%;
+    background: var(--hold-logout-fill);
+    transition: width var(--hold-logout-reset-dur) var(--hold-logout-ease);
+    will-change: width;
+}
+
+.t-hold-logout.is-holding .t-hold-logout-fill {
+    transition: none;
+}
+
+.t-hold-logout.is-complete .t-hold-logout-fill {
+    width: 100% !important;
+    transition: width 120ms var(--hold-logout-ease);
+}
+
+.t-hold-logout-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.625rem;
+    padding-inline: 0.75rem;
+    font-size: inherit;
+    font-weight: 500;
+    color: var(--color-danger);
+}
+
+.t-hold-logout:disabled {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-hold-logout-fill {
         transition: none !important;
     }
 }

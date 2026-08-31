@@ -23,7 +23,11 @@ export function BrokerPortalShell({ children }: { children: ReactNode }) {
         authProvider: profile?.authProvider ?? user?.authProvider,
     });
 
-    const broker = mapBrokerProfileMenuBroker(profile, userName);
+    const broker = mapBrokerProfileMenuBroker(
+        profile,
+        userName,
+        user?.email ?? profile?.email ?? undefined,
+    );
     if (avatarUrl) {
         broker.avatarUrl = avatarUrl;
     }
