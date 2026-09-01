@@ -1,37 +1,79 @@
 import Link from "next/link";
 
-import { Activity } from "lucide-react";
+import {
+    Activity,
+    BadgeCheck,
+    Ban,
+    Check,
+    Eye,
+    Link2,
+    type LucideIcon,
+    TrendingDown,
+    X,
+} from "lucide-react";
 
+import { formatActivityDayLabel, formatCompactRelative, formatDateIso } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { TextLinkButton } from "@/components/shared/text-link-button";
-
 import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
+import { TextLinkButton } from "@/components/shared/text-link-button";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
+import type { ActivityData, ActivityEventType, ActivityItem } from "./mock-data";
+
+export type { ActivityData, ActivityItem } from "./mock-data";
 
 const ACTIVITY_INFO = "Recent updates across your properties, clients, and visits.";
 
-export type ActivityItem = {
-    id: string;
-    title: string;
-    detail?: string | null;
-    whenLabel: string;
-    href?: string | null;
-    category?: string;
-};
-
-export type ActivityData = {
-    items: ActivityItem[];
-    remainingCount?: number;
-};
+const MAX_ACTIVITY_ROWS = 6;
 
 export type ActivityCardProps = {
     data: ActivityData;
     className?: string;
 };
+
+type ActivityDaySection = {
+    dayKey: string;
+    label: string;
+    items: ActivityItem[];
+};
+
+const ACTIVITY_ICON: Record<ActivityEventType, LucideIcon> = {
+    request_approved: Check,
+    request_declined: X,
+    request_viewed: Eye,
+    share_link_opened: Link2,
+    property_unavailable: Ban,
+    price_changed: TrendingDown,
+    verification_approved: BadgeCheck,
+    team_listing_added: Activity,
+    team_visit_booked: Activity,
+};
+
+function groupActivitiesByDay(items: ActivityItem[], now: Date): ActivityDaySection[] {
+    const byDay = new Map<string, ActivityItem[]>();
+
+    for (const item of items) {
+        const occurredAt = new Date(item.occurredAt);
+        const dayKey = formatDateIso(occurredAt);
+        const bucket = byDay.get(dayKey);
+        if (bucket) {
+            bucket.push(item);
+        } else {
+            byDay.set(dayKey, [item]);
+        }
+    }
+
+    return [...byDay.entries()]
+        .sort(([left], [right]) => right.localeCompare(left))
+        .map(([dayKey, dayItems]) => ({
+            dayKey,
+            label: formatActivityDayLabel(new Date(dayItems[0].occurredAt), now),
+            items: dayItems,
+        }));
+}
 
 function EmptyActivity() {
     return (
@@ -45,17 +87,36 @@ function EmptyActivity() {
     );
 }
 
-function ActivityRow({ item }: { item: ActivityItem }) {
+function ActivityIcon({ type }: { type: ActivityEventType }) {
+    const Icon = ACTIVITY_ICON[type];
+    const isApproved = type === "request_approved";
+
+    return (
+        <span
+            className={cn(
+                `mbs-0.5 flex shrink-0 items-center justify-center rounded-full block-8 inline-8`,
+                isApproved ? "bg-brand-soft text-brand" : "bg-surface-muted text-ink-muted",
+            )}
+        >
+            <Icon aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+        </span>
+    );
+}
+
+function ActivityRow({ item, now }: { item: ActivityItem; now: Date }) {
+    const occurredAt = new Date(item.occurredAt);
+    const whenLabel = formatCompactRelative(occurredAt, now);
+
     const content = (
         <>
-            <span aria-hidden className="mbs-1.5 shrink-0 rounded-full bg-brand block-2 inline-2" />
+            <ActivityIcon type={item.type} />
             <div className="flex-1 min-inline-0">
                 <p className="body truncate font-medium text-ink">{item.title}</p>
-                {item.detail ? (
-                    <p className="body-sm mbs-0.5 truncate text-ink-muted">{item.detail}</p>
+                {item.subtitle ? (
+                    <p className="body-sm mbs-0.5 truncate text-ink-muted">{item.subtitle}</p>
                 ) : null}
             </div>
-            <span className="body-xs shrink-0 font-medium text-ink-muted">{item.whenLabel}</span>
+            <span className="body-xs mbs-0.5 shrink-0 font-medium text-ink-muted">{whenLabel}</span>
         </>
     );
 
@@ -79,8 +140,26 @@ function ActivityRow({ item }: { item: ActivityItem }) {
     return <li className="flex items-start gap-3 py-3">{content}</li>;
 }
 
+function DaySection({ section, now }: { section: ActivityDaySection; now: Date }) {
+    return (
+        <li className="flex flex-col gap-1">
+            <div className="flex items-center gap-3 py-2">
+                <p className="body-sm shrink-0 font-semibold text-pending">{section.label}</p>
+                <div className="flex-1 bg-pending/35 block-px" aria-hidden />
+            </div>
+            <ul className="flex flex-col">
+                {section.items.map((item) => (
+                    <ActivityRow key={item.id} item={item} now={now} />
+                ))}
+            </ul>
+        </li>
+    );
+}
+
 export function ActivityCard({ data, className }: ActivityCardProps) {
-    const items = data.items.slice(0, 6);
+    const now = new Date();
+    const items = data.items.slice(0, MAX_ACTIVITY_ROWS);
+    const sections = groupActivitiesByDay(items, now);
     const isEmpty = items.length === 0;
     const showFade = items.length >= 4 || (data.remainingCount ?? 0) > 0;
 
@@ -89,9 +168,14 @@ export function ActivityCard({ data, className }: ActivityCardProps) {
             className={cn(DASHBOARD_CARD_SHELL, className)}
             aria-labelledby="activity-card-heading"
         >
-            <CardLabel info={ACTIVITY_INFO}>
-                <span id="activity-card-heading">Activity</span>
-            </CardLabel>
+            <div className="flex shrink-0 items-start justify-between gap-3">
+                <CardLabel info={ACTIVITY_INFO}>
+                    <span id="activity-card-heading">Activity</span>
+                </CardLabel>
+                {/* {!isEmpty ? (
+                    <p className="eyebrow shrink-0 text-ink-muted">Since you last opened</p>
+                ) : null} */}
+            </div>
 
             {isEmpty ? (
                 <EmptyActivity />
@@ -104,14 +188,9 @@ export function ActivityCard({ data, className }: ActivityCardProps) {
                           [&::-webkit-scrollbar]:hidden
                         "
                     >
-                        <ul
-                            className={cn(
-                                "flex flex-col divide-y divide-border-warm",
-                                showFade && "pbe-7",
-                            )}
-                        >
-                            {items.map((item) => (
-                                <ActivityRow key={item.id} item={item} />
+                        <ul className={cn("flex flex-col gap-4", showFade && "pbe-7")}>
+                            {sections.map((section) => (
+                                <DaySection key={section.dayKey} section={section} now={now} />
                             ))}
                         </ul>
                     </div>

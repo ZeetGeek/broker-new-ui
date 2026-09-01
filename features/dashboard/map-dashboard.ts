@@ -9,8 +9,9 @@ import type {
 import type { UserProfile } from "@/lib/api/profile";
 import { formatDateIso } from "@/lib/format/date";
 
-import type { ActivityData } from "./activity-card";
 import type {
+    ActivityData,
+    ActivityEventType,
     AreaPropertyItem,
     FollowUp,
     FollowUpsData,
@@ -299,6 +300,20 @@ function mapFollowUps(followUps: DashboardFollowUps | undefined): FollowUpsData 
     };
 }
 
+function mapActivityEventType(category: string, action: string): ActivityEventType {
+    const haystack = `${category} ${action}`.toLowerCase();
+    if (haystack.includes("approv")) return "request_approved";
+    if (haystack.includes("declin") || haystack.includes("reject")) return "request_declined";
+    if (haystack.includes("share") || haystack.includes("link") || haystack.includes("open")) {
+        return "share_link_opened";
+    }
+    if (haystack.includes("unavailable")) return "property_unavailable";
+    if (haystack.includes("price")) return "price_changed";
+    if (haystack.includes("verif") || haystack.includes("rera")) return "verification_approved";
+    if (haystack.includes("view")) return "request_viewed";
+    return "request_viewed";
+}
+
 function mapActivity(activity: DashboardActivity | undefined): ActivityData {
     if (!activity) {
         return { items: [], remainingCount: 0 };
@@ -307,11 +322,12 @@ function mapActivity(activity: DashboardActivity | undefined): ActivityData {
     return {
         items: (activity.items ?? []).map((item) => ({
             id: item.id,
-            title: item.title,
-            detail: item.detail,
-            whenLabel: item.whenLabel,
+            type: mapActivityEventType(item.category, item.action),
+            occurredAt: item.createdAt,
             href: item.href,
-            category: item.category,
+            title: item.title,
+            subtitle: item.detail ?? "",
+            actorKind: "owner",
         })),
         remainingCount: activity.remainingCount ?? 0,
     };
