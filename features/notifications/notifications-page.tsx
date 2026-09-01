@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { formatDateIn, formatDateIso, formatTimeIn } from "@/lib/format/date";
+import { toApiInstant } from "@/lib/datetime/api";
+import { formatDateIn, formatTimeIn } from "@/lib/format/date";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,7 +83,7 @@ export function NotificationsPage() {
                                     ) : null}
                                     {createdAt ? (
                                         <time
-                                            dateTime={formatDateIso(createdAt)}
+                                            dateTime={toApiInstant(createdAt)}
                                             className="tabular body-xs mbs-2 block text-ink-subtle"
                                         >
                                             {formatDateIn(createdAt)} · {formatTimeIn(createdAt)}

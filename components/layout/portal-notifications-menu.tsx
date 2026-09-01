@@ -1,6 +1,14 @@
 "use client";
 
-import { Fragment, type CSSProperties, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+    type CSSProperties,
+    Fragment,
+    type ReactNode,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -22,7 +30,8 @@ import {
 } from "lucide-react";
 
 import type { NotificationItem } from "@/lib/api/notifications";
-import { formatDateIso, formatNotificationDayTime, formatRelativePast } from "@/lib/format/date";
+import { toApiInstant } from "@/lib/datetime/api";
+import { formatNotificationDayTime, formatRelativePast } from "@/lib/format/date";
 import {
     countByTab,
     filterNotificationsByTab,
@@ -116,8 +125,7 @@ const unreadItemClass = `
   focus:border-brand-soft/80 focus:bg-brand-soft/45!
 `;
 
-const notificationLeadClass =
-    "flex shrink-0 items-start justify-center block-8 inline-8 pbs-0.5";
+const notificationLeadClass = "flex shrink-0 items-start justify-center block-8 inline-8 pbs-0.5";
 
 function NotificationLeadMedia({ children }: { children: ReactNode }) {
     return <span className={notificationLeadClass}>{children}</span>;
@@ -141,11 +149,7 @@ function movePill(pill: HTMLElement, tab: HTMLElement, animate: boolean) {
     pill.style.width = nextWidth;
 }
 
-function paintNotificationFilterPill(
-    bar: HTMLDivElement,
-    pill: HTMLSpanElement,
-    animate: boolean,
-) {
+function paintNotificationFilterPill(bar: HTMLDivElement, pill: HTMLSpanElement, animate: boolean) {
     const active = bar.querySelector<HTMLElement>('[aria-selected="true"]');
     if (!active) return;
     movePill(pill, active, animate);
@@ -291,7 +295,7 @@ function NotificationTypeIcon({
 
     return (
         <span data-notification-icon className={cn("inline-flex shrink-0", colorClass)}>
-            <Icon aria-hidden className="block-6 inline-6 text-current" strokeWidth={1.75} />
+            <Icon aria-hidden className="text-current block-6 inline-6" strokeWidth={1.75} />
         </span>
     );
 }
@@ -384,7 +388,7 @@ function NotificationFilterTabs({
     return (
         <div
             ref={scrollRef}
-            className="scrollbar-none scroll-smooth overflow-x-auto max-inline-full"
+            className="scrollbar-none overflow-x-auto scroll-smooth max-inline-full"
             role="tablist"
             aria-label="Filter notifications"
         >
@@ -580,7 +584,7 @@ function NotificationDescription({ text }: { text: string }) {
 }
 
 function NotificationTimestamp({ occurredAt, now }: { occurredAt: Date; now: Date }) {
-    const dateTime = formatDateIso(occurredAt);
+    const dateTime = toApiInstant(occurredAt);
     const metaTimeClass =
         "tabular body-xs inline-flex items-center gap-1 leading-none whitespace-nowrap text-ink-muted";
     const metaIconClass = "shrink-0 self-center text-ink-subtle block-2.5 inline-2.5";
@@ -628,12 +632,16 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
                           inline-flex items-center justify-center rounded-full block-8 inline-8
                         "
                     >
-                        <NotificationTypeIcon type={item.type} title={item.title} body={item.body} />
+                        <NotificationTypeIcon
+                            type={item.type}
+                            title={item.title}
+                            body={item.body}
+                        />
                     </span>
                 </NotificationLeadMedia>
             )}
 
-            <div className="flex flex-1 flex-col gap-2 min-inline-0 pie-6">
+            <div className="pie-6 flex flex-1 flex-col gap-2 min-inline-0">
                 <span
                     data-notification-title
                     className={cn(
@@ -671,7 +679,9 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
             {!item.isRead ? (
                 <span
                     aria-hidden
-                    className="t-unread-dot absolute inset-bs-2 inset-e-2 rounded-full block-2 inline-2"
+                    className="
+                      t-unread-dot absolute inset-e-2 inset-bs-2 rounded-full block-2 inline-2
+                    "
                 />
             ) : null}
         </div>
