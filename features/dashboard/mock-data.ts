@@ -207,6 +207,7 @@ export type ActivityItem = {
 
 export type ActivityData = {
     items: ActivityItem[];
+    remainingCount?: number;
 };
 
 export type ReraStatus = "profile_incomplete" | "verifying" | "verified";

@@ -206,3 +206,19 @@ export function activityDayGroup(occurredAt: Date, now: Date): ActivityDayGroup 
 
     return "this_week";
 }
+
+/** Activity feed day header: `Today · 27 Aug`, `Yesterday · 26 Aug`, `Mon · 24 Aug`. */
+export function formatActivityDayLabel(occurredAt: Date, now: Date): string {
+    const datePart = formatDateShort(occurredAt);
+    const group = activityDayGroup(occurredAt, now);
+
+    if (group === "today") return `Today · ${datePart}`;
+    if (group === "yesterday") return `Yesterday · ${datePart}`;
+
+    const weekday = new Intl.DateTimeFormat(LOCALE, {
+        timeZone: TIME_ZONE,
+        weekday: "short",
+    }).format(occurredAt);
+
+    return `${weekday} · ${datePart}`;
+}
