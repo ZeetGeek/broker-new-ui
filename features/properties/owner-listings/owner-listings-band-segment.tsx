@@ -12,6 +12,15 @@ export type OwnerListingsBandSegmentProps = {
     isOpen?: boolean;
 };
 
+export function OwnerListingsBandDivider({ className }: { className?: string }) {
+    return (
+        <div
+            className={cn("my-auto block-7 w-px shrink-0 bg-border-warm/80", className)}
+            aria-hidden
+        />
+    );
+}
+
 export function OwnerListingsBandSegment({
     label,
     value,
@@ -25,16 +34,16 @@ export function OwnerListingsBandSegment({
             onClick={onClick}
             className={cn(
                 `
-                  flex min-w-0 flex-1 flex-col items-start gap-0.5 px-4 py-3 text-start
+                  flex min-w-0 flex-1 flex-col items-start gap-1 rounded-inner px-4 py-2.5 text-start
                   transition-colors duration-160
-                  hover:bg-surface-muted/60
+                  hover:bg-surface-muted/70
                 `,
                 className,
             )}
             aria-expanded={isOpen}
         >
             <span className="body-xs text-ink-subtle">{label}</span>
-            <span className="flex w-full min-w-0 items-center gap-1">
+            <span className="flex w-full min-w-0 items-center gap-1.5">
                 <span className="body-sm truncate font-medium text-ink">{value}</span>
                 <ChevronDown
                     aria-hidden

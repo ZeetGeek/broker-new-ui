@@ -23,7 +23,10 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
+import {
+    OwnerListingsBandDivider,
+    OwnerListingsBandSegment,
+} from "@/features/properties/owner-listings/owner-listings-band-segment";
 import type {
     OwnerListingFurnishing,
     OwnerListingPropertyType,
@@ -99,9 +102,9 @@ export function OwnerListingsSearchBand({
     }, [draft, onApplyBand]);
 
     return (
-        <div className="flex items-stretch overflow-hidden rounded-control border border-border-warm bg-surface">
-            <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
-                <div className="flex min-w-0 min-inline-36 flex-1">
+        <div className="flex items-center gap-2 rounded-card border border-border-warm bg-surface p-2 shadow-sm">
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
+                <div className="flex min-w-0 min-inline-36 flex-1 p-0.5">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -126,9 +129,9 @@ export function OwnerListingsSearchBand({
                     </DropdownMenu>
                 </div>
 
-                <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
+                <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="hidden min-w-0 min-inline-32 flex-1 md:block">
+                <div className="hidden min-w-0 min-inline-32 flex-1 p-0.5 md:block">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -147,9 +150,9 @@ export function OwnerListingsSearchBand({
                     </DropdownMenu>
                 </div>
 
-                <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
+                <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="flex min-w-0 min-inline-36 flex-1">
+                <div className="flex min-w-0 min-inline-36 flex-1 p-0.5">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -176,9 +179,9 @@ export function OwnerListingsSearchBand({
                     </DropdownMenu>
                 </div>
 
-                <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
+                <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="hidden min-w-0 min-inline-28 flex-1 md:block">
+                <div className="hidden min-w-0 min-inline-28 flex-1 p-0.5 md:block">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -203,9 +206,9 @@ export function OwnerListingsSearchBand({
                     </DropdownMenu>
                 </div>
 
-                <div className="hidden w-px shrink-0 self-stretch bg-border-warm lg:block" aria-hidden />
+                <OwnerListingsBandDivider className="hidden lg:block" />
 
-                <div className="hidden min-w-0 min-inline-32 flex-1 lg:block">
+                <div className="hidden min-w-0 min-inline-32 flex-1 p-0.5 lg:block">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -234,9 +237,9 @@ export function OwnerListingsSearchBand({
                     </DropdownMenu>
                 </div>
 
-                <div className="hidden w-px shrink-0 self-stretch bg-border-warm lg:block" aria-hidden />
+                <OwnerListingsBandDivider className="hidden lg:block" />
 
-                <div className="hidden min-w-0 min-inline-36 flex-1 lg:block">
+                <div className="hidden min-w-0 min-inline-36 flex-1 p-0.5 lg:block">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -264,7 +267,7 @@ export function OwnerListingsSearchBand({
                 </div>
             </div>
 
-            <div className="flex shrink-0 items-center border-is border-border-warm p-2">
+            <div className="flex shrink-0 items-center pe-1">
                 <Button
                     type="button"
                     size="icon-md"
