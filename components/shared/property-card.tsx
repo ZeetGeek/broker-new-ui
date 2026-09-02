@@ -36,8 +36,15 @@ const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-
 const PROPERTY_CARD_PHOTO_GRID_CLASS = "h-40 w-full";
 const PROPERTY_CARD_PHOTO_LIST_CLASS = "w-36 min-h-36 self-stretch sm:w-44 md:w-52";
 
-const BROWSE_CARD_PHOTO_GRID_CLASS = "aspect-[4/3] w-full";
-const BROWSE_CARD_PHOTO_LIST_CLASS = "w-40 min-h-40 self-stretch shrink-0 sm:w-48 md:w-56";
+const BROWSE_CARD_PHOTO_FRAME_CLASS =
+    "shrink-0 rounded-card bg-surface p-1 shadow-md transition-shadow duration-160 group-hover:shadow-lg";
+const BROWSE_CARD_PHOTO_FRAME_GRID_CLASS = "w-full";
+const BROWSE_CARD_PHOTO_FRAME_LIST_CLASS = "w-40 sm:w-48 md:w-56";
+
+const BROWSE_CARD_PHOTO_INNER_CLASS =
+    "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
+const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full";
+const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[4/3] min-h-40 w-full";
 
 const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
@@ -142,11 +149,20 @@ function BrowsePropertyCardPhoto({
     return (
         <div
             className={cn(
-                PROPERTY_CARD_PHOTO_CLASS,
-                "rounded-card shadow-sm transition-shadow duration-160 group-hover:shadow-md",
-                layout === "list" ? BROWSE_CARD_PHOTO_LIST_CLASS : BROWSE_CARD_PHOTO_GRID_CLASS,
+                BROWSE_CARD_PHOTO_FRAME_CLASS,
+                layout === "list"
+                    ? BROWSE_CARD_PHOTO_FRAME_LIST_CLASS
+                    : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
             )}
         >
+            <div
+                className={cn(
+                    BROWSE_CARD_PHOTO_INNER_CLASS,
+                    layout === "list"
+                        ? BROWSE_CARD_PHOTO_INNER_LIST_CLASS
+                        : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
+                )}
+            >
             {listing.imageSrc ? (
                 <AppImage
                     src={listing.imageSrc}
@@ -189,6 +205,7 @@ function BrowsePropertyCardPhoto({
                     ))}
                 </div>
             ) : null}
+            </div>
         </div>
     );
 }

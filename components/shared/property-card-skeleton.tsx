@@ -1,9 +1,14 @@
 import { cn } from "@/lib/utils";
 
-const BROWSE_CARD_PHOTO_CLASS =
-    "relative aspect-[4/3] shrink-0 overflow-hidden rounded-card bg-surface-muted shadow-sm";
-const BROWSE_CARD_PHOTO_LIST_CLASS =
-    "relative w-40 min-h-40 shrink-0 self-stretch overflow-hidden rounded-card bg-surface-muted shadow-sm sm:w-48 md:w-56";
+const BROWSE_CARD_PHOTO_FRAME_CLASS =
+    "shrink-0 rounded-card bg-surface p-1 shadow-md";
+const BROWSE_CARD_PHOTO_FRAME_GRID_CLASS = "w-full";
+const BROWSE_CARD_PHOTO_FRAME_LIST_CLASS = "w-40 sm:w-48 md:w-56";
+
+const BROWSE_CARD_PHOTO_INNER_CLASS =
+    "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
+const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full animate-pulse";
+const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[4/3] min-h-40 w-full animate-pulse";
 
 export function PropertyCardSkeleton({
     className,
@@ -28,11 +33,21 @@ export function PropertyCardSkeleton({
             >
                 <div
                     className={cn(
-                        BROWSE_CARD_PHOTO_CLASS,
-                        "animate-pulse",
-                        isListView && BROWSE_CARD_PHOTO_LIST_CLASS,
+                        BROWSE_CARD_PHOTO_FRAME_CLASS,
+                        isListView
+                            ? BROWSE_CARD_PHOTO_FRAME_LIST_CLASS
+                            : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
                     )}
-                />
+                >
+                    <div
+                        className={cn(
+                            BROWSE_CARD_PHOTO_INNER_CLASS,
+                            isListView
+                                ? BROWSE_CARD_PHOTO_INNER_LIST_CLASS
+                                : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
+                        )}
+                    />
+                </div>
 
                 <div className="flex flex-1 flex-col gap-2.5 px-2 min-inline-0">
                     <div className="flex flex-col gap-1.5">
@@ -87,7 +102,7 @@ export function PropertyCardSkeleton({
         >
             <div className="animate-pulse bg-brand-deep/70 block-8 inline-full" />
 
-            <div className={cn(BROWSE_CARD_PHOTO_CLASS, "animate-pulse")} />
+            <div className="relative aspect-[4/3] animate-pulse overflow-hidden rounded-card bg-surface-muted" />
 
             <div className="flex flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-3">
