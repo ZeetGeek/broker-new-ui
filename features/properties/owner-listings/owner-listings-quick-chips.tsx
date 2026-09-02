@@ -8,7 +8,11 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 
-import type { OwnerListingsFilters } from "@/features/properties/owner-listings/types";
+import type { OwnerListingSort, OwnerListingsFilters } from "@/features/properties/owner-listings/types";
+import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
+
+import { OwnerListingsSortMenu } from "@/features/properties/owner-listings/owner-listings-sort-menu";
+import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
 
 type QuickChipKey = "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove";
 
@@ -25,6 +29,9 @@ export type OwnerListingsQuickChipsProps = {
     sheetFilterCount: number;
     onToggleQuickChip: (key: QuickChipKey) => void;
     onOpenFilters: () => void;
+    onSortChange: (sort: OwnerListingSort) => void;
+    view: OwnerListingsView;
+    onViewChange: (view: OwnerListingsView) => void;
 };
 
 function QuickChip({
@@ -60,30 +67,12 @@ export function OwnerListingsQuickChips({
     sheetFilterCount,
     onToggleQuickChip,
     onOpenFilters,
+    onSortChange,
+    view,
+    onViewChange,
 }: OwnerListingsQuickChipsProps) {
     return (
         <div className="flex items-center gap-2">
-            <div className="
-              flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none]
-              [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
-            ">
-                {QUICK_CHIPS.map((chip) => (
-                    <QuickChip
-                        key={chip.key}
-                        label={
-                            <>
-                                <span className="md:hidden">{chip.mobileLabel ?? chip.label}</span>
-                                <span className="hidden md:inline">{chip.label}</span>
-                            </>
-                        }
-                        isActive={filters[chip.key]}
-                        onClick={() => onToggleQuickChip(chip.key)}
-                    />
-                ))}
-            </div>
-
-            <div className="h-8 w-px shrink-0 bg-border-warm" aria-hidden />
-
             <Button
                 type="button"
                 variant="outline"
@@ -104,6 +93,32 @@ export function OwnerListingsQuickChips({
                     </span>
                 ) : null}
             </Button>
+
+            <div className="h-8 w-px shrink-0 bg-border-warm" aria-hidden />
+
+            <div className="
+              flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none]
+              [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
+            ">
+                {QUICK_CHIPS.map((chip) => (
+                    <QuickChip
+                        key={chip.key}
+                        label={
+                            <>
+                                <span className="md:hidden">{chip.mobileLabel ?? chip.label}</span>
+                                <span className="hidden md:inline">{chip.label}</span>
+                            </>
+                        }
+                        isActive={filters[chip.key]}
+                        onClick={() => onToggleQuickChip(chip.key)}
+                    />
+                ))}
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+                <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
+                <OwnerListingsSortMenu filters={filters} onSortChange={onSortChange} />
+            </div>
         </div>
     );
 }

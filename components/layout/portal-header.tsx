@@ -79,8 +79,12 @@ export function PortalHeader({
     return (
         <div className="bg-surface-muted min-block-screen">
             <div className="overflow-x-hidden px-4 md:px-8">
-                <header className="border-be border-border-warm">
-                    <div className="flex items-center justify-between gap-8 py-5">
+                <header>
+                    <div
+                        className="
+                          flex items-center justify-between gap-8 border-be border-border-warm py-5
+                        "
+                    >
                         <div className="flex flex-1 items-center gap-10 min-inline-0">
                             <Logo href={homeHref} />
                             <PortalNav items={navItems} />
@@ -99,12 +103,16 @@ export function PortalHeader({
                                             `
                                               group border! text-ink-muted
                                               group-hover:text-ink
-                                              md:justify-start md:gap-2 md:px-4 md:inline-auto md:min-w-64
+                                              md:justify-start md:gap-2 md:px-4 md:inline-auto
+                                              md:min-inline-64
                                             `,
                                         )}
                                     >
                                         <Search aria-hidden="true" />
-                                        <span aria-hidden="true" className="hidden overflow-hidden md:inline-flex">
+                                        <span
+                                            aria-hidden="true"
+                                            className="hidden overflow-hidden md:inline-flex"
+                                        >
                                             <SearchPlaceholderLoop />
                                         </span>
                                         <Kbd
@@ -142,22 +150,10 @@ export function PortalHeader({
                         </TooltipProvider>
                     </div>
 
-                    {sectionNav ? (
-                        <div className="border-be border-border-warm">{sectionNav}</div>
-                    ) : null}
+                    {sectionNav ? <div className="mbe-4">{sectionNav}</div> : null}
                 </header>
 
-                {children ? (
-                    <main
-                        className={cn(
-                            "py-6",
-                            mobileNav &&
-                                "pbe-[calc(5.5rem+env(safe-area-inset-bottom))] md:pbe-6",
-                        )}
-                    >
-                        {children}
-                    </main>
-                ) : null}
+                {children ? <main>{children}</main> : null}
             </div>
 
             {mobileNav}

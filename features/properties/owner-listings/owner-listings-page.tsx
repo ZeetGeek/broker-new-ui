@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { fetchOwnerListings } from "@/lib/api/owner-listings";
+import { cn } from "@/lib/utils";
+
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 
 import {
     type BrokerVerificationState,
@@ -15,8 +18,9 @@ import {
 } from "@/features/properties/owner-listings/mock-owner-listings";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
-import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
+import { OWNER_LISTINGS_GRID_CLASS, OWNER_LISTINGS_LIST_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { OwnerListingsHeader } from "@/features/properties/owner-listings/owner-listings-header";
+import { OwnerListingsIntro } from "@/features/properties/owner-listings/owner-listings-intro";
 import { OwnerListingsPageSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
 import type {
     OwnerListingsBandFilters,
@@ -26,6 +30,7 @@ import type {
     OwnerListingsResult,
 } from "@/features/properties/owner-listings/types";
 import { useOwnerListingsFilters } from "@/features/properties/owner-listings/use-owner-listings-filters";
+import { useOwnerListingsView, type OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
@@ -63,6 +68,7 @@ function OwnerListingsResults({
     onClearFilters,
     onLoaded,
     onLoadingChange,
+    view,
 }: {
     filterSignature: string;
     serviceAreasKey: string;
@@ -72,6 +78,7 @@ function OwnerListingsResults({
     onClearFilters: () => void;
     onLoaded: (result: OwnerListingsResult) => void;
     onLoadingChange: (isLoading: boolean) => void;
+    view: OwnerListingsView;
 }) {
     const [result, setResult] = useState<OwnerListingsResult | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -131,11 +138,14 @@ function OwnerListingsResults({
         }
 
         return (
-            <div className={OWNER_LISTINGS_GRID_CLASS}>
-                {Array.from({ length: 10 }).map((_, index) => (
+            <div className={view === "list" ? OWNER_LISTINGS_LIST_CLASS : OWNER_LISTINGS_GRID_CLASS}>
+                {Array.from({ length: view === "list" ? 6 : 10 }).map((_, index) => (
                     <div
                         key={index}
-                        className="animate-pulse rounded-card bg-surface-muted block-80"
+                        className={cn(
+                            "animate-pulse rounded-card bg-surface-muted",
+                            view === "list" ? "block-36" : "block-80",
+                        )}
                         aria-hidden
                     />
                 ))}
@@ -155,7 +165,7 @@ function OwnerListingsResults({
 
     return (
         <div className={isFetching ? "opacity-60 transition-opacity duration-160" : undefined}>
-            <OwnerListingsGrid items={result.items} />
+            <OwnerListingsGrid items={result.items} view={view} />
         </div>
     );
 }
@@ -176,6 +186,7 @@ export function OwnerListingsPage() {
         hasActiveFilters,
         filterSignature,
     } = useOwnerListingsFilters();
+    const { view, setView } = useOwnerListingsView();
 
     const serviceAreas = profile?.broker?.serviceAreas ?? EMPTY_SERVICE_AREAS;
     const serviceAreasKey = serviceAreas.join("|");
@@ -226,6 +237,29 @@ export function OwnerListingsPage() {
         [applyFilters, filters],
     );
 
+    const introSection = useMemo(
+        () => (
+            <OwnerListingsIntro
+                userId={userId}
+                hasApprovedRepresentation={hasApprovedRepresentation}
+                newThisWeekCount={newThisWeekCount}
+                serviceAreas={serviceAreas}
+                totalCount={totalCount}
+                filters={filters}
+                isLoading={isResultsLoading}
+            />
+        ),
+        [
+            userId,
+            hasApprovedRepresentation,
+            newThisWeekCount,
+            serviceAreasKey,
+            totalCount,
+            filterSignature,
+            isResultsLoading,
+        ],
+    );
+
     useEffect(() => {
         if (dashboardStatus === "idle") {
             void dispatch(fetchBrokerDashboard());
@@ -250,20 +284,18 @@ export function OwnerListingsPage() {
 
     return (
         <div className="flex flex-col gap-4">
+            <PortalSectionNav>{introSection}</PortalSectionNav>
+
             <OwnerListingsHeader
-                userId={userId}
-                hasApprovedRepresentation={hasApprovedRepresentation}
-                newThisWeekCount={newThisWeekCount}
                 filters={filters}
-                serviceAreas={serviceAreas}
                 localityOptions={OWNER_LISTING_LOCALITIES}
-                totalCount={totalCount}
-                isLoading={isResultsLoading}
                 filterContext={filterContext}
                 onApplyBand={handleApplyBand}
                 onApplySheet={handleApplySheet}
                 onToggleQuickChip={toggleQuickChip}
                 onSortChange={handleSortChange}
+                view={view}
+                onViewChange={setView}
             />
 
             <OwnerListingsResults
@@ -275,6 +307,7 @@ export function OwnerListingsPage() {
                 onClearFilters={clearFilters}
                 onLoaded={handleLoaded}
                 onLoadingChange={setIsResultsLoading}
+                view={view}
             />
         </div>
     );

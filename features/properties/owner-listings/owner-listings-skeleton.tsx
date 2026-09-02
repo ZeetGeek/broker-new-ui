@@ -5,11 +5,6 @@ import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/
 export function OwnerListingsPageSkeleton() {
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-                <div className="animate-pulse rounded-full bg-surface-muted block-7 inline-3/5" />
-                <div className="hidden animate-pulse rounded-full bg-surface-muted body-sm sm:block block-4 inline-full max-inline-[52ch]" />
-            </div>
-
             <div className="flex flex-col gap-3">
                 <div className="
                   flex items-stretch overflow-hidden rounded-control border border-border-warm
@@ -40,7 +35,9 @@ export function OwnerListingsPageSkeleton() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <div className="flex flex-1 gap-2 overflow-hidden">
+                    <div className="animate-pulse rounded-full bg-surface-muted block-8 inline-20 shrink-0" />
+                    <div className="h-8 w-px bg-border-warm" aria-hidden />
+                    <div className="flex min-w-0 flex-1 gap-2 overflow-hidden">
                         {Array.from({ length: 4 }).map((_, index) => (
                             <div
                                 key={index}
@@ -50,13 +47,11 @@ export function OwnerListingsPageSkeleton() {
                             />
                         ))}
                     </div>
-                    <div className="h-8 w-px bg-border-warm" aria-hidden />
-                    <div className="animate-pulse rounded-full bg-surface-muted block-8 inline-20" />
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                    <div className="animate-pulse rounded-full bg-surface-muted block-4 inline-40" />
-                    <div className="animate-pulse rounded-full bg-surface-muted block-8 inline-28" />
+                    <div className="
+                      shrink-0 animate-pulse rounded-full border border-border-warm bg-surface
+                      block-8 inline-16
+                    " />
+                    <div className="animate-pulse rounded-full bg-surface-muted block-8 inline-28 shrink-0" />
                 </div>
             </div>
 

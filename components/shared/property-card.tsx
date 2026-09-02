@@ -31,7 +31,9 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 
-const PROPERTY_CARD_PHOTO_CLASS = "relative h-40 shrink-0 overflow-hidden bg-surface-muted";
+const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted";
+const PROPERTY_CARD_PHOTO_GRID_CLASS = "h-40 w-full";
+const PROPERTY_CARD_PHOTO_LIST_CLASS = "w-36 min-h-36 self-stretch sm:w-44 md:w-52";
 
 export type PropertyCardOwner = {
     name: string;
@@ -72,6 +74,7 @@ export type RepresentedPropertyCardListing = PropertyCardBase & {
 
 export type PropertyCardProps = {
     className?: string;
+    layout?: "grid" | "list";
     detailsHref: string;
     priority?: boolean;
     imageSizes?: string;
@@ -97,15 +100,22 @@ function PropertyCardPhoto({
     listing,
     priority,
     imageSizes,
+    layout = "grid",
 }: {
     listing: PropertyCardBase;
     priority: boolean;
     imageSizes: string;
+    layout?: "grid" | "list";
 }) {
     const alt = `${listing.configLabel} ${listing.propertyTypeLabel}`;
 
     return (
-        <div className={PROPERTY_CARD_PHOTO_CLASS}>
+        <div
+            className={cn(
+                PROPERTY_CARD_PHOTO_CLASS,
+                layout === "list" ? PROPERTY_CARD_PHOTO_LIST_CLASS : PROPERTY_CARD_PHOTO_GRID_CLASS,
+            )}
+        >
             {listing.imageSrc ? (
                 <AppImage
                     src={listing.imageSrc}
@@ -305,6 +315,7 @@ function BrowseMeta({ listing }: { listing: BrowsePropertyCardListing }) {
 export function PropertyCard(props: PropertyCardProps) {
     const {
         className,
+        layout = "grid",
         detailsHref,
         priority = false,
         imageSizes = "(max-width: 768px) 100vw, 50vw",
@@ -326,9 +337,9 @@ export function PropertyCard(props: PropertyCardProps) {
         <article
             className={cn(
                 `
-                  group flex flex-col overflow-hidden rounded-card border border-border-warm
-                  bg-surface
+                  group overflow-hidden rounded-card border border-border-warm bg-surface
                 `,
+                layout === "list" && variant === "browse" ? "flex flex-row" : "flex flex-col",
                 className,
             )}
         >
@@ -343,7 +354,12 @@ export function PropertyCard(props: PropertyCardProps) {
                 </div>
             ) : null}
 
-            <PropertyCardPhoto listing={listing} priority={priority} imageSizes={imageSizes} />
+            <PropertyCardPhoto
+                listing={listing}
+                priority={priority}
+                imageSizes={imageSizes}
+                layout={layout}
+            />
 
             <div className="flex flex-1 flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-3">

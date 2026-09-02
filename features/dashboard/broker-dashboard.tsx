@@ -83,9 +83,7 @@ export function BrokerDashboard() {
                     pipelineActiveTotal={view.pipelineCard.activeTotal}
                     followUpsOverdueCount={view.followUps.overdueCount}
                     followUpsRemainingCount={view.followUps.remainingThisWeek}
-                    activityCount={
-                        view.activity.items.length + (view.activity.remainingCount ?? 0)
-                    }
+                    activityCount={view.activity.items.length + (view.activity.remainingCount ?? 0)}
                     reraStatus={view.reraStatus}
                     serviceAreas={view.serviceAreas}
                     phoneDigits={view.phoneDigits}
@@ -106,10 +104,7 @@ export function BrokerDashboard() {
                 <ActivityCard data={view.activity} className="md:col-span-5" />
                 <div className="grid grid-cols-1 gap-4 md:col-span-12 md:grid-cols-2 md:gap-5">
                     <YouRepresentCard data={view.youRepresent} />
-                    <NewInAreas
-                        properties={view.newInAreas}
-                        serviceAreas={view.serviceAreas}
-                    />
+                    <NewInAreas properties={view.newInAreas} serviceAreas={view.serviceAreas} />
                 </div>
             </div>
         </div>

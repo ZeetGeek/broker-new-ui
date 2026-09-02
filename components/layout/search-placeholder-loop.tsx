@@ -1,7 +1,8 @@
 "use client";
 
+import { ease } from "@/lib/motion/tokens";
+
 import { TextLoop } from "@/components/motion-primitives/text-loop";
-import { duration, ease } from "@/lib/motion/tokens";
 
 /**
  * Rotating hint inside the header search control. Each line names something the
@@ -20,7 +21,7 @@ export function SearchPlaceholderLoop() {
         <TextLoop
             className="body-sm font-medium"
             interval={4}
-            transition={{ duration: duration.base, ease: ease.smoothOut }}
+            transition={{ ease: ease.smoothOut }}
             variants={{
                 initial: { y: 12, opacity: 0 },
                 animate: { y: 0, opacity: 1 },

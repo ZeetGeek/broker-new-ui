@@ -234,7 +234,7 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                 >
                     <div className="flex flex-wrap gap-3">
                         <Button
-                            variant="default"
+                            variant="accent"
                             size="md"
                             nativeButton={false}
                             render={

@@ -56,10 +56,7 @@ const buttonVariants = cva(
                   border-highlight bg-transparent text-highlight
                   hover:bg-highlight/5
                 `,
-                "outline-dark": `
-                  border-foreground bg-transparent text-foreground
-                  hover:bg-foreground/5
-                `,
+                "outline-dark": `border-ink-muted bg-transparent text-ink hover:bg-canvas/40`,
             },
             size: {
                 default: `

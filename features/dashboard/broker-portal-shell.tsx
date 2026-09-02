@@ -7,6 +7,10 @@ import { BROKER_OWNER_LISTINGS_HREF, BROKER_YOUR_LISTINGS_HREF } from "@/lib/rou
 
 import { PortalHeader } from "@/components/layout/portal-header";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
+import {
+    PortalSectionNavProvider,
+    usePortalSectionNav,
+} from "@/components/layout/portal-section-nav";
 
 import { BROKER_NAV_ITEMS } from "@/config/nav";
 import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
@@ -31,6 +35,15 @@ const BROKER_SHORTCUT_ROUTES = {
 };
 
 export function BrokerPortalShell({ children }: { children: ReactNode }) {
+    return (
+        <PortalSectionNavProvider>
+            <BrokerPortalShellInner>{children}</BrokerPortalShellInner>
+        </PortalSectionNavProvider>
+    );
+}
+
+function BrokerPortalShellInner({ children }: { children: ReactNode }) {
+    const sectionNav = usePortalSectionNav();
     const user = useAppSelector((state) => state.auth.user);
     const profile = useAppSelector((state) => state.dashboard.profile);
 
@@ -66,6 +79,7 @@ export function BrokerPortalShell({ children }: { children: ReactNode }) {
             <PortalHeader
                 navItems={BROKER_NAV_ITEMS}
                 notificationsHref={BROKER_NOTIFICATIONS_HREF}
+                sectionNav={sectionNav}
                 mobileNav={<PortalMobileNav items={BROKER_NAV_ITEMS} />}
                 profileMenu={
                     <BrokerProfileMenu
