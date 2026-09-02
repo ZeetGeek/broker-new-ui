@@ -2,14 +2,14 @@ import Link from "next/link";
 
 import { Check, Clock, Send, X } from "lucide-react";
 
+import { BROKER_OWNER_LISTINGS_HREF, BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
+import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 import { Button } from "@/components/ui/button";
-
-import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
@@ -139,7 +139,7 @@ function EmptyRequests({ className }: { className?: string }) {
                 heading="No requests sent yet"
                 description="Find a property you'd like to sell and ask the owner."
             >
-                <TextLinkButton href="/broker/properties">Browse properties</TextLinkButton>
+                <TextLinkButton href={BROKER_OWNER_LISTINGS_HREF}>Owner listings</TextLinkButton>
             </EmptyState>
         </section>
     );
@@ -232,8 +232,8 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                         />
                     ) : null}
                     <div className="relative flex justify-center">
-                        <ShortcutTooltip shortcutId="properties" label="Properties">
-                            <TextLinkButton href="/broker/properties?tab=requests">
+                        <ShortcutTooltip shortcutId="your_listings">
+                            <TextLinkButton href={`${BROKER_YOUR_LISTINGS_HREF}?tab=requests`}>
                                 View all requests
                             </TextLinkButton>
                         </ShortcutTooltip>

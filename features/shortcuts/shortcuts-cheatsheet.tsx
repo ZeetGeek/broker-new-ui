@@ -8,6 +8,7 @@ import {
     CalendarClock,
     Gift,
     Keyboard,
+    KeyRound,
     LayoutDashboard,
     LogOut,
     type LucideProps,
@@ -31,7 +32,8 @@ export type ShortcutsCheatsheetProps = {
 const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<LucideProps>> = {
     shortcuts_cheatsheet: Keyboard,
     dashboard: LayoutDashboard,
-    properties: Building2,
+    owner_listings: Building2,
+    your_listings: KeyRound,
     clients: Users,
     visits: CalendarClock,
     referrals: Gift,

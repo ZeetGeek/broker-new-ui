@@ -590,14 +590,14 @@ export const dashboardMock: DashboardMock = {
         },
         {
             id: "browse",
-            label: "Browse properties in your areas",
-            href: "/broker/properties",
+            label: "Pick an owner listing in your areas",
+            href: "/broker/owner-listings",
             isComplete: false,
         },
         {
             id: "request",
             label: "Send your first request",
-            href: "/broker/properties",
+            href: "/broker/owner-listings",
             isComplete: false,
         },
     ],

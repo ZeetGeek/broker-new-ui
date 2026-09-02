@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import {
     BadgeCheck,
+    Briefcase,
     ChevronDown,
     Command,
     ExternalLink,
@@ -126,22 +127,20 @@ function VerificationStatus({
 }) {
     if (state === "VERIFIED") {
         return (
-            <div
-                className="
-                  body-xs inline-flex w-fit items-center gap-1 rounded-full border
-                  border-brand-soft bg-linear-to-b from-brand-soft/70 to-brand-soft/40 py-1
-                  pe-2.5 ps-1.5 font-medium text-brand-text shadow-xs
-                "
-            >
-                <span
-                    className="
-                      flex shrink-0 items-center justify-center rounded-full bg-brand
-                      block-3.5 inline-3.5
-                    "
-                >
-                    <BadgeCheck aria-hidden className="text-brand-on block-2.5 inline-2.5" strokeWidth={2.5} />
+            <div className="body-xs flex items-center gap-2.5 font-medium text-ink-muted">
+                <span className="inline-flex items-center gap-1">
+                    <Briefcase aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={2} />
+                    Broker
                 </span>
-                Verified
+                <span aria-hidden className="rounded-full bg-ink-subtle/40 block-1 inline-1" />
+                <span className="inline-flex items-center gap-1 text-brand-text">
+                    <BadgeCheck
+                        aria-hidden
+                        className="shrink-0 animate-verified-glow text-brand block-3.5 inline-3.5"
+                        strokeWidth={2.25}
+                    />
+                    RERA verified
+                </span>
             </div>
         );
     }

@@ -2,10 +2,10 @@
 
 import type { ReactNode } from "react";
 
+import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
+
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { PortalHeader } from "@/components/layout/portal-header";
-
-import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
 
 import { OWNER_NAV_ITEMS } from "@/config/nav";
 import { NotificationProvider } from "@/providers/notification-provider";

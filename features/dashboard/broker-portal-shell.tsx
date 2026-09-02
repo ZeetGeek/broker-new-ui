@@ -3,8 +3,10 @@
 import { type ReactNode,useCallback, useState } from "react";
 
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
+import { BROKER_OWNER_LISTINGS_HREF, BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
 
 import { PortalHeader } from "@/components/layout/portal-header";
+import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
 
 import { BROKER_NAV_ITEMS } from "@/config/nav";
 import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
@@ -18,7 +20,8 @@ const BROKER_NOTIFICATIONS_HREF = "/broker/notifications";
 
 const BROKER_SHORTCUT_ROUTES = {
     dashboard: "/broker/dashboard",
-    properties: "/broker/properties",
+    ownerListings: BROKER_OWNER_LISTINGS_HREF,
+    yourListings: BROKER_YOUR_LISTINGS_HREF,
     clients: "/broker/clients",
     visits: "/broker/visits",
     referrals: "/broker/referrals",
@@ -63,6 +66,7 @@ export function BrokerPortalShell({ children }: { children: ReactNode }) {
             <PortalHeader
                 navItems={BROKER_NAV_ITEMS}
                 notificationsHref={BROKER_NOTIFICATIONS_HREF}
+                mobileNav={<PortalMobileNav items={BROKER_NAV_ITEMS} />}
                 profileMenu={
                     <BrokerProfileMenu
                         broker={broker}

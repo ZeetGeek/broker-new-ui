@@ -212,7 +212,8 @@ These map to the existing nav.
 | Keys | Action |
 |---|---|
 | `g d` | Dashboard |
-| `g p` | Properties |
+| `g o` | Owner listings |
+| `g p` | Your listings |
 | `g c` | Clients |
 | `g v` | Visits |
 | `g r` | Referrals |

@@ -125,7 +125,7 @@ export function HoldToLogout({ disabled = false, onComplete }: HoldToLogoutProps
             disabled={disabled}
             aria-label={label}
             className={cn(
-                "t-hold-logout body-sm h-9 w-full rounded-inner text-start",
+                "t-hold-logout body-sm rounded-inner text-start block-9 inline-full",
                 isHolding && "is-holding",
                 isComplete && "is-complete",
             )}

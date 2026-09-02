@@ -8,15 +8,15 @@ import { Bookmark, Clock3, MapPin, Users } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
 import { formatAreaSqft } from "@/lib/format/area";
+import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
+import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL_AUTO, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
@@ -205,7 +205,7 @@ function EmptyNewInAreas() {
             heading="Nothing new this week"
             description="We'll show properties added in the areas you work in."
         >
-            <ShortcutKbdMessage shortcutId="properties">to browse properties</ShortcutKbdMessage>
+            <ShortcutKbdMessage shortcutId="owner_listings">to browse owner listings</ShortcutKbdMessage>
         </EmptyState>
     );
 }
@@ -274,8 +274,8 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
                     ) : null}
                 </div>
                 {!isEmpty ? (
-                    <ShortcutTooltip shortcutId="properties" label="Properties">
-                        <TextLinkButton href="/broker/properties" className="shrink-0">
+                    <ShortcutTooltip shortcutId="owner_listings">
+                        <TextLinkButton href={BROKER_OWNER_LISTINGS_HREF} className="shrink-0">
                             Browse all
                         </TextLinkButton>
                     </ShortcutTooltip>

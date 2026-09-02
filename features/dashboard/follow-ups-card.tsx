@@ -11,9 +11,8 @@ import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { Badge } from "@/components/ui/badge";
-
 import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
+import { Badge } from "@/components/ui/badge";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";

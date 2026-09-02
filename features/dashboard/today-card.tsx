@@ -4,7 +4,6 @@ import { formatDateIso, formatDateShort, formatTimeIn } from "@/lib/format/date"
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
-
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 import { CardLabel } from "./card-label";

@@ -1,0 +1,203 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+
+import { Search } from "lucide-react";
+
+import {
+    extractBandFilters,
+    formatBudgetLabel,
+    formatBhkLabel,
+    formatLocalitiesLabel,
+    formatTransactionTypeLabel,
+} from "@/lib/format/owner-listings-labels";
+
+import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
+import type {
+    OwnerListingsBandFilters,
+    OwnerListingsFilters,
+} from "@/features/properties/owner-listings/types";
+
+const BHK_OPTIONS = ["1", "2", "3", "4"] as const;
+
+const BUDGET_PRESETS = [
+    { min: "", max: "5000000", label: "Under ₹50 L" },
+    { min: "", max: "10000000", label: "Under ₹1 Cr" },
+    { min: "", max: "20000000", label: "Under ₹2 Cr" },
+    { min: "4000000", max: "6000000", label: "₹40 L – ₹60 L" },
+] as const;
+
+export type OwnerListingsSearchBandProps = {
+    appliedFilters: OwnerListingsFilters;
+    localityOptions: string[];
+    onApplyBand: (band: OwnerListingsBandFilters) => void;
+};
+
+export function OwnerListingsSearchBand({
+    appliedFilters,
+    localityOptions,
+    onApplyBand,
+}: OwnerListingsSearchBandProps) {
+    const [draft, setDraft] = useState(() => extractBandFilters(appliedFilters));
+
+    useEffect(() => {
+        setDraft(extractBandFilters(appliedFilters));
+    }, [appliedFilters]);
+
+    const updateDraft = useCallback((patch: Partial<OwnerListingsBandFilters>) => {
+        setDraft((prev) => ({ ...prev, ...patch }));
+    }, []);
+
+    const toggleLocality = useCallback((locality: string) => {
+        setDraft((prev) => {
+            const exists = prev.localities.includes(locality);
+            return {
+                ...prev,
+                localities: exists
+                    ? prev.localities.filter((item) => item !== locality)
+                    : [...prev.localities, locality],
+            };
+        });
+    }, []);
+
+    const toggleBhk = useCallback((value: string) => {
+        setDraft((prev) => {
+            const exists = prev.bhk.includes(value);
+            return {
+                ...prev,
+                bhk: exists ? prev.bhk.filter((item) => item !== value) : [...prev.bhk, value],
+            };
+        });
+    }, []);
+
+    const handleSearch = useCallback(() => {
+        onApplyBand(draft);
+    }, [draft, onApplyBand]);
+
+    return (
+        <div className="flex items-stretch overflow-hidden rounded-control border border-border-warm bg-surface">
+            <div className="flex min-w-0 flex-1">
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        render={
+                            <OwnerListingsBandSegment
+                                label="Where"
+                                value={formatLocalitiesLabel(draft.localities)}
+                                className="w-full"
+                            />
+                        }
+                    />
+                    <DropdownMenuContent align="start" className="min-inline-56">
+                        {localityOptions.map((locality) => (
+                            <DropdownMenuCheckboxItem
+                                key={locality}
+                                checked={draft.localities.includes(locality)}
+                                onCheckedChange={() => toggleLocality(locality)}
+                            >
+                                {locality}
+                            </DropdownMenuCheckboxItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
+            <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
+
+            <div className="hidden min-w-0 flex-1 md:block">
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        render={
+                            <OwnerListingsBandSegment
+                                label="Looking for"
+                                value={formatTransactionTypeLabel(draft.type)}
+                                className="w-full"
+                            />
+                        }
+                    />
+                    <DropdownMenuContent align="start" className="min-inline-44">
+                        <DropdownMenuItem onClick={() => updateDraft({ type: "" })}>Any</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => updateDraft({ type: "sale" })}>Sale</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => updateDraft({ type: "rent" })}>Rent</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
+            <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
+
+            <div className="flex min-w-0 flex-1">
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        render={
+                            <OwnerListingsBandSegment
+                                label="Budget"
+                                value={formatBudgetLabel(draft.min, draft.max)}
+                                className="w-full"
+                            />
+                        }
+                    />
+                    <DropdownMenuContent align="start" className="min-inline-52">
+                        <DropdownMenuItem onClick={() => updateDraft({ min: "", max: "" })}>
+                            Any budget
+                        </DropdownMenuItem>
+                        {BUDGET_PRESETS.map((preset) => (
+                            <DropdownMenuItem
+                                key={preset.label}
+                                onClick={() => updateDraft({ min: preset.min, max: preset.max })}
+                            >
+                                {preset.label}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
+            <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
+
+            <div className="hidden min-w-0 flex-1 md:block">
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        render={
+                            <OwnerListingsBandSegment
+                                label="BHK"
+                                value={formatBhkLabel(draft.bhk)}
+                                className="w-full"
+                            />
+                        }
+                    />
+                    <DropdownMenuContent align="start" className="min-inline-44">
+                        {BHK_OPTIONS.map((value) => (
+                            <DropdownMenuCheckboxItem
+                                key={value}
+                                checked={draft.bhk.includes(value)}
+                                onCheckedChange={() => toggleBhk(value)}
+                            >
+                                {value} BHK
+                            </DropdownMenuCheckboxItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
+            <div className="flex shrink-0 items-center border-is border-border-warm p-2">
+                <Button
+                    type="button"
+                    size="icon-md"
+                    className="rounded-full bg-brand-ink text-surface hover:bg-brand-ink/90"
+                    aria-label="Search properties"
+                    onClick={handleSearch}
+                >
+                    <Search aria-hidden strokeWidth={1.75} />
+                </Button>
+            </div>
+        </div>
+    );
+}

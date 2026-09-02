@@ -246,6 +246,31 @@
     min-inline-size: --value(--size-control-*);
 }
 
+/* Logical 100% sizing. Tailwind ships size-full (width/height) but no
+   block/inline logical equivalents, so declare them here. */
+@utility block-full {
+    block-size: 100%;
+}
+@utility inline-full {
+    inline-size: 100%;
+}
+
+@utility animate-verified-glow {
+    animation: verified-glow 2.2s ease-in-out infinite;
+}
+
+@keyframes verified-glow {
+    0%,
+    100% {
+        opacity: 1;
+        filter: drop-shadow(0 0 0 color-mix(in oklab, var(--color-brand) 0%, transparent));
+    }
+    50% {
+        opacity: 0.75;
+        filter: drop-shadow(0 0 3px color-mix(in oklab, var(--color-brand) 60%, transparent));
+    }
+}
+
 @layer base {
     * {
         @apply border-border outline-ring/50;

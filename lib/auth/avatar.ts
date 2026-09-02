@@ -34,7 +34,7 @@ export type ResolveUserAvatarImageUrlInput = {
     authProvider?: string | null;
 };
 
-/** Google sign-in with a photo → URL. Everything else → undefined (facehash). */
+/** Google sign-in with a photo → URL. Everything else → undefined (generated avatar). */
 export function resolveUserAvatarImageUrl({
     avatarUrl,
     authProvider,

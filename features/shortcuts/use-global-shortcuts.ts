@@ -27,7 +27,8 @@ function guarded(handler: (event: KeyboardEvent) => void) {
 
 export type GlobalShortcutRoutes = {
     dashboard: string;
-    properties: string;
+    ownerListings: string;
+    yourListings: string;
     clients: string;
     visits: string;
     referrals: string;
@@ -54,7 +55,8 @@ export function useGlobalShortcuts({ routes, onShortcutsOpen, onLogoutFocus }: U
     useEffect(() => {
         const unsubscribe = tinykeys(window, {
             "g d": guarded(() => router.push(routes.dashboard)),
-            "g p": guarded(() => router.push(routes.properties)),
+            "g o": guarded(() => router.push(routes.ownerListings)),
+            "g p": guarded(() => router.push(routes.yourListings)),
             "g c": guarded(() => router.push(routes.clients)),
             "g v": guarded(() => router.push(routes.visits)),
             "g r": guarded(() => router.push(routes.referrals)),

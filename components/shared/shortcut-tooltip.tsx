@@ -33,7 +33,7 @@ export function ShortcutTooltip({ shortcutId, label, side = "bottom", children }
                 {label ?? shortcut.label}
                 <KbdGroup className="gap-0.5">
                     {shortcut.displayKeys.map((key) => (
-                        <Kbd key={key} className="min-inline-4 px-1.5 text-[10px]">
+                        <Kbd key={key} className="px-1.5 text-[10px] min-inline-4">
                             {key}
                         </Kbd>
                     ))}
@@ -61,11 +61,13 @@ export function ShortcutKbdMessage({ shortcutId, children, className }: Shortcut
     if (!shortcut) return null;
 
     return (
-        <p className={cn("body-sm inline-flex flex-wrap items-center justify-center gap-1.5 text-ink-subtle", className)}>
+        <p className={cn(`
+          body-sm inline-flex flex-wrap items-center justify-center gap-1.5 text-ink-subtle
+        `, className)}>
             <span>Press</span>
             <KbdGroup className="gap-0.5">
                 {shortcut.displayKeys.map((key) => (
-                    <Kbd key={key} variant="muted" className="min-inline-4 px-1.5 text-[10px]">
+                    <Kbd key={key} variant="muted" className="px-1.5 text-[10px] min-inline-4">
                         {key}
                     </Kbd>
                 ))}

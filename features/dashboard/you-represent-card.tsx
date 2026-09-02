@@ -3,15 +3,15 @@ import Link from "next/link";
 import { AlertTriangle, KeyRound, MessageCircle, UserRound } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
+import { BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
+import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL_AUTO, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
@@ -204,7 +204,7 @@ function EmptyYouRepresent() {
             heading="Not representing any properties yet"
             description="Once an owner approves your request, the property appears here."
         >
-            <ShortcutKbdMessage shortcutId="properties">to browse properties</ShortcutKbdMessage>
+            <ShortcutKbdMessage shortcutId="owner_listings">to browse owner listings</ShortcutKbdMessage>
         </EmptyState>
     );
 }
@@ -225,8 +225,8 @@ export function YouRepresentCard({ data, className }: YouRepresentCardProps) {
                     <span id="you-represent-heading">{heading}</span>
                 </CardLabel>
                 {!isEmpty ? (
-                    <ShortcutTooltip shortcutId="properties" label="Properties">
-                        <TextLinkButton href="/broker/properties?mine=1">View all</TextLinkButton>
+                    <ShortcutTooltip shortcutId="your_listings">
+                        <TextLinkButton href={BROKER_YOUR_LISTINGS_HREF}>View all</TextLinkButton>
                     </ShortcutTooltip>
                 ) : null}
             </div>

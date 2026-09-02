@@ -23,3 +23,10 @@ export function formatMaskedPhoneIn(phoneDigits: string): string {
     }
     return formatted.replace(/\d(?=\d{4})/g, "•");
 }
+
+/** WhatsApp deep link for an Indian mobile number. */
+export function formatWhatsAppUrl(phoneDigits: string): string {
+    const digits = phoneDigits.replace(/\D/g, "");
+    const e164 = digits.length === 10 ? `91${digits}` : digits;
+    return `https://wa.me/${e164}`;
+}

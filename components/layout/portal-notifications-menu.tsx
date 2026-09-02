@@ -59,7 +59,7 @@ const menuSurfaceClass = `
   before:backdrop-blur-none
   data-closed:animate-none!
   data-open:animate-none!
-  w-fit! min-inline-[28rem] max-inline-[min(100vw-2rem,36rem)]
+  w-fit! min-inline-[20rem] max-inline-[min(100vw-2rem,26rem)]
   **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
   **:data-[slot$=-item]:focus:bg-surface-muted!
 `;
@@ -798,7 +798,7 @@ export function PortalNotificationsMenu({
             )}
 
             <DropdownMenuContent align="end" sideOffset={14} className={cn(menuSurfaceClass)}>
-                <div className="shrink-0 px-4 py-3.5">
+                <div className="shrink-0 px-3 py-3.5">
                     <NotificationsHeader
                         unreadCount={unreadCount}
                         activeTab={activeTab}

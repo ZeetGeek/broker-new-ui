@@ -1,16 +1,7 @@
-import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { type PropertiesTab, PropertiesTabs } from "@/features/properties/properties-tabs";
+import { BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
 
-export const metadata: Metadata = {
-    robots: { index: false, follow: false },
-};
-
-const VALID_TABS: PropertiesTab[] = ["browse", "requests", "mine"];
-
-export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-    const { tab } = await searchParams;
-    const activeTab = VALID_TABS.includes(tab as PropertiesTab) ? (tab as PropertiesTab) : "browse";
-
-    return <PropertiesTabs activeTab={activeTab} />;
+export default function Page() {
+    redirect(BROKER_YOUR_LISTINGS_HREF);
 }

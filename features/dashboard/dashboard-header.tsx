@@ -6,16 +6,16 @@ import Link from "next/link";
 import { Mail, MapPin, Pencil, Phone, Search, UserRoundPlus } from "lucide-react";
 import { motion } from "motion/react";
 
+import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { TextLoop } from "@/components/motion-primitives/text-loop";
 import { DateDisplay } from "@/components/shared/date-display";
 import { PhoneNumber } from "@/components/shared/phone-number";
+import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
-import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 
 import { DigitPopIn } from "./digit-pop-in";
 import type { ReraStatus } from "./mock-data";
@@ -333,16 +333,16 @@ export function DashboardHeader({
                         className="ms-auto flex shrink-0 items-center gap-3"
                         variants={dashboardMetaItem}
                     >
-                        <ShortcutTooltip shortcutId="properties" label="Properties">
+                        <ShortcutTooltip shortcutId="owner_listings">
                             <Button
                                 variant="outline-dark"
                                 size="md"
                                 nativeButton={false}
-                                render={<Link href="/broker/properties" />}
-                                aria-label="Browse properties"
+                                render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
+                                aria-label="Owner listings"
                             >
                                 <Search aria-hidden strokeWidth={1.75} />
-                                <span className="hidden md:inline">Browse properties</span>
+                                <span className="hidden md:inline">Owner listings</span>
                             </Button>
                         </ShortcutTooltip>
                         <ShortcutTooltip shortcutId="clients" label="Clients">

@@ -57,7 +57,7 @@
     --notif-tabs-pill-shadow: var(--shadow-xs);
     --notif-tabs-pill-radius: calc(var(--radius-inner) - 3px);
     --notif-tabs-tab-height: 32px;
-    --notif-tabs-track-padding: 4px;
+    --notif-tabs-track-padding: 2px;
     /* Notification body marquee — hover to scroll truncated description */
     --notif-marquee-fade: 1.25rem;
     --notif-marquee-ease: linear;
@@ -489,10 +489,10 @@
     flex: 1 0 auto;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    min-inline-size: 5.25rem;
+    gap: 2px;
+    min-inline-size: 0;
     block-size: var(--notif-tabs-tab-height);
-    padding: 4px 10px;
+    padding: 2px 4px;
     border: 0;
     border-radius: var(--notif-tabs-pill-radius);
     background: transparent;
@@ -526,7 +526,7 @@
 .t-notif-filter-tab-count[data-badge="true"] {
     border-radius: 6px;
     background: color-mix(in oklch, var(--color-canvas) 88%, var(--color-surface-muted));
-    padding: 1px 6px;
+    padding: 0 2px;
 }
 .t-notif-filter-tabs-pill {
     position: absolute;
