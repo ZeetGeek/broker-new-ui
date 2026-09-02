@@ -4,17 +4,21 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { countSheetFilters } from "@/features/properties/owner-listings/filter-owner-listings";
 import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
+import { OwnerListingsIntro } from "@/features/properties/owner-listings/owner-listings-intro";
 import { OwnerListingsQuickChips } from "@/features/properties/owner-listings/owner-listings-quick-chips";
 import { OwnerListingsResultsBar } from "@/features/properties/owner-listings/owner-listings-results-bar";
 import { OwnerListingsSearchBand } from "@/features/properties/owner-listings/owner-listings-search-band";
 import type {
-    OwnerListingSort,
     OwnerListingsBandFilters,
     OwnerListingsFilterContext,
     OwnerListingsFilters,
+    OwnerListingSort,
 } from "@/features/properties/owner-listings/types";
 
 export type OwnerListingsHeaderProps = {
+    userId: string | undefined;
+    hasApprovedRepresentation: boolean;
+    newThisWeekCount: number;
     filters: OwnerListingsFilters;
     serviceAreas: string[];
     localityOptions: string[];
@@ -44,6 +48,9 @@ function useIsMobile() {
 }
 
 export function OwnerListingsHeader({
+    userId,
+    hasApprovedRepresentation,
+    newThisWeekCount,
     filters,
     serviceAreas,
     localityOptions,
@@ -70,10 +77,14 @@ export function OwnerListingsHeader({
     return (
         <>
             <div className="flex flex-col gap-3">
-                <div className="
-                  sticky inset-bs-0 z-10 -mx-4 flex flex-col gap-3 border-be border-border-warm
-                  bg-canvas px-4 pb-3 pt-1 md:-mx-8 md:px-8
-                ">
+                <OwnerListingsIntro
+                    userId={userId}
+                    hasApprovedRepresentation={hasApprovedRepresentation}
+                    newThisWeekCount={newThisWeekCount}
+                    serviceAreas={serviceAreas}
+                />
+
+                <div className="sticky inset-bs-0 z-10 flex flex-col gap-3">
                     <OwnerListingsSearchBand
                         appliedFilters={filters}
                         localityOptions={localityOptions}

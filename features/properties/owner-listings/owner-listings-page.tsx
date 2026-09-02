@@ -8,19 +8,20 @@ import {
     type BrokerVerificationState,
     mapBrokerVerificationState,
 } from "@/features/broker/map-profile-menu";
+import { OWNER_LISTING_LOCALITIES, MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
+import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/owner-listings/count-new-listings-this-week";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
-import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
+import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { OwnerListingsHeader } from "@/features/properties/owner-listings/owner-listings-header";
 import { OwnerListingsPageSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
 import type {
-    OwnerListingSort,
     OwnerListingsBandFilters,
     OwnerListingsFilterContext,
     OwnerListingsFilters,
+    OwnerListingSort,
     OwnerListingsResult,
 } from "@/features/properties/owner-listings/types";
-import { OWNER_LISTING_LOCALITIES } from "@/features/properties/owner-listings/mock-owner-listings";
 import { useOwnerListingsFilters } from "@/features/properties/owner-listings/use-owner-listings-filters";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
@@ -159,6 +160,8 @@ function OwnerListingsResults({
 export function OwnerListingsPage() {
     const dispatch = useAppDispatch();
     const profile = useAppSelector((state) => state.dashboard.profile);
+    const dashboardData = useAppSelector((state) => state.dashboard.data);
+    const authUser = useAppSelector((state) => state.auth.user);
     const dashboardStatus = useAppSelector((state) => state.dashboard.status);
     const isMobile = useIsMobile();
 
@@ -173,8 +176,12 @@ export function OwnerListingsPage() {
 
     const serviceAreas = profile?.broker?.serviceAreas ?? EMPTY_SERVICE_AREAS;
     const serviceAreasKey = serviceAreas.join("|");
-    const filterContext = useMemo(
-        () => ({ serviceAreas }),
+    const filterContext = useMemo(() => ({ serviceAreas }), [serviceAreasKey]);
+
+    const userId = profile?.id ?? authUser?.id;
+    const hasApprovedRepresentation = (dashboardData?.youRepresent?.totalCount ?? 0) > 0;
+    const newThisWeekCount = useMemo(
+        () => countNewListingsInServiceAreasThisWeek(MOCK_OWNER_LISTINGS, serviceAreas),
         [serviceAreasKey],
     );
 
@@ -241,6 +248,9 @@ export function OwnerListingsPage() {
     return (
         <div className="flex flex-col gap-4">
             <OwnerListingsHeader
+                userId={userId}
+                hasApprovedRepresentation={hasApprovedRepresentation}
+                newThisWeekCount={newThisWeekCount}
                 filters={filters}
                 serviceAreas={serviceAreas}
                 localityOptions={OWNER_LISTING_LOCALITIES}

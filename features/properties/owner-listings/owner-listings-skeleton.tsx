@@ -5,6 +5,11 @@ import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/
 export function OwnerListingsPageSkeleton() {
     return (
         <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+                <div className="animate-pulse rounded-full bg-surface-muted block-7 inline-3/5" />
+                <div className="hidden animate-pulse rounded-full bg-surface-muted body-sm sm:block block-4 inline-full max-inline-[52ch]" />
+            </div>
+
             <div className="flex flex-col gap-3">
                 <div className="
                   flex items-stretch overflow-hidden rounded-control border border-border-warm
