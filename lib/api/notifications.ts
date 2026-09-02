@@ -1,10 +1,33 @@
 import { apiFetch } from "@/lib/api/client";
 
+export type NotificationType =
+    | "representation_request"
+    | "representation_approved"
+    | "representation_rejected"
+    | "representation_revoked"
+    | "representation_message"
+    | "invite_received"
+    | "invite_accepted"
+    | "invite_declined"
+    | "offer_received"
+    | "offer_accepted"
+    | "offer_rejected"
+    | "visit_requested"
+    | "visit_approved"
+    | "visit_cancelled"
+    | "lead_added"
+    | "deal_closed"
+    | "team_joined"
+    | "referral_rewarded"
+    | "property_assigned"
+    | "client_assigned"
+    | "system";
+
 export type NotificationItem = {
     id: string;
     userId: string;
     actorUserId: string | null;
-    type: string | null;
+    type: NotificationType | string | null;
     title: string;
     body: string | null;
     href: string | null;
