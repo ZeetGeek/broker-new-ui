@@ -41,6 +41,10 @@ const BROWSE_CARD_PHOTO_LIST_CLASS = "w-40 min-h-40 self-stretch shrink-0 sm:w-4
 
 const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
+const BROWSE_REQUEST_LABEL = "Send request";
+const BROWSE_REQUEST_PENDING_LABEL = "Sending…";
+const BROWSE_REQUEST_SENT_LABEL = "Sent";
+
 export type PropertyCardOwner = {
     name: string;
     avatarUrl?: string;
@@ -214,33 +218,43 @@ function BrowsePropertyCard({
     detailsHref,
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
+    onRequest,
+    isRequestPending = false,
     className,
 }: Extract<PropertyCardProps, { variant: "browse" }>) {
     const priceLabel = listing.isRent
         ? formatRentInr(listing.amountInr)
         : formatPriceInr(listing.amountInr);
     const isListView = layout === "list";
+    const requestLabel = listing.hasRequested
+        ? BROWSE_REQUEST_SENT_LABEL
+        : isRequestPending
+          ? BROWSE_REQUEST_PENDING_LABEL
+          : BROWSE_REQUEST_LABEL;
 
     return (
-        <Link
-            href={detailsHref}
-            prefetch={false}
-            className={cn("group block min-w-0", className)}
+        <article
+            className={cn(
+                "flex min-w-0",
+                isListView ? "flex-row items-start gap-4" : "flex-col gap-3",
+                className,
+            )}
         >
-            <article
-                className={cn(
-                    "flex min-w-0",
-                    isListView ? "flex-row items-start gap-4" : "flex-col gap-3",
-                )}
-            >
+            <Link href={detailsHref} prefetch={false} className="group block min-w-0 shrink-0">
                 <BrowsePropertyCardPhoto
                     listing={listing}
                     priority={priority}
                     imageSizes={imageSizes}
                     layout={layout}
                 />
+            </Link>
 
-                <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-2.5 px-2">
+                <Link
+                    href={detailsHref}
+                    prefetch={false}
+                    className="flex min-w-0 flex-col gap-2.5"
+                >
                     <div className="flex min-w-0 flex-col gap-1.5">
                         <h3 className="truncate body font-semibold text-ink">{listing.title}</h3>
                         <p className="body-sm flex min-w-0 items-center gap-1.5 text-ink-muted">
@@ -263,9 +277,20 @@ function BrowsePropertyCard({
                             ({listing.commissionPercent}%)
                         </span>
                     </div>
-                </div>
-            </article>
-        </Link>
+                </Link>
+
+                <Button
+                    type="button"
+                    size="md"
+                    variant="accent"
+                    className="w-full"
+                    disabled={listing.hasRequested || isRequestPending}
+                    onClick={onRequest}
+                >
+                    {requestLabel}
+                </Button>
+            </div>
+        </article>
     );
 }
 

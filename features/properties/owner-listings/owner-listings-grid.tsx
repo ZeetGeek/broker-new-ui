@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useState } from "react";
+
 import { PropertyCard } from "@/components/shared/property-card";
 
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
@@ -16,6 +18,19 @@ export type OwnerListingsGridProps = {
 };
 
 export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridProps) {
+    const [requestingId, setRequestingId] = useState<string | null>(null);
+    const [requestedIds, setRequestedIds] = useState<Record<string, boolean>>(() =>
+        Object.fromEntries(items.filter((item) => item.hasRequested).map((item) => [item.id, true])),
+    );
+
+    const handleRequest = useCallback((id: string) => {
+        setRequestingId(id);
+        window.setTimeout(() => {
+            setRequestedIds((prev) => ({ ...prev, [id]: true }));
+            setRequestingId(null);
+        }, 600);
+    }, []);
+
     const isListView = view === "list";
 
     return (
@@ -28,7 +43,10 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
                         key={item.id}
                         variant="browse"
                         layout={view}
-                        listing={listing}
+                        listing={{
+                            ...listing,
+                            hasRequested: requestedIds[item.id] ?? listing.hasRequested,
+                        }}
                         detailsHref={`/broker/properties/${item.id}`}
                         priority={index < 5}
                         imageSizes={
@@ -36,6 +54,8 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
                                 ? "(max-width: 640px) 160px, 224px"
                                 : "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                         }
+                        isRequestPending={requestingId === item.id}
+                        onRequest={() => handleRequest(item.id)}
                     />
                 );
             })}

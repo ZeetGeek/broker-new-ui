@@ -20,7 +20,7 @@ export function PropertyCardSkeleton({
         return (
             <div
                 className={cn(
-                    "flex min-w-0",
+                    "flex min-inline-0",
                     isListView ? "flex-row items-start gap-4" : "flex-col gap-3",
                     className,
                 )}
@@ -34,18 +34,44 @@ export function PropertyCardSkeleton({
                     )}
                 />
 
-                <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+                <div className="flex flex-1 flex-col gap-2.5 px-2 min-inline-0">
                     <div className="flex flex-col gap-1.5">
-                        <div className="animate-pulse rounded-full bg-surface-muted block-4 inline-4/5" />
-                        <div className="animate-pulse rounded-full bg-surface-muted block-3.5 inline-3/5" />
+                        <div
+                            className="
+                              animate-pulse rounded-full bg-surface-muted block-4 inline-4/5
+                            "
+                        />
+                        <div
+                            className="
+                              animate-pulse rounded-full bg-surface-muted block-3.5 inline-3/5
+                            "
+                        />
                     </div>
 
-                    <div className="animate-pulse rounded-full bg-surface-muted block-3.5 inline-full" />
+                    <div
+                        className="
+                          animate-pulse rounded-full bg-surface-muted block-3.5 inline-full
+                        "
+                    />
 
-                    <div className="flex items-baseline gap-2 pt-0.5">
-                        <div className="animate-pulse rounded-full bg-surface-muted block-6 inline-24" />
-                        <div className="animate-pulse rounded-full bg-surface-muted block-4 inline-10" />
+                    <div className="flex items-baseline gap-2 pbs-0.5">
+                        <div
+                            className="
+                              animate-pulse rounded-full bg-surface-muted block-6 inline-24
+                            "
+                        />
+                        <div
+                            className="
+                              animate-pulse rounded-full bg-surface-muted block-4 inline-10
+                            "
+                        />
                     </div>
+
+                    <div
+                        className="
+                          animate-pulse rounded-control bg-surface-muted block-11 inline-full
+                        "
+                    />
                 </div>
             </div>
         );
@@ -77,13 +103,21 @@ export function PropertyCardSkeleton({
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                         <div className="animate-pulse rounded-full bg-surface-muted block-8 inline-8" />
-                        <div className="animate-pulse rounded-full bg-surface-muted block-4 inline-28" />
+                        <div
+                            className="
+                              animate-pulse rounded-full bg-surface-muted block-4 inline-28
+                            "
+                        />
                     </div>
                 </div>
 
                 <div className="flex gap-2 pbs-1">
-                    <div className="animate-pulse flex-1 rounded-control bg-surface-muted block-9" />
-                    <div className="animate-pulse flex-[1.4] rounded-control bg-surface-muted block-9" />
+                    <div className="flex-1 animate-pulse rounded-control bg-surface-muted block-9" />
+                    <div
+                        className="
+                          flex-[1.4] animate-pulse rounded-control bg-surface-muted block-9
+                        "
+                    />
                 </div>
             </div>
         </div>
