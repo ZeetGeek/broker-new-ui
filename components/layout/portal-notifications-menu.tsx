@@ -62,7 +62,7 @@ const menuSurfaceClass = `
   before:backdrop-blur-none
   data-closed:animate-none!
   data-open:animate-none!
-  min-inline-[22rem] max-inline-[28rem]
+  w-fit! min-inline-[28rem] max-inline-[min(100vw-2rem,36rem)]
   **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
   **:data-[slot$=-item]:focus:bg-surface-muted!
 `;

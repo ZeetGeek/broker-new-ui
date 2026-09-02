@@ -16,7 +16,6 @@ import {
     User,
 } from "lucide-react";
 
-import { formatPhoneIn } from "@/lib/format/phone";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
@@ -129,11 +128,19 @@ function VerificationStatus({
         return (
             <div
                 className="
-                  body-xs flex items-center gap-1.5 rounded-full border border-brand-soft
-                  bg-brand-soft/60 px-3 py-1.5 font-medium text-brand-text
+                  body-xs inline-flex w-fit items-center gap-1 rounded-full border
+                  border-brand-soft bg-linear-to-b from-brand-soft/70 to-brand-soft/40 py-1
+                  pe-2.5 ps-1.5 font-medium text-brand-text shadow-xs
                 "
             >
-                <BadgeCheck aria-hidden className="text-brand block-3 inline-3" strokeWidth={2} />
+                <span
+                    className="
+                      flex shrink-0 items-center justify-center rounded-full bg-brand
+                      block-3.5 inline-3.5
+                    "
+                >
+                    <BadgeCheck aria-hidden className="text-brand-on block-2.5 inline-2.5" strokeWidth={2.5} />
+                </span>
                 Verified
             </div>
         );
@@ -188,33 +195,22 @@ function VerificationStatus({
 }
 
 function ProfileMenuHeader({ broker }: { broker: BrokerProfileMenuBroker }) {
-    const phoneDisplay =
-        broker.phone.replace(/\D/g, "").slice(-10).length === 10
-            ? formatPhoneIn(broker.phone)
-            : broker.phone;
-
     return (
         <DropdownMenuLabel className="flex flex-col gap-3 p-0! font-normal text-ink">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
                 <span className="shrink-0 overflow-hidden rounded-full block-8 inline-8">
                     <UserAvatar name={broker.name} imageUrl={broker.avatarUrl} size="fill" />
                 </span>
-                <div className="flex flex-col gap-0.5 min-inline-0">
+                <div className="flex flex-col gap-1 min-inline-0">
                     <p className="truncate font-display text-sm font-medium text-ink capitalize">
                         {broker.name}
                     </p>
-                    {broker.email ? (
-                        <p className="body-xs truncate text-ink-muted">{broker.email}</p>
-                    ) : null}
-                    {phoneDisplay ? (
-                        <p className="tabular body-xs truncate text-ink-subtle">{phoneDisplay}</p>
-                    ) : null}
+                    <VerificationStatus
+                        state={broker.verificationState}
+                        profileCompletion={broker.profileCompletion}
+                    />
                 </div>
             </div>
-            <VerificationStatus
-                state={broker.verificationState}
-                profileCompletion={broker.profileCompletion}
-            />
         </DropdownMenuLabel>
     );
 }
