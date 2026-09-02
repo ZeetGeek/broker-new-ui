@@ -3,7 +3,7 @@ export const DASHBOARD_CARD_HEIGHT = "block-[380px]";
 
 const DASHBOARD_CARD_FRAME = `
   flex flex-col overflow-hidden rounded-card border border-border-warm bg-surface
-  p-8 shadow-sm
+  p-6 shadow-sm
 `;
 
 export const DASHBOARD_CARD_SHELL = `

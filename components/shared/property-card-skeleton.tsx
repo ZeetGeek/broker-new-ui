@@ -1,14 +1,54 @@
 import { cn } from "@/lib/utils";
 
-const PROPERTY_CARD_PHOTO_CLASS = "relative h-40 shrink-0 overflow-hidden bg-surface-muted";
+const BROWSE_CARD_PHOTO_CLASS = "relative aspect-[4/3] shrink-0 overflow-hidden bg-surface-muted";
+const BROWSE_CARD_PHOTO_LIST_CLASS = "relative w-40 min-h-40 shrink-0 self-stretch overflow-hidden bg-surface-muted sm:w-48 md:w-56";
 
 export function PropertyCardSkeleton({
     className,
     variant = "browse",
+    layout = "grid",
 }: {
     className?: string;
     variant?: "browse" | "represented";
+    layout?: "grid" | "list";
 }) {
+    const isListView = layout === "list";
+
+    if (variant === "browse") {
+        return (
+            <div
+                className={cn(
+                    "overflow-hidden rounded-card border border-border-warm/70 bg-surface shadow-sm",
+                    isListView ? "flex flex-row" : "flex flex-col",
+                    className,
+                )}
+                aria-hidden
+            >
+                <div
+                    className={cn(
+                        BROWSE_CARD_PHOTO_CLASS,
+                        "animate-pulse bg-surface-muted",
+                        isListView && BROWSE_CARD_PHOTO_LIST_CLASS,
+                    )}
+                />
+
+                <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-4">
+                    <div className="flex flex-col gap-1.5">
+                        <div className="animate-pulse rounded-full bg-surface-muted block-4 inline-4/5" />
+                        <div className="animate-pulse rounded-full bg-surface-muted block-3.5 inline-3/5" />
+                    </div>
+
+                    <div className="animate-pulse rounded-full bg-surface-muted block-3.5 inline-full" />
+
+                    <div className="flex items-baseline gap-2 pt-0.5">
+                        <div className="animate-pulse rounded-full bg-surface-muted block-6 inline-24" />
+                        <div className="animate-pulse rounded-full bg-surface-muted block-4 inline-10" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div
             className={cn(
@@ -17,11 +57,9 @@ export function PropertyCardSkeleton({
             )}
             aria-hidden
         >
-            {variant === "represented" ? (
-                <div className="animate-pulse bg-brand-deep/70 block-8 inline-full" />
-            ) : null}
+            <div className="animate-pulse bg-brand-deep/70 block-8 inline-full" />
 
-            <div className={cn(PROPERTY_CARD_PHOTO_CLASS, "animate-pulse bg-surface-muted")} />
+            <div className={cn(BROWSE_CARD_PHOTO_CLASS, "animate-pulse bg-surface-muted")} />
 
             <div className="flex flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -39,20 +77,6 @@ export function PropertyCardSkeleton({
                         <div className="animate-pulse rounded-full bg-surface-muted block-8 inline-8" />
                         <div className="animate-pulse rounded-full bg-surface-muted block-4 inline-28" />
                     </div>
-                    <div className="animate-pulse rounded-control bg-surface-muted block-9 inline-full" />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <div className="flex gap-1">
-                        {Array.from({ length: 3 }).map((_, index) => (
-                            <div
-                                key={index}
-                                className="h-1.5 flex-1 animate-pulse rounded-full bg-surface-muted"
-                            />
-                        ))}
-                    </div>
-                    <div className="animate-pulse rounded-full bg-surface-muted block-3.5 inline-4/5" />
-                    <div className="animate-pulse rounded-full bg-surface-muted block-3.5 inline-3/5" />
                 </div>
 
                 <div className="flex gap-2 pbs-1">

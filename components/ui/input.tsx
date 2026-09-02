@@ -264,7 +264,10 @@ function Input({
         }
         copyInputTypeMetrics(input, mirror, placeholderLayer);
         syncClearHasValue(field, hasValue);
-    }, [clearable, hasValue, size, startIcon, hasEndSlot]);
+        mirror.textContent = hasValue
+            ? String(currentValue ?? "").replace(/ /g, "\u00a0")
+            : "";
+    }, [clearable, currentValue, hasValue, size, startIcon, hasEndSlot]);
 
     function handleValueChange(
         nextValue: string,

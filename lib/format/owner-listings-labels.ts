@@ -16,6 +16,15 @@ export function formatLocalitiesLabel(localities: string[]): string {
     return `${localities.slice(0, 2).join(", ")} +${localities.length - 2}`;
 }
 
+/** Full list for tooltips when the band label is truncated. */
+export function formatLocalitiesTooltip(localities: string[]): string | null {
+    if (localities.length <= 2) {
+        return null;
+    }
+
+    return localities.join(", ");
+}
+
 export function formatTransactionTypeLabel(type: OwnerListingTransactionType | ""): string {
     if (type === "sale") return "Sale";
     if (type === "rent") return "Rent";

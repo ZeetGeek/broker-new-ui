@@ -3,20 +3,21 @@
 import Link from "next/link";
 
 import {
+    Bath,
+    BedDouble,
     Building2,
     Calendar,
     Camera,
     CircleCheck,
     Clock,
-    Lock,
     MapPin,
+    Maximize2,
     MessageCircle,
-    Percent,
     Users,
 } from "lucide-react";
 
-import { brokerSlotsLabel } from "@/lib/format/broker-slots";
 import { formatAreaSqft } from "@/lib/format/area";
+import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import {
     formatRepresentationExpiry,
@@ -34,6 +35,11 @@ import { Button, buttonVariants } from "@/components/ui/button";
 const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted";
 const PROPERTY_CARD_PHOTO_GRID_CLASS = "h-40 w-full";
 const PROPERTY_CARD_PHOTO_LIST_CLASS = "w-36 min-h-36 self-stretch sm:w-44 md:w-52";
+
+const BROWSE_CARD_PHOTO_GRID_CLASS = "aspect-[4/3] w-full";
+const BROWSE_CARD_PHOTO_LIST_CLASS = "w-40 min-h-40 self-stretch shrink-0 sm:w-48 md:w-56";
+
+const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
 export type PropertyCardOwner = {
     name: string;
@@ -55,8 +61,10 @@ type PropertyCardBase = {
 };
 
 export type BrowsePropertyCardListing = PropertyCardBase & {
+    title: string;
     locality: string;
     city: string;
+    bhk: number;
     brokerSlotsOpen: number;
     brokerSlotsTotal: number;
     commissionPercent: number;
@@ -87,6 +95,178 @@ export type PropertyCardProps = {
     | { variant: "browse"; listing: BrowsePropertyCardListing }
     | { variant: "represented"; listing: RepresentedPropertyCardListing }
 );
+
+function formatBrowseCardArea(areaSqft: number): string {
+    return `${Math.round(areaSqft).toLocaleString("en-IN")} sq.ft.`;
+}
+
+function formatBedLabel(bhk: number): string {
+    return bhk === 1 ? "1 bed" : `${bhk} bed`;
+}
+
+function formatBathLabel(bhk: number): string {
+    return bhk === 1 ? "1 bath" : `${bhk} bath`;
+}
+
+function BrowseSpecDivider() {
+    return <span aria-hidden className="text-ink-subtle/70">|</span>;
+}
+
+function BrowseSpecItem({ icon: Icon, label }: { icon: typeof Maximize2; label: string }) {
+    return (
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+            <Icon aria-hidden className="block-3.5 inline-3.5 shrink-0" strokeWidth={1.75} />
+            {label}
+        </span>
+    );
+}
+
+function BrowsePropertyCardPhoto({
+    listing,
+    priority,
+    imageSizes,
+    layout = "grid",
+}: {
+    listing: BrowsePropertyCardListing;
+    priority: boolean;
+    imageSizes: string;
+    layout?: "grid" | "list";
+}) {
+    const alt = listing.title;
+    const dotCount = Math.min(Math.max(listing.photoCount, 1), 5);
+
+    return (
+        <div
+            className={cn(
+                PROPERTY_CARD_PHOTO_CLASS,
+                layout === "list" ? BROWSE_CARD_PHOTO_LIST_CLASS : BROWSE_CARD_PHOTO_GRID_CLASS,
+            )}
+        >
+            {listing.imageSrc ? (
+                <AppImage
+                    src={listing.imageSrc}
+                    alt={alt}
+                    fill
+                    sizes={imageSizes}
+                    priority={priority}
+                    className="object-cover transition-transform duration-160 group-hover:scale-[1.02]"
+                />
+            ) : (
+                <div className="flex block-full inline-full flex-col items-center justify-center gap-2 px-4 text-center">
+                    <Building2
+                        aria-hidden
+                        className="block-8 inline-8 text-ink-subtle"
+                        strokeWidth={1.5}
+                    />
+                    <p className="body-xs text-ink-subtle">No photos yet</p>
+                </div>
+            )}
+
+            {listing.isNew ? (
+                <Badge className="absolute top-3 end-3 border-0 bg-surface body-xs font-semibold text-ink shadow-xs">
+                    New
+                </Badge>
+            ) : null}
+
+            {listing.photoCount > 1 ? (
+                <div
+                    className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-1.5"
+                    aria-hidden
+                >
+                    {Array.from({ length: dotCount }).map((_, index) => (
+                        <span
+                            key={index}
+                            className={cn(
+                                "h-1.5 rounded-full bg-surface/90",
+                                index === 0 ? "inline-4 opacity-100" : "inline-1.5 opacity-60",
+                            )}
+                        />
+                    ))}
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
+function BrowsePropertyCardSpecs({ listing }: { listing: BrowsePropertyCardListing }) {
+    const showBedBath =
+        listing.bhk > 0 && RESIDENTIAL_PROPERTY_TYPES.has(listing.propertyTypeLabel);
+
+    return (
+        <div className="body-sm flex flex-wrap items-center gap-x-2.5 gap-y-1 text-ink-muted">
+            <BrowseSpecItem icon={Maximize2} label={formatBrowseCardArea(listing.areaSqft)} />
+            {showBedBath ? (
+                <>
+                    <BrowseSpecDivider />
+                    <BrowseSpecItem icon={BedDouble} label={formatBedLabel(listing.bhk)} />
+                    <BrowseSpecDivider />
+                    <BrowseSpecItem icon={Bath} label={formatBathLabel(listing.bhk)} />
+                </>
+            ) : null}
+        </div>
+    );
+}
+
+function BrowsePropertyCard({
+    listing,
+    layout = "grid",
+    detailsHref,
+    priority = false,
+    imageSizes = "(max-width: 768px) 100vw, 50vw",
+    className,
+}: Extract<PropertyCardProps, { variant: "browse" }>) {
+    const priceLabel = listing.isRent
+        ? formatRentInr(listing.amountInr)
+        : formatPriceInr(listing.amountInr);
+    const isListView = layout === "list";
+
+    return (
+        <Link
+            href={detailsHref}
+            prefetch={false}
+            className={cn("group block min-w-0", className)}
+        >
+            <article
+                className={cn(
+                    "overflow-hidden rounded-card border border-border-warm/70 bg-surface shadow-sm transition-shadow duration-160 group-hover:shadow-md",
+                    isListView ? "flex flex-row" : "flex flex-col",
+                )}
+            >
+                <BrowsePropertyCardPhoto
+                    listing={listing}
+                    priority={priority}
+                    imageSizes={imageSizes}
+                    layout={layout}
+                />
+
+                <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-4">
+                    <div className="flex min-w-0 flex-col gap-1.5">
+                        <h3 className="truncate body font-semibold text-ink">{listing.title}</h3>
+                        <p className="body-sm flex min-w-0 items-center gap-1.5 text-ink-muted">
+                            <MapPin
+                                aria-hidden
+                                className="block-3.5 inline-3.5 shrink-0"
+                                strokeWidth={1.75}
+                            />
+                            <span className="truncate">
+                                {listing.locality}, {listing.city}
+                            </span>
+                        </p>
+                    </div>
+
+                    <BrowsePropertyCardSpecs listing={listing} />
+
+                    <div className="flex items-baseline gap-1.5 pt-0.5">
+                        <span className="h5 font-semibold tabular-nums text-ink">{priceLabel}</span>
+                        <span className="body-sm font-medium text-brand">
+                            ({listing.commissionPercent}%)
+                        </span>
+                    </div>
+                </div>
+            </article>
+        </Link>
+    );
+}
 
 function TransactionBadge({ isRent }: { isRent: boolean }) {
     return (
@@ -154,62 +334,13 @@ function PropertyCardPhoto({
     );
 }
 
-function BrokerSlotsBar({
-    openCount,
-    totalCount,
-}: {
-    openCount: number;
-    totalCount: number;
-}) {
-    const takenCount = Math.max(0, totalCount - openCount);
-
-    return (
-        <div className="flex flex-col gap-2">
-            <div
-                className="flex gap-1"
-                role="img"
-                aria-label={brokerSlotsLabel(openCount, totalCount)}
-            >
-                {Array.from({ length: totalCount }).map((_, index) => (
-                    <span
-                        key={index}
-                        className={cn(
-                            "h-1.5 flex-1 rounded-full",
-                            index < takenCount ? "bg-brand-ink" : "bg-border-warm",
-                        )}
-                    />
-                ))}
-            </div>
-            <p className="body-xs text-ink-muted">{brokerSlotsLabel(openCount, totalCount)}</p>
-        </div>
-    );
-}
-
 function PropertyCardOwnerBlock({
     owner,
     variant,
 }: {
     owner: PropertyCardOwner;
-    variant: PropertyCardProps["variant"];
+    variant: "represented";
 }) {
-    if (variant === "browse") {
-        return (
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2.5">
-                    <UserAvatar name={owner.name} imageUrl={owner.avatarUrl} size="sm" />
-                    <p className="body-sm font-medium text-ink">{owner.name}</p>
-                </div>
-                <div className="
-                  flex items-center justify-center gap-2 rounded-control border border-border-warm
-                  bg-surface-muted px-3 py-2
-                ">
-                    <Lock aria-hidden className="block-3.5 inline-3.5 shrink-0 text-ink-subtle" strokeWidth={1.75} />
-                    <p className="body-xs text-ink-muted">Contact unlocks after approval</p>
-                </div>
-            </div>
-        );
-    }
-
     if (!owner.phoneDigits) {
         return (
             <div className="flex items-center gap-2.5">
@@ -251,11 +382,7 @@ function PropertyCardOwnerBlock({
     );
 }
 
-function RepresentedMeta({
-    listing,
-}: {
-    listing: RepresentedPropertyCardListing;
-}) {
+function RepresentedMeta({ listing }: { listing: RepresentedPropertyCardListing }) {
     const expiry = formatRepresentationExpiry(listing.representationEndsAt);
     const visitLabel =
         listing.visitsBookedCount === 1
@@ -297,62 +424,33 @@ function RepresentedMeta({
     );
 }
 
-function BrowseMeta({ listing }: { listing: BrowsePropertyCardListing }) {
-    return (
-        <div className="flex flex-col gap-2.5">
-            <BrokerSlotsBar
-                openCount={listing.brokerSlotsOpen}
-                totalCount={listing.brokerSlotsTotal}
-            />
-            <p className="body-xs flex items-center gap-1.5 text-ink-muted">
-                <Percent aria-hidden className="block-3.5 inline-3.5 shrink-0" strokeWidth={1.75} />
-                Owner offers {listing.commissionPercent}% commission
-            </p>
-        </div>
-    );
-}
-
-export function PropertyCard(props: PropertyCardProps) {
-    const {
-        className,
-        layout = "grid",
-        detailsHref,
-        priority = false,
-        imageSizes = "(max-width: 768px) 100vw, 50vw",
-        onRequest,
-        isRequestPending = false,
-        onShare,
-        onOpenCrm,
-        crmHref,
-    } = props;
-    const { listing, variant } = props;
-
+function RepresentedPropertyCard({
+    listing,
+    layout = "grid",
+    detailsHref,
+    priority = false,
+    imageSizes = "(max-width: 768px) 100vw, 50vw",
+    onShare,
+    onOpenCrm,
+    crmHref,
+    className,
+}: Extract<PropertyCardProps, { variant: "represented" }>) {
     const titleLine = `${listing.configLabel} ${listing.propertyTypeLabel} · ${formatAreaSqft(listing.areaSqft)}`;
-    const locationLine =
-        variant === "browse"
-            ? `${listing.locality}, ${listing.city}`
-            : listing.fullAddress;
 
     return (
         <article
             className={cn(
-                `
-                  group overflow-hidden rounded-card border border-border-warm bg-surface
-                `,
-                layout === "list" && variant === "browse" ? "flex flex-row" : "flex flex-col",
+                "group overflow-hidden rounded-card border border-border-warm bg-surface",
+                layout === "list" ? "flex flex-row" : "flex flex-col",
                 className,
             )}
         >
-            {variant === "represented" ? (
-                <div className="
-                  flex items-center gap-2 bg-brand-deep px-3 py-2 text-surface
-                ">
-                    <CircleCheck aria-hidden className="block-4 inline-4 shrink-0" strokeWidth={1.75} />
-                    <p className="body-xs font-medium">
-                        {formatRepresentedSince(listing.representedSince)}
-                    </p>
-                </div>
-            ) : null}
+            <div className="flex items-center gap-2 bg-brand-deep px-3 py-2 text-surface">
+                <CircleCheck aria-hidden className="block-4 inline-4 shrink-0" strokeWidth={1.75} />
+                <p className="body-xs font-medium">
+                    {formatRepresentedSince(listing.representedSince)}
+                </p>
+            </div>
 
             <PropertyCardPhoto
                 listing={listing}
@@ -379,57 +477,26 @@ export function PropertyCard(props: PropertyCardProps) {
                             className="mt-0.5 block-3.5 inline-3.5 shrink-0"
                             strokeWidth={1.75}
                         />
-                        <span>{locationLine}</span>
+                        <span>{listing.fullAddress}</span>
                     </p>
                 </div>
 
-                <PropertyCardOwnerBlock owner={listing.owner} variant={variant} />
+                <PropertyCardOwnerBlock owner={listing.owner} variant="represented" />
 
-                {variant === "browse" ? (
-                    <BrowseMeta listing={listing} />
-                ) : (
-                    <RepresentedMeta listing={listing} />
-                )}
+                <RepresentedMeta listing={listing} />
 
                 <div className="mt-auto flex gap-2 pbs-1">
-                    {variant === "browse" ? (
-                        <Link
-                            href={detailsHref}
-                            prefetch={false}
-                            className={cn(
-                                buttonVariants({ variant: "outline", size: "sm" }),
-                                "flex-1 border-border-warm",
-                            )}
-                        >
-                            Details
-                        </Link>
-                    ) : (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 border-border-warm"
-                            onClick={onShare}
-                        >
-                            Share
-                        </Button>
-                    )}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 border-border-warm"
+                        onClick={onShare}
+                    >
+                        Share
+                    </Button>
 
-                    {variant === "browse" ? (
-                        <Button
-                            type="button"
-                            size="sm"
-                            className="flex-[1.4] bg-brand-ink text-surface hover:bg-brand-ink/90"
-                            disabled={listing.hasRequested || isRequestPending}
-                            onClick={onRequest}
-                        >
-                            {listing.hasRequested
-                                ? "Requested"
-                                : isRequestPending
-                                  ? "Requesting…"
-                                  : "Request to represent"}
-                        </Button>
-                    ) : crmHref ? (
+                    {crmHref ? (
                         <Link
                             href={crmHref}
                             prefetch={false}
@@ -454,4 +521,12 @@ export function PropertyCard(props: PropertyCardProps) {
             </div>
         </article>
     );
+}
+
+export function PropertyCard(props: PropertyCardProps) {
+    if (props.variant === "browse") {
+        return <BrowsePropertyCard {...props} />;
+    }
+
+    return <RepresentedPropertyCard {...props} />;
 }

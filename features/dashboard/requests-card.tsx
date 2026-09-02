@@ -174,7 +174,7 @@ function RequestRow({ item }: { item: RequestRowItem }) {
                         {item.note}
                     </p>
                 </TooltipTrigger>
-                <TooltipContent side="top" align="center" className="text-pretty max-inline-64">
+                <TooltipContent side="top" align="center" className="text-pretty max-inline-52">
                     {hint}
                 </TooltipContent>
             </Tooltip>
@@ -195,7 +195,7 @@ function RequestRow({ item }: { item: RequestRowItem }) {
                         </Button>
                     }
                 />
-                <TooltipContent side="top" align="end" className="text-pretty max-inline-64">
+                <TooltipContent side="top" align="end" className="text-pretty max-inline-48!">
                     {actionHint(item)}
                 </TooltipContent>
             </Tooltip>
@@ -312,7 +312,7 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                           [&::-webkit-scrollbar]:hidden
                         "
                     >
-                        <ul className="flex flex-col gap-1">
+                        <ul className="flex flex-col gap-1 pbe-3">
                             {rows.map((item) => (
                                 <RequestRow key={item.id} item={item} />
                             ))}
@@ -322,10 +322,7 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                     <p className="body text-ink-muted">No request details to show yet.</p>
                 )}
 
-                {/*
-                  Softens the hard clip where a row meets the scroll edge. Harmless when
-                  the list is short - it fades white into white against the card surface.
-                */}
+                {/* Softens the hard clip where a row meets the scroll edge. */}
                 {rows.length > 0 ? (
                     <div
                         aria-hidden

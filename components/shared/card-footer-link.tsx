@@ -21,17 +21,11 @@ export type CardFooterLinkProps = {
 export function CardFooterLink({ href, children, className }: CardFooterLinkProps) {
     return (
         <Button
-            variant="outline"
-            size="md"
+            variant="outline-dark"
+            size="lg"
             nativeButton={false}
             render={<Link href={href} />}
-            className={cn(
-                `
-                  group/footer border-border-warm bg-surface text-ink-muted inline-full
-                  hover:border-brand/30 hover:bg-brand/5 hover:text-brand-text
-                `,
-                className,
-            )}
+            className={cn(`inline-full`, className)}
         >
             <span>{children}</span>
             <MoveRight
