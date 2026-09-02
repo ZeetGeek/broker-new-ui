@@ -129,7 +129,11 @@ function VerificationStatus({
         return (
             <div className="body-xs flex items-center gap-2.5 font-medium text-ink-muted">
                 <span className="inline-flex items-center gap-1">
-                    <Briefcase aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={2} />
+                    <Briefcase
+                        aria-hidden
+                        className="shrink-0 block-3.5 inline-3.5"
+                        strokeWidth={2}
+                    />
                     Broker
                 </span>
                 <span aria-hidden className="rounded-full bg-ink-subtle/40 block-1 inline-1" />
@@ -195,7 +199,7 @@ function VerificationStatus({
 
 function ProfileMenuHeader({ broker }: { broker: BrokerProfileMenuBroker }) {
     return (
-        <DropdownMenuLabel className="flex flex-col gap-3 p-0! font-normal text-ink">
+        <DropdownMenuLabel className="flex flex-col gap-3 p-0! ps-[5px]! font-normal text-ink">
             <div className="flex items-center gap-2.5">
                 <span className="shrink-0 overflow-hidden rounded-full block-8 inline-8">
                     <UserAvatar name={broker.name} imageUrl={broker.avatarUrl} size="fill" />

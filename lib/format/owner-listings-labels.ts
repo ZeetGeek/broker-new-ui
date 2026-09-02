@@ -1,10 +1,14 @@
 import { formatPriceInr } from "@/lib/format/price";
 
 import type {
+    OwnerListingFurnishing,
+    OwnerListingPropertyType,
     OwnerListingSort,
     OwnerListingTransactionType,
+    OwnerListingsBandFilters,
     OwnerListingsFilters,
 } from "@/features/properties/owner-listings/types";
+import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
 
 export function formatLocalitiesLabel(localities: string[]): string {
     if (localities.length === 0) return "Anywhere";
@@ -42,6 +46,18 @@ export function formatBhkLabel(bhk: string[]): string {
     return bhk.map((value) => `${value} BHK`).join(", ");
 }
 
+export function formatPropertyTypeLabel(propertyType: OwnerListingPropertyType | ""): string {
+    const match = OWNER_LISTING_PROPERTY_TYPES.find((option) => option.value === propertyType);
+    return match?.label ?? "Any type";
+}
+
+export function formatFurnishingLabel(furnishing: OwnerListingFurnishing | ""): string {
+    if (furnishing === "furnished") return "Furnished";
+    if (furnishing === "semi") return "Semi-furnished";
+    if (furnishing === "unfurnished") return "Unfurnished";
+    return "Any";
+}
+
 export function formatSortLabel(sort: OwnerListingSort): string {
     if (sort === "price_asc") return "Price low";
     if (sort === "price_desc") return "Price high";
@@ -66,15 +82,15 @@ export function formatResultsCountLine(
     return `${totalCount} ${propertyLabel}`;
 }
 
-export function extractBandFilters(
-    filters: OwnerListingsFilters,
-): Pick<OwnerListingsFilters, "localities" | "bhk" | "type" | "min" | "max"> {
+export function extractBandFilters(filters: OwnerListingsFilters): OwnerListingsBandFilters {
     return {
         localities: filters.localities,
         bhk: filters.bhk,
         type: filters.type,
         min: filters.min,
         max: filters.max,
+        propertyType: filters.propertyType,
+        furnishing: filters.furnishing,
     };
 }
 

@@ -70,7 +70,7 @@ export type OwnerListingsFilters = {
 
 export type OwnerListingsBandFilters = Pick<
     OwnerListingsFilters,
-    "localities" | "bhk" | "type" | "min" | "max"
+    "localities" | "bhk" | "type" | "min" | "max" | "propertyType" | "furnishing"
 >;
 
 export type OwnerListingsSheetFilters = Pick<

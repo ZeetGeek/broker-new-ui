@@ -8,7 +8,9 @@ import {
     extractBandFilters,
     formatBudgetLabel,
     formatBhkLabel,
+    formatFurnishingLabel,
     formatLocalitiesLabel,
+    formatPropertyTypeLabel,
     formatTransactionTypeLabel,
 } from "@/lib/format/owner-listings-labels";
 
@@ -23,18 +25,31 @@ import {
 
 import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
 import type {
+    OwnerListingFurnishing,
+    OwnerListingPropertyType,
     OwnerListingsBandFilters,
     OwnerListingsFilters,
 } from "@/features/properties/owner-listings/types";
+import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
 
-const BHK_OPTIONS = ["1", "2", "3", "4"] as const;
+const BHK_OPTIONS = ["1", "2", "3", "4", "5"] as const;
 
 const BUDGET_PRESETS = [
+    { min: "", max: "2500000", label: "Under ₹25 L" },
     { min: "", max: "5000000", label: "Under ₹50 L" },
     { min: "", max: "10000000", label: "Under ₹1 Cr" },
     { min: "", max: "20000000", label: "Under ₹2 Cr" },
+    { min: "", max: "50000000", label: "Under ₹5 Cr" },
     { min: "4000000", max: "6000000", label: "₹40 L – ₹60 L" },
+    { min: "10000000", max: "20000000", label: "₹1 Cr – ₹2 Cr" },
+    { min: "20000000", max: "", label: "₹2 Cr+" },
 ] as const;
+
+const FURNISHING_OPTIONS: { value: OwnerListingFurnishing; label: string }[] = [
+    { value: "furnished", label: "Furnished" },
+    { value: "semi", label: "Semi-furnished" },
+    { value: "unfurnished", label: "Unfurnished" },
+];
 
 export type OwnerListingsSearchBandProps = {
     appliedFilters: OwnerListingsFilters;
@@ -85,106 +100,168 @@ export function OwnerListingsSearchBand({
 
     return (
         <div className="flex items-stretch overflow-hidden rounded-control border border-border-warm bg-surface">
-            <div className="flex min-w-0 flex-1">
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <OwnerListingsBandSegment
-                                label="Where"
-                                value={formatLocalitiesLabel(draft.localities)}
-                                className="w-full"
-                            />
-                        }
-                    />
-                    <DropdownMenuContent align="start" className="min-inline-56">
-                        {localityOptions.map((locality) => (
-                            <DropdownMenuCheckboxItem
-                                key={locality}
-                                checked={draft.localities.includes(locality)}
-                                onCheckedChange={() => toggleLocality(locality)}
-                            >
-                                {locality}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+            <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
+                <div className="flex min-w-0 min-inline-36 flex-1">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            render={
+                                <OwnerListingsBandSegment
+                                    label="Where"
+                                    value={formatLocalitiesLabel(draft.localities)}
+                                    className="w-full"
+                                />
+                            }
+                        />
+                        <DropdownMenuContent align="start" className="min-inline-56">
+                            {localityOptions.map((locality) => (
+                                <DropdownMenuCheckboxItem
+                                    key={locality}
+                                    checked={draft.localities.includes(locality)}
+                                    onCheckedChange={() => toggleLocality(locality)}
+                                >
+                                    {locality}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
 
-            <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
+                <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
 
-            <div className="hidden min-w-0 flex-1 md:block">
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <OwnerListingsBandSegment
-                                label="Looking for"
-                                value={formatTransactionTypeLabel(draft.type)}
-                                className="w-full"
-                            />
-                        }
-                    />
-                    <DropdownMenuContent align="start" className="min-inline-44">
-                        <DropdownMenuItem onClick={() => updateDraft({ type: "" })}>Any</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateDraft({ type: "sale" })}>Sale</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateDraft({ type: "rent" })}>Rent</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+                <div className="hidden min-w-0 min-inline-32 flex-1 md:block">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            render={
+                                <OwnerListingsBandSegment
+                                    label="Looking for"
+                                    value={formatTransactionTypeLabel(draft.type)}
+                                    className="w-full"
+                                />
+                            }
+                        />
+                        <DropdownMenuContent align="start" className="min-inline-44">
+                            <DropdownMenuItem onClick={() => updateDraft({ type: "" })}>Any</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => updateDraft({ type: "sale" })}>Sale</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => updateDraft({ type: "rent" })}>Rent</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
 
-            <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
+                <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
 
-            <div className="flex min-w-0 flex-1">
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <OwnerListingsBandSegment
-                                label="Budget"
-                                value={formatBudgetLabel(draft.min, draft.max)}
-                                className="w-full"
-                            />
-                        }
-                    />
-                    <DropdownMenuContent align="start" className="min-inline-52">
-                        <DropdownMenuItem onClick={() => updateDraft({ min: "", max: "" })}>
-                            Any budget
-                        </DropdownMenuItem>
-                        {BUDGET_PRESETS.map((preset) => (
-                            <DropdownMenuItem
-                                key={preset.label}
-                                onClick={() => updateDraft({ min: preset.min, max: preset.max })}
-                            >
-                                {preset.label}
+                <div className="flex min-w-0 min-inline-36 flex-1">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            render={
+                                <OwnerListingsBandSegment
+                                    label="Budget"
+                                    value={formatBudgetLabel(draft.min, draft.max)}
+                                    className="w-full"
+                                />
+                            }
+                        />
+                        <DropdownMenuContent align="start" className="min-inline-52">
+                            <DropdownMenuItem onClick={() => updateDraft({ min: "", max: "" })}>
+                                Any budget
                             </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+                            {BUDGET_PRESETS.map((preset) => (
+                                <DropdownMenuItem
+                                    key={preset.label}
+                                    onClick={() => updateDraft({ min: preset.min, max: preset.max })}
+                                >
+                                    {preset.label}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
 
-            <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
+                <div className="hidden w-px shrink-0 self-stretch bg-border-warm md:block" aria-hidden />
 
-            <div className="hidden min-w-0 flex-1 md:block">
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <OwnerListingsBandSegment
-                                label="BHK"
-                                value={formatBhkLabel(draft.bhk)}
-                                className="w-full"
-                            />
-                        }
-                    />
-                    <DropdownMenuContent align="start" className="min-inline-44">
-                        {BHK_OPTIONS.map((value) => (
-                            <DropdownMenuCheckboxItem
-                                key={value}
-                                checked={draft.bhk.includes(value)}
-                                onCheckedChange={() => toggleBhk(value)}
-                            >
-                                {value} BHK
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="hidden min-w-0 min-inline-28 flex-1 md:block">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            render={
+                                <OwnerListingsBandSegment
+                                    label="BHK"
+                                    value={formatBhkLabel(draft.bhk)}
+                                    className="w-full"
+                                />
+                            }
+                        />
+                        <DropdownMenuContent align="start" className="min-inline-44">
+                            {BHK_OPTIONS.map((value) => (
+                                <DropdownMenuCheckboxItem
+                                    key={value}
+                                    checked={draft.bhk.includes(value)}
+                                    onCheckedChange={() => toggleBhk(value)}
+                                >
+                                    {value} BHK
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+
+                <div className="hidden w-px shrink-0 self-stretch bg-border-warm lg:block" aria-hidden />
+
+                <div className="hidden min-w-0 min-inline-32 flex-1 lg:block">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            render={
+                                <OwnerListingsBandSegment
+                                    label="Property type"
+                                    value={formatPropertyTypeLabel(draft.propertyType)}
+                                    className="w-full"
+                                />
+                            }
+                        />
+                        <DropdownMenuContent align="start" className="min-inline-48">
+                            <DropdownMenuItem onClick={() => updateDraft({ propertyType: "" })}>
+                                Any type
+                            </DropdownMenuItem>
+                            {OWNER_LISTING_PROPERTY_TYPES.map((option) => (
+                                <DropdownMenuItem
+                                    key={option.value}
+                                    onClick={() =>
+                                        updateDraft({ propertyType: option.value as OwnerListingPropertyType })
+                                    }
+                                >
+                                    {option.label}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+
+                <div className="hidden w-px shrink-0 self-stretch bg-border-warm lg:block" aria-hidden />
+
+                <div className="hidden min-w-0 min-inline-36 flex-1 lg:block">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            render={
+                                <OwnerListingsBandSegment
+                                    label="Furnishing"
+                                    value={formatFurnishingLabel(draft.furnishing)}
+                                    className="w-full"
+                                />
+                            }
+                        />
+                        <DropdownMenuContent align="start" className="min-inline-48">
+                            <DropdownMenuItem onClick={() => updateDraft({ furnishing: "" })}>
+                                Any
+                            </DropdownMenuItem>
+                            {FURNISHING_OPTIONS.map((option) => (
+                                <DropdownMenuItem
+                                    key={option.value}
+                                    onClick={() => updateDraft({ furnishing: option.value })}
+                                >
+                                    {option.label}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
 
             <div className="flex shrink-0 items-center border-is border-border-warm p-2">

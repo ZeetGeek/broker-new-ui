@@ -29,7 +29,7 @@ import {
     OWNER_LISTING_PROPERTY_TYPES,
 } from "@/features/properties/owner-listings/types";
 
-const BHK_OPTIONS = ["1", "2", "3", "4"] as const;
+const BHK_OPTIONS = ["1", "2", "3", "4", "5"] as const;
 
 const FURNISHING_OPTIONS: { value: OwnerListingFurnishing; label: string }[] = [
     { value: "furnished", label: "Furnished" },
