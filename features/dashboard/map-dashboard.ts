@@ -182,17 +182,44 @@ function mapTodayAgenda(visits: DashboardVisit[], now: Date): TodayAgenda {
     };
 }
 
+/** Localities arrive from the API in mixed case ("baner"); render them as names. */
+function titleCaseLocality(value: string): string {
+    return value.replace(/[a-z]/g, (char) => char.toUpperCase());
+}
+
+/**
+ * What the broker is actually waiting on, in plain words. The API's
+ * "awaiting owner response" is shorthand that does not say what to do next.
+ */
+function requestNote(request: DashboardBrokerRequest, daysWaiting: number): string {
+    const status = request.status.toLowerCase();
+
+    if (status === "declined" || status === "rejected") {
+        return "The owner said no to this one";
+    }
+    if (status === "approved" || status === "accepted") {
+        return "Approved - you can start working this property";
+    }
+    if (daysWaiting <= 0) {
+        return "Sent today - waiting on the owner";
+    }
+    const days = daysWaiting === 1 ? "1 day" : `${daysWaiting} days`;
+    return `Waiting ${days} - the owner hasn't replied yet`;
+}
+
 function mapRequestRow(request: DashboardBrokerRequest, now: Date): RequestRowItem {
+    const locality = titleCaseLocality(request.locality ?? "");
     const title =
-        [request.configLabel, request.locality].filter(Boolean).join(" · ") ||
-        request.propertyTitle;
+        [request.configLabel, locality].filter(Boolean).join(" · ") || request.propertyTitle;
+    const waitingDays =
+        request.daysWaiting ?? calendarDaysBetween(new Date(request.createdAt), now);
     const base = {
         id: request.id,
         propertyId: request.propertyId,
         title,
         amountInr: request.amountInr,
         isRent: request.isRent,
-        note: request.note || request.statusLabel,
+        note: requestNote(request, waitingDays),
         action: request.action,
     };
 
@@ -208,10 +235,10 @@ function mapRequestRow(request: DashboardBrokerRequest, now: Date): RequestRowIt
     if (request.attentionType === "pending_stale") {
         return {
             ...base,
+            note: `No reply in ${waitingDays} days - worth a nudge`,
             type: "pending_stale",
             requestedAt: request.createdAt,
-            daysWaiting:
-                request.daysWaiting ?? calendarDaysBetween(new Date(request.createdAt), now),
+            daysWaiting: waitingDays,
             ownerSeen: false,
         };
     }
@@ -234,7 +261,7 @@ function mapRequestRow(request: DashboardBrokerRequest, now: Date): RequestRowIt
         ...base,
         type: "pending",
         requestedAt: request.createdAt,
-        daysWaiting: request.daysWaiting ?? calendarDaysBetween(new Date(request.createdAt), now),
+        daysWaiting: waitingDays,
     };
 }
 

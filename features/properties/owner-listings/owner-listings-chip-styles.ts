@@ -1,15 +1,17 @@
 import { cn } from "@/lib/utils";
 
+const CHIP_HOVER_TRANSITION = "transition-[background-color,border-color,color] duration-160";
+
 export function ownerListingsChipClassName(isActive: boolean) {
     return cn(
         `
           inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-sm
-          font-semibold whitespace-nowrap transition-[background-color,border-color,box-shadow,color]
-          duration-160
+          font-semibold whitespace-nowrap
         `,
+        CHIP_HOVER_TRANSITION,
         isActive
-            ? "border-brand bg-brand-soft text-brand-text shadow-none"
-            : "border-border-warm bg-surface text-ink shadow-sm hover:border-ink/15 hover:shadow-md",
+            ? "border-brand bg-brand-soft text-brand-text shadow-none hover:border-brand-text hover:bg-brand-soft/80"
+            : "border-border-warm bg-surface text-ink shadow-sm hover:border-ink/25 hover:bg-surface-muted/60",
     );
 }
 

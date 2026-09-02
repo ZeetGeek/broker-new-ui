@@ -127,11 +127,7 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                             </button>
                         }
                     />
-                    <TooltipContent
-                        side="bottom"
-                        align="center"
-                        className="text-pretty max-inline-64"
-                    >
+                    <TooltipContent side="top" align="center" className="text-pretty max-inline-64">
                         {`${agenda.doneCount} of ${agenda.doneCount + agenda.remainingCount} items today are done. ${agenda.remainingCount} still to go.`}
                     </TooltipContent>
                 </Tooltip>

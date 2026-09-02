@@ -27,7 +27,10 @@ export function OwnerListingsViewToggle({
             role="group"
             aria-label="Results layout"
             className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-full border border-border-warm bg-surface p-1 shadow-sm",
+                `
+                  inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-border-warm
+                  bg-surface p-1 shadow-sm
+                `,
                 className,
             )}
         >
@@ -44,15 +47,18 @@ export function OwnerListingsViewToggle({
                         onClick={() => onViewChange(option.value)}
                         className={cn(
                             `
-                              flex items-center justify-center rounded-full p-2 transition-[background-color,color,box-shadow]
-                              duration-160
+                              flex size-7 items-center justify-center rounded-full border
+                              transition-[background-color,border-color,color] duration-160
                             `,
                             isActive
-                                ? "border border-brand bg-brand-soft text-brand-text shadow-none"
-                                : "border border-transparent text-ink-muted hover:border-border-warm hover:text-ink",
+                                ? "border-brand bg-brand-soft text-brand-text shadow-none hover:border-brand-text hover:bg-brand-soft/80"
+                                : `
+                                  border-transparent text-ink-muted
+                                  hover:border-border-warm hover:bg-surface-muted/60 hover:text-ink
+                                `,
                         )}
                     >
-                        <Icon aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                        <Icon aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
                     </button>
                 );
             })}
