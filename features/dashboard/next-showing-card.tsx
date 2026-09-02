@@ -20,6 +20,7 @@ import { TextLinkButton } from "@/components/shared/text-link-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
@@ -50,32 +51,79 @@ export type NextShowingCardProps = {
     className?: string;
 };
 
-function statusBadge(status: NextShowingStatus, isStartingSoon: boolean, isPast: boolean) {
+/**
+ * Visit states in the broker's words. "Awaiting owner" and friends are internal
+ * shorthand - each label says what happened, each tooltip says what to do next.
+ */
+function statusBadgeContent(
+    status: NextShowingStatus,
+    isStartingSoon: boolean,
+    isPast: boolean,
+): { label: string; hint: string; className: string; variant?: "brand" | "urgent" | "outline" } {
     if (isPast) {
-        return (
-            <Badge variant="brand" className="font-semibold">
-                Started
-            </Badge>
-        );
+        return {
+            label: "In progress",
+            hint: "This visit's start time has passed. Mark it done or reschedule once you're finished.",
+            variant: "brand",
+            className: "font-semibold",
+        };
     }
     if (isStartingSoon) {
-        return (
-            <Badge variant="urgent" className="font-semibold">
-                Starting soon
-            </Badge>
-        );
+        return {
+            label: "Starting soon",
+            hint: `Starts in under ${STARTING_SOON_MINUTES} minutes. Leave now if you aren't already on your way.`,
+            variant: "urgent",
+            className: "font-semibold",
+        };
     }
     if (status === "confirmed") {
-        return (
-            <Badge className="border-transparent bg-highlight font-semibold text-highlight-ink">
-                Confirmed
-            </Badge>
-        );
+        return {
+            label: "Owner confirmed",
+            hint: "The owner approved this time slot. The visit is on - no further action needed.",
+            className: "border-transparent bg-highlight font-semibold text-highlight-ink",
+        };
     }
+    return {
+        label: "Owner not replied",
+        hint: "The owner hasn't confirmed this slot yet. Nudge them, or reschedule if you don't hear back before the visit.",
+        variant: "outline",
+        className: "bg-surface font-semibold text-pending",
+    };
+}
+
+function StatusBadge({
+    status,
+    isStartingSoon,
+    isPast,
+}: {
+    status: NextShowingStatus;
+    isStartingSoon: boolean;
+    isPast: boolean;
+}) {
+    const { label, hint, className, variant } = statusBadgeContent(status, isStartingSoon, isPast);
+
     return (
-        <Badge variant="outline" className="bg-surface font-semibold text-pending">
-            Awaiting owner
-        </Badge>
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <button
+                        type="button"
+                        aria-label={`Visit status: ${label}. ${hint}`}
+                        className="
+                          shrink-0 rounded-full outline-none
+                          focus-visible:ring-2 focus-visible:ring-ring
+                        "
+                    >
+                        <Badge variant={variant} className={className}>
+                            {label}
+                        </Badge>
+                    </button>
+                }
+            />
+            <TooltipContent side="bottom" align="center" className="text-pretty max-inline-64">
+                {hint}
+            </TooltipContent>
+        </Tooltip>
     );
 }
 
@@ -93,7 +141,7 @@ function mapsSearchUrl(address: string): string {
 function MapPlaceholder({ distanceKm }: { distanceKm: number }) {
     return (
         <aside
-            className="mbs-4 flex hidden shrink-0 flex-col items-center gap-3 pe-5"
+            className="mbs-4 hidden shrink-0 flex-col items-center gap-3 pe-5"
             aria-label="Travel details"
         >
             <div
@@ -148,7 +196,15 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
         duration.minutesRemaining > 0 &&
         duration.minutesRemaining <= STARTING_SOON_MINUTES;
     const phoneHref = `tel:+91${showing.clientPhoneDigits.replace(/\D/g, "").slice(-10)}`;
-    const directionsHref = mapsSearchUrl(showing.address);
+    const hasPrice = showing.amountInr > 0;
+    /** Locality is often folded into the title already - only join when it adds something. */
+    const propertyLine = [showing.configLabel, showing.locality]
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .join(" · ");
+    /** Prefer a real street address; fall back to the property line when the API omits one. */
+    const locationLine = showing.address.trim() || propertyLine;
+    const directionsHref = mapsSearchUrl(locationLine);
 
     return (
         <section
@@ -157,12 +213,16 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
         >
             <div className="flex shrink-0 items-start justify-between gap-3">
                 <CardLabel info={NEXT_SHOWING_INFO}>Next showing</CardLabel>
-                {statusBadge(showing.status, isStartingSoon, duration.isPast)}
+                <StatusBadge
+                    status={showing.status}
+                    isStartingSoon={isStartingSoon}
+                    isPast={duration.isPast}
+                />
             </div>
 
             <div className="mbs-3 flex flex-1 flex-col gap-3 overflow-hidden min-block-0">
                 <div className="flex flex-1 items-start justify-between gap-4 min-block-0">
-                    <div className="flex flex-1 flex-col gap-3 min-inline-0">
+                    <div className="flex flex-1 flex-col justify-center gap-3 min-inline-0">
                         <div className="shrink-0">
                             <h2 id={`next-showing-${showing.id}`} className="h2 text-ink">
                                 <time dateTime={showing.scheduledAt.toISOString()}>
@@ -180,47 +240,51 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                         </div>
 
                         <div className="shrink-0">
-                            <p className="h5 text-ink">
-                                {showing.configLabel} · {showing.locality}
-                            </p>
                             <p
                                 className="
-                                  body-sm mbs-1.5 flex items-center gap-1.5 text-ink-muted
-                                  max-inline-100
+                                  body-sm flex items-start gap-1.5 text-ink-muted max-inline-100
                                 "
                             >
                                 <MapPin
                                     aria-hidden
-                                    className="shrink-0 block-3.5 inline-3.5"
+                                    className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
                                     strokeWidth={1.75}
                                 />
-                                <span className="text-pretty min-inline-0">{showing.address}</span>
+                                <span className="text-pretty min-inline-0">{locationLine}</span>
                             </p>
-                            <Badge
-                                className="
-                                  body-sm mbs-5! inline-flex items-center gap-1.5 border-border-warm
-                                  bg-transparent px-3 py-1.5 font-medium whitespace-normal
-                                  text-ink-muted max-inline-100
-                                "
-                            >
-                                <IndianRupee
-                                    aria-hidden
-                                    className="shrink-0 text-brand block-3.5 inline-3.5"
-                                    strokeWidth={1.75}
-                                />
-                                <span className="leading-0 text-pretty min-inline-0">
-                                    <Price
-                                        amountInr={showing.amountInr}
-                                        isRent={showing.isRent}
-                                        className="font-semibold text-brand"
-                                    />
-                                    <span aria-hidden className="text-ink-subtle">
-                                        {" "}
-                                        ·{" "}
+                            {hasPrice || showing.meetNote ? (
+                                <Badge
+                                    className="
+                                      body-sm mbs-3! inline-flex items-center gap-1.5
+                                      border-border-warm bg-transparent px-3 py-1.5 font-medium
+                                      whitespace-normal text-ink-muted max-inline-100
+                                    "
+                                >
+                                    {hasPrice ? (
+                                        <IndianRupee
+                                            aria-hidden
+                                            className="shrink-0 text-brand block-3.5 inline-3.5"
+                                            strokeWidth={1.75}
+                                        />
+                                    ) : null}
+                                    <span className="leading-0 text-pretty min-inline-0">
+                                        {hasPrice ? (
+                                            <Price
+                                                amountInr={showing.amountInr}
+                                                isRent={showing.isRent}
+                                                className="font-semibold text-brand"
+                                            />
+                                        ) : null}
+                                        {hasPrice && showing.meetNote ? (
+                                            <span aria-hidden className="text-ink-subtle">
+                                                {" "}
+                                                ·{" "}
+                                            </span>
+                                        ) : null}
+                                        {showing.meetNote ? <span>{showing.meetNote}</span> : null}
                                     </span>
-                                    <span>{showing.meetNote}</span>
-                                </span>
-                            </Badge>
+                                </Badge>
+                            ) : null}
                         </div>
                     </div>
 
@@ -262,7 +326,7 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                     <div className="flex items-center gap-2.5 min-inline-0">
                         <UserAvatar name={showing.clientName} size="md" />
                         <div className="min-inline-0">
-                            <p className="body truncate font-medium text-ink">
+                            <p className="body truncate font-medium text-ink capitalize">
                                 {showing.clientName}
                             </p>
                             <p
@@ -280,23 +344,39 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                                     Client
                                 </span>
                                 <span aria-hidden>·</span>
-                                <Button
-                                    variant="link"
-                                    size="sm"
-                                    nativeButton={false}
-                                    render={<a href={phoneHref} />}
-                                    className="
-                                      body-sm gap-1 p-0 font-medium text-ink-muted block-auto
-                                      hover:text-ink hover:underline
-                                    "
-                                >
-                                    <Phone
-                                        aria-hidden
-                                        className="block-3.5 inline-3.5"
-                                        strokeWidth={2}
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Button
+                                                variant="link"
+                                                size="sm"
+                                                nativeButton={false}
+                                                render={<a href={phoneHref} />}
+                                                className="
+                                                  body-sm gap-1 p-0 font-medium text-ink-muted
+                                                  block-auto
+                                                  hover:text-ink hover:underline
+                                                "
+                                            >
+                                                <Phone
+                                                    aria-hidden
+                                                    className="block-3.5 inline-3.5"
+                                                    strokeWidth={2}
+                                                />
+                                                <PhoneNumber
+                                                    phoneDigits={showing.clientPhoneDigits}
+                                                />
+                                            </Button>
+                                        }
                                     />
-                                    <PhoneNumber phoneDigits={showing.clientPhoneDigits} />
-                                </Button>
+                                    <TooltipContent
+                                        side="top"
+                                        align="center"
+                                        className="text-pretty"
+                                    >
+                                        {`Call ${showing.clientName} about this visit`}
+                                    </TooltipContent>
+                                </Tooltip>
                             </p>
                         </div>
                     </div>

@@ -1,10 +1,10 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ArrowDownUp, ChevronDown } from "lucide-react";
 
 import { formatSortLabel } from "@/lib/format/owner-listings-labels";
+import { cn } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,39 +12,54 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { ownerListingsChipClassName } from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import type { OwnerListingSort, OwnerListingsFilters } from "@/features/properties/owner-listings/types";
 
 export type OwnerListingsSortMenuProps = {
     filters: OwnerListingsFilters;
     onSortChange: (sort: OwnerListingSort) => void;
+    className?: string;
 };
 
-export function OwnerListingsSortMenu({ filters, onSortChange }: OwnerListingsSortMenuProps) {
+const SORT_OPTIONS: { value: OwnerListingSort; label: string }[] = [
+    { value: "newest", label: "Newest first" },
+    { value: "price_asc", label: "Price low" },
+    { value: "price_desc", label: "Price high" },
+];
+
+export function OwnerListingsSortMenu({ filters, onSortChange, className }: OwnerListingsSortMenuProps) {
+    const isDefaultSort = filters.sort === "newest";
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
                 render={
-                    <Button
+                    <button
                         type="button"
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0 rounded-full border-border-warm bg-surface text-ink-muted"
+                        className={cn(
+                            ownerListingsChipClassName(!isDefaultSort),
+                            "gap-2",
+                            isDefaultSort && "text-ink-muted",
+                            className,
+                        )}
                     >
-                        {formatSortLabel(filters.sort)}
-                        <ChevronDown aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-                    </Button>
+                        <ArrowDownUp aria-hidden className="block-4 inline-4 text-brand" strokeWidth={1.75} />
+                        <span className="hidden sm:inline">{formatSortLabel(filters.sort)}</span>
+                        <span className="sm:hidden">Sort</span>
+                        <ChevronDown aria-hidden className="block-3.5 inline-3.5 opacity-60" strokeWidth={1.75} />
+                    </button>
                 }
             />
             <DropdownMenuContent align="end" className="min-inline-44">
-                <DropdownMenuItem onClick={() => onSortChange("newest")}>
-                    Newest first
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSortChange("price_asc")}>
-                    Price low
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSortChange("price_desc")}>
-                    Price high
-                </DropdownMenuItem>
+                {SORT_OPTIONS.map((option) => (
+                    <DropdownMenuItem
+                        key={option.value}
+                        onClick={() => onSortChange(option.value)}
+                        className={cn(filters.sort === option.value && "font-semibold text-brand")}
+                    >
+                        {option.label}
+                    </DropdownMenuItem>
+                ))}
             </DropdownMenuContent>
         </DropdownMenu>
     );

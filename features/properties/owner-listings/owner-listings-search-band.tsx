@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { Search } from "lucide-react";
+import { BedDouble, Building2, IndianRupee, MapPin, Search, Sofa, Tags } from "lucide-react";
 
 import {
     extractBandFilters,
@@ -110,6 +110,7 @@ export function OwnerListingsSearchBand({
                             render={
                                 <OwnerListingsBandSegment
                                     label="Where"
+                                    icon={MapPin}
                                     value={formatLocalitiesLabel(draft.localities)}
                                     className="w-full"
                                 />
@@ -137,6 +138,7 @@ export function OwnerListingsSearchBand({
                             render={
                                 <OwnerListingsBandSegment
                                     label="Looking for"
+                                    icon={Tags}
                                     value={formatTransactionTypeLabel(draft.type)}
                                     className="w-full"
                                 />
@@ -158,6 +160,7 @@ export function OwnerListingsSearchBand({
                             render={
                                 <OwnerListingsBandSegment
                                     label="Budget"
+                                    icon={IndianRupee}
                                     value={formatBudgetLabel(draft.min, draft.max)}
                                     className="w-full"
                                 />
@@ -187,6 +190,7 @@ export function OwnerListingsSearchBand({
                             render={
                                 <OwnerListingsBandSegment
                                     label="BHK"
+                                    icon={BedDouble}
                                     value={formatBhkLabel(draft.bhk)}
                                     className="w-full"
                                 />
@@ -214,6 +218,7 @@ export function OwnerListingsSearchBand({
                             render={
                                 <OwnerListingsBandSegment
                                     label="Property type"
+                                    icon={Building2}
                                     value={formatPropertyTypeLabel(draft.propertyType)}
                                     className="w-full"
                                 />
@@ -245,6 +250,7 @@ export function OwnerListingsSearchBand({
                             render={
                                 <OwnerListingsBandSegment
                                     label="Furnishing"
+                                    icon={Sofa}
                                     value={formatFurnishingLabel(draft.furnishing)}
                                     className="w-full"
                                 />
@@ -271,7 +277,8 @@ export function OwnerListingsSearchBand({
                 <Button
                     type="button"
                     size="icon-md"
-                    className="rounded-full bg-brand-ink text-surface hover:bg-brand-ink/90"
+                    variant="accent"
+                    className="rounded-full"
                     aria-label="Search properties"
                     onClick={handleSearch}
                 >

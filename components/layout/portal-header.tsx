@@ -150,16 +150,15 @@ export function PortalHeader({
                         </TooltipProvider>
                     </div>
 
-                    {sectionNav ? <div className="pt-6 pb-4">{sectionNav}</div> : null}
+                    {sectionNav ? <div className="py-6">{sectionNav}</div> : null}
                 </header>
 
                 {children ? (
                     <main
                         className={cn(
-                            "pb-6",
-                            sectionNav ? "pt-0" : "pt-6",
-                            mobileNav &&
-                                "pbe-[calc(5.5rem+env(safe-area-inset-bottom))] md:pbe-6",
+                            "pbe-6",
+                            sectionNav ? "pbs-0" : "pbs-6",
+                            mobileNav && "pbe-[calc(5.5rem+env(safe-area-inset-bottom))] md:pbe-6",
                         )}
                     >
                         {children}

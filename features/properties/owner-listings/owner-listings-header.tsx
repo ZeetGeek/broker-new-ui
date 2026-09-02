@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import type { QuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
 import { countSheetFilters } from "@/features/properties/owner-listings/filter-owner-listings";
 import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
 import { OwnerListingsQuickChips } from "@/features/properties/owner-listings/owner-listings-quick-chips";
@@ -18,6 +19,8 @@ export type OwnerListingsHeaderProps = {
     filters: OwnerListingsFilters;
     localityOptions: string[];
     filterContext: OwnerListingsFilterContext;
+    chipCounts: QuickChipCounts;
+    isResultsLoading?: boolean;
     onApplyBand: (band: OwnerListingsBandFilters) => void;
     onApplySheet: (patch: Partial<OwnerListingsFilters>) => void;
     onToggleQuickChip: (
@@ -46,6 +49,8 @@ export function OwnerListingsHeader({
     filters,
     localityOptions,
     filterContext,
+    chipCounts,
+    isResultsLoading = false,
     onApplyBand,
     onApplySheet,
     onToggleQuickChip,
@@ -67,7 +72,7 @@ export function OwnerListingsHeader({
 
     return (
         <>
-            <div className="sticky inset-bs-0 z-10 flex flex-col gap-3">
+            <div className="sticky inset-bs-0 z-10 flex flex-col gap-6">
                 <OwnerListingsSearchBand
                     appliedFilters={filters}
                     localityOptions={localityOptions}
@@ -76,7 +81,9 @@ export function OwnerListingsHeader({
 
                 <OwnerListingsQuickChips
                     filters={filters}
+                    chipCounts={chipCounts}
                     sheetFilterCount={sheetFilterCount}
+                    isLoading={isResultsLoading}
                     onToggleQuickChip={onToggleQuickChip}
                     onOpenFilters={handleOpenFilters}
                     onSortChange={onSortChange}

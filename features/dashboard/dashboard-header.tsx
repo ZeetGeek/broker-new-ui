@@ -83,9 +83,7 @@ function buildSummaryLines({
         siteVisitCount === 0 ? (
             "Your calendar is clear today"
         ) : (
-            <>
-                You have {countPhrase(siteVisitCount, "site visit today", "site visits today")}
-            </>
+            <>You have {countPhrase(siteVisitCount, "site visit today", "site visits today")}</>
         ),
         requestsWaitingCount === 0 ? (
             "No owner replies waiting on you"
@@ -110,18 +108,30 @@ function buildSummaryLines({
             <>You&apos;re all caught up on follow-ups</>
         ) : followUpsOverdueCount > 0 ? (
             <>
-                {countPhrase(followUpsOverdueCount, "client waiting for your call", "clients waiting for your call")}
+                {countPhrase(
+                    followUpsOverdueCount,
+                    "client waiting for your call",
+                    "clients waiting for your call",
+                )}
             </>
         ) : (
             <>
-                {countPhrase(followUpCount, "follow-up coming up this week", "follow-ups coming up this week")}
+                {countPhrase(
+                    followUpCount,
+                    "follow-up coming up this week",
+                    "follow-ups coming up this week",
+                )}
             </>
         ),
         activityCount === 0 ? (
             "Updates will show here as things happen"
         ) : (
             <>
-                {countPhrase(activityCount, "update since you last checked", "updates since you last checked")}
+                {countPhrase(
+                    activityCount,
+                    "update since you last checked",
+                    "updates since you last checked",
+                )}
             </>
         ),
     ];
@@ -291,7 +301,7 @@ export function DashboardHeader({
                 animate="visible"
                 className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2"
             >
-                <div className="-mbe-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <div className="-mbe-3 flex flex-wrap items-center gap-x-3 gap-y-2">
                     <motion.div
                         className="flex flex-wrap items-center gap-2"
                         variants={dashboardMetaItem}

@@ -7,6 +7,8 @@ import { CircleCheck, MapPin, Phone } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
 import type { TodayItem } from "./mock-data";
 
 const SCROLL_HIDE = `
@@ -57,59 +59,90 @@ function ItemIcon({ item }: { item: TodayItem }) {
     return <MapPin aria-hidden className={className} strokeWidth={1.75} />;
 }
 
+/** Plain-language explanation of a row's state, shown on hover. */
+function rowHint(item: TodayItem): string {
+    const what = item.kind === "call" ? "call" : "site visit";
+    if (item.state === "done") {
+        return `This ${what} is marked done. Open it to review what happened.`;
+    }
+    if (item.state === "blocked") {
+        return `This ${what} is blocked and needs your attention. Open it to sort it out.`;
+    }
+    if (item.isNext) {
+        return `Your next ${what} today. Open it for directions and client details.`;
+    }
+    return `Coming up later today. Open this ${what} for directions and client details.`;
+}
+
 function TimelineRow({ item, showDivider }: { item: TodayItem; showDivider: boolean }) {
     const isDone = item.state === "done";
     const isNext = Boolean(item.isNext) && !isDone;
     const isBlocked = item.state === "blocked";
+    const hint = rowHint(item);
 
     return (
         <li className={cn(showDivider && "border-bs border-border-warm/50")}>
-            <Link
-                href={item.href}
-                className={`
-                  grid grid-cols-[auto_auto_1fr] items-start gap-x-4 py-3.5 outline-none
-                  focus-visible:ring-3 focus-visible:ring-ring/30
-                `}
-            >
-                <time
-                    className={cn(
-                        "body tabular shrink-0 whitespace-nowrap min-inline-18",
-                        isDone && "font-medium text-ink-subtle",
-                        isNext && "font-semibold text-ink",
-                        !isDone && !isNext && "font-medium text-ink-muted",
-                    )}
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <Link
+                            href={item.href}
+                            className={`
+                              grid grid-cols-[auto_auto_1fr] items-start gap-x-4 py-3.5 outline-none
+                              focus-visible:ring-3 focus-visible:ring-ring/30
+                            `}
+                        />
+                    }
                 >
-                    {item.timeLabel}
-                </time>
-                <div className="flex items-start gap-3">
-                    <span className="mbs-0.5 flex items-center justify-center block-5 inline-5">
-                        <ItemIcon item={item} />
-                    </span>
-                    <div className="min-inline-0">
-                        <p
-                            className={cn(
-                                "body font-semibold",
-                                isDone && "text-ink-subtle line-through",
-                                !isDone && "text-ink",
-                            )}
-                        >
-                            {item.title}
-                        </p>
-                        <p
-                            className={cn(
-                                "body-sm mbs-0.5",
-                                isBlocked
-                                    ? "text-urgent"
-                                    : isDone
-                                      ? "text-ink-subtle"
-                                      : "text-ink-muted",
-                            )}
-                        >
-                            {item.subtitle}
-                        </p>
+                    <time
+                        className={cn(
+                            "body tabular shrink-0 whitespace-nowrap min-inline-18",
+                            isDone && "font-medium text-ink-subtle",
+                            isNext && "font-semibold text-ink",
+                            !isDone && !isNext && "font-medium text-ink-muted",
+                        )}
+                    >
+                        {item.timeLabel}
+                    </time>
+                    <div className="flex items-start gap-3">
+                        <span className="mbs-0.5 flex items-center justify-center block-5 inline-5">
+                            <ItemIcon item={item} />
+                        </span>
+                        <div className="min-inline-0">
+                            <p
+                                className={cn(
+                                    "body font-semibold",
+                                    isDone && "text-ink-subtle line-through",
+                                    !isDone && "text-ink",
+                                )}
+                            >
+                                {item.title}
+                            </p>
+                            <p
+                                className={cn(
+                                    "body-sm mbs-0.5",
+                                    isBlocked
+                                        ? "text-urgent"
+                                        : isDone
+                                          ? "text-ink-subtle"
+                                          : "text-ink-muted",
+                                )}
+                            >
+                                {item.clientName ? (
+                                    <>
+                                        <span className="capitalize">{item.clientName}</span>
+                                        {item.subtitle ? <span aria-hidden> · </span> : null}
+                                    </>
+                                ) : null}
+                                {item.subtitle}
+                            </p>
+                        </div>
                     </div>
-                </div>
-            </Link>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="center" className="text-pretty max-inline-64">
+                    {hint}
+                </TooltipContent>
+            </Tooltip>
         </li>
     );
 }
@@ -123,9 +156,26 @@ function NowMarker({
 }) {
     return (
         <li ref={markerRef} className="flex items-center gap-3 py-1" aria-label={`Now, ${label}`}>
-            <p className="body-sm shrink-0 font-semibold whitespace-nowrap text-urgent">
-                Now · {label}
-            </p>
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <button
+                            type="button"
+                            className="
+                              body-sm shrink-0 rounded-sm font-semibold whitespace-nowrap
+                              text-urgent outline-none
+                              focus-visible:ring-2 focus-visible:ring-ring
+                            "
+                        >
+                            Now · {label}
+                        </button>
+                    }
+                />
+                <TooltipContent side="top" align="center" className="text-pretty max-inline-64">
+                    The current time. Anything above this line has already passed; anything below is
+                    still ahead of you today.
+                </TooltipContent>
+            </Tooltip>
             <span className="flex-1 bg-urgent/70 block-px min-inline-0" aria-hidden />
         </li>
     );

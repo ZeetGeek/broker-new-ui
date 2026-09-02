@@ -11,6 +11,8 @@ import {
     type BrokerVerificationState,
     mapBrokerVerificationState,
 } from "@/features/broker/map-profile-menu";
+import type { OwnerListingsPoolSummary } from "@/features/properties/owner-listings/build-owner-listings-summary-lines";
+import { buildQuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
 import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/owner-listings/count-new-listings-this-week";
 import {
     MOCK_OWNER_LISTINGS,
@@ -18,7 +20,10 @@ import {
 } from "@/features/properties/owner-listings/mock-owner-listings";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
-import { OWNER_LISTINGS_GRID_CLASS, OWNER_LISTINGS_LIST_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
+import {
+    OWNER_LISTINGS_GRID_CLASS,
+    OWNER_LISTINGS_LIST_CLASS,
+} from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { OwnerListingsHeader } from "@/features/properties/owner-listings/owner-listings-header";
 import { OwnerListingsIntro } from "@/features/properties/owner-listings/owner-listings-intro";
 import { OwnerListingsPageSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
@@ -30,7 +35,10 @@ import type {
     OwnerListingsResult,
 } from "@/features/properties/owner-listings/types";
 import { useOwnerListingsFilters } from "@/features/properties/owner-listings/use-owner-listings-filters";
-import { useOwnerListingsView, type OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
+import {
+    type OwnerListingsView,
+    useOwnerListingsView,
+} from "@/features/properties/owner-listings/use-owner-listings-view";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
@@ -58,6 +66,22 @@ function useIsMobile() {
 }
 
 const EMPTY_SERVICE_AREAS: string[] = [];
+
+const EMPTY_POOL_SUMMARY: OwnerListingsPoolSummary = {
+    slotsOpenCount: 0,
+    newTodayCount: 0,
+    commissionSetCount: 0,
+    readyToMoveCount: 0,
+};
+
+function summarizePool(items: OwnerListingsResult["items"]): OwnerListingsPoolSummary {
+    return {
+        slotsOpenCount: items.filter((item) => item.brokerSlotsOpen > 0).length,
+        newTodayCount: items.filter((item) => item.isNew).length,
+        commissionSetCount: items.filter((item) => item.commissionPercent > 0).length,
+        readyToMoveCount: items.filter((item) => item.readyToMove).length,
+    };
+}
 
 function OwnerListingsResults({
     filterSignature,
@@ -138,7 +162,9 @@ function OwnerListingsResults({
         }
 
         return (
-            <div className={view === "list" ? OWNER_LISTINGS_LIST_CLASS : OWNER_LISTINGS_GRID_CLASS}>
+            <div
+                className={view === "list" ? OWNER_LISTINGS_LIST_CLASS : OWNER_LISTINGS_GRID_CLASS}
+            >
                 {Array.from({ length: view === "list" ? 6 : 10 }).map((_, index) => (
                     <div
                         key={index}
@@ -198,12 +224,18 @@ export function OwnerListingsPage() {
         () => countNewListingsInServiceAreasThisWeek(MOCK_OWNER_LISTINGS, serviceAreas),
         [serviceAreasKey],
     );
+    const chipCounts = useMemo(
+        () => buildQuickChipCounts(MOCK_OWNER_LISTINGS, serviceAreas),
+        [serviceAreasKey],
+    );
 
     const [totalCount, setTotalCount] = useState(0);
+    const [poolSummary, setPoolSummary] = useState<OwnerListingsPoolSummary>(EMPTY_POOL_SUMMARY);
     const [isResultsLoading, setIsResultsLoading] = useState(true);
 
     const handleLoaded = useCallback((result: OwnerListingsResult) => {
         setTotalCount(result.totalCount);
+        setPoolSummary(summarizePool(result.items));
     }, []);
 
     const handleApplyBand = useCallback(
@@ -245,7 +277,9 @@ export function OwnerListingsPage() {
                 newThisWeekCount={newThisWeekCount}
                 serviceAreas={serviceAreas}
                 totalCount={totalCount}
+                poolSummary={poolSummary}
                 filters={filters}
+                hasActiveFilters={hasActiveFilters}
                 isLoading={isResultsLoading}
             />
         ),
@@ -255,7 +289,9 @@ export function OwnerListingsPage() {
             newThisWeekCount,
             serviceAreasKey,
             totalCount,
+            poolSummary,
             filterSignature,
+            hasActiveFilters,
             isResultsLoading,
         ],
     );
@@ -283,13 +319,15 @@ export function OwnerListingsPage() {
     }
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             <PortalSectionNav>{introSection}</PortalSectionNav>
 
             <OwnerListingsHeader
                 filters={filters}
                 localityOptions={OWNER_LISTING_LOCALITIES}
                 filterContext={filterContext}
+                chipCounts={chipCounts}
+                isResultsLoading={isResultsLoading}
                 onApplyBand={handleApplyBand}
                 onApplySheet={handleApplySheet}
                 onToggleQuickChip={toggleQuickChip}

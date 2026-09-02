@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
@@ -106,11 +107,34 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                         <time dateTime={dateIso}>{dateLabel}</time>
                     </span>
                 </CardLabel>
-                <p className="eyebrow shrink-0 text-ink-muted">
-                    {agenda.doneCount} done
-                    <span aria-hidden> · </span>
-                    {agenda.remainingCount} left
-                </p>
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <button
+                                type="button"
+                                aria-label={
+                                    `${agenda.doneCount} of ${agenda.doneCount + agenda.remainingCount} ` +
+                                    `items done today, ${agenda.remainingCount} still to go`
+                                }
+                                className="
+                                  eyebrow shrink-0 rounded-full text-ink-muted outline-none
+                                  focus-visible:ring-2 focus-visible:ring-ring
+                                "
+                            >
+                                {agenda.doneCount} done
+                                <span aria-hidden> · </span>
+                                {agenda.remainingCount} left
+                            </button>
+                        }
+                    />
+                    <TooltipContent
+                        side="bottom"
+                        align="center"
+                        className="text-pretty max-inline-64"
+                    >
+                        {`${agenda.doneCount} of ${agenda.doneCount + agenda.remainingCount} items today are done. ${agenda.remainingCount} still to go.`}
+                    </TooltipContent>
+                </Tooltip>
             </div>
 
             <div className="relative mbs-2 flex-1 min-block-0">

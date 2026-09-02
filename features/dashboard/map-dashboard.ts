@@ -79,15 +79,25 @@ function phoneDigits(value: string | null | undefined): string {
     return (value ?? "").replace(/\D/g, "").slice(-10);
 }
 
+/**
+ * API titles arrive in two shapes: delimited ("3 BHK · Vesu") and prose
+ * ("2BHK Apartment in Baner"). Split on whichever is present so the locality
+ * does not end up duplicated into the config label.
+ */
 function parseTitle(propertyTitle: string): { configLabel: string; locality: string } {
-    const parts = propertyTitle
+    const title = propertyTitle.trim();
+    const delimited = title
         .split(/[·,|-]/)
         .map((part) => part.trim())
         .filter(Boolean);
-    if (parts.length >= 2) {
-        return { configLabel: parts[0], locality: parts[1] };
+    if (delimited.length >= 2) {
+        return { configLabel: delimited[0], locality: delimited[1] };
     }
-    return { configLabel: propertyTitle || "Property", locality: "" };
+    const prose = title.match(/^(.*?)\s+in\s+(.+)$/i);
+    if (prose) {
+        return { configLabel: prose[1].trim(), locality: prose[2].trim() };
+    }
+    return { configLabel: title || "Property", locality: "" };
 }
 
 function mapReraStatus(profile: UserProfile | null): ReraStatus {
@@ -108,16 +118,30 @@ function mapNextShowing(visit: DashboardVisit | undefined) {
         scheduledAt,
         configLabel,
         locality,
-        address: visit.propertyTitle,
+        // The visits API carries no address, price, or meeting note - only
+        // propertyTitle. Leave them empty so the card hides those lines rather
+        // than echoing the title or repeating the status badge.
+        address: "",
         amountInr: 0,
         isRent: false,
-        meetNote: visit.statusLabel || "Scheduled",
+        meetNote: "",
         distanceKm: 0,
         brokerNote: "",
         status: visit.status === "confirmed" ? ("confirmed" as const) : ("awaiting_owner" as const),
         clientName: visit.clientName || "Client",
         clientPhoneDigits: phoneDigits(visit.clientPhone),
     };
+}
+
+/**
+ * Visit status in the broker's words. The raw `statusLabel` is internal shorthand
+ * ("pending"), which does not tell the broker who they are waiting on.
+ */
+function visitStateLabel(visit: DashboardVisit): string {
+    if (visit.status === "confirmed") return "Owner confirmed the slot";
+    if (visit.status === "cancelled") return "Visit cancelled";
+    if (visit.status === "completed") return "Visit done";
+    return visit.statusLabel ? "Owner hasn't confirmed yet" : "Awaiting owner";
 }
 
 function mapTodayAgenda(visits: DashboardVisit[], now: Date): TodayAgenda {
@@ -135,7 +159,8 @@ function mapTodayAgenda(visits: DashboardVisit[], now: Date): TodayAgenda {
                 time,
                 timeLabel,
                 title: `Site visit · ${visit.propertyTitle}`,
-                subtitle: `${visit.clientName} · ${visit.statusLabel.toLowerCase()}`,
+                clientName: visit.clientName || "Client",
+                subtitle: visitStateLabel(visit),
                 state: scheduledAt.getTime() < now.getTime() ? "done" : "upcoming",
                 href: `/broker/visits/${visit.id}`,
             };

@@ -1,16 +1,34 @@
 "use client";
 
-import { formatResultsCountLine } from "@/lib/format/owner-listings-labels";
+import { useMemo, useState } from "react";
+
+import { MapPin } from "lucide-react";
+
+import { useSelfDestructBanner } from "@/lib/onboarding/use-self-destruct-banner";
+
+import { TextLoop } from "@/components/motion-primitives/text-loop";
+import { Badge } from "@/components/ui/badge";
 
 import {
-    formatNewInAreasThisWeekLine,
-} from "@/features/properties/owner-listings/count-new-listings-this-week";
+    buildOwnerListingsSummaryLines,
+    type OwnerListingsPoolSummary,
+} from "@/features/properties/owner-listings/build-owner-listings-summary-lines";
 import type { OwnerListingsFilters } from "@/features/properties/owner-listings/types";
-import { useSelfDestructBanner } from "@/lib/onboarding/use-self-destruct-banner";
 
 const INTRO_TITLE = "Find properties to represent";
 const INTRO_DESCRIPTION =
     "Every property here is listed by the owner. Send a request, and once they approve it, the property moves straight into your pipeline.";
+const SUMMARY_LOOP_INTERVAL_S = 6.5;
+const ICON_CLASS = "block-3 inline-3";
+const META_TEXT = "body-sm font-medium text-ink-muted";
+const CHIP_SURFACE = "bg-surface";
+
+const EMPTY_POOL_SUMMARY: OwnerListingsPoolSummary = {
+    slotsOpenCount: 0,
+    newTodayCount: 0,
+    commissionSetCount: 0,
+    readyToMoveCount: 0,
+};
 
 export type OwnerListingsIntroProps = {
     userId: string | undefined;
@@ -18,20 +36,136 @@ export type OwnerListingsIntroProps = {
     newThisWeekCount: number;
     serviceAreas: string[];
     totalCount: number;
+    poolSummary?: OwnerListingsPoolSummary;
     filters: OwnerListingsFilters;
+    hasActiveFilters: boolean;
     isLoading?: boolean;
 };
 
-function ResultsCount({ totalCount, filters, serviceAreas, isLoading }: Pick<
+function OwnerListingsBrowseSummary({
+    totalCount,
+    newThisWeekCount,
+    serviceAreas,
+    poolSummary,
+    filters,
+    hasActiveFilters,
+    isLoading,
+}: Pick<
     OwnerListingsIntroProps,
-    "totalCount" | "filters" | "serviceAreas" | "isLoading"
+    | "totalCount"
+    | "newThisWeekCount"
+    | "serviceAreas"
+    | "poolSummary"
+    | "filters"
+    | "hasActiveFilters"
+    | "isLoading"
 >) {
-    const countLine = formatResultsCountLine(totalCount, filters, serviceAreas);
+    const [isPaused, setIsPaused] = useState(false);
+
+    const lines = useMemo(
+        () =>
+            buildOwnerListingsSummaryLines({
+                totalCount,
+                newThisWeekCount,
+                serviceAreas,
+                filters,
+                poolSummary: poolSummary ?? EMPTY_POOL_SUMMARY,
+                isLoading: isLoading ?? false,
+                hasActiveFilters,
+            }),
+        [
+            totalCount,
+            newThisWeekCount,
+            serviceAreas,
+            poolSummary,
+            filters,
+            hasActiveFilters,
+            isLoading,
+        ],
+    );
 
     return (
-        <p className="body-sm shrink-0 text-ink-muted">
-            {isLoading ? "Finding properties…" : countLine}
-        </p>
+        <span
+            aria-live="polite"
+            aria-atomic="true"
+            className="text-ink-muted"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+        >
+            <TextLoop interval={SUMMARY_LOOP_INTERVAL_S} trigger={!isPaused}>
+                {lines.map((line, index) => (
+                    <span key={index}>{line}</span>
+                ))}
+            </TextLoop>
+        </span>
+    );
+}
+
+function ServiceAreasMeta({ areas }: { areas: string[] }) {
+    if (areas.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
+                    <MapPin aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                    Your areas
+                </span>
+                {areas.map((area) => (
+                    <Badge key={area} variant="outline" className={CHIP_SURFACE}>
+                        {area}
+                    </Badge>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+type BrowseHeaderProps = Pick<
+    OwnerListingsIntroProps,
+    | "totalCount"
+    | "newThisWeekCount"
+    | "serviceAreas"
+    | "poolSummary"
+    | "filters"
+    | "hasActiveFilters"
+    | "isLoading"
+> & {
+    title: string;
+    titleClassName: string;
+};
+
+function BrowseHeader({
+    title,
+    titleClassName,
+    totalCount,
+    newThisWeekCount,
+    serviceAreas,
+    poolSummary,
+    filters,
+    hasActiveFilters,
+    isLoading,
+}: BrowseHeaderProps) {
+    return (
+        <div className="flex items-center justify-between gap-3 text-start">
+            <h1 className={`${titleClassName} min-inline-0`}>
+                <span className="text-ink">{title}</span>
+                <span className="text-ink">.</span>{" "}
+                <OwnerListingsBrowseSummary
+                    totalCount={totalCount}
+                    newThisWeekCount={newThisWeekCount}
+                    serviceAreas={serviceAreas}
+                    poolSummary={poolSummary}
+                    filters={filters}
+                    hasActiveFilters={hasActiveFilters}
+                    isLoading={isLoading}
+                />
+            </h1>
+
+            <ServiceAreasMeta areas={serviceAreas} />
+        </div>
     );
 }
 
@@ -41,7 +175,9 @@ export function OwnerListingsIntro({
     newThisWeekCount,
     serviceAreas,
     totalCount,
+    poolSummary,
     filters,
+    hasActiveFilters,
     isLoading = false,
 }: OwnerListingsIntroProps) {
     const isExpanded = useSelfDestructBanner({
@@ -50,44 +186,26 @@ export function OwnerListingsIntro({
         milestoneReached: hasApprovedRepresentation,
     });
 
-    const newThisWeekLine = formatNewInAreasThisWeekLine(newThisWeekCount, serviceAreas);
+    const headerProps = {
+        totalCount,
+        newThisWeekCount,
+        serviceAreas,
+        poolSummary,
+        filters,
+        hasActiveFilters,
+        isLoading,
+    };
 
     if (isExpanded) {
         return (
-            <div className="flex flex-col gap-2 text-start">
-                <div className="flex items-baseline justify-between gap-4">
-                    <h1 className="h2 min-w-0 text-ink">{INTRO_TITLE}</h1>
-                    <ResultsCount
-                        totalCount={totalCount}
-                        filters={filters}
-                        serviceAreas={serviceAreas}
-                        isLoading={isLoading}
-                    />
-                </div>
-                <p className="body hidden max-inline-[52ch] text-ink-muted sm:block">
+            <div className="flex flex-col gap-3 text-start">
+                <BrowseHeader title={INTRO_TITLE} titleClassName="h2" {...headerProps} />
+                <p className="body hidden text-ink-muted max-inline-[52ch] sm:block">
                     {INTRO_DESCRIPTION}
                 </p>
             </div>
         );
     }
 
-    return (
-        <div className="flex items-baseline justify-between gap-4 text-start">
-            <h1 className="h5 min-w-0 text-ink">
-                Browse
-                {newThisWeekLine ? (
-                    <>
-                        <span aria-hidden> · </span>
-                        <span className="body-sm font-normal text-ink-muted">{newThisWeekLine}</span>
-                    </>
-                ) : null}
-            </h1>
-            <ResultsCount
-                totalCount={totalCount}
-                filters={filters}
-                serviceAreas={serviceAreas}
-                isLoading={isLoading}
-            />
-        </div>
-    );
+    return <BrowseHeader title="Browse" titleClassName="h3" {...headerProps} />;
 }

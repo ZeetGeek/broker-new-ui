@@ -11,6 +11,11 @@ export type TodayItem = {
     timeLabel: string;
     title: string;
     subtitle: string;
+    /**
+     * Client on this item, kept separate from `subtitle` so it can be capitalized
+     * on its own — API names arrive lowercased and `subtitle` is free-form prose.
+     */
+    clientName?: string;
     state: TodayItemState;
     /** Marks the next upcoming item after "now" — stronger type treatment. */
     isNext?: boolean;
@@ -349,7 +354,8 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             time: "08:30",
             timeLabel: "8:30 AM",
             title: "Site visit · 1 BHK, Pal",
-            subtitle: "Amit Desai · marked done",
+            clientName: "Amit Desai",
+            subtitle: "Marked done",
             state: "done",
             clientId: "cl_006",
             propertyId: "pr_099",
@@ -361,7 +367,8 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             time: "10:00",
             timeLabel: "10:00 AM",
             title: "Site visit · 2 BHK, Adajan",
-            subtitle: "Priya Shah · marked done",
+            clientName: "Priya Shah",
+            subtitle: "Marked done",
             state: "done",
             clientId: "cl_002",
             propertyId: "pr_114",
@@ -373,7 +380,8 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             time: "14:11",
             timeLabel: "2:11 PM",
             title: "Site visit · 3 BHK, Vesu",
-            subtitle: "Milan Vamja · confirmed",
+            clientName: "Milan Vamja",
+            subtitle: "Owner confirmed the slot",
             state: "upcoming",
             isNext: true,
             clientId: "cl_001",
@@ -409,7 +417,8 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             time: "19:00",
             timeLabel: "7:00 PM",
             title: "Site visit · 4 BHK, Vesu",
-            subtitle: "Neha Patel · confirmed",
+            clientName: "Neha Patel",
+            subtitle: "Owner confirmed the slot",
             state: "upcoming",
             clientId: "cl_007",
             propertyId: "pr_130",
