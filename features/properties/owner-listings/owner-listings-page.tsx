@@ -8,8 +8,11 @@ import {
     type BrokerVerificationState,
     mapBrokerVerificationState,
 } from "@/features/broker/map-profile-menu";
-import { OWNER_LISTING_LOCALITIES, MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
 import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/owner-listings/count-new-listings-this-week";
+import {
+    MOCK_OWNER_LISTINGS,
+    OWNER_LISTING_LOCALITIES,
+} from "@/features/properties/owner-listings/mock-owner-listings";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
 import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
