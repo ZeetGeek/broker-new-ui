@@ -1,7 +1,9 @@
 import { cn } from "@/lib/utils";
 
-const BROWSE_CARD_PHOTO_CLASS = "relative aspect-[4/3] shrink-0 overflow-hidden bg-surface-muted";
-const BROWSE_CARD_PHOTO_LIST_CLASS = "relative w-40 min-h-40 shrink-0 self-stretch overflow-hidden bg-surface-muted sm:w-48 md:w-56";
+const BROWSE_CARD_PHOTO_CLASS =
+    "relative aspect-[4/3] shrink-0 overflow-hidden rounded-card bg-surface-muted shadow-sm";
+const BROWSE_CARD_PHOTO_LIST_CLASS =
+    "relative w-40 min-h-40 shrink-0 self-stretch overflow-hidden rounded-card bg-surface-muted shadow-sm sm:w-48 md:w-56";
 
 export function PropertyCardSkeleton({
     className,
@@ -18,8 +20,8 @@ export function PropertyCardSkeleton({
         return (
             <div
                 className={cn(
-                    "overflow-hidden rounded-card border border-border-warm/70 bg-surface shadow-sm",
-                    isListView ? "flex flex-row" : "flex flex-col",
+                    "flex min-w-0",
+                    isListView ? "flex-row items-start gap-4" : "flex-col gap-3",
                     className,
                 )}
                 aria-hidden
@@ -27,12 +29,12 @@ export function PropertyCardSkeleton({
                 <div
                     className={cn(
                         BROWSE_CARD_PHOTO_CLASS,
-                        "animate-pulse bg-surface-muted",
+                        "animate-pulse",
                         isListView && BROWSE_CARD_PHOTO_LIST_CLASS,
                     )}
                 />
 
-                <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-4">
+                <div className="flex min-w-0 flex-1 flex-col gap-2.5">
                     <div className="flex flex-col gap-1.5">
                         <div className="animate-pulse rounded-full bg-surface-muted block-4 inline-4/5" />
                         <div className="animate-pulse rounded-full bg-surface-muted block-3.5 inline-3/5" />
@@ -59,7 +61,7 @@ export function PropertyCardSkeleton({
         >
             <div className="animate-pulse bg-brand-deep/70 block-8 inline-full" />
 
-            <div className={cn(BROWSE_CARD_PHOTO_CLASS, "animate-pulse bg-surface-muted")} />
+            <div className={cn(BROWSE_CARD_PHOTO_CLASS, "animate-pulse")} />
 
             <div className="flex flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-3">

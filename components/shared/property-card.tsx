@@ -139,6 +139,7 @@ function BrowsePropertyCardPhoto({
         <div
             className={cn(
                 PROPERTY_CARD_PHOTO_CLASS,
+                "rounded-card shadow-sm transition-shadow duration-160 group-hover:shadow-md",
                 layout === "list" ? BROWSE_CARD_PHOTO_LIST_CLASS : BROWSE_CARD_PHOTO_GRID_CLASS,
             )}
         >
@@ -228,8 +229,8 @@ function BrowsePropertyCard({
         >
             <article
                 className={cn(
-                    "overflow-hidden rounded-card border border-border-warm/70 bg-surface shadow-sm transition-shadow duration-160 group-hover:shadow-md",
-                    isListView ? "flex flex-row" : "flex flex-col",
+                    "flex min-w-0",
+                    isListView ? "flex-row items-start gap-4" : "flex-col gap-3",
                 )}
             >
                 <BrowsePropertyCardPhoto
@@ -239,7 +240,7 @@ function BrowsePropertyCard({
                     layout={layout}
                 />
 
-                <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-4">
+                <div className="flex min-w-0 flex-1 flex-col gap-2.5">
                     <div className="flex min-w-0 flex-col gap-1.5">
                         <h3 className="truncate body font-semibold text-ink">{listing.title}</h3>
                         <p className="body-sm flex min-w-0 items-center gap-1.5 text-ink-muted">
