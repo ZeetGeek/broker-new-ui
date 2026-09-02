@@ -1,78 +1,90 @@
-const TIME_ZONE = "Asia/Kolkata";
+/**
+ * Display formatting — date-fns v4 + @date-fns/tz in the user's local timezone.
+ * API instants arrive as UTC ISO strings; parse with `parseApiInstant`.
+ */
+
+import { tz } from "@date-fns/tz";
+import {
+    addDays,
+    differenceInCalendarDays,
+    format,
+    formatDistanceToNowStrict,
+    isSameDay,
+} from "date-fns";
+
+import { getUserTimeZone, userTzContext } from "@/lib/datetime/timezone";
+
 const LOCALE = "en-IN";
 
-function partsFor(date: Date, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormatPart[] {
-    return new Intl.DateTimeFormat(LOCALE, { timeZone: TIME_ZONE, ...options }).formatToParts(date);
+function formatInUserTz(date: Date, pattern: string, timeZone = getUserTimeZone()): string {
+    return format(date, pattern, { in: tz(timeZone), locale: undefined });
 }
 
-function part(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
-    return parts.find((entry) => entry.type === type)?.value ?? "";
+/** Whether two instants fall on the same calendar day in the user's timezone. */
+export function isSameCalendarDay(a: Date, b: Date, timeZone = getUserTimeZone()): boolean {
+    return isSameDay(a, b, { in: tz(timeZone) });
 }
 
-function calendarParts(date: Date): Intl.DateTimeFormatPart[] {
-    return partsFor(date, { day: "2-digit", month: "2-digit", year: "numeric" });
+/** Whole calendar days between two instants in the user's timezone. */
+export function calendarDaysBetween(from: Date, to: Date, timeZone = getUserTimeZone()): number {
+    return Math.max(0, differenceInCalendarDays(to, from, { in: tz(timeZone) }));
 }
 
-/** Calendar date as `dd/mm/yyyy`. */
+function addCalendarDays(date: Date, days: number, timeZone = getUserTimeZone()): Date {
+    return addDays(date, days, { in: tz(timeZone) });
+}
+
+/** Calendar date as `dd/mm/yyyy` in the user's timezone. */
 export function formatDateIn(date: Date): string {
-    const parts = calendarParts(date);
-    return `${part(parts, "day")}/${part(parts, "month")}/${part(parts, "year")}`;
+    return formatInUserTz(date, "dd/MM/yyyy");
 }
 
-/** Calendar date as `yyyy-mm-dd` for `<time dateTime>`. */
+/** Calendar date as `yyyy-mm-dd` for `<time dateTime>` (local calendar day). */
 export function formatDateIso(date: Date): string {
-    const parts = calendarParts(date);
-    return `${part(parts, "year")}-${part(parts, "month")}-${part(parts, "day")}`;
+    return formatInUserTz(date, "yyyy-MM-dd");
 }
 
-/** Conversational date as `24 Aug`. */
+/** Conversational date as `24 Aug` in the user's timezone. */
 export function formatDateShort(date: Date): string {
-    return new Intl.DateTimeFormat(LOCALE, {
-        timeZone: TIME_ZONE,
-        day: "numeric",
-        month: "short",
-    }).format(date);
+    return formatInUserTz(date, "d MMM");
 }
 
-/** Dashboard date line as `Mon, 24 Aug`. */
+/** Dashboard date line as `Mon, 24 Aug` in the user's timezone. */
 export function formatWeekdayDate(date: Date): string {
-    return new Intl.DateTimeFormat(LOCALE, {
-        timeZone: TIME_ZONE,
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-    }).format(date);
+    return formatInUserTz(date, "EEE, d MMM");
 }
 
 /** Notification detail line as `Monday 03:20pm`. */
 export function formatNotificationDayTime(date: Date): string {
-    const weekday = new Intl.DateTimeFormat(LOCALE, {
-        timeZone: TIME_ZONE,
-        weekday: "long",
-    }).format(date);
-    const parts = partsFor(date, { hour: "2-digit", minute: "2-digit", hour12: true });
-    const hour = part(parts, "hour");
-    const minute = part(parts, "minute");
-    const dayPeriod = part(parts, "dayPeriod").toLowerCase();
+    const timeZone = getUserTimeZone();
+    console.log("timeZone", timeZone);
+    const weekday = formatInUserTz(date, "EEEE", timeZone);
+    const parts = new Intl.DateTimeFormat(LOCALE, {
+        timeZone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+    }).formatToParts(date);
+    const hour = parts.find((p) => p.type === "hour")?.value ?? "";
+    const minute = parts.find((p) => p.type === "minute")?.value ?? "";
+    const dayPeriod = (parts.find((p) => p.type === "dayPeriod")?.value ?? "").toLowerCase();
     return `${weekday} ${hour}:${minute}${dayPeriod}`;
 }
 
 /** Notification detail line as `Friday 3:04 PM`. */
 export function formatNotificationWhen(date: Date): string {
-    const weekday = new Intl.DateTimeFormat(LOCALE, {
-        timeZone: TIME_ZONE,
-        weekday: "long",
-    }).format(date);
+    const weekday = formatInUserTz(date, "EEEE");
     return `${weekday} ${formatTimeIn(date)}`;
 }
 
-/** Wall-clock time as `11:00 AM`. */
+/** Wall-clock time as `11:00 AM` in the user's timezone. */
 export function formatTimeIn(date: Date): string {
-    const parts = partsFor(date, { hour: "numeric", minute: "2-digit", hour12: true });
-    const hour = part(parts, "hour");
-    const minute = part(parts, "minute");
-    const dayPeriod = part(parts, "dayPeriod").toUpperCase();
-    return `${hour}:${minute} ${dayPeriod}`;
+    return formatInUserTz(date, "h:mm a");
+}
+
+/** 24-hour clock `HH:mm` for sorting and compact labels. */
+export function formatTime24(date: Date): string {
+    return formatInUserTz(date, "HH:mm");
 }
 
 function calendarDayKey(date: Date): string {
@@ -89,8 +101,7 @@ export function formatShowingWhen(scheduledAt: Date, now: Date): string {
         return `Today, ${time}`;
     }
 
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    if (scheduledDay === calendarDayKey(tomorrow)) {
+    if (scheduledDay === calendarDayKey(addCalendarDays(now, 1))) {
         return `Tomorrow, ${time}`;
     }
 
@@ -120,11 +131,11 @@ export function formatRelativePast(date: Date, now: Date): string {
     }
 
     const hoursAgo = Math.round(minutesAgo / 60);
-    if (hoursAgo < 24) {
+    if (hoursAgo < 24 && isSameCalendarDay(date, now)) {
         return `${hoursAgo}h ago`;
     }
 
-    const daysAgo = Math.round(hoursAgo / 24);
+    const daysAgo = calendarDaysBetween(date, now);
     if (daysAgo === 1) {
         return "Yesterday";
     }
@@ -161,7 +172,7 @@ export function formatDurationUntil(target: Date, now: Date): DurationUntil {
 
 /**
  * Compact past relative for activity feeds: `12m`, `2h`, `1d`.
- * Uses Asia/Kolkata calendar days once the event is not same-day.
+ * Uses the user's local calendar day once the event is not same-day.
  */
 export function formatCompactRelative(occurredAt: Date, now: Date): string {
     const elapsedMs = Math.max(0, now.getTime() - occurredAt.getTime());
@@ -172,38 +183,20 @@ export function formatCompactRelative(occurredAt: Date, now: Date): string {
     }
 
     const hours = Math.floor(minutes / 60);
-    if (calendarDayKey(occurredAt) === calendarDayKey(now)) {
+    if (isSameCalendarDay(occurredAt, now)) {
         return `${hours}h`;
     }
 
-    const occurredDay = calendarDayKey(occurredAt);
-    const todayDay = calendarDayKey(now);
-    const occurredUtc = Date.UTC(
-        Number(occurredDay.slice(0, 4)),
-        Number(occurredDay.slice(5, 7)) - 1,
-        Number(occurredDay.slice(8, 10)),
-    );
-    const todayUtc = Date.UTC(
-        Number(todayDay.slice(0, 4)),
-        Number(todayDay.slice(5, 7)) - 1,
-        Number(todayDay.slice(8, 10)),
-    );
-    const dayDiff = Math.max(1, Math.round((todayUtc - occurredUtc) / 86_400_000));
-    return `${dayDiff}d`;
+    const dayDiff = calendarDaysBetween(occurredAt, now);
+    return `${Math.max(1, dayDiff)}d`;
 }
 
 export type ActivityDayGroup = "today" | "yesterday" | "this_week";
 
-/** Bucket an event into Today / Yesterday / This week (Asia/Kolkata calendar). */
+/** Bucket an event into Today / Yesterday / This week (local calendar). */
 export function activityDayGroup(occurredAt: Date, now: Date): ActivityDayGroup {
-    const occurredDay = calendarDayKey(occurredAt);
-    const todayDay = calendarDayKey(now);
-    if (occurredDay === todayDay) return "today";
-
-    // India has no DST — one day back is a stable calendar yesterday for bucketing.
-    const yesterdayDay = calendarDayKey(new Date(now.getTime() - 86_400_000));
-    if (occurredDay === yesterdayDay) return "yesterday";
-
+    if (isSameCalendarDay(occurredAt, now)) return "today";
+    if (isSameCalendarDay(occurredAt, addCalendarDays(now, -1))) return "yesterday";
     return "this_week";
 }
 
@@ -215,10 +208,29 @@ export function formatActivityDayLabel(occurredAt: Date, now: Date): string {
     if (group === "today") return `Today · ${datePart}`;
     if (group === "yesterday") return `Yesterday · ${datePart}`;
 
-    const weekday = new Intl.DateTimeFormat(LOCALE, {
-        timeZone: TIME_ZONE,
-        weekday: "short",
-    }).format(occurredAt);
-
+    const weekday = formatInUserTz(occurredAt, "EEE");
     return `${weekday} · ${datePart}`;
 }
+
+/** Human-readable distance from now, e.g. for slot lists (`in 2 hours`, `3 days ago`). */
+export function formatDistanceFromNow(date: Date, now = new Date()): string {
+    return formatDistanceToNowStrict(date, {
+        addSuffix: true,
+        roundingMethod: "floor",
+        in: userTzContext(),
+    });
+}
+
+// Re-export timezone + API helpers for visit/slot booking screens.
+export {
+    parseApiInstant,
+    toApiDateOnly,
+    toApiInstant,
+    toApiInstantFromLocalParts,
+} from "@/lib/datetime/api";
+export {
+    fromUserZonedTime,
+    getUserTimeZone,
+    toUserZonedTime,
+    userTzContext,
+} from "@/lib/datetime/timezone";

@@ -7,7 +7,13 @@ import type {
     PipelineFunnelStage,
 } from "@/lib/api/dashboard";
 import type { UserProfile } from "@/lib/api/profile";
-import { formatDateIso } from "@/lib/format/date";
+import {
+    calendarDaysBetween,
+    formatDateIso,
+    formatTime24,
+    formatTimeIn,
+    isSameCalendarDay,
+} from "@/lib/format/date";
 
 import type {
     ActivityData,
@@ -73,26 +79,6 @@ function phoneDigits(value: string | null | undefined): string {
     return (value ?? "").replace(/\D/g, "").slice(-10);
 }
 
-function isSameLocalDay(a: Date, b: Date) {
-    return (
-        a.getFullYear() === b.getFullYear() &&
-        a.getMonth() === b.getMonth() &&
-        a.getDate() === b.getDate()
-    );
-}
-
-function timeParts(date: Date): { time: string; timeLabel: string } {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const time = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-    const timeLabel = date.toLocaleTimeString("en-IN", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-    });
-    return { time, timeLabel };
-}
-
 function parseTitle(propertyTitle: string): { configLabel: string; locality: string } {
     const parts = propertyTitle
         .split(/[·,|-]/)
@@ -102,11 +88,6 @@ function parseTitle(propertyTitle: string): { configLabel: string; locality: str
         return { configLabel: parts[0], locality: parts[1] };
     }
     return { configLabel: propertyTitle || "Property", locality: "" };
-}
-
-function daysBetween(from: Date, to: Date) {
-    const ms = to.getTime() - from.getTime();
-    return Math.max(0, Math.floor(ms / 86_400_000));
 }
 
 function mapReraStatus(profile: UserProfile | null): ReraStatus {
@@ -143,10 +124,11 @@ function mapTodayAgenda(visits: DashboardVisit[], now: Date): TodayAgenda {
     const todays = visits
         .map((visit) => {
             const scheduledAt = new Date(visit.scheduledAt);
-            if (Number.isNaN(scheduledAt.getTime()) || !isSameLocalDay(scheduledAt, now)) {
+            if (Number.isNaN(scheduledAt.getTime()) || !isSameCalendarDay(scheduledAt, now)) {
                 return null;
             }
-            const { time, timeLabel } = timeParts(scheduledAt);
+            const time = formatTime24(scheduledAt);
+            const timeLabel = formatTimeIn(scheduledAt);
             const item: TodayItem = {
                 id: visit.id,
                 kind: "site_visit",
@@ -203,7 +185,8 @@ function mapRequestRow(request: DashboardBrokerRequest, now: Date): RequestRowIt
             ...base,
             type: "pending_stale",
             requestedAt: request.createdAt,
-            daysWaiting: request.daysWaiting ?? daysBetween(new Date(request.createdAt), now),
+            daysWaiting:
+                request.daysWaiting ?? calendarDaysBetween(new Date(request.createdAt), now),
             ownerSeen: false,
         };
     }
@@ -226,7 +209,7 @@ function mapRequestRow(request: DashboardBrokerRequest, now: Date): RequestRowIt
         ...base,
         type: "pending",
         requestedAt: request.createdAt,
-        daysWaiting: request.daysWaiting ?? daysBetween(new Date(request.createdAt), now),
+        daysWaiting: request.daysWaiting ?? calendarDaysBetween(new Date(request.createdAt), now),
     };
 }
 
@@ -413,7 +396,7 @@ export function mapBrokerDashboardView(
     const visits = data?.upcomingVisits ?? [];
     const todayVisits = visits.filter((visit) => {
         const scheduledAt = new Date(visit.scheduledAt);
-        return !Number.isNaN(scheduledAt.getTime()) && isSameLocalDay(scheduledAt, now);
+        return !Number.isNaN(scheduledAt.getTime()) && isSameCalendarDay(scheduledAt, now);
     });
 
     const fullName =
