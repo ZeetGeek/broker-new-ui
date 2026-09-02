@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { type NotificationItem, notificationsApi } from "@/lib/api/notifications";
+import { type RepresentationRespondStatus, representativeApi } from "@/lib/api/representative";
 import {
     requestBrowserNotificationPermission,
     showBrowserNotification,
@@ -26,12 +27,18 @@ type NotificationContextValue = {
     refresh: () => Promise<void>;
     markRead: (id: string) => Promise<void>;
     markAllRead: () => Promise<void>;
+    respondToRepresentation: (
+        notificationId: string,
+        representationId: string,
+        status: RepresentationRespondStatus,
+    ) => Promise<void>;
 };
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
     const accessToken = useAppSelector((state) => state.auth.accessToken);
+    const userRole = useAppSelector((state) => state.auth.user?.role);
     const isAuthenticated = Boolean(accessToken);
     const [items, setItems] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -82,6 +89,28 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
         setUnreadCount(0);
     }, [accessToken]);
+
+    const respondToRepresentation = useCallback(
+        async (
+            notificationId: string,
+            representationId: string,
+            status: RepresentationRespondStatus,
+        ) => {
+            if (!accessToken) return;
+
+            const body = { status };
+            if (userRole === "owner") {
+                await representativeApi.ownerRespond(representationId, body);
+            } else {
+                await representativeApi.brokerRespond(representationId, body);
+            }
+
+            setItems((prev) => prev.filter((item) => item.id !== notificationId));
+            await markRead(notificationId);
+            await refresh();
+        },
+        [accessToken, userRole, markRead, refresh],
+    );
 
     useEffect(() => {
         if (!isAuthenticated || !accessToken) {
@@ -150,8 +179,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             refresh,
             markRead,
             markAllRead,
+            respondToRepresentation,
         }),
-        [isAuthenticated, items, unreadCount, loading, refresh, markRead, markAllRead],
+        [
+            isAuthenticated,
+            items,
+            unreadCount,
+            loading,
+            refresh,
+            markRead,
+            markAllRead,
+            respondToRepresentation,
+        ],
     );
 
     return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;

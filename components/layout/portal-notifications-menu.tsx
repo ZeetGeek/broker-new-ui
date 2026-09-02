@@ -12,40 +12,27 @@ import {
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import type { LucideIcon } from "lucide-react";
-import {
-    BadgeCheck,
-    Bell,
-    BellRing,
-    Building2,
-    CalendarClock,
-    CheckCheck,
-    Clock3,
-    Gift,
-    MessageCircle,
-    Send,
-    ShieldCheck,
-    UserPlus,
-    XCircle,
-} from "lucide-react";
+import { Bell, Building2, CalendarClock, CheckCheck, Clock3 } from "lucide-react";
 
+import { ApiError } from "@/lib/api/client";
 import type { NotificationItem } from "@/lib/api/notifications";
 import { toApiInstant } from "@/lib/datetime/api";
 import { formatNotificationDayTime, formatRelativePast } from "@/lib/format/date";
 import {
     countByTab,
     filterNotificationsByTab,
-    getNotificationActor,
+    getNotificationVisual,
     getPropertyLabel,
+    groupNotificationsByDay,
     isActionableRequest,
     NOTIFICATION_TABS,
+    type NotificationDaySection,
     type NotificationTab,
 } from "@/lib/notifications/classify";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { TextLinkButton } from "@/components/shared/text-link-button";
-import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -58,6 +45,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { useNotifications } from "@/providers/notification-provider";
+import { useAppSelector } from "@/store/hooks";
 
 export type PortalNotificationsMenuProps = {
     viewAllHref: string;
@@ -214,89 +202,31 @@ function UnreadBadge({ count }: { count: number }) {
     );
 }
 
-type NotificationVisual = {
-    Icon: LucideIcon;
-    colorClass: string;
-};
-
-function getNotificationVisual(
-    type: string | null,
-    title: string,
-    body: string | null,
-): NotificationVisual {
-    const key = `${type ?? ""} ${title} ${body ?? ""}`.toLowerCase();
-
-    if (key.includes("referral")) {
-        return { Icon: Gift, colorClass: "!text-urgent-mid" };
-    }
-
-    if (key.includes("message") || key.includes("chat")) {
-        return { Icon: MessageCircle, colorClass: "!text-brand-deep" };
-    }
-
-    if (key.includes("visit") || key.includes("showing") || key.includes("schedule")) {
-        return {
-            Icon: CalendarClock,
-            colorClass:
-                key.includes("approv") || key.includes("accept") ? "!text-brand" : "!text-urgent",
-        };
-    }
-
-    if (key.includes("invite") || key.includes("property") || key.includes("listing")) {
-        return { Icon: Building2, colorClass: "!text-brand" };
-    }
-
-    if (key.includes("reject") || key.includes("declin") || key.includes("cancel")) {
-        return { Icon: XCircle, colorClass: "!text-danger" };
-    }
-
-    if (key.includes("approv") || key.includes("accepted") || key.includes("qualified")) {
-        return { Icon: BadgeCheck, colorClass: "!text-brand" };
-    }
-
-    if (key.includes("represent") || key.includes("request")) {
-        return { Icon: Send, colorClass: "!text-brand-deep" };
-    }
-
-    if (
-        key.includes("reminder") ||
-        key.includes("follow-up") ||
-        key.includes("follow up") ||
-        key.includes("due")
-    ) {
-        return { Icon: BellRing, colorClass: "!text-urgent" };
-    }
-
-    if (key.includes("client") || key.includes("lead")) {
-        return { Icon: UserPlus, colorClass: "!text-brand-text" };
-    }
-
-    if (key.includes("verif") || key.includes("rera")) {
-        return { Icon: ShieldCheck, colorClass: "!text-brand-text" };
-    }
-
-    if (key.includes("announce") || key.includes("update") || key.includes("system")) {
-        return { Icon: Bell, colorClass: "!text-brand" };
-    }
-
-    return { Icon: Bell, colorClass: "!text-brand" };
-}
-
-function NotificationTypeIcon({
-    type,
-    title,
-    body,
-}: {
-    type: string | null;
-    title: string;
-    body: string | null;
-}) {
-    const { Icon, colorClass } = getNotificationVisual(type, title, body);
+function NotificationTypeIcon({ item }: { item: NotificationItem }) {
+    const { Icon, colorClass } = getNotificationVisual(item);
 
     return (
-        <span data-notification-icon className={cn("inline-flex shrink-0", colorClass)}>
-            <Icon aria-hidden className="text-current block-6 inline-6" strokeWidth={1.75} />
+        <span
+            data-notification-icon
+            className={cn(
+                `
+                  inline-flex items-center justify-center rounded-full bg-surface-muted block-8
+                  inline-8
+                `,
+                colorClass,
+            )}
+        >
+            <Icon aria-hidden className="text-current block-4 inline-4" strokeWidth={1.75} />
         </span>
+    );
+}
+
+function NotificationDayHeader({ label }: { label: string }) {
+    return (
+        <div className="flex items-center gap-3 px-1 py-2" role="presentation">
+            <p className="body-sm shrink-0 font-semibold text-pending">{label}</p>
+            <div className="flex-1 bg-pending/35 block-px" aria-hidden />
+        </div>
     );
 }
 
@@ -492,11 +422,40 @@ function NotificationsEmpty({
     );
 }
 
-function RequestActions() {
-    function handlePlaceholder(event: React.MouseEvent) {
+function RequestActions({
+    item,
+    onRespond,
+}: {
+    item: NotificationItem;
+    onRespond: (
+        notificationId: string,
+        representationId: string,
+        status: "accepted" | "rejected",
+    ) => Promise<void>;
+}) {
+    const [saving, setSaving] = useState<"accepted" | "rejected" | null>(null);
+    const representationId = item.relatedRepresentationId;
+
+    async function handleDecision(status: "accepted" | "rejected", event: React.MouseEvent) {
         event.preventDefault();
         event.stopPropagation();
-        toast("Approve and reject from here is coming soon");
+        if (!representationId || saving) return;
+
+        setSaving(status);
+        try {
+            await onRespond(item.id, representationId, status);
+            toast.success(status === "accepted" ? "Request accepted" : "Request declined");
+        } catch (error) {
+            const message =
+                error instanceof ApiError
+                    ? error.message
+                    : error instanceof Error
+                      ? error.message
+                      : "Failed to respond";
+            toast.error(message);
+        } finally {
+            setSaving(null);
+        }
     }
 
     return (
@@ -510,7 +469,9 @@ function RequestActions() {
                 variant="outline"
                 size="xs"
                 className={declineActionClass}
-                onClick={handlePlaceholder}
+                disabled={Boolean(saving)}
+                loading={saving === "rejected"}
+                onClick={(event) => void handleDecision("rejected", event)}
             >
                 Decline
             </Button>
@@ -518,7 +479,9 @@ function RequestActions() {
                 type="button"
                 size="xs"
                 className={acceptActionClass}
-                onClick={handlePlaceholder}
+                disabled={Boolean(saving)}
+                loading={saving === "accepted"}
+                onClick={(event) => void handleDecision("accepted", event)}
             >
                 Accept
             </Button>
@@ -607,39 +570,30 @@ function NotificationTimestamp({ occurredAt, now }: { occurredAt: Date; now: Dat
     );
 }
 
-function NotificationRowContent({ item, now }: { item: NotificationItem; now: Date }) {
+function NotificationRowContent({
+    item,
+    now,
+    userRole,
+    onRespond,
+}: {
+    item: NotificationItem;
+    now: Date;
+    userRole: string | null | undefined;
+    onRespond: (
+        notificationId: string,
+        representationId: string,
+        status: "accepted" | "rejected",
+    ) => Promise<void>;
+}) {
     const occurredAt = item.createdAt ? new Date(item.createdAt) : null;
-    const actor = getNotificationActor(item);
     const propertyLabel = getPropertyLabel(item);
-    const showActions = isActionableRequest(item);
+    const showActions = isActionableRequest(item, userRole);
 
     return (
         <div className="flex items-start gap-3 inline-full min-inline-0">
-            {actor ? (
-                <NotificationLeadMedia>
-                    <span className="overflow-hidden rounded-full block-8 inline-8">
-                        <UserAvatar
-                            name={actor.name}
-                            imageUrl={actor.avatarUrl ?? undefined}
-                            size="fill"
-                        />
-                    </span>
-                </NotificationLeadMedia>
-            ) : (
-                <NotificationLeadMedia>
-                    <span
-                        className="
-                          inline-flex items-center justify-center rounded-full block-8 inline-8
-                        "
-                    >
-                        <NotificationTypeIcon
-                            type={item.type}
-                            title={item.title}
-                            body={item.body}
-                        />
-                    </span>
-                </NotificationLeadMedia>
-            )}
+            <NotificationLeadMedia>
+                <NotificationTypeIcon item={item} />
+            </NotificationLeadMedia>
 
             <div className="pie-6 flex flex-1 flex-col gap-2 min-inline-0">
                 <span
@@ -671,7 +625,7 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
                     </span>
                 ) : null}
 
-                {showActions ? <RequestActions /> : null}
+                {showActions ? <RequestActions item={item} onRespond={onRespond} /> : null}
 
                 {occurredAt ? <NotificationTimestamp occurredAt={occurredAt} now={now} /> : null}
             </div>
@@ -688,26 +642,89 @@ function NotificationRowContent({ item, now }: { item: NotificationItem; now: Da
     );
 }
 
+function NotificationDayBlock({
+    section,
+    viewAllHref,
+    now,
+    userRole,
+    onMarkRead,
+    onRespond,
+    showHeader,
+    isLastSection,
+}: {
+    section: NotificationDaySection;
+    viewAllHref: string;
+    now: Date;
+    userRole: string | null | undefined;
+    onMarkRead: (id: string) => void;
+    onRespond: (
+        notificationId: string,
+        representationId: string,
+        status: "accepted" | "rejected",
+    ) => Promise<void>;
+    showHeader: boolean;
+    isLastSection: boolean;
+}) {
+    return (
+        <div className="flex flex-col">
+            {showHeader ? <NotificationDayHeader label={section.label} /> : null}
+            {section.items.map((item, index) => {
+                const isLastItem = index === section.items.length - 1;
+                const showDivider = !(isLastItem && isLastSection);
+
+                return (
+                    <Fragment key={item.id}>
+                        <NotificationRow
+                            item={item}
+                            viewAllHref={viewAllHref}
+                            now={now}
+                            userRole={userRole}
+                            onMarkRead={onMarkRead}
+                            onRespond={onRespond}
+                        />
+                        {showDivider ? (
+                            <div aria-hidden className={listDividerClass} role="separator" />
+                        ) : null}
+                    </Fragment>
+                );
+            })}
+        </div>
+    );
+}
+
 function NotificationRow({
     item,
     viewAllHref,
     now,
+    userRole,
     onMarkRead,
+    onRespond,
 }: {
     item: NotificationItem;
     viewAllHref: string;
     now: Date;
+    userRole: string | null | undefined;
     onMarkRead: (id: string) => void;
+    onRespond: (
+        notificationId: string,
+        representationId: string,
+        status: "accepted" | "rejected",
+    ) => Promise<void>;
 }) {
     const href = item.href || viewAllHref;
-    const actionable = isActionableRequest(item);
+    const actionable = isActionableRequest(item, userRole);
 
     const rowClass = cn(itemClass, !item.isRead && unreadItemClass);
 
     if (actionable) {
         return (
             <DropdownMenuItem className={rowClass}>
-                <NotificationRowContent item={item} now={now} />
+                <NotificationRowContent
+                    item={item}
+                    now={now}
+                    userRole={userRole}
+                    onRespond={onRespond}
+                />
             </DropdownMenuItem>
         );
     }
@@ -720,7 +737,12 @@ function NotificationRow({
                 if (!item.isRead) onMarkRead(item.id);
             }}
         >
-            <NotificationRowContent item={item} now={now} />
+            <NotificationRowContent
+                item={item}
+                now={now}
+                userRole={userRole}
+                onRespond={onRespond}
+            />
         </DropdownMenuItem>
     );
 }
@@ -730,7 +752,9 @@ export function PortalNotificationsMenu({
     triggerClassName,
     tooltipLabel,
 }: PortalNotificationsMenuProps) {
-    const { items, unreadCount, loading, markRead, markAllRead } = useNotifications();
+    const { items, unreadCount, loading, markRead, markAllRead, respondToRepresentation } =
+        useNotifications();
+    const userRole = useAppSelector((state) => state.auth.user?.role);
     const [activeTab, setActiveTab] = useState<NotificationTab>("all");
     const now = new Date();
     const label = unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications";
@@ -739,6 +763,10 @@ export function PortalNotificationsMenu({
     const filteredItems = useMemo(
         () => filterNotificationsByTab(items, activeTab),
         [items, activeTab],
+    );
+    const daySections = useMemo(
+        () => groupNotificationsByDay(filteredItems, now),
+        [filteredItems, now],
     );
 
     const trigger = (
@@ -798,22 +826,18 @@ export function PortalNotificationsMenu({
                     <div className={notificationsListClass}>
                         <ScrollArea className={notificationsScrollClass}>
                             <DropdownMenuGroup className="flex flex-col px-2.5 py-2 pbe-14">
-                                {filteredItems.map((item, index) => (
-                                    <Fragment key={item.id}>
-                                        <NotificationRow
-                                            item={item}
-                                            viewAllHref={viewAllHref}
-                                            now={now}
-                                            onMarkRead={(id) => void markRead(id)}
-                                        />
-                                        {index < filteredItems.length - 1 ? (
-                                            <div
-                                                aria-hidden
-                                                className={listDividerClass}
-                                                role="separator"
-                                            />
-                                        ) : null}
-                                    </Fragment>
+                                {daySections.map((section, sectionIndex) => (
+                                    <NotificationDayBlock
+                                        key={section.dayKey}
+                                        section={section}
+                                        viewAllHref={viewAllHref}
+                                        now={now}
+                                        userRole={userRole}
+                                        onMarkRead={(id) => void markRead(id)}
+                                        onRespond={respondToRepresentation}
+                                        showHeader={daySections.length > 1}
+                                        isLastSection={sectionIndex === daySections.length - 1}
+                                    />
                                 ))}
                             </DropdownMenuGroup>
                         </ScrollArea>
