@@ -23,6 +23,7 @@ import {
     filterNotificationsByTab,
     getNotificationVisual,
     getPropertyLabel,
+    getRepresentationDecisionLabel,
     groupNotificationsByDay,
     isActionableRequest,
     NOTIFICATION_TABS,
@@ -588,6 +589,7 @@ function NotificationRowContent({
     const occurredAt = item.createdAt ? new Date(item.createdAt) : null;
     const propertyLabel = getPropertyLabel(item);
     const showActions = isActionableRequest(item, userRole);
+    const decisionLabel = getRepresentationDecisionLabel(item);
 
     return (
         <div className="flex items-start gap-3 inline-full min-inline-0">
@@ -626,6 +628,18 @@ function NotificationRowContent({
                 ) : null}
 
                 {showActions ? <RequestActions item={item} onRespond={onRespond} /> : null}
+
+                {decisionLabel ? (
+                    <span
+                        data-notification-status
+                        className="
+                          body-xs rounded-full border border-border-warm bg-surface-muted/80 px-2
+                          py-0.5 font-medium text-ink-muted inline-fit
+                        "
+                    >
+                        {decisionLabel}
+                    </span>
+                ) : null}
 
                 {occurredAt ? <NotificationTimestamp occurredAt={occurredAt} now={now} /> : null}
             </div>

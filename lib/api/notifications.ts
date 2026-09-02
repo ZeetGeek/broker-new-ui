@@ -37,6 +37,8 @@ export type NotificationItem = {
     relatedRepresentationId: string | null;
     relatedLeadId: string | null;
     metadata: Record<string, unknown> | null;
+    /** Live status from property_representations when relatedRepresentationId is set. */
+    representationStatus: string | null;
     isRead: boolean;
     readAt: string | null;
     createdAt: string | null;
