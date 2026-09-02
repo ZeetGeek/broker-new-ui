@@ -246,10 +246,29 @@ export function getNotificationActor(item: NotificationItem): NotificationActor 
     return null;
 }
 
-function isPendingRequest(item: NotificationItem): boolean {
+function getRepresentationStatus(item: NotificationItem): string | null {
+    if (item.representationStatus) {
+        return item.representationStatus.toLowerCase();
+    }
     const status = metadataString(item.metadata, "status", "requestStatus", "request_status");
+    return status ? status.toLowerCase() : null;
+}
+
+function isPendingRequest(item: NotificationItem): boolean {
+    const status = getRepresentationStatus(item);
     if (!status) return true;
-    return matchesAny(status.toLowerCase(), ["pending", "open", "awaiting"]);
+    return matchesAny(status, ["pending", "open", "awaiting"]);
+}
+
+/** Shown after a representation request/invite has been decided. */
+export function getRepresentationDecisionLabel(item: NotificationItem): string | null {
+    const status = getRepresentationStatus(item);
+    if (!status || isPendingRequest(item)) return null;
+    if (status === "accepted") return "Accepted";
+    if (status === "rejected") return "Declined";
+    if (status === "withdrawn") return "Withdrawn";
+    if (status === "revoked") return "Revoked";
+    return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 /** Whether to show inline Decline / Accept controls for the signed-in portal. */

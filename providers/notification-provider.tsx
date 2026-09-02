@@ -105,11 +105,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 await representativeApi.brokerRespond(representationId, body);
             }
 
-            setItems((prev) => prev.filter((item) => item.id !== notificationId));
+            setItems((prev) =>
+                prev.map((item) => {
+                    if (
+                        item.id !== notificationId &&
+                        item.relatedRepresentationId !== representationId
+                    ) {
+                        return item;
+                    }
+
+                    return {
+                        ...item,
+                        representationStatus: status,
+                        metadata: { ...(item.metadata ?? {}), status },
+                        isRead: item.id === notificationId ? true : item.isRead,
+                    };
+                }),
+            );
             await markRead(notificationId);
-            await refresh();
         },
-        [accessToken, userRole, markRead, refresh],
+        [accessToken, userRole, markRead],
     );
 
     useEffect(() => {
@@ -160,12 +175,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             );
         };
 
+        const onUpdated = (item: NotificationItem) => {
+            setItems((prev) => prev.map((entry) => (entry.id === item.id ? item : entry)));
+        };
+
         socket.on("notification.created", onCreated);
+        socket.on("notification.updated", onUpdated);
         socket.on("notification.unread_count", onUnread);
         socket.on("notification.read", onRead);
 
         return () => {
             socket.off("notification.created", onCreated);
+            socket.off("notification.updated", onUpdated);
             socket.off("notification.unread_count", onUnread);
             socket.off("notification.read", onRead);
         };
