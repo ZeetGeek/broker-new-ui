@@ -1,7 +1,10 @@
 "use client";
 
 import { LayoutGrid, List } from "lucide-react";
+import { useReducedMotion } from "motion/react";
 
+import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
+import { spring } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
 import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
@@ -22,6 +25,8 @@ export function OwnerListingsViewToggle({
     onViewChange,
     className,
 }: OwnerListingsViewToggleProps) {
+    const reduceMotion = useReducedMotion();
+
     return (
         <div
             role="group"
@@ -34,34 +39,42 @@ export function OwnerListingsViewToggle({
                 className,
             )}
         >
-            {VIEW_OPTIONS.map((option) => {
-                const Icon = option.icon;
-                const isActive = view === option.value;
+            <AnimatedBackground
+                defaultValue={view}
+                onValueChange={(id) => {
+                    if (id) {
+                        onViewChange(id as OwnerListingsView);
+                    }
+                }}
+                className="rounded-full border border-brand bg-brand-soft shadow-none"
+                transition={reduceMotion ? { duration: 0 } : spring.snappy}
+            >
+                {VIEW_OPTIONS.map((option) => {
+                    const Icon = option.icon;
+                    const isActive = view === option.value;
 
-                return (
-                    <button
-                        key={option.value}
-                        type="button"
-                        aria-label={option.label}
-                        aria-pressed={isActive}
-                        onClick={() => onViewChange(option.value)}
-                        className={cn(
-                            `
-                              flex size-7 items-center justify-center rounded-full border
-                              transition-[background-color,border-color,color] duration-160
-                            `,
-                            isActive
-                                ? "border-brand bg-brand-soft text-brand-text shadow-none hover:border-brand-text hover:bg-brand-soft/80"
-                                : `
-                                  border-transparent text-ink-muted
-                                  hover:border-border-warm hover:bg-surface-muted/60 hover:text-ink
+                    return (
+                        <button
+                            key={option.value}
+                            data-id={option.value}
+                            type="button"
+                            aria-label={option.label}
+                            aria-pressed={isActive}
+                            className={cn(
+                                `
+                                  flex size-7 items-center justify-center rounded-full border
+                                  border-transparent transition-[color] duration-160
                                 `,
-                        )}
-                    >
-                        <Icon aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-                    </button>
-                );
-            })}
+                                isActive
+                                    ? "text-brand-text"
+                                    : "text-ink-muted hover:text-ink",
+                            )}
+                        >
+                            <Icon aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                        </button>
+                    );
+                })}
+            </AnimatedBackground>
         </div>
     );
 }
