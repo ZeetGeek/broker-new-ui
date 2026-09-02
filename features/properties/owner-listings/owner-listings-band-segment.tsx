@@ -36,19 +36,15 @@ export function OwnerListingsBandSegment({
             onClick={onClick}
             className={cn(
                 `
-                  flex min-w-0 flex-1 items-center gap-2.5 rounded-inner px-3.5 py-2.5 text-start
-                  transition-colors duration-160
+                  group flex min-w-0 flex-1 items-center gap-2.5 rounded-inner px-3.5 py-2.5
+                  text-start transition-colors duration-160
                   hover:bg-surface-muted/70
                 `,
                 className,
             )}
             aria-expanded={isOpen}
         >
-            <Icon
-                aria-hidden
-                className="block-4 inline-4 shrink-0 text-brand"
-                strokeWidth={1.75}
-            />
+            <Icon aria-hidden className="block-4 inline-4 shrink-0 text-brand" strokeWidth={1.75} />
             <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
                 <span className="eyebrow shrink-0 text-ink-muted">{label}</span>
                 <span className="flex w-full min-w-0 items-center gap-1.5">
@@ -56,7 +52,10 @@ export function OwnerListingsBandSegment({
                     <ChevronDown
                         aria-hidden
                         className={cn(
-                            "block-3.5 inline-3.5 shrink-0 text-ink-subtle transition-transform duration-160",
+                            `
+                              block-3.5 inline-3.5 shrink-0 text-ink-subtle transition-transform
+                              duration-160 group-aria-expanded:rotate-180
+                            `,
                             isOpen && "rotate-180",
                         )}
                         strokeWidth={1.75}

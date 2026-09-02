@@ -432,6 +432,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
 
 export const MOCK_OWNER_LISTINGS: OwnerListingItem[] = ENTRIES.map((entry, index) => ({
     ...entry,
+    state: "Gujarat",
+    country: "India",
     id: `ol_${String(index + 1).padStart(3, "0")}`,
     imageSrc: IMAGES[index % IMAGES.length]!,
     propertyTypeLabel: PROPERTY_TYPES[index % PROPERTY_TYPES.length]!,

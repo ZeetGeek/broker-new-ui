@@ -6,6 +6,7 @@ import { formatDateShort } from "@/lib/format/date";
 import { BROKER_OWNER_LISTINGS_HREF, BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { CardFooterLink } from "@/components/shared/card-footer-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
@@ -139,7 +140,7 @@ function RequestRow({ item }: { item: RequestRowItem }) {
     const hint = rowHint(item);
 
     return (
-        <li className="flex items-start gap-3 py-3">
+        <li className="flex items-start gap-3 py-2">
             <RequestIcon type={item.type} />
             <Tooltip>
                 <TooltipTrigger
@@ -231,7 +232,9 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
     const rows = data.items.slice(0, MAX_REQUEST_ROWS);
     const remainingLabel =
         data.quota.remaining === 1 ? "1 left this week" : `${data.quota.remaining} left this week`;
-    const showFade = rows.length >= 3 || data.items.length > MAX_REQUEST_ROWS;
+    // Name the real total when rows are cut off, so the link says what it opens.
+    const total = totalRequests(data.counts);
+    const viewAllLabel = total > rows.length ? `View all ${total} requests` : "View all requests";
     const quotaHint =
         `You can send ${data.quota.limit} requests a week. ` +
         `${data.quota.used} used, ${data.quota.remaining} left. ` +
@@ -300,21 +303,16 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                 />
             </div>
 
-            <div className="relative mbs-2 flex-1 min-block-0">
+            <div className="relative mbs-2 flex-1 overflow-hidden min-block-0">
                 {rows.length > 0 ? (
                     <div
                         className="
-                          absolute inset-0 scrollbar-none overflow-y-auto overscroll-contain
-                          [-ms-overflow-style:none]
+                          scrollbar-none overflow-y-auto overscroll-contain
+                          [-ms-overflow-style:none] block-full
                           [&::-webkit-scrollbar]:hidden
                         "
                     >
-                        <ul
-                            className={cn(
-                                "flex flex-col divide-y divide-border-warm",
-                                showFade && "pbe-7",
-                            )}
-                        >
+                        <ul className="flex flex-col gap-1">
                             {rows.map((item) => (
                                 <RequestRow key={item.id} item={item} />
                             ))}
@@ -324,28 +322,27 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                     <p className="body text-ink-muted">No request details to show yet.</p>
                 )}
 
-                <div
-                    className="
-                      absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end block-14
-                    "
-                >
-                    {showFade ? (
-                        <div
-                            aria-hidden
-                            className={`
-                              pointer-events-none absolute inset-0 bg-linear-to-t from-surface
-                              from-40% via-surface/90 to-transparent
-                            `}
-                        />
-                    ) : null}
-                    <div className="relative flex justify-center">
-                        <ShortcutTooltip shortcutId="your_listings">
-                            <TextLinkButton href={`${BROKER_YOUR_LISTINGS_HREF}?tab=requests`}>
-                                View all requests
-                            </TextLinkButton>
-                        </ShortcutTooltip>
-                    </div>
-                </div>
+                {/*
+                  Softens the hard clip where a row meets the scroll edge. Harmless when
+                  the list is short - it fades white into white against the card surface.
+                */}
+                {rows.length > 0 ? (
+                    <div
+                        aria-hidden
+                        className="
+                          pointer-events-none absolute inset-x-0 inset-be-0 bg-linear-to-t
+                          from-surface from-20% to-transparent block-8
+                        "
+                    />
+                ) : null}
+            </div>
+
+            <div className="mbs-3 shrink-0">
+                <ShortcutTooltip shortcutId="your_listings">
+                    <CardFooterLink href={`${BROKER_YOUR_LISTINGS_HREF}?tab=requests`}>
+                        {viewAllLabel}
+                    </CardFooterLink>
+                </ShortcutTooltip>
             </div>
         </section>
     );

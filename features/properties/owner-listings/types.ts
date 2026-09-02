@@ -21,6 +21,10 @@ export type OwnerListingItem = {
     bhk: number;
     locality: string;
     city: string;
+    /** Indian state or union territory. Supplied by API when available. */
+    state?: string;
+    /** ISO market country. Defaults to India in location helpers when absent. */
+    country?: string;
     amountInr: number;
     isRent: boolean;
     areaSqft: number;

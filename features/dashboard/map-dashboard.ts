@@ -184,7 +184,7 @@ function mapTodayAgenda(visits: DashboardVisit[], now: Date): TodayAgenda {
 
 /** Localities arrive from the API in mixed case ("baner"); render them as names. */
 function titleCaseLocality(value: string): string {
-    return value.replace(/[a-z]/g, (char) => char.toUpperCase());
+    return value.replace(/\b[a-z]/g, (char) => char.toUpperCase());
 }
 
 /**

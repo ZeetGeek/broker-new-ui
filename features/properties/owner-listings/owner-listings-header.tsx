@@ -11,13 +11,14 @@ import type {
     OwnerListingsBandFilters,
     OwnerListingsFilterContext,
     OwnerListingsFilters,
+    OwnerListingItem,
     OwnerListingSort,
 } from "@/features/properties/owner-listings/types";
 import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
 
 export type OwnerListingsHeaderProps = {
     filters: OwnerListingsFilters;
-    localityOptions: string[];
+    listings: OwnerListingItem[];
     filterContext: OwnerListingsFilterContext;
     chipCounts: QuickChipCounts;
     isResultsLoading?: boolean;
@@ -47,7 +48,7 @@ function useIsMobile() {
 
 export function OwnerListingsHeader({
     filters,
-    localityOptions,
+    listings,
     filterContext,
     chipCounts,
     isResultsLoading = false,
@@ -75,7 +76,7 @@ export function OwnerListingsHeader({
             <div className="sticky inset-bs-0 z-10 flex flex-col gap-6">
                 <OwnerListingsSearchBand
                     appliedFilters={filters}
-                    localityOptions={localityOptions}
+                    listings={listings}
                     onApplyBand={onApplyBand}
                 />
 

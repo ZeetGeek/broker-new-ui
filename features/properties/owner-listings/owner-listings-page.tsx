@@ -16,7 +16,6 @@ import { buildQuickChipCounts } from "@/features/properties/owner-listings/build
 import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/owner-listings/count-new-listings-this-week";
 import {
     MOCK_OWNER_LISTINGS,
-    OWNER_LISTING_LOCALITIES,
 } from "@/features/properties/owner-listings/mock-owner-listings";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
@@ -324,7 +323,7 @@ export function OwnerListingsPage() {
 
             <OwnerListingsHeader
                 filters={filters}
-                localityOptions={OWNER_LISTING_LOCALITIES}
+                listings={MOCK_OWNER_LISTINGS}
                 filterContext={filterContext}
                 chipCounts={chipCounts}
                 isResultsLoading={isResultsLoading}
