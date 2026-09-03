@@ -193,7 +193,7 @@ function renderSearchResults({
     hits: OwnerListingLocationSearchHit[];
     query: string;
     selectedSet: Set<string>;
-    onToggle: (locality: string) => void;
+    onToggle: (locality: string, city: string) => void;
 }) {
     return hits.map((hit) => (
         <WhereLocationRow
@@ -203,7 +203,7 @@ function renderSearchResults({
             listingCount={hit.listingCount}
             query={query}
             checked={selectedSet.has(hit.locality)}
-            onToggle={() => onToggle(hit.locality)}
+            onToggle={() => onToggle(hit.locality, hit.city)}
         />
     ));
 }
@@ -262,23 +262,6 @@ export function OwnerListingsWhereMenu({
         }
 
         onLocationChange(nextCities, nextLocalities);
-    };
-
-    const toggleCity = (city: string) => {
-        if (selectedCitySet.has(city)) {
-            const localitiesInCity = new Set(
-                cityGroups
-                    .find((group) => group.city === city)
-                    ?.localities.map((leaf) => leaf.locality) ?? [],
-            );
-            onLocationChange(
-                selectedCities.filter((item) => item !== city),
-                selectedLocalities.filter((locality) => !localitiesInCity.has(locality)),
-            );
-            return;
-        }
-
-        onLocationChange([...selectedCities, city], selectedLocalities);
     };
 
     const whereTooltipLabel = formatLocalitiesTooltip(selectedLocalities, selectedCities);
@@ -372,7 +355,7 @@ export function OwnerListingsWhereMenu({
                                     ? renderSearchResults({
                                           hits: searchHits,
                                           query,
-                                          selectedSet,
+                                          selectedSet: selectedLocalitySet,
                                           onToggle: toggleLocality,
                                       })
                                     : cityGroups.map((cityGroup, cityIndex) => (
@@ -402,22 +385,23 @@ export function OwnerListingsWhereMenu({
                                                   </div>
                                               ) : null}
 
-                                            {cityGroup.localities.map((leaf) => (
-                                                <WhereLocationRow
-                                                    key={`${cityGroup.city}-${leaf.locality}`}
-                                                    locality={leaf.locality}
-                                                    pathLabel={`${leaf.city}, ${leaf.state}`}
-                                                    listingCount={leaf.listingCount}
-                                                    query=""
-                                                    checked={selectedLocalitySet.has(leaf.locality)}
-                                                    onToggle={() =>
-                                                        toggleLocality(leaf.locality, leaf.city)
-                                                    }
-                                                />
-                                            ))}
-                                        </Fragment>
-                                    ))
-                                )}
+                                              {cityGroup.localities.map((leaf) => (
+                                                  <WhereLocationRow
+                                                      key={`${cityGroup.city}-${leaf.locality}`}
+                                                      locality={leaf.locality}
+                                                      pathLabel={`${leaf.city}, ${leaf.state}`}
+                                                      listingCount={leaf.listingCount}
+                                                      query=""
+                                                      checked={selectedLocalitySet.has(
+                                                          leaf.locality,
+                                                      )}
+                                                      onToggle={() =>
+                                                          toggleLocality(leaf.locality, leaf.city)
+                                                      }
+                                                  />
+                                              ))}
+                                          </Fragment>
+                                      ))}
                             </div>
                         </ScrollArea>
                     </div>
