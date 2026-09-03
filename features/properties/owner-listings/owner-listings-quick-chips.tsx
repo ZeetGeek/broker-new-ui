@@ -4,22 +4,28 @@ import { SlidersHorizontal } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import type { QuickChipCounts, QuickChipKey } from "@/features/properties/owner-listings/build-quick-chip-counts";
-import {
-    OwnerListingsChipsCarousel,
-    OwnerListingsChipsCarouselSlide,
-} from "@/features/properties/owner-listings/owner-listings-chips-carousel";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+import type {
+    QuickChipCounts,
+    QuickChipKey,
+} from "@/features/properties/owner-listings/build-quick-chip-counts";
 import {
     formatChipCount,
     ownerListingsChipClassName,
     ownerListingsChipCountClassName,
 } from "@/features/properties/owner-listings/owner-listings-chip-styles";
+import {
+    OwnerListingsChipsCarousel,
+    OwnerListingsChipsCarouselSlide,
+} from "@/features/properties/owner-listings/owner-listings-chips-carousel";
 import { OwnerListingsSortMenu } from "@/features/properties/owner-listings/owner-listings-sort-menu";
-import type { OwnerListingSort, OwnerListingsFilters } from "@/features/properties/owner-listings/types";
-import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
 import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
-
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import type {
+    OwnerListingsFilters,
+    OwnerListingSort,
+} from "@/features/properties/owner-listings/types";
+import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
 
 type QuickChipConfig = {
     key: QuickChipKey;
@@ -37,9 +43,9 @@ const QUICK_CHIPS: QuickChipConfig[] = [
     },
     {
         key: "newToday",
-        label: "New today",
+        label: "New this week",
         mobileLabel: "New",
-        description: "Listed in the last 24 hours",
+        description: "Created in the last 7 days",
     },
     {
         key: "slotsOpen",
@@ -147,7 +153,9 @@ function FiltersChipButton({
                     </button>
                 }
             />
-            <TooltipContent side="bottom">More filters — type, furnishing, and search</TooltipContent>
+            <TooltipContent side="bottom">
+                More filters — type, furnishing, and search
+            </TooltipContent>
         </Tooltip>
     );
 }

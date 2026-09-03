@@ -451,7 +451,7 @@ export const MOCK_OWNER_LISTINGS: OwnerListingItem[] = ENTRIES.map((entry, index
         commissionPercent: index % 4 === 0 ? 0 : index % 3 === 0 ? 2.5 : 2,
         ownerName: OWNER_NAMES[index % OWNER_NAMES.length]!,
         photoCount,
-        isNew: entry.listedHoursAgo <= 24,
+        isNew: entry.listedHoursAgo <= 7 * 24,
         readyToMove: index % 5 < 2,
     };
 });

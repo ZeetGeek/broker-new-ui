@@ -33,6 +33,8 @@ export type PropertyBrowseListing = {
     availableFrom?: string | null;
     publishedAt?: string | null;
     createdAt?: string | null;
+    /** True when created within the last 7 days (from API). */
+    isNew?: boolean;
     ownerName?: string | null;
     ownerAvatarUrl?: string | null;
     organizationName?: string | null;
