@@ -118,23 +118,46 @@ export function propertyTypeToApiSubtype(
     return UI_TO_SUBTYPE[propertyType];
 }
 
+function mapPricing(listing: PropertyBrowseListing): {
+    saleAmountInr: number | null;
+    rentAmountInr: number | null;
+} {
+    const saleRaw = toNumber(listing.salePrice);
+    const rentRaw = toNumber(listing.monthlyRent);
+    const saleAmountInr = saleRaw > 0 ? saleRaw : null;
+    const rentAmountInr = rentRaw > 0 ? rentRaw : null;
+    const type = listing.transactionType?.trim().toLowerCase();
+
+    // Honour explicit transaction type when the API sends it; otherwise fall back
+    // to whichever price fields are present (including both).
+    if (type === "sale") {
+        return { saleAmountInr, rentAmountInr: null };
+    }
+    if (type === "rent") {
+        return { saleAmountInr: null, rentAmountInr };
+    }
+    if (type === "both") {
+        return { saleAmountInr, rentAmountInr };
+    }
+
+    return { saleAmountInr, rentAmountInr };
+}
+
 export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): OwnerListingItem {
     const propertyTypeLabel = mapPropertyType(listing);
     const bhk = mapBhk(listing);
-    const isRent =
-        listing.transactionType === "rent" ||
-        (listing.transactionType !== "sale" && toNumber(listing.monthlyRent) > 0);
-    const amountInr = isRent ? toNumber(listing.monthlyRent) : toNumber(listing.salePrice);
+    const { saleAmountInr, rentAmountInr } = mapPricing(listing);
     const furnishing = mapFurnishing(listing.furnishingStatus);
     const listedAt = listing.publishedAt ?? listing.createdAt;
     const listedHours = hoursAgo(listedAt);
     const hasRequested =
         listing.representation?.status === "pending" ||
         listing.representation?.status === "accepted";
-    const photos = listing.photos ?? [];
+    const photos = (listing.photos ?? []).filter((src): src is string => Boolean(src?.trim()));
     const locality = listing.address?.trim() || listing.city?.trim() || "Locality";
     const city = listing.city?.trim() || "City";
     const ownerName = listing.ownerName?.trim() || listing.organizationName?.trim() || "Owner";
+    const imageSrc = photos[0] ?? "";
 
     return {
         id: listing.id,
@@ -144,8 +167,8 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         locality,
         city,
         country: listing.country?.trim() || "India",
-        amountInr,
-        isRent,
+        saleAmountInr,
+        rentAmountInr,
         areaSqft: listing.areaSqft ?? 0,
         furnishingLabel: furnishingLabel(furnishing),
         furnishing,
@@ -163,7 +186,8 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         readyToMove: isReadyToMove(listing.availableFrom),
         hasRequested,
         isBookmarked: false,
-        imageSrc: photos[0] ?? "",
+        imageSrc,
+        imageSrcs: photos.length > 0 ? photos : imageSrc ? [imageSrc] : [],
         status: listing.representation?.status === "pending" ? "pending" : "active",
     };
 }
@@ -187,8 +211,8 @@ export function citiesToLocationListings(cities: PropertyBrowseCity[]): OwnerLis
                 locality: locality.name,
                 city: cityGroup.city,
                 country: "India",
-                amountInr: 0,
-                isRent: false,
+                saleAmountInr: null,
+                rentAmountInr: null,
                 areaSqft: 0,
                 furnishingLabel: "Unfurnished",
                 furnishing: "unfurnished",
@@ -204,6 +228,7 @@ export function citiesToLocationListings(cities: PropertyBrowseCity[]): OwnerLis
                 hasRequested: false,
                 isBookmarked: false,
                 imageSrc: "",
+                imageSrcs: [],
                 status: "active",
                 // Carry API count through for the location tree.
                 detailLabel: String(locality.listingCount),
