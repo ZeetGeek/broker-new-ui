@@ -1,4 +1,4 @@
-import { formatPriceInr } from "@/lib/format/price";
+import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 
 import type {
     OwnerListingFurnishing,
@@ -45,20 +45,28 @@ export function formatTransactionTypeLabel(type: OwnerListingTransactionType | "
     return "Any";
 }
 
-export function formatBudgetLabel(min: string, max: string): string {
+export function formatBudgetLabel(
+    min: string,
+    max: string,
+    kind: OwnerListingTransactionType | "" = "",
+): string {
     const minInr = min ? Number(min) : null;
     const maxInr = max ? Number(max) : null;
+    const format = kind === "rent" ? formatRentInr : formatPriceInr;
+    const stripMo = (value: string) => value.replace(/\/mo$/, "");
 
     if (minInr !== null && !Number.isNaN(minInr) && maxInr !== null && !Number.isNaN(maxInr)) {
-        return `${formatPriceInr(minInr).replace("₹", "")} – ${formatPriceInr(maxInr)}`;
+        const left = stripMo(format(minInr)).replace("₹", "");
+        const right = format(maxInr);
+        return `${left} – ${right}`;
     }
 
     if (maxInr !== null && !Number.isNaN(maxInr)) {
-        return `Under ${formatPriceInr(maxInr)}`;
+        return `Under ${format(maxInr)}`;
     }
 
     if (minInr !== null && !Number.isNaN(minInr)) {
-        return `${formatPriceInr(minInr)}+`;
+        return `${format(minInr)}+`;
     }
 
     return "Any budget";

@@ -145,7 +145,16 @@ export function OwnerListingsSearchBand({
                 <div className="hidden flex-1 p-0.5 min-inline-0 min-inline-32 md:block">
                     <OwnerListingsLookingForMenu
                         value={draft.type}
-                        onValueChange={(type) => updateDraft({ type })}
+                        onValueChange={(type) => {
+                            const budgetNeedsReset =
+                                (draft.type === "rent") !== (type === "rent") &&
+                                (Boolean(draft.min) || Boolean(draft.max));
+                            updateDraft(
+                                budgetNeedsReset
+                                    ? { type, min: "", max: "" }
+                                    : { type },
+                            );
+                        }}
                         className="inline-full"
                     />
                 </div>
@@ -156,6 +165,7 @@ export function OwnerListingsSearchBand({
                     <OwnerListingsBudgetMenu
                         min={draft.min}
                         max={draft.max}
+                        lookingFor={draft.type}
                         onBudgetChange={({ min, max }) => updateDraft({ min, max })}
                         className="inline-full"
                     />
