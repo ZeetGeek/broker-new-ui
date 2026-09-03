@@ -13,17 +13,17 @@ import {
   AnimatePresence,
   MotionConfig,
   motion,
-  Transition,
-  Variants,
+  type Transition,
+  type Variants,
 } from 'motion/react';
-import useClickOutside from '@/hooks/useClickOutside';
+import useClickOutside from '@/components/motion-primitives/useClickOutside';
 import { cn } from '@/lib/utils';
 
 const TRANSITION = {
   type: 'spring',
   bounce: 0.1,
   duration: 0.4,
-};
+} as const satisfies Transition;
 
 type MorphingPopoverContextValue = {
   isOpen: boolean;

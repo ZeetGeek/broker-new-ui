@@ -16,8 +16,7 @@ import { formatActivityDayLabel, formatCompactRelative, formatDateIso } from "@/
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
-import { TextLinkButton } from "@/components/shared/text-link-button";
+import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
@@ -161,7 +160,6 @@ export function ActivityCard({ data, className }: ActivityCardProps) {
     const items = data.items.slice(0, MAX_ACTIVITY_ROWS);
     const sections = groupActivitiesByDay(items, now);
     const isEmpty = items.length === 0;
-    const showFade = items.length >= 4 || (data.remainingCount ?? 0) > 0;
 
     return (
         <section
@@ -188,34 +186,11 @@ export function ActivityCard({ data, className }: ActivityCardProps) {
                           [&::-webkit-scrollbar]:hidden
                         "
                     >
-                        <ul className={cn("flex flex-col gap-4", showFade && "pbe-7")}>
+                        <ul className="flex flex-col gap-4">
                             {sections.map((section) => (
                                 <DaySection key={section.dayKey} section={section} now={now} />
                             ))}
                         </ul>
-                    </div>
-
-                    <div
-                        className="
-                          absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end block-14
-                        "
-                    >
-                        {showFade ? (
-                            <div
-                                aria-hidden
-                                className={`
-                                  pointer-events-none absolute inset-0 bg-linear-to-t from-surface
-                                  from-40% via-surface/90 to-transparent
-                                `}
-                            />
-                        ) : null}
-                        <div className="relative flex justify-center">
-                            <ShortcutTooltip shortcutId="notifications">
-                                <TextLinkButton href="/broker/notifications">
-                                    View all activity
-                                </TextLinkButton>
-                            </ShortcutTooltip>
-                        </div>
                     </div>
                 </div>
             )}

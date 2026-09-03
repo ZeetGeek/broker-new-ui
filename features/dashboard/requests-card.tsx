@@ -3,13 +3,11 @@ import Link from "next/link";
 import { Check, Clock, Send, X } from "lucide-react";
 
 import { formatDateShort } from "@/lib/format/date";
-import { BROKER_OWNER_LISTINGS_HREF, BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
+import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { CardFooterLink } from "@/components/shared/card-footer-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
-import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -21,12 +19,10 @@ import type { RequestRowItem, RequestsData } from "./mock-data";
 const REQUESTS_INFO =
     "Requests you've sent to owners to represent their properties, and where each one stands.";
 
-const MAX_REQUEST_ROWS = 5;
 
 export type RequestsCardProps = {
     data: RequestsData;
     /** Service areas from the broker profile — used in the empty-state CTA. */
-    serviceAreas: string[];
     className?: string;
 };
 
@@ -224,17 +220,14 @@ function EmptyRequests({ className }: { className?: string }) {
     );
 }
 
-export function RequestsCard({ data, serviceAreas, className }: RequestsCardProps) {
+export function RequestsCard({ data, className }: RequestsCardProps) {
     if (totalRequests(data.counts) === 0) {
         return <EmptyRequests className={className} />;
     }
 
-    const rows = data.items.slice(0, MAX_REQUEST_ROWS);
+    const rows = data.items;
     const remainingLabel =
         data.quota.remaining === 1 ? "1 left this week" : `${data.quota.remaining} left this week`;
-    // Name the real total when rows are cut off, so the link says what it opens.
-    const total = totalRequests(data.counts);
-    const viewAllLabel = total > rows.length ? `View all ${total} requests` : "View all requests";
     const quotaHint =
         `You can send ${data.quota.limit} requests a week. ` +
         `${data.quota.used} used, ${data.quota.remaining} left. ` +
@@ -303,7 +296,7 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                 />
             </div>
 
-            <div className="relative mbs-2 flex-1 overflow-hidden min-block-0">
+            <div className="mbs-2 flex-1 overflow-hidden min-block-0">
                 {rows.length > 0 ? (
                     <div
                         className="
@@ -312,7 +305,7 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                           [&::-webkit-scrollbar]:hidden
                         "
                     >
-                        <ul className="flex flex-col gap-1 pbe-3">
+                        <ul className="flex flex-col gap-1">
                             {rows.map((item) => (
                                 <RequestRow key={item.id} item={item} />
                             ))}
@@ -321,25 +314,6 @@ export function RequestsCard({ data, serviceAreas, className }: RequestsCardProp
                 ) : (
                     <p className="body text-ink-muted">No request details to show yet.</p>
                 )}
-
-                {/* Softens the hard clip where a row meets the scroll edge. */}
-                {rows.length > 0 ? (
-                    <div
-                        aria-hidden
-                        className="
-                          pointer-events-none absolute inset-x-0 inset-be-0 bg-linear-to-t
-                          from-surface from-20% to-transparent block-8
-                        "
-                    />
-                ) : null}
-            </div>
-
-            <div className="mbs-3 shrink-0">
-                <ShortcutTooltip shortcutId="your_listings">
-                    <CardFooterLink href={`${BROKER_YOUR_LISTINGS_HREF}?tab=requests`}>
-                        {viewAllLabel}
-                    </CardFooterLink>
-                </ShortcutTooltip>
             </div>
         </section>
     );

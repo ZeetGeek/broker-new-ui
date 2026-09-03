@@ -82,11 +82,19 @@ export function PropertyCardSkeleton({
                         />
                     </div>
 
-                    <div
-                        className="
-                          animate-pulse w-full rounded-control bg-surface-muted block-11
-                        "
-                    />
+                    <div className="flex items-center gap-2">
+                        <div
+                            className="
+                              animate-pulse flex-1 rounded-control bg-surface-muted block-11
+                            "
+                        />
+                        <div
+                            className="
+                              animate-pulse shrink-0 rounded-control bg-surface-muted
+                              block-11 inline-11
+                            "
+                        />
+                    </div>
                 </div>
             </div>
         );

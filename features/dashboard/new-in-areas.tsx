@@ -8,26 +8,23 @@ import { Bookmark, Clock3, MapPin, Users } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
 import { formatAreaSqft } from "@/lib/format/area";
-import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
-import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
+import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
-import { DASHBOARD_CARD_SHELL_AUTO, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
+import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { AreaPropertyItem } from "./mock-data";
-import { TextLinkButton } from "./text-link-button";
 
 const NEW_IN_AREAS_INFO =
     "Fresh listings in the localities you cover — ready to request representation.";
 
 const NEW_BADGE_HOURS = 6;
-const MAX_ROWS = 3;
 
 export type NewInAreasProps = {
     properties: AreaPropertyItem[];
@@ -75,20 +72,18 @@ function PropertyRow({
     isRequesting,
     onToggleBookmark,
     onRequest,
-    className,
 }: {
     property: AreaPropertyItem;
     state: RowState;
     isRequesting: boolean;
     onToggleBookmark: () => void;
     onRequest: () => void;
-    className?: string;
 }) {
     const isNew = property.listedHoursAgo < NEW_BADGE_HOURS;
     const competition = competitionStatus(property.brokerRequestCount);
 
     return (
-        <li className={cn("flex items-center gap-3 sm:gap-4", className)}>
+        <li className="flex items-center gap-3 sm:gap-4">
             <PropertyThumb
                 src={property.imageSrc}
                 alt={`${property.configLabel} in ${property.locality}`}
@@ -205,13 +200,15 @@ function EmptyNewInAreas() {
             heading="Nothing new this week"
             description="We'll show properties added in the areas you work in."
         >
-            <ShortcutKbdMessage shortcutId="owner_listings">to browse owner listings</ShortcutKbdMessage>
+            <ShortcutKbdMessage shortcutId="owner_listings">
+                to browse owner listings
+            </ShortcutKbdMessage>
         </EmptyState>
     );
 }
 
 export function NewInAreas({ properties, serviceAreas, className }: NewInAreasProps) {
-    const rows = properties.slice(0, MAX_ROWS);
+    const rows = properties;
     const isEmpty = rows.length === 0;
     const [rowState, setRowState] = useState<Record<string, RowState>>(() =>
         Object.fromEntries(
@@ -258,10 +255,7 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
 
     return (
         <section
-            className={cn(
-                isEmpty ? DASHBOARD_CARD_SHELL_EMPTY : DASHBOARD_CARD_SHELL_AUTO,
-                className,
-            )}
+            className={cn(isEmpty ? DASHBOARD_CARD_SHELL_EMPTY : DASHBOARD_CARD_SHELL, className)}
             aria-labelledby="new-in-areas-heading"
         >
             <div className="flex shrink-0 items-start justify-between gap-3">
@@ -273,42 +267,38 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
                         <p className="body-sm text-ink-subtle">{serviceAreas.join(" · ")}</p>
                     ) : null}
                 </div>
-                {!isEmpty ? (
-                    <ShortcutTooltip shortcutId="owner_listings">
-                        <TextLinkButton href={BROKER_OWNER_LISTINGS_HREF} className="shrink-0">
-                            Browse all
-                        </TextLinkButton>
-                    </ShortcutTooltip>
-                ) : null}
             </div>
 
             {isEmpty ? (
                 <EmptyNewInAreas />
             ) : (
-                <ul className="mbs-1 flex flex-col">
-                    {rows.map((property, index) => {
-                        const state = rowState[property.id] ?? {
-                            hasRequested: property.hasRequested,
-                            isBookmarked: property.isBookmarked,
-                        };
+                <div
+                    className="
+                      mbs-4 flex-1 scrollbar-none overflow-y-auto overscroll-contain
+                      [-ms-overflow-style:none] min-block-0
+                      [&::-webkit-scrollbar]:hidden
+                    "
+                >
+                    <ul className="flex flex-col gap-4">
+                        {rows.map((property) => {
+                            const state = rowState[property.id] ?? {
+                                hasRequested: property.hasRequested,
+                                isBookmarked: property.isBookmarked,
+                            };
 
-                        return (
-                            <PropertyRow
-                                key={property.id}
-                                property={property}
-                                state={state}
-                                isRequesting={requestingId === property.id}
-                                onToggleBookmark={() => toggleBookmark(property.id)}
-                                onRequest={() => void requestProperty(property.id)}
-                                className={
-                                    index > 0
-                                        ? "mbs-3 border-bs border-border-warm/50 pbs-3"
-                                        : "mbs-4"
-                                }
-                            />
-                        );
-                    })}
-                </ul>
+                            return (
+                                <PropertyRow
+                                    key={property.id}
+                                    property={property}
+                                    state={state}
+                                    isRequesting={requestingId === property.id}
+                                    onToggleBookmark={() => toggleBookmark(property.id)}
+                                    onRequest={() => void requestProperty(property.id)}
+                                />
+                            );
+                        })}
+                    </ul>
+                </div>
             )}
         </section>
     );

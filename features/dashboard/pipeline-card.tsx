@@ -242,10 +242,7 @@ export function PipelineCard({ data, className }: PipelineCardProps) {
 
                 <div className="shrink-0 inline-full">
                     <div
-                        className="
-                          flex flex-col divide-y divide-border-warm/50 border-bs
-                          border-border-warm/50
-                        "
+                        className="flex flex-col"
                     >
                         {showStalled && data.stalled ? <StalledRow stalled={data.stalled} /> : null}
                         <MonthFooter won={data.thisMonth.won} lost={data.thisMonth.lost} />

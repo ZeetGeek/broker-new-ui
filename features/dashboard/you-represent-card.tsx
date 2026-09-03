@@ -3,25 +3,21 @@ import Link from "next/link";
 import { AlertTriangle, KeyRound, MessageCircle, UserRound } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
-import { BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
-import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
+import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { CardLabel } from "./card-label";
-import { DASHBOARD_CARD_SHELL_AUTO, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
+import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { RepresentedPropertyItem, YouRepresentData } from "./mock-data";
-import { TextLinkButton } from "./text-link-button";
 
 const YOU_REPRESENT_INFO =
     "Properties owners have approved you to represent — share them or book a visit before they go stale.";
-
-const MAX_ROWS = 3;
 
 const META_CHIP =
     "inline-flex items-center rounded-control bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-700";
@@ -51,9 +47,7 @@ function activityStatus(property: RepresentedPropertyItem): {
     }
 
     const visitsDone =
-        property.visitCount === 1
-            ? "1 visit done"
-            : `${property.visitCount} visits done`;
+        property.visitCount === 1 ? "1 visit done" : `${property.visitCount} visits done`;
 
     if (property.stageLabel && property.negotiationClientName) {
         return {
@@ -82,17 +76,11 @@ function activityStatus(property: RepresentedPropertyItem): {
     };
 }
 
-function PropertyRow({
-    property,
-    className,
-}: {
-    property: RepresentedPropertyItem;
-    className?: string;
-}) {
+function PropertyRow({ property }: { property: RepresentedPropertyItem }) {
     const activity = activityStatus(property);
 
     return (
-        <li className={cn("flex items-center gap-3 sm:gap-4", className)}>
+        <li className="flex items-center gap-3 sm:gap-4">
             <PropertyThumb
                 src={property.imageSrc}
                 alt={`${property.configLabel} in ${property.locality}`}
@@ -134,21 +122,12 @@ function PropertyRow({
                         <span className={META_CHIP}>{formatAreaSqft(property.areaSqft)}</span>
                         <span className={META_CHIP}>{property.furnishingLabel}</span>
                         <span className={cn(META_CHIP, "hidden gap-1 sm:inline-flex")}>
-                            <UserRound
-                                aria-hidden
-                                className="block-3 inline-3"
-                                strokeWidth={2}
-                            />
+                            <UserRound aria-hidden className="block-3 inline-3" strokeWidth={2} />
                             {property.ownerFirstName}
                         </span>
                     </div>
 
-                    <p
-                        className={cn(
-                            "body-sm flex items-start gap-1.5",
-                            activity.className,
-                        )}
-                    >
+                    <p className={cn("body-sm flex items-start gap-1.5", activity.className)}>
                         {activity.showWarning ? (
                             <AlertTriangle
                                 aria-hidden
@@ -204,49 +183,46 @@ function EmptyYouRepresent() {
             heading="Not representing any properties yet"
             description="Once an owner approves your request, the property appears here."
         >
-            <ShortcutKbdMessage shortcutId="owner_listings">to browse owner listings</ShortcutKbdMessage>
+            <ShortcutKbdMessage shortcutId="owner_listings">
+                to browse owner listings
+            </ShortcutKbdMessage>
         </EmptyState>
     );
 }
 
 export function YouRepresentCard({ data, className }: YouRepresentCardProps) {
     const { totalCount, properties } = data;
-    const rows = properties.slice(0, MAX_ROWS);
+    const rows = properties;
     const isEmpty = totalCount === 0 || properties.length === 0;
     const heading = isEmpty ? "You represent" : `You represent · ${totalCount}`;
 
     return (
         <section
-            className={cn(isEmpty ? DASHBOARD_CARD_SHELL_EMPTY : DASHBOARD_CARD_SHELL_AUTO, className)}
+            className={cn(isEmpty ? DASHBOARD_CARD_SHELL_EMPTY : DASHBOARD_CARD_SHELL, className)}
             aria-labelledby={isEmpty ? "you-represent-empty-heading" : "you-represent-heading"}
         >
             <div className="flex shrink-0 items-center justify-between gap-3">
                 <CardLabel info={YOU_REPRESENT_INFO}>
                     <span id="you-represent-heading">{heading}</span>
                 </CardLabel>
-                {!isEmpty ? (
-                    <ShortcutTooltip shortcutId="your_listings">
-                        <TextLinkButton href={BROKER_YOUR_LISTINGS_HREF}>View all</TextLinkButton>
-                    </ShortcutTooltip>
-                ) : null}
             </div>
 
             {isEmpty ? (
                 <EmptyYouRepresent />
             ) : (
-                <ul className="mbs-1 flex flex-col">
-                    {rows.map((property, index) => (
-                        <PropertyRow
-                            key={property.id}
-                            property={property}
-                            className={
-                                index > 0
-                                    ? "mbs-3 border-bs border-border-warm/50 pbs-3"
-                                    : "mbs-4"
-                            }
-                        />
-                    ))}
-                </ul>
+                <div
+                    className="
+                      mbs-4 flex-1 scrollbar-none overflow-y-auto overscroll-contain
+                      [-ms-overflow-style:none] min-block-0
+                      [&::-webkit-scrollbar]:hidden
+                    "
+                >
+                    <ul className="flex flex-col gap-4">
+                        {rows.map((property) => (
+                            <PropertyRow key={property.id} property={property} />
+                        ))}
+                    </ul>
+                </div>
             )}
         </section>
     );

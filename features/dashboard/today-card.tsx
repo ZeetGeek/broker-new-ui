@@ -4,7 +4,6 @@ import { formatDateIso, formatDateShort, formatTimeIn } from "@/lib/format/date"
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { CardLabel } from "./card-label";
@@ -31,23 +30,18 @@ function sortByTime(items: TodayItem[]): TodayItem[] {
 function buildTimeline(items: TodayItem[], nowLabel: string) {
     const entries: Array<
         | { type: "now"; key: string; label: string }
-        | { type: "item"; key: string; item: TodayItem; showDivider: boolean }
+        | { type: "item"; key: string; item: TodayItem }
     > = [];
     let nowPlaced = false;
 
-    items.forEach((item, index) => {
+    items.forEach((item) => {
         const shouldPlaceNow = !nowPlaced && item.state !== "done";
         if (shouldPlaceNow) {
             entries.push({ type: "now", key: "now", label: nowLabel });
             nowPlaced = true;
         }
 
-        entries.push({
-            type: "item",
-            key: item.id,
-            item,
-            showDivider: index > 0 && !shouldPlaceNow,
-        });
+        entries.push({ type: "item", key: item.id, item });
     });
 
     return entries;
@@ -92,7 +86,6 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
     const sorted = sortByTime(agenda.items);
     const scrollItems = sorted.slice(0, MAX_SCROLL_ROWS);
     const timeline = buildTimeline(scrollItems, nowLabel);
-    const showFade = scrollItems.length > 3;
 
     return (
         <section
@@ -134,11 +127,7 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
             </div>
 
             <div className="relative mbs-2 flex-1 min-block-0">
-                <TodayTimeline
-                    timeline={timeline}
-                    doneCount={agenda.doneCount}
-                    showFade={showFade}
-                />
+                <TodayTimeline timeline={timeline} doneCount={agenda.doneCount} />
 
                 {agenda.doneCount > 0 ? (
                     <div
@@ -149,27 +138,6 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                         `}
                     />
                 ) : null}
-
-                <div
-                    className="
-                      absolute inset-x-0 -inset-be-4 z-10 flex flex-col justify-end block-14
-                    "
-                >
-                    {showFade ? (
-                        <div
-                            aria-hidden
-                            className={`
-                              pointer-events-none absolute inset-0 bg-linear-to-t from-surface
-                              from-40% via-surface/90 to-transparent
-                            `}
-                        />
-                    ) : null}
-                    <div className="relative flex justify-center">
-                        <ShortcutTooltip shortcutId="visits">
-                            <TextLinkButton href="/broker/visits">View all visits</TextLinkButton>
-                        </ShortcutTooltip>
-                    </div>
-                </div>
             </div>
         </section>
     );

@@ -17,20 +17,19 @@ import {
 } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
-import {
-    formatRepresentationExpiry,
-    formatRepresentedSince,
-} from "@/lib/format/representation";
+import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
+import { PropertySharePopover } from "@/components/shared/property-share-popover";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted";
 const PROPERTY_CARD_PHOTO_GRID_CLASS = "h-40 w-full";
@@ -52,6 +51,12 @@ const BROWSE_REQUEST_LABEL = "Send request";
 const BROWSE_REQUEST_PENDING_LABEL = "Sending…";
 const BROWSE_REQUEST_SENT_LABEL = "Request sent";
 
+const BROWSE_REQUEST_TOOLTIP = {
+    idle: "Ask the owner for permission to represent this property",
+    pending: "Sending your request to the owner…",
+    sent: "Waiting for the owner to approve. You'll hear back once they respond.",
+} as const;
+
 function BrowseRequestAction({
     hasRequested,
     isRequestPending,
@@ -61,37 +66,57 @@ function BrowseRequestAction({
     isRequestPending: boolean;
     onRequest?: () => void;
 }) {
-    if (hasRequested) {
-        return (
-            <div
-                role="status"
-                className="
-                  flex w-full items-center justify-center gap-2 rounded-control border
-                  border-brand/20 bg-brand-soft px-4 block-control-lg body-sm font-semibold
-                  text-brand-text
-                "
-            >
-                <CircleCheck
-                    aria-hidden
-                    className="block-4 inline-4 shrink-0 text-brand"
-                    strokeWidth={1.75}
-                />
-                {BROWSE_REQUEST_SENT_LABEL}
-            </div>
-        );
-    }
+    const tooltip = hasRequested
+        ? BROWSE_REQUEST_TOOLTIP.sent
+        : isRequestPending
+          ? BROWSE_REQUEST_TOOLTIP.pending
+          : BROWSE_REQUEST_TOOLTIP.idle;
 
-    return (
+    const sentStatus = (
+        <div
+            role="status"
+            className="
+              body-sm flex items-center justify-center gap-2 rounded-control border-2 border-brand
+              bg-brand-soft px-4 font-semibold text-brand-text block-control-lg inline-full
+            "
+        >
+            <CircleCheck
+                aria-hidden
+                className="shrink-0 text-brand-text block-4 inline-4"
+                strokeWidth={2}
+            />
+            {BROWSE_REQUEST_SENT_LABEL}
+        </div>
+    );
+
+    const requestButton = (
         <Button
             type="button"
             size="md"
             variant="accent"
-            className="w-full"
+            className="inline-full"
             disabled={isRequestPending}
             onClick={onRequest}
         >
             {isRequestPending ? BROWSE_REQUEST_PENDING_LABEL : BROWSE_REQUEST_LABEL}
         </Button>
+    );
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <span className="inline-flex inline-full">
+                            {hasRequested ? sentStatus : requestButton}
+                        </span>
+                    }
+                />
+                <TooltipContent side="top" className="text-center max-inline-xs">
+                    {tooltip}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
     );
 }
 
@@ -163,13 +188,17 @@ function formatBathLabel(bhk: number): string {
 }
 
 function BrowseSpecDivider() {
-    return <span aria-hidden className="text-ink-subtle/70">|</span>;
+    return (
+        <span aria-hidden className="text-ink-subtle/70">
+            |
+        </span>
+    );
 }
 
 function BrowseSpecItem({ icon: Icon, label }: { icon: typeof Maximize2; label: string }) {
     return (
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-            <Icon aria-hidden className="block-3.5 inline-3.5 shrink-0" strokeWidth={1.75} />
+            <Icon aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
             {label}
         </span>
     );
@@ -206,48 +235,63 @@ function BrowsePropertyCardPhoto({
                         : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
                 )}
             >
-            {listing.imageSrc ? (
-                <AppImage
-                    src={listing.imageSrc}
-                    alt={alt}
-                    fill
-                    sizes={imageSizes}
-                    priority={priority}
-                    className="object-cover transition-transform duration-160 group-hover:scale-[1.02]"
-                />
-            ) : (
-                <div className="flex block-full inline-full flex-col items-center justify-center gap-2 px-4 text-center">
-                    <Building2
-                        aria-hidden
-                        className="block-8 inline-8 text-ink-subtle"
-                        strokeWidth={1.5}
+                {listing.imageSrc ? (
+                    <AppImage
+                        src={listing.imageSrc}
+                        alt={alt}
+                        fill
+                        sizes={imageSizes}
+                        priority={priority}
+                        className="
+                          object-cover transition-transform duration-160
+                          group-hover:scale-[1.02]
+                        "
                     />
-                    <p className="body-xs text-ink-subtle">No photos yet</p>
-                </div>
-            )}
-
-            {listing.isNew ? (
-                <Badge className="absolute top-3 end-3 border-0 bg-surface body-xs font-semibold text-ink shadow-xs">
-                    New
-                </Badge>
-            ) : null}
-
-            {listing.photoCount > 1 ? (
-                <div
-                    className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-1.5"
-                    aria-hidden
-                >
-                    {Array.from({ length: dotCount }).map((_, index) => (
-                        <span
-                            key={index}
-                            className={cn(
-                                "h-1.5 rounded-full bg-surface/90",
-                                index === 0 ? "inline-4 opacity-100" : "inline-1.5 opacity-60",
-                            )}
+                ) : (
+                    <div
+                        className="
+                          flex flex-col items-center justify-center gap-2 px-4 text-center
+                          block-full inline-full
+                        "
+                    >
+                        <Building2
+                            aria-hidden
+                            className="text-ink-subtle block-8 inline-8"
+                            strokeWidth={1.5}
                         />
-                    ))}
-                </div>
-            ) : null}
+                        <p className="body-xs text-ink-subtle">No photos yet</p>
+                    </div>
+                )}
+
+                {listing.isNew ? (
+                    <Badge
+                        className="
+                          body-xs absolute inset-e-3 inset-bs-3 border-0 bg-surface font-semibold
+                          text-ink shadow-xs
+                        "
+                    >
+                        New
+                    </Badge>
+                ) : null}
+
+                {listing.photoCount > 1 ? (
+                    <div
+                        className="
+                          absolute inset-x-0 inset-be-3 flex items-center justify-center gap-1.5
+                        "
+                        aria-hidden
+                    >
+                        {Array.from({ length: dotCount }).map((_, index) => (
+                            <span
+                                key={index}
+                                className={cn(
+                                    "rounded-full bg-surface/90 block-1.5",
+                                    index === 0 ? "opacity-100 inline-4" : "opacity-60 inline-1.5",
+                                )}
+                            />
+                        ))}
+                    </div>
+                ) : null}
             </div>
         </div>
     );
@@ -290,12 +334,12 @@ function BrowsePropertyCard({
     return (
         <article
             className={cn(
-                "flex min-w-0",
+                "flex min-inline-0",
                 isListView ? "flex-row items-start gap-4" : "flex-col gap-3",
                 className,
             )}
         >
-            <Link href={detailsHref} prefetch={false} className="group block min-w-0 shrink-0">
+            <Link href={detailsHref} prefetch={false} className="group block shrink-0 min-inline-0">
                 <BrowsePropertyCardPhoto
                     listing={listing}
                     priority={priority}
@@ -304,18 +348,18 @@ function BrowsePropertyCard({
                 />
             </Link>
 
-            <div className="flex min-w-0 flex-1 flex-col gap-2.5 px-2">
+            <div className="flex flex-1 flex-col gap-2.5 px-2 min-inline-0">
                 <Link
                     href={detailsHref}
                     prefetch={false}
-                    className="flex min-w-0 flex-col gap-2.5"
+                    className="flex flex-col gap-2.5 min-inline-0"
                 >
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <h3 className="truncate body font-semibold text-ink">{listing.title}</h3>
-                        <p className="body-sm flex min-w-0 items-center gap-1.5 text-ink-muted">
+                    <div className="flex flex-col gap-1.5 min-inline-0">
+                        <h3 className="body truncate font-semibold text-ink">{listing.title}</h3>
+                        <p className="body-sm flex items-center gap-1.5 text-ink-muted min-inline-0">
                             <MapPin
                                 aria-hidden
-                                className="block-3.5 inline-3.5 shrink-0"
+                                className="shrink-0 block-3.5 inline-3.5"
                                 strokeWidth={1.75}
                             />
                             <span className="truncate">
@@ -328,17 +372,32 @@ function BrowsePropertyCard({
                 </Link>
 
                 <div className="flex items-baseline gap-1.5">
-                    <span className="truncate h5 font-semibold tabular-nums text-ink">{priceLabel}</span>
-                    <span className="shrink-0 body-sm font-medium text-brand">
+                    <span className="h5 truncate font-semibold text-ink tabular-nums">
+                        {priceLabel}
+                    </span>
+                    <span className="body-sm shrink-0 font-medium text-brand">
                         ({listing.commissionPercent}%)
                     </span>
                 </div>
 
-                <BrowseRequestAction
-                    hasRequested={listing.hasRequested}
-                    isRequestPending={isRequestPending}
-                    onRequest={onRequest}
-                />
+                <div className="flex items-center gap-2">
+                    <div className="min-inline-0 flex-1">
+                        <BrowseRequestAction
+                            hasRequested={listing.hasRequested}
+                            isRequestPending={isRequestPending}
+                            onRequest={onRequest}
+                        />
+                    </div>
+                    <PropertySharePopover
+                        listing={{
+                            id: listing.id,
+                            title: listing.title,
+                            locality: listing.locality,
+                            city: listing.city,
+                            priceLabel,
+                        }}
+                    />
+                </div>
             </div>
         </article>
     );
@@ -379,13 +438,21 @@ function PropertyCardPhoto({
                     fill
                     sizes={imageSizes}
                     priority={priority}
-                    className="object-cover transition-transform duration-160 group-hover:scale-[1.02]"
+                    className="
+                      object-cover transition-transform duration-160
+                      group-hover:scale-[1.02]
+                    "
                 />
             ) : (
-                <div className="flex block-full inline-full flex-col items-center justify-center gap-2 px-4 text-center">
+                <div
+                    className="
+                      flex flex-col items-center justify-center gap-2 px-4 text-center block-full
+                      inline-full
+                    "
+                >
                     <Building2
                         aria-hidden
-                        className="block-8 inline-8 text-ink-subtle"
+                        className="text-ink-subtle block-8 inline-8"
                         strokeWidth={1.5}
                     />
                     <p className="body-xs text-ink-subtle">No photos yet</p>
@@ -428,9 +495,9 @@ function PropertyCardOwnerBlock({
 
     return (
         <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-inline-0">
                 <UserAvatar name={owner.name} imageUrl={owner.avatarUrl} size="sm" />
-                <div className="min-w-0">
+                <div className="min-inline-0">
                     <p className="body-sm font-medium text-ink">{owner.name}</p>
                     <PhoneNumber
                         phoneDigits={owner.phoneDigits}
@@ -483,17 +550,21 @@ function RepresentedMeta({ listing }: { listing: RepresentedPropertyCardListing 
                         : "bg-surface-muted text-ink-muted",
                 )}
             >
-                <Clock aria-hidden className="block-3.5 inline-3.5 shrink-0" strokeWidth={1.75} />
+                <Clock aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
                 <p className={cn("body-xs", expiry.isUrgent && "font-medium")}>{expiry.label}</p>
             </div>
 
             <p className="body-xs flex items-center gap-1.5 text-ink-muted">
-                <Users aria-hidden className="block-3.5 inline-3.5 shrink-0" strokeWidth={1.75} />
+                <Users aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
                 {sharedLabel}
             </p>
 
             <p className="body-xs flex items-center gap-1.5 text-ink-muted">
-                <Calendar aria-hidden className="block-3.5 inline-3.5 shrink-0" strokeWidth={1.75} />
+                <Calendar
+                    aria-hidden
+                    className="shrink-0 block-3.5 inline-3.5"
+                    strokeWidth={1.75}
+                />
                 {visitLabel} · {clientLabel}
             </p>
         </div>
@@ -522,7 +593,7 @@ function RepresentedPropertyCard({
             )}
         >
             <div className="flex items-center gap-2 bg-brand-deep px-3 py-2 text-surface">
-                <CircleCheck aria-hidden className="block-4 inline-4 shrink-0" strokeWidth={1.75} />
+                <CircleCheck aria-hidden className="shrink-0 block-4 inline-4" strokeWidth={1.75} />
                 <p className="body-xs font-medium">
                     {formatRepresentedSince(listing.representedSince)}
                 </p>
@@ -550,7 +621,7 @@ function RepresentedPropertyCard({
                     <p className="body-xs flex items-start gap-1.5 text-ink-muted">
                         <MapPin
                             aria-hidden
-                            className="mt-0.5 block-3.5 inline-3.5 shrink-0"
+                            className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
                             strokeWidth={1.75}
                         />
                         <span>{listing.fullAddress}</span>
@@ -561,7 +632,7 @@ function RepresentedPropertyCard({
 
                 <RepresentedMeta listing={listing} />
 
-                <div className="mt-auto flex gap-2 pbs-1">
+                <div className="mbs-auto flex gap-2 pbs-1">
                     <Button
                         type="button"
                         variant="outline"

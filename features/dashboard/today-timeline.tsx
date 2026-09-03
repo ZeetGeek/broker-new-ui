@@ -20,7 +20,7 @@ const SCROLL_HIDE = `
 
 export type TimelineEntry =
     | { type: "now"; key: string; label: string }
-    | { type: "item"; key: string; item: TodayItem; showDivider: boolean };
+    | { type: "item"; key: string; item: TodayItem };
 
 /** How much of the completed stack peeks above the Now marker. */
 const COMPLETED_PEEK_PX = 52;
@@ -74,14 +74,14 @@ function rowHint(item: TodayItem): string {
     return `Coming up later today. Open this ${what} for directions and client details.`;
 }
 
-function TimelineRow({ item, showDivider }: { item: TodayItem; showDivider: boolean }) {
+function TimelineRow({ item }: { item: TodayItem }) {
     const isDone = item.state === "done";
     const isNext = Boolean(item.isNext) && !isDone;
     const isBlocked = item.state === "blocked";
     const hint = rowHint(item);
 
     return (
-        <li className={cn(showDivider && "border-bs border-border-warm/50")}>
+        <li>
             <Tooltip>
                 <TooltipTrigger
                     render={
@@ -184,10 +184,9 @@ function NowMarker({
 export type TodayTimelineProps = {
     timeline: TimelineEntry[];
     doneCount: number;
-    showFade: boolean;
 };
 
-export function TodayTimeline({ timeline, doneCount, showFade }: TodayTimelineProps) {
+export function TodayTimeline({ timeline, doneCount }: TodayTimelineProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const nowRef = useRef<HTMLLIElement>(null);
 
@@ -208,17 +207,13 @@ export function TodayTimeline({ timeline, doneCount, showFade }: TodayTimelinePr
 
     return (
         <div ref={scrollRef} className={cn("absolute inset-0", SCROLL_HIDE)}>
-            <ul className={cn("flex flex-col", showFade && "pbe-7")}>
+            <ul className="flex flex-col">
                 {timeline.map((entry) => {
                     if (entry.type === "now") {
                         return <NowMarker key={entry.key} label={entry.label} markerRef={nowRef} />;
                     }
                     return (
-                        <TimelineRow
-                            key={entry.key}
-                            item={entry.item}
-                            showDivider={entry.showDivider}
-                        />
+                        <TimelineRow key={entry.key} item={entry.item} />
                     );
                 })}
             </ul>

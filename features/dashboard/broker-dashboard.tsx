@@ -92,20 +92,18 @@ export function BrokerDashboard() {
             </header>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-5">
-                <NextShowingCard showing={view.nextShowing} now={now} className="md:col-span-5" />
-                <div className="grid grid-cols-1 gap-4 md:col-span-7 md:grid-cols-2 md:gap-5">
-                    <TodayCard agenda={view.today} now={now} />
-                    <RequestsCard data={view.requests} serviceAreas={view.serviceAreas} />
-                </div>
-                <div className="grid grid-cols-1 gap-4 md:col-span-7 md:grid-cols-2 md:gap-5">
-                    <PipelineCard data={view.pipelineCard} />
-                    <FollowUpsCard data={view.followUps} />
-                </div>
-                <ActivityCard data={view.activity} className="md:col-span-5" />
-                <div className="grid grid-cols-1 gap-4 md:col-span-12 md:grid-cols-2 md:gap-5">
-                    <YouRepresentCard data={view.youRepresent} />
-                    <NewInAreas properties={view.newInAreas} serviceAreas={view.serviceAreas} />
-                </div>
+                <NextShowingCard showing={view.nextShowing} now={now} className="md:col-span-4" />
+                <TodayCard agenda={view.today} now={now} className="md:col-span-4" />
+                <RequestsCard data={view.requests} className="md:col-span-4" />
+                <PipelineCard data={view.pipelineCard} className="md:col-span-4" />
+                <FollowUpsCard data={view.followUps} className="md:col-span-4" />
+                <ActivityCard data={view.activity} className="md:col-span-4" />
+                <YouRepresentCard data={view.youRepresent} className="md:col-span-6" />
+                <NewInAreas
+                    properties={view.newInAreas}
+                    serviceAreas={view.serviceAreas}
+                    className="md:col-span-6"
+                />
             </div>
         </div>
     );

@@ -11,13 +11,12 @@ import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { ShortcutKbdMessage, ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
+import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
 import { Badge } from "@/components/ui/badge";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { FollowUp, FollowUpDue, FollowUpsData } from "./mock-data";
-import { TextLinkButton } from "./text-link-button";
 
 const FOLLOW_UPS_INFO =
     "Untimed tasks to chase — tick them done here, or jump straight into WhatsApp.";
@@ -208,7 +207,6 @@ export function FollowUpsCard({
 
     const overdueCount = items.filter((item) => item.due === "overdue").length;
     const isEmpty = items.length === 0;
-    const showFade = items.length >= 3 || data.remainingThisWeek > 0;
 
     function restoreItem(id: string) {
         const removed = removedRef.current.get(id);
@@ -306,10 +304,7 @@ export function FollowUpsCard({
                         "
                     >
                         <motion.ul
-                            className={cn(
-                                "flex flex-col divide-y divide-border-warm/50",
-                                showFade && "pbe-7",
-                            )}
+                            className="flex flex-col"
                             initial="hidden"
                             animate="visible"
                             variants={listVariants}
@@ -325,29 +320,6 @@ export function FollowUpsCard({
                                 ))}
                             </AnimatePresence>
                         </motion.ul>
-                    </div>
-
-                    <div
-                        className="
-                          absolute inset-x-0 -inset-be-4 z-10 flex flex-col justify-end block-14
-                        "
-                    >
-                        {showFade ? (
-                            <div
-                                aria-hidden
-                                className={`
-                                  pointer-events-none absolute inset-0 bg-linear-to-t from-surface
-                                  from-40% via-surface/90 to-transparent
-                                `}
-                            />
-                        ) : null}
-                        <div className="relative flex justify-center">
-                            <ShortcutTooltip shortcutId="clients" label="Clients">
-                                <TextLinkButton href="/broker/clients?filter=followups">
-                                    View all follow-ups
-                                </TextLinkButton>
-                            </ShortcutTooltip>
-                        </div>
                     </div>
                 </div>
             )}
