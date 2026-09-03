@@ -1,4 +1,10 @@
-import { clearSession, getAccessToken } from "@/lib/auth/session";
+import axios, {
+    AxiosHeaders,
+    type AxiosRequestConfig,
+    type InternalAxiosRequestConfig,
+} from "axios";
+
+import { type AuthUser, clearSession, getAccessToken, setSession } from "@/lib/auth/session";
 
 import { API_URL } from "@/config";
 
@@ -17,6 +23,17 @@ export class ApiError extends Error {
 type ApiOptions = RequestInit & {
     token?: string | null;
     skipAuth?: boolean;
+};
+
+type RetryConfig = InternalAxiosRequestConfig & {
+    skipAuth?: boolean;
+    _retry?: boolean;
+};
+
+type RefreshResponse = {
+    user: AuthUser;
+    accessToken: string;
+    tokenType?: string;
 };
 
 /** Unwrap NestJS / gateway error payloads into a readable string. */
@@ -39,51 +56,183 @@ function extractErrorMessage(data: unknown, fallback: string): string {
     return fallback;
 }
 
-export async function apiFetch<T = unknown>(path: string, options: ApiOptions = {}): Promise<T> {
-    const { token, skipAuth, headers, credentials, ...rest } = options;
-    const accessToken = skipAuth ? null : (token ?? getAccessToken());
-    const isFormData = typeof FormData !== "undefined" && rest.body instanceof FormData;
+function toApiError(error: unknown): ApiError {
+    if (error instanceof ApiError) return error;
 
-    const url = `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
+    if (axios.isAxiosError(error)) {
+        if (!error.response) {
+            return new ApiError(
+                `Unable to reach the server at ${API_URL}. Please check your connection and try again.`,
+                0,
+                error.message,
+            );
+        }
 
-    let res: Response;
-    try {
-        res = await fetch(url, {
-            ...rest,
-            credentials: credentials ?? "same-origin",
-            headers: {
-                ...(isFormData ? {} : { "Content-Type": "application/json" }),
-                ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-                ...headers,
-            },
-            cache: "no-store",
-        });
-    } catch (err) {
-        throw new ApiError(
-            `Unable to reach the server at ${API_URL}. Please check your connection and try again.`,
-            0,
-            err instanceof Error ? err.message : err,
-        );
+        const data = error.response.data;
+        const message = extractErrorMessage(data, error.response.statusText || "Request failed");
+        return new ApiError(message, error.response.status, data);
     }
 
-    const text = await res.text();
-    let data: unknown = null;
-    if (text) {
+    return new ApiError(error instanceof Error ? error.message : "Request failed", 0, error);
+}
+
+function forceLogout() {
+    clearSession();
+    if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("broker:unauthorized"));
+    }
+}
+
+function notifyTokenRefreshed(accessToken: string, user: AuthUser) {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+        new CustomEvent("broker:token-refreshed", {
+            detail: { accessToken, user },
+        }),
+    );
+}
+
+function isAuthRefreshPath(url?: string): boolean {
+    if (!url) return false;
+    return (
+        url.includes("/auth/refresh") ||
+        url.includes("/auth/login") ||
+        url.includes("/auth/logout") ||
+        url.includes("/auth/register")
+    );
+}
+
+/** Bare client for token refresh — no response interceptor (avoids recursion). */
+const refreshClient = axios.create({
+    baseURL: API_URL,
+    withCredentials: true,
+    headers: { "Content-Type": "application/json" },
+});
+
+let refreshPromise: Promise<string> | null = null;
+
+/**
+ * Rotate access token using the httpOnly refresh cookie (`withCredentials`).
+ * Logs out only when the refresh cookie is missing/expired/revoked.
+ */
+async function refreshAccessToken(): Promise<string> {
+    if (!refreshPromise) {
+        refreshPromise = refreshClient
+            .post<RefreshResponse>("/auth/refresh", {})
+            .then((res) => {
+                const { accessToken, user } = res.data;
+                if (!accessToken || !user) {
+                    throw new ApiError("Refresh response missing tokens", 401, res.data);
+                }
+                setSession({ accessToken, user });
+                notifyTokenRefreshed(accessToken, user);
+                return accessToken;
+            })
+            .catch((error) => {
+                forceLogout();
+                throw toApiError(error);
+            })
+            .finally(() => {
+                refreshPromise = null;
+            });
+    }
+
+    return refreshPromise;
+}
+
+export const api = axios.create({
+    baseURL: API_URL,
+    withCredentials: true,
+});
+
+api.interceptors.request.use((config: RetryConfig) => {
+    const headers = AxiosHeaders.from(config.headers);
+
+    if (!(config.data instanceof FormData) && !headers.has("Content-Type")) {
+        headers.set("Content-Type", "application/json");
+    }
+
+    if (!config.skipAuth && !headers.has("Authorization")) {
+        const accessToken = getAccessToken();
+        if (accessToken) {
+            headers.set("Authorization", `Bearer ${accessToken}`);
+        }
+    }
+
+    config.headers = headers;
+    return config;
+});
+
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const original = error.config as RetryConfig | undefined;
+        const status = error.response?.status;
+
+        const shouldAttemptRefresh =
+            status === 401 &&
+            Boolean(original) &&
+            !original!._retry &&
+            !original!.skipAuth &&
+            !isAuthRefreshPath(original!.url);
+
+        if (!shouldAttemptRefresh) {
+            return Promise.reject(toApiError(error));
+        }
+
+        original!._retry = true;
+
         try {
-            data = JSON.parse(text);
-        } catch {
-            data = text;
+            const accessToken = await refreshAccessToken();
+            const headers = AxiosHeaders.from(original!.headers);
+            headers.set("Authorization", `Bearer ${accessToken}`);
+            original!.headers = headers;
+            return api.request(original!);
+        } catch (refreshError) {
+            return Promise.reject(toApiError(refreshError));
         }
+    },
+);
+
+/**
+ * Drop-in fetch-style helper used across the app.
+ * Backed by axios so expired access tokens are refreshed via interceptor.
+ */
+export async function apiFetch<T = unknown>(path: string, options: ApiOptions = {}): Promise<T> {
+    const { token, skipAuth, headers, body, method, signal } = options;
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+
+    const axiosHeaders: Record<string, string> = {};
+    if (headers) {
+        const list = new Headers(headers);
+        list.forEach((value, key) => {
+            axiosHeaders[key] = value;
+        });
     }
 
-    if (!res.ok) {
-        if (res.status === 401 && typeof window !== "undefined") {
-            clearSession();
-            window.dispatchEvent(new CustomEvent("broker:unauthorized"));
-        }
-        const message = extractErrorMessage(data, res.statusText || "Request failed");
-        throw new ApiError(message, res.status, data);
+    if (token) {
+        axiosHeaders.Authorization = `Bearer ${token}`;
     }
 
-    return data as T;
+    if (isFormData) {
+        delete axiosHeaders["Content-Type"];
+        delete axiosHeaders["content-type"];
+    }
+
+    const config: AxiosRequestConfig & { skipAuth?: boolean } = {
+        url: path.startsWith("/") ? path : `/${path}`,
+        method: (method ?? "GET") as AxiosRequestConfig["method"],
+        data: body,
+        ...(signal ? { signal } : {}),
+        skipAuth: Boolean(skipAuth),
+        headers: axiosHeaders,
+        withCredentials: true,
+    };
+
+    try {
+        const response = await api.request<T>(config);
+        return response.data;
+    } catch (error) {
+        throw toApiError(error);
+    }
 }
