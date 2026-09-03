@@ -122,6 +122,16 @@
     --tt-out-ease: ease-out;
     --tt-bg: var(--color-surface);
     --tt-fg: var(--color-ink);
+    /* Modal open / close — transitions.dev 06-modal */
+    --duration-quick: 150ms;
+    --scale-large: 0.96;
+    --modal-open-dur: var(--duration-fast);
+    --modal-close-dur: var(--duration-quick);
+    --modal-scale: var(--scale-large);
+    --modal-scale-close: var(--scale-large);
+    --modal-ease: var(--ease-smooth-out);
+    --modal-backdrop-open-dur: var(--modal-open-dur);
+    --modal-backdrop-close-dur: var(--modal-close-dur);
     /* Menu dropdown — transitions.dev 05-menu-dropdown */
     --dropdown-open-dur: 220ms;
     --dropdown-close-dur: 130ms;
@@ -859,6 +869,76 @@
 
 @media (prefers-reduced-motion: reduce) {
     .t-tooltip {
+        transition: none !important;
+    }
+}
+
+/* --- 06 modal open / close ---
+   Centered scale + opacity. Open 250ms / close 150ms (asymmetric).
+   Uses the `scale` property (not transform) so it does not clobber
+   the popup's centering translate or sheet positioning overrides.
+   Base UI drives enter/exit via data-starting-style / data-ending-style. */
+
+.t-modal {
+    transform-origin: center;
+    opacity: 1;
+    scale: 1;
+    transition:
+        scale var(--modal-open-dur) var(--modal-ease),
+        opacity var(--modal-open-dur) var(--modal-ease);
+    will-change: scale, opacity;
+}
+
+.t-modal[data-starting-style],
+.t-modal[data-ending-style],
+.t-modal[data-closed] {
+    opacity: 0;
+    scale: var(--modal-scale);
+}
+
+.t-modal[data-ending-style] {
+    scale: var(--modal-scale-close);
+    transition:
+        scale var(--modal-close-dur) var(--modal-ease),
+        opacity var(--modal-close-dur) var(--modal-ease);
+}
+
+@starting-style {
+    .t-modal[data-open] {
+        opacity: 0;
+        scale: var(--modal-scale);
+    }
+}
+
+.t-modal[data-instant] {
+    transition: none;
+}
+
+.t-modal-backdrop {
+    opacity: 1;
+    transition: opacity var(--modal-backdrop-open-dur) var(--modal-ease);
+    will-change: opacity;
+}
+
+.t-modal-backdrop[data-starting-style],
+.t-modal-backdrop[data-ending-style],
+.t-modal-backdrop[data-closed] {
+    opacity: 0;
+}
+
+.t-modal-backdrop[data-ending-style] {
+    transition-duration: var(--modal-backdrop-close-dur);
+}
+
+@starting-style {
+    .t-modal-backdrop[data-open] {
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-modal,
+    .t-modal-backdrop {
         transition: none !important;
     }
 }

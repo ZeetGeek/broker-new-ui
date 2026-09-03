@@ -42,3 +42,11 @@ export function buildEmailShareUrl(url: string, text: string): string {
     const body = encodeURIComponent(`${text}\n\n${url}`);
     return `mailto:?subject=${subject}&body=${body}`;
 }
+
+export function buildSkypeShareUrl(url: string, text: string): string {
+    return `https://web.skype.com/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+}
+
+export function buildPinterestShareUrl(url: string, text: string): string {
+    return `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`;
+}
