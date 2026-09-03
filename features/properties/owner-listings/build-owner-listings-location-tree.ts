@@ -57,21 +57,16 @@ function resolveListingRegion(item: OwnerListingItem) {
     };
 }
 
-function sortByLabel<T extends { locality?: string; city?: string; state?: string; country?: string }>(
-    left: T,
-    right: T,
-    key: keyof T,
-) {
+function sortByLabel<
+    T extends { locality?: string; city?: string; state?: string; country?: string },
+>(left: T, right: T, key: keyof T) {
     return String(left[key]).localeCompare(String(right[key]), "en-IN");
 }
 
 export function buildOwnerListingsLocationTree(
     items: OwnerListingItem[],
 ): OwnerListingLocationCountryGroup[] {
-    const countryMap = new Map<
-        string,
-        Map<string, Map<string, Map<string, number>>>
-    >();
+    const countryMap = new Map<string, Map<string, Map<string, Map<string, number>>>>();
 
     for (const item of items) {
         const region = resolveListingRegion(item);
@@ -79,7 +74,9 @@ export function buildOwnerListingsLocationTree(
             countryMap.get(region.country) ?? new Map<string, Map<string, Map<string, number>>>();
         const cities = states.get(region.state) ?? new Map<string, Map<string, number>>();
         const localities = cities.get(region.city) ?? new Map<string, number>();
-        localities.set(region.locality, (localities.get(region.locality) ?? 0) + 1);
+        const weight = Number(item.detailLabel);
+        const increment = Number.isFinite(weight) && weight > 0 ? weight : 1;
+        localities.set(region.locality, (localities.get(region.locality) ?? 0) + increment);
         cities.set(region.city, localities);
         states.set(region.state, cities);
         countryMap.set(region.country, states);

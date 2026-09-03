@@ -3,26 +3,40 @@ import { formatPriceInr } from "@/lib/format/price";
 import type {
     OwnerListingFurnishing,
     OwnerListingPropertyType,
-    OwnerListingSort,
-    OwnerListingTransactionType,
     OwnerListingsBandFilters,
     OwnerListingsFilters,
+    OwnerListingSort,
+    OwnerListingTransactionType,
 } from "@/features/properties/owner-listings/types";
 import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
 
-export function formatLocalitiesLabel(localities: string[]): string {
-    if (localities.length === 0) return "Anywhere";
-    if (localities.length <= 2) return localities.join(", ");
-    return `${localities.slice(0, 2).join(", ")} +${localities.length - 2}`;
+export function formatLocalitiesLabel(localities: string[], cities: string[] = []): string {
+    if (localities.length > 0) {
+        if (localities.length <= 2) return localities.join(", ");
+        return `${localities.slice(0, 2).join(", ")} +${localities.length - 2}`;
+    }
+    if (cities.length > 0) {
+        if (cities.length <= 2) return cities.join(", ");
+        return `${cities.slice(0, 2).join(", ")} +${cities.length - 2}`;
+    }
+    return "Anywhere";
 }
 
 /** Full list for tooltips when the band label is truncated. */
-export function formatLocalitiesTooltip(localities: string[]): string | null {
-    if (localities.length <= 2) {
+export function formatLocalitiesTooltip(
+    localities: string[],
+    cities: string[] = [],
+): string | null {
+    if (localities.length > 2) {
+        return localities.join(", ");
+    }
+    if (localities.length === 0 && cities.length > 2) {
+        return cities.join(", ");
+    }
+    if (localities.length === 0 && cities.length > 0 && cities.length <= 2) {
         return null;
     }
-
-    return localities.join(", ");
+    return null;
 }
 
 export function formatTransactionTypeLabel(type: OwnerListingTransactionType | ""): string {
@@ -88,11 +102,16 @@ export function formatResultsCountLine(
         return `${totalCount} ${propertyLabel} in ${formatLocalitiesLabel(filters.localities)}`;
     }
 
+    if (filters.cities.length > 0) {
+        return `${totalCount} ${propertyLabel} in ${formatLocalitiesLabel([], filters.cities)}`;
+    }
+
     return `${totalCount} ${propertyLabel}`;
 }
 
 export function extractBandFilters(filters: OwnerListingsFilters): OwnerListingsBandFilters {
     return {
+        cities: filters.cities,
         localities: filters.localities,
         bhk: filters.bhk,
         type: filters.type,

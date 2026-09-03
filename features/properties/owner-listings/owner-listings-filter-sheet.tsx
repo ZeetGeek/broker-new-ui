@@ -1,33 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Search } from "lucide-react";
 
-import { filterOwnerListings } from "@/features/properties/owner-listings/filter-owner-listings";
-import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-    Dialog,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogPopup, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
+import { filterOwnerListings } from "@/features/properties/owner-listings/filter-owner-listings";
 import type {
     OwnerListingFurnishing,
-    OwnerListingPropertyType,
+    OwnerListingItem,
     OwnerListingsFilterContext,
     OwnerListingsFilters,
 } from "@/features/properties/owner-listings/types";
-import {
-    OWNER_LISTING_PROPERTY_TYPES,
-} from "@/features/properties/owner-listings/types";
+import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
 
 const BHK_OPTIONS = ["1", "2", "3", "4", "5"] as const;
 
@@ -42,6 +34,7 @@ export type OwnerListingsFilterSheetProps = {
     onOpenChange: (open: boolean) => void;
     appliedFilters: OwnerListingsFilters;
     filterContext: OwnerListingsFilterContext;
+    listings: OwnerListingItem[];
     includeTypeAndBhk: boolean;
     onApply: (patch: Partial<OwnerListingsFilters>) => void;
 };
@@ -77,24 +70,27 @@ export function OwnerListingsFilterSheet({
     onOpenChange,
     appliedFilters,
     filterContext,
+    listings,
     includeTypeAndBhk,
     onApply,
 }: OwnerListingsFilterSheetProps) {
     const [draft, setDraft] = useState(() => extractSheetFilters(appliedFilters));
+    const [draftSource, setDraftSource] = useState({ open: false, appliedFilters });
 
-    useEffect(() => {
-        if (open) {
-            setDraft(extractSheetFilters(appliedFilters));
-        }
-    }, [appliedFilters, open]);
+    if (open && (!draftSource.open || draftSource.appliedFilters !== appliedFilters)) {
+        setDraftSource({ open: true, appliedFilters });
+        setDraft(extractSheetFilters(appliedFilters));
+    } else if (!open && draftSource.open) {
+        setDraftSource({ open: false, appliedFilters });
+    }
 
     const previewCount = useMemo(() => {
         const merged: OwnerListingsFilters = {
             ...appliedFilters,
             ...draft,
         };
-        return filterOwnerListings(MOCK_OWNER_LISTINGS, merged, filterContext).totalCount;
-    }, [appliedFilters, draft, filterContext]);
+        return filterOwnerListings(listings, merged, filterContext).totalCount;
+    }, [appliedFilters, draft, filterContext, listings]);
 
     const updateDraft = (patch: Partial<typeof draft>) => {
         setDraft((prev) => ({ ...prev, ...patch }));
@@ -120,13 +116,13 @@ export function OwnerListingsFilterSheet({
             <DialogPopup
                 className={cn(
                     `
-                      inset-s-auto inset-bs-0 max-inline-full translate-x-0 translate-y-0
-                      rounded-none border-be-0 border-is-0 p-0
-                      md:inset-bs-0 md:inset-e-0 md:max-inline-md md:rounded-s-3xl
+                      border-is-0 inset-s-auto inset-bs-0 translate-0 rounded-none border-be-0 p-0
+                      max-inline-full
+                      md:inset-e-0 md:inset-bs-0 md:rounded-s-3xl md:max-inline-md
                     `,
                 )}
             >
-                <div className="flex max-h-[100dvh] flex-col">
+                <div className="flex flex-col max-block-dvh">
                     <DialogHeader className="border-be border-border-warm px-6 py-5 text-start">
                         <DialogTitle>Filters</DialogTitle>
                     </DialogHeader>
@@ -158,13 +154,21 @@ export function OwnerListingsFilterSheet({
                                                 type="button"
                                                 size="sm"
                                                 variant={
-                                                    draft.type === option.value ? "default" : "outline"
+                                                    draft.type === option.value
+                                                        ? "default"
+                                                        : "outline"
                                                 }
                                                 className={cn(
                                                     "rounded-full",
                                                     draft.type === option.value
-                                                        ? "bg-brand-ink text-surface hover:bg-brand-ink/90"
-                                                        : "border-border-warm bg-surface text-ink-muted",
+                                                        ? `
+                                                          bg-brand-ink text-surface
+                                                          hover:bg-brand-ink/90
+                                                        `
+                                                        : `
+                                                          border-border-warm bg-surface
+                                                          text-ink-muted
+                                                        `,
                                                 )}
                                                 onClick={() =>
                                                     updateDraft({
@@ -239,7 +243,11 @@ export function OwnerListingsFilterSheet({
                                         key={option.value}
                                         type="button"
                                         size="sm"
-                                        variant={draft.furnishing === option.value ? "default" : "outline"}
+                                        variant={
+                                            draft.furnishing === option.value
+                                                ? "default"
+                                                : "outline"
+                                        }
                                         className={cn(
                                             "rounded-full",
                                             draft.furnishing === option.value
@@ -259,7 +267,7 @@ export function OwnerListingsFilterSheet({
                         <Button
                             type="button"
                             size="lg"
-                            className="w-full bg-brand-ink text-surface hover:bg-brand-ink/90"
+                            className="bg-brand-ink text-surface inline-full hover:bg-brand-ink/90"
                             onClick={handleApply}
                         >
                             Show {previewCount} properties
