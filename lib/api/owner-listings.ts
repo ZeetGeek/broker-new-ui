@@ -61,9 +61,7 @@ export async function fetchOwnerListings(
         items = items.filter((item) => item.readyToMove);
     }
 
-    const marketValueInr = items
-        .filter((item) => !item.isRent)
-        .reduce((sum, item) => sum + item.amountInr, 0);
+    const marketValueInr = items.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0);
 
     const nextPage = result.page < result.totalPages ? String(result.page + 1) : null;
 
