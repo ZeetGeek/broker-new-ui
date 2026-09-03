@@ -50,7 +50,50 @@ const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
 const BROWSE_REQUEST_LABEL = "Send request";
 const BROWSE_REQUEST_PENDING_LABEL = "Sending…";
-const BROWSE_REQUEST_SENT_LABEL = "Sent";
+const BROWSE_REQUEST_SENT_LABEL = "Request sent";
+
+function BrowseRequestAction({
+    hasRequested,
+    isRequestPending,
+    onRequest,
+}: {
+    hasRequested: boolean;
+    isRequestPending: boolean;
+    onRequest?: () => void;
+}) {
+    if (hasRequested) {
+        return (
+            <div
+                role="status"
+                className="
+                  flex w-full items-center justify-center gap-2 rounded-control border
+                  border-brand/20 bg-brand-soft px-4 block-control-lg body-sm font-semibold
+                  text-brand-text
+                "
+            >
+                <CircleCheck
+                    aria-hidden
+                    className="block-4 inline-4 shrink-0 text-brand"
+                    strokeWidth={1.75}
+                />
+                {BROWSE_REQUEST_SENT_LABEL}
+            </div>
+        );
+    }
+
+    return (
+        <Button
+            type="button"
+            size="md"
+            variant="accent"
+            className="w-full"
+            disabled={isRequestPending}
+            onClick={onRequest}
+        >
+            {isRequestPending ? BROWSE_REQUEST_PENDING_LABEL : BROWSE_REQUEST_LABEL}
+        </Button>
+    );
+}
 
 export type PropertyCardOwner = {
     name: string;
@@ -243,11 +286,6 @@ function BrowsePropertyCard({
         ? formatRentInr(listing.amountInr)
         : formatPriceInr(listing.amountInr);
     const isListView = layout === "list";
-    const requestLabel = listing.hasRequested
-        ? BROWSE_REQUEST_SENT_LABEL
-        : isRequestPending
-          ? BROWSE_REQUEST_PENDING_LABEL
-          : BROWSE_REQUEST_LABEL;
 
     return (
         <article
@@ -287,25 +325,20 @@ function BrowsePropertyCard({
                     </div>
 
                     <BrowsePropertyCardSpecs listing={listing} />
-
-                    <div className="flex items-baseline gap-1.5 pt-0.5">
-                        <span className="h5 font-semibold tabular-nums text-ink">{priceLabel}</span>
-                        <span className="body-sm font-medium text-brand">
-                            ({listing.commissionPercent}%)
-                        </span>
-                    </div>
                 </Link>
 
-                <Button
-                    type="button"
-                    size="md"
-                    variant="accent"
-                    className="w-full"
-                    disabled={listing.hasRequested || isRequestPending}
-                    onClick={onRequest}
-                >
-                    {requestLabel}
-                </Button>
+                <div className="flex items-baseline gap-1.5">
+                    <span className="truncate h5 font-semibold tabular-nums text-ink">{priceLabel}</span>
+                    <span className="shrink-0 body-sm font-medium text-brand">
+                        ({listing.commissionPercent}%)
+                    </span>
+                </div>
+
+                <BrowseRequestAction
+                    hasRequested={listing.hasRequested}
+                    isRequestPending={isRequestPending}
+                    onRequest={onRequest}
+                />
             </div>
         </article>
     );

@@ -251,10 +251,10 @@ export function OwnerListingsWhereMenu({
 
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
-            {whereTooltipLabel ? (
-                <TooltipProvider>
-                    <Tooltip open={open ? false : undefined}>
-                        <TooltipTrigger render={whereTrigger} />
+            <TooltipProvider>
+                <Tooltip open={open || !whereTooltipLabel ? false : undefined}>
+                    <TooltipTrigger render={whereTrigger} />
+                    {whereTooltipLabel ? (
                         <TooltipContent
                             side="bottom"
                             align="start"
@@ -263,11 +263,9 @@ export function OwnerListingsWhereMenu({
                         >
                             {whereTooltipLabel}
                         </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            ) : (
-                whereTrigger
-            )}
+                    ) : null}
+                </Tooltip>
+            </TooltipProvider>
             <DropdownMenuContent
                 align="start"
                 sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
