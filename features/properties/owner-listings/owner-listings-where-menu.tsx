@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { type LucideIcon, MapPin, MapPinOff, Search } from "lucide-react";
 
@@ -19,13 +19,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import {
     buildOwnerListingsLocationTree,
-    groupOwnerListingLocationsByCity,
+    flattenOwnerListingLocationLeaves,
     type OwnerListingLocationSearchHit,
     searchOwnerListingLocations,
 } from "@/features/properties/owner-listings/build-owner-listings-location-tree";
 import {
     OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
-    OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET,
 } from "@/features/properties/owner-listings/owner-listings-band-menu-content";
 import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
@@ -229,10 +228,12 @@ export function OwnerListingsWhereMenu({
     const [query, setQuery] = useState("");
 
     const locationTree = useMemo(() => buildOwnerListingsLocationTree(listings), [listings]);
-    const cityGroups = useMemo(
-        () => groupOwnerListingLocationsByCity(locationTree),
-        [locationTree],
-    );
+    const locationLeaves = useMemo(() => {
+        const leaves = flattenOwnerListingLocationLeaves(locationTree);
+        return [...leaves].sort((left, right) =>
+            left.locality.localeCompare(right.locality, "en-IN"),
+        );
+    }, [locationTree]);
     const searchHits = useMemo(
         () => searchOwnerListingLocations(locationTree, query),
         [locationTree, query],
@@ -266,49 +267,56 @@ export function OwnerListingsWhereMenu({
 
     const whereTooltipLabel = formatLocalitiesTooltip(selectedLocalities, selectedCities);
 
-    const whereTrigger = (
-        <DropdownMenuTrigger
-            render={
-                <OwnerListingsBandSegment
-                    label="Where"
-                    icon={MapPin}
-                    value={formatLocalitiesLabel(selectedLocalities, selectedCities)}
-                    className={className}
-                    isOpen={open}
-                />
-            }
-        />
-    );
-
     return (
-        <DropdownMenu open={open} onOpenChange={handleOpenChange}>
-            <TooltipProvider>
-                <Tooltip open={open || !whereTooltipLabel ? false : undefined}>
-                    <TooltipTrigger render={whereTrigger} />
-                    {whereTooltipLabel ? (
-                        <TooltipContent
-                            side="bottom"
-                            align="start"
-                            sideOffset={12}
-                            className="text-pretty max-inline-72"
-                        >
-                            {whereTooltipLabel}
-                        </TooltipContent>
-                    ) : null}
-                </Tooltip>
-            </TooltipProvider>
-            <DropdownMenuContent
-                align="start"
-                sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
-                className={cn(
-                    OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
-                    `
-                      grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden! p-0
-                      inline-(--anchor-width) max-inline-(--anchor-width) min-inline-0
-                    `,
-                    "max-block-[min(28rem,var(--available-height))]",
-                )}
-            >
+        <div className={cn("min-w-0 w-full", className)}>
+            <DropdownMenu open={open} onOpenChange={handleOpenChange}>
+                <TooltipProvider>
+                    <Tooltip open={open || !whereTooltipLabel ? false : undefined}>
+                        <TooltipTrigger
+                            className="flex min-w-0 w-full"
+                            render={
+                                <DropdownMenuTrigger
+                                    className="flex min-w-0 w-full"
+                                    render={
+                                        <OwnerListingsBandSegment
+                                            label="Where"
+                                            icon={MapPin}
+                                            value={formatLocalitiesLabel(
+                                                selectedLocalities,
+                                                selectedCities,
+                                            )}
+                                            className="w-full"
+                                            isOpen={open}
+                                        />
+                                    }
+                                />
+                            }
+                        />
+                        {whereTooltipLabel ? (
+                            <TooltipContent
+                                side="bottom"
+                                align="start"
+                                sideOffset={12}
+                                className="text-pretty max-inline-72"
+                            >
+                                {whereTooltipLabel}
+                            </TooltipContent>
+                        ) : null}
+                    </Tooltip>
+                </TooltipProvider>
+                <DropdownMenuContent
+                    align="start"
+                    sideOffset={10}
+                    className={cn(
+                        OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
+                        `
+                          grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden! p-0
+                          w-(--anchor-width)! min-w-(--anchor-width)! max-w-(--anchor-width)!
+                          min-inline-0
+                        `,
+                        "max-block-[min(28rem,var(--available-height))]",
+                    )}
+                >
                 <div className="shrink-0 px-4 pbs-4 pbe-1">
                     <Input
                         value={query}
@@ -342,7 +350,7 @@ export function OwnerListingsWhereMenu({
                         ) : (
                             <WhereMenuEmptyState
                                 icon={Search}
-                                title="No matching cities"
+                                title="No matching areas"
                                 description={`Nothing found for "${query.trim()}". Try another city or area.`}
                             />
                         )}
@@ -358,55 +366,25 @@ export function OwnerListingsWhereMenu({
                                           selectedSet: selectedLocalitySet,
                                           onToggle: toggleLocality,
                                       })
-                                    : cityGroups.map((cityGroup, cityIndex) => (
-                                          <Fragment key={`${cityGroup.state}-${cityGroup.city}`}>
-                                              {cityGroups.length > 1 ? (
-                                                  <div
-                                                      className={cn(
-                                                          "flex items-center gap-2 px-2.5 pbe-1",
-                                                          cityIndex > 0 ? "mbs-3 pbs-1" : "pbs-0",
-                                                      )}
-                                                  >
-                                                      <span
-                                                          className="
-                                                            text-[11px] font-semibold
-                                                            tracking-[0.08em] text-ink-muted
-                                                            uppercase
-                                                          "
-                                                      >
-                                                          {cityGroup.city}
-                                                      </span>
-                                                      <span
-                                                          className="
-                                                            flex-1 bg-border-warm/70 block-px
-                                                          "
-                                                          aria-hidden
-                                                      />
-                                                  </div>
-                                              ) : null}
-
-                                              {cityGroup.localities.map((leaf) => (
-                                                  <WhereLocationRow
-                                                      key={`${cityGroup.city}-${leaf.locality}`}
-                                                      locality={leaf.locality}
-                                                      pathLabel={`${leaf.city}, ${leaf.state}`}
-                                                      listingCount={leaf.listingCount}
-                                                      query=""
-                                                      checked={selectedLocalitySet.has(
-                                                          leaf.locality,
-                                                      )}
-                                                      onToggle={() =>
-                                                          toggleLocality(leaf.locality, leaf.city)
-                                                      }
-                                                  />
-                                              ))}
-                                          </Fragment>
+                                    : locationLeaves.map((leaf) => (
+                                          <WhereLocationRow
+                                              key={`${leaf.state}-${leaf.city}-${leaf.locality}`}
+                                              locality={leaf.locality}
+                                              pathLabel={`${leaf.city}, ${leaf.state}`}
+                                              listingCount={leaf.listingCount}
+                                              query=""
+                                              checked={selectedLocalitySet.has(leaf.locality)}
+                                              onToggle={() =>
+                                                  toggleLocality(leaf.locality, leaf.city)
+                                              }
+                                          />
                                       ))}
                             </div>
                         </ScrollArea>
                     </div>
                 )}
             </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenu>
+        </div>
     );
 }

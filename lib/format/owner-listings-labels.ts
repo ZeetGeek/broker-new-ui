@@ -74,7 +74,16 @@ export function formatBudgetLabel(
 
 export function formatBhkLabel(bhk: string[]): string {
     if (bhk.length === 0) return "Any";
-    return bhk.map((value) => `${value} BHK`).join(", ");
+
+    const sorted = [...bhk]
+        .map(Number)
+        .filter((n) => !Number.isNaN(n))
+        .sort((a, b) => a - b)
+        .map((n) => (n >= 5 ? "5+" : String(n)));
+
+    if (sorted.length === 0) return "Any";
+    if (sorted.length === 1) return `${sorted[0]} BHK`;
+    return `${sorted.join(", ")} BHK`;
 }
 
 export function formatPropertyTypeLabel(propertyType: OwnerListingPropertyType | ""): string {

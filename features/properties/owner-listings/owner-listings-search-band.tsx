@@ -2,20 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { BedDouble, Building2, Search, Sofa } from "lucide-react";
+import { Search, Sofa } from "lucide-react";
 
 import {
     extractBandFilters,
-    formatBhkLabel,
     formatFurnishingLabel,
-    formatPropertyTypeLabel,
 } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
-    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
@@ -29,19 +26,17 @@ import {
     OwnerListingsBandDivider,
     OwnerListingsBandSegment,
 } from "@/features/properties/owner-listings/owner-listings-band-segment";
+import { OwnerListingsBhkMenu } from "@/features/properties/owner-listings/owner-listings-bhk-menu";
 import { OwnerListingsBudgetMenu } from "@/features/properties/owner-listings/owner-listings-budget-menu";
 import { OwnerListingsLookingForMenu } from "@/features/properties/owner-listings/owner-listings-looking-for-menu";
+import { OwnerListingsPropertyTypeMenu } from "@/features/properties/owner-listings/owner-listings-property-type-menu";
 import { OwnerListingsWhereMenu } from "@/features/properties/owner-listings/owner-listings-where-menu";
 import type {
     OwnerListingFurnishing,
     OwnerListingItem,
-    OwnerListingPropertyType,
     OwnerListingsBandFilters,
     OwnerListingsFilters,
 } from "@/features/properties/owner-listings/types";
-import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
-
-const BHK_OPTIONS = ["1", "2", "3", "4", "5"] as const;
 
 const FURNISHING_OPTIONS: { value: OwnerListingFurnishing; label: string }[] = [
     { value: "furnished", label: "Furnished" },
@@ -95,6 +90,14 @@ export function OwnerListingsSearchBand({
                 ...prev,
                 bhk: exists ? prev.bhk.filter((item) => item !== value) : [...prev.bhk, value],
             };
+            draftRef.current = next;
+            return next;
+        });
+    }, []);
+
+    const clearBhk = useCallback(() => {
+        setDraft((prev) => {
+            const next = { ...prev, bhk: [] as string[] };
             draftRef.current = next;
             return next;
         });
@@ -174,71 +177,22 @@ export function OwnerListingsSearchBand({
                 <OwnerListingsBandDivider className="hidden md:block" />
 
                 <div className="hidden flex-1 p-0.5 min-inline-28 md:block">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <OwnerListingsBandSegment
-                                    label="BHK"
-                                    icon={BedDouble}
-                                    value={formatBhkLabel(draft.bhk)}
-                                    className="inline-full"
-                                />
-                            }
-                        />
-                        <DropdownMenuContent
-                            align="start"
-                            sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
-                            className={cn(OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS, "min-inline-44")}
-                        >
-                            {BHK_OPTIONS.map((value) => (
-                                <DropdownMenuCheckboxItem
-                                    key={value}
-                                    checked={draft.bhk.includes(value)}
-                                    onCheckedChange={() => toggleBhk(value)}
-                                >
-                                    {value} BHK
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <OwnerListingsBhkMenu
+                        value={draft.bhk}
+                        onToggle={toggleBhk}
+                        onClear={clearBhk}
+                        className="inline-full"
+                    />
                 </div>
 
                 <OwnerListingsBandDivider className="hidden lg:block" />
 
                 <div className="hidden flex-1 p-0.5 min-inline-32 lg:block">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <OwnerListingsBandSegment
-                                    label="Property type"
-                                    icon={Building2}
-                                    value={formatPropertyTypeLabel(draft.propertyType)}
-                                    className="inline-full"
-                                />
-                            }
-                        />
-                        <DropdownMenuContent
-                            align="start"
-                            sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
-                            className={cn(OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS, "min-inline-48")}
-                        >
-                            <DropdownMenuItem onClick={() => updateDraft({ propertyType: "" })}>
-                                Any type
-                            </DropdownMenuItem>
-                            {OWNER_LISTING_PROPERTY_TYPES.map((option) => (
-                                <DropdownMenuItem
-                                    key={option.value}
-                                    onClick={() =>
-                                        updateDraft({
-                                            propertyType: option.value as OwnerListingPropertyType,
-                                        })
-                                    }
-                                >
-                                    {option.label}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <OwnerListingsPropertyTypeMenu
+                        value={draft.propertyType}
+                        onValueChange={(propertyType) => updateDraft({ propertyType })}
+                        className="inline-full"
+                    />
                 </div>
 
                 <OwnerListingsBandDivider className="hidden lg:block" />
