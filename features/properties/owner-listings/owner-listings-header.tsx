@@ -8,10 +8,10 @@ import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/o
 import { OwnerListingsQuickChips } from "@/features/properties/owner-listings/owner-listings-quick-chips";
 import { OwnerListingsSearchBand } from "@/features/properties/owner-listings/owner-listings-search-band";
 import type {
+    OwnerListingItem,
     OwnerListingsBandFilters,
     OwnerListingsFilterContext,
     OwnerListingsFilters,
-    OwnerListingItem,
     OwnerListingSort,
 } from "@/features/properties/owner-listings/types";
 import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
@@ -21,6 +21,7 @@ export type OwnerListingsHeaderProps = {
     listings: OwnerListingItem[];
     filterContext: OwnerListingsFilterContext;
     chipCounts: QuickChipCounts;
+    poolListings: OwnerListingItem[];
     isResultsLoading?: boolean;
     onApplyBand: (band: OwnerListingsBandFilters) => void;
     onApplySheet: (patch: Partial<OwnerListingsFilters>) => void;
@@ -51,6 +52,7 @@ export function OwnerListingsHeader({
     listings,
     filterContext,
     chipCounts,
+    poolListings,
     isResultsLoading = false,
     onApplyBand,
     onApplySheet,
@@ -97,6 +99,7 @@ export function OwnerListingsHeader({
                 onOpenChange={setSheetOpen}
                 appliedFilters={filters}
                 filterContext={filterContext}
+                listings={poolListings}
                 includeTypeAndBhk={isMobile}
                 onApply={onApplySheet}
             />

@@ -13,14 +13,13 @@ export function countNewListingsInServiceAreasThisWeek(
     const areaSet = new Set(serviceAreas);
 
     return items.filter(
-        (item) => areaSet.has(item.locality) && item.listedHoursAgo < HOURS_IN_WEEK,
+        (item) =>
+            (areaSet.has(item.locality) || areaSet.has(item.city)) &&
+            item.listedHoursAgo < HOURS_IN_WEEK,
     ).length;
 }
 
-export function formatNewInAreasThisWeekLine(
-    count: number,
-    serviceAreas: string[],
-): string | null {
+export function formatNewInAreasThisWeekLine(count: number, serviceAreas: string[]): string | null {
     if (count === 0 || serviceAreas.length === 0) {
         return null;
     }

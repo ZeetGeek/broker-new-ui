@@ -1,17 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { BedDouble, Building2, IndianRupee, Search, Sofa, Tags } from "lucide-react";
 
 import {
     extractBandFilters,
-    formatBudgetLabel,
     formatBhkLabel,
+    formatBudgetLabel,
     formatFurnishingLabel,
     formatPropertyTypeLabel,
     formatTransactionTypeLabel,
 } from "@/lib/format/owner-listings-labels";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,18 +24,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import {
+    OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
+    OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET,
+} from "@/features/properties/owner-listings/owner-listings-band-menu-content";
+import {
     OwnerListingsBandDivider,
     OwnerListingsBandSegment,
 } from "@/features/properties/owner-listings/owner-listings-band-segment";
-import { OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS, OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET } from "@/features/properties/owner-listings/owner-listings-band-menu-content";
-import { cn } from "@/lib/utils";
 import { OwnerListingsWhereMenu } from "@/features/properties/owner-listings/owner-listings-where-menu";
 import type {
     OwnerListingFurnishing,
+    OwnerListingItem,
     OwnerListingPropertyType,
     OwnerListingsBandFilters,
     OwnerListingsFilters,
-    OwnerListingItem,
 } from "@/features/properties/owner-listings/types";
 import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
 
@@ -69,48 +72,87 @@ export function OwnerListingsSearchBand({
     onApplyBand,
 }: OwnerListingsSearchBandProps) {
     const [draft, setDraft] = useState(() => extractBandFilters(appliedFilters));
+    const draftRef = useRef(draft);
 
     useEffect(() => {
-        setDraft(extractBandFilters(appliedFilters));
+        const timer = window.setTimeout(() => {
+            const next = extractBandFilters(appliedFilters);
+            draftRef.current = next;
+            setDraft(next);
+        }, 0);
+        return () => window.clearTimeout(timer);
     }, [appliedFilters]);
 
     const updateDraft = useCallback((patch: Partial<OwnerListingsBandFilters>) => {
-        setDraft((prev) => ({ ...prev, ...patch }));
+        setDraft((prev) => {
+            const next = { ...prev, ...patch };
+            draftRef.current = next;
+            return next;
+        });
     }, []);
 
-    const setLocalities = useCallback((localities: string[]) => {
-        setDraft((prev) => ({ ...prev, localities }));
+    const setLocationFilters = useCallback((cities: string[], localities: string[]) => {
+        setDraft((prev) => {
+            const next = { ...prev, cities, localities };
+            draftRef.current = next;
+            return next;
+        });
     }, []);
 
     const toggleBhk = useCallback((value: string) => {
         setDraft((prev) => {
             const exists = prev.bhk.includes(value);
-            return {
+            const next = {
                 ...prev,
                 bhk: exists ? prev.bhk.filter((item) => item !== value) : [...prev.bhk, value],
             };
+            draftRef.current = next;
+            return next;
         });
     }, []);
 
     const handleSearch = useCallback(() => {
-        onApplyBand(draft);
-    }, [draft, onApplyBand]);
+        onApplyBand(draftRef.current);
+    }, [onApplyBand]);
+
+    const handleWhereOpenChange = useCallback(
+        (open: boolean) => {
+            if (open) return;
+
+            const current = draftRef.current;
+            const applied = extractBandFilters(appliedFilters);
+            const locationChanged =
+                current.cities.join("|") !== applied.cities.join("|") ||
+                current.localities.join("|") !== applied.localities.join("|");
+
+            if (locationChanged) {
+                onApplyBand(current);
+            }
+        },
+        [appliedFilters, onApplyBand],
+    );
 
     return (
-        <div className="flex items-center gap-2 rounded-card border border-border-warm bg-surface p-2 shadow-sm">
-            <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
-                <div className="flex min-w-0 min-inline-36 flex-1 p-0.5">
+        <div
+            className="
+          flex items-center gap-2 rounded-card border border-border-warm bg-surface p-2 shadow-sm
+        "
+        >
+            <div className="flex flex-1 items-center gap-1.5 overflow-x-auto min-inline-0">
+                <div className="flex flex-1 p-0.5 min-inline-36">
                     <OwnerListingsWhereMenu
                         listings={listings}
+                        selectedCities={draft.cities}
                         selectedLocalities={draft.localities}
-                        onSelectedLocalitiesChange={setLocalities}
-                        className="w-full"
+                        onLocationChange={setLocationFilters}
+                        onOpenChange={handleWhereOpenChange}
+                        className="inline-full"
                     />
                 </div>
 
                 <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="hidden min-w-0 min-inline-32 flex-1 p-0.5 md:block">
+                <div className="hidden flex-1 p-0.5 min-inline-32 md:block">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -118,7 +160,7 @@ export function OwnerListingsSearchBand({
                                     label="Looking for"
                                     icon={Tags}
                                     value={formatTransactionTypeLabel(draft.type)}
-                                    className="w-full"
+                                    className="inline-full"
                                 />
                             }
                         />
@@ -142,7 +184,7 @@ export function OwnerListingsSearchBand({
 
                 <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="flex min-w-0 min-inline-36 flex-1 p-0.5">
+                <div className="flex flex-1 p-0.5 min-inline-36">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -150,7 +192,7 @@ export function OwnerListingsSearchBand({
                                     label="Budget"
                                     icon={IndianRupee}
                                     value={formatBudgetLabel(draft.min, draft.max)}
-                                    className="w-full"
+                                    className="inline-full"
                                 />
                             }
                         />
@@ -178,7 +220,7 @@ export function OwnerListingsSearchBand({
 
                 <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="hidden min-w-0 min-inline-28 flex-1 p-0.5 md:block">
+                <div className="hidden flex-1 p-0.5 min-inline-28 md:block">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -186,7 +228,7 @@ export function OwnerListingsSearchBand({
                                     label="BHK"
                                     icon={BedDouble}
                                     value={formatBhkLabel(draft.bhk)}
-                                    className="w-full"
+                                    className="inline-full"
                                 />
                             }
                         />
@@ -210,7 +252,7 @@ export function OwnerListingsSearchBand({
 
                 <OwnerListingsBandDivider className="hidden lg:block" />
 
-                <div className="hidden min-w-0 min-inline-32 flex-1 p-0.5 lg:block">
+                <div className="hidden flex-1 p-0.5 min-inline-32 lg:block">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -218,7 +260,7 @@ export function OwnerListingsSearchBand({
                                     label="Property type"
                                     icon={Building2}
                                     value={formatPropertyTypeLabel(draft.propertyType)}
-                                    className="w-full"
+                                    className="inline-full"
                                 />
                             }
                         />
@@ -248,7 +290,7 @@ export function OwnerListingsSearchBand({
 
                 <OwnerListingsBandDivider className="hidden lg:block" />
 
-                <div className="hidden min-w-0 min-inline-36 flex-1 p-0.5 lg:block">
+                <div className="hidden flex-1 p-0.5 min-inline-36 lg:block">
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -256,7 +298,7 @@ export function OwnerListingsSearchBand({
                                     label="Furnishing"
                                     icon={Sofa}
                                     value={formatFurnishingLabel(draft.furnishing)}
-                                    className="w-full"
+                                    className="inline-full"
                                 />
                             }
                         />

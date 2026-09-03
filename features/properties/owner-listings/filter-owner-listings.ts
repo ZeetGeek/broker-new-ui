@@ -1,3 +1,5 @@
+import { listingCompareAmountInr } from "@/lib/format/listing-availability";
+
 import type {
     OwnerListingItem,
     OwnerListingPropertyType,
@@ -6,7 +8,6 @@ import type {
     OwnerListingsResult,
 } from "@/features/properties/owner-listings/types";
 import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
-import { listingCompareAmountInr } from "@/lib/format/listing-availability";
 
 function parseParam(
     params: URLSearchParams | Record<string, string | string[] | undefined>,
@@ -27,12 +28,22 @@ function parseListParam(
     if (params instanceof URLSearchParams) {
         const raw = params.get(key);
         if (!raw) return [];
-        return raw.split(",").map((part) => part.trim()).filter(Boolean);
+        return raw
+            .split(",")
+            .map((part) => part.trim())
+            .filter(Boolean);
     }
     const value = params[key];
     if (!value) return [];
-    if (Array.isArray(value)) return value.flatMap((v) => v.split(",")).map((p) => p.trim()).filter(Boolean);
-    return value.split(",").map((part) => part.trim()).filter(Boolean);
+    if (Array.isArray(value))
+        return value
+            .flatMap((v) => v.split(","))
+            .map((p) => p.trim())
+            .filter(Boolean);
+    return value
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
 }
 
 function parseBoolParam(
@@ -61,6 +72,7 @@ export function parseOwnerListingsFilters(
 
     return {
         q: parseParam(params, "q"),
+        cities: parseListParam(params, "city"),
         localities: parseListParam(params, "locality"),
         bhk: parseListParam(params, "bhk"),
         type: type === "sale" || type === "rent" ? type : "",
@@ -87,6 +99,7 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     const params = new URLSearchParams();
 
     if (filters.q.trim()) params.set("q", filters.q.trim());
+    if (filters.cities.length > 0) params.set("city", filters.cities.join(","));
     if (filters.localities.length > 0) params.set("locality", filters.localities.join(","));
     if (filters.bhk.length > 0) params.set("bhk", filters.bhk.join(","));
     if (filters.type) params.set("type", filters.type);
@@ -123,6 +136,7 @@ export function countSheetFilters(
 export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): boolean {
     return (
         Boolean(filters.q.trim()) ||
+        filters.cities.length > 0 ||
         filters.localities.length > 0 ||
         filters.bhk.length > 0 ||
         Boolean(filters.type) ||
@@ -142,6 +156,7 @@ export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): bo
 export function ownerListingsFilterSignature(filters: OwnerListingsFilters): string {
     return [
         filters.q,
+        filters.cities.join(","),
         filters.localities.join(","),
         filters.bhk.join(","),
         filters.type,
@@ -192,9 +207,19 @@ export function filterOwnerListings(
         if (!matchesQuery(item, filters.q)) return false;
 
         if (filters.yourAreas && serviceAreas.length > 0) {
-            if (!serviceAreas.includes(item.locality)) return false;
-        } else if (filters.localities.length > 0 && !filters.localities.includes(item.locality)) {
-            return false;
+            if (!serviceAreas.includes(item.locality) && !serviceAreas.includes(item.city)) {
+                return false;
+            }
+        } else {
+            if (
+                filters.cities.length > 0 &&
+                !filters.cities.some((city) => city.toLowerCase() === item.city.toLowerCase())
+            ) {
+                return false;
+            }
+            if (filters.localities.length > 0 && !filters.localities.includes(item.locality)) {
+                return false;
+            }
         }
 
         if (bhkValues.length > 0 && !bhkValues.includes(item.bhk)) return false;

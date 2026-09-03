@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { fetchOwnerListings } from "@/lib/api/owner-listings";
+import { fetchOwnerListingCities, fetchOwnerListings } from "@/lib/api/owner-listings";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
@@ -14,9 +14,7 @@ import {
 import type { OwnerListingsPoolSummary } from "@/features/properties/owner-listings/build-owner-listings-summary-lines";
 import { buildQuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
 import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/owner-listings/count-new-listings-this-week";
-import {
-    MOCK_OWNER_LISTINGS,
-} from "@/features/properties/owner-listings/mock-owner-listings";
+import { citiesToLocationListings } from "@/features/properties/owner-listings/map-browse-listing";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
 import {
@@ -27,6 +25,7 @@ import { OwnerListingsHeader } from "@/features/properties/owner-listings/owner-
 import { OwnerListingsIntro } from "@/features/properties/owner-listings/owner-listings-intro";
 import { OwnerListingsPageSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
 import type {
+    OwnerListingItem,
     OwnerListingsBandFilters,
     OwnerListingsFilterContext,
     OwnerListingsFilters,
@@ -65,6 +64,7 @@ function useIsMobile() {
 }
 
 const EMPTY_SERVICE_AREAS: string[] = [];
+const EMPTY_LOCATION_LISTINGS: OwnerListingItem[] = [];
 
 const EMPTY_POOL_SUMMARY: OwnerListingsPoolSummary = {
     slotsOpenCount: 0,
@@ -110,34 +110,37 @@ function OwnerListingsResults({
     useEffect(() => {
         let cancelled = false;
 
-        setError(null);
-        setIsFetching(true);
-        onLoadingChange(true);
+        const timer = window.setTimeout(() => {
+            if (cancelled) return;
 
-        void fetchOwnerListings(filters, filterContext)
-            .then((data) => {
-                if (cancelled) return;
-                setResult(data);
-                onLoaded(data);
-            })
-            .catch(() => {
-                if (!cancelled) {
-                    setError("Could not load owner listings. Try again.");
-                }
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setIsFetching(false);
-                    onLoadingChange(false);
-                }
-            });
+            setError(null);
+            setIsFetching(true);
+            onLoadingChange(true);
+
+            void fetchOwnerListings(filters, filterContext)
+                .then((data) => {
+                    if (cancelled) return;
+                    setResult(data);
+                    onLoaded(data);
+                })
+                .catch(() => {
+                    if (!cancelled) {
+                        setError("Could not load owner listings. Try again.");
+                    }
+                })
+                .finally(() => {
+                    if (!cancelled) {
+                        setIsFetching(false);
+                        onLoadingChange(false);
+                    }
+                });
+        }, 0);
 
         return () => {
             cancelled = true;
+            window.clearTimeout(timer);
         };
-        // filterSignature + serviceAreasKey are stable fetch triggers; filters/context read at fire time.
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional stable keys
-    }, [filterSignature, serviceAreasKey]);
+    }, [filterSignature, serviceAreasKey, filters, filterContext, onLoaded, onLoadingChange]);
 
     if (error) {
         return (
@@ -215,33 +218,47 @@ export function OwnerListingsPage() {
 
     const serviceAreas = profile?.broker?.serviceAreas ?? EMPTY_SERVICE_AREAS;
     const serviceAreasKey = serviceAreas.join("|");
-    const filterContext = useMemo(() => ({ serviceAreas }), [serviceAreasKey]);
+    const filterContext = useMemo(() => ({ serviceAreas }), [serviceAreas]);
 
     const userId = profile?.id ?? authUser?.id;
     const hasApprovedRepresentation = (dashboardData?.youRepresent?.totalCount ?? 0) > 0;
-    const newThisWeekCount = useMemo(
-        () => countNewListingsInServiceAreasThisWeek(MOCK_OWNER_LISTINGS, serviceAreas),
-        [serviceAreasKey],
-    );
-    const chipCounts = useMemo(
-        () => buildQuickChipCounts(MOCK_OWNER_LISTINGS, serviceAreas),
-        [serviceAreasKey],
-    );
 
+    const [locationListings, setLocationListings] =
+        useState<OwnerListingItem[]>(EMPTY_LOCATION_LISTINGS);
+    const [poolItems, setPoolItems] = useState<OwnerListingItem[]>([]);
     const [totalCount, setTotalCount] = useState(0);
     const [poolSummary, setPoolSummary] = useState<OwnerListingsPoolSummary>(EMPTY_POOL_SUMMARY);
     const [isResultsLoading, setIsResultsLoading] = useState(true);
 
+    const newThisWeekCount = useMemo(
+        () => countNewListingsInServiceAreasThisWeek(poolItems, serviceAreas),
+        [poolItems, serviceAreas],
+    );
+    const chipCounts = useMemo(
+        () => buildQuickChipCounts(poolItems, serviceAreas),
+        [poolItems, serviceAreas],
+    );
+
     const handleLoaded = useCallback((result: OwnerListingsResult) => {
         setTotalCount(result.totalCount);
         setPoolSummary(summarizePool(result.items));
+        setPoolItems(result.items);
     }, []);
 
     const handleApplyBand = useCallback(
         (band: OwnerListingsBandFilters) => {
+            const hasLocationFilter = band.cities.length > 0 || band.localities.length > 0;
+            const next = {
+                ...filters,
+                ...band,
+                cursor: "",
+                ...(hasLocationFilter ? { yourAreas: false } : {}),
+            };
+
             if (isMobile) {
                 applyFilters({
-                    ...filters,
+                    ...next,
+                    cities: band.cities,
                     localities: band.localities,
                     min: band.min,
                     max: band.max,
@@ -249,7 +266,7 @@ export function OwnerListingsPage() {
                 return;
             }
 
-            applyFilters({ ...filters, ...band });
+            applyFilters(next);
         },
         [applyFilters, filters, isMobile],
     );
@@ -286,10 +303,10 @@ export function OwnerListingsPage() {
             userId,
             hasApprovedRepresentation,
             newThisWeekCount,
-            serviceAreasKey,
+            serviceAreas,
             totalCount,
             poolSummary,
-            filterSignature,
+            filters,
             hasActiveFilters,
             isResultsLoading,
         ],
@@ -300,6 +317,27 @@ export function OwnerListingsPage() {
             void dispatch(fetchBrokerDashboard());
         }
     }, [dashboardStatus, dispatch]);
+
+    useEffect(() => {
+        if (dashboardStatus !== "succeeded") return;
+
+        let cancelled = false;
+        void fetchOwnerListingCities()
+            .then((data) => {
+                if (!cancelled) {
+                    setLocationListings(citiesToLocationListings(data.items));
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setLocationListings(EMPTY_LOCATION_LISTINGS);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [dashboardStatus, serviceAreasKey]);
 
     const verificationState = mapBrokerVerificationState(profile);
     const serviceAreaCount = serviceAreas.length;
@@ -323,9 +361,10 @@ export function OwnerListingsPage() {
 
             <OwnerListingsHeader
                 filters={filters}
-                listings={MOCK_OWNER_LISTINGS}
+                listings={locationListings}
                 filterContext={filterContext}
                 chipCounts={chipCounts}
+                poolListings={poolItems}
                 isResultsLoading={isResultsLoading}
                 onApplyBand={handleApplyBand}
                 onApplySheet={handleApplySheet}
@@ -336,6 +375,7 @@ export function OwnerListingsPage() {
             />
 
             <OwnerListingsResults
+                key={filterSignature}
                 filterSignature={filterSignature}
                 serviceAreasKey={serviceAreasKey}
                 filters={filters}

@@ -1,15 +1,19 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
+
+import { ApiError } from "@/lib/api/client";
+import { representativeApi } from "@/lib/api/representative";
 
 import { PropertyCard } from "@/components/shared/property-card";
 
-import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 import {
     OWNER_LISTINGS_GRID_CLASS,
     OWNER_LISTINGS_LIST_CLASS,
 } from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
+import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
 
 export type OwnerListingsGridProps = {
@@ -20,16 +24,34 @@ export type OwnerListingsGridProps = {
 export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridProps) {
     const [requestingId, setRequestingId] = useState<string | null>(null);
     const [requestedIds, setRequestedIds] = useState<Record<string, boolean>>(() =>
-        Object.fromEntries(items.filter((item) => item.hasRequested).map((item) => [item.id, true])),
+        Object.fromEntries(
+            items.filter((item) => item.hasRequested).map((item) => [item.id, true]),
+        ),
     );
 
-    const handleRequest = useCallback((id: string) => {
-        setRequestingId(id);
-        window.setTimeout(() => {
-            setRequestedIds((prev) => ({ ...prev, [id]: true }));
-            setRequestingId(null);
-        }, 600);
-    }, []);
+    const handleRequest = useCallback(
+        async (id: string) => {
+            if (requestingId || requestedIds[id]) return;
+
+            setRequestingId(id);
+            try {
+                await representativeApi.requestRepresentation(id);
+                setRequestedIds((prev) => ({ ...prev, [id]: true }));
+                toast.success("Representation request sent");
+            } catch (error) {
+                const message =
+                    error instanceof ApiError
+                        ? error.message
+                        : error instanceof Error
+                          ? error.message
+                          : "Could not send request";
+                toast.error(message);
+            } finally {
+                setRequestingId(null);
+            }
+        },
+        [requestingId, requestedIds],
+    );
 
     const isListView = view === "list";
 
@@ -55,7 +77,7 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
                                 : "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                         }
                         isRequestPending={requestingId === item.id}
-                        onRequest={() => handleRequest(item.id)}
+                        onRequest={() => void handleRequest(item.id)}
                     />
                 );
             })}

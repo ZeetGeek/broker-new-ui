@@ -14,7 +14,8 @@ export function buildQuickChipCounts(
         yourAreas:
             serviceAreas.length === 0
                 ? 0
-                : items.filter((item) => areaSet.has(item.locality)).length,
+                : items.filter((item) => areaSet.has(item.locality) || areaSet.has(item.city))
+                      .length,
         newToday: items.filter((item) => item.isNew).length,
         slotsOpen: items.filter((item) => item.brokerSlotsOpen > 0).length,
         commissionSet: items.filter((item) => item.commissionPercent > 0).length,

@@ -7,12 +7,7 @@ export type OwnerListingSort = "newest" | "price_asc" | "price_desc";
 export type OwnerListingTransactionType = "sale" | "rent";
 
 export type OwnerListingPropertyType =
-    | "apartment"
-    | "villa"
-    | "penthouse"
-    | "shop"
-    | "office"
-    | "plot";
+    "apartment" | "villa" | "penthouse" | "shop" | "office" | "plot";
 
 export type OwnerListingItem = {
     id: string;
@@ -54,6 +49,8 @@ export type OwnerListingItem = {
 export type OwnerListingsFilters = {
     /** Sheet — free-text search */
     q: string;
+    /** Band — multi-select cities (from browse cities API) */
+    cities: string[];
     /** Band — multi-select localities */
     localities: string[];
     /** Band — multi-select BHK values */
@@ -78,7 +75,7 @@ export type OwnerListingsFilters = {
 
 export type OwnerListingsBandFilters = Pick<
     OwnerListingsFilters,
-    "localities" | "bhk" | "type" | "min" | "max" | "propertyType" | "furnishing"
+    "cities" | "localities" | "bhk" | "type" | "min" | "max" | "propertyType" | "furnishing"
 >;
 
 export type OwnerListingsSheetFilters = Pick<
@@ -100,6 +97,7 @@ export type OwnerListingsResult = {
 
 export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     q: "",
+    cities: [],
     localities: [],
     bhk: [],
     type: "",
