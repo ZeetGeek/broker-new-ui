@@ -50,7 +50,13 @@ const PROPERTY_CARD_PHOTO_GRID_CLASS = "h-40 w-full";
 const PROPERTY_CARD_PHOTO_LIST_CLASS = "w-36 min-h-36 self-stretch sm:w-44 md:w-52";
 
 const BROWSE_CARD_PHOTO_FRAME_CLASS =
-    "shrink-0 rounded-card bg-surface p-1 shadow-md transition-shadow duration-160 group-hover:shadow-lg";
+    "shrink-0 rounded-card p-1 shadow-md transition-[box-shadow,background] duration-160 group-hover:shadow-lg";
+const BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS = "bg-surface";
+const BROWSE_CARD_PHOTO_FRAME_NEW_CLASS = `
+  bg-gradient-to-br from-highlight via-brand-soft to-brand/55
+  shadow-[0_0_0_1px_color-mix(in_oklch,var(--color-highlight)_35%,transparent),var(--shadow-md)]
+  group-hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--color-highlight)_50%,transparent),var(--shadow-lg)]
+`;
 const BROWSE_CARD_PHOTO_FRAME_GRID_CLASS = "w-full";
 const BROWSE_CARD_PHOTO_FRAME_LIST_CLASS = "w-40 sm:w-48 md:w-56";
 
@@ -310,6 +316,9 @@ function BrowsePropertyCardPhoto({
         <div
             className={cn(
                 BROWSE_CARD_PHOTO_FRAME_CLASS,
+                listing.isNew
+                    ? BROWSE_CARD_PHOTO_FRAME_NEW_CLASS
+                    : BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS,
                 layout === "list"
                     ? BROWSE_CARD_PHOTO_FRAME_LIST_CLASS
                     : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
