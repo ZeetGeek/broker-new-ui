@@ -495,20 +495,12 @@ function BrowsePropertyCardSpecs({ listing }: { listing: BrowsePropertyCardListi
     );
 }
 
-function BrowsePropertyCardPrice({
-    listing,
-}: {
-    listing: BrowsePropertyCardListing;
-}) {
+function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListing }) {
     const both = offersBoth(listing);
     const reduceMotion = useReducedMotion();
     const [mode, setMode] = useState<ListingPriceMode>(() => defaultPriceMode(listing));
 
-    const activeMode: ListingPriceMode = both
-        ? mode
-        : offersSale(listing)
-          ? "sale"
-          : "rent";
+    const activeMode: ListingPriceMode = both ? mode : offersSale(listing) ? "sale" : "rent";
 
     const priceLabel =
         activeMode === "rent"
@@ -536,7 +528,9 @@ function BrowsePropertyCardPrice({
     return (
         <div className="flex items-center gap-2 min-inline-0">
             <div className="flex min-inline-0 flex-1 items-baseline gap-1.5">
-                <span className="h5 truncate font-semibold text-ink tabular-nums">{priceLabel}</span>
+                <span className="h5 truncate font-semibold text-ink tabular-nums">
+                    {priceLabel}
+                </span>
                 {hasCommission ? (
                     <Tooltip>
                         <TooltipTrigger
@@ -625,9 +619,10 @@ function BrowsePropertyCard({
     isRequestPending = false,
     className,
 }: Extract<PropertyCardProps, { variant: "browse" }>) {
-    const sharePriceLabel = offersRent(listing) && !offersSale(listing)
-        ? formatRentInr(listing.rentAmountInr ?? 0)
-        : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
+    const sharePriceLabel =
+        offersRent(listing) && !offersSale(listing)
+            ? formatRentInr(listing.rentAmountInr ?? 0)
+            : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
     const isListView = layout === "list";
 
     return (
@@ -660,7 +655,9 @@ function BrowsePropertyCard({
                         className="flex min-inline-0 flex-1 flex-col gap-2.5"
                     >
                         <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h3 className="body truncate font-semibold text-ink">{listing.title}</h3>
+                            <h3 className="body truncate font-semibold text-ink">
+                                {listing.title}
+                            </h3>
                             <p className="body-sm flex items-center gap-1.5 text-ink-muted min-inline-0">
                                 <MapPin
                                     aria-hidden
