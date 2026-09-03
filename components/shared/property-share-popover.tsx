@@ -18,12 +18,11 @@ import {
 import { cn } from "@/lib/utils";
 
 import {
-    Dialog,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+    MorphingPopover,
+    MorphingPopoverContent,
+    MorphingPopoverTrigger,
+} from "@/components/motion-primitives/morphing-popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type ShareIcon = (props: SVGProps<SVGSVGElement>) => React.ReactNode;
 
@@ -129,7 +128,7 @@ export function PropertySharePopover({ listing, className }: PropertySharePopove
             },
             {
                 id: "copy",
-                label: copied ? "Copied" : "Copy link",
+                label: copied ? "Copied" : "Copy",
                 icon: toShareIcon(copied ? Check : Copy),
                 onClick: handleCopyLink,
                 accentClassName: copied ? "text-brand" : undefined,
@@ -179,61 +178,90 @@ export function PropertySharePopover({ listing, className }: PropertySharePopove
     }, [canNativeShare, copied, handleCopyLink, handleNativeShare, shareText, shareUrl]);
 
     return (
-        <>
-            <button
-                type="button"
-                aria-label="Share property"
-                className={cn(
-                    `
-                      inline-flex shrink-0 items-center justify-center text-ink-muted
-                      transition-colors duration-160
-                      hover:text-ink
-                      block-5 inline-5
-                    `,
-                    className,
-                )}
-                onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    setOpen(true);
-                }}
+        <MorphingPopover
+            open={open}
+            onOpenChange={setOpen}
+            className={cn("relative shrink-0", className)}
+        >
+            <TooltipProvider>
+                <Tooltip open={open ? false : undefined}>
+                    <TooltipTrigger
+                        render={
+                            <span className="inline-flex">
+                                <MorphingPopoverTrigger
+                                    type="button"
+                                    aria-label="Share listing"
+                                    className="
+                                      body-sm inline-flex items-center gap-1.5 font-medium
+                                      text-ink-muted transition-colors duration-160
+                                      hover:text-ink
+                                    "
+                                >
+                                    <Share2
+                                        aria-hidden
+                                        className="block-3.5 inline-3.5"
+                                        strokeWidth={1.75}
+                                    />
+                                    <span>Share</span>
+                                </MorphingPopoverTrigger>
+                            </span>
+                        }
+                    />
+                    <TooltipContent side="bottom">
+                        Share this listing with a client
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+
+            <MorphingPopoverContent
+                className="
+                  z-30 mt-2 overflow-hidden rounded-card border border-border-warm bg-surface
+                  p-3 text-ink shadow-lg inset-e-0 top-full min-inline-60
+                "
+                onClick={(event) => event.stopPropagation()}
             >
-                <Share2 aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-            </button>
+                <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-0.5 px-1">
+                        <p className="body-sm font-semibold text-ink">Share listing</p>
+                        <p className="body-xs text-ink-muted">Send this property to a client</p>
+                    </div>
 
-            <Dialog open={open} onOpenChange={setOpen}>
-                <DialogPopup className="max-inline-sm gap-5 p-5">
-                    <DialogHeader>
-                        <DialogTitle>Share listing</DialogTitle>
-                        <DialogDescription>
-                            Send this property to a client or copy the link.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-4 gap-1">
                         {channels.map((channel) => {
                             const Icon = channel.icon;
                             const content = (
                                 <>
-                                    <Icon
+                                    <span
                                         className={cn(
-                                            "block-4 inline-4 shrink-0",
-                                            channel.accentClassName ?? "text-ink-muted",
+                                            `
+                                              flex items-center justify-center rounded-full
+                                              bg-surface-muted block-9 inline-9
+                                            `,
+                                            channel.id === "whatsapp" && "bg-brand-soft",
+                                            channel.id === "copy" &&
+                                                copied &&
+                                                "bg-brand-soft",
                                         )}
-                                    />
-                                    <span className="truncate">{channel.label}</span>
+                                    >
+                                        <Icon
+                                            className={cn(
+                                                "block-4 inline-4",
+                                                channel.accentClassName ?? "text-ink-muted",
+                                            )}
+                                        />
+                                    </span>
+                                    <span className="body-xs text-center font-medium text-ink">
+                                        {channel.label}
+                                    </span>
                                 </>
                             );
 
                             const itemClass = cn(
                                 `
-                                  body-sm flex items-center gap-2.5 rounded-inner border
-                                  border-border-warm px-3 py-3 font-medium text-ink
+                                  flex flex-col items-center gap-1.5 rounded-inner px-1 py-2
                                   transition-colors duration-160
-                                  hover:bg-surface-muted
+                                  hover:bg-surface-muted/70
                                 `,
-                                channel.id === "whatsapp" &&
-                                    "border-brand/25 bg-brand-soft/50 hover:bg-brand-soft",
                             );
 
                             if (channel.href) {
@@ -265,8 +293,8 @@ export function PropertySharePopover({ listing, className }: PropertySharePopove
                             );
                         })}
                     </div>
-                </DialogPopup>
-            </Dialog>
-        </>
+                </div>
+            </MorphingPopoverContent>
+        </MorphingPopover>
     );
 }
