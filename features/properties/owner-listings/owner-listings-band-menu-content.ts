@@ -18,4 +18,8 @@ export const OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS = cn(
     "**:data-[slot=dropdown-menu-checkbox-item]:data-highlighted:text-ink!",
     "**:data-[slot=dropdown-menu-checkbox-item]:focus:bg-surface-muted!",
     "**:data-[slot=dropdown-menu-checkbox-item]:focus:text-ink!",
+    "**:data-[slot=dropdown-menu-radio-item]:data-highlighted:bg-surface-muted!",
+    "**:data-[slot=dropdown-menu-radio-item]:data-highlighted:text-ink!",
+    "**:data-[slot=dropdown-menu-radio-item]:focus:bg-surface-muted!",
+    "**:data-[slot=dropdown-menu-radio-item]:focus:text-ink!",
 );

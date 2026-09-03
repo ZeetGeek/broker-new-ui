@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import {
     buildOwnerListingsLocationTree,
     groupOwnerListingLocationsByCity,
+    type OwnerListingLocationSearchHit,
     searchOwnerListingLocations,
 } from "@/features/properties/owner-listings/build-owner-listings-location-tree";
 import {
@@ -31,25 +32,36 @@ import type { OwnerListingItem } from "@/features/properties/owner-listings/type
 
 const rowClass = (checked: boolean) =>
     cn(
-        "group/row my-0.5 items-center gap-3.5 rounded-xl px-2.5 py-3",
-        "font-normal text-ink transition-colors duration-160",
+        "group/row my-1 items-center gap-3 rounded-xl px-2.5 py-3 pe-10",
+        "font-normal text-ink transition-[background-color,box-shadow] duration-160",
         "data-highlighted:bg-surface-muted/70! data-highlighted:text-ink!",
         "focus:bg-surface-muted/70! focus:text-ink!",
-        checked && "bg-brand-soft/35 data-highlighted:bg-brand-soft/45!",
         "**:data-muted-line:data-highlighted:text-ink-muted!",
         "**:data-muted-line:focus:text-ink-muted!",
-        "[&_.text-brand]:data-highlighted:text-brand!",
-        "[&_.text-brand]:focus:text-brand!",
+        // Keep pin brand-green on hover/focus (base checkbox forces accent-foreground on **:)
+        "**:data-[slot=where-location-pin]:text-brand!",
+        "focus:**:data-[slot=where-location-pin]:text-brand!",
+        "data-highlighted:**:data-[slot=where-location-pin]:text-brand!",
+        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:pointer-events-none",
+        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:absolute",
+        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:inset-e-4",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:inline-flex",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:items-center",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:justify-center",
-        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-brand",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-0",
-        "duration-160 **:data-[slot=dropdown-menu-checkbox-item-indicator]:transition-opacity",
-        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:[&_svg]:block-4.5",
-        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:[&_svg]:inline-4.5",
+        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:scale-75",
+        `
+          duration-160
+          **:data-[slot=dropdown-menu-checkbox-item-indicator]:transition-[opacity,transform]
+        `,
+        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:[&_svg]:block-4",
+        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:[&_svg]:inline-4",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:[&_svg]:stroke-[2.25]",
-        checked && "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-100",
+        checked && [
+            "**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink",
+            "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-100",
+            "**:data-[slot=dropdown-menu-checkbox-item-indicator]:scale-100",
+        ],
     );
 
 function formatListingCount(count: number): string {
@@ -83,6 +95,7 @@ function LocationIcon() {
     return (
         <MapPin
             aria-hidden
+            data-slot="where-location-pin"
             className="shrink-0 text-brand block-4.5 inline-4.5"
             strokeWidth={1.75}
         />
@@ -171,6 +184,30 @@ const WHERE_MENU_LIST_PANEL_CLASS = cn(
     "shrink-0 overflow-hidden min-block-52",
 );
 
+function renderSearchResults({
+    hits,
+    query,
+    selectedSet,
+    onToggle,
+}: {
+    hits: OwnerListingLocationSearchHit[];
+    query: string;
+    selectedSet: Set<string>;
+    onToggle: (locality: string, city: string) => void;
+}) {
+    return hits.map((hit) => (
+        <WhereLocationRow
+            key={`${hit.state}-${hit.city}-${hit.locality}`}
+            locality={hit.locality}
+            pathLabel={hit.pathLabel}
+            listingCount={hit.listingCount}
+            query={query}
+            checked={selectedSet.has(hit.locality)}
+            onToggle={() => onToggle(hit.locality, hit.city)}
+        />
+    ));
+}
+
 export type OwnerListingsWhereMenuProps = {
     listings: OwnerListingItem[];
     selectedCities: string[];
@@ -204,13 +241,7 @@ export function OwnerListingsWhereMenu({
     const selectedLocalitySet = useMemo(() => new Set(selectedLocalities), [selectedLocalities]);
     const hasListings = locationTree.length > 0;
     const isSearching = query.trim().length > 0;
-    const citySearchHits = useMemo(() => {
-        const needle = query.trim().toLowerCase();
-        if (!needle) return [];
-        return cityGroups.filter((group) => group.city.toLowerCase().includes(needle));
-    }, [cityGroups, query]);
-    const showEmptyState =
-        !hasListings || (isSearching && searchHits.length === 0 && citySearchHits.length === 0);
+    const showEmptyState = !hasListings || (isSearching && searchHits.length === 0);
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
@@ -231,23 +262,6 @@ export function OwnerListingsWhereMenu({
         }
 
         onLocationChange(nextCities, nextLocalities);
-    };
-
-    const toggleCity = (city: string) => {
-        if (selectedCitySet.has(city)) {
-            const localitiesInCity = new Set(
-                cityGroups
-                    .find((group) => group.city === city)
-                    ?.localities.map((leaf) => leaf.locality) ?? [],
-            );
-            onLocationChange(
-                selectedCities.filter((item) => item !== city),
-                selectedLocalities.filter((locality) => !localitiesInCity.has(locality)),
-            );
-            return;
-        }
-
-        onLocationChange([...selectedCities, city], selectedLocalities);
     };
 
     const whereTooltipLabel = formatLocalitiesTooltip(selectedLocalities, selectedCities);
@@ -290,7 +304,7 @@ export function OwnerListingsWhereMenu({
                     OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
                     `
                       grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden! p-0
-                      max-inline-[min(100vw-2rem,27rem)] min-inline-84
+                      inline-(--anchor-width) max-inline-(--anchor-width) min-inline-0
                     `,
                     "max-block-[min(28rem,var(--available-height))]",
                 )}
@@ -336,64 +350,58 @@ export function OwnerListingsWhereMenu({
                 ) : (
                     <div className={WHERE_MENU_LIST_PANEL_CLASS}>
                         <ScrollArea className="overflow-hidden block-full">
-                            <div className="px-2 pe-3 pbs-0 pbe-2">
-                                {isSearching ? (
-                                    <>
-                                        {citySearchHits.map((cityGroup) => (
-                                            <WhereLocationRow
-                                                key={`city-${cityGroup.state}-${cityGroup.city}`}
-                                                locality={cityGroup.city}
-                                                pathLabel="City"
-                                                listingCount={cityGroup.listingCount}
-                                                query={query}
-                                                checked={selectedCitySet.has(cityGroup.city)}
-                                                onToggle={() => toggleCity(cityGroup.city)}
-                                            />
-                                        ))}
-                                        {searchHits.map((hit) => (
-                                            <WhereLocationRow
-                                                key={`${hit.state}-${hit.city}-${hit.locality}`}
-                                                locality={hit.locality}
-                                                pathLabel={hit.pathLabel}
-                                                listingCount={hit.listingCount}
-                                                query={query}
-                                                checked={selectedLocalitySet.has(hit.locality)}
-                                                onToggle={() =>
-                                                    toggleLocality(hit.locality, hit.city)
-                                                }
-                                            />
-                                        ))}
-                                    </>
-                                ) : (
-                                    cityGroups.map((cityGroup, cityIndex) => (
-                                        <Fragment key={`${cityGroup.state}-${cityGroup.city}`}>
-                                            <div className={cityIndex > 0 ? "mbs-2" : undefined}>
-                                                <WhereLocationRow
-                                                    locality={cityGroup.city}
-                                                    pathLabel="City"
-                                                    listingCount={cityGroup.listingCount}
-                                                    query=""
-                                                    checked={selectedCitySet.has(cityGroup.city)}
-                                                    onToggle={() => toggleCity(cityGroup.city)}
-                                                />
-                                            </div>
+                            <div className="px-3 pe-3 pbs-0 pbe-3">
+                                {isSearching
+                                    ? renderSearchResults({
+                                          hits: searchHits,
+                                          query,
+                                          selectedSet: selectedLocalitySet,
+                                          onToggle: toggleLocality,
+                                      })
+                                    : cityGroups.map((cityGroup, cityIndex) => (
+                                          <Fragment key={`${cityGroup.state}-${cityGroup.city}`}>
+                                              {cityGroups.length > 1 ? (
+                                                  <div
+                                                      className={cn(
+                                                          "flex items-center gap-2 px-2.5 pbe-1",
+                                                          cityIndex > 0 ? "mbs-3 pbs-1" : "pbs-0",
+                                                      )}
+                                                  >
+                                                      <span
+                                                          className="
+                                                            text-[11px] font-semibold
+                                                            tracking-[0.08em] text-ink-muted
+                                                            uppercase
+                                                          "
+                                                      >
+                                                          {cityGroup.city}
+                                                      </span>
+                                                      <span
+                                                          className="
+                                                            flex-1 bg-border-warm/70 block-px
+                                                          "
+                                                          aria-hidden
+                                                      />
+                                                  </div>
+                                              ) : null}
 
-                                            {cityGroup.localities.map((leaf) => (
-                                                <WhereLocationRow
-                                                    key={`${cityGroup.city}-${leaf.locality}`}
-                                                    locality={leaf.locality}
-                                                    pathLabel={`${leaf.city}, ${leaf.state}`}
-                                                    listingCount={leaf.listingCount}
-                                                    query=""
-                                                    checked={selectedLocalitySet.has(leaf.locality)}
-                                                    onToggle={() =>
-                                                        toggleLocality(leaf.locality, leaf.city)
-                                                    }
-                                                />
-                                            ))}
-                                        </Fragment>
-                                    ))
-                                )}
+                                              {cityGroup.localities.map((leaf) => (
+                                                  <WhereLocationRow
+                                                      key={`${cityGroup.city}-${leaf.locality}`}
+                                                      locality={leaf.locality}
+                                                      pathLabel={`${leaf.city}, ${leaf.state}`}
+                                                      listingCount={leaf.listingCount}
+                                                      query=""
+                                                      checked={selectedLocalitySet.has(
+                                                          leaf.locality,
+                                                      )}
+                                                      onToggle={() =>
+                                                          toggleLocality(leaf.locality, leaf.city)
+                                                      }
+                                                  />
+                                              ))}
+                                          </Fragment>
+                                      ))}
                             </div>
                         </ScrollArea>
                     </div>

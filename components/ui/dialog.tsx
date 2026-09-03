@@ -65,9 +65,8 @@ function DialogPopup({
                 className={cn(
                     `
                       t-modal fixed inset-s-1/2 inset-bs-1/2 z-50 grid -translate-1/2 gap-4
-                      rounded-card border border-border-warm bg-surface p-(--dialog-pad)
-                      shadow-xl outline-none
-                      inline-full max-inline-md
+                      rounded-card border border-border-warm bg-surface p-(--dialog-pad) shadow-xl
+                      outline-none inline-full max-inline-md
                     `,
                     className,
                 )}
@@ -80,11 +79,10 @@ function DialogPopup({
                             render={
                                 <DialogClose
                                     className="
-                                      absolute inset-e-(--dialog-pad) inset-bs-(--dialog-pad)
-                                      flex items-center justify-center rounded-full text-ink-muted
-                                      outline-none transition-[color,transform] duration-160
-                                      ease-out
-                                      block-10 inline-10
+                                      absolute inset-e-(--dialog-pad) inset-bs-(--dialog-pad) flex
+                                      items-center justify-center text-ink-muted
+                                      transition-[color,transform] duration-160 ease-out
+                                      outline-none
                                       hover:text-ink
                                       focus-visible:ring-2 focus-visible:ring-brand
                                       focus-visible:ring-offset-2 focus-visible:ring-offset-surface
@@ -93,10 +91,10 @@ function DialogPopup({
                                 />
                             }
                         >
-                            <XIcon className="block-4.5 inline-4.5" strokeWidth={2} />
+                            <XIcon className="block-4.5 inline-4.5" strokeWidth={2} aria-hidden />
                             <span className="sr-only">Close</span>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom">
+                        <TooltipContent side="inline-start">
                             Close
                             <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
                         </TooltipContent>
@@ -113,8 +111,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
             data-slot="dialog-header"
             className={cn(
                 `
-                  flex flex-col gap-1.5 text-center
-                  pe-[calc(var(--dialog-pad)+2.5rem)]
+                  flex flex-col gap-1.5 pe-[calc(var(--dialog-pad)+1.25rem)] text-center
                   sm:text-start
                 `,
                 className,

@@ -1,7 +1,7 @@
 "use client";
 
+import { type MouseEvent, type PointerEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useCallback, useEffect, useState, type MouseEvent, type PointerEvent } from "react";
 
 import useEmblaCarousel from "embla-carousel-react";
 import {
@@ -24,10 +24,10 @@ import { useReducedMotion } from "motion/react";
 import { formatAreaSqft } from "@/lib/format/area";
 import {
     defaultPriceMode,
+    type ListingPriceMode,
     offersBoth,
     offersRent,
     offersSale,
-    type ListingPriceMode,
 } from "@/lib/format/listing-availability";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
@@ -35,12 +35,12 @@ import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format
 import { spring } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
+import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { AppImage } from "@/components/shared/app-image";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertySharePopover } from "@/components/shared/property-share-popover";
 import { UserAvatar } from "@/components/shared/user-avatar";
-import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -336,15 +336,15 @@ function BrowsePropertyCardPhoto({
                 {images.length > 0 ? (
                     <div
                         ref={emblaRef}
-                        className="h-full w-full overflow-hidden"
+                        className="overflow-hidden block-full inline-full"
                         aria-roledescription="carousel"
                         aria-label={`${alt} photos`}
                     >
-                        <div className="flex h-full touch-pan-y">
+                        <div className="flex touch-pan-y block-full">
                             {images.map((src, index) => (
                                 <div
                                     key={`${src}-${index}`}
-                                    className="relative min-w-0 shrink-0 grow-0 basis-full"
+                                    className="relative shrink-0 grow-0 basis-full min-inline-0"
                                     role="group"
                                     aria-roledescription="slide"
                                     aria-label={`Photo ${index + 1} of ${images.length}`}
@@ -377,7 +377,11 @@ function BrowsePropertyCardPhoto({
                     </div>
                 )}
 
-                <div className="absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5">
+                <div
+                    className="
+                      absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
+                    "
+                >
                     {offersSale(listing) ? (
                         <Badge
                             className="
@@ -421,7 +425,11 @@ function BrowsePropertyCardPhoto({
                             className={cn(
                                 BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
                                 "inset-s-3.5",
-                                "opacity-0 group-hover/photo:opacity-100 group-focus-within/photo:opacity-100",
+                                `
+                                  opacity-0
+                                  group-focus-within/photo:opacity-100
+                                  group-hover/photo:opacity-100
+                                `,
                             )}
                         >
                             <ChevronLeft
@@ -439,7 +447,11 @@ function BrowsePropertyCardPhoto({
                             className={cn(
                                 BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
                                 "inset-e-3.5",
-                                "opacity-0 group-hover/photo:opacity-100 group-focus-within/photo:opacity-100",
+                                `
+                                  opacity-0
+                                  group-focus-within/photo:opacity-100
+                                  group-hover/photo:opacity-100
+                                `,
                             )}
                         >
                             <ChevronRight
@@ -460,7 +472,10 @@ function BrowsePropertyCardPhoto({
                                 <span
                                     key={index}
                                     className={cn(
-                                        "rounded-full bg-surface/90 transition-[inline-size,opacity] duration-160",
+                                        `
+                                          rounded-full bg-surface/90
+                                          transition-[inline-size,opacity] duration-160
+                                        `,
                                         "block-1.5",
                                         index === activeDot
                                             ? "opacity-100 inline-4"
@@ -527,7 +542,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
 
     return (
         <div className="flex items-center gap-2 min-inline-0">
-            <div className="flex min-inline-0 flex-1 items-baseline gap-1.5">
+            <div className="flex flex-1 items-baseline gap-1.5 min-inline-0">
                 <span className="h5 truncate font-semibold text-ink tabular-nums">
                     {priceLabel}
                 </span>
@@ -547,7 +562,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                         />
                         <TooltipContent side="top" className="text-center max-inline-xs">
                             <p className="font-semibold tabular-nums">You get {commissionLabel}</p>
-                            <p className="body-xs mt-0.5 opacity-90">
+                            <p className="body-xs mbs-0.5 opacity-90">
                                 {listing.commissionPercent}% of {priceLabel}
                             </p>
                         </TooltipContent>
@@ -562,8 +577,8 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                     role="group"
                     aria-label="Price type"
                     className="
-                      inline-flex shrink-0 items-center gap-0.5 rounded-full border border-border-warm
-                      bg-surface p-0.5 shadow-sm
+                      inline-flex shrink-0 items-center gap-0.5 rounded-full border
+                      border-border-warm bg-surface p-0.5 shadow-sm
                     "
                 >
                     <AnimatedBackground
@@ -629,7 +644,7 @@ function BrowsePropertyCard({
         <article
             className={cn(
                 "flex min-inline-0",
-                isListView ? "flex-row items-start gap-4" : "h-full flex-col gap-3",
+                isListView ? "flex-row items-start gap-4" : "flex-col gap-3 block-full",
                 className,
             )}
         >
@@ -652,13 +667,17 @@ function BrowsePropertyCard({
                     <Link
                         href={detailsHref}
                         prefetch={false}
-                        className="flex min-inline-0 flex-1 flex-col gap-2.5"
+                        className="flex flex-1 flex-col gap-2.5 min-inline-0"
                     >
                         <div className="flex flex-col gap-1.5 min-inline-0">
                             <h3 className="body truncate font-semibold text-ink">
                                 {listing.title}
                             </h3>
-                            <p className="body-sm flex items-center gap-1.5 text-ink-muted min-inline-0">
+                            <p
+                                className="
+                                  body-sm flex items-center gap-1.5 text-ink-muted min-inline-0
+                                "
+                            >
                                 <MapPin
                                     aria-hidden
                                     className="shrink-0 block-3.5 inline-3.5"
@@ -680,12 +699,19 @@ function BrowsePropertyCard({
                             locality: listing.locality,
                             city: listing.city,
                             priceLabel: sharePriceLabel,
+                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                            configLabel: listing.configLabel,
+                            propertyTypeLabel: listing.propertyTypeLabel,
+                            areaSqft: listing.areaSqft,
+                            bhk: listing.bhk,
+                            listingKind:
+                                offersRent(listing) && !offersSale(listing) ? "rent" : "sale",
                         }}
-                        className="mt-0.5"
+                        className="mbs-0.5"
                     />
                 </div>
 
-                <div className={cn("flex flex-col gap-2.5", !isListView && "mt-auto")}>
+                <div className={cn("flex flex-col gap-2.5", !isListView && "mbs-auto")}>
                     <BrowsePropertyCardPrice listing={listing} />
 
                     <BrowseRequestAction
