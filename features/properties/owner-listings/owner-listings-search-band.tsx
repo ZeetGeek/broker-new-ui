@@ -2,16 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { BedDouble, Building2, IndianRupee, Search, Sofa, Tags } from "lucide-react";
+import { BedDouble, Building2, Search, Sofa } from "lucide-react";
 
 import {
     extractBandFilters,
     formatBhkLabel,
-    formatBudgetLabel,
     formatFurnishingLabel,
     formatPropertyTypeLabel,
-    formatTransactionTypeLabel,
 } from "@/lib/format/owner-listings-labels";
+import { cn } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,8 @@ import {
     OwnerListingsBandDivider,
     OwnerListingsBandSegment,
 } from "@/features/properties/owner-listings/owner-listings-band-segment";
+import { OwnerListingsBudgetMenu } from "@/features/properties/owner-listings/owner-listings-budget-menu";
+import { OwnerListingsLookingForMenu } from "@/features/properties/owner-listings/owner-listings-looking-for-menu";
 import { OwnerListingsWhereMenu } from "@/features/properties/owner-listings/owner-listings-where-menu";
 import type {
     OwnerListingFurnishing,
@@ -42,17 +43,6 @@ import type {
 import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
 
 const BHK_OPTIONS = ["1", "2", "3", "4", "5"] as const;
-
-const BUDGET_PRESETS = [
-    { min: "", max: "2500000", label: "Under ₹25 L" },
-    { min: "", max: "5000000", label: "Under ₹50 L" },
-    { min: "", max: "10000000", label: "Under ₹1 Cr" },
-    { min: "", max: "20000000", label: "Under ₹2 Cr" },
-    { min: "", max: "50000000", label: "Under ₹5 Cr" },
-    { min: "4000000", max: "6000000", label: "₹40 L – ₹60 L" },
-    { min: "10000000", max: "20000000", label: "₹1 Cr – ₹2 Cr" },
-    { min: "20000000", max: "", label: "₹2 Cr+" },
-] as const;
 
 const FURNISHING_OPTIONS: { value: OwnerListingFurnishing; label: string }[] = [
     { value: "furnished", label: "Furnished" },
@@ -135,8 +125,9 @@ export function OwnerListingsSearchBand({
     return (
         <div
             className="
-          flex items-center gap-2 rounded-card border border-border-warm bg-surface p-2 shadow-sm
-        "
+              flex items-center gap-2 rounded-card border border-border-warm bg-surface p-2
+              shadow-sm
+            "
         >
             <div className="flex flex-1 items-center gap-1.5 overflow-x-auto min-inline-0">
                 <div className="flex flex-1 p-0.5 min-inline-36">
@@ -152,70 +143,23 @@ export function OwnerListingsSearchBand({
 
                 <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="hidden flex-1 p-0.5 min-inline-32 md:block">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <OwnerListingsBandSegment
-                                    label="Looking for"
-                                    icon={Tags}
-                                    value={formatTransactionTypeLabel(draft.type)}
-                                    className="inline-full"
-                                />
-                            }
-                        />
-                        <DropdownMenuContent
-                            align="start"
-                            sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
-                            className={cn(OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS, "min-inline-44")}
-                        >
-                            <DropdownMenuItem onClick={() => updateDraft({ type: "" })}>
-                                Any
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateDraft({ type: "sale" })}>
-                                Sale
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateDraft({ type: "rent" })}>
-                                Rent
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                <div className="hidden flex-1 p-0.5 min-inline-0 min-inline-32 md:block">
+                    <OwnerListingsLookingForMenu
+                        value={draft.type}
+                        onValueChange={(type) => updateDraft({ type })}
+                        className="inline-full"
+                    />
                 </div>
 
                 <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="flex flex-1 p-0.5 min-inline-36">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <OwnerListingsBandSegment
-                                    label="Budget"
-                                    icon={IndianRupee}
-                                    value={formatBudgetLabel(draft.min, draft.max)}
-                                    className="inline-full"
-                                />
-                            }
-                        />
-                        <DropdownMenuContent
-                            align="start"
-                            sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
-                            className={cn(OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS, "min-inline-52")}
-                        >
-                            <DropdownMenuItem onClick={() => updateDraft({ min: "", max: "" })}>
-                                Any budget
-                            </DropdownMenuItem>
-                            {BUDGET_PRESETS.map((preset) => (
-                                <DropdownMenuItem
-                                    key={preset.label}
-                                    onClick={() =>
-                                        updateDraft({ min: preset.min, max: preset.max })
-                                    }
-                                >
-                                    {preset.label}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                <div className="flex flex-1 p-0.5 min-inline-0 min-inline-36">
+                    <OwnerListingsBudgetMenu
+                        min={draft.min}
+                        max={draft.max}
+                        onBudgetChange={({ min, max }) => updateDraft({ min, max })}
+                        className="inline-full"
+                    />
                 </div>
 
                 <OwnerListingsBandDivider className="hidden md:block" />
@@ -323,7 +267,7 @@ export function OwnerListingsSearchBand({
                 </div>
             </div>
 
-            <div className="flex shrink-0 items-center pe-1">
+            <div className="flex shrink-0 items-center ps-2 pe-4">
                 <Button
                     type="button"
                     size="icon-md"

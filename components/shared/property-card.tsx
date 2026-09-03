@@ -680,6 +680,13 @@ function BrowsePropertyCard({
                             locality: listing.locality,
                             city: listing.city,
                             priceLabel: sharePriceLabel,
+                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                            configLabel: listing.configLabel,
+                            propertyTypeLabel: listing.propertyTypeLabel,
+                            areaSqft: listing.areaSqft,
+                            bhk: listing.bhk,
+                            listingKind:
+                                offersRent(listing) && !offersSale(listing) ? "rent" : "sale",
                         }}
                         className="mt-0.5"
                     />
