@@ -84,6 +84,8 @@ export const authApi = {
     refresh() {
         return apiFetch<LoginResponse>("/auth/refresh", {
             method: "POST",
+            body: JSON.stringify({}),
+            skipAuth: true,
             credentials: "include",
         });
     },
@@ -91,6 +93,8 @@ export const authApi = {
     logout() {
         return apiFetch("/auth/logout", {
             method: "POST",
+            body: JSON.stringify({}),
+            skipAuth: true,
             credentials: "include",
         }).catch(() => undefined);
     },
