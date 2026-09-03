@@ -349,27 +349,40 @@ function BrowsePropertyCard({
             </Link>
 
             <div className="flex flex-1 flex-col gap-2.5 px-2 min-inline-0">
-                <Link
-                    href={detailsHref}
-                    prefetch={false}
-                    className="flex flex-col gap-2.5 min-inline-0"
-                >
-                    <div className="flex flex-col gap-1.5 min-inline-0">
-                        <h3 className="body truncate font-semibold text-ink">{listing.title}</h3>
-                        <p className="body-sm flex items-center gap-1.5 text-ink-muted min-inline-0">
-                            <MapPin
-                                aria-hidden
-                                className="shrink-0 block-3.5 inline-3.5"
-                                strokeWidth={1.75}
-                            />
-                            <span className="truncate">
-                                {listing.locality}, {listing.city}
-                            </span>
-                        </p>
-                    </div>
+                <div className="flex items-start gap-2">
+                    <Link
+                        href={detailsHref}
+                        prefetch={false}
+                        className="flex min-inline-0 flex-1 flex-col gap-2.5"
+                    >
+                        <div className="flex flex-col gap-1.5 min-inline-0">
+                            <h3 className="body truncate font-semibold text-ink">{listing.title}</h3>
+                            <p className="body-sm flex items-center gap-1.5 text-ink-muted min-inline-0">
+                                <MapPin
+                                    aria-hidden
+                                    className="shrink-0 block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
+                                <span className="truncate">
+                                    {listing.locality}, {listing.city}
+                                </span>
+                            </p>
+                        </div>
 
-                    <BrowsePropertyCardSpecs listing={listing} />
-                </Link>
+                        <BrowsePropertyCardSpecs listing={listing} />
+                    </Link>
+
+                    <PropertySharePopover
+                        listing={{
+                            id: listing.id,
+                            title: listing.title,
+                            locality: listing.locality,
+                            city: listing.city,
+                            priceLabel,
+                        }}
+                        className="mt-0.5"
+                    />
+                </div>
 
                 <div className="flex items-baseline gap-1.5">
                     <span className="h5 truncate font-semibold text-ink tabular-nums">
@@ -380,24 +393,11 @@ function BrowsePropertyCard({
                     </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <div className="min-inline-0 flex-1">
-                        <BrowseRequestAction
-                            hasRequested={listing.hasRequested}
-                            isRequestPending={isRequestPending}
-                            onRequest={onRequest}
-                        />
-                    </div>
-                    <PropertySharePopover
-                        listing={{
-                            id: listing.id,
-                            title: listing.title,
-                            locality: listing.locality,
-                            city: listing.city,
-                            priceLabel,
-                        }}
-                    />
-                </div>
+                <BrowseRequestAction
+                    hasRequested={listing.hasRequested}
+                    isRequestPending={isRequestPending}
+                    onRequest={onRequest}
+                />
             </div>
         </article>
     );
