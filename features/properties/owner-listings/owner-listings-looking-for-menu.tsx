@@ -18,7 +18,9 @@ import {
 import {
     OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
     OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET,
+    OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
 } from "@/features/properties/owner-listings/owner-listings-band-menu-content";
+import { OwnerListingsBandMenuHeader } from "@/features/properties/owner-listings/owner-listings-band-menu-header";
 import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
 import type { OwnerListingTransactionType } from "@/features/properties/owner-listings/types";
 
@@ -110,27 +112,35 @@ export function OwnerListingsLookingForMenu({
     const [open, setOpen] = useState(false);
 
     return (
+        <div className={cn("min-w-0 w-full", className)}>
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger
+                className="flex min-w-0 w-full"
                 render={
                     <OwnerListingsBandSegment
                         label="Looking for"
                         icon={Tags}
                         value={formatTransactionTypeLabel(value)}
-                        className={className}
+                        className="w-full"
                         isOpen={open}
                     />
                 }
             />
             <DropdownMenuContent
-                align="start"
+                align="center"
                 sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
                 className={cn(
                     OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
-                    "min-inline-0 inline-(--anchor-width) max-inline-(--anchor-width) overflow-hidden! p-0",
+                    OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
+                    "overflow-hidden! p-0",
                 )}
             >
-                <div className="px-3 pe-3 pbs-3 pbe-3">
+                <div className="flex flex-col gap-3 px-3 pe-3 pbs-3 pbe-3">
+                    <OwnerListingsBandMenuHeader
+                        description="Sale, rent, or both"
+                        onClear={() => onValueChange("")}
+                        className="px-2 pt-1"
+                    />
                     <DropdownMenuRadioGroup
                         value={toRadioValue(value)}
                         onValueChange={(next) => onValueChange(fromRadioValue(next))}
@@ -169,5 +179,6 @@ export function OwnerListingsLookingForMenu({
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>
+        </div>
     );
 }

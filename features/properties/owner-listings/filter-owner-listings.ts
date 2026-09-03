@@ -263,5 +263,7 @@ export function filterOwnerListings(
         totalCount: filtered.length,
         marketValueInr,
         nextCursor: null,
+        page: 1,
+        totalPages: 1,
     };
 }

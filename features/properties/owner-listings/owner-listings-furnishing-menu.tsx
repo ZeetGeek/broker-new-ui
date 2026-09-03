@@ -2,19 +2,9 @@
 
 import { useState } from "react";
 
-import {
-    Briefcase,
-    Building2,
-    Check,
-    Home,
-    Hotel,
-    LandPlot,
-    Layers,
-    Store,
-    type LucideIcon,
-} from "lucide-react";
+import { Armchair, Check, Layers, PackageOpen, Sofa, type LucideIcon } from "lucide-react";
 
-import { formatPropertyTypeLabel } from "@/lib/format/owner-listings-labels";
+import { formatFurnishingLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
 import {
@@ -30,74 +20,56 @@ import {
 } from "@/features/properties/owner-listings/owner-listings-band-menu-content";
 import { OwnerListingsBandMenuHeader } from "@/features/properties/owner-listings/owner-listings-band-menu-header";
 import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
-import type { OwnerListingPropertyType } from "@/features/properties/owner-listings/types";
+import type { OwnerListingFurnishing } from "@/features/properties/owner-listings/types";
 
-type PropertyTypeValue = OwnerListingPropertyType | "";
+type FurnishingValue = OwnerListingFurnishing | "";
 
-const PROPERTY_TYPE_OPTIONS: {
-    value: PropertyTypeValue;
+const FURNISHING_OPTIONS: {
+    value: FurnishingValue;
     label: string;
     description: string;
     icon: LucideIcon;
 }[] = [
     {
         value: "",
-        label: "Any type",
-        description: "All residential and commercial",
+        label: "Any",
+        description: "All furnishing levels",
         icon: Layers,
     },
     {
-        value: "apartment",
-        label: "Apartment",
-        description: "Flats in a building",
-        icon: Building2,
+        value: "furnished",
+        label: "Furnished",
+        description: "Fully ready to move in",
+        icon: Sofa,
     },
     {
-        value: "villa",
-        label: "Villa",
-        description: "Independent house",
-        icon: Home,
+        value: "semi",
+        label: "Semi-furnished",
+        description: "Basics like fans and lights",
+        icon: Armchair,
     },
     {
-        value: "penthouse",
-        label: "Penthouse",
-        description: "Top-floor luxury",
-        icon: Hotel,
-    },
-    {
-        value: "shop",
-        label: "Shop",
-        description: "Retail space",
-        icon: Store,
-    },
-    {
-        value: "office",
-        label: "Office",
-        description: "Workspaces",
-        icon: Briefcase,
-    },
-    {
-        value: "plot",
-        label: "Plot",
-        description: "Land ready to build",
-        icon: LandPlot,
+        value: "unfurnished",
+        label: "Unfurnished",
+        description: "Empty shell, bring your own",
+        icon: PackageOpen,
     },
 ];
 
-export type OwnerListingsPropertyTypeMenuProps = {
-    value: PropertyTypeValue;
-    onValueChange: (value: PropertyTypeValue) => void;
+export type OwnerListingsFurnishingMenuProps = {
+    value: FurnishingValue;
+    onValueChange: (value: FurnishingValue) => void;
     className?: string;
 };
 
-export function OwnerListingsPropertyTypeMenu({
+export function OwnerListingsFurnishingMenu({
     value,
     onValueChange,
     className,
-}: OwnerListingsPropertyTypeMenuProps) {
+}: OwnerListingsFurnishingMenuProps) {
     const [open, setOpen] = useState(false);
 
-    const handleSelect = (next: PropertyTypeValue) => {
+    const handleSelect = (next: FurnishingValue) => {
         onValueChange(next);
         setOpen(false);
     };
@@ -109,9 +81,9 @@ export function OwnerListingsPropertyTypeMenu({
                 className="flex min-w-0 w-full"
                 render={
                     <OwnerListingsBandSegment
-                        label="Property type"
-                        icon={Building2}
-                        value={formatPropertyTypeLabel(value)}
+                        label="Furnishing"
+                        icon={Sofa}
+                        value={formatFurnishingLabel(value)}
                         className="w-full"
                         isOpen={open}
                     />
@@ -128,7 +100,7 @@ export function OwnerListingsPropertyTypeMenu({
             >
                 <div className="flex flex-col gap-3 px-3 py-3">
                     <OwnerListingsBandMenuHeader
-                        description="Choose a category"
+                        description="How ready is the home"
                         onClear={() => handleSelect("")}
                         className="px-2 pt-1"
                     />
@@ -136,9 +108,9 @@ export function OwnerListingsPropertyTypeMenu({
                     <div
                         className="flex flex-col gap-1"
                         role="radiogroup"
-                        aria-label="Property type"
+                        aria-label="Furnishing"
                     >
-                        {PROPERTY_TYPE_OPTIONS.map((option) => {
+                        {FURNISHING_OPTIONS.map((option) => {
                             const active = value === option.value;
                             const Icon = option.icon;
 
@@ -215,12 +187,13 @@ export function OwnerListingsPropertyTypeMenu({
                                         className={cn(
                                             `
                                               flex shrink-0 items-center justify-center rounded-full
-                                              block-5 inline-5 transition-[opacity,transform,background-color]
+                                              block-5 inline-5
+                                              transition-[opacity,transform,background-color]
                                               duration-160
                                             `,
                                             active
-                                                ? "bg-brand text-surface opacity-100 scale-100"
-                                                : "opacity-0 scale-75",
+                                                ? "scale-100 bg-brand text-surface opacity-100"
+                                                : "scale-75 opacity-0",
                                         )}
                                         aria-hidden
                                     >

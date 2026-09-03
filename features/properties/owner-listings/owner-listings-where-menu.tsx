@@ -25,7 +25,10 @@ import {
 } from "@/features/properties/owner-listings/build-owner-listings-location-tree";
 import {
     OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
+    OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET,
+    OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
 } from "@/features/properties/owner-listings/owner-listings-band-menu-content";
+import { OwnerListingsBandMenuHeader } from "@/features/properties/owner-listings/owner-listings-band-menu-header";
 import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 
@@ -244,6 +247,11 @@ export function OwnerListingsWhereMenu({
     const isSearching = query.trim().length > 0;
     const showEmptyState = !hasListings || (isSearching && searchHits.length === 0);
 
+    const clearSelection = () => {
+        setQuery("");
+        onLocationChange([], []);
+    };
+
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
         if (!nextOpen) {
@@ -305,19 +313,22 @@ export function OwnerListingsWhereMenu({
                     </Tooltip>
                 </TooltipProvider>
                 <DropdownMenuContent
-                    align="start"
-                    sideOffset={10}
+                    align="center"
+                    sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
                     className={cn(
                         OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
+                        OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
                         `
                           grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden! p-0
-                          w-(--anchor-width)! min-w-(--anchor-width)! max-w-(--anchor-width)!
-                          min-inline-0
                         `,
                         "max-block-[min(28rem,var(--available-height))]",
                     )}
                 >
-                <div className="shrink-0 px-4 pbs-4 pbe-1">
+                <div className="shrink-0 flex flex-col gap-3 px-4 pbs-4 pbe-1">
+                    <OwnerListingsBandMenuHeader
+                        description="Pick cities or areas"
+                        onClear={clearSelection}
+                    />
                     <Input
                         value={query}
                         onValueChange={setQuery}

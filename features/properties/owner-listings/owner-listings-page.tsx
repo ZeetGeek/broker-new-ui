@@ -6,6 +6,7 @@ import { fetchOwnerListingCities, fetchOwnerListings } from "@/lib/api/owner-lis
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { AppPagination } from "@/components/shared/app-pagination";
 
 import {
     type BrokerVerificationState,
@@ -91,6 +92,7 @@ function OwnerListingsResults({
     onClearFilters,
     onLoaded,
     onLoadingChange,
+    onPageChange,
     view,
 }: {
     filterSignature: string;
@@ -101,6 +103,7 @@ function OwnerListingsResults({
     onClearFilters: () => void;
     onLoaded: (result: OwnerListingsResult) => void;
     onLoadingChange: (isLoading: boolean) => void;
+    onPageChange: (page: number) => void;
     view: OwnerListingsView;
 }) {
     const [result, setResult] = useState<OwnerListingsResult | null>(null);
@@ -191,9 +194,22 @@ function OwnerListingsResults({
         );
     }
 
+    const currentPage = result.page > 0 ? result.page : 1;
+
     return (
-        <div className={isFetching ? "opacity-60 transition-opacity duration-160" : undefined}>
+        <div
+            className={cn(
+                "flex flex-col gap-8",
+                isFetching && "opacity-60 transition-opacity duration-160",
+            )}
+        >
             <OwnerListingsGrid items={result.items} view={view} />
+            <AppPagination
+                page={currentPage}
+                totalPages={result.totalPages}
+                onPageChange={onPageChange}
+                aria-label="Owner listings pages"
+            />
         </div>
     );
 }
@@ -273,14 +289,24 @@ export function OwnerListingsPage() {
 
     const handleApplySheet = useCallback(
         (patch: Partial<OwnerListingsFilters>) => {
-            applyFilters({ ...filters, ...patch });
+            applyFilters({ ...filters, ...patch, cursor: "" });
         },
         [applyFilters, filters],
     );
 
     const handleSortChange = useCallback(
         (sort: OwnerListingSort) => {
-            applyFilters({ ...filters, sort });
+            applyFilters({ ...filters, sort, cursor: "" });
+        },
+        [applyFilters, filters],
+    );
+
+    const handlePageChange = useCallback(
+        (page: number) => {
+            const nextCursor = page <= 1 ? "" : String(page);
+            if (filters.cursor === nextCursor) return;
+            applyFilters({ ...filters, cursor: nextCursor });
+            window.scrollTo({ top: 0, behavior: "smooth" });
         },
         [applyFilters, filters],
     );
@@ -375,7 +401,6 @@ export function OwnerListingsPage() {
             />
 
             <OwnerListingsResults
-                key={filterSignature}
                 filterSignature={filterSignature}
                 serviceAreasKey={serviceAreasKey}
                 filters={filters}
@@ -384,6 +409,7 @@ export function OwnerListingsPage() {
                 onClearFilters={clearFilters}
                 onLoaded={handleLoaded}
                 onLoadingChange={setIsResultsLoading}
+                onPageChange={handlePageChange}
                 view={view}
             />
         </div>

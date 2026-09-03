@@ -11,7 +11,7 @@ import type {
     OwnerListingsResult,
 } from "@/features/properties/owner-listings/types";
 
-const PAGE_SIZE = 60;
+const PAGE_SIZE = 10;
 
 /**
  * Broker owner-listings pool from `GET /properties/browse`.
@@ -70,6 +70,8 @@ export async function fetchOwnerListings(
         totalCount: result.total,
         marketValueInr,
         nextCursor: nextPage,
+        page: result.page,
+        totalPages: result.totalPages,
     };
 }
 

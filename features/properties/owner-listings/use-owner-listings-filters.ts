@@ -50,7 +50,7 @@ export function useOwnerListingsFilters() {
 
     const toggleQuickChip = useCallback(
         (key: "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove") => {
-            setFilters({ [key]: !filters[key] });
+            setFilters({ [key]: !filters[key], cursor: "" });
         },
         [filters, setFilters],
     );

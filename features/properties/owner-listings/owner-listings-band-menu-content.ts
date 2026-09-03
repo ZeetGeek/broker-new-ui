@@ -1,7 +1,18 @@
 import { cn } from "@/lib/utils";
 
 /** Vertical gap between filter trigger and dropdown panel. */
-export const OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET = 16;
+export const OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET = 18;
+
+/**
+ * Slightly wider than the trigger so panel content breathes; pair with
+ * `align="center"` so the extra width grows evenly left and right.
+ */
+export const OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS = cn(
+    "min-inline-0!",
+    "w-[calc(var(--anchor-width)+2rem)]!",
+    "min-w-[calc(var(--anchor-width)+2rem)]!",
+    "max-w-[min(calc(var(--anchor-width)+2rem),calc(100vw-1.5rem))]!",
+);
 
 /** Shared popup surface for owner-listings filter band — matches profile menu motion. */
 export const OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS = cn(

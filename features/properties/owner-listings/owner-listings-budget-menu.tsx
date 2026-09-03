@@ -22,7 +22,9 @@ import {
 import {
     OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
     OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET,
+    OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
 } from "@/features/properties/owner-listings/owner-listings-band-menu-content";
+import { OwnerListingsBandMenuHeader } from "@/features/properties/owner-listings/owner-listings-band-menu-header";
 import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
 import type { OwnerListingTransactionType } from "@/features/properties/owner-listings/types";
 
@@ -78,33 +80,37 @@ export function OwnerListingsBudgetMenu({
     );
 
     return (
+        <div className={cn("min-w-0 w-full", className)}>
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger
+                className="flex min-w-0 w-full"
                 render={
                     <OwnerListingsBandSegment
                         label="Budget"
                         icon={IndianRupee}
                         value={formatBudgetLabel(min, max, lookingFor)}
-                        className={className}
+                        className="w-full"
                         isOpen={open}
                     />
                 }
             />
             <DropdownMenuContent
-                align="start"
+                align="center"
                 sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
                 className={cn(
                     OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
-                    "min-inline-0 inline-(--anchor-width) max-inline-(--anchor-width) overflow-hidden p-0",
+                    OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
+                    "overflow-hidden p-0",
                 )}
             >
                 <div className="flex flex-col gap-3 px-5 py-5">
-                    <div className="flex flex-col gap-0.5">
-                        <p className="body-xs font-semibold tracking-[0.08em] text-ink-muted uppercase">
-                            Budget
-                        </p>
-                        <p className="body-sm text-ink-muted">{hint}</p>
-                    </div>
+                    <OwnerListingsBandMenuHeader
+                        description={hint}
+                        onClear={() => {
+                            setStepIndex(0);
+                            onBudgetChange({ min: "", max: "" });
+                        }}
+                    />
 
                     <BudgetRotaryKnob
                         stepCount={maxStep}
@@ -142,5 +148,6 @@ export function OwnerListingsBudgetMenu({
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>
+        </div>
     );
 }
