@@ -143,7 +143,7 @@ export function PropertySharePopover({ listing, className }: PropertySharePopove
                 <TooltipContent side="bottom">Share this listing with a client</TooltipContent>
             </Tooltip>
 
-            <DialogPopup className="max-inline-sm gap-6 p-6 sm:p-7">
+            <DialogPopup className="max-inline-sm gap-6 sm:[--dialog-pad:1.75rem]">
                 <DialogHeader className="gap-1 text-start">
                     <DialogTitle className="font-display text-xl font-semibold text-ink">
                         Share

@@ -7,6 +7,12 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { Kbd } from "@/components/ui/kbd";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+/** Padding + close-button inset. Change once — both stay in sync. */
+const DIALOG_PAD = "1.5rem";
+
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
     return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
@@ -40,6 +46,7 @@ function DialogPopup({
     className,
     children,
     showCloseButton = true,
+    style,
     ...props
 }: DialogPrimitive.Popup.Props & {
     showCloseButton?: boolean;
@@ -49,10 +56,17 @@ function DialogPopup({
             <DialogBackdrop />
             <DialogPrimitive.Popup
                 data-slot="dialog-popup"
+                style={
+                    {
+                        "--dialog-pad": DIALOG_PAD,
+                        ...style,
+                    } as React.CSSProperties
+                }
                 className={cn(
                     `
                       t-modal fixed inset-s-1/2 inset-bs-1/2 z-50 grid -translate-1/2 gap-4
-                      rounded-card border border-border-warm bg-surface p-6 shadow-xl outline-none
+                      rounded-card border border-border-warm bg-surface p-(--dialog-pad)
+                      shadow-xl outline-none
                       inline-full max-inline-md
                     `,
                     className,
@@ -61,21 +75,32 @@ function DialogPopup({
             >
                 {children}
                 {showCloseButton ? (
-                    <DialogClose
-                        className="
-                          absolute inset-e-3 inset-bs-3 flex items-center justify-center
-                          rounded-full bg-surface-muted text-ink-muted outline-none
-                          transition-[background-color,color,transform] duration-160 ease-out
-                          block-10 inline-10
-                          hover:bg-canvas hover:text-ink
-                          focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
-                          focus-visible:ring-offset-surface
-                          active:scale-[0.94]
-                        "
-                    >
-                        <XIcon className="block-4.5 inline-4.5" strokeWidth={2} />
-                        <span className="sr-only">Close</span>
-                    </DialogClose>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <DialogClose
+                                    className="
+                                      absolute inset-e-(--dialog-pad) inset-bs-(--dialog-pad)
+                                      flex items-center justify-center rounded-full text-ink-muted
+                                      outline-none transition-[color,transform] duration-160
+                                      ease-out
+                                      block-10 inline-10
+                                      hover:text-ink
+                                      focus-visible:ring-2 focus-visible:ring-brand
+                                      focus-visible:ring-offset-2 focus-visible:ring-offset-surface
+                                      active:scale-[0.94]
+                                    "
+                                />
+                            }
+                        >
+                            <XIcon className="block-4.5 inline-4.5" strokeWidth={2} />
+                            <span className="sr-only">Close</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                            Close
+                            <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
+                        </TooltipContent>
+                    </Tooltip>
                 ) : null}
             </DialogPrimitive.Popup>
         </DialogPortal>
@@ -86,7 +111,14 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
             data-slot="dialog-header"
-            className={cn("flex flex-col gap-1.5 pe-10 text-center sm:text-start", className)}
+            className={cn(
+                `
+                  flex flex-col gap-1.5 text-center
+                  pe-[calc(var(--dialog-pad)+2.5rem)]
+                  sm:text-start
+                `,
+                className,
+            )}
             {...props}
         />
     );

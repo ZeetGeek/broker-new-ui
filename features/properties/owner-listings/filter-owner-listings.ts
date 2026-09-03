@@ -6,6 +6,7 @@ import type {
     OwnerListingsResult,
 } from "@/features/properties/owner-listings/types";
 import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
+import { listingCompareAmountInr } from "@/lib/format/listing-availability";
 
 function parseParam(
     params: URLSearchParams | Record<string, string | string[] | undefined>,
@@ -197,28 +198,40 @@ export function filterOwnerListings(
         }
 
         if (bhkValues.length > 0 && !bhkValues.includes(item.bhk)) return false;
-        if (filters.type === "sale" && item.isRent) return false;
-        if (filters.type === "rent" && !item.isRent) return false;
+        if (filters.type === "sale" && (item.saleAmountInr == null || item.saleAmountInr <= 0)) {
+            return false;
+        }
+        if (filters.type === "rent" && (item.rentAmountInr == null || item.rentAmountInr <= 0)) {
+            return false;
+        }
         if (filters.furnishing && item.furnishing !== filters.furnishing) return false;
         if (filters.propertyType && item.propertyTypeLabel !== filters.propertyType) return false;
         if (filters.newToday && !item.isNew) return false;
         if (filters.slotsOpen && item.brokerSlotsOpen <= 0) return false;
         if (filters.commissionSet && item.commissionPercent <= 0) return false;
         if (filters.readyToMove && !item.readyToMove) return false;
-        if (minInr !== null && !Number.isNaN(minInr) && item.amountInr < minInr) return false;
-        if (maxInr !== null && !Number.isNaN(maxInr) && item.amountInr > maxInr) return false;
+
+        const compareAmount = listingCompareAmountInr(item, filters.type);
+        if (minInr !== null && !Number.isNaN(minInr) && compareAmount < minInr) return false;
+        if (maxInr !== null && !Number.isNaN(maxInr) && compareAmount > maxInr) return false;
         return true;
     });
 
     filtered = [...filtered].sort((a, b) => {
-        if (filters.sort === "price_asc") return a.amountInr - b.amountInr;
-        if (filters.sort === "price_desc") return b.amountInr - a.amountInr;
+        if (filters.sort === "price_asc") {
+            return (
+                listingCompareAmountInr(a, filters.type) - listingCompareAmountInr(b, filters.type)
+            );
+        }
+        if (filters.sort === "price_desc") {
+            return (
+                listingCompareAmountInr(b, filters.type) - listingCompareAmountInr(a, filters.type)
+            );
+        }
         return a.listedHoursAgo - b.listedHoursAgo;
     });
 
-    const marketValueInr = filtered
-        .filter((item) => !item.isRent)
-        .reduce((sum, item) => sum + item.amountInr, 0);
+    const marketValueInr = filtered.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0);
 
     return {
         items: filtered,

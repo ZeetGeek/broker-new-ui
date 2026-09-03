@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useState, type MouseEvent, type PointerEvent } from "react";
 
+import useEmblaCarousel from "embla-carousel-react";
 import {
     Bath,
     BedDouble,
     Building2,
     Calendar,
     Camera,
+    ChevronLeft,
+    ChevronRight,
     CircleCheck,
     Clock,
     MapPin,
@@ -15,11 +19,20 @@ import {
     MessageCircle,
     Users,
 } from "lucide-react";
+import { useReducedMotion } from "motion/react";
 
 import { formatAreaSqft } from "@/lib/format/area";
+import {
+    defaultPriceMode,
+    offersBoth,
+    offersRent,
+    offersSale,
+    type ListingPriceMode,
+} from "@/lib/format/listing-availability";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
+import { spring } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
@@ -27,6 +40,7 @@ import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertySharePopover } from "@/components/shared/property-share-popover";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -44,6 +58,17 @@ const BROWSE_CARD_PHOTO_INNER_CLASS =
     "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
 const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full";
 const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[4/3] min-h-40 w-full";
+
+const BROWSE_CARD_PHOTO_NAV_BTN_CLASS = `
+  absolute inset-bs-1/2 z-10 flex -translate-y-1/2 items-center justify-center
+  rounded-full bg-surface/95 text-ink transition-[opacity,transform] duration-160
+  block-7 inline-7
+  shadow-[inset_0_-2px_0_0_rgba(111,123,144,0.1)]
+  hover:bg-surface
+  disabled:pointer-events-none disabled:opacity-0
+  focus-visible:opacity-100 focus-visible:outline-none
+  focus-visible:ring-2 focus-visible:ring-ring/40
+`;
 
 const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
@@ -134,6 +159,8 @@ type PropertyCardBase = {
     amountInr: number;
     isRent: boolean;
     imageSrc?: string | null;
+    /** Gallery for browse card carousel. Falls back to `[imageSrc]` when absent. */
+    imageSrcs?: string[];
     photoCount: number;
     isNew?: boolean;
     owner: PropertyCardOwner;
@@ -148,6 +175,8 @@ export type BrowsePropertyCardListing = PropertyCardBase & {
     brokerSlotsTotal: number;
     commissionPercent: number;
     hasRequested: boolean;
+    saleAmountInr: number | null;
+    rentAmountInr: number | null;
 };
 
 export type RepresentedPropertyCardListing = PropertyCardBase & {
@@ -216,7 +245,66 @@ function BrowsePropertyCardPhoto({
     layout?: "grid" | "list";
 }) {
     const alt = listing.title;
-    const dotCount = Math.min(Math.max(listing.photoCount, 1), 5);
+    const images =
+        listing.imageSrcs && listing.imageSrcs.length > 0
+            ? listing.imageSrcs
+            : listing.imageSrc
+              ? [listing.imageSrc]
+              : [];
+    const canCarousel = images.length > 1;
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    const [canScrollPrev, setCanScrollPrev] = useState(false);
+    const [canScrollNext, setCanScrollNext] = useState(false);
+
+    const [emblaRef, emblaApi] = useEmblaCarousel({
+        align: "start",
+        containScroll: "trimSnaps",
+        dragFree: false,
+        skipSnaps: false,
+        watchDrag: canCarousel,
+    });
+
+    const syncCarouselState = useCallback(() => {
+        if (!emblaApi) return;
+        setSelectedIndex(emblaApi.selectedScrollSnap());
+        setCanScrollPrev(emblaApi.canScrollPrev());
+        setCanScrollNext(emblaApi.canScrollNext());
+    }, [emblaApi]);
+
+    useEffect(() => {
+        if (!emblaApi) return;
+        syncCarouselState();
+        emblaApi.on("select", syncCarouselState);
+        emblaApi.on("reInit", syncCarouselState);
+        return () => {
+            emblaApi.off("select", syncCarouselState);
+            emblaApi.off("reInit", syncCarouselState);
+        };
+    }, [emblaApi, syncCarouselState]);
+
+    const stopLinkNav = (event: MouseEvent | PointerEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
+    const scrollPrev = (event: MouseEvent) => {
+        stopLinkNav(event);
+        emblaApi?.scrollPrev();
+    };
+
+    const scrollNext = (event: MouseEvent) => {
+        stopLinkNav(event);
+        emblaApi?.scrollNext();
+    };
+
+    const dotCount = Math.min(images.length || 1, 5);
+    const activeDot =
+        images.length > dotCount
+            ? Math.min(
+                  Math.floor((selectedIndex / Math.max(images.length - 1, 1)) * (dotCount - 1)),
+                  dotCount - 1,
+              )
+            : selectedIndex;
 
     return (
         <div
@@ -230,23 +318,40 @@ function BrowsePropertyCardPhoto({
             <div
                 className={cn(
                     BROWSE_CARD_PHOTO_INNER_CLASS,
+                    "group/photo",
                     layout === "list"
                         ? BROWSE_CARD_PHOTO_INNER_LIST_CLASS
                         : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
                 )}
             >
-                {listing.imageSrc ? (
-                    <AppImage
-                        src={listing.imageSrc}
-                        alt={alt}
-                        fill
-                        sizes={imageSizes}
-                        priority={priority}
-                        className="
-                          object-cover transition-transform duration-160
-                          group-hover:scale-[1.02]
-                        "
-                    />
+                {images.length > 0 ? (
+                    <div
+                        ref={emblaRef}
+                        className="h-full w-full overflow-hidden"
+                        aria-roledescription="carousel"
+                        aria-label={`${alt} photos`}
+                    >
+                        <div className="flex h-full touch-pan-y">
+                            {images.map((src, index) => (
+                                <div
+                                    key={`${src}-${index}`}
+                                    className="relative min-w-0 shrink-0 grow-0 basis-full"
+                                    role="group"
+                                    aria-roledescription="slide"
+                                    aria-label={`Photo ${index + 1} of ${images.length}`}
+                                >
+                                    <AppImage
+                                        src={src}
+                                        alt={index === 0 ? alt : `${alt} — photo ${index + 1}`}
+                                        fill
+                                        sizes={imageSizes}
+                                        priority={priority && index === 0}
+                                        className="object-cover"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 ) : (
                     <div
                         className="
@@ -263,34 +368,99 @@ function BrowsePropertyCardPhoto({
                     </div>
                 )}
 
+                <div className="absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5">
+                    {offersSale(listing) ? (
+                        <Badge
+                            className="
+                              body-xs border-0 bg-brand font-semibold text-surface shadow-xs
+                            "
+                        >
+                            For sale
+                        </Badge>
+                    ) : null}
+                    {offersRent(listing) ? (
+                        <Badge
+                            className="
+                              body-xs border border-urgent/30 bg-urgent-soft font-semibold
+                              text-urgent shadow-xs
+                            "
+                        >
+                            For rent
+                        </Badge>
+                    ) : null}
+                </div>
+
                 {listing.isNew ? (
                     <Badge
                         className="
-                          body-xs absolute inset-e-3 inset-bs-3 border-0 bg-surface font-semibold
-                          text-ink shadow-xs
+                          body-xs absolute inset-e-3 inset-bs-3 z-10 border-0 bg-highlight
+                          font-semibold text-highlight-ink shadow-xs
                         "
                     >
                         New
                     </Badge>
                 ) : null}
 
-                {listing.photoCount > 1 ? (
-                    <div
-                        className="
-                          absolute inset-x-0 inset-be-3 flex items-center justify-center gap-1.5
-                        "
-                        aria-hidden
-                    >
-                        {Array.from({ length: dotCount }).map((_, index) => (
-                            <span
-                                key={index}
-                                className={cn(
-                                    "rounded-full bg-surface/90 block-1.5",
-                                    index === 0 ? "opacity-100 inline-4" : "opacity-60 inline-1.5",
-                                )}
+                {canCarousel ? (
+                    <>
+                        <button
+                            type="button"
+                            aria-label="Previous photo"
+                            disabled={!canScrollPrev}
+                            onClick={scrollPrev}
+                            onPointerDown={stopLinkNav}
+                            className={cn(
+                                BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
+                                "inset-s-3.5",
+                                "opacity-0 group-hover/photo:opacity-100 group-focus-within/photo:opacity-100",
+                            )}
+                        >
+                            <ChevronLeft
+                                aria-hidden
+                                className="block-3.5 inline-3.5"
+                                strokeWidth={2}
                             />
-                        ))}
-                    </div>
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="Next photo"
+                            disabled={!canScrollNext}
+                            onClick={scrollNext}
+                            onPointerDown={stopLinkNav}
+                            className={cn(
+                                BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
+                                "inset-e-3.5",
+                                "opacity-0 group-hover/photo:opacity-100 group-focus-within/photo:opacity-100",
+                            )}
+                        >
+                            <ChevronRight
+                                aria-hidden
+                                className="block-3.5 inline-3.5"
+                                strokeWidth={2}
+                            />
+                        </button>
+
+                        <div
+                            className="
+                              absolute inset-x-0 inset-be-3 z-10 flex items-center justify-center
+                              gap-1.5
+                            "
+                            aria-hidden
+                        >
+                            {Array.from({ length: dotCount }).map((_, index) => (
+                                <span
+                                    key={index}
+                                    className={cn(
+                                        "rounded-full bg-surface/90 transition-[inline-size,opacity] duration-160",
+                                        "block-1.5",
+                                        index === activeDot
+                                            ? "opacity-100 inline-4"
+                                            : "opacity-60 inline-1.5",
+                                    )}
+                                />
+                            ))}
+                        </div>
+                    </>
                 ) : null}
             </div>
         </div>
@@ -316,6 +486,126 @@ function BrowsePropertyCardSpecs({ listing }: { listing: BrowsePropertyCardListi
     );
 }
 
+function BrowsePropertyCardPrice({
+    listing,
+}: {
+    listing: BrowsePropertyCardListing;
+}) {
+    const both = offersBoth(listing);
+    const reduceMotion = useReducedMotion();
+    const [mode, setMode] = useState<ListingPriceMode>(() => defaultPriceMode(listing));
+
+    const activeMode: ListingPriceMode = both
+        ? mode
+        : offersSale(listing)
+          ? "sale"
+          : "rent";
+
+    const priceLabel =
+        activeMode === "rent"
+            ? formatRentInr(listing.rentAmountInr ?? 0)
+            : formatPriceInr(listing.saleAmountInr ?? 0);
+
+    const baseAmountInr =
+        activeMode === "rent" ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0);
+    const commissionInr = Math.round((baseAmountInr * listing.commissionPercent) / 100);
+    const commissionLabel =
+        activeMode === "rent" ? formatRentInr(commissionInr) : formatPriceInr(commissionInr);
+    const hasCommission = listing.commissionPercent > 0 && baseAmountInr > 0;
+
+    const commissionBadge = (
+        <span
+            className={cn(
+                "body-sm shrink-0 font-medium text-brand",
+                hasCommission && "cursor-help underline decoration-brand/30 underline-offset-2",
+            )}
+        >
+            ({listing.commissionPercent}%)
+        </span>
+    );
+
+    return (
+        <div className="flex items-center gap-2 min-inline-0">
+            <div className="flex min-inline-0 flex-1 items-baseline gap-1.5">
+                <span className="h5 truncate font-semibold text-ink tabular-nums">{priceLabel}</span>
+                {hasCommission ? (
+                    <Tooltip>
+                        <TooltipTrigger
+                            delay={200}
+                            render={
+                                <button
+                                    type="button"
+                                    className="inline-flex border-0 bg-transparent p-0"
+                                    aria-label={`${listing.commissionPercent}% commission`}
+                                >
+                                    {commissionBadge}
+                                </button>
+                            }
+                        />
+                        <TooltipContent side="top" className="text-center max-inline-xs">
+                            <p className="font-semibold tabular-nums">You get {commissionLabel}</p>
+                            <p className="body-xs mt-0.5 opacity-90">
+                                {listing.commissionPercent}% of {priceLabel}
+                            </p>
+                        </TooltipContent>
+                    </Tooltip>
+                ) : (
+                    commissionBadge
+                )}
+            </div>
+
+            {both ? (
+                <div
+                    role="group"
+                    aria-label="Price type"
+                    className="
+                      inline-flex shrink-0 items-center gap-0.5 rounded-full border border-border-warm
+                      bg-surface p-0.5 shadow-sm
+                    "
+                >
+                    <AnimatedBackground
+                        defaultValue={activeMode}
+                        onValueChange={(id) => {
+                            if (id === "sale" || id === "rent") setMode(id);
+                        }}
+                        className="rounded-full border border-brand bg-brand-soft shadow-none"
+                        transition={reduceMotion ? { duration: 0 } : spring.snappy}
+                    >
+                        {(
+                            [
+                                { id: "sale", label: "Sale" },
+                                { id: "rent", label: "Rent" },
+                            ] as const
+                        ).map((option) => {
+                            const isActive = activeMode === option.id;
+
+                            return (
+                                <button
+                                    key={option.id}
+                                    data-id={option.id}
+                                    type="button"
+                                    aria-pressed={isActive}
+                                    className={cn(
+                                        `
+                                          body-xs rounded-full px-2.5 py-0.5 font-semibold
+                                          transition-[color] duration-160
+                                        `,
+                                        isActive
+                                            ? "text-brand-text"
+                                            : "text-ink-muted hover:text-ink",
+                                    )}
+                                >
+                                    {option.label}
+                                </button>
+                            );
+                        })}
+                    </AnimatedBackground>
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
 function BrowsePropertyCard({
     listing,
     layout = "grid",
@@ -326,16 +616,16 @@ function BrowsePropertyCard({
     isRequestPending = false,
     className,
 }: Extract<PropertyCardProps, { variant: "browse" }>) {
-    const priceLabel = listing.isRent
-        ? formatRentInr(listing.amountInr)
-        : formatPriceInr(listing.amountInr);
+    const sharePriceLabel = offersRent(listing) && !offersSale(listing)
+        ? formatRentInr(listing.rentAmountInr ?? 0)
+        : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
     const isListView = layout === "list";
 
     return (
         <article
             className={cn(
                 "flex min-inline-0",
-                isListView ? "flex-row items-start gap-4" : "flex-col gap-3",
+                isListView ? "flex-row items-start gap-4" : "h-full flex-col gap-3",
                 className,
             )}
         >
@@ -348,7 +638,12 @@ function BrowsePropertyCard({
                 />
             </Link>
 
-            <div className="flex flex-1 flex-col gap-2.5 px-2 min-inline-0">
+            <div
+                className={cn(
+                    "flex flex-1 flex-col gap-2.5 px-2 min-inline-0",
+                    !isListView && "min-block-0",
+                )}
+            >
                 <div className="flex items-start gap-2">
                     <Link
                         href={detailsHref}
@@ -378,26 +673,21 @@ function BrowsePropertyCard({
                             title: listing.title,
                             locality: listing.locality,
                             city: listing.city,
-                            priceLabel,
+                            priceLabel: sharePriceLabel,
                         }}
                         className="mt-0.5"
                     />
                 </div>
 
-                <div className="flex items-baseline gap-1.5">
-                    <span className="h5 truncate font-semibold text-ink tabular-nums">
-                        {priceLabel}
-                    </span>
-                    <span className="body-sm shrink-0 font-medium text-brand">
-                        ({listing.commissionPercent}%)
-                    </span>
-                </div>
+                <div className={cn("flex flex-col gap-2.5", !isListView && "mt-auto")}>
+                    <BrowsePropertyCardPrice listing={listing} />
 
-                <BrowseRequestAction
-                    hasRequested={listing.hasRequested}
-                    isRequestPending={isRequestPending}
-                    onRequest={onRequest}
-                />
+                    <BrowseRequestAction
+                        hasRequested={listing.hasRequested}
+                        isRequestPending={isRequestPending}
+                        onRequest={onRequest}
+                    />
+                </div>
             </div>
         </article>
     );

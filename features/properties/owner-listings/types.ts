@@ -25,8 +25,10 @@ export type OwnerListingItem = {
     state?: string;
     /** ISO market country. Defaults to India in location helpers when absent. */
     country?: string;
-    amountInr: number;
-    isRent: boolean;
+    /** Sale ask in INR. Null when not offered for sale. */
+    saleAmountInr: number | null;
+    /** Monthly rent ask in INR. Null when not offered for rent. */
+    rentAmountInr: number | null;
     areaSqft: number;
     furnishingLabel: string;
     furnishing: OwnerListingFurnishing;
@@ -44,6 +46,8 @@ export type OwnerListingItem = {
     hasRequested: boolean;
     isBookmarked: boolean;
     imageSrc: string;
+    /** Gallery URLs for card carousel. First entry should match `imageSrc`. */
+    imageSrcs: string[];
     status: OwnerListingStatus;
 };
 
