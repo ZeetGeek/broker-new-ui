@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export type YourListingsTab = "representing" | "requests";
 
 const YOUR_LISTINGS_TABS: { value: YourListingsTab; label: string; href: string }[] = [
-    { value: "representing", label: "Representing", href: BROKER_YOUR_LISTINGS_HREF },
+    { value: "representing", label: "My listings", href: BROKER_YOUR_LISTINGS_HREF },
     {
         value: "requests",
         label: "Requests",

@@ -195,6 +195,20 @@ export type RepresentedPropertyCardListing = PropertyCardBase & {
     clientsMatchedCount: number;
 };
 
+export type OwnedPropertyCardStatus = "draft" | "published" | "unpublished";
+
+export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
+    title: string;
+    locality: string;
+    city: string;
+    bhk: number;
+    status: OwnedPropertyCardStatus;
+    inboundRequestCount: number;
+    listedDaysAgo: number;
+    saleAmountInr: number | null;
+    rentAmountInr: number | null;
+};
+
 export type PropertyCardProps = {
     className?: string;
     layout?: "grid" | "list";
@@ -206,9 +220,11 @@ export type PropertyCardProps = {
     onShare?: () => void;
     onOpenCrm?: () => void;
     crmHref?: string;
+    editHref?: string;
 } & (
     | { variant: "browse"; listing: BrowsePropertyCardListing }
     | { variant: "represented"; listing: RepresentedPropertyCardListing }
+    | { variant: "owned"; listing: OwnedPropertyCardListing }
 );
 
 function formatBrowseCardArea(areaSqft: number): string {
@@ -1000,9 +1016,278 @@ function RepresentedPropertyCard({
     );
 }
 
+const OWNED_EDIT_LABEL = "Edit property";
+const OWNED_OPEN_LABEL = "Open";
+const OWNED_EDIT_TOOLTIP = "Update price, photos, and other listing details";
+const OWNED_OPEN_TOOLTIP = "View this listing's full details";
+
+function OwnedListingAction({
+    href,
+    isEdit,
+}: {
+    href: string;
+    isEdit: boolean;
+}) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <span className="inline-flex inline-full">
+                            <Button
+                                size="md"
+                                variant="accent"
+                                className="inline-full"
+                                render={<Link href={href} prefetch={false} />}
+                            >
+                                {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
+                            </Button>
+                        </span>
+                    }
+                />
+                <TooltipContent side="top" className="text-center max-inline-xs">
+                    {isEdit ? OWNED_EDIT_TOOLTIP : OWNED_OPEN_TOOLTIP}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+}
+
+const OWNED_STATUS_LABEL: Record<OwnedPropertyCardStatus, string> = {
+    draft: "Draft",
+    published: "Published",
+    unpublished: "Unpublished",
+};
+
+function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowsePropertyCardListing {
+    return {
+        id: listing.id,
+        title: listing.title,
+        configLabel: listing.configLabel,
+        propertyTypeLabel: listing.propertyTypeLabel,
+        areaSqft: listing.areaSqft,
+        amountInr: listing.amountInr,
+        isRent: listing.isRent,
+        imageSrc: listing.imageSrc,
+        imageSrcs: listing.imageSrcs,
+        photoCount: listing.photoCount,
+        isNew: listing.isNew,
+        owner: { name: "You" },
+        locality: listing.locality,
+        city: listing.city,
+        bhk: listing.bhk,
+        brokerSlotsOpen: 0,
+        brokerSlotsTotal: 0,
+        commissionPercent: 0,
+        hasRequested: false,
+        saleAmountInr: listing.saleAmountInr,
+        rentAmountInr: listing.rentAmountInr,
+    };
+}
+
+function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
+    if (status === "published") {
+        return (
+            <Badge className="body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs">
+                {OWNED_STATUS_LABEL[status]}
+            </Badge>
+        );
+    }
+    if (status === "draft") {
+        return (
+            <Badge className="body-xs border-0 bg-surface/95 font-semibold text-ink-muted shadow-xs">
+                {OWNED_STATUS_LABEL[status]}
+            </Badge>
+        );
+    }
+    return (
+        <Badge className="body-xs border-0 bg-urgent-soft font-semibold text-urgent shadow-xs">
+            {OWNED_STATUS_LABEL[status]}
+        </Badge>
+    );
+}
+
+function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing }) {
+    const browse = ownedToBrowseListing(listing);
+    const both = offersBoth(browse);
+    const reduceMotion = useReducedMotion();
+    const [mode, setMode] = useState<ListingPriceMode>(() => defaultPriceMode(browse));
+    const activeMode: ListingPriceMode = both ? mode : offersSale(browse) ? "sale" : "rent";
+    const priceLabel =
+        activeMode === "rent"
+            ? formatRentInr(listing.rentAmountInr ?? 0)
+            : formatPriceInr(listing.saleAmountInr ?? 0);
+
+    const requestLabel =
+        listing.inboundRequestCount === 0
+            ? "(0 req)"
+            : listing.inboundRequestCount === 1
+              ? "(1 req)"
+              : `(${listing.inboundRequestCount} req)`;
+
+    return (
+        <div className="flex items-center gap-2 min-inline-0">
+            <div className="flex flex-1 items-baseline gap-1.5 min-inline-0">
+                <span className="h5 truncate font-semibold text-ink tabular-nums">{priceLabel}</span>
+                <span className="body-sm shrink-0 font-medium text-brand">{requestLabel}</span>
+            </div>
+            {both ? (
+                <div
+                    role="group"
+                    aria-label="Price type"
+                    className="
+                      inline-flex shrink-0 items-center gap-0.5 rounded-full border
+                      border-border-warm bg-surface p-0.5 shadow-sm
+                    "
+                >
+                    <AnimatedBackground
+                        defaultValue={activeMode}
+                        onValueChange={(id) => {
+                            if (id === "sale" || id === "rent") setMode(id);
+                        }}
+                        className="rounded-full border border-brand bg-brand-soft shadow-none"
+                        transition={reduceMotion ? { duration: 0 } : spring.snappy}
+                    >
+                        {(
+                            [
+                                { id: "sale", label: "Sale" },
+                                { id: "rent", label: "Rent" },
+                            ] as const
+                        ).map((option) => {
+                            const isActive = activeMode === option.id;
+
+                            return (
+                                <button
+                                    key={option.id}
+                                    data-id={option.id}
+                                    type="button"
+                                    aria-pressed={isActive}
+                                    className={cn(
+                                        `
+                                          body-xs rounded-full px-2.5 py-0.5 font-semibold
+                                          transition-[color] duration-160
+                                        `,
+                                        isActive
+                                            ? "text-brand-text"
+                                            : "text-ink-muted hover:text-ink",
+                                    )}
+                                >
+                                    {option.label}
+                                </button>
+                            );
+                        })}
+                    </AnimatedBackground>
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
+function OwnedPropertyCard({
+    listing,
+    layout = "grid",
+    detailsHref,
+    priority = false,
+    imageSizes = "(max-width: 768px) 100vw, 50vw",
+    editHref,
+    className,
+}: Extract<PropertyCardProps, { variant: "owned" }>) {
+    const browse = ownedToBrowseListing(listing);
+    const isListView = layout === "list";
+    const sharePriceLabel =
+        offersRent(browse) && !offersSale(browse)
+            ? formatRentInr(listing.rentAmountInr ?? 0)
+            : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
+
+    return (
+        <article
+            className={cn(
+                "flex min-inline-0",
+                isListView ? "flex-row items-stretch gap-4" : "flex-col gap-3 block-full",
+                className,
+            )}
+        >
+            <Link
+                href={detailsHref}
+                prefetch={false}
+                className={cn("group relative block shrink-0 min-inline-0", isListView && "self-start")}
+            >
+                <BrowsePropertyCardPhoto
+                    listing={browse}
+                    priority={priority}
+                    imageSizes={imageSizes}
+                    layout={layout}
+                />
+                <div className="pointer-events-none absolute inset-e-3 inset-bs-3 z-20 flex flex-col items-end gap-1.5">
+                    <OwnedStatusBadge status={listing.status} />
+                </div>
+            </Link>
+
+            <div
+                className={cn(
+                    "flex flex-1 flex-col gap-2.5 px-2 min-inline-0",
+                    isListView ? "self-stretch" : "min-block-0",
+                )}
+            >
+                <div className="flex items-start gap-2">
+                    <Link
+                        href={detailsHref}
+                        prefetch={false}
+                        className="flex flex-1 flex-col gap-2.5 min-inline-0"
+                    >
+                        <div className="flex flex-col gap-1.5 min-inline-0">
+                            <h3 className="body truncate font-semibold text-ink">{listing.title}</h3>
+                            <p className="body-sm flex items-center gap-1.5 text-ink-muted min-inline-0">
+                                <MapPin
+                                    aria-hidden
+                                    className="shrink-0 block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
+                                <span className="truncate">
+                                    {listing.locality}, {listing.city}
+                                </span>
+                            </p>
+                        </div>
+                        <BrowsePropertyCardSpecs listing={browse} />
+                    </Link>
+
+                    <PropertySharePopover
+                        listing={{
+                            id: listing.id,
+                            title: listing.title,
+                            locality: listing.locality,
+                            city: listing.city,
+                            priceLabel: sharePriceLabel,
+                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                            configLabel: listing.configLabel,
+                            propertyTypeLabel: listing.propertyTypeLabel,
+                            areaSqft: listing.areaSqft,
+                            bhk: listing.bhk,
+                            listingKind:
+                                offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
+                        }}
+                        className="mbs-0.5"
+                    />
+                </div>
+
+                <div className="mbs-auto flex flex-col gap-2.5">
+                    <OwnedPropertyCardPrice listing={listing} />
+                    <OwnedListingAction
+                        href={editHref ?? detailsHref}
+                        isEdit={Boolean(editHref)}
+                    />
+                </div>
+            </div>
+        </article>
+    );
+}
+
 export function PropertyCard(props: PropertyCardProps) {
     if (props.variant === "browse") {
         return <BrowsePropertyCard {...props} />;
+    }
+    if (props.variant === "owned") {
+        return <OwnedPropertyCard {...props} />;
     }
 
     return <RepresentedPropertyCard {...props} />;

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
-import { PropertyDetailPage } from "@/features/properties/property-detail/property-detail-page";
+import { PropertyEditPage } from "@/features/properties/property-form/property-edit-page";
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
 };
 
 export default function Page() {
-    return <PropertyDetailPage />;
+    return <PropertyEditPage />;
 }
