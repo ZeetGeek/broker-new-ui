@@ -16,10 +16,7 @@ export function useOwnerListingsFilters() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const filters = useMemo(
-        () => parseOwnerListingsFilters(searchParams),
-        [searchParams],
-    );
+    const filters = useMemo(() => parseOwnerListingsFilters(searchParams), [searchParams]);
 
     const replaceFilters = useCallback(
         (next: OwnerListingsFilters) => {
@@ -45,7 +42,9 @@ export function useOwnerListingsFilters() {
     );
 
     const clearFilters = useCallback(() => {
-        router.replace(pathname, { scroll: false });
+        const params = new URLSearchParams();
+        params.set("yourAreas", "1");
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }, [pathname, router]);
 
     const toggleQuickChip = useCallback(

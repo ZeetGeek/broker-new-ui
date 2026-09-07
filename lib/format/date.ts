@@ -213,7 +213,7 @@ export function formatActivityDayLabel(occurredAt: Date, now: Date): string {
 }
 
 /** Human-readable distance from now, e.g. for slot lists (`in 2 hours`, `3 days ago`). */
-export function formatDistanceFromNow(date: Date, now = new Date()): string {
+export function formatDistanceFromNow(date: Date, _now = new Date()): string {
     return formatDistanceToNowStrict(date, {
         addSuffix: true,
         roundingMethod: "floor",

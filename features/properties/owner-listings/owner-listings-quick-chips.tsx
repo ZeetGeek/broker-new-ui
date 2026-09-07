@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { Search, SlidersHorizontal } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -90,10 +91,12 @@ function OwnerListingsQueryInput({
     onChange: (q: string) => void;
 }) {
     const [draft, setDraft] = useState(value);
+    const [prevValue, setPrevValue] = useState(value);
 
-    useEffect(() => {
+    if (value !== prevValue) {
+        setPrevValue(value);
         setDraft(value);
-    }, [value]);
+    }
 
     useEffect(() => {
         if (draft === value) return;
@@ -116,8 +119,8 @@ function OwnerListingsQueryInput({
               lg:min-inline-64 lg:inline-64
             "
             className="
-              h-[38px]! rounded-full border! border-border-warm bg-surface text-sm font-medium
-              shadow-sm
+              rounded-full border! border-border-warm bg-surface text-sm font-medium shadow-sm
+              block-[38px]!
               hover:border-ink/25!
               focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
             "

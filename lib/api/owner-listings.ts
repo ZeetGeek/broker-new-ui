@@ -3,46 +3,46 @@ import { propertiesApi } from "@/lib/api/properties";
 import {
     bhkValuesToApiConfig,
     mapBrowseListingToOwnerItem,
-    propertyTypeToApiSubtype,
+    propertyTypeToApiFilters,
 } from "@/features/properties/owner-listings/map-browse-listing";
 import type {
     OwnerListingsFilterContext,
     OwnerListingsFilters,
     OwnerListingsResult,
 } from "@/features/properties/owner-listings/types";
-
-const PAGE_SIZE = 10;
+import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
 
 /**
  * Broker owner-listings pool from `GET /properties/browse`.
- * Service-area scoping is applied on the backend when the broker has areas.
+ * - Serviceable areas (default): omit city/locality → backend scopes to broker areas
+ * - Anywhere: `allAreas=true` → all public owner listings
+ * - Explicit city/locality: filter to those places
  */
 export async function fetchOwnerListings(
     filters: OwnerListingsFilters,
-    context: OwnerListingsFilterContext = {},
+    _context: OwnerListingsFilterContext = {},
 ): Promise<OwnerListingsResult> {
     const page = filters.cursor ? Number(filters.cursor) || 1 : 1;
+    const limit = filters.limit || DEFAULT_OWNER_LISTINGS_FILTERS.limit;
     const hasLocationFilter = filters.cities.length > 0 || filters.localities.length > 0;
-    const useServiceAreasOnly =
-        !hasLocationFilter && filters.yourAreas && (context.serviceAreas?.length ?? 0) > 0;
+    const allAreas = !hasLocationFilter && !filters.yourAreas;
+    const typeFilters = propertyTypeToApiFilters(filters.propertyType);
 
     const result = await propertiesApi.browse({
         search: filters.q.trim() || undefined,
         city: filters.cities.length ? filters.cities : undefined,
-        locality: useServiceAreasOnly
-            ? context.serviceAreas
-            : filters.localities.length
-              ? filters.localities
-              : undefined,
+        locality: filters.localities.length ? filters.localities : undefined,
+        allAreas: allAreas || undefined,
         transactionType: filters.type || undefined,
-        subtype: propertyTypeToApiSubtype(filters.propertyType),
+        propertyType: typeFilters.propertyType,
+        subtype: typeFilters.subtype,
         bhkConfig: filters.bhk.length ? bhkValuesToApiConfig(filters.bhk) : undefined,
         minPrice: filters.min ? Number(filters.min) : undefined,
         maxPrice: filters.max ? Number(filters.max) : undefined,
         furnishingStatus: filters.furnishing || undefined,
         sort: filters.sort,
         page,
-        limit: PAGE_SIZE,
+        limit,
     });
 
     let items = result.items.map(mapBrowseListingToOwnerItem);

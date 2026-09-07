@@ -33,6 +33,7 @@ export type OwnerListingsBhkMenuProps = {
     value: string[];
     onToggle: (value: string) => void;
     onClear: () => void;
+    onOpenChange?: (open: boolean) => void;
     className?: string;
 };
 
@@ -40,105 +41,111 @@ export function OwnerListingsBhkMenu({
     value,
     onToggle,
     onClear,
+    onOpenChange,
     className,
 }: OwnerListingsBhkMenuProps) {
     const [open, setOpen] = useState(false);
 
+    const handleOpenChange = (nextOpen: boolean) => {
+        setOpen(nextOpen);
+        onOpenChange?.(nextOpen);
+    };
+
     return (
-        <div className={cn("min-w-0 w-full", className)}>
-        <DropdownMenu open={open} onOpenChange={setOpen}>
-            <DropdownMenuTrigger
-                className="flex min-w-0 w-full"
-                render={
-                    <OwnerListingsBandSegment
-                        label="BHK"
-                        icon={BedDouble}
-                        value={formatBhkLabel(value)}
-                        className="w-full"
-                        isOpen={open}
-                    />
-                }
-            />
-            <DropdownMenuContent
-                align="center"
-                sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
-                className={cn(
-                    OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
-                    OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
-                    "overflow-hidden! p-0",
-                )}
-            >
-                <div className="flex flex-col gap-4 px-5 py-5">
-                    <OwnerListingsBandMenuHeader
-                        description="Select one or more"
-                        onClear={onClear}
-                    />
+        <div className={cn("inline-full min-inline-0", className)}>
+            <DropdownMenu open={open} onOpenChange={handleOpenChange}>
+                <DropdownMenuTrigger
+                    className="flex inline-full min-inline-0"
+                    render={
+                        <OwnerListingsBandSegment
+                            label="BHK"
+                            icon={BedDouble}
+                            value={formatBhkLabel(value)}
+                            className="inline-full"
+                            isOpen={open}
+                        />
+                    }
+                />
+                <DropdownMenuContent
+                    align="center"
+                    sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
+                    className={cn(
+                        OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
+                        OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
+                        "overflow-hidden! p-0",
+                    )}
+                >
+                    <div className="flex flex-col gap-4 p-5">
+                        <OwnerListingsBandMenuHeader
+                            description="Select one or more"
+                            onClear={onClear}
+                        />
 
-                    <div
-                        className="grid grid-cols-2 gap-3"
-                        role="group"
-                        aria-label="Bedroom configuration"
-                    >
-                        {BHK_OPTIONS.map((option) => {
-                            const active = value.includes(option.value);
-                            const isFullWidth = option.value === "5";
+                        <div
+                            className="grid grid-cols-2 gap-3"
+                            role="group"
+                            aria-label="Bedroom configuration"
+                        >
+                            {BHK_OPTIONS.map((option) => {
+                                const active = value.includes(option.value);
+                                const isFullWidth = option.value === "5";
 
-                            return (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    aria-pressed={active}
-                                    onClick={() => onToggle(option.value)}
-                                    className={cn(
-                                        `
-                                          group/tile flex flex-col items-center justify-center gap-2.5
-                                          rounded-2xl border px-3 py-5 outline-none
+                                return (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        aria-pressed={active}
+                                        onClick={() => onToggle(option.value)}
+                                        className={cn(
+                                            `
+                                          group/tile flex flex-col items-center justify-center
+                                          gap-2.5 rounded-2xl border px-3 py-5
                                           transition-[background-color,border-color,box-shadow,transform]
-                                          duration-160
+                                          duration-160 outline-none
                                           focus-visible:ring-2 focus-visible:ring-brand
                                           active:scale-[0.97]
                                         `,
-                                        isFullWidth && "col-span-2",
-                                        active
-                                            ? `
-                                              border-brand bg-brand-soft text-ink shadow-sm
-                                              ring-1 ring-brand/20
+                                            isFullWidth && "col-span-2",
+                                            active
+                                                ? `
+                                              border-brand bg-brand-soft text-ink shadow-sm ring-1
+                                              ring-brand/20
                                             `
-                                            : `
+                                                : `
                                               border-border-warm bg-surface text-ink-muted
                                               hover:border-ink/20 hover:bg-surface-muted/70
                                               hover:text-ink
                                             `,
-                                    )}
-                                >
-                                    <BedDouble
-                                        aria-hidden
-                                        className={cn(
-                                            `
-                                              block-5 inline-5 shrink-0 transition-colors
-                                              duration-160
-                                            `,
-                                            active
-                                                ? "text-brand"
-                                                : "text-ink-subtle group-hover/tile:text-brand",
-                                        )}
-                                        strokeWidth={1.75}
-                                    />
-                                    <span
-                                        className={cn(
-                                            "body-sm leading-none font-semibold whitespace-nowrap",
-                                            active ? "text-brand-text" : "text-ink",
                                         )}
                                     >
-                                        {option.label}
-                                    </span>
-                                </button>
-                            );
-                        })}
+                                        <BedDouble
+                                            aria-hidden
+                                            className={cn(
+                                                `
+                                              shrink-0 transition-colors duration-160 block-5
+                                              inline-5
+                                            `,
+                                                active
+                                                    ? "text-brand"
+                                                    : "text-ink-subtle group-hover/tile:text-brand",
+                                            )}
+                                            strokeWidth={1.75}
+                                        />
+                                        <span
+                                            className={cn(
+                                                "body-sm leading-none font-semibold whitespace-nowrap",
+                                                active ? "text-brand-text" : "text-ink",
+                                            )}
+                                        >
+                                            {option.label}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     );
 }

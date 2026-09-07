@@ -73,11 +73,21 @@ export function parseOwnerListingsFilters(
     const type = parseParam(params, "type");
     const furnishing = parseParam(params, "furnishing");
     const propertyType = parseParam(params, "propertyType");
+    const cities = parseListParam(params, "city");
+    const localities = parseListParam(params, "locality");
+    const yourAreasRaw = parseParam(params, "yourAreas");
+    // Default to serviceable areas when Where has no explicit cities/localities.
+    const yourAreas =
+        yourAreasRaw === "1"
+            ? true
+            : yourAreasRaw === "0"
+              ? false
+              : cities.length === 0 && localities.length === 0;
 
     return {
         q: parseParam(params, "q"),
-        cities: parseListParam(params, "city"),
-        localities: parseListParam(params, "locality"),
+        cities,
+        localities,
         bhk: parseListParam(params, "bhk"),
         type: type === "sale" || type === "rent" ? type : "",
         min: parseParam(params, "min"),
@@ -93,14 +103,23 @@ export function parseOwnerListingsFilters(
         maxAreaSqft: parseParam(params, "maxArea"),
         listedWithinDays: parseListedWithinDays(parseParam(params, "listedWithin")),
         minCommissionPercent: parseParam(params, "minCommission"),
-        yourAreas: parseBoolParam(params, "yourAreas"),
+        yourAreas,
         newToday: parseBoolParam(params, "newToday"),
         slotsOpen: parseBoolParam(params, "slotsOpen"),
         commissionSet: parseBoolParam(params, "commissionSet"),
         readyToMove: parseBoolParam(params, "readyToMove"),
         sort: sort === "price_asc" || sort === "price_desc" ? sort : "newest",
         cursor: parseParam(params, "cursor"),
+        limit: parseLimitParam(params),
     };
+}
+
+function parseLimitParam(
+    params: URLSearchParams | Record<string, string | string[] | undefined>,
+): number {
+    const raw = Number(parseParam(params, "limit"));
+    if (raw === 10 || raw === 20 || raw === 30 || raw === 50) return raw;
+    return DEFAULT_OWNER_LISTINGS_FILTERS.limit;
 }
 
 export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchParams {
@@ -119,13 +138,19 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     if (filters.maxAreaSqft) params.set("maxArea", filters.maxAreaSqft);
     if (filters.listedWithinDays) params.set("listedWithin", filters.listedWithinDays);
     if (filters.minCommissionPercent) params.set("minCommission", filters.minCommissionPercent);
-    if (filters.yourAreas) params.set("yourAreas", "1");
+    // Persist Anywhere (`0`) so a refresh does not fall back to serviceable areas.
+    if (filters.cities.length === 0 && filters.localities.length === 0) {
+        params.set("yourAreas", filters.yourAreas ? "1" : "0");
+    }
     if (filters.newToday) params.set("newToday", "1");
     if (filters.slotsOpen) params.set("slotsOpen", "1");
     if (filters.commissionSet) params.set("commissionSet", "1");
     if (filters.readyToMove) params.set("readyToMove", "1");
     if (filters.sort !== "newest") params.set("sort", filters.sort);
     if (filters.cursor) params.set("cursor", filters.cursor);
+    if (filters.limit !== DEFAULT_OWNER_LISTINGS_FILTERS.limit) {
+        params.set("limit", String(filters.limit));
+    }
 
     return params;
 }
@@ -135,7 +160,6 @@ export function countSheetFilters(filters: OwnerListingsFilters): number {
     if (filters.minAreaSqft || filters.maxAreaSqft) count++;
     if (filters.listedWithinDays || filters.newToday) count++;
     if (filters.minCommissionPercent) count++;
-    if (filters.yourAreas) count++;
     if (filters.slotsOpen) count++;
     if (filters.commissionSet) count++;
     if (filters.readyToMove) count++;
@@ -143,10 +167,14 @@ export function countSheetFilters(filters: OwnerListingsFilters): number {
 }
 
 export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): boolean {
+    const isAnywhere =
+        !filters.yourAreas && filters.cities.length === 0 && filters.localities.length === 0;
+
     return (
         Boolean(filters.q.trim()) ||
         filters.cities.length > 0 ||
         filters.localities.length > 0 ||
+        isAnywhere ||
         filters.bhk.length > 0 ||
         Boolean(filters.type) ||
         Boolean(filters.min) ||
@@ -157,7 +185,6 @@ export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): bo
         Boolean(filters.maxAreaSqft) ||
         Boolean(filters.listedWithinDays) ||
         Boolean(filters.minCommissionPercent) ||
-        filters.yourAreas ||
         filters.newToday ||
         filters.slotsOpen ||
         filters.commissionSet ||
@@ -188,6 +215,7 @@ export function ownerListingsFilterSignature(filters: OwnerListingsFilters): str
         filters.readyToMove ? "1" : "0",
         filters.sort,
         filters.cursor,
+        String(filters.limit),
     ].join("|");
 }
 
@@ -258,9 +286,7 @@ export function filterOwnerListings(
         if (minArea !== null && !Number.isNaN(minArea) && item.areaSqft < minArea) return false;
         if (maxArea !== null && !Number.isNaN(maxArea) && item.areaSqft > maxArea) return false;
 
-        const listedWithinDays = filters.listedWithinDays
-            ? Number(filters.listedWithinDays)
-            : null;
+        const listedWithinDays = filters.listedWithinDays ? Number(filters.listedWithinDays) : null;
         if (
             listedWithinDays !== null &&
             !Number.isNaN(listedWithinDays) &&

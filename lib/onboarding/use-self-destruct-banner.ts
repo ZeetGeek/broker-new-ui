@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 import {
-    shouldShowExpandedSelfDestructBanner,
     type SelfDestructBannerKey,
+    shouldShowExpandedSelfDestructBanner,
 } from "@/lib/onboarding/self-destruct-banner";
 
 export function useSelfDestructBanner({
@@ -18,28 +18,14 @@ export function useSelfDestructBanner({
     milestoneReached?: boolean;
     ttlDays?: number;
 }): boolean {
-    const [isExpanded, setIsExpanded] = useState(false);
-
-    useEffect(() => {
-        if (milestoneReached) {
-            setIsExpanded(false);
-            return;
-        }
-
-        if (!userId) {
-            setIsExpanded(true);
-            return;
-        }
-
-        setIsExpanded(
-            shouldShowExpandedSelfDestructBanner({
-                key: bannerKey,
-                userId,
-                milestoneReached,
-                ttlDays,
-            }),
-        );
+    return useMemo(() => {
+        if (milestoneReached) return false;
+        if (!userId) return true;
+        return shouldShowExpandedSelfDestructBanner({
+            key: bannerKey,
+            userId,
+            milestoneReached,
+            ttlDays,
+        });
     }, [bannerKey, milestoneReached, ttlDays, userId]);
-
-    return isExpanded;
 }

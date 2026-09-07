@@ -3,9 +3,10 @@
 import { LayoutGrid, List } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 
-import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { spring } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
+
+import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 
 import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
 
@@ -33,8 +34,8 @@ export function OwnerListingsViewToggle({
             aria-label="Results layout"
             className={cn(
                 `
-                  inline-flex h-[38px] shrink-0 items-center gap-1 rounded-full border
-                  border-border-warm bg-surface p-1 shadow-sm
+                  inline-flex shrink-0 items-center gap-1 rounded-full border border-border-warm
+                  bg-surface p-1 shadow-sm block-[38px]
                 `,
                 className,
             )}
@@ -62,12 +63,11 @@ export function OwnerListingsViewToggle({
                             aria-pressed={isActive}
                             className={cn(
                                 `
-                                  flex size-7 items-center justify-center rounded-full border
-                                  border-transparent transition-[color] duration-160
+                                  flex items-center justify-center rounded-full border
+                                  border-transparent transition-[color] duration-160 block-7
+                                  inline-7
                                 `,
-                                isActive
-                                    ? "text-brand-text"
-                                    : "text-ink-muted hover:text-ink",
+                                isActive ? "text-brand-text" : "text-ink-muted hover:text-ink",
                             )}
                         >
                             <Icon aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />

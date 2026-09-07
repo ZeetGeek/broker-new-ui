@@ -5,13 +5,17 @@ import type {
     OwnerListingPropertyType,
     OwnerListingsBandFilters,
     OwnerListingsFilters,
-    OwnerListingsSheetFilters,
     OwnerListingSort,
+    OwnerListingsSheetFilters,
     OwnerListingTransactionType,
 } from "@/features/properties/owner-listings/types";
 import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
 
-export function formatLocalitiesLabel(localities: string[], cities: string[] = []): string {
+export function formatLocalitiesLabel(
+    localities: string[],
+    cities: string[] = [],
+    yourAreas = false,
+): string {
     if (localities.length > 0) {
         if (localities.length <= 2) return localities.join(", ");
         return `${localities.slice(0, 2).join(", ")} +${localities.length - 2}`;
@@ -20,6 +24,7 @@ export function formatLocalitiesLabel(localities: string[], cities: string[] = [
         if (cities.length <= 2) return cities.join(", ");
         return `${cities.slice(0, 2).join(", ")} +${cities.length - 2}`;
     }
+    if (yourAreas) return "Serviceable areas";
     return "Anywhere";
 }
 
@@ -27,12 +32,16 @@ export function formatLocalitiesLabel(localities: string[], cities: string[] = [
 export function formatLocalitiesTooltip(
     localities: string[],
     cities: string[] = [],
+    yourAreas = false,
 ): string | null {
     if (localities.length > 2) {
         return localities.join(", ");
     }
     if (localities.length === 0 && cities.length > 2) {
         return cities.join(", ");
+    }
+    if (localities.length === 0 && cities.length === 0 && yourAreas) {
+        return "Listings in your serviceable areas";
     }
     if (localities.length === 0 && cities.length > 0 && cities.length <= 2) {
         return null;
@@ -124,6 +133,10 @@ export function formatResultsCountLine(
         return `${totalCount} ${propertyLabel} in ${formatLocalitiesLabel([], filters.cities)}`;
     }
 
+    if (!filters.yourAreas) {
+        return `${totalCount} ${propertyLabel} anywhere`;
+    }
+
     return `${totalCount} ${propertyLabel}`;
 }
 
@@ -137,6 +150,7 @@ export function extractBandFilters(filters: OwnerListingsFilters): OwnerListings
         max: filters.max,
         propertyType: filters.propertyType,
         furnishing: filters.furnishing,
+        yourAreas: filters.yourAreas,
     };
 }
 

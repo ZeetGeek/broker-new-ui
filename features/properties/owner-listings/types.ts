@@ -78,12 +78,23 @@ export type OwnerListingsFilters = {
     commissionSet: boolean;
     readyToMove: boolean;
     sort: OwnerListingSort;
+    /** 1-based page as string (URL `cursor`). Empty = page 1. */
     cursor: string;
+    /** Rows per page (URL `limit`). */
+    limit: number;
 };
 
 export type OwnerListingsBandFilters = Pick<
     OwnerListingsFilters,
-    "cities" | "localities" | "bhk" | "type" | "min" | "max" | "propertyType" | "furnishing"
+    | "cities"
+    | "localities"
+    | "bhk"
+    | "type"
+    | "min"
+    | "max"
+    | "propertyType"
+    | "furnishing"
+    | "yourAreas"
 >;
 
 export type OwnerListingsSheetFilters = Pick<
@@ -128,13 +139,15 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     maxAreaSqft: "",
     listedWithinDays: "",
     minCommissionPercent: "",
-    yourAreas: false,
+    /** Default Where → Serviceable areas. */
+    yourAreas: true,
     newToday: false,
     slotsOpen: false,
     commissionSet: false,
     readyToMove: false,
     sort: "newest",
     cursor: "",
+    limit: 10,
 };
 
 export const OWNER_LISTING_PROPERTY_TYPES: { value: OwnerListingPropertyType; label: string }[] = [
