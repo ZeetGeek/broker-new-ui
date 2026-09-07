@@ -459,26 +459,27 @@ export function OwnerListingsWhereMenu({
                                                 onCheckedChange={selectServiceableAreas}
                                                 className={rowClass(isServiceableSelected)}
                                             >
-                                                <LocationIcon checked={isServiceableSelected} />
+                                                <LocationIcon />
                                                 <span
                                                     className="
-                                              flex flex-1 flex-col gap-0.5 text-start min-inline-0
-                                            "
+                                                      flex flex-1 flex-col gap-0.5 text-start
+                                                      min-inline-0
+                                                    "
                                                 >
                                                     <span
                                                         data-slot="where-location-title"
                                                         className="
-                                                      truncate text-[15px] leading-snug font-medium
-                                                      text-ink capitalize
-                                                    "
+                                                          truncate text-[15px] leading-snug
+                                                          font-medium text-ink capitalize
+                                                        "
                                                     >
                                                         Serviceable areas
                                                     </span>
                                                     <span
                                                         className="
-                                                      truncate text-[13px] leading-snug
-                                                      text-ink-muted
-                                                    "
+                                                          truncate text-[13px] leading-snug
+                                                          text-ink-muted
+                                                        "
                                                         data-muted-line
                                                     >
                                                         Default — your coverage areas
@@ -490,26 +491,27 @@ export function OwnerListingsWhereMenu({
                                                 onCheckedChange={selectAnywhere}
                                                 className={rowClass(isAnywhereSelected)}
                                             >
-                                                <LocationIcon checked={isAnywhereSelected} />
+                                                <LocationIcon />
                                                 <span
                                                     className="
-                                              flex flex-1 flex-col gap-0.5 text-start min-inline-0
-                                            "
+                                                      flex flex-1 flex-col gap-0.5 text-start
+                                                      min-inline-0
+                                                    "
                                                 >
                                                     <span
                                                         data-slot="where-location-title"
                                                         className="
-                                                      truncate text-[15px] leading-snug font-medium
-                                                      text-ink capitalize
-                                                    "
+                                                          truncate text-[15px] leading-snug
+                                                          font-medium text-ink capitalize
+                                                        "
                                                     >
                                                         Anywhere
                                                     </span>
                                                     <span
                                                         className="
-                                                      truncate text-[13px] leading-snug
-                                                      text-ink-muted
-                                                    "
+                                                          truncate text-[13px] leading-snug
+                                                          text-ink-muted
+                                                        "
                                                         data-muted-line
                                                     >
                                                         All listed properties

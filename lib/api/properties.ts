@@ -28,6 +28,8 @@ export type PropertyBrowseListing = {
     status?: string | null;
     salePrice?: string | number | null;
     monthlyRent?: string | number | null;
+    /** Owner-shared broker commission percent (optional). */
+    commissionPercent?: string | number | null;
     photos?: string[] | null;
     furnishingStatus?: "furnished" | "semi" | "unfurnished" | string | null;
     availableFrom?: string | null;
@@ -76,6 +78,12 @@ export type PropertyBrowseQuery = {
     bhkConfig?: string[];
     minPrice?: number;
     maxPrice?: number;
+    minAreaSqft?: number;
+    maxAreaSqft?: number;
+    listedWithinDays?: number;
+    minCommissionPercent?: number;
+    commissionSet?: boolean;
+    readyToMove?: boolean;
     furnishingStatus?: "furnished" | "semi" | "unfurnished";
     sort?: PropertyBrowseSort;
     page?: number;
@@ -106,6 +114,20 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     if (params.maxPrice != null && !Number.isNaN(params.maxPrice)) {
         q.set("maxPrice", String(params.maxPrice));
     }
+    if (params.minAreaSqft != null && !Number.isNaN(params.minAreaSqft)) {
+        q.set("minAreaSqft", String(params.minAreaSqft));
+    }
+    if (params.maxAreaSqft != null && !Number.isNaN(params.maxAreaSqft)) {
+        q.set("maxAreaSqft", String(params.maxAreaSqft));
+    }
+    if (params.listedWithinDays != null && !Number.isNaN(params.listedWithinDays)) {
+        q.set("listedWithinDays", String(params.listedWithinDays));
+    }
+    if (params.minCommissionPercent != null && !Number.isNaN(params.minCommissionPercent)) {
+        q.set("minCommissionPercent", String(params.minCommissionPercent));
+    }
+    if (params.commissionSet) q.set("commissionSet", "1");
+    if (params.readyToMove) q.set("readyToMove", "1");
     if (params.furnishingStatus) q.set("furnishingStatus", params.furnishingStatus);
     if (params.sort) q.set("sort", params.sort);
     if (params.page != null && params.page > 1) q.set("page", String(params.page));
