@@ -259,6 +259,10 @@
     animation: verified-glow 2.2s ease-in-out infinite;
 }
 
+@utility animate-fab-pulse {
+    animation: fab-pulse 2.4s ease-in-out infinite;
+}
+
 @keyframes verified-glow {
     0%,
     100% {
@@ -268,6 +272,21 @@
     50% {
         opacity: 0.75;
         filter: drop-shadow(0 0 3px color-mix(in oklab, var(--color-brand) 60%, transparent));
+    }
+}
+
+@keyframes fab-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.55;
+    }
+    70% {
+        transform: scale(1.55);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1.55);
+        opacity: 0;
     }
 }
 

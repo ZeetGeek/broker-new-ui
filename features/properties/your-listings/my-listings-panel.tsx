@@ -10,7 +10,10 @@ import { AppPagination } from "@/components/shared/app-pagination";
 import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import { MyListingsGrid } from "@/features/properties/your-listings/my-listings-grid";
 import { MyListingsHeader } from "@/features/properties/your-listings/my-listings-header";
-import { MyListingsIntro } from "@/features/properties/your-listings/my-listings-intro";
+import {
+    MyListingsAddFab,
+    MyListingsIntro,
+} from "@/features/properties/your-listings/my-listings-intro";
 import { MyListingsResultsSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
 import type { MyListingsResult } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
@@ -108,6 +111,7 @@ export function MyListingsPanel() {
                     ) : null}
                 </div>
             ) : null}
+            <MyListingsAddFab />
         </div>
     );
 }
