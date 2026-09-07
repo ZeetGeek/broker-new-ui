@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 
 import { spring } from "@/lib/motion/tokens";
@@ -10,6 +10,13 @@ import { getVisiblePages } from "@/lib/pagination/get-visible-pages";
 import { cn } from "@/lib/utils";
 
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 50] as const;
 
@@ -130,9 +137,9 @@ export function AppPagination({
             {/* Left — showing page N of M */}
             <div
                 className="
-              body-sm flex flex-wrap items-center justify-center gap-2 text-ink-muted
-              lg:justify-start
-            "
+                  body-sm flex flex-wrap items-center justify-center gap-2 text-ink-muted
+                  lg:justify-start
+                "
             >
                 <label htmlFor={pageInputId} className="whitespace-nowrap">
                     Showing page
@@ -269,41 +276,47 @@ export function AppPagination({
             {showPageSize ? (
                 <div
                     className="
-                  body-sm flex flex-wrap items-center justify-center gap-2 text-ink-muted
-                  lg:justify-end
-                "
+                      body-sm flex flex-wrap items-center justify-center gap-2 text-ink-muted
+                      lg:justify-end
+                    "
                 >
                     <label htmlFor={`${pageInputId}-rows`} className="whitespace-nowrap">
                         Rows per page
                     </label>
-                    <div className="relative">
-                        <select
+                    <Select
+                        value={String(pageSize)}
+                        onValueChange={(next) => {
+                            if (next == null) return;
+                            onPageSizeChange(Number(next));
+                        }}
+                    >
+                        <SelectTrigger
                             id={`${pageInputId}-rows`}
-                            value={pageSize}
-                            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+                            size="sm"
+                            aria-label="Rows per page"
                             className={cn(
                                 controlChipClass,
                                 `
-                                  body-sm appearance-none ps-3.5 pe-9 tabular-nums block-10
-                                  min-inline-18
+                                  gap-2 border-border-warm bg-surface px-3.5 font-semibold text-ink
+                                  tabular-nums shadow-sm block-9.5 min-inline-18
+                                  data-[size=sm]:block-9.5
                                 `,
                             )}
                         >
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent
+                            align="end"
+                            alignItemWithTrigger={false}
+                            className="min-inline-24"
+                        >
                             {pageSizeOptions.map((option) => (
-                                <option key={option} value={option}>
+                                <SelectItem key={option} value={String(option)}>
                                     {option}
-                                </option>
+                                </SelectItem>
                             ))}
-                        </select>
-                        <ChevronDown
-                            aria-hidden
-                            className="
-                              pointer-events-none absolute inset-e-2.5 inset-bs-1/2 -translate-y-1/2
-                              text-ink-subtle block-3.5 inline-3.5
-                            "
-                            strokeWidth={1.75}
-                        />
-                    </div>
+                        </SelectContent>
+                    </Select>
                 </div>
             ) : (
                 <div className="hidden lg:block" aria-hidden />
