@@ -208,7 +208,10 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         brokerSlotsOpen: hasRequested
             ? Math.max(0, DEFAULT_BROKER_SLOTS_TOTAL - 1)
             : DEFAULT_BROKER_SLOTS_TOTAL,
-        commissionPercent: 0,
+        commissionPercent: (() => {
+            const raw = toNumber(listing.commissionPercent);
+            return raw > 0 ? raw : 0;
+        })(),
         ownerName,
         ownerAvatarUrl: listing.ownerAvatarUrl ?? undefined,
         photoCount: photos.length,

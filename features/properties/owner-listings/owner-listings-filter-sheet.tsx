@@ -341,7 +341,12 @@ export function OwnerListingsFilterSheet({
     };
 
     const handleApply = () => {
-        onApply(draft);
+        onApply({
+            ...draft,
+            // Keep the New chip in sync with the Listed preset.
+            newToday: draft.listedWithinDays === "7",
+            cursor: "",
+        });
         onOpenChange(false);
     };
 
@@ -372,12 +377,7 @@ export function OwnerListingsFilterSheet({
                     "
                 >
                     <div className="flex flex-col gap-1">
-                        <DialogTitle
-                            className="
-                          font-display text-base font-medium text-ink
-                          sm:text-lg
-                        "
-                        >
+                        <DialogTitle className="font-display text-base font-medium text-ink sm:text-lg">
                             Advanced filters
                         </DialogTitle>
                         <p className="body-sm text-ink-muted">
@@ -457,9 +457,9 @@ export function OwnerListingsFilterSheet({
                         <FilterPanel title="Listed" subtitle="How fresh the listing should be">
                             <div
                                 className="
-                              grid flex-1 auto-rows-fr grid-cols-1 gap-2.5 min-block-0
-                              sm:grid-cols-3
-                            "
+                                  grid flex-1 auto-rows-fr grid-cols-1 gap-2.5 min-block-0
+                                  sm:grid-cols-3
+                                "
                             >
                                 {LISTED_PRESETS.map((preset) => (
                                     <OptionCard
@@ -481,9 +481,9 @@ export function OwnerListingsFilterSheet({
                         >
                             <div
                                 className="
-                              grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 min-block-0
-                              sm:grid-cols-4
-                            "
+                                  grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 min-block-0
+                                  sm:grid-cols-4
+                                "
                             >
                                 {COMMISSION_PRESETS.map((preset) => (
                                     <OptionCard

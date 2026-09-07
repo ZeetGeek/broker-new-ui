@@ -17,6 +17,7 @@ import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-list
  * - Serviceable areas (default): omit city/locality → backend scopes to broker areas
  * - Anywhere: `allAreas=true` → all public owner listings
  * - Explicit city/locality: filter to those places
+ * - Advanced sheet filters (area / listed / commission / ready-to-move) go to the API
  */
 export async function fetchOwnerListings(
     filters: OwnerListingsFilters,
@@ -27,6 +28,15 @@ export async function fetchOwnerListings(
     const hasLocationFilter = filters.cities.length > 0 || filters.localities.length > 0;
     const allAreas = !hasLocationFilter && !filters.yourAreas;
     const typeFilters = propertyTypeToApiFilters(filters.propertyType);
+
+    const listedWithinDays = filters.listedWithinDays
+        ? Number(filters.listedWithinDays)
+        : filters.newToday
+          ? 7
+          : undefined;
+    const minCommission = filters.minCommissionPercent
+        ? Number(filters.minCommissionPercent)
+        : undefined;
 
     const result = await propertiesApi.browse({
         search: filters.q.trim() || undefined,
@@ -39,6 +49,16 @@ export async function fetchOwnerListings(
         bhkConfig: filters.bhk.length ? bhkValuesToApiConfig(filters.bhk) : undefined,
         minPrice: filters.min ? Number(filters.min) : undefined,
         maxPrice: filters.max ? Number(filters.max) : undefined,
+        minAreaSqft: filters.minAreaSqft ? Number(filters.minAreaSqft) : undefined,
+        maxAreaSqft: filters.maxAreaSqft ? Number(filters.maxAreaSqft) : undefined,
+        listedWithinDays:
+            listedWithinDays != null && !Number.isNaN(listedWithinDays)
+                ? listedWithinDays
+                : undefined,
+        minCommissionPercent:
+            minCommission != null && !Number.isNaN(minCommission) ? minCommission : undefined,
+        commissionSet: filters.commissionSet || undefined,
+        readyToMove: filters.readyToMove || undefined,
         furnishingStatus: filters.furnishing || undefined,
         sort: filters.sort,
         page,
@@ -47,18 +67,9 @@ export async function fetchOwnerListings(
 
     let items = result.items.map(mapBrowseListingToOwnerItem);
 
-    // Chips that the browse API does not model yet — apply locally on the page.
-    if (filters.newToday) {
-        items = items.filter((item) => item.isNew);
-    }
+    // Slots-open is still a local signal until the API models broker slots.
     if (filters.slotsOpen) {
         items = items.filter((item) => item.brokerSlotsOpen > 0);
-    }
-    if (filters.commissionSet) {
-        items = items.filter((item) => item.commissionPercent > 0);
-    }
-    if (filters.readyToMove) {
-        items = items.filter((item) => item.readyToMove);
     }
 
     const marketValueInr = items.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0);
