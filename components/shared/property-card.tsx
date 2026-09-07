@@ -59,12 +59,12 @@ const BROWSE_CARD_PHOTO_FRAME_NEW_CLASS = `
 `;
 const BROWSE_CARD_PHOTO_FRAME_GRID_CLASS = "w-full";
 const BROWSE_CARD_PHOTO_FRAME_LIST_CLASS =
-    "h-full w-[min(56%,24rem)] min-w-56 self-stretch sm:min-w-64";
+    "w-[min(62%,28rem)] min-w-64 shrink-0 self-start sm:min-w-72";
 
 const BROWSE_CARD_PHOTO_INNER_CLASS =
     "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
 const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full";
-const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-auto min-h-56 w-full block-full sm:min-h-64";
+const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[5/4] w-full";
 
 const BROWSE_CARD_PHOTO_NAV_BTN_CLASS = `
   absolute inset-bs-1/2 z-10 flex -translate-y-1/2 items-center justify-center
@@ -654,7 +654,7 @@ function BrowsePropertyCard({
                 prefetch={false}
                 className={cn(
                     "group block shrink-0 min-inline-0",
-                    isListView && "flex self-stretch",
+                    isListView && "self-start",
                 )}
             >
                 <BrowsePropertyCardPhoto
@@ -668,7 +668,7 @@ function BrowsePropertyCard({
             <div
                 className={cn(
                     "flex flex-1 flex-col gap-2.5 px-2 min-inline-0",
-                    !isListView && "min-block-0",
+                    isListView ? "self-stretch" : "min-block-0",
                 )}
             >
                 <div className="flex items-start gap-2">
@@ -719,7 +719,7 @@ function BrowsePropertyCard({
                     />
                 </div>
 
-                <div className={cn("flex flex-col gap-2.5", "mbs-auto")}>
+                <div className="mbs-auto flex flex-col gap-2.5">
                     <BrowsePropertyCardPrice listing={listing} />
 
                     <BrowseRequestAction

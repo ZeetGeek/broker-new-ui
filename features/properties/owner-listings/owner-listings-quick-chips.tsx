@@ -1,9 +1,11 @@
 "use client";
 
-import { SlidersHorizontal } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, SlidersHorizontal } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type {
@@ -74,10 +76,54 @@ export type OwnerListingsQuickChipsProps = {
     isLoading?: boolean;
     onToggleQuickChip: (key: QuickChipKey) => void;
     onOpenFilters: () => void;
+    onQueryChange: (q: string) => void;
     onSortChange: (sort: OwnerListingSort) => void;
     view: OwnerListingsView;
     onViewChange: (view: OwnerListingsView) => void;
 };
+
+function OwnerListingsQueryInput({
+    value,
+    onChange,
+}: {
+    value: string;
+    onChange: (q: string) => void;
+}) {
+    const [draft, setDraft] = useState(value);
+
+    useEffect(() => {
+        setDraft(value);
+    }, [value]);
+
+    useEffect(() => {
+        if (draft === value) return;
+        const timer = window.setTimeout(() => onChange(draft), 300);
+        return () => window.clearTimeout(timer);
+    }, [draft, onChange, value]);
+
+    return (
+        <Input
+            size="sm"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="Search listings"
+            aria-label="Search owner listings"
+            startIcon={Search}
+            clearable
+            wrapperClassName="
+              min-inline-44 inline-44 shadow-sm
+              sm:min-inline-52 sm:inline-52
+              lg:min-inline-64 lg:inline-64
+            "
+            className="
+              h-[38px]! rounded-full border! border-border-warm bg-surface text-sm font-medium
+              shadow-sm
+              hover:border-ink/25!
+              focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
+            "
+        />
+    );
+}
 
 function QuickChipButton({
     chip,
@@ -154,7 +200,7 @@ function FiltersChipButton({
                 }
             />
             <TooltipContent side="bottom">
-                Advanced filters — area, photos, timing, and deal fit
+                Advanced filters — area, timing, commission, and deal fit
             </TooltipContent>
         </Tooltip>
     );
@@ -167,13 +213,14 @@ export function OwnerListingsQuickChips({
     isLoading = false,
     onToggleQuickChip,
     onOpenFilters,
+    onQueryChange,
     onSortChange,
     view,
     onViewChange,
 }: OwnerListingsQuickChipsProps) {
     return (
         <TooltipProvider>
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-3 sm:gap-4">
                 <OwnerListingsChipsCarousel>
                     <OwnerListingsChipsCarouselSlide>
                         <FiltersChipButton
@@ -199,6 +246,7 @@ export function OwnerListingsQuickChips({
                 </OwnerListingsChipsCarousel>
 
                 <div className="flex shrink-0 items-center gap-2.5">
+                    <OwnerListingsQueryInput value={filters.q} onChange={onQueryChange} />
                     <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
                     <OwnerListingsSortMenu filters={filters} onSortChange={onSortChange} />
                 </div>

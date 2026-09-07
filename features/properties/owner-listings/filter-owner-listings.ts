@@ -91,7 +91,6 @@ export function parseOwnerListingsFilters(
             : "",
         minAreaSqft: parseParam(params, "minArea"),
         maxAreaSqft: parseParam(params, "maxArea"),
-        minPhotos: parseParam(params, "minPhotos"),
         listedWithinDays: parseListedWithinDays(parseParam(params, "listedWithin")),
         minCommissionPercent: parseParam(params, "minCommission"),
         yourAreas: parseBoolParam(params, "yourAreas"),
@@ -118,7 +117,6 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     if (filters.propertyType) params.set("propertyType", filters.propertyType);
     if (filters.minAreaSqft) params.set("minArea", filters.minAreaSqft);
     if (filters.maxAreaSqft) params.set("maxArea", filters.maxAreaSqft);
-    if (filters.minPhotos) params.set("minPhotos", filters.minPhotos);
     if (filters.listedWithinDays) params.set("listedWithin", filters.listedWithinDays);
     if (filters.minCommissionPercent) params.set("minCommission", filters.minCommissionPercent);
     if (filters.yourAreas) params.set("yourAreas", "1");
@@ -134,9 +132,7 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
 
 export function countSheetFilters(filters: OwnerListingsFilters): number {
     let count = 0;
-    if (filters.q.trim()) count++;
     if (filters.minAreaSqft || filters.maxAreaSqft) count++;
-    if (filters.minPhotos) count++;
     if (filters.listedWithinDays || filters.newToday) count++;
     if (filters.minCommissionPercent) count++;
     if (filters.yourAreas) count++;
@@ -159,7 +155,6 @@ export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): bo
         Boolean(filters.propertyType) ||
         Boolean(filters.minAreaSqft) ||
         Boolean(filters.maxAreaSqft) ||
-        Boolean(filters.minPhotos) ||
         Boolean(filters.listedWithinDays) ||
         Boolean(filters.minCommissionPercent) ||
         filters.yourAreas ||
@@ -184,7 +179,6 @@ export function ownerListingsFilterSignature(filters: OwnerListingsFilters): str
         filters.propertyType,
         filters.minAreaSqft,
         filters.maxAreaSqft,
-        filters.minPhotos,
         filters.listedWithinDays,
         filters.minCommissionPercent,
         filters.yourAreas ? "1" : "0",
@@ -263,11 +257,6 @@ export function filterOwnerListings(
         const maxArea = filters.maxAreaSqft ? Number(filters.maxAreaSqft) : null;
         if (minArea !== null && !Number.isNaN(minArea) && item.areaSqft < minArea) return false;
         if (maxArea !== null && !Number.isNaN(maxArea) && item.areaSqft > maxArea) return false;
-
-        const minPhotos = filters.minPhotos ? Number(filters.minPhotos) : null;
-        if (minPhotos !== null && !Number.isNaN(minPhotos) && item.photoCount < minPhotos) {
-            return false;
-        }
 
         const listedWithinDays = filters.listedWithinDays
             ? Number(filters.listedWithinDays)

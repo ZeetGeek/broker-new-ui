@@ -67,8 +67,6 @@ export type OwnerListingsFilters = {
     minAreaSqft: string;
     /** Sheet — carpet / built-up area upper bound (sqft) */
     maxAreaSqft: string;
-    /** Sheet — minimum gallery photo count */
-    minPhotos: string;
     /** Sheet — listed within N days (`7` | `30` | "") */
     listedWithinDays: string;
     /** Sheet — minimum owner commission percent */
@@ -90,10 +88,8 @@ export type OwnerListingsBandFilters = Pick<
 
 export type OwnerListingsSheetFilters = Pick<
     OwnerListingsFilters,
-    | "q"
     | "minAreaSqft"
     | "maxAreaSqft"
-    | "minPhotos"
     | "listedWithinDays"
     | "minCommissionPercent"
     | "yourAreas"
@@ -130,7 +126,6 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     propertyType: "",
     minAreaSqft: "",
     maxAreaSqft: "",
-    minPhotos: "",
     listedWithinDays: "",
     minCommissionPercent: "",
     yourAreas: false,

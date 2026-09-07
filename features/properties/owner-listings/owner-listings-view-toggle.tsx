@@ -33,8 +33,8 @@ export function OwnerListingsViewToggle({
             aria-label="Results layout"
             className={cn(
                 `
-                  inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-border-warm
-                  bg-surface p-1 shadow-sm
+                  inline-flex h-[38px] shrink-0 items-center gap-1 rounded-full border
+                  border-border-warm bg-surface p-1 shadow-sm
                 `,
                 className,
             )}

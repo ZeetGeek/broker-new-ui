@@ -142,10 +142,8 @@ export function extractBandFilters(filters: OwnerListingsFilters): OwnerListings
 
 export function extractSheetFilters(filters: OwnerListingsFilters): OwnerListingsSheetFilters {
     return {
-        q: filters.q,
         minAreaSqft: filters.minAreaSqft,
         maxAreaSqft: filters.maxAreaSqft,
-        minPhotos: filters.minPhotos,
         listedWithinDays: filters.listedWithinDays,
         minCommissionPercent: filters.minCommissionPercent,
         yourAreas: filters.yourAreas,

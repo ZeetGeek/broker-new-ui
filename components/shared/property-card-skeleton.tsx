@@ -3,13 +3,12 @@ import { cn } from "@/lib/utils";
 const BROWSE_CARD_PHOTO_FRAME_CLASS = "shrink-0 rounded-card bg-surface p-1 shadow-md";
 const BROWSE_CARD_PHOTO_FRAME_GRID_CLASS = "w-full";
 const BROWSE_CARD_PHOTO_FRAME_LIST_CLASS =
-    "h-full w-[min(56%,24rem)] min-w-56 self-stretch sm:min-w-64";
+    "w-[min(62%,28rem)] min-w-64 shrink-0 self-start sm:min-w-72";
 
 const BROWSE_CARD_PHOTO_INNER_CLASS =
     "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
 const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full animate-pulse";
-const BROWSE_CARD_PHOTO_INNER_LIST_CLASS =
-    "aspect-auto min-h-56 w-full animate-pulse block-full sm:min-h-64";
+const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[5/4] w-full animate-pulse";
 
 export function PropertyCardSkeleton({
     className,
@@ -27,7 +26,7 @@ export function PropertyCardSkeleton({
             <div
                 className={cn(
                     "flex min-inline-0",
-                    isListView ? "flex-row items-stretch gap-4" : "flex-col gap-3",
+                    isListView ? "flex-row items-start gap-4" : "flex-col gap-3",
                     className,
                 )}
                 aria-hidden

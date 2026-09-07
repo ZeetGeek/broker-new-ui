@@ -5,13 +5,10 @@ import { useMemo, useState } from "react";
 import {
     BadgePercent,
     CalendarDays,
-    Camera,
     DoorOpen,
     KeyRound,
     MapPinned,
-    RotateCcw,
     Ruler,
-    Search,
     XIcon,
     type LucideIcon,
 } from "lucide-react";
@@ -27,8 +24,8 @@ import {
     DialogPopup,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
+import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { filterOwnerListings } from "@/features/properties/owner-listings/filter-owner-listings";
@@ -49,12 +46,6 @@ const AREA_PRESETS: AreaPreset[] = [
     { min: "1000", max: "1500", label: "1,000 – 1,500" },
     { min: "1500", max: "2500", label: "1,500 – 2,500" },
     { min: "2500", max: "", label: "2,500+ sqft" },
-];
-
-const PHOTO_PRESETS: ChoicePreset[] = [
-    { value: "", label: "Any", hint: "No photo minimum" },
-    { value: "1", label: "Has photos", hint: "At least 1 photo" },
-    { value: "5", label: "5+ photos", hint: "Stronger listing gallery" },
 ];
 
 const LISTED_PRESETS: ChoicePreset[] = [
@@ -106,10 +97,8 @@ const DEAL_OPTIONS: {
 ];
 
 const EMPTY_SHEET_FILTERS: OwnerListingsSheetFilters = {
-    q: "",
     minAreaSqft: "",
     maxAreaSqft: "",
-    minPhotos: "",
     listedWithinDays: "",
     minCommissionPercent: "",
     yourAreas: false,
@@ -118,6 +107,8 @@ const EMPTY_SHEET_FILTERS: OwnerListingsSheetFilters = {
     commissionSet: false,
     readyToMove: false,
 };
+
+const SELECT_TRANSITION = "transition-[background-color,border-color,color,box-shadow] duration-160";
 
 export type OwnerListingsFilterSheetProps = {
     open: boolean;
@@ -142,7 +133,7 @@ function FilterPanel({
     return (
         <section
             className={cn(
-                "flex block-full flex-col gap-3 rounded-[1.25rem] bg-surface-muted/70 p-4 sm:p-5",
+                "flex block-full flex-col gap-4 rounded-card border border-border-warm p-4 sm:p-5",
                 className,
             )}
         >
@@ -173,14 +164,11 @@ function ChoiceChip({
                 `
                   inline-flex items-center justify-center rounded-full border px-3.5 py-2 text-sm
                   font-semibold whitespace-nowrap
-                  transition-[background-color,border-color,color] duration-160
                 `,
+                SELECT_TRANSITION,
                 active
-                    ? "border-brand-ink bg-brand-ink text-surface"
-                    : `
-                      border-border-warm bg-surface text-ink-muted
-                      hover:border-ink/20 hover:text-ink
-                    `,
+                    ? "border-brand bg-brand-soft text-brand-text"
+                    : "border-border-warm bg-transparent text-ink-muted hover:border-brand/40 hover:text-ink",
             )}
         >
             {label}
@@ -209,23 +197,26 @@ function OptionCard({
             className={cn(
                 `
                   flex block-full flex-col justify-center gap-2 rounded-2xl border p-3.5 text-start
-                  transition-[background-color,border-color,color] duration-160
                 `,
+                SELECT_TRANSITION,
                 active
-                    ? "border-brand-ink bg-brand-ink text-surface"
-                    : "border-transparent bg-surface text-ink hover:border-border-warm",
+                    ? "border-brand bg-brand-soft text-brand-text"
+                    : `
+                      border-border-warm bg-transparent text-ink
+                      hover:border-brand/40 hover:text-brand-text
+                    `,
             )}
         >
             {Icon ? (
                 <Icon
                     aria-hidden
-                    className={cn("block-5 inline-5", active ? "text-surface" : "text-ink-muted")}
+                    className={cn("block-5 inline-5", active ? "text-brand" : "text-ink-muted")}
                     strokeWidth={1.75}
                 />
             ) : null}
             <span className="text-sm font-semibold">{label}</span>
             {hint ? (
-                <span className={cn("body-sm", active ? "text-surface/75" : "text-ink-muted")}>
+                <span className={cn("body-sm", active ? "text-brand-text/75" : "text-ink-muted")}>
                     {hint}
                 </span>
             ) : null}
@@ -238,64 +229,61 @@ function DealToggle({
     description,
     icon: Icon,
     active,
-    onClick,
+    onCheckedChange,
 }: {
     label: string;
     description: string;
     icon: LucideIcon;
     active: boolean;
-    onClick: () => void;
+    onCheckedChange: (checked: boolean) => void;
 }) {
     return (
-        <button
-            type="button"
-            aria-pressed={active}
-            onClick={onClick}
+        <div
             className={cn(
-                `
-                  flex items-start gap-3 rounded-2xl border p-3.5 text-start
-                  transition-[background-color,border-color] duration-160
-                `,
+                "flex items-start gap-3 rounded-2xl border p-3.5 sm:p-4",
+                SELECT_TRANSITION,
                 active
-                    ? "border-brand bg-brand-soft"
-                    : "border-transparent bg-surface hover:border-border-warm",
+                    ? "border-brand bg-transparent"
+                    : "border-border-warm bg-transparent hover:border-brand/35",
             )}
         >
-            <span
-                className={cn(
-                    "flex shrink-0 items-center justify-center rounded-full block-10 inline-10",
-                    active ? "bg-brand text-surface" : "bg-surface-muted text-ink-muted",
-                )}
-            >
-                <Icon aria-hidden className="block-4.5 inline-4.5" strokeWidth={1.75} />
-            </span>
-            <span className="flex min-inline-0 flex-1 flex-col gap-0.5">
-                <span
-                    className={cn("text-sm font-semibold", active ? "text-brand-text" : "text-ink")}
-                >
-                    {label}
-                </span>
-                <span className="body-sm text-ink-muted">{description}</span>
-            </span>
-            <span
-                aria-hidden
-                className={cn(
-                    "relative mt-1 shrink-0 rounded-full transition-colors duration-160 block-5 inline-9",
-                    active ? "bg-brand" : "bg-border-warm",
-                )}
+            <button
+                type="button"
+                className="flex min-inline-0 flex-1 items-start gap-3 text-start"
+                onClick={() => onCheckedChange(!active)}
             >
                 <span
                     className={cn(
-                        `
-                          absolute inset-bs-0.5 rounded-full bg-surface shadow-xs
-                          transition-[inset-inline-start] duration-160
-                          block-4 inline-4
-                        `,
-                        active ? "inset-is-[1.125rem]" : "inset-is-0.5",
+                        "flex shrink-0 items-center justify-center",
+                        SELECT_TRANSITION,
+                        active ? "text-brand" : "text-ink-muted",
                     )}
-                />
-            </span>
-        </button>
+                >
+                    <Icon aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
+                </span>
+                <span className="flex min-inline-0 flex-1 flex-col gap-0.5">
+                    <span
+                        className={cn(
+                            "text-sm font-semibold",
+                            active ? "text-brand-text" : "text-ink",
+                        )}
+                    >
+                        {label}
+                    </span>
+                    <span className="body-sm text-ink-muted">{description}</span>
+                </span>
+            </button>
+            <Switch
+                checked={active}
+                onCheckedChange={onCheckedChange}
+                aria-label={label}
+                className="
+                  mts-1
+                  data-checked:border-brand data-checked:bg-brand
+                  data-unchecked:border-border-warm data-unchecked:bg-border-warm/80
+                "
+            />
+        </div>
     );
 }
 
@@ -327,10 +315,8 @@ export function OwnerListingsFilterSheet({
 
     const hasDraftFilters = useMemo(() => {
         return (
-            Boolean(draft.q.trim()) ||
             Boolean(draft.minAreaSqft) ||
             Boolean(draft.maxAreaSqft) ||
-            Boolean(draft.minPhotos) ||
             Boolean(draft.listedWithinDays) ||
             Boolean(draft.minCommissionPercent) ||
             draft.yourAreas ||
@@ -367,7 +353,7 @@ export function OwnerListingsFilterSheet({
                 showCloseButton={false}
                 className={cn(
                     `
-                      flex flex-col gap-0 overflow-hidden p-0
+                      flex flex-col gap-0 overflow-hidden border-border-warm bg-surface p-0
                       inline-[min(64rem,calc(100vw-1.5rem))]
                       max-inline-[min(64rem,calc(100vw-1.5rem))]
                       max-block-[min(90dvh,calc(100%-1.5rem))]
@@ -379,100 +365,57 @@ export function OwnerListingsFilterSheet({
                 <DialogHeader
                     className="
                       shrink-0 flex-row items-center justify-between gap-4 border-be
-                      border-border-warm px-5 py-4 pe-5 text-start
+                      border-border-warm/40 bg-surface px-5 py-4 pe-5 text-start
                       sm:px-7 sm:py-5 sm:pe-7
                     "
                 >
                     <div className="flex flex-col gap-1">
-                        <DialogTitle className="font-display text-xl sm:text-2xl">
+                        <DialogTitle className="font-display text-base font-medium text-ink sm:text-lg">
                             Advanced filters
                         </DialogTitle>
                         <p className="body-sm text-ink-muted">
-                            Extra controls beyond the search bar — area, photos, timing, and deal
-                            fit
+                            Extra controls beyond the search bar — area, timing, commission, and
+                            deal fit
                         </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <button
-                                        type="button"
-                                        aria-label="Reset filters"
-                                        disabled={!hasDraftFilters}
-                                        onClick={handleClear}
-                                        className="
-                                          flex items-center justify-center rounded-full border
-                                          border-border-warm bg-surface text-ink-muted
-                                          transition-[color,background-color,transform] duration-160
-                                          block-10 inline-10
-                                          hover:bg-surface-muted hover:text-ink
-                                          focus-visible:ring-2 focus-visible:ring-brand
-                                          disabled:opacity-40
-                                          active:scale-[0.94]
-                                        "
-                                    >
-                                        <RotateCcw
-                                            className="block-4 inline-4"
-                                            strokeWidth={1.75}
-                                            aria-hidden
-                                        />
-                                    </button>
-                                }
-                            />
-                            <TooltipContent side="bottom">Reset filters</TooltipContent>
-                        </Tooltip>
-
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <DialogClose
-                                        className="
-                                          flex items-center justify-center rounded-full
-                                          bg-brand-ink text-surface
-                                          transition-[background-color,transform] duration-160
-                                          block-10 inline-10
-                                          hover:bg-brand-ink/90
-                                          focus-visible:ring-2 focus-visible:ring-brand
-                                          focus-visible:ring-offset-2
-                                          focus-visible:ring-offset-surface
-                                          active:scale-[0.94]
-                                        "
-                                    >
-                                        <XIcon
-                                            className="block-4.5 inline-4.5"
-                                            strokeWidth={2}
-                                            aria-hidden
-                                        />
-                                        <span className="sr-only">Close</span>
-                                    </DialogClose>
-                                }
-                            />
-                            <TooltipContent side="bottom">
-                                Close
-                                <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <DialogClose
+                                    className="
+                                      flex shrink-0 items-center justify-center rounded-full border
+                                      border-border-warm bg-surface text-ink-muted
+                                      transition-[background-color,border-color,color,transform]
+                                      duration-160
+                                      block-10 inline-10
+                                      hover:border-brand/40 hover:bg-brand-soft hover:text-brand-text
+                                      focus-visible:ring-2 focus-visible:ring-brand
+                                      focus-visible:ring-offset-2 focus-visible:ring-offset-surface
+                                      active:scale-[0.94]
+                                    "
+                                >
+                                    <XIcon
+                                        className="block-4.5 inline-4.5"
+                                        strokeWidth={2}
+                                        aria-hidden
+                                    />
+                                    <span className="sr-only">Close</span>
+                                </DialogClose>
+                            }
+                        />
+                        <TooltipContent side="bottom">
+                            Close
+                            <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
+                        </TooltipContent>
+                    </Tooltip>
                 </DialogHeader>
 
-                <div className="flex min-block-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-5 sm:gap-5 sm:px-7 sm:py-6">
-                    <FilterPanel
-                        title="Search"
-                        subtitle="Find a locality, society name, or config label"
-                    >
-                        <Input
-                            size="lg"
-                            value={draft.q}
-                            onChange={(event) => updateDraft({ q: event.target.value })}
-                            placeholder="Locality, society, or config"
-                            aria-label="Search owner listings"
-                            startIcon={Search}
-                            clearable
-                            className="border-border-warm bg-surface"
-                        />
-                    </FilterPanel>
-
+                <div
+                    className="
+                      flex min-block-0 flex-1 flex-col gap-4 overflow-y-auto bg-surface px-5 py-5
+                      sm:gap-5 sm:px-7 sm:py-6
+                    "
+                >
                     <div className="grid gap-4 md:grid-cols-2 md:gap-5">
                         <FilterPanel
                             title="Area"
@@ -508,7 +451,7 @@ export function OwnerListingsFilterSheet({
                             title="Listed"
                             subtitle="How fresh the listing should be"
                         >
-                            <div className="grid min-block-0 flex-1 auto-rows-fr grid-cols-1 gap-2 sm:grid-cols-3">
+                            <div className="grid min-block-0 flex-1 auto-rows-fr grid-cols-1 gap-2.5 sm:grid-cols-3">
                                 {LISTED_PRESETS.map((preset) => (
                                     <OptionCard
                                         key={preset.value || "any"}
@@ -523,28 +466,11 @@ export function OwnerListingsFilterSheet({
                         </FilterPanel>
 
                         <FilterPanel
-                            title="Photos"
-                            subtitle="Skip thin listings before you request"
-                        >
-                            <div className="grid min-block-0 flex-1 auto-rows-fr grid-cols-1 gap-2 sm:grid-cols-3">
-                                {PHOTO_PRESETS.map((preset) => (
-                                    <OptionCard
-                                        key={preset.value || "any"}
-                                        label={preset.label}
-                                        hint={preset.hint}
-                                        active={draft.minPhotos === preset.value}
-                                        icon={Camera}
-                                        onClick={() => updateDraft({ minPhotos: preset.value })}
-                                    />
-                                ))}
-                            </div>
-                        </FilterPanel>
-
-                        <FilterPanel
                             title="Commission"
                             subtitle="Minimum rate the owner has shared"
+                            className="md:col-span-2"
                         >
-                            <div className="grid min-block-0 flex-1 auto-rows-fr grid-cols-1 gap-2 sm:grid-cols-2">
+                            <div className="grid min-block-0 flex-1 auto-rows-fr grid-cols-2 gap-2.5 sm:grid-cols-4">
                                 {COMMISSION_PRESETS.map((preset) => (
                                     <OptionCard
                                         key={preset.value || "any"}
@@ -565,7 +491,7 @@ export function OwnerListingsFilterSheet({
                         title="Deal fit"
                         subtitle="Broker-side signals that are not on the search bar"
                     >
-                        <div className="grid gap-2 sm:grid-cols-2">
+                        <div className="grid gap-2.5 sm:grid-cols-2">
                             {DEAL_OPTIONS.map((option) => (
                                 <DealToggle
                                     key={option.key}
@@ -573,8 +499,8 @@ export function OwnerListingsFilterSheet({
                                     description={option.description}
                                     icon={option.icon}
                                     active={draft[option.key]}
-                                    onClick={() =>
-                                        updateDraft({ [option.key]: !draft[option.key] })
+                                    onCheckedChange={(checked) =>
+                                        updateDraft({ [option.key]: checked })
                                     }
                                 />
                             ))}
@@ -584,7 +510,7 @@ export function OwnerListingsFilterSheet({
 
                 <div
                     className="
-                      shrink-0 flex flex-col-reverse gap-3 border-bs border-border-warm bg-surface
+                      shrink-0 flex flex-col-reverse gap-3 border-bs border-border-warm/40 bg-surface
                       px-5 py-4
                       sm:flex-row sm:items-center sm:justify-between sm:px-7
                     "
@@ -603,9 +529,9 @@ export function OwnerListingsFilterSheet({
                         type="button"
                         size="lg"
                         className="
-                          bg-brand-ink text-surface rounded-full px-8
+                          bg-brand text-surface rounded-full px-8
                           sm:min-inline-56
-                          hover:bg-brand-ink/90
+                          hover:bg-brand-text
                         "
                         onClick={handleApply}
                     >

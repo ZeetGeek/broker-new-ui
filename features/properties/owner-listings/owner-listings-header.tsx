@@ -71,6 +71,7 @@ export function OwnerListingsHeader({
                     isLoading={isResultsLoading}
                     onToggleQuickChip={onToggleQuickChip}
                     onOpenFilters={handleOpenFilters}
+                    onQueryChange={(q) => onApplySheet({ q, cursor: "" })}
                     onSortChange={onSortChange}
                     view={view}
                     onViewChange={onViewChange}
