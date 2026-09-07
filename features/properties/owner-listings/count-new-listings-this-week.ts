@@ -15,7 +15,7 @@ export function countNewListingsInServiceAreasThisWeek(
     return items.filter(
         (item) =>
             (areaSet.has(item.locality) || areaSet.has(item.city)) &&
-            item.listedHoursAgo < HOURS_IN_WEEK,
+            (item.isNew || item.listedHoursAgo < HOURS_IN_WEEK),
     ).length;
 }
 

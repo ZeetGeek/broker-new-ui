@@ -68,9 +68,7 @@ export function buildOwnerListingsSummaryLines({
 
     if (poolSummary.newTodayCount > 0) {
         lines.push(
-            <>
-                {countLabel(poolSummary.newTodayCount, "new listing", "new listings")} posted today
-            </>,
+            <>{countLabel(poolSummary.newTodayCount, "new listing", "new listings")} this week</>,
         );
     }
 

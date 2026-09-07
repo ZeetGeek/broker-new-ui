@@ -40,6 +40,8 @@ const UI_TO_SUBTYPE: Partial<Record<OwnerListingPropertyType, string>> = {
 };
 
 const DEFAULT_BROKER_SLOTS_TOTAL = 3;
+/** Matches backend `PropertyService.NEW_LISTING_MAX_AGE_MS` (created within 7 days). */
+const NEW_LISTING_MAX_AGE_HOURS = 7 * 24;
 
 function toNumber(value: string | number | null | undefined): number {
     if (value == null) return 0;
@@ -52,6 +54,12 @@ function hoursAgo(iso: string | null | undefined): number {
     const then = new Date(iso).getTime();
     if (Number.isNaN(then)) return 0;
     return Math.max(0, Math.round((Date.now() - then) / (1000 * 60 * 60)));
+}
+
+function resolveIsNew(listing: PropertyBrowseListing, listedHours: number): boolean {
+    if (typeof listing.isNew === "boolean") return listing.isNew;
+    // Fallback when older API responses omit `isNew`.
+    return listedHours <= NEW_LISTING_MAX_AGE_HOURS;
 }
 
 function mapFurnishing(value: string | null | undefined): OwnerListingFurnishing {
@@ -148,8 +156,10 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
     const bhk = mapBhk(listing);
     const { saleAmountInr, rentAmountInr } = mapPricing(listing);
     const furnishing = mapFurnishing(listing.furnishingStatus);
+    // "New" is based on create time (API `isNew`); listed label prefers publish time.
     const listedAt = listing.publishedAt ?? listing.createdAt;
-    const listedHours = hoursAgo(listedAt);
+    const listedHours = hoursAgo(listing.createdAt ?? listedAt);
+    const displayListedHours = hoursAgo(listedAt);
     const hasRequested =
         listing.representation?.status === "pending" ||
         listing.representation?.status === "accepted";
@@ -172,7 +182,7 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         areaSqft: listing.areaSqft ?? 0,
         furnishingLabel: furnishingLabel(furnishing),
         furnishing,
-        listedHoursAgo: listedHours,
+        listedHoursAgo: displayListedHours,
         brokerRequestCount: hasRequested ? 1 : 0,
         brokerSlotsTotal: DEFAULT_BROKER_SLOTS_TOTAL,
         brokerSlotsOpen: hasRequested
@@ -182,7 +192,7 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         ownerName,
         ownerAvatarUrl: listing.ownerAvatarUrl ?? undefined,
         photoCount: photos.length,
-        isNew: listedHours <= 48,
+        isNew: resolveIsNew(listing, listedHours),
         readyToMove: isReadyToMove(listing.availableFrom),
         hasRequested,
         isBookmarked: false,
