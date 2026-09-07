@@ -1,6 +1,6 @@
 /**
- * Build the visible page tokens for a compact pager (1 … 4 5 6 … 20).
- * Pure helper — no React.
+ * Build visible page tokens for a full-width table-style pager
+ * (e.g. 1 2 3 … 8 9 10).
  */
 export type PaginationPageToken = number | "ellipsis";
 
@@ -18,10 +18,24 @@ export function getVisiblePages(
     }
 
     const pages = new Set<number>([1, totalPages]);
+
     for (let page = current - siblingCount; page <= current + siblingCount; page++) {
         if (page >= 1 && page <= totalPages) {
             pages.add(page);
         }
+    }
+
+    // Near the start — mirror the reference: 1 2 3 … n-2 n-1 n
+    if (current <= 3) {
+        pages.add(2);
+        pages.add(3);
+        pages.add(totalPages - 2);
+        pages.add(totalPages - 1);
+    } else if (current >= totalPages - 2) {
+        pages.add(2);
+        pages.add(3);
+        pages.add(totalPages - 2);
+        pages.add(totalPages - 1);
     }
 
     const sorted = [...pages].sort((a, b) => a - b);

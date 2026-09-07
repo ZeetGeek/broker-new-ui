@@ -34,24 +34,19 @@ import type { OwnerListingItem } from "@/features/properties/owner-listings/type
 
 const rowClass = (checked: boolean) =>
     cn(
-        "group/row my-1 items-center gap-3 rounded-xl px-2.5 py-3 pe-10",
-        "font-normal text-ink transition-[background-color,box-shadow] duration-160",
-        "data-highlighted:bg-surface-muted/70! data-highlighted:text-ink!",
-        "focus:bg-surface-muted/70! focus:text-ink!",
+        "group/row my-1 cursor-pointer! items-center gap-3 rounded-xl border border-transparent px-2.5 py-3 pe-10",
+        "font-normal text-ink transition-[background-color,border-color,box-shadow] duration-160",
         "**:data-muted-line:data-highlighted:text-ink-muted!",
         "**:data-muted-line:focus:text-ink-muted!",
-        // Keep pin brand-green on hover/focus (base checkbox forces accent-foreground on **:)
-        "**:data-[slot=where-location-pin]:text-brand!",
-        "focus:**:data-[slot=where-location-pin]:text-brand!",
-        "data-highlighted:**:data-[slot=where-location-pin]:text-brand!",
+        // Pin + check indicator shared plumbing
+        "**:data-[slot=where-location-pin]:transition-colors",
+        "**:data-[slot=where-location-pin]:duration-160",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:pointer-events-none",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:absolute",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:inset-e-4",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:inline-flex",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:items-center",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:justify-center",
-        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-0",
-        "**:data-[slot=dropdown-menu-checkbox-item-indicator]:scale-75",
         `
           duration-160
           **:data-[slot=dropdown-menu-checkbox-item-indicator]:transition-[opacity,transform]
@@ -59,11 +54,50 @@ const rowClass = (checked: boolean) =>
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:[&_svg]:block-4",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:[&_svg]:inline-4",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:[&_svg]:stroke-[2.25]",
-        checked && [
-            "**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink",
-            "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-100",
-            "**:data-[slot=dropdown-menu-checkbox-item-indicator]:scale-100",
-        ],
+        checked
+            ? [
+                  // Active: lock look — no hover/focus color shift on pin or subtitle
+                  "border-brand bg-brand-soft! text-ink! shadow-sm ring-1 ring-brand/20",
+                  "data-checked:bg-brand-soft! data-checked:text-ink!",
+                  "data-checked:data-highlighted:bg-brand-soft! data-checked:data-highlighted:text-ink!",
+                  "data-checked:focus:bg-brand-soft! data-checked:focus:text-ink!",
+                  "data-checked:hover:bg-brand-soft! data-checked:hover:text-ink!",
+                  // Title stays ink (beat base focus:**:text-accent-foreground)
+                  "**:data-[slot=where-location-title]:text-ink!",
+                  "focus:**:data-[slot=where-location-title]:text-ink!",
+                  "data-highlighted:**:data-[slot=where-location-title]:text-ink!",
+                  "hover:**:data-[slot=where-location-title]:text-ink!",
+                  // Subtitle + listing count stay muted (incl. nested spans)
+                  "**:data-muted-line:text-ink-muted!",
+                  "**:data-muted-line:*:text-ink-muted!",
+                  "focus:**:data-muted-line:text-ink-muted!",
+                  "focus:**:data-muted-line:*:text-ink-muted!",
+                  "data-highlighted:**:data-muted-line:text-ink-muted!",
+                  "data-highlighted:**:data-muted-line:*:text-ink-muted!",
+                  "hover:**:data-muted-line:text-ink-muted!",
+                  "hover:**:data-muted-line:*:text-ink-muted!",
+                  // Pin stays brand — never reverts on hover/focus
+                  "**:data-[slot=where-location-pin]:text-brand!",
+                  "focus:**:data-[slot=where-location-pin]:text-brand!",
+                  "data-highlighted:**:data-[slot=where-location-pin]:text-brand!",
+                  "hover:**:data-[slot=where-location-pin]:text-brand!",
+                  "**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink!",
+                  "focus:**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink!",
+                  "data-highlighted:**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink!",
+                  "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-100",
+                  "**:data-[slot=dropdown-menu-checkbox-item-indicator]:scale-100",
+              ]
+            : [
+                  // Idle: muted hover only when not selected
+                  "data-highlighted:bg-surface-muted/70! data-highlighted:text-ink!",
+                  "focus:bg-surface-muted/70! focus:text-ink!",
+                  "**:data-[slot=where-location-pin]:text-ink-subtle!",
+                  "group-hover/row:**:data-[slot=where-location-pin]:text-brand!",
+                  "focus:**:data-[slot=where-location-pin]:text-brand!",
+                  "data-highlighted:**:data-[slot=where-location-pin]:text-brand!",
+                  "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-0",
+                  "**:data-[slot=dropdown-menu-checkbox-item-indicator]:scale-75",
+              ],
     );
 
 function formatListingCount(count: number): string {
@@ -93,12 +127,19 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
     );
 }
 
-function LocationIcon() {
+function LocationIcon({ checked }: { checked?: boolean }) {
     return (
         <MapPin
             aria-hidden
             data-slot="where-location-pin"
-            className="shrink-0 text-brand block-4.5 inline-4.5"
+            // Explicit stroke when selected — CSS hover/focus cannot repaint it black
+            color={checked ? "var(--color-brand)" : "currentColor"}
+            className={cn(
+                "block-6 inline-6 shrink-0",
+                checked
+                    ? null
+                    : "text-ink-subtle transition-colors duration-160 group-hover/row:text-brand data-highlighted:text-brand",
+            )}
             strokeWidth={1.75}
         />
     );
@@ -127,11 +168,14 @@ function WhereLocationRow({
             onCheckedChange={onToggle}
             className={rowClass(checked)}
         >
-            <LocationIcon />
+            <LocationIcon checked={checked} />
             <span className="flex flex-1 flex-col gap-0.5 text-start min-inline-0">
                 {isSearching ? (
                     <>
-                        <span className="truncate text-[15px] leading-snug text-ink">
+                        <span
+                            data-slot="where-location-title"
+                            className="truncate text-[15px] leading-snug capitalize text-ink"
+                        >
                             <HighlightMatch text={locality} query={query} />
                         </span>
                         <span
@@ -143,16 +187,27 @@ function WhereLocationRow({
                     </>
                 ) : (
                     <>
-                        <span className="truncate text-[15px] leading-snug font-medium text-ink">
+                        <span
+                            data-slot="where-location-title"
+                            className="truncate text-[15px] leading-snug font-medium capitalize text-ink"
+                        >
                             {locality}
                         </span>
                         <span
                             className="truncate text-[13px] leading-snug text-ink-muted"
                             data-muted-line
+                            style={checked ? { color: "var(--color-ink-muted)" } : undefined}
                         >
                             {pathLabel}
                             <span aria-hidden> · </span>
-                            <span className="tabular-nums">{formatListingCount(listingCount)}</span>
+                            <span
+                                className="tabular-nums"
+                                style={
+                                    checked ? { color: "var(--color-ink-muted)" } : undefined
+                                }
+                            >
+                                {formatListingCount(listingCount)}
+                            </span>
                         </span>
                     </>
                 )}

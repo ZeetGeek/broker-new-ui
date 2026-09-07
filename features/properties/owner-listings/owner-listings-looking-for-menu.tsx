@@ -66,36 +66,56 @@ function fromRadioValue(radioValue: string): LookingForValue {
     return radioValue === ANY_RADIO_VALUE ? "" : (radioValue as OwnerListingTransactionType);
 }
 
-/** Mirrors Where menu row treatment — brand leading icon, check only when selected. */
+/** Matches Where menu row treatment — brand-soft when selected. */
 const rowClass = (checked: boolean) =>
     cn(
-        "group/row my-1 items-center gap-3 rounded-xl px-2.5 py-3 pe-10",
-        "font-normal text-ink transition-[background-color,box-shadow] duration-160",
-        "data-highlighted:bg-surface-muted/70! data-highlighted:text-ink!",
-        "focus:bg-surface-muted/70! focus:text-ink!",
+        "group/row my-1 cursor-pointer! items-center gap-3 rounded-xl border border-transparent px-2.5 py-3 pe-10",
+        "font-normal text-ink transition-[background-color,border-color,box-shadow] duration-160",
         "**:data-muted-line:data-highlighted:text-ink-muted!",
         "**:data-muted-line:focus:text-ink-muted!",
-        // Keep leading icon brand on hover/focus (base radio forces accent-foreground on **:)
-        "**:data-[slot=looking-for-icon]:text-brand!",
-        "focus:**:data-[slot=looking-for-icon]:text-brand!",
-        "data-highlighted:**:data-[slot=looking-for-icon]:text-brand!",
+        "**:data-[slot=looking-for-icon]:transition-colors",
+        "**:data-[slot=looking-for-icon]:duration-160",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:pointer-events-none",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:absolute",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:inset-e-4",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:inline-flex",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:items-center",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:justify-center",
-        "**:data-[slot=dropdown-menu-radio-item-indicator]:opacity-0",
-        "**:data-[slot=dropdown-menu-radio-item-indicator]:scale-75",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:transition-[opacity,transform] duration-160",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:[&_svg]:block-4",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:[&_svg]:inline-4",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:[&_svg]:stroke-[2.25]",
-        checked && [
-            "**:data-[slot=dropdown-menu-radio-item-indicator]:text-ink",
-            "**:data-[slot=dropdown-menu-radio-item-indicator]:opacity-100",
-            "**:data-[slot=dropdown-menu-radio-item-indicator]:scale-100",
-        ],
+        checked
+            ? [
+                  "border-brand bg-brand-soft! text-ink! shadow-sm ring-1 ring-brand/20",
+                  "data-checked:bg-brand-soft! data-checked:text-ink!",
+                  "data-checked:data-highlighted:bg-brand-soft! data-checked:data-highlighted:text-ink!",
+                  "data-checked:focus:bg-brand-soft! data-checked:focus:text-ink!",
+                  "data-checked:hover:bg-brand-soft! data-checked:hover:text-ink!",
+                  "**:data-[slot=looking-for-title]:text-ink!",
+                  "focus:**:data-[slot=looking-for-title]:text-ink!",
+                  "data-highlighted:**:data-[slot=looking-for-title]:text-ink!",
+                  "**:data-muted-line:text-ink-muted!",
+                  "focus:**:data-muted-line:text-ink-muted!",
+                  "data-highlighted:**:data-muted-line:text-ink-muted!",
+                  "**:data-[slot=looking-for-icon]:text-brand!",
+                  "focus:**:data-[slot=looking-for-icon]:text-brand!",
+                  "data-highlighted:**:data-[slot=looking-for-icon]:text-brand!",
+                  "hover:**:data-[slot=looking-for-icon]:text-brand!",
+                  "**:data-[slot=dropdown-menu-radio-item-indicator]:text-ink!",
+                  "**:data-[slot=dropdown-menu-radio-item-indicator]:opacity-100",
+                  "**:data-[slot=dropdown-menu-radio-item-indicator]:scale-100",
+              ]
+            : [
+                  "data-highlighted:bg-surface-muted/70! data-highlighted:text-ink!",
+                  "focus:bg-surface-muted/70! focus:text-ink!",
+                  "**:data-[slot=looking-for-icon]:text-ink-subtle!",
+                  "group-hover/row:**:data-[slot=looking-for-icon]:text-brand!",
+                  "focus:**:data-[slot=looking-for-icon]:text-brand!",
+                  "data-highlighted:**:data-[slot=looking-for-icon]:text-brand!",
+                  "**:data-[slot=dropdown-menu-radio-item-indicator]:opacity-0",
+                  "**:data-[slot=dropdown-menu-radio-item-indicator]:scale-75",
+              ],
     );
 
 export type OwnerListingsLookingForMenuProps = {
@@ -158,11 +178,20 @@ export function OwnerListingsLookingForMenu({
                                     <Icon
                                         aria-hidden
                                         data-slot="looking-for-icon"
-                                        className="block-4.5 inline-4.5 shrink-0 text-brand"
+                                        color={checked ? "var(--color-brand)" : "currentColor"}
+                                        className={cn(
+                                            "block-4.5 inline-4.5 shrink-0",
+                                            checked
+                                                ? null
+                                                : "text-ink-subtle transition-colors duration-160",
+                                        )}
                                         strokeWidth={1.75}
                                     />
                                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-start">
-                                        <span className="truncate text-[15px] leading-snug font-medium text-ink">
+                                        <span
+                                            data-slot="looking-for-title"
+                                            className="truncate text-[15px] leading-snug font-medium text-ink"
+                                        >
                                             {option.label}
                                         </span>
                                         <span

@@ -156,9 +156,9 @@ export function PortalHeader({
                 {children ? (
                     <main
                         className={cn(
-                            "pbe-6",
+                            "pbe-8",
                             sectionNav ? "pbs-0" : "pbs-6",
-                            mobileNav && "pbe-[calc(5.5rem+env(safe-area-inset-bottom))] md:pbe-6",
+                            mobileNav && "pbe-[calc(6rem+env(safe-area-inset-bottom))] md:pbe-10",
                         )}
                     >
                         {children}

@@ -67,6 +67,9 @@ function useIsMobile() {
 const EMPTY_SERVICE_AREAS: string[] = [];
 const EMPTY_LOCATION_LISTINGS: OwnerListingItem[] = [];
 
+/** Static page count so the pager stays visible while the pool is small. */
+const STATIC_OWNER_LISTINGS_PAGES = 10;
+
 const EMPTY_POOL_SUMMARY: OwnerListingsPoolSummary = {
     slotsOpenCount: 0,
     newTodayCount: 0,
@@ -92,7 +95,6 @@ function OwnerListingsResults({
     onClearFilters,
     onLoaded,
     onLoadingChange,
-    onPageChange,
     view,
 }: {
     filterSignature: string;
@@ -103,12 +105,14 @@ function OwnerListingsResults({
     onClearFilters: () => void;
     onLoaded: (result: OwnerListingsResult) => void;
     onLoadingChange: (isLoading: boolean) => void;
-    onPageChange: (page: number) => void;
     view: OwnerListingsView;
 }) {
     const [result, setResult] = useState<OwnerListingsResult | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isFetching, setIsFetching] = useState(true);
+    // Static pager for UI — always visible while listing volume is low.
+    const [staticPage, setStaticPage] = useState(1);
+    const [staticPageSize, setStaticPageSize] = useState(10);
 
     useEffect(() => {
         let cancelled = false;
@@ -144,6 +148,10 @@ function OwnerListingsResults({
             window.clearTimeout(timer);
         };
     }, [filterSignature, serviceAreasKey, filters, filterContext, onLoaded, onLoadingChange]);
+
+    useEffect(() => {
+        setStaticPage(1);
+    }, [filterSignature]);
 
     if (error) {
         return (
@@ -194,8 +202,6 @@ function OwnerListingsResults({
         );
     }
 
-    const currentPage = result.page > 0 ? result.page : 1;
-
     return (
         <div
             className={cn(
@@ -205,9 +211,14 @@ function OwnerListingsResults({
         >
             <OwnerListingsGrid items={result.items} view={view} />
             <AppPagination
-                page={currentPage}
-                totalPages={result.totalPages}
-                onPageChange={onPageChange}
+                page={staticPage}
+                totalPages={STATIC_OWNER_LISTINGS_PAGES}
+                onPageChange={setStaticPage}
+                pageSize={staticPageSize}
+                onPageSizeChange={(next) => {
+                    setStaticPageSize(next);
+                    setStaticPage(1);
+                }}
                 aria-label="Owner listings pages"
             />
         </div>
@@ -297,16 +308,6 @@ export function OwnerListingsPage() {
     const handleSortChange = useCallback(
         (sort: OwnerListingSort) => {
             applyFilters({ ...filters, sort, cursor: "" });
-        },
-        [applyFilters, filters],
-    );
-
-    const handlePageChange = useCallback(
-        (page: number) => {
-            const nextCursor = page <= 1 ? "" : String(page);
-            if (filters.cursor === nextCursor) return;
-            applyFilters({ ...filters, cursor: nextCursor });
-            window.scrollTo({ top: 0, behavior: "smooth" });
         },
         [applyFilters, filters],
     );
@@ -409,7 +410,6 @@ export function OwnerListingsPage() {
                 onClearFilters={clearFilters}
                 onLoaded={handleLoaded}
                 onLoadingChange={setIsResultsLoading}
-                onPageChange={handlePageChange}
                 view={view}
             />
         </div>
