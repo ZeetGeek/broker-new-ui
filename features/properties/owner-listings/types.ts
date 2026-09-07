@@ -80,7 +80,17 @@ export type OwnerListingsBandFilters = Pick<
 
 export type OwnerListingsSheetFilters = Pick<
     OwnerListingsFilters,
-    "q" | "propertyType" | "furnishing" | "type" | "bhk"
+    | "q"
+    | "propertyType"
+    | "furnishing"
+    | "type"
+    | "bhk"
+    | "min"
+    | "max"
+    | "newToday"
+    | "slotsOpen"
+    | "commissionSet"
+    | "readyToMove"
 >;
 
 export type OwnerListingsFilterContext = {

@@ -141,12 +141,31 @@ export function extractBandFilters(filters: OwnerListingsFilters): OwnerListings
 
 export function extractSheetFilters(
     filters: OwnerListingsFilters,
-): Pick<OwnerListingsFilters, "q" | "propertyType" | "furnishing" | "type" | "bhk"> {
+): Pick<
+    OwnerListingsFilters,
+    | "q"
+    | "propertyType"
+    | "furnishing"
+    | "type"
+    | "bhk"
+    | "min"
+    | "max"
+    | "newToday"
+    | "slotsOpen"
+    | "commissionSet"
+    | "readyToMove"
+> {
     return {
         q: filters.q,
         propertyType: filters.propertyType,
         furnishing: filters.furnishing,
         type: filters.type,
         bhk: filters.bhk,
+        min: filters.min,
+        max: filters.max,
+        newToday: filters.newToday,
+        slotsOpen: filters.slotsOpen,
+        commissionSet: filters.commissionSet,
+        readyToMove: filters.readyToMove,
     };
 }

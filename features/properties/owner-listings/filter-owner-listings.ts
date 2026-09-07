@@ -118,18 +118,18 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     return params;
 }
 
-export function countSheetFilters(
-    filters: OwnerListingsFilters,
-    options?: { includeTypeAndBhk?: boolean },
-): number {
+export function countSheetFilters(filters: OwnerListingsFilters): number {
     let count = 0;
     if (filters.q.trim()) count++;
     if (filters.propertyType) count++;
     if (filters.furnishing) count++;
-    if (options?.includeTypeAndBhk) {
-        if (filters.type) count++;
-        if (filters.bhk.length > 0) count++;
-    }
+    if (filters.type) count++;
+    if (filters.bhk.length > 0) count++;
+    if (filters.min || filters.max) count++;
+    if (filters.newToday) count++;
+    if (filters.slotsOpen) count++;
+    if (filters.commissionSet) count++;
+    if (filters.readyToMove) count++;
     return count;
 }
 

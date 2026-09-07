@@ -71,10 +71,16 @@ const rowClass = (checked: boolean) =>
     cn(
         "group/row my-1 cursor-pointer! items-center gap-3 rounded-xl border border-transparent px-2.5 py-3 pe-10",
         "font-normal text-ink transition-[background-color,border-color,box-shadow] duration-160",
-        "**:data-muted-line:data-highlighted:text-ink-muted!",
-        "**:data-muted-line:focus:text-ink-muted!",
-        "**:data-[slot=looking-for-icon]:transition-colors",
-        "**:data-[slot=looking-for-icon]:duration-160",
+        // Icon color via CSS var — beats menu focus:**:text-accent-foreground cascade
+        "[--row-icon:var(--color-ink-subtle)]",
+        "hover:[--row-icon:var(--color-brand)]",
+        "focus:[--row-icon:var(--color-brand)]",
+        "data-highlighted:[--row-icon:var(--color-brand)]",
+        // Description stays muted gray in every state (beats focus:**:text-accent-foreground)
+        "**:data-muted-line:text-ink-muted!",
+        "hover:**:data-muted-line:text-ink-muted!",
+        "focus:**:data-muted-line:text-ink-muted!",
+        "data-highlighted:**:data-muted-line:text-ink-muted!",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:pointer-events-none",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:absolute",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:inset-e-4",
@@ -88,6 +94,10 @@ const rowClass = (checked: boolean) =>
         checked
             ? [
                   "border-brand bg-brand-soft! text-ink! shadow-sm ring-1 ring-brand/20",
+                  "[--row-icon:var(--color-brand)]",
+                  "hover:[--row-icon:var(--color-brand)]",
+                  "focus:[--row-icon:var(--color-brand)]",
+                  "data-highlighted:[--row-icon:var(--color-brand)]",
                   "data-checked:bg-brand-soft! data-checked:text-ink!",
                   "data-checked:data-highlighted:bg-brand-soft! data-checked:data-highlighted:text-ink!",
                   "data-checked:focus:bg-brand-soft! data-checked:focus:text-ink!",
@@ -95,13 +105,10 @@ const rowClass = (checked: boolean) =>
                   "**:data-[slot=looking-for-title]:text-ink!",
                   "focus:**:data-[slot=looking-for-title]:text-ink!",
                   "data-highlighted:**:data-[slot=looking-for-title]:text-ink!",
-                  "**:data-muted-line:text-ink-muted!",
+                  "hover:**:data-muted-line:text-ink-muted!",
                   "focus:**:data-muted-line:text-ink-muted!",
                   "data-highlighted:**:data-muted-line:text-ink-muted!",
-                  "**:data-[slot=looking-for-icon]:text-brand!",
-                  "focus:**:data-[slot=looking-for-icon]:text-brand!",
-                  "data-highlighted:**:data-[slot=looking-for-icon]:text-brand!",
-                  "hover:**:data-[slot=looking-for-icon]:text-brand!",
+                  "data-checked:**:data-muted-line:text-ink-muted!",
                   "**:data-[slot=dropdown-menu-radio-item-indicator]:text-ink!",
                   "**:data-[slot=dropdown-menu-radio-item-indicator]:opacity-100",
                   "**:data-[slot=dropdown-menu-radio-item-indicator]:scale-100",
@@ -109,10 +116,6 @@ const rowClass = (checked: boolean) =>
             : [
                   "data-highlighted:bg-surface-muted/70! data-highlighted:text-ink!",
                   "focus:bg-surface-muted/70! focus:text-ink!",
-                  "**:data-[slot=looking-for-icon]:text-ink-subtle!",
-                  "group-hover/row:**:data-[slot=looking-for-icon]:text-brand!",
-                  "focus:**:data-[slot=looking-for-icon]:text-brand!",
-                  "data-highlighted:**:data-[slot=looking-for-icon]:text-brand!",
                   "**:data-[slot=dropdown-menu-radio-item-indicator]:opacity-0",
                   "**:data-[slot=dropdown-menu-radio-item-indicator]:scale-75",
               ],
@@ -178,13 +181,8 @@ export function OwnerListingsLookingForMenu({
                                     <Icon
                                         aria-hidden
                                         data-slot="looking-for-icon"
-                                        color={checked ? "var(--color-brand)" : "currentColor"}
-                                        className={cn(
-                                            "block-4.5 inline-4.5 shrink-0",
-                                            checked
-                                                ? null
-                                                : "text-ink-subtle transition-colors duration-160",
-                                        )}
+                                        color="var(--row-icon)"
+                                        className="block-4.5 inline-4.5 shrink-0 transition-[color,stroke] duration-160"
                                         strokeWidth={1.75}
                                     />
                                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-start">
@@ -195,8 +193,9 @@ export function OwnerListingsLookingForMenu({
                                             {option.label}
                                         </span>
                                         <span
-                                            className="truncate text-[13px] leading-snug text-ink-muted"
+                                            className="truncate text-[13px] leading-snug text-ink-muted!"
                                             data-muted-line
+                                            style={{ color: "var(--color-ink-muted)" }}
                                         >
                                             {option.description}
                                         </span>

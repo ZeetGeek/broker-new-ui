@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { QuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
 import { countSheetFilters } from "@/features/properties/owner-listings/filter-owner-listings";
@@ -33,20 +33,6 @@ export type OwnerListingsHeaderProps = {
     onViewChange: (view: OwnerListingsView) => void;
 };
 
-function useIsMobile() {
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const mediaQuery = window.matchMedia("(max-width: 47.9375rem)");
-        const update = () => setIsMobile(mediaQuery.matches);
-        update();
-        mediaQuery.addEventListener("change", update);
-        return () => mediaQuery.removeEventListener("change", update);
-    }, []);
-
-    return isMobile;
-}
-
 export function OwnerListingsHeader({
     filters,
     listings,
@@ -62,12 +48,8 @@ export function OwnerListingsHeader({
     onViewChange,
 }: OwnerListingsHeaderProps) {
     const [sheetOpen, setSheetOpen] = useState(false);
-    const isMobile = useIsMobile();
 
-    const sheetFilterCount = useMemo(
-        () => countSheetFilters(filters, { includeTypeAndBhk: isMobile }),
-        [filters, isMobile],
-    );
+    const sheetFilterCount = useMemo(() => countSheetFilters(filters), [filters]);
 
     const handleOpenFilters = useCallback(() => {
         setSheetOpen(true);
@@ -100,7 +82,6 @@ export function OwnerListingsHeader({
                 appliedFilters={filters}
                 filterContext={filterContext}
                 listings={poolListings}
-                includeTypeAndBhk={isMobile}
                 onApply={onApplySheet}
             />
         </>

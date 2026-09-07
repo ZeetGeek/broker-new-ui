@@ -36,11 +36,18 @@ const rowClass = (checked: boolean) =>
     cn(
         "group/row my-1 cursor-pointer! items-center gap-3 rounded-xl border border-transparent px-2.5 py-3 pe-10",
         "font-normal text-ink transition-[background-color,border-color,box-shadow] duration-160",
-        "**:data-muted-line:data-highlighted:text-ink-muted!",
-        "**:data-muted-line:focus:text-ink-muted!",
-        // Pin + check indicator shared plumbing
-        "**:data-[slot=where-location-pin]:transition-colors",
-        "**:data-[slot=where-location-pin]:duration-160",
+        "[--row-icon:var(--color-ink-subtle)]",
+        "hover:[--row-icon:var(--color-brand)]",
+        "focus:[--row-icon:var(--color-brand)]",
+        "data-highlighted:[--row-icon:var(--color-brand)]",
+        "**:data-muted-line:text-ink-muted!",
+        "**:data-muted-line:*:text-ink-muted!",
+        "hover:**:data-muted-line:text-ink-muted!",
+        "hover:**:data-muted-line:*:text-ink-muted!",
+        "focus:**:data-muted-line:text-ink-muted!",
+        "focus:**:data-muted-line:*:text-ink-muted!",
+        "data-highlighted:**:data-muted-line:text-ink-muted!",
+        "data-highlighted:**:data-muted-line:*:text-ink-muted!",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:pointer-events-none",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:absolute",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:inset-e-4",
@@ -58,6 +65,10 @@ const rowClass = (checked: boolean) =>
             ? [
                   // Active: lock look — no hover/focus color shift on pin or subtitle
                   "border-brand bg-brand-soft! text-ink! shadow-sm ring-1 ring-brand/20",
+                  "[--row-icon:var(--color-brand)]",
+                  "hover:[--row-icon:var(--color-brand)]",
+                  "focus:[--row-icon:var(--color-brand)]",
+                  "data-highlighted:[--row-icon:var(--color-brand)]",
                   "data-checked:bg-brand-soft! data-checked:text-ink!",
                   "data-checked:data-highlighted:bg-brand-soft! data-checked:data-highlighted:text-ink!",
                   "data-checked:focus:bg-brand-soft! data-checked:focus:text-ink!",
@@ -76,11 +87,6 @@ const rowClass = (checked: boolean) =>
                   "data-highlighted:**:data-muted-line:*:text-ink-muted!",
                   "hover:**:data-muted-line:text-ink-muted!",
                   "hover:**:data-muted-line:*:text-ink-muted!",
-                  // Pin stays brand — never reverts on hover/focus
-                  "**:data-[slot=where-location-pin]:text-brand!",
-                  "focus:**:data-[slot=where-location-pin]:text-brand!",
-                  "data-highlighted:**:data-[slot=where-location-pin]:text-brand!",
-                  "hover:**:data-[slot=where-location-pin]:text-brand!",
                   "**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink!",
                   "focus:**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink!",
                   "data-highlighted:**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink!",
@@ -91,10 +97,6 @@ const rowClass = (checked: boolean) =>
                   // Idle: muted hover only when not selected
                   "data-highlighted:bg-surface-muted/70! data-highlighted:text-ink!",
                   "focus:bg-surface-muted/70! focus:text-ink!",
-                  "**:data-[slot=where-location-pin]:text-ink-subtle!",
-                  "group-hover/row:**:data-[slot=where-location-pin]:text-brand!",
-                  "focus:**:data-[slot=where-location-pin]:text-brand!",
-                  "data-highlighted:**:data-[slot=where-location-pin]:text-brand!",
                   "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-0",
                   "**:data-[slot=dropdown-menu-checkbox-item-indicator]:scale-75",
               ],
@@ -127,19 +129,13 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
     );
 }
 
-function LocationIcon({ checked }: { checked?: boolean }) {
+function LocationIcon() {
     return (
         <MapPin
             aria-hidden
             data-slot="where-location-pin"
-            // Explicit stroke when selected — CSS hover/focus cannot repaint it black
-            color={checked ? "var(--color-brand)" : "currentColor"}
-            className={cn(
-                "block-6 inline-6 shrink-0",
-                checked
-                    ? null
-                    : "text-ink-subtle transition-colors duration-160 group-hover/row:text-brand data-highlighted:text-brand",
-            )}
+            color="var(--row-icon)"
+            className="block-6 inline-6 shrink-0 transition-[color,stroke] duration-160"
             strokeWidth={1.75}
         />
     );
@@ -168,7 +164,7 @@ function WhereLocationRow({
             onCheckedChange={onToggle}
             className={rowClass(checked)}
         >
-            <LocationIcon checked={checked} />
+            <LocationIcon />
             <span className="flex flex-1 flex-col gap-0.5 text-start min-inline-0">
                 {isSearching ? (
                     <>
@@ -179,8 +175,9 @@ function WhereLocationRow({
                             <HighlightMatch text={locality} query={query} />
                         </span>
                         <span
-                            className="truncate text-[13px] leading-snug text-ink-muted"
+                            className="truncate text-[13px] leading-snug text-ink-muted!"
                             data-muted-line
+                            style={{ color: "var(--color-ink-muted)" }}
                         >
                             {pathLabel}
                         </span>
@@ -194,17 +191,15 @@ function WhereLocationRow({
                             {locality}
                         </span>
                         <span
-                            className="truncate text-[13px] leading-snug text-ink-muted"
+                            className="truncate text-[13px] leading-snug text-ink-muted!"
                             data-muted-line
-                            style={checked ? { color: "var(--color-ink-muted)" } : undefined}
+                            style={{ color: "var(--color-ink-muted)" }}
                         >
                             {pathLabel}
                             <span aria-hidden> · </span>
                             <span
                                 className="tabular-nums"
-                                style={
-                                    checked ? { color: "var(--color-ink-muted)" } : undefined
-                                }
+                                style={{ color: "var(--color-ink-muted)" }}
                             >
                                 {formatListingCount(listingCount)}
                             </span>
