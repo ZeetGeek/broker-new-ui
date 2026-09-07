@@ -459,7 +459,7 @@ export function OwnerListingsWhereMenu({
                                                 onCheckedChange={selectServiceableAreas}
                                                 className={rowClass(isServiceableSelected)}
                                             >
-                                                <LocationIcon checked={isServiceableSelected} />
+                                                <LocationIcon />
                                                 <span
                                                     className="
                                               flex flex-1 flex-col gap-0.5 text-start min-inline-0
@@ -490,7 +490,7 @@ export function OwnerListingsWhereMenu({
                                                 onCheckedChange={selectAnywhere}
                                                 className={rowClass(isAnywhereSelected)}
                                             >
-                                                <LocationIcon checked={isAnywhereSelected} />
+                                                <LocationIcon />
                                                 <span
                                                     className="
                                               flex flex-1 flex-col gap-0.5 text-start min-inline-0

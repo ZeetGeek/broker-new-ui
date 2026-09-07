@@ -1,11 +1,6 @@
 import { z } from "zod";
 
-export const propertyCategorySchema = z.enum([
-    "residential",
-    "commercial",
-    "industrial",
-    "land",
-]);
+export const propertyCategorySchema = z.enum(["residential", "commercial", "industrial", "land"]);
 
 export const propertyTypeSchema = z.enum([
     "apartment",
@@ -77,7 +72,20 @@ export function needsBhk(propertyType: PropertyType): boolean {
     return RESIDENTIAL_PROPERTY_TYPES.has(propertyType);
 }
 
-const optionalNonNegInt = z.number().int().min(0).nullable();
+const optionalCount = (label: string, max: number) =>
+    z
+        .number()
+        .int(`Enter ${label} as a whole number`)
+        .min(0, `${label} cannot be negative`)
+        .max(max, `Enter ${label} up to ${max}`)
+        .nullable();
+
+/** ₹1 L — the floor below which a listing price is almost certainly a typo. */
+const MIN_SALE_INR = 100_000;
+/** ₹100 Cr. */
+const MAX_SALE_INR = 1_000_000_000;
+const MIN_RENT_INR = 1_000;
+const MAX_RENT_INR = 10_000_000;
 
 export const propertyFormSchema = z
     .object({
@@ -85,10 +93,22 @@ export const propertyFormSchema = z
         category: propertyCategorySchema,
         propertyType: propertyTypeSchema,
         bhk: z.number().int().min(0).max(10),
-        title: z.string().trim().min(1, "Enter a title for this listing"),
-        locality: z.string().trim().min(1, "Enter the property's locality"),
-        city: z.string().trim().min(1, "Enter the city"),
-        address: z.string().trim(),
+        title: z
+            .string()
+            .trim()
+            .min(1, "Enter a title for this listing")
+            .max(120, "Keep the title under 120 characters"),
+        locality: z
+            .string()
+            .trim()
+            .min(1, "Enter the property's locality")
+            .max(80, "Keep the locality under 80 characters"),
+        city: z
+            .string()
+            .trim()
+            .min(1, "Enter the city")
+            .max(80, "Keep the city under 80 characters"),
+        address: z.string().trim().max(200, "Keep the address under 200 characters"),
         pinCode: z
             .string()
             .trim()
@@ -97,18 +117,25 @@ export const propertyFormSchema = z
             }),
         saleAmountInr: z.number().nullable(),
         rentAmountInr: z.number().nullable(),
-        areaSqft: z.number().positive("Enter area in sq.ft."),
+        areaSqft: z
+            .number({ message: "Enter area in sq.ft." })
+            .positive("Enter area in sq.ft.")
+            .max(1_000_000, "Enter area up to 10,00,000 sq.ft."),
         furnishing: furnishingSchema,
         imageSrcs: z.array(z.string().min(1)).min(1, "Add at least one photo"),
-        bathrooms: optionalNonNegInt,
-        balconies: optionalNonNegInt,
-        floorNumber: optionalNonNegInt,
-        totalFloors: optionalNonNegInt,
+        bathrooms: optionalCount("bathrooms", 20),
+        balconies: optionalCount("balconies", 20),
+        floorNumber: optionalCount("the floor", 200),
+        totalFloors: optionalCount("total floors", 200),
         facing: facingSchema.nullable(),
         parking: parkingSchema,
-        maintenanceInr: z.number().nullable(),
+        maintenanceInr: z
+            .number()
+            .min(0, "Maintenance cannot be negative")
+            .max(1_000_000, "Enter maintenance up to ₹10,00,000")
+            .nullable(),
         availableFrom: z.string().nullable(),
-        description: z.string().trim(),
+        description: z.string().trim().max(2000, "Keep the description under 2000 characters"),
         amenities: z.array(z.string().trim().min(1)),
         publish: z.boolean(),
     })
@@ -133,18 +160,48 @@ export const propertyFormSchema = z
         const needsSale = data.transactionType === "sale" || data.transactionType === "both";
         const needsRent = data.transactionType === "rent" || data.transactionType === "both";
 
-        if (needsSale && (data.saleAmountInr == null || data.saleAmountInr <= 0)) {
-            ctx.addIssue({
-                code: "custom",
-                path: ["saleAmountInr"],
-                message: "Enter a price between ₹1 L and ₹100 Cr",
-            });
+        if (needsSale) {
+            const sale = data.saleAmountInr;
+            if (sale == null || sale <= 0) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: ["saleAmountInr"],
+                    message: "Enter a price between ₹1 L and ₹100 Cr",
+                });
+            } else if (sale < MIN_SALE_INR || sale > MAX_SALE_INR) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: ["saleAmountInr"],
+                    message: "Enter a price between ₹1 L and ₹100 Cr",
+                });
+            }
         }
-        if (needsRent && (data.rentAmountInr == null || data.rentAmountInr <= 0)) {
+        if (needsRent) {
+            const rent = data.rentAmountInr;
+            if (rent == null || rent <= 0) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: ["rentAmountInr"],
+                    message: "Enter a monthly rent greater than ₹0",
+                });
+            } else if (rent < MIN_RENT_INR || rent > MAX_RENT_INR) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: ["rentAmountInr"],
+                    message: "Enter a monthly rent between ₹1,000 and ₹1 Cr",
+                });
+            }
+        }
+
+        if (
+            data.floorNumber != null &&
+            data.totalFloors != null &&
+            data.floorNumber > data.totalFloors
+        ) {
             ctx.addIssue({
                 code: "custom",
-                path: ["rentAmountInr"],
-                message: "Enter a monthly rent greater than ₹0",
+                path: ["floorNumber"],
+                message: "Floor cannot be higher than the total floors",
             });
         }
 

@@ -60,7 +60,7 @@ function DialogPopup({
                     {
                         "--dialog-pad": DIALOG_PAD,
                         ...style,
-                    } as React.CSSProperties
+                    } as unknown as React.CSSProperties
                 }
                 className={cn(
                     `

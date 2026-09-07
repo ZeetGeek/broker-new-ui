@@ -1,25 +1,23 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { type ChangeEvent,useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
+import { cn } from "@/lib/utils";
 import {
+    amenityLabel,
     PROPERTY_AMENITY_OPTIONS,
     PROPERTY_FACING_OPTIONS,
     PROPERTY_PARKING_OPTIONS,
-    amenityLabel,
     type PropertyFormValues,
 } from "@/lib/validation/property";
 
-import {
-    Field,
-    FieldError,
-    FieldGroup,
-    FieldLabel,
-} from "@/components/ui/field";
+import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { FORM_CONTROL_CLASS } from "@/features/properties/property-form/form-controls";
 import { FormSection } from "@/features/properties/property-form/form-ui";
 import { SelectionChip } from "@/features/properties/property-form/selection-chip";
 
@@ -62,7 +60,7 @@ export function ListingExtraFields() {
 
     return (
         <>
-            <div className="grid gap-5 lg:grid-cols-2">
+            <div className="grid items-start gap-5 lg:grid-cols-2">
                 <FormSection
                     title="Interior & building"
                     description="Optional — skip anything you don’t know yet."
@@ -107,14 +105,17 @@ export function ListingExtraFields() {
                                     render={({ field }) => (
                                         <Input
                                             id="bathrooms"
+                                            aria-invalid={errors.bathrooms != null}
                                             type="number"
                                             min={0}
+                                            className={FORM_CONTROL_CLASS}
                                             placeholder="e.g. 2"
                                             {...optionalNumberRegister(field.onChange, field.value)}
                                             onBlur={field.onBlur}
                                         />
                                     )}
                                 />
+                                <FieldError>{errors.bathrooms?.message}</FieldError>
                             </Field>
                             <Field>
                                 <FieldLabel htmlFor="balconies" className="body-sm text-ink">
@@ -126,14 +127,17 @@ export function ListingExtraFields() {
                                     render={({ field }) => (
                                         <Input
                                             id="balconies"
+                                            aria-invalid={errors.balconies != null}
                                             type="number"
                                             min={0}
+                                            className={FORM_CONTROL_CLASS}
                                             placeholder="e.g. 1"
                                             {...optionalNumberRegister(field.onChange, field.value)}
                                             onBlur={field.onBlur}
                                         />
                                     )}
                                 />
+                                <FieldError>{errors.balconies?.message}</FieldError>
                             </Field>
                             <Field>
                                 <FieldLabel htmlFor="floorNumber" className="body-sm text-ink">
@@ -145,14 +149,17 @@ export function ListingExtraFields() {
                                     render={({ field }) => (
                                         <Input
                                             id="floorNumber"
+                                            aria-invalid={errors.floorNumber != null}
                                             type="number"
                                             min={0}
+                                            className={FORM_CONTROL_CLASS}
                                             placeholder="e.g. 6"
                                             {...optionalNumberRegister(field.onChange, field.value)}
                                             onBlur={field.onBlur}
                                         />
                                     )}
                                 />
+                                <FieldError>{errors.floorNumber?.message}</FieldError>
                             </Field>
                             <Field>
                                 <FieldLabel htmlFor="totalFloors" className="body-sm text-ink">
@@ -164,14 +171,17 @@ export function ListingExtraFields() {
                                     render={({ field }) => (
                                         <Input
                                             id="totalFloors"
+                                            aria-invalid={errors.totalFloors != null}
                                             type="number"
                                             min={0}
+                                            className={FORM_CONTROL_CLASS}
                                             placeholder="e.g. 12"
                                             {...optionalNumberRegister(field.onChange, field.value)}
                                             onBlur={field.onBlur}
                                         />
                                     )}
                                 />
+                                <FieldError>{errors.totalFloors?.message}</FieldError>
                             </Field>
                         </div>
 
@@ -233,8 +243,10 @@ export function ListingExtraFields() {
                                 render={({ field }) => (
                                     <Input
                                         id="maintenanceInr"
+                                        aria-invalid={errors.maintenanceInr != null}
                                         type="number"
                                         inputMode="numeric"
+                                        className={FORM_CONTROL_CLASS}
                                         placeholder="Optional · e.g. 3500"
                                         value={field.value ?? ""}
                                         onChange={(event) => {
@@ -245,6 +257,7 @@ export function ListingExtraFields() {
                                     />
                                 )}
                             />
+                            <FieldError>{errors.maintenanceInr?.message}</FieldError>
                         </Field>
 
                         <Field>
@@ -255,19 +268,16 @@ export function ListingExtraFields() {
                                 name="availableFrom"
                                 control={control}
                                 render={({ field }) => (
-                                    <Input
+                                    <AppDatePicker
                                         id="availableFrom"
-                                        type="date"
-                                        value={field.value ?? ""}
-                                        onChange={(event) =>
-                                            field.onChange(
-                                                event.target.value ? event.target.value : null,
-                                            )
-                                        }
+                                        value={field.value}
+                                        onChange={field.onChange}
                                         onBlur={field.onBlur}
+                                        invalid={errors.availableFrom != null}
                                     />
                                 )}
                             />
+                            <FieldError>{errors.availableFrom?.message}</FieldError>
                         </Field>
                     </FieldGroup>
                 </FormSection>
@@ -334,12 +344,12 @@ export function ListingExtraFields() {
                                     </div>
                                 )}
                             />
-                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                            <div className="flex flex-wrap items-center gap-2 pbs-1">
                                 <Input
                                     value={customAmenity}
                                     onChange={(event) => setCustomAmenity(event.target.value)}
                                     placeholder="e.g. Jogging track"
-                                    className="max-w-xs"
+                                    className={cn("max-inline-xs", FORM_CONTROL_CLASS)}
                                     onKeyDown={(event) => {
                                         if (event.key === "Enter") {
                                             event.preventDefault();
@@ -365,7 +375,14 @@ export function ListingExtraFields() {
                                 id="description"
                                 rows={5}
                                 placeholder="Optional · a short note for buyers or tenants."
-                                className="rounded-card border-border-warm bg-surface min-block-28"
+                                className="
+                                  rounded-card border-2 border-border-warm bg-surface px-3.5 py-3
+                                  text-[15px] text-ink min-block-28
+                                  hover:border-ink-subtle
+                                  focus-visible:border-ring focus-visible:ring-3
+                                  focus-visible:ring-ring/30
+                                  aria-invalid:border-danger-mid
+                                "
                                 {...register("description")}
                             />
                             <FieldError>{errors.description?.message}</FieldError>

@@ -5,16 +5,14 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { buildPropertyTitle } from "@/lib/format/property-title";
-import {
-    brokerPropertyDetailHref,
-    BROKER_YOUR_LISTINGS_HREF,
-} from "@/lib/routes/broker";
+import { duration, ease } from "@/lib/motion/tokens";
+import { BROKER_YOUR_LISTINGS_HREF,brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import {
     categoryForPropertyType,
@@ -28,10 +26,10 @@ import {
     type PropertyType,
 } from "@/lib/validation/property";
 
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { AppModal } from "@/components/shared/app-modal";
+import { Button } from "@/components/ui/button";
+
 import { StepDetails } from "@/features/properties/property-form/step-details";
 import { StepPhotos } from "@/features/properties/property-form/step-photos";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
@@ -109,8 +107,7 @@ export function PropertyForm({
     const [titleTouched, setTitleTouched] = useState(mode === "edit");
 
     const defaultValues = useMemo(
-        () =>
-            initialListing ? listingToFormValues(initialListing) : DEFAULT_PROPERTY_FORM_VALUES,
+        () => (initialListing ? listingToFormValues(initialListing) : DEFAULT_PROPERTY_FORM_VALUES),
         [initialListing],
     );
 
@@ -211,16 +208,9 @@ export function PropertyForm({
         void handleSubmit(onSubmit, onInvalid)();
     }
 
-    async function handleTabChange(next: string | number | null) {
+    function handleTabChange(next: string | number | null) {
         if (next !== "details" && next !== "photos") return;
         if (next === step) return;
-        if (next === "photos") {
-            const ok = await trigger(PROPERTY_FORM_STEP_FIELDS.details);
-            if (!ok) {
-                setFormBanner("Finish the listing details before continuing.");
-                return;
-            }
-        }
         setFormBanner(null);
         setStep(next);
     }
@@ -302,7 +292,7 @@ export function PropertyForm({
             {formBanner ? (
                 <div
                     role="alert"
-                    className="mb-5 rounded-card border border-danger/30 bg-danger-soft px-4 py-3"
+                    className="mbe-5 rounded-card border border-danger/30 bg-danger-soft px-4 py-3"
                 >
                     <p className="body-sm font-medium text-danger">{formBanner}</p>
                 </div>
@@ -318,28 +308,45 @@ export function PropertyForm({
     );
 
     const stepTabs = (
-        <Tabs value={step} onValueChange={(value) => void handleTabChange(value)} className="w-full">
-            <TabsList
-                variant="default"
-                className="h-auto w-full gap-1 rounded-full bg-surface-muted p-1"
+        <div
+            role="tablist"
+            aria-label="Property form steps"
+            className="flex gap-1 rounded-full bg-surface-muted p-1 inline-full"
+        >
+            <AnimatedBackground
+                defaultValue={step}
+                onValueChange={(value) => handleTabChange(value)}
+                className="rounded-full bg-surface shadow-xs"
+                transition={{ duration: duration.tabs, ease: ease.smoothOut }}
             >
                 {PROPERTY_FORM_STEPS.map((item) => {
                     const hasError = stepHasErrors(item, errors);
+                    const isActive = item === step;
                     return (
-                        <TabsTrigger
+                        <button
                             key={item}
-                            value={item}
+                            type="button"
+                            data-id={item}
+                            role="tab"
+                            aria-selected={isActive}
                             className={cn(
-                                "flex-1 rounded-full px-4 py-2.5 body-sm",
-                                hasError && item !== step ? "text-danger" : undefined,
+                                `
+                                  body-sm flex-1 items-center justify-center rounded-full px-4
+                                  font-medium transition-colors duration-160 block-10
+                                  [&>div]:text-center [&>div]:inline-full
+                                `,
+                                isActive
+                                    ? "text-foreground"
+                                    : "text-foreground/60 hover:text-foreground",
+                                hasError && !isActive ? "text-danger hover:text-danger" : undefined,
                             )}
                         >
                             {PROPERTY_FORM_STEP_LABELS[item]}
-                        </TabsTrigger>
+                        </button>
                     );
                 })}
-            </TabsList>
-        </Tabs>
+            </AnimatedBackground>
+        </div>
     );
 
     const stepDescription =
@@ -383,7 +390,7 @@ export function PropertyForm({
     return (
         <FormProvider {...methods}>
             <form
-                className={cn("mx-auto flex w-full max-w-6xl flex-col gap-6", className)}
+                className={cn("mx-auto flex flex-col gap-6 inline-full max-inline-6xl", className)}
                 onSubmit={handleSubmit(onSubmit, onInvalid)}
                 noValidate
             >

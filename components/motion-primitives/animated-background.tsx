@@ -7,8 +7,12 @@ import { cn } from "@/lib/utils";
 
 type AnimatedBackgroundChild = ReactElement<{
     "data-id": string;
+    "data-checked"?: string;
     className?: string;
     children?: React.ReactNode;
+    onClick?: React.MouseEventHandler;
+    onMouseEnter?: React.MouseEventHandler;
+    onMouseLeave?: React.MouseEventHandler;
 }>;
 
 export type AnimatedBackgroundProps = {

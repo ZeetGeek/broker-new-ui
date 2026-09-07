@@ -6,24 +6,19 @@ import { Controller, useFormContext } from "react-hook-form";
 import { buildPropertyTitle } from "@/lib/format/property-title";
 import { cn } from "@/lib/utils";
 import {
+    needsBhk,
     PROPERTY_BHK_OPTIONS,
     PROPERTY_CATEGORY_OPTIONS,
-    PROPERTY_TYPES_BY_CATEGORY,
     PROPERTY_TYPE_OPTIONS,
-    needsBhk,
+    PROPERTY_TYPES_BY_CATEGORY,
     type PropertyFormValues,
     type PropertyType,
 } from "@/lib/validation/property";
 
-import {
-    Field,
-    FieldDescription,
-    FieldError,
-    FieldGroup,
-    FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
+import { FORM_CONTROL_CLASS } from "@/features/properties/property-form/form-controls";
 import { FormSection } from "@/features/properties/property-form/form-ui";
 import { ListingExtraFields } from "@/features/properties/property-form/listing-extra-fields";
 import { SelectionChip } from "@/features/properties/property-form/selection-chip";
@@ -70,16 +65,14 @@ export function StepDetails({
 
     useEffect(() => {
         if (titleTouched) return;
-        setValue(
-            "title",
-            buildPropertyTitle({ bhk, propertyType, locality, city }),
-            { shouldValidate: false },
-        );
+        setValue("title", buildPropertyTitle({ bhk, propertyType, locality, city }), {
+            shouldValidate: false,
+        });
     }, [bhk, propertyType, locality, city, titleTouched, setValue]);
 
     return (
         <div className="flex flex-col gap-5">
-            <div className="grid gap-5 lg:grid-cols-2">
+            <div className="grid items-start gap-5 lg:grid-cols-2">
                 <FormSection
                     title="What are you listing?"
                     description="Pick the deal type and property shape — takes a few taps."
@@ -194,8 +187,10 @@ export function StepDetails({
                             </FieldLabel>
                             <Input
                                 id="areaSqft"
+                                aria-invalid={errors.areaSqft != null}
                                 type="number"
                                 min={1}
+                                className={FORM_CONTROL_CLASS}
                                 placeholder="e.g. 1050"
                                 {...register("areaSqft", { valueAsNumber: true })}
                             />
@@ -214,7 +209,13 @@ export function StepDetails({
                                 <FieldLabel htmlFor="city" className="body-sm text-ink">
                                     City
                                 </FieldLabel>
-                                <Input id="city" placeholder="e.g. Surat" {...register("city")} />
+                                <Input
+                                    id="city"
+                                    aria-invalid={errors.city != null}
+                                    className={FORM_CONTROL_CLASS}
+                                    placeholder="e.g. Surat"
+                                    {...register("city")}
+                                />
                                 <FieldError>{errors.city?.message}</FieldError>
                             </Field>
                             <Field>
@@ -223,6 +224,8 @@ export function StepDetails({
                                 </FieldLabel>
                                 <Input
                                     id="locality"
+                                    aria-invalid={errors.locality != null}
+                                    className={FORM_CONTROL_CLASS}
                                     placeholder="e.g. Vesu"
                                     {...register("locality")}
                                 />
@@ -237,8 +240,10 @@ export function StepDetails({
                                 </FieldLabel>
                                 <Input
                                     id="pinCode"
+                                    aria-invalid={errors.pinCode != null}
                                     inputMode="numeric"
                                     maxLength={6}
+                                    className={FORM_CONTROL_CLASS}
                                     placeholder="Optional · 6 digits"
                                     {...register("pinCode")}
                                 />
@@ -250,6 +255,8 @@ export function StepDetails({
                                 </FieldLabel>
                                 <Input
                                     id="address"
+                                    aria-invalid={errors.address != null}
+                                    className={FORM_CONTROL_CLASS}
                                     placeholder="Optional · building, street"
                                     {...register("address")}
                                 />
@@ -263,6 +270,8 @@ export function StepDetails({
                             </FieldLabel>
                             <Input
                                 id="title"
+                                aria-invalid={errors.title != null}
+                                className={FORM_CONTROL_CLASS}
                                 placeholder="e.g. 2 BHK Apartment in Vesu, Surat"
                                 {...register("title", {
                                     onChange: () => onTitleTouched(),
@@ -277,15 +286,14 @@ export function StepDetails({
                 </FormSection>
             </div>
 
-            <FormSection
-                title="Price"
-                description="Enter the asking price for this listing."
-            >
+            <FormSection title="Price" description="Enter the asking price for this listing.">
                 <FieldGroup className="gap-5">
                     <div
                         className={cn(
                             "grid gap-4",
-                            needsSale && needsRent ? "sm:grid-cols-2" : "sm:grid-cols-1 sm:max-w-md",
+                            needsSale && needsRent
+                                ? "sm:grid-cols-2"
+                                : "sm:grid-cols-1 sm:max-inline-md",
                         )}
                     >
                         {needsSale ? (
@@ -299,8 +307,10 @@ export function StepDetails({
                                     render={({ field }) => (
                                         <Input
                                             id="saleAmountInr"
+                                            aria-invalid={errors.saleAmountInr != null}
                                             type="number"
                                             inputMode="numeric"
+                                            className={FORM_CONTROL_CLASS}
                                             placeholder="e.g. 8500000"
                                             value={field.value ?? ""}
                                             onChange={(event) => {
@@ -326,8 +336,10 @@ export function StepDetails({
                                     render={({ field }) => (
                                         <Input
                                             id="rentAmountInr"
+                                            aria-invalid={errors.rentAmountInr != null}
                                             type="number"
                                             inputMode="numeric"
+                                            className={FORM_CONTROL_CLASS}
                                             placeholder="e.g. 25000"
                                             value={field.value ?? ""}
                                             onChange={(event) => {
