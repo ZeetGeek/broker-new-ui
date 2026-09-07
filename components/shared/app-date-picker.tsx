@@ -54,7 +54,7 @@ export function AppDatePicker({
                         className={cn(
                             `
                               justify-between rounded-control border-2 border-border-warm bg-surface
-                              px-3.5 text-[15px] font-normal text-ink block-control-lg inline-full
+                              px-3.5 text-[15px] font-normal text-ink block-control-xl inline-full
                               hover:border-ink-subtle hover:bg-surface
                               aria-invalid:border-danger-mid
                             `,
@@ -80,6 +80,7 @@ export function AppDatePicker({
                         setOpen(false);
                     }}
                     autoFocus
+                    className="p-4 [--cell-size:--spacing(10)]"
                 />
             </PopoverContent>
         </Popover>

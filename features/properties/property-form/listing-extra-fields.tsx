@@ -1,9 +1,10 @@
 "use client";
 
-import { type ChangeEvent,useState } from "react";
+import { type ChangeEvent, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { cn } from "@/lib/utils";
+import { Sofa, Sparkles } from "lucide-react";
+
 import {
     amenityLabel,
     PROPERTY_AMENITY_OPTIONS,
@@ -44,7 +45,28 @@ export function ListingExtraFields() {
     } = useFormContext<PropertyFormValues>();
 
     const amenities = watch("amenities");
+    const furnishing = watch("furnishing");
+    const bathrooms = watch("bathrooms");
     const [customAmenity, setCustomAmenity] = useState("");
+
+    const interiorSummary =
+        [
+            furnishing === "semi"
+                ? "Semi-furnished"
+                : furnishing === "furnished"
+                  ? "Furnished"
+                  : "Unfurnished",
+            bathrooms != null && bathrooms > 0
+                ? `${bathrooms} ${bathrooms === 1 ? "bathroom" : "bathrooms"}`
+                : null,
+        ]
+            .filter(Boolean)
+            .join(" · ") || undefined;
+
+    const amenitiesSummary =
+        amenities.length > 0
+            ? `${amenities.length} selected · ${amenities.slice(0, 2).map(amenityLabel).join(", ")}`
+            : "No amenities picked yet";
 
     function addCustomAmenity() {
         const next = customAmenity.trim();
@@ -60,10 +82,22 @@ export function ListingExtraFields() {
 
     return (
         <>
-            <div className="grid items-start gap-5 lg:grid-cols-2">
+            <div className="grid items-start gap-5">
                 <FormSection
                     title="Interior & building"
+                    icon={<Sofa />}
                     description="Optional — skip anything you don’t know yet."
+                    defaultOpen={false}
+                    hasError={
+                        errors.furnishing != null ||
+                        errors.bathrooms != null ||
+                        errors.balconies != null ||
+                        errors.floorNumber != null ||
+                        errors.totalFloors != null ||
+                        errors.maintenanceInr != null ||
+                        errors.availableFrom != null
+                    }
+                    summary={interiorSummary}
                 >
                     <FieldGroup className="gap-5">
                         <Field>
@@ -284,7 +318,11 @@ export function ListingExtraFields() {
 
                 <FormSection
                     title="Amenities & description"
+                    icon={<Sparkles />}
                     description="Highlight what makes this listing stand out."
+                    defaultOpen={false}
+                    hasError={errors.description != null || errors.amenities != null}
+                    summary={amenitiesSummary}
                 >
                     <FieldGroup className="gap-5">
                         <Field>
@@ -349,7 +387,7 @@ export function ListingExtraFields() {
                                     value={customAmenity}
                                     onChange={(event) => setCustomAmenity(event.target.value)}
                                     placeholder="e.g. Jogging track"
-                                    className={cn("max-inline-xs", FORM_CONTROL_CLASS)}
+                                    className={FORM_CONTROL_CLASS}
                                     onKeyDown={(event) => {
                                         if (event.key === "Enter") {
                                             event.preventDefault();
@@ -377,7 +415,7 @@ export function ListingExtraFields() {
                                 placeholder="Optional · a short note for buyers or tenants."
                                 className="
                                   rounded-card border-2 border-border-warm bg-surface px-3.5 py-3
-                                  text-[15px] text-ink min-block-28
+                                  text-[15px] text-ink min-block-32
                                   hover:border-ink-subtle
                                   focus-visible:border-ring focus-visible:ring-3
                                   focus-visible:ring-ring/30

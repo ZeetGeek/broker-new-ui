@@ -80,6 +80,12 @@ const optionalCount = (label: string, max: number) =>
         .max(max, `Enter ${label} up to ${max}`)
         .nullable();
 
+/** Photos a single listing can carry. */
+export const MAX_LISTING_PHOTOS = 10;
+
+/** Largest accepted upload per photo, in megabytes. */
+export const MAX_PHOTO_SIZE_MB = 5;
+
 /** ₹1 L — the floor below which a listing price is almost certainly a typo. */
 const MIN_SALE_INR = 100_000;
 /** ₹100 Cr. */
@@ -122,7 +128,10 @@ export const propertyFormSchema = z
             .positive("Enter area in sq.ft.")
             .max(1_000_000, "Enter area up to 10,00,000 sq.ft."),
         furnishing: furnishingSchema,
-        imageSrcs: z.array(z.string().min(1)).min(1, "Add at least one photo"),
+        imageSrcs: z
+            .array(z.string().min(1))
+            .min(1, "Add at least one photo")
+            .max(MAX_LISTING_PHOTOS, `Add up to ${MAX_LISTING_PHOTOS} photos`),
         bathrooms: optionalCount("bathrooms", 20),
         balconies: optionalCount("balconies", 20),
         floorNumber: optionalCount("the floor", 200),

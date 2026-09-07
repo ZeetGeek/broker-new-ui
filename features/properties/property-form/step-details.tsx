@@ -3,12 +3,16 @@
 import { useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
+import { Building2, IndianRupee, MapPin } from "lucide-react";
+
+import { formatAreaSqft } from "@/lib/format/area";
 import { buildPropertyTitle } from "@/lib/format/property-title";
 import { cn } from "@/lib/utils";
 import {
     needsBhk,
     PROPERTY_BHK_OPTIONS,
     PROPERTY_CATEGORY_OPTIONS,
+    PROPERTY_TYPE_LABELS,
     PROPERTY_TYPE_OPTIONS,
     PROPERTY_TYPES_BY_CATEGORY,
     type PropertyFormValues,
@@ -21,6 +25,12 @@ import { Input } from "@/components/ui/input";
 import { FORM_CONTROL_CLASS } from "@/features/properties/property-form/form-controls";
 import { FormSection } from "@/features/properties/property-form/form-ui";
 import { ListingExtraFields } from "@/features/properties/property-form/listing-extra-fields";
+import {
+    bhkIcon,
+    CATEGORY_ICONS,
+    PROPERTY_TYPE_ICONS,
+    TRANSACTION_TYPE_ICONS,
+} from "@/features/properties/property-form/option-icons";
 import { SelectionChip } from "@/features/properties/property-form/selection-chip";
 
 export function StepDetails({
@@ -50,6 +60,23 @@ export function StepDetails({
 
     const subtypeOptions = PROPERTY_TYPE_OPTIONS.filter((option) => option.category === category);
 
+    const areaSqft = watch("areaSqft");
+
+    const listingSummary = [
+        transactionType === "both"
+            ? "For sale & rent"
+            : transactionType === "rent"
+              ? "For rent"
+              : "For sale",
+        showBhk && bhk > 0 ? `${bhk} BHK` : null,
+        PROPERTY_TYPE_LABELS[propertyType],
+        areaSqft > 0 ? formatAreaSqft(areaSqft) : null,
+    ]
+        .filter(Boolean)
+        .join(" · ");
+
+    const locationSummary = [locality, city].filter((part) => part?.trim()).join(", ");
+
     useEffect(() => {
         const allowed = PROPERTY_TYPES_BY_CATEGORY[category];
         if (!allowed.includes(propertyType)) {
@@ -72,10 +99,19 @@ export function StepDetails({
 
     return (
         <div className="flex flex-col gap-5">
-            <div className="grid items-start gap-5 lg:grid-cols-2">
+            <div className="grid items-start gap-5">
                 <FormSection
                     title="What are you listing?"
+                    icon={<Building2 />}
                     description="Pick the deal type and property shape — takes a few taps."
+                    hasError={
+                        errors.transactionType != null ||
+                        errors.category != null ||
+                        errors.propertyType != null ||
+                        errors.bhk != null ||
+                        errors.areaSqft != null
+                    }
+                    summary={listingSummary}
                 >
                     <FieldGroup className="gap-5">
                         <Field>
@@ -96,6 +132,7 @@ export function StepDetails({
                                             <SelectionChip
                                                 active={field.value === value}
                                                 onClick={() => field.onChange(value)}
+                                                icon={TRANSACTION_TYPE_ICONS[value]}
                                             >
                                                 {label}
                                             </SelectionChip>
@@ -118,6 +155,7 @@ export function StepDetails({
                                             <SelectionChip
                                                 active={field.value === option.value}
                                                 onClick={() => field.onChange(option.value)}
+                                                icon={CATEGORY_ICONS[option.value]}
                                             >
                                                 {option.label}
                                             </SelectionChip>
@@ -139,6 +177,7 @@ export function StepDetails({
                                         render={({ field }) => (
                                             <SelectionChip
                                                 active={field.value === option.value}
+                                                icon={PROPERTY_TYPE_ICONS[option.value]}
                                                 onClick={() => {
                                                     field.onChange(option.value);
                                                     if (!needsBhk(option.value as PropertyType)) {
@@ -170,6 +209,7 @@ export function StepDetails({
                                                 <SelectionChip
                                                     active={field.value === option.value}
                                                     onClick={() => field.onChange(option.value)}
+                                                    icon={bhkIcon()}
                                                 >
                                                     {option.label}
                                                 </SelectionChip>
@@ -201,7 +241,16 @@ export function StepDetails({
 
                 <FormSection
                     title="Where is it?"
+                    icon={<MapPin />}
                     description="City and locality help brokers find the right matches."
+                    hasError={
+                        errors.city != null ||
+                        errors.locality != null ||
+                        errors.pinCode != null ||
+                        errors.address != null ||
+                        errors.title != null
+                    }
+                    summary={locationSummary}
                 >
                     <FieldGroup className="gap-5">
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -286,14 +335,17 @@ export function StepDetails({
                 </FormSection>
             </div>
 
-            <FormSection title="Price" description="Enter the asking price for this listing.">
+            <FormSection
+                title="Price"
+                icon={<IndianRupee />}
+                description="Enter the asking price for this listing."
+                hasError={errors.saleAmountInr != null || errors.rentAmountInr != null}
+            >
                 <FieldGroup className="gap-5">
                     <div
                         className={cn(
                             "grid gap-4",
-                            needsSale && needsRent
-                                ? "sm:grid-cols-2"
-                                : "sm:grid-cols-1 sm:max-inline-md",
+                            needsSale && needsRent ? "sm:grid-cols-2" : "sm:grid-cols-1",
                         )}
                     >
                         {needsSale ? (

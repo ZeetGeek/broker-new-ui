@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+
 import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "lucide-react";
 
 import type { MyListingsSummary } from "@/lib/api/my-listings";
 import { formatSortLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import {
     Dialog,
     DialogClose,
@@ -142,8 +143,8 @@ function MyListingsQueryInput({
               lg:min-inline-64 lg:inline-64
             "
             className="
-              h-[38px]! rounded-full border! border-border-warm bg-surface text-sm font-medium
-              shadow-sm
+              rounded-full border! border-border-warm bg-surface text-sm font-medium shadow-sm
+              block-[38px]!
               hover:border-ink/25!
               focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
             "
@@ -174,14 +175,14 @@ function MyListingsSortMenu({
                     >
                         <ArrowDownUp
                             aria-hidden
-                            className="block-4 inline-4 text-brand"
+                            className="text-brand block-4 inline-4"
                             strokeWidth={1.75}
                         />
                         <span className="hidden sm:inline">{formatSortLabel(sort)}</span>
                         <span className="sm:hidden">Sort</span>
                         <ChevronDown
                             aria-hidden
-                            className="block-3.5 inline-3.5 opacity-60"
+                            className="opacity-60 block-3.5 inline-3.5"
                             strokeWidth={1.75}
                         />
                     </button>
@@ -221,12 +222,12 @@ function MyListingsFilterDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup className="max-w-lg gap-0 p-0 sm:max-w-lg">
-                <DialogHeader className="border-b border-border-warm px-5 py-4">
+            <DialogPopup className="gap-0 p-0 max-inline-lg sm:max-inline-lg">
+                <DialogHeader className="border-be border-border-warm px-5 py-4">
                     <DialogTitle>Filters</DialogTitle>
                     <DialogClose />
                 </DialogHeader>
-                <div className="flex flex-col gap-5 px-5 py-5">
+                <div className="flex flex-col gap-5 p-5">
                     <div className="flex flex-col gap-2">
                         <p className="body-sm font-semibold text-ink">Looking for</p>
                         <div className="flex flex-wrap gap-2">
@@ -301,12 +302,10 @@ function MyListingsFilterDialog({
                         </div>
                     </div>
                 </div>
-                <div className="flex justify-end gap-2 border-t border-border-warm px-5 py-4">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="border-border-warm"
-                        onClick={() =>
+                <div className="border-bs border-border-warm/40 bg-surface px-5 py-4">
+                    <AppModalFooter
+                        secondaryLabel="Clear all"
+                        onSecondary={() =>
                             setDraft({
                                 ...draft,
                                 type: "",
@@ -315,19 +314,12 @@ function MyListingsFilterDialog({
                                 propertyType: "",
                             })
                         }
-                    >
-                        Clear
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="accent"
-                        onClick={() => {
+                        primaryLabel="Apply filters"
+                        onPrimary={() => {
                             onApply({ ...draft, page: 1 });
                             onOpenChange(false);
                         }}
-                    >
-                        Apply filters
-                    </Button>
+                    />
                 </div>
             </DialogPopup>
         </Dialog>
@@ -383,7 +375,9 @@ export function MyListingsHeader({
                                             <button
                                                 type="button"
                                                 className={cn(
-                                                    ownerListingsChipClassName(sheetFilterCount > 0),
+                                                    ownerListingsChipClassName(
+                                                        sheetFilterCount > 0,
+                                                    ),
                                                     "gap-2",
                                                 )}
                                                 onClick={() => setSheetOpen(true)}

@@ -30,8 +30,8 @@ export function PropertyEditPage() {
     if (listing === undefined) {
         return (
             <div className="flex flex-col gap-4 py-6">
-                <div className="h-8 w-48 animate-pulse rounded-control bg-surface-muted" />
-                <div className="h-64 animate-pulse rounded-card bg-surface-muted" />
+                <div className="animate-pulse rounded-control bg-surface-muted block-8 inline-48" />
+                <div className="animate-pulse rounded-card bg-surface-muted block-64" />
             </div>
         );
     }

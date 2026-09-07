@@ -1,18 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FormProvider, useForm, useWatch } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { buildPropertyTitle } from "@/lib/format/property-title";
 import { duration, ease } from "@/lib/motion/tokens";
-import { BROKER_YOUR_LISTINGS_HREF,brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import {
     categoryForPropertyType,
@@ -28,7 +26,7 @@ import {
 
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { AppModal } from "@/components/shared/app-modal";
-import { Button } from "@/components/ui/button";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
 import { StepDetails } from "@/features/properties/property-form/step-details";
 import { StepPhotos } from "@/features/properties/property-form/step-photos";
@@ -121,12 +119,9 @@ export function PropertyForm({
     const {
         handleSubmit,
         trigger,
-        control,
-        setValue,
         formState: { isSubmitting, errors },
     } = methods;
 
-    const publish = useWatch({ control, name: "publish" });
     const stepIndex = PROPERTY_FORM_STEPS.indexOf(step);
     const heading = mode === "edit" ? "Edit property" : "Add property";
 
@@ -203,11 +198,6 @@ export function PropertyForm({
         if (problemSteps[0]) setStep(problemSteps[0]);
     }
 
-    function handleSkipForNow() {
-        setValue("publish", false, { shouldDirty: true });
-        void handleSubmit(onSubmit, onInvalid)();
-    }
-
     function handleTabChange(next: string | number | null) {
         if (next !== "details" && next !== "photos") return;
         if (next === step) return;
@@ -215,77 +205,29 @@ export function PropertyForm({
         setStep(next);
     }
 
-    const footerLeft =
-        stepIndex === 0 ? (
-            onCancel ? (
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="border-border-warm"
-                    onClick={onCancel}
-                >
-                    <ArrowLeft aria-hidden className="block-4 inline-4" />
-                    Cancel
-                </Button>
-            ) : (
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="border-border-warm"
-                    render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
-                >
-                    <ArrowLeft aria-hidden className="block-4 inline-4" />
-                    Cancel
-                </Button>
-            )
-        ) : (
-            <div className="flex flex-wrap gap-2">
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="border-border-warm"
-                    onClick={goBack}
-                >
-                    <ArrowLeft aria-hidden className="block-4 inline-4" />
-                    Back
-                </Button>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={handleSkipForNow}
-                    disabled={isSubmitting}
-                >
-                    Skip for now
-                </Button>
-            </div>
-        );
+    const isLastStep = stepIndex === PROPERTY_FORM_STEPS.length - 1;
 
-    const footerRight =
-        stepIndex < PROPERTY_FORM_STEPS.length - 1 ? (
-            <Button
-                type="button"
-                className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                onClick={() => void goNext()}
-            >
-                Continue
-                <ArrowRight aria-hidden className="block-4 inline-4" />
-            </Button>
-        ) : (
-            <Button
-                type="submit"
-                form={isDialog ? "property-form-dialog" : undefined}
-                disabled={isSubmitting}
-                className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-            >
-                {isSubmitting
-                    ? "Saving…"
-                    : mode === "edit"
-                      ? "Save property"
-                      : publish
-                        ? "Publish listing"
-                        : "Save draft"}
-            </Button>
-        );
+    const submitLabel = isSubmitting
+        ? "Saving…"
+        : mode === "edit"
+          ? "Save property"
+          : "Publish listing";
+
+    const modalFooter = (
+        <AppModalFooter
+            secondaryLabel={stepIndex === 0 ? "Cancel" : "Back"}
+            onSecondary={
+                stepIndex === 0
+                    ? (onCancel ?? (() => router.push(BROKER_YOUR_LISTINGS_HREF)))
+                    : goBack
+            }
+            primaryLabel={isLastStep ? submitLabel : "Continue"}
+            primaryType={isLastStep ? "submit" : "button"}
+            primaryFormId={isLastStep && isDialog ? "property-form-dialog" : undefined}
+            primaryDisabled={isSubmitting}
+            onPrimary={isLastStep ? undefined : () => void goNext()}
+        />
+    );
 
     const stepBody = (
         <>
@@ -352,7 +294,7 @@ export function PropertyForm({
     const stepDescription =
         step === "details"
             ? "Tell us what you’re listing and where it is."
-            : "Add photos, then choose publish or draft.";
+            : "Add photos of the property, then publish the listing.";
 
     if (isDialog) {
         return (
@@ -362,24 +304,19 @@ export function PropertyForm({
                     onOpenChange={onOpenChange ?? (() => undefined)}
                     title={heading}
                     description={stepDescription}
-                    size="xl"
+                    size="lg"
                     padding="lg"
                     showCloseButton
-                    header={stepTabs}
-                    footer={
-                        <>
-                            {footerLeft}
-                            {footerRight}
-                        </>
-                    }
+                    footer={modalFooter}
                     className={className}
                 >
                     <form
                         id="property-form-dialog"
                         onSubmit={handleSubmit(onSubmit, onInvalid)}
                         noValidate
-                        className="flex flex-col"
+                        className="flex flex-col gap-5"
                     >
+                        {stepTabs}
                         {stepBody}
                     </form>
                 </AppModal>
@@ -404,10 +341,7 @@ export function PropertyForm({
 
                 {stepBody}
 
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    {footerLeft}
-                    {footerRight}
-                </div>
+                {modalFooter}
             </form>
         </FormProvider>
     );

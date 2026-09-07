@@ -12,11 +12,12 @@ import {
     Ruler,
     XIcon,
 } from "lucide-react";
+import SimpleBar from "simplebar-react";
 
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import {
     Dialog,
     DialogClose,
@@ -35,6 +36,8 @@ import type {
     OwnerListingsFilters,
     OwnerListingsSheetFilters,
 } from "@/features/properties/owner-listings/types";
+
+import "simplebar-react/dist/simplebar.min.css";
 
 type AreaPreset = { min: string; max: string; label: string };
 type ChoicePreset = { value: string; label: string; hint?: string };
@@ -361,8 +364,7 @@ export function OwnerListingsFilterSheet({
                 className={cn(
                     `
                       flex flex-col gap-0 overflow-hidden border-border-warm bg-surface p-0
-                      inline-[min(64rem,calc(100vw-1.5rem))]
-                      max-block-[min(90dvh,calc(100%-1.5rem))]
+                      block-[min(90dvh,calc(100%-1.5rem))] inline-[min(64rem,calc(100vw-1.5rem))]
                       max-inline-[min(64rem,calc(100vw-1.5rem))]
                       sm:inline-[min(64rem,calc(100vw-3rem))]
                       sm:max-inline-[min(64rem,calc(100vw-3rem))]
@@ -372,12 +374,15 @@ export function OwnerListingsFilterSheet({
                 <DialogHeader
                     className="
                       shrink-0 flex-row items-center justify-between gap-4 border-be
-                      border-border-warm/40 bg-surface px-5 py-4 pe-5 text-start
+                      border-border-warm bg-surface px-5 py-4 pe-5 text-start
                       sm:px-7 sm:py-5 sm:pe-7
                     "
                 >
                     <div className="flex flex-col gap-1">
-                        <DialogTitle className="font-display text-base font-medium text-ink sm:text-lg">
+                        <DialogTitle className="
+                          font-display text-base font-medium text-ink
+                          sm:text-lg
+                        ">
                             Advanced filters
                         </DialogTitle>
                         <p className="body-sm text-ink-muted">
@@ -410,147 +415,134 @@ export function OwnerListingsFilterSheet({
                                 </DialogClose>
                             }
                         />
-                        <TooltipContent side="bottom">
+                        <TooltipContent side="inline-start">
                             Close
                             <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
                         </TooltipContent>
                     </Tooltip>
                 </DialogHeader>
 
-                <div
-                    className="
-                      flex flex-1 flex-col gap-4 overflow-y-auto bg-surface p-5 min-block-0
-                      sm:gap-5 sm:px-7 sm:py-6
-                    "
-                >
-                    <div className="grid gap-4 md:grid-cols-2 md:gap-5">
-                        <FilterPanel
-                            title="Area"
-                            subtitle="Built-up size that fits your client brief"
-                        >
-                            <div className="flex flex-1 flex-wrap content-start gap-2">
-                                {AREA_PRESETS.map((preset) => {
-                                    const active =
-                                        draft.minAreaSqft === preset.min &&
-                                        draft.maxAreaSqft === preset.max;
-                                    return (
-                                        <ChoiceChip
-                                            key={preset.label}
-                                            label={preset.label}
-                                            active={active}
-                                            onClick={() =>
-                                                updateDraft({
-                                                    minAreaSqft: preset.min,
-                                                    maxAreaSqft: preset.max,
-                                                })
+                <div className="flex-1 overflow-hidden bg-surface min-block-0">
+                    <SimpleBar
+                        className="app-modal-simplebar block-full"
+                        style={{ maxHeight: "100%", height: "100%" }}
+                        autoHide={false}
+                    >
+                        <div className="flex flex-col gap-4 p-5 sm:gap-5 sm:px-7 sm:py-6">
+                            <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+                                <FilterPanel
+                                    title="Area"
+                                    subtitle="Built-up size that fits your client brief"
+                                >
+                                    <div className="flex flex-1 flex-wrap content-start gap-2">
+                                        {AREA_PRESETS.map((preset) => {
+                                            const active =
+                                                draft.minAreaSqft === preset.min &&
+                                                draft.maxAreaSqft === preset.max;
+                                            return (
+                                                <ChoiceChip
+                                                    key={preset.label}
+                                                    label={preset.label}
+                                                    active={active}
+                                                    onClick={() =>
+                                                        updateDraft({
+                                                            minAreaSqft: preset.min,
+                                                            maxAreaSqft: preset.max,
+                                                        })
+                                                    }
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="mts-auto flex items-center gap-2 text-ink-muted">
+                                        <Ruler className="block-4 inline-4" strokeWidth={1.75} />
+                                        <span className="body-sm">Uses listing area in sqft</span>
+                                    </div>
+                                </FilterPanel>
+
+                                <FilterPanel
+                                    title="Listed"
+                                    subtitle="How fresh the listing should be"
+                                >
+                                    <div
+                                        className="
+                                          grid flex-1 auto-rows-fr grid-cols-1 gap-2.5 min-block-0
+                                          sm:grid-cols-3
+                                        "
+                                    >
+                                        {LISTED_PRESETS.map((preset) => (
+                                            <OptionCard
+                                                key={preset.value || "any"}
+                                                label={preset.label}
+                                                hint={preset.hint}
+                                                active={draft.listedWithinDays === preset.value}
+                                                icon={CalendarDays}
+                                                onClick={() => setListedPreset(preset.value)}
+                                            />
+                                        ))}
+                                    </div>
+                                </FilterPanel>
+
+                                <FilterPanel
+                                    title="Commission"
+                                    subtitle="Minimum rate the owner has shared"
+                                    className="md:col-span-2"
+                                >
+                                    <div
+                                        className="
+                                          grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 min-block-0
+                                          sm:grid-cols-4
+                                        "
+                                    >
+                                        {COMMISSION_PRESETS.map((preset) => (
+                                            <OptionCard
+                                                key={preset.value || "any"}
+                                                label={preset.label}
+                                                hint={preset.hint}
+                                                active={draft.minCommissionPercent === preset.value}
+                                                icon={BadgePercent}
+                                                onClick={() =>
+                                                    updateDraft({
+                                                        minCommissionPercent: preset.value,
+                                                    })
+                                                }
+                                            />
+                                        ))}
+                                    </div>
+                                </FilterPanel>
+                            </div>
+
+                            <FilterPanel
+                                title="Deal fit"
+                                subtitle="Broker-side signals that are not on the search bar"
+                            >
+                                <div className="grid gap-2.5 sm:grid-cols-2">
+                                    {DEAL_OPTIONS.map((option) => (
+                                        <DealToggle
+                                            key={option.key}
+                                            label={option.label}
+                                            description={option.description}
+                                            icon={option.icon}
+                                            active={draft[option.key]}
+                                            onCheckedChange={(checked) =>
+                                                updateDraft({ [option.key]: checked })
                                             }
                                         />
-                                    );
-                                })}
-                            </div>
-                            <div className="mts-auto flex items-center gap-2 text-ink-muted">
-                                <Ruler className="block-4 inline-4" strokeWidth={1.75} />
-                                <span className="body-sm">Uses listing area in sqft</span>
-                            </div>
-                        </FilterPanel>
-
-                        <FilterPanel title="Listed" subtitle="How fresh the listing should be">
-                            <div
-                                className="
-                                  grid flex-1 auto-rows-fr grid-cols-1 gap-2.5 min-block-0
-                                  sm:grid-cols-3
-                                "
-                            >
-                                {LISTED_PRESETS.map((preset) => (
-                                    <OptionCard
-                                        key={preset.value || "any"}
-                                        label={preset.label}
-                                        hint={preset.hint}
-                                        active={draft.listedWithinDays === preset.value}
-                                        icon={CalendarDays}
-                                        onClick={() => setListedPreset(preset.value)}
-                                    />
-                                ))}
-                            </div>
-                        </FilterPanel>
-
-                        <FilterPanel
-                            title="Commission"
-                            subtitle="Minimum rate the owner has shared"
-                            className="md:col-span-2"
-                        >
-                            <div
-                                className="
-                                  grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 min-block-0
-                                  sm:grid-cols-4
-                                "
-                            >
-                                {COMMISSION_PRESETS.map((preset) => (
-                                    <OptionCard
-                                        key={preset.value || "any"}
-                                        label={preset.label}
-                                        hint={preset.hint}
-                                        active={draft.minCommissionPercent === preset.value}
-                                        icon={BadgePercent}
-                                        onClick={() =>
-                                            updateDraft({ minCommissionPercent: preset.value })
-                                        }
-                                    />
-                                ))}
-                            </div>
-                        </FilterPanel>
-                    </div>
-
-                    <FilterPanel
-                        title="Deal fit"
-                        subtitle="Broker-side signals that are not on the search bar"
-                    >
-                        <div className="grid gap-2.5 sm:grid-cols-2">
-                            {DEAL_OPTIONS.map((option) => (
-                                <DealToggle
-                                    key={option.key}
-                                    label={option.label}
-                                    description={option.description}
-                                    icon={option.icon}
-                                    active={draft[option.key]}
-                                    onCheckedChange={(checked) =>
-                                        updateDraft({ [option.key]: checked })
-                                    }
-                                />
-                            ))}
+                                    ))}
+                                </div>
+                            </FilterPanel>
                         </div>
-                    </FilterPanel>
+                    </SimpleBar>
                 </div>
 
-                <div
-                    className="
-                      flex shrink-0 flex-col-reverse gap-3 border-bs border-border-warm/40
-                      bg-surface px-5 py-4
-                      sm:flex-row sm:items-center sm:justify-between sm:px-7
-                    "
-                >
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="lg"
-                        disabled={!hasDraftFilters}
-                        className="text-ink-muted hover:text-ink"
-                        onClick={handleClear}
-                    >
-                        Clear all
-                    </Button>
-                    <Button
-                        type="button"
-                        size="lg"
-                        className="
-                          rounded-full bg-brand px-8 text-surface
-                          hover:bg-brand-text
-                          sm:min-inline-56
-                        "
-                        onClick={handleApply}
-                    >
-                        Show {previewCount} properties
-                    </Button>
+                <div className="shrink-0 border-bs border-border-warm bg-surface px-5 py-4 sm:px-7">
+                    <AppModalFooter
+                        secondaryLabel="Clear all"
+                        secondaryDisabled={!hasDraftFilters}
+                        onSecondary={handleClear}
+                        primaryLabel={`Show ${previewCount} properties`}
+                        onPrimary={handleApply}
+                    />
                 </div>
             </DialogPopup>
         </Dialog>

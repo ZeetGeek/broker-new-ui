@@ -1,9 +1,9 @@
 /**
  * One control height for every field in the property form — text inputs,
- * selects, and the date picker. `control-lg` is 44px, which clears the
- * mobile tap-target minimum.
+ * selects, and the date picker. `control-xl` is 48px, matching the mobile
+ * tap-target minimum in the design rules.
  */
-export const FORM_CONTROL_CLASS = "block-control-lg";
+export const FORM_CONTROL_CLASS = "block-control-xl";
 
 /** Shared surface styling for controls that are not the themed `Input`. */
 export const FORM_CONTROL_SURFACE_CLASS = `

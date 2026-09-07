@@ -167,7 +167,7 @@ export function AppModal({
                                     />
                                     <span className="sr-only">Close</span>
                                 </TooltipTrigger>
-                                <TooltipContent side="bottom">
+                                <TooltipContent side="inline-start">
                                     Close
                                     <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
                                 </TooltipContent>

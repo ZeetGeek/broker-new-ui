@@ -263,6 +263,33 @@
     animation: fab-pulse 2.4s ease-in-out infinite;
 }
 
+@utility animate-accordion-down {
+    animation: accordion-down 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility animate-accordion-up {
+    animation: accordion-up 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* base-ui exposes the measured panel height as --accordion-panel-height. */
+@keyframes accordion-down {
+    from {
+        height: 0;
+    }
+    to {
+        height: var(--accordion-panel-height);
+    }
+}
+
+@keyframes accordion-up {
+    from {
+        height: var(--accordion-panel-height);
+    }
+    to {
+        height: 0;
+    }
+}
+
 @keyframes verified-glow {
     0%,
     100% {
