@@ -168,6 +168,8 @@ export function OwnerListingsPropertyTypeMenu({
     className,
 }: OwnerListingsPropertyTypeMenuProps) {
     const [open, setOpen] = useState(false);
+    const triggerIcon =
+        PROPERTY_TYPE_OPTIONS.find((option) => option.value === value)?.icon ?? Layers;
 
     return (
         <div className={cn("min-w-0 w-full", className)}>
@@ -177,7 +179,7 @@ export function OwnerListingsPropertyTypeMenu({
                     render={
                         <OwnerListingsBandSegment
                             label="Property type"
-                            icon={Building2}
+                            icon={triggerIcon}
                             value={formatPropertyTypeLabel(value)}
                             className="w-full"
                             isOpen={open}

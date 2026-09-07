@@ -62,6 +62,10 @@ const PROPERTY_TYPES = new Set<OwnerListingPropertyType>([
     "plot",
 ]);
 
+function parseListedWithinDays(value: string): string {
+    return value === "7" || value === "30" ? value : "";
+}
+
 export function parseOwnerListingsFilters(
     params: URLSearchParams | Record<string, string | string[] | undefined>,
 ): OwnerListingsFilters {
@@ -85,6 +89,11 @@ export function parseOwnerListingsFilters(
         propertyType: PROPERTY_TYPES.has(propertyType as OwnerListingPropertyType)
             ? (propertyType as OwnerListingPropertyType)
             : "",
+        minAreaSqft: parseParam(params, "minArea"),
+        maxAreaSqft: parseParam(params, "maxArea"),
+        minPhotos: parseParam(params, "minPhotos"),
+        listedWithinDays: parseListedWithinDays(parseParam(params, "listedWithin")),
+        minCommissionPercent: parseParam(params, "minCommission"),
         yourAreas: parseBoolParam(params, "yourAreas"),
         newToday: parseBoolParam(params, "newToday"),
         slotsOpen: parseBoolParam(params, "slotsOpen"),
@@ -107,6 +116,11 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     if (filters.max) params.set("max", filters.max);
     if (filters.furnishing) params.set("furnishing", filters.furnishing);
     if (filters.propertyType) params.set("propertyType", filters.propertyType);
+    if (filters.minAreaSqft) params.set("minArea", filters.minAreaSqft);
+    if (filters.maxAreaSqft) params.set("maxArea", filters.maxAreaSqft);
+    if (filters.minPhotos) params.set("minPhotos", filters.minPhotos);
+    if (filters.listedWithinDays) params.set("listedWithin", filters.listedWithinDays);
+    if (filters.minCommissionPercent) params.set("minCommission", filters.minCommissionPercent);
     if (filters.yourAreas) params.set("yourAreas", "1");
     if (filters.newToday) params.set("newToday", "1");
     if (filters.slotsOpen) params.set("slotsOpen", "1");
@@ -121,12 +135,11 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
 export function countSheetFilters(filters: OwnerListingsFilters): number {
     let count = 0;
     if (filters.q.trim()) count++;
-    if (filters.propertyType) count++;
-    if (filters.furnishing) count++;
-    if (filters.type) count++;
-    if (filters.bhk.length > 0) count++;
-    if (filters.min || filters.max) count++;
-    if (filters.newToday) count++;
+    if (filters.minAreaSqft || filters.maxAreaSqft) count++;
+    if (filters.minPhotos) count++;
+    if (filters.listedWithinDays || filters.newToday) count++;
+    if (filters.minCommissionPercent) count++;
+    if (filters.yourAreas) count++;
     if (filters.slotsOpen) count++;
     if (filters.commissionSet) count++;
     if (filters.readyToMove) count++;
@@ -144,6 +157,11 @@ export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): bo
         Boolean(filters.max) ||
         Boolean(filters.furnishing) ||
         Boolean(filters.propertyType) ||
+        Boolean(filters.minAreaSqft) ||
+        Boolean(filters.maxAreaSqft) ||
+        Boolean(filters.minPhotos) ||
+        Boolean(filters.listedWithinDays) ||
+        Boolean(filters.minCommissionPercent) ||
         filters.yourAreas ||
         filters.newToday ||
         filters.slotsOpen ||
@@ -164,6 +182,11 @@ export function ownerListingsFilterSignature(filters: OwnerListingsFilters): str
         filters.max,
         filters.furnishing,
         filters.propertyType,
+        filters.minAreaSqft,
+        filters.maxAreaSqft,
+        filters.minPhotos,
+        filters.listedWithinDays,
+        filters.minCommissionPercent,
         filters.yourAreas ? "1" : "0",
         filters.newToday ? "1" : "0",
         filters.slotsOpen ? "1" : "0",
@@ -235,6 +258,38 @@ export function filterOwnerListings(
         if (filters.slotsOpen && item.brokerSlotsOpen <= 0) return false;
         if (filters.commissionSet && item.commissionPercent <= 0) return false;
         if (filters.readyToMove && !item.readyToMove) return false;
+
+        const minArea = filters.minAreaSqft ? Number(filters.minAreaSqft) : null;
+        const maxArea = filters.maxAreaSqft ? Number(filters.maxAreaSqft) : null;
+        if (minArea !== null && !Number.isNaN(minArea) && item.areaSqft < minArea) return false;
+        if (maxArea !== null && !Number.isNaN(maxArea) && item.areaSqft > maxArea) return false;
+
+        const minPhotos = filters.minPhotos ? Number(filters.minPhotos) : null;
+        if (minPhotos !== null && !Number.isNaN(minPhotos) && item.photoCount < minPhotos) {
+            return false;
+        }
+
+        const listedWithinDays = filters.listedWithinDays
+            ? Number(filters.listedWithinDays)
+            : null;
+        if (
+            listedWithinDays !== null &&
+            !Number.isNaN(listedWithinDays) &&
+            item.listedHoursAgo > listedWithinDays * 24
+        ) {
+            return false;
+        }
+
+        const minCommission = filters.minCommissionPercent
+            ? Number(filters.minCommissionPercent)
+            : null;
+        if (
+            minCommission !== null &&
+            !Number.isNaN(minCommission) &&
+            item.commissionPercent < minCommission
+        ) {
+            return false;
+        }
 
         const compareAmount = listingCompareAmountInr(item, filters.type);
         if (minInr !== null && !Number.isNaN(minInr) && compareAmount < minInr) return false;

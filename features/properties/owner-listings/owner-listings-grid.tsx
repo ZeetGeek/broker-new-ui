@@ -73,7 +73,7 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
                         priority={index < 5}
                         imageSizes={
                             isListView
-                                ? "(max-width: 640px) 160px, 224px"
+                                ? "(max-width: 768px) 55vw, 320px"
                                 : "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                         }
                         isRequestPending={requestingId === item.id}

@@ -59,11 +59,21 @@ export type OwnerListingsFilters = {
     type: OwnerListingTransactionType | "";
     min: string;
     max: string;
-    /** Sheet — furnishing */
+    /** Band — furnishing */
     furnishing: OwnerListingFurnishing | "";
-    /** Sheet — property type */
+    /** Band — property type */
     propertyType: OwnerListingPropertyType | "";
-    /** Quick chips — instant toggles */
+    /** Sheet — carpet / built-up area lower bound (sqft) */
+    minAreaSqft: string;
+    /** Sheet — carpet / built-up area upper bound (sqft) */
+    maxAreaSqft: string;
+    /** Sheet — minimum gallery photo count */
+    minPhotos: string;
+    /** Sheet — listed within N days (`7` | `30` | "") */
+    listedWithinDays: string;
+    /** Sheet — minimum owner commission percent */
+    minCommissionPercent: string;
+    /** Quick chips / sheet — instant toggles */
     yourAreas: boolean;
     newToday: boolean;
     slotsOpen: boolean;
@@ -81,12 +91,12 @@ export type OwnerListingsBandFilters = Pick<
 export type OwnerListingsSheetFilters = Pick<
     OwnerListingsFilters,
     | "q"
-    | "propertyType"
-    | "furnishing"
-    | "type"
-    | "bhk"
-    | "min"
-    | "max"
+    | "minAreaSqft"
+    | "maxAreaSqft"
+    | "minPhotos"
+    | "listedWithinDays"
+    | "minCommissionPercent"
+    | "yourAreas"
     | "newToday"
     | "slotsOpen"
     | "commissionSet"
@@ -118,6 +128,11 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     max: "",
     furnishing: "",
     propertyType: "",
+    minAreaSqft: "",
+    maxAreaSqft: "",
+    minPhotos: "",
+    listedWithinDays: "",
+    minCommissionPercent: "",
     yourAreas: false,
     newToday: false,
     slotsOpen: false,

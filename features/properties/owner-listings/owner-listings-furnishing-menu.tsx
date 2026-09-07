@@ -138,6 +138,8 @@ export function OwnerListingsFurnishingMenu({
     className,
 }: OwnerListingsFurnishingMenuProps) {
     const [open, setOpen] = useState(false);
+    const triggerIcon =
+        FURNISHING_OPTIONS.find((option) => option.value === value)?.icon ?? Layers;
 
     return (
         <div className={cn("min-w-0 w-full", className)}>
@@ -147,7 +149,7 @@ export function OwnerListingsFurnishingMenu({
                     render={
                         <OwnerListingsBandSegment
                             label="Furnishing"
-                            icon={Sofa}
+                            icon={triggerIcon}
                             value={formatFurnishingLabel(value)}
                             className="w-full"
                             isOpen={open}

@@ -154,7 +154,7 @@ function FiltersChipButton({
                 }
             />
             <TooltipContent side="bottom">
-                More filters — type, furnishing, and search
+                Advanced filters — area, photos, timing, and deal fit
             </TooltipContent>
         </Tooltip>
     );

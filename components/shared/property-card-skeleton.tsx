@@ -1,14 +1,15 @@
 import { cn } from "@/lib/utils";
 
-const BROWSE_CARD_PHOTO_FRAME_CLASS =
-    "shrink-0 rounded-card bg-surface p-1 shadow-md";
+const BROWSE_CARD_PHOTO_FRAME_CLASS = "shrink-0 rounded-card bg-surface p-1 shadow-md";
 const BROWSE_CARD_PHOTO_FRAME_GRID_CLASS = "w-full";
-const BROWSE_CARD_PHOTO_FRAME_LIST_CLASS = "w-40 sm:w-48 md:w-56";
+const BROWSE_CARD_PHOTO_FRAME_LIST_CLASS =
+    "h-full w-[min(56%,24rem)] min-w-56 self-stretch sm:min-w-64";
 
 const BROWSE_CARD_PHOTO_INNER_CLASS =
     "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
 const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full animate-pulse";
-const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[4/3] min-h-40 w-full animate-pulse";
+const BROWSE_CARD_PHOTO_INNER_LIST_CLASS =
+    "aspect-auto min-h-56 w-full animate-pulse block-full sm:min-h-64";
 
 export function PropertyCardSkeleton({
     className,
@@ -26,7 +27,7 @@ export function PropertyCardSkeleton({
             <div
                 className={cn(
                     "flex min-inline-0",
-                    isListView ? "flex-row items-start gap-4" : "flex-col gap-3",
+                    isListView ? "flex-row items-stretch gap-4" : "flex-col gap-3",
                     className,
                 )}
                 aria-hidden
@@ -82,24 +83,26 @@ export function PropertyCardSkeleton({
                         />
                     </div>
 
-                    <div className="flex items-baseline gap-2">
+                    <div className="mbs-auto flex flex-col gap-2.5">
+                        <div className="flex items-baseline gap-2">
+                            <div
+                                className="
+                                  animate-pulse rounded-full bg-surface-muted block-6 inline-24
+                                "
+                            />
+                            <div
+                                className="
+                                  animate-pulse rounded-full bg-surface-muted block-4 inline-10
+                                "
+                            />
+                        </div>
+
                         <div
                             className="
-                              animate-pulse rounded-full bg-surface-muted block-6 inline-24
-                            "
-                        />
-                        <div
-                            className="
-                              animate-pulse rounded-full bg-surface-muted block-4 inline-10
+                              animate-pulse w-full rounded-control bg-surface-muted block-11
                             "
                         />
                     </div>
-
-                    <div
-                        className="
-                          animate-pulse w-full rounded-control bg-surface-muted block-11
-                        "
-                    />
                 </div>
             </div>
         );

@@ -183,7 +183,7 @@ function OwnerListingsResults({
                         key={index}
                         className={cn(
                             "animate-pulse rounded-card bg-surface-muted",
-                            view === "list" ? "block-36" : "block-80",
+                            view === "list" ? "min-h-52" : "block-80",
                         )}
                         aria-hidden
                     />

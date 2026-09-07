@@ -5,6 +5,7 @@ import type {
     OwnerListingPropertyType,
     OwnerListingsBandFilters,
     OwnerListingsFilters,
+    OwnerListingsSheetFilters,
     OwnerListingSort,
     OwnerListingTransactionType,
 } from "@/features/properties/owner-listings/types";
@@ -139,30 +140,15 @@ export function extractBandFilters(filters: OwnerListingsFilters): OwnerListings
     };
 }
 
-export function extractSheetFilters(
-    filters: OwnerListingsFilters,
-): Pick<
-    OwnerListingsFilters,
-    | "q"
-    | "propertyType"
-    | "furnishing"
-    | "type"
-    | "bhk"
-    | "min"
-    | "max"
-    | "newToday"
-    | "slotsOpen"
-    | "commissionSet"
-    | "readyToMove"
-> {
+export function extractSheetFilters(filters: OwnerListingsFilters): OwnerListingsSheetFilters {
     return {
         q: filters.q,
-        propertyType: filters.propertyType,
-        furnishing: filters.furnishing,
-        type: filters.type,
-        bhk: filters.bhk,
-        min: filters.min,
-        max: filters.max,
+        minAreaSqft: filters.minAreaSqft,
+        maxAreaSqft: filters.maxAreaSqft,
+        minPhotos: filters.minPhotos,
+        listedWithinDays: filters.listedWithinDays,
+        minCommissionPercent: filters.minCommissionPercent,
+        yourAreas: filters.yourAreas,
         newToday: filters.newToday,
         slotsOpen: filters.slotsOpen,
         commissionSet: filters.commissionSet,
