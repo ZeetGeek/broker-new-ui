@@ -1,24 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 export type OwnerListingsView = "grid" | "list";
 
 const STORAGE_KEY = "owner_listings_view";
 
-export function useOwnerListingsView() {
-    const [view, setViewState] = useState<OwnerListingsView>("grid");
+function readStoredView(): OwnerListingsView {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    return stored === "grid" || stored === "list" ? stored : "grid";
+}
 
-    useEffect(() => {
-        const stored = window.localStorage.getItem(STORAGE_KEY);
-        if (stored === "grid" || stored === "list") {
-            setViewState(stored);
-        }
-    }, []);
+function subscribe(onStoreChange: () => void) {
+    window.addEventListener("storage", onStoreChange);
+    return () => window.removeEventListener("storage", onStoreChange);
+}
+
+export function useOwnerListingsView() {
+    const view = useSyncExternalStore(subscribe, readStoredView, () => "grid" as const);
 
     const setView = useCallback((next: OwnerListingsView) => {
-        setViewState(next);
         window.localStorage.setItem(STORAGE_KEY, next);
+        // Same-tab updates do not fire `storage` — notify subscribers manually.
+        window.dispatchEvent(new Event("storage"));
     }, []);
 
     return { view, setView };

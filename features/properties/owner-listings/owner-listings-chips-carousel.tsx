@@ -11,7 +11,10 @@ type OwnerListingsChipsCarouselProps = {
     className?: string;
 };
 
-export function OwnerListingsChipsCarousel({ children, className }: OwnerListingsChipsCarouselProps) {
+export function OwnerListingsChipsCarousel({
+    children,
+    className,
+}: OwnerListingsChipsCarouselProps) {
     const [emblaRef] = useEmblaCarousel({
         align: "start",
         containScroll: "trimSnaps",
@@ -21,7 +24,7 @@ export function OwnerListingsChipsCarousel({ children, className }: OwnerListing
     return (
         <div
             ref={emblaRef}
-            className={cn("min-w-0 flex-1 overflow-hidden py-1.5 -my-1.5", className)}
+            className={cn("-my-1.5 flex-1 overflow-hidden py-1.5 min-inline-0", className)}
             aria-roledescription="carousel"
         >
             <div className="flex touch-pan-y gap-2.5 px-0.5">{children}</div>

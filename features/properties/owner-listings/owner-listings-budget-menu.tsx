@@ -13,12 +13,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { BudgetRotaryKnob } from "@/features/properties/owner-listings/owner-listings-budget-knob";
-import {
-    findBudgetStepIndex,
-    getBudgetSteps,
-    isBudgetInSteps,
-} from "@/features/properties/owner-listings/owner-listings-budget-presets";
 import {
     OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
     OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET,
@@ -26,6 +20,12 @@ import {
 } from "@/features/properties/owner-listings/owner-listings-band-menu-content";
 import { OwnerListingsBandMenuHeader } from "@/features/properties/owner-listings/owner-listings-band-menu-header";
 import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
+import { BudgetRotaryKnob } from "@/features/properties/owner-listings/owner-listings-budget-knob";
+import {
+    findBudgetStepIndex,
+    getBudgetSteps,
+    isBudgetInSteps,
+} from "@/features/properties/owner-listings/owner-listings-budget-presets";
 import type { OwnerListingTransactionType } from "@/features/properties/owner-listings/types";
 
 export type OwnerListingsBudgetMenuProps = {
@@ -34,6 +34,7 @@ export type OwnerListingsBudgetMenuProps = {
     /** Looking-for mode — drives sale vs rent preset scales. */
     lookingFor: OwnerListingTransactionType | "";
     onBudgetChange: (next: { min: string; max: string }) => void;
+    onOpenChange?: (open: boolean) => void;
     className?: string;
 };
 
@@ -42,15 +43,19 @@ export function OwnerListingsBudgetMenu({
     max,
     lookingFor,
     onBudgetChange,
+    onOpenChange,
     className,
 }: OwnerListingsBudgetMenuProps) {
     const [open, setOpen] = useState(false);
     const steps = useMemo(() => getBudgetSteps(lookingFor), [lookingFor]);
-    const [stepIndex, setStepIndex] = useState(() => findBudgetStepIndex(min, max, steps));
+    const syncedIndex = findBudgetStepIndex(min, max, steps);
+    const [stepIndex, setStepIndex] = useState(syncedIndex);
+    const [prevSyncedIndex, setPrevSyncedIndex] = useState(syncedIndex);
 
-    useEffect(() => {
-        setStepIndex(findBudgetStepIndex(min, max, steps));
-    }, [min, max, steps]);
+    if (syncedIndex !== prevSyncedIndex) {
+        setPrevSyncedIndex(syncedIndex);
+        setStepIndex(syncedIndex);
+    }
 
     // Sale ↔ rent scales do not share INR ranges — clear an orphaned budget.
     useEffect(() => {
@@ -79,75 +84,83 @@ export function OwnerListingsBudgetMenu({
         [maxStep, onBudgetChange, steps],
     );
 
+    const handleOpenChange = (nextOpen: boolean) => {
+        setOpen(nextOpen);
+        onOpenChange?.(nextOpen);
+    };
+
     return (
-        <div className={cn("min-w-0 w-full", className)}>
-        <DropdownMenu open={open} onOpenChange={setOpen}>
-            <DropdownMenuTrigger
-                className="flex min-w-0 w-full"
-                render={
-                    <OwnerListingsBandSegment
-                        label="Budget"
-                        icon={IndianRupee}
-                        value={formatBudgetLabel(min, max, lookingFor)}
-                        className="w-full"
-                        isOpen={open}
-                    />
-                }
-            />
-            <DropdownMenuContent
-                align="center"
-                sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
-                className={cn(
-                    OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
-                    OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
-                    "overflow-hidden p-0",
-                )}
-            >
-                <div className="flex flex-col gap-3 px-5 py-5">
-                    <OwnerListingsBandMenuHeader
-                        description={hint}
-                        onClear={() => {
-                            setStepIndex(0);
-                            onBudgetChange({ min: "", max: "" });
-                        }}
-                    />
+        <div className={cn("inline-full min-inline-0", className)}>
+            <DropdownMenu open={open} onOpenChange={handleOpenChange}>
+                <DropdownMenuTrigger
+                    className="flex inline-full min-inline-0"
+                    render={
+                        <OwnerListingsBandSegment
+                            label="Budget"
+                            icon={IndianRupee}
+                            value={formatBudgetLabel(min, max, lookingFor)}
+                            className="inline-full"
+                            isOpen={open}
+                        />
+                    }
+                />
+                <DropdownMenuContent
+                    align="center"
+                    sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
+                    className={cn(
+                        OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
+                        OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
+                        "overflow-hidden p-0",
+                    )}
+                >
+                    <div className="flex flex-col gap-3 p-5">
+                        <OwnerListingsBandMenuHeader
+                            description={hint}
+                            onClear={() => {
+                                setStepIndex(0);
+                                onBudgetChange({ min: "", max: "" });
+                            }}
+                        />
 
-                    <BudgetRotaryKnob
-                        stepCount={maxStep}
-                        value={stepIndex}
-                        onValueChange={handleStepChange}
-                        displayValue={step.shortLabel}
-                        displayHint={step.label}
-                    />
+                        <BudgetRotaryKnob
+                            stepCount={maxStep}
+                            value={stepIndex}
+                            onValueChange={handleStepChange}
+                            displayValue={step.shortLabel}
+                            displayHint={step.label}
+                        />
 
-                    <div className="flex flex-wrap justify-center gap-1.5">
-                        {steps.map((option, index) => {
-                            const active = index === stepIndex;
-                            return (
-                                <button
-                                    key={`${lookingFor}-${option.label}`}
-                                    type="button"
-                                    aria-pressed={active}
-                                    onClick={() => handleStepChange(index)}
-                                    className={cn(
-                                        `
+                        <div className="flex flex-wrap justify-center gap-1.5">
+                            {steps.map((option, index) => {
+                                const active = index === stepIndex;
+                                return (
+                                    <button
+                                        key={`${lookingFor}-${option.label}`}
+                                        type="button"
+                                        aria-pressed={active}
+                                        onClick={() => handleStepChange(index)}
+                                        className={cn(
+                                            `
                                           body-xs rounded-full border px-2.5 py-1 font-medium
-                                          outline-none transition-colors duration-160
+                                          transition-colors duration-160 outline-none
                                           focus-visible:ring-2 focus-visible:ring-brand
                                         `,
-                                        active
-                                            ? "border-brand bg-brand-soft text-ink"
-                                            : "border-border-warm bg-surface text-ink-muted hover:bg-surface-muted",
-                                    )}
-                                >
-                                    {option.shortLabel}
-                                </button>
-                            );
-                        })}
+                                            active
+                                                ? "border-brand bg-brand-soft text-ink"
+                                                : `
+                                              border-border-warm bg-surface text-ink-muted
+                                              hover:bg-surface-muted
+                                            `,
+                                        )}
+                                    >
+                                        {option.shortLabel}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     );
 }

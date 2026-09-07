@@ -1,15 +1,16 @@
+import { toLegacyAmountFields } from "@/lib/format/listing-availability";
+import { formatPropertyTypeLabel } from "@/lib/format/owner-listings-labels";
+
 import type { BrowsePropertyCardListing } from "@/components/shared/property-card";
 
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
-import { formatPropertyTypeLabel } from "@/lib/format/owner-listings-labels";
-import { toLegacyAmountFields } from "@/lib/format/listing-availability";
 
 export function toBrowsePropertyCardListing(item: OwnerListingItem): BrowsePropertyCardListing {
     const legacy = toLegacyAmountFields(item);
 
     return {
         id: item.id,
-        title: `${item.locality} ${formatPropertyTypeLabel(item.propertyTypeLabel)}`,
+        title: `${item.locality} ${formatPropertyTypeLabel(item.propertyTypeLabel)}`, //from here setting title
         configLabel: item.configLabel,
         propertyTypeLabel: item.propertyTypeLabel,
         areaSqft: item.areaSqft,

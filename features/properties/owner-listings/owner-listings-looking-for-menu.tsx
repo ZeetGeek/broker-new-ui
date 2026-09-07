@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { HandCoins, KeyRound, Layers, Tags, type LucideIcon } from "lucide-react";
+import { HandCoins, KeyRound, Layers, type LucideIcon, Tags } from "lucide-react";
 
 import { formatTransactionTypeLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
@@ -69,7 +69,10 @@ function fromRadioValue(radioValue: string): LookingForValue {
 /** Matches Where menu row treatment — brand-soft when selected. */
 const rowClass = (checked: boolean) =>
     cn(
-        "group/row my-1 cursor-pointer! items-center gap-3 rounded-xl border border-transparent px-2.5 py-3 pe-10",
+        `
+          group/row my-1 cursor-pointer! items-center gap-3 rounded-xl border border-transparent
+          px-2.5 py-3 pe-10
+        `,
         "font-normal text-ink transition-[background-color,border-color,box-shadow] duration-160",
         // Icon color via CSS var — beats menu focus:**:text-accent-foreground cascade
         "[--row-icon:var(--color-ink-subtle)]",
@@ -87,7 +90,10 @@ const rowClass = (checked: boolean) =>
         "**:data-[slot=dropdown-menu-radio-item-indicator]:inline-flex",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:items-center",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:justify-center",
-        "**:data-[slot=dropdown-menu-radio-item-indicator]:transition-[opacity,transform] duration-160",
+        `
+          duration-160
+          **:data-[slot=dropdown-menu-radio-item-indicator]:transition-[opacity,transform]
+        `,
         "**:data-[slot=dropdown-menu-radio-item-indicator]:[&_svg]:block-4",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:[&_svg]:inline-4",
         "**:data-[slot=dropdown-menu-radio-item-indicator]:[&_svg]:stroke-[2.25]",
@@ -99,7 +105,10 @@ const rowClass = (checked: boolean) =>
                   "focus:[--row-icon:var(--color-brand)]",
                   "data-highlighted:[--row-icon:var(--color-brand)]",
                   "data-checked:bg-brand-soft! data-checked:text-ink!",
-                  "data-checked:data-highlighted:bg-brand-soft! data-checked:data-highlighted:text-ink!",
+                  `
+                    data-checked:data-highlighted:bg-brand-soft!
+                    data-checked:data-highlighted:text-ink!
+                  `,
                   "data-checked:focus:bg-brand-soft! data-checked:focus:text-ink!",
                   "data-checked:hover:bg-brand-soft! data-checked:hover:text-ink!",
                   "**:data-[slot=looking-for-title]:text-ink!",
@@ -124,89 +133,107 @@ const rowClass = (checked: boolean) =>
 export type OwnerListingsLookingForMenuProps = {
     value: LookingForValue;
     onValueChange: (value: LookingForValue) => void;
+    onOpenChange?: (open: boolean) => void;
     className?: string;
 };
 
 export function OwnerListingsLookingForMenu({
     value,
     onValueChange,
+    onOpenChange,
     className,
 }: OwnerListingsLookingForMenuProps) {
     const [open, setOpen] = useState(false);
 
-    return (
-        <div className={cn("min-w-0 w-full", className)}>
-        <DropdownMenu open={open} onOpenChange={setOpen}>
-            <DropdownMenuTrigger
-                className="flex min-w-0 w-full"
-                render={
-                    <OwnerListingsBandSegment
-                        label="Looking for"
-                        icon={Tags}
-                        value={formatTransactionTypeLabel(value)}
-                        className="w-full"
-                        isOpen={open}
-                    />
-                }
-            />
-            <DropdownMenuContent
-                align="center"
-                sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
-                className={cn(
-                    OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
-                    OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
-                    "overflow-hidden! p-0",
-                )}
-            >
-                <div className="flex flex-col gap-3 px-3 pe-3 pbs-3 pbe-3">
-                    <OwnerListingsBandMenuHeader
-                        description="Sale, rent, or both"
-                        onClear={() => onValueChange("")}
-                        className="px-2 pt-1"
-                    />
-                    <DropdownMenuRadioGroup
-                        value={toRadioValue(value)}
-                        onValueChange={(next) => onValueChange(fromRadioValue(next))}
-                    >
-                        {LOOKING_FOR_OPTIONS.map((option) => {
-                            const checked = value === option.value;
-                            const Icon = option.icon;
+    const handleOpenChange = (nextOpen: boolean) => {
+        setOpen(nextOpen);
+        onOpenChange?.(nextOpen);
+    };
 
-                            return (
-                                <DropdownMenuRadioItem
-                                    key={option.radioValue}
-                                    value={option.radioValue}
-                                    className={rowClass(checked)}
-                                >
-                                    <Icon
-                                        aria-hidden
-                                        data-slot="looking-for-icon"
-                                        color="var(--row-icon)"
-                                        className="block-4.5 inline-4.5 shrink-0 transition-[color,stroke] duration-160"
-                                        strokeWidth={1.75}
-                                    />
-                                    <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-start">
+    return (
+        <div className={cn("inline-full min-inline-0", className)}>
+            <DropdownMenu open={open} onOpenChange={handleOpenChange}>
+                <DropdownMenuTrigger
+                    className="flex inline-full min-inline-0"
+                    render={
+                        <OwnerListingsBandSegment
+                            label="Looking for"
+                            icon={Tags}
+                            value={formatTransactionTypeLabel(value)}
+                            className="inline-full"
+                            isOpen={open}
+                        />
+                    }
+                />
+                <DropdownMenuContent
+                    align="center"
+                    sideOffset={OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET}
+                    className={cn(
+                        OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
+                        OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
+                        "overflow-hidden! p-0",
+                    )}
+                >
+                    <div className="flex flex-col gap-3 px-3 pe-3 pbs-3 pbe-3">
+                        <OwnerListingsBandMenuHeader
+                            description="Sale, rent, or both"
+                            onClear={() => onValueChange("")}
+                            className="px-2 pbs-1"
+                        />
+                        <DropdownMenuRadioGroup
+                            value={toRadioValue(value)}
+                            onValueChange={(next) => onValueChange(fromRadioValue(next))}
+                        >
+                            {LOOKING_FOR_OPTIONS.map((option) => {
+                                const checked = value === option.value;
+                                const Icon = option.icon;
+
+                                return (
+                                    <DropdownMenuRadioItem
+                                        key={option.radioValue}
+                                        value={option.radioValue}
+                                        className={rowClass(checked)}
+                                    >
+                                        <Icon
+                                            aria-hidden
+                                            data-slot="looking-for-icon"
+                                            color="var(--row-icon)"
+                                            className="
+                                          shrink-0 transition-[color,stroke] duration-160 block-4.5
+                                          inline-4.5
+                                        "
+                                            strokeWidth={1.75}
+                                        />
                                         <span
-                                            data-slot="looking-for-title"
-                                            className="truncate text-[15px] leading-snug font-medium text-ink"
+                                            className="
+                                      flex flex-1 flex-col gap-0.5 text-start min-inline-0
+                                    "
                                         >
-                                            {option.label}
+                                            <span
+                                                data-slot="looking-for-title"
+                                                className="
+                                              truncate text-[15px] leading-snug font-medium text-ink
+                                            "
+                                            >
+                                                {option.label}
+                                            </span>
+                                            <span
+                                                className="
+                                              truncate text-[13px] leading-snug text-ink-muted!
+                                            "
+                                                data-muted-line
+                                                style={{ color: "var(--color-ink-muted)" }}
+                                            >
+                                                {option.description}
+                                            </span>
                                         </span>
-                                        <span
-                                            className="truncate text-[13px] leading-snug text-ink-muted!"
-                                            data-muted-line
-                                            style={{ color: "var(--color-ink-muted)" }}
-                                        >
-                                            {option.description}
-                                        </span>
-                                    </span>
-                                </DropdownMenuRadioItem>
-                            );
-                        })}
-                    </DropdownMenuRadioGroup>
-                </div>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                                    </DropdownMenuRadioItem>
+                                );
+                            })}
+                        </DropdownMenuRadioGroup>
+                    </div>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     );
 }

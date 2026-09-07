@@ -34,7 +34,10 @@ import type { OwnerListingItem } from "@/features/properties/owner-listings/type
 
 const rowClass = (checked: boolean) =>
     cn(
-        "group/row my-1 cursor-pointer! items-center gap-3 rounded-xl border border-transparent px-2.5 py-3 pe-10",
+        `
+          group/row my-1 cursor-pointer! items-center gap-3 rounded-xl border border-transparent
+          px-2.5 py-3 pe-10
+        `,
         "font-normal text-ink transition-[background-color,border-color,box-shadow] duration-160",
         "[--row-icon:var(--color-ink-subtle)]",
         "hover:[--row-icon:var(--color-brand)]",
@@ -70,7 +73,10 @@ const rowClass = (checked: boolean) =>
                   "focus:[--row-icon:var(--color-brand)]",
                   "data-highlighted:[--row-icon:var(--color-brand)]",
                   "data-checked:bg-brand-soft! data-checked:text-ink!",
-                  "data-checked:data-highlighted:bg-brand-soft! data-checked:data-highlighted:text-ink!",
+                  `
+                    data-checked:data-highlighted:bg-brand-soft!
+                    data-checked:data-highlighted:text-ink!
+                  `,
                   "data-checked:focus:bg-brand-soft! data-checked:focus:text-ink!",
                   "data-checked:hover:bg-brand-soft! data-checked:hover:text-ink!",
                   // Title stays ink (beat base focus:**:text-accent-foreground)
@@ -135,7 +141,7 @@ function LocationIcon() {
             aria-hidden
             data-slot="where-location-pin"
             color="var(--row-icon)"
-            className="block-6 inline-6 shrink-0 transition-[color,stroke] duration-160"
+            className="shrink-0 transition-[color,stroke] duration-160 block-6 inline-6"
             strokeWidth={1.75}
         />
     );
@@ -170,7 +176,7 @@ function WhereLocationRow({
                     <>
                         <span
                             data-slot="where-location-title"
-                            className="truncate text-[15px] leading-snug capitalize text-ink"
+                            className="truncate text-[15px] leading-snug text-ink capitalize"
                         >
                             <HighlightMatch text={locality} query={query} />
                         </span>
@@ -186,7 +192,9 @@ function WhereLocationRow({
                     <>
                         <span
                             data-slot="where-location-title"
-                            className="truncate text-[15px] leading-snug font-medium capitalize text-ink"
+                            className="
+                              truncate text-[15px] leading-snug font-medium text-ink capitalize
+                            "
                         >
                             {locality}
                         </span>
@@ -264,7 +272,8 @@ export type OwnerListingsWhereMenuProps = {
     listings: OwnerListingItem[];
     selectedCities: string[];
     selectedLocalities: string[];
-    onLocationChange: (cities: string[], localities: string[]) => void;
+    yourAreas: boolean;
+    onWhereChange: (next: { cities: string[]; localities: string[]; yourAreas: boolean }) => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
 };
@@ -273,7 +282,8 @@ export function OwnerListingsWhereMenu({
     listings,
     selectedCities,
     selectedLocalities,
-    onLocationChange,
+    yourAreas,
+    onWhereChange,
     onOpenChange,
     className,
 }: OwnerListingsWhereMenuProps) {
@@ -291,15 +301,27 @@ export function OwnerListingsWhereMenu({
         () => searchOwnerListingLocations(locationTree, query),
         [locationTree, query],
     );
-    const selectedCitySet = useMemo(() => new Set(selectedCities), [selectedCities]);
     const selectedLocalitySet = useMemo(() => new Set(selectedLocalities), [selectedLocalities]);
     const hasListings = locationTree.length > 0;
     const isSearching = query.trim().length > 0;
     const showEmptyState = !hasListings || (isSearching && searchHits.length === 0);
+    const isServiceableSelected =
+        yourAreas && selectedCities.length === 0 && selectedLocalities.length === 0;
+    const isAnywhereSelected =
+        !yourAreas && selectedCities.length === 0 && selectedLocalities.length === 0;
+
+    const selectServiceableAreas = () => {
+        setQuery("");
+        onWhereChange({ cities: [], localities: [], yourAreas: true });
+    };
+
+    const selectAnywhere = () => {
+        setQuery("");
+        onWhereChange({ cities: [], localities: [], yourAreas: false });
+    };
 
     const clearSelection = () => {
-        setQuery("");
-        onLocationChange([], []);
+        selectServiceableAreas();
     };
 
     const handleOpenChange = (nextOpen: boolean) => {
@@ -311,30 +333,49 @@ export function OwnerListingsWhereMenu({
     };
 
     const toggleLocality = (locality: string, city: string) => {
-        const nextLocalities = selectedLocalitySet.has(locality)
+        const removing = selectedLocalitySet.has(locality);
+        const nextLocalities = removing
             ? selectedLocalities.filter((item) => item !== locality)
             : [...selectedLocalities, locality];
 
-        let nextCities = selectedCities;
-        if (!selectedLocalitySet.has(locality) && !selectedCitySet.has(city)) {
-            nextCities = [...selectedCities, city];
+        if (nextLocalities.length === 0) {
+            onWhereChange({ cities: [], localities: [], yourAreas: true });
+            return;
         }
 
-        onLocationChange(nextCities, nextLocalities);
+        const nextCities = Array.from(
+            new Set(
+                nextLocalities.map((loc) => {
+                    if (loc === locality) return city;
+                    const leaf = locationLeaves.find((entry) => entry.locality === loc);
+                    return leaf?.city ?? city;
+                }),
+            ),
+        );
+
+        onWhereChange({
+            cities: nextCities,
+            localities: nextLocalities,
+            yourAreas: false,
+        });
     };
 
-    const whereTooltipLabel = formatLocalitiesTooltip(selectedLocalities, selectedCities);
+    const whereTooltipLabel = formatLocalitiesTooltip(
+        selectedLocalities,
+        selectedCities,
+        yourAreas,
+    );
 
     return (
-        <div className={cn("min-w-0 w-full", className)}>
+        <div className={cn("inline-full min-inline-0", className)}>
             <DropdownMenu open={open} onOpenChange={handleOpenChange}>
                 <TooltipProvider>
                     <Tooltip open={open || !whereTooltipLabel ? false : undefined}>
                         <TooltipTrigger
-                            className="flex min-w-0 w-full"
+                            className="flex inline-full min-inline-0"
                             render={
                                 <DropdownMenuTrigger
-                                    className="flex min-w-0 w-full"
+                                    className="flex inline-full min-inline-0"
                                     render={
                                         <OwnerListingsBandSegment
                                             label="Where"
@@ -342,8 +383,9 @@ export function OwnerListingsWhereMenu({
                                             value={formatLocalitiesLabel(
                                                 selectedLocalities,
                                                 selectedCities,
+                                                yourAreas,
                                             )}
-                                            className="w-full"
+                                            className="inline-full"
                                             isOpen={open}
                                         />
                                     }
@@ -368,83 +410,150 @@ export function OwnerListingsWhereMenu({
                     className={cn(
                         OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
                         OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
-                        `
-                          grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden! p-0
-                        `,
+                        `grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden! p-0`,
                         "max-block-[min(28rem,var(--available-height))]",
                     )}
                 >
-                <div className="shrink-0 flex flex-col gap-3 px-4 pbs-4 pbe-1">
-                    <OwnerListingsBandMenuHeader
-                        description="Pick cities or areas"
-                        onClear={clearSelection}
-                    />
-                    <Input
-                        value={query}
-                        onValueChange={setQuery}
-                        placeholder="Search cities or areas"
-                        startIcon={Search}
-                        clearable
-                        size="lg"
-                        autoFocus={open}
-                        aria-label="Search cities or areas"
-                        className="text-ink shadow-sm"
-                        wrapperClassName="text-ink"
-                        onKeyDown={(event) => event.stopPropagation()}
-                        onPointerDown={(event) => event.stopPropagation()}
-                    />
-                </div>
+                    <div className="flex shrink-0 flex-col gap-3 px-4 pbs-4 pbe-1">
+                        <OwnerListingsBandMenuHeader
+                            description="Pick cities or areas"
+                            onClear={clearSelection}
+                        />
+                        <Input
+                            value={query}
+                            onValueChange={setQuery}
+                            placeholder="Search cities or areas"
+                            startIcon={Search}
+                            clearable
+                            size="lg"
+                            autoFocus={open}
+                            aria-label="Search cities or areas"
+                            className="text-ink shadow-sm"
+                            wrapperClassName="text-ink"
+                            onKeyDown={(event) => event.stopPropagation()}
+                            onPointerDown={(event) => event.stopPropagation()}
+                        />
+                    </div>
 
-                {showEmptyState ? (
-                    <div
-                        className={cn(
-                            WHERE_MENU_LIST_PANEL_CLASS,
-                            "flex items-center justify-center",
-                        )}
-                    >
-                        {!hasListings ? (
-                            <WhereMenuEmptyState
-                                icon={MapPinOff}
-                                title="No listings yet"
-                                description="Owner listings will appear here once they are live in a city."
-                            />
-                        ) : (
+                    {showEmptyState && isSearching ? (
+                        <div
+                            className={cn(
+                                WHERE_MENU_LIST_PANEL_CLASS,
+                                "flex items-center justify-center",
+                            )}
+                        >
                             <WhereMenuEmptyState
                                 icon={Search}
                                 title="No matching areas"
                                 description={`Nothing found for "${query.trim()}". Try another city or area.`}
                             />
-                        )}
-                    </div>
-                ) : (
-                    <div className={WHERE_MENU_LIST_PANEL_CLASS}>
-                        <ScrollArea className="overflow-hidden block-full">
-                            <div className="px-3 pe-3 pbs-0 pbe-3">
-                                {isSearching
-                                    ? renderSearchResults({
-                                          hits: searchHits,
-                                          query,
-                                          selectedSet: selectedLocalitySet,
-                                          onToggle: toggleLocality,
-                                      })
-                                    : locationLeaves.map((leaf) => (
-                                          <WhereLocationRow
-                                              key={`${leaf.state}-${leaf.city}-${leaf.locality}`}
-                                              locality={leaf.locality}
-                                              pathLabel={`${leaf.city}, ${leaf.state}`}
-                                              listingCount={leaf.listingCount}
-                                              query=""
-                                              checked={selectedLocalitySet.has(leaf.locality)}
-                                              onToggle={() =>
-                                                  toggleLocality(leaf.locality, leaf.city)
-                                              }
-                                          />
-                                      ))}
-                            </div>
-                        </ScrollArea>
-                    </div>
-                )}
-            </DropdownMenuContent>
+                        </div>
+                    ) : (
+                        <div className={WHERE_MENU_LIST_PANEL_CLASS}>
+                            <ScrollArea className="overflow-hidden block-full">
+                                <div className="px-3 pe-3 pbs-0 pbe-3">
+                                    {!isSearching ? (
+                                        <>
+                                            <DropdownMenuCheckboxItem
+                                                checked={isServiceableSelected}
+                                                onCheckedChange={selectServiceableAreas}
+                                                className={rowClass(isServiceableSelected)}
+                                            >
+                                                <LocationIcon checked={isServiceableSelected} />
+                                                <span
+                                                    className="
+                                              flex flex-1 flex-col gap-0.5 text-start min-inline-0
+                                            "
+                                                >
+                                                    <span
+                                                        data-slot="where-location-title"
+                                                        className="
+                                                      truncate text-[15px] leading-snug font-medium
+                                                      text-ink capitalize
+                                                    "
+                                                    >
+                                                        Serviceable areas
+                                                    </span>
+                                                    <span
+                                                        className="
+                                                      truncate text-[13px] leading-snug
+                                                      text-ink-muted
+                                                    "
+                                                        data-muted-line
+                                                    >
+                                                        Default — your coverage areas
+                                                    </span>
+                                                </span>
+                                            </DropdownMenuCheckboxItem>
+                                            <DropdownMenuCheckboxItem
+                                                checked={isAnywhereSelected}
+                                                onCheckedChange={selectAnywhere}
+                                                className={rowClass(isAnywhereSelected)}
+                                            >
+                                                <LocationIcon checked={isAnywhereSelected} />
+                                                <span
+                                                    className="
+                                              flex flex-1 flex-col gap-0.5 text-start min-inline-0
+                                            "
+                                                >
+                                                    <span
+                                                        data-slot="where-location-title"
+                                                        className="
+                                                      truncate text-[15px] leading-snug font-medium
+                                                      text-ink capitalize
+                                                    "
+                                                    >
+                                                        Anywhere
+                                                    </span>
+                                                    <span
+                                                        className="
+                                                      truncate text-[13px] leading-snug
+                                                      text-ink-muted
+                                                    "
+                                                        data-muted-line
+                                                    >
+                                                        All listed properties
+                                                    </span>
+                                                </span>
+                                            </DropdownMenuCheckboxItem>
+                                        </>
+                                    ) : null}
+
+                                    {isSearching ? (
+                                        renderSearchResults({
+                                            hits: searchHits,
+                                            query,
+                                            selectedSet: selectedLocalitySet,
+                                            onToggle: toggleLocality,
+                                        })
+                                    ) : hasListings ? (
+                                        locationLeaves.map((leaf) => (
+                                            <WhereLocationRow
+                                                key={`${leaf.state}-${leaf.city}-${leaf.locality}`}
+                                                locality={leaf.locality}
+                                                pathLabel={`${leaf.city}, ${leaf.state}`}
+                                                listingCount={leaf.listingCount}
+                                                query=""
+                                                checked={selectedLocalitySet.has(leaf.locality)}
+                                                onToggle={() =>
+                                                    toggleLocality(leaf.locality, leaf.city)
+                                                }
+                                            />
+                                        ))
+                                    ) : (
+                                        <div className="flex items-center justify-center py-10">
+                                            <WhereMenuEmptyState
+                                                icon={MapPinOff}
+                                                title="No listings yet"
+                                                description="Owner listings will appear here once they are live in a city."
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </ScrollArea>
+                        </div>
+                    )}
+                </DropdownMenuContent>
             </DropdownMenu>
         </div>
     );

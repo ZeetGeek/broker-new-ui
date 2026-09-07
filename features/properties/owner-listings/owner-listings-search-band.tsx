@@ -27,6 +27,20 @@ export type OwnerListingsSearchBandProps = {
     onApplyBand: (band: OwnerListingsBandFilters) => void;
 };
 
+function bandSignature(band: OwnerListingsBandFilters): string {
+    return [
+        band.cities.join(","),
+        band.localities.join(","),
+        band.yourAreas ? "1" : "0",
+        band.bhk.join(","),
+        band.type,
+        band.min,
+        band.max,
+        band.propertyType,
+        band.furnishing,
+    ].join("|");
+}
+
 export function OwnerListingsSearchBand({
     appliedFilters,
     listings,
@@ -45,60 +59,61 @@ export function OwnerListingsSearchBand({
     }, [appliedFilters]);
 
     const updateDraft = useCallback((patch: Partial<OwnerListingsBandFilters>) => {
-        setDraft((prev) => {
-            const next = { ...prev, ...patch };
-            draftRef.current = next;
-            return next;
-        });
+        const next = { ...draftRef.current, ...patch };
+        draftRef.current = next;
+        setDraft(next);
     }, []);
 
-    const setLocationFilters = useCallback((cities: string[], localities: string[]) => {
-        setDraft((prev) => {
-            const next = { ...prev, cities, localities };
-            draftRef.current = next;
-            return next;
-        });
-    }, []);
+    const setWhereFilters = useCallback(
+        (next: { cities: string[]; localities: string[]; yourAreas: boolean }) => {
+            const updated = {
+                ...draftRef.current,
+                cities: next.cities,
+                localities: next.localities,
+                yourAreas: next.yourAreas,
+            };
+            draftRef.current = updated;
+            setDraft(updated);
+        },
+        [],
+    );
 
     const toggleBhk = useCallback((value: string) => {
-        setDraft((prev) => {
-            const exists = prev.bhk.includes(value);
-            const next = {
-                ...prev,
-                bhk: exists ? prev.bhk.filter((item) => item !== value) : [...prev.bhk, value],
-            };
-            draftRef.current = next;
-            return next;
-        });
+        const prev = draftRef.current;
+        const exists = prev.bhk.includes(value);
+        const next = {
+            ...prev,
+            bhk: exists ? prev.bhk.filter((item) => item !== value) : [...prev.bhk, value],
+        };
+        draftRef.current = next;
+        setDraft(next);
     }, []);
 
     const clearBhk = useCallback(() => {
-        setDraft((prev) => {
-            const next = { ...prev, bhk: [] as string[] };
-            draftRef.current = next;
-            return next;
-        });
+        const next = { ...draftRef.current, bhk: [] as string[] };
+        draftRef.current = next;
+        setDraft(next);
     }, []);
+
+    const applyDraftIfChanged = useCallback(() => {
+        const current = draftRef.current;
+        const applied = extractBandFilters(appliedFilters);
+        if (bandSignature(current) !== bandSignature(applied)) {
+            onApplyBand(current);
+        }
+    }, [appliedFilters, onApplyBand]);
 
     const handleSearch = useCallback(() => {
         onApplyBand(draftRef.current);
     }, [onApplyBand]);
 
-    const handleWhereOpenChange = useCallback(
+    const handleMenuOpenChange = useCallback(
         (open: boolean) => {
-            if (open) return;
-
-            const current = draftRef.current;
-            const applied = extractBandFilters(appliedFilters);
-            const locationChanged =
-                current.cities.join("|") !== applied.cities.join("|") ||
-                current.localities.join("|") !== applied.localities.join("|");
-
-            if (locationChanged) {
-                onApplyBand(current);
+            if (!open) {
+                applyDraftIfChanged();
             }
         },
-        [appliedFilters, onApplyBand],
+        [applyDraftIfChanged],
     );
 
     return (
@@ -114,39 +129,38 @@ export function OwnerListingsSearchBand({
                         listings={listings}
                         selectedCities={draft.cities}
                         selectedLocalities={draft.localities}
-                        onLocationChange={setLocationFilters}
-                        onOpenChange={handleWhereOpenChange}
+                        yourAreas={draft.yourAreas}
+                        onWhereChange={setWhereFilters}
+                        onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
                 </div>
 
                 <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="hidden flex-1 p-0.5 min-inline-0 min-inline-32 md:block">
+                <div className="hidden flex-1 p-0.5 min-inline-32 md:block">
                     <OwnerListingsLookingForMenu
                         value={draft.type}
                         onValueChange={(type) => {
                             const budgetNeedsReset =
                                 (draft.type === "rent") !== (type === "rent") &&
                                 (Boolean(draft.min) || Boolean(draft.max));
-                            updateDraft(
-                                budgetNeedsReset
-                                    ? { type, min: "", max: "" }
-                                    : { type },
-                            );
+                            updateDraft(budgetNeedsReset ? { type, min: "", max: "" } : { type });
                         }}
+                        onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
                 </div>
 
                 <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="flex flex-1 p-0.5 min-inline-0 min-inline-36">
+                <div className="flex flex-1 p-0.5 min-inline-36">
                     <OwnerListingsBudgetMenu
                         min={draft.min}
                         max={draft.max}
                         lookingFor={draft.type}
                         onBudgetChange={({ min, max }) => updateDraft({ min, max })}
+                        onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
                 </div>
@@ -158,6 +172,7 @@ export function OwnerListingsSearchBand({
                         value={draft.bhk}
                         onToggle={toggleBhk}
                         onClear={clearBhk}
+                        onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
                 </div>
@@ -168,6 +183,7 @@ export function OwnerListingsSearchBand({
                     <OwnerListingsPropertyTypeMenu
                         value={draft.propertyType}
                         onValueChange={(propertyType) => updateDraft({ propertyType })}
+                        onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
                 </div>
@@ -178,6 +194,7 @@ export function OwnerListingsSearchBand({
                     <OwnerListingsFurnishingMenu
                         value={draft.furnishing}
                         onValueChange={(furnishing) => updateDraft({ furnishing })}
+                        onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
                 </div>

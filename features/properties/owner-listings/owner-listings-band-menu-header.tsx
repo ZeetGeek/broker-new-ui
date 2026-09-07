@@ -18,7 +18,7 @@ export function OwnerListingsBandMenuHeader({
 }: OwnerListingsBandMenuHeaderProps) {
     return (
         <div className={cn("flex items-center justify-between gap-3", className)}>
-            <p className="body-sm min-w-0 text-pretty text-ink-muted">{description}</p>
+            <p className="body-sm text-pretty text-ink-muted min-inline-0">{description}</p>
             <Button
                 type="button"
                 variant="link"

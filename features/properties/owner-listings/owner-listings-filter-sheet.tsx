@@ -7,10 +7,10 @@ import {
     CalendarDays,
     DoorOpen,
     KeyRound,
+    type LucideIcon,
     MapPinned,
     Ruler,
     XIcon,
-    type LucideIcon,
 } from "lucide-react";
 
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
@@ -108,7 +108,8 @@ const EMPTY_SHEET_FILTERS: OwnerListingsSheetFilters = {
     readyToMove: false,
 };
 
-const SELECT_TRANSITION = "transition-[background-color,border-color,color,box-shadow] duration-160";
+const SELECT_TRANSITION =
+    "transition-[background-color,border-color,color,box-shadow] duration-160";
 
 export type OwnerListingsFilterSheetProps = {
     open: boolean;
@@ -133,7 +134,7 @@ function FilterPanel({
     return (
         <section
             className={cn(
-                "flex block-full flex-col gap-4 rounded-card border border-border-warm p-4 sm:p-5",
+                "flex flex-col gap-4 rounded-card border border-border-warm p-4 block-full sm:p-5",
                 className,
             )}
         >
@@ -141,7 +142,7 @@ function FilterPanel({
                 <h3 className="font-display text-base font-medium text-ink">{title}</h3>
                 {subtitle ? <p className="body-sm text-ink-muted">{subtitle}</p> : null}
             </div>
-            <div className="flex min-block-0 flex-1 flex-col gap-3">{children}</div>
+            <div className="flex flex-1 flex-col gap-3 min-block-0">{children}</div>
         </section>
     );
 }
@@ -168,7 +169,10 @@ function ChoiceChip({
                 SELECT_TRANSITION,
                 active
                     ? "border-brand bg-brand-soft text-brand-text"
-                    : "border-border-warm bg-transparent text-ink-muted hover:border-brand/40 hover:text-ink",
+                    : `
+                      border-border-warm bg-transparent text-ink-muted
+                      hover:border-brand/40 hover:text-ink
+                    `,
             )}
         >
             {label}
@@ -195,9 +199,7 @@ function OptionCard({
             aria-pressed={active}
             onClick={onClick}
             className={cn(
-                `
-                  flex block-full flex-col justify-center gap-2 rounded-2xl border p-3.5 text-start
-                `,
+                `flex flex-col justify-center gap-2 rounded-2xl border p-3.5 text-start block-full`,
                 SELECT_TRANSITION,
                 active
                     ? "border-brand bg-brand-soft text-brand-text"
@@ -249,7 +251,7 @@ function DealToggle({
         >
             <button
                 type="button"
-                className="flex min-inline-0 flex-1 items-start gap-3 text-start"
+                className="flex flex-1 items-start gap-3 text-start min-inline-0"
                 onClick={() => onCheckedChange(!active)}
             >
                 <span
@@ -261,7 +263,7 @@ function DealToggle({
                 >
                     <Icon aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
                 </span>
-                <span className="flex min-inline-0 flex-1 flex-col gap-0.5">
+                <span className="flex flex-1 flex-col gap-0.5 min-inline-0">
                     <span
                         className={cn(
                             "text-sm font-semibold",
@@ -355,8 +357,8 @@ export function OwnerListingsFilterSheet({
                     `
                       flex flex-col gap-0 overflow-hidden border-border-warm bg-surface p-0
                       inline-[min(64rem,calc(100vw-1.5rem))]
-                      max-inline-[min(64rem,calc(100vw-1.5rem))]
                       max-block-[min(90dvh,calc(100%-1.5rem))]
+                      max-inline-[min(64rem,calc(100vw-1.5rem))]
                       sm:inline-[min(64rem,calc(100vw-3rem))]
                       sm:max-inline-[min(64rem,calc(100vw-3rem))]
                     `,
@@ -370,7 +372,12 @@ export function OwnerListingsFilterSheet({
                     "
                 >
                     <div className="flex flex-col gap-1">
-                        <DialogTitle className="font-display text-base font-medium text-ink sm:text-lg">
+                        <DialogTitle
+                            className="
+                          font-display text-base font-medium text-ink
+                          sm:text-lg
+                        "
+                        >
                             Advanced filters
                         </DialogTitle>
                         <p className="body-sm text-ink-muted">
@@ -386,9 +393,9 @@ export function OwnerListingsFilterSheet({
                                       flex shrink-0 items-center justify-center rounded-full border
                                       border-border-warm bg-surface text-ink-muted
                                       transition-[background-color,border-color,color,transform]
-                                      duration-160
-                                      block-10 inline-10
-                                      hover:border-brand/40 hover:bg-brand-soft hover:text-brand-text
+                                      duration-160 block-10 inline-10
+                                      hover:border-brand/40 hover:bg-brand-soft
+                                      hover:text-brand-text
                                       focus-visible:ring-2 focus-visible:ring-brand
                                       focus-visible:ring-offset-2 focus-visible:ring-offset-surface
                                       active:scale-[0.94]
@@ -412,7 +419,7 @@ export function OwnerListingsFilterSheet({
 
                 <div
                     className="
-                      flex min-block-0 flex-1 flex-col gap-4 overflow-y-auto bg-surface px-5 py-5
+                      flex flex-1 flex-col gap-4 overflow-y-auto bg-surface p-5 min-block-0
                       sm:gap-5 sm:px-7 sm:py-6
                     "
                 >
@@ -447,11 +454,13 @@ export function OwnerListingsFilterSheet({
                             </div>
                         </FilterPanel>
 
-                        <FilterPanel
-                            title="Listed"
-                            subtitle="How fresh the listing should be"
-                        >
-                            <div className="grid min-block-0 flex-1 auto-rows-fr grid-cols-1 gap-2.5 sm:grid-cols-3">
+                        <FilterPanel title="Listed" subtitle="How fresh the listing should be">
+                            <div
+                                className="
+                              grid flex-1 auto-rows-fr grid-cols-1 gap-2.5 min-block-0
+                              sm:grid-cols-3
+                            "
+                            >
                                 {LISTED_PRESETS.map((preset) => (
                                     <OptionCard
                                         key={preset.value || "any"}
@@ -470,7 +479,12 @@ export function OwnerListingsFilterSheet({
                             subtitle="Minimum rate the owner has shared"
                             className="md:col-span-2"
                         >
-                            <div className="grid min-block-0 flex-1 auto-rows-fr grid-cols-2 gap-2.5 sm:grid-cols-4">
+                            <div
+                                className="
+                              grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 min-block-0
+                              sm:grid-cols-4
+                            "
+                            >
                                 {COMMISSION_PRESETS.map((preset) => (
                                     <OptionCard
                                         key={preset.value || "any"}
@@ -510,8 +524,8 @@ export function OwnerListingsFilterSheet({
 
                 <div
                     className="
-                      shrink-0 flex flex-col-reverse gap-3 border-bs border-border-warm/40 bg-surface
-                      px-5 py-4
+                      flex shrink-0 flex-col-reverse gap-3 border-bs border-border-warm/40
+                      bg-surface px-5 py-4
                       sm:flex-row sm:items-center sm:justify-between sm:px-7
                     "
                 >
@@ -529,9 +543,9 @@ export function OwnerListingsFilterSheet({
                         type="button"
                         size="lg"
                         className="
-                          bg-brand text-surface rounded-full px-8
-                          sm:min-inline-56
+                          rounded-full bg-brand px-8 text-surface
                           hover:bg-brand-text
+                          sm:min-inline-56
                         "
                         onClick={handleApply}
                     >

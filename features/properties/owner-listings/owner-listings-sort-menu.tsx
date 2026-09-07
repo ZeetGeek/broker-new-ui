@@ -13,7 +13,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { ownerListingsChipClassName } from "@/features/properties/owner-listings/owner-listings-chip-styles";
-import type { OwnerListingSort, OwnerListingsFilters } from "@/features/properties/owner-listings/types";
+import type {
+    OwnerListingsFilters,
+    OwnerListingSort,
+} from "@/features/properties/owner-listings/types";
 
 export type OwnerListingsSortMenuProps = {
     filters: OwnerListingsFilters;
@@ -27,7 +30,11 @@ const SORT_OPTIONS: { value: OwnerListingSort; label: string }[] = [
     { value: "price_desc", label: "Price high" },
 ];
 
-export function OwnerListingsSortMenu({ filters, onSortChange, className }: OwnerListingsSortMenuProps) {
+export function OwnerListingsSortMenu({
+    filters,
+    onSortChange,
+    className,
+}: OwnerListingsSortMenuProps) {
     const isDefaultSort = filters.sort === "newest";
 
     return (
@@ -43,10 +50,18 @@ export function OwnerListingsSortMenu({ filters, onSortChange, className }: Owne
                             className,
                         )}
                     >
-                        <ArrowDownUp aria-hidden className="block-4 inline-4 text-brand" strokeWidth={1.75} />
+                        <ArrowDownUp
+                            aria-hidden
+                            className="text-brand block-4 inline-4"
+                            strokeWidth={1.75}
+                        />
                         <span className="hidden sm:inline">{formatSortLabel(filters.sort)}</span>
                         <span className="sm:hidden">Sort</span>
-                        <ChevronDown aria-hidden className="block-3.5 inline-3.5 opacity-60" strokeWidth={1.75} />
+                        <ChevronDown
+                            aria-hidden
+                            className="opacity-60 block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
                     </button>
                 }
             />
