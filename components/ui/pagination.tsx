@@ -12,7 +12,7 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
             role="navigation"
             aria-label="pagination"
             data-slot="pagination"
-            className={cn("mx-auto flex w-full justify-center", className)}
+            className={cn("mx-auto flex justify-center inline-full", className)}
             {...props}
         />
     );
@@ -37,12 +37,7 @@ type PaginationLinkProps = {
 } & Pick<React.ComponentProps<typeof Button>, "size"> &
     React.ComponentProps<"a">;
 
-function PaginationLink({
-    className,
-    isActive,
-    size = "icon",
-    ...props
-}: PaginationLinkProps) {
+function PaginationLink({ className, isActive, size = "icon", ...props }: PaginationLinkProps) {
     return (
         <Button
             variant={isActive ? "accent" : "ghost"}
@@ -110,10 +105,9 @@ function PaginationEllipsis({ className, ...props }: React.ComponentProps<"span"
             data-slot="pagination-ellipsis"
             className={cn(
                 `
-                  flex items-center justify-center rounded-full text-ink-subtle
-                  block-control-md inline-control-md
-                  [&_svg:not([class*='size-'])]:block-4
-                  [&_svg:not([class*='size-'])]:inline-4
+                  flex items-center justify-center rounded-full text-ink-subtle block-control-md
+                  inline-control-md
+                  [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
                 `,
                 className,
             )}

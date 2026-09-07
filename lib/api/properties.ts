@@ -68,6 +68,8 @@ export type PropertyBrowseQuery = {
     search?: string;
     city?: string[];
     locality?: string[];
+    /** Skip broker service-area scope (Where → Anywhere). */
+    allAreas?: boolean;
     transactionType?: "sale" | "rent" | "both";
     propertyType?: string;
     subtype?: string;
@@ -91,6 +93,7 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     if (params.locality?.length) {
         params.locality.forEach((locality) => q.append("locality", locality));
     }
+    if (params.allAreas) q.set("allAreas", "1");
     if (params.transactionType) q.set("transactionType", params.transactionType);
     if (params.propertyType) q.set("propertyType", params.propertyType);
     if (params.subtype) q.set("subtype", params.subtype);

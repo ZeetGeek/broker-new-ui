@@ -9,9 +9,9 @@ export const OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET = 18;
  */
 export const OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS = cn(
     "min-inline-0!",
-    "w-[calc(var(--anchor-width)+2rem)]!",
-    "min-w-[calc(var(--anchor-width)+2rem)]!",
-    "max-w-[min(calc(var(--anchor-width)+2rem),calc(100vw-1.5rem))]!",
+    "inline-[calc(var(--anchor-width)+2rem)]!",
+    "min-inline-[calc(var(--anchor-width)+2rem)]!",
+    "max-inline-[min(calc(var(--anchor-width)+2rem),calc(100vw-1.5rem))]!",
 );
 
 /** Shared popup surface for owner-listings filter band — matches profile menu motion. */
@@ -26,7 +26,9 @@ export const OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS = cn(
     "**:data-[slot$=-item]:not([data-checked]):data-highlighted:text-ink!",
     "**:data-[slot$=-item]:not([data-checked]):focus:bg-surface-muted!",
     "**:data-[slot$=-item]:not([data-checked]):focus:text-ink!",
-    "**:data-[slot=dropdown-menu-checkbox-item]:not([data-checked]):data-highlighted:bg-surface-muted!",
+    `
+      **:data-[slot=dropdown-menu-checkbox-item]:not([data-checked]):data-highlighted:bg-surface-muted!
+    `,
     "**:data-[slot=dropdown-menu-checkbox-item]:not([data-checked]):data-highlighted:text-ink!",
     "**:data-[slot=dropdown-menu-checkbox-item]:not([data-checked]):focus:bg-surface-muted!",
     "**:data-[slot=dropdown-menu-checkbox-item]:not([data-checked]):focus:text-ink!",

@@ -148,7 +148,6 @@ export function BudgetRotaryKnob({
 
     const trackStart = POINTER_OFFSET_DEG;
     const trackEnd = POINTER_OFFSET_DEG + KNOB_MAX_DEG;
-    const progressEnd = POINTER_OFFSET_DEG + angle;
     const size = 196;
     const cx = size / 2;
     const cy = size / 2;

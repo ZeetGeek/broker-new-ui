@@ -1,6 +1,6 @@
 "use client";
 
-import { type MouseEvent, type PointerEvent, useCallback, useEffect, useState } from "react";
+import { type MouseEvent, type PointerEvent, useEffect, useState } from "react";
 import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
@@ -287,23 +287,23 @@ function BrowsePropertyCardPhoto({
         watchDrag: canCarousel,
     });
 
-    const syncCarouselState = useCallback(() => {
-        if (!emblaApi) return;
-        setSelectedIndex(emblaApi.selectedScrollSnap());
-        setCanScrollPrev(emblaApi.canScrollPrev());
-        setCanScrollNext(emblaApi.canScrollNext());
-    }, [emblaApi]);
-
     useEffect(() => {
         if (!emblaApi) return;
-        syncCarouselState();
-        emblaApi.on("select", syncCarouselState);
-        emblaApi.on("reInit", syncCarouselState);
-        return () => {
-            emblaApi.off("select", syncCarouselState);
-            emblaApi.off("reInit", syncCarouselState);
+        const onSelect = () => {
+            setSelectedIndex(emblaApi.selectedScrollSnap());
+            setCanScrollPrev(emblaApi.canScrollPrev());
+            setCanScrollNext(emblaApi.canScrollNext());
         };
-    }, [emblaApi, syncCarouselState]);
+        emblaApi.on("select", onSelect);
+        emblaApi.on("reInit", onSelect);
+        // Defer initial sync so we don't setState synchronously in the effect body.
+        const frame = requestAnimationFrame(onSelect);
+        return () => {
+            cancelAnimationFrame(frame);
+            emblaApi.off("select", onSelect);
+            emblaApi.off("reInit", onSelect);
+        };
+    }, [emblaApi]);
 
     const stopLinkNav = (event: MouseEvent | PointerEvent) => {
         event.preventDefault();
@@ -668,10 +668,7 @@ function BrowsePropertyCard({
             <Link
                 href={detailsHref}
                 prefetch={false}
-                className={cn(
-                    "group block shrink-0 min-inline-0",
-                    isListView && "self-start",
-                )}
+                className={cn("group block shrink-0 min-inline-0", isListView && "self-start")}
             >
                 <BrowsePropertyCardPhoto
                     listing={listing}
@@ -825,7 +822,7 @@ function PropertyCardPhoto({
 
 function PropertyCardOwnerBlock({
     owner,
-    variant,
+    variant: _variant,
 }: {
     owner: PropertyCardOwner;
     variant: "represented";
@@ -920,7 +917,7 @@ function RepresentedMeta({ listing }: { listing: RepresentedPropertyCardListing 
 function RepresentedPropertyCard({
     listing,
     layout = "grid",
-    detailsHref,
+    detailsHref: _detailsHref,
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     onShare,

@@ -39,6 +39,12 @@ const UI_TO_SUBTYPE: Partial<Record<OwnerListingPropertyType, string>> = {
     penthouse: "penthouse",
 };
 
+const UI_TO_PROPERTY_TYPE: Partial<Record<OwnerListingPropertyType, string>> = {
+    shop: "commercial",
+    office: "commercial",
+    plot: "land",
+};
+
 const DEFAULT_BROKER_SLOTS_TOTAL = 3;
 /** Matches backend `PropertyService.NEW_LISTING_MAX_AGE_MS` (created within 7 days). */
 const NEW_LISTING_MAX_AGE_HOURS = 7 * 24;
@@ -124,6 +130,20 @@ export function propertyTypeToApiSubtype(
 ): string | undefined {
     if (!propertyType) return undefined;
     return UI_TO_SUBTYPE[propertyType];
+}
+
+/** Maps UI property-type chips to browse API `propertyType` / `subtype` filters. */
+export function propertyTypeToApiFilters(propertyType: OwnerListingPropertyType | ""): {
+    propertyType?: string;
+    subtype?: string;
+} {
+    if (!propertyType) return {};
+    const subtype = UI_TO_SUBTYPE[propertyType];
+    const category = UI_TO_PROPERTY_TYPE[propertyType];
+    return {
+        ...(subtype ? { subtype } : {}),
+        ...(category ? { propertyType: category } : {}),
+    };
 }
 
 function mapPricing(listing: PropertyBrowseListing): {

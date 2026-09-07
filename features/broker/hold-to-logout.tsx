@@ -76,25 +76,6 @@ export function HoldToLogout({ disabled = false, onComplete }: HoldToLogoutProps
         await onComplete();
     }, [disabled, onComplete]);
 
-    const tick = useCallback(() => {
-        if (holdStartRef.current === null) return;
-
-        const elapsed = performance.now() - holdStartRef.current;
-        const nextProgress = Math.min(100, (elapsed / holdDurationMs) * 100);
-        setProgress(nextProgress);
-        if (fillRef.current) {
-            fillRef.current.style.width = `${nextProgress}%`;
-        }
-
-        if (nextProgress >= 100) {
-            rafRef.current = null;
-            void finishHold();
-            return;
-        }
-
-        rafRef.current = requestAnimationFrame(tick);
-    }, [finishHold, holdDurationMs]);
-
     const startHold = useCallback(
         (pointerId: number | null, target: HTMLElement) => {
             if (disabled || completedRef.current) return;
@@ -104,9 +85,29 @@ export function HoldToLogout({ disabled = false, onComplete }: HoldToLogoutProps
             setIsComplete(false);
             setIsHolding(true);
             holdStartRef.current = performance.now();
-            rafRef.current = requestAnimationFrame(tick);
+
+            const loop = (now: number) => {
+                if (holdStartRef.current === null) return;
+
+                const elapsed = now - holdStartRef.current;
+                const nextProgress = Math.min(100, (elapsed / holdDurationMs) * 100);
+                setProgress(nextProgress);
+                if (fillRef.current) {
+                    fillRef.current.style.width = `${nextProgress}%`;
+                }
+
+                if (nextProgress >= 100) {
+                    rafRef.current = null;
+                    void finishHold();
+                    return;
+                }
+
+                rafRef.current = requestAnimationFrame(loop);
+            };
+
+            rafRef.current = requestAnimationFrame(loop);
         },
-        [disabled, tick],
+        [disabled, finishHold, holdDurationMs],
     );
 
     useEffect(() => {

@@ -85,9 +85,10 @@ export function PropertySharePopover({ listing, className }: PropertySharePopove
         return () => window.clearTimeout(timer);
     }, [copied]);
 
-    useEffect(() => {
-        if (!open) setCopied(false);
-    }, [open]);
+    const handleOpenChange = useCallback((nextOpen: boolean) => {
+        setOpen(nextOpen);
+        if (!nextOpen) setCopied(false);
+    }, []);
 
     const handleCopyLink = useCallback(async () => {
         await copyText(shareUrl);
@@ -167,7 +168,7 @@ export function PropertySharePopover({ listing, className }: PropertySharePopove
                     size="sm"
                     aria-label="Share listing"
                     aria-haspopup="menu"
-                    className={cn("h-auto gap-1.5 p-0 font-medium", className)}
+                    className={cn("gap-1.5 p-0 font-medium block-auto", className)}
                 />
             }
         >
@@ -177,7 +178,7 @@ export function PropertySharePopover({ listing, className }: PropertySharePopove
     );
 
     return (
-        <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenu open={open} onOpenChange={handleOpenChange}>
             <Tooltip open={open ? false : undefined}>
                 <TooltipTrigger render={trigger} />
                 <TooltipContent side="bottom">Share this listing with a client</TooltipContent>
@@ -193,14 +194,16 @@ export function PropertySharePopover({ listing, className }: PropertySharePopove
                       p-1.5 text-ink shadow-md ring-0 min-inline-52
                     `,
                     "before:backdrop-blur-none",
-                    "data-closed:animate-none! data-open:animate-none!",
+                    "data-open:animate-none! data-closed:animate-none!",
                 )}
             >
                 <div className="flex flex-col gap-0.5">
                     {channels.map((channel) => {
                         const mark = channel.icon ? (
                             <span
-                                className="flex shrink-0 items-center justify-center block-5 inline-5"
+                                className="
+                                  flex shrink-0 items-center justify-center block-5 inline-5
+                                "
                                 aria-hidden
                             >
                                 <Icon

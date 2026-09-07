@@ -50,25 +50,8 @@ function resolveBlockedReason(
     return null;
 }
 
-function useIsMobile() {
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const mediaQuery = window.matchMedia("(max-width: 47.9375rem)");
-        const update = () => setIsMobile(mediaQuery.matches);
-        update();
-        mediaQuery.addEventListener("change", update);
-        return () => mediaQuery.removeEventListener("change", update);
-    }, []);
-
-    return isMobile;
-}
-
 const EMPTY_SERVICE_AREAS: string[] = [];
 const EMPTY_LOCATION_LISTINGS: OwnerListingItem[] = [];
-
-/** Static page count so the pager stays visible while the pool is small. */
-const STATIC_OWNER_LISTINGS_PAGES = 10;
 
 const EMPTY_POOL_SUMMARY: OwnerListingsPoolSummary = {
     slotsOpenCount: 0,
@@ -93,6 +76,8 @@ function OwnerListingsResults({
     filterContext,
     hasActiveFilters,
     onClearFilters,
+    onPageChange,
+    onPageSizeChange,
     onLoaded,
     onLoadingChange,
     view,
@@ -103,6 +88,8 @@ function OwnerListingsResults({
     filterContext: OwnerListingsFilterContext;
     hasActiveFilters: boolean;
     onClearFilters: () => void;
+    onPageChange: (page: number) => void;
+    onPageSizeChange: (pageSize: number) => void;
     onLoaded: (result: OwnerListingsResult) => void;
     onLoadingChange: (isLoading: boolean) => void;
     view: OwnerListingsView;
@@ -110,9 +97,8 @@ function OwnerListingsResults({
     const [result, setResult] = useState<OwnerListingsResult | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isFetching, setIsFetching] = useState(true);
-    // Static pager for UI — always visible while listing volume is low.
-    const [staticPage, setStaticPage] = useState(1);
-    const [staticPageSize, setStaticPageSize] = useState(10);
+
+    const currentPage = filters.cursor ? Number(filters.cursor) || 1 : 1;
 
     useEffect(() => {
         let cancelled = false;
@@ -149,10 +135,6 @@ function OwnerListingsResults({
         };
     }, [filterSignature, serviceAreasKey, filters, filterContext, onLoaded, onLoadingChange]);
 
-    useEffect(() => {
-        setStaticPage(1);
-    }, [filterSignature]);
-
     if (error) {
         return (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -178,12 +160,12 @@ function OwnerListingsResults({
             <div
                 className={view === "list" ? OWNER_LISTINGS_LIST_CLASS : OWNER_LISTINGS_GRID_CLASS}
             >
-                {Array.from({ length: view === "list" ? 6 : 10 }).map((_, index) => (
+                {Array.from({ length: view === "list" ? 6 : filters.limit }).map((_, index) => (
                     <div
                         key={index}
                         className={cn(
                             "animate-pulse rounded-card bg-surface-muted",
-                            view === "list" ? "min-h-52" : "block-80",
+                            view === "list" ? "min-block-52" : "block-80",
                         )}
                         aria-hidden
                     />
@@ -210,17 +192,16 @@ function OwnerListingsResults({
             )}
         >
             <OwnerListingsGrid items={result.items} view={view} />
-            <AppPagination
-                page={staticPage}
-                totalPages={STATIC_OWNER_LISTINGS_PAGES}
-                onPageChange={setStaticPage}
-                pageSize={staticPageSize}
-                onPageSizeChange={(next) => {
-                    setStaticPageSize(next);
-                    setStaticPage(1);
-                }}
-                aria-label="Owner listings pages"
-            />
+            {result.totalPages > 0 ? (
+                <AppPagination
+                    page={Math.min(currentPage, result.totalPages)}
+                    totalPages={result.totalPages}
+                    onPageChange={onPageChange}
+                    pageSize={filters.limit}
+                    onPageSizeChange={onPageSizeChange}
+                    aria-label="Owner listings pages"
+                />
+            ) : null}
         </div>
     );
 }
@@ -231,7 +212,6 @@ export function OwnerListingsPage() {
     const dashboardData = useAppSelector((state) => state.dashboard.data);
     const authUser = useAppSelector((state) => state.auth.user);
     const dashboardStatus = useAppSelector((state) => state.dashboard.status);
-    const isMobile = useIsMobile();
 
     const {
         filters,
@@ -274,28 +254,13 @@ export function OwnerListingsPage() {
 
     const handleApplyBand = useCallback(
         (band: OwnerListingsBandFilters) => {
-            const hasLocationFilter = band.cities.length > 0 || band.localities.length > 0;
-            const next = {
+            applyFilters({
                 ...filters,
                 ...band,
                 cursor: "",
-                ...(hasLocationFilter ? { yourAreas: false } : {}),
-            };
-
-            if (isMobile) {
-                applyFilters({
-                    ...next,
-                    cities: band.cities,
-                    localities: band.localities,
-                    min: band.min,
-                    max: band.max,
-                });
-                return;
-            }
-
-            applyFilters(next);
+            });
         },
-        [applyFilters, filters, isMobile],
+        [applyFilters, filters],
     );
 
     const handleApplySheet = useCallback(
@@ -308,6 +273,34 @@ export function OwnerListingsPage() {
     const handleSortChange = useCallback(
         (sort: OwnerListingSort) => {
             applyFilters({ ...filters, sort, cursor: "" });
+        },
+        [applyFilters, filters],
+    );
+
+    const handlePageChange = useCallback(
+        (page: number) => {
+            const nextPage = Math.max(1, page);
+            applyFilters({
+                ...filters,
+                cursor: nextPage <= 1 ? "" : String(nextPage),
+            });
+            if (typeof window !== "undefined") {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+        },
+        [applyFilters, filters],
+    );
+
+    const handlePageSizeChange = useCallback(
+        (pageSize: number) => {
+            applyFilters({
+                ...filters,
+                limit: pageSize,
+                cursor: "",
+            });
+            if (typeof window !== "undefined") {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
         },
         [applyFilters, filters],
     );
@@ -408,6 +401,8 @@ export function OwnerListingsPage() {
                 filterContext={filterContext}
                 hasActiveFilters={hasActiveFilters}
                 onClearFilters={clearFilters}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
                 onLoaded={handleLoaded}
                 onLoadingChange={setIsResultsLoading}
                 view={view}

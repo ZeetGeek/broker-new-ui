@@ -1,13 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 
-import {
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 
 import { spring } from "@/lib/motion/tokens";
@@ -29,7 +24,7 @@ const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 50] as const;
 const controlChipClass = cn(
     `
       rounded-full border border-border-warm bg-surface font-semibold text-ink shadow-sm
-      outline-none transition-[background-color,border-color,color] duration-160
+      transition-[background-color,border-color,color] duration-160 outline-none
       hover:border-ink/25 hover:bg-surface-muted/60
       focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/30
     `,
@@ -38,24 +33,23 @@ const controlChipClass = cn(
 /** Outer shell — same as owner-listings view toggle. */
 const arrowGroupClass = cn(
     `
-      inline-flex shrink-0 items-center gap-1 rounded-full border border-border-warm
-      bg-surface p-1 shadow-sm
+      inline-flex shrink-0 items-center gap-1 rounded-full border border-border-warm bg-surface p-1
+      shadow-sm
     `,
 );
 
 /** Page-number cluster — same height as arrow groups, a bit more inner padding. */
 const pageGroupClass = cn(
     `
-      inline-flex shrink-0 items-center gap-0.5 rounded-full border border-border-warm
-      bg-surface px-1.5 py-1 shadow-sm
+      inline-flex shrink-0 items-center gap-0.5 rounded-full border border-border-warm bg-surface
+      px-1.5 py-1 shadow-sm
     `,
 );
 
 const arrowButtonClass = cn(
     `
       inline-flex shrink-0 items-center justify-center rounded-full border border-transparent
-      text-ink-muted outline-none transition-[color] duration-160
-      block-8 inline-8
+      text-ink-muted transition-[color] duration-160 outline-none block-8 inline-8
       focus-visible:ring-2 focus-visible:ring-brand
       disabled:pointer-events-none disabled:opacity-35
       data-[checked=true]:text-brand-text
@@ -64,9 +58,8 @@ const arrowButtonClass = cn(
 
 const pageButtonClass = cn(
     `
-      inline-flex items-center justify-center rounded-full outline-none
-      transition-[color] duration-160 body-sm block-8 min-inline-8 px-2.5 font-semibold
-      tabular-nums
+      body-sm inline-flex items-center justify-center rounded-full px-2.5 font-semibold tabular-nums
+      transition-[color] duration-160 outline-none block-8 min-inline-8
       focus-visible:ring-2 focus-visible:ring-brand
     `,
 );
@@ -102,10 +95,13 @@ export function AppPagination({
     const safeTotal = Math.max(0, totalPages);
     const current = safeTotal === 0 ? 1 : Math.min(Math.max(1, page), safeTotal);
     const [pageDraft, setPageDraft] = useState(String(current));
+    const [syncedPage, setSyncedPage] = useState(current);
 
-    useEffect(() => {
+    // Keep the draft input aligned when the controlled page changes (React render-time sync).
+    if (current !== syncedPage) {
+        setSyncedPage(current);
         setPageDraft(String(current));
-    }, [current]);
+    }
 
     if (safeTotal <= 0) return null;
 
@@ -132,14 +128,19 @@ export function AppPagination({
             aria-label={ariaLabel}
             className={cn(
                 `
-                  grid w-full grid-cols-1 items-center gap-4 bg-transparent p-0
+                  grid grid-cols-1 items-center gap-4 bg-transparent p-0 inline-full
                   lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-6
                 `,
                 className,
             )}
         >
             {/* Left — showing page N of M */}
-            <div className="flex flex-wrap items-center justify-center gap-2 body-sm text-ink-muted lg:justify-start">
+            <div
+                className="
+                  body-sm flex flex-wrap items-center justify-center gap-2 text-ink-muted
+                  lg:justify-start
+                "
+            >
                 <label htmlFor={pageInputId} className="whitespace-nowrap">
                     Showing page
                 </label>
@@ -159,10 +160,7 @@ export function AppPagination({
                     aria-label="Current page"
                     className={cn(
                         controlChipClass,
-                        `
-                          body-sm px-3 text-center tabular-nums
-                          block-10 inline-14
-                        `,
+                        `body-sm px-3 text-center tabular-nums block-10 inline-14`,
                     )}
                 />
                 <span className="whitespace-nowrap tabular-nums">of {safeTotal}</span>
@@ -217,8 +215,8 @@ export function AppPagination({
                                     data-id={`ellipsis-${index}`}
                                     aria-hidden
                                     className="
-                                      pointer-events-none inline-flex items-center justify-center
-                                      body-sm text-ink-subtle block-8 min-inline-6
+                                      body-sm pointer-events-none inline-flex items-center
+                                      justify-center text-ink-subtle block-8 min-inline-6
                                     "
                                 >
                                     …
@@ -276,7 +274,12 @@ export function AppPagination({
 
             {/* Right — rows per page */}
             {showPageSize ? (
-                <div className="flex flex-wrap items-center justify-center gap-2 body-sm text-ink-muted lg:justify-end">
+                <div
+                    className="
+                      body-sm flex flex-wrap items-center justify-center gap-2 text-ink-muted
+                      lg:justify-end
+                    "
+                >
                     <label htmlFor={`${pageInputId}-rows`} className="whitespace-nowrap">
                         Rows per page
                     </label>
@@ -294,9 +297,9 @@ export function AppPagination({
                             className={cn(
                                 controlChipClass,
                                 `
-                                  h-9.5 gap-2 border-border-warm bg-surface px-3.5
-                                  font-semibold text-ink tabular-nums shadow-sm
-                                  data-[size=sm]:h-9.5 min-inline-18
+                                  gap-2 border-border-warm bg-surface px-3.5 font-semibold text-ink
+                                  tabular-nums shadow-sm block-9.5 min-inline-18
+                                  data-[size=sm]:block-9.5
                                 `,
                             )}
                         >
