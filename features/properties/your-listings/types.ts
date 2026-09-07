@@ -6,26 +6,44 @@ export type MyListingSort = "newest" | "price_asc" | "price_desc";
 
 export type MyListingTransactionType = "sale" | "rent" | "both";
 
+export type MyListingCategory = "residential" | "commercial" | "industrial" | "land";
+
 export type MyListingPropertyType =
     | "apartment"
     | "villa"
+    | "independent_house"
+    | "builder_floor"
     | "penthouse"
+    | "farmhouse"
+    | "flat"
     | "shop"
     | "office"
-    | "plot";
+    | "showroom"
+    | "warehouse"
+    | "factory"
+    | "plot"
+    | "agricultural";
 
-export type MyListingAmenity =
-    | "parking"
-    | "lift"
-    | "power_backup"
-    | "security"
-    | "gym"
-    | "garden";
+export type MyListingFacing =
+    | "north"
+    | "east"
+    | "south"
+    | "west"
+    | "north_east"
+    | "north_west"
+    | "south_east"
+    | "south_west";
+
+export type MyListingParking = "none" | "1" | "2" | "3plus";
+
+/** Known amenity keys plus free-form custom labels. */
+export type MyListingAmenity = string;
 
 export type MyListingItem = {
     id: string;
     title: string;
     configLabel: string;
+    category: MyListingCategory;
     propertyType: MyListingPropertyType;
     propertyTypeLabel: string;
     bhk: number;
@@ -39,6 +57,13 @@ export type MyListingItem = {
     areaSqft: number;
     furnishing: MyListingFurnishing;
     furnishingLabel: string;
+    bathrooms: number | null;
+    balconies: number | null;
+    floorNumber: number | null;
+    totalFloors: number | null;
+    facing: MyListingFacing | null;
+    parking: MyListingParking;
+    maintenanceInr: number | null;
     description: string;
     amenities: MyListingAmenity[];
     availableFrom: string | null;
@@ -112,8 +137,10 @@ export type BrokerRequestsResult = {
 
 export type CreateMyListingInput = {
     transactionType: MyListingTransactionType;
+    category: MyListingCategory;
     propertyType: MyListingPropertyType;
     bhk: number;
+    title: string;
     locality: string;
     city: string;
     address: string;
@@ -123,6 +150,13 @@ export type CreateMyListingInput = {
     areaSqft: number;
     furnishing: MyListingFurnishing;
     imageSrcs: string[];
+    bathrooms: number | null;
+    balconies: number | null;
+    floorNumber: number | null;
+    totalFloors: number | null;
+    facing: MyListingFacing | null;
+    parking: MyListingParking;
+    maintenanceInr: number | null;
     availableFrom: string | null;
     description: string;
     amenities: MyListingAmenity[];

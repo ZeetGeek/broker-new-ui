@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import Link from "next/link";
 import { Plus } from "lucide-react";
 
-import { BROKER_PROPERTIES_NEW_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { TextLoop } from "@/components/motion-primitives/text-loop";
@@ -99,7 +97,13 @@ function InventoryStatusMeta({ summary }: { summary: MyListingsSummary | null })
     );
 }
 
-export function MyListingsAddFab({ className }: { className?: string }) {
+export function MyListingsAddFab({
+    className,
+    onClick,
+}: {
+    className?: string;
+    onClick: () => void;
+}) {
     return (
         <div
             className={cn(
@@ -125,8 +129,9 @@ export function MyListingsAddFab({ className }: { className?: string }) {
                     <TooltipTrigger
                         delay={200}
                         render={
-                            <Link
-                                href={BROKER_PROPERTIES_NEW_HREF}
+                            <button
+                                type="button"
+                                onClick={onClick}
                                 aria-label="Add property"
                                 title="Add property"
                                 className="
@@ -144,7 +149,7 @@ export function MyListingsAddFab({ className }: { className?: string }) {
                                     className="block-6 inline-6"
                                     strokeWidth={2}
                                 />
-                            </Link>
+                            </button>
                         }
                     />
                     <TooltipContent side="left" sideOffset={12} className="body-sm font-medium">

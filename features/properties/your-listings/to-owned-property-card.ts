@@ -1,15 +1,7 @@
 import type { OwnedPropertyCardListing } from "@/components/shared/property-card";
 
 import type { MyListingItem } from "@/features/properties/your-listings/types";
-
-const TYPE_TITLE: Record<string, string> = {
-    apartment: "Apartment",
-    villa: "Villa",
-    penthouse: "Penthouse",
-    shop: "Shop",
-    office: "Office",
-    plot: "Plot",
-};
+import { PROPERTY_TYPE_LABELS } from "@/lib/validation/property";
 
 export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCardListing {
     const isRent =
@@ -21,7 +13,7 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
 
     return {
         id: item.id,
-        title: `${item.locality} ${TYPE_TITLE[item.propertyType] ?? item.propertyTypeLabel}`,
+        title: `${item.locality} ${PROPERTY_TYPE_LABELS[item.propertyType] ?? item.propertyTypeLabel}`,
         configLabel: item.configLabel,
         /** Lowercase type key — matches browse cards / residential checks. */
         propertyTypeLabel: item.propertyType,

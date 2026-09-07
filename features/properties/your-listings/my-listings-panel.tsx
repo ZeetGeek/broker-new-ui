@@ -7,6 +7,7 @@ import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { AppPagination } from "@/components/shared/app-pagination";
 
+import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
 import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import { MyListingsGrid } from "@/features/properties/your-listings/my-listings-grid";
 import { MyListingsHeader } from "@/features/properties/your-listings/my-listings-header";
@@ -26,6 +27,7 @@ export function MyListingsPanel() {
     const [summary, setSummary] = useState<MyListingsSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [addOpen, setAddOpen] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -95,6 +97,7 @@ export function MyListingsPanel() {
                     variant={hasActiveFilters ? "filtered" : "first_run"}
                     searchQuery={filters.q}
                     onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                    onAddProperty={() => setAddOpen(true)}
                 />
             ) : result ? (
                 <div className={loading ? "opacity-60 transition-opacity duration-160" : undefined}>
@@ -111,7 +114,8 @@ export function MyListingsPanel() {
                     ) : null}
                 </div>
             ) : null}
-            <MyListingsAddFab />
+            <MyListingsAddFab onClick={() => setAddOpen(true)} />
+            <PropertyFormDialog open={addOpen} onOpenChange={setAddOpen} />
         </div>
     );
 }

@@ -1,24 +1,24 @@
+import { buildPropertyTitle } from "@/lib/format/property-title";
+import {
+    PROPERTY_TYPE_LABELS,
+    categoryForPropertyType,
+    needsBhk,
+    type PropertyType,
+} from "@/lib/validation/property";
+
 import type {
     BrokerRequestItem,
     BrokerRequestsResult,
     CreateMyListingInput,
     MyListingAmenity,
+    MyListingCategory,
     MyListingFurnishing,
     MyListingItem,
+    MyListingParking,
     MyListingPropertyType,
     MyListingStatus,
-    MyListingTransactionType,
     UpdateMyListingInput,
 } from "@/features/properties/your-listings/types";
-
-const PROPERTY_TYPE_LABELS: Record<MyListingPropertyType, string> = {
-    apartment: "Apartment",
-    villa: "Villa",
-    penthouse: "Penthouse",
-    shop: "Shop",
-    office: "Office",
-    plot: "Plot",
-};
 
 const FURNISHING_LABELS: Record<MyListingFurnishing, string> = {
     furnished: "Furnished",
@@ -31,21 +31,27 @@ function daysAgoIso(days: number): string {
 }
 
 function configLabelFor(bhk: number, propertyType: MyListingPropertyType): string {
-    if (propertyType === "shop" || propertyType === "office" || propertyType === "plot") {
-        return PROPERTY_TYPE_LABELS[propertyType];
+    if (!needsBhk(propertyType as PropertyType)) {
+        return PROPERTY_TYPE_LABELS[propertyType as PropertyType];
     }
-    return `${bhk} BHK`;
+    return bhk >= 5 ? "5+ BHK" : `${bhk} BHK`;
 }
 
-function buildTitle(
-    bhk: number,
-    propertyType: MyListingPropertyType,
-    locality: string,
-    transactionType: MyListingTransactionType,
-): string {
-    const config = configLabelFor(bhk, propertyType);
-    const rentSuffix = transactionType === "rent" ? " rent" : "";
-    return `${config}${rentSuffix} · ${locality}`;
+function resolveTitle(input: {
+    title?: string;
+    bhk: number;
+    propertyType: MyListingPropertyType;
+    locality: string;
+    city: string;
+}): string {
+    const trimmed = input.title?.trim();
+    if (trimmed) return trimmed;
+    return buildPropertyTitle({
+        bhk: input.bhk,
+        propertyType: input.propertyType as PropertyType,
+        locality: input.locality,
+        city: input.city,
+    });
 }
 
 export function listingFromCreateInput(
@@ -55,13 +61,16 @@ export function listingFromCreateInput(
 ): MyListingItem {
     const imageSrcs = input.imageSrcs.length > 0 ? input.imageSrcs : ["/properties/1.jpg"];
     const status: MyListingStatus = input.publish ? "published" : "draft";
+    const category: MyListingCategory =
+        input.category ?? categoryForPropertyType(input.propertyType as PropertyType);
 
     return {
         id,
-        title: buildTitle(input.bhk, input.propertyType, input.locality, input.transactionType),
+        title: resolveTitle(input),
         configLabel: configLabelFor(input.bhk, input.propertyType),
+        category,
         propertyType: input.propertyType,
-        propertyTypeLabel: PROPERTY_TYPE_LABELS[input.propertyType],
+        propertyTypeLabel: PROPERTY_TYPE_LABELS[input.propertyType as PropertyType],
         bhk: input.bhk,
         locality: input.locality,
         city: input.city,
@@ -73,6 +82,13 @@ export function listingFromCreateInput(
         areaSqft: input.areaSqft,
         furnishing: input.furnishing,
         furnishingLabel: FURNISHING_LABELS[input.furnishing],
+        bathrooms: input.bathrooms,
+        balconies: input.balconies,
+        floorNumber: input.floorNumber,
+        totalFloors: input.totalFloors,
+        facing: input.facing,
+        parking: input.parking,
+        maintenanceInr: input.maintenanceInr,
         description: input.description,
         amenities: input.amenities,
         availableFrom: input.availableFrom,
@@ -91,9 +107,13 @@ export function applyListingUpdate(item: MyListingItem, input: UpdateMyListingIn
     const next: MyListingItem = { ...item };
 
     if (input.transactionType != null) next.transactionType = input.transactionType;
+    if (input.category != null) next.category = input.category;
     if (input.propertyType != null) {
         next.propertyType = input.propertyType;
-        next.propertyTypeLabel = PROPERTY_TYPE_LABELS[input.propertyType];
+        next.propertyTypeLabel = PROPERTY_TYPE_LABELS[input.propertyType as PropertyType];
+        if (input.category == null) {
+            next.category = categoryForPropertyType(input.propertyType as PropertyType);
+        }
     }
     if (input.bhk != null) next.bhk = input.bhk;
     if (input.locality != null) next.locality = input.locality;
@@ -112,6 +132,13 @@ export function applyListingUpdate(item: MyListingItem, input: UpdateMyListingIn
         next.imageSrc = next.imageSrcs[0]!;
         next.photoCount = next.imageSrcs.length;
     }
+    if (input.bathrooms !== undefined) next.bathrooms = input.bathrooms;
+    if (input.balconies !== undefined) next.balconies = input.balconies;
+    if (input.floorNumber !== undefined) next.floorNumber = input.floorNumber;
+    if (input.totalFloors !== undefined) next.totalFloors = input.totalFloors;
+    if (input.facing !== undefined) next.facing = input.facing;
+    if (input.parking != null) next.parking = input.parking;
+    if (input.maintenanceInr !== undefined) next.maintenanceInr = input.maintenanceInr;
     if (input.availableFrom !== undefined) next.availableFrom = input.availableFrom;
     if (input.description != null) next.description = input.description;
     if (input.amenities != null) next.amenities = input.amenities;
@@ -120,7 +147,13 @@ export function applyListingUpdate(item: MyListingItem, input: UpdateMyListingIn
     else if (input.publish === false && next.status === "published") next.status = "draft";
 
     next.configLabel = configLabelFor(next.bhk, next.propertyType);
-    next.title = buildTitle(next.bhk, next.propertyType, next.locality, next.transactionType);
+    next.title = resolveTitle({
+        title: input.title ?? next.title,
+        bhk: next.bhk,
+        propertyType: next.propertyType,
+        locality: next.locality,
+        city: next.city,
+    });
     next.updatedAt = new Date().toISOString();
 
     return next;
@@ -137,7 +170,42 @@ const SEED_AMENITIES: MyListingAmenity[][] = [
     ["parking", "security"],
 ];
 
-export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = [
+type SeedDraft = Omit<
+    MyListingItem,
+    | "category"
+    | "bathrooms"
+    | "balconies"
+    | "floorNumber"
+    | "totalFloors"
+    | "facing"
+    | "parking"
+    | "maintenanceInr"
+> & {
+    category?: MyListingCategory;
+    bathrooms?: number | null;
+    balconies?: number | null;
+    floorNumber?: number | null;
+    totalFloors?: number | null;
+    facing?: MyListingItem["facing"];
+    parking?: MyListingParking;
+    maintenanceInr?: number | null;
+};
+
+function hydrateSeed(item: SeedDraft): MyListingItem {
+    return {
+        ...item,
+        category: item.category ?? categoryForPropertyType(item.propertyType as PropertyType),
+        parking: item.parking ?? "1",
+        bathrooms: item.bathrooms ?? null,
+        balconies: item.balconies ?? null,
+        floorNumber: item.floorNumber ?? null,
+        totalFloors: item.totalFloors ?? null,
+        facing: item.facing ?? null,
+        maintenanceInr: item.maintenanceInr ?? null,
+    };
+}
+
+const SEED_DRAFTS: SeedDraft[] = [
     {
         id: "own_001",
         title: "3 BHK · Vesu",
@@ -167,6 +235,12 @@ export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = [
         imageSrcs: ["/properties/1.jpg", "/properties/2.jpg", "/properties/3.jpg"],
         createdAt: daysAgoIso(4),
         updatedAt: daysAgoIso(1),
+        bathrooms: 3,
+        balconies: 2,
+        floorNumber: 6,
+        totalFloors: 12,
+        facing: "north_east",
+        parking: "2",
     },
     {
         id: "own_002",
@@ -196,6 +270,12 @@ export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = [
         imageSrcs: ["/properties/2.jpg", "/properties/4.jpg"],
         createdAt: daysAgoIso(9),
         updatedAt: daysAgoIso(3),
+        bathrooms: 2,
+        balconies: 1,
+        floorNumber: 4,
+        totalFloors: 10,
+        parking: "1",
+        maintenanceInr: 2500,
     },
     {
         id: "own_003",
@@ -225,6 +305,9 @@ export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = [
         imageSrcs: ["/properties/3.jpg"],
         createdAt: daysAgoIso(1),
         updatedAt: daysAgoIso(1),
+        bathrooms: 4,
+        balconies: 3,
+        parking: "2",
     },
     {
         id: "own_004",
@@ -254,6 +337,10 @@ export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = [
         imageSrcs: ["/properties/4.jpg", "/properties/5.jpg"],
         createdAt: daysAgoIso(14),
         updatedAt: daysAgoIso(5),
+        bathrooms: 1,
+        balconies: 1,
+        floorNumber: 1,
+        totalFloors: 7,
     },
     {
         id: "own_005",
@@ -283,6 +370,10 @@ export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = [
         imageSrcs: ["/properties/5.jpg", "/properties/6.jpg"],
         createdAt: daysAgoIso(21),
         updatedAt: daysAgoIso(2),
+        category: "commercial",
+        parking: "none",
+        floorNumber: 0,
+        totalFloors: 3,
     },
     {
         id: "own_006",
@@ -312,6 +403,13 @@ export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = [
         imageSrcs: ["/properties/6.jpg", "/properties/1.jpg", "/properties/2.jpg"],
         createdAt: daysAgoIso(6),
         updatedAt: daysAgoIso(0),
+        bathrooms: 3,
+        balconies: 2,
+        floorNumber: 8,
+        totalFloors: 14,
+        facing: "west",
+        parking: "2",
+        maintenanceInr: 4500,
     },
     {
         id: "own_007",
@@ -341,6 +439,10 @@ export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = [
         imageSrcs: ["/properties/1.jpg"],
         createdAt: daysAgoIso(0),
         updatedAt: daysAgoIso(0),
+        bathrooms: 2,
+        balconies: 1,
+        floorNumber: 3,
+        totalFloors: 9,
     },
     {
         id: "own_008",
@@ -370,8 +472,15 @@ export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = [
         imageSrcs: ["/properties/3.jpg", "/properties/4.jpg"],
         createdAt: daysAgoIso(11),
         updatedAt: daysAgoIso(4),
+        category: "commercial",
+        parking: "1",
+        floorNumber: 3,
+        totalFloors: 8,
+        maintenanceInr: 8000,
     },
 ];
+
+export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = SEED_DRAFTS.map(hydrateSeed);
 
 export const MOCK_BROKER_REQUESTS: BrokerRequestsResult = {
     counts: { approved: 3, pending: 4, declined: 2 },

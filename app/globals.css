@@ -317,3 +317,20 @@
 .tabular {
     font-variant-numeric: tabular-nums;
 }
+
+/* AppModal — SimpleBar track (replaces native scrollbar) */
+.app-modal-simplebar .simplebar-track.simplebar-vertical {
+    inline-size: 0.5rem;
+    inset-e: 0.25rem;
+}
+.app-modal-simplebar .simplebar-scrollbar::before {
+    background: var(--color-brand);
+    opacity: 0.35;
+    inset-inline: 0.1rem;
+}
+.app-modal-simplebar .simplebar-scrollbar.simplebar-visible::before {
+    opacity: 0.55;
+}
+.app-modal-simplebar .simplebar-track.simplebar-horizontal {
+    block-size: 0.5rem;
+}

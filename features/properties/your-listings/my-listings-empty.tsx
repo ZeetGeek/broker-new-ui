@@ -1,8 +1,6 @@
 import { Building2, Search } from "lucide-react";
 import Link from "next/link";
 
-import { BROKER_PROPERTIES_NEW_HREF } from "@/lib/routes/broker";
-
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 
@@ -10,9 +8,15 @@ export type MyListingsEmptyProps = {
     variant: "filtered" | "first_run";
     searchQuery?: string;
     onClearFilters?: () => void;
+    onAddProperty?: () => void;
 };
 
-export function MyListingsEmpty({ variant, searchQuery, onClearFilters }: MyListingsEmptyProps) {
+export function MyListingsEmpty({
+    variant,
+    searchQuery,
+    onClearFilters,
+    onAddProperty,
+}: MyListingsEmptyProps) {
     if (variant === "filtered") {
         return (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -47,7 +51,7 @@ export function MyListingsEmpty({ variant, searchQuery, onClearFilters }: MyList
             <Button
                 size="lg"
                 className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                render={<Link href={BROKER_PROPERTIES_NEW_HREF} />}
+                onClick={onAddProperty}
             >
                 Add property
             </Button>
