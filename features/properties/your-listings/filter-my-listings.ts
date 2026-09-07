@@ -1,9 +1,10 @@
-import type { MyListingsFilters, MyListingSort, MyListingStatus } from "@/features/properties/your-listings/types";
-import { DEFAULT_MY_LISTINGS_FILTERS } from "@/features/properties/your-listings/types";
 import {
     PROPERTY_TYPE_OPTIONS,
     type PropertyType,
 } from "@/lib/validation/property";
+
+import type { MyListingsFilters, MyListingSort, MyListingStatus } from "@/features/properties/your-listings/types";
+import { DEFAULT_MY_LISTINGS_FILTERS } from "@/features/properties/your-listings/types";
 
 function first(value: string | string[] | undefined): string {
     if (Array.isArray(value)) return value[0] ?? "";

@@ -16,7 +16,7 @@ import {
     MyListingsIntro,
 } from "@/features/properties/your-listings/my-listings-intro";
 import { MyListingsResultsSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
-import type { MyListingsResult } from "@/features/properties/your-listings/types";
+import type { MyListingItem, MyListingsResult } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
 import { useMyListingsView } from "@/features/properties/your-listings/use-my-listings-view";
 
@@ -28,6 +28,9 @@ export function MyListingsPanel() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [addOpen, setAddOpen] = useState(false);
+    const [editingListing, setEditingListing] = useState<MyListingItem | null>(null);
+    /** Bumped after a save so the list refetches without changing filters. */
+    const [refreshToken, setRefreshToken] = useState(0);
 
     useEffect(() => {
         let cancelled = false;
@@ -37,7 +40,9 @@ export function MyListingsPanel() {
         return () => {
             cancelled = true;
         };
-    }, [result?.total]);
+        // refreshToken: an edit can flip a listing's status without changing the
+        // total, and the summary counts published/draft separately.
+    }, [result?.total, refreshToken]);
 
     useEffect(() => {
         let cancelled = false;
@@ -62,7 +67,7 @@ export function MyListingsPanel() {
         return () => {
             cancelled = true;
         };
-    }, [filters]);
+    }, [filters, refreshToken]);
 
     return (
         <div className="flex flex-col gap-6">
@@ -101,9 +106,13 @@ export function MyListingsPanel() {
                 />
             ) : result ? (
                 <div className={loading ? "opacity-60 transition-opacity duration-160" : undefined}>
-                    <MyListingsGrid items={result.items} view={view} />
+                    <MyListingsGrid
+                        items={result.items}
+                        view={view}
+                        onEditListing={setEditingListing}
+                    />
                     {result.totalPages > 1 ? (
-                        <div className="pt-6">
+                        <div className="pbs-6">
                             <AppPagination
                                 page={result.page}
                                 totalPages={result.totalPages}
@@ -115,7 +124,25 @@ export function MyListingsPanel() {
                 </div>
             ) : null}
             <MyListingsAddFab onClick={() => setAddOpen(true)} />
-            <PropertyFormDialog open={addOpen} onOpenChange={setAddOpen} />
+            <PropertyFormDialog
+                open={addOpen}
+                onOpenChange={setAddOpen}
+                onSaved={() => {
+                    setAddOpen(false);
+                    setRefreshToken((token) => token + 1);
+                }}
+            />
+            <PropertyFormDialog
+                open={editingListing != null}
+                listing={editingListing}
+                onOpenChange={(next) => {
+                    if (!next) setEditingListing(null);
+                }}
+                onSaved={() => {
+                    setEditingListing(null);
+                    setRefreshToken((token) => token + 1);
+                }}
+            />
         </div>
     );
 }

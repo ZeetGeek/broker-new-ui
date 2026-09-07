@@ -221,6 +221,8 @@ export type PropertyCardProps = {
     onOpenCrm?: () => void;
     crmHref?: string;
     editHref?: string;
+    /** Owned cards: open the edit form in a modal instead of following editHref. */
+    onEdit?: () => void;
 } & (
     | { variant: "browse"; listing: BrowsePropertyCardListing }
     | { variant: "represented"; listing: RepresentedPropertyCardListing }
@@ -1021,10 +1023,15 @@ const OWNED_OPEN_TOOLTIP = "View this listing's full details";
 function OwnedListingAction({
     href,
     isEdit,
+    onEdit,
 }: {
     href: string;
     isEdit: boolean;
+    /** When set, editing opens in place instead of navigating to the edit page. */
+    onEdit?: () => void;
 }) {
+    const opensInModal = isEdit && onEdit != null;
+
     return (
         <TooltipProvider>
             <Tooltip>
@@ -1035,7 +1042,13 @@ function OwnedListingAction({
                                 size="md"
                                 variant="accent"
                                 className="inline-full"
-                                render={<Link href={href} prefetch={false} />}
+                                type={opensInModal ? "button" : undefined}
+                                onClick={opensInModal ? onEdit : undefined}
+                                render={
+                                    opensInModal ? undefined : (
+                                        <Link href={href} prefetch={false} />
+                                    )
+                                }
                             >
                                 {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
                             </Button>
@@ -1085,7 +1098,9 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
 function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
     if (status === "published") {
         return (
-            <Badge className="body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs">
+            <Badge className="
+              body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs
+            ">
                 {OWNED_STATUS_LABEL[status]}
             </Badge>
         );
@@ -1187,6 +1202,7 @@ function OwnedPropertyCard({
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     editHref,
+    onEdit,
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
     const browse = ownedToBrowseListing(listing);
@@ -1207,7 +1223,9 @@ function OwnedPropertyCard({
             <Link
                 href={detailsHref}
                 prefetch={false}
-                className={cn("group relative block shrink-0 min-inline-0", isListView && "self-start")}
+                className={cn("group relative block shrink-0 min-inline-0", isListView && `
+                  self-start
+                `)}
             >
                 <BrowsePropertyCardPhoto
                     listing={browse}
@@ -1215,7 +1233,10 @@ function OwnedPropertyCard({
                     imageSizes={imageSizes}
                     layout={layout}
                 />
-                <div className="pointer-events-none absolute inset-e-3 inset-bs-3 z-20 flex flex-col items-end gap-1.5">
+                <div className="
+                  pointer-events-none absolute inset-e-3 inset-bs-3 z-20 flex flex-col items-end
+                  gap-1.5
+                ">
                     <OwnedStatusBadge status={listing.status} />
                 </div>
             </Link>
@@ -1234,7 +1255,9 @@ function OwnedPropertyCard({
                     >
                         <div className="flex flex-col gap-1.5 min-inline-0">
                             <h3 className="body truncate font-semibold text-ink">{listing.title}</h3>
-                            <p className="body-sm flex items-center gap-1.5 text-ink-muted min-inline-0">
+                            <p className="
+                              body-sm flex items-center gap-1.5 text-ink-muted min-inline-0
+                            ">
                                 <MapPin
                                     aria-hidden
                                     className="shrink-0 block-3.5 inline-3.5"
@@ -1272,6 +1295,7 @@ function OwnedPropertyCard({
                     <OwnedListingAction
                         href={editHref ?? detailsHref}
                         isEdit={Boolean(editHref)}
+                        onEdit={onEdit}
                     />
                 </div>
             </div>

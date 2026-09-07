@@ -18,9 +18,11 @@ import type { MyListingsView } from "@/features/properties/your-listings/use-my-
 export type MyListingsGridProps = {
     items: MyListingItem[];
     view?: MyListingsView;
+    /** When set, "Edit property" opens a modal instead of the edit route. */
+    onEditListing?: (listing: MyListingItem) => void;
 };
 
-export function MyListingsGrid({ items, view = "grid" }: MyListingsGridProps) {
+export function MyListingsGrid({ items, view = "grid", onEditListing }: MyListingsGridProps) {
     const isListView = view === "list";
 
     return (
@@ -36,6 +38,7 @@ export function MyListingsGrid({ items, view = "grid" }: MyListingsGridProps) {
                         listing={listing}
                         detailsHref={brokerPropertyDetailHref(item.id)}
                         editHref={brokerPropertyEditHref(item.id)}
+                        onEdit={onEditListing ? () => onEditListing(item) : undefined}
                         priority={index < 5}
                         imageSizes={
                             isListView

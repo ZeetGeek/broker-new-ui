@@ -14,8 +14,8 @@ import { Button } from "@/components/ui/button";
 import { MyListingsRequestsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import type {
     BrokerRequestItem,
-    BrokerRequestStatusFilter,
     BrokerRequestsResult,
+    BrokerRequestStatusFilter,
 } from "@/features/properties/your-listings/types";
 
 const STATUS_CHIPS: { value: BrokerRequestStatusFilter; label: string }[] = [
@@ -66,7 +66,10 @@ function RequestRow({ item }: { item: BrokerRequestItem }) {
     return (
         <li className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4">
             <RequestIcon type={item.type} />
-            <div className="flex flex-1 flex-col gap-2 min-inline-0 sm:flex-row sm:items-center sm:justify-between">
+            <div className="
+              flex flex-1 flex-col gap-2 min-inline-0
+              sm:flex-row sm:items-center sm:justify-between
+            ">
                 <div className="flex flex-col gap-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <p className="body font-semibold text-ink">{item.title}</p>
@@ -81,7 +84,7 @@ function RequestRow({ item }: { item: BrokerRequestItem }) {
                 <Button
                     size="sm"
                     variant="outline"
-                    className="shrink-0 border-border-warm self-start sm:self-center"
+                    className="shrink-0 self-start border-border-warm sm:self-center"
                     render={<Link href={item.action.href} />}
                 >
                     {item.action.label}
@@ -116,7 +119,9 @@ export function MyListingsRequestsPanel() {
     return (
         <div className="flex flex-col gap-5">
             {counts ? (
-                <div className="flex flex-wrap gap-4 rounded-card border border-border-warm bg-surface px-4 py-3">
+                <div className="
+                  flex flex-wrap gap-4 rounded-card border border-border-warm bg-surface px-4 py-3
+                ">
                     <div>
                         <p className="body-xs text-ink-muted">Approved</p>
                         <p className="tabular h6 font-semibold text-ink">{counts.approved}</p>
@@ -161,7 +166,7 @@ export function MyListingsRequestsPanel() {
                     {Array.from({ length: 4 }).map((_, index) => (
                         <div
                             key={index}
-                            className="h-24 animate-pulse rounded-card bg-surface-muted"
+                            className="animate-pulse rounded-card bg-surface-muted block-24"
                         />
                     ))}
                 </div>
@@ -170,7 +175,7 @@ export function MyListingsRequestsPanel() {
             ) : result && result.items.length === 0 ? (
                 <div className="py-10 text-center">
                     <p className="h6 text-ink">No {status} requests</p>
-                    <p className="body-sm mt-2 text-ink-muted">Try another filter.</p>
+                    <p className="body-sm mbs-2 text-ink-muted">Try another filter.</p>
                 </div>
             ) : result ? (
                 <ul className="flex flex-col gap-3">

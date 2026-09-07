@@ -11,15 +11,21 @@ export function MyListingsPageSkeleton({ view = "grid" }: { view?: MyListingsVie
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="h-8 w-72 max-w-full animate-pulse rounded-control bg-surface-muted" />
-            <div className="flex h-[38px] items-center gap-2.5">
+            <div className="
+              animate-pulse rounded-control bg-surface-muted block-8 inline-72 max-inline-full
+            " />
+            <div className="flex items-center gap-2.5 block-[38px]">
                 {Array.from({ length: 5 }).map((_, index) => (
                     <div
                         key={index}
-                        className="h-[38px] w-28 animate-pulse rounded-full bg-surface-muted"
+                        className="
+                          animate-pulse rounded-full bg-surface-muted block-[38px] inline-28
+                        "
                     />
                 ))}
-                <div className="ms-auto h-[38px] w-52 animate-pulse rounded-full bg-surface-muted" />
+                <div className="
+                  ms-auto animate-pulse rounded-full bg-surface-muted block-[38px] inline-52
+                " />
             </div>
             <div className={isList ? MY_LISTINGS_LIST_CLASS : MY_LISTINGS_GRID_CLASS}>
                 {Array.from({ length: 5 }).map((_, index) => (

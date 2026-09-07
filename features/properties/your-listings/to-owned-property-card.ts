@@ -1,7 +1,8 @@
+import { PROPERTY_TYPE_LABELS } from "@/lib/validation/property";
+
 import type { OwnedPropertyCardListing } from "@/components/shared/property-card";
 
 import type { MyListingItem } from "@/features/properties/your-listings/types";
-import { PROPERTY_TYPE_LABELS } from "@/lib/validation/property";
 
 export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCardListing {
     const isRent =

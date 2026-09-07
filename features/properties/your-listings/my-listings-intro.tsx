@@ -1,15 +1,15 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { type ReactNode,useMemo, useState } from "react";
+
 import { Plus } from "lucide-react";
 
+import type { MyListingsSummary } from "@/lib/api/my-listings";
 import { cn } from "@/lib/utils";
 
 import { TextLoop } from "@/components/motion-primitives/text-loop";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-import type { MyListingsSummary } from "@/lib/api/my-listings";
 
 const SUMMARY_LOOP_INTERVAL_S = 6.5;
 const META_TEXT = "body-sm font-medium text-ink-muted";
@@ -108,9 +108,8 @@ export function MyListingsAddFab({
         <div
             className={cn(
                 `
-                  fixed z-30 size-14
-                  inset-e-8
-                  inset-be-[calc(5.75rem+env(safe-area-inset-bottom))]
+                  fixed inset-e-8 inset-be-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 block-14
+                  inline-14
                   md:inset-e-10 md:inset-be-10
                 `,
                 className,
@@ -119,8 +118,7 @@ export function MyListingsAddFab({
             <span
                 aria-hidden
                 className="
-                  pointer-events-none absolute inset-0 z-0 rounded-full bg-brand
-                  animate-fab-pulse
+                  pointer-events-none absolute inset-0 z-0 animate-fab-pulse rounded-full bg-brand
                   motion-reduce:hidden
                 "
             />
@@ -135,13 +133,14 @@ export function MyListingsAddFab({
                                 aria-label="Add property"
                                 title="Add property"
                                 className="
-                                  relative z-10 flex size-14 items-center justify-center
-                                  rounded-full bg-brand text-surface shadow-lg
-                                  transition-[background-color,transform] duration-160
+                                  relative z-10 flex items-center justify-center rounded-full
+                                  bg-brand text-surface shadow-lg
+                                  transition-[background-color,transform] duration-160 block-14
+                                  inline-14
                                   hover:bg-brand/85
+                                  focus-visible:ring-3 focus-visible:ring-ring/30
+                                  focus-visible:outline-none
                                   active:scale-[0.97]
-                                  focus-visible:outline-none focus-visible:ring-3
-                                  focus-visible:ring-ring/30
                                 "
                             >
                                 <Plus

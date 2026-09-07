@@ -86,6 +86,11 @@ export type PropertyFormProps = {
     /** Required when variant is "dialog" */
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    /**
+     * Called with the saved listing instead of navigating to its detail page.
+     * Set this when the form runs in a modal over a list the caller refreshes.
+     */
+    onSaved?: (listing: MyListingItem) => void;
 };
 
 export function PropertyForm({
@@ -97,6 +102,7 @@ export function PropertyForm({
     className,
     open = false,
     onOpenChange,
+    onSaved,
 }: PropertyFormProps) {
     const router = useRouter();
     const isDialog = variant === "dialog";
@@ -170,6 +176,13 @@ export function PropertyForm({
                         : "Property saved",
                 );
                 onCancel?.();
+                // When the caller handles the result itself (an edit modal opened
+                // over a list), navigating away would throw the user out of the
+                // page they were working in.
+                if (onSaved) {
+                    onSaved(updated);
+                    return;
+                }
                 router.push(brokerPropertyDetailHref(updated.id));
                 return;
             }
@@ -179,6 +192,10 @@ export function PropertyForm({
                 values.publish ? "Property published. Brokers can now see it." : "Property added",
             );
             onCancel?.();
+            if (onSaved) {
+                onSaved(created);
+                return;
+            }
             router.push(brokerPropertyDetailHref(created.id));
         } catch {
             setFormBanner("Something went wrong on our side. Try again in a moment.");
