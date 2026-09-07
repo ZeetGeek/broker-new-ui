@@ -1,36 +1,36 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
-import {
-    Bath,
-    BedDouble,
-    Building2,
-    MapPin,
-    Maximize2,
-    Pencil,
-    Share2,
-    Trash2,
-} from "lucide-react";
+import { ChevronLeft, MapPin } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
-import { formatAreaSqft } from "@/lib/format/area";
+import { toLegacyAmountFields } from "@/lib/format/listing-availability";
+import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import {
-    brokerPropertyEditHref,
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
+    brokerPropertyEditHref,
 } from "@/lib/routes/broker";
-import { buildPropertyShareUrl } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
+import { amenityLabel } from "@/lib/validation/property";
 
-import { AppImage } from "@/components/shared/app-image";
-import { Price } from "@/components/shared/price";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { PropertyActionRail } from "@/features/properties/property-detail/property-action-rail";
+import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
+import {
+    buildPropertyFacts,
+    factColumnsClass,
+    listedAgoLabel,
+} from "@/features/properties/property-detail/property-detail-facts";
+import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
+import { PropertyGallery } from "@/features/properties/property-detail/property-gallery";
+import { PropertyPriceBlock } from "@/features/properties/property-detail/property-price-block";
 import type { MyListingItem, MyListingStatus } from "@/features/properties/your-listings/types";
 
 const STATUS_LABEL: Record<MyListingStatus, string> = {
@@ -39,31 +39,37 @@ const STATUS_LABEL: Record<MyListingStatus, string> = {
     unpublished: "Unpublished",
 };
 
-function statusClass(status: MyListingStatus): string {
-    if (status === "published") return "bg-brand-soft text-brand-text";
-    if (status === "draft") return "bg-surface-muted text-ink-muted";
-    return "bg-urgent-soft text-urgent";
-}
-
-function amenityLabel(value: string): string {
-    return value
-        .split("_")
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ");
-}
+const STATUS_VARIANT: Record<MyListingStatus, "brand" | "neutral" | "urgent"> = {
+    draft: "neutral",
+    published: "brand",
+    unpublished: "urgent",
+};
 
 function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
     const router = useRouter();
     const [item, setItem] = useState(listing);
     const [busy, setBusy] = useState(false);
-    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [descriptionOpen, setDescriptionOpen] = useState(false);
 
-    const primaryIsRent =
-        item.transactionType === "rent" ||
-        (item.transactionType === "both" && item.saleAmountInr == null);
-    const amountInr = primaryIsRent
-        ? (item.rentAmountInr ?? item.saleAmountInr ?? 0)
-        : (item.saleAmountInr ?? item.rentAmountInr ?? 0);
+    const facts = useMemo(() => buildPropertyFacts(item), [item]);
+
+    const shareListing = useMemo(() => {
+        const { amountInr, isRent } = toLegacyAmountFields(item);
+        return {
+            id: item.id,
+            title: item.title,
+            locality: item.locality,
+            city: item.city,
+            priceLabel: isRent ? formatRentInr(amountInr) : formatPriceInr(amountInr),
+            imageSrc: item.imageSrc,
+            configLabel: item.configLabel,
+            propertyTypeLabel: item.propertyTypeLabel,
+            areaSqft: item.areaSqft,
+            bhk: item.bhk,
+            listingKind: isRent ? ("rent" as const) : ("sale" as const),
+        };
+    }, [item]);
 
     const togglePublish = useCallback(async () => {
         setBusy(true);
@@ -71,15 +77,17 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
             item.status === "published" ? "unpublished" : "published";
         const updated = await myListingsApi.setStatus(item.id, nextStatus);
         setBusy(false);
+
         if (!updated) {
             toast.error("Couldn't update status");
             return;
         }
+
         setItem(updated);
         toast.success(
             nextStatus === "published"
-                ? "Property published. Brokers can now see it."
-                : "Property unpublished",
+                ? "Published. Brokers can now find it."
+                : "Unpublished. Brokers can no longer find it.",
         );
     }, [item.id, item.status]);
 
@@ -87,255 +95,208 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
         setBusy(true);
         const ok = await myListingsApi.remove(item.id);
         setBusy(false);
+
         if (!ok) {
             toast.error("Couldn't remove property");
             return;
         }
+
+        setDeleteOpen(false);
         toast.success("Property removed");
         router.push(BROKER_YOUR_LISTINGS_HREF);
     }, [item.id, router]);
 
-    const handleShare = useCallback(() => {
-        const url = buildPropertyShareUrl(item.id);
-        void navigator.clipboard?.writeText(url).then(
-            () => toast.success("Link copied"),
-            () => toast.success(url),
-        );
-    }, [item.id]);
+    const isLongDescription = item.description.length > 320;
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex flex-col gap-2 min-inline-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h1 className="display-md">{item.title}</h1>
-                        <Badge className={statusClass(item.status)}>
+        <div className="flex flex-col gap-6 pbe-24 lg:pbe-8">
+            <Link
+                href={BROKER_YOUR_LISTINGS_HREF}
+                className="
+                  body-sm inline-flex items-center gap-1 font-medium text-ink-muted
+                  transition-colors duration-160 inline-fit
+                  hover:text-ink
+                "
+            >
+                <ChevronLeft aria-hidden className="block-4 inline-4" strokeWidth={2} />
+                Your listings
+            </Link>
+
+            <PropertyGallery
+                title={item.title}
+                imageSrcs={item.imageSrcs}
+                editHref={brokerPropertyEditHref(item.id)}
+                overlay={
+                    <>
+                        <Badge
+                            variant={STATUS_VARIANT[item.status]}
+                            className="border-0 bg-surface/95 text-ink shadow-xs"
+                        >
                             {STATUS_LABEL[item.status]}
                         </Badge>
-                    </div>
-                    <p className="body flex items-center gap-1.5 text-ink-muted">
-                        <MapPin
-                            aria-hidden
-                            className="shrink-0 block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                        {item.address}, {item.locality}, {item.city} {item.pinCode}
-                    </p>
-                </div>
+                        <Badge className="border-0 bg-surface/95 text-ink-muted shadow-xs">
+                            Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
+                        </Badge>
+                    </>
+                }
+            />
 
-                <div className="flex flex-wrap gap-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="border-border-warm"
-                        onClick={handleShare}
-                    >
-                        <Share2 aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        Share
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="border-border-warm"
-                        render={<Link href={brokerPropertyEditHref(item.id)} />}
-                    >
-                        <Pencil aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        Edit
-                    </Button>
-                    <Button
-                        type="button"
-                        className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                        disabled={busy}
-                        onClick={() => void togglePublish()}
-                    >
-                        {item.status === "published" ? "Unpublish" : "Publish"}
-                    </Button>
-                </div>
-            </div>
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,1fr)] lg:gap-10">
+                <div className="flex flex-col gap-8 min-inline-0">
+                    <header className="flex flex-col gap-3">
+                        <h1 className="h2 text-ink">{item.title}</h1>
+                        <p className="body flex items-start gap-1.5 text-ink-muted">
+                            <MapPin
+                                aria-hidden
+                                className="mbs-0.5 shrink-0 block-4 inline-4"
+                                strokeWidth={1.75}
+                            />
+                            <span>
+                                {item.address}, {item.locality}, {item.city} {item.pinCode}
+                            </span>
+                        </p>
+                    </header>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {item.imageSrcs.map((src, index) => (
-                    <div
-                        key={`${src}-${index}`}
-                        className={cn(
-                            "relative overflow-hidden rounded-card bg-surface-muted aspect-[4/3]",
-                            index === 0 && "sm:col-span-2 lg:col-span-2 lg:row-span-2 lg:aspect-auto lg:min-h-80",
-                        )}
+                    <section
+                        className="rounded-card border border-border-warm bg-surface p-5 sm:p-6"
                     >
-                        <AppImage
-                            src={src}
-                            alt={`${item.title} photo ${index + 1}`}
-                            fill
-                            className="object-cover"
-                            sizes={
-                                index === 0
-                                    ? "(max-width: 1024px) 100vw, 66vw"
-                                    : "(max-width: 1024px) 50vw, 33vw"
-                            }
-                            priority={index === 0}
-                        />
-                    </div>
-                ))}
-            </div>
+                        <PropertyPriceBlock item={item} />
+                    </section>
 
-            <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-                <div className="flex flex-col gap-5 rounded-card border border-border-warm bg-surface p-5">
-                    <div className="flex flex-wrap gap-4">
-                        <Price
-                            amountInr={amountInr}
-                            isRent={primaryIsRent}
-                            className="h4 font-semibold text-brand"
-                        />
-                        {item.transactionType === "both" &&
-                        item.saleAmountInr != null &&
-                        item.rentAmountInr != null ? (
-                            <Price
-                                amountInr={
-                                    primaryIsRent ? item.saleAmountInr : item.rentAmountInr
+                    <section className="flex flex-col gap-4">
+                        <h2 className="eyebrow">Property details</h2>
+                        {/* Separators are per-cell ring insets rather than a
+                            background showing through `gap-px`: the column count
+                            changes per breakpoint, and any gap-based rule leaves a
+                            stray coloured cell wherever the total does not divide. */}
+                        <dl
+                            className={cn(
+                                `
+                                  grid grid-cols-2 overflow-hidden rounded-card border
+                                  border-border-warm bg-surface
+                                `,
+                                factColumnsClass(facts.length),
+                            )}
+                        >
+                            {facts.map((fact) => (
+                                <div
+                                    key={fact.key}
+                                    className="
+                                      flex flex-col gap-1 bg-surface p-4
+                                      shadow-[inset_-1px_-1px_0_0_var(--color-border-warm)]
+                                    "
+                                >
+                                    <dt className="body-xs text-ink-muted">{fact.label}</dt>
+                                    <dd className="body font-semibold text-ink">{fact.value}</dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </section>
+
+                    {item.description.trim() ? (
+                        <section className="flex flex-col gap-3">
+                            <h2 className="eyebrow">About this property</h2>
+                            <p
+                                className={
+                                    isLongDescription && !descriptionOpen
+                                        ? "body line-clamp-5 whitespace-pre-wrap text-ink-muted"
+                                        : "body whitespace-pre-wrap text-ink-muted"
                                 }
-                                isRent={!primaryIsRent}
-                                className="body font-semibold text-ink-muted"
-                            />
-                        ) : null}
-                    </div>
-
-                    <div className="flex flex-wrap gap-3 body-sm text-ink-muted">
-                        {item.bhk > 0 ? (
-                            <span className="inline-flex items-center gap-1.5">
-                                <BedDouble
-                                    aria-hidden
-                                    className="block-4 inline-4"
-                                    strokeWidth={1.75}
-                                />
-                                {item.bhk} bed
-                            </span>
-                        ) : null}
-                        {item.bhk > 0 ? (
-                            <span className="inline-flex items-center gap-1.5">
-                                <Bath
-                                    aria-hidden
-                                    className="block-4 inline-4"
-                                    strokeWidth={1.75}
-                                />
-                                {item.bhk} bath
-                            </span>
-                        ) : null}
-                        <span className="inline-flex items-center gap-1.5">
-                            <Maximize2
-                                aria-hidden
-                                className="block-4 inline-4"
-                                strokeWidth={1.75}
-                            />
-                            {formatAreaSqft(item.areaSqft)}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                            <Building2
-                                aria-hidden
-                                className="block-4 inline-4"
-                                strokeWidth={1.75}
-                            />
-                            {item.propertyTypeLabel} · {item.furnishingLabel}
-                        </span>
-                    </div>
-
-                    <div>
-                        <h2 className="h6 mb-2">About this property</h2>
-                        <p className="body text-ink-muted whitespace-pre-wrap">{item.description}</p>
-                    </div>
+                            >
+                                {item.description}
+                            </p>
+                            {isLongDescription ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setDescriptionOpen((open) => !open)}
+                                    className="
+                                      body-sm font-semibold text-brand underline-offset-4 inline-fit
+                                      hover:underline
+                                    "
+                                >
+                                    {descriptionOpen ? "Show less" : "Read more"}
+                                </button>
+                            ) : null}
+                        </section>
+                    ) : null}
 
                     {item.amenities.length > 0 ? (
-                        <div>
-                            <h2 className="h6 mb-2">Amenities</h2>
-                            <div className="flex flex-wrap gap-2">
+                        <section className="flex flex-col gap-3">
+                            <h2 className="eyebrow">Amenities</h2>
+                            <ul className="flex flex-wrap gap-2">
                                 {item.amenities.map((amenity) => (
-                                    <span
+                                    <li
                                         key={amenity}
-                                        className="body-sm rounded-full bg-surface-muted px-3 py-1 text-ink"
+                                        className="
+                                          body-sm rounded-control border border-border-warm
+                                          bg-surface px-3.5 py-1.5 font-medium text-ink
+                                        "
                                     >
                                         {amenityLabel(amenity)}
-                                    </span>
+                                    </li>
                                 ))}
-                            </div>
-                        </div>
+                            </ul>
+                        </section>
                     ) : null}
                 </div>
 
-                <aside className="flex flex-col gap-4 rounded-card border border-border-warm bg-surface p-5">
-                    <div>
-                        <p className="body-xs text-ink-muted">Inbound requests</p>
-                        <p className="tabular h5 font-semibold text-ink">
-                            {item.inboundRequestCount}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="body-xs text-ink-muted">Listed</p>
-                        <p className="body font-medium text-ink">
-                            {item.listedDaysAgo === 0
-                                ? "Today"
-                                : item.listedDaysAgo === 1
-                                  ? "1 day ago"
-                                  : `${item.listedDaysAgo} days ago`}
-                        </p>
-                    </div>
-                    {item.availableFrom ? (
-                        <div>
-                            <p className="body-xs text-ink-muted">Available from</p>
-                            <p className="body font-medium text-ink">{item.availableFrom}</p>
-                        </div>
-                    ) : null}
-
-                    <div className="mt-auto flex flex-col gap-2 border-t border-border-warm pt-4">
-                        {!confirmDelete ? (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="border-danger/40 text-danger hover:bg-danger-soft"
-                                disabled={busy}
-                                onClick={() => setConfirmDelete(true)}
-                            >
-                                <Trash2
-                                    aria-hidden
-                                    className="block-4 inline-4"
-                                    strokeWidth={1.75}
-                                />
-                                Delete property
-                            </Button>
-                        ) : (
-                            <div className="flex flex-col gap-2">
-                                <p className="body-sm text-ink-muted">
-                                    &ldquo;{item.title}&rdquo; will be removed permanently.
-                                </p>
-                                <div className="flex gap-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="flex-1 border-border-warm"
-                                        onClick={() => setConfirmDelete(false)}
-                                    >
-                                        Keep
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        className="flex-1 bg-danger text-surface hover:bg-danger/90"
-                                        disabled={busy}
-                                        onClick={() => void handleDelete()}
-                                    >
-                                        {busy ? "Removing…" : "Delete"}
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="border-border-warm"
-                            render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
-                        >
-                            Back to listings
-                        </Button>
-                    </div>
-                </aside>
+                <PropertyActionRail
+                    item={item}
+                    busy={busy}
+                    onTogglePublish={() => void togglePublish()}
+                    onRequestDelete={() => setDeleteOpen(true)}
+                    shareListing={shareListing}
+                />
             </div>
+
+            {/* Cheap Android phones are the primary device — the publish action
+                must stay reachable without scrolling back to the rail. */}
+            <div
+                className="
+                  fixed inset-x-0 inset-be-0 z-30 flex items-center gap-3 border-bs
+                  border-border-warm bg-surface/95 p-3 backdrop-blur-sm
+                  lg:hidden
+                "
+            >
+                <Button
+                    type="button"
+                    size="lg"
+                    disabled={busy}
+                    onClick={() => void togglePublish()}
+                    className={
+                        item.status === "published"
+                            ? `
+                              flex-1 rounded-control border border-border-warm bg-surface-muted
+                              text-ink
+                            `
+                            : "flex-1 rounded-control bg-brand text-surface hover:bg-brand-text"
+                    }
+                >
+                    {item.status === "published" ? "Unpublish" : "Publish"}
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="rounded-control border-border-warm"
+                    render={<Link href={`${BROKER_YOUR_LISTINGS_HREF}?tab=requests`} />}
+                >
+                    Requests
+                    {item.inboundRequestCount > 0 ? (
+                        <span className="tabular ms-1 rounded-full bg-brand px-1.5 text-surface">
+                            {item.inboundRequestCount}
+                        </span>
+                    ) : null}
+                </Button>
+            </div>
+
+            <PropertyDeleteDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                title={item.title}
+                busy={busy}
+                onConfirm={() => void handleDelete()}
+            />
         </div>
     );
 }
@@ -343,7 +304,7 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
 function BrowsePropertyFallback({ propertyId }: { propertyId: string }) {
     return (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <h1 className="display-md">Property {propertyId}</h1>
+            <h1 className="h3">Property {propertyId}</h1>
             <p className="body max-w-prose text-ink-muted">
                 This listing isn&apos;t in your inventory. Open Owner listings to request
                 representation, or go back to your own properties.
@@ -382,19 +343,8 @@ export function PropertyDetailPage() {
         };
     }, [propertyId]);
 
-    if (listing === undefined) {
-        return (
-            <div className="flex flex-col gap-4 py-4">
-                <div className="h-10 w-64 animate-pulse rounded-control bg-surface-muted" />
-                <div className="h-72 animate-pulse rounded-card bg-surface-muted" />
-                <div className="h-40 animate-pulse rounded-card bg-surface-muted" />
-            </div>
-        );
-    }
-
-    if (!listing) {
-        return <BrowsePropertyFallback propertyId={propertyId} />;
-    }
+    if (listing === undefined) return <PropertyDetailSkeleton />;
+    if (!listing) return <BrowsePropertyFallback propertyId={propertyId} />;
 
     return <OwnedPropertyDetail listing={listing} />;
 }
