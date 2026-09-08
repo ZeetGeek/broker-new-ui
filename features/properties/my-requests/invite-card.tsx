@@ -56,6 +56,7 @@ function asRequestShape(item: InviteItem): RequestItem {
         brokerSlotsOpen: item.brokerSlotsOpen,
         brokerSlotsTotal: item.brokerSlotsTotal,
         attemptNumber: 1,
+        reminderCount: 0,
         reminderUsed: false,
         nudgedAt: null,
         imageSrc: item.imageSrc,

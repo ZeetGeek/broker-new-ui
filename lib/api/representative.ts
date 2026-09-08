@@ -37,6 +37,24 @@ export type RepresentationItem = {
     propertyCommissionPercent?: string | number | null;
     propertyPhotos?: string[] | null;
     propertyOwnerName?: string | null;
+    propertyOwnerPhone?: string | null;
+    propertyOwnerAvatarUrl?: string | null;
+};
+
+export type RepresentationListPage = {
+    items: RepresentationItem[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+};
+
+export type BrokerInvitationListQuery = {
+    /** `pending` (default server-side), `accepted`, `rejected`, `closed`, or `all`. */
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
 };
 
 export const representativeApi = {
@@ -51,6 +69,22 @@ export const representativeApi = {
     brokerList(status?: string) {
         const qs = status ? `?status=${encodeURIComponent(status)}` : "";
         return apiFetch<RepresentationItem[]>(`/representative/broker/list${qs}`);
+    },
+
+    /**
+     * Owner → broker invitations for this agency.
+     * Without page/limit the API returns the full array; with either it pages.
+     */
+    brokerInvitationList(params?: BrokerInvitationListQuery) {
+        const q = new URLSearchParams();
+        if (params?.status) q.set("status", params.status);
+        if (params?.search) q.set("search", params.search);
+        if (params?.page != null && params.page > 1) q.set("page", String(params.page));
+        if (params?.limit != null) q.set("limit", String(params.limit));
+        const qs = q.toString();
+        return apiFetch<RepresentationItem[] | RepresentationListPage>(
+            `/representative/broker/invitation/list${qs ? `?${qs}` : ""}`,
+        );
     },
 
     /** Remind the owner about a pending request (capped server-side). */
@@ -74,7 +108,7 @@ export const representativeApi = {
     },
 
     brokerRespond(representationId: string, body: RepresentationRespondBody) {
-        return apiFetch(`/representative/${representationId}/broker/respond`, {
+        return apiFetch<RepresentationItem>(`/representative/${representationId}/broker/respond`, {
             method: "PUT",
             body: JSON.stringify(body),
         });

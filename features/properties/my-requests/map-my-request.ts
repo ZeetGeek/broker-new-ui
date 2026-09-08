@@ -189,6 +189,7 @@ export function mapRepresentationToRequestItem(
         resolvedAt,
         daysWaiting: stage === "pending" ? calendarDaysBetween(new Date(requestedAt), now) : 0,
         clientsAttached: 0,
+        attachedClients: [],
         brokerSlotsOpen: 0,
         brokerSlotsTotal: 3,
         attemptNumber,

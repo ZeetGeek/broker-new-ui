@@ -4,8 +4,8 @@ import { type ReactNode, useCallback, useState } from "react";
 
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
 import {
-    BROKER_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
+    BROKER_REQUESTS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
 
@@ -30,7 +30,7 @@ const BROKER_NOTIFICATIONS_HREF = "/broker/notifications";
 const BROKER_SHORTCUT_ROUTES = {
     dashboard: "/broker/dashboard",
     ownerListings: BROKER_OWNER_LISTINGS_HREF,
-    deals: BROKER_DEALS_HREF,
+    deals: BROKER_REQUESTS_HREF,
     yourListings: BROKER_YOUR_LISTINGS_HREF,
     pipeline: "/broker/pipeline",
     contacts: "/broker/contacts",
