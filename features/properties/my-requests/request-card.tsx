@@ -25,6 +25,7 @@ import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
+import { AvatarStack } from "@/components/shared/avatar-stack";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -32,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import { attemptActions, attemptLabel } from "@/features/properties/my-requests/attempt-rules";
 import { needsFollowUp } from "@/features/properties/my-requests/filter-requests";
 import { REQUEST_STAGE_META } from "@/features/properties/my-requests/request-stage-meta";
@@ -69,10 +71,9 @@ function statusLine(item: RequestItem): { text: string; tone: "urgent" | "muted"
                 tone: "urgent",
             };
         }
-        return {
-            text: `Request accepted. ${item.clientsAttached === 1 ? "1 buyer" : `${item.clientsAttached} buyers`} added so far.`,
-            tone: "success",
-        };
+        // The avatar stack below already names the buyers, so this line does
+        // not repeat the count.
+        return { text: "Request accepted. You can sell this property.", tone: "success" };
     }
 
     if (item.stage === "declined") {
@@ -112,12 +113,14 @@ function RequestCardActions({
     onNudge,
     onWithdraw,
     onRetry,
+    onAddBuyers,
     isBusy,
 }: {
     item: RequestItem;
     onNudge: (id: string) => void;
     onWithdraw: (id: string) => void;
     onRetry: (id: string) => void;
+    onAddBuyers: () => void;
     isBusy: boolean;
 }) {
     const actions = attemptActions(item);
@@ -219,12 +222,7 @@ function RequestCardActions({
                 <Tooltip>
                     <TooltipTrigger
                         render={
-                            <Button
-                                size="sm"
-                                render={
-                                    <Link href={`/broker/clients?property=${item.propertyId}`} />
-                                }
-                            >
+                            <Button size="sm" disabled={isBusy} onClick={onAddBuyers}>
                                 <UserPlus
                                     aria-hidden
                                     className="block-4 inline-4"
@@ -236,8 +234,8 @@ function RequestCardActions({
                     />
                     <TooltipContent>
                         {item.clientsAttached === 0
-                            ? "Add a buyer for this property so it shows up in your deals."
-                            : "See the buyers you added for this property."}
+                            ? "Pick which buyers you will show this property to."
+                            : "Change the buyers you added for this property."}
                     </TooltipContent>
                 </Tooltip>
 
@@ -406,6 +404,7 @@ export function RequestCard({
     onNudge,
     onWithdraw,
     onRetry,
+    onBuyersChanged,
     isBusy = false,
 }: {
     item: RequestItem;
@@ -413,9 +412,11 @@ export function RequestCard({
     onNudge: (id: string) => void;
     onWithdraw: (id: string) => void;
     onRetry: (id: string) => void;
+    onBuyersChanged: () => void;
     isBusy?: boolean;
 }) {
     const [showTimeline, setShowTimeline] = useState(false);
+    const [isBuyersOpen, setIsBuyersOpen] = useState(false);
 
     const meta = REQUEST_STAGE_META[item.stage];
     const StageIcon = meta.icon;
@@ -572,6 +573,26 @@ export function RequestCard({
                             {status.text}
                         </p>
 
+                        {item.attachedClients.length > 0 ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <AvatarStack people={item.attachedClients} />
+                                <button
+                                    type="button"
+                                    onClick={() => setIsBuyersOpen(true)}
+                                    className="
+                                      body-xs font-medium text-ink-muted transition-colors
+                                      duration-160
+                                      hover:text-ink
+                                      focus-visible:underline focus-visible:outline-none
+                                    "
+                                >
+                                    {item.attachedClients.length === 1
+                                        ? "1 buyer added"
+                                        : `${item.attachedClients.length} buyers added`}
+                                </button>
+                            </div>
+                        ) : null}
+
                         <RequestOwnerBlock item={item} />
 
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -580,6 +601,7 @@ export function RequestCard({
                                 onNudge={onNudge}
                                 onWithdraw={onWithdraw}
                                 onRetry={onRetry}
+                                onAddBuyers={() => setIsBuyersOpen(true)}
                                 isBusy={isBusy}
                             />
 
@@ -621,6 +643,15 @@ export function RequestCard({
                 </div>
 
                 {showTimeline ? <RequestTimeline steps={item.timeline} /> : null}
+
+                {item.stage === "approved" ? (
+                    <AttachBuyersModal
+                        open={isBuyersOpen}
+                        onOpenChange={setIsBuyersOpen}
+                        request={item}
+                        onSaved={onBuyersChanged}
+                    />
+                ) : null}
             </li>
         </TooltipProvider>
     );

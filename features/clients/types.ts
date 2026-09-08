@@ -1,0 +1,30 @@
+/** What the buyer is after — used to flag a poor match before attaching. */
+export type ClientLookingFor = "buy" | "rent";
+
+/**
+ * A buyer or tenant on the broker's own book. Named "client" internally to
+ * match the CRM, but shown to brokers as "buyer" — plainer for a
+ * non-technical user.
+ */
+export type ClientItem = {
+    id: string;
+    name: string;
+    phoneDigits: string;
+    lookingFor: ClientLookingFor;
+    /** Localities the buyer is searching in. */
+    preferredLocalities: string[];
+    /** Upper bound of what they will pay, in INR. Null when not stated. */
+    budgetMaxInr: number | null;
+    /** BHK they want. Null for plots, shops and offices. */
+    bhk: number | null;
+    /** ISO instant the broker last spoke to them. Null when never. */
+    lastContactedAt: string | null;
+    /** How many properties this buyer is already attached to. */
+    attachedPropertyCount: number;
+};
+
+/**
+ * Buyers a broker may attach to one property. Keeps the pipeline honest — a
+ * property shown to twenty buyers is a property nobody is really working.
+ */
+export const BUYERS_PER_PROPERTY_LIMIT = 5;

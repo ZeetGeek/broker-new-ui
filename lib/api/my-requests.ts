@@ -1,3 +1,5 @@
+import { attachedClientsFor } from "@/lib/api/clients";
+
 import { attemptActions } from "@/features/properties/my-requests/attempt-rules";
 import {
     filterRequests,
@@ -23,11 +25,22 @@ function delay(ms = 240): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Buyers live in the clients store, so read them from there. */
+function withClientCount(item: RequestItem): RequestItem {
+    const attached = attachedClientsFor(item.propertyId);
+    return {
+        ...item,
+        clientsAttached: attached.length,
+        attachedClients: attached.map((client) => ({ id: client.id, name: client.name })),
+    };
+}
+
 export const myRequestsApi = {
     async list(filters: RequestsFilters): Promise<RequestsResult> {
         await delay();
 
-        const matched = sortRequests(filterRequests(requests, filters), filters.sort);
+        const live = requests.map(withClientCount);
+        const matched = sortRequests(filterRequests(live, filters), filters.sort);
         const totalPages = Math.max(1, Math.ceil(matched.length / filters.limit));
         const page = Math.min(Math.max(1, filters.page), totalPages);
         const start = (page - 1) * filters.limit;
@@ -43,7 +56,7 @@ export const myRequestsApi = {
     /** Summary is over the whole set, not the filtered page. */
     async summary(): Promise<RequestsSummary> {
         await delay(160);
-        return summarizeRequests(requests, { ...MOCK_REQUESTS_QUOTA });
+        return summarizeRequests(requests.map(withClientCount), { ...MOCK_REQUESTS_QUOTA });
     },
 
     /**

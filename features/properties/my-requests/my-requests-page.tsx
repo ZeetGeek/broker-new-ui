@@ -1,13 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { myRequestsApi } from "@/lib/api/my-requests";
+import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { AppPagination } from "@/components/shared/app-pagination";
 
+import type { InvitesSummary } from "@/features/properties/my-requests/invite-types";
+import { InvitesIntro } from "@/features/properties/my-requests/invites-intro";
+import { InvitesPanel } from "@/features/properties/my-requests/invites-panel";
 import { RequestCard } from "@/features/properties/my-requests/request-card";
 import {
     RequestsFilteredEmpty,
@@ -23,11 +27,12 @@ import {
     RequestsListSkeleton,
     RequestsPageSkeleton,
 } from "@/features/properties/my-requests/requests-skeleton";
+import { type RequestsTab, RequestsTabs } from "@/features/properties/my-requests/requests-tabs";
 import type { RequestsResult, RequestsSummary } from "@/features/properties/my-requests/types";
 import { useRequestsFilters } from "@/features/properties/my-requests/use-requests-filters";
 import { useRequestsView } from "@/features/properties/my-requests/use-requests-view";
 
-export function MyRequestsPage() {
+function SentRequestsPanel({ onSummary }: { onSummary?: (summary: RequestsSummary) => void }) {
     const { filters, patchFilters, setFilters, clearFilters, hasActiveFilters, filterSignature } =
         useRequestsFilters();
     const { view, setView } = useRequestsView();
@@ -76,7 +81,9 @@ export function MyRequestsPage() {
         void myRequestsApi
             .summary()
             .then((next) => {
-                if (!cancelled) setSummary(next);
+                if (cancelled) return;
+                setSummary(next);
+                onSummary?.(next);
             })
             .catch(() => {
                 if (!cancelled) setSummary(null);
@@ -85,7 +92,7 @@ export function MyRequestsPage() {
         return () => {
             cancelled = true;
         };
-    }, [revision]);
+    }, [revision, onSummary]);
 
     const runMutation = useCallback(async (id: string, action: () => Promise<void>) => {
         setBusyId(id);
@@ -111,6 +118,11 @@ export function MyRequestsPage() {
         [runMutation],
     );
 
+    /** Buyer changes live in the clients API, so just refetch this list. */
+    const handleRefresh = useCallback(() => {
+        setRevision((prev) => prev + 1);
+    }, []);
+
     const handleRetry = useCallback(
         (id: string) => {
             void runMutation(id, () => myRequestsApi.retry(id));
@@ -134,11 +146,6 @@ export function MyRequestsPage() {
         [patchFilters],
     );
 
-    const introSection = useMemo(
-        () => <RequestsIntro summary={summary} isLoading={isFetching && !summary} />,
-        [summary, isFetching],
-    );
-
     if (!result && isFetching) {
         return <RequestsPageSkeleton />;
     }
@@ -148,8 +155,6 @@ export function MyRequestsPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <PortalSectionNav>{introSection}</PortalSectionNav>
-
             {isFirstRun ? (
                 <RequestsFirstRunEmpty />
             ) : (
@@ -204,6 +209,7 @@ export function MyRequestsPage() {
                                         onNudge={handleNudge}
                                         onWithdraw={handleWithdraw}
                                         onRetry={handleRetry}
+                                        onBuyersChanged={handleRefresh}
                                         isBusy={busyId === item.id}
                                     />
                                 ))}
@@ -222,6 +228,67 @@ export function MyRequestsPage() {
                         </div>
                     )}
                 </>
+            )}
+        </div>
+    );
+}
+
+export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
+    const [sentSummary, setSentSummary] = useState<RequestsSummary | null>(null);
+    const [inviteSummary, setInviteSummary] = useState<InvitesSummary | null>(null);
+
+    // Both tab counts have to be right whichever tab is open, so the summaries
+    // are fetched here rather than only by the panel that renders the list.
+    useEffect(() => {
+        let cancelled = false;
+
+        void Promise.all([myRequestsApi.summary(), ownerInvitesApi.summary()]).then(
+            ([sent, invites]) => {
+                if (cancelled) return;
+                setSentSummary(sent);
+                setInviteSummary(invites);
+            },
+        );
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeTab]);
+
+    const isInvites = activeTab === "invites";
+
+    // Title, stats and tabs share the portal header row so the heading always
+    // names the tab you are on.
+    const headerSection = (
+        <div
+            className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6"
+        >
+            <div className="min-inline-0">
+                {isInvites ? (
+                    <InvitesIntro summary={inviteSummary} isLoading={!inviteSummary} />
+                ) : (
+                    <RequestsIntro summary={sentSummary} isLoading={!sentSummary} />
+                )}
+            </div>
+
+            <RequestsTabs
+                activeTab={activeTab}
+                sentCount={sentSummary?.counts.all}
+                inviteCount={inviteSummary?.counts.all}
+                waitingCount={inviteSummary?.waitingOnYouCount ?? 0}
+                className="shrink-0 lg:justify-end"
+            />
+        </div>
+    );
+
+    return (
+        <div className="flex flex-col gap-6">
+            <PortalSectionNav>{headerSection}</PortalSectionNav>
+
+            {isInvites ? (
+                <InvitesPanel onSummary={setInviteSummary} />
+            ) : (
+                <SentRequestsPanel onSummary={setSentSummary} />
             )}
         </div>
     );

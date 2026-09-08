@@ -19,6 +19,13 @@ export type RequestTimelineStep = {
     at: string;
 };
 
+/** Just enough of a buyer to render an avatar and a name. */
+export type RequestAttachedClient = {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+};
+
 /**
  * One tracked "request to represent". Denormalized on purpose — the broker
  * must never retype property data the owner already entered.
@@ -55,6 +62,11 @@ export type RequestItem = {
     daysWaiting: number;
     /** Clients attached after approval — the "did I act on it" signal. */
     clientsAttached: number;
+    /**
+     * The attached buyers themselves, for the avatar stack on the card.
+     * Denormalized so the card never has to fetch the client list per row.
+     */
+    attachedClients: RequestAttachedClient[];
     brokerSlotsOpen: number;
     brokerSlotsTotal: number;
     /**
