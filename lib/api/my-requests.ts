@@ -115,7 +115,10 @@ export const myRequestsApi = {
         );
     },
 
-    /** Open the next attempt on a property whose last attempt was cancelled. */
+    /**
+     * Open the next attempt on a property whose last attempt ended — either
+     * the broker cancelled it or the owner rejected it.
+     */
     async retry(requestId: string): Promise<void> {
         await delay(200);
 
@@ -137,6 +140,9 @@ export const myRequestsApi = {
                       requestedAt: at,
                       resolvedAt: null,
                       daysWaiting: 0,
+                      // The previous attempt's rejection reason must not
+                      // follow the new request into a fresh attempt.
+                      declineReason: undefined,
                       timeline: [
                           ...item.timeline,
                           {

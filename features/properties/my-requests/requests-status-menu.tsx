@@ -26,7 +26,7 @@ const VIEW_DESCRIPTIONS: Record<RequestsViewFilter, string> = {
     all: "Every request you have sent",
     pending: "Sent, but the owner has not replied",
     approved: "Request accepted, you can sell these",
-    declined: "The owner rejected your request",
+    declined: "Rejected, you may still have attempts left",
     cancelled: "You cancelled these, attempts may remain",
     locked: "All attempts used, owner never replied",
     // These three are subsets of a stage above, so each says which one —

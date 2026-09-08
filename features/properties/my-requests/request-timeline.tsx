@@ -54,9 +54,9 @@ export function RequestTimeline({ steps }: { steps: RequestTimelineStep[] }) {
                             ) : null}
                         </span>
 
-                        <div className="
-                          flex flex-1 flex-wrap items-baseline justify-between gap-x-3
-                        ">
+                        <div
+                            className="flex flex-1 flex-wrap items-baseline justify-between gap-x-3"
+                        >
                             <span className="body-sm text-ink">{step.label}</span>
                             <time dateTime={step.at} className="body-xs text-ink-muted">
                                 {formatRelativePast(new Date(step.at), now)}

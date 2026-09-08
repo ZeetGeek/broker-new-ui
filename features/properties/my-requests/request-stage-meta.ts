@@ -31,7 +31,7 @@ export const REQUEST_STAGE_META: Record<RequestStage, RequestStageMeta> = {
     },
     declined: {
         label: "Request rejected",
-        hint: "The owner rejected your request for this property.",
+        hint: "The owner rejected your request. You can try again if you have attempts left.",
         icon: CircleX,
         badgeVariant: "danger",
         toneClass: "text-danger",

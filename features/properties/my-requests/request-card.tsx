@@ -76,10 +76,16 @@ function statusLine(item: RequestItem): { text: string; tone: "urgent" | "muted"
     }
 
     if (item.stage === "declined") {
+        const { attemptsLeft } = attemptActions(item);
+        const reason = item.declineReason
+            ? `Your request was rejected. Reason: ${item.declineReason.toLowerCase()}.`
+            : "Your request was rejected by the owner.";
+
         return {
-            text: item.declineReason
-                ? `Your request was rejected. Reason: ${item.declineReason.toLowerCase()}.`
-                : "Your request was rejected by the owner.",
+            text:
+                attemptsLeft > 0
+                    ? `${reason} You have ${attemptsLeft} of ${ATTEMPT_LIMIT} attempts left.`
+                    : `${reason} You have no attempts left.`,
             tone: "muted",
         };
     }
@@ -172,11 +178,8 @@ function RequestCardActions({
         );
     }
 
-    if (item.stage === "cancelled") {
-        if (!actions.canRetry) {
-            return null;
-        }
-
+    // Cancelled and rejected both end an attempt, so both offer the next one.
+    if (actions.canRetry) {
         return (
             <Tooltip>
                 <TooltipTrigger
@@ -257,24 +260,37 @@ function RequestCardActions({
         );
     }
 
-    // Declined, expired and withdrawn all dead-end — send the broker back to
-    // the pool rather than leaving them on a row they cannot act on.
+    // Rejected with no attempts left is a dead end — say so, then send the
+    // broker back to the pool rather than stranding them on a row.
     return (
-        <Tooltip>
-            <TooltipTrigger
-                render={
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-border-warm"
-                        render={<Link href="/broker/owner-listings" />}
-                    >
-                        Find similar
-                    </Button>
-                }
-            />
-            <TooltipContent>Find other properties you can send a request for.</TooltipContent>
-        </Tooltip>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-border-warm"
+                            render={<Link href="/broker/owner-listings" />}
+                        >
+                            Find similar
+                        </Button>
+                    }
+                />
+                <TooltipContent>Find other properties you can send a request for.</TooltipContent>
+            </Tooltip>
+
+            {actions.attemptsLeft === 0 ? (
+                <p className="body-xs flex items-center gap-1.5 text-ink-muted">
+                    <Lock
+                        aria-hidden
+                        className="shrink-0 block-3.5 inline-3.5"
+                        strokeWidth={1.75}
+                    />
+                    No attempts left for this property.
+                </p>
+            ) : null}
+        </div>
     );
 }
 
@@ -405,7 +421,8 @@ export function RequestCard({
     const StageIcon = meta.icon;
     const status = statusLine(item);
     // Attempt count only matters while the broker still has moves to make.
-    const showAttempts = item.stage === "pending" || item.stage === "cancelled";
+    const showAttempts =
+        item.stage === "pending" || item.stage === "cancelled" || item.stage === "declined";
     const isList = view === "list";
 
     return (
@@ -466,9 +483,9 @@ export function RequestCard({
                                 </p>
                             </div>
 
-                            <div
-                                className="flex shrink-0 flex-wrap items-center justify-end gap-1.5"
-                            >
+                            <div className="
+                              flex shrink-0 flex-wrap items-center justify-end gap-1.5
+                            ">
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={

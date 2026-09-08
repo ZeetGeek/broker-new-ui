@@ -6,8 +6,9 @@ import { ATTEMPT_LIMIT, type RequestItem } from "@/features/properties/my-reques
  * The rules, in one place:
  * - While an attempt is pending the broker may send its one reminder, then
  *   cancel it.
- * - Cancelling frees the next attempt, up to ATTEMPT_LIMIT.
- * - After the last attempt is cancelled with no reply, the property locks and
+ * - An attempt ends when the broker cancels it or the owner rejects it.
+ *   Either way the next attempt opens, up to ATTEMPT_LIMIT.
+ * - After the last attempt ends without an approval the property locks and
  *   the broker has no further move. The owner may still make contact.
  */
 export type AttemptActions = {
@@ -20,7 +21,7 @@ export type AttemptActions = {
     /** Attempts already used, including the current one. */
     attemptsUsed: number;
     attemptsLeft: number;
-    /** No attempts remain and the owner never replied. */
+    /** No attempts remain and the owner never approved. */
     isLocked: boolean;
 };
 
@@ -39,8 +40,9 @@ export function attemptActions(item: RequestItem): AttemptActions {
         };
     }
 
-    // A cancelled attempt is the only state that hands the broker another try.
-    if (item.stage === "cancelled") {
+    // Cancelled and rejected both end an attempt, so both hand over the next
+    // one. A rejection still costs the broker a try.
+    if (item.stage === "cancelled" || item.stage === "declined") {
         return {
             canRemind: false,
             canCancel: false,
