@@ -25,14 +25,7 @@ export type MyListingPropertyType =
     | "agricultural";
 
 export type MyListingFacing =
-    | "north"
-    | "east"
-    | "south"
-    | "west"
-    | "north_east"
-    | "north_west"
-    | "south_east"
-    | "south_west";
+    "north" | "east" | "south" | "west" | "north_east" | "north_west" | "south_east" | "south_west";
 
 export type MyListingParking = "none" | "1" | "2" | "3plus";
 
@@ -107,11 +100,7 @@ export const DEFAULT_MY_LISTINGS_FILTERS: MyListingsFilters = {
 export type BrokerRequestStatusFilter = "all" | "pending" | "approved" | "declined";
 
 export type BrokerRequestRowType =
-    | "approved_untouched"
-    | "approved"
-    | "pending_stale"
-    | "pending"
-    | "declined";
+    "approved_untouched" | "approved" | "pending_stale" | "pending" | "declined";
 
 export type BrokerRequestItem = {
     id: string;
@@ -150,6 +139,8 @@ export type CreateMyListingInput = {
     areaSqft: number;
     furnishing: MyListingFurnishing;
     imageSrcs: string[];
+    /** Newly picked files (blob previews in imageSrcs). */
+    photoFiles?: File[];
     bathrooms: number | null;
     balconies: number | null;
     floorNumber: number | null;
