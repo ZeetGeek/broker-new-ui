@@ -98,33 +98,33 @@ export function OwnerListingsBhkMenu({
                                         onClick={() => onToggle(option.value)}
                                         className={cn(
                                             `
-                                          group/tile flex flex-col items-center justify-center
-                                          gap-2.5 rounded-2xl border px-3 py-5
-                                          transition-[background-color,border-color,box-shadow,transform]
-                                          duration-160 outline-none
-                                          focus-visible:ring-2 focus-visible:ring-brand
-                                          active:scale-[0.97]
-                                        `,
+                                              group/tile flex flex-col items-center justify-center
+                                              gap-2.5 rounded-2xl border px-3 py-5
+                                              transition-[background-color,border-color,box-shadow,transform]
+                                              duration-160 outline-none
+                                              focus-visible:ring-2 focus-visible:ring-brand
+                                              active:scale-[0.97]
+                                            `,
                                             isFullWidth && "col-span-2",
                                             active
                                                 ? `
-                                              border-brand bg-brand-soft text-ink shadow-sm ring-1
-                                              ring-brand/20
-                                            `
+                                                  border-brand bg-brand-soft text-ink shadow-sm
+                                                  ring-1 ring-brand/20
+                                                `
                                                 : `
-                                              border-border-warm bg-surface text-ink-muted
-                                              hover:border-ink/20 hover:bg-surface-muted/70
-                                              hover:text-ink
-                                            `,
+                                                  border-border-warm bg-surface text-ink-muted
+                                                  hover:border-ink/20 hover:bg-surface-muted/70
+                                                  hover:text-ink
+                                                `,
                                         )}
                                     >
                                         <BedDouble
                                             aria-hidden
                                             className={cn(
                                                 `
-                                              shrink-0 transition-colors duration-160 block-5
-                                              inline-5
-                                            `,
+                                                  shrink-0 transition-colors duration-160 block-5
+                                                  inline-5
+                                                `,
                                                 active
                                                     ? "text-brand"
                                                     : "text-ink-subtle group-hover/tile:text-brand",
@@ -133,7 +133,10 @@ export function OwnerListingsBhkMenu({
                                         />
                                         <span
                                             className={cn(
-                                                "body-sm leading-none font-semibold whitespace-nowrap",
+                                                `
+                                                  body-sm leading-none font-semibold
+                                                  whitespace-nowrap
+                                                `,
                                                 active ? "text-brand-text" : "text-ink",
                                             )}
                                         >

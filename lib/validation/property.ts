@@ -128,9 +128,9 @@ export const propertyFormSchema = z
             .positive("Enter area in sq.ft.")
             .max(1_000_000, "Enter area up to 10,00,000 sq.ft."),
         furnishing: furnishingSchema,
+        // Drafts may have no photos; publish requires ≥1 via superRefine below.
         imageSrcs: z
             .array(z.string().min(1))
-            .min(1, "Add at least one photo")
             .max(MAX_LISTING_PHOTOS, `Add up to ${MAX_LISTING_PHOTOS} photos`),
         bathrooms: optionalCount("bathrooms", 20),
         balconies: optionalCount("balconies", 20),
@@ -225,6 +225,14 @@ export const propertyFormSchema = z
                 message: "Add at least 20 characters, or leave blank",
             });
         }
+
+        if (data.publish && data.imageSrcs.length < 1) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["imageSrcs"],
+                message: "Add at least one photo before publishing",
+            });
+        }
     });
 
 export type PropertyFormValues = z.infer<typeof propertyFormSchema>;
@@ -281,7 +289,7 @@ export const DEFAULT_PROPERTY_FORM_VALUES: PropertyFormValues = {
     rentAmountInr: null,
     areaSqft: 1050,
     furnishing: "semi",
-    imageSrcs: ["/properties/1.jpg"],
+    imageSrcs: [],
     bathrooms: null,
     balconies: null,
     floorNumber: null,

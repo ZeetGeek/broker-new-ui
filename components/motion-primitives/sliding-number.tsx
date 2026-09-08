@@ -23,9 +23,9 @@ function Digit({ value, place }: { value: number; place: number }) {
     return (
         <div
             className="
-      relative inline-block overflow-x-visible overflow-y-clip leading-none tabular-nums
-      inline-[1ch]
-    "
+              relative inline-block overflow-x-visible overflow-y-clip leading-none tabular-nums
+              inline-[1ch]
+            "
         >
             <div className="invisible">0</div>
             {Array.from({ length: 10 }, (_, i) => (

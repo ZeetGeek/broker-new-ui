@@ -66,10 +66,12 @@ function RequestRow({ item }: { item: BrokerRequestItem }) {
     return (
         <li className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4">
             <RequestIcon type={item.type} />
-            <div className="
+            <div
+                className="
               flex flex-1 flex-col gap-2 min-inline-0
               sm:flex-row sm:items-center sm:justify-between
-            ">
+            "
+            >
                 <div className="flex flex-col gap-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <p className="body font-semibold text-ink">{item.title}</p>
@@ -101,27 +103,46 @@ export function MyListingsRequestsPanel() {
 
     useEffect(() => {
         let cancelled = false;
-        setLoading(true);
-        void brokerRequestsApi.list(status).then((next) => {
+
+        const timer = window.setTimeout(() => {
             if (cancelled) return;
-            setResult(next);
-            setLoading(false);
-        });
+            setLoading(true);
+            void brokerRequestsApi
+                .list(status)
+                .then((next) => {
+                    if (cancelled) return;
+                    setResult(next);
+                })
+                .catch(() => {
+                    if (cancelled) return;
+                    setResult({
+                        counts: { approved: 0, pending: 0, declined: 0 },
+                        quota: { limit: 10, used: 0, remaining: 10, resetsOn: "" },
+                        items: [],
+                    });
+                })
+                .finally(() => {
+                    if (!cancelled) setLoading(false);
+                });
+        }, 0);
+
         return () => {
             cancelled = true;
+            window.clearTimeout(timer);
         };
     }, [status]);
 
     const counts = result?.counts;
-    const total =
-        counts == null ? 0 : counts.approved + counts.pending + counts.declined;
+    const total = counts == null ? 0 : counts.approved + counts.pending + counts.declined;
 
     return (
         <div className="flex flex-col gap-5">
             {counts ? (
-                <div className="
+                <div
+                    className="
                   flex flex-wrap gap-4 rounded-card border border-border-warm bg-surface px-4 py-3
-                ">
+                "
+                >
                     <div>
                         <p className="body-xs text-ink-muted">Approved</p>
                         <p className="tabular h6 font-semibold text-ink">{counts.approved}</p>

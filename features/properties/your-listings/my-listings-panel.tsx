@@ -46,26 +46,33 @@ export function MyListingsPanel() {
 
     useEffect(() => {
         let cancelled = false;
-        setLoading(true);
-        setError(null);
 
-        void myListingsApi
-            .list(filters)
-            .then((next) => {
-                if (cancelled) return;
-                setResult(next);
-            })
-            .catch(() => {
-                if (cancelled) return;
-                setError("Couldn't load your listings. Try again.");
-                setResult(null);
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
-            });
+        // Defer loading flags so the effect body stays free of synchronous setState
+        // (react-hooks/set-state-in-effect). Same pattern as owner-listings fetch.
+        const timer = window.setTimeout(() => {
+            if (cancelled) return;
+            setLoading(true);
+            setError(null);
+
+            void myListingsApi
+                .list(filters)
+                .then((next) => {
+                    if (cancelled) return;
+                    setResult(next);
+                })
+                .catch(() => {
+                    if (cancelled) return;
+                    setError("Couldn't load your listings. Try again.");
+                    setResult(null);
+                })
+                .finally(() => {
+                    if (!cancelled) setLoading(false);
+                });
+        }, 0);
 
         return () => {
             cancelled = true;
+            window.clearTimeout(timer);
         };
     }, [filters, refreshToken]);
 

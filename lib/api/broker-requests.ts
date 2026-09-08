@@ -1,31 +1,37 @@
-import { MOCK_BROKER_REQUESTS } from "@/features/properties/your-listings/mock-my-listings";
+import { dashboardApi, type DashboardRequestQuota } from "@/lib/api/dashboard";
+import { representativeApi } from "@/lib/api/representative";
+
+import { mapBrokerRequests } from "@/features/properties/your-listings/map-broker-request";
 import type {
-    BrokerRequestItem,
-    BrokerRequestStatusFilter,
     BrokerRequestsResult,
+    BrokerRequestStatusFilter,
 } from "@/features/properties/your-listings/types";
 
-function delay(ms = 240): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function statusMatches(item: BrokerRequestItem, filter: BrokerRequestStatusFilter): boolean {
+function statusMatches(
+    itemType: BrokerRequestsResult["items"][number]["type"],
+    filter: BrokerRequestStatusFilter,
+): boolean {
     if (filter === "all") return true;
-    if (filter === "pending") return item.type === "pending" || item.type === "pending_stale";
+    if (filter === "pending") return itemType === "pending" || itemType === "pending_stale";
     if (filter === "approved") {
-        return item.type === "approved" || item.type === "approved_untouched";
+        return itemType === "approved" || itemType === "approved_untouched";
     }
-    return item.type === "declined";
+    return itemType === "declined";
 }
 
 export const brokerRequestsApi = {
     async list(status: BrokerRequestStatusFilter = "all"): Promise<BrokerRequestsResult> {
-        await delay();
-        const items = MOCK_BROKER_REQUESTS.items.filter((item) => statusMatches(item, status));
+        const [representations, dashboard] = await Promise.all([
+            representativeApi.brokerList(),
+            dashboardApi.get().catch(() => null),
+        ]);
+
+        const quota = dashboard?.summary?.requestQuota as DashboardRequestQuota | undefined;
+        const mapped = mapBrokerRequests(representations, quota);
         return {
-            counts: { ...MOCK_BROKER_REQUESTS.counts },
-            quota: { ...MOCK_BROKER_REQUESTS.quota },
-            items,
+            counts: mapped.counts,
+            quota: mapped.quota,
+            items: mapped.items.filter((item) => statusMatches(item.type, status)),
         };
     },
 };

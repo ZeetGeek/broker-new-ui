@@ -246,8 +246,8 @@ export function OwnerListingsPropertyTypeMenu({
                                         />
                                         <span
                                             className="
-                                          flex flex-1 flex-col gap-0.5 text-start min-inline-0
-                                        "
+                                              flex flex-1 flex-col gap-0.5 text-start min-inline-0
+                                            "
                                         >
                                             <span
                                                 data-slot="property-type-title"

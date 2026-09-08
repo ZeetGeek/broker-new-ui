@@ -117,10 +117,13 @@ function MyListingsQueryInput({
     onChange: (q: string) => void;
 }) {
     const [draft, setDraft] = useState(value);
+    const [prevValue, setPrevValue] = useState(value);
 
-    useEffect(() => {
+    // Sync when the parent filter changes (e.g. Clear filters), not while typing.
+    if (value !== prevValue) {
+        setPrevValue(value);
         setDraft(value);
-    }, [value]);
+    }
 
     useEffect(() => {
         if (draft === value) return;
@@ -215,10 +218,19 @@ function MyListingsFilterDialog({
     onApply: (next: MyListingsFilters) => void;
 }) {
     const [draft, setDraft] = useState(filters);
+    const [wasOpen, setWasOpen] = useState(open);
+    const [syncedFilters, setSyncedFilters] = useState(filters);
 
-    useEffect(() => {
-        if (open) setDraft(filters);
-    }, [filters, open]);
+    // Reset draft when the sheet opens, or when applied filters change while open.
+    if (open) {
+        if (!wasOpen || filters !== syncedFilters) {
+            setWasOpen(true);
+            setSyncedFilters(filters);
+            setDraft(filters);
+        }
+    } else if (wasOpen) {
+        setWasOpen(false);
+    }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
