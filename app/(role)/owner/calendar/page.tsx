@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-    return <VisitsPage viewer="broker" />;
+    return <VisitsPage viewer="owner" />;
 }
