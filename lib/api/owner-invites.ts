@@ -1,4 +1,9 @@
 import { attachedClientsFor } from "@/lib/api/clients";
+import {
+    type RepresentationItem,
+    type RepresentationListPage,
+    representativeApi,
+} from "@/lib/api/representative";
 
 import {
     filterInvites,
@@ -11,16 +16,20 @@ import type {
     InvitesResult,
     InvitesSummary,
 } from "@/features/properties/my-requests/invite-types";
-import { MOCK_INVITES } from "@/features/properties/my-requests/mock-invites";
+import { mapRepresentationToInviteItem } from "@/features/properties/my-requests/map-invite";
 
-/** Mutable in-memory copy so accept/decline survive within a session. */
-let invites: InviteItem[] = MOCK_INVITES.map((item) => ({ ...item }));
-
-function delay(ms = 240): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+function isPaged(
+    value: RepresentationItem[] | RepresentationListPage,
+): value is RepresentationListPage {
+    return !Array.isArray(value) && Array.isArray(value.items);
 }
 
-/** Buyers live in the clients store, so read them from there. */
+async function fetchAllInvitations(): Promise<RepresentationItem[]> {
+    // `all` so stage chips / summary see pending + decided + closed invites.
+    const response = await representativeApi.brokerInvitationList({ status: "all" });
+    return isPaged(response) ? response.items : response;
+}
+
 function withClients(item: InviteItem): InviteItem {
     const attached = attachedClientsFor(item.propertyId);
     return {
@@ -30,12 +39,18 @@ function withClients(item: InviteItem): InviteItem {
     };
 }
 
+async function loadInvites(): Promise<InviteItem[]> {
+    const rows = await fetchAllInvitations();
+    return rows
+        .map((row) => mapRepresentationToInviteItem(row))
+        .filter((item): item is InviteItem => item != null)
+        .map(withClients);
+}
+
 export const ownerInvitesApi = {
     async list(filters: InvitesFilters): Promise<InvitesResult> {
-        await delay();
-
-        const live = invites.map(withClients);
-        const matched = sortInvites(filterInvites(live, filters), filters.sort);
+        const items = await loadInvites();
+        const matched = sortInvites(filterInvites(items, filters), filters.sort);
         const totalPages = Math.max(1, Math.ceil(matched.length / filters.limit));
         const page = Math.min(Math.max(1, filters.page), totalPages);
         const start = (page - 1) * filters.limit;
@@ -48,53 +63,17 @@ export const ownerInvitesApi = {
         };
     },
 
-    /** Summary is over the whole set, not the filtered page. */
+    /** Summary is over the whole invite inbox, not the filtered page. */
     async summary(): Promise<InvitesSummary> {
-        await delay(160);
-        return summarizeInvites(invites);
+        const items = await loadInvites();
+        return summarizeInvites(items);
     },
 
-    /**
-     * Take the owner up on their invite. The owner chose this broker, so
-     * acceptance is immediate — there is no second approval step.
-     */
     async accept(inviteId: string): Promise<void> {
-        await delay(200);
-
-        const target = invites.find((item) => item.id === inviteId);
-        if (!target || target.stage !== "pending") return;
-
-        invites = invites.map((item) =>
-            item.id === inviteId
-                ? {
-                      ...item,
-                      stage: "accepted" as const,
-                      respondedAt: new Date().toISOString(),
-                      daysWaiting: 0,
-                      // Accepting is what unlocks the owner's number.
-                      ownerPhoneDigits: item.ownerPhoneDigits ?? "9825000000",
-                  }
-                : item,
-        );
+        await representativeApi.brokerRespond(inviteId, { status: "accepted" });
     },
 
-    /** Turn the invite down. The owner may invite another broker instead. */
     async decline(inviteId: string): Promise<void> {
-        await delay(200);
-
-        const target = invites.find((item) => item.id === inviteId);
-        if (!target || target.stage !== "pending") return;
-
-        invites = invites.map((item) =>
-            item.id === inviteId
-                ? {
-                      ...item,
-                      stage: "declined" as const,
-                      respondedAt: new Date().toISOString(),
-                      daysWaiting: 0,
-                      ownerPhoneDigits: undefined,
-                  }
-                : item,
-        );
+        await representativeApi.brokerRespond(inviteId, { status: "rejected" });
     },
 };

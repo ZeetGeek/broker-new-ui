@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 import { Inbox, ListFilter, Search } from "lucide-react";
 
@@ -114,23 +115,34 @@ export function InvitesPanel({ onSummary }: { onSummary?: (summary: InvitesSumma
         };
     }, [revision, onSummary]);
 
-    const runMutation = useCallback(async (id: string, action: () => Promise<void>) => {
-        setBusyId(id);
-        try {
-            await action();
-            setRevision((prev) => prev + 1);
-        } finally {
-            setBusyId(null);
-        }
-    }, []);
+    const runMutation = useCallback(
+        async (id: string, action: () => Promise<void>, ok?: string) => {
+            setBusyId(id);
+            try {
+                await action();
+                if (ok) toast.success(ok);
+                setRevision((prev) => prev + 1);
+            } catch {
+                toast.error("Something went wrong. Try again.");
+            } finally {
+                setBusyId(null);
+            }
+        },
+        [],
+    );
 
     const handleAccept = useCallback(
-        (id: string) => void runMutation(id, () => ownerInvitesApi.accept(id)),
+        (id: string) =>
+            void runMutation(
+                id,
+                () => ownerInvitesApi.accept(id),
+                "Invite accepted — you can sell this property",
+            ),
         [runMutation],
     );
 
     const handleDecline = useCallback(
-        (id: string) => void runMutation(id, () => ownerInvitesApi.decline(id)),
+        (id: string) => void runMutation(id, () => ownerInvitesApi.decline(id), "Invite declined"),
         [runMutation],
     );
 
