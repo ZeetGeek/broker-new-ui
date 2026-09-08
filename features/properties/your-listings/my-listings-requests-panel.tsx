@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { Check, Clock, Send, X } from "lucide-react";
@@ -62,15 +63,25 @@ function RequestIcon({ type }: { type: BrokerRequestItem["type"] }) {
     );
 }
 
-function RequestRow({ item }: { item: BrokerRequestItem }) {
+function RequestRow({
+    item,
+    busy,
+    onRemind,
+}: {
+    item: BrokerRequestItem;
+    busy: boolean;
+    onRemind: (id: string) => void;
+}) {
+    const isRemind = item.action.kind === "remind";
+
     return (
         <li className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4">
             <RequestIcon type={item.type} />
             <div
                 className="
-              flex flex-1 flex-col gap-2 min-inline-0
-              sm:flex-row sm:items-center sm:justify-between
-            "
+                  flex flex-1 flex-col gap-2 min-inline-0
+                  sm:flex-row sm:items-center sm:justify-between
+                "
             >
                 <div className="flex flex-col gap-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -83,14 +94,26 @@ function RequestRow({ item }: { item: BrokerRequestItem }) {
                     </div>
                     <p className="body-sm text-ink-muted">{item.note}</p>
                 </div>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0 self-start border-border-warm sm:self-center"
-                    render={<Link href={item.action.href} />}
-                >
-                    {item.action.label}
-                </Button>
+                {isRemind ? (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 self-start border-border-warm sm:self-center"
+                        disabled={!item.canRemind || busy}
+                        onClick={() => onRemind(item.id)}
+                    >
+                        {item.action.label}
+                    </Button>
+                ) : (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 self-start border-border-warm sm:self-center"
+                        render={<Link href={item.action.href} />}
+                    >
+                        {item.action.label}
+                    </Button>
+                )}
             </div>
         </li>
     );
@@ -100,12 +123,17 @@ export function MyListingsRequestsPanel() {
     const [status, setStatus] = useState<BrokerRequestStatusFilter>("all");
     const [result, setResult] = useState<BrokerRequestsResult | null>(null);
     const [loading, setLoading] = useState(true);
+    const [busyId, setBusyId] = useState<string | null>(null);
+    const [revision, setRevision] = useState(0);
 
     useEffect(() => {
         let cancelled = false;
 
+        // Deferred so the loading flag does not set state during the effect
+        // body, which would cascade an extra render on every filter change.
         const timer = window.setTimeout(() => {
             if (cancelled) return;
+
             setLoading(true);
             void brokerRequestsApi
                 .list(status)
@@ -130,7 +158,20 @@ export function MyListingsRequestsPanel() {
             cancelled = true;
             window.clearTimeout(timer);
         };
-    }, [status]);
+    }, [status, revision]);
+
+    async function handleRemind(id: string) {
+        setBusyId(id);
+        try {
+            await brokerRequestsApi.remind(id);
+            toast.success("Reminder sent to the owner");
+            setRevision((prev) => prev + 1);
+        } catch {
+            toast.error("Could not send reminder. Try again.");
+        } finally {
+            setBusyId(null);
+        }
+    }
 
     const counts = result?.counts;
     const total = counts == null ? 0 : counts.approved + counts.pending + counts.declined;
@@ -201,7 +242,12 @@ export function MyListingsRequestsPanel() {
             ) : result ? (
                 <ul className="flex flex-col gap-3">
                     {result.items.map((item) => (
-                        <RequestRow key={item.id} item={item} />
+                        <RequestRow
+                            key={item.id}
+                            item={item}
+                            busy={busyId === item.id}
+                            onRemind={handleRemind}
+                        />
                     ))}
                 </ul>
             ) : null}

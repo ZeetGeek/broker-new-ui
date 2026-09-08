@@ -72,9 +72,9 @@ export function AvatarStack({ people, max = 3, overflowLabel, className }: Avata
                                 <span
                                     className={cn(
                                         `
-                                          group/avatar relative -ms-2 inline-flex cursor-default
-                                          items-center justify-center rounded-full bg-ink
-                                          body-xs font-semibold text-surface ring-2 ring-surface
+                                          group/avatar body-xs relative -ms-2 inline-flex
+                                          cursor-default items-center justify-center rounded-full
+                                          bg-ink font-semibold text-surface ring-2 ring-surface
                                           transition-transform duration-160 block-control-sm
                                           inline-control-sm
                                           hover:z-10 hover:-translate-y-0.5

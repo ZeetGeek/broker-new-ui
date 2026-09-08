@@ -93,16 +93,26 @@ function mapRow(rep: RepresentationItem, now: Date): BrokerRequestItem | null {
         type = "pending";
     }
 
-    const href = brokerPropertyDetailHref(rep.propertyId);
-    const action =
-        type === "pending" || type === "pending_stale"
-            ? { label: "Nudge", href: `${href}?nudge=1` }
-            : type === "declined"
-              ? { label: "View", href }
-              : { label: "Open", href };
-
-    const isApproved = type === "approved";
     const isPending = type === "pending" || type === "pending_stale";
+    const isApproved = type === "approved";
+    const reminderCount = rep.reminderCount ?? 0;
+    const remindersRemaining = rep.remindersRemaining ?? Math.max(0, 2 - reminderCount);
+    const canRemind = isPending && remindersRemaining > 0;
+
+    const href = brokerPropertyDetailHref(rep.propertyId);
+    const action = isPending
+        ? {
+              label: canRemind
+                  ? reminderCount > 0
+                      ? `Remind again (${remindersRemaining} left)`
+                      : "Remind owner"
+                  : "Reminders used",
+              href,
+              kind: "remind" as const,
+          }
+        : type === "declined"
+          ? { label: "View", href, kind: "view" as const }
+          : { label: "Open", href, kind: "open" as const };
 
     return {
         id: rep.id,
@@ -113,6 +123,9 @@ function mapRow(rep: RepresentationItem, now: Date): BrokerRequestItem | null {
         isRent,
         note: requestNote(type, isApproved ? daysSince : daysWaiting),
         action,
+        reminderCount,
+        remindersRemaining,
+        canRemind,
         ...(isApproved
             ? {
                   approvedAt: decidedAt?.toISOString() ?? createdAt.toISOString(),

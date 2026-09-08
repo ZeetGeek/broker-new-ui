@@ -110,7 +110,11 @@ export type BrokerRequestItem = {
     amountInr: number;
     isRent: boolean;
     note: string;
-    action: { label: string; href: string };
+    action: { label: string; href: string; kind?: "remind" | "open" | "view" };
+    /** Pending only — reminders already sent on this attempt. */
+    reminderCount?: number;
+    remindersRemaining?: number;
+    canRemind?: boolean;
     approvedAt?: string;
     daysSince?: number;
     requestedAt?: string;

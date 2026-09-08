@@ -11,10 +11,10 @@ function Separator({ className, orientation = "horizontal", ...props }: Separato
             orientation={orientation}
             className={cn(
                 `
-          shrink-0 bg-border
-          data-horizontal:block-px data-horizontal:inline-full
-          data-vertical:self-stretch data-vertical:inline-px
-        `,
+                  shrink-0 bg-border
+                  data-horizontal:block-px data-horizontal:inline-full
+                  data-vertical:self-stretch data-vertical:inline-px
+                `,
                 className,
             )}
             {...props}
