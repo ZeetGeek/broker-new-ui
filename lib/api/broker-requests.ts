@@ -21,17 +21,21 @@ function statusMatches(
 
 export const brokerRequestsApi = {
     async list(status: BrokerRequestStatusFilter = "all"): Promise<BrokerRequestsResult> {
-        const [representations, dashboard] = await Promise.all([
+        const [reps, dashboard] = await Promise.all([
             representativeApi.brokerList(),
             dashboardApi.get().catch(() => null),
         ]);
 
         const quota = dashboard?.summary?.requestQuota as DashboardRequestQuota | undefined;
-        const mapped = mapBrokerRequests(representations, quota);
+        const mapped = mapBrokerRequests(reps, quota);
         return {
             counts: mapped.counts,
             quota: mapped.quota,
             items: mapped.items.filter((item) => statusMatches(item.type, status)),
         };
+    },
+
+    async remind(requestId: string): Promise<void> {
+        await representativeApi.remind(requestId);
     },
 };

@@ -1,19 +1,26 @@
-import { ATTEMPT_LIMIT, type RequestItem } from "@/features/properties/my-requests/types";
+import {
+    ATTEMPT_LIMIT,
+    REMINDER_LIMIT,
+    type RequestItem,
+} from "@/features/properties/my-requests/types";
 
 /**
  * What the broker is allowed to do on this request right now.
  *
  * The rules, in one place:
- * - While an attempt is pending the broker may send its one reminder, then
- *   cancel it.
+ * - While an attempt is pending the broker may send up to REMINDER_LIMIT
+ *   reminders, then cancel it.
  * - An attempt ends when the broker cancels it or the owner rejects it.
  *   Either way the next attempt opens, up to ATTEMPT_LIMIT.
  * - After the last attempt ends without an approval the property locks and
  *   the broker has no further move. The owner may still make contact.
  */
 export type AttemptActions = {
-    /** Reminder for the current attempt is still unused. */
+    /** Reminder budget still open on the current pending attempt. */
     canRemind: boolean;
+    /** Reminders already sent on this attempt. */
+    remindersUsed: number;
+    remindersLeft: number;
     /** Broker may cancel this attempt and free the next one. */
     canCancel: boolean;
     /** Broker may open a fresh attempt on this property. */
@@ -28,10 +35,14 @@ export type AttemptActions = {
 export function attemptActions(item: RequestItem): AttemptActions {
     const attemptsUsed = item.attemptNumber;
     const attemptsLeft = Math.max(0, ATTEMPT_LIMIT - attemptsUsed);
+    const remindersUsed = item.reminderCount ?? (item.reminderUsed ? REMINDER_LIMIT : 0);
+    const remindersLeft = Math.max(0, REMINDER_LIMIT - remindersUsed);
 
     if (item.stage === "pending") {
         return {
-            canRemind: !item.reminderUsed,
+            canRemind: remindersLeft > 0,
+            remindersUsed,
+            remindersLeft,
             canCancel: true,
             canRetry: false,
             attemptsUsed,
@@ -45,6 +56,8 @@ export function attemptActions(item: RequestItem): AttemptActions {
     if (item.stage === "cancelled" || item.stage === "declined") {
         return {
             canRemind: false,
+            remindersUsed,
+            remindersLeft: 0,
             canCancel: false,
             canRetry: attemptsLeft > 0,
             attemptsUsed,
@@ -55,6 +68,8 @@ export function attemptActions(item: RequestItem): AttemptActions {
 
     return {
         canRemind: false,
+        remindersUsed,
+        remindersLeft: 0,
         canCancel: false,
         canRetry: false,
         attemptsUsed,
