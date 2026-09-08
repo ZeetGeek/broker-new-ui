@@ -34,12 +34,6 @@ export const buyerPropertyKindSchema = z.enum([
     "any",
 ]);
 
-/** How soon they intend to move. Drives follow-up priority. */
-export const buyerUrgencySchema = z.enum(["immediate", "three_months", "exploring"]);
-
-/** How they intend to pay. A cash buyer closes faster and is worth flagging. */
-export const buyerFundingSchema = z.enum(["cash", "loan", "loan_approved", "unknown"]);
-
 /** Where the buyer came from, so the broker knows what is working. */
 export const buyerSourceSchema = z.enum([
     "referral",
@@ -51,8 +45,6 @@ export const buyerSourceSchema = z.enum([
 ]);
 
 export type BuyerPropertyKind = z.infer<typeof buyerPropertyKindSchema>;
-export type BuyerUrgency = z.infer<typeof buyerUrgencySchema>;
-export type BuyerFunding = z.infer<typeof buyerFundingSchema>;
 export type BuyerSource = z.infer<typeof buyerSourceSchema>;
 
 /**
@@ -96,8 +88,6 @@ export const buyerFormSchema = z
         }, "Enter an amount above zero"),
         /** Empty string means "any" — plots and shops have no BHK. */
         bhk: z.string(),
-        urgency: buyerUrgencySchema,
-        funding: buyerFundingSchema,
         source: buyerSourceSchema,
         note: z.string().max(300, "Note is too long"),
     })

@@ -42,8 +42,6 @@ const EMPTY: BuyerFormValues = {
     budgetMin: "",
     budgetMax: "",
     bhk: "",
-    urgency: "three_months",
-    funding: "unknown",
     source: "referral",
     note: "",
 };
@@ -232,18 +230,20 @@ export function AddBuyerModal({
             // shape happens here, where the types stay honest.
             const maxDigits = normalizeBuyerBudget(values.budgetMax);
             const minDigits = normalizeBuyerBudget(values.budgetMin);
-            // The card shows one ceiling, so fall back to the lower figure when
-            // that is the only one given.
-            const ceiling = maxDigits || minDigits;
 
             try {
                 await clientsApi.create({
                     name: values.name.trim(),
                     phoneDigits: normalizeBuyerPhone(values.phone),
+                    email: values.email.trim() || null,
                     lookingFor: values.lookingFor,
+                    propertyKind: values.propertyKind,
                     preferredLocalities: parseBuyerLocalities(values.localities),
-                    budgetMaxInr: ceiling === "" ? null : Number(ceiling),
+                    budgetMinInr: minDigits === "" ? null : Number(minDigits),
+                    budgetMaxInr: maxDigits === "" ? null : Number(maxDigits),
                     bhk: values.bhk === "" ? null : Number(values.bhk),
+                    source: values.source,
+                    notes: values.note.trim() || null,
                 });
 
                 onCreated(values.name.trim());

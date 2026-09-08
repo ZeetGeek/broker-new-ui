@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import type { BuyerPropertyKind, BuyerSource } from "@/lib/validation/buyer";
 
 import type { ClientItem, ClientLookingFor } from "@/features/clients/types";
 import type { BuyerDocument } from "@/features/contacts/document-rules";
@@ -19,10 +20,15 @@ export type AttachedClientRef = {
 export type NewBuyerInput = {
     name: string;
     phoneDigits: string;
+    email?: string | null;
     lookingFor: ClientLookingFor;
+    propertyKind: BuyerPropertyKind;
     preferredLocalities: string[];
+    budgetMinInr: number | null;
     budgetMaxInr: number | null;
     bhk: number | null;
+    source: BuyerSource;
+    notes?: string | null;
     documents?: BuyerDocument[];
 };
 
@@ -32,8 +38,12 @@ type ApiClientContact = {
     phone: string;
     email?: string | null;
     clientType?: string | null;
+    propertyKind?: string | null;
+    preferredLocalities?: string[] | null;
     budgetMin?: string | null;
     budgetMax?: string | null;
+    bhk?: number | null;
+    source?: string | null;
     notes?: string | null;
     updatedAt?: string | null;
     leads?: Array<{ id: string; propertyId: string }>;
@@ -69,6 +79,24 @@ type AttachClientsResponse = {
     propertyId: string;
 };
 
+const PROPERTY_KINDS = new Set<BuyerPropertyKind>([
+    "apartment",
+    "villa",
+    "plot",
+    "shop",
+    "office",
+    "any",
+]);
+
+const SOURCES = new Set<BuyerSource>([
+    "referral",
+    "walk_in",
+    "portal",
+    "social",
+    "repeat",
+    "other",
+]);
+
 function digitsOnly(value: string): string {
     return value.replace(/\D/g, "");
 }
@@ -82,33 +110,16 @@ function clientTypeFromLookingFor(lookingFor: ClientLookingFor): "buyer" | "rent
     return lookingFor === "rent" ? "renter" : "buyer";
 }
 
-function parseLocalitiesFromNotes(notes: string | null | undefined): string[] {
-    if (!notes) return [];
-    const match = notes.match(/Areas?:\s*(.+?)(?:\.|$)/i);
-    if (!match?.[1]) return [];
-    return match[1]
-        .split(",")
-        .map((part) => part.trim())
-        .filter(Boolean);
+function asPropertyKind(value: string | null | undefined): BuyerPropertyKind {
+    if (value && PROPERTY_KINDS.has(value as BuyerPropertyKind)) {
+        return value as BuyerPropertyKind;
+    }
+    return "any";
 }
 
-function parseBhkFromNotes(notes: string | null | undefined): number | null {
-    if (!notes) return null;
-    const match = notes.match(/BHK:\s*(\d+)/i);
-    if (!match?.[1]) return null;
-    const value = Number(match[1]);
-    return Number.isFinite(value) ? value : null;
-}
-
-function buildCreateNotes(input: NewBuyerInput): string | undefined {
-    const parts: string[] = [];
-    if (input.preferredLocalities.length > 0) {
-        parts.push(`Areas: ${input.preferredLocalities.join(", ")}`);
-    }
-    if (input.bhk != null) {
-        parts.push(`BHK: ${input.bhk}`);
-    }
-    return parts.length > 0 ? parts.join(". ") : undefined;
+function asSource(value: string | null | undefined): BuyerSource | null {
+    if (value && SOURCES.has(value as BuyerSource)) return value as BuyerSource;
+    return null;
 }
 
 function mapContact(contact: ApiClientContact): ClientItem {
@@ -120,10 +131,15 @@ function mapContact(contact: ApiClientContact): ClientItem {
         id: contact.id,
         name: contact.name,
         phoneDigits: normalized,
+        email: contact.email?.trim() || null,
         lookingFor: lookingForFromType(contact.clientType),
-        preferredLocalities: parseLocalitiesFromNotes(contact.notes),
+        propertyKind: asPropertyKind(contact.propertyKind),
+        preferredLocalities: contact.preferredLocalities ?? [],
+        budgetMinInr: contact.budgetMin != null ? Number(contact.budgetMin) : null,
         budgetMaxInr: contact.budgetMax != null ? Number(contact.budgetMax) : null,
-        bhk: parseBhkFromNotes(contact.notes),
+        bhk: contact.bhk ?? null,
+        source: asSource(contact.source),
+        notes: contact.notes ?? null,
         lastContactedAt: contact.updatedAt ?? null,
         attachedPropertyCount: contact.leads?.length ?? 0,
         documents: [],
@@ -252,9 +268,15 @@ export const clientsApi = {
             body: JSON.stringify({
                 name: input.name,
                 phone: `+91${input.phoneDigits}`,
+                email: input.email?.trim() || undefined,
                 clientType: clientTypeFromLookingFor(input.lookingFor),
+                propertyKind: input.propertyKind,
+                preferredLocalities: input.preferredLocalities,
+                budgetMin: input.budgetMinInr ?? undefined,
                 budgetMax: input.budgetMaxInr ?? undefined,
-                notes: buildCreateNotes(input),
+                bhk: input.bhk ?? undefined,
+                source: input.source,
+                notes: input.notes?.trim() || undefined,
             }),
         });
         return mapContact(contact);

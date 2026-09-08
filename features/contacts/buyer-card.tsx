@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { ChatButton } from "@/features/chat/chat-button";
+import { PROPERTY_KIND_OPTIONS } from "@/features/contacts/buyer-options";
 import {
     BUYER_DOCUMENT_KIND_LABEL,
     documentIcon,
@@ -22,12 +23,20 @@ import {
 import type { BuyerRow } from "@/features/contacts/types";
 
 function budgetLabel(buyer: BuyerRow): string | null {
-    if (buyer.budgetMaxInr === null) return null;
+    if (buyer.budgetMaxInr === null && buyer.budgetMinInr === null) return null;
     const amount =
         buyer.lookingFor === "rent"
-            ? formatRentInr(buyer.budgetMaxInr)
-            : formatPriceInr(buyer.budgetMaxInr);
-    return `Up to ${amount}`;
+            ? formatRentInr(buyer.budgetMaxInr ?? buyer.budgetMinInr ?? 0)
+            : formatPriceInr(buyer.budgetMaxInr ?? buyer.budgetMinInr ?? 0);
+    if (buyer.budgetMaxInr != null) return `Up to ${amount}`;
+    return `From ${amount}`;
+}
+
+function kindLabel(buyer: BuyerRow): string | null {
+    if (buyer.propertyKind === "any") return null;
+    return (
+        PROPERTY_KIND_OPTIONS.find((option) => option.value === buyer.propertyKind)?.label ?? null
+    );
 }
 
 /**
@@ -76,9 +85,11 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
-                                            <span className="
+                                            <span
+                                                className="
                                               flex shrink-0 items-center text-success
-                                            ">
+                                            "
+                                            >
                                                 <TrendingUp
                                                     aria-hidden
                                                     className="block-3.5 inline-3.5"
@@ -143,9 +154,8 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
                     <LookingIcon aria-hidden className="block-3 inline-3" strokeWidth={2} />
                     {buyer.lookingFor === "rent" ? "Renting" : "Buying"}
                 </Badge>
-                {buyer.bhk !== null ? (
-                    <Badge variant="neutral">{buyer.bhk} BHK</Badge>
-                ) : null}
+                {kindLabel(buyer) ? <Badge variant="neutral">{kindLabel(buyer)}</Badge> : null}
+                {buyer.bhk !== null ? <Badge variant="neutral">{buyer.bhk} BHK</Badge> : null}
                 {budget ? (
                     <Badge variant="neutral" className="tabular">
                         {budget}
@@ -159,7 +169,11 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
                     className="mbs-px shrink-0 block-3.5 inline-3.5"
                     strokeWidth={1.75}
                 />
-                <span className="text-pretty">{buyer.preferredLocalities.join(", ")}</span>
+                <span className="text-pretty">
+                    {buyer.preferredLocalities.length > 0
+                        ? buyer.preferredLocalities.join(", ")
+                        : "No preferred areas"}
+                </span>
             </p>
 
             {buyer.documents.length > 0 ? (
@@ -199,9 +213,11 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
                                             className="shrink-0 text-ink-muted block-4 inline-4"
                                             strokeWidth={1.75}
                                         />
-                                        <span className="
+                                        <span
+                                            className="
                                           body-xs flex-1 truncate text-ink min-inline-0
-                                        ">
+                                        "
+                                        >
                                             {doc.fileName}
                                         </span>
                                         <span className="body-xs shrink-0 text-ink-subtle">
@@ -218,9 +234,11 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
                 </details>
             ) : null}
 
-            <div className="
+            <div
+                className="
               flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm pbs-3
-            ">
+            "
+            >
                 <p
                     className={cn(
                         "body-xs",
