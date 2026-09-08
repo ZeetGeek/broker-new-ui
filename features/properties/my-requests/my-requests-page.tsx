@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 import { myRequestsApi } from "@/lib/api/my-requests";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
@@ -94,26 +95,32 @@ function SentRequestsPanel({ onSummary }: { onSummary?: (summary: RequestsSummar
         };
     }, [revision, onSummary]);
 
-    const runMutation = useCallback(async (id: string, action: () => Promise<void>) => {
-        setBusyId(id);
-        try {
-            await action();
-            setRevision((prev) => prev + 1);
-        } finally {
-            setBusyId(null);
-        }
-    }, []);
+    const runMutation = useCallback(
+        async (id: string, action: () => Promise<void>, successMessage?: string) => {
+            setBusyId(id);
+            try {
+                await action();
+                if (successMessage) toast.success(successMessage);
+                setRevision((prev) => prev + 1);
+            } catch {
+                toast.error("Something went wrong. Try again.");
+            } finally {
+                setBusyId(null);
+            }
+        },
+        [],
+    );
 
     const handleNudge = useCallback(
         (id: string) => {
-            void runMutation(id, () => myRequestsApi.nudge(id));
+            void runMutation(id, () => myRequestsApi.nudge(id), "Reminder sent to the owner");
         },
         [runMutation],
     );
 
     const handleWithdraw = useCallback(
         (id: string) => {
-            void runMutation(id, () => myRequestsApi.withdraw(id));
+            void runMutation(id, () => myRequestsApi.withdraw(id), "Request cancelled");
         },
         [runMutation],
     );
@@ -125,7 +132,7 @@ function SentRequestsPanel({ onSummary }: { onSummary?: (summary: RequestsSummar
 
     const handleRetry = useCallback(
         (id: string) => {
-            void runMutation(id, () => myRequestsApi.retry(id));
+            void runMutation(id, () => myRequestsApi.retry(id), "Request sent again");
         },
         [runMutation],
     );
@@ -260,9 +267,7 @@ export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
     // Title, stats and tabs share the portal header row so the heading always
     // names the tab you are on.
     const headerSection = (
-        <div
-            className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6"
-        >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
             <div className="min-inline-0">
                 {isInvites ? (
                     <InvitesIntro summary={inviteSummary} isLoading={!inviteSummary} />

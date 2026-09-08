@@ -39,7 +39,11 @@ import { attemptActions, attemptLabel } from "@/features/properties/my-requests/
 import { needsFollowUp } from "@/features/properties/my-requests/filter-requests";
 import { REQUEST_STAGE_META } from "@/features/properties/my-requests/request-stage-meta";
 import { RequestTimeline } from "@/features/properties/my-requests/request-timeline";
-import { ATTEMPT_LIMIT, type RequestItem } from "@/features/properties/my-requests/types";
+import {
+    ATTEMPT_LIMIT,
+    REMINDER_LIMIT,
+    type RequestItem,
+} from "@/features/properties/my-requests/types";
 import type { RequestsView } from "@/features/properties/my-requests/use-requests-view";
 
 function dayLabel(days: number): string {
@@ -144,15 +148,19 @@ function RequestCardActions({
                                         className="block-4 inline-4"
                                         strokeWidth={1.75}
                                     />
-                                    {actions.canRemind ? "Remind owner" : "Reminder sent"}
+                                    {actions.canRemind
+                                        ? actions.remindersUsed > 0
+                                            ? `Remind again (${actions.remindersLeft} left)`
+                                            : "Remind owner"
+                                        : "Reminders used"}
                                 </Button>
                             </span>
                         }
                     />
                     <TooltipContent>
                         {actions.canRemind
-                            ? "Send the owner one reminder about this request."
-                            : "You already used the reminder for this attempt."}
+                            ? `Send the owner a reminder (${actions.remindersLeft} of ${REMINDER_LIMIT} left on this attempt).`
+                            : `You already used both reminders for this attempt.`}
                     </TooltipContent>
                 </Tooltip>
 
@@ -499,7 +507,11 @@ export function RequestCard({
                                 </p>
                             </div>
 
-                            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                            <div
+                                className="
+                              flex shrink-0 flex-wrap items-center justify-end gap-1.5
+                            "
+                            >
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
@@ -523,7 +535,8 @@ export function RequestCard({
                                         />
                                         <TooltipContent>
                                             You get {ATTEMPT_LIMIT} attempts per property. Each
-                                            attempt is one request plus one reminder.
+                                            attempt is one request plus up to {REMINDER_LIMIT}{" "}
+                                            reminders.
                                         </TooltipContent>
                                     </Tooltip>
                                 ) : null}

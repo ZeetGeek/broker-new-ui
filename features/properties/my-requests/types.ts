@@ -71,12 +71,14 @@ export type RequestItem = {
     brokerSlotsTotal: number;
     /**
      * Which attempt this is, 1-based. A broker gets ATTEMPT_LIMIT tries per
-     * property; each try is one request plus one optional reminder.
+     * property; each try is one request plus up to REMINDER_LIMIT reminders.
      */
     attemptNumber: number;
-    /** Whether the reminder for THIS attempt has been used. */
+    /** Reminders sent on THIS pending attempt. */
+    reminderCount: number;
+    /** True when reminderCount has reached REMINDER_LIMIT. */
     reminderUsed: boolean;
-    /** ISO instant of this attempt's reminder. Null when not yet sent. */
+    /** ISO instant of this attempt's latest reminder. Null when not yet sent. */
     nudgedAt: string | null;
     /** Owner's reason, when they gave one on decline. */
     declineReason?: string;
@@ -134,9 +136,12 @@ export const DEFAULT_REQUESTS_FILTERS: RequestsFilters = {
 };
 
 /**
- * Tries a broker gets per property. One attempt = one request plus one
- * optional reminder. After the last attempt is cancelled unanswered the
+ * Tries a broker gets per property. One attempt = one request plus up to
+ * REMINDER_LIMIT reminders. After the last attempt ends without approval the
  * property locks: the broker cannot approach that owner again, though the
  * owner may still reach out to the broker.
  */
 export const ATTEMPT_LIMIT = 3;
+
+/** Reminders allowed per pending attempt. Raised in one place when product asks. */
+export const REMINDER_LIMIT = 2;

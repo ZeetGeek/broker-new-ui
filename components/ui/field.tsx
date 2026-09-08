@@ -15,10 +15,10 @@ function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
             data-slot="field-set"
             className={cn(
                 `
-          flex flex-col gap-6
-          has-[>[data-slot=checkbox-group]]:gap-3
-          has-[>[data-slot=radio-group]]:gap-3
-        `,
+                  flex flex-col gap-6
+                  has-[>[data-slot=checkbox-group]]:gap-3
+                  has-[>[data-slot=radio-group]]:gap-3
+                `,
                 className,
             )}
             {...props}
@@ -50,10 +50,10 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
             data-slot="field-group"
             className={cn(
                 `
-          group/field-group @container/field-group flex flex-col gap-7 inline-full
-          data-[slot=checkbox-group]:gap-3
-          *:data-[slot=field-group]:gap-4
-        `,
+                  group/field-group @container/field-group flex flex-col gap-7 inline-full
+                  data-[slot=checkbox-group]:gap-3
+                  *:data-[slot=field-group]:gap-4
+                `,
                 className,
             )}
             {...props}
@@ -68,21 +68,21 @@ const fieldVariants = cva(
             orientation: {
                 vertical: "flex-col *:inline-full [&>.sr-only]:inline-auto",
                 horizontal: `
-            flex-row items-center
-            has-[>[data-slot=field-content]]:items-start
-            *:data-[slot=field-label]:flex-auto
-            has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mbs-px
-          `,
+                  flex-row items-center
+                  has-[>[data-slot=field-content]]:items-start
+                  *:data-[slot=field-label]:flex-auto
+                  has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mbs-px
+                `,
                 responsive: `
-            flex-col
-            *:inline-full
-            @md/field-group:flex-row @md/field-group:items-center
-            @md/field-group:*:inline-auto
-            @md/field-group:has-[>[data-slot=field-content]]:items-start
-            @md/field-group:*:data-[slot=field-label]:flex-auto
-            [&>.sr-only]:inline-auto
-            @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mbs-px
-          `,
+                  flex-col
+                  *:inline-full
+                  @md/field-group:flex-row @md/field-group:items-center
+                  @md/field-group:*:inline-auto
+                  @md/field-group:has-[>[data-slot=field-content]]:items-start
+                  @md/field-group:*:data-[slot=field-label]:flex-auto
+                  [&>.sr-only]:inline-auto
+                  @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mbs-px
+                `,
             },
         },
         defaultVariants: {
@@ -123,16 +123,16 @@ function FieldLabel({ className, ...props }: React.ComponentProps<typeof Label>)
             data-slot="field-label"
             className={cn(
                 `
-          group/field-label peer/field-label flex gap-2 leading-snug inline-fit
-          group-data-[disabled=true]/field:opacity-50
-          has-data-checked:bg-input/30
-          has-[>[data-slot=field]]:rounded-2xl has-[>[data-slot=field]]:border
-          has-[>[data-slot=field]]:not-has-[:disabled,[data-disabled]]:hover:bg-input/40
-          has-[>[data-slot=field]]:has-focus-visible:border-ring
-          has-[>[data-slot=field]]:has-focus-visible:ring-3
-          has-[>[data-slot=field]]:has-focus-visible:ring-ring/50
-          *:data-[slot=field]:p-4
-        `,
+                  group/field-label peer/field-label flex gap-2 leading-snug inline-fit
+                  group-data-[disabled=true]/field:opacity-50
+                  has-data-checked:bg-input/30
+                  has-[>[data-slot=field]]:rounded-2xl has-[>[data-slot=field]]:border
+                  has-[>[data-slot=field]]:not-has-[:disabled,[data-disabled]]:hover:bg-input/40
+                  has-[>[data-slot=field]]:has-focus-visible:border-ring
+                  has-[>[data-slot=field]]:has-focus-visible:ring-3
+                  has-[>[data-slot=field]]:has-focus-visible:ring-ring/50
+                  *:data-[slot=field]:p-4
+                `,
                 "has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:inline-full",
                 className,
             )}
@@ -147,9 +147,9 @@ function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
             data-slot="field-label"
             className={cn(
                 `
-          flex items-center gap-2 text-sm font-medium inline-fit
-          group-data-[disabled=true]/field:opacity-50
-        `,
+                  flex items-center gap-2 text-sm font-medium inline-fit
+                  group-data-[disabled=true]/field:opacity-50
+                `,
                 className,
             )}
             {...props}
@@ -163,10 +163,10 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
             data-slot="field-description"
             className={cn(
                 `
-          text-start text-sm/normal font-normal text-muted-foreground
-          group-has-data-horizontal/field:text-balance
-          [[data-variant=legend]+&]:-mbs-1.5
-        `,
+                  text-start text-sm/normal font-normal text-muted-foreground
+                  group-has-data-horizontal/field:text-balance
+                  [[data-variant=legend]+&]:-mbs-1.5
+                `,
                 "last:mbs-0 nth-last-2:-mbs-1",
                 "[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
                 className,
@@ -196,7 +196,9 @@ function FieldSeparator({
             <Separator className="absolute inset-0 inset-bs-1/2" />
             {children && (
                 <span
-                    className="relative mx-auto block bg-background px-2 text-muted-foreground inline-fit"
+                    className="
+                      relative mx-auto block bg-background px-2 text-muted-foreground inline-fit
+                    "
                     data-slot="field-separator-content"
                 >
                     {children}

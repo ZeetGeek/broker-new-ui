@@ -2,6 +2,7 @@ import { apiFetch } from "@/lib/api/client";
 
 export type NotificationType =
     | "representation_request"
+    | "representation_reminder"
     | "representation_approved"
     | "representation_rejected"
     | "representation_revoked"

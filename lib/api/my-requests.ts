@@ -1,28 +1,49 @@
 import { attachedClientsFor } from "@/lib/api/clients";
+import { dashboardApi, type DashboardRequestQuota } from "@/lib/api/dashboard";
+import { representativeApi } from "@/lib/api/representative";
+import { formatDateIso } from "@/lib/format/date";
 
-import { attemptActions } from "@/features/properties/my-requests/attempt-rules";
 import {
     filterRequests,
     sortRequests,
     summarizeRequests,
 } from "@/features/properties/my-requests/filter-requests";
-import {
-    MOCK_REQUESTS,
-    MOCK_REQUESTS_QUOTA,
-} from "@/features/properties/my-requests/mock-requests";
+import { mapRepresentationToRequestItem } from "@/features/properties/my-requests/map-my-request";
 import type {
     RequestItem,
     RequestsFilters,
     RequestsResult,
     RequestsSummary,
 } from "@/features/properties/my-requests/types";
-import { ATTEMPT_LIMIT } from "@/features/properties/my-requests/types";
 
-/** Mutable in-memory copy so attempt changes survive within a session. */
-let requests: RequestItem[] = MOCK_REQUESTS.map((item) => ({ ...item }));
+async function loadOutboundRequests() {
+    const rows = await representativeApi.brokerList();
+    return rows
+        .map((row) => mapRepresentationToRequestItem(row))
+        .filter((item): item is NonNullable<typeof item> => item != null);
+}
 
-function delay(ms = 240): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+async function loadQuota(): Promise<RequestsSummary["quota"]> {
+    try {
+        const dashboard = await dashboardApi.get();
+        const quota = dashboard.summary?.requestQuota as DashboardRequestQuota | undefined;
+        if (quota && typeof quota === "object") {
+            return {
+                limit: Number(quota.limit) || 10,
+                used: Number(quota.used) || 0,
+                remaining: Number(quota.remaining) || 0,
+                resetsOn: String(quota.resetsOn || formatDateIso(new Date())),
+            };
+        }
+    } catch {
+        // Fall through to a safe default when dashboard is unavailable.
+    }
+    return {
+        limit: 10,
+        used: 0,
+        remaining: 10,
+        resetsOn: formatDateIso(new Date()),
+    };
 }
 
 /** Buyers live in the clients store, so read them from there. */
@@ -37,9 +58,8 @@ function withClientCount(item: RequestItem): RequestItem {
 
 export const myRequestsApi = {
     async list(filters: RequestsFilters): Promise<RequestsResult> {
-        await delay();
-
-        const live = requests.map(withClientCount);
+        const items = await loadOutboundRequests();
+        const live = items.map(withClientCount);
         const matched = sortRequests(filterRequests(live, filters), filters.sort);
         const totalPages = Math.max(1, Math.ceil(matched.length / filters.limit));
         const page = Math.min(Math.max(1, filters.page), totalPages);
@@ -55,117 +75,27 @@ export const myRequestsApi = {
 
     /** Summary is over the whole set, not the filtered page. */
     async summary(): Promise<RequestsSummary> {
-        await delay(160);
-        return summarizeRequests(requests.map(withClientCount), { ...MOCK_REQUESTS_QUOTA });
+        const [items, quota] = await Promise.all([loadOutboundRequests(), loadQuota()]);
+        return summarizeRequests(items.map(withClientCount), quota);
     },
 
-    /**
-     * Send this attempt's one reminder. Enforced here too — the button being
-     * disabled is a convenience, not the rule.
-     */
+    /** Send a reminder to the owner (max REMINDER_LIMIT per pending attempt). */
     async nudge(requestId: string): Promise<void> {
-        await delay(200);
-
-        const target = requests.find((item) => item.id === requestId);
-        if (!target || !attemptActions(target).canRemind) return;
-
-        const sentAt = new Date().toISOString();
-
-        requests = requests.map((item) =>
-            item.id === requestId
-                ? {
-                      ...item,
-                      reminderUsed: true,
-                      nudgedAt: sentAt,
-                      timeline: [
-                          ...item.timeline,
-                          {
-                              key: "nudged" as const,
-                              label: "You sent a reminder",
-                              at: sentAt,
-                          },
-                      ],
-                  }
-                : item,
-        );
+        await representativeApi.remind(requestId);
     },
 
-    /**
-     * Close the current attempt. When it was the broker's last one the
-     * property locks instead, and they may not approach that owner again.
-     */
+    /** Withdraw the current pending attempt. */
     async withdraw(requestId: string): Promise<void> {
-        await delay(200);
-
-        const target = requests.find((item) => item.id === requestId);
-        if (!target || !attemptActions(target).canCancel) return;
-
-        const at = new Date().toISOString();
-        const isLastAttempt = target.attemptNumber >= ATTEMPT_LIMIT;
-
-        requests = requests.map((item) =>
-            item.id === requestId
-                ? {
-                      ...item,
-                      stage: isLastAttempt ? ("locked" as const) : ("cancelled" as const),
-                      resolvedAt: at,
-                      timeline: [
-                          ...item.timeline,
-                          isLastAttempt
-                              ? {
-                                    key: "locked" as const,
-                                    label: "No attempts left — owner never replied",
-                                    at,
-                                }
-                              : {
-                                    key: "cancelled" as const,
-                                    label: `You cancelled attempt ${item.attemptNumber}`,
-                                    at,
-                                },
-                      ],
-                  }
-                : item,
-        );
+        await representativeApi.withdraw(requestId);
     },
 
-    /**
-     * Open the next attempt on a property whose last attempt ended — either
-     * the broker cancelled it or the owner rejected it.
-     */
+    /** Open the next request attempt on the same property. */
     async retry(requestId: string): Promise<void> {
-        await delay(200);
-
-        const target = requests.find((item) => item.id === requestId);
-        if (!target || !attemptActions(target).canRetry) return;
-
-        const at = new Date().toISOString();
-        const nextAttempt = target.attemptNumber + 1;
-
-        requests = requests.map((item) =>
-            item.id === requestId
-                ? {
-                      ...item,
-                      stage: "pending" as const,
-                      attemptNumber: nextAttempt,
-                      reminderUsed: false,
-                      nudgedAt: null,
-                      ownerSeen: false,
-                      requestedAt: at,
-                      resolvedAt: null,
-                      daysWaiting: 0,
-                      // The previous attempt's rejection reason must not
-                      // follow the new request into a fresh attempt.
-                      declineReason: undefined,
-                      timeline: [
-                          ...item.timeline,
-                          {
-                              key: "sent" as const,
-                              label: `You sent the request (${nextAttempt} of ${ATTEMPT_LIMIT})`,
-                              at,
-                          },
-                      ],
-                  }
-                : item,
-        );
+        const rows = await representativeApi.brokerList();
+        const target = rows.find((row) => row.id === requestId);
+        if (!target?.propertyId) {
+            throw new Error("Request not found");
+        }
+        await representativeApi.requestRepresentation(target.propertyId);
     },
 };

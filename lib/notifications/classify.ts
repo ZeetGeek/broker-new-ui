@@ -32,6 +32,7 @@ const TAB_ORDER: NotificationTab[] = ["all", "requests", "visits", "updates"];
 
 const REQUEST_TYPES = new Set<NotificationType>([
     "representation_request",
+    "representation_reminder",
     "representation_approved",
     "representation_rejected",
     "representation_revoked",
@@ -55,7 +56,10 @@ const BROKER_ACTIONABLE_TYPES = new Set<NotificationType>([
     "invite_received",
 ]);
 
-const OWNER_ACTIONABLE_TYPES = new Set<NotificationType>(["representation_request"]);
+const OWNER_ACTIONABLE_TYPES = new Set<NotificationType>([
+    "representation_request",
+    "representation_reminder",
+]);
 
 const ALL_NOTIFICATION_TYPES = new Set<NotificationType>([
     ...REQUEST_TYPES,
