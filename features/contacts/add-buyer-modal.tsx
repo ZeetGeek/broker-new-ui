@@ -25,15 +25,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import {
     BHK_OPTIONS,
-    FUNDING_OPTIONS,
     KINDS_WITHOUT_BHK,
     type Option,
     PROPERTY_KIND_OPTIONS,
     SOURCE_OPTIONS,
-    URGENCY_OPTIONS,
 } from "@/features/contacts/buyer-options";
-import type { BuyerDocument } from "@/features/contacts/document-rules";
-import { DocumentUploader } from "@/features/contacts/document-uploader";
 import { SelectionChip } from "@/features/properties/property-form/selection-chip";
 
 const EMPTY: BuyerFormValues = {
@@ -196,12 +192,6 @@ export function AddBuyerModal({
     onCreated: (name: string) => void;
 }) {
     const [submitError, setSubmitError] = useState<string | null>(null);
-    /**
-     * Files live outside the form state: they are validated by
-     * `document-rules.ts` at pick time, not by the zod schema, which only
-     * describes typed text.
-     */
-    const [documents, setDocuments] = useState<BuyerDocument[]>([]);
 
     const {
         control,
@@ -224,7 +214,6 @@ export function AddBuyerModal({
         if (open) {
             reset(EMPTY);
             setSubmitError(null);
-            setDocuments([]);
         }
     }
 
@@ -255,18 +244,19 @@ export function AddBuyerModal({
                     preferredLocalities: parseBuyerLocalities(values.localities),
                     budgetMaxInr: ceiling === "" ? null : Number(ceiling),
                     bhk: values.bhk === "" ? null : Number(values.bhk),
-                    documents,
                 });
 
                 onCreated(values.name.trim());
                 onOpenChange(false);
             } catch (error) {
                 setSubmitError(
-                    error instanceof Error ? error.message : "Could not save this buyer. Try again.",
+                    error instanceof Error
+                        ? error.message
+                        : "Could not save this buyer. Try again.",
                 );
             }
         },
-        [documents, onCreated, onOpenChange],
+        [onCreated, onOpenChange],
     );
 
     return (
@@ -455,54 +445,8 @@ export function AddBuyerModal({
 
                     <div className="border-bs border-border-warm" />
 
-                    <Section eyebrow={isRent ? "Rent they will pay" : "Budget and readiness"}>
+                    <Section eyebrow={isRent ? "Rent they will pay" : "Budget"}>
                         <BudgetFields control={control} isRent={isRent} />
-
-                        <div className="grid grid-cols-1 gap-4">
-                            <Controller
-                                name="urgency"
-                                control={control}
-                                render={({ field }) => (
-                                    <ChipRow
-                                        label="Timeline"
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        options={URGENCY_OPTIONS}
-                                        dense
-                                    />
-                                )}
-                            />
-
-                            {!isRent ? (
-                                <Controller
-                                    name="funding"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <ChipRow
-                                            label="Paying by"
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            options={FUNDING_OPTIONS}
-                                            dense
-                                        />
-                                    )}
-                                />
-                            ) : null}
-                        </div>
-                    </Section>
-
-                    <div className="border-bs border-border-warm" />
-
-                    <Section eyebrow="Documents">
-                        <p className="body-xs -mbs-1 text-ink-subtle">
-                            ID, address or income proof, loan papers. You can open these later
-                            from the buyer&apos;s card.
-                        </p>
-                        <DocumentUploader
-                            documents={documents}
-                            onChange={setDocuments}
-                            disabled={isSubmitting}
-                        />
                     </Section>
 
                     <div className="border-bs border-border-warm" />
