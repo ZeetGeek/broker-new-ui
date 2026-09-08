@@ -2,13 +2,18 @@
 
 import { useMemo } from "react";
 
+import { useReducedMotion } from "motion/react";
+
 import { formatDateIso, formatDateShort, isSameCalendarDay } from "@/lib/format/date";
+import { spring } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
+import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { VisitItem, VisitViewer } from "@/features/site-visits/types";
 import { VisitRow, type VisitRowHandlers } from "@/features/site-visits/visit-row";
+import { VisitsDayEmpty } from "@/features/site-visits/visits-empty";
 
 /** Local calendar-day key, for bucketing visits into day sections. */
 function dayKey(date: Date): string {
@@ -83,8 +88,16 @@ type VisitsListProps = {
     handlers: VisitRowHandlers;
     busyId: string | null;
     now: Date;
-    /** Jumps to a day section. Omitted when the list is not date-ordered. */
-    onJumpToDay?: (day: Date) => void;
+    /** The selected day as `YYYY-MM-DD`, or "" for every day. */
+    selectedDay?: string;
+    /** Selects a day, or clears it when the same day is tapped again. */
+    onSelectDay?: (dayKey: string) => void;
+    /**
+     * Per-day counts for the whole book, unnarrowed by the day filter. The
+     * strip must keep showing what Thursday holds while Wednesday is
+     * selected, so it cannot count the rows it is currently displaying.
+     */
+    dayCounts?: Map<string, number>;
 };
 
 /**
@@ -101,13 +114,35 @@ export function VisitsList({
     handlers,
     busyId,
     now,
-    onJumpToDay,
+    selectedDay = "",
+    onSelectDay,
+    dayCounts,
 }: VisitsListProps) {
     const groups = useMemo(() => groupByDay(visits), [visits]);
 
     return (
         <div className="flex flex-col gap-6">
-            {onJumpToDay ? <WeekStrip groups={groups} now={now} onJumpToDay={onJumpToDay} /> : null}
+            {onSelectDay ? (
+                <WeekStrip
+                    now={now}
+                    selectedDay={selectedDay}
+                    onSelectDay={onSelectDay}
+                    dayCounts={dayCounts ?? new Map()}
+                />
+            ) : null}
+
+            {/* An empty day keeps the strip above it, so the tap that got
+                the user here is also the way back out. Replacing the whole
+                list with a page-level empty state would take the strip away
+                and leave them stranded. */}
+            {groups.length === 0 && selectedDay ? (
+                <div className="rounded-card border border-border-warm">
+                    {/* No action offered: /broker/visits/new takes no date
+                        yet, so a "Propose a time" button would silently lose
+                        the day the user picked. */}
+                    <VisitsDayEmpty />
+                </div>
+            ) : null}
 
             {groups.map((group) => (
                 <section key={group.key} id={`visits-day-${group.key}`} className="flex flex-col">
@@ -150,96 +185,136 @@ export function VisitsList({
 }
 
 /**
- * The seven days from today, as a jump bar.
+ * The seven days from today, as a day filter.
  *
- * Only days that actually hold a visit are clickable — an enabled control that
- * scrolls nowhere teaches the user not to trust the bar. Days with nothing on
- * them still render, because an empty Friday is information.
+ * Tapping a day narrows the list to that day; tapping it again clears it.
+ * Filtering rather than scrolling means the answer to "what does Thursday
+ * look like" is the only thing on screen, which is what a broker on a small
+ * Android phone can actually act on.
+ *
+ * Every day is selectable, including the empty ones. "Is Friday free?" is a
+ * real question a broker asks before promising a buyer a time, and a dead
+ * button answers it only by implication. Tapping an empty day says so in
+ * words instead.
+ *
+ * The selected pill slides between days rather than cutting, which shows
+ * *which way* the selection moved — a jump cut leaves the eye to re-find it.
  */
 function WeekStrip({
-    groups,
     now,
-    onJumpToDay,
+    selectedDay,
+    onSelectDay,
+    dayCounts,
 }: {
-    groups: DayGroup[];
     now: Date;
-    onJumpToDay: (day: Date) => void;
+    selectedDay: string;
+    onSelectDay: (dayKey: string) => void;
+    dayCounts: Map<string, number>;
 }) {
     const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(now, i)), [now]);
-    const counts = useMemo(
-        () => new Map(groups.map((group) => [group.key, group.visits.length])),
-        [groups],
-    );
+    const reduceMotion = useReducedMotion();
 
     return (
         // The seven days share the full width rather than sitting in a short
         // fixed-width row — a strip that stops a third of the way across reads
         // as a rendering fault, not as a control.
-        <div className="grid grid-cols-7 gap-1 rounded-card border border-border-warm bg-surface p-1">
-            {days.map((day) => {
-                const count = counts.get(dayKey(day)) ?? 0;
-                const isToday = isSameCalendarDay(day, now);
+        <div
+            role="group"
+            aria-label="Filter visits by day"
+            className="grid grid-cols-7 gap-1 rounded-card border border-border-warm bg-surface p-1"
+        >
+            <AnimatedBackground
+                // Passing "" when nothing is selected retracts the pill, so
+                // clearing the filter is visible rather than silent.
+                defaultValue={selectedDay}
+                // AnimatedBackground overwrites each child's onClick with its
+                // own, so selection is routed through here — an onClick on the
+                // button below would be discarded by cloneElement.
+                onValueChange={(id) => onSelectDay(id === selectedDay ? "" : (id ?? ""))}
+                className="rounded-inner bg-brand-ink/10 ring-1 ring-brand-ink"
+                transition={reduceMotion ? { duration: 0 } : spring.snappy}
+            >
+                {days.map((day) => {
+                    const key = dayKey(day);
+                    const count = dayCounts.get(key) ?? 0;
+                    const isToday = isSameCalendarDay(day, now);
+                    const isSelected = selectedDay === key;
 
-                const dateLabel = day.toLocaleDateString("en-IN", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                });
-                const hint =
-                    count === 0
-                        ? `${dateLabel} — nothing booked`
-                        : `${dateLabel} — ${count} ${count === 1 ? "visit" : "visits"}. Tap to jump.`;
+                    const dateLabel = day.toLocaleDateString("en-IN", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                    });
+                    const load =
+                        count === 0
+                            ? "nothing booked"
+                            : `${count} ${count === 1 ? "visit" : "visits"}`;
+                    const hint = isSelected
+                        ? `${dateLabel} — ${load}. Tap to show every day.`
+                        : `${dateLabel} — ${load}. Tap to show only this day.`;
 
-                return (
-                    <Tooltip key={day.toISOString()}>
-                        <TooltipTrigger
-                            render={
-                                <button
-                                    type="button"
-                                    disabled={count === 0}
-                                    onClick={() => onJumpToDay(day)}
-                                    className={cn(
-                                        `
-                                          flex flex-col items-center gap-0.5 rounded-inner px-1 py-2
-                                          transition-colors duration-160
-                                        `,
-                                        count > 0
-                                            ? "hover:bg-surface-muted"
-                                            : "cursor-default opacity-40",
-                                        isToday && "bg-surface-muted",
-                                    )}
-                                />
-                            }
+                    // `data-id` must sit on AnimatedBackground's *direct*
+                    // child: it clones this element to inject the pill and
+                    // reads the id off these props. A Tooltip wrapper here
+                    // would hide the id and have its own children replaced,
+                    // so the tooltip lives inside the button instead.
+                    return (
+                        <button
+                            key={key}
+                            type="button"
+                            data-id={key}
+                            aria-pressed={isSelected}
+                            aria-label={hint}
+                            className={cn(
+                                `
+                                  justify-center rounded-inner px-1 py-2 transition-colors
+                                  duration-160 inline-full
+                                  [&>div]:inline-full
+                                `,
+                                // Today keeps its own resting tint; the
+                                // sliding pill carries selection.
+                                !isSelected && isToday && "bg-surface-muted",
+                                !isSelected && "hover:bg-surface-muted",
+                            )}
                         >
-                            <span className="body-xs text-ink-subtle">
-                                {day.toLocaleDateString("en-IN", { weekday: "short" })}
-                            </span>
-                            <span
-                                className={cn(
-                                    `
-                                      body-sm tabular flex items-center justify-center rounded-full
-                                      font-semibold block-7 inline-7
-                                    `,
-                                    isToday ? "bg-brand-ink text-white" : "text-ink",
-                                )}
-                            >
-                                {day.getDate()}
-                            </span>
-                            {/* A dot, not a digit: the number is already in the
-                                day heading below, and a second one here reads
-                                as part of the date. */}
-                            <span
-                                aria-hidden
-                                className={cn(
-                                    "rounded-full block-1.5 inline-1.5",
-                                    count > 0 ? "bg-brand" : "bg-transparent",
-                                )}
-                            />
-                        </TooltipTrigger>
-                        <TooltipContent>{hint}</TooltipContent>
-                    </Tooltip>
-                );
-            })}
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <span className="flex flex-col items-center gap-0.5" />
+                                    }
+                                >
+                                    <span className="body-xs text-ink-subtle">
+                                        {day.toLocaleDateString("en-IN", { weekday: "short" })}
+                                    </span>
+                                    <span
+                                        className={cn(
+                                            `
+                                              body-sm tabular flex items-center justify-center
+                                              rounded-full font-semibold block-7 inline-7
+                                            `,
+                                            isToday ? "bg-brand-ink text-white" : "text-ink",
+                                        )}
+                                    >
+                                        {day.getDate()}
+                                    </span>
+                                    {/* A dot, not a digit: the number is
+                                        already in the day heading below, and a
+                                        second one here reads as part of the
+                                        date. */}
+                                    <span
+                                        aria-hidden
+                                        className={cn(
+                                            "rounded-full block-1.5 inline-1.5",
+                                            count > 0 ? "bg-brand" : "bg-transparent",
+                                        )}
+                                    />
+                                </TooltipTrigger>
+                                <TooltipContent>{hint}</TooltipContent>
+                            </Tooltip>
+                        </button>
+                    );
+                })}
+            </AnimatedBackground>
         </div>
     );
 }

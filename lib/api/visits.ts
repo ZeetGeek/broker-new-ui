@@ -1,3 +1,5 @@
+import { formatDateIso } from "@/lib/format/date";
+
 import { MOCK_VISITS } from "@/features/site-visits/mock-visits";
 import {
     isLiveVisit,
@@ -20,6 +22,13 @@ function delay(ms = 220): Promise<void> {
 
 function nowIso(): string {
     return new Date().toISOString();
+}
+
+/** Local midnight, so a visit earlier today still counts as today. */
+function startOfDay(date: Date): Date {
+    const next = new Date(date);
+    next.setHours(0, 0, 0, 0);
+    return next;
 }
 
 function isSameLocalDay(a: Date, b: Date): boolean {
@@ -54,7 +63,11 @@ function matchesStatus(
 
     switch (filter) {
         case "all":
-            return true;
+            // "All" is a planning view, not an archive: it starts at today and
+            // runs forward. A finished visit from last week above today's
+            // first appointment buries the thing the broker opened the page
+            // for. History lives behind Done and Cancelled.
+            return new Date(visit.scheduledAt).getTime() >= startOfDay(now).getTime();
         case "upcoming":
             // Live and not yet started. The default view — what is coming.
             return (
@@ -78,7 +91,12 @@ function forViewer(visit: VisitItem, viewer: VisitViewer): VisitItem {
     return { ...visit, buyer: null, brokerNote: "" };
 }
 
-function summarize(items: VisitItem[], viewer: VisitViewer): VisitsSummary {
+function summarize(
+    items: VisitItem[],
+    viewer: VisitViewer,
+    /** Already narrowed by status and query, but never by the date window. */
+    dayScoped: VisitItem[],
+): VisitsSummary {
     const now = new Date();
 
     let todayCount = 0;
@@ -110,7 +128,14 @@ function summarize(items: VisitItem[], viewer: VisitViewer): VisitsSummary {
         }
     }
 
+    const dayCounts: Record<string, number> = {};
+    for (const visit of dayScoped) {
+        const key = formatDateIso(new Date(visit.scheduledAt));
+        dayCounts[key] = (dayCounts[key] ?? 0) + 1;
+    }
+
     return {
+        dayCounts,
         todayCount,
         upcomingCount,
         needsActionCount,
@@ -149,10 +174,24 @@ export const visitsApi = {
 
         const visible = visits.map((visit) => forViewer(visit, viewer));
 
-        const items = visible
+        // Everything except the date window. The week strip counts this set,
+        // so its per-day numbers survive selecting a day or a range.
+        const beforeDay = visible
             .filter((visit) => matchesQuery(visit, filters.q))
             .filter((visit) => matchesStatus(visit, filters.status, viewer))
-            .filter((visit) => !filters.propertyId || visit.property.id === filters.propertyId)
+            .filter((visit) => !filters.propertyId || visit.property.id === filters.propertyId);
+
+        const items = beforeDay
+            // The date window, inclusive at both ends. Compared as local day
+            // keys rather than instants, so a 6 PM visit belongs to its own
+            // day regardless of the reader's clock, and a window ending on
+            // the 14th includes everything on the 14th.
+            .filter((visit) => {
+                const key = formatDateIso(new Date(visit.scheduledAt));
+                if (filters.dateFrom && key < filters.dateFrom) return false;
+                if (filters.dateTo && key > filters.dateTo) return false;
+                return true;
+            })
             .sort((a, b) => {
                 const at = new Date(a.scheduledAt).getTime();
                 const bt = new Date(b.scheduledAt).getTime();
@@ -160,9 +199,11 @@ export const visitsApi = {
                 return historical ? bt - at : at - bt;
             });
 
-        // The summary counts the whole book, not the filtered slice — a filter
-        // that hid the one visit needing action would hide the number too.
-        return { items, summary: summarize(visible, viewer) };
+        // The chip counts read the whole book, not the filtered slice — a
+        // filter that hid the one visit needing action would hide the number
+        // too. Only the strip's per-day counts follow the active filters.
+        // (`beforeDay` is the status/query slice without the date window.)
+        return { items, summary: summarize(visible, viewer, beforeDay) };
     },
 
     async get(visitId: string, viewer: VisitViewer): Promise<VisitItem | null> {

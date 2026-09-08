@@ -255,6 +255,13 @@
     inline-size: 100%;
 }
 
+/* Content-sized, for overriding a component's default inline-* width.
+   `w-auto` cannot do it: tailwind-merge does not know `w-*` and `inline-*`
+   are the same axis, so both survive the merge and the default wins. */
+@utility inline-auto {
+    inline-size: auto;
+}
+
 @utility animate-verified-glow {
     animation: verified-glow 2.2s ease-in-out infinite;
 }

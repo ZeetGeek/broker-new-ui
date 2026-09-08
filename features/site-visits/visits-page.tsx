@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { visitsApi } from "@/lib/api/visits";
-import { formatDateIso } from "@/lib/format/date";
 
 import {
     DEFAULT_VISITS_FILTERS,
@@ -185,12 +184,13 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
         setFilters(DEFAULT_VISITS_FILTERS);
     }, []);
 
-    /** Scrolls a day section into view from the week strip. */
-    const handleJumpToDay = useCallback((day: Date) => {
-        const key = formatDateIso(day);
-        document
-            .getElementById(`visits-day-${key}`)
-            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    /**
+     * The week strip narrows the list to one day, written as a one-day window
+     * so it and the range picker share a single filter. Passing "" clears it,
+     * which is what tapping the selected day again does.
+     */
+    const handleSelectDay = useCallback((day: string) => {
+        setFilters((prev) => ({ ...prev, dateFrom: day, dateTo: day }));
     }, []);
 
     const handleSubmitOutcome = useCallback(
@@ -232,7 +232,9 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
     const hasFilters =
         filters.q.trim().length > 0 ||
         filters.status !== DEFAULT_VISITS_FILTERS.status ||
-        filters.propertyId !== "";
+        filters.propertyId !== "" ||
+        filters.dateFrom !== "" ||
+        filters.dateTo !== "";
     /** True first-run: nothing at all, and no filter hid it. */
     const isFirstRun =
         !hasFilters &&
@@ -245,6 +247,27 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
      * forward-looking filters.
      */
     const isForwardOrder = filters.status !== "completed" && filters.status !== "cancelled";
+
+    /**
+     * The strip's pill only lights up for a one-day window. A wider range is
+     * a real selection, but it belongs to no single day, so no day is shown
+     * as picked.
+     */
+    const selectedDay =
+        filters.dateFrom !== "" && filters.dateFrom === filters.dateTo ? filters.dateFrom : "";
+
+    /**
+     * A date window was picked and it holds nothing. Distinct from "no visits
+     * match" because the strip itself is the way out, so the list must stay.
+     */
+    const isEmptyDay =
+        isForwardOrder && (visits ?? []).length === 0 && (filters.dateFrom !== "" || filters.dateTo !== "");
+
+    /** Object → Map once, so the strip is not rebuilt on every clock tick. */
+    const dayCounts = useMemo(
+        () => new Map(Object.entries(summary?.dayCounts ?? {})),
+        [summary?.dayCounts],
+    );
 
     return (
         <div className="flex flex-col gap-6">
@@ -277,7 +300,9 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
                         isFetching ? "opacity-60 transition-opacity duration-160" : undefined
                     }
                 >
-                    {(visits ?? []).length === 0 ? (
+                    {/* A selected day with nothing on it is handled inside
+                        the list, which keeps the week strip on screen. */}
+                    {(visits ?? []).length === 0 && !isEmptyDay ? (
                         hasFilters ? (
                             filters.status === "needs_action" ? (
                                 <VisitsAllClearEmpty viewer={viewer} />
@@ -294,9 +319,11 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
                             handlers={handlers}
                             busyId={busyId}
                             now={now}
-                            // The week strip is a forward jump bar, so it only
+                            selectedDay={selectedDay}
+                            dayCounts={dayCounts}
+                            // The strip covers the next seven days, so it only
                             // makes sense while the list runs forward in time.
-                            onJumpToDay={isForwardOrder ? handleJumpToDay : undefined}
+                            onSelectDay={isForwardOrder ? handleSelectDay : undefined}
                         />
                     )}
                 </div>

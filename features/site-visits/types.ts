@@ -161,6 +161,19 @@ export type VisitsFilters = {
     status: VisitStatusFilter;
     /** Property id, or "" for all. */
     propertyId: string;
+    /**
+     * Inclusive date window as `YYYY-MM-DD`, or "" for no bound.
+     *
+     * One filter with two inputs: the week strip sets a single day (both ends
+     * equal), the range picker sets a span. They write the same fields, so
+     * there is never a strip day and a range disagreeing about what is shown.
+     *
+     * A window narrows whatever the status chip already selected rather than
+     * replacing it — "Needs you" plus this week means the visits this week
+     * that need you.
+     */
+    dateFrom: string;
+    dateTo: string;
 };
 
 export type VisitsSummary = {
@@ -176,6 +189,12 @@ export type VisitsSummary = {
     missingOutcomeCount: number;
     completedCount: number;
     cancelledCount: number;
+    /**
+     * Visits per local calendar day (`YYYY-MM-DD` → count), for the week
+     * strip. Reflects the status filter but *not* the date window — the strip
+     * has to keep showing what Thursday holds while Wednesday is selected.
+     */
+    dayCounts: Record<string, number>;
 };
 
 export type VisitsResult = {
@@ -188,6 +207,8 @@ export const DEFAULT_VISITS_FILTERS: VisitsFilters = {
     /** Unfiltered, matching the leading "All" chip. */
     status: "all",
     propertyId: "",
+    dateFrom: "",
+    dateTo: "",
 };
 
 /** Default showing length. Long enough to walk a 3 BHK and talk in the lift. */

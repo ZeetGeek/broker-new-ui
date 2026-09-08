@@ -14,8 +14,18 @@ import type {
     VisitStatusFilter,
     VisitViewer,
 } from "@/features/site-visits/types";
+import { VisitsDateRange } from "@/features/site-visits/visits-date-range";
 
-type StatusOption = { value: VisitStatusFilter; label: string; countKey?: keyof VisitsSummary };
+/**
+ * Only the numeric summary fields can sit on a chip. Spelled out as a
+ * constraint rather than `keyof VisitsSummary` so a non-numeric field like
+ * `dayCounts` cannot be pointed at a chip and rendered as "[object Object]".
+ */
+type CountKey = {
+    [K in keyof VisitsSummary]: VisitsSummary[K] extends number ? K : never;
+}[keyof VisitsSummary];
+
+type StatusOption = { value: VisitStatusFilter; label: string; countKey?: CountKey };
 
 /**
  * Filter chips. "All" leads as the unfiltered default, then the narrowing
@@ -82,38 +92,51 @@ export function VisitsHeader({ filters, summary, onPatch }: VisitsHeaderProps) {
         <div className="flex flex-col gap-3">
             <VisitsQueryInput value={filters.q} onChange={(q) => onPatch({ q })} />
 
-            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pbe-1">
-                {STATUS_OPTIONS.map((option) => {
-                    const isActive = filters.status === option.value;
-                    const count = option.countKey ? summary?.[option.countKey] : undefined;
+            <div className="flex items-start gap-3">
+                <div className="-mx-1 flex flex-1 gap-2 overflow-x-auto px-1 pbe-1 min-inline-0">
+                    {STATUS_OPTIONS.map((option) => {
+                        const isActive = filters.status === option.value;
+                        const count = option.countKey ? summary?.[option.countKey] : undefined;
 
-                    return (
-                        <button
-                            key={option.value}
-                            type="button"
-                            aria-pressed={isActive}
-                            onClick={() => onPatch({ status: option.value })}
-                            className={cn(
-                                CHIP_CLASS,
-                                isActive
-                                    ? "border-brand-ink bg-brand-ink text-white"
-                                    : `border-border-warm bg-surface text-ink hover:border-ink/25`,
-                            )}
-                        >
-                            {option.label}
-                            {typeof count === "number" && count > 0 ? (
-                                <span
-                                    className={cn(
-                                        "tabular body-xs",
-                                        isActive ? "text-white/70" : "text-ink-subtle",
-                                    )}
-                                >
-                                    {count}
-                                </span>
-                            ) : null}
-                        </button>
-                    );
-                })}
+                        return (
+                            <button
+                                key={option.value}
+                                type="button"
+                                aria-pressed={isActive}
+                                onClick={() => onPatch({ status: option.value })}
+                                className={cn(
+                                    CHIP_CLASS,
+                                    isActive
+                                        ? "border-brand-ink bg-brand-ink text-white"
+                                        : `
+                                          border-border-warm bg-surface text-ink
+                                          hover:border-ink/25
+                                        `,
+                                )}
+                            >
+                                {option.label}
+                                {typeof count === "number" && count > 0 ? (
+                                    <span
+                                        className={cn(
+                                            "tabular body-xs",
+                                            isActive ? "text-white/70" : "text-ink-subtle",
+                                        )}
+                                    >
+                                        {count}
+                                    </span>
+                                ) : null}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Outside the scrolling chip row so it stays reachable
+                    instead of sliding off the end on a narrow phone. */}
+                <VisitsDateRange
+                    dateFrom={filters.dateFrom}
+                    dateTo={filters.dateTo}
+                    onChange={onPatch}
+                />
             </div>
         </div>
     );
