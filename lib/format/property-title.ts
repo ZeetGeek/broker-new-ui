@@ -1,8 +1,4 @@
-import {
-    PROPERTY_TYPE_LABELS,
-    needsBhk,
-    type PropertyType,
-} from "@/lib/validation/property";
+import { needsBhk, PROPERTY_TYPE_LABELS, type PropertyType } from "@/lib/validation/property";
 
 export function buildPropertyTitle({
     bhk,

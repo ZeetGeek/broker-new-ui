@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type FormEvent, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -109,6 +109,7 @@ export function PropertyForm({
     const [step, setStep] = useState<PropertyFormStep>("details");
     const [formBanner, setFormBanner] = useState<string | null>(null);
     const [titleTouched, setTitleTouched] = useState(mode === "edit");
+    const photoFilesRef = useRef<Map<string, File>>(new Map());
 
     const defaultValues = useMemo(
         () => (initialListing ? listingToFormValues(initialListing) : DEFAULT_PROPERTY_FORM_VALUES),
@@ -154,54 +155,6 @@ export function PropertyForm({
         if (prev) setStep(prev);
     }
 
-    async function onSubmit(values: PropertyFormValues) {
-        setFormBanner(null);
-        try {
-            if (mode === "edit" && propertyId) {
-                const updated = await myListingsApi.update(propertyId, {
-                    ...values,
-                    status: values.publish
-                        ? "published"
-                        : initialListing?.status === "unpublished"
-                          ? "unpublished"
-                          : "draft",
-                });
-                if (!updated) {
-                    setFormBanner("Couldn't find that property.");
-                    return;
-                }
-                toast.success(
-                    values.publish
-                        ? "Property published. Brokers can now see it."
-                        : "Property saved",
-                );
-                onCancel?.();
-                // When the caller handles the result itself (an edit modal opened
-                // over a list), navigating away would throw the user out of the
-                // page they were working in.
-                if (onSaved) {
-                    onSaved(updated);
-                    return;
-                }
-                router.push(brokerPropertyDetailHref(updated.id));
-                return;
-            }
-
-            const created = await myListingsApi.create(values);
-            toast.success(
-                values.publish ? "Property published. Brokers can now see it." : "Property added",
-            );
-            onCancel?.();
-            if (onSaved) {
-                onSaved(created);
-                return;
-            }
-            router.push(brokerPropertyDetailHref(created.id));
-        } catch {
-            setFormBanner("Something went wrong on our side. Try again in a moment.");
-        }
-    }
-
     async function onInvalid() {
         const problemSteps = PROPERTY_FORM_STEPS.filter((item) =>
             stepHasErrors(item, methods.formState.errors),
@@ -213,6 +166,63 @@ export function PropertyForm({
                 : "Please check the highlighted fields.",
         );
         if (problemSteps[0]) setStep(problemSteps[0]);
+    }
+
+    /** Ref reads stay inside this event handler — not passed through render. */
+    function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+        void handleSubmit(async (values) => {
+            setFormBanner(null);
+            const photoFiles = values.imageSrcs
+                .map((src) => photoFilesRef.current.get(src))
+                .filter((file): file is File => file instanceof File);
+            try {
+                if (mode === "edit" && propertyId) {
+                    const updated = await myListingsApi.update(propertyId, {
+                        ...values,
+                        photoFiles,
+                        status: values.publish
+                            ? "published"
+                            : initialListing?.status === "unpublished"
+                              ? "unpublished"
+                              : "draft",
+                    });
+                    if (!updated) {
+                        setFormBanner("Couldn't find that property.");
+                        return;
+                    }
+                    toast.success(
+                        values.publish
+                            ? "Property published. Brokers can now see it."
+                            : "Property saved",
+                    );
+                    onCancel?.();
+                    // When the caller handles the result itself (an edit modal opened
+                    // over a list), navigating away would throw the user out of the
+                    // page they were working in.
+                    if (onSaved) {
+                        onSaved(updated);
+                        return;
+                    }
+                    router.push(brokerPropertyDetailHref(updated.id));
+                    return;
+                }
+
+                const created = await myListingsApi.create({ ...values, photoFiles });
+                toast.success(
+                    values.publish
+                        ? "Property published. Brokers can now see it."
+                        : "Property added",
+                );
+                onCancel?.();
+                if (onSaved) {
+                    onSaved(created);
+                    return;
+                }
+                router.push(brokerPropertyDetailHref(created.id));
+            } catch {
+                setFormBanner("Something went wrong on our side. Try again in a moment.");
+            }
+        }, onInvalid)(event);
     }
 
     function handleTabChange(next: string | number | null) {
@@ -262,7 +272,7 @@ export function PropertyForm({
                     onTitleTouched={() => setTitleTouched(true)}
                 />
             ) : null}
-            {step === "photos" ? <StepPhotos /> : null}
+            {step === "photos" ? <StepPhotos photoFilesRef={photoFilesRef} /> : null}
         </>
     );
 
@@ -329,7 +339,7 @@ export function PropertyForm({
                 >
                     <form
                         id="property-form-dialog"
-                        onSubmit={handleSubmit(onSubmit, onInvalid)}
+                        onSubmit={handleFormSubmit}
                         noValidate
                         className="flex flex-col gap-5"
                     >
@@ -345,7 +355,7 @@ export function PropertyForm({
         <FormProvider {...methods}>
             <form
                 className={cn("mx-auto flex flex-col gap-6 inline-full max-inline-6xl", className)}
-                onSubmit={handleSubmit(onSubmit, onInvalid)}
+                onSubmit={handleFormSubmit}
                 noValidate
             >
                 <div className="flex flex-col gap-4">

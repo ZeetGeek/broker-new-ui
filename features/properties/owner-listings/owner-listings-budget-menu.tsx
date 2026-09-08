@@ -141,16 +141,16 @@ export function OwnerListingsBudgetMenu({
                                         onClick={() => handleStepChange(index)}
                                         className={cn(
                                             `
-                                          body-xs rounded-full border px-2.5 py-1 font-medium
-                                          transition-colors duration-160 outline-none
-                                          focus-visible:ring-2 focus-visible:ring-brand
-                                        `,
+                                              body-xs rounded-full border px-2.5 py-1 font-medium
+                                              transition-colors duration-160 outline-none
+                                              focus-visible:ring-2 focus-visible:ring-brand
+                                            `,
                                             active
                                                 ? "border-brand bg-brand-soft text-ink"
                                                 : `
-                                              border-border-warm bg-surface text-ink-muted
-                                              hover:bg-surface-muted
-                                            `,
+                                                  border-border-warm bg-surface text-ink-muted
+                                                  hover:bg-surface-muted
+                                                `,
                                         )}
                                     >
                                         {option.shortLabel}

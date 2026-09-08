@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type MutableRefObject, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
 import { Camera, X } from "lucide-react";
@@ -24,7 +24,12 @@ function rejectionMessage(rejections: PhotoRejection[]): string {
     return `${rejections.length} files were skipped — check the type, size, and how many slots are left.`;
 }
 
-export function StepPhotos() {
+export type StepPhotosProps = {
+    /** Maps preview URL → File for newly picked photos (blob URLs). */
+    photoFilesRef: MutableRefObject<Map<string, File>>;
+};
+
+export function StepPhotos({ photoFilesRef }: StepPhotosProps) {
     const {
         control,
         formState: { errors },
@@ -33,13 +38,14 @@ export function StepPhotos() {
     const [uploadNotice, setUploadNotice] = useState<string | null>(null);
 
     // Object URLs are created for local previews and must be released by hand.
-    const objectUrlsRef = useRef<string[]>([]);
     useEffect(() => {
-        const urls = objectUrlsRef.current;
+        const files = photoFilesRef.current;
         return () => {
-            for (const url of urls) URL.revokeObjectURL(url);
+            files.forEach((_, src) => {
+                if (src.startsWith("blob:")) URL.revokeObjectURL(src);
+            });
         };
-    }, []);
+    }, [photoFilesRef]);
 
     return (
         <div className="flex flex-col gap-5">
@@ -67,7 +73,7 @@ export function StepPhotos() {
                                                 setUploadNotice(null);
                                                 const urls = files.map((file) => {
                                                     const url = URL.createObjectURL(file);
-                                                    objectUrlsRef.current.push(url);
+                                                    photoFilesRef.current.set(url, file);
                                                     return url;
                                                 });
                                                 field.onChange([...field.value, ...urls]);
@@ -102,13 +108,17 @@ export function StepPhotos() {
                                                                 ? "Cover photo — click to remove"
                                                                 : "Remove photo"
                                                         }
-                                                        onClick={() =>
+                                                        onClick={() => {
+                                                            if (src.startsWith("blob:")) {
+                                                                URL.revokeObjectURL(src);
+                                                                photoFilesRef.current.delete(src);
+                                                            }
                                                             field.onChange(
                                                                 field.value.filter(
                                                                     (item) => item !== src,
                                                                 ),
-                                                            )
-                                                        }
+                                                            );
+                                                        }}
                                                         className="
                                                           group/photo relative aspect-square
                                                           overflow-hidden rounded-card border-2
