@@ -2,27 +2,15 @@ import type { LucideIcon } from "lucide-react";
 import {
     Building,
     Building2,
-    CalendarClock,
-    CalendarRange,
-    Compass,
     Home,
-    Landmark,
     LayoutGrid,
     Megaphone,
     Repeat,
     Store,
     Trees,
-    UserRoundCheck,
-    Wallet,
-    Zap,
 } from "lucide-react";
 
-import type {
-    BuyerFunding,
-    BuyerPropertyKind,
-    BuyerSource,
-    BuyerUrgency,
-} from "@/lib/validation/buyer";
+import type { BuyerPropertyKind, BuyerSource } from "@/lib/validation/buyer";
 
 export type Option<T extends string> = {
     value: T;
@@ -39,39 +27,6 @@ export const PROPERTY_KIND_OPTIONS: Option<BuyerPropertyKind>[] = [
     { value: "plot", label: "Plot", icon: Trees },
     { value: "shop", label: "Shop", icon: Store },
     { value: "office", label: "Office", icon: Building },
-];
-
-export const URGENCY_OPTIONS: Option<BuyerUrgency>[] = [
-    {
-        value: "immediate",
-        label: "Right away",
-        icon: Zap,
-        hint: "Ready to move within a month. Call these first.",
-    },
-    {
-        value: "three_months",
-        label: "In 3 months",
-        icon: CalendarRange,
-        hint: "Planning a move this quarter.",
-    },
-    {
-        value: "exploring",
-        label: "Just looking",
-        icon: Compass,
-        hint: "No timeline yet. Keep them warm.",
-    },
-];
-
-export const FUNDING_OPTIONS: Option<BuyerFunding>[] = [
-    { value: "unknown", label: "Not sure", icon: CalendarClock, hint: "They have not said yet." },
-    { value: "cash", label: "Cash", icon: Wallet, hint: "Paying without a loan. Closes fastest." },
-    { value: "loan", label: "Needs loan", icon: Landmark, hint: "Will need a home loan." },
-    {
-        value: "loan_approved",
-        label: "Loan approved",
-        icon: UserRoundCheck,
-        hint: "Loan is already sanctioned.",
-    },
 ];
 
 export const SOURCE_OPTIONS: Option<BuyerSource>[] = [
