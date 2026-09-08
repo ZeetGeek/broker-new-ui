@@ -1,4 +1,4 @@
-import { VisitsCalendarSkeleton } from "@/features/site-visits/visits-skeleton";
+import { VisitsListSkeleton } from "@/features/site-visits/visits-skeleton";
 
 export default function Loading() {
     return (
@@ -10,7 +10,7 @@ export default function Loading() {
                     <div className="animate-pulse rounded-full bg-surface-muted block-6 inline-24" />
                 </div>
             </div>
-            <VisitsCalendarSkeleton />
+            <VisitsListSkeleton />
         </div>
     );
 }

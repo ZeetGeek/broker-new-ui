@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { visitsApi } from "@/lib/api/visits";
+import { formatDateIso } from "@/lib/format/date";
 
 import {
     DEFAULT_VISITS_FILTERS,
@@ -12,15 +13,13 @@ import {
     type VisitOutcome,
     type VisitsFilters,
     type VisitsSummary,
-    type VisitsView,
     type VisitViewer,
 } from "@/features/site-visits/types";
-import { VisitCalendar } from "@/features/site-visits/visit-calendar";
-import { VisitCard, type VisitCardHandlers } from "@/features/site-visits/visit-card";
 import { VisitDetailModal } from "@/features/site-visits/visit-detail-modal";
 import { VisitCancelModal, VisitOutcomeModal } from "@/features/site-visits/visit-outcome-modal";
 import type { VisitAction } from "@/features/site-visits/visit-permissions";
 import { VisitRescheduleModal } from "@/features/site-visits/visit-reschedule-modal";
+import type { VisitRowHandlers } from "@/features/site-visits/visit-row";
 import {
     VisitsAllClearEmpty,
     VisitsFilteredEmpty,
@@ -28,7 +27,8 @@ import {
 } from "@/features/site-visits/visits-empty";
 import { VisitsHeader } from "@/features/site-visits/visits-header";
 import { VisitsIntro } from "@/features/site-visits/visits-intro";
-import { VisitsCalendarSkeleton, VisitsListSkeleton } from "@/features/site-visits/visits-skeleton";
+import { VisitsList } from "@/features/site-visits/visits-list";
+import { VisitsListSkeleton } from "@/features/site-visits/visits-skeleton";
 
 /** Which modal is open. One at a time — they are all decisions about one visit. */
 type ModalState =
@@ -44,9 +44,6 @@ type VisitsPageProps = {
 
 export function VisitsPage({ viewer }: VisitsPageProps) {
     const [filters, setFilters] = useState<VisitsFilters>(DEFAULT_VISITS_FILTERS);
-    const [view, setView] = useState<VisitsView>("calendar");
-    // Date navigation and the view switcher live inside the calendar itself,
-    // so this page holds no anchor date of its own.
 
     const [visits, setVisits] = useState<VisitItem[] | null>(null);
     const [summary, setSummary] = useState<VisitsSummary | null>(null);
@@ -71,16 +68,6 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
         return () => window.clearInterval(timer);
     }, []);
 
-    /**
-     * The calendar needs every visit regardless of the status filter — an
-     * hour that looks free but holds a filtered-out visit is a double booking
-     * waiting to happen. The list respects the filter; the grid does not.
-     */
-    const listFilters = useMemo(
-        () => (view === "calendar" ? { ...filters, status: "all" as const } : filters),
-        [filters, view],
-    );
-
     useEffect(() => {
         let cancelled = false;
 
@@ -91,7 +78,7 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
             setError(null);
 
             void visitsApi
-                .list(listFilters, viewer)
+                .list(filters, viewer)
                 .then((next) => {
                     if (cancelled) return;
                     setVisits(next.items);
@@ -113,7 +100,7 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
             cancelled = true;
             window.clearTimeout(timer);
         };
-    }, [listFilters, revision, viewer]);
+    }, [filters, revision, viewer]);
 
     const activeVisit = useMemo(() => {
         if (modal.kind === "none") return null;
@@ -182,7 +169,7 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
         [runMutation, viewer],
     );
 
-    const handlers = useMemo<VisitCardHandlers>(
+    const handlers = useMemo<VisitRowHandlers>(
         () => ({
             onAction: handleAction,
             onOpen: (visitId) => setModal({ kind: "detail", visitId }),
@@ -198,26 +185,13 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
         setFilters(DEFAULT_VISITS_FILTERS);
     }, []);
 
-    /**
-     * A chip was dragged to a new slot. The calendar has already refused any
-     * drop that would double-book (`canDropEvent`), so what reaches here is a
-     * time the broker can actually keep — it still goes back through
-     * `proposed` for the other side to agree to.
-     */
-    const handleDragReschedule = useCallback(
-        (visitId: string, start: Date, durationMin: number) => {
-            void runMutation(
-                visitId,
-                () =>
-                    visitsApi.reschedule(visitId, viewer, {
-                        scheduledAt: start.toISOString(),
-                        durationMin,
-                    }),
-                "New time suggested",
-            );
-        },
-        [runMutation, viewer],
-    );
+    /** Scrolls a day section into view from the week strip. */
+    const handleJumpToDay = useCallback((day: Date) => {
+        const key = formatDateIso(day);
+        document
+            .getElementById(`visits-day-${key}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, []);
 
     const handleSubmitOutcome = useCallback(
         (visitId: string, outcome: VisitOutcome) => {
@@ -265,6 +239,13 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
         summary != null &&
         summary.upcomingCount + summary.completedCount + summary.cancelledCount === 0;
 
+    /**
+     * Historical views (Done, Cancelled) read backwards from now, so a strip
+     * of the next seven days would point at nothing. It only shows on the
+     * forward-looking filters.
+     */
+    const isForwardOrder = filters.status !== "completed" && filters.status !== "cancelled";
+
     return (
         <div className="flex flex-col gap-6">
             <VisitsIntro summary={summary} viewer={viewer} isLoading={isFetching} />
@@ -273,10 +254,8 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
                 <VisitsHeader
                     filters={filters}
                     summary={summary}
-                    view={view}
                     viewer={viewer}
                     onPatch={handlePatch}
-                    onViewChange={setView}
                 />
             ) : null}
 
@@ -287,11 +266,7 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
             ) : null}
 
             {isFirstLoad && isFetching ? (
-                view === "calendar" ? (
-                    <VisitsCalendarSkeleton />
-                ) : (
-                    <VisitsListSkeleton />
-                )
+                <VisitsListSkeleton />
             ) : isFirstRun ? (
                 <VisitsFirstRunEmpty viewer={viewer} canSchedule={viewer === "broker"} />
             ) : (
@@ -302,31 +277,7 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
                         isFetching ? "opacity-60 transition-opacity duration-160" : undefined
                     }
                 >
-                    {view === "calendar" ? (
-                        // A month grid does not survive 360px, so the phone
-                        // opens on the agenda instead. Both mount the same
-                        // calendar — the user can still switch to any view.
-                        <>
-                            <VisitCalendar
-                                visits={visits ?? []}
-                                viewer={viewer}
-                                defaultView="agenda"
-                                now={now}
-                                onOpenVisit={(visitId) => setModal({ kind: "detail", visitId })}
-                                onReschedule={handleDragReschedule}
-                                className="lg:hidden"
-                            />
-                            <VisitCalendar
-                                visits={visits ?? []}
-                                viewer={viewer}
-                                defaultView="month"
-                                now={now}
-                                onOpenVisit={(visitId) => setModal({ kind: "detail", visitId })}
-                                onReschedule={handleDragReschedule}
-                                className="hidden lg:block"
-                            />
-                        </>
-                    ) : (visits ?? []).length === 0 ? (
+                    {(visits ?? []).length === 0 ? (
                         hasFilters ? (
                             filters.status === "needs_action" ? (
                                 <VisitsAllClearEmpty viewer={viewer} />
@@ -337,18 +288,16 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
                             <VisitsAllClearEmpty viewer={viewer} />
                         )
                     ) : (
-                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                            {(visits ?? []).map((visit) => (
-                                <VisitCard
-                                    key={visit.id}
-                                    visit={visit}
-                                    viewer={viewer}
-                                    handlers={handlers}
-                                    isBusy={busyId === visit.id}
-                                    now={now}
-                                />
-                            ))}
-                        </div>
+                        <VisitsList
+                            visits={visits ?? []}
+                            viewer={viewer}
+                            handlers={handlers}
+                            busyId={busyId}
+                            now={now}
+                            // The week strip is a forward jump bar, so it only
+                            // makes sense while the list runs forward in time.
+                            onJumpToDay={isForwardOrder ? handleJumpToDay : undefined}
+                        />
                     )}
                 </div>
             )}

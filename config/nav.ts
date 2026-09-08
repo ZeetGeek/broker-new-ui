@@ -22,7 +22,7 @@ export const OWNER_NAV_ITEMS: NavItem[] = [
     { label: "Overview", href: "/owner" },
     { label: "Properties", href: "/owner/properties" },
     { label: "Requests", href: "/owner/requests" },
-    { label: "Calendar", href: "/owner/calendar" },
+    { label: "Visits", href: "/owner/visits" },
 ];
 
 export const BROKER_NAV_ITEMS: NavItem[] = [

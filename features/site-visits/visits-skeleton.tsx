@@ -1,80 +1,62 @@
 /**
- * Skeletons mirror the real layout — thumb, when-strip, two people, one action
- * row — so nothing reflows when the data lands. See docs/LOADING.md.
+ * Skeletons mirror the real layout — a day header, then rows with a time
+ * gutter, a thumb, and three text lines — so nothing reflows when the data
+ * lands. See docs/LOADING.md.
  */
-function VisitCardSkeleton() {
+function VisitRowSkeleton() {
     return (
-        <div
-            className="
-              flex flex-col gap-3 rounded-card border-s-2 border-s-border-warm bg-surface p-4
-            "
-            aria-hidden
-        >
-            <div className="flex items-start gap-3">
-                <div
-                    className="
-                      shrink-0 rounded-inner bg-surface-muted block-14 inline-18
-                      sm:block-18 sm:inline-22
-                    "
-                />
-                <div className="flex flex-1 flex-col gap-2">
-                    <div className="rounded-full bg-surface-muted block-4 inline-40" />
-                    <div className="rounded-full bg-surface-muted block-3 inline-28" />
-                    <div className="rounded-full bg-surface-muted block-3 inline-20" />
-                </div>
+        <div className="flex gap-3 border-be border-border-warm px-3 py-3.5 sm:gap-4 sm:px-4">
+            <div className="flex shrink-0 flex-col gap-1.5 inline-16 sm:inline-20">
+                <div className="rounded-full bg-surface-muted block-4 inline-14" />
+                <div className="rounded-full bg-surface-muted block-3 inline-8" />
             </div>
 
-            <div className="rounded-inner bg-surface-muted block-10" />
+            <div className="shrink-0 rounded-full bg-surface-muted inline-0.5" />
 
-            <div className="flex items-center gap-2">
-                <div
-                    className="
-                      shrink-0 rounded-full bg-surface-muted block-control-sm inline-control-sm
-                    "
-                />
-                <div className="rounded-full bg-surface-muted block-3 inline-24" />
+            <div
+                className="
+                  hidden shrink-0 rounded-inner bg-surface-muted
+                  sm:block sm:block-18 sm:inline-22
+                "
+            />
+
+            <div className="flex flex-1 flex-col gap-2 min-inline-0">
+                <div className="rounded-full bg-surface-muted block-4 inline-40" />
+                <div className="rounded-full bg-surface-muted block-3 inline-52" />
+                <div className="rounded-full bg-surface-muted block-3 inline-36" />
             </div>
 
-            <div className="flex gap-2">
-                <div className="rounded-control bg-surface-muted block-control-sm inline-24" />
-                <div className="rounded-control bg-surface-muted block-control-sm inline-32" />
-            </div>
+            <div className="shrink-0 rounded-control bg-surface-muted block-control-sm inline-20" />
         </div>
     );
 }
 
-export function VisitsListSkeleton({ rows = 4 }: { rows?: number }) {
+export function VisitsListSkeleton({
+    days = 2,
+    rowsPerDay = 2,
+}: {
+    days?: number;
+    rowsPerDay?: number;
+}) {
     return (
-        <div
-            className="grid grid-cols-1 gap-3 lg:grid-cols-2"
-            aria-busy
-            aria-label="Loading your visits"
-        >
-            {Array.from({ length: rows }, (_, index) => (
-                <VisitCardSkeleton key={index} />
-            ))}
-        </div>
-    );
-}
-
-/** Matches the calendar's header row plus grid, so the swap does not jump. */
-export function VisitsCalendarSkeleton() {
-    return (
-        <div
-            className="overflow-hidden rounded-card bg-surface"
-            aria-busy
-            aria-label="Loading your calendar"
-        >
-            <div className="flex gap-2 border-be border-border-warm p-3">
-                <div className="shrink-0 inline-12 sm:inline-14" />
-                {Array.from({ length: 7 }, (_, index) => (
-                    <div key={index} className="flex flex-1 flex-col items-center gap-1">
-                        <div className="rounded-full bg-surface-muted block-3 inline-8" />
-                        <div className="rounded-full bg-surface-muted block-6 inline-6" />
+        <div className="flex flex-col gap-6" aria-busy aria-label="Loading your visits">
+            {Array.from({ length: days }, (_, dayIndex) => (
+                <section key={dayIndex} className="flex flex-col">
+                    <div className="border-be border-border-warm pbe-2">
+                        <div className="rounded-full bg-surface-muted block-4 inline-44" />
                     </div>
-                ))}
-            </div>
-            <div className="bg-surface-muted/40 block-96" />
+
+                    <div
+                        className="
+                          overflow-hidden rounded-card border border-bs-0 border-border-warm
+                        "
+                    >
+                        {Array.from({ length: rowsPerDay }, (_, rowIndex) => (
+                            <VisitRowSkeleton key={rowIndex} />
+                        ))}
+                    </div>
+                </section>
+            ))}
         </div>
     );
 }

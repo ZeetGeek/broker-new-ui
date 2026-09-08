@@ -154,8 +154,6 @@ export type VisitItem = {
 /** Which portal is reading. Decides the visible fields and the allowed actions. */
 export type VisitViewer = "broker" | "owner";
 
-export type VisitsView = "calendar" | "list";
-
 export type VisitStatusFilter = VisitStatus | "all" | "upcoming" | "needs_action";
 
 export type VisitsFilters = {
@@ -187,7 +185,8 @@ export type VisitsResult = {
 
 export const DEFAULT_VISITS_FILTERS: VisitsFilters = {
     q: "",
-    status: "upcoming",
+    /** Unfiltered, matching the leading "All" chip. */
+    status: "all",
     propertyId: "",
 };
 
