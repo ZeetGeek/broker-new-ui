@@ -1,4 +1,4 @@
-import { attachedClientsFor } from "@/lib/api/clients";
+import { attachedClientsByProperty } from "@/lib/api/clients";
 import {
     type RepresentationItem,
     type RepresentationListPage,
@@ -30,8 +30,11 @@ async function fetchAllInvitations(): Promise<RepresentationItem[]> {
     return isPaged(response) ? response.items : response;
 }
 
-function withClients(item: InviteItem): InviteItem {
-    const attached = attachedClientsFor(item.propertyId);
+function withClients(
+    item: InviteItem,
+    attachedByProperty: Map<string, { id: string; name: string }[]>,
+): InviteItem {
+    const attached = attachedByProperty.get(item.propertyId) ?? [];
     return {
         ...item,
         clientsAttached: attached.length,
@@ -40,11 +43,14 @@ function withClients(item: InviteItem): InviteItem {
 }
 
 async function loadInvites(): Promise<InviteItem[]> {
-    const rows = await fetchAllInvitations();
+    const [rows, attachedByProperty] = await Promise.all([
+        fetchAllInvitations(),
+        attachedClientsByProperty(),
+    ]);
     return rows
         .map((row) => mapRepresentationToInviteItem(row))
         .filter((item): item is InviteItem => item != null)
-        .map(withClients);
+        .map((item) => withClients(item, attachedByProperty));
 }
 
 export const ownerInvitesApi = {

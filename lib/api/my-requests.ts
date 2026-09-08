@@ -1,4 +1,4 @@
-import { attachedClientsFor } from "@/lib/api/clients";
+import { attachedClientsByProperty } from "@/lib/api/clients";
 import { dashboardApi, type DashboardRequestQuota } from "@/lib/api/dashboard";
 import { representativeApi } from "@/lib/api/representative";
 import { formatDateIso } from "@/lib/format/date";
@@ -46,9 +46,11 @@ async function loadQuota(): Promise<RequestsSummary["quota"]> {
     };
 }
 
-/** Buyers live in the clients store, so read them from there. */
-function withClientCount(item: RequestItem): RequestItem {
-    const attached = attachedClientsFor(item.propertyId);
+function withClientCount(
+    item: RequestItem,
+    attachedByProperty: Map<string, { id: string; name: string }[]>,
+): RequestItem {
+    const attached = attachedByProperty.get(item.propertyId) ?? [];
     return {
         ...item,
         clientsAttached: attached.length,
@@ -58,8 +60,11 @@ function withClientCount(item: RequestItem): RequestItem {
 
 export const myRequestsApi = {
     async list(filters: RequestsFilters): Promise<RequestsResult> {
-        const items = await loadOutboundRequests();
-        const live = items.map(withClientCount);
+        const [items, attachedByProperty] = await Promise.all([
+            loadOutboundRequests(),
+            attachedClientsByProperty(),
+        ]);
+        const live = items.map((item) => withClientCount(item, attachedByProperty));
         const matched = sortRequests(filterRequests(live, filters), filters.sort);
         const totalPages = Math.max(1, Math.ceil(matched.length / filters.limit));
         const page = Math.min(Math.max(1, filters.page), totalPages);
@@ -75,8 +80,15 @@ export const myRequestsApi = {
 
     /** Summary is over the whole set, not the filtered page. */
     async summary(): Promise<RequestsSummary> {
-        const [items, quota] = await Promise.all([loadOutboundRequests(), loadQuota()]);
-        return summarizeRequests(items.map(withClientCount), quota);
+        const [items, quota, attachedByProperty] = await Promise.all([
+            loadOutboundRequests(),
+            loadQuota(),
+            attachedClientsByProperty(),
+        ]);
+        return summarizeRequests(
+            items.map((item) => withClientCount(item, attachedByProperty)),
+            quota,
+        );
     },
 
     /** Send a reminder to the owner (max REMINDER_LIMIT per pending attempt). */

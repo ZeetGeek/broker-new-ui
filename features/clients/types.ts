@@ -30,9 +30,3 @@ export type ClientItem = {
      */
     documents: BuyerDocument[];
 };
-
-/**
- * Buyers a broker may attach to one property. Keeps the pipeline honest — a
- * property shown to twenty buyers is a property nobody is really working.
- */
-export const BUYERS_PER_PROPERTY_LIMIT = 5;

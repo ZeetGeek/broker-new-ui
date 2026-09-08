@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 import { Search, UserPlus, Users } from "lucide-react";
 
@@ -65,13 +66,11 @@ function BuyerRow({
     client,
     request,
     isSelected,
-    isDisabled,
     onToggle,
 }: {
     client: ClientItem;
     request: RequestItem;
     isSelected: boolean;
-    isDisabled: boolean;
     onToggle: () => void;
 }) {
     const mismatch = mismatchReason(client, request);
@@ -91,12 +90,10 @@ function BuyerRow({
                           border-border-warm bg-surface
                           hover:border-ink/20 hover:bg-surface-muted/50
                         `,
-                    isDisabled && "cursor-not-allowed opacity-50 hover:border-border-warm",
                 )}
             >
                 <Checkbox
                     checked={isSelected}
-                    disabled={isDisabled}
                     onCheckedChange={onToggle}
                     aria-label={`Add ${client.name}`}
                     className="mbs-0.5 shrink-0"
@@ -120,7 +117,9 @@ function BuyerRow({
                     />
 
                     <p className="body-xs text-ink-muted">
-                        {client.preferredLocalities.join(", ")}
+                        {client.preferredLocalities.length > 0
+                            ? client.preferredLocalities.join(", ")
+                            : "No preferred areas"}
                         {budget ? ` · ${budget}` : ""}
                         {client.attachedPropertyCount > 0
                             ? ` · On ${client.attachedPropertyCount} other ${
@@ -146,8 +145,8 @@ export function AttachBuyersModal({
     onSaved: () => void;
 }) {
     const [clients, setClients] = useState<ClientItem[]>([]);
+    const [attachedIds, setAttachedIds] = useState<string[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [limit, setLimit] = useState(5);
     const [query, setQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -170,8 +169,15 @@ export function AttachBuyersModal({
                 .then((result) => {
                     if (cancelled) return;
                     setClients(result.clients);
+                    setAttachedIds(result.attachedIds);
                     setSelectedIds(result.attachedIds);
-                    setLimit(result.limit);
+                })
+                .catch(() => {
+                    if (cancelled) return;
+                    toast.error("Could not load your buyers. Try again.");
+                    setClients([]);
+                    setAttachedIds([]);
+                    setSelectedIds([]);
                 })
                 .finally(() => {
                     if (!cancelled) setIsLoading(false);
@@ -189,31 +195,41 @@ export function AttachBuyersModal({
         [clients, query],
     );
 
-    const isAtLimit = selectedIds.length >= limit;
-
-    const handleToggle = useCallback(
-        (clientId: string) => {
-            setSelectedIds((previous) =>
-                previous.includes(clientId)
-                    ? previous.filter((id) => id !== clientId)
-                    : previous.length >= limit
-                      ? previous
-                      : [...previous, clientId],
-            );
-        },
-        [limit],
-    );
+    const handleToggle = useCallback((clientId: string) => {
+        setSelectedIds((previous) =>
+            previous.includes(clientId)
+                ? previous.filter((id) => id !== clientId)
+                : [...previous, clientId],
+        );
+    }, []);
 
     const handleSave = useCallback(() => {
+        // Only send newly selected buyers — already linked stay linked.
+        const toAttach = selectedIds.filter((id) => !attachedIds.includes(id));
+        if (toAttach.length === 0) {
+            onOpenChange(false);
+            return;
+        }
+
         setIsSaving(true);
         void clientsApi
-            .setPropertyClients(request.propertyId, selectedIds)
+            .setPropertyClients(request.propertyId, toAttach)
             .then(() => {
+                toast.success(
+                    toAttach.length === 1
+                        ? "Buyer linked to this property."
+                        : `${toAttach.length} buyers linked to this property.`,
+                );
                 onSaved();
                 onOpenChange(false);
             })
+            .catch((error) => {
+                toast.error(
+                    error instanceof Error ? error.message : "Could not link buyers. Try again.",
+                );
+            })
             .finally(() => setIsSaving(false));
-    }, [onOpenChange, onSaved, request.propertyId, selectedIds]);
+    }, [attachedIds, onOpenChange, onSaved, request.propertyId, selectedIds]);
 
     return (
         <AppModal
@@ -221,7 +237,7 @@ export function AttachBuyersModal({
             onOpenChange={onOpenChange}
             size="lg"
             title="Add buyers"
-            description={`Pick who you will show ${request.title} to. You can add up to ${limit}.`}
+            description={`Pick who you will show ${request.title} to. You can select one or many.`}
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <Input
@@ -234,13 +250,8 @@ export function AttachBuyersModal({
                         clearable
                         wrapperClassName="min-inline-56 flex-1"
                     />
-                    <span
-                        className={cn(
-                            "body-sm shrink-0 font-medium",
-                            isAtLimit ? "text-urgent" : "text-ink-muted",
-                        )}
-                    >
-                        {selectedIds.length} of {limit} added
+                    <span className="body-sm shrink-0 font-medium text-ink-muted">
+                        {selectedIds.length} selected
                     </span>
                 </div>
             }
@@ -286,20 +297,12 @@ export function AttachBuyersModal({
                                 client={client}
                                 request={request}
                                 isSelected={isSelected}
-                                isDisabled={!isSelected && isAtLimit}
                                 onToggle={() => handleToggle(client.id)}
                             />
                         );
                     })}
                 </ul>
             )}
-
-            {isAtLimit ? (
-                <p className="body-sm mbs-3 text-urgent">
-                    You have added the most buyers allowed for one property. Remove one to add
-                    someone else.
-                </p>
-            ) : null}
         </AppModal>
     );
 }
