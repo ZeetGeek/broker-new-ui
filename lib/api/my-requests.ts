@@ -1,3 +1,4 @@
+import { attemptActions } from "@/features/properties/my-requests/attempt-rules";
 import {
     filterRequests,
     sortRequests,
@@ -7,16 +8,15 @@ import {
     MOCK_REQUESTS,
     MOCK_REQUESTS_QUOTA,
 } from "@/features/properties/my-requests/mock-requests";
-import { reminderState } from "@/features/properties/my-requests/reminder-rules";
 import type {
     RequestItem,
     RequestsFilters,
     RequestsResult,
     RequestsSummary,
 } from "@/features/properties/my-requests/types";
-import { REMINDER_LIMIT } from "@/features/properties/my-requests/types";
+import { ATTEMPT_LIMIT } from "@/features/properties/my-requests/types";
 
-/** Mutable in-memory copy so nudge/withdraw survive within a session. */
+/** Mutable in-memory copy so attempt changes survive within a session. */
 let requests: RequestItem[] = MOCK_REQUESTS.map((item) => ({ ...item }));
 
 function delay(ms = 240): Promise<void> {
@@ -47,29 +47,28 @@ export const myRequestsApi = {
     },
 
     /**
-     * Remind an owner who has not answered. The cap and cooldown are enforced
-     * here too — the button being hidden is a convenience, not the rule.
+     * Send this attempt's one reminder. Enforced here too — the button being
+     * disabled is a convenience, not the rule.
      */
     async nudge(requestId: string): Promise<void> {
         await delay(200);
 
         const target = requests.find((item) => item.id === requestId);
-        if (!target || !reminderState(target).canRemind) return;
+        if (!target || !attemptActions(target).canRemind) return;
 
         const sentAt = new Date().toISOString();
-        const nextCount = target.remindersSent + 1;
 
         requests = requests.map((item) =>
             item.id === requestId
                 ? {
                       ...item,
-                      remindersSent: nextCount,
+                      reminderUsed: true,
                       nudgedAt: sentAt,
                       timeline: [
                           ...item.timeline,
                           {
                               key: "nudged" as const,
-                              label: `You sent a reminder (${nextCount} of ${REMINDER_LIMIT})`,
+                              label: "You sent a reminder",
                               at: sentAt,
                           },
                       ],
@@ -78,23 +77,72 @@ export const myRequestsApi = {
         );
     },
 
-    /** Pull back a request the broker no longer wants. Frees a quota slot. */
+    /**
+     * Close the current attempt. When it was the broker's last one the
+     * property locks instead, and they may not approach that owner again.
+     */
     async withdraw(requestId: string): Promise<void> {
         await delay(200);
+
+        const target = requests.find((item) => item.id === requestId);
+        if (!target || !attemptActions(target).canCancel) return;
+
+        const at = new Date().toISOString();
+        const isLastAttempt = target.attemptNumber >= ATTEMPT_LIMIT;
+
         requests = requests.map((item) =>
             item.id === requestId
                 ? {
                       ...item,
-                      stage: "withdrawn" as const,
-                      resolvedAt: new Date().toISOString(),
-                      daysToExpiry: null,
-                      expiresAt: null,
+                      stage: isLastAttempt ? ("locked" as const) : ("cancelled" as const),
+                      resolvedAt: at,
+                      timeline: [
+                          ...item.timeline,
+                          isLastAttempt
+                              ? {
+                                    key: "locked" as const,
+                                    label: "No attempts left — owner never replied",
+                                    at,
+                                }
+                              : {
+                                    key: "cancelled" as const,
+                                    label: `You cancelled attempt ${item.attemptNumber}`,
+                                    at,
+                                },
+                      ],
+                  }
+                : item,
+        );
+    },
+
+    /** Open the next attempt on a property whose last attempt was cancelled. */
+    async retry(requestId: string): Promise<void> {
+        await delay(200);
+
+        const target = requests.find((item) => item.id === requestId);
+        if (!target || !attemptActions(target).canRetry) return;
+
+        const at = new Date().toISOString();
+        const nextAttempt = target.attemptNumber + 1;
+
+        requests = requests.map((item) =>
+            item.id === requestId
+                ? {
+                      ...item,
+                      stage: "pending" as const,
+                      attemptNumber: nextAttempt,
+                      reminderUsed: false,
+                      nudgedAt: null,
+                      ownerSeen: false,
+                      requestedAt: at,
+                      resolvedAt: null,
+                      daysWaiting: 0,
                       timeline: [
                           ...item.timeline,
                           {
-                              key: "withdrawn" as const,
-                              label: "You cancelled the request",
-                              at: new Date().toISOString(),
+                              key: "sent" as const,
+                              label: `You sent the request (${nextAttempt} of ${ATTEMPT_LIMIT})`,
+                              at,
                           },
                       ],
                   }

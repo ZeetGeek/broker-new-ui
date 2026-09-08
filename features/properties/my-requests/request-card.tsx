@@ -8,10 +8,11 @@ import {
     ChevronDown,
     Eye,
     EyeOff,
+    Lock,
     MapPin,
     Maximize2,
     MessageCircle,
-    Timer,
+    Send,
     TriangleAlert,
     UserPlus,
     X,
@@ -31,11 +32,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { isExpiringSoon, needsFollowUp } from "@/features/properties/my-requests/filter-requests";
-import { expiryCountdown, reminderState } from "@/features/properties/my-requests/reminder-rules";
+import { attemptActions, attemptLabel } from "@/features/properties/my-requests/attempt-rules";
+import { needsFollowUp } from "@/features/properties/my-requests/filter-requests";
 import { REQUEST_STAGE_META } from "@/features/properties/my-requests/request-stage-meta";
 import { RequestTimeline } from "@/features/properties/my-requests/request-timeline";
-import { REMINDER_LIMIT, type RequestItem } from "@/features/properties/my-requests/types";
+import { ATTEMPT_LIMIT, type RequestItem } from "@/features/properties/my-requests/types";
 import type { RequestsView } from "@/features/properties/my-requests/use-requests-view";
 
 function dayLabel(days: number): string {
@@ -49,19 +50,6 @@ function dayLabel(days: number): string {
  */
 function statusLine(item: RequestItem): { text: string; tone: "urgent" | "muted" | "success" } {
     if (item.stage === "pending") {
-        // The countdown badge already shows the time left, so this line says
-        // what to do about it rather than repeating the number.
-        if (isExpiringSoon(item)) {
-            const reminders = reminderState(item);
-            return {
-                text: reminders.canRemind
-                    ? "Closing soon. Send a reminder before it does."
-                    : reminders.reason === "limit_reached"
-                      ? "Closing soon. You have used all your reminders."
-                      : `Closing soon. You can remind again in ${reminders.hoursUntilNext}h.`,
-                tone: "urgent",
-            };
-        }
         if (!item.ownerSeen) {
             return {
                 text: `The owner has not opened your request yet. Sent ${dayLabel(item.daysWaiting)} ago.`,
@@ -96,37 +84,39 @@ function statusLine(item: RequestItem): { text: string; tone: "urgent" | "muted"
         };
     }
 
-    if (item.stage === "expired") {
+    if (item.stage === "locked") {
         return {
-            text: "Your request expired without a reply. You can send a new one.",
+            text: "You have used all 3 attempts and the owner never replied. The owner can still contact you.",
             tone: "muted",
         };
     }
 
-    return { text: "You cancelled this request yourself.", tone: "muted" };
+    const { attemptsLeft } = attemptActions(item);
+    return {
+        text:
+            attemptsLeft > 0
+                ? `You cancelled this attempt. ${attemptsLeft} of ${ATTEMPT_LIMIT} attempts left.`
+                : "You cancelled your last attempt.",
+        tone: "muted",
+    };
 }
 
 function RequestCardActions({
     item,
     onNudge,
     onWithdraw,
+    onRetry,
     isBusy,
 }: {
     item: RequestItem;
     onNudge: (id: string) => void;
     onWithdraw: (id: string) => void;
+    onRetry: (id: string) => void;
     isBusy: boolean;
 }) {
+    const actions = attemptActions(item);
+
     if (item.stage === "pending") {
-        const reminders = reminderState(item);
-        const usedLabel = `${item.remindersSent} of ${REMINDER_LIMIT} reminders used`;
-
-        const nudgeHint = reminders.canRemind
-            ? `Send the owner a reminder. ${usedLabel}.`
-            : reminders.reason === "limit_reached"
-              ? `You have used all ${REMINDER_LIMIT} reminders on this request.`
-              : `You reminded them recently. You can remind again in ${reminders.hoursUntilNext}h. ${usedLabel}.`;
-
         return (
             <div className="flex flex-wrap items-center gap-2">
                 <Tooltip>
@@ -136,7 +126,7 @@ function RequestCardActions({
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    disabled={!reminders.canRemind || isBusy}
+                                    disabled={!actions.canRemind || isBusy}
                                     onClick={() => onNudge(item.id)}
                                     className="border-border-warm"
                                 >
@@ -145,15 +135,16 @@ function RequestCardActions({
                                         className="block-4 inline-4"
                                         strokeWidth={1.75}
                                     />
-                                    Remind owner
-                                    <span className="tabular text-ink-muted">
-                                        {item.remindersSent}/{REMINDER_LIMIT}
-                                    </span>
+                                    {actions.canRemind ? "Remind owner" : "Reminder sent"}
                                 </Button>
                             </span>
                         }
                     />
-                    <TooltipContent>{nudgeHint}</TooltipContent>
+                    <TooltipContent>
+                        {actions.canRemind
+                            ? "Send the owner one reminder about this request."
+                            : "You already used the reminder for this attempt."}
+                    </TooltipContent>
                 </Tooltip>
 
                 <Tooltip>
@@ -172,10 +163,50 @@ function RequestCardActions({
                         }
                     />
                     <TooltipContent>
-                        Cancel this request. It frees up one of your weekly requests.
+                        {actions.attemptsLeft > 0
+                            ? `Close this attempt. You will have ${actions.attemptsLeft} of ${ATTEMPT_LIMIT} attempts left.`
+                            : "Close this attempt. It is your last one for this property."}
                     </TooltipContent>
                 </Tooltip>
             </div>
+        );
+    }
+
+    if (item.stage === "cancelled") {
+        if (!actions.canRetry) {
+            return null;
+        }
+
+        return (
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isBusy}
+                            onClick={() => onRetry(item.id)}
+                            className="border-border-warm"
+                        >
+                            <Send aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                            Send request again
+                        </Button>
+                    }
+                />
+                <TooltipContent>
+                    Start attempt {Math.min(item.attemptNumber + 1, ATTEMPT_LIMIT)} of{" "}
+                    {ATTEMPT_LIMIT} for this property.
+                </TooltipContent>
+            </Tooltip>
+        );
+    }
+
+    if (item.stage === "locked") {
+        return (
+            <p className="body-xs flex items-center gap-1.5 text-ink-muted">
+                <Lock aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
+                No attempts left. The owner can still contact you.
+            </p>
         );
     }
 
@@ -358,12 +389,14 @@ export function RequestCard({
     view,
     onNudge,
     onWithdraw,
+    onRetry,
     isBusy = false,
 }: {
     item: RequestItem;
     view: RequestsView;
     onNudge: (id: string) => void;
     onWithdraw: (id: string) => void;
+    onRetry: (id: string) => void;
     isBusy?: boolean;
 }) {
     const [showTimeline, setShowTimeline] = useState(false);
@@ -371,7 +404,8 @@ export function RequestCard({
     const meta = REQUEST_STAGE_META[item.stage];
     const StageIcon = meta.icon;
     const status = statusLine(item);
-    const countdown = expiryCountdown(item);
+    // Attempt count only matters while the broker still has moves to make.
+    const showAttempts = item.stage === "pending" || item.stage === "cancelled";
     const isList = view === "list";
 
     return (
@@ -432,9 +466,9 @@ export function RequestCard({
                                 </p>
                             </div>
 
-                            <div className="
-                              flex shrink-0 flex-wrap items-center justify-end gap-1.5
-                            ">
+                            <div
+                                className="flex shrink-0 flex-wrap items-center justify-end gap-1.5"
+                            >
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
@@ -447,27 +481,18 @@ export function RequestCard({
                                     <TooltipContent>{meta.hint}</TooltipContent>
                                 </Tooltip>
 
-                                {countdown ? (
+                                {showAttempts ? (
                                     <Tooltip>
                                         <TooltipTrigger
                                             render={
-                                                <Badge
-                                                    variant={
-                                                        countdown.isUrgent ? "urgent" : "outline"
-                                                    }
-                                                    className={cn(
-                                                        !countdown.isUrgent && "bg-surface",
-                                                    )}
-                                                >
-                                                    <Timer aria-hidden strokeWidth={2} />
-                                                    {countdown.label}
+                                                <Badge variant="outline" className="bg-surface">
+                                                    {attemptLabel(item)}
                                                 </Badge>
                                             }
                                         />
                                         <TooltipContent>
-                                            {countdown.isExpired
-                                                ? "This request has closed. Refresh to see its final status."
-                                                : `If the owner does not reply, this request closes on its own in ${countdown.label.replace(" left", "")}.`}
+                                            You get {ATTEMPT_LIMIT} attempts per property. Each
+                                            attempt is one request plus one reminder.
                                         </TooltipContent>
                                     </Tooltip>
                                 ) : null}
@@ -537,6 +562,7 @@ export function RequestCard({
                                 item={item}
                                 onNudge={onNudge}
                                 onWithdraw={onWithdraw}
+                                onRetry={onRetry}
                                 isBusy={isBusy}
                             />
 

@@ -47,12 +47,6 @@ function buildSummaryLines(summary: RequestsSummary | null, isLoading: boolean):
         );
     }
 
-    if (summary.expiringSoonCount > 0) {
-        lines.push(
-            <>{countLabel(summary.expiringSoonCount, "request closes", "requests close")} soon</>,
-        );
-    }
-
     if (summary.counts.pending > 0) {
         lines.push(
             <>

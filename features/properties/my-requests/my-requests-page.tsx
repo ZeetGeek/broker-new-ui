@@ -111,6 +111,13 @@ export function MyRequestsPage() {
         [runMutation],
     );
 
+    const handleRetry = useCallback(
+        (id: string) => {
+            void runMutation(id, () => myRequestsApi.retry(id));
+        },
+        [runMutation],
+    );
+
     const handlePageChange = useCallback(
         (page: number) => {
             setFilters((prev) => ({ ...prev, page: Math.max(1, page) }));
@@ -196,6 +203,7 @@ export function MyRequestsPage() {
                                         view={view}
                                         onNudge={handleNudge}
                                         onWithdraw={handleWithdraw}
+                                        onRetry={handleRetry}
                                         isBusy={busyId === item.id}
                                     />
                                 ))}

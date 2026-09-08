@@ -10,10 +10,9 @@ const VIEWS: RequestsViewFilter[] = [
     "pending",
     "approved",
     "declined",
-    "expired",
-    "withdrawn",
+    "cancelled",
+    "locked",
     "needs_buyer",
-    "closing_soon",
     "not_opened",
 ];
 

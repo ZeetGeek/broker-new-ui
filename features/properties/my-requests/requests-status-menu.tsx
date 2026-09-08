@@ -27,12 +27,11 @@ const VIEW_DESCRIPTIONS: Record<RequestsViewFilter, string> = {
     pending: "Sent, but the owner has not replied",
     approved: "Request accepted, you can sell these",
     declined: "The owner rejected your request",
-    expired: "Closed because the owner never replied",
-    withdrawn: "You cancelled these requests",
+    cancelled: "You cancelled these, attempts may remain",
+    locked: "All attempts used, owner never replied",
     // These three are subsets of a stage above, so each says which one —
     // otherwise "Not opened" reads as a rival to "Waiting for reply".
     needs_buyer: "Accepted requests with no buyer added yet",
-    closing_soon: "Waiting requests that close in a few days",
     not_opened: "Waiting requests the owner never opened",
 };
 
@@ -41,16 +40,15 @@ const VIEW_LABELS: Record<RequestsViewFilter, string> = {
     pending: REQUEST_STAGE_META.pending.label,
     approved: REQUEST_STAGE_META.approved.label,
     declined: REQUEST_STAGE_META.declined.label,
-    expired: REQUEST_STAGE_META.expired.label,
-    withdrawn: REQUEST_STAGE_META.withdrawn.label,
+    cancelled: REQUEST_STAGE_META.cancelled.label,
+    locked: REQUEST_STAGE_META.locked.label,
     needs_buyer: "Needs a buyer",
-    closing_soon: "Closing soon",
     not_opened: "Not opened yet",
 };
 
 /** Stage options first, then the three "needs your attention" shortcuts. */
 const STAGE_VIEWS: RequestsViewFilter[] = ["all", ...REQUEST_STAGE_ORDER];
-const FOCUS_VIEWS: RequestsViewFilter[] = ["needs_buyer", "closing_soon", "not_opened"];
+const FOCUS_VIEWS: RequestsViewFilter[] = ["needs_buyer", "not_opened"];
 
 function countFor(summary: RequestsSummary | null, view: RequestsViewFilter): number {
     if (!summary) return 0;
@@ -60,8 +58,6 @@ function countFor(summary: RequestsSummary | null, view: RequestsViewFilter): nu
             return summary.counts.all;
         case "needs_buyer":
             return summary.needsFollowUpCount;
-        case "closing_soon":
-            return summary.expiringSoonCount;
         case "not_opened":
             return summary.unseenCount;
         default:

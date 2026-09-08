@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Ban, CircleCheck, CircleX, Clock, Hourglass } from "lucide-react";
+import { Ban, CircleCheck, CircleX, Hourglass, Lock } from "lucide-react";
 
 import type { RequestStage } from "@/features/properties/my-requests/types";
 
@@ -36,18 +36,18 @@ export const REQUEST_STAGE_META: Record<RequestStage, RequestStageMeta> = {
         badgeVariant: "danger",
         toneClass: "text-danger",
     },
-    expired: {
-        label: "Request expired",
-        hint: "The owner never replied, so your request closed on its own. You can send a new request.",
-        icon: Clock,
-        badgeVariant: "urgent",
-        toneClass: "text-urgent",
-    },
-    withdrawn: {
-        label: "Request cancelled",
-        hint: "You cancelled your request, so the owner will not see it.",
-        icon: Ban,
+    locked: {
+        label: "No more attempts",
+        hint: "You used all your attempts and the owner never replied. You cannot send another request for this property. The owner can still contact you.",
+        icon: Lock,
         badgeVariant: "neutral",
+        toneClass: "text-ink-muted",
+    },
+    cancelled: {
+        label: "You cancelled",
+        hint: "You cancelled this attempt. You can send another request if you have attempts left.",
+        icon: Ban,
+        badgeVariant: "outline",
         toneClass: "text-ink-muted",
     },
 };
@@ -56,6 +56,6 @@ export const REQUEST_STAGE_ORDER: RequestStage[] = [
     "pending",
     "approved",
     "declined",
-    "expired",
-    "withdrawn",
+    "cancelled",
+    "locked",
 ];

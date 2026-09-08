@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Ban, Bell, CircleCheck, CircleX, Clock, Eye, Send } from "lucide-react";
+import { Ban, Bell, CircleCheck, CircleX, Eye, Lock, Send } from "lucide-react";
 
 import { formatRelativePast } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -12,8 +12,8 @@ const STEP_ICONS: Record<RequestTimelineStep["key"], LucideIcon> = {
     nudged: Bell,
     approved: CircleCheck,
     declined: CircleX,
-    expired: Clock,
-    withdrawn: Ban,
+    locked: Lock,
+    cancelled: Ban,
 };
 
 const STEP_TONES: Record<RequestTimelineStep["key"], string> = {
@@ -22,8 +22,8 @@ const STEP_TONES: Record<RequestTimelineStep["key"], string> = {
     nudged: "text-brand",
     approved: "text-success",
     declined: "text-danger",
-    expired: "text-urgent",
-    withdrawn: "text-ink-muted",
+    locked: "text-ink-muted",
+    cancelled: "text-ink-muted",
 };
 
 /** Newest last, so the row reads top-to-bottom as the story of the request. */
@@ -54,9 +54,9 @@ export function RequestTimeline({ steps }: { steps: RequestTimelineStep[] }) {
                             ) : null}
                         </span>
 
-                        <div
-                            className="flex flex-1 flex-wrap items-baseline justify-between gap-x-3"
-                        >
+                        <div className="
+                          flex flex-1 flex-wrap items-baseline justify-between gap-x-3
+                        ">
                             <span className="body-sm text-ink">{step.label}</span>
                             <time dateTime={step.at} className="body-xs text-ink-muted">
                                 {formatRelativePast(new Date(step.at), now)}

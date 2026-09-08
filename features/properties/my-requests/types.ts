@@ -1,5 +1,11 @@
-/** Lifecycle of a "request to represent" from the broker's side. */
-export type RequestStage = "pending" | "approved" | "declined" | "expired" | "withdrawn";
+/**
+ * Lifecycle of a "request to represent" from the broker's side.
+ *
+ * `locked` is the dead end: all three attempts used and the owner never
+ * replied, so the broker may not approach them again on this property. The
+ * owner can still start a conversation from their side.
+ */
+export type RequestStage = "pending" | "approved" | "declined" | "locked" | "cancelled";
 
 export type RequestStageFilter = "all" | RequestStage;
 
@@ -7,7 +13,7 @@ export type RequestSort = "recent" | "oldest" | "waiting_longest" | "price_desc"
 
 export type RequestTimelineStep = {
     /** Machine key for the icon + tone. */
-    key: "sent" | "seen" | "approved" | "declined" | "expired" | "withdrawn" | "nudged";
+    key: "sent" | "seen" | "approved" | "declined" | "locked" | "cancelled" | "nudged";
     label: string;
     /** ISO instant. */
     at: string;
@@ -43,24 +49,22 @@ export type RequestItem = {
     ownerSeen: boolean;
     /** ISO instant the request was sent. */
     requestedAt: string;
-    /** ISO instant of approve/decline/expire. Null while pending. */
+    /** ISO instant of approve/decline/lock/cancel. Null while pending. */
     resolvedAt: string | null;
-    /** Whole days the request has been waiting. Pending rows only. */
+    /** Whole days the current attempt has been waiting. Pending rows only. */
     daysWaiting: number;
-    /** Days until an unanswered request auto-expires. Pending rows only. */
-    daysToExpiry: number | null;
-    /**
-     * ISO instant the request auto-expires. Null once resolved. Drives the
-     * live countdown — `daysToExpiry` is too coarse on the final day.
-     */
-    expiresAt: string | null;
     /** Clients attached after approval — the "did I act on it" signal. */
     clientsAttached: number;
     brokerSlotsOpen: number;
     brokerSlotsTotal: number;
-    /** Reminders already sent. Capped at REMINDER_LIMIT. */
-    remindersSent: number;
-    /** ISO instant of the most recent reminder. Null when none sent. */
+    /**
+     * Which attempt this is, 1-based. A broker gets ATTEMPT_LIMIT tries per
+     * property; each try is one request plus one optional reminder.
+     */
+    attemptNumber: number;
+    /** Whether the reminder for THIS attempt has been used. */
+    reminderUsed: boolean;
+    /** ISO instant of this attempt's reminder. Null when not yet sent. */
     nudgedAt: string | null;
     /** Owner's reason, when they gave one on decline. */
     declineReason?: string;
@@ -69,15 +73,13 @@ export type RequestItem = {
 };
 
 /**
- * Every way of narrowing the list, as one value — the six stages plus three
+ * Every way of narrowing the list, as one value — the stages plus two
  * shortcuts for rows that need the broker to act. One control, one choice.
  */
 export type RequestsViewFilter =
     | RequestStageFilter
     /** Approved rows with zero clients attached. */
     | "needs_buyer"
-    /** Pending rows about to auto-expire. */
-    | "closing_soon"
     /** Pending rows the owner has not opened yet. */
     | "not_opened";
 
@@ -101,8 +103,6 @@ export type RequestsSummary = {
     needsFollowUpCount: number;
     /** Pending rows the owner has not opened. */
     unseenCount: number;
-    /** Pending rows expiring within the warning window. */
-    expiringSoonCount: number;
     quota: { limit: number; used: number; remaining: number; resetsOn: string };
 };
 
@@ -121,14 +121,10 @@ export const DEFAULT_REQUESTS_FILTERS: RequestsFilters = {
     limit: 10,
 };
 
-/** Pending requests inside this many days of expiry are "expiring soon". */
-export const EXPIRING_SOON_DAYS = 3;
-
 /**
- * Most reminders a broker may send on one request. Owners are non-technical
- * and on cheap phones — repeat pings from one broker cost us the supply side.
+ * Tries a broker gets per property. One attempt = one request plus one
+ * optional reminder. After the last attempt is cancelled unanswered the
+ * property locks: the broker cannot approach that owner again, though the
+ * owner may still reach out to the broker.
  */
-export const REMINDER_LIMIT = 3;
-
-/** Wait between reminders, so the three cannot be fired back to back. */
-export const REMINDER_COOLDOWN_HOURS = 48;
+export const ATTEMPT_LIMIT = 3;
