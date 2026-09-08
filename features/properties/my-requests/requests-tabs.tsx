@@ -1,16 +1,16 @@
 import Link from "next/link";
 
-import { BROKER_MY_REQUESTS_HREF } from "@/lib/routes/broker";
+import { BROKER_DEALS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 export type RequestsTab = "sent" | "invites";
 
 export const REQUESTS_TABS: { value: RequestsTab; label: string; href: string }[] = [
-    { value: "sent", label: "Sent by you", href: BROKER_MY_REQUESTS_HREF },
+    { value: "sent", label: "Sent by you", href: BROKER_DEALS_HREF },
     {
         value: "invites",
         label: "Invites from owners",
-        href: `${BROKER_MY_REQUESTS_HREF}?tab=invites`,
+        href: `${BROKER_DEALS_HREF}?tab=invites`,
     },
 ];
 

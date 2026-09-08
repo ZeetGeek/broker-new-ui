@@ -123,8 +123,11 @@ export function RequestsIntro({
     return (
         <TooltipProvider>
             <div className="flex flex-col gap-3">
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <h1 className="h4 text-ink">Your requests.</h1>
+                {/* Title and summary stack rather than sharing a baseline — at
+                    360px the rotating line wrapped under the title anyway, and
+                    the ragged two-column effect was the worst of both. */}
+                <div className="flex flex-col gap-1">
+                    <h1 className="h4 text-ink">Your deals</h1>
                     <div className={cn(META_TEXT, "min-inline-0")}>
                         {lines.length > 1 ? (
                             <TextLoop interval={SUMMARY_LOOP_INTERVAL_S}>
@@ -140,37 +143,26 @@ export function RequestsIntro({
 
                 {summary && summary.counts.all > 0 ? (
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                        {/* Three numbers, not seven. Waiting and Accepted are the
+                            two states a broker acts on; "needs a buyer" only
+                            appears when it is actually true. Success rate and
+                            average reply time moved to the tooltip on Accepted —
+                            they explain a number rather than being one. */}
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className={META_TEXT}>So far</span>
                             <StatChip
                                 label="Waiting"
                                 value={String(summary.counts.pending)}
-                                hint="Requests the owner has not replied to yet."
+                                hint={
+                                    summary.avgResponseDays > 0
+                                        ? `Requests the owner has not replied to yet. Owners usually reply in ${summary.avgResponseDays} days.`
+                                        : "Requests the owner has not replied to yet."
+                                }
                             />
                             <StatChip
                                 label="Accepted"
                                 value={String(summary.counts.approved)}
                                 tone="success"
-                                hint="Requests the owner accepted. You can sell these."
-                            />
-                            <StatChip
-                                label="Rejected"
-                                value={String(summary.counts.declined)}
-                                hint="Requests the owner rejected."
-                            />
-                            <StatChip
-                                label="Success rate"
-                                value={`${summary.approvalRate}%`}
-                                hint="Of the requests owners replied to, how many were accepted."
-                            />
-                            <StatChip
-                                label="Usual reply"
-                                value={
-                                    summary.avgResponseDays > 0
-                                        ? `${summary.avgResponseDays} days`
-                                        : "—"
-                                }
-                                hint="How long owners usually take to reply to your request."
+                                hint={`Requests the owner accepted. You can sell these. Of the requests owners replied to, ${summary.approvalRate}% were accepted.`}
                             />
                             {summary.needsFollowUpCount > 0 ? (
                                 <StatChip

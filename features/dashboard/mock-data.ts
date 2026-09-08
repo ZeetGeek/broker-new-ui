@@ -409,7 +409,7 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             subtitle: "Discuss Vesu feedback",
             state: "upcoming",
             clientId: "cl_003",
-            href: "/broker/clients/cl_003",
+            href: "/broker/pipeline/cl_003",
         },
         {
             id: "visit_04",
@@ -433,7 +433,7 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             subtitle: "Share Pal options",
             state: "upcoming",
             clientId: "cl_008",
-            href: "/broker/clients/cl_008",
+            href: "/broker/pipeline/cl_008",
         },
     ],
 };
@@ -513,7 +513,7 @@ export const PIPELINE_PLACEHOLDER: PipelineData = {
         { key: "site_visit", label: "Site visit", count: 3 },
         { key: "negotiation", label: "Negotiation", count: 1 },
     ],
-    stalled: { count: 2, thresholdDays: 14, href: "/broker/clients?filter=stalled" },
+    stalled: { count: 2, thresholdDays: 14, href: "/broker/pipeline?filter=stalled" },
     thisMonth: { won: 1, lost: 2 },
 };
 
@@ -532,7 +532,7 @@ export const FOLLOWUPS_PLACEHOLDER: FollowUpsData = {
             clientName: "Rahul Mehta",
             clientPhone: "+919876543210",
             channel: "whatsapp",
-            href: "/broker/clients/cl_003",
+            href: "/broker/pipeline/cl_003",
         },
         {
             id: "fu_02",
@@ -545,7 +545,7 @@ export const FOLLOWUPS_PLACEHOLDER: FollowUpsData = {
             clientName: "Priya Shah",
             clientPhone: "+919876500011",
             channel: "whatsapp",
-            href: "/broker/clients/cl_002",
+            href: "/broker/pipeline/cl_002",
         },
         {
             id: "fu_03",
@@ -558,7 +558,7 @@ export const FOLLOWUPS_PLACEHOLDER: FollowUpsData = {
             clientName: "Pal visit",
             clientPhone: "+919876500022",
             channel: "phone",
-            href: "/broker/clients/cl_004",
+            href: "/broker/pipeline/cl_004",
         },
         {
             id: "fu_04",
@@ -571,7 +571,7 @@ export const FOLLOWUPS_PLACEHOLDER: FollowUpsData = {
             clientName: "Nisha Desai",
             clientPhone: "+919876500033",
             channel: "whatsapp",
-            href: "/broker/clients/cl_005",
+            href: "/broker/pipeline/cl_005",
         },
     ],
 };

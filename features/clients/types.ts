@@ -1,3 +1,5 @@
+import type { BuyerDocument } from "@/features/contacts/document-rules";
+
 /** What the buyer is after — used to flag a poor match before attaching. */
 export type ClientLookingFor = "buy" | "rent";
 
@@ -21,6 +23,12 @@ export type ClientItem = {
     lastContactedAt: string | null;
     /** How many properties this buyer is already attached to. */
     attachedPropertyCount: number;
+    /**
+     * KYC papers, loan letters and anything else the broker was sent. Stored
+     * with the buyer rather than the deal — a PAN card belongs to the person,
+     * not to one property they looked at.
+     */
+    documents: BuyerDocument[];
 };
 
 /**

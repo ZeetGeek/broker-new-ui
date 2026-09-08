@@ -9,7 +9,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
     return (
         <>
-            <h1 className="display-md">Client {id}</h1>
+            <h1 className="display-md">Buyer {id}</h1>
             <p className="body text-ink-muted">Timeline, follow-ups, and WhatsApp go here.</p>
         </>
     );

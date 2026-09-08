@@ -90,7 +90,7 @@ export function InvitesIntro({
         <TooltipProvider>
             <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <h1 className="h4 text-ink">Owner invites.</h1>
+                    <h1 className="h4 text-ink">Your deals</h1>
                     <div className={cn(META_TEXT, "min-inline-0")}>
                         {lines.length > 1 ? (
                             <TextLoop interval={SUMMARY_LOOP_INTERVAL_S}>

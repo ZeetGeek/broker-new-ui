@@ -355,16 +355,16 @@ export function DashboardHeader({
                                 <span className="hidden md:inline">Owner listings</span>
                             </Button>
                         </ShortcutTooltip>
-                        <ShortcutTooltip shortcutId="clients" label="Clients">
+                        <ShortcutTooltip shortcutId="pipeline" label="Pipeline">
                             <Button
                                 variant="accent"
                                 size="md"
                                 nativeButton={false}
-                                render={<Link href="/broker/clients" />}
-                                aria-label="Add client"
+                                render={<Link href="/broker/pipeline" />}
+                                aria-label="Add buyer"
                             >
                                 <UserRoundPlus aria-hidden strokeWidth={1.75} />
-                                <span className="hidden md:inline">Add clients</span>
+                                <span className="hidden md:inline">Add buyers</span>
                             </Button>
                         </ShortcutTooltip>
                     </motion.div>

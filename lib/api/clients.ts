@@ -1,5 +1,6 @@
 import { MOCK_CLIENTS, MOCK_PROPERTY_CLIENTS } from "@/features/clients/mock-clients";
 import { BUYERS_PER_PROPERTY_LIMIT, type ClientItem } from "@/features/clients/types";
+import type { BuyerDocument } from "@/features/contacts/document-rules";
 
 /** Mutable in-memory copies so attach/detach survive within a session. */
 let clients: ClientItem[] = MOCK_CLIENTS.map((item) => ({ ...item }));
@@ -30,7 +31,54 @@ export function attachedClientsFor(propertyId: string): ClientItem[] {
         .filter((client): client is ClientItem => client != null);
 }
 
+/** Fields the broker types when adding a buyer. */
+export type NewBuyerInput = {
+    name: string;
+    phoneDigits: string;
+    lookingFor: ClientItem["lookingFor"];
+    preferredLocalities: string[];
+    budgetMaxInr: number | null;
+    bhk: number | null;
+    documents?: BuyerDocument[];
+};
+
 export const clientsApi = {
+    /** Every buyer on the broker's book. */
+    async list(): Promise<ClientItem[]> {
+        await delay();
+        return clients.map((item) => ({ ...item }));
+    },
+
+    /**
+     * Add a buyer. Rejects a duplicate phone number rather than silently
+     * creating a second record — the same person entered twice is how a
+     * pipeline stops being trustworthy.
+     */
+    async create(input: NewBuyerInput): Promise<ClientItem> {
+        await delay(320);
+
+        const exists = clients.some((item) => item.phoneDigits === input.phoneDigits);
+        if (exists) {
+            throw new Error("A buyer with this mobile number is already on your list.");
+        }
+
+        const created: ClientItem = {
+            id: `cl_${Date.now().toString(36)}`,
+            name: input.name,
+            phoneDigits: input.phoneDigits,
+            lookingFor: input.lookingFor,
+            preferredLocalities: input.preferredLocalities,
+            budgetMaxInr: input.budgetMaxInr,
+            bhk: input.bhk,
+            lastContactedAt: null,
+            attachedPropertyCount: 0,
+            documents: input.documents ?? [],
+        };
+
+        clients = [created, ...clients];
+        return { ...created };
+    },
+
     /** Buyers plus who is already on this property, for the attach picker. */
     async listForProperty(propertyId: string): Promise<PropertyClientsResult> {
         await delay();

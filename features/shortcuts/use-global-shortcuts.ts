@@ -28,10 +28,11 @@ function guarded(handler: (event: KeyboardEvent) => void) {
 export type GlobalShortcutRoutes = {
     dashboard: string;
     ownerListings: string;
-    /** Broker-only — the owner portal has no request tracker. */
-    myRequests?: string;
+    /** Broker-only — the owner portal has no deal tracker. */
+    deals?: string;
     yourListings: string;
-    clients: string;
+    pipeline: string;
+    contacts: string;
     visits: string;
     referrals: string;
     notifications: string;
@@ -59,10 +60,11 @@ export function useGlobalShortcuts({ routes, onShortcutsOpen, onLogoutFocus }: U
             "g d": guarded(() => router.push(routes.dashboard)),
             "g o": guarded(() => router.push(routes.ownerListings)),
             "g q": guarded(() => {
-                if (routes.myRequests) router.push(routes.myRequests);
+                if (routes.deals) router.push(routes.deals);
             }),
             "g p": guarded(() => router.push(routes.yourListings)),
-            "g c": guarded(() => router.push(routes.clients)),
+            "g c": guarded(() => router.push(routes.pipeline)),
+            "g b": guarded(() => router.push(routes.contacts)),
             "g v": guarded(() => router.push(routes.visits)),
             "g r": guarded(() => router.push(routes.referrals)),
             "g n": guarded(() => router.push(routes.notifications)),

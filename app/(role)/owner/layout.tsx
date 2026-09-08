@@ -8,6 +8,7 @@ import { AuthGuard } from "@/components/auth/auth-guard";
 import { PortalHeader } from "@/components/layout/portal-header";
 
 import { OWNER_NAV_ITEMS } from "@/config/nav";
+import { ChatProvider } from "@/features/chat/chat-provider";
 import { NotificationProvider } from "@/providers/notification-provider";
 import { useAppSelector } from "@/store/hooks";
 
@@ -21,18 +22,20 @@ function OwnerPortalShell({ children }: { children: ReactNode }) {
 
     return (
         <NotificationProvider>
-            <PortalHeader
-                navItems={OWNER_NAV_ITEMS}
-                userName={userName}
-                userEmail={user?.email ?? undefined}
-                userAvatarUrl={avatarUrl}
-                notificationsHref="/owner/notifications"
-                profileHref="/owner"
-                roleLabel={user?.role ?? "Owner"}
-                orgName={user?.orgName ?? null}
-            >
-                {children}
-            </PortalHeader>
+            <ChatProvider>
+                <PortalHeader
+                    navItems={OWNER_NAV_ITEMS}
+                    userName={userName}
+                    userEmail={user?.email ?? undefined}
+                    userAvatarUrl={avatarUrl}
+                    notificationsHref="/owner/notifications"
+                    profileHref="/owner"
+                    roleLabel={user?.role ?? "Owner"}
+                    orgName={user?.orgName ?? null}
+                >
+                    {children}
+                </PortalHeader>
+            </ChatProvider>
         </NotificationProvider>
     );
 }

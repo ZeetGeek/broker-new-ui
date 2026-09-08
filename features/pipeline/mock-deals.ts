@@ -1,0 +1,277 @@
+import type { DealItem } from "@/features/pipeline/types";
+
+const HOUR_MS = 3_600_000;
+const DAY_MS = 24 * HOUR_MS;
+
+function daysAgo(days: number, hours = 0): string {
+    return new Date(Date.now() - days * DAY_MS - hours * HOUR_MS).toISOString();
+}
+
+function daysAhead(days: number, hours = 0): string {
+    return new Date(Date.now() + days * DAY_MS + hours * HOUR_MS).toISOString();
+}
+
+/**
+ * Properties the broker represents. Ids, owners and photos match the fixtures
+ * in `mock-requests.ts` on purpose — a deal only exists because a request was
+ * approved, so the two sets have to agree about who owns what.
+ */
+const PROPERTIES = {
+    vesu3bhk: {
+        id: "pr_108",
+        title: "3 BHK Apartment in Vesu",
+        configLabel: "3 BHK",
+        propertyTypeLabel: "Apartment",
+        locality: "Vesu",
+        city: "Surat",
+        areaSqft: 1_680,
+        bhk: 3,
+        amountInr: 1_15_00_000,
+        isRent: false,
+        imageSrc: "/properties/1.jpg",
+    },
+    palFlat: {
+        id: "pr_099",
+        title: "1 BHK Apartment in Pal",
+        configLabel: "1 BHK",
+        propertyTypeLabel: "Apartment",
+        locality: "Pal",
+        city: "Surat",
+        areaSqft: 620,
+        bhk: 1,
+        amountInr: 42_00_000,
+        isRent: false,
+        imageSrc: "/properties/2.jpg",
+    },
+    piplodRent: {
+        id: "pr_088",
+        title: "2 BHK Apartment in Piplod",
+        configLabel: "2 BHK",
+        propertyTypeLabel: "Apartment",
+        locality: "Piplod",
+        city: "Surat",
+        areaSqft: 1_100,
+        bhk: 2,
+        amountInr: 28_000,
+        isRent: true,
+        imageSrc: "/properties/3.jpg",
+    },
+    adajanRent: {
+        id: "pr_121",
+        title: "2 BHK Apartment in Adajan",
+        configLabel: "2 BHK",
+        propertyTypeLabel: "Apartment",
+        locality: "Adajan",
+        city: "Surat",
+        areaSqft: 980,
+        bhk: 2,
+        amountInr: 22_000,
+        isRent: true,
+        imageSrc: "/properties/4.jpg",
+    },
+    vesuVilla: {
+        id: "pr_130",
+        title: "4 BHK Villa in Vesu",
+        configLabel: "4 BHK",
+        propertyTypeLabel: "Villa",
+        locality: "Vesu",
+        city: "Surat",
+        areaSqft: 3_200,
+        bhk: 4,
+        amountInr: 1_85_00_000,
+        isRent: false,
+        imageSrc: "/properties/5.jpg",
+    },
+} as const;
+
+/** Owners, matching the request fixtures. */
+const OWNERS = {
+    rakesh: { name: "Rakesh Mehta", phoneDigits: "9825044556", isRepresentationActive: true },
+    sunita: { name: "Sunita Desai", phoneDigits: "9898033221", isRepresentationActive: true },
+    imran: { name: "Imran Shaikh", phoneDigits: "9727011990", isRepresentationActive: true },
+    bhavesh: { name: "Bhavesh Patel", phoneDigits: "9016022114", isRepresentationActive: true },
+    /** Representation lapsed — name stays, the phone number goes. */
+    nilesh: { name: "Nilesh Trivedi", isRepresentationActive: false },
+} as const;
+
+/** Buyers, matching `features/clients/mock-clients.ts`. */
+const BUYERS = {
+    ankit: { id: "cl_001", name: "Ankit Shah", phoneDigits: "9825011223", budgetMaxInr: 1_30_00_000 },
+    priya: { id: "cl_002", name: "Priya Nair", phoneDigits: "9898044556", budgetMaxInr: 1_20_00_000 },
+    mohit: { id: "cl_003", name: "Mohit Agarwal", phoneDigits: "9727066778", budgetMaxInr: 60_00_000 },
+    sneha: { id: "cl_004", name: "Sneha Bhatt", phoneDigits: "9016077889", budgetMaxInr: 35_000 },
+    rajesh: { id: "cl_005", name: "Rajesh Kumar", phoneDigits: "9825099001", budgetMaxInr: 2_00_00_000 },
+    farida: { id: "cl_006", name: "Farida Contractor", phoneDigits: "9898122334", budgetMaxInr: 95_00_000 },
+    deepak: { id: "cl_007", name: "Deepak Solanki", phoneDigits: "9727144556", budgetMaxInr: 25_000 },
+} as const;
+
+/**
+ * Fixture set for the pipeline board. Covers every stage, both outcomes, and
+ * the states the UI has to render honestly: a stalled deal, a visit today, a
+ * buyer over budget, one buyer on two properties, and a property whose
+ * representation lapsed so the owner's number is gone.
+ */
+export const MOCK_DEALS: DealItem[] = [
+    // Ankit appears twice — keen on the villa, cold on the Vesu flat. This is
+    // the case a buyer-per-card board could not represent.
+    {
+        id: "dl_001",
+        status: "negotiation",
+        buyer: BUYERS.ankit,
+        property: PROPERTIES.vesuVilla,
+        owner: OWNERS.nilesh,
+        stageEnteredAt: daysAgo(3),
+        lastContactedAt: daysAgo(1),
+        nextVisitAt: null,
+        note: "Offered ₹1.72 Cr. Owner wants 1.8. Meeting Thursday to settle.",
+        resolvedAt: null,
+        closedAmountInr: null,
+    },
+    {
+        id: "dl_002",
+        status: "new",
+        buyer: BUYERS.ankit,
+        property: PROPERTIES.vesu3bhk,
+        owner: OWNERS.rakesh,
+        stageEnteredAt: daysAgo(2),
+        lastContactedAt: null,
+        nextVisitAt: null,
+        note: "",
+        resolvedAt: null,
+        closedAmountInr: null,
+    },
+    {
+        id: "dl_003",
+        status: "visit",
+        buyer: BUYERS.priya,
+        property: PROPERTIES.vesu3bhk,
+        owner: OWNERS.rakesh,
+        stageEnteredAt: daysAgo(4),
+        lastContactedAt: daysAgo(0, 6),
+        nextVisitAt: daysAhead(0, 5),
+        note: "Second visit. Bringing her husband this time.",
+        resolvedAt: null,
+        closedAmountInr: null,
+    },
+    {
+        id: "dl_004",
+        status: "contacted",
+        buyer: BUYERS.mohit,
+        property: PROPERTIES.palFlat,
+        owner: OWNERS.sunita,
+        stageEnteredAt: daysAgo(6),
+        lastContactedAt: daysAgo(6),
+        nextVisitAt: null,
+        note: "Wants to see it on a weekend.",
+        resolvedAt: null,
+        closedAmountInr: null,
+    },
+    // Stalled: no contact in 19 days, well past the 14-day mark.
+    {
+        id: "dl_005",
+        status: "contacted",
+        buyer: BUYERS.farida,
+        property: PROPERTIES.vesuVilla,
+        owner: OWNERS.nilesh,
+        stageEnteredAt: daysAgo(21),
+        lastContactedAt: daysAgo(19),
+        nextVisitAt: null,
+        note: "Said she would call back after Diwali.",
+        resolvedAt: null,
+        closedAmountInr: null,
+    },
+    {
+        id: "dl_006",
+        status: "visit",
+        buyer: BUYERS.sneha,
+        property: PROPERTIES.piplodRent,
+        owner: OWNERS.imran,
+        stageEnteredAt: daysAgo(2),
+        lastContactedAt: daysAgo(2),
+        nextVisitAt: daysAhead(2, 3),
+        note: "",
+        resolvedAt: null,
+        closedAmountInr: null,
+    },
+    {
+        id: "dl_007",
+        status: "new",
+        buyer: BUYERS.deepak,
+        property: PROPERTIES.adajanRent,
+        owner: OWNERS.bhavesh,
+        stageEnteredAt: daysAgo(1),
+        lastContactedAt: null,
+        nextVisitAt: null,
+        note: "",
+        resolvedAt: null,
+        closedAmountInr: null,
+    },
+    // Over budget on purpose — the card flags it rather than hiding it.
+    {
+        id: "dl_008",
+        status: "new",
+        buyer: BUYERS.mohit,
+        property: PROPERTIES.vesu3bhk,
+        owner: OWNERS.rakesh,
+        stageEnteredAt: daysAgo(5),
+        lastContactedAt: null,
+        nextVisitAt: null,
+        note: "",
+        resolvedAt: null,
+        closedAmountInr: null,
+    },
+    {
+        id: "dl_009",
+        status: "negotiation",
+        buyer: BUYERS.rajesh,
+        property: PROPERTIES.vesuVilla,
+        owner: OWNERS.nilesh,
+        stageEnteredAt: daysAgo(8),
+        lastContactedAt: daysAgo(2),
+        nextVisitAt: null,
+        note: "Cash buyer. Wants possession by March.",
+        resolvedAt: null,
+        closedAmountInr: null,
+    },
+    {
+        id: "dl_010",
+        status: "closed",
+        buyer: BUYERS.priya,
+        property: PROPERTIES.palFlat,
+        owner: OWNERS.sunita,
+        stageEnteredAt: daysAgo(30),
+        lastContactedAt: daysAgo(12),
+        nextVisitAt: null,
+        note: "Registry done. Commission received.",
+        resolvedAt: daysAgo(12),
+        closedAmountInr: 40_50_000,
+    },
+    {
+        id: "dl_011",
+        status: "lost",
+        buyer: BUYERS.sneha,
+        property: PROPERTIES.adajanRent,
+        owner: OWNERS.bhavesh,
+        stageEnteredAt: daysAgo(40),
+        lastContactedAt: daysAgo(25),
+        nextVisitAt: null,
+        note: "",
+        lostReason: "bought_elsewhere",
+        resolvedAt: daysAgo(25),
+        closedAmountInr: null,
+    },
+    {
+        id: "dl_012",
+        status: "lost",
+        buyer: BUYERS.deepak,
+        property: PROPERTIES.piplodRent,
+        owner: OWNERS.imran,
+        stageEnteredAt: daysAgo(35),
+        lastContactedAt: daysAgo(28),
+        nextVisitAt: null,
+        note: "",
+        lostReason: "price",
+        resolvedAt: daysAgo(28),
+        closedAmountInr: null,
+    },
+];

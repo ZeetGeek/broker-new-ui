@@ -1,7 +1,13 @@
 const LAKH = 100_000;
 const CRORE = 10_000_000;
 
+/**
+ * Drops a trailing `.0` / `.50` from a decimal, leaving whole numbers alone.
+ * Anchoring on the decimal point matters: a bare `/0+$/` turned "60" into "6",
+ * rendering ₹60 L as ₹6 L.
+ */
 function trimTrailingZeros(value: string): string {
+    if (!value.includes(".")) return value;
     return value.replace(/\.?0+$/, "");
 }
 

@@ -40,7 +40,7 @@ export type PipelineCardProps = {
 };
 
 function stageHref(key: PipelineStageKey) {
-    return `/broker/clients?stage=${key}`;
+    return `/broker/pipeline?stage=${key}`;
 }
 
 function visibleStages(stages: PipelineStage[]): PipelineStage[] {
@@ -204,10 +204,10 @@ function EmptyPipeline({ className }: { className?: string }) {
 
             <EmptyState
                 icon={Users}
-                heading="No clients yet"
+                heading="No buyers yet"
                 description="Add a buyer or tenant to start tracking deals."
             >
-                <TextLinkButton href="/broker/clients/new">Add client</TextLinkButton>
+                <TextLinkButton href="/broker/pipeline/new">Add buyer</TextLinkButton>
             </EmptyState>
         </section>
     );
@@ -229,11 +229,11 @@ export function PipelineCard({ data, className }: PipelineCardProps) {
                 <CardLabel info={PIPELINE_INFO}>
                     <span id="pipeline-card-heading">Pipeline</span>
                 </CardLabel>
-                <p className="eyebrow shrink-0 text-ink-muted">{data.activeTotal} active clients</p>
+                <p className="eyebrow shrink-0 text-ink-muted">{data.activeTotal} active buyers</p>
             </div>
 
             <div className="mbs-4 flex flex-1 flex-col min-block-0">
-                <ShortcutTooltip shortcutId="clients" label="Clients">
+                <ShortcutTooltip shortcutId="pipeline" label="Pipeline">
                     <div className="flex flex-1 flex-col justify-center gap-3.5 pbe-3.5 min-block-0">
                         <PipelineSegmentedBar stages={data.stages} />
                         <PipelineLegend stages={data.stages} />

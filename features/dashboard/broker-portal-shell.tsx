@@ -1,10 +1,10 @@
 "use client";
 
-import { type ReactNode,useCallback, useState } from "react";
+import { type ReactNode, useCallback, useState } from "react";
 
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
 import {
-    BROKER_MY_REQUESTS_HREF,
+    BROKER_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
@@ -19,6 +19,7 @@ import {
 import { BROKER_NAV_ITEMS } from "@/config/nav";
 import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
 import { BrokerProfileMenu } from "@/features/broker/profile-menu";
+import { ChatProvider } from "@/features/chat/chat-provider";
 import { ShortcutsCheatsheet } from "@/features/shortcuts/shortcuts-cheatsheet";
 import { useGlobalShortcuts } from "@/features/shortcuts/use-global-shortcuts";
 import { NotificationProvider } from "@/providers/notification-provider";
@@ -29,9 +30,10 @@ const BROKER_NOTIFICATIONS_HREF = "/broker/notifications";
 const BROKER_SHORTCUT_ROUTES = {
     dashboard: "/broker/dashboard",
     ownerListings: BROKER_OWNER_LISTINGS_HREF,
-    myRequests: BROKER_MY_REQUESTS_HREF,
+    deals: BROKER_DEALS_HREF,
     yourListings: BROKER_YOUR_LISTINGS_HREF,
-    clients: "/broker/clients",
+    pipeline: "/broker/pipeline",
+    contacts: "/broker/contacts",
     visits: "/broker/visits",
     referrals: "/broker/referrals",
     notifications: BROKER_NOTIFICATIONS_HREF,
@@ -81,24 +83,26 @@ function BrokerPortalShellInner({ children }: { children: ReactNode }) {
 
     return (
         <NotificationProvider>
-            <PortalHeader
-                navItems={BROKER_NAV_ITEMS}
-                notificationsHref={BROKER_NOTIFICATIONS_HREF}
-                sectionNav={sectionNav}
-                mobileNav={<PortalMobileNav items={BROKER_NAV_ITEMS} />}
-                profileMenu={
-                    <BrokerProfileMenu
-                        broker={broker}
-                        tooltipLabel="Account"
-                        onShortcutsOpen={handleShortcutsOpen}
-                        open={isProfileMenuOpen}
-                        onOpenChange={setIsProfileMenuOpen}
-                    />
-                }
-            >
-                {children}
-            </PortalHeader>
-            <ShortcutsCheatsheet open={isShortcutsOpen} onOpenChange={setIsShortcutsOpen} />
+            <ChatProvider>
+                <PortalHeader
+                    navItems={BROKER_NAV_ITEMS}
+                    notificationsHref={BROKER_NOTIFICATIONS_HREF}
+                    sectionNav={sectionNav}
+                    mobileNav={<PortalMobileNav items={BROKER_NAV_ITEMS} />}
+                    profileMenu={
+                        <BrokerProfileMenu
+                            broker={broker}
+                            tooltipLabel="Account"
+                            onShortcutsOpen={handleShortcutsOpen}
+                            open={isProfileMenuOpen}
+                            onOpenChange={setIsProfileMenuOpen}
+                        />
+                    }
+                >
+                    {children}
+                </PortalHeader>
+                <ShortcutsCheatsheet open={isShortcutsOpen} onOpenChange={setIsShortcutsOpen} />
+            </ChatProvider>
         </NotificationProvider>
     );
 }

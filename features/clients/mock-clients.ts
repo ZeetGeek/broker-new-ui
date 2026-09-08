@@ -18,6 +18,7 @@ export const MOCK_CLIENTS: ClientItem[] = [
         bhk: 3,
         lastContactedAt: daysAgo(2),
         attachedPropertyCount: 2,
+        documents: [],
     },
     {
         id: "cl_002",
@@ -29,6 +30,7 @@ export const MOCK_CLIENTS: ClientItem[] = [
         bhk: 3,
         lastContactedAt: daysAgo(5),
         attachedPropertyCount: 1,
+        documents: [],
     },
     {
         id: "cl_003",
@@ -40,6 +42,7 @@ export const MOCK_CLIENTS: ClientItem[] = [
         bhk: 2,
         lastContactedAt: daysAgo(1),
         attachedPropertyCount: 0,
+        documents: [],
     },
     {
         id: "cl_004",
@@ -51,6 +54,7 @@ export const MOCK_CLIENTS: ClientItem[] = [
         bhk: 2,
         lastContactedAt: daysAgo(9),
         attachedPropertyCount: 3,
+        documents: [],
     },
     {
         id: "cl_005",
@@ -62,6 +66,7 @@ export const MOCK_CLIENTS: ClientItem[] = [
         bhk: 4,
         lastContactedAt: daysAgo(14),
         attachedPropertyCount: 1,
+        documents: [],
     },
     {
         id: "cl_006",
@@ -73,6 +78,7 @@ export const MOCK_CLIENTS: ClientItem[] = [
         bhk: 3,
         lastContactedAt: null,
         attachedPropertyCount: 0,
+        documents: [],
     },
     {
         id: "cl_007",
@@ -84,6 +90,7 @@ export const MOCK_CLIENTS: ClientItem[] = [
         bhk: 2,
         lastContactedAt: daysAgo(4),
         attachedPropertyCount: 2,
+        documents: [],
     },
     {
         id: "cl_008",
@@ -95,6 +102,7 @@ export const MOCK_CLIENTS: ClientItem[] = [
         bhk: null,
         lastContactedAt: daysAgo(21),
         attachedPropertyCount: 0,
+        documents: [],
     },
 ];
 

@@ -1,6 +1,8 @@
 import {
-    BROKER_MY_REQUESTS_HREF,
+    BROKER_CONTACTS_HREF,
+    BROKER_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
+    BROKER_PIPELINE_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
 import type { ShortcutId } from "@/lib/shortcuts";
@@ -33,9 +35,10 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
         activePrefixes: ["/broker/browse-properties"],
     },
     {
-        label: "Requests",
-        mobileLabel: "Requests",
-        href: BROKER_MY_REQUESTS_HREF,
+        // Covers both directions — requests the broker sent and invites owners
+        // sent them. "Requests" only named half the page.
+        label: "Deals",
+        href: BROKER_DEALS_HREF,
         shortcutId: "my_requests",
     },
     {
@@ -45,7 +48,7 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
         shortcutId: "your_listings",
         activePrefixes: ["/broker/my-properties", "/broker/properties"],
     },
-    { label: "Clients", href: "/broker/clients", shortcutId: "clients" },
+    { label: "Pipeline", href: BROKER_PIPELINE_HREF, shortcutId: "pipeline" },
+    { label: "Contacts", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
     { label: "Visits", href: "/broker/visits", shortcutId: "visits" },
-    { label: "Referrals", href: "/broker/referrals", shortcutId: "referrals" },
 ];

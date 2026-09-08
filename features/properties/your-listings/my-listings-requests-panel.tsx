@@ -68,9 +68,9 @@ function RequestRow({ item }: { item: BrokerRequestItem }) {
             <RequestIcon type={item.type} />
             <div
                 className="
-              flex flex-1 flex-col gap-2 min-inline-0
-              sm:flex-row sm:items-center sm:justify-between
-            "
+                  flex flex-1 flex-col gap-2 min-inline-0
+                  sm:flex-row sm:items-center sm:justify-between
+                "
             >
                 <div className="flex flex-col gap-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -140,8 +140,9 @@ export function MyListingsRequestsPanel() {
             {counts ? (
                 <div
                     className="
-                  flex flex-wrap gap-4 rounded-card border border-border-warm bg-surface px-4 py-3
-                "
+                      flex flex-wrap gap-4 rounded-card border border-border-warm bg-surface px-4
+                      py-3
+                    "
                 >
                     <div>
                         <p className="body-xs text-ink-muted">Approved</p>

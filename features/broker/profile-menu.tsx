@@ -11,6 +11,7 @@ import {
     ChevronDown,
     Command,
     ExternalLink,
+    Gift,
     LifeBuoy,
     Settings,
     ShieldCheck,
@@ -62,6 +63,7 @@ export type BrokerProfileMenuProps = {
 
 const PROFILE_HREF = "/broker/profile";
 const PROFILE_EDIT_HREF = "/broker/profile/edit";
+const REFERRALS_HREF = "/broker/referrals";
 const SETTINGS_HREF = "/broker/settings";
 const VERIFICATION_HREF = "/broker/verification";
 
@@ -363,6 +365,19 @@ function DesktopProfileDropdown({
                     <DropdownMenuSeparator className="mx-0! my-2.5 bg-border-warm inline-full!" />
 
                     <DropdownMenuGroup>
+                        <DropdownMenuItem
+                            className={itemClass}
+                            render={<Link href={REFERRALS_HREF} />}
+                        >
+                            <Gift
+                                aria-hidden
+                                className="shrink-0 block-4 inline-4"
+                                strokeWidth={1.75}
+                            />
+                            <span className="flex-1 min-inline-0">Referrals</span>
+                            <ShortcutHint shortcutId="referrals" />
+                        </DropdownMenuItem>
+
                         <DropdownMenuItem
                             className={itemClass}
                             render={<Link href={SETTINGS_HREF} />}

@@ -189,7 +189,7 @@ function EmptyFollowUps() {
             heading="No follow-ups yet"
             description="Set a reminder to call a client back, and it'll show here."
         >
-            <ShortcutKbdMessage shortcutId="clients">to add a follow-up</ShortcutKbdMessage>
+            <ShortcutKbdMessage shortcutId="pipeline">to add a follow-up</ShortcutKbdMessage>
         </EmptyState>
     );
 }

@@ -2,14 +2,11 @@
 
 import { type ReactNode,useMemo, useState } from "react";
 
-import { Plus } from "lucide-react";
-
 import type { MyListingsSummary } from "@/lib/api/my-listings";
-import { cn } from "@/lib/utils";
 
 import { TextLoop } from "@/components/motion-primitives/text-loop";
+import { AddFab } from "@/components/shared/add-fab";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SUMMARY_LOOP_INTERVAL_S = 6.5;
 const META_TEXT = "body-sm font-medium text-ink-muted";
@@ -97,6 +94,7 @@ function InventoryStatusMeta({ summary }: { summary: MyListingsSummary | null })
     );
 }
 
+/** Thin wrapper kept so existing call sites and copy stay put. */
 export function MyListingsAddFab({
     className,
     onClick,
@@ -105,58 +103,12 @@ export function MyListingsAddFab({
     onClick: () => void;
 }) {
     return (
-        <div
-            className={cn(
-                `
-                  fixed inset-e-8 inset-be-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 block-14
-                  inline-14
-                  md:inset-e-10 md:inset-be-10
-                `,
-                className,
-            )}
-        >
-            <span
-                aria-hidden
-                className="
-                  pointer-events-none absolute inset-0 z-0 animate-fab-pulse rounded-full bg-brand
-                  motion-reduce:hidden
-                "
-            />
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger
-                        delay={200}
-                        render={
-                            <button
-                                type="button"
-                                onClick={onClick}
-                                aria-label="Add property"
-                                title="Add property"
-                                className="
-                                  relative z-10 flex items-center justify-center rounded-full
-                                  bg-brand text-surface shadow-lg
-                                  transition-[background-color,transform] duration-160 block-14
-                                  inline-14
-                                  hover:bg-brand/85
-                                  focus-visible:ring-3 focus-visible:ring-ring/30
-                                  focus-visible:outline-none
-                                  active:scale-[0.97]
-                                "
-                            >
-                                <Plus
-                                    aria-hidden
-                                    className="block-6 inline-6"
-                                    strokeWidth={2}
-                                />
-                            </button>
-                        }
-                    />
-                    <TooltipContent side="left" sideOffset={12} className="body-sm font-medium">
-                        Add a new property to your inventory
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-        </div>
+        <AddFab
+            onClick={onClick}
+            label="Add property"
+            hint="Add a new property to your inventory"
+            className={className}
+        />
     );
 }
 

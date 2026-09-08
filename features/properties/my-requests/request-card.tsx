@@ -33,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { ChatButton } from "@/features/chat/chat-button";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import { attemptActions, attemptLabel } from "@/features/properties/my-requests/attempt-rules";
 import { needsFollowUp } from "@/features/properties/my-requests/filter-requests";
@@ -66,21 +67,20 @@ function statusLine(item: RequestItem): { text: string; tone: "urgent" | "muted"
 
     if (item.stage === "approved") {
         if (needsFollowUp(item)) {
-            return {
-                text: "Your request was accepted. Add a buyer to get started.",
-                tone: "urgent",
-            };
+            // The badge already says the request was accepted, so this line
+            // spends its words on the next action instead of repeating it.
+            return { text: "Add a buyer to get started.", tone: "urgent" };
         }
-        // The avatar stack below already names the buyers, so this line does
-        // not repeat the count.
-        return { text: "Request accepted. You can sell this property.", tone: "success" };
+        // Accepted with buyers attached needs no sentence at all — the badge
+        // and the avatar stack below already say everything true about it.
+        return { text: "", tone: "success" };
     }
 
     if (item.stage === "declined") {
         const { attemptsLeft } = attemptActions(item);
         const reason = item.declineReason
-            ? `Your request was rejected. Reason: ${item.declineReason.toLowerCase()}.`
-            : "Your request was rejected by the owner.";
+            ? `Reason: ${item.declineReason.toLowerCase()}.`
+            : "The owner gave no reason.";
 
         return {
             text:
@@ -363,28 +363,40 @@ function RequestOwnerBlock({ item }: { item: RequestItem }) {
 
             <div className="flex items-center gap-2">
                 {phoneDigits ? (
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button
-                                    variant="outline"
-                                    size="icon-sm"
-                                    className="shrink-0 border-border-warm text-brand"
-                                    render={
-                                        <a
-                                            href={formatWhatsAppUrl(phoneDigits)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            aria-label={`Message ${item.ownerName} on WhatsApp`}
-                                        />
-                                    }
-                                >
-                                    <MessageCircle aria-hidden strokeWidth={1.75} />
-                                </Button>
-                            }
+                    <>
+                        <ChatButton
+                            peer={{
+                                id: item.id,
+                                name: item.ownerName,
+                                avatarUrl: item.ownerAvatarUrl,
+                                roleLabel: "Owner",
+                                isOnline: true,
+                            }}
                         />
-                        <TooltipContent>Message {item.ownerName} on WhatsApp.</TooltipContent>
-                    </Tooltip>
+
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        variant="outline"
+                                        size="icon-sm"
+                                        className="shrink-0 border-border-warm text-brand"
+                                        render={
+                                            <a
+                                                href={formatWhatsAppUrl(phoneDigits)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                aria-label={`Message ${item.ownerName} on WhatsApp`}
+                                            />
+                                        }
+                                    >
+                                        <MessageCircle aria-hidden strokeWidth={1.75} />
+                                    </Button>
+                                }
+                            />
+                            <TooltipContent>Message {item.ownerName} on WhatsApp.</TooltipContent>
+                        </Tooltip>
+                    </>
                 ) : null}
 
                 <Tooltip>
@@ -421,9 +433,12 @@ export function RequestCard({
     const meta = REQUEST_STAGE_META[item.stage];
     const StageIcon = meta.icon;
     const status = statusLine(item);
-    // Attempt count only matters while the broker still has moves to make.
+    // Attempt count only matters while the broker still has moves to make —
+    // and only once it is not the first try. "Attempt 1 of 3" on every fresh
+    // request was noise on a card that already carries a stage badge.
     const showAttempts =
-        item.stage === "pending" || item.stage === "cancelled" || item.stage === "declined";
+        item.attemptNumber > 1 &&
+        (item.stage === "pending" || item.stage === "cancelled" || item.stage === "declined");
     const isList = view === "list";
 
     return (
@@ -432,7 +447,7 @@ export function RequestCard({
                 className={cn(
                     `
                       group flex flex-col gap-4 rounded-card border border-border-warm bg-surface
-                      p-4 transition-[box-shadow,border-color] duration-160
+                      p-5 transition-[box-shadow,border-color] duration-160
                       hover:border-ink/15 hover:shadow-md
                     `,
                     isBusy && "pointer-events-none opacity-60",
@@ -484,9 +499,7 @@ export function RequestCard({
                                 </p>
                             </div>
 
-                            <div className="
-                              flex shrink-0 flex-wrap items-center justify-end gap-1.5
-                            ">
+                            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
@@ -555,23 +568,25 @@ export function RequestCard({
                             ) : null}
                         </div>
 
-                        <p
-                            className={cn(
-                                "body-sm flex items-center gap-1.5",
-                                status.tone === "urgent" && "font-medium text-urgent",
-                                status.tone === "success" && "text-success",
-                                status.tone === "muted" && "text-ink-muted",
-                            )}
-                        >
-                            {status.tone === "urgent" ? (
-                                <TriangleAlert
-                                    aria-hidden
-                                    className="shrink-0 block-4 inline-4"
-                                    strokeWidth={1.75}
-                                />
-                            ) : null}
-                            {status.text}
-                        </p>
+                        {status.text ? (
+                            <p
+                                className={cn(
+                                    "body-sm flex items-center gap-1.5",
+                                    status.tone === "urgent" && "font-medium text-urgent",
+                                    status.tone === "success" && "text-success",
+                                    status.tone === "muted" && "text-ink-muted",
+                                )}
+                            >
+                                {status.tone === "urgent" ? (
+                                    <TriangleAlert
+                                        aria-hidden
+                                        className="shrink-0 block-4 inline-4"
+                                        strokeWidth={1.75}
+                                    />
+                                ) : null}
+                                {status.text}
+                            </p>
+                        ) : null}
 
                         {item.attachedClients.length > 0 ? (
                             <div className="flex flex-wrap items-center gap-2">
@@ -590,6 +605,18 @@ export function RequestCard({
                                         ? "1 buyer added"
                                         : `${item.attachedClients.length} buyers added`}
                                 </button>
+
+                                {item.attachedClients.length === 1 ? (
+                                    <ChatButton
+                                        size="icon-xs"
+                                        peer={{
+                                            id: `client-${item.attachedClients[0].id}`,
+                                            name: item.attachedClients[0].name,
+                                            avatarUrl: item.attachedClients[0].avatarUrl,
+                                            roleLabel: "Buyer",
+                                        }}
+                                    />
+                                ) : null}
                             </div>
                         ) : null}
 

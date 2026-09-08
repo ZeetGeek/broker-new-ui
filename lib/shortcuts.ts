@@ -3,7 +3,8 @@ export type ShortcutId =
     | "owner_listings"
     | "my_requests"
     | "your_listings"
-    | "clients"
+    | "pipeline"
+    | "contacts"
     | "visits"
     | "referrals"
     | "notifications"
@@ -61,7 +62,7 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
         id: "my_requests",
         keys: "g q",
         displayKeys: ["G", "Q"],
-        label: "Requests",
+        label: "Deals",
         group: "Go to",
         scope: "global",
     },
@@ -74,10 +75,18 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
         scope: "global",
     },
     {
-        id: "clients",
+        id: "pipeline",
         keys: "g c",
         displayKeys: ["G", "C"],
-        label: "Clients",
+        label: "Pipeline",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "contacts",
+        keys: "g b",
+        displayKeys: ["G", "B"],
+        label: "Contacts",
         group: "Go to",
         scope: "global",
     },
