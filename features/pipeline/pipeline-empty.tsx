@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { CircleSlash, Search, Users } from "lucide-react";
 
-import { BROKER_DEALS_HREF } from "@/lib/routes/broker";
+import { BROKER_REQUESTS_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,8 @@ export function PipelineFirstRunEmpty() {
             description="A deal starts when you add a buyer to a property you represent. Open one an owner accepted and add the buyer there."
             className="py-16"
         >
-            <Button size="lg" nativeButton={false} render={<Link href={BROKER_DEALS_HREF} />}>
-                Go to your deals
+            <Button size="lg" nativeButton={false} render={<Link href={BROKER_REQUESTS_HREF} />}>
+                Go to your requests
             </Button>
         </EmptyState>
     );
