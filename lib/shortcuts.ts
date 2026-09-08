@@ -62,7 +62,7 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
         id: "my_requests",
         keys: "g q",
         displayKeys: ["G", "Q"],
-        label: "Deals",
+        label: "Requests",
         group: "Go to",
         scope: "global",
     },
@@ -162,11 +162,15 @@ if (process.env.NODE_ENV !== "production") {
     }
 
     const firstKeys = new Set(
-        SHORTCUTS.filter((s) => s.keys.includes(" ")).map((s) => s.keys.split(" ")[0].toLowerCase()),
+        SHORTCUTS.filter((s) => s.keys.includes(" ")).map((s) =>
+            s.keys.split(" ")[0].toLowerCase(),
+        ),
     );
     for (const s of SHORTCUTS) {
         if (!s.keys.includes(" ") && firstKeys.has(s.keys.toLowerCase())) {
-            throw new Error(`Shortcut "${s.keys}" (${s.id}) is shadowed by a sequence starting with it`);
+            throw new Error(
+                `Shortcut "${s.keys}" (${s.id}) is shadowed by a sequence starting with it`,
+            );
         }
     }
 }
