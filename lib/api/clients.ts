@@ -1,121 +1,300 @@
-import { MOCK_CLIENTS, MOCK_PROPERTY_CLIENTS } from "@/features/clients/mock-clients";
-import { BUYERS_PER_PROPERTY_LIMIT, type ClientItem } from "@/features/clients/types";
+import { apiFetch } from "@/lib/api/client";
+
+import type { ClientItem, ClientLookingFor } from "@/features/clients/types";
 import type { BuyerDocument } from "@/features/contacts/document-rules";
-
-/** Mutable in-memory copies so attach/detach survive within a session. */
-let clients: ClientItem[] = MOCK_CLIENTS.map((item) => ({ ...item }));
-let propertyClients: Record<string, string[]> = Object.fromEntries(
-    Object.entries(MOCK_PROPERTY_CLIENTS).map(([key, ids]) => [key, [...ids]]),
-);
-
-function delay(ms = 220): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export type PropertyClientsResult = {
     /** Every buyer on the broker's book. */
     clients: ClientItem[];
     /** Ids already attached to this property. */
     attachedIds: string[];
-    limit: number;
 };
 
-/**
- * The buyers on one property, in the order the broker added them. The
- * requests API reads this so the card and the modal can never disagree.
- */
-export function attachedClientsFor(propertyId: string): ClientItem[] {
-    const ids = propertyClients[propertyId] ?? [];
-    return ids
-        .map((id) => clients.find((client) => client.id === id))
-        .filter((client): client is ClientItem => client != null);
-}
+export type AttachedClientRef = {
+    id: string;
+    name: string;
+};
 
 /** Fields the broker types when adding a buyer. */
 export type NewBuyerInput = {
     name: string;
     phoneDigits: string;
-    lookingFor: ClientItem["lookingFor"];
+    lookingFor: ClientLookingFor;
     preferredLocalities: string[];
     budgetMaxInr: number | null;
     bhk: number | null;
     documents?: BuyerDocument[];
 };
 
+type ApiClientContact = {
+    id: string;
+    name: string;
+    phone: string;
+    email?: string | null;
+    clientType?: string | null;
+    budgetMin?: string | null;
+    budgetMax?: string | null;
+    notes?: string | null;
+    updatedAt?: string | null;
+    leads?: Array<{ id: string; propertyId: string }>;
+};
+
+type ClientsListResponse = {
+    items: ApiClientContact[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+};
+
+type ApiPropertyLead = {
+    id: string;
+    propertyId: string;
+    clientId?: string | null;
+    client?: { id: string; name: string; phone?: string } | null;
+};
+
+type LeadsListResponse = {
+    items: ApiPropertyLead[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+};
+
+type AttachClientsResponse = {
+    items: ApiPropertyLead[];
+    attached: number;
+    alreadyLinkedClientIds: string[];
+    propertyId: string;
+};
+
+function digitsOnly(value: string): string {
+    return value.replace(/\D/g, "");
+}
+
+function lookingForFromType(clientType: string | null | undefined): ClientLookingFor {
+    if (clientType === "renter") return "rent";
+    return "buy";
+}
+
+function clientTypeFromLookingFor(lookingFor: ClientLookingFor): "buyer" | "renter" {
+    return lookingFor === "rent" ? "renter" : "buyer";
+}
+
+function parseLocalitiesFromNotes(notes: string | null | undefined): string[] {
+    if (!notes) return [];
+    const match = notes.match(/Areas?:\s*(.+?)(?:\.|$)/i);
+    if (!match?.[1]) return [];
+    return match[1]
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+}
+
+function parseBhkFromNotes(notes: string | null | undefined): number | null {
+    if (!notes) return null;
+    const match = notes.match(/BHK:\s*(\d+)/i);
+    if (!match?.[1]) return null;
+    const value = Number(match[1]);
+    return Number.isFinite(value) ? value : null;
+}
+
+function buildCreateNotes(input: NewBuyerInput): string | undefined {
+    const parts: string[] = [];
+    if (input.preferredLocalities.length > 0) {
+        parts.push(`Areas: ${input.preferredLocalities.join(", ")}`);
+    }
+    if (input.bhk != null) {
+        parts.push(`BHK: ${input.bhk}`);
+    }
+    return parts.length > 0 ? parts.join(". ") : undefined;
+}
+
+function mapContact(contact: ApiClientContact): ClientItem {
+    const phoneDigits = digitsOnly(contact.phone);
+    // Keep last 10 digits for Indian mobiles stored as +91XXXXXXXXXX.
+    const normalized = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
+
+    return {
+        id: contact.id,
+        name: contact.name,
+        phoneDigits: normalized,
+        lookingFor: lookingForFromType(contact.clientType),
+        preferredLocalities: parseLocalitiesFromNotes(contact.notes),
+        budgetMaxInr: contact.budgetMax != null ? Number(contact.budgetMax) : null,
+        bhk: parseBhkFromNotes(contact.notes),
+        lastContactedAt: contact.updatedAt ?? null,
+        attachedPropertyCount: contact.leads?.length ?? 0,
+        documents: [],
+    };
+}
+
+async function fetchAllContacts(): Promise<ApiClientContact[]> {
+    const items: ApiClientContact[] = [];
+    let page = 1;
+    let totalPages = 1;
+
+    while (page <= totalPages) {
+        const qs = new URLSearchParams({
+            page: String(page),
+            limit: "100",
+        });
+        const response = await apiFetch<ClientsListResponse>(`/clients?${qs}`);
+        items.push(...(response.items ?? []));
+        totalPages = Math.max(1, response.totalPages ?? 1);
+        page += 1;
+    }
+
+    return items;
+}
+
+async function fetchLeadsForProperty(propertyId: string): Promise<ApiPropertyLead[]> {
+    const items: ApiPropertyLead[] = [];
+    let page = 1;
+    let totalPages = 1;
+
+    while (page <= totalPages) {
+        const qs = new URLSearchParams({
+            propertyId,
+            page: String(page),
+            limit: "100",
+        });
+        const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`);
+        items.push(...(response.items ?? []));
+        totalPages = Math.max(1, response.totalPages ?? 1);
+        page += 1;
+    }
+
+    return items;
+}
+
+async function fetchAllLeads(): Promise<ApiPropertyLead[]> {
+    const items: ApiPropertyLead[] = [];
+    let page = 1;
+    let totalPages = 1;
+
+    while (page <= totalPages) {
+        const qs = new URLSearchParams({
+            page: String(page),
+            limit: "100",
+        });
+        const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`);
+        items.push(...(response.items ?? []));
+        totalPages = Math.max(1, response.totalPages ?? 1);
+        page += 1;
+    }
+
+    return items;
+}
+
+function leadClientRef(lead: ApiPropertyLead): AttachedClientRef | null {
+    const id = lead.client?.id ?? lead.clientId;
+    if (!id) return null;
+    return {
+        id,
+        name: lead.client?.name?.trim() || "Buyer",
+    };
+}
+
+/**
+ * Buyers already linked to a property (from live leads). Used by request/invite cards.
+ */
+export async function attachedClientsFor(propertyId: string): Promise<AttachedClientRef[]> {
+    const leads = await fetchLeadsForProperty(propertyId);
+    const seen = new Set<string>();
+    const attached: AttachedClientRef[] = [];
+
+    for (const lead of leads) {
+        const ref = leadClientRef(lead);
+        if (!ref || seen.has(ref.id)) continue;
+        seen.add(ref.id);
+        attached.push(ref);
+    }
+
+    return attached;
+}
+
+/**
+ * Group attached buyers by property in one leads scan — avoids N+1 on list pages.
+ */
+export async function attachedClientsByProperty(): Promise<Map<string, AttachedClientRef[]>> {
+    const leads = await fetchAllLeads();
+    const map = new Map<string, AttachedClientRef[]>();
+
+    for (const lead of leads) {
+        const ref = leadClientRef(lead);
+        if (!ref) continue;
+
+        const list = map.get(lead.propertyId) ?? [];
+        if (!list.some((item) => item.id === ref.id)) {
+            list.push(ref);
+            map.set(lead.propertyId, list);
+        }
+    }
+
+    return map;
+}
+
 export const clientsApi = {
     /** Every buyer on the broker's book. */
     async list(): Promise<ClientItem[]> {
-        await delay();
-        return clients.map((item) => ({ ...item }));
+        const contacts = await fetchAllContacts();
+        return contacts.map(mapContact);
     },
 
     /**
-     * Add a buyer. Rejects a duplicate phone number rather than silently
-     * creating a second record — the same person entered twice is how a
-     * pipeline stops being trustworthy.
+     * Add a buyer. Backend rejects duplicate phones for the same broker scope.
      */
     async create(input: NewBuyerInput): Promise<ClientItem> {
-        await delay(320);
-
-        const exists = clients.some((item) => item.phoneDigits === input.phoneDigits);
-        if (exists) {
-            throw new Error("A buyer with this mobile number is already on your list.");
-        }
-
-        const created: ClientItem = {
-            id: `cl_${Date.now().toString(36)}`,
-            name: input.name,
-            phoneDigits: input.phoneDigits,
-            lookingFor: input.lookingFor,
-            preferredLocalities: input.preferredLocalities,
-            budgetMaxInr: input.budgetMaxInr,
-            bhk: input.bhk,
-            lastContactedAt: null,
-            attachedPropertyCount: 0,
-            documents: input.documents ?? [],
-        };
-
-        clients = [created, ...clients];
-        return { ...created };
+        const contact = await apiFetch<ApiClientContact>("/clients", {
+            method: "POST",
+            body: JSON.stringify({
+                name: input.name,
+                phone: `+91${input.phoneDigits}`,
+                clientType: clientTypeFromLookingFor(input.lookingFor),
+                budgetMax: input.budgetMaxInr ?? undefined,
+                notes: buildCreateNotes(input),
+            }),
+        });
+        return mapContact(contact);
     },
 
     /** Buyers plus who is already on this property, for the attach picker. */
     async listForProperty(propertyId: string): Promise<PropertyClientsResult> {
-        await delay();
+        const [contacts, leads] = await Promise.all([
+            fetchAllContacts(),
+            fetchLeadsForProperty(propertyId),
+        ]);
+
+        const attachedIds = [
+            ...new Set(
+                leads
+                    .map((lead) => lead.client?.id ?? lead.clientId)
+                    .filter((id): id is string => Boolean(id)),
+            ),
+        ];
+
         return {
-            clients: clients.map((item) => ({ ...item })),
-            attachedIds: [...(propertyClients[propertyId] ?? [])],
-            limit: BUYERS_PER_PROPERTY_LIMIT,
+            clients: contacts.map(mapContact),
+            attachedIds,
         };
     },
 
     /**
-     * Replace the buyer list for one property. Enforces the cap here as well
-     * as in the UI — a disabled checkbox is a convenience, not the rule.
+     * Link the selected buyers to the property. Already-linked ids are skipped
+     * server-side. Unchecking a previously linked buyer does not detach them
+     * (no detach endpoint yet) — the next open still shows them as attached.
      */
     async setPropertyClients(propertyId: string, clientIds: string[]): Promise<void> {
-        await delay();
+        if (clientIds.length === 0) return;
 
-        const nextIds = clientIds.slice(0, BUYERS_PER_PROPERTY_LIMIT);
-        const previousIds = propertyClients[propertyId] ?? [];
-
-        propertyClients = { ...propertyClients, [propertyId]: nextIds };
-
-        // Keep each buyer's own counter in step with what they are attached to.
-        const added = nextIds.filter((id) => !previousIds.includes(id));
-        const removed = previousIds.filter((id) => !nextIds.includes(id));
-
-        clients = clients.map((item) => {
-            if (added.includes(item.id)) {
-                return { ...item, attachedPropertyCount: item.attachedPropertyCount + 1 };
-            }
-            if (removed.includes(item.id)) {
-                return {
-                    ...item,
-                    attachedPropertyCount: Math.max(0, item.attachedPropertyCount - 1),
-                };
-            }
-            return item;
+        await apiFetch<AttachClientsResponse>("/clients/leads", {
+            method: "POST",
+            body: JSON.stringify({
+                propertyId,
+                clientIds,
+            }),
         });
     },
 };
