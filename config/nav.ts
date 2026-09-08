@@ -1,4 +1,5 @@
 import {
+    BROKER_MY_REQUESTS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
@@ -30,6 +31,12 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
         href: BROKER_OWNER_LISTINGS_HREF,
         shortcutId: "owner_listings",
         activePrefixes: ["/broker/browse-properties"],
+    },
+    {
+        label: "Requests",
+        mobileLabel: "Requests",
+        href: BROKER_MY_REQUESTS_HREF,
+        shortcutId: "my_requests",
     },
     {
         label: "Your listings",

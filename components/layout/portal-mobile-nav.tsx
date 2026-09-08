@@ -5,7 +5,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import type { LucideIcon } from "lucide-react";
-import { Briefcase, Building2, Calendar, Gift, LayoutDashboard, Users } from "lucide-react";
+import {
+    Briefcase,
+    Building2,
+    Calendar,
+    Gift,
+    LayoutDashboard,
+    Send,
+    Users,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -20,6 +28,7 @@ export type PortalMobileNavProps = {
 const NAV_ICONS: Record<string, LucideIcon> = {
     "/broker/dashboard": LayoutDashboard,
     "/broker/owner-listings": Building2,
+    "/broker/my-requests": Send,
     "/broker/your-listings": Briefcase,
     "/broker/clients": Users,
     "/broker/visits": Calendar,

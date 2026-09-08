@@ -28,6 +28,8 @@ function guarded(handler: (event: KeyboardEvent) => void) {
 export type GlobalShortcutRoutes = {
     dashboard: string;
     ownerListings: string;
+    /** Broker-only — the owner portal has no request tracker. */
+    myRequests?: string;
     yourListings: string;
     clients: string;
     visits: string;
@@ -56,6 +58,9 @@ export function useGlobalShortcuts({ routes, onShortcutsOpen, onLogoutFocus }: U
         const unsubscribe = tinykeys(window, {
             "g d": guarded(() => router.push(routes.dashboard)),
             "g o": guarded(() => router.push(routes.ownerListings)),
+            "g q": guarded(() => {
+                if (routes.myRequests) router.push(routes.myRequests);
+            }),
             "g p": guarded(() => router.push(routes.yourListings)),
             "g c": guarded(() => router.push(routes.clients)),
             "g v": guarded(() => router.push(routes.visits)),
