@@ -93,11 +93,22 @@ export function VisitsAllClearEmpty({ viewer }: { viewer: VisitViewer }) {
     );
 }
 
-/** No visits on the selected day. Sits inside the calendar, so it stays small. */
-export function VisitsDayEmpty({ onPickSlot }: { onPickSlot?: () => void }) {
+/**
+ * No visits in the selected date window. Sits inside the list, under the week
+ * strip, so the strip stays on screen as the way back out.
+ */
+export function VisitsDayEmpty({
+    onPickSlot,
+    isRange = false,
+}: {
+    onPickSlot?: () => void;
+    isRange?: boolean;
+}) {
     return (
         <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
-            <p className="body-sm text-ink-muted">Nothing booked this day</p>
+            <p className="body-sm text-ink-muted">
+                {isRange ? "Nothing booked in these dates" : "Nothing booked this day"}
+            </p>
             {onPickSlot ? (
                 <Button variant="secondary" size="sm" onClick={onPickSlot}>
                     Propose a time

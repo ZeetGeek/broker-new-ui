@@ -320,6 +320,7 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
                             busyId={busyId}
                             now={now}
                             selectedDay={selectedDay}
+                            hasDateWindow={filters.dateFrom !== "" || filters.dateTo !== ""}
                             dayCounts={dayCounts}
                             // The strip covers the next seven days, so it only
                             // makes sense while the list runs forward in time.

@@ -88,8 +88,13 @@ type VisitsListProps = {
     handlers: VisitRowHandlers;
     busyId: string | null;
     now: Date;
-    /** The selected day as `YYYY-MM-DD`, or "" for every day. */
+    /** The selected day as `YYYY-MM-DD`, or "" when no single day is picked. */
     selectedDay?: string;
+    /**
+     * Whether any date window is active. Distinct from `selectedDay`, which is
+     * empty for a multi-day range — the empty state must still show for one.
+     */
+    hasDateWindow?: boolean;
     /** Selects a day, or clears it when the same day is tapped again. */
     onSelectDay?: (dayKey: string) => void;
     /**
@@ -115,6 +120,7 @@ export function VisitsList({
     busyId,
     now,
     selectedDay = "",
+    hasDateWindow = false,
     onSelectDay,
     dayCounts,
 }: VisitsListProps) {
@@ -135,12 +141,12 @@ export function VisitsList({
                 the user here is also the way back out. Replacing the whole
                 list with a page-level empty state would take the strip away
                 and leave them stranded. */}
-            {groups.length === 0 && selectedDay ? (
+            {groups.length === 0 && hasDateWindow ? (
                 <div className="rounded-card border border-border-warm">
                     {/* No action offered: /broker/visits/new takes no date
                         yet, so a "Propose a time" button would silently lose
                         the day the user picked. */}
-                    <VisitsDayEmpty />
+                    <VisitsDayEmpty isRange={!selectedDay} />
                 </div>
             ) : null}
 
