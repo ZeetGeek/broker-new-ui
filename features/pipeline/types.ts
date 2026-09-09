@@ -89,6 +89,29 @@ export type DealItem = {
     resolvedAt: string | null;
     /** What the deal actually closed at, in INR. Null unless closed. */
     closedAmountInr: number | null;
+    /** Latest offer amount in INR. Null when none submitted. */
+    offerAmountInr: number | null;
+    /** Owner response on the latest offer. Null when no offer yet. */
+    offerStatus: "pending" | "accepted" | "rejected" | null;
+};
+
+/** One stage-change entry from the API `stageHistory` array. */
+export type DealHistoryEntry = {
+    status: string;
+    at: string | null;
+    note: string | null;
+    by: string | null;
+};
+
+/** Full lead payload for the View modal (board card + history + extras). */
+export type DealDetail = DealItem & {
+    /** API stage string before UI mapping (e.g. offer_made, site_visit). */
+    apiStage: string | null;
+    listPriceInr: number | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+    buyerEmail: string | null;
+    history: DealHistoryEntry[];
 };
 
 export type DealsFilters = {
