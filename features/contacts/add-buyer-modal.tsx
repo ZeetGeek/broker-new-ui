@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import {
     buyerFormSchema,
     type BuyerFormValues,
+    type BuyerSource,
     normalizeBuyerBudget,
     normalizeBuyerPhone,
     parseBuyerLocalities,
@@ -23,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import type { ClientItem } from "@/features/clients/types";
 import {
     BHK_OPTIONS,
     KINDS_WITHOUT_BHK,
@@ -45,6 +47,22 @@ const EMPTY: BuyerFormValues = {
     source: "referral",
     note: "",
 };
+
+function valuesFromBuyer(buyer: ClientItem): BuyerFormValues {
+    return {
+        name: buyer.name,
+        phone: buyer.phoneDigits,
+        email: buyer.email ?? "",
+        lookingFor: buyer.lookingFor,
+        propertyKind: buyer.propertyKind,
+        localities: buyer.preferredLocalities.join(", "),
+        budgetMin: buyer.budgetMinInr != null ? String(buyer.budgetMinInr) : "",
+        budgetMax: buyer.budgetMaxInr != null ? String(buyer.budgetMaxInr) : "",
+        bhk: buyer.bhk != null ? String(buyer.bhk) : "",
+        source: (buyer.source ?? "referral") as BuyerSource,
+        note: buyer.notes ?? "",
+    };
+}
 
 /**
  * A titled band of related fields. Grouping is what lets a long form read as
@@ -184,11 +202,17 @@ export function AddBuyerModal({
     open,
     onOpenChange,
     onCreated,
+    buyer = null,
+    onUpdated,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onCreated: (name: string) => void;
+    /** When set, the modal edits this buyer instead of creating one. */
+    buyer?: ClientItem | null;
+    onUpdated?: (name: string) => void;
 }) {
+    const isEdit = buyer != null;
     const [submitError, setSubmitError] = useState<string | null>(null);
 
     const {
@@ -203,14 +227,13 @@ export function AddBuyerModal({
         reValidateMode: "onChange",
     });
 
-    // A reopened modal always starts clean — a half-typed buyer from last time
-    // is worse than an empty form. Done as derived state on the open->true
-    // edge rather than in an effect, which would cascade a second render.
+    // A reopened modal always starts from the right draft — empty for create,
+    // the buyer's current values for edit.
     const [wasOpen, setWasOpen] = useState(open);
     if (open !== wasOpen) {
         setWasOpen(open);
         if (open) {
-            reset(EMPTY);
+            reset(buyer ? valuesFromBuyer(buyer) : EMPTY);
             setSubmitError(null);
         }
     }
@@ -226,37 +249,42 @@ export function AddBuyerModal({
         async (values: BuyerFormValues) => {
             setSubmitError(null);
 
-            // The schema validates the typed strings; converting to the stored
-            // shape happens here, where the types stay honest.
             const maxDigits = normalizeBuyerBudget(values.budgetMax);
             const minDigits = normalizeBuyerBudget(values.budgetMin);
+            const payload = {
+                name: values.name.trim(),
+                phoneDigits: normalizeBuyerPhone(values.phone),
+                email: values.email.trim() || null,
+                lookingFor: values.lookingFor,
+                propertyKind: values.propertyKind,
+                preferredLocalities: parseBuyerLocalities(values.localities),
+                budgetMinInr: minDigits === "" ? null : Number(minDigits),
+                budgetMaxInr: maxDigits === "" ? null : Number(maxDigits),
+                bhk: values.bhk === "" ? null : Number(values.bhk),
+                source: values.source,
+                notes: values.note.trim() || null,
+            };
 
             try {
-                await clientsApi.create({
-                    name: values.name.trim(),
-                    phoneDigits: normalizeBuyerPhone(values.phone),
-                    email: values.email.trim() || null,
-                    lookingFor: values.lookingFor,
-                    propertyKind: values.propertyKind,
-                    preferredLocalities: parseBuyerLocalities(values.localities),
-                    budgetMinInr: minDigits === "" ? null : Number(minDigits),
-                    budgetMaxInr: maxDigits === "" ? null : Number(maxDigits),
-                    bhk: values.bhk === "" ? null : Number(values.bhk),
-                    source: values.source,
-                    notes: values.note.trim() || null,
-                });
-
-                onCreated(values.name.trim());
+                if (isEdit && buyer) {
+                    await clientsApi.update(buyer.id, payload);
+                    onUpdated?.(values.name.trim());
+                } else {
+                    await clientsApi.create(payload);
+                    onCreated(values.name.trim());
+                }
                 onOpenChange(false);
             } catch (error) {
                 setSubmitError(
                     error instanceof Error
                         ? error.message
-                        : "Could not save this buyer. Try again.",
+                        : isEdit
+                          ? "Could not update this buyer. Try again."
+                          : "Could not save this buyer. Try again.",
                 );
             }
         },
-        [onCreated, onOpenChange],
+        [buyer, isEdit, onCreated, onOpenChange, onUpdated],
     );
 
     return (
@@ -265,11 +293,23 @@ export function AddBuyerModal({
                 open={open}
                 onOpenChange={onOpenChange}
                 size="lg"
-                title="Add a buyer"
-                description="Someone looking to buy or rent. You can link them to a property afterwards."
+                title={isEdit ? "Edit buyer" : "Add a buyer"}
+                description={
+                    isEdit
+                        ? "Update their details. Linked properties stay as they are."
+                        : "Someone looking to buy or rent. You can link them to a property afterwards."
+                }
                 footer={
                     <AppModalFooter
-                        primaryLabel={isSubmitting ? "Saving…" : "Save buyer"}
+                        primaryLabel={
+                            isSubmitting
+                                ? isEdit
+                                    ? "Saving…"
+                                    : "Saving…"
+                                : isEdit
+                                  ? "Save changes"
+                                  : "Save buyer"
+                        }
                         primaryIcon={<UserPlus aria-hidden strokeWidth={1.75} />}
                         onPrimary={handleSubmit(onSubmit)}
                         primaryDisabled={isSubmitting}

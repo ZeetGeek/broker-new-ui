@@ -1,10 +1,22 @@
 "use client";
 
-import { Home, KeyRound, MapPin, MessageCircle, Paperclip, TrendingUp } from "lucide-react";
+import Link from "next/link";
+
+import {
+    Home,
+    KeyRound,
+    Link2,
+    MapPin,
+    MessageCircle,
+    Paperclip,
+    Pencil,
+    TrendingUp,
+} from "lucide-react";
 
 import { formatRelativePast } from "@/lib/format/date";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { PhoneNumber } from "@/components/shared/phone-number";
@@ -62,7 +74,15 @@ function statusLine(buyer: BuyerRow): { text: string; tone: "urgent" | "muted" |
     };
 }
 
-export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
+export function BuyerCard({
+    buyer,
+    onEdit,
+    onAttachProperties,
+}: {
+    buyer: BuyerRow;
+    onEdit: (buyer: BuyerRow) => void;
+    onAttachProperties: (buyer: BuyerRow) => void;
+}) {
     const budget = budgetLabel(buyer);
     const status = statusLine(buyer);
     const LookingIcon = buyer.lookingFor === "rent" ? KeyRound : Home;
@@ -89,7 +109,11 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
-                                            <span className="flex shrink-0 items-center text-success">
+                                            <span
+                                                className="
+                                              flex shrink-0 items-center text-success
+                                            "
+                                            >
                                                 <TrendingUp
                                                     aria-hidden
                                                     className="block-3.5 inline-3.5"
@@ -114,6 +138,38 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1.5">
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    variant="outline"
+                                    size="icon-xs"
+                                    className="shrink-0 border-border-warm"
+                                    aria-label={`Edit ${buyer.name}`}
+                                    onClick={() => onEdit(buyer)}
+                                />
+                            }
+                        >
+                            <Pencil aria-hidden strokeWidth={1.75} />
+                        </TooltipTrigger>
+                        <TooltipContent>Edit buyer</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    variant="outline"
+                                    size="icon-xs"
+                                    className="shrink-0 border-border-warm"
+                                    aria-label={`Attach properties for ${buyer.name}`}
+                                    onClick={() => onAttachProperties(buyer)}
+                                />
+                            }
+                        >
+                            <Link2 aria-hidden strokeWidth={1.75} />
+                        </TooltipTrigger>
+                        <TooltipContent>Attach to properties</TooltipContent>
+                    </Tooltip>
                     <ChatButton
                         size="icon-xs"
                         peer={{
@@ -175,6 +231,26 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
                         : "No preferred areas"}
                 </span>
             </p>
+
+            {buyer.attachedProperties.length > 0 ? (
+                <ul className="flex flex-col gap-1">
+                    {buyer.attachedProperties.slice(0, 3).map((property) => (
+                        <li key={property.leadId}>
+                            <Link
+                                href={brokerPropertyDetailHref(property.id)}
+                                className="body-xs text-brand-text hover:underline"
+                            >
+                                {property.title}
+                            </Link>
+                        </li>
+                    ))}
+                    {buyer.attachedProperties.length > 3 ? (
+                        <li className="body-xs text-ink-subtle">
+                            +{buyer.attachedProperties.length - 3} more
+                        </li>
+                    ) : null}
+                </ul>
+            ) : null}
 
             {buyer.documents.length > 0 ? (
                 <details className="group/docs">

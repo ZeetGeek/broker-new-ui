@@ -13,6 +13,8 @@ export type BuyerRow = ClientItem & {
     closedDealCount: number;
     /** Localities of the properties they are actually being shown. */
     activePropertyTitles: string[];
+    /** Live attachments — used for deep-links and the attach modal. */
+    attachedProperties: Array<{ id: string; leadId: string; title: string }>;
 };
 
 /**

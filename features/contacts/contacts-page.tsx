@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 
 import { ArrowDownUp, ChevronDown, Search, UserPlus, UserRound, Users } from "lucide-react";
 
-import { contactsApi,type ContactsResult } from "@/lib/api/contacts";
+import { contactsApi, type ContactsResult } from "@/lib/api/contacts";
 import { cn } from "@/lib/utils";
 
 import { AddFab } from "@/components/shared/add-fab";
@@ -21,10 +21,12 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
+import { AttachBuyerPropertiesModal } from "@/features/contacts/attach-buyer-properties-modal";
 import { BuyerCard } from "@/features/contacts/buyer-card";
 import { ContactsSkeleton } from "@/features/contacts/contacts-skeleton";
 import { OwnerCard } from "@/features/contacts/owner-card";
 import {
+    type BuyerRow,
     type ContactsFilters,
     type ContactsSort,
     type ContactsSummary,
@@ -125,7 +127,9 @@ export function ContactsPage() {
     const [isFetching, setIsFetching] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isAddOpen, setIsAddOpen] = useState(false);
-    /** Bumped after a create so the list and counts both refetch. */
+    const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
+    const [attachingBuyer, setAttachingBuyer] = useState<BuyerRow | null>(null);
+    /** Bumped after a create/update/attach so the list and counts both refetch. */
     const [revision, setRevision] = useState(0);
 
     useEffect(() => {
@@ -146,7 +150,9 @@ export function ContactsPage() {
                 })
                 .catch(() => {
                     if (!cancelled) {
-                        setError("Could not load your contacts. Check your connection and try again.");
+                        setError(
+                            "Could not load your contacts. Check your connection and try again.",
+                        );
                     }
                 })
                 .finally(() => {
@@ -163,6 +169,17 @@ export function ContactsPage() {
     const handleCreated = useCallback((name: string) => {
         setRevision((prev) => prev + 1);
         toast.success(`${name} added to your buyers`);
+    }, []);
+
+    const handleUpdated = useCallback((name: string) => {
+        setRevision((prev) => prev + 1);
+        setEditingBuyer(null);
+        toast.success(`${name} updated`);
+    }, []);
+
+    const handleAttached = useCallback(() => {
+        setRevision((prev) => prev + 1);
+        setAttachingBuyer(null);
     }, []);
 
     const setTab = useCallback((tab: ContactsTab) => {
@@ -364,7 +381,12 @@ export function ContactsPage() {
                     >
                         {isBuyers
                             ? (data?.buyers ?? []).map((buyer) => (
-                                  <BuyerCard key={buyer.id} buyer={buyer} />
+                                  <BuyerCard
+                                      key={buyer.id}
+                                      buyer={buyer}
+                                      onEdit={setEditingBuyer}
+                                      onAttachProperties={setAttachingBuyer}
+                                  />
                               ))
                             : (data?.owners ?? []).map((owner) => (
                                   <OwnerCard key={owner.id} owner={owner} />
@@ -387,6 +409,27 @@ export function ContactsPage() {
                     onOpenChange={setIsAddOpen}
                     onCreated={handleCreated}
                 />
+
+                <AddBuyerModal
+                    open={editingBuyer != null}
+                    onOpenChange={(next) => {
+                        if (!next) setEditingBuyer(null);
+                    }}
+                    buyer={editingBuyer}
+                    onCreated={handleCreated}
+                    onUpdated={handleUpdated}
+                />
+
+                {attachingBuyer ? (
+                    <AttachBuyerPropertiesModal
+                        open
+                        onOpenChange={(next) => {
+                            if (!next) setAttachingBuyer(null);
+                        }}
+                        buyer={attachingBuyer}
+                        onSaved={handleAttached}
+                    />
+                ) : null}
             </div>
         </TooltipProvider>
     );
