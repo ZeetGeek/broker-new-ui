@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
 
+import { ReferralsPage } from "@/features/referrals/referrals-page";
+
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
 };
 
 export default function Page() {
-    return (
-        <>
-            <h1 className="display-md">Referrals</h1>
-            <p className="body text-ink-muted">Invite other brokers.</p>
-        </>
-    );
+    return <ReferralsPage />;
 }
