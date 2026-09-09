@@ -32,6 +32,28 @@ export type NewBuyerInput = {
     documents?: BuyerDocument[];
 };
 
+/** Nested lead on `/clients` list items — active properties live here. */
+export type ApiClientLead = {
+    id: string;
+    propertyId: string;
+    stage?: string | null;
+    offerAmount?: string | null;
+    offerStatus?: string | null;
+    listPrice?: string | null;
+    closedAmount?: string | null;
+    notes?: string | null;
+    createdAt?: string | null;
+    updatedAt?: string | null;
+    property?: {
+        id: string;
+        title?: string | null;
+        city?: string | null;
+        address?: string | null;
+        salePrice?: string | null;
+        monthlyRent?: string | null;
+    } | null;
+};
+
 type ApiClientContact = {
     id: string;
     name: string;
@@ -46,7 +68,13 @@ type ApiClientContact = {
     source?: string | null;
     notes?: string | null;
     updatedAt?: string | null;
-    leads?: Array<{ id: string; propertyId: string }>;
+    leads?: ApiClientLead[];
+};
+
+export type ClientLeadSummary = {
+    liveDealCount: number;
+    closedDealCount: number;
+    activePropertyTitles: string[];
 };
 
 type ClientsListResponse = {
@@ -122,6 +150,36 @@ function asSource(value: string | null | undefined): BuyerSource | null {
     return null;
 }
 
+function isClosedLead(lead: ApiClientLead): boolean {
+    const stage = lead.stage?.toLowerCase();
+    if (stage === "closed") return true;
+    return lead.closedAmount != null && String(lead.closedAmount).trim() !== "";
+}
+
+function isLostLead(lead: ApiClientLead): boolean {
+    return lead.stage?.toLowerCase() === "lost";
+}
+
+/** Live leads (not closed/lost) — drives the property line on buyer cards. */
+export function summarizeClientLeads(leads: ApiClientLead[] | undefined): ClientLeadSummary {
+    const list = leads ?? [];
+    const live = list.filter((lead) => !isClosedLead(lead) && !isLostLead(lead));
+    const closed = list.filter((lead) => isClosedLead(lead));
+    const titles = [
+        ...new Set(
+            live
+                .map((lead) => lead.property?.title?.trim())
+                .filter((title): title is string => Boolean(title)),
+        ),
+    ];
+
+    return {
+        liveDealCount: live.length,
+        closedDealCount: closed.length,
+        activePropertyTitles: titles,
+    };
+}
+
 function mapContact(contact: ApiClientContact): ClientItem {
     const phoneDigits = digitsOnly(contact.phone);
     // Keep last 10 digits for Indian mobiles stored as +91XXXXXXXXXX.
@@ -144,6 +202,21 @@ function mapContact(contact: ApiClientContact): ClientItem {
         attachedPropertyCount: contact.leads?.length ?? 0,
         documents: [],
     };
+}
+
+/**
+ * Clients plus the lead summary from nested `/clients` leads. Contacts list
+ * uses this so buyer cards show real active properties without joining pipeline.
+ */
+export async function listClientsWithLeadSummary(): Promise<
+    Array<ClientItem & ClientLeadSummary & { leads: ApiClientLead[] }>
+> {
+    const contacts = await fetchAllContacts();
+    return contacts.map((contact) => ({
+        ...mapContact(contact),
+        ...summarizeClientLeads(contact.leads),
+        leads: contact.leads ?? [],
+    }));
 }
 
 async function fetchAllContacts(): Promise<ApiClientContact[]> {
