@@ -33,6 +33,7 @@ import {
     type ContactsTab,
     DEFAULT_CONTACTS_FILTERS,
 } from "@/features/contacts/types";
+import { ViewBuyerLeadsModal } from "@/features/contacts/view-buyer-leads-modal";
 
 const SORT_OPTIONS: { value: ContactsSort; label: string }[] = [
     { value: "recent", label: "Recent first" },
@@ -129,6 +130,7 @@ export function ContactsPage() {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
     const [attachingBuyer, setAttachingBuyer] = useState<BuyerRow | null>(null);
+    const [viewingBuyer, setViewingBuyer] = useState<BuyerRow | null>(null);
     /** Bumped after a create/update/attach so the list and counts both refetch. */
     const [revision, setRevision] = useState(0);
 
@@ -386,6 +388,7 @@ export function ContactsPage() {
                                       buyer={buyer}
                                       onEdit={setEditingBuyer}
                                       onAttachProperties={setAttachingBuyer}
+                                      onViewLeads={setViewingBuyer}
                                   />
                               ))
                             : (data?.owners ?? []).map((owner) => (
@@ -428,6 +431,16 @@ export function ContactsPage() {
                         }}
                         buyer={attachingBuyer}
                         onSaved={handleAttached}
+                    />
+                ) : null}
+
+                {viewingBuyer ? (
+                    <ViewBuyerLeadsModal
+                        open
+                        onOpenChange={(next) => {
+                            if (!next) setViewingBuyer(null);
+                        }}
+                        buyer={viewingBuyer}
                     />
                 ) : null}
             </div>

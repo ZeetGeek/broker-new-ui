@@ -71,11 +71,26 @@ type ApiClientContact = {
     leads?: ApiClientLead[];
 };
 
+export type ClientLeadDetail = {
+    leadId: string;
+    propertyId: string;
+    title: string;
+    city: string;
+    stage: string;
+    updatedAt: string | null;
+    offerAmountInr: number | null;
+    listPriceInr: number | null;
+    closedAmountInr: number | null;
+    isRent: boolean;
+};
+
 export type ClientLeadSummary = {
     liveDealCount: number;
     closedDealCount: number;
     activePropertyTitles: string[];
     attachedProperties: Array<{ id: string; leadId: string; title: string }>;
+    /** Every lead on this buyer, including closed/lost — for the view modal. */
+    leads: ClientLeadDetail[];
 };
 
 type ClientsListResponse = {
@@ -161,9 +176,47 @@ function isLostLead(lead: ApiClientLead): boolean {
     return stage === "closed_lost" || stage === "lost";
 }
 
+function toMoney(value: string | number | null | undefined): number | null {
+    if (value == null || value === "") return null;
+    const n = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(n) ? n : null;
+}
+
+function mapLeadDetail(lead: ApiClientLead): ClientLeadDetail | null {
+    const propertyId = lead.property?.id ?? lead.propertyId;
+    if (!propertyId) return null;
+
+    const rent = toMoney(lead.property?.monthlyRent);
+    const sale = toMoney(lead.property?.salePrice);
+    const isRent = (rent ?? 0) > 0 && (sale ?? 0) <= 0;
+
+    return {
+        leadId: lead.id,
+        propertyId,
+        title: lead.property?.title?.trim() || "Property",
+        city: lead.property?.city?.trim() || "",
+        stage: (lead.stage ?? "new").toLowerCase(),
+        updatedAt: lead.updatedAt ?? lead.createdAt ?? null,
+        offerAmountInr: toMoney(lead.offerAmount),
+        listPriceInr: toMoney(lead.listPrice) ?? sale ?? rent,
+        closedAmountInr: toMoney(lead.closedAmount),
+        isRent,
+    };
+}
+
 /** Live leads (not closed/lost) — drives the property line on buyer cards. */
 export function summarizeClientLeads(leads: ApiClientLead[] | undefined): ClientLeadSummary {
     const list = leads ?? [];
+    const details = list
+        .map(mapLeadDetail)
+        .filter((item): item is ClientLeadDetail => item != null)
+        // Newest activity first.
+        .sort((a, b) => {
+            const aAt = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+            const bAt = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+            return bAt - aAt;
+        });
+
     const live = list.filter((lead) => !isClosedLead(lead) && !isLostLead(lead));
     const closed = list.filter((lead) => isClosedLead(lead));
     const titles = [
@@ -192,6 +245,7 @@ export function summarizeClientLeads(leads: ApiClientLead[] | undefined): Client
         closedDealCount: closed.length,
         activePropertyTitles: titles,
         attachedProperties,
+        leads: details,
     };
 }
 
@@ -225,12 +279,11 @@ function mapContact(contact: ApiClientContact): ClientItem {
  */
 export async function listClientsWithLeadSummary(options?: {
     search?: string;
-}): Promise<Array<ClientItem & ClientLeadSummary & { leads: ApiClientLead[] }>> {
+}): Promise<Array<ClientItem & ClientLeadSummary>> {
     const contacts = await fetchAllContacts(options);
     return contacts.map((contact) => ({
         ...mapContact(contact),
         ...summarizeClientLeads(contact.leads),
-        leads: contact.leads ?? [],
     }));
 }
 

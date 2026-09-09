@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import {
+    Eye,
     Home,
     KeyRound,
     Link2,
@@ -25,7 +26,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { ChatButton } from "@/features/chat/chat-button";
 import { PROPERTY_KIND_OPTIONS } from "@/features/contacts/buyer-options";
 import {
     BUYER_DOCUMENT_KIND_LABEL,
@@ -78,10 +78,12 @@ export function BuyerCard({
     buyer,
     onEdit,
     onAttachProperties,
+    onViewLeads,
 }: {
     buyer: BuyerRow;
     onEdit: (buyer: BuyerRow) => void;
     onAttachProperties: (buyer: BuyerRow) => void;
+    onViewLeads: (buyer: BuyerRow) => void;
 }) {
     const budget = budgetLabel(buyer);
     const status = statusLine(buyer);
@@ -145,6 +147,22 @@ export function BuyerCard({
                                     variant="outline"
                                     size="icon-xs"
                                     className="shrink-0 border-border-warm"
+                                    aria-label={`View leads for ${buyer.name}`}
+                                    onClick={() => onViewLeads(buyer)}
+                                />
+                            }
+                        >
+                            <Eye aria-hidden strokeWidth={1.75} />
+                        </TooltipTrigger>
+                        <TooltipContent>View properties and status</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    variant="outline"
+                                    size="icon-xs"
+                                    className="shrink-0 border-border-warm"
                                     aria-label={`Edit ${buyer.name}`}
                                     onClick={() => onEdit(buyer)}
                                 />
@@ -170,15 +188,6 @@ export function BuyerCard({
                         </TooltipTrigger>
                         <TooltipContent>Attach to properties</TooltipContent>
                     </Tooltip>
-                    <ChatButton
-                        size="icon-xs"
-                        peer={{
-                            id: buyer.id,
-                            name: buyer.name,
-                            roleLabel: "Buyer",
-                            isOnline: false,
-                        }}
-                    />
                     <Tooltip>
                         <TooltipTrigger
                             render={

@@ -2,6 +2,20 @@ import type { ClientItem } from "@/features/clients/types";
 
 export type ContactsTab = "buyers" | "owners";
 
+export type BuyerLead = {
+    leadId: string;
+    propertyId: string;
+    title: string;
+    city: string;
+    /** Raw stage from the API (e.g. new, offer_made, closed_won). */
+    stage: string;
+    updatedAt: string | null;
+    offerAmountInr: number | null;
+    listPriceInr: number | null;
+    closedAmountInr: number | null;
+    isRent: boolean;
+};
+
 /**
  * A buyer row, plus the deal context that only the pipeline knows about.
  * `ClientItem` is the stored record; this is what the list actually renders.
@@ -15,6 +29,8 @@ export type BuyerRow = ClientItem & {
     activePropertyTitles: string[];
     /** Live attachments — used for deep-links and the attach modal. */
     attachedProperties: Array<{ id: string; leadId: string; title: string }>;
+    /** All leads with latest stage — drives the View modal. */
+    leads: BuyerLead[];
 };
 
 /**

@@ -88,8 +88,7 @@ function buildOwnerRows(deals: DealItem[]): OwnerRow[] {
 function toBuyerRow(
     client: Awaited<ReturnType<typeof listClientsWithLeadSummary>>[number],
 ): BuyerRow {
-    const { leads: _leads, ...buyer } = client;
-    return buyer;
+    return client;
 }
 
 export type ContactsResult = {
