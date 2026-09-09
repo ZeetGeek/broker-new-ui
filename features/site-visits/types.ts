@@ -176,6 +176,22 @@ export type VisitsFilters = {
     dateTo: string;
 };
 
+/**
+ * One property the viewer has visits on, for the property filter.
+ *
+ * Carries only what the selector renders. The full `VisitProperty` would drag
+ * price and image into a list that shows neither.
+ */
+export type VisitPropertyOption = {
+    id: string;
+    /** `3 BHK · Apartment`, as the rows above the list say it. */
+    label: string;
+    locality: string;
+    city: string;
+    /** Visits on this property, ignoring the date window. */
+    count: number;
+};
+
 export type VisitsSummary = {
     /** Confirmed and starting today, in the user's timezone. */
     todayCount: number;
@@ -195,6 +211,14 @@ export type VisitsSummary = {
      * has to keep showing what Thursday holds while Wednesday is selected.
      */
     dayCounts: Record<string, number>;
+    /**
+     * Every property with at least one visit, for the property filter.
+     *
+     * Reflects the status and query filters but *not* the property filter
+     * itself — a selector narrowed by its own selection would collapse to a
+     * single option the moment one was picked, with no way back.
+     */
+    properties: VisitPropertyOption[];
 };
 
 export type VisitsResult = {

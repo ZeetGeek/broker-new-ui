@@ -6,6 +6,7 @@ import {
     type VisitCancelReason,
     type VisitItem,
     type VisitOutcome,
+    type VisitPropertyOption,
     type VisitsFilters,
     type VisitsResult,
     type VisitsSummary,
@@ -96,6 +97,8 @@ function summarize(
     viewer: VisitViewer,
     /** Already narrowed by status and query, but never by the date window. */
     dayScoped: VisitItem[],
+    /** Status and query only — never the property filter. See `properties`. */
+    propertyScoped: VisitItem[],
 ): VisitsSummary {
     const now = new Date();
 
@@ -134,8 +137,30 @@ function summarize(
         dayCounts[key] = (dayCounts[key] ?? 0) + 1;
     }
 
+    // Ordered by how busy each property is: the one a broker is showing four
+    // times this week is the one they are most likely reaching for.
+    const propertyCounts = new Map<string, VisitPropertyOption>();
+    for (const visit of propertyScoped) {
+        const existing = propertyCounts.get(visit.property.id);
+        if (existing) {
+            existing.count += 1;
+            continue;
+        }
+        propertyCounts.set(visit.property.id, {
+            id: visit.property.id,
+            label: `${visit.property.configLabel} · ${visit.property.propertyTypeLabel}`,
+            locality: visit.property.locality,
+            city: visit.property.city,
+            count: 1,
+        });
+    }
+    const properties = [...propertyCounts.values()].sort(
+        (a, b) => b.count - a.count || a.label.localeCompare(b.label),
+    );
+
     return {
         dayCounts,
+        properties,
         todayCount,
         upcomingCount,
         needsActionCount,
@@ -176,10 +201,15 @@ export const visitsApi = {
 
         // Everything except the date window. The week strip counts this set,
         // so its per-day numbers survive selecting a day or a range.
-        const beforeDay = visible
+        // Status and query only. The property selector counts this set, so
+        // its options survive picking one of them.
+        const beforeProperty = visible
             .filter((visit) => matchesQuery(visit, filters.q))
-            .filter((visit) => matchesStatus(visit, filters.status, viewer))
-            .filter((visit) => !filters.propertyId || visit.property.id === filters.propertyId);
+            .filter((visit) => matchesStatus(visit, filters.status, viewer));
+
+        const beforeDay = beforeProperty.filter(
+            (visit) => !filters.propertyId || visit.property.id === filters.propertyId,
+        );
 
         const items = beforeDay
             // The date window, inclusive at both ends. Compared as local day
@@ -203,7 +233,7 @@ export const visitsApi = {
         // filter that hid the one visit needing action would hide the number
         // too. Only the strip's per-day counts follow the active filters.
         // (`beforeDay` is the status/query slice without the date window.)
-        return { items, summary: summarize(visible, viewer, beforeDay) };
+        return { items, summary: summarize(visible, viewer, beforeDay, beforeProperty) };
     },
 
     async get(visitId: string, viewer: VisitViewer): Promise<VisitItem | null> {

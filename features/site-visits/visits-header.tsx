@@ -14,6 +14,7 @@ import type {
     VisitStatusFilter,
     VisitViewer,
 } from "@/features/site-visits/types";
+import { VisitsPropertyFilter } from "@/features/site-visits/visits-property-filter";
 
 /**
  * Only the numeric summary fields can sit on a chip. Spelled out as a
@@ -125,6 +126,14 @@ export function VisitsHeader({ filters, summary, onPatch }: VisitsHeaderProps) {
                     );
                 })}
             </div>
+
+            {/* Property first, then search: one narrows to a thing the broker
+                already has, the other hunts for one they are not sure of. */}
+            <VisitsPropertyFilter
+                properties={summary?.properties ?? []}
+                value={filters.propertyId}
+                onChange={(propertyId) => onPatch({ propertyId })}
+            />
 
             <VisitsQueryInput value={filters.q} onChange={(q) => onPatch({ q })} />
         </div>
