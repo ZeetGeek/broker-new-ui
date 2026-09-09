@@ -9,14 +9,30 @@ import { Switch } from "@/components/ui/switch";
 
 type Channel = "whatsapp" | "sms" | "email";
 
-const CHANNELS: { id: Channel; label: string; hint: string }[] = [
+const CHANNELS: {
+    id: Channel;
+    label: string;
+    hint: string;
+    apiKey: "notifyWhatsapp" | "notifySms" | "notifyEmail";
+}[] = [
     {
         id: "whatsapp",
         label: "WhatsApp",
         hint: "How most owners reply. Turning this off will cost you deals.",
+        apiKey: "notifyWhatsapp",
     },
-    { id: "sms", label: "SMS", hint: "A text when WhatsApp does not reach you." },
-    { id: "email", label: "Email", hint: "A daily summary of what needs you." },
+    {
+        id: "sms",
+        label: "SMS",
+        hint: "A text when WhatsApp does not reach you.",
+        apiKey: "notifySms",
+    },
+    {
+        id: "email",
+        label: "Email",
+        hint: "A daily summary of what needs you.",
+        apiKey: "notifyEmail",
+    },
 ];
 
 type NotificationPreferencesProps = {
@@ -50,10 +66,29 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
         async (channel: Channel, next: boolean) => {
             if (!profile) return;
 
+            const apiKey = CHANNELS.find((c) => c.id === channel)?.apiKey;
+            if (!apiKey) return;
+
             setPendingChannel(channel);
             try {
-                const updated = await profileApi.updateNotifications({ ...prefs, [channel]: next });
-                onSaved(updated);
+                // Backend returns `{ message }` only — merge the flip into the
+                // profile we already hold so the switch stays honest.
+                await profileApi.updateNotifications({
+                    notifyWhatsapp: prefs.whatsapp,
+                    notifySms: prefs.sms,
+                    notifyEmail: prefs.email,
+                    [apiKey]: next,
+                });
+                onSaved({
+                    ...profile,
+                    notifications: {
+                        ...profile.notifications,
+                        unreadCount: profile.notifications?.unreadCount,
+                        whatsapp: channel === "whatsapp" ? next : prefs.whatsapp,
+                        sms: channel === "sms" ? next : prefs.sms,
+                        email: channel === "email" ? next : prefs.email,
+                    },
+                });
             } catch {
                 toast.error("Could not save that. Try again.");
                 // The parent still holds the old profile, so not calling

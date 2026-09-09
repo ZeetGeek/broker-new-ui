@@ -34,25 +34,24 @@ export type ResolveUserAvatarImageUrlInput = {
     authProvider?: string | null;
 };
 
-/** Google sign-in with a photo → URL. Everything else → undefined (generated avatar). */
+/**
+ * Prefer a real photo when we have one.
+ *
+ * Uploaded avatars always win. Google profile photos are allowed for Google
+ * accounts, but suppressed for email/password accounts so a leftover OAuth
+ * URL never overrides the generated avatar (or a later upload).
+ */
 export function resolveUserAvatarImageUrl({
     avatarUrl,
     authProvider,
 }: ResolveUserAvatarImageUrlInput): string | undefined {
     const normalized = normalizeAvatarUrl(avatarUrl);
-    const provider = authProvider?.trim().toLowerCase();
+    if (!normalized) return undefined;
 
-    if (provider && MANUAL_AUTH_PROVIDERS.has(provider)) {
+    const provider = authProvider?.trim().toLowerCase();
+    if (isGoogleAvatarUrl(normalized) && provider && MANUAL_AUTH_PROVIDERS.has(provider)) {
         return undefined;
     }
 
-    if (provider === "google") {
-        return normalized;
-    }
-
-    if (normalized && isGoogleAvatarUrl(normalized)) {
-        return normalized;
-    }
-
-    return undefined;
+    return normalized;
 }

@@ -61,8 +61,11 @@ export function ProfilePhotoField({ profile, onUploaded }: ProfilePhotoFieldProp
             setIsUploading(true);
 
             try {
+                // Presigned PUT → confirm. Returns the full profile so the
+                // header avatar and form stay in sync without a second GET.
                 const updated = await profileApi.uploadAvatar(file);
                 onUploaded(updated);
+                setPreviewUrl(null);
             } catch {
                 // Put the old photo back rather than leaving a preview that
                 // looks saved and is not.

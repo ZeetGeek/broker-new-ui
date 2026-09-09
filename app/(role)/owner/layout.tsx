@@ -14,9 +14,10 @@ import { useAppSelector } from "@/store/hooks";
 
 function OwnerPortalShell({ children }: { children: ReactNode }) {
     const user = useAppSelector((state) => state.auth.user);
-    const userName = user?.fullName?.trim() || user?.email || "Owner";
+    const profile = useAppSelector((state) => state.dashboard.profile);
+    const userName = profile?.fullName?.trim() || user?.fullName?.trim() || user?.email || "Owner";
     const avatarUrl = resolveUserAvatarImageUrl({
-        avatarUrl: user?.avatarUrl,
+        avatarUrl: profile?.avatarUrl ?? user?.avatarUrl,
         authProvider: user?.authProvider,
     });
 
@@ -29,9 +30,9 @@ function OwnerPortalShell({ children }: { children: ReactNode }) {
                     userEmail={user?.email ?? undefined}
                     userAvatarUrl={avatarUrl}
                     notificationsHref="/owner/notifications"
-                    profileHref="/owner"
-                    roleLabel={user?.role ?? "Owner"}
-                    orgName={user?.orgName ?? null}
+                    profileHref="/owner/profile"
+                    roleLabel={profile?.accountLabel ?? user?.role ?? "Owner"}
+                    orgName={profile?.orgName ?? user?.orgName ?? null}
                 >
                     {children}
                 </PortalHeader>
