@@ -1,7 +1,12 @@
-import { clientsApi } from "@/lib/api/clients";
+import { listClientsWithLeadSummary } from "@/lib/api/clients";
 import { pipelineApi } from "@/lib/api/pipeline";
 
-import type { BuyerRow, ContactsFilters, ContactsSummary, OwnerRow } from "@/features/contacts/types";
+import type {
+    BuyerRow,
+    ContactsFilters,
+    ContactsSummary,
+    OwnerRow,
+} from "@/features/contacts/types";
 import { type DealItem, DEFAULT_DEALS_FILTERS, isLiveStage } from "@/features/pipeline/types";
 
 /** Owners have no id of their own yet, so derive a stable one from the name. */
@@ -56,9 +61,7 @@ function buildOwnerRows(deals: DealItem[]): OwnerRow[] {
                 avatarUrl: deal.owner.avatarUrl,
                 // Only carried while the relationship is live — see the note
                 // on OwnerRow.phoneDigits.
-                phoneDigits: deal.owner.isRepresentationActive
-                    ? deal.owner.phoneDigits
-                    : undefined,
+                phoneDigits: deal.owner.isRepresentationActive ? deal.owner.phoneDigits : undefined,
                 hasActiveRepresentation: deal.owner.isRepresentationActive,
                 propertyCount: 1,
                 propertyTitles: [deal.property.title],
@@ -112,21 +115,12 @@ export const contactsApi = {
      */
     async list(filters: ContactsFilters): Promise<ContactsResult> {
         const [clients, deals] = await Promise.all([
-            clientsApi.list(),
+            listClientsWithLeadSummary(),
             pipelineApi.list({ ...DEFAULT_DEALS_FILTERS }).then((result) => result.items),
         ]);
 
-        const buyers: BuyerRow[] = clients.map((client) => {
-            const own = deals.filter((deal) => deal.buyer.id === client.id);
-            const live = own.filter((deal) => isLiveStage(deal.status));
-
-            return {
-                ...client,
-                liveDealCount: live.length,
-                closedDealCount: own.filter((deal) => deal.status === "closed").length,
-                activePropertyTitles: unique(live.map((deal) => deal.property.title)),
-            };
-        });
+        // Active properties come from nested `leads` on `/clients`, not pipeline.
+        const buyers: BuyerRow[] = clients.map(({ leads: _leads, ...buyer }) => buyer);
 
         const owners = buildOwnerRows(deals);
 

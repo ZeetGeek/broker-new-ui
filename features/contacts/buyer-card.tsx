@@ -52,6 +52,10 @@ function statusLine(buyer: BuyerRow): { text: string; tone: "urgent" | "muted" |
         return { text: buyer.activePropertyTitles[0], tone: "muted" };
     }
 
+    if (buyer.activePropertyTitles.length > 1) {
+        return { text: buyer.activePropertyTitles.join(" · "), tone: "muted" };
+    }
+
     return {
         text: `On ${buyer.liveDealCount} properties`,
         tone: "muted",
@@ -85,11 +89,7 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
-                                            <span
-                                                className="
-                                              flex shrink-0 items-center text-success
-                                            "
-                                            >
+                                            <span className="flex shrink-0 items-center text-success">
                                                 <TrendingUp
                                                     aria-hidden
                                                     className="block-3.5 inline-3.5"
@@ -215,8 +215,8 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
                                         />
                                         <span
                                             className="
-                                          body-xs flex-1 truncate text-ink min-inline-0
-                                        "
+                                              body-xs flex-1 truncate text-ink min-inline-0
+                                            "
                                         >
                                             {doc.fileName}
                                         </span>
@@ -236,8 +236,9 @@ export function BuyerCard({ buyer }: { buyer: BuyerRow }) {
 
             <div
                 className="
-              flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm pbs-3
-            "
+                  flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm
+                  pbs-3
+                "
             >
                 <p
                     className={cn(
