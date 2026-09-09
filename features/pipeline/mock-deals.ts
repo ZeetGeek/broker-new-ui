@@ -96,13 +96,43 @@ const OWNERS = {
 
 /** Buyers, matching `features/clients/mock-clients.ts`. */
 const BUYERS = {
-    ankit: { id: "cl_001", name: "Ankit Shah", phoneDigits: "9825011223", budgetMaxInr: 1_30_00_000 },
-    priya: { id: "cl_002", name: "Priya Nair", phoneDigits: "9898044556", budgetMaxInr: 1_20_00_000 },
-    mohit: { id: "cl_003", name: "Mohit Agarwal", phoneDigits: "9727066778", budgetMaxInr: 60_00_000 },
+    ankit: {
+        id: "cl_001",
+        name: "Ankit Shah",
+        phoneDigits: "9825011223",
+        budgetMaxInr: 1_30_00_000,
+    },
+    priya: {
+        id: "cl_002",
+        name: "Priya Nair",
+        phoneDigits: "9898044556",
+        budgetMaxInr: 1_20_00_000,
+    },
+    mohit: {
+        id: "cl_003",
+        name: "Mohit Agarwal",
+        phoneDigits: "9727066778",
+        budgetMaxInr: 60_00_000,
+    },
     sneha: { id: "cl_004", name: "Sneha Bhatt", phoneDigits: "9016077889", budgetMaxInr: 35_000 },
-    rajesh: { id: "cl_005", name: "Rajesh Kumar", phoneDigits: "9825099001", budgetMaxInr: 2_00_00_000 },
-    farida: { id: "cl_006", name: "Farida Contractor", phoneDigits: "9898122334", budgetMaxInr: 95_00_000 },
-    deepak: { id: "cl_007", name: "Deepak Solanki", phoneDigits: "9727144556", budgetMaxInr: 25_000 },
+    rajesh: {
+        id: "cl_005",
+        name: "Rajesh Kumar",
+        phoneDigits: "9825099001",
+        budgetMaxInr: 2_00_00_000,
+    },
+    farida: {
+        id: "cl_006",
+        name: "Farida Contractor",
+        phoneDigits: "9898122334",
+        budgetMaxInr: 95_00_000,
+    },
+    deepak: {
+        id: "cl_007",
+        name: "Deepak Solanki",
+        phoneDigits: "9727144556",
+        budgetMaxInr: 25_000,
+    },
 } as const;
 
 /**
@@ -126,6 +156,8 @@ export const MOCK_DEALS: DealItem[] = [
         note: "Offered ₹1.72 Cr. Owner wants 1.8. Meeting Thursday to settle.",
         resolvedAt: null,
         closedAmountInr: null,
+        offerAmountInr: 1_72_00_000,
+        offerStatus: "pending",
     },
     {
         id: "dl_002",
@@ -139,6 +171,8 @@ export const MOCK_DEALS: DealItem[] = [
         note: "",
         resolvedAt: null,
         closedAmountInr: null,
+        offerAmountInr: null,
+        offerStatus: null,
     },
     {
         id: "dl_003",
@@ -152,6 +186,8 @@ export const MOCK_DEALS: DealItem[] = [
         note: "Second visit. Bringing her husband this time.",
         resolvedAt: null,
         closedAmountInr: null,
+        offerAmountInr: null,
+        offerStatus: null,
     },
     {
         id: "dl_004",
@@ -165,6 +201,8 @@ export const MOCK_DEALS: DealItem[] = [
         note: "Wants to see it on a weekend.",
         resolvedAt: null,
         closedAmountInr: null,
+        offerAmountInr: null,
+        offerStatus: null,
     },
     // Stalled: no contact in 19 days, well past the 14-day mark.
     {
@@ -179,6 +217,8 @@ export const MOCK_DEALS: DealItem[] = [
         note: "Said she would call back after Diwali.",
         resolvedAt: null,
         closedAmountInr: null,
+        offerAmountInr: null,
+        offerStatus: null,
     },
     {
         id: "dl_006",
@@ -192,6 +232,8 @@ export const MOCK_DEALS: DealItem[] = [
         note: "",
         resolvedAt: null,
         closedAmountInr: null,
+        offerAmountInr: null,
+        offerStatus: null,
     },
     {
         id: "dl_007",
@@ -205,6 +247,8 @@ export const MOCK_DEALS: DealItem[] = [
         note: "",
         resolvedAt: null,
         closedAmountInr: null,
+        offerAmountInr: null,
+        offerStatus: null,
     },
     // Over budget on purpose — the card flags it rather than hiding it.
     {
@@ -219,6 +263,8 @@ export const MOCK_DEALS: DealItem[] = [
         note: "",
         resolvedAt: null,
         closedAmountInr: null,
+        offerAmountInr: null,
+        offerStatus: null,
     },
     {
         id: "dl_009",
@@ -232,6 +278,8 @@ export const MOCK_DEALS: DealItem[] = [
         note: "Cash buyer. Wants possession by March.",
         resolvedAt: null,
         closedAmountInr: null,
+        offerAmountInr: null,
+        offerStatus: null,
     },
     {
         id: "dl_010",
@@ -245,6 +293,8 @@ export const MOCK_DEALS: DealItem[] = [
         note: "Registry done. Commission received.",
         resolvedAt: daysAgo(12),
         closedAmountInr: 40_50_000,
+        offerAmountInr: null,
+        offerStatus: null,
     },
     {
         id: "dl_011",
@@ -259,6 +309,8 @@ export const MOCK_DEALS: DealItem[] = [
         lostReason: "bought_elsewhere",
         resolvedAt: daysAgo(25),
         closedAmountInr: null,
+        offerAmountInr: null,
+        offerStatus: null,
     },
     {
         id: "dl_012",
@@ -273,5 +325,7 @@ export const MOCK_DEALS: DealItem[] = [
         lostReason: "price",
         resolvedAt: daysAgo(28),
         closedAmountInr: null,
+        offerAmountInr: null,
+        offerStatus: null,
     },
 ];
