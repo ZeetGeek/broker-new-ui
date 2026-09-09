@@ -507,11 +507,7 @@ export function RequestCard({
                                 </p>
                             </div>
 
-                            <div
-                                className="
-                              flex shrink-0 flex-wrap items-center justify-end gap-1.5
-                            "
-                            >
+                            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={

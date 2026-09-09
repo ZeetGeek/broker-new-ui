@@ -8,6 +8,8 @@ import {
     CalendarClock,
     Check,
     CircleSlash,
+    Eye,
+    Handshake,
     Lock,
     MessageCircle,
     MoreHorizontal,
@@ -50,17 +52,26 @@ import {
     DEAL_STAGE_ORDER,
     type DealItem,
     type DealStage,
+    type DealStatus,
     isLiveStage,
     nextStage,
 } from "@/features/pipeline/types";
 
 export type DealCardHandlers = {
+    onView: (dealId: string) => void;
     onAdvance: (dealId: string, stage: DealStage) => void;
-    onLogContact: (dealId: string) => void;
+    onLogContact: (dealId: string, currentStatus: DealStatus) => void;
     onClose: (dealId: string) => void;
     onLose: (dealId: string) => void;
     onReopen: (dealId: string, stage: DealStage) => void;
+    onMakeOffer: (dealId: string) => void;
 };
+
+/** Broker can submit/revise unless the lead is closed or an offer is already pending. */
+export function canMakeOffer(deal: DealItem): boolean {
+    if (!isLiveStage(deal.status)) return false;
+    return deal.offerStatus !== "pending";
+}
 
 /**
  * The single line telling the broker what to do next. Ordered by urgency so
@@ -82,6 +93,23 @@ function nextStepLine(deal: DealItem): { text: string; tone: "urgent" | "muted" 
         return {
             text: `Visit ${formatShowingWhen(new Date(deal.nextVisitAt), new Date())}`,
             tone: "brand",
+        };
+    }
+
+    if (deal.offerStatus === "pending" && deal.offerAmountInr != null) {
+        return {
+            text: `Offer of ${formatPriceInr(deal.offerAmountInr)} pending owner response.`,
+            tone: "brand",
+        };
+    }
+
+    if (deal.offerStatus === "rejected") {
+        return {
+            text:
+                deal.offerAmountInr != null
+                    ? `Offer of ${formatPriceInr(deal.offerAmountInr)} was rejected. Revise it.`
+                    : "Offer was rejected. Revise it.",
+            tone: "urgent",
         };
     }
 
@@ -301,12 +329,28 @@ function DealCardMenu({
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="min-inline-52">
+                <DropdownMenuItem onClick={() => handlers.onView(deal.id)}>
+                    <Eye aria-hidden strokeWidth={1.75} />
+                    View details
+                </DropdownMenuItem>
+
                 {live ? (
                     <>
-                        <DropdownMenuItem onClick={() => handlers.onLogContact(deal.id)}>
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                            onClick={() => handlers.onLogContact(deal.id, deal.status)}
+                        >
                             <PhoneCall aria-hidden strokeWidth={1.75} />
                             Log a call
                         </DropdownMenuItem>
+
+                        {canMakeOffer(deal) ? (
+                            <DropdownMenuItem onClick={() => handlers.onMakeOffer(deal.id)}>
+                                <Handshake aria-hidden strokeWidth={1.75} />
+                                {deal.offerStatus === "rejected" ? "Revise offer" : "Make offer"}
+                            </DropdownMenuItem>
+                        ) : null}
 
                         <DropdownMenuSeparator />
 
@@ -338,10 +382,13 @@ function DealCardMenu({
                         </DropdownMenuItem>
                     </>
                 ) : (
-                    <DropdownMenuItem onClick={() => handlers.onReopen(deal.id, "contacted")}>
-                        <Undo2 aria-hidden strokeWidth={1.75} />
-                        Put back on the board
-                    </DropdownMenuItem>
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handlers.onReopen(deal.id, "contacted")}>
+                            <Undo2 aria-hidden strokeWidth={1.75} />
+                            Put back on the board
+                        </DropdownMenuItem>
+                    </>
                 )}
             </DropdownMenuContent>
         </DropdownMenu>
@@ -468,15 +515,78 @@ export function DealCard({
             ) : null}
 
             {live && advance ? (
+                <div className="flex flex-col gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={isBusy}
+                        onClick={() => handlers.onView(deal.id)}
+                        className="justify-center inline-full"
+                    >
+                        <Eye aria-hidden strokeWidth={1.75} />
+                        View
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={isBusy}
+                        onClick={() => handlers.onAdvance(deal.id, advance)}
+                        className="justify-center inline-full"
+                    >
+                        {DEAL_STAGE_META[advance].advanceLabel}
+                        <ArrowRight aria-hidden strokeWidth={1.75} />
+                    </Button>
+                </div>
+            ) : null}
+
+            {live && !advance && canMakeOffer(deal) ? (
+                <div className="flex flex-col gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={isBusy}
+                        onClick={() => handlers.onView(deal.id)}
+                        className="justify-center inline-full"
+                    >
+                        <Eye aria-hidden strokeWidth={1.75} />
+                        View
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={isBusy}
+                        onClick={() => handlers.onMakeOffer(deal.id)}
+                        className="justify-center inline-full"
+                    >
+                        {deal.offerStatus === "rejected" ? "Revise offer" : "Make offer"}
+                        <Handshake aria-hidden strokeWidth={1.75} />
+                    </Button>
+                </div>
+            ) : null}
+
+            {live && !advance && !canMakeOffer(deal) ? (
                 <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
                     disabled={isBusy}
-                    onClick={() => handlers.onAdvance(deal.id, advance)}
+                    onClick={() => handlers.onView(deal.id)}
                     className="justify-center inline-full"
                 >
-                    {DEAL_STAGE_META[advance].advanceLabel}
-                    <ArrowRight aria-hidden strokeWidth={1.75} />
+                    <Eye aria-hidden strokeWidth={1.75} />
+                    View
+                </Button>
+            ) : null}
+
+            {!live ? (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isBusy}
+                    onClick={() => handlers.onView(deal.id)}
+                    className="justify-center inline-full"
+                >
+                    <Eye aria-hidden strokeWidth={1.75} />
+                    View
                 </Button>
             ) : null}
 
