@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 
-import { CalendarRange, X } from "lucide-react";
+import { CalendarRange } from "lucide-react";
 
 import { formatDateIso, formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -11,19 +11,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
-/** Local midnight, so a picked day is compared as a calendar day. */
-function startOfDay(date: Date): Date {
-    const next = new Date(date);
-    next.setHours(0, 0, 0, 0);
-    return next;
-}
-
-function addDays(date: Date, days: number): Date {
-    const next = startOfDay(date);
-    next.setDate(next.getDate() + days);
-    return next;
-}
 
 /** `YYYY-MM-DD` → Date, or undefined for "". */
 function parseKey(key: string): Date | undefined {
@@ -33,22 +20,15 @@ function parseKey(key: string): Date | undefined {
     return new Date(y, m - 1, d);
 }
 
-type Preset = {
-    label: string;
-    /** Inclusive window, as local dates. */
-    build: (now: Date) => { from: Date; to: Date };
-};
-
 /**
- * The windows a broker actually asks for. Offered as one tap each because
- * "this week" via two calendar clicks is four decisions instead of one.
+ * Whether the calendar picks one day or a window.
+ *
+ * Two separate questions a broker asks — "what is on Thursday" and "what
+ * does next week look like" — and a range picker answers the first one
+ * badly: it takes two clicks to say one day, and a mis-aimed second click
+ * silently widens the answer.
  */
-const PRESETS: Preset[] = [
-    { label: "Today", build: (now) => ({ from: startOfDay(now), to: startOfDay(now) }) },
-    { label: "Tomorrow", build: (now) => ({ from: addDays(now, 1), to: addDays(now, 1) }) },
-    { label: "Next 7 days", build: (now) => ({ from: startOfDay(now), to: addDays(now, 6) }) },
-    { label: "Next 30 days", build: (now) => ({ from: startOfDay(now), to: addDays(now, 29) }) },
-];
+type PickMode = "single" | "range";
 
 type VisitsDateRangeProps = {
     dateFrom: string;
@@ -64,9 +44,14 @@ type VisitsDateRangeProps = {
  * retracts the strip's pill, and tapping a strip day collapses the range to
  * that one day.
  *
- * Deliberately not bounded to the next seven days: the strip covers that
+ * Deliberately not bounded to the week on screen: the strip covers that
  * already. This is how a broker answers "what does the rest of the month
  * look like", which is the question the strip cannot.
+ *
+ * The popover never closes itself. Picking a date updates the list behind
+ * it, so staying open lets a broker try a few dates in a row and watch each
+ * answer, rather than reopening the calendar between every guess. Dismissal
+ * is the user's to make — click outside, or press Escape.
  */
 export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeProps) {
     const [open, setOpen] = useState(false);
@@ -75,9 +60,33 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
     const to = parseKey(dateTo);
     const hasRange = Boolean(from || to);
 
+    /** Whether the filter as it stands spans more than one day. */
+    const isRangeFilter = Boolean(dateFrom && dateTo && dateFrom !== dateTo);
+
+    const [mode, setMode] = useState<PickMode>(isRangeFilter ? "range" : "single");
+
     const selected: DateRange | undefined = from || to ? { from, to } : undefined;
 
-    const handleSelect = (range: DateRange | undefined) => {
+    /**
+     * Switching mode keeps the day the user already picked.
+     *
+     * Going range → single collapses the window to its start rather than
+     * clearing: the start is the day they chose first, and dropping the
+     * filter entirely would make the toggle feel like a reset button.
+     */
+    const handleModeChange = (next: PickMode) => {
+        setMode(next);
+        if (next === "single" && dateFrom && dateFrom !== dateTo) {
+            onChange({ dateFrom, dateTo: dateFrom });
+        }
+    };
+
+    const handleSelectSingle = (day: Date | undefined) => {
+        const key = day ? formatDateIso(day) : "";
+        onChange({ dateFrom: key, dateTo: key });
+    };
+
+    const handleSelectRange = (range: DateRange | undefined) => {
         // react-day-picker reports the in-progress selection too, so the
         // first click arrives as `{ from }` with no `to`. Writing both ends
         // from `from` keeps the list showing that single day mid-pick rather
@@ -85,10 +94,6 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
         const nextFrom = range?.from ? formatDateIso(range.from) : "";
         const nextTo = range?.to ? formatDateIso(range.to) : nextFrom;
         onChange({ dateFrom: nextFrom, dateTo: nextTo });
-
-        // Close only once the window is complete, so the calendar stays open
-        // for the second click.
-        if (range?.from && range?.to) setOpen(false);
     };
 
     const label = (() => {
@@ -103,7 +108,17 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
 
     return (
         <div className="flex items-center gap-1">
-            <Popover open={open} onOpenChange={setOpen}>
+            <Popover
+                open={open}
+                // Opening re-reads the filter so the calendar shows the
+                // selection the way it was made. The filter also moves from
+                // outside this component — the week strip writes the same two
+                // fields — so the mode cannot be settled once at mount.
+                onOpenChange={(next) => {
+                    if (next) setMode(isRangeFilter ? "range" : "single");
+                    setOpen(next);
+                }}
+            >
                 <PopoverTrigger
                     render={
                         <button
@@ -125,54 +140,92 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
                 />
 
                 <PopoverContent align="end" className="p-0 inline-auto">
-                    <div className="flex flex-wrap gap-1 border-be border-border-warm p-2">
-                        {PRESETS.map((preset) => (
-                            <Button
-                                key={preset.label}
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    const { from: f, to: t } = preset.build(new Date());
-                                    onChange({
-                                        dateFrom: formatDateIso(f),
-                                        dateTo: formatDateIso(t),
-                                    });
-                                    setOpen(false);
-                                }}
-                            >
-                                {preset.label}
-                            </Button>
-                        ))}
+                    <div
+                        role="group"
+                        aria-label="How to pick dates"
+                        className="flex gap-1 border-be border-border-warm p-2"
+                    >
+                        <ModeButton
+                            isActive={mode === "single"}
+                            onClick={() => handleModeChange("single")}
+                        >
+                            Single date
+                        </ModeButton>
+                        <ModeButton
+                            isActive={mode === "range"}
+                            onClick={() => handleModeChange("range")}
+                        >
+                            Date range
+                        </ModeButton>
                     </div>
 
-                    <Calendar
-                        mode="range"
-                        autoFocus
-                        selected={selected}
-                        onSelect={handleSelect}
-                        defaultMonth={from ?? new Date()}
-                        numberOfMonths={1}
-                    />
+                    {mode === "single" ? (
+                        <Calendar
+                            mode="single"
+                            autoFocus
+                            selected={from}
+                            onSelect={handleSelectSingle}
+                            defaultMonth={from ?? new Date()}
+                            numberOfMonths={1}
+                        />
+                    ) : (
+                        <Calendar
+                            mode="range"
+                            autoFocus
+                            selected={selected}
+                            onSelect={handleSelectRange}
+                            defaultMonth={from ?? new Date()}
+                            numberOfMonths={1}
+                        />
+                    )}
+
+                    {/* Range mode only, and only once there is something to
+                        clear. In single mode every click replaces the one
+                        selected day, so there is no half-finished state to
+                        back out of — and clearing to no date at all is the
+                        one thing the day filter is never meant to be. */}
+                    {mode === "range" && hasRange ? (
+                        <div className="flex justify-end border-bs border-border-warm p-2">
+                            <Button
+                                variant="link"
+                                size="sm"
+                                onClick={() => onChange({ dateFrom: "", dateTo: "" })}
+                            >
+                                Clear selection
+                            </Button>
+                        </div>
+                    ) : null}
                 </PopoverContent>
             </Popover>
-
-            {/* Clearing is its own control rather than a third state on the
-                chip — a broker who wants every date back should not have to
-                guess that tapping the label again does it. */}
-            {hasRange ? (
-                <button
-                    type="button"
-                    aria-label="Clear the date filter"
-                    onClick={() => onChange({ dateFrom: "", dateTo: "" })}
-                    className="
-                      flex shrink-0 items-center justify-center rounded-full text-ink-subtle
-                      transition-colors duration-160 block-7 inline-7
-                      hover:bg-surface-muted hover:text-ink
-                    "
-                >
-                    <X className="block-4 inline-4" strokeWidth={1.75} />
-                </button>
-            ) : null}
         </div>
+    );
+}
+
+function ModeButton({
+    isActive,
+    onClick,
+    children,
+}: {
+    isActive: boolean;
+    onClick: () => void;
+    children: React.ReactNode;
+}) {
+    return (
+        <button
+            type="button"
+            aria-pressed={isActive}
+            onClick={onClick}
+            className={cn(
+                `
+                  body-sm flex-1 rounded-full border px-3 py-1 font-medium transition-colors
+                  duration-160
+                `,
+                isActive
+                    ? "border-brand-ink bg-brand-ink text-white"
+                    : "border-border-warm bg-surface text-ink hover:bg-surface-muted",
+            )}
+        >
+            {children}
+        </button>
     );
 }

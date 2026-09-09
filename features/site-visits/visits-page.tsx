@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { visitsApi } from "@/lib/api/visits";
+import { formatDateIso } from "@/lib/format/date";
 
 import {
     DEFAULT_VISITS_FILTERS,
@@ -19,6 +20,7 @@ import { VisitCancelModal, VisitOutcomeModal } from "@/features/site-visits/visi
 import type { VisitAction } from "@/features/site-visits/visit-permissions";
 import { VisitRescheduleModal } from "@/features/site-visits/visit-reschedule-modal";
 import type { VisitRowHandlers } from "@/features/site-visits/visit-row";
+import { VisitsDateRange } from "@/features/site-visits/visits-date-range";
 import {
     VisitsAllClearEmpty,
     VisitsFilteredEmpty,
@@ -42,7 +44,21 @@ type VisitsPageProps = {
 };
 
 export function VisitsPage({ viewer }: VisitsPageProps) {
-    const [filters, setFilters] = useState<VisitsFilters>(DEFAULT_VISITS_FILTERS);
+    /**
+     * The book opens on today, not on the whole week.
+     *
+     * A broker's first question is "what do I have to do now", and a list
+     * running seven days deep buries today's two visits under Thursday's.
+     * The week strip is right above the list, so widening back out is one
+     * tap — but it has to be a deliberate one.
+     *
+     * Computed on mount rather than in `DEFAULT_VISITS_FILTERS`, which is a
+     * module constant and would freeze on the day the bundle was imported.
+     */
+    const [filters, setFilters] = useState<VisitsFilters>(() => {
+        const today = formatDateIso(new Date());
+        return { ...DEFAULT_VISITS_FILTERS, dateFrom: today, dateTo: today };
+    });
 
     const [visits, setVisits] = useState<VisitItem[] | null>(null);
     const [summary, setSummary] = useState<VisitsSummary | null>(null);
@@ -180,8 +196,10 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
         setFilters((prev) => ({ ...prev, ...patch }));
     }, []);
 
+    /** Clearing goes back to today, the same place the page opens on. */
     const handleClearFilters = useCallback(() => {
-        setFilters(DEFAULT_VISITS_FILTERS);
+        const today = formatDateIso(new Date());
+        setFilters({ ...DEFAULT_VISITS_FILTERS, dateFrom: today, dateTo: today });
     }, []);
 
     /**
@@ -229,12 +247,20 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
     );
 
     const isFirstLoad = visits === null;
+
+    /**
+     * Today-only is where the page starts, so it is the resting state rather
+     * than a filter. Counting it as one would leave the Clear button showing
+     * on a screen the user never narrowed, with nothing to clear.
+     */
+    const todayKey = formatDateIso(now);
+    const isDefaultDayWindow = filters.dateFrom === todayKey && filters.dateTo === todayKey;
+
     const hasFilters =
         filters.q.trim().length > 0 ||
         filters.status !== DEFAULT_VISITS_FILTERS.status ||
         filters.propertyId !== "" ||
-        filters.dateFrom !== "" ||
-        filters.dateTo !== "";
+        (!isDefaultDayWindow && (filters.dateFrom !== "" || filters.dateTo !== ""));
     /** True first-run: nothing at all, and no filter hid it. */
     const isFirstRun =
         !hasFilters &&
@@ -300,33 +326,44 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
                         isFetching ? "opacity-60 transition-opacity duration-160" : undefined
                     }
                 >
-                    {/* A selected day with nothing on it is handled inside
-                        the list, which keeps the week strip on screen. */}
-                    {(visits ?? []).length === 0 && !isEmptyDay ? (
-                        hasFilters ? (
-                            filters.status === "needs_action" ? (
-                                <VisitsAllClearEmpty viewer={viewer} />
-                            ) : (
-                                <VisitsFilteredEmpty onClear={handleClearFilters} />
-                            )
-                        ) : (
-                            <VisitsAllClearEmpty viewer={viewer} />
-                        )
-                    ) : (
-                        <VisitsList
-                            visits={visits ?? []}
-                            viewer={viewer}
-                            handlers={handlers}
-                            busyId={busyId}
-                            now={now}
-                            selectedDay={selectedDay}
-                            hasDateWindow={filters.dateFrom !== "" || filters.dateTo !== ""}
-                            dayCounts={dayCounts}
-                            // The strip covers the next seven days, so it only
-                            // makes sense while the list runs forward in time.
-                            onSelectDay={isForwardOrder ? handleSelectDay : undefined}
-                        />
-                    )}
+                    <VisitsList
+                        visits={visits ?? []}
+                        viewer={viewer}
+                        handlers={handlers}
+                        busyId={busyId}
+                        now={now}
+                        selectedDay={selectedDay}
+                        hasDateWindow={filters.dateFrom !== "" || filters.dateTo !== ""}
+                        dateFrom={filters.dateFrom}
+                        dateTo={filters.dateTo}
+                        dayCounts={dayCounts}
+                        // The week strip reads forward in time, so it only
+                        // makes sense on the forward-looking filters.
+                        onSelectDay={isForwardOrder ? handleSelectDay : undefined}
+                        // Sits on the strip's own header row, beside the week
+                        // arrows — both answer "which dates am I looking at",
+                        // so they belong together.
+                        dateControl={
+                            <VisitsDateRange
+                                dateFrom={filters.dateFrom}
+                                dateTo={filters.dateTo}
+                                onChange={handlePatch}
+                            />
+                        }
+                        // Empty states render inside the list so the week
+                        // strip and date control stay on screen — they are
+                        // the way out of an empty result, and a page-level
+                        // empty state would take them away.
+                        emptyState={
+                            (visits ?? []).length === 0 && !isEmptyDay ? (
+                                hasFilters && filters.status !== "needs_action" ? (
+                                    <VisitsFilteredEmpty onClear={handleClearFilters} />
+                                ) : (
+                                    <VisitsAllClearEmpty viewer={viewer} />
+                                )
+                            ) : null
+                        }
+                    />
                 </div>
             )}
 
