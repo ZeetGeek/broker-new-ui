@@ -26,7 +26,7 @@ export function OwnerListingsEmpty({
                     heading="Tell us where you work"
                     description="We'll show you new properties in those areas."
                 >
-                    <TextLinkButton href="/broker/profile/edit">Add service areas</TextLinkButton>
+                    <TextLinkButton href="/broker/profile">Add service areas</TextLinkButton>
                 </EmptyState>
             );
         }
@@ -37,7 +37,7 @@ export function OwnerListingsEmpty({
                 heading="Add your RERA number to get verified"
                 description="Owners approve verified brokers far more often."
             >
-                <TextLinkButton href="/broker/profile/edit">Add RERA number</TextLinkButton>
+                <TextLinkButton href="/broker/profile">Add RERA number</TextLinkButton>
             </EmptyState>
         );
     }

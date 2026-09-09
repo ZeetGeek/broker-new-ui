@@ -89,7 +89,11 @@ export function EarningsChart({ earnings, className }: EarningsChartProps) {
 
     return (
         <figure className={cn("flex flex-col gap-2", className)}>
-            <ChartContainer config={CHART_CONFIG} className="block-40 inline-full">
+            {/* `aspect-video` is baked into ChartContainer, which would make
+                the height follow the card's width instead of staying fixed.
+                Overriding it here is what keeps the chart 160px on a phone and
+                on a desktop alike. */}
+            <ChartContainer config={CHART_CONFIG} className="aspect-auto block-40 inline-full">
                 <BarChart data={earnings} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
                     {/* Horizontal only — vertical lines between six columns add
                         ink without helping anyone read a value. */}

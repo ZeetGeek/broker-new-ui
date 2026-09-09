@@ -588,13 +588,13 @@ export const dashboardMock: DashboardMock = {
         {
             id: "rera",
             label: "Add your RERA number",
-            href: "/broker/profile/edit",
+            href: "/broker/profile",
             isComplete: true,
         },
         {
             id: "areas",
             label: "Set your service areas",
-            href: "/broker/profile/edit",
+            href: "/broker/profile",
             isComplete: true,
         },
         {

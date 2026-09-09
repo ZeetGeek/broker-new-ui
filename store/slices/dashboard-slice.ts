@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import { ApiError } from "@/lib/api/client";
 import { dashboardApi, type DashboardResponse } from "@/lib/api/dashboard";
@@ -37,6 +37,17 @@ const dashboardSlice = createSlice({
     name: "dashboard",
     initialState,
     reducers: {
+        /**
+         * Replace the cached profile after the user edits it.
+         *
+         * The profile lives in this slice because the dashboard fetches it
+         * alongside its own data, and the portal header reads it for the name
+         * and avatar. Without this, saving the profile would leave the header
+         * showing the old name until a full reload.
+         */
+        setProfile(state, action: PayloadAction<UserProfile>) {
+            state.profile = action.payload;
+        },
         resetDashboard(state) {
             state.data = null;
             state.profile = null;
@@ -66,5 +77,5 @@ const dashboardSlice = createSlice({
     },
 });
 
-export const { resetDashboard } = dashboardSlice.actions;
+export const { resetDashboard, setProfile } = dashboardSlice.actions;
 export default dashboardSlice.reducer;

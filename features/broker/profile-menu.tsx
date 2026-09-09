@@ -62,7 +62,7 @@ export type BrokerProfileMenuProps = {
 };
 
 const PROFILE_HREF = "/broker/profile";
-const PROFILE_EDIT_HREF = "/broker/profile/edit";
+const PROFILE_EDIT_HREF = "/broker/profile";
 const REFERRALS_HREF = "/broker/referrals";
 const SETTINGS_HREF = "/broker/settings";
 const VERIFICATION_HREF = "/broker/verification";

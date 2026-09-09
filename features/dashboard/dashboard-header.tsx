@@ -43,7 +43,7 @@ export type DashboardHeaderProps = DashboardSummaryStats & {
 const CHIP_SURFACE = "bg-surface";
 const ICON_CLASS = "block-3 inline-3";
 const META_TEXT = "body-sm font-medium text-ink-muted";
-const PROFILE_EDIT_HREF = "/broker/profile/edit";
+const PROFILE_EDIT_HREF = "/broker/profile";
 const ADD_SERVICE_AREA_TOOLTIP =
     "Tell us where you work. We'll show you new properties in those areas.";
 const SETUP_CHIP_TOOLTIP_CLASS = "block w-max max-w-66! text-pretty";

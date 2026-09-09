@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import type { ReraStatus } from "./mock-data";
 
-const PROFILE_EDIT_HREF = "/broker/profile/edit";
+const PROFILE_EDIT_HREF = "/broker/profile";
 const VERIFY_WAIT_COPY = "Usually within 24 hours";
 const ADD_RERA_TOOLTIP =
     "Add your RERA number to get verified. Owners approve verified brokers far more often.";
