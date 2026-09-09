@@ -18,17 +18,6 @@ function unique(values: string[]): string[] {
     return [...new Set(values)];
 }
 
-function matchesBuyer(row: BuyerRow, q: string): boolean {
-    const needle = q.trim().toLowerCase();
-    if (!needle) return true;
-
-    return (
-        row.name.toLowerCase().includes(needle) ||
-        row.phoneDigits.includes(needle.replace(/\D/g, "")) ||
-        row.preferredLocalities.some((area) => area.toLowerCase().includes(needle))
-    );
-}
-
 function matchesOwner(row: OwnerRow, q: string): boolean {
     const needle = q.trim().toLowerCase();
     if (!needle) return true;
@@ -59,8 +48,6 @@ function buildOwnerRows(deals: DealItem[]): OwnerRow[] {
                 id,
                 name: deal.owner.name,
                 avatarUrl: deal.owner.avatarUrl,
-                // Only carried while the relationship is live — see the note
-                // on OwnerRow.phoneDigits.
                 phoneDigits: deal.owner.isRepresentationActive ? deal.owner.phoneDigits : undefined,
                 hasActiveRepresentation: deal.owner.isRepresentationActive,
                 propertyCount: 1,
@@ -73,8 +60,6 @@ function buildOwnerRows(deals: DealItem[]): OwnerRow[] {
             continue;
         }
 
-        // The same owner can appear on several deals. Count each property once,
-        // but count every live deal.
         const isNewProperty = !existing.propertyTitles.includes(deal.property.title);
 
         byOwner.set(id, {
@@ -92,14 +77,18 @@ function buildOwnerRows(deals: DealItem[]): OwnerRow[] {
             totalValueInr: isNewProperty
                 ? existing.totalValueInr + deal.property.amountInr
                 : existing.totalValueInr,
-            // Mixed sale and rent means the total is not a rent figure, so the
-            // /mo suffix would be wrong on it.
             isAllRent: existing.isAllRent && deal.property.isRent,
             liveDealCount: existing.liveDealCount + (isLive ? 1 : 0),
         });
     }
 
     return [...byOwner.values()];
+}
+
+function toBuyerRow(
+    client: Awaited<ReturnType<typeof listClientsWithLeadSummary>>[number],
+): BuyerRow {
+    return client;
 }
 
 export type ContactsResult = {
@@ -110,24 +99,26 @@ export type ContactsResult = {
 
 export const contactsApi = {
     /**
-     * Both sides in one call. The two lists share a source — deals — so
-     * fetching them separately would let the counts disagree mid-render.
+     * Both sides in one call. Buyer search goes to `GET /clients?search=`;
+     * summary counts stay based on the full buyer book so tab chips do not
+     * shrink while typing.
      */
     async list(filters: ContactsFilters): Promise<ContactsResult> {
-        const [clients, deals] = await Promise.all([
+        const search = filters.q.trim();
+        const [allClients, searchedClients, deals] = await Promise.all([
             listClientsWithLeadSummary(),
+            search ? listClientsWithLeadSummary({ search }) : Promise.resolve(null),
             pipelineApi.list({ ...DEFAULT_DEALS_FILTERS }).then((result) => result.items),
         ]);
 
-        // Active properties come from nested `leads` on `/clients`, not pipeline.
-        const buyers: BuyerRow[] = clients.map(({ leads: _leads, ...buyer }) => buyer);
-
+        const buyersAll = allClients.map(toBuyerRow);
+        const buyers = (searchedClients ?? allClients).map(toBuyerRow);
         const owners = buildOwnerRows(deals);
 
         const summary: ContactsSummary = {
-            buyerCount: buyers.length,
+            buyerCount: buyersAll.length,
             ownerCount: owners.length,
-            unmatchedBuyerCount: buyers.filter((row) => row.liveDealCount === 0).length,
+            unmatchedBuyerCount: buyersAll.filter((row) => row.liveDealCount === 0).length,
             lapsedOwnerCount: owners.filter((row) => !row.hasActiveRepresentation).length,
         };
 
@@ -139,7 +130,6 @@ export const contactsApi = {
             if (filters.sort === "most_active") {
                 return sorted.sort((a, b) => b.liveDealCount - a.liveDealCount);
             }
-            // Never-contacted buyers lead: they are the ones needing a call.
             return sorted.sort((a, b) => {
                 const aAt = a.lastContactedAt ? new Date(a.lastContactedAt).getTime() : 0;
                 const bAt = b.lastContactedAt ? new Date(b.lastContactedAt).getTime() : 0;
@@ -159,7 +149,7 @@ export const contactsApi = {
         };
 
         return {
-            buyers: sortBuyers(buyers.filter((row) => matchesBuyer(row, filters.q))),
+            buyers: sortBuyers(buyers),
             owners: sortOwners(owners.filter((row) => matchesOwner(row, filters.q))),
             summary,
         };

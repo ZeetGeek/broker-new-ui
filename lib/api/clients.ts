@@ -71,10 +71,26 @@ type ApiClientContact = {
     leads?: ApiClientLead[];
 };
 
+export type ClientLeadDetail = {
+    leadId: string;
+    propertyId: string;
+    title: string;
+    city: string;
+    stage: string;
+    updatedAt: string | null;
+    offerAmountInr: number | null;
+    listPriceInr: number | null;
+    closedAmountInr: number | null;
+    isRent: boolean;
+};
+
 export type ClientLeadSummary = {
     liveDealCount: number;
     closedDealCount: number;
     activePropertyTitles: string[];
+    attachedProperties: Array<{ id: string; leadId: string; title: string }>;
+    /** Every lead on this buyer, including closed/lost — for the view modal. */
+    leads: ClientLeadDetail[];
 };
 
 type ClientsListResponse = {
@@ -152,17 +168,55 @@ function asSource(value: string | null | undefined): BuyerSource | null {
 
 function isClosedLead(lead: ApiClientLead): boolean {
     const stage = lead.stage?.toLowerCase();
-    if (stage === "closed") return true;
-    return lead.closedAmount != null && String(lead.closedAmount).trim() !== "";
+    return stage === "closed_won" || stage === "closed";
 }
 
 function isLostLead(lead: ApiClientLead): boolean {
-    return lead.stage?.toLowerCase() === "lost";
+    const stage = lead.stage?.toLowerCase();
+    return stage === "closed_lost" || stage === "lost";
+}
+
+function toMoney(value: string | number | null | undefined): number | null {
+    if (value == null || value === "") return null;
+    const n = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(n) ? n : null;
+}
+
+function mapLeadDetail(lead: ApiClientLead): ClientLeadDetail | null {
+    const propertyId = lead.property?.id ?? lead.propertyId;
+    if (!propertyId) return null;
+
+    const rent = toMoney(lead.property?.monthlyRent);
+    const sale = toMoney(lead.property?.salePrice);
+    const isRent = (rent ?? 0) > 0 && (sale ?? 0) <= 0;
+
+    return {
+        leadId: lead.id,
+        propertyId,
+        title: lead.property?.title?.trim() || "Property",
+        city: lead.property?.city?.trim() || "",
+        stage: (lead.stage ?? "new").toLowerCase(),
+        updatedAt: lead.updatedAt ?? lead.createdAt ?? null,
+        offerAmountInr: toMoney(lead.offerAmount),
+        listPriceInr: toMoney(lead.listPrice) ?? sale ?? rent,
+        closedAmountInr: toMoney(lead.closedAmount),
+        isRent,
+    };
 }
 
 /** Live leads (not closed/lost) — drives the property line on buyer cards. */
 export function summarizeClientLeads(leads: ApiClientLead[] | undefined): ClientLeadSummary {
     const list = leads ?? [];
+    const details = list
+        .map(mapLeadDetail)
+        .filter((item): item is ClientLeadDetail => item != null)
+        // Newest activity first.
+        .sort((a, b) => {
+            const aAt = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+            const bAt = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+            return bAt - aAt;
+        });
+
     const live = list.filter((lead) => !isClosedLead(lead) && !isLostLead(lead));
     const closed = list.filter((lead) => isClosedLead(lead));
     const titles = [
@@ -172,11 +226,26 @@ export function summarizeClientLeads(leads: ApiClientLead[] | undefined): Client
                 .filter((title): title is string => Boolean(title)),
         ),
     ];
+    const attachedProperties = live
+        .map((lead) => {
+            const id = lead.property?.id ?? lead.propertyId;
+            if (!id) return null;
+            return {
+                id,
+                leadId: lead.id,
+                title: lead.property?.title?.trim() || "Property",
+            };
+        })
+        .filter((item): item is NonNullable<typeof item> => item != null)
+        // Dedupe by property id (keep first).
+        .filter((item, index, all) => all.findIndex((row) => row.id === item.id) === index);
 
     return {
         liveDealCount: live.length,
         closedDealCount: closed.length,
         activePropertyTitles: titles,
+        attachedProperties,
+        leads: details,
     };
 }
 
@@ -208,27 +277,28 @@ function mapContact(contact: ApiClientContact): ClientItem {
  * Clients plus the lead summary from nested `/clients` leads. Contacts list
  * uses this so buyer cards show real active properties without joining pipeline.
  */
-export async function listClientsWithLeadSummary(): Promise<
-    Array<ClientItem & ClientLeadSummary & { leads: ApiClientLead[] }>
-> {
-    const contacts = await fetchAllContacts();
+export async function listClientsWithLeadSummary(options?: {
+    search?: string;
+}): Promise<Array<ClientItem & ClientLeadSummary>> {
+    const contacts = await fetchAllContacts(options);
     return contacts.map((contact) => ({
         ...mapContact(contact),
         ...summarizeClientLeads(contact.leads),
-        leads: contact.leads ?? [],
     }));
 }
 
-async function fetchAllContacts(): Promise<ApiClientContact[]> {
+async function fetchAllContacts(options?: { search?: string }): Promise<ApiClientContact[]> {
     const items: ApiClientContact[] = [];
     let page = 1;
     let totalPages = 1;
+    const search = options?.search?.trim();
 
     while (page <= totalPages) {
         const qs = new URLSearchParams({
             page: String(page),
             limit: "100",
         });
+        if (search) qs.set("search", search);
         const response = await apiFetch<ClientsListResponse>(`/clients?${qs}`);
         items.push(...(response.items ?? []));
         totalPages = Math.max(1, response.totalPages ?? 1);
@@ -327,8 +397,8 @@ export async function attachedClientsByProperty(): Promise<Map<string, AttachedC
 
 export const clientsApi = {
     /** Every buyer on the broker's book. */
-    async list(): Promise<ClientItem[]> {
-        const contacts = await fetchAllContacts();
+    async list(options?: { search?: string }): Promise<ClientItem[]> {
+        const contacts = await fetchAllContacts(options);
         return contacts.map(mapContact);
     },
 
@@ -338,19 +408,16 @@ export const clientsApi = {
     async create(input: NewBuyerInput): Promise<ClientItem> {
         const contact = await apiFetch<ApiClientContact>("/clients", {
             method: "POST",
-            body: JSON.stringify({
-                name: input.name,
-                phone: `+91${input.phoneDigits}`,
-                email: input.email?.trim() || undefined,
-                clientType: clientTypeFromLookingFor(input.lookingFor),
-                propertyKind: input.propertyKind,
-                preferredLocalities: input.preferredLocalities,
-                budgetMin: input.budgetMinInr ?? undefined,
-                budgetMax: input.budgetMaxInr ?? undefined,
-                bhk: input.bhk ?? undefined,
-                source: input.source,
-                notes: input.notes?.trim() || undefined,
-            }),
+            body: JSON.stringify(toClientPayload(input)),
+        });
+        return mapContact(contact);
+    },
+
+    /** Update an existing buyer contact. */
+    async update(clientId: string, input: NewBuyerInput): Promise<ClientItem> {
+        const contact = await apiFetch<ApiClientContact>(`/clients/${clientId}`, {
+            method: "PATCH",
+            body: JSON.stringify(toClientPayload(input)),
         });
         return mapContact(contact);
     },
@@ -392,4 +459,38 @@ export const clientsApi = {
             }),
         });
     },
+
+    /** Attach one buyer to one or more properties (skips already-linked pairs). */
+    async attachClientToProperties(clientId: string, propertyIds: string[]): Promise<void> {
+        const unique = [...new Set(propertyIds.filter(Boolean))];
+        if (unique.length === 0) return;
+
+        await Promise.all(
+            unique.map((propertyId) =>
+                apiFetch<AttachClientsResponse>("/clients/leads", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        propertyId,
+                        clientIds: [clientId],
+                    }),
+                }),
+            ),
+        );
+    },
 };
+
+function toClientPayload(input: NewBuyerInput) {
+    return {
+        name: input.name,
+        phone: `+91${input.phoneDigits}`,
+        email: input.email?.trim() || undefined,
+        clientType: clientTypeFromLookingFor(input.lookingFor),
+        propertyKind: input.propertyKind,
+        preferredLocalities: input.preferredLocalities,
+        budgetMin: input.budgetMinInr ?? undefined,
+        budgetMax: input.budgetMaxInr ?? undefined,
+        bhk: input.bhk ?? undefined,
+        source: input.source,
+        notes: input.notes?.trim() || undefined,
+    };
+}
