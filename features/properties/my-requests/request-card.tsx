@@ -21,7 +21,7 @@ import {
 import { formatAreaSqft } from "@/lib/format/area";
 import { formatRelativePast } from "@/lib/format/date";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
-import { brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
@@ -254,7 +254,9 @@ function RequestCardActions({
                                 size="sm"
                                 variant="outline"
                                 className="border-border-warm"
-                                render={<Link href={brokerPropertyDetailHref(item.propertyId)} />}
+                                render={
+                                    <Link href={brokerOwnerListingDetailHref(item.propertyId)} />
+                                }
                             >
                                 View details
                             </Button>
@@ -463,7 +465,7 @@ export function RequestCard({
             >
                 <div className={cn("flex gap-4", isList ? "flex-col sm:flex-row" : "flex-col")}>
                     <Link
-                        href={brokerPropertyDetailHref(item.propertyId)}
+                        href={brokerOwnerListingDetailHref(item.propertyId)}
                         className={cn(
                             `
                               relative shrink-0 overflow-hidden rounded-inner bg-surface-muted
@@ -488,7 +490,7 @@ export function RequestCard({
                         <div className="flex flex-wrap items-start justify-between gap-2">
                             <div className="flex flex-col gap-1 min-inline-0">
                                 <Link
-                                    href={brokerPropertyDetailHref(item.propertyId)}
+                                    href={brokerOwnerListingDetailHref(item.propertyId)}
                                     className="
                                       body font-semibold text-ink transition-colors duration-160
                                       hover:text-brand
@@ -507,7 +509,11 @@ export function RequestCard({
                                 </p>
                             </div>
 
-                            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                            <div
+                                className="
+                              flex shrink-0 flex-wrap items-center justify-end gap-1.5
+                            "
+                            >
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
