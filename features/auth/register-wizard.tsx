@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Circle, Lock, Mail } from "lucide-react";
+import { CheckCircle2, Circle, Gift, Lock, Mail } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { authApi } from "@/lib/api/auth";
@@ -30,6 +30,10 @@ import { PortalPicker } from "./portal-picker";
 import { SocialAuthButtons } from "./social-auth-buttons";
 
 type Step = "role" | "account";
+
+function normalizeReferralCode(value: string): string {
+    return value.trim().toUpperCase();
+}
 
 function syncSlideHeight(slide: HTMLElement, pageId: "1" | "2") {
     const active = slide.querySelector<HTMLElement>(`.t-page[data-page-id="${pageId}"]`);
@@ -108,14 +112,25 @@ function PasswordRequirements({ password }: { password: string }) {
     );
 }
 
-export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Portal }) {
+export function RegisterWizard({
+    initialPortal = "owner",
+    initialReferralCode = "",
+}: {
+    initialPortal?: Portal;
+    /** From `/register?ref=CODE` — same as the old frontend invite links. */
+    initialReferralCode?: string;
+}) {
     const router = useRouter();
     const [portal, setPortal] = React.useState<Portal>(initialPortal);
     const [step, setStep] = React.useState<Step>("role");
     const [isRedirecting, setIsRedirecting] = React.useState(false);
+    const [referralCode, setReferralCode] = React.useState(() =>
+        normalizeReferralCode(initialReferralCode),
+    );
     const slideRef = React.useRef<HTMLDivElement>(null);
     const pageId = step === "role" ? "1" : "2";
     const selected = PORTAL_OPTIONS.find((option) => option.value === portal) ?? PORTAL_OPTIONS[0];
+    const resolvedReferralCode = normalizeReferralCode(referralCode);
 
     const {
         control,
@@ -199,6 +214,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                 email: values.email.trim(),
                 password: values.password,
                 role: values.portal,
+                ...(resolvedReferralCode ? { referralCode: resolvedReferralCode } : {}),
             });
             toast.success("Account created. Check your email to verify.");
             setIsRedirecting(true);
@@ -296,7 +312,11 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                             />
                         </div>
 
-                        <SocialAuthButtons action="Sign up" role={portal} />
+                        <SocialAuthButtons
+                            action="Sign up"
+                            role={portal}
+                            referralCode={resolvedReferralCode || undefined}
+                        />
 
                         <OrDivider />
 
@@ -425,6 +445,34 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                     </div>
                                 )}
                             />
+
+                            <div className="flex flex-col gap-2">
+                                <label
+                                    htmlFor="register-referral-code"
+                                    className="body font-medium text-ink"
+                                >
+                                    Referral code{" "}
+                                    <span className="font-normal text-ink-subtle">(optional)</span>
+                                </label>
+                                <Input
+                                    id="register-referral-code"
+                                    size="lg"
+                                    type="text"
+                                    autoComplete="off"
+                                    placeholder="e.g. YB-NIVEDITA"
+                                    startIcon={Gift}
+                                    value={referralCode}
+                                    onValueChange={(value) =>
+                                        setReferralCode(normalizeReferralCode(value))
+                                    }
+                                    maxLength={40}
+                                />
+                                {initialReferralCode ? (
+                                    <p className="body-xs text-ink-subtle">
+                                        Filled from your invite link. You can change it if needed.
+                                    </p>
+                                ) : null}
+                            </div>
 
                             {submitError ? (
                                 <p role="alert" className="body-sm text-danger">

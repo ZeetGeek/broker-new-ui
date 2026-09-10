@@ -56,15 +56,23 @@ function SocialButton({
 export function SocialAuthButtons({
     action,
     role = "broker",
+    referralCode,
 }: {
     action: "Sign in" | "Sign up";
     role?: Portal;
+    /** Passed through on Google sign-up so invite links still credit the referrer. */
+    referralCode?: string;
 }) {
     const [isOpeningGoogle, setIsOpeningGoogle] = React.useState(false);
 
     function handleGoogle() {
         setIsOpeningGoogle(true);
-        window.location.href = authApi.googleStartUrl({ role });
+        window.location.href = authApi.googleStartUrl({
+            role,
+            ...(action === "Sign up" && referralCode?.trim()
+                ? { referralCode: referralCode.trim().toUpperCase() }
+                : {}),
+        });
     }
 
     function handleApple() {
