@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BellRing, MessageSquare, MoreHorizontal, Trash2 } from "lucide-react";
+import { ArrowRight, BellRing, MessageSquare, MoreHorizontal } from "lucide-react";
 
 import { formatRelativePast } from "@/lib/format/date";
 import { buildWhatsAppInviteUrl } from "@/lib/share/referral";
@@ -33,7 +33,6 @@ import { isNudgeable, type ReferralItem, referralNextStep } from "@/features/ref
 
 export type ReferralRowHandlers = {
     onNudge: (referralId: string) => void;
-    onCancel: (referralId: string) => void;
     onOpen: (referralId: string) => void;
 };
 
@@ -73,8 +72,6 @@ export function ReferralRow({
     const nudge = nudgeState(referral, now);
     const blockedReason = nudgeBlockedReason(nudge);
     const nextStep = referralNextStep(referral);
-    /** Only a person who has not signed up can have their invite withdrawn. */
-    const canWithdraw = referral.joinedAt === null && referral.status !== "expired";
 
     const firstName = referral.person.name.split(" ")[0];
     const message = buildInviteMessage({ inviterName, shareUrl });
@@ -142,11 +139,17 @@ export function ReferralRow({
                       body-xs flex flex-wrap items-center gap-x-2 gap-y-0.5 text-ink-subtle
                     "
                 >
-                    <PhoneNumber phoneDigits={referral.person.phoneDigits} />
-                    <span aria-hidden>·</span>
+                    {referral.person.phoneDigits ? (
+                        <PhoneNumber phoneDigits={referral.person.phoneDigits} />
+                    ) : referral.person.email ? (
+                        <span className="truncate">{referral.person.email}</span>
+                    ) : null}
+                    {(referral.person.phoneDigits || referral.person.email) && (
+                        <span aria-hidden>·</span>
+                    )}
                     {/* Every relative time says what it is timing — a bare
                         "3 days ago" next to a phone number invites a guess. */}
-                    <span>Invited {formatRelativePast(new Date(referral.invitedAt), now)}</span>
+                    <span>Joined {formatRelativePast(new Date(referral.invitedAt), now)}</span>
                     <span aria-hidden>·</span>
                     <span>{REFERRAL_CHANNEL_LABEL[referral.channel]}</span>
                 </div>
@@ -211,7 +214,7 @@ export function ReferralRow({
                                 <a
                                     href={buildWhatsAppInviteUrl(
                                         message,
-                                        referral.person.phoneDigits,
+                                        referral.person.phoneDigits || undefined,
                                     )}
                                     target="_blank"
                                     rel="noreferrer noopener"
@@ -221,16 +224,6 @@ export function ReferralRow({
                             <MessageSquare aria-hidden />
                             Message on WhatsApp
                         </DropdownMenuItem>
-
-                        {canWithdraw ? (
-                            <DropdownMenuItem
-                                onClick={() => handlers.onCancel(referral.id)}
-                                className="text-danger"
-                            >
-                                <Trash2 aria-hidden />
-                                Withdraw invite
-                            </DropdownMenuItem>
-                        ) : null}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>

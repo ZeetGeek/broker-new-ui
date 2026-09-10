@@ -8,10 +8,8 @@
  *
  * Two tracks, because the two sides prove themselves differently:
  *
- * - An invited **broker** qualifies when an owner **accepts** their request to
- *   represent. Not when they sign up, and not when they send the request —
- *   the whole loop only pays off once a representation actually exists, and
- *   requests can be sent to nobody in particular.
+ * - An invited **broker** qualifies when they **request** to represent an
+ *   owner property (after email verify). Credits pay on that request.
  * - An invited **owner** qualifies when they create their first property. That
  *   is supply arriving, which is the thing the marketplace is short of.
  *
@@ -212,7 +210,7 @@ export function referralNextStep(item: ReferralItem): string | null {
         case "verified":
             return item.role === "owner" ? "Add their first property" : "Request an owner property";
         case "awaiting_approval":
-            return "Owner to accept";
+            return "Request an owner property";
         case "qualified":
         case "expired":
             return null;

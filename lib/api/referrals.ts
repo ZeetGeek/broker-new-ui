@@ -1,77 +1,237 @@
-import {
-    MOCK_CREDIT_LEDGER,
-    MOCK_REFERRAL_CODE,
-    MOCK_REFERRALS,
-} from "@/features/referrals/mock-referrals";
+import { apiFetch } from "@/lib/api/client";
+
 import { isStaleReferral } from "@/features/referrals/referral-meta";
 import {
     type CreditEntry,
+    type CreditEntryKind,
     isNudgeable,
     isPendingReferral,
-    type ReferralChannel,
+    type ReferralCode,
     type ReferralEarningsPoint,
-    type ReferralInviteDraft,
     type ReferralItem,
+    type ReferralRole,
     type ReferralsFilters,
     type ReferralsResult,
     type ReferralsSummary,
+    type ReferralStatus,
 } from "@/features/referrals/types";
 
+/** Backend shapes — read-only. No DB/schema changes from the client. */
+
+export type ReferralOverviewResponse = {
+    balance: number;
+    listingCost: number;
+    referralCode: string;
+    inviteUrl: string;
+    share?: { whatsappUrl?: string; copyText?: string };
+    earnRules?: Array<{ key: string; label: string; credits: number }>;
+    history?: ReferralTxnDto[];
+};
+
+type ReferralTxnDto = {
+    id: string;
+    type: string;
+    reason?: string | null;
+    description?: string | null;
+    label?: string | null;
+    amount: number;
+    date?: string | null;
+    createdAt?: string | Date | null;
+};
+
+type BackendInviteStatus = "credited" | "awaiting_property" | "awaiting_request" | "email_pending";
+
+export type ReferralInviteDto = {
+    id: string;
+    referredUserId: string;
+    fullName: string;
+    email: string;
+    role: string;
+    avatarUrl: string | null;
+    emailVerified: boolean;
+    milestones?: {
+        emailVerified: boolean;
+        firstProperty: boolean;
+        firstRepresentationRequest: boolean;
+    };
+    status: BackendInviteStatus;
+    statusLabel: string;
+    nextStep?: string | null;
+    creditsEarned: number;
+    creditsPending: number;
+    joinedAt: string | Date;
+    creditedAt: string | Date | null;
+};
+
+export type ReferralInvitesResponse = {
+    page: number;
+    limit: number;
+    total: number;
+    summary: {
+        totalInvites: number;
+        credited: number;
+        pendingVerification: number;
+        awaitingAction?: number;
+    };
+    items: ReferralInviteDto[];
+};
+
+export type ReferralHistoryResponse = {
+    page: number;
+    limit: number;
+    total: number;
+    items: ReferralTxnDto[];
+};
+
+function toIso(value: string | Date | null | undefined): string | null {
+    if (value == null) return null;
+    if (value instanceof Date) return value.toISOString();
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+function toIsoRequired(value: string | Date | null | undefined, fallback = new Date()): string {
+    return toIso(value) ?? fallback.toISOString();
+}
+
 /**
- * Mock referrals API.
+ * Map API invite statuses onto the UI state machine.
  *
- * Same shape as the real endpoint will have, so swapping in `apiClient` later
- * is a change to this file and nothing above it. State is module-level and
- * mutable so an invite sent or a nudge fired survives within a session — a
- * fixture that resets on every refetch makes the optimistic paths untestable.
- *
- * Qualification is not modelled here as something the client can trigger. A
- * referral becomes `qualified` when an owner accepts a request or an owner
- * lists a property — both happen on the other person's account, so the server
- * is the only thing that can move that state. The client only ever reads it.
+ * Backend only tracks people who already registered with the code — there is
+ * no pre-signup `sent`/`opened` row. Broker reward unlocks on first
+ * representation *request*, not owner acceptance.
  */
-
-let referrals: ReferralItem[] = MOCK_REFERRALS.map((referral) => ({ ...referral }));
-const ledger: CreditEntry[] = MOCK_CREDIT_LEDGER.map((entry) => ({ ...entry }));
-
-function delay(ms = 220): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+function mapInviteStatus(invite: ReferralInviteDto): ReferralStatus {
+    switch (invite.status) {
+        case "credited":
+            return "qualified";
+        case "email_pending":
+            return "joined";
+        case "awaiting_property":
+        case "awaiting_request":
+            return "verified";
+        default:
+            return "joined";
+    }
 }
 
-function nowIso(): string {
-    return new Date().toISOString();
+function mapRole(role: string): ReferralRole | null {
+    if (role === "broker" || role === "owner") return role;
+    return null;
 }
 
-function matchesQuery(referral: ReferralItem, q: string): boolean {
-    const needle = q.trim().toLowerCase();
-    if (!needle) return true;
-
-    return [
-        referral.person.name,
-        referral.person.phoneDigits,
-        referral.person.email ?? "",
-        referral.person.agencyName ?? "",
-        referral.person.city ?? "",
-    ].some((field) => field.toLowerCase().includes(needle));
+function mapTxnKind(reason: string | null | undefined, amount: number): CreditEntryKind {
+    if (reason === "listing" || amount < 0) return "listing_published";
+    if (reason === "refer_broker" || reason === "refer_owner") return "referral_qualified";
+    return "bonus";
 }
 
-function matchesStatus(referral: ReferralItem, filter: ReferralsFilters["status"]): boolean {
-    if (filter === "all") return true;
-    if (filter === "pending") return isPendingReferral(referral.status);
-    return referral.status === filter;
+function mapTxn(txn: ReferralTxnDto): CreditEntry {
+    return {
+        id: txn.id,
+        kind: mapTxnKind(txn.reason, txn.amount),
+        amount: txn.amount,
+        label: txn.description || txn.label || txn.reason || txn.type,
+        at: toIsoRequired(txn.createdAt),
+        referralId: null,
+    };
 }
 
-function summarize(all: ReferralItem[], now: Date): ReferralsSummary {
-    const invitedCount = all.length;
-    const pendingCount = all.filter((item) => isPendingReferral(item.status)).length;
-    const joinedCount = all.filter((item) => item.joinedAt !== null).length;
-    const qualifiedCount = all.filter((item) => item.status === "qualified").length;
-    const emailPendingCount = all.filter((item) => item.status === "joined").length;
-    const awaitingApprovalCount = all.filter((item) => item.status === "awaiting_approval").length;
-    const expiredCount = all.filter((item) => item.status === "expired").length;
-    const needsNudgeCount = all.filter((item) => isStaleReferral(item, now)).length;
+function buildHistory(invite: ReferralInviteDto): ReferralItem["history"] {
+    const events: ReferralItem["history"] = [];
+    const joinedAt = toIsoRequired(invite.joinedAt);
 
-    const creditBalance = ledger.reduce((total, entry) => total + entry.amount, 0);
+    events.push({
+        id: `${invite.id}-joined`,
+        at: joinedAt,
+        label: "Signed up with your code",
+        kind: "joined",
+    });
+
+    if (invite.emailVerified || invite.milestones?.emailVerified) {
+        events.push({
+            id: `${invite.id}-verified`,
+            at: joinedAt,
+            label: "Confirmed their email",
+            kind: "verified",
+        });
+    }
+
+    if (invite.milestones?.firstProperty) {
+        events.push({
+            id: `${invite.id}-property`,
+            at: joinedAt,
+            label: "Listed their first property",
+            kind: "verified",
+        });
+    }
+
+    if (invite.milestones?.firstRepresentationRequest) {
+        events.push({
+            id: `${invite.id}-request`,
+            at: joinedAt,
+            label: "Requested an owner property",
+            kind: "verified",
+        });
+    }
+
+    if (invite.creditedAt) {
+        events.push({
+            id: `${invite.id}-credited`,
+            at: toIsoRequired(invite.creditedAt),
+            label: "Qualified — credits paid",
+            kind: "qualified",
+        });
+    }
+
+    return events;
+}
+
+export function mapInviteToReferralItem(invite: ReferralInviteDto): ReferralItem {
+    const joinedAt = toIsoRequired(invite.joinedAt);
+    const status = mapInviteStatus(invite);
+    const role = mapRole(invite.role);
+
+    return {
+        id: invite.id,
+        status,
+        role,
+        person: {
+            id: invite.referredUserId,
+            name: invite.fullName,
+            // Phone is not returned by the invites API — show email instead in the row.
+            phoneDigits: "",
+            email: invite.email,
+            avatarUrl: invite.avatarUrl ?? undefined,
+        },
+        channel: "link",
+        invitedAt: joinedAt,
+        openedAt: joinedAt,
+        joinedAt,
+        verifiedAt: invite.emailVerified || invite.milestones?.emailVerified ? joinedAt : null,
+        qualifiedAt: invite.creditedAt ? toIsoRequired(invite.creditedAt) : null,
+        // Registered invites do not expire on the server.
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60_000).toISOString(),
+        creditsEarned: invite.creditsEarned,
+        reminderCount: 0,
+        lastRemindedAt: null,
+        history: buildHistory(invite),
+    };
+}
+
+function summarizeFromApi(
+    invitesSummary: ReferralInvitesResponse["summary"],
+    items: ReferralItem[],
+    ledger: CreditEntry[],
+    balance: number,
+    now: Date,
+): ReferralsSummary {
+    const invitedCount = invitesSummary.totalInvites;
+    const qualifiedCount = invitesSummary.credited;
+    const emailPendingCount = invitesSummary.pendingVerification;
+    const awaitingAction = invitesSummary.awaitingAction ?? 0;
+    const pendingCount = emailPendingCount + awaitingAction;
+
     const creditsEarnedTotal = ledger
         .filter((entry) => entry.amount > 0)
         .reduce((total, entry) => total + entry.amount, 0);
@@ -82,59 +242,22 @@ function summarize(all: ReferralItem[], now: Date): ReferralsSummary {
     return {
         invitedCount,
         pendingCount,
-        joinedCount,
+        joinedCount: invitedCount,
         qualifiedCount,
         emailPendingCount,
-        awaitingApprovalCount,
-        expiredCount,
-        needsNudgeCount,
-        creditBalance,
+        awaitingApprovalCount: 0,
+        expiredCount: 0,
+        needsNudgeCount: items.filter((item) => isStaleReferral(item, now)).length,
+        creditBalance: balance,
         creditsEarnedTotal,
         creditsSpentTotal,
-        // No invites means no rate. Reporting 0% for someone who has never
-        // invited anyone reads as a failure they did not earn.
         conversionPct:
             invitedCount === 0 ? null : Math.round((qualifiedCount / invitedCount) * 100),
     };
 }
 
-/**
- * Anything the inviter can act on first, then everything else newest-first.
- *
- * The list answers "who do I chase", so a chaseable invite buried under last
- * month's successes cannot be chased. `awaiting_approval` ranks below the
- * nudgeable ones deliberately — it looks urgent and is not actionable.
- */
-function sortReferrals(items: ReferralItem[], now: Date): ReferralItem[] {
-    const rank = (item: ReferralItem): number => {
-        if (isStaleReferral(item, now)) return 0;
-        if (isNudgeable(item.status)) return 1;
-        if (item.status === "awaiting_approval") return 2;
-        if (item.status === "qualified") return 3;
-        return 4;
-    };
-
-    return [...items].sort((a, b) => {
-        const byRank = rank(a) - rank(b);
-        if (byRank !== 0) return byRank;
-        return new Date(b.invitedAt).getTime() - new Date(a.invitedAt).getTime();
-    });
-}
-
-/** Months the chart always shows, however quiet they were. */
 const EARNINGS_MONTHS = 6;
 
-/**
- * Credits earned per month over the last six months, oldest first.
- *
- * Empty months are filled in rather than skipped: a chart that omits a month
- * with no earnings silently rescales the gap between the ones either side of
- * it, which makes a quiet spell look like it never happened.
- *
- * Spending is excluded on purpose — this answers "what has referring earned
- * me", and netting a published listing against it would answer neither that
- * nor "what did I spend".
- */
 function buildEarnings(entries: CreditEntry[], qualified: ReferralItem[]): ReferralEarningsPoint[] {
     const now = new Date();
     const points: ReferralEarningsPoint[] = [];
@@ -162,114 +285,87 @@ function buildEarnings(entries: CreditEntry[], qualified: ReferralItem[]): Refer
     return points;
 }
 
-export type SendInviteInput = ReferralInviteDraft & { channel: ReferralChannel };
+function matchesQuery(referral: ReferralItem, q: string): boolean {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return true;
+
+    return [
+        referral.person.name,
+        referral.person.email ?? "",
+        referral.person.agencyName ?? "",
+        referral.person.city ?? "",
+    ].some((field) => field.toLowerCase().includes(needle));
+}
+
+function matchesStatus(referral: ReferralItem, filter: ReferralsFilters["status"]): boolean {
+    if (filter === "all") return true;
+    if (filter === "pending") return isPendingReferral(referral.status);
+    return referral.status === filter;
+}
+
+function sortReferrals(items: ReferralItem[], now: Date): ReferralItem[] {
+    const rank = (item: ReferralItem): number => {
+        if (isStaleReferral(item, now)) return 0;
+        if (isNudgeable(item.status)) return 1;
+        if (item.status === "awaiting_approval") return 2;
+        if (item.status === "qualified") return 3;
+        return 4;
+    };
+
+    return [...items].sort((a, b) => {
+        const byRank = rank(a) - rank(b);
+        if (byRank !== 0) return byRank;
+        return new Date(b.invitedAt).getTime() - new Date(a.invitedAt).getTime();
+    });
+}
 
 export const referralsApi = {
-    async list(filters: ReferralsFilters): Promise<ReferralsResult> {
-        await delay();
-        const now = new Date();
+    overview() {
+        return apiFetch<ReferralOverviewResponse>("/referrals");
+    },
 
-        const filtered = referrals.filter(
+    invites(page = 1, limit = 50) {
+        return apiFetch<ReferralInvitesResponse>(`/referrals/invites?page=${page}&limit=${limit}`);
+    },
+
+    history(page = 1, limit = 50) {
+        return apiFetch<ReferralHistoryResponse>(`/referrals/history?page=${page}&limit=${limit}`);
+    },
+
+    /**
+     * Load overview + invites + ledger, then shape them for the referrals page.
+     * Filters are applied client-side — the backend list endpoints are paginated
+     * only and do not accept search/status query params.
+     */
+    async list(filters: ReferralsFilters): Promise<ReferralsResult> {
+        const [overview, invites, history] = await Promise.all([
+            this.overview(),
+            this.invites(1, 100),
+            this.history(1, 100),
+        ]);
+
+        const now = new Date();
+        const allItems = invites.items.map(mapInviteToReferralItem);
+        const ledger = history.items
+            .map(mapTxn)
+            .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+
+        const filtered = allItems.filter(
             (referral) =>
                 matchesQuery(referral, filters.q) && matchesStatus(referral, filters.status),
         );
 
+        const referralCode: ReferralCode = {
+            code: overview.referralCode,
+            shareUrl: overview.inviteUrl,
+        };
+
         return {
             items: sortReferrals(filtered, now),
-            // Ledger is never narrowed by the list filters — it is an account
-            // statement, and a statement that hides lines is not one.
-            ledger: [...ledger].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()),
-            // Built from every referral, never the filtered list — a chart
-            // that moved when a search box was typed into would be lying.
-            earnings: buildEarnings(ledger, referrals),
-            summary: summarize(referrals, now),
-            referralCode: MOCK_REFERRAL_CODE,
+            ledger,
+            earnings: buildEarnings(ledger, allItems),
+            summary: summarizeFromApi(invites.summary, allItems, ledger, overview.balance, now),
+            referralCode,
         };
-    },
-
-    /**
-     * Create an invite.
-     *
-     * Rejects a number already invited rather than silently creating a second
-     * row. Two live invites to one person means two nudges landing on the same
-     * phone, which is how a referral programme becomes spam.
-     */
-    async invite(input: SendInviteInput): Promise<ReferralItem> {
-        await delay(320);
-
-        const duplicate = referrals.find(
-            (referral) =>
-                referral.person.phoneDigits === input.phoneDigits && referral.status !== "expired",
-        );
-        if (duplicate) {
-            throw new Error(`You have already invited ${duplicate.person.name}.`);
-        }
-
-        const at = nowIso();
-        const created: ReferralItem = {
-            id: `rf_${Math.random().toString(36).slice(2, 8)}`,
-            status: "sent",
-            // Unknown until they sign up — one link serves both sides.
-            role: null,
-            person: {
-                id: `rp_${Math.random().toString(36).slice(2, 8)}`,
-                name: input.name.trim(),
-                phoneDigits: input.phoneDigits,
-            },
-            channel: input.channel,
-            invitedAt: at,
-            openedAt: null,
-            joinedAt: null,
-            verifiedAt: null,
-            qualifiedAt: null,
-            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60_000).toISOString(),
-            creditsEarned: 0,
-            reminderCount: 0,
-            lastRemindedAt: null,
-            history: [{ id: `re_${at}`, at, label: "You sent the invite", kind: "sent" }],
-        };
-
-        referrals = [created, ...referrals];
-        return created;
-    },
-
-    /** Nudge one invite. The cooldown and the ceiling are enforced server-side too. */
-    async remind(referralId: string): Promise<void> {
-        await delay(260);
-
-        const at = nowIso();
-        referrals = referrals.map((referral) =>
-            referral.id === referralId
-                ? {
-                      ...referral,
-                      reminderCount: referral.reminderCount + 1,
-                      lastRemindedAt: at,
-                      history: [
-                          ...referral.history,
-                          {
-                              id: `re_${at}`,
-                              at,
-                              label: `You nudged ${referral.person.name.split(" ")[0]}`,
-                              kind: "reminded" as const,
-                          },
-                      ],
-                  }
-                : referral,
-        );
-    },
-
-    /**
-     * Withdraw an invite that has not been taken up. Only the invite goes —
-     * a person who already joined is not the inviter's to remove.
-     */
-    async cancel(referralId: string): Promise<void> {
-        await delay(260);
-
-        const target = referrals.find((referral) => referral.id === referralId);
-        if (target && target.joinedAt !== null) {
-            throw new Error("They have already signed up, so this invite cannot be withdrawn.");
-        }
-
-        referrals = referrals.filter((referral) => referral.id !== referralId);
     },
 };

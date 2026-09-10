@@ -4,12 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { referralsApi } from "@/lib/api/referrals";
+import { buildWhatsAppInviteUrl } from "@/lib/share/referral";
 
 import { CreditsLedger } from "@/features/referrals/credits-ledger";
 import { EarningsCard } from "@/features/referrals/earnings-card";
 import { HowToEarnCard } from "@/features/referrals/how-to-earn-card";
 import { InviteBrokerModal } from "@/features/referrals/invite-broker-modal";
 import { ReferralDetailModal } from "@/features/referrals/referral-detail-modal";
+import { buildInviteMessage } from "@/features/referrals/referral-meta";
 import type { ReferralRowHandlers } from "@/features/referrals/referral-row";
 import { ReferralShareCard } from "@/features/referrals/referral-share-card";
 import {
@@ -54,10 +56,7 @@ export function ReferralsPage() {
     const [referralCode, setReferralCode] = useState<ReferralCode | null>(null);
     const [isFetching, setIsFetching] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [busyId, setBusyId] = useState<string | null>(null);
     const [modal, setModal] = useState<ModalState>({ kind: "none" });
-    /** Bumped after a mutation so the list, ledger and counts all refetch. */
-    const [revision, setRevision] = useState(0);
 
     /**
      * One clock for the whole screen, ticking each minute. Every "gone quiet"
@@ -107,65 +106,39 @@ export function ReferralsPage() {
             cancelled = true;
             window.clearTimeout(timer);
         };
-    }, [filters, revision]);
+    }, [filters]);
 
     const activeReferral = useMemo(() => {
         if (modal.kind !== "detail") return null;
         return referrals?.find((referral) => referral.id === modal.referralId) ?? null;
     }, [modal, referrals]);
 
-    const runMutation = useCallback(
-        async (referralId: string, action: () => Promise<void>, message?: string) => {
-            setBusyId(referralId);
-            try {
-                await action();
-                setRevision((prev) => prev + 1);
-                if (message) toast.success(message);
-            } catch (mutationError) {
-                toast.error(
-                    mutationError instanceof Error && mutationError.message
-                        ? mutationError.message
-                        : "Could not do that. Try again.",
-                );
-            } finally {
-                setBusyId(null);
-            }
-        },
-        [],
-    );
-
     const handleNudge = useCallback(
         (referralId: string) => {
-            const name =
-                referrals
-                    ?.find((referral) => referral.id === referralId)
-                    ?.person.name.split(" ")[0] ?? "them";
-            void runMutation(referralId, () => referralsApi.remind(referralId), `Nudged ${name}`);
-        },
-        [referrals, runMutation],
-    );
+            const referral = referrals?.find((item) => item.id === referralId);
+            if (!referral || !referralCode) return;
 
-    /**
-     * Withdrawing is not confirmed in a modal on purpose. Nothing is destroyed
-     * — the person keeps whatever link they already have, and the broker can
-     * invite them again in ten seconds. A confirmation for that is friction
-     * without a risk behind it (docs/MESSAGES.md).
-     */
-    const handleCancel = useCallback(
-        (referralId: string) => {
-            void runMutation(referralId, () => referralsApi.cancel(referralId), "Invite withdrawn");
-            setModal({ kind: "none" });
+            const message = buildInviteMessage({
+                inviterName,
+                shareUrl: referralCode.shareUrl,
+            });
+            // No remind write API — open WhatsApp with the invite link instead.
+            window.open(
+                buildWhatsAppInviteUrl(message, referral.person.phoneDigits || undefined),
+                "_blank",
+                "noopener,noreferrer",
+            );
+            toast.success(`Opened WhatsApp for ${referral.person.name.split(" ")[0]}`);
         },
-        [runMutation],
+        [inviterName, referralCode, referrals],
     );
 
     const handlers = useMemo<ReferralRowHandlers>(
         () => ({
             onNudge: handleNudge,
-            onCancel: handleCancel,
             onOpen: (referralId) => setModal({ kind: "detail", referralId }),
         }),
-        [handleCancel, handleNudge],
+        [handleNudge],
     );
 
     const handlePatch = useCallback((patch: Partial<ReferralsFilters>) => {
@@ -177,8 +150,7 @@ export function ReferralsPage() {
     }, []);
 
     const handleInvited = useCallback((firstName: string) => {
-        setRevision((prev) => prev + 1);
-        toast.success(`Invite recorded for ${firstName}`);
+        toast.success(`Message ready for ${firstName}`);
     }, []);
 
     const isFirstLoad = referrals === null;
@@ -224,7 +196,7 @@ export function ReferralsPage() {
                         handlers={handlers}
                         inviterName={inviterName}
                         shareUrl={referralCode?.shareUrl ?? ""}
-                        busyId={busyId}
+                        busyId={null}
                         now={now}
                         emptyState={
                             <ReferralsFirstRunEmpty onInvite={() => setModal({ kind: "invite" })} />
@@ -243,7 +215,7 @@ export function ReferralsPage() {
                             handlers={handlers}
                             inviterName={inviterName}
                             shareUrl={referralCode?.shareUrl ?? ""}
-                            busyId={busyId}
+                            busyId={null}
                             now={now}
                             emptyState={<ReferralsFilteredEmpty onClear={handleClearFilters} />}
                         />
@@ -272,7 +244,7 @@ export function ReferralsPage() {
                 onOpenChange={(open) => !open && setModal({ kind: "none" })}
                 inviterName={inviterName}
                 shareUrl={referralCode?.shareUrl ?? ""}
-                isBusy={busyId != null}
+                isBusy={false}
                 now={now}
                 onNudge={handleNudge}
             />
