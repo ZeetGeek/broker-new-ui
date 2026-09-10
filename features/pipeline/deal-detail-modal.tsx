@@ -220,9 +220,9 @@ export function DealDetailModal({
 
                     <div
                         className="
-                      grid grid-cols-1 gap-4 rounded-inner bg-surface-muted/60 p-3
-                      sm:grid-cols-2
-                    "
+                          grid grid-cols-1 gap-4 rounded-inner bg-surface-muted/60 p-3
+                          sm:grid-cols-2
+                        "
                     >
                         <div className="flex items-center gap-2.5 min-inline-0">
                             <UserAvatar name={deal.buyer.name} imageUrl={deal.buyer.avatarUrl} />

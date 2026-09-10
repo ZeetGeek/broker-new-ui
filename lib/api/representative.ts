@@ -7,6 +7,18 @@ export type RepresentationRespondBody = {
     message?: string;
 };
 
+export type RepresentationMessage = {
+    id: string;
+    representationId: string;
+    sender: "owner" | "broker";
+    body: string;
+    attachmentUrl?: string | null;
+    attachmentName?: string | null;
+    attachmentMime?: string | null;
+    attachmentSize?: number | null;
+    createdAt: string | null;
+};
+
 export type RepresentationItem = {
     id: string;
     propertyId: string;
@@ -111,6 +123,31 @@ export const representativeApi = {
         return apiFetch<RepresentationItem>(`/representative/${representationId}/broker/respond`, {
             method: "PUT",
             body: JSON.stringify(body),
+        });
+    },
+
+    messages(representationId: string) {
+        return apiFetch<RepresentationMessage[]>(`/representative/${representationId}/messages`);
+    },
+
+    /**
+     * Text and/or document. JSON when text-only; multipart when a file is attached
+     * so the old text contract still works.
+     */
+    addMessage(representationId: string, input: { message?: string; file?: File }) {
+        if (input.file) {
+            const form = new FormData();
+            if (input.message?.trim()) form.append("message", input.message.trim());
+            form.append("file", input.file);
+            return apiFetch<RepresentationMessage>(`/representative/${representationId}/message`, {
+                method: "POST",
+                body: form,
+            });
+        }
+
+        return apiFetch<RepresentationMessage>(`/representative/${representationId}/message`, {
+            method: "POST",
+            body: JSON.stringify({ message: input.message?.trim() ?? "" }),
         });
     },
 };

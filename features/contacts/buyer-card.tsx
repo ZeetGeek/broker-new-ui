@@ -111,7 +111,11 @@ export function BuyerCard({
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
-                                            <span className="flex shrink-0 items-center text-success">
+                                            <span
+                                                className="
+                                              flex shrink-0 items-center text-success
+                                            "
+                                            >
                                                 <TrendingUp
                                                     aria-hidden
                                                     className="block-3.5 inline-3.5"

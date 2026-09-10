@@ -41,7 +41,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { ChatButton } from "@/features/chat/chat-button";
 import {
     DEAL_LOST_REASON_LABEL,
     DEAL_OUTCOME_META,
@@ -183,16 +182,6 @@ function DealOwnerRow({ deal }: { deal: DealItem }) {
 
             {canContact && owner.phoneDigits ? (
                 <div className="flex shrink-0 items-center gap-1.5">
-                    <ChatButton
-                        size="icon-xs"
-                        peer={{
-                            id: `owner_${deal.property.id}`,
-                            name: owner.name,
-                            avatarUrl: owner.avatarUrl,
-                            roleLabel: "Owner",
-                            isOnline: true,
-                        }}
-                    />
                     <Tooltip>
                         <TooltipTrigger
                             render={
@@ -263,16 +252,6 @@ function DealBuyerRow({ deal }: { deal: DealItem }) {
             </div>
 
             <div className="flex shrink-0 items-center gap-1.5">
-                <ChatButton
-                    size="icon-xs"
-                    peer={{
-                        id: deal.buyer.id,
-                        name: deal.buyer.name,
-                        avatarUrl: deal.buyer.avatarUrl,
-                        roleLabel: "Buyer",
-                        isOnline: false,
-                    }}
-                />
                 <Tooltip>
                     <TooltipTrigger
                         render={

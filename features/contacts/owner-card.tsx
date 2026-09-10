@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { ChatButton } from "@/features/chat/chat-button";
 import type { OwnerRow } from "@/features/contacts/types";
 
 /**
@@ -45,9 +44,11 @@ export function OwnerCard({ owner }: { owner: OwnerRow }) {
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
-                                            <span className="
+                                            <span
+                                                className="
                                               flex shrink-0 items-center text-ink-muted
-                                            ">
+                                            "
+                                            >
                                                 <Lock
                                                     aria-hidden
                                                     className="block-3.5 inline-3.5"
@@ -77,16 +78,6 @@ export function OwnerCard({ owner }: { owner: OwnerRow }) {
 
                 {canContact && owner.phoneDigits ? (
                     <div className="flex shrink-0 items-center gap-1.5">
-                        <ChatButton
-                            size="icon-xs"
-                            peer={{
-                                id: owner.id,
-                                name: owner.name,
-                                avatarUrl: owner.avatarUrl,
-                                roleLabel: "Owner",
-                                isOnline: true,
-                            }}
-                        />
                         <Tooltip>
                             <TooltipTrigger
                                 render={
@@ -117,8 +108,7 @@ export function OwnerCard({ owner }: { owner: OwnerRow }) {
             <div className="flex flex-wrap items-center gap-1.5">
                 <Badge variant="neutral" className="gap-1">
                     <Building2 aria-hidden className="block-3 inline-3" strokeWidth={2} />
-                    {owner.propertyCount}{" "}
-                    {owner.propertyCount === 1 ? "property" : "properties"}
+                    {owner.propertyCount} {owner.propertyCount === 1 ? "property" : "properties"}
                 </Badge>
                 {owner.liveDealCount > 0 ? (
                     <Badge variant="brand">
@@ -136,9 +126,11 @@ export function OwnerCard({ owner }: { owner: OwnerRow }) {
                 <span className="text-pretty">{owner.localities.join(", ")}</span>
             </p>
 
-            <div className="
+            <div
+                className="
               flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm pbs-3
-            ">
+            "
+            >
                 <p className="body-xs truncate text-ink-muted">{owner.propertyTitles[0]}</p>
                 <p className="body-xs tabular shrink-0 text-brand">
                     {owner.isAllRent

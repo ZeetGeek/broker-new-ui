@@ -374,11 +374,18 @@ function RequestOwnerBlock({ item }: { item: RequestItem }) {
             <div className="flex items-center gap-2">
                 <ChatButton
                     peer={{
-                        id: `owner-${item.propertyId}`,
+                        id: item.id,
                         name: item.ownerName,
                         avatarUrl: item.ownerAvatarUrl,
                         roleLabel: item.title,
                         isOnline: item.stage === "approved",
+                        representationId: item.id,
+                        mySide: "broker",
+                        canSend: true,
+                        closed:
+                            item.stage === "declined" ||
+                            item.stage === "cancelled" ||
+                            item.stage === "locked",
                     }}
                 />
 
@@ -508,7 +515,11 @@ export function RequestCard({
                                 </p>
                             </div>
 
-                            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                            <div
+                                className="
+                              flex shrink-0 flex-wrap items-center justify-end gap-1.5
+                            "
+                            >
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
@@ -615,18 +626,6 @@ export function RequestCard({
                                         ? "1 buyer added"
                                         : `${item.attachedClients.length} buyers added`}
                                 </button>
-
-                                {item.attachedClients.length === 1 ? (
-                                    <ChatButton
-                                        size="icon-xs"
-                                        peer={{
-                                            id: `client-${item.attachedClients[0].id}`,
-                                            name: item.attachedClients[0].name,
-                                            avatarUrl: item.attachedClients[0].avatarUrl,
-                                            roleLabel: "Buyer",
-                                        }}
-                                    />
-                                ) : null}
                             </div>
                         ) : null}
 

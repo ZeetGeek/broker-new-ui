@@ -69,11 +69,7 @@ function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
     const phone = accepted ? detail.ownerPhoneDigits : undefined;
 
     return (
-        <section
-            className="
-          flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-5
-        "
-        >
+        <section className="flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-5">
             <h2 className="eyebrow">Owner contact</h2>
             <div className="flex items-center gap-3">
                 <UserAvatar name={detail.ownerName} imageUrl={detail.ownerAvatarUrl} size="lg" />
@@ -314,12 +310,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                         </p>
                     </header>
 
-                    <section
-                        className="
-                      rounded-card border border-border-warm bg-surface p-5
-                      sm:p-6
-                    "
-                    >
+                    <section className="rounded-card border border-border-warm bg-surface p-5 sm:p-6">
                         <PropertyPriceBlock item={item} />
                     </section>
 

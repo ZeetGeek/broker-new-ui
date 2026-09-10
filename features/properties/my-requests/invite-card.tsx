@@ -425,11 +425,16 @@ export function InviteCard({
                             <div className="flex items-center gap-2">
                                 <ChatButton
                                     peer={{
-                                        id: `owner-${item.propertyId}`,
+                                        id: item.id,
                                         name: item.ownerName,
                                         avatarUrl: item.ownerAvatarUrl,
                                         roleLabel: item.title,
                                         isOnline: item.stage === "accepted",
+                                        representationId: item.id,
+                                        mySide: "broker",
+                                        canSend: true,
+                                        closed:
+                                            item.stage === "declined" || item.stage === "expired",
                                     }}
                                 />
 
