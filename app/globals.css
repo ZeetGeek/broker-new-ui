@@ -255,6 +255,15 @@
     inline-size: 100%;
 }
 
+/* Viewport-sized logical equivalents of h-screen / w-screen. Same reason:
+   Tailwind has no logical form, and the lint rule bans the physical one. */
+@utility block-screen {
+    block-size: 100vh;
+}
+@utility inline-screen {
+    inline-size: 100vw;
+}
+
 /* Content-sized, for overriding a component's default inline-* width.
    `w-auto` cannot do it: tailwind-merge does not know `w-*` and `inline-*`
    are the same axis, so both survive the merge and the default wins. */
