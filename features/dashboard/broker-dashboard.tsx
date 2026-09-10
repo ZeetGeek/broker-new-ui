@@ -2,8 +2,6 @@
 
 import { useEffect } from "react";
 
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
-
 import { mapBrokerDashboardView } from "@/features/dashboard/map-dashboard";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
@@ -17,14 +15,6 @@ import { PipelineCard } from "./pipeline-card";
 import { RequestsCard } from "./requests-card";
 import { TodayCard } from "./today-card";
 import { YouRepresentCard } from "./you-represent-card";
-
-function DashboardLoading() {
-    return (
-        <div className="flex items-center justify-center min-block-[calc(100dvh-5rem)]">
-            <LoadingSpinner label="Loading dashboard" />
-        </div>
-    );
-}
 
 function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
     return (
@@ -56,7 +46,7 @@ export function BrokerDashboard() {
     }, [dispatch]);
 
     if (status === "idle" || status === "loading") {
-        return <DashboardLoading />;
+        return null;
     }
 
     if (status === "failed") {

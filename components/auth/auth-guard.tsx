@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
 
 import { useAppSelector } from "@/store/hooks";
 
@@ -30,7 +29,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                 aria-live="polite"
                 aria-busy="true"
             >
-                <LoadingSpinner label="Loading your account" />
                 <p className="body text-ink-muted">Loading your account</p>
             </div>
         );

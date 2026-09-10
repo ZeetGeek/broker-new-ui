@@ -21,7 +21,6 @@ import {
 import { ReferralsHeader } from "@/features/referrals/referrals-header";
 import { ReferralsIntro } from "@/features/referrals/referrals-intro";
 import { ReferralsList } from "@/features/referrals/referrals-list";
-import { ReferralsListSkeleton } from "@/features/referrals/referrals-skeleton";
 import {
     type CreditEntry,
     DEFAULT_REFERRALS_FILTERS,
@@ -161,7 +160,7 @@ export function ReferralsPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <ReferralsIntro summary={summary} isLoading={isFetching} />
+            <ReferralsIntro summary={summary} />
 
             {error ? (
                 <p role="alert" className="body-sm text-urgent">
@@ -188,9 +187,7 @@ export function ReferralsPage() {
                     <ReferralsHeader filters={filters} summary={summary} onPatch={handlePatch} />
                 ) : null}
 
-                {isFirstLoad && isFetching ? (
-                    <ReferralsListSkeleton />
-                ) : isFirstRun ? (
+                {isFirstLoad && isFetching ? null : isFirstRun ? (
                     <ReferralsList
                         referrals={[]}
                         handlers={handlers}

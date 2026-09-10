@@ -28,12 +28,7 @@ export function PropertyEditPage() {
     }, [propertyId]);
 
     if (listing === undefined) {
-        return (
-            <div className="flex flex-col gap-4 py-6">
-                <div className="animate-pulse rounded-control bg-surface-muted block-8 inline-48" />
-                <div className="animate-pulse rounded-card bg-surface-muted block-64" />
-            </div>
-        );
+        return null;
     }
 
     if (!listing) {

@@ -1,7 +1,5 @@
 "use client";
 
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
-
 import { AuthFormFrame } from "./auth-back-link";
 import { AuthHeading } from "./auth-heading";
 
@@ -15,7 +13,6 @@ export function AuthBusyState({ title, description }: { title: string; descripti
             aria-live="polite"
             aria-busy="true"
         >
-            <LoadingSpinner label={title} />
             <AuthHeading title={title} description={description} />
         </div>
     );

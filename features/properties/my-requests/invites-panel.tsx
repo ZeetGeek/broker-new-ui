@@ -33,7 +33,6 @@ import {
     REQUESTS_GRID_CLASS,
     REQUESTS_LIST_CLASS,
 } from "@/features/properties/my-requests/requests-grid-class";
-import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 import { RequestsViewToggle } from "@/features/properties/my-requests/requests-view-toggle";
 import { useInvitesFilters } from "@/features/properties/my-requests/use-invites-filters";
 import { useRequestsView } from "@/features/properties/my-requests/use-requests-view";
@@ -157,7 +156,7 @@ export function InvitesPanel({ onSummary }: { onSummary?: (summary: InvitesSumma
     );
 
     if (!result && isFetching) {
-        return <RequestsListSkeleton view={view} />;
+        return null;
     }
 
     // Nothing has ever arrived — explain the mechanism rather than show a filter.
@@ -270,9 +269,7 @@ export function InvitesPanel({ onSummary }: { onSummary?: (summary: InvitesSumma
                 </div>
             </div>
 
-            {!result ? (
-                <RequestsListSkeleton view={view} />
-            ) : result.items.length === 0 ? (
+            {!result ? null : result.items.length === 0 ? (
                 <EmptyState
                     icon={Inbox}
                     heading="Nothing matches what you picked"

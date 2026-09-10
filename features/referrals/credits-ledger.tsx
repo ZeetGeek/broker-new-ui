@@ -40,23 +40,7 @@ export function CreditsLedger({ ledger, className }: CreditsLedgerProps) {
     const [isExpanded, setIsExpanded] = useState(false);
 
     if (!ledger) {
-        return (
-            <section
-                className={cn(
-                    `
-                      flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-4
-                      sm:p-5
-                    `,
-                    className,
-                )}
-                aria-busy
-                aria-label="Loading your credits"
-            >
-                <span className="animate-pulse rounded-full bg-surface-muted block-5 inline-32" />
-                <span className="animate-pulse rounded-full bg-surface-muted block-4 inline-full" />
-                <span className="animate-pulse rounded-full bg-surface-muted block-4 inline-52" />
-            </section>
-        );
+        return null;
     }
 
     // Empty cards collapse to their content rather than reserving the loaded

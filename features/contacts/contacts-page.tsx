@@ -23,7 +23,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
 import { AttachBuyerPropertiesModal } from "@/features/contacts/attach-buyer-properties-modal";
 import { BuyerCard } from "@/features/contacts/buyer-card";
-import { ContactsSkeleton } from "@/features/contacts/contacts-skeleton";
 import { OwnerCard } from "@/features/contacts/owner-card";
 import {
     type BuyerRow,
@@ -336,9 +335,7 @@ export function ContactsPage() {
                     </p>
                 ) : null}
 
-                {isFirstLoad && isFetching ? (
-                    <ContactsSkeleton />
-                ) : rows.length === 0 ? (
+                {isFirstLoad && isFetching ? null : rows.length === 0 ? (
                     hasSearch ? (
                         <EmptyState
                             icon={Search}

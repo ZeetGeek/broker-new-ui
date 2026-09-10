@@ -15,7 +15,6 @@ import {
     MyListingsAddFab,
     MyListingsIntro,
 } from "@/features/properties/your-listings/my-listings-intro";
-import { MyListingsResultsSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
 import type { MyListingItem, MyListingsResult } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
 import { useMyListingsView } from "@/features/properties/your-listings/use-my-listings-view";
@@ -102,9 +101,7 @@ export function MyListingsPanel() {
                 </p>
             ) : null}
 
-            {loading && !result ? (
-                <MyListingsResultsSkeleton view={view} />
-            ) : result && result.items.length === 0 ? (
+            {loading && !result ? null : result && result.items.length === 0 ? (
                 <MyListingsEmpty
                     variant={hasActiveFilters ? "filtered" : "first_run"}
                     searchQuery={filters.q}

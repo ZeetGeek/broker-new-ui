@@ -29,7 +29,6 @@ import {
 import { VisitsHeader } from "@/features/site-visits/visits-header";
 import { VisitsIntro } from "@/features/site-visits/visits-intro";
 import { VisitsList } from "@/features/site-visits/visits-list";
-import { VisitsListSkeleton } from "@/features/site-visits/visits-skeleton";
 
 /** Which modal is open. One at a time — they are all decisions about one visit. */
 type ModalState =
@@ -297,7 +296,7 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
 
     return (
         <div className="flex flex-col gap-6">
-            <VisitsIntro summary={summary} viewer={viewer} isLoading={isFetching} />
+            <VisitsIntro summary={summary} viewer={viewer} />
 
             {!isFirstRun ? (
                 <VisitsHeader
@@ -314,9 +313,7 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
                 </p>
             ) : null}
 
-            {isFirstLoad && isFetching ? (
-                <VisitsListSkeleton />
-            ) : isFirstRun ? (
+            {isFirstLoad && isFetching ? null : isFirstRun ? (
                 <VisitsFirstRunEmpty viewer={viewer} canSchedule={viewer === "broker"} />
             ) : (
                 // Filter changes dim the content rather than wiping it.

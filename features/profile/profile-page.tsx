@@ -22,7 +22,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { NotificationPreferences } from "@/features/profile/notification-preferences";
 import { ProfilePhotoField } from "@/features/profile/profile-photo-field";
-import { ProfileSkeleton } from "@/features/profile/profile-skeleton";
 import { ProfileStats } from "@/features/profile/profile-stats";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setProfile } from "@/store/slices/dashboard-slice";
@@ -233,7 +232,7 @@ export function ProfilePage() {
     );
 
     if (isLoading && !profile) {
-        return <ProfileSkeleton />;
+        return null;
     }
 
     if (loadError && !profile) {

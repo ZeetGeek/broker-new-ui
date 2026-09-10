@@ -24,10 +24,6 @@ import {
 } from "@/features/properties/my-requests/requests-grid-class";
 import { RequestsHeader } from "@/features/properties/my-requests/requests-header";
 import { RequestsIntro } from "@/features/properties/my-requests/requests-intro";
-import {
-    RequestsListSkeleton,
-    RequestsPageSkeleton,
-} from "@/features/properties/my-requests/requests-skeleton";
 import { type RequestsTab, RequestsTabs } from "@/features/properties/my-requests/requests-tabs";
 import type { RequestsResult, RequestsSummary } from "@/features/properties/my-requests/types";
 import { useRequestsFilters } from "@/features/properties/my-requests/use-requests-filters";
@@ -154,7 +150,7 @@ function SentRequestsPanel({ onSummary }: { onSummary?: (summary: RequestsSummar
     );
 
     if (!result && isFetching) {
-        return <RequestsPageSkeleton />;
+        return null;
     }
 
     // A broker who has never sent a request gets the pool, not an empty table.
@@ -190,9 +186,7 @@ function SentRequestsPanel({ onSummary }: { onSummary?: (summary: RequestsSummar
                                 Try again
                             </button>
                         </div>
-                    ) : !result ? (
-                        <RequestsListSkeleton view={view} />
-                    ) : result.items.length === 0 ? (
+                    ) : !result ? null : result.items.length === 0 ? (
                         <RequestsFilteredEmpty
                             onClearFilters={hasActiveFilters ? clearFilters : undefined}
                         />

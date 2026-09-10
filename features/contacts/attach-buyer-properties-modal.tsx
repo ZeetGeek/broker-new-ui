@@ -194,17 +194,7 @@ export function AttachBuyerPropertiesModal({
                 />
             }
         >
-            {isLoading ? (
-                <div className="flex flex-col gap-2">
-                    {Array.from({ length: 4 }).map((_, index) => (
-                        <div
-                            key={index}
-                            className="animate-pulse rounded-card bg-surface-muted block-20"
-                            aria-hidden
-                        />
-                    ))}
-                </div>
-            ) : visible.length === 0 ? (
+            {isLoading ? null : visible.length === 0 ? (
                 <EmptyState
                     icon={Building2}
                     heading={query ? "No properties match your search" : "No accepted listings yet"}

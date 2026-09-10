@@ -83,21 +83,6 @@ function VerificationTile({ profile, isOwner }: { profile: UserProfile; isOwner:
     );
 }
 
-function StatsSkeleton() {
-    return (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-busy aria-hidden>
-            {Array.from({ length: 4 }, (_, index) => (
-                <div
-                    key={index}
-                    className="
-                      animate-pulse rounded-card border border-border-warm bg-surface p-4 block-24
-                    "
-                />
-            ))}
-        </div>
-    );
-}
-
 function countOrNone(value: number | undefined): { display: string; hasValue: boolean } {
     const n = value ?? 0;
     return { display: n > 0 ? String(n) : "None yet", hasValue: n > 0 };
@@ -110,7 +95,7 @@ function countOrNone(value: number | undefined): { display: string; hasValue: bo
  * Owner tiles: properties listed, active brokers, site visits — from `stats`.
  */
 export function ProfileStats({ profile }: { profile: UserProfile | null }) {
-    if (!profile) return <StatsSkeleton />;
+    if (!profile) return null;
 
     const isOwner = profile.profileType === "owner" || profile.role === "owner";
 

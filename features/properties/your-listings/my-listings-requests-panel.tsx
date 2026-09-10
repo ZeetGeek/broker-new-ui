@@ -224,16 +224,7 @@ export function MyListingsRequestsPanel() {
                 ))}
             </div>
 
-            {loading && !result ? (
-                <div className="flex flex-col gap-3">
-                    {Array.from({ length: 4 }).map((_, index) => (
-                        <div
-                            key={index}
-                            className="animate-pulse rounded-card bg-surface-muted block-24"
-                        />
-                    ))}
-                </div>
-            ) : result && total === 0 && status === "all" ? (
+            {loading && !result ? null : result && total === 0 && status === "all" ? (
                 <MyListingsRequestsEmpty />
             ) : result && result.items.length === 0 ? (
                 <div className="py-10 text-center">

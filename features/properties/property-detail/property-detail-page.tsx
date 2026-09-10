@@ -28,7 +28,6 @@ import {
     factColumnsClass,
     listedAgoLabel,
 } from "@/features/properties/property-detail/property-detail-facts";
-import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
 import { PropertyGallery } from "@/features/properties/property-detail/property-gallery";
 import { PropertyPriceBlock } from "@/features/properties/property-detail/property-price-block";
 import type { MyListingItem, MyListingStatus } from "@/features/properties/your-listings/types";
@@ -343,7 +342,7 @@ export function PropertyDetailPage() {
         };
     }, [propertyId]);
 
-    if (listing === undefined) return <PropertyDetailSkeleton />;
+    if (listing === undefined) return null;
     if (!listing) return <BrowsePropertyFallback propertyId={propertyId} />;
 
     return <OwnedPropertyDetail listing={listing} />;

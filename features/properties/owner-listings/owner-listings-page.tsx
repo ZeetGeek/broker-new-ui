@@ -18,13 +18,8 @@ import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/ow
 import { citiesToLocationListings } from "@/features/properties/owner-listings/map-browse-listing";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
-import {
-    OWNER_LISTINGS_GRID_CLASS,
-    OWNER_LISTINGS_LIST_CLASS,
-} from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { OwnerListingsHeader } from "@/features/properties/owner-listings/owner-listings-header";
 import { OwnerListingsIntro } from "@/features/properties/owner-listings/owner-listings-intro";
-import { OwnerListingsPageSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
 import type {
     OwnerListingItem,
     OwnerListingsBandFilters,
@@ -152,26 +147,7 @@ function OwnerListingsResults({
     }
 
     if (!result) {
-        if (!isFetching) {
-            return null;
-        }
-
-        return (
-            <div
-                className={view === "list" ? OWNER_LISTINGS_LIST_CLASS : OWNER_LISTINGS_GRID_CLASS}
-            >
-                {Array.from({ length: view === "list" ? 6 : filters.limit }).map((_, index) => (
-                    <div
-                        key={index}
-                        className={cn(
-                            "animate-pulse rounded-card bg-surface-muted",
-                            view === "list" ? "min-block-52" : "block-80",
-                        )}
-                        aria-hidden
-                    />
-                ))}
-            </div>
-        );
+        return null;
     }
 
     if (result.items.length === 0) {
@@ -364,7 +340,7 @@ export function OwnerListingsPage() {
     const blockedReason = resolveBlockedReason(verificationState, serviceAreaCount);
 
     if (dashboardStatus === "loading" || dashboardStatus === "idle") {
-        return <OwnerListingsPageSkeleton />;
+        return null;
     }
 
     if (blockedReason) {

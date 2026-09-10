@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { MyRequestsPage } from "@/features/properties/my-requests/my-requests-page";
-import { RequestsPageSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 import type { RequestsTab } from "@/features/properties/my-requests/requests-tabs";
 
 export const metadata: Metadata = {
@@ -16,7 +15,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
     const activeTab = VALID_TABS.includes(tab as RequestsTab) ? (tab as RequestsTab) : "sent";
 
     return (
-        <Suspense fallback={<RequestsPageSkeleton />}>
+        <Suspense fallback={null}>
             <MyRequestsPage activeTab={activeTab} />
         </Suspense>
     );

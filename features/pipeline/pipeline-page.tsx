@@ -16,7 +16,6 @@ import {
 } from "@/features/pipeline/pipeline-empty";
 import { PipelineHeader } from "@/features/pipeline/pipeline-header";
 import { PipelineIntro } from "@/features/pipeline/pipeline-intro";
-import { PipelineBoardSkeleton } from "@/features/pipeline/pipeline-skeleton";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { type StageMoveRequest, StageNoteModal } from "@/features/pipeline/stage-note-modal";
 import { StageTabs } from "@/features/pipeline/stage-tabs";
@@ -273,9 +272,7 @@ export function PipelinePage() {
                 </p>
             ) : null}
 
-            {isFirstLoad && isFetching ? (
-                <PipelineBoardSkeleton />
-            ) : isFirstRun ? (
+            {isFirstLoad && isFetching ? null : isFirstRun ? (
                 <PipelineFirstRunEmpty />
             ) : view === "done" ? (
                 doneDeals.length === 0 ? (

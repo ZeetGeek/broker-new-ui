@@ -24,7 +24,6 @@ import {
     factColumnsClass,
     listedAgoLabel,
 } from "@/features/properties/property-detail/property-detail-facts";
-import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
 import { PropertyGallery } from "@/features/properties/property-detail/property-gallery";
 import { PropertyPriceBlock } from "@/features/properties/property-detail/property-price-block";
 import { mapPropertyListingToMyItem } from "@/features/properties/your-listings/map-my-listing";
@@ -492,7 +491,7 @@ export function OwnerListingDetailPage() {
         };
     }, [propertyId]);
 
-    if (detail === undefined) return <PropertyDetailSkeleton />;
+    if (detail === undefined) return null;
     if (!detail) return <NotFoundState />;
 
     return <OwnerListingDetailView initial={detail} />;

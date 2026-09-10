@@ -66,13 +66,7 @@ type EarningsChartProps = {
  */
 export function EarningsChart({ earnings, className }: EarningsChartProps) {
     if (!earnings) {
-        return (
-            <div
-                className={cn("animate-pulse rounded-inner bg-surface-muted block-40", className)}
-                aria-busy
-                aria-label="Loading your earnings"
-            />
-        );
+        return null;
     }
 
     const total = earnings.reduce((sum, point) => sum + point.credits, 0);

@@ -267,17 +267,7 @@ export function AttachBuyersModal({
                 />
             }
         >
-            {isLoading ? (
-                <div className="flex flex-col gap-2">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                        <div
-                            key={index}
-                            className="animate-pulse rounded-card bg-surface-muted block-20"
-                            aria-hidden
-                        />
-                    ))}
-                </div>
-            ) : visibleClients.length === 0 ? (
+            {isLoading ? null : visibleClients.length === 0 ? (
                 <EmptyState
                     icon={Users}
                     heading={query ? "No buyers match your search" : "You have no buyers yet"}
