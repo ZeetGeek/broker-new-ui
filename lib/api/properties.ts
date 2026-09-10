@@ -42,6 +42,11 @@ export type PropertyBrowseListing = {
     ownerAvatarUrl?: string | null;
     organizationName?: string | null;
     representation?: PropertyRepresentationStanding | null;
+    /**
+     * Consent-gated. Present only when `representation.status === "accepted"`.
+     * Never trust a nested owner phone on browse payloads.
+     */
+    ownerPhone?: string | null;
 };
 
 /** Inventory listing returned by `GET /properties` (and get/create/update). */
@@ -272,6 +277,16 @@ export const propertiesApi = {
 
     browseCities() {
         return apiFetch<PropertyBrowseCitiesResponse>("/properties/browse/cities");
+    },
+
+    /** One public owner listing for the Owner-listings detail page. */
+    browseById(id: string) {
+        return apiFetch<
+            PropertyListing & {
+                representation?: PropertyRepresentationStanding | null;
+                ownerPhone?: string | null;
+            }
+        >(`/properties/browse/${id}`);
     },
 
     /** Caller's inventory listings (My listings). */

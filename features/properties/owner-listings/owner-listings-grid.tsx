@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
+import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import { PropertyCard } from "@/components/shared/property-card";
 
@@ -69,7 +70,7 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
                             ...listing,
                             hasRequested: requestedIds[item.id] ?? listing.hasRequested,
                         }}
-                        detailsHref={`/broker/properties/${item.id}`}
+                        detailsHref={brokerOwnerListingDetailHref(item.id)}
                         priority={index < 5}
                         imageSizes={
                             isListView

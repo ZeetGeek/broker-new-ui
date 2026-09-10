@@ -1,7 +1,7 @@
 import type { DashboardRequestQuota } from "@/lib/api/dashboard";
 import type { RepresentationItem } from "@/lib/api/representative";
 import { calendarDaysBetween, formatDateIso } from "@/lib/format/date";
-import { brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import type {
     BrokerRequestItem,
@@ -99,7 +99,7 @@ function mapRow(rep: RepresentationItem, now: Date): BrokerRequestItem | null {
     const remindersRemaining = rep.remindersRemaining ?? Math.max(0, 2 - reminderCount);
     const canRemind = isPending && remindersRemaining > 0;
 
-    const href = brokerPropertyDetailHref(rep.propertyId);
+    const href = brokerOwnerListingDetailHref(rep.propertyId);
     const action = isPending
         ? {
               label: canRemind
