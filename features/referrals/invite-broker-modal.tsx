@@ -6,7 +6,6 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MessageSquare, Phone, Send, UserRound } from "lucide-react";
 
-import { referralsApi } from "@/lib/api/referrals";
 import { buildSmsInviteUrl, buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import {
     EMPTY_REFERRAL_INVITE,
@@ -43,15 +42,11 @@ type InviteBrokerModalProps = {
 };
 
 /**
- * Invite one broker by number.
+ * Share the referral link to one contact.
  *
- * Two things happen on submit and both matter: the invite is recorded so it
- * can be tracked and credited, and WhatsApp opens on that person's thread with
- * the message ready. Recording without sending leaves a row nobody was told
- * about; sending without recording is an invite that can never earn.
- *
- * The record is written first. If WhatsApp fails to open — an old WebView, a
- * blocked popup — the broker still has a row they can send from the list.
+ * Credits are earned when they register with the code and finish setup — the
+ * backend has no "create invite by phone" write API, so this modal only opens
+ * WhatsApp/SMS. The person appears under Your invites after they sign up.
  */
 export function InviteBrokerModal({
     open,
@@ -60,8 +55,6 @@ export function InviteBrokerModal({
     shareUrl,
     onInvited,
 }: InviteBrokerModalProps) {
-    const [submitError, setSubmitError] = useState<string | null>(null);
-
     const {
         control,
         handleSubmit,
@@ -83,7 +76,6 @@ export function InviteBrokerModal({
         setWasOpen(open);
         if (open) {
             reset(EMPTY_REFERRAL_INVITE);
-            setSubmitError(null);
         }
     }
 
@@ -91,28 +83,8 @@ export function InviteBrokerModal({
     const previewMessage = buildInviteMessage({ inviterName, shareUrl, note });
 
     const submit = useCallback(
-        async (values: ReferralInviteFormValues, channel: ReferralChannel) => {
-            setSubmitError(null);
+        (values: ReferralInviteFormValues, channel: ReferralChannel) => {
             const phoneDigits = normalizeReferralPhone(values.phone);
-
-            try {
-                await referralsApi.invite({
-                    name: values.name,
-                    phoneDigits,
-                    note: values.note,
-                    channel,
-                });
-            } catch (error) {
-                // The API's own sentence when it has one — it knows things the
-                // UI does not, like who was already invited.
-                setSubmitError(
-                    error instanceof Error && error.message
-                        ? error.message
-                        : "Could not save that invite. Check your connection and try again.",
-                );
-                return;
-            }
-
             const message = buildInviteMessage({ inviterName, shareUrl, note: values.note });
             const href =
                 channel === "sms"
@@ -133,10 +105,10 @@ export function InviteBrokerModal({
             onOpenChange={onOpenChange}
             size="md"
             title="Invite a broker"
-            description="We record the invite so you get the credit, then open the message for you to send."
+            description="Opens a message with your invite link. They show up here after they sign up with your code."
             footer={
                 <AppModalFooter
-                    primaryLabel={isSubmitting ? "Sending…" : "Send on WhatsApp"}
+                    primaryLabel={isSubmitting ? "Opening…" : "Send on WhatsApp"}
                     primaryIcon={<MessageSquare aria-hidden />}
                     primaryDisabled={isSubmitting}
                     onPrimary={handleSubmit((values) => submit(values, "whatsapp"))}
@@ -148,20 +120,6 @@ export function InviteBrokerModal({
             }
         >
             <div className="flex flex-col gap-4">
-                {submitError ? (
-                    // Form-level, and it stays. A failed invite in a toast is a
-                    // lost error. docs/MESSAGES.md.
-                    <p
-                        role="alert"
-                        className="
-                          body-sm rounded-inner border border-danger/25 bg-danger-soft px-3 py-2.5
-                          text-danger
-                        "
-                    >
-                        {submitError}
-                    </p>
-                ) : null}
-
                 <Controller
                     name="name"
                     control={control}

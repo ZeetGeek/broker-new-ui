@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, Mail, MapPin, Phone, UserRound } from "lucide-react";
 
-import { profileApi, type UserProfile } from "@/lib/api/profile";
+import { profileApi, type UpdateProfileInput, type UserProfile } from "@/lib/api/profile";
 import {
     BIO_MAX,
     normalizeProfilePhone,
@@ -61,8 +61,14 @@ function FieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNod
     );
 }
 
+function isOwnerProfile(profile: UserProfile | null): boolean {
+    return profile?.profileType === "owner" || profile?.role === "owner";
+}
+
 /** The form's starting values, read off whatever the API returned. */
 function toFormValues(profile: UserProfile): ProfileFormValues {
+    const owner = isOwnerProfile(profile);
+
     return {
         fullName: profile.fullName ?? "",
         // Stored E.164, shown as the ten digits an Indian broker recognises.
@@ -70,16 +76,39 @@ function toFormValues(profile: UserProfile): ProfileFormValues {
         city: profile.city ?? "",
         country: profile.country ?? "India",
         orgName: profile.orgName ?? "",
-        bio: profile.broker?.bio ?? "",
+        bio: owner ? (profile.owner?.bio ?? "") : (profile.broker?.bio ?? ""),
+        companyName: profile.owner?.companyName ?? profile.companyName ?? "",
+        gstin: profile.owner?.gstin ?? "",
+        preferredCities: (profile.owner?.preferredCities ?? []).join(", "),
+        preferredLocalities: (profile.owner?.preferredLocalities ?? []).join(", "),
         experienceYears:
             profile.broker?.experienceYears == null ? "" : String(profile.broker.experienceYears),
         licenseNumber: profile.broker?.licenseNumber ?? profile.licenseNumber ?? "",
         reraState: profile.broker?.reraState ?? profile.reraState ?? "",
-        publicSlug: profile.broker?.publicSlug ?? "",
+        publicSlug: profile.broker?.publicSlug ?? profile.qr?.publicSlug ?? "",
         serviceAreas: (profile.broker?.serviceAreas ?? []).join(", "),
         specializations: (profile.broker?.specializations ?? []).join(", "),
     };
 }
+
+const EMPTY_FORM: ProfileFormValues = {
+    fullName: "",
+    phone: "",
+    city: "",
+    country: "India",
+    orgName: "",
+    bio: "",
+    companyName: "",
+    gstin: "",
+    preferredCities: "",
+    preferredLocalities: "",
+    experienceYears: "",
+    licenseNumber: "",
+    reraState: "",
+    publicSlug: "",
+    serviceAreas: "",
+    specializations: "",
+};
 
 export function ProfilePage() {
     const dispatch = useAppDispatch();
@@ -101,22 +130,7 @@ export function ProfilePage() {
         // typing reads as being told off. docs/MESSAGES.md rule 5.
         mode: "onTouched",
         reValidateMode: "onChange",
-        defaultValues: storedProfile
-            ? toFormValues(storedProfile)
-            : {
-                  fullName: "",
-                  phone: "",
-                  city: "",
-                  country: "India",
-                  orgName: "",
-                  bio: "",
-                  experienceYears: "",
-                  licenseNumber: "",
-                  reraState: "",
-                  publicSlug: "",
-                  serviceAreas: "",
-                  specializations: "",
-              },
+        defaultValues: storedProfile ? toFormValues(storedProfile) : EMPTY_FORM,
     });
 
     /**
@@ -168,9 +182,10 @@ export function ProfilePage() {
     const onSubmit = useCallback(
         async (values: ProfileFormValues) => {
             setSubmitError(null);
+            const owner = isOwnerProfile(profile);
 
             try {
-                const updated = await profileApi.update({
+                const payload: UpdateProfileInput = {
                     fullName: values.fullName.trim(),
                     // Back to E.164 on the way out — the wire format, not the
                     // display one. lib/api is the boundary that converts.
@@ -179,16 +194,26 @@ export function ProfilePage() {
                     country: values.country.trim(),
                     orgName: values.orgName.trim(),
                     bio: values.bio.trim(),
-                    experienceYears:
+                };
+
+                if (owner) {
+                    payload.companyName = values.companyName.trim();
+                    payload.gstin = values.gstin.trim();
+                    payload.preferredCities = parseCommaList(values.preferredCities);
+                    payload.preferredLocalities = parseCommaList(values.preferredLocalities);
+                } else {
+                    payload.experienceYears =
                         values.experienceYears.trim() === ""
                             ? null
-                            : Number(values.experienceYears),
-                    licenseNumber: values.licenseNumber.trim(),
-                    reraState: values.reraState.trim(),
-                    publicSlug: values.publicSlug.trim(),
-                    serviceAreas: parseCommaList(values.serviceAreas),
-                    specializations: parseCommaList(values.specializations),
-                });
+                            : Number(values.experienceYears);
+                    payload.licenseNumber = values.licenseNumber.trim();
+                    payload.reraState = values.reraState.trim();
+                    payload.publicSlug = values.publicSlug.trim();
+                    payload.serviceAreas = parseCommaList(values.serviceAreas);
+                    payload.specializations = parseCommaList(values.specializations);
+                }
+
+                const updated = await profileApi.update(payload);
 
                 handleProfileReplaced(updated);
                 // Reset to what the server stored, not to what was typed, so
@@ -204,7 +229,7 @@ export function ProfilePage() {
                 );
             }
         },
-        [handleProfileReplaced, reset],
+        [handleProfileReplaced, profile, reset],
     );
 
     if (isLoading && !profile) {
@@ -230,7 +255,7 @@ export function ProfilePage() {
         );
     }
 
-    const isOwnerAccount = profile?.profileType === "owner";
+    const ownerAccount = isOwnerProfile(profile);
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
@@ -240,7 +265,11 @@ export function ProfilePage() {
                         <span className="text-ink">
                             {profile?.fullName?.trim() || "Your profile"}.
                         </span>{" "}
-                        <span className="text-ink-muted">This is what owners see.</span>
+                        <span className="text-ink-muted">
+                            {ownerAccount
+                                ? "This is what brokers see."
+                                : "This is what owners see."}
+                        </span>
                     </h1>
                     <p className="body-sm text-ink-subtle">{profile?.email}</p>
                 </div>
@@ -268,7 +297,14 @@ export function ProfilePage() {
 
             <ProfilePhotoField profile={profile} onUploaded={handleProfileReplaced} />
 
-            <Section title="Your details" description="How owners and buyers reach you.">
+            <Section
+                title="Your details"
+                description={
+                    ownerAccount
+                        ? "How brokers reach you about your properties."
+                        : "How owners and buyers reach you."
+                }
+            >
                 <div className="grid gap-4 sm:grid-cols-2">
                     <Controller
                         name="fullName"
@@ -357,12 +393,18 @@ export function ProfilePage() {
                         control={control}
                         render={({ field, fieldState }) => (
                             <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-org">Agency</FieldLabel>
+                                <FieldLabel htmlFor="profile-org">
+                                    {ownerAccount ? "Organization" : "Agency"}
+                                </FieldLabel>
                                 <Input
                                     {...field}
                                     id="profile-org"
                                     startIcon={Building2}
-                                    placeholder="Leave blank if you work independently"
+                                    placeholder={
+                                        ownerAccount
+                                            ? "Leave blank if you list as an individual"
+                                            : "Leave blank if you work independently"
+                                    }
                                     errorText={fieldState.error?.message}
                                 />
                             </div>
@@ -371,9 +413,114 @@ export function ProfilePage() {
                 </div>
             </Section>
 
-            {/* Broker-only. An owner account has no RERA number or service
-                areas, so the whole band goes rather than rendering empty. */}
-            {!isOwnerAccount ? (
+            {ownerAccount ? (
+                <Section
+                    title="Your property preferences"
+                    description="Brokers use this to decide which listings to bring you."
+                >
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Controller
+                            name="companyName"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <div className="flex flex-col gap-2">
+                                    <FieldLabel htmlFor="profile-company">Company name</FieldLabel>
+                                    <Input
+                                        {...field}
+                                        id="profile-company"
+                                        startIcon={Building2}
+                                        placeholder="Desai Estates"
+                                        errorText={fieldState.error?.message}
+                                    />
+                                </div>
+                            )}
+                        />
+
+                        <Controller
+                            name="gstin"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <div className="flex flex-col gap-2">
+                                    <FieldLabel htmlFor="profile-gstin">GSTIN</FieldLabel>
+                                    <Input
+                                        {...field}
+                                        id="profile-gstin"
+                                        placeholder="22AAAAA0000A1Z5"
+                                        errorText={fieldState.error?.message}
+                                    />
+                                </div>
+                            )}
+                        />
+                    </div>
+
+                    <Controller
+                        name="preferredCities"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <div className="flex flex-col gap-2">
+                                <FieldLabel htmlFor="profile-preferred-cities">
+                                    Preferred cities
+                                </FieldLabel>
+                                <Input
+                                    {...field}
+                                    id="profile-preferred-cities"
+                                    placeholder="Surat, Ahmedabad"
+                                    errorText={fieldState.error?.message}
+                                    helperText="Separate them with commas."
+                                />
+                            </div>
+                        )}
+                    />
+
+                    <Controller
+                        name="preferredLocalities"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <div className="flex flex-col gap-2">
+                                <FieldLabel htmlFor="profile-preferred-localities">
+                                    Preferred localities
+                                </FieldLabel>
+                                <Input
+                                    {...field}
+                                    id="profile-preferred-localities"
+                                    placeholder="Adajan, Vesu"
+                                    errorText={fieldState.error?.message}
+                                    helperText="Separate them with commas."
+                                />
+                            </div>
+                        )}
+                    />
+
+                    <Controller
+                        name="bio"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <div className="flex flex-col gap-2">
+                                <FieldLabel htmlFor="profile-bio">About you</FieldLabel>
+                                <Textarea
+                                    {...field}
+                                    id="profile-bio"
+                                    rows={4}
+                                    placeholder="What kind of properties you look for, and why."
+                                    aria-invalid={Boolean(fieldState.error) || undefined}
+                                    aria-describedby="profile-bio-help"
+                                />
+                                <p
+                                    id="profile-bio-help"
+                                    className={
+                                        fieldState.error
+                                            ? "body-xs text-danger"
+                                            : "body-xs tabular text-ink-subtle"
+                                    }
+                                >
+                                    {fieldState.error?.message ??
+                                        `${(bio ?? "").length} of ${BIO_MAX} characters`}
+                                </p>
+                            </div>
+                        )}
+                    />
+                </Section>
+            ) : (
                 <Section
                     title="Your work"
                     description="Owners read this before they accept a request. It is the strongest part of your profile."
@@ -518,7 +665,7 @@ export function ProfilePage() {
                         )}
                     />
                 </Section>
-            ) : null}
+            )}
 
             <NotificationPreferences profile={profile} onSaved={handleProfileReplaced} />
         </form>

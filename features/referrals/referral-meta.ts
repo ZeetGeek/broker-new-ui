@@ -72,11 +72,11 @@ export function referralStatusHint(item: ReferralItem): string {
                 ? "Signed up. They have not listed a property yet."
                 : "Signed up. They have not asked an owner for a property yet.";
         case "awaiting_approval":
-            return "They asked an owner to represent a property. Your credits land when the owner accepts.";
+            return "They asked an owner to represent a property. Waiting on the next milestone.";
         case "qualified":
             return item.role === "owner"
                 ? "Listed their first property. Credits paid."
-                : "An owner accepted their request. Credits paid.";
+                : "Requested an owner property. Credits paid.";
         case "expired":
             return "The link ran out. Send a fresh one if they are still interested.";
     }
@@ -99,10 +99,11 @@ export const REFERRAL_ROLE_ICON: Record<ReferralRole, LucideIcon> = {
  * promise made when sending an invite cannot drift from the promise shown when
  * counting the reward.
  */
+/** Matches backend `earnRules` / REFERRAL_WORKFLOW.md — do not invent extra gates. */
 export const REFERRAL_EARNING_RULES: { role: ReferralRole; label: string; credits: number }[] = [
     {
         role: "broker",
-        label: "Broker joins, confirms their email, and an owner accepts their request",
+        label: "Broker joins, confirms their email, and requests an owner property",
         credits: REFERRAL_REWARD_CREDITS.broker,
     },
     {

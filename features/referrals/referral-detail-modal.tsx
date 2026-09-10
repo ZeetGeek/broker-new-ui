@@ -100,7 +100,11 @@ export function ReferralDetailModal({
                         </div>
 
                         <p className="body-sm text-ink-muted">
-                            <PhoneNumber phoneDigits={referral.person.phoneDigits} />
+                            {referral.person.phoneDigits ? (
+                                <PhoneNumber phoneDigits={referral.person.phoneDigits} />
+                            ) : (
+                                (referral.person.email ?? "—")
+                            )}
                             {referral.person.agencyName ? ` · ${referral.person.agencyName}` : ""}
                             {referral.person.city ? ` · ${referral.person.city}` : ""}
                         </p>
@@ -109,7 +113,7 @@ export function ReferralDetailModal({
 
                 <div className="grid grid-cols-2 gap-3 rounded-inner bg-surface-muted p-3">
                     <div className="flex flex-col gap-0.5">
-                        <span className="eyebrow">Invited</span>
+                        <span className="eyebrow">Joined</span>
                         <span className="body-sm text-ink">
                             {formatDateShort(new Date(referral.invitedAt))} ·{" "}
                             {REFERRAL_CHANNEL_LABEL[referral.channel]}
@@ -117,12 +121,8 @@ export function ReferralDetailModal({
                     </div>
 
                     <div className="flex flex-col gap-0.5">
-                        <span className="eyebrow">
-                            {new Date(referral.expiresAt) > now ? "Link expires" : "Link expired"}
-                        </span>
-                        <span className="body-sm text-ink">
-                            {formatDateShort(new Date(referral.expiresAt))}
-                        </span>
+                        <span className="eyebrow">Status</span>
+                        <span className="body-sm text-ink">{meta.label}</span>
                     </div>
                 </div>
 

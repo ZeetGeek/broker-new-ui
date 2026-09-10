@@ -127,7 +127,7 @@ export function RequestsIntro({
                     360px the rotating line wrapped under the title anyway, and
                     the ragged two-column effect was the worst of both. */}
                 <div className="flex flex-col gap-1">
-                    <h1 className="h4 text-ink">Your deals</h1>
+                    <h1 className="h4 text-ink">Your requests</h1>
                     <div className={cn(META_TEXT, "min-inline-0")}>
                         {lines.length > 1 ? (
                             <TextLoop interval={SUMMARY_LOOP_INTERVAL_S}>

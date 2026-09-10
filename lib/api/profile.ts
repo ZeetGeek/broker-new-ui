@@ -7,6 +7,19 @@ export type NotificationPreferences = {
     email?: boolean;
 };
 
+export type AvatarUploadUrlResponse = {
+    key: string;
+    uploadUrl: string;
+    publicUrl: string;
+    expiresIn: number;
+};
+
+export type ConfirmAvatarResponse = {
+    avatarUrl: string;
+    key: string;
+    profile?: UserProfile;
+};
+
 export type UserProfile = {
     id?: string;
     email?: string;
@@ -33,6 +46,18 @@ export type UserProfile = {
     licenseNumber?: string | null;
     reraState?: string | null;
     stats?: Record<string, number>;
+    qr?: {
+        publicSlug?: string | null;
+        publicProfileUrl?: string | null;
+    };
+    organization?: { id: string; name: string; portal: string } | null;
+    organizationRole?: {
+        key: string;
+        name: string;
+        level: number | null;
+        memberId: string;
+        isMember: boolean;
+    } | null;
     broker?: {
         id?: string;
         experienceYears?: number | null;
@@ -68,13 +93,20 @@ export type UserProfile = {
  * client claim a verified badge it was never granted.
  */
 export type UpdateProfileInput = {
-    fullName: string;
-    phone: string;
-    city: string;
-    country: string;
-    orgName: string;
-    bio: string;
-    /** Broker-only fields. Omitted entirely for an owner account. */
+    fullName?: string;
+    phone?: string;
+    city?: string;
+    country?: string;
+    orgName?: string;
+    bio?: string;
+    accountType?: "individual" | "organization";
+    // Owner-only
+    ownerKind?: "individual" | "builder" | "company";
+    companyName?: string;
+    gstin?: string;
+    preferredCities?: string[];
+    preferredLocalities?: string[];
+    // Broker-only
     experienceYears?: number | null;
     licenseNumber?: string;
     reraState?: string;
@@ -84,9 +116,9 @@ export type UpdateProfileInput = {
 };
 
 export type UpdateNotificationsInput = {
-    whatsapp: boolean;
-    sms: boolean;
-    email: boolean;
+    notifyWhatsapp?: boolean;
+    notifySms?: boolean;
+    notifyEmail?: boolean;
 };
 
 export const profileApi = {
@@ -108,20 +140,47 @@ export const profileApi = {
         });
     },
 
+    /** Step 1 — get a presigned PUT URL for the avatar. */
+    createAvatarUploadUrl(fileName: string, contentType: string) {
+        return apiFetch<AvatarUploadUrlResponse>("/profile/avatar/upload-url", {
+            method: "POST",
+            body: JSON.stringify({ fileName, contentType }),
+        });
+    },
+
+    /** Step 2 — confirm after the file was PUT to `uploadUrl`. */
+    confirmAvatar(key: string) {
+        return apiFetch<ConfirmAvatarResponse>("/profile/avatar", {
+            method: "PATCH",
+            body: JSON.stringify({ key }),
+        });
+    },
+
     /**
-     * Replace the profile photo. Multipart, like the property photo upload —
-     * `apiFetch` drops the JSON content-type when it sees FormData so the
-     * browser can set its own boundary.
+     * Full avatar flow: request URL → PUT file to storage → confirm on API.
+     * Returns the updated profile (or a minimal stub with the new avatarUrl).
      */
-    uploadAvatar(file: File) {
-        const form = new FormData();
-        form.append("avatar", file);
-        return apiFetch<UserProfile>("/profile/avatar", { method: "POST", body: form });
+    async uploadAvatar(file: File): Promise<UserProfile> {
+        const contentType = file.type === "image/jpg" ? "image/jpeg" : file.type;
+        const { key, uploadUrl } = await this.createAvatarUploadUrl(file.name, contentType);
+
+        const putRes = await fetch(uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": contentType },
+            body: file,
+        });
+        if (!putRes.ok) {
+            throw new Error("Failed to upload image to storage");
+        }
+
+        const result = await this.confirmAvatar(key);
+        if (result.profile) return result.profile;
+        return { avatarUrl: result.avatarUrl };
     },
 
     updateNotifications(input: UpdateNotificationsInput) {
-        return apiFetch<UserProfile>("/profile/notifications", {
-            method: "PATCH",
+        return apiFetch<{ message: string }>("/profile/notification-preference", {
+            method: "POST",
             body: JSON.stringify(input),
         });
     },

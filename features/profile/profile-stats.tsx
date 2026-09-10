@@ -40,16 +40,28 @@ function StatTile({
 }
 
 /** Verified is a badge with a word in it, never a bare colour. docs/DESIGN.md §1.4. */
-function VerificationTile({ profile }: { profile: UserProfile }) {
-    const isVerified = Boolean(profile.broker?.verified ?? profile.verified);
+function VerificationTile({ profile, isOwner }: { profile: UserProfile; isOwner: boolean }) {
+    const isVerified = Boolean(
+        isOwner
+            ? (profile.owner?.verified ?? profile.verified)
+            : (profile.broker?.verified ?? profile.verified),
+    );
     const isEmailVerified = Boolean(profile.isEmailVerified);
 
-    // Two different things can be unverified, and they need different next
-    // steps, so the tile says which one is outstanding rather than a flat "No".
     const state = isVerified
-        ? { label: "Verified broker", hint: "Owners see a verified badge on your requests." }
+        ? {
+              label: isOwner ? "Verified owner" : "Verified broker",
+              hint: isOwner
+                  ? "Brokers see a verified badge on your listings."
+                  : "Owners see a verified badge on your requests.",
+          }
         : isEmailVerified
-          ? { label: "Awaiting review", hint: "We are checking your RERA number." }
+          ? {
+                label: "Awaiting review",
+                hint: isOwner
+                    ? "We are checking your account details."
+                    : "We are checking your RERA number.",
+            }
           : { label: "Confirm your email", hint: "Check your inbox to finish signing up." };
 
     const Icon = isVerified ? BadgeCheck : isEmailVerified ? ShieldQuestion : ShieldCheck;
@@ -86,23 +98,72 @@ function StatsSkeleton() {
     );
 }
 
+function countOrNone(value: number | undefined): { display: string; hasValue: boolean } {
+    const n = value ?? 0;
+    return { display: n > 0 ? String(n) : "None yet", hasValue: n > 0 };
+}
+
 /**
  * The account at a glance.
  *
- * Deliberately not the stat set from the reference mock: this product has no
- * "leads" table and no login-streak concept, so those tiles could only ever
- * render zero. These four come from fields the API actually returns.
+ * Broker tiles: deals, clients, avg close time.
+ * Owner tiles: properties listed, active brokers, site visits — from `stats`.
  */
 export function ProfileStats({ profile }: { profile: UserProfile | null }) {
     if (!profile) return <StatsSkeleton />;
 
-    const dealsClosed = profile.broker?.dealsClosed ?? 0;
+    const isOwner = profile.profileType === "owner" || profile.role === "owner";
+
+    if (isOwner) {
+        const properties = countOrNone(profile.stats?.propertiesListed);
+        const brokers = countOrNone(profile.stats?.activeBrokers);
+        const visits = countOrNone(profile.stats?.siteVisits);
+
+        return (
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <VerificationTile profile={profile} isOwner />
+
+                <StatTile
+                    label="Properties listed"
+                    value={properties.display}
+                    hint={
+                        properties.hasValue
+                            ? "Listings on your account"
+                            : "Add your first property to get started"
+                    }
+                    tone={properties.hasValue ? "brand" : "default"}
+                />
+
+                <StatTile
+                    label="Active brokers"
+                    value={brokers.display}
+                    hint={
+                        brokers.hasValue
+                            ? "Accepted representation requests"
+                            : "Invite a broker from a listing"
+                    }
+                />
+
+                <StatTile
+                    label="Site visits"
+                    value={visits.display}
+                    hint={
+                        visits.hasValue
+                            ? "Across your properties"
+                            : "Visits will show here once booked"
+                    }
+                />
+            </div>
+        );
+    }
+
+    const dealsClosed = profile.broker?.dealsClosed ?? profile.stats?.dealsClosed ?? 0;
     const clientsServed = profile.clientsServed ?? 0;
     const avgDays = profile.broker?.avgDaysToClose ?? null;
 
     return (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <VerificationTile profile={profile} />
+            <VerificationTile profile={profile} isOwner={false} />
 
             <StatTile
                 label="Deals closed"
