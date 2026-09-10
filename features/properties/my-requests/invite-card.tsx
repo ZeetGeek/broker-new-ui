@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { ChatButton } from "@/features/chat/chat-button";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import { INVITE_STAGE_META } from "@/features/properties/my-requests/invite-stage-meta";
 import type { InviteItem } from "@/features/properties/my-requests/invite-types";
@@ -422,6 +423,16 @@ export function InviteCard({
                             </div>
 
                             <div className="flex items-center gap-2">
+                                <ChatButton
+                                    peer={{
+                                        id: `owner-${item.propertyId}`,
+                                        name: item.ownerName,
+                                        avatarUrl: item.ownerAvatarUrl,
+                                        roleLabel: item.title,
+                                        isOnline: item.stage === "accepted",
+                                    }}
+                                />
+
                                 {phoneDigits ? (
                                     <Tooltip>
                                         <TooltipTrigger
@@ -429,6 +440,7 @@ export function InviteCard({
                                                 <Button
                                                     variant="outline"
                                                     size="icon-sm"
+                                                    nativeButton={false}
                                                     className="
                                                       shrink-0 border-border-warm text-brand
                                                     "

@@ -372,41 +372,40 @@ function RequestOwnerBlock({ item }: { item: RequestItem }) {
             </div>
 
             <div className="flex items-center gap-2">
-                {phoneDigits ? (
-                    <>
-                        <ChatButton
-                            peer={{
-                                id: item.id,
-                                name: item.ownerName,
-                                avatarUrl: item.ownerAvatarUrl,
-                                roleLabel: "Owner",
-                                isOnline: true,
-                            }}
-                        />
+                <ChatButton
+                    peer={{
+                        id: `owner-${item.propertyId}`,
+                        name: item.ownerName,
+                        avatarUrl: item.ownerAvatarUrl,
+                        roleLabel: item.title,
+                        isOnline: item.stage === "approved",
+                    }}
+                />
 
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <Button
-                                        variant="outline"
-                                        size="icon-sm"
-                                        className="shrink-0 border-border-warm text-brand"
-                                        render={
-                                            <a
-                                                href={formatWhatsAppUrl(phoneDigits)}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                aria-label={`Message ${item.ownerName} on WhatsApp`}
-                                            />
-                                        }
-                                    >
-                                        <MessageCircle aria-hidden strokeWidth={1.75} />
-                                    </Button>
-                                }
-                            />
-                            <TooltipContent>Message {item.ownerName} on WhatsApp.</TooltipContent>
-                        </Tooltip>
-                    </>
+                {phoneDigits ? (
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    variant="outline"
+                                    size="icon-sm"
+                                    nativeButton={false}
+                                    className="shrink-0 border-border-warm text-brand"
+                                    render={
+                                        <a
+                                            href={formatWhatsAppUrl(phoneDigits)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label={`Message ${item.ownerName} on WhatsApp`}
+                                        />
+                                    }
+                                >
+                                    <MessageCircle aria-hidden strokeWidth={1.75} />
+                                </Button>
+                            }
+                        />
+                        <TooltipContent>Message {item.ownerName} on WhatsApp.</TooltipContent>
+                    </Tooltip>
                 ) : null}
 
                 <Tooltip>
@@ -509,11 +508,7 @@ export function RequestCard({
                                 </p>
                             </div>
 
-                            <div
-                                className="
-                              flex shrink-0 flex-wrap items-center justify-end gap-1.5
-                            "
-                            >
+                            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
