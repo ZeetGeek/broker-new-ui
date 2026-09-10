@@ -1,5 +1,5 @@
+import { apiFetch } from "@/lib/api/client";
 import { listClientsWithLeadSummary } from "@/lib/api/clients";
-import { pipelineApi } from "@/lib/api/pipeline";
 
 import type {
     BuyerRow,
@@ -7,88 +7,81 @@ import type {
     ContactsSummary,
     OwnerRow,
 } from "@/features/contacts/types";
-import { type DealItem, DEFAULT_DEALS_FILTERS, isLiveStage } from "@/features/pipeline/types";
 
-/** Owners have no id of their own yet, so derive a stable one from the name. */
-function ownerIdFor(name: string): string {
-    return `ow_${name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
+type ApiOwnerItem = {
+    id: string;
+    name: string;
+    avatarUrl?: string | null;
+    phone?: string | null;
+    hasActiveRepresentation: boolean;
+    propertyCount: number;
+    propertyTitles: string[];
+    localities: string[];
+    totalValueInr: number;
+    isAllRent: boolean;
+    liveDealCount: number;
+};
+
+type ApiOwnersResponse = {
+    items: ApiOwnerItem[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    summary: {
+        ownerCount: number;
+        lapsedOwnerCount: number;
+    };
+};
+
+function digitsOnly(value: string | null | undefined): string {
+    return (value ?? "").replace(/\D/g, "");
 }
 
-function unique(values: string[]): string[] {
-    return [...new Set(values)];
-}
+function toOwnerRow(item: ApiOwnerItem): OwnerRow {
+    const phoneDigits = digitsOnly(item.phone);
+    const normalized = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
 
-function matchesOwner(row: OwnerRow, q: string): boolean {
-    const needle = q.trim().toLowerCase();
-    if (!needle) return true;
-
-    return (
-        row.name.toLowerCase().includes(needle) ||
-        (row.phoneDigits ?? "").includes(needle.replace(/\D/g, "")) ||
-        row.localities.some((area) => area.toLowerCase().includes(needle)) ||
-        row.propertyTitles.some((title) => title.toLowerCase().includes(needle))
-    );
-}
-
-/**
- * Owners assembled from the properties the broker represents. One row per
- * owner even when they own several properties, because the broker thinks in
- * people here, not listings.
- */
-function buildOwnerRows(deals: DealItem[]): OwnerRow[] {
-    const byOwner = new Map<string, OwnerRow>();
-
-    for (const deal of deals) {
-        const id = ownerIdFor(deal.owner.name);
-        const existing = byOwner.get(id);
-        const isLive = isLiveStage(deal.status);
-
-        if (!existing) {
-            byOwner.set(id, {
-                id,
-                name: deal.owner.name,
-                avatarUrl: deal.owner.avatarUrl,
-                phoneDigits: deal.owner.isRepresentationActive ? deal.owner.phoneDigits : undefined,
-                hasActiveRepresentation: deal.owner.isRepresentationActive,
-                propertyCount: 1,
-                propertyTitles: [deal.property.title],
-                localities: [deal.property.locality],
-                totalValueInr: deal.property.amountInr,
-                isAllRent: deal.property.isRent,
-                liveDealCount: isLive ? 1 : 0,
-            });
-            continue;
-        }
-
-        const isNewProperty = !existing.propertyTitles.includes(deal.property.title);
-
-        byOwner.set(id, {
-            ...existing,
-            phoneDigits:
-                existing.phoneDigits ??
-                (deal.owner.isRepresentationActive ? deal.owner.phoneDigits : undefined),
-            hasActiveRepresentation:
-                existing.hasActiveRepresentation || deal.owner.isRepresentationActive,
-            propertyCount: isNewProperty ? existing.propertyCount + 1 : existing.propertyCount,
-            propertyTitles: isNewProperty
-                ? [...existing.propertyTitles, deal.property.title]
-                : existing.propertyTitles,
-            localities: unique([...existing.localities, deal.property.locality]),
-            totalValueInr: isNewProperty
-                ? existing.totalValueInr + deal.property.amountInr
-                : existing.totalValueInr,
-            isAllRent: existing.isAllRent && deal.property.isRent,
-            liveDealCount: existing.liveDealCount + (isLive ? 1 : 0),
-        });
-    }
-
-    return [...byOwner.values()];
+    return {
+        id: item.id,
+        name: item.name?.trim() || "Owner",
+        avatarUrl: item.avatarUrl ?? undefined,
+        phoneDigits: item.hasActiveRepresentation && normalized ? normalized : undefined,
+        hasActiveRepresentation: Boolean(item.hasActiveRepresentation),
+        propertyCount: item.propertyCount ?? 0,
+        propertyTitles: item.propertyTitles ?? [],
+        localities: item.localities?.length ? item.localities : ["—"],
+        totalValueInr: Number(item.totalValueInr) || 0,
+        isAllRent: Boolean(item.isAllRent),
+        liveDealCount: item.liveDealCount ?? 0,
+    };
 }
 
 function toBuyerRow(
     client: Awaited<ReturnType<typeof listClientsWithLeadSummary>>[number],
 ): BuyerRow {
     return client;
+}
+
+async function listOwners(filters: ContactsFilters): Promise<{
+    owners: OwnerRow[];
+    summary: Pick<ContactsSummary, "ownerCount" | "lapsedOwnerCount">;
+}> {
+    const params = new URLSearchParams();
+    if (filters.q.trim()) params.set("search", filters.q.trim());
+    params.set("sort", filters.sort);
+    params.set("limit", "100");
+
+    const qs = params.toString();
+    const data = await apiFetch<ApiOwnersResponse>(`/clients/owners${qs ? `?${qs}` : ""}`);
+
+    return {
+        owners: (data.items ?? []).map(toOwnerRow),
+        summary: {
+            ownerCount: data.summary?.ownerCount ?? data.total ?? 0,
+            lapsedOwnerCount: data.summary?.lapsedOwnerCount ?? 0,
+        },
+    };
 }
 
 export type ContactsResult = {
@@ -99,28 +92,19 @@ export type ContactsResult = {
 
 export const contactsApi = {
     /**
-     * Both sides in one call. Buyer search goes to `GET /clients?search=`;
-     * summary counts stay based on the full buyer book so tab chips do not
-     * shrink while typing.
+     * Buyers from `GET /clients`; owners from `GET /clients/owners`
+     * (accepted representations + lapsed revoked/withdrawn).
      */
     async list(filters: ContactsFilters): Promise<ContactsResult> {
         const search = filters.q.trim();
-        const [allClients, searchedClients, deals] = await Promise.all([
+        const [allClients, searchedClients, ownersResult] = await Promise.all([
             listClientsWithLeadSummary(),
             search ? listClientsWithLeadSummary({ search }) : Promise.resolve(null),
-            pipelineApi.list({ ...DEFAULT_DEALS_FILTERS }).then((result) => result.items),
+            listOwners(filters),
         ]);
 
         const buyersAll = allClients.map(toBuyerRow);
         const buyers = (searchedClients ?? allClients).map(toBuyerRow);
-        const owners = buildOwnerRows(deals);
-
-        const summary: ContactsSummary = {
-            buyerCount: buyersAll.length,
-            ownerCount: owners.length,
-            unmatchedBuyerCount: buyersAll.filter((row) => row.liveDealCount === 0).length,
-            lapsedOwnerCount: owners.filter((row) => !row.hasActiveRepresentation).length,
-        };
 
         const sortBuyers = (rows: BuyerRow[]): BuyerRow[] => {
             const sorted = [...rows];
@@ -137,21 +121,15 @@ export const contactsApi = {
             });
         };
 
-        const sortOwners = (rows: OwnerRow[]): OwnerRow[] => {
-            const sorted = [...rows];
-            if (filters.sort === "name") {
-                return sorted.sort((a, b) => a.name.localeCompare(b.name));
-            }
-            if (filters.sort === "most_active") {
-                return sorted.sort((a, b) => b.liveDealCount - a.liveDealCount);
-            }
-            return sorted.sort((a, b) => b.totalValueInr - a.totalValueInr);
-        };
-
         return {
             buyers: sortBuyers(buyers),
-            owners: sortOwners(owners.filter((row) => matchesOwner(row, filters.q))),
-            summary,
+            owners: ownersResult.owners,
+            summary: {
+                buyerCount: buyersAll.length,
+                ownerCount: ownersResult.summary.ownerCount,
+                unmatchedBuyerCount: buyersAll.filter((row) => row.liveDealCount === 0).length,
+                lapsedOwnerCount: ownersResult.summary.lapsedOwnerCount,
+            },
         };
     },
 };

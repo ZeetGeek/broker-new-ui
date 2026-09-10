@@ -34,15 +34,14 @@ export type BuyerRow = ClientItem & {
 };
 
 /**
- * An owner, assembled from the properties the broker represents.
+ * An owner the broker represents (or previously represented).
  *
- * Owners have no store of their own here on purpose: the broker never creates
- * one, and an owner with no property is not a contact the broker has any
- * business holding. Every owner on this list is derived from a real
- * representation, which is also what decides whether their number is visible.
+ * Sourced from accepted property representations — owner accepted the broker's
+ * request, or the broker accepted the owner's invite. Phone is consent-gated
+ * to active representations only.
  */
 export type OwnerRow = {
-    /** Stable per owner — derived from their name until the API sends an id. */
+    /** Owner profile id from the API. */
     id: string;
     name: string;
     avatarUrl?: string;

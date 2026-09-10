@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Circle, Lock, Mail } from "lucide-react";
+import { CheckCircle2, Circle, Gift, Lock, Mail } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { authApi } from "@/lib/api/auth";
@@ -31,12 +31,29 @@ import { SocialAuthButtons } from "./social-auth-buttons";
 
 type Step = "role" | "account";
 
+function normalizeReferralCode(value: string): string {
+    return value.trim().toUpperCase();
+}
+
 function syncSlideHeight(slide: HTMLElement, pageId: "1" | "2") {
     const active = slide.querySelector<HTMLElement>(`.t-page[data-page-id="${pageId}"]`);
     if (!active) {
         return;
     }
-    slide.style.height = `${Math.ceil(active.getBoundingClientRect().height)}px`;
+    // Absolute pages don't contribute to parent height — measure with a
+    // temporary relative layout so a remount (or an inline error) never
+    // leaves the slide at 0px / blank.
+    const previousPosition = active.style.position;
+    const previousInset = active.style.inset;
+    const previousHeight = active.style.height;
+    slide.style.height = "auto";
+    active.style.position = "relative";
+    active.style.inset = "auto";
+    active.style.height = "auto";
+    slide.style.height = `${active.offsetHeight}px`;
+    active.style.position = previousPosition;
+    active.style.inset = previousInset;
+    active.style.height = previousHeight;
 }
 
 function RegisterLoginHint() {
@@ -95,19 +112,32 @@ function PasswordRequirements({ password }: { password: string }) {
     );
 }
 
-export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Portal }) {
+export function RegisterWizard({
+    initialPortal = "owner",
+    initialReferralCode = "",
+}: {
+    initialPortal?: Portal;
+    /** From `/register?ref=CODE` — same as the old frontend invite links. */
+    initialReferralCode?: string;
+}) {
     const router = useRouter();
     const [portal, setPortal] = React.useState<Portal>(initialPortal);
     const [step, setStep] = React.useState<Step>("role");
     const [isRedirecting, setIsRedirecting] = React.useState(false);
+    const [referralCode, setReferralCode] = React.useState(() =>
+        normalizeReferralCode(initialReferralCode),
+    );
     const slideRef = React.useRef<HTMLDivElement>(null);
     const pageId = step === "role" ? "1" : "2";
     const selected = PORTAL_OPTIONS.find((option) => option.value === portal) ?? PORTAL_OPTIONS[0];
+    const resolvedReferralCode = normalizeReferralCode(referralCode);
 
     const {
         control,
         handleSubmit,
         setValue,
+        setError,
+        clearErrors,
         formState: { isSubmitting, errors },
     } = useForm<RegisterValues>({
         resolver: zodResolver(registerSchema),
@@ -122,6 +152,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
     });
 
     const password = useWatch({ control, name: "password" }) ?? "";
+    const submitError = errors.root?.message;
 
     React.useEffect(() => {
         setValue("portal", portal);
@@ -151,7 +182,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
         });
         observer.observe(active);
         return () => observer.disconnect();
-    }, [pageId, portal, password, errors]);
+    }, [pageId, portal, password, errors, isSubmitting, submitError]);
 
     function goToAccount() {
         setStep("account");
@@ -176,38 +207,47 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
     }
 
     async function onSubmit(values: RegisterValues) {
+        clearErrors("root");
+
         try {
             await authApi.register({
                 email: values.email.trim(),
                 password: values.password,
                 role: values.portal,
+                ...(resolvedReferralCode ? { referralCode: resolvedReferralCode } : {}),
             });
             toast.success("Account created. Check your email to verify.");
             setIsRedirecting(true);
             router.push(`/verify-pending?email=${encodeURIComponent(values.email.trim())}`);
         } catch (err: unknown) {
-            toast.error(
-                err instanceof ApiError
-                    ? err.message
-                    : err instanceof Error
-                      ? err.message
-                      : "Registration failed",
-            );
+            // Keep the form mounted — swapping it for a busy screen unmounts
+            // the absolute page slide and comes back blank after a 409.
+            if (err instanceof ApiError && err.status === 409) {
+                setError("email", {
+                    type: "server",
+                    message: "This email already has an account. Log in instead.",
+                });
+                return;
+            }
+
+            setError("root", {
+                type: "server",
+                message:
+                    err instanceof ApiError
+                        ? err.message
+                        : "Could not create your account. Try again.",
+            });
         }
     }
 
-    const isBusy = isSubmitting || isRedirecting;
-
-    if (isBusy) {
+    // Only leave the form after a real success. Errors must stay on the form
+    // (docs/MESSAGES.md — never toast an error the user must act on).
+    if (isRedirecting) {
         return (
             <AuthFormFrame>
                 <AuthBusyState
-                    title={isRedirecting ? "Account created" : "Creating your account"}
-                    description={
-                        isRedirecting
-                            ? "Taking you to verify your email."
-                            : "Saving your details. This can take a few seconds."
-                    }
+                    title="Account created"
+                    description="Taking you to verify your email."
                 />
             </AuthFormFrame>
         );
@@ -272,7 +312,11 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                             />
                         </div>
 
-                        <SocialAuthButtons action="Sign up" role={portal} />
+                        <SocialAuthButtons
+                            action="Sign up"
+                            role={portal}
+                            referralCode={resolvedReferralCode || undefined}
+                        />
 
                         <OrDivider />
 
@@ -303,7 +347,12 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                             placeholder="you@example.com"
                                             startIcon={Mail}
                                             value={field.value}
-                                            onValueChange={field.onChange}
+                                            onValueChange={(value) => {
+                                                field.onChange(value);
+                                                if (fieldState.error?.type === "server") {
+                                                    clearErrors("email");
+                                                }
+                                            }}
                                             onBlur={field.onBlur}
                                             name={field.name}
                                             errorText={fieldState.error?.message}
@@ -396,6 +445,40 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                     </div>
                                 )}
                             />
+
+                            <div className="flex flex-col gap-2">
+                                <label
+                                    htmlFor="register-referral-code"
+                                    className="body font-medium text-ink"
+                                >
+                                    Referral code{" "}
+                                    <span className="font-normal text-ink-subtle">(optional)</span>
+                                </label>
+                                <Input
+                                    id="register-referral-code"
+                                    size="lg"
+                                    type="text"
+                                    autoComplete="off"
+                                    placeholder="e.g. YB-NIVEDITA"
+                                    startIcon={Gift}
+                                    value={referralCode}
+                                    onValueChange={(value) =>
+                                        setReferralCode(normalizeReferralCode(value))
+                                    }
+                                    maxLength={40}
+                                />
+                                {initialReferralCode ? (
+                                    <p className="body-xs text-ink-subtle">
+                                        Filled from your invite link. You can change it if needed.
+                                    </p>
+                                ) : null}
+                            </div>
+
+                            {submitError ? (
+                                <p role="alert" className="body-sm text-danger">
+                                    {submitError}
+                                </p>
+                            ) : null}
 
                             <Button
                                 size="lg"
