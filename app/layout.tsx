@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 
 import { ThemeProvider } from "@/components/theme-provider";
 
+import { ProgressProvider } from "@/providers/progress-provider";
 import { StoreProvider } from "@/providers/store-provider";
 
 import "./globals.css";
@@ -21,7 +22,9 @@ export default function RootLayout({
         >
             <body>
                 <StoreProvider>
-                    <ThemeProvider>{children}</ThemeProvider>
+                    <ThemeProvider>
+                        <ProgressProvider>{children}</ProgressProvider>
+                    </ThemeProvider>
                 </StoreProvider>
             </body>
         </html>
