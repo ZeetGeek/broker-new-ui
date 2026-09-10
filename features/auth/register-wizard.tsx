@@ -36,7 +36,20 @@ function syncSlideHeight(slide: HTMLElement, pageId: "1" | "2") {
     if (!active) {
         return;
     }
-    slide.style.height = `${Math.ceil(active.getBoundingClientRect().height)}px`;
+    // Absolute pages don't contribute to parent height — measure with a
+    // temporary relative layout so a remount (or an inline error) never
+    // leaves the slide at 0px / blank.
+    const previousPosition = active.style.position;
+    const previousInset = active.style.inset;
+    const previousHeight = active.style.height;
+    slide.style.height = "auto";
+    active.style.position = "relative";
+    active.style.inset = "auto";
+    active.style.height = "auto";
+    slide.style.height = `${active.offsetHeight}px`;
+    active.style.position = previousPosition;
+    active.style.inset = previousInset;
+    active.style.height = previousHeight;
 }
 
 function RegisterLoginHint() {
@@ -108,6 +121,8 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
         control,
         handleSubmit,
         setValue,
+        setError,
+        clearErrors,
         formState: { isSubmitting, errors },
     } = useForm<RegisterValues>({
         resolver: zodResolver(registerSchema),
@@ -122,6 +137,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
     });
 
     const password = useWatch({ control, name: "password" }) ?? "";
+    const submitError = errors.root?.message;
 
     React.useEffect(() => {
         setValue("portal", portal);
@@ -151,7 +167,7 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
         });
         observer.observe(active);
         return () => observer.disconnect();
-    }, [pageId, portal, password, errors]);
+    }, [pageId, portal, password, errors, isSubmitting, submitError]);
 
     function goToAccount() {
         setStep("account");
@@ -176,6 +192,8 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
     }
 
     async function onSubmit(values: RegisterValues) {
+        clearErrors("root");
+
         try {
             await authApi.register({
                 email: values.email.trim(),
@@ -186,28 +204,34 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
             setIsRedirecting(true);
             router.push(`/verify-pending?email=${encodeURIComponent(values.email.trim())}`);
         } catch (err: unknown) {
-            toast.error(
-                err instanceof ApiError
-                    ? err.message
-                    : err instanceof Error
-                      ? err.message
-                      : "Registration failed",
-            );
+            // Keep the form mounted — swapping it for a busy screen unmounts
+            // the absolute page slide and comes back blank after a 409.
+            if (err instanceof ApiError && err.status === 409) {
+                setError("email", {
+                    type: "server",
+                    message: "This email already has an account. Log in instead.",
+                });
+                return;
+            }
+
+            setError("root", {
+                type: "server",
+                message:
+                    err instanceof ApiError
+                        ? err.message
+                        : "Could not create your account. Try again.",
+            });
         }
     }
 
-    const isBusy = isSubmitting || isRedirecting;
-
-    if (isBusy) {
+    // Only leave the form after a real success. Errors must stay on the form
+    // (docs/MESSAGES.md — never toast an error the user must act on).
+    if (isRedirecting) {
         return (
             <AuthFormFrame>
                 <AuthBusyState
-                    title={isRedirecting ? "Account created" : "Creating your account"}
-                    description={
-                        isRedirecting
-                            ? "Taking you to verify your email."
-                            : "Saving your details. This can take a few seconds."
-                    }
+                    title="Account created"
+                    description="Taking you to verify your email."
                 />
             </AuthFormFrame>
         );
@@ -303,7 +327,12 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                             placeholder="you@example.com"
                                             startIcon={Mail}
                                             value={field.value}
-                                            onValueChange={field.onChange}
+                                            onValueChange={(value) => {
+                                                field.onChange(value);
+                                                if (fieldState.error?.type === "server") {
+                                                    clearErrors("email");
+                                                }
+                                            }}
                                             onBlur={field.onBlur}
                                             name={field.name}
                                             errorText={fieldState.error?.message}
@@ -396,6 +425,12 @@ export function RegisterWizard({ initialPortal = "owner" }: { initialPortal?: Po
                                     </div>
                                 )}
                             />
+
+                            {submitError ? (
+                                <p role="alert" className="body-sm text-danger">
+                                    {submitError}
+                                </p>
+                            ) : null}
 
                             <Button
                                 size="lg"
