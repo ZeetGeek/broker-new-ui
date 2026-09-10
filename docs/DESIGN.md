@@ -395,6 +395,11 @@ on a soft fill, never `ink` on a coloured fill.
 | Rejected, inactive         | `danger-soft`   | `danger`     |
 | Neutral status, filters    | `surface-muted` | `ink-muted`  |
 
+The `focused` variant uses the same size and spacing as every other badge, with
+a `brand-soft` surface, subtle `brand` outline, green checkmark, and
+`brand-text` label. The checkmark is supplied by the component and must not be
+repeated by callers. Use `<Badge variant="focused">Focused</Badge>`.
+
 12px, weight 500, `4px 10px` padding, pill radius.
 
 ### 4.5 Property card
@@ -434,6 +439,12 @@ Used for loan breakdowns, property stats, deal summaries.
 Full-width `brand-deep` bar, pill radius, showing pipeline position. Completed stages
 carry a `brand` dot and white label; the current stage carries a `highlight` dot and
 white label; future stages are `#7E9A8D` with no dot.
+
+The broker dashboard status rail is the sole gradient exception. It uses a restrained,
+lightened single-hue transition derived from `brand-deep`, `brand-ink`, and `brand`,
+plus a coordinated green gradient border. It has generous horizontal padding and
+semantic dots connected by low-contrast green rules. No other gradient colours or
+decorative effects may be added to it.
 
 On mobile this becomes horizontally scrollable stage tabs, not a compressed bar.
 
@@ -655,7 +666,7 @@ Things that will be rejected in review:
 - A shadow that isn't one of the five ink-tinted `--shadow-*` tokens (no default browser
   shadow, no pure-black shadow, no shadow on a dark attention card)
 - Stacking more than one shadow step on the same element
-- Gradients anywhere, including on photo overlays
+- Gradients anywhere except the documented broker dashboard status rail, including on photo overlays
 - Orange used decoratively rather than for a deadline
 - Lime appearing more than once per card, or as text on a light surface
 - `rounded-md` or `rounded-lg` on a button, badge, or input

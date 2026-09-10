@@ -26,7 +26,7 @@ export const dashboardHeaderLine: Variants = {
     },
 };
 
-/** Meta bar (RERA / contact / areas / actions) — L→R stagger. */
+/** Broker status strip (RERA / market focus / snapshot / actions) — L→R stagger. */
 export const dashboardMetaContainer: Variants = {
     hidden: {},
     visible: {

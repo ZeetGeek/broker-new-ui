@@ -41,7 +41,7 @@
     /* YesBroker product palette — see docs/DESIGN.md §1 */
     --color-canvas: #efeae0;
     --color-surface: #ffffff;
-    --color-surface-muted: #f7f4ee;
+    --color-surface-muted: #efece4;
     --color-border-warm: #e4ded2;
 
     --color-ink: #191c1a;
@@ -269,6 +269,25 @@
    are the same axis, so both survive the merge and the default wins. */
 @utility inline-auto {
     inline-size: auto;
+}
+
+/* Approved single-hue gradient for the broker dashboard status rail. */
+@utility dashboard-status-rail {
+    border: 1px solid transparent;
+    background:
+        linear-gradient(
+                100deg,
+                color-mix(in oklch, var(--color-brand-deep) 55%, var(--color-brand) 45%) 0%,
+                color-mix(in oklch, var(--color-brand-ink) 58%, var(--color-brand) 42%) 100%
+            )
+            padding-box,
+        linear-gradient(
+                100deg,
+                color-mix(in oklch, var(--color-brand) 72%, var(--color-brand-soft) 28%) 0%,
+                color-mix(in oklch, var(--color-brand-soft) 45%, var(--color-brand) 55%) 52%,
+                color-mix(in oklch, var(--color-brand) 45%, var(--color-brand-deep) 55%) 100%
+            )
+            border-box;
 }
 
 @utility animate-verified-glow {

@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
+import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const badgeVariants = cva(
                 danger: "border-danger/25 bg-danger-soft text-danger",
                 neutral: "border-border-warm bg-surface-muted text-ink",
                 outline: "border-border-warm bg-transparent text-ink-muted",
+                focused: "border-brand/30 bg-brand-soft text-brand-text",
             },
         },
         defaultVariants: {
@@ -28,10 +30,16 @@ const badgeVariants = cva(
 function Badge({
     className,
     variant,
+    children,
     ...props
 }: React.ComponentProps<"span"> & VariantProps<typeof badgeVariants>) {
     return (
-        <span data-slot="badge" className={cn(badgeVariants({ variant, className }))} {...props} />
+        <span data-slot="badge" className={cn(badgeVariants({ variant, className }))} {...props}>
+            {variant === "focused" ? (
+                <Check aria-hidden className="text-brand" strokeWidth={2.25} />
+            ) : null}
+            {children}
+        </span>
     );
 }
 
