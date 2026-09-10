@@ -9,6 +9,11 @@ export function brokerPropertyDetailHref(propertyId: string): string {
     return `/broker/properties/${propertyId}`;
 }
 
+/** Owner-listed (browse) property detail — not the broker's own inventory. */
+export function brokerOwnerListingDetailHref(propertyId: string): string {
+    return `/broker/owner-listings/${propertyId}`;
+}
+
 export function brokerPropertyEditHref(propertyId: string): string {
     return `/broker/properties/${propertyId}/edit`;
 }
