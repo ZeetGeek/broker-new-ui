@@ -40,6 +40,19 @@ export type PropertyBrowseListing = {
     isNew?: boolean;
     ownerName?: string | null;
     ownerAvatarUrl?: string | null;
+    /** `users.id` for the listing owner. */
+    ownerUserId?: string | null;
+    /** `owners.id` when the API sends the profile row separately. */
+    ownerProfileId?: string | null;
+    owner?: {
+        id?: string | null;
+        userId?: string | null;
+        profileId?: string | null;
+    } | null;
+    /** Where the owner is based. Not yet sent by the browse API. */
+    ownerCity?: string | null;
+    /** Owner locality within `ownerCity`. Not yet sent by the browse API. */
+    ownerLocality?: string | null;
     organizationName?: string | null;
     representation?: PropertyRepresentationStanding | null;
     /**

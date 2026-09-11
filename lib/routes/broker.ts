@@ -22,3 +22,8 @@ export function brokerYourListingsHref(tab?: "representing" | "requests"): strin
     if (!tab || tab === "representing") return BROKER_YOUR_LISTINGS_HREF;
     return `${BROKER_YOUR_LISTINGS_HREF}?tab=${tab}`;
 }
+
+/** Broker-facing owner profile — the person who listed the property. */
+export function brokerOwnerProfileHref(ownerUserId: string): string {
+    return `/broker/owners/${ownerUserId}`;
+}

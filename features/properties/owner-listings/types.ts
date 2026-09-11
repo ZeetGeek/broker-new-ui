@@ -35,6 +35,10 @@ export type OwnerListingItem = {
     commissionPercent: number;
     ownerName: string;
     ownerAvatarUrl?: string;
+    /** `users.id` for the listing owner — used to open their profile. */
+    ownerUserId?: string;
+    /** Where the owner is based, e.g. "Adajan, Surat". Absent until the API sends it. */
+    ownerLocationLabel?: string;
     photoCount: number;
     isNew: boolean;
     readyToMove: boolean;

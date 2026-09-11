@@ -1,3 +1,4 @@
+import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { PROPERTY_TYPE_LABELS } from "@/lib/validation/property";
 
 import type { OwnedPropertyCardListing } from "@/components/shared/property-card";
@@ -11,10 +12,12 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
     const amountInr = isRent
         ? (item.rentAmountInr ?? item.saleAmountInr ?? 0)
         : (item.saleAmountInr ?? item.rentAmountInr ?? 0);
+    const locality = formatPlaceName(item.locality);
+    const city = formatPlaceName(item.city);
 
     return {
         id: item.id,
-        title: `${item.locality} ${PROPERTY_TYPE_LABELS[item.propertyType] ?? item.propertyTypeLabel}`,
+        title: `${locality} ${PROPERTY_TYPE_LABELS[item.propertyType] ?? item.propertyTypeLabel}`,
         configLabel: item.configLabel,
         /** Lowercase type key — matches browse cards / residential checks. */
         propertyTypeLabel: item.propertyType,
@@ -25,8 +28,8 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         imageSrcs: item.imageSrcs,
         photoCount: item.photoCount,
         isNew: false,
-        locality: item.locality,
-        city: item.city,
+        locality,
+        city,
         bhk: item.bhk,
         status: item.status,
         inboundRequestCount: item.inboundRequestCount,

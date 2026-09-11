@@ -117,6 +117,28 @@ function isReadyToMove(availableFrom: string | null | undefined): boolean {
     return date.getTime() <= today.getTime();
 }
 
+function firstId(...values: Array<string | null | undefined>): string | undefined {
+    for (const value of values) {
+        const id = value?.trim();
+        if (id) return id;
+    }
+    return undefined;
+}
+
+/** Prefer `users.id`; fall back to the owner profile row when that is all the API sends. */
+function ownerUserIdFromBrowseListing(listing: PropertyBrowseListing): string | undefined {
+    const nested = listing.owner;
+    const snake = listing as PropertyBrowseListing & { owner_id?: string | null };
+    return firstId(
+        listing.ownerUserId,
+        nested?.userId,
+        listing.ownerProfileId,
+        nested?.profileId,
+        nested?.id,
+        snake.owner_id,
+    );
+}
+
 export function bhkValuesToApiConfig(bhk: string[]): string[] {
     return bhk
         .map((value) => Number(value))
@@ -187,6 +209,9 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
     const locality = listing.address?.trim() || listing.city?.trim() || "Locality";
     const city = listing.city?.trim() || "City";
     const ownerName = listing.ownerName?.trim() || listing.organizationName?.trim() || "Owner";
+    const ownerLocationLabel = [listing.ownerLocality?.trim(), listing.ownerCity?.trim()]
+        .filter(Boolean)
+        .join(", ");
     const imageSrc = photos[0] ?? "";
 
     return {
@@ -214,6 +239,8 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         })(),
         ownerName,
         ownerAvatarUrl: listing.ownerAvatarUrl ?? undefined,
+        ownerUserId: ownerUserIdFromBrowseListing(listing),
+        ownerLocationLabel: ownerLocationLabel || undefined,
         photoCount: photos.length,
         isNew: resolveIsNew(listing, listedHours),
         readyToMove: isReadyToMove(listing.availableFrom),

@@ -66,7 +66,7 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
         <WindowVirtualGrid
             items={items}
             getKey={(item) => item.id}
-            estimateRowHeight={isListView ? 224 : 480}
+            estimateRowHeight={isListView ? 268 : 528}
             gap={isListView ? 24 : 24}
             breakpoints={isListView ? LIST_BREAKPOINTS : GRID_BREAKPOINTS}
             ariaLabel="Owner listings"

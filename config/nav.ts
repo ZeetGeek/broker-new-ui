@@ -32,7 +32,7 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
         mobileLabel: "Owners",
         href: BROKER_OWNER_LISTINGS_HREF,
         shortcutId: "owner_listings",
-        activePrefixes: ["/broker/browse-properties", "/broker/owner-listings"],
+        activePrefixes: ["/broker/browse-properties", "/broker/owner-listings", "/broker/owners"],
     },
     {
         // Covers both directions — requests the broker sent and invites owners

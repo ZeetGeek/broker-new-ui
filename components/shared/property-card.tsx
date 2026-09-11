@@ -84,6 +84,14 @@ const BROWSE_REQUEST_LABEL = "Send request";
 const BROWSE_REQUEST_PENDING_LABEL = "Sending…";
 const BROWSE_REQUEST_SENT_LABEL = "Request sent";
 
+const PROPERTY_CARD_TITLE_CLASS = "body truncate font-semibold tracking-wide text-ink capitalize";
+const PROPERTY_CARD_LOCATION_CLASS = `
+  body-sm flex items-center gap-1.5 tracking-wide text-ink-muted min-inline-0
+`;
+const PROPERTY_CARD_SPECS_CLASS = `
+  body-sm flex flex-nowrap items-center gap-x-1.5 overflow-hidden tracking-wide text-ink-muted
+`;
+
 const BROWSE_REQUEST_TOOLTIP = {
     idle: "Ask the owner for permission to represent this property",
     pending: "Sending your request to the owner…",
@@ -157,6 +165,10 @@ export type PropertyCardOwner = {
     name: string;
     avatarUrl?: string;
     phoneDigits?: string;
+    /** Where the owner is based, e.g. "Adajan, Surat". Hidden when absent. */
+    locationLabel?: string;
+    /** Broker-facing owner profile. Name becomes a link when set. */
+    profileHref?: string;
 };
 
 type PropertyCardBase = {
@@ -233,29 +245,29 @@ export type PropertyCardProps = {
 );
 
 function formatBrowseCardArea(areaSqft: number): string {
-    return `${Math.round(areaSqft).toLocaleString("en-IN")} sq.ft.`;
+    return `${Math.round(areaSqft).toLocaleString("en-IN")} sqft`;
 }
 
 function formatBedLabel(bhk: number): string {
-    return bhk === 1 ? "1 bed" : `${bhk} bed`;
+    return bhk === 1 ? "1 Bed" : `${bhk} Bed`;
 }
 
 function formatBathLabel(bhk: number): string {
-    return bhk === 1 ? "1 bath" : `${bhk} bath`;
+    return bhk === 1 ? "1 Bath" : `${bhk} Bath`;
 }
 
 function BrowseSpecDivider() {
     return (
         <span aria-hidden className="text-ink-subtle/70">
-            |
+            ·
         </span>
     );
 }
 
 function BrowseSpecItem({ icon: Icon, label }: { icon: typeof Maximize2; label: string }) {
     return (
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-            <Icon aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
+        <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <Icon aria-hidden className="shrink-0 block-3 inline-3" strokeWidth={1.75} />
             {label}
         </span>
     );
@@ -513,12 +525,57 @@ function BrowsePropertyCardPhoto({
     );
 }
 
+function BrowsePropertyCardOwner({ owner }: { owner: PropertyCardOwner }) {
+    return (
+        <div className="mbs-auto flex items-center gap-2 py-1.5 min-inline-0">
+            <UserAvatar
+                name={owner.name}
+                imageUrl={owner.avatarUrl}
+                size="sm"
+                className="shrink-0"
+            />
+            <div className="flex flex-col min-inline-0">
+                <Button
+                    variant="link"
+                    size="sm"
+                    nativeButton={owner.profileHref ? false : undefined}
+                    render={
+                        owner.profileHref ? (
+                            <Link href={owner.profileHref} prefetch={false} />
+                        ) : undefined
+                    }
+                    className="
+                      body-sm justify-start gap-1.5 truncate p-0 font-medium tracking-wide text-ink
+                      capitalize block-auto min-inline-0 max-inline-full
+                    "
+                >
+                    {owner.name}
+                </Button>
+                {owner.locationLabel ? (
+                    <p
+                        className="
+                          body-xs flex items-center gap-1 tracking-wide text-ink-muted min-inline-0
+                        "
+                    >
+                        <MapPin
+                            aria-hidden
+                            className="shrink-0 block-3 inline-3"
+                            strokeWidth={1.75}
+                        />
+                        <span className="truncate capitalize">{owner.locationLabel}</span>
+                    </p>
+                ) : null}
+            </div>
+        </div>
+    );
+}
+
 function BrowsePropertyCardSpecs({ listing }: { listing: BrowsePropertyCardListing }) {
     const showBedBath =
         listing.bhk > 0 && RESIDENTIAL_PROPERTY_TYPES.has(listing.propertyTypeLabel);
 
     return (
-        <div className="body-sm flex flex-wrap items-center gap-x-2.5 gap-y-1 text-ink-muted">
+        <div className={PROPERTY_CARD_SPECS_CLASS}>
             <BrowseSpecItem icon={Maximize2} label={formatBrowseCardArea(listing.areaSqft)} />
             {showBedBath ? (
                 <>
@@ -554,7 +611,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
     const commissionBadge = (
         <span
             className={cn(
-                "body-sm shrink-0 font-medium text-brand",
+                "body-sm shrink-0 font-medium tracking-wide text-brand",
                 hasCommission && "cursor-help underline decoration-brand/30 underline-offset-2",
             )}
         >
@@ -565,7 +622,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
     return (
         <div className="flex items-center gap-2 min-inline-0">
             <div className="flex flex-1 items-baseline gap-1.5 min-inline-0">
-                <span className="h5 truncate font-semibold text-ink tabular-nums">
+                <span className="h5 truncate font-semibold tracking-wide text-ink tabular-nums">
                     {priceLabel}
                 </span>
                 {hasCommission ? (
@@ -666,7 +723,7 @@ function BrowsePropertyCard({
         <article
             className={cn(
                 "flex min-inline-0",
-                isListView ? "flex-row items-stretch gap-4" : "flex-col gap-3 block-full",
+                isListView ? "flex-row items-stretch gap-4" : "flex-1 flex-col gap-3 block-full",
                 className,
             )}
         >
@@ -689,34 +746,32 @@ function BrowsePropertyCard({
                     isListView ? "self-stretch" : "min-block-0",
                 )}
             >
-                <div className="flex items-start gap-2">
-                    <Link
-                        href={detailsHref}
-                        prefetch={false}
-                        className="flex flex-1 flex-col gap-2.5 min-inline-0"
-                    >
-                        <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h3 className="body truncate font-semibold text-ink">
-                                {listing.title}
-                            </h3>
-                            <p
-                                className="
-                                  body-sm flex items-center gap-1.5 text-ink-muted min-inline-0
-                                "
-                            >
-                                <MapPin
-                                    aria-hidden
-                                    className="shrink-0 block-3.5 inline-3.5"
-                                    strokeWidth={1.75}
-                                />
-                                <span className="truncate">
-                                    {listing.locality}, {listing.city}
-                                </span>
-                            </p>
-                        </div>
+                <div className="flex flex-1 items-stretch gap-2 min-block-0">
+                    <div className="flex flex-1 flex-col gap-1.5 min-block-0 min-inline-0">
+                        <Link
+                            href={detailsHref}
+                            prefetch={false}
+                            className="flex flex-col gap-1.5 min-inline-0"
+                        >
+                            <div className="flex flex-col gap-1.5 min-inline-0">
+                                <h3 className={PROPERTY_CARD_TITLE_CLASS}>{listing.title}</h3>
+                                <p className={PROPERTY_CARD_LOCATION_CLASS}>
+                                    <MapPin
+                                        aria-hidden
+                                        className="shrink-0 block-3.5 inline-3.5"
+                                        strokeWidth={1.75}
+                                    />
+                                    <span className="truncate capitalize">
+                                        {listing.locality}, {listing.city}
+                                    </span>
+                                </p>
+                            </div>
 
-                        <BrowsePropertyCardSpecs listing={listing} />
-                    </Link>
+                            <BrowsePropertyCardSpecs listing={listing} />
+                        </Link>
+
+                        <BrowsePropertyCardOwner owner={listing.owner} />
+                    </div>
 
                     <PropertySharePopover
                         listing={{
@@ -733,7 +788,7 @@ function BrowsePropertyCard({
                             listingKind:
                                 offersRent(listing) && !offersSale(listing) ? "rent" : "sale",
                         }}
-                        className="mbs-0.5"
+                        className="mbs-0.5 self-start tracking-wide"
                     />
                 </div>
 
@@ -1139,7 +1194,11 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
 function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
     if (status === "published") {
         return (
-            <Badge className="body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs">
+            <Badge
+                className="
+              body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs
+            "
+            >
                 {OWNED_STATUS_LABEL[status]}
             </Badge>
         );
@@ -1179,10 +1238,12 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
     return (
         <div className="flex items-center gap-2 min-inline-0">
             <div className="flex flex-1 items-baseline gap-1.5 min-inline-0">
-                <span className="h5 truncate font-semibold text-ink tabular-nums">
+                <span className="h5 truncate font-semibold tracking-wide text-ink tabular-nums">
                     {priceLabel}
                 </span>
-                <span className="body-sm shrink-0 font-medium text-brand">{requestLabel}</span>
+                <span className="body-sm shrink-0 font-medium tracking-wide text-brand">
+                    {requestLabel}
+                </span>
             </div>
             {both ? (
                 <div
@@ -1258,7 +1319,7 @@ function OwnedPropertyCard({
         <article
             className={cn(
                 "flex min-inline-0",
-                isListView ? "flex-row items-stretch gap-4" : "flex-col gap-3 block-full",
+                isListView ? "flex-row items-stretch gap-4" : "flex-1 flex-col gap-3 block-full",
                 className,
             )}
         >
@@ -1296,23 +1357,17 @@ function OwnedPropertyCard({
                     <Link
                         href={detailsHref}
                         prefetch={false}
-                        className="flex flex-1 flex-col gap-2.5 min-inline-0"
+                        className="flex flex-1 flex-col gap-1.5 min-inline-0"
                     >
                         <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h3 className="body truncate font-semibold text-ink">
-                                {listing.title}
-                            </h3>
-                            <p
-                                className="
-                                  body-sm flex items-center gap-1.5 text-ink-muted min-inline-0
-                                "
-                            >
+                            <h3 className={PROPERTY_CARD_TITLE_CLASS}>{listing.title}</h3>
+                            <p className={PROPERTY_CARD_LOCATION_CLASS}>
                                 <MapPin
                                     aria-hidden
                                     className="shrink-0 block-3.5 inline-3.5"
                                     strokeWidth={1.75}
                                 />
-                                <span className="truncate">
+                                <span className="truncate capitalize">
                                     {listing.locality}, {listing.city}
                                 </span>
                             </p>
@@ -1335,7 +1390,7 @@ function OwnedPropertyCard({
                             listingKind:
                                 offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
                         }}
-                        className="mbs-0.5"
+                        className="mbs-0.5 self-start tracking-wide"
                     />
                 </div>
 

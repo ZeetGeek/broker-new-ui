@@ -96,7 +96,7 @@ export function WindowVirtualGrid<T>({
                 }}
             >
                 {items.map((item, index) => (
-                    <div key={getKey(item)} role="listitem" className="min-inline-0">
+                    <div key={getKey(item)} role="listitem" className="flex flex-col min-inline-0">
                         {renderItem(item, index)}
                     </div>
                 ))}
@@ -133,7 +133,11 @@ export function WindowVirtualGrid<T>({
                             }}
                         >
                             {row.map(({ item, index }) => (
-                                <div key={getKey(item)} role="listitem" className="min-inline-0">
+                                <div
+                                    key={getKey(item)}
+                                    role="listitem"
+                                    className="flex flex-col min-inline-0"
+                                >
                                     {renderItem(item, index)}
                                 </div>
                             ))}
