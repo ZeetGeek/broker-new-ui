@@ -14,6 +14,8 @@ export type MyListingsGridProps = {
     view?: MyListingsView;
     /** When set, "Edit property" opens a modal instead of the edit route. */
     onEditListing?: (listing: MyListingItem) => void;
+    /** When set, each card offers "Add buyer" for that listing. */
+    onAddBuyer?: (listing: MyListingItem) => void;
 };
 
 const GRID_BREAKPOINTS = [
@@ -25,7 +27,12 @@ const GRID_BREAKPOINTS = [
 
 const LIST_BREAKPOINTS = [{ minWidth: 768, columns: 2 }];
 
-export function MyListingsGrid({ items, view = "grid", onEditListing }: MyListingsGridProps) {
+export function MyListingsGrid({
+    items,
+    view = "grid",
+    onEditListing,
+    onAddBuyer,
+}: MyListingsGridProps) {
     const isListView = view === "list";
 
     return (
@@ -47,6 +54,7 @@ export function MyListingsGrid({ items, view = "grid", onEditListing }: MyListin
                         detailsHref={brokerPropertyDetailHref(item.id)}
                         editHref={brokerPropertyEditHref(item.id)}
                         onEdit={onEditListing ? () => onEditListing(item) : undefined}
+                        onAddBuyer={onAddBuyer ? () => onAddBuyer(item) : undefined}
                         priority={index < 5}
                         imageSizes={
                             isListView
