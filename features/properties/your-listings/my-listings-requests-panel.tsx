@@ -7,7 +7,9 @@ import Link from "next/link";
 import { Check, Clock, Send, X } from "lucide-react";
 
 import { brokerRequestsApi } from "@/lib/api/broker-requests";
+import { PREF_KEYS } from "@/lib/prefs/keys";
 import { cn } from "@/lib/utils";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { Price } from "@/components/shared/price";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -26,6 +28,10 @@ const STATUS_CHIPS: { value: BrokerRequestStatusFilter; label: string }[] = [
     { value: "approved", label: "Approved" },
     { value: "declined", label: "Declined" },
 ];
+
+function isRequestStatus(value: unknown): value is BrokerRequestStatusFilter {
+    return value === "all" || value === "pending" || value === "approved" || value === "declined";
+}
 
 function RequestIcon({ type }: { type: BrokerRequestItem["type"] }) {
     if (type === "approved" || type === "approved_untouched") {
@@ -76,9 +82,11 @@ function RequestRow({
     const isRemind = item.action.kind === "remind";
 
     return (
-        <article className="
+        <article
+            className="
           flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4
-        ">
+        "
+        >
             <RequestIcon type={item.type} />
             <div
                 className="
@@ -123,7 +131,11 @@ function RequestRow({
 }
 
 export function MyListingsRequestsPanel() {
-    const [status, setStatus] = useState<BrokerRequestStatusFilter>("all");
+    const [status, setStatus] = usePersistedJson<BrokerRequestStatusFilter>(
+        PREF_KEYS.broker.myListings.requestsStatus,
+        "all",
+        { isValid: isRequestStatus },
+    );
     const [result, setResult] = useState<BrokerRequestsResult | null>(null);
     const [loading, setLoading] = useState(true);
     const [busyId, setBusyId] = useState<string | null>(null);

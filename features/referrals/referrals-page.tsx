@@ -10,8 +10,10 @@ import {
     filterAndSortReferrals,
     referralsApi,
 } from "@/lib/api/referrals";
+import { PREF_KEYS } from "@/lib/prefs/keys";
 import { buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
@@ -37,6 +39,12 @@ import { useAppSelector } from "@/store/hooks";
 /** Which modal is open. One at a time — both are about a single decision. */
 type ModalState = { kind: "none" } | { kind: "invite" } | { kind: "detail"; referralId: string };
 
+function isReferralsFilters(value: unknown): value is ReferralsFilters {
+    if (typeof value !== "object" || value === null) return false;
+    const v = value as Partial<ReferralsFilters>;
+    return typeof v.q === "string" && typeof v.status === "string";
+}
+
 export function ReferralsPage() {
     const user = useAppSelector((state) => state.auth.user);
     const profile = useAppSelector((state) => state.dashboard.profile);
@@ -49,7 +57,11 @@ export function ReferralsPage() {
     const inviterName =
         profile?.fullName?.trim() || user?.fullName?.trim() || "a broker on the platform";
 
-    const [filters, setFilters] = useState<ReferralsFilters>(DEFAULT_REFERRALS_FILTERS);
+    const [filters, setFilters] = usePersistedJson<ReferralsFilters>(
+        PREF_KEYS.broker.referrals.prefs,
+        DEFAULT_REFERRALS_FILTERS,
+        { isValid: isReferralsFilters },
+    );
     const [modal, setModal] = useState<ModalState>({ kind: "none" });
 
     const invitesQuery = useInfiniteItems({

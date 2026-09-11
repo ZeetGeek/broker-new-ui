@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { pipelineApi } from "@/lib/api/pipeline";
+import { PREF_KEYS } from "@/lib/prefs/keys";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
@@ -26,10 +28,10 @@ import {
     DEAL_STAGE_ORDER,
     type DealDetail,
     type DealItem,
-    type DealsFilters,
-    type DealsSummary,
     type DealStage,
     type DealStatus,
+    type DealsFilters,
+    type DealsSummary,
     type DealsView,
     DEFAULT_DEALS_FILTERS,
     isLiveStage,
@@ -40,11 +42,66 @@ const DONE_GRID_BREAKPOINTS = [
     { minWidth: 1024, columns: 3 },
 ];
 
+type PipelinePrefs = {
+    filters: DealsFilters;
+    view: DealsView;
+    mobileStage: DealStage;
+};
+
+const DEFAULT_PIPELINE_PREFS: PipelinePrefs = {
+    filters: DEFAULT_DEALS_FILTERS,
+    view: "board",
+    mobileStage: "new",
+};
+
+function isDealStage(value: unknown): value is DealStage {
+    return value === "new" || value === "contacted" || value === "visit" || value === "negotiation";
+}
+
+function isPipelinePrefs(value: unknown): value is PipelinePrefs {
+    if (typeof value !== "object" || value === null) return false;
+    const v = value as Partial<PipelinePrefs>;
+    return (
+        typeof v.filters === "object" &&
+        v.filters !== null &&
+        typeof (v.filters as DealsFilters).q === "string" &&
+        (v.view === "board" || v.view === "done") &&
+        isDealStage(v.mobileStage)
+    );
+}
+
 export function PipelinePage() {
-    const [filters, setFilters] = useState<DealsFilters>(DEFAULT_DEALS_FILTERS);
-    const [view, setView] = useState<DealsView>("board");
+    const [prefs, setPrefs] = usePersistedJson<PipelinePrefs>(
+        PREF_KEYS.broker.pipeline.prefs,
+        DEFAULT_PIPELINE_PREFS,
+        { isValid: isPipelinePrefs },
+    );
+    const { filters, view, mobileStage } = prefs;
+
+    const setFilters = useCallback(
+        (next: DealsFilters | ((prev: DealsFilters) => DealsFilters)) => {
+            setPrefs((prev) => ({
+                ...prev,
+                filters: typeof next === "function" ? next(prev.filters) : next,
+            }));
+        },
+        [setPrefs],
+    );
+
+    const setView = useCallback(
+        (next: DealsView) => {
+            setPrefs((prev) => ({ ...prev, view: next }));
+        },
+        [setPrefs],
+    );
+
     /** Which stage the mobile tabs are showing. Desktop shows all four. */
-    const [mobileStage, setMobileStage] = useState<DealStage>("new");
+    const setMobileStage = useCallback(
+        (next: DealStage) => {
+            setPrefs((prev) => ({ ...prev, mobileStage: next }));
+        },
+        [setPrefs],
+    );
 
     const [deals, setDeals] = useState<DealItem[] | null>(null);
     const [summary, setSummary] = useState<DealsSummary | null>(null);

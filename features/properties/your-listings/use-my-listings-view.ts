@@ -1,29 +1,32 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
+import { LEGACY_PREF_KEYS, PREF_KEYS } from "@/lib/prefs/keys";
+import { migrateLegacyPref } from "@/lib/prefs/storage";
 
 export type MyListingsView = "grid" | "list";
 
-const STORAGE_KEY = "my_listings_view";
-
-function readStoredView(): MyListingsView {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    return stored === "grid" || stored === "list" ? stored : "grid";
+function isView(value: unknown): value is MyListingsView {
+    return value === "grid" || value === "list";
 }
 
-function subscribe(onStoreChange: () => void) {
-    window.addEventListener("storage", onStoreChange);
-    return () => window.removeEventListener("storage", onStoreChange);
+let migrated = false;
+function ensureMigrated() {
+    if (migrated || typeof window === "undefined") return;
+    migrated = true;
+    migrateLegacyPref(LEGACY_PREF_KEYS.myListingsView, PREF_KEYS.broker.myListings.view, (raw) =>
+        raw === "list" || raw === "grid" ? raw : "grid",
+    );
 }
 
 export function useMyListingsView() {
-    const view = useSyncExternalStore(subscribe, readStoredView, () => "grid" as const);
-
-    const setView = useCallback((next: MyListingsView) => {
-        window.localStorage.setItem(STORAGE_KEY, next);
-        // Same-tab updates do not fire `storage` — notify subscribers manually.
-        window.dispatchEvent(new Event("storage"));
-    }, []);
-
+    ensureMigrated();
+    const [view, setView] = usePersistedJson<MyListingsView>(
+        PREF_KEYS.broker.myListings.view,
+        "grid",
+        {
+            isValid: isView,
+        },
+    );
     return { view, setView };
 }

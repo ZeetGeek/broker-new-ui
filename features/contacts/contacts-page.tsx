@@ -7,8 +7,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDownUp, ChevronDown, Search, UserPlus, UserRound, Users } from "lucide-react";
 
 import { contactsApi, sortBuyerRows } from "@/lib/api/contacts";
+import { PREF_KEYS } from "@/lib/prefs/keys";
 import { cn } from "@/lib/utils";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { AddFab } from "@/components/shared/add-fab";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -49,6 +51,16 @@ const CONTACT_GRID_BREAKPOINTS = [
     { minWidth: 640, columns: 2 },
     { minWidth: 1280, columns: 3 },
 ];
+
+function isContactsFilters(value: unknown): value is ContactsFilters {
+    if (typeof value !== "object" || value === null) return false;
+    const v = value as Partial<ContactsFilters>;
+    return (
+        typeof v.q === "string" &&
+        (v.tab === "buyers" || v.tab === "owners") &&
+        (v.sort === "recent" || v.sort === "name" || v.sort === "most_active")
+    );
+}
 
 /** Debounced so typing does not refetch on every keystroke. */
 function ContactsQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
@@ -127,7 +139,11 @@ function buildHeadline(
 }
 
 export function ContactsPage() {
-    const [filters, setFilters] = useState<ContactsFilters>(DEFAULT_CONTACTS_FILTERS);
+    const [filters, setFilters] = usePersistedJson<ContactsFilters>(
+        PREF_KEYS.broker.contacts.prefs,
+        DEFAULT_CONTACTS_FILTERS,
+        { isValid: isContactsFilters },
+    );
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
     const [attachingBuyer, setAttachingBuyer] = useState<BuyerRow | null>(null);

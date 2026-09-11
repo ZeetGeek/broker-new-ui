@@ -42,7 +42,7 @@ const QUICK_CHIPS: QuickChipConfig[] = [
         key: "yourAreas",
         label: "Your areas",
         mobileLabel: "Areas",
-        description: "Only listings in your service areas",
+        description: "Your service areas first, then elsewhere",
     },
     {
         key: "newToday",

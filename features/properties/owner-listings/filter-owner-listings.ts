@@ -76,13 +76,16 @@ export function parseOwnerListingsFilters(
     const cities = parseListParam(params, "city");
     const localities = parseListParam(params, "locality");
     const yourAreasRaw = parseParam(params, "yourAreas");
-    // Default to serviceable areas when Where has no explicit cities/localities.
-    const yourAreas =
-        yourAreasRaw === "1"
+    const hasLocationFilter = cities.length > 0 || localities.length > 0;
+    // Explicit city/locality picks turn off your-areas priority.
+    // Missing param defaults to Your areas on (URL restore layer may override).
+    const yourAreas = hasLocationFilter
+        ? false
+        : yourAreasRaw === "0"
+          ? false
+          : yourAreasRaw === "1"
             ? true
-            : yourAreasRaw === "0"
-              ? false
-              : cities.length === 0 && localities.length === 0;
+            : true;
 
     return {
         q: parseParam(params, "q"),
@@ -138,7 +141,7 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     if (filters.maxAreaSqft) params.set("maxArea", filters.maxAreaSqft);
     if (filters.listedWithinDays) params.set("listedWithin", filters.listedWithinDays);
     if (filters.minCommissionPercent) params.set("minCommission", filters.minCommissionPercent);
-    // Persist Anywhere (`0`) so a refresh does not fall back to serviceable areas.
+    // Persist Your areas chip when Where is not pinned to a city/locality.
     if (filters.cities.length === 0 && filters.localities.length === 0) {
         params.set("yourAreas", filters.yourAreas ? "1" : "0");
     }
@@ -167,14 +170,10 @@ export function countSheetFilters(filters: OwnerListingsFilters): number {
 }
 
 export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): boolean {
-    const isAnywhere =
-        !filters.yourAreas && filters.cities.length === 0 && filters.localities.length === 0;
-
     return (
         Boolean(filters.q.trim()) ||
         filters.cities.length > 0 ||
         filters.localities.length > 0 ||
-        isAnywhere ||
         filters.bhk.length > 0 ||
         Boolean(filters.type) ||
         Boolean(filters.min) ||
@@ -251,11 +250,7 @@ export function filterOwnerListings(
     let filtered = items.filter((item) => {
         if (!matchesQuery(item, filters.q)) return false;
 
-        if (filters.yourAreas && serviceAreas.length > 0) {
-            if (!serviceAreas.includes(item.locality) && !serviceAreas.includes(item.city)) {
-                return false;
-            }
-        } else {
+        if (filters.cities.length > 0 || filters.localities.length > 0) {
             if (
                 filters.cities.length > 0 &&
                 !filters.cities.some((city) => city.toLowerCase() === item.city.toLowerCase())
@@ -313,6 +308,12 @@ export function filterOwnerListings(
     });
 
     filtered = [...filtered].sort((a, b) => {
+        if (filters.yourAreas && serviceAreas.length > 0) {
+            const areaSet = new Set(serviceAreas);
+            const aIn = areaSet.has(a.locality) || areaSet.has(a.city) ? 0 : 1;
+            const bIn = areaSet.has(b.locality) || areaSet.has(b.city) ? 0 : 1;
+            if (aIn !== bIn) return aIn - bIn;
+        }
         if (filters.sort === "price_asc") {
             return (
                 listingCompareAmountInr(a, filters.type) - listingCompareAmountInr(b, filters.type)

@@ -11,20 +11,47 @@ import type {
 } from "@/features/properties/owner-listings/types";
 import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
 
+/** Title-case a place name for UI (handles spaces, hyphens, underscores). */
+export function formatPlaceName(value: string): string {
+    return value
+        .trim()
+        .split(/([\s-]+)/)
+        .map((part) => {
+            if (/^[\s-]+$/.test(part)) return part;
+            if (!part) return part;
+            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+        })
+        .join("");
+}
+
+/** City + state for Where rows — title-cased, no duplicated city/state. */
+export function formatLocationPathLabel(city: string, state: string): string {
+    const cityLabel = formatPlaceName(city);
+    const stateLabel = formatPlaceName(state);
+
+    if (!cityLabel) return stateLabel;
+    if (!stateLabel || cityLabel.toLowerCase() === stateLabel.toLowerCase()) {
+        return cityLabel;
+    }
+
+    return `${cityLabel}, ${stateLabel}`;
+}
+
 export function formatLocalitiesLabel(
     localities: string[],
     cities: string[] = [],
-    yourAreas = false,
+    _yourAreas = false,
 ): string {
     if (localities.length > 0) {
-        if (localities.length <= 2) return localities.join(", ");
-        return `${localities.slice(0, 2).join(", ")} +${localities.length - 2}`;
+        const labels = localities.map(formatPlaceName);
+        if (labels.length <= 2) return labels.join(", ");
+        return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
     }
     if (cities.length > 0) {
-        if (cities.length <= 2) return cities.join(", ");
-        return `${cities.slice(0, 2).join(", ")} +${cities.length - 2}`;
+        const labels = cities.map(formatPlaceName);
+        if (labels.length <= 2) return labels.join(", ");
+        return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
     }
-    if (yourAreas) return "Serviceable areas";
     return "Anywhere";
 }
 
@@ -32,16 +59,16 @@ export function formatLocalitiesLabel(
 export function formatLocalitiesTooltip(
     localities: string[],
     cities: string[] = [],
-    yourAreas = false,
+    _yourAreas = false,
 ): string | null {
     if (localities.length > 2) {
-        return localities.join(", ");
+        return localities.map(formatPlaceName).join(", ");
     }
     if (localities.length === 0 && cities.length > 2) {
-        return cities.join(", ");
+        return cities.map(formatPlaceName).join(", ");
     }
-    if (localities.length === 0 && cities.length === 0 && yourAreas) {
-        return "Listings in your serviceable areas";
+    if (localities.length === 0 && cities.length === 0) {
+        return "All listed properties";
     }
     if (localities.length === 0 && cities.length > 0 && cities.length <= 2) {
         return null;
@@ -122,7 +149,7 @@ export function formatResultsCountLine(
     const propertyLabel = totalCount === 1 ? "property" : "properties";
 
     if (filters.yourAreas && serviceAreas.length > 0) {
-        return `${totalCount} ${propertyLabel} in your areas`;
+        return `${totalCount} ${propertyLabel} · your areas first`;
     }
 
     if (filters.localities.length > 0) {

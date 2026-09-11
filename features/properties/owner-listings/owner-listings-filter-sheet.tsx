@@ -75,8 +75,8 @@ const DEAL_OPTIONS: {
 }[] = [
     {
         key: "yourAreas",
-        label: "Your areas only",
-        description: "Limit to your service localities",
+        label: "Your areas first",
+        description: "Show your service localities before others",
         icon: MapPinned,
     },
     {

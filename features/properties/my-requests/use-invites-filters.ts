@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback } from "react";
+
+import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
+import { PREF_KEYS } from "@/lib/prefs/keys";
 
 import {
     DEFAULT_INVITES_FILTERS,
@@ -14,7 +16,9 @@ const STAGES: InviteStageFilter[] = ["all", "pending", "accepted", "declined", "
 const SORTS: InviteSort[] = ["recent", "oldest", "price_desc", "price_asc"];
 const PAGE_SIZES = [10, 20, 50];
 
-function parse(record: Record<string, string>): InvitesFilters {
+const INVITES_URL_KEYS = ["q", "stage", "sort", "limit"] as const;
+
+function parseRecord(record: Record<string, string>): InvitesFilters {
     const stage = record.stage as InviteStageFilter;
     const sort = record.sort as InviteSort;
     const page = Number.parseInt(record.page ?? "", 10);
@@ -29,7 +33,6 @@ function parse(record: Record<string, string>): InvitesFilters {
     };
 }
 
-/** Only non-default values reach the URL, plus the tab that owns this view. */
 function serialize(filters: InvitesFilters): URLSearchParams {
     const params = new URLSearchParams({ tab: "invites" });
 
@@ -42,28 +45,47 @@ function serialize(filters: InvitesFilters): URLSearchParams {
     return params;
 }
 
-export function useInvitesFilters() {
-    const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
+function parse(params: URLSearchParams): InvitesFilters {
+    const record: Record<string, string> = {};
+    params.forEach((value, key) => {
+        record[key] = value;
+    });
+    return parseRecord(record);
+}
 
-    const filters = useMemo(() => {
-        const record: Record<string, string> = {};
-        searchParams.forEach((value, key) => {
-            record[key] = value;
-        });
-        return parse(record);
-    }, [searchParams]);
+function forStorage(filters: InvitesFilters): InvitesFilters {
+    return { ...filters, page: 1 };
+}
+
+function isInvitesFilters(value: unknown): value is InvitesFilters {
+    if (typeof value !== "object" || value === null) return false;
+    const v = value as Partial<InvitesFilters>;
+    return typeof v.q === "string" && typeof v.stage === "string" && typeof v.sort === "string";
+}
+
+export function useInvitesFilters() {
+    const {
+        value: filters,
+        replace,
+        ready,
+    } = useUrlSyncedPrefs<InvitesFilters>({
+        storageKey: PREF_KEYS.broker.requests.invitesFilters,
+        urlKeys: INVITES_URL_KEYS,
+        preserveUrlKeys: ["tab"],
+        parse,
+        serialize: (value) => serialize(forStorage(value)),
+        forStorage,
+        isValid: isInvitesFilters,
+    });
 
     const setFilters = useCallback(
         (next: InvitesFilters | ((prev: InvitesFilters) => InvitesFilters)) => {
             const resolved = typeof next === "function" ? next(filters) : next;
-            router.replace(`${pathname}?${serialize(resolved).toString()}`, { scroll: false });
+            replace(resolved);
         },
-        [filters, pathname, router],
+        [filters, replace],
     );
 
-    /** Any filter change resets to page 1 — page 4 of a new result set is empty. */
     const patchFilters = useCallback(
         (patch: Partial<InvitesFilters>) => {
             setFilters((prev) => ({ ...prev, ...patch, page: patch.page ?? 1 }));
@@ -82,5 +104,6 @@ export function useInvitesFilters() {
         clearFilters,
         hasActiveFilters: filters.q.trim().length > 0 || filters.stage !== "all",
         filterSignature: serialize(filters).toString(),
+        scopeReady: ready,
     };
 }

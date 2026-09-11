@@ -4,7 +4,12 @@ import { useMemo, useState } from "react";
 
 import { type LucideIcon, MapPin, MapPinOff, Search } from "lucide-react";
 
-import { formatLocalitiesLabel, formatLocalitiesTooltip } from "@/lib/format/owner-listings-labels";
+import {
+    formatLocationPathLabel,
+    formatLocalitiesLabel,
+    formatLocalitiesTooltip,
+    formatPlaceName,
+} from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
 import {
@@ -66,7 +71,6 @@ const rowClass = (checked: boolean) =>
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:[&_svg]:stroke-[2.25]",
         checked
             ? [
-                  // Active: lock look — no hover/focus color shift on pin or subtitle
                   "border-brand bg-brand-soft! text-ink! shadow-sm ring-1 ring-brand/20",
                   "[--row-icon:var(--color-brand)]",
                   "hover:[--row-icon:var(--color-brand)]",
@@ -79,12 +83,10 @@ const rowClass = (checked: boolean) =>
                   `,
                   "data-checked:focus:bg-brand-soft! data-checked:focus:text-ink!",
                   "data-checked:hover:bg-brand-soft! data-checked:hover:text-ink!",
-                  // Title stays ink (beat base focus:**:text-accent-foreground)
                   "**:data-[slot=where-location-title]:text-ink!",
                   "focus:**:data-[slot=where-location-title]:text-ink!",
                   "data-highlighted:**:data-[slot=where-location-title]:text-ink!",
                   "hover:**:data-[slot=where-location-title]:text-ink!",
-                  // Subtitle + listing count stay muted (incl. nested spans)
                   "**:data-muted-line:text-ink-muted!",
                   "**:data-muted-line:*:text-ink-muted!",
                   "focus:**:data-muted-line:text-ink-muted!",
@@ -100,7 +102,6 @@ const rowClass = (checked: boolean) =>
                   "**:data-[slot=dropdown-menu-checkbox-item-indicator]:scale-100",
               ]
             : [
-                  // Idle: muted hover only when not selected
                   "data-highlighted:bg-surface-muted/70! data-highlighted:text-ink!",
                   "focus:bg-surface-muted/70! focus:text-ink!",
                   "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-0",
@@ -112,25 +113,34 @@ function formatListingCount(count: number): string {
     return count === 1 ? "1 listing" : `${count} listings`;
 }
 
+const WHERE_META_CLASS = cn(
+    "truncate text-[12px] font-medium leading-snug tracking-[0.04em] text-ink-muted",
+);
+
+const WHERE_TITLE_CLASS = cn(
+    "truncate text-[15px] font-medium leading-snug tracking-[-0.01em] text-ink",
+);
+
 function HighlightMatch({ text, query }: { text: string; query: string }) {
+    const display = formatPlaceName(text);
     const needle = query.trim().toLowerCase();
     if (!needle) {
-        return <>{text}</>;
+        return <>{display}</>;
     }
 
-    const haystack = text.toLowerCase();
+    const haystack = display.toLowerCase();
     const index = haystack.indexOf(needle);
     if (index === -1) {
-        return <>{text}</>;
+        return <>{display}</>;
     }
 
     return (
         <>
-            {text.slice(0, index)}
+            {display.slice(0, index)}
             <span className="font-semibold text-ink">
-                {text.slice(index, index + needle.length)}
+                {display.slice(index, index + needle.length)}
             </span>
-            {text.slice(index + needle.length)}
+            {display.slice(index + needle.length)}
         </>
     );
 }
@@ -141,28 +151,58 @@ function LocationIcon() {
             aria-hidden
             data-slot="where-location-pin"
             color="var(--row-icon)"
-            className="shrink-0 transition-[color,stroke] duration-160 block-6 inline-6"
+            className="shrink-0 transition-[color,stroke] duration-160 block-5 inline-5"
             strokeWidth={1.75}
         />
     );
 }
 
+function WhereLocationMeta({
+    pathLabel,
+    listingCount,
+    showCount,
+}: {
+    pathLabel: string;
+    listingCount?: number;
+    showCount?: boolean;
+}) {
+    return (
+        <span className={WHERE_META_CLASS} data-muted-line>
+            <span className="capitalize">{pathLabel}</span>
+            {showCount && listingCount != null ? (
+                <>
+                    <span className="mx-1.5 text-ink-subtle" aria-hidden>
+                        ·
+                    </span>
+                    <span className="tabular-nums tracking-[0.02em]">
+                        {formatListingCount(listingCount)}
+                    </span>
+                </>
+            ) : null}
+        </span>
+    );
+}
+
 function WhereLocationRow({
     locality,
-    pathLabel,
+    city,
+    state,
     listingCount,
     query,
     checked,
     onToggle,
 }: {
     locality: string;
-    pathLabel: string;
+    city: string;
+    state: string;
     listingCount: number;
     query: string;
     checked: boolean;
     onToggle: () => void;
 }) {
     const isSearching = query.trim().length > 0;
+    const title = formatPlaceName(locality);
+    const pathLabel = formatLocationPathLabel(city, state);
 
     return (
         <DropdownMenuCheckboxItem
@@ -171,49 +211,15 @@ function WhereLocationRow({
             className={rowClass(checked)}
         >
             <LocationIcon />
-            <span className="flex flex-1 flex-col gap-0.5 text-start min-inline-0">
-                {isSearching ? (
-                    <>
-                        <span
-                            data-slot="where-location-title"
-                            className="truncate text-[15px] leading-snug text-ink capitalize"
-                        >
-                            <HighlightMatch text={locality} query={query} />
-                        </span>
-                        <span
-                            className="truncate text-[13px] leading-snug text-ink-muted!"
-                            data-muted-line
-                            style={{ color: "var(--color-ink-muted)" }}
-                        >
-                            {pathLabel}
-                        </span>
-                    </>
-                ) : (
-                    <>
-                        <span
-                            data-slot="where-location-title"
-                            className="
-                              truncate text-[15px] leading-snug font-medium text-ink capitalize
-                            "
-                        >
-                            {locality}
-                        </span>
-                        <span
-                            className="truncate text-[13px] leading-snug text-ink-muted!"
-                            data-muted-line
-                            style={{ color: "var(--color-ink-muted)" }}
-                        >
-                            {pathLabel}
-                            <span aria-hidden> · </span>
-                            <span
-                                className="tabular-nums"
-                                style={{ color: "var(--color-ink-muted)" }}
-                            >
-                                {formatListingCount(listingCount)}
-                            </span>
-                        </span>
-                    </>
-                )}
+            <span className="flex flex-1 flex-col gap-1 text-start min-inline-0">
+                <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
+                    {isSearching ? <HighlightMatch text={locality} query={query} /> : title}
+                </span>
+                <WhereLocationMeta
+                    pathLabel={pathLabel}
+                    listingCount={listingCount}
+                    showCount={!isSearching}
+                />
             </span>
         </DropdownMenuCheckboxItem>
     );
@@ -259,7 +265,8 @@ function renderSearchResults({
         <WhereLocationRow
             key={`${hit.state}-${hit.city}-${hit.locality}`}
             locality={hit.locality}
-            pathLabel={hit.pathLabel}
+            city={hit.city}
+            state={hit.state}
             listingCount={hit.listingCount}
             query={query}
             checked={selectedSet.has(hit.locality)}
@@ -272,7 +279,6 @@ export type OwnerListingsWhereMenuProps = {
     listings: OwnerListingItem[];
     selectedCities: string[];
     selectedLocalities: string[];
-    yourAreas: boolean;
     onWhereChange: (next: { cities: string[]; localities: string[]; yourAreas: boolean }) => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
@@ -282,7 +288,6 @@ export function OwnerListingsWhereMenu({
     listings,
     selectedCities,
     selectedLocalities,
-    yourAreas,
     onWhereChange,
     onOpenChange,
     className,
@@ -305,15 +310,7 @@ export function OwnerListingsWhereMenu({
     const hasListings = locationTree.length > 0;
     const isSearching = query.trim().length > 0;
     const showEmptyState = !hasListings || (isSearching && searchHits.length === 0);
-    const isServiceableSelected =
-        yourAreas && selectedCities.length === 0 && selectedLocalities.length === 0;
-    const isAnywhereSelected =
-        !yourAreas && selectedCities.length === 0 && selectedLocalities.length === 0;
-
-    const selectServiceableAreas = () => {
-        setQuery("");
-        onWhereChange({ cities: [], localities: [], yourAreas: true });
-    };
+    const isAnywhereSelected = selectedCities.length === 0 && selectedLocalities.length === 0;
 
     const selectAnywhere = () => {
         setQuery("");
@@ -321,7 +318,7 @@ export function OwnerListingsWhereMenu({
     };
 
     const clearSelection = () => {
-        selectServiceableAreas();
+        selectAnywhere();
     };
 
     const handleOpenChange = (nextOpen: boolean) => {
@@ -339,7 +336,7 @@ export function OwnerListingsWhereMenu({
             : [...selectedLocalities, locality];
 
         if (nextLocalities.length === 0) {
-            onWhereChange({ cities: [], localities: [], yourAreas: true });
+            onWhereChange({ cities: [], localities: [], yourAreas: false });
             return;
         }
 
@@ -360,11 +357,7 @@ export function OwnerListingsWhereMenu({
         });
     };
 
-    const whereTooltipLabel = formatLocalitiesTooltip(
-        selectedLocalities,
-        selectedCities,
-        yourAreas,
-    );
+    const whereTooltipLabel = formatLocalitiesTooltip(selectedLocalities, selectedCities, false);
 
     return (
         <div className={cn("inline-full min-inline-0", className)}>
@@ -383,7 +376,7 @@ export function OwnerListingsWhereMenu({
                                             value={formatLocalitiesLabel(
                                                 selectedLocalities,
                                                 selectedCities,
-                                                yourAreas,
+                                                false,
                                             )}
                                             className="inline-full"
                                             isOpen={open}
@@ -453,72 +446,26 @@ export function OwnerListingsWhereMenu({
                             <ScrollArea className="overflow-hidden block-full">
                                 <div className="px-3 pe-3 pbs-0 pbe-3">
                                     {!isSearching ? (
-                                        <>
-                                            <DropdownMenuCheckboxItem
-                                                checked={isServiceableSelected}
-                                                onCheckedChange={selectServiceableAreas}
-                                                className={rowClass(isServiceableSelected)}
+                                        <DropdownMenuCheckboxItem
+                                            checked={isAnywhereSelected}
+                                            onCheckedChange={selectAnywhere}
+                                            className={rowClass(isAnywhereSelected)}
+                                        >
+                                            <LocationIcon />
+                                            <span
+                                                className="
+                                                  flex flex-1 flex-col gap-1 text-start min-inline-0
+                                                "
                                             >
-                                                <LocationIcon />
                                                 <span
-                                                    className="
-                                                      flex flex-1 flex-col gap-0.5 text-start
-                                                      min-inline-0
-                                                    "
+                                                    data-slot="where-location-title"
+                                                    className={WHERE_TITLE_CLASS}
                                                 >
-                                                    <span
-                                                        data-slot="where-location-title"
-                                                        className="
-                                                          truncate text-[15px] leading-snug
-                                                          font-medium text-ink capitalize
-                                                        "
-                                                    >
-                                                        Serviceable areas
-                                                    </span>
-                                                    <span
-                                                        className="
-                                                          truncate text-[13px] leading-snug
-                                                          text-ink-muted
-                                                        "
-                                                        data-muted-line
-                                                    >
-                                                        Default — your coverage areas
-                                                    </span>
+                                                    Anywhere
                                                 </span>
-                                            </DropdownMenuCheckboxItem>
-                                            <DropdownMenuCheckboxItem
-                                                checked={isAnywhereSelected}
-                                                onCheckedChange={selectAnywhere}
-                                                className={rowClass(isAnywhereSelected)}
-                                            >
-                                                <LocationIcon />
-                                                <span
-                                                    className="
-                                                      flex flex-1 flex-col gap-0.5 text-start
-                                                      min-inline-0
-                                                    "
-                                                >
-                                                    <span
-                                                        data-slot="where-location-title"
-                                                        className="
-                                                          truncate text-[15px] leading-snug
-                                                          font-medium text-ink capitalize
-                                                        "
-                                                    >
-                                                        Anywhere
-                                                    </span>
-                                                    <span
-                                                        className="
-                                                          truncate text-[13px] leading-snug
-                                                          text-ink-muted
-                                                        "
-                                                        data-muted-line
-                                                    >
-                                                        All listed properties
-                                                    </span>
-                                                </span>
-                                            </DropdownMenuCheckboxItem>
-                                        </>
+                                                <WhereLocationMeta pathLabel="All listed properties" />
+                                            </span>
+                                        </DropdownMenuCheckboxItem>
                                     ) : null}
 
                                     {isSearching ? (
@@ -533,7 +480,8 @@ export function OwnerListingsWhereMenu({
                                             <WhereLocationRow
                                                 key={`${leaf.state}-${leaf.city}-${leaf.locality}`}
                                                 locality={leaf.locality}
-                                                pathLabel={`${leaf.city}, ${leaf.state}`}
+                                                city={leaf.city}
+                                                state={leaf.state}
                                                 listingCount={leaf.listingCount}
                                                 query=""
                                                 checked={selectedLocalitySet.has(leaf.locality)}

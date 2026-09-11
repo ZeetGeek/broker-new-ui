@@ -129,7 +129,6 @@ export function OwnerListingsSearchBand({
                         listings={listings}
                         selectedCities={draft.cities}
                         selectedLocalities={draft.localities}
-                        yourAreas={draft.yourAreas}
                         onWhereChange={setWhereFilters}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"

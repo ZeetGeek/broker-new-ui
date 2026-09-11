@@ -80,6 +80,7 @@ function OwnerListingsResults({
     onLoaded,
     onLoadingChange,
     view,
+    enabled,
 }: {
     filterSignature: string;
     serviceAreasKey: string;
@@ -90,9 +91,11 @@ function OwnerListingsResults({
     onLoaded: (result: OwnerListingsResult) => void;
     onLoadingChange: (isLoading: boolean) => void;
     view: OwnerListingsView;
+    enabled: boolean;
 }) {
     const query = useInfiniteItems({
         queryKey: ["owner-listings", filterSignature, serviceAreasKey],
+        enabled,
         queryFn: async ({ cursor, signal }) => {
             const page = await fetchOwnerListings(
                 {
@@ -108,16 +111,19 @@ function OwnerListingsResults({
     });
 
     useEffect(() => {
-        onLoadingChange(query.isFetching);
-    }, [onLoadingChange, query.isFetching]);
+        onLoadingChange(query.isFetching || !enabled);
+    }, [enabled, onLoadingChange, query.isFetching]);
 
     useEffect(() => {
         const pages = query.data?.pages;
         if (!pages?.length) return;
         const lastPage = pages.at(-1)!;
+        // Prefer the latest page total so priority mode can surface the full pool size
+        // once the anywhere phase begins.
+        const totalCount = Math.max(...pages.map((page) => page.total), query.total);
         onLoaded({
             items: query.items,
-            totalCount: query.total,
+            totalCount,
             marketValueInr: query.items.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0),
             nextCursor: lastPage.nextCursor,
             page: lastPage.page,
@@ -125,23 +131,7 @@ function OwnerListingsResults({
         });
     }, [onLoaded, query.data?.pages, query.items, query.total]);
 
-    if (query.isError && query.items.length === 0) {
-        return (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load owner listings</p>
-                <p className="body-sm text-ink-muted">Could not load owner listings. Try again.</p>
-                <button
-                    type="button"
-                    onClick={() => void query.refetch()}
-                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                >
-                    Try again
-                </button>
-            </div>
-        );
-    }
-
-    if (query.isPending) {
+    if (!enabled || query.isPending) {
         return (
             <div
                 className={view === "list" ? OWNER_LISTINGS_LIST_CLASS : OWNER_LISTINGS_GRID_CLASS}
@@ -156,6 +146,22 @@ function OwnerListingsResults({
                         aria-hidden
                     />
                 ))}
+            </div>
+        );
+    }
+
+    if (query.isError && query.items.length === 0) {
+        return (
+            <div className="flex flex-col items-center gap-4 py-12 text-center">
+                <p className="h6 text-ink">Could not load owner listings</p>
+                <p className="body-sm text-ink-muted">Could not load owner listings. Try again.</p>
+                <button
+                    type="button"
+                    onClick={() => void query.refetch()}
+                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
+                >
+                    Try again
+                </button>
             </div>
         );
     }
@@ -203,6 +209,7 @@ export function OwnerListingsPage() {
         clearFilters,
         hasActiveFilters,
         filterSignature,
+        scopeReady,
     } = useOwnerListingsFilters();
     const { view, setView } = useOwnerListingsView();
 
@@ -359,6 +366,7 @@ export function OwnerListingsPage() {
                 onLoaded={handleLoaded}
                 onLoadingChange={setIsResultsLoading}
                 view={view}
+                enabled={scopeReady}
             />
         </div>
     );
