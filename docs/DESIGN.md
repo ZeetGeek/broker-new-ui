@@ -67,11 +67,12 @@ ink-subtle      #A9A79D   captions, metadata, placeholder
 ```
 
 ```
-brand-ink       #0B1F17   primary button fill (reads black, is green)
-brand-deep      #0F3D2E   dark attention cards
-brand           #1B7A5A   prices, match %, active state, links
-brand-soft      #E3F2EA   badge and chip backgrounds
-brand-text      #0B5A41   text sitting on brand-soft
+brand-ink        #0B1F17   primary button fill (reads black, is green)
+brand-deep       #0F3D2E   dark attention cards
+brand            #1B7A5A   prices, match %, active state, links
+brand-soft       #E3F2EA   badge and chip backgrounds
+brand-soft-hover #D0E8DC   hover fill on brand-soft controls (same hue, one step deeper)
+brand-text       #0B5A41   text sitting on brand-soft
 ```
 
 ```
@@ -369,6 +370,8 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 | Secondary         | transparent, 1px `border`    | `ink`           | Reschedule, Cancel, Map view                                                                                                                                |
 | Destructive       | transparent, 1px `danger`    | `danger`        | Reject, Delete                                                                                                                                              |
 | Ghost             | none                         | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
+
+`brand-soft` fills hover to `brand-soft-hover` — one step deeper in the same green, never a different hue.
 
 All use the standard 12px control radius. Height comes from the control-height scale (§3.1a):
 `xs`/`sm`/`default`/`md`/`lg` map to `control-xs`/`control-sm`/`control-md`/

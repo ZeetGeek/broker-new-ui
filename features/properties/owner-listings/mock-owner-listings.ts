@@ -97,6 +97,7 @@ const ENTRIES: MockOwnerListingSeed[] = [
         listedHoursAgo: 52,
         brokerRequestCount: 3,
         hasRequested: true,
+        pendingRepresentationId: "rep_mock_pending",
         isBookmarked: false,
         status: "active",
     },

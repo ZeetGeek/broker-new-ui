@@ -32,6 +32,10 @@ export function toBrowsePropertyCardListing(item: OwnerListingItem): BrowsePrope
         brokerSlotsTotal: item.brokerSlotsTotal,
         commissionPercent: item.commissionPercent,
         hasRequested: item.hasRequested,
+        isRepresenting: item.isRepresenting,
+        isInvitePending: item.isInvitePending,
+        pendingRepresentationId: item.pendingRepresentationId,
+        pendingInvitationId: item.pendingInvitationId,
         owner: {
             name: formatPlaceName(item.ownerName),
             avatarUrl: item.ownerAvatarUrl,

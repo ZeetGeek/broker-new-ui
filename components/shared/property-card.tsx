@@ -10,6 +10,7 @@ import {
     Building2,
     Calendar,
     Camera,
+    Check,
     ChevronLeft,
     ChevronRight,
     CircleCheck,
@@ -19,6 +20,7 @@ import {
     MessageCircle,
     UserPlus,
     Users,
+    X,
 } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 
@@ -82,7 +84,13 @@ const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
 const BROWSE_REQUEST_LABEL = "Send request";
 const BROWSE_REQUEST_PENDING_LABEL = "Sending…";
-const BROWSE_REQUEST_SENT_LABEL = "Request sent";
+const BROWSE_REQUEST_CANCEL_LABEL = "Cancel request";
+const BROWSE_REQUEST_CANCELLING_LABEL = "Cancelling…";
+const BROWSE_REPRESENTING_LABEL = "Representing";
+const BROWSE_INVITE_ACCEPT_LABEL = "Accept";
+const BROWSE_INVITE_ACCEPTING_LABEL = "Accepting…";
+const BROWSE_INVITE_CANCEL_LABEL = "Cancel invitation";
+const BROWSE_INVITE_CANCELLING_LABEL = "Cancelling…";
 
 const PROPERTY_CARD_TITLE_CLASS = "body truncate font-semibold tracking-wide text-ink capitalize";
 const PROPERTY_CARD_LOCATION_CLASS = `
@@ -95,39 +103,163 @@ const PROPERTY_CARD_SPECS_CLASS = `
 const BROWSE_REQUEST_TOOLTIP = {
     idle: "Ask the owner for permission to represent this property",
     pending: "Sending your request to the owner…",
-    sent: "Waiting for the owner to approve. You'll hear back once they respond.",
+    cancel: "Tap to cancel this request. You can send it again later.",
+    cancelling: "Cancelling your request…",
+    representing: "The owner already approved you for this listing.",
+    inviteAccept: "Accept this invite. You'll get the owner's number straight away.",
+    inviteCancel: "Turn this down. The owner can then ask another broker.",
 } as const;
 
 function BrowseRequestAction({
     hasRequested,
+    isRepresenting,
+    isInvitePending,
     isRequestPending,
+    inviteActionPending,
     onRequest,
+    onCancelRequest,
+    onAcceptInvite,
+    onCancelInvite,
 }: {
     hasRequested: boolean;
+    isRepresenting?: boolean;
+    isInvitePending?: boolean;
     isRequestPending: boolean;
+    inviteActionPending?: "accept" | "cancel";
     onRequest?: () => void;
+    onCancelRequest?: () => void;
+    onAcceptInvite?: () => void;
+    onCancelInvite?: () => void;
 }) {
-    const tooltip = hasRequested
-        ? BROWSE_REQUEST_TOOLTIP.sent
-        : isRequestPending
-          ? BROWSE_REQUEST_TOOLTIP.pending
-          : BROWSE_REQUEST_TOOLTIP.idle;
+    const canCancel = Boolean(hasRequested && onCancelRequest);
+    const canRespondToInvite = Boolean(isInvitePending && onAcceptInvite && onCancelInvite);
+    const inviteBusy = Boolean(inviteActionPending);
+    const tooltip = isRepresenting
+        ? BROWSE_REQUEST_TOOLTIP.representing
+        : canRespondToInvite
+          ? undefined
+          : canCancel
+            ? isRequestPending
+                ? BROWSE_REQUEST_TOOLTIP.cancelling
+                : BROWSE_REQUEST_TOOLTIP.cancel
+            : isRequestPending
+              ? BROWSE_REQUEST_TOOLTIP.pending
+              : BROWSE_REQUEST_TOOLTIP.idle;
 
-    const sentStatus = (
-        <div
-            role="status"
-            className="
-              body-sm flex items-center justify-center gap-2 rounded-control border-2 border-brand
-              bg-brand-soft px-4 font-semibold text-brand-text block-control-lg inline-full
-            "
-        >
+    const statusClassName = `
+      body-sm flex items-center justify-center gap-2 rounded-control border-2 border-brand
+      bg-brand-soft px-4 font-semibold text-brand-text block-control-lg inline-full
+    `;
+
+    const representingStatus = (
+        <div role="status" className={statusClassName}>
             <CircleCheck
                 aria-hidden
                 className="shrink-0 text-brand-text block-4 inline-4"
                 strokeWidth={2}
             />
-            {BROWSE_REQUEST_SENT_LABEL}
+            {BROWSE_REPRESENTING_LABEL}
         </div>
+    );
+
+    const inviteButtons = (
+        <div className="flex flex-col gap-2 inline-full">
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <span className="inline-flex inline-full">
+                            <Button
+                                type="button"
+                                size="md"
+                                variant="accent"
+                                className="inline-full"
+                                disabled={inviteBusy}
+                                loading={inviteActionPending === "accept"}
+                                onClick={onAcceptInvite}
+                            >
+                                {inviteActionPending === "accept" ? (
+                                    BROWSE_INVITE_ACCEPTING_LABEL
+                                ) : (
+                                    <>
+                                        <Check
+                                            aria-hidden
+                                            className="block-4 inline-4"
+                                            strokeWidth={2}
+                                        />
+                                        {BROWSE_INVITE_ACCEPT_LABEL}
+                                    </>
+                                )}
+                            </Button>
+                        </span>
+                    }
+                />
+                <TooltipContent side="top" className="text-center max-inline-xs">
+                    {BROWSE_REQUEST_TOOLTIP.inviteAccept}
+                </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <span className="inline-flex inline-full">
+                            <Button
+                                type="button"
+                                size="md"
+                                variant="outline"
+                                className="
+                                  border-2 border-brand bg-brand-soft font-semibold
+                                  text-brand-text inline-full
+                                  hover:border-brand hover:bg-brand-soft-hover
+                                  hover:text-brand-text
+                                "
+                                disabled={inviteBusy}
+                                loading={inviteActionPending === "cancel"}
+                                onClick={onCancelInvite}
+                            >
+                                {inviteActionPending === "cancel" ? (
+                                    BROWSE_INVITE_CANCELLING_LABEL
+                                ) : (
+                                    <>
+                                        <X
+                                            aria-hidden
+                                            className="block-4 inline-4"
+                                            strokeWidth={2}
+                                        />
+                                        {BROWSE_INVITE_CANCEL_LABEL}
+                                    </>
+                                )}
+                            </Button>
+                        </span>
+                    }
+                />
+                <TooltipContent side="top" className="text-center max-inline-xs">
+                    {BROWSE_REQUEST_TOOLTIP.inviteCancel}
+                </TooltipContent>
+            </Tooltip>
+        </div>
+    );
+
+    const cancelButton = (
+        <Button
+            type="button"
+            size="md"
+            variant="outline"
+            className="
+              border-2 border-brand bg-brand-soft font-semibold text-brand-text inline-full
+              hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
+            "
+            disabled={isRequestPending}
+            loading={isRequestPending}
+            onClick={onCancelRequest}
+        >
+            {isRequestPending ? (
+                BROWSE_REQUEST_CANCELLING_LABEL
+            ) : (
+                <>
+                    <X aria-hidden className="block-4 inline-4" strokeWidth={2} />
+                    {BROWSE_REQUEST_CANCEL_LABEL}
+                </>
+            )}
+        </Button>
     );
 
     const requestButton = (
@@ -137,22 +269,29 @@ function BrowseRequestAction({
             variant="accent"
             className="inline-full"
             disabled={isRequestPending}
+            loading={isRequestPending}
             onClick={onRequest}
         >
             {isRequestPending ? BROWSE_REQUEST_PENDING_LABEL : BROWSE_REQUEST_LABEL}
         </Button>
     );
 
+    const action = isRepresenting
+        ? representingStatus
+        : canRespondToInvite
+          ? inviteButtons
+          : canCancel
+            ? cancelButton
+            : requestButton;
+
+    if (canRespondToInvite) {
+        return <TooltipProvider>{action}</TooltipProvider>;
+    }
+
     return (
         <TooltipProvider>
             <Tooltip>
-                <TooltipTrigger
-                    render={
-                        <span className="inline-flex inline-full">
-                            {hasRequested ? sentStatus : requestButton}
-                        </span>
-                    }
-                />
+                <TooltipTrigger render={<span className="inline-flex inline-full">{action}</span>} />
                 <TooltipContent side="top" className="text-center max-inline-xs">
                     {tooltip}
                 </TooltipContent>
@@ -195,6 +334,10 @@ export type BrowsePropertyCardListing = PropertyCardBase & {
     brokerSlotsTotal: number;
     commissionPercent: number;
     hasRequested: boolean;
+    isRepresenting?: boolean;
+    isInvitePending?: boolean;
+    pendingRepresentationId?: string;
+    pendingInvitationId?: string;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
 };
@@ -229,7 +372,12 @@ export type PropertyCardProps = {
     priority?: boolean;
     imageSizes?: string;
     onRequest?: () => void;
+    /** Withdraw a pending broker request. Shown whenever the request is still pending. */
+    onCancelRequest?: () => void;
     isRequestPending?: boolean;
+    onAcceptInvite?: () => void;
+    onCancelInvite?: () => void;
+    inviteActionPending?: "accept" | "cancel";
     onShare?: () => void;
     onOpenCrm?: () => void;
     crmHref?: string;
@@ -710,7 +858,11 @@ function BrowsePropertyCard({
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     onRequest,
+    onCancelRequest,
     isRequestPending = false,
+    onAcceptInvite,
+    onCancelInvite,
+    inviteActionPending,
     className,
 }: Extract<PropertyCardProps, { variant: "browse" }>) {
     const sharePriceLabel =
@@ -797,8 +949,14 @@ function BrowsePropertyCard({
 
                     <BrowseRequestAction
                         hasRequested={listing.hasRequested}
+                        isRepresenting={listing.isRepresenting}
+                        isInvitePending={listing.isInvitePending}
                         isRequestPending={isRequestPending}
+                        inviteActionPending={inviteActionPending}
                         onRequest={onRequest}
+                        onCancelRequest={onCancelRequest}
+                        onAcceptInvite={onAcceptInvite}
+                        onCancelInvite={onCancelInvite}
                     />
                 </div>
             </div>

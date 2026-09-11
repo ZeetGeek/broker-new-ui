@@ -151,3 +151,47 @@ export const representativeApi = {
         });
     },
 };
+
+function representationListItems(
+    result: RepresentationItem[] | RepresentationListPage | unknown,
+): RepresentationItem[] {
+    if (Array.isArray(result)) return result;
+    if (
+        result &&
+        typeof result === "object" &&
+        "items" in result &&
+        Array.isArray((result as RepresentationListPage).items)
+    ) {
+        return (result as RepresentationListPage).items;
+    }
+    return [];
+}
+
+/** Browse payloads sometimes omit `representation.id` on pending rows. */
+export async function findPendingBrokerRepresentationId(
+    propertyId: string,
+): Promise<string | undefined> {
+    const items = representationListItems(await representativeApi.brokerList("pending"));
+    const match = items.find((row) => {
+        const extra = row as RepresentationItem & { property_id?: string };
+        const rowPropertyId = row.propertyId?.trim() || extra.property_id?.trim();
+        if (rowPropertyId !== propertyId) return false;
+        return row.initiatedBy !== "owner";
+    });
+    return match?.id;
+}
+
+/** Browse payloads sometimes omit `representation.id` on owner invites. */
+export async function findPendingOwnerInvitationId(
+    propertyId: string,
+): Promise<string | undefined> {
+    const items = representationListItems(
+        await representativeApi.brokerInvitationList({ status: "pending" }),
+    );
+    const match = items.find((row) => {
+        const extra = row as RepresentationItem & { property_id?: string };
+        const rowPropertyId = row.propertyId?.trim() || extra.property_id?.trim();
+        return rowPropertyId === propertyId;
+    });
+    return match?.id;
+}

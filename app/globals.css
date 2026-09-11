@@ -52,6 +52,7 @@
     --color-brand-deep: #0f3d2e;
     --color-brand: #1b7a5a;
     --color-brand-soft: #e3f2ea;
+    --color-brand-soft-hover: #d0e8dc;
     --color-brand-text: #0b5a41;
 
     --color-highlight: #c9f24d;
@@ -190,6 +191,7 @@
     --color-brand-deep: var(--color-brand-deep);
     --color-brand: var(--color-brand);
     --color-brand-soft: var(--color-brand-soft);
+    --color-brand-soft-hover: var(--color-brand-soft-hover);
     --color-brand-text: var(--color-brand-text);
     --color-highlight: var(--color-highlight);
     --color-highlight-ink: var(--color-highlight-ink);

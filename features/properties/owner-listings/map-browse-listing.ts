@@ -1,4 +1,8 @@
-import type { PropertyBrowseCity, PropertyBrowseListing } from "@/lib/api/properties";
+import type {
+    PropertyBrowseCity,
+    PropertyBrowseListing,
+    PropertyRepresentationStanding,
+} from "@/lib/api/properties";
 
 import type {
     OwnerListingFurnishing,
@@ -125,6 +129,51 @@ function firstId(...values: Array<string | null | undefined>): string | undefine
     return undefined;
 }
 
+type BrowseListingExtras = PropertyBrowseListing & {
+    hasRequested?: boolean;
+    representationId?: string | null;
+    representation_id?: string | null;
+    representation?: PropertyRepresentationStanding & {
+        representationId?: string | null;
+        initiated_by?: string | null;
+    };
+};
+
+function browseRepresentationStanding(listing: PropertyBrowseListing): {
+    hasRequested: boolean;
+    isRepresenting: boolean;
+    isInvitePending: boolean;
+    pendingRepresentationId?: string;
+    pendingInvitationId?: string;
+} {
+    const extra = listing as BrowseListingExtras;
+    const raw = extra.representation;
+    const status = (raw?.status ?? "").trim().toLowerCase();
+    const initiatedBy = String(raw?.initiatedBy ?? raw?.initiated_by ?? "")
+        .trim()
+        .toLowerCase();
+    const id = firstId(
+        raw?.id,
+        raw?.representationId,
+        extra.representationId,
+        extra.representation_id,
+    );
+    const isRepresenting = status === "accepted";
+    const isInvitePending = status === "pending" && initiatedBy === "owner";
+    const hasRequested =
+        !isRepresenting &&
+        !isInvitePending &&
+        (status === "pending" || extra.hasRequested === true);
+
+    return {
+        hasRequested,
+        isRepresenting,
+        isInvitePending,
+        pendingRepresentationId: hasRequested ? id : undefined,
+        pendingInvitationId: isInvitePending ? id : undefined,
+    };
+}
+
 /** Prefer `users.id`; fall back to the owner profile row when that is all the API sends. */
 function ownerUserIdFromBrowseListing(listing: PropertyBrowseListing): string | undefined {
     const nested = listing.owner;
@@ -202,9 +251,10 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
     const listedAt = listing.publishedAt ?? listing.createdAt;
     const listedHours = hoursAgo(listing.createdAt ?? listedAt);
     const displayListedHours = hoursAgo(listedAt);
-    const hasRequested =
-        listing.representation?.status === "pending" ||
-        listing.representation?.status === "accepted";
+    const standing = browseRepresentationStanding(listing);
+    const hasRequested = standing.hasRequested;
+    const pendingRepresentationId = standing.pendingRepresentationId;
+    const occupiesSlot = hasRequested || standing.isRepresenting || standing.isInvitePending;
     const photos = (listing.photos ?? []).filter((src): src is string => Boolean(src?.trim()));
     const locality = listing.address?.trim() || listing.city?.trim() || "Locality";
     const city = listing.city?.trim() || "City";
@@ -228,9 +278,9 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         furnishingLabel: furnishingLabel(furnishing),
         furnishing,
         listedHoursAgo: displayListedHours,
-        brokerRequestCount: hasRequested ? 1 : 0,
+        brokerRequestCount: occupiesSlot ? 1 : 0,
         brokerSlotsTotal: DEFAULT_BROKER_SLOTS_TOTAL,
-        brokerSlotsOpen: hasRequested
+        brokerSlotsOpen: occupiesSlot
             ? Math.max(0, DEFAULT_BROKER_SLOTS_TOTAL - 1)
             : DEFAULT_BROKER_SLOTS_TOTAL,
         commissionPercent: (() => {
@@ -245,6 +295,10 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         isNew: resolveIsNew(listing, listedHours),
         readyToMove: isReadyToMove(listing.availableFrom),
         hasRequested,
+        isRepresenting: standing.isRepresenting,
+        isInvitePending: standing.isInvitePending,
+        pendingRepresentationId,
+        pendingInvitationId: standing.pendingInvitationId,
         isBookmarked: false,
         imageSrc,
         imageSrcs: photos.length > 0 ? photos : imageSrc ? [imageSrc] : [],
@@ -286,6 +340,8 @@ export function citiesToLocationListings(cities: PropertyBrowseCity[]): OwnerLis
                 isNew: false,
                 readyToMove: true,
                 hasRequested: false,
+                isRepresenting: false,
+                isInvitePending: false,
                 isBookmarked: false,
                 imageSrc: "",
                 imageSrcs: [],

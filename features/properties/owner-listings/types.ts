@@ -42,7 +42,22 @@ export type OwnerListingItem = {
     photoCount: number;
     isNew: boolean;
     readyToMove: boolean;
+    /** Pending broker-initiated request — card shows Cancel request. */
     hasRequested: boolean;
+    /** Owner already approved this broker. */
+    isRepresenting?: boolean;
+    /** Owner invited this broker. Card shows Accept / Cancel invitation. */
+    isInvitePending?: boolean;
+    /**
+     * Pending owner-initiated invitation. Present while the broker can still
+     * accept or cancel. May be missing even when `isInvitePending` is true.
+     */
+    pendingInvitationId?: string;
+    /**
+     * Pending broker-initiated representation. Present only while the request
+     * can still be withdrawn. May be missing even when `hasRequested` is true.
+     */
+    pendingRepresentationId?: string;
     isBookmarked: boolean;
     imageSrc: string;
     /** Gallery URLs for card carousel. First entry should match `imageSrc`. */

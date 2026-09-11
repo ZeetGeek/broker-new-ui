@@ -115,6 +115,13 @@ export const COLOR_GROUPS: ColorGroup[] = [
                 usage: "Badge and chip backgrounds",
             },
             {
+                name: "Brand soft hover",
+                variable: "--color-brand-soft-hover",
+                hex: "#D0E8DC",
+                className: "bg-brand-soft-hover",
+                usage: "Hover fill on brand-soft controls",
+            },
+            {
                 name: "Brand text",
                 variable: "--color-brand-text",
                 hex: "#0B5A41",
