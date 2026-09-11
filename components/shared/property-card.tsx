@@ -17,6 +17,7 @@ import {
     MapPin,
     Maximize2,
     MessageCircle,
+    UserPlus,
     Users,
 } from "lucide-react";
 import { useReducedMotion } from "motion/react";
@@ -223,6 +224,8 @@ export type PropertyCardProps = {
     editHref?: string;
     /** Owned cards: open the edit form in a modal instead of following editHref. */
     onEdit?: () => void;
+    /** Owned cards: open the buyer picker for this listing. */
+    onAddBuyer?: () => void;
 } & (
     | { variant: "browse"; listing: BrowsePropertyCardListing }
     | { variant: "represented"; listing: RepresentedPropertyCardListing }
@@ -596,7 +599,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                     role="group"
                     aria-label="Price type"
                     className="
-                       inline-flex shrink-0 items-center gap-0.5 rounded-control border
+                      inline-flex shrink-0 items-center gap-0.5 rounded-control border
                       border-border-warm bg-surface p-0.5 shadow-sm
                     "
                 >
@@ -624,7 +627,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                                     aria-pressed={isActive}
                                     className={cn(
                                         `
-                                           body-xs rounded-md px-2.5 py-0.5 font-semibold
+                                          body-xs rounded-md px-2.5 py-0.5 font-semibold
                                           transition-[color] duration-160
                                         `,
                                         isActive
@@ -1019,46 +1022,84 @@ const OWNED_EDIT_LABEL = "Edit property";
 const OWNED_OPEN_LABEL = "Open";
 const OWNED_EDIT_TOOLTIP = "Update price, photos, and other listing details";
 const OWNED_OPEN_TOOLTIP = "View this listing's full details";
+const OWNED_ADD_BUYER_LABEL = "Add buyer";
+const OWNED_ADD_BUYER_TOOLTIP = "Pick which buyers you will show this property to";
 
 function OwnedListingAction({
     href,
     isEdit,
     onEdit,
+    onAddBuyer,
 }: {
     href: string;
     isEdit: boolean;
     /** When set, editing opens in place instead of navigating to the edit page. */
     onEdit?: () => void;
+    /** When set, a second button opens the buyer picker for this listing. */
+    onAddBuyer?: () => void;
 }) {
     const opensInModal = isEdit && onEdit != null;
 
     return (
         <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger
-                    render={
-                        <span className="inline-flex inline-full">
-                            <Button
-                                size="md"
-                                variant="accent"
-                                className="inline-full"
-                                type={opensInModal ? "button" : undefined}
-                                onClick={opensInModal ? onEdit : undefined}
-                                render={
-                                    opensInModal ? undefined : (
-                                        <Link href={href} prefetch={false} />
-                                    )
-                                }
+            <div className="flex gap-2">
+                {onAddBuyer ? (
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    size="md"
+                                    variant="outline"
+                                    type="button"
+                                    className="flex-1 border-border-warm"
+                                    onClick={onAddBuyer}
+                                >
+                                    <UserPlus
+                                        aria-hidden
+                                        className="block-4 inline-4"
+                                        strokeWidth={1.75}
+                                    />
+                                    {OWNED_ADD_BUYER_LABEL}
+                                </Button>
+                            }
+                        />
+                        <TooltipContent side="top" className="text-center max-inline-xs">
+                            {OWNED_ADD_BUYER_TOOLTIP}
+                        </TooltipContent>
+                    </Tooltip>
+                ) : null}
+
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <span
+                                className={cn(
+                                    "inline-flex",
+                                    onAddBuyer ? "flex-[1.4]" : "inline-full",
+                                )}
                             >
-                                {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
-                            </Button>
-                        </span>
-                    }
-                />
-                <TooltipContent side="top" className="text-center max-inline-xs">
-                    {isEdit ? OWNED_EDIT_TOOLTIP : OWNED_OPEN_TOOLTIP}
-                </TooltipContent>
-            </Tooltip>
+                                <Button
+                                    size="md"
+                                    variant="accent"
+                                    className="inline-full"
+                                    type={opensInModal ? "button" : undefined}
+                                    onClick={opensInModal ? onEdit : undefined}
+                                    render={
+                                        opensInModal ? undefined : (
+                                            <Link href={href} prefetch={false} />
+                                        )
+                                    }
+                                >
+                                    {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
+                                </Button>
+                            </span>
+                        }
+                    />
+                    <TooltipContent side="top" className="text-center max-inline-xs">
+                        {isEdit ? OWNED_EDIT_TOOLTIP : OWNED_OPEN_TOOLTIP}
+                    </TooltipContent>
+                </Tooltip>
+            </div>
         </TooltipProvider>
     );
 }
@@ -1098,9 +1139,7 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
 function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
     if (status === "published") {
         return (
-            <Badge className="
-              body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs
-            ">
+            <Badge className="body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs">
                 {OWNED_STATUS_LABEL[status]}
             </Badge>
         );
@@ -1140,7 +1179,9 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
     return (
         <div className="flex items-center gap-2 min-inline-0">
             <div className="flex flex-1 items-baseline gap-1.5 min-inline-0">
-                <span className="h5 truncate font-semibold text-ink tabular-nums">{priceLabel}</span>
+                <span className="h5 truncate font-semibold text-ink tabular-nums">
+                    {priceLabel}
+                </span>
                 <span className="body-sm shrink-0 font-medium text-brand">{requestLabel}</span>
             </div>
             {both ? (
@@ -1148,7 +1189,7 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
                     role="group"
                     aria-label="Price type"
                     className="
-                       inline-flex shrink-0 items-center gap-0.5 rounded-control border
+                      inline-flex shrink-0 items-center gap-0.5 rounded-control border
                       border-border-warm bg-surface p-0.5 shadow-sm
                     "
                 >
@@ -1176,7 +1217,7 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
                                     aria-pressed={isActive}
                                     className={cn(
                                         `
-                                           body-xs rounded-md px-2.5 py-0.5 font-semibold
+                                          body-xs rounded-md px-2.5 py-0.5 font-semibold
                                           transition-[color] duration-160
                                         `,
                                         isActive
@@ -1203,6 +1244,7 @@ function OwnedPropertyCard({
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     editHref,
     onEdit,
+    onAddBuyer,
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
     const browse = ownedToBrowseListing(listing);
@@ -1223,9 +1265,10 @@ function OwnedPropertyCard({
             <Link
                 href={detailsHref}
                 prefetch={false}
-                className={cn("group relative block shrink-0 min-inline-0", isListView && `
-                  self-start
-                `)}
+                className={cn(
+                    "group relative block shrink-0 min-inline-0",
+                    isListView && `self-start`,
+                )}
             >
                 <BrowsePropertyCardPhoto
                     listing={browse}
@@ -1233,10 +1276,12 @@ function OwnedPropertyCard({
                     imageSizes={imageSizes}
                     layout={layout}
                 />
-                <div className="
-                  pointer-events-none absolute inset-e-3 inset-bs-3 z-20 flex flex-col items-end
-                  gap-1.5
-                ">
+                <div
+                    className="
+                      pointer-events-none absolute inset-e-3 inset-bs-3 z-20 flex flex-col items-end
+                      gap-1.5
+                    "
+                >
                     <OwnedStatusBadge status={listing.status} />
                 </div>
             </Link>
@@ -1254,10 +1299,14 @@ function OwnedPropertyCard({
                         className="flex flex-1 flex-col gap-2.5 min-inline-0"
                     >
                         <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h3 className="body truncate font-semibold text-ink">{listing.title}</h3>
-                            <p className="
-                              body-sm flex items-center gap-1.5 text-ink-muted min-inline-0
-                            ">
+                            <h3 className="body truncate font-semibold text-ink">
+                                {listing.title}
+                            </h3>
+                            <p
+                                className="
+                                  body-sm flex items-center gap-1.5 text-ink-muted min-inline-0
+                                "
+                            >
                                 <MapPin
                                     aria-hidden
                                     className="shrink-0 block-3.5 inline-3.5"
@@ -1296,6 +1345,7 @@ function OwnedPropertyCard({
                         href={editHref ?? detailsHref}
                         isEdit={Boolean(editHref)}
                         onEdit={onEdit}
+                        onAddBuyer={onAddBuyer}
                     />
                 </div>
             </div>

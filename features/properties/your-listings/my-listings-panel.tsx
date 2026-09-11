@@ -8,6 +8,8 @@ import { useInfiniteItems } from "@/hooks/use-infinite-items";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
+import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
+import type { RequestItem } from "@/features/properties/my-requests/types";
 import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
 import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import { MyListingsGrid } from "@/features/properties/your-listings/my-listings-grid";
@@ -21,12 +23,54 @@ import type { MyListingItem } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
 import { useMyListingsView } from "@/features/properties/your-listings/use-my-listings-view";
 
+/**
+ * The buyers modal is written against a request. A listing the broker owns
+ * carries the same fields it reads, so adapt rather than duplicate the picker.
+ */
+function asRequestShape(item: MyListingItem): RequestItem {
+    const isRent = item.transactionType === "rent";
+
+    return {
+        id: item.id,
+        propertyId: item.id,
+        stage: "approved",
+        title: item.title,
+        configLabel: item.configLabel,
+        propertyTypeLabel: item.propertyTypeLabel,
+        locality: item.locality,
+        city: item.city,
+        areaSqft: item.areaSqft,
+        bhk: item.bhk,
+        amountInr: (isRent ? item.rentAmountInr : item.saleAmountInr) ?? 0,
+        isRent,
+        commissionPercent: 0,
+        ownerName: "You",
+        ownerSeen: true,
+        requestedAt: item.createdAt,
+        resolvedAt: null,
+        daysWaiting: 0,
+        clientsAttached: 0,
+        attachedClients: [],
+        brokerSlotsOpen: 0,
+        brokerSlotsTotal: 0,
+        attemptNumber: 1,
+        reminderCount: 0,
+        reminderUsed: false,
+        nudgedAt: null,
+        imageSrc: item.imageSrc,
+        timeline: [],
+    };
+}
+
 export function MyListingsPanel() {
     const { filters, setFilters, clearFilters, hasActiveFilters } = useMyListingsFilters();
     const { view, setView } = useMyListingsView();
     const [summary, setSummary] = useState<MyListingsSummary | null>(null);
     const [addOpen, setAddOpen] = useState(false);
     const [editingListing, setEditingListing] = useState<MyListingItem | null>(null);
+    /** Kept after close so the modal can animate out with its listing intact. */
+    const [buyersListing, setBuyersListing] = useState<MyListingItem | null>(null);
+    const [isBuyersOpen, setIsBuyersOpen] = useState(false);
     /** Bumped after a save so the list refetches without changing filters. */
     const [refreshToken, setRefreshToken] = useState(0);
 
@@ -100,6 +144,10 @@ export function MyListingsPanel() {
                         items={query.items}
                         view={view}
                         onEditListing={setEditingListing}
+                        onAddBuyer={(listing) => {
+                            setBuyersListing(listing);
+                            setIsBuyersOpen(true);
+                        }}
                     />
                     <InfiniteListStatus
                         hasNextPage={Boolean(query.hasNextPage)}
@@ -129,6 +177,14 @@ export function MyListingsPanel() {
                     setRefreshToken((token) => token + 1);
                 }}
             />
+            {buyersListing ? (
+                <AttachBuyersModal
+                    open={isBuyersOpen}
+                    onOpenChange={setIsBuyersOpen}
+                    request={asRequestShape(buyersListing)}
+                    onSaved={() => setRefreshToken((token) => token + 1)}
+                />
+            ) : null}
         </div>
     );
 }
