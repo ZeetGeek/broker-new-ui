@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { FileText, Gift, type LucideIcon, Sparkles } from "lucide-react";
 
 import { formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 
 import type { CreditEntry, CreditEntryKind } from "@/features/referrals/types";
@@ -22,8 +23,51 @@ const COLLAPSED_COUNT = 4;
 
 type CreditsLedgerProps = {
     ledger: CreditEntry[] | null;
+    total?: number;
+    footer?: ReactNode;
     className?: string;
 };
+
+function CreditRow({ entry, hasBorder }: { entry: CreditEntry; hasBorder: boolean }) {
+    const Icon = ENTRY_ICON[entry.kind];
+    const isSpend = entry.amount < 0;
+
+    return (
+        <div
+            className={cn(
+                "flex items-center gap-3 py-2.5",
+                hasBorder && "border-be border-border-warm",
+            )}
+        >
+            <span
+                aria-hidden
+                className={cn(
+                    `flex shrink-0 items-center justify-center rounded-control block-8 inline-8`,
+                    isSpend ? "bg-surface-muted text-ink-muted" : "bg-brand-soft text-brand-text",
+                )}
+            >
+                <Icon className="block-4 inline-4" strokeWidth={1.75} />
+            </span>
+
+            <div className="flex flex-1 flex-col min-inline-0">
+                <span className="body-sm truncate text-ink">{entry.label}</span>
+                <span className="body-xs text-ink-subtle">
+                    {formatDateShort(new Date(entry.at))}
+                </span>
+            </div>
+
+            <span
+                className={cn(
+                    "body-sm tabular shrink-0 font-semibold",
+                    isSpend ? "text-ink" : "text-brand",
+                )}
+            >
+                {isSpend ? "" : "+"}
+                {entry.amount}
+            </span>
+        </div>
+    );
+}
 
 /**
  * The credit statement.
@@ -36,7 +80,7 @@ type CreditsLedgerProps = {
  * Redemption is an open product question (AGENTS.md), and inventing a rupee
  * value in the UI is the kind of promise that has to be honoured later.
  */
-export function CreditsLedger({ ledger, className }: CreditsLedgerProps) {
+export function CreditsLedger({ ledger, total, footer, className }: CreditsLedgerProps) {
     const [isExpanded, setIsExpanded] = useState(false);
 
     if (!ledger) {
@@ -85,7 +129,7 @@ export function CreditsLedger({ ledger, className }: CreditsLedgerProps) {
     }
 
     const visible = isExpanded ? ledger : ledger.slice(0, COLLAPSED_COUNT);
-    const hiddenCount = ledger.length - visible.length;
+    const hiddenCount = Math.max(0, (total ?? ledger.length) - visible.length);
 
     return (
         <section
@@ -104,56 +148,19 @@ export function CreditsLedger({ ledger, className }: CreditsLedgerProps) {
                 </p>
             </div>
 
-            <ul className="flex flex-col">
-                {visible.map((entry, index) => {
-                    const Icon = ENTRY_ICON[entry.kind];
-                    const isSpend = entry.amount < 0;
+            <WindowVirtualGrid
+                items={visible}
+                getKey={(entry) => entry.id}
+                estimateRowHeight={52}
+                gap={0}
+                overscan={4}
+                ariaLabel="Credit activity"
+                renderItem={(entry, index) => (
+                    <CreditRow entry={entry} hasBorder={index < visible.length - 1} />
+                )}
+            />
 
-                    return (
-                        <li
-                            key={entry.id}
-                            className={cn(
-                                "flex items-center gap-3 py-2.5",
-                                index < visible.length - 1 && "border-be border-border-warm",
-                            )}
-                        >
-                            <span
-                                aria-hidden
-                                className={cn(
-                                    `
-                                      flex shrink-0 items-center justify-center rounded-control block-8
-                                      inline-8
-                                    `,
-                                    // A spend in the earn colour reads as
-                                    // money arriving. Neutral ground instead.
-                                    isSpend
-                                        ? "bg-surface-muted text-ink-muted"
-                                        : "bg-brand-soft text-brand-text",
-                                )}
-                            >
-                                <Icon className="block-4 inline-4" strokeWidth={1.75} />
-                            </span>
-
-                            <div className="flex flex-1 flex-col min-inline-0">
-                                <span className="body-sm truncate text-ink">{entry.label}</span>
-                                <span className="body-xs text-ink-subtle">
-                                    {formatDateShort(new Date(entry.at))}
-                                </span>
-                            </div>
-
-                            <span
-                                className={cn(
-                                    "body-sm tabular shrink-0 font-semibold",
-                                    isSpend ? "text-ink" : "text-brand",
-                                )}
-                            >
-                                {isSpend ? "" : "+"}
-                                {entry.amount}
-                            </span>
-                        </li>
-                    );
-                })}
-            </ul>
+            {isExpanded ? footer : null}
 
             {hiddenCount > 0 || isExpanded ? (
                 <Button

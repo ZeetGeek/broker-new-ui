@@ -271,8 +271,10 @@ function appendFormFields(
 }
 
 export const propertiesApi = {
-    browse(params?: PropertyBrowseQuery) {
-        return apiFetch<PropertyBrowsePage>(`/properties/browse${buildBrowseQuery(params)}`);
+    browse(params?: PropertyBrowseQuery, signal?: AbortSignal) {
+        return apiFetch<PropertyBrowsePage>(`/properties/browse${buildBrowseQuery(params)}`, {
+            signal,
+        });
     },
 
     browseCities() {
@@ -290,8 +292,8 @@ export const propertiesApi = {
     },
 
     /** Caller's inventory listings (My listings). */
-    list(params?: PropertyListQuery) {
-        return apiFetch<PropertyListPage>(`/properties${buildListQuery(params)}`);
+    list(params?: PropertyListQuery, signal?: AbortSignal) {
+        return apiFetch<PropertyListPage>(`/properties${buildListQuery(params)}`, { signal });
     },
 
     options() {

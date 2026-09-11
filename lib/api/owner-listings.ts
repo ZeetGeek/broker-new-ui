@@ -22,6 +22,7 @@ import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-list
 export async function fetchOwnerListings(
     filters: OwnerListingsFilters,
     _context: OwnerListingsFilterContext = {},
+    signal?: AbortSignal,
 ): Promise<OwnerListingsResult> {
     const page = filters.cursor ? Number(filters.cursor) || 1 : 1;
     const limit = filters.limit || DEFAULT_OWNER_LISTINGS_FILTERS.limit;
@@ -38,32 +39,35 @@ export async function fetchOwnerListings(
         ? Number(filters.minCommissionPercent)
         : undefined;
 
-    const result = await propertiesApi.browse({
-        search: filters.q.trim() || undefined,
-        city: filters.cities.length ? filters.cities : undefined,
-        locality: filters.localities.length ? filters.localities : undefined,
-        allAreas: allAreas || undefined,
-        transactionType: filters.type || undefined,
-        propertyType: typeFilters.propertyType,
-        subtype: typeFilters.subtype,
-        bhkConfig: filters.bhk.length ? bhkValuesToApiConfig(filters.bhk) : undefined,
-        minPrice: filters.min ? Number(filters.min) : undefined,
-        maxPrice: filters.max ? Number(filters.max) : undefined,
-        minAreaSqft: filters.minAreaSqft ? Number(filters.minAreaSqft) : undefined,
-        maxAreaSqft: filters.maxAreaSqft ? Number(filters.maxAreaSqft) : undefined,
-        listedWithinDays:
-            listedWithinDays != null && !Number.isNaN(listedWithinDays)
-                ? listedWithinDays
-                : undefined,
-        minCommissionPercent:
-            minCommission != null && !Number.isNaN(minCommission) ? minCommission : undefined,
-        commissionSet: filters.commissionSet || undefined,
-        readyToMove: filters.readyToMove || undefined,
-        furnishingStatus: filters.furnishing || undefined,
-        sort: filters.sort,
-        page,
-        limit,
-    });
+    const result = await propertiesApi.browse(
+        {
+            search: filters.q.trim() || undefined,
+            city: filters.cities.length ? filters.cities : undefined,
+            locality: filters.localities.length ? filters.localities : undefined,
+            allAreas: allAreas || undefined,
+            transactionType: filters.type || undefined,
+            propertyType: typeFilters.propertyType,
+            subtype: typeFilters.subtype,
+            bhkConfig: filters.bhk.length ? bhkValuesToApiConfig(filters.bhk) : undefined,
+            minPrice: filters.min ? Number(filters.min) : undefined,
+            maxPrice: filters.max ? Number(filters.max) : undefined,
+            minAreaSqft: filters.minAreaSqft ? Number(filters.minAreaSqft) : undefined,
+            maxAreaSqft: filters.maxAreaSqft ? Number(filters.maxAreaSqft) : undefined,
+            listedWithinDays:
+                listedWithinDays != null && !Number.isNaN(listedWithinDays)
+                    ? listedWithinDays
+                    : undefined,
+            minCommissionPercent:
+                minCommission != null && !Number.isNaN(minCommission) ? minCommission : undefined,
+            commissionSet: filters.commissionSet || undefined,
+            readyToMove: filters.readyToMove || undefined,
+            furnishingStatus: filters.furnishing || undefined,
+            sort: filters.sort,
+            page,
+            limit,
+        },
+        signal,
+    );
 
     let items = result.items.map(mapBrowseListingToOwnerItem);
 

@@ -17,6 +17,7 @@ import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
 
 import { DEAL_OUTCOME_META, DEAL_STAGE_META, isOutcome } from "@/features/pipeline/stage-meta";
@@ -60,11 +61,17 @@ function HistoryList({ history, now }: { history: DealHistoryEntry[]; now: Date 
     const ordered = [...history].reverse();
 
     return (
-        <ol className="flex flex-col gap-3">
-            {ordered.map((entry, index) => {
+        <VirtualListBox
+            items={ordered}
+            getKey={(entry, index) => `${entry.at ?? "x"}-${entry.status}-${index}`}
+            estimateItemHeight={88}
+            gap={0}
+            ariaLabel="Deal stage history"
+            className="max-block-96"
+            renderItem={(entry, index) => {
                 const isFirst = index === 0;
                 return (
-                    <li key={`${entry.at ?? "x"}-${entry.status}-${index}`} className="flex gap-3">
+                    <div className="flex gap-3">
                         <span aria-hidden className="flex flex-col items-center gap-1 pbs-1">
                             <span
                                 className={cn(
@@ -95,10 +102,10 @@ function HistoryList({ history, now }: { history: DealHistoryEntry[]; now: Date 
                                 {formatWhen(entry.at, now)}
                             </span>
                         </span>
-                    </li>
+                    </div>
                 );
-            })}
-        </ol>
+            }}
+        />
     );
 }
 

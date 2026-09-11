@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 
 import { pipelineApi } from "@/lib/api/pipeline";
 
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
+
 import { BoardColumn } from "@/features/pipeline/board-column";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DealDetailModal } from "@/features/pipeline/deal-detail-modal";
@@ -32,6 +34,11 @@ import {
     DEFAULT_DEALS_FILTERS,
     isLiveStage,
 } from "@/features/pipeline/types";
+
+const DONE_GRID_BREAKPOINTS = [
+    { minWidth: 640, columns: 2 },
+    { minWidth: 1024, columns: 3 },
+];
 
 export function PipelinePage() {
     const [filters, setFilters] = useState<DealsFilters>(DEFAULT_DEALS_FILTERS);
@@ -290,17 +297,22 @@ export function PipelinePage() {
                             isFetching ? "opacity-60 transition-opacity duration-160" : undefined
                         }
                     >
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {doneDeals.map((deal) => (
+                        <WindowVirtualGrid
+                            items={doneDeals}
+                            getKey={(deal) => deal.id}
+                            estimateRowHeight={520}
+                            gap={12}
+                            breakpoints={DONE_GRID_BREAKPOINTS}
+                            ariaLabel="Completed and lost deals"
+                            renderItem={(deal) => (
                                 <DealCard
-                                    key={deal.id}
                                     deal={deal}
                                     handlers={handlers}
                                     isBusy={busyId === deal.id}
                                     layout="list"
                                 />
-                            ))}
-                        </div>
+                            )}
+                        />
                     </div>
                 )
             ) : liveDeals.length === 0 ? (
@@ -343,16 +355,20 @@ export function PipelinePage() {
                         />
 
                         {dealsByStage[mobileStage].length > 0 ? (
-                            <div className="flex flex-col gap-2.5">
-                                {dealsByStage[mobileStage].map((deal) => (
+                            <WindowVirtualGrid
+                                items={dealsByStage[mobileStage]}
+                                getKey={(deal) => deal.id}
+                                estimateRowHeight={520}
+                                gap={10}
+                                ariaLabel={`${DEAL_STAGE_META[mobileStage].label} deals`}
+                                renderItem={(deal) => (
                                     <DealCard
-                                        key={deal.id}
                                         deal={deal}
                                         handlers={handlers}
                                         isBusy={busyId === deal.id}
                                     />
-                                ))}
-                            </div>
+                                )}
+                            />
                         ) : (
                             <p
                                 className="

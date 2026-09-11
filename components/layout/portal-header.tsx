@@ -93,8 +93,8 @@ export function PortalHeader({
                                         className={cn(
                                             headerControlClass,
                                             `
-                                              group border! text-ink-muted
-                                              group-hover:text-ink
+                                              border! text-ink-muted
+                                              hover:bg-transparent hover:text-ink-muted
                                               md:justify-start md:gap-2 md:px-4 md:inline-auto
                                               md:min-inline-64
                                             `,
@@ -107,7 +107,10 @@ export function PortalHeader({
                                     tooltipLabel="Notifications"
                                     triggerClassName={cn(
                                         headerControlClass,
-                                        "relative border! text-ink-muted hover:text-ink",
+                                        `
+                                          relative border! text-ink-muted
+                                          hover:bg-transparent hover:text-ink-muted
+                                        `,
                                     )}
                                 />
 

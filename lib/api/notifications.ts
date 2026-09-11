@@ -54,13 +54,15 @@ export type NotificationListResponse = {
 };
 
 export const notificationsApi = {
-    list(params?: { page?: number; limit?: number; unreadOnly?: boolean }) {
+    list(params?: { page?: number; limit?: number; unreadOnly?: boolean }, signal?: AbortSignal) {
         const q = new URLSearchParams();
         if (params?.page) q.set("page", String(params.page));
         if (params?.limit) q.set("limit", String(params.limit));
         if (params?.unreadOnly) q.set("unreadOnly", "true");
         const qs = q.toString();
-        return apiFetch<NotificationListResponse>(`/notifications${qs ? `?${qs}` : ""}`);
+        return apiFetch<NotificationListResponse>(`/notifications${qs ? `?${qs}` : ""}`, {
+            signal,
+        });
     },
 
     unreadCount() {

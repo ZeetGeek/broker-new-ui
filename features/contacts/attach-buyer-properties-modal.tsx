@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { EmptyState } from "@/components/shared/empty-state";
+import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -215,8 +216,12 @@ export function AttachBuyerPropertiesModal({
                     }
                 />
             ) : (
-                <ul className="flex flex-col gap-2">
-                    {visible.map((property) => {
+                <VirtualListBox
+                    items={visible}
+                    getKey={(property) => property.id}
+                    estimateItemHeight={92}
+                    ariaLabel="Properties available to attach"
+                    renderItem={(property) => {
                         const isSelected = selectedIds.includes(property.id);
                         const alreadyLinked = attachedIds.includes(property.id);
                         const amount = property.isRent
@@ -224,7 +229,7 @@ export function AttachBuyerPropertiesModal({
                             : formatPriceInr(property.amountInr);
 
                         return (
-                            <li key={property.id}>
+                            <div>
                                 <label
                                     className={cn(
                                         `
@@ -264,10 +269,10 @@ export function AttachBuyerPropertiesModal({
                                         </p>
                                     </div>
                                 </label>
-                            </li>
+                            </div>
                         );
-                    })}
-                </ul>
+                    }}
+                />
             )}
         </AppModal>
     );

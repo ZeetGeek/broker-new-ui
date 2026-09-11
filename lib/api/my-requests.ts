@@ -66,15 +66,11 @@ export const myRequestsApi = {
         ]);
         const live = items.map((item) => withClientCount(item, attachedByProperty));
         const matched = sortRequests(filterRequests(live, filters), filters.sort);
-        const totalPages = Math.max(1, Math.ceil(matched.length / filters.limit));
-        const page = Math.min(Math.max(1, filters.page), totalPages);
-        const start = (page - 1) * filters.limit;
-
         return {
-            items: matched.slice(start, start + filters.limit),
+            items: matched,
             total: matched.length,
-            page,
-            totalPages,
+            page: 1,
+            totalPages: 1,
         };
     },
 

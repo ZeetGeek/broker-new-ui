@@ -23,7 +23,7 @@ import type {
 } from "@/features/properties/your-listings/types";
 import { DEFAULT_MY_LISTINGS_FILTERS } from "@/features/properties/your-listings/types";
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 20;
 
 export type MyListingsSummary = {
     total: number;
@@ -74,14 +74,17 @@ export const myListingsApi = {
         };
     },
 
-    async list(filters: Partial<MyListingsFilters> = {}): Promise<MyListingsResult> {
+    async list(
+        filters: Partial<MyListingsFilters> = {},
+        signal?: AbortSignal,
+    ): Promise<MyListingsResult> {
         const merged: MyListingsFilters = { ...DEFAULT_MY_LISTINGS_FILTERS, ...filters };
         const query = filtersToQuery(merged);
         if (!query) {
             return { items: [], total: 0, page: 1, totalPages: 1 };
         }
 
-        const page = await propertiesApi.list(query);
+        const page = await propertiesApi.list(query, signal);
         return {
             items: page.items.map(mapPropertyListingToMyItem),
             total: page.total,

@@ -8,11 +8,8 @@ import { representativeApi } from "@/lib/api/representative";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import { PropertyCard } from "@/components/shared/property-card";
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
-import {
-    OWNER_LISTINGS_GRID_CLASS,
-    OWNER_LISTINGS_LIST_CLASS,
-} from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
@@ -21,6 +18,15 @@ export type OwnerListingsGridProps = {
     items: OwnerListingItem[];
     view?: OwnerListingsView;
 };
+
+const GRID_BREAKPOINTS = [
+    { minWidth: 640, columns: 2 },
+    { minWidth: 768, columns: 3 },
+    { minWidth: 1024, columns: 4 },
+    { minWidth: 1280, columns: 5 },
+];
+
+const LIST_BREAKPOINTS = [{ minWidth: 768, columns: 2 }];
 
 export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridProps) {
     const [requestingId, setRequestingId] = useState<string | null>(null);
@@ -57,13 +63,18 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
     const isListView = view === "list";
 
     return (
-        <div className={isListView ? OWNER_LISTINGS_LIST_CLASS : OWNER_LISTINGS_GRID_CLASS}>
-            {items.map((item, index) => {
+        <WindowVirtualGrid
+            items={items}
+            getKey={(item) => item.id}
+            estimateRowHeight={isListView ? 224 : 480}
+            gap={isListView ? 24 : 24}
+            breakpoints={isListView ? LIST_BREAKPOINTS : GRID_BREAKPOINTS}
+            ariaLabel="Owner listings"
+            renderItem={(item, index) => {
                 const listing = toBrowsePropertyCardListing(item);
 
                 return (
                     <PropertyCard
-                        key={item.id}
                         variant="browse"
                         layout={view}
                         listing={{
@@ -81,7 +92,7 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
                         onRequest={() => void handleRequest(item.id)}
                     />
                 );
-            })}
-        </div>
+            }}
+        />
     );
 }

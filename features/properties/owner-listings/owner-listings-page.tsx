@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { fetchOwnerListingCities, fetchOwnerListings } from "@/lib/api/owner-listings";
 import { cn } from "@/lib/utils";
+import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
-import { AppPagination } from "@/components/shared/app-pagination";
+import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
 import {
     type BrokerVerificationState,
@@ -76,8 +77,6 @@ function OwnerListingsResults({
     filterContext,
     hasActiveFilters,
     onClearFilters,
-    onPageChange,
-    onPageSizeChange,
     onLoaded,
     onLoadingChange,
     view,
@@ -88,61 +87,52 @@ function OwnerListingsResults({
     filterContext: OwnerListingsFilterContext;
     hasActiveFilters: boolean;
     onClearFilters: () => void;
-    onPageChange: (page: number) => void;
-    onPageSizeChange: (pageSize: number) => void;
     onLoaded: (result: OwnerListingsResult) => void;
     onLoadingChange: (isLoading: boolean) => void;
     view: OwnerListingsView;
 }) {
-    const [result, setResult] = useState<OwnerListingsResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [isFetching, setIsFetching] = useState(true);
-
-    const currentPage = filters.cursor ? Number(filters.cursor) || 1 : 1;
+    const query = useInfiniteItems({
+        queryKey: ["owner-listings", filterSignature, serviceAreasKey],
+        queryFn: async ({ cursor, signal }) => {
+            const page = await fetchOwnerListings(
+                {
+                    ...filters,
+                    cursor: cursor ?? "",
+                    limit: 20,
+                },
+                filterContext,
+                signal,
+            );
+            return { ...page, total: page.totalCount };
+        },
+    });
 
     useEffect(() => {
-        let cancelled = false;
+        onLoadingChange(query.isFetching);
+    }, [onLoadingChange, query.isFetching]);
 
-        const timer = window.setTimeout(() => {
-            if (cancelled) return;
+    useEffect(() => {
+        const pages = query.data?.pages;
+        if (!pages?.length) return;
+        const lastPage = pages.at(-1)!;
+        onLoaded({
+            items: query.items,
+            totalCount: query.total,
+            marketValueInr: query.items.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0),
+            nextCursor: lastPage.nextCursor,
+            page: lastPage.page,
+            totalPages: lastPage.totalPages,
+        });
+    }, [onLoaded, query.data?.pages, query.items, query.total]);
 
-            setError(null);
-            setIsFetching(true);
-            onLoadingChange(true);
-
-            void fetchOwnerListings(filters, filterContext)
-                .then((data) => {
-                    if (cancelled) return;
-                    setResult(data);
-                    onLoaded(data);
-                })
-                .catch(() => {
-                    if (!cancelled) {
-                        setError("Could not load owner listings. Try again.");
-                    }
-                })
-                .finally(() => {
-                    if (!cancelled) {
-                        setIsFetching(false);
-                        onLoadingChange(false);
-                    }
-                });
-        }, 0);
-
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timer);
-        };
-    }, [filterSignature, serviceAreasKey, filters, filterContext, onLoaded, onLoadingChange]);
-
-    if (error) {
+    if (query.isError && query.items.length === 0) {
         return (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
                 <p className="h6 text-ink">Could not load owner listings</p>
-                <p className="body-sm text-ink-muted">{error}</p>
+                <p className="body-sm text-ink-muted">Could not load owner listings. Try again.</p>
                 <button
                     type="button"
-                    onClick={() => window.location.reload()}
+                    onClick={() => void query.refetch()}
                     className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                     Try again
@@ -151,16 +141,12 @@ function OwnerListingsResults({
         );
     }
 
-    if (!result) {
-        if (!isFetching) {
-            return null;
-        }
-
+    if (query.isPending) {
         return (
             <div
                 className={view === "list" ? OWNER_LISTINGS_LIST_CLASS : OWNER_LISTINGS_GRID_CLASS}
             >
-                {Array.from({ length: view === "list" ? 6 : filters.limit }).map((_, index) => (
+                {Array.from({ length: view === "list" ? 6 : 10 }).map((_, index) => (
                     <div
                         key={index}
                         className={cn(
@@ -174,7 +160,7 @@ function OwnerListingsResults({
         );
     }
 
-    if (result.items.length === 0) {
+    if (query.items.length === 0) {
         return (
             <OwnerListingsEmpty
                 variant={hasActiveFilters ? "filtered" : "first_run"}
@@ -186,22 +172,19 @@ function OwnerListingsResults({
 
     return (
         <div
-            className={cn(
-                "flex flex-col gap-8",
-                isFetching && "opacity-60 transition-opacity duration-160",
-            )}
+            className={
+                query.isFetching && !query.isFetchingNextPage
+                    ? "flex flex-col gap-2 opacity-60 transition-opacity duration-160"
+                    : "flex flex-col gap-2"
+            }
         >
-            <OwnerListingsGrid items={result.items} view={view} />
-            {result.totalPages > 0 ? (
-                <AppPagination
-                    page={Math.min(currentPage, result.totalPages)}
-                    totalPages={result.totalPages}
-                    onPageChange={onPageChange}
-                    pageSize={filters.limit}
-                    onPageSizeChange={onPageSizeChange}
-                    aria-label="Owner listings pages"
-                />
-            ) : null}
+            <OwnerListingsGrid items={query.items} view={view} />
+            <InfiniteListStatus
+                hasNextPage={Boolean(query.hasNextPage)}
+                isFetchingNextPage={query.isFetchingNextPage}
+                error={query.isFetchNextPageError ? query.error : null}
+                onLoadMore={() => void query.fetchNextPage()}
+            />
         </div>
     );
 }
@@ -273,34 +256,6 @@ export function OwnerListingsPage() {
     const handleSortChange = useCallback(
         (sort: OwnerListingSort) => {
             applyFilters({ ...filters, sort, cursor: "" });
-        },
-        [applyFilters, filters],
-    );
-
-    const handlePageChange = useCallback(
-        (page: number) => {
-            const nextPage = Math.max(1, page);
-            applyFilters({
-                ...filters,
-                cursor: nextPage <= 1 ? "" : String(nextPage),
-            });
-            if (typeof window !== "undefined") {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            }
-        },
-        [applyFilters, filters],
-    );
-
-    const handlePageSizeChange = useCallback(
-        (pageSize: number) => {
-            applyFilters({
-                ...filters,
-                limit: pageSize,
-                cursor: "",
-            });
-            if (typeof window !== "undefined") {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            }
         },
         [applyFilters, filters],
     );
@@ -401,8 +356,6 @@ export function OwnerListingsPage() {
                 filterContext={filterContext}
                 hasActiveFilters={hasActiveFilters}
                 onClearFilters={clearFilters}
-                onPageChange={handlePageChange}
-                onPageSizeChange={handlePageSizeChange}
                 onLoaded={handleLoaded}
                 onLoadingChange={setIsResultsLoading}
                 view={view}

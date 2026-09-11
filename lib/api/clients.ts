@@ -93,11 +93,18 @@ export type ClientLeadSummary = {
     leads: ClientLeadDetail[];
 };
 
-type ClientsListResponse = {
+export type ClientsListResponse = {
     items: ApiClientContact[];
     total: number;
     page: number;
     limit: number;
+    totalPages: number;
+};
+
+export type ClientListPageWithLeadSummary = {
+    items: Array<ClientItem & ClientLeadSummary>;
+    total: number;
+    page: number;
     totalPages: number;
 };
 
@@ -285,6 +292,35 @@ export async function listClientsWithLeadSummary(options?: {
         ...mapContact(contact),
         ...summarizeClientLeads(contact.leads),
     }));
+}
+
+export async function listClientsPageWithLeadSummary(options: {
+    search?: string;
+    sort?: string;
+    page: number;
+    limit: number;
+    signal?: AbortSignal;
+}): Promise<ClientListPageWithLeadSummary> {
+    const qs = new URLSearchParams({
+        page: String(options.page),
+        limit: String(options.limit),
+    });
+    if (options.search?.trim()) qs.set("search", options.search.trim());
+    if (options.sort) qs.set("sort", options.sort);
+
+    const response = await apiFetch<ClientsListResponse>(`/clients?${qs}`, {
+        signal: options.signal,
+    });
+
+    return {
+        items: (response.items ?? []).map((contact) => ({
+            ...mapContact(contact),
+            ...summarizeClientLeads(contact.leads),
+        })),
+        total: response.total ?? 0,
+        page: response.page ?? options.page,
+        totalPages: Math.max(1, response.totalPages ?? 1),
+    };
 }
 
 async function fetchAllContacts(options?: { search?: string }): Promise<ApiClientContact[]> {

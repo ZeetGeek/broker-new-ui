@@ -4,6 +4,7 @@ import { type DragEvent, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
@@ -66,7 +67,10 @@ export function BoardColumn({
                             <div className="flex cursor-help items-center gap-2 min-inline-0">
                                 <span
                                     aria-hidden
-                                    className={cn("shrink-0 rounded-full block-2 inline-2", meta.dotClass)}
+                                    className={cn(
+                                        "shrink-0 rounded-full block-2 inline-2",
+                                        meta.dotClass,
+                                    )}
                                 />
                                 <h3 className="body-sm truncate font-semibold text-ink">
                                     {meta.label}
@@ -80,41 +84,46 @@ export function BoardColumn({
                 <span className="body-xs tabular shrink-0 text-ink-muted">{deals.length}</span>
             </div>
 
-            <div className="flex flex-col gap-2.5">
-                {deals.map((deal) => (
-                    <div
-                        key={deal.id}
-                        draggable
-                        onDragStart={(event) => {
-                            event.dataTransfer.setData("text/deal-id", deal.id);
-                            event.dataTransfer.effectAllowed = "move";
-                            setDraggingId(deal.id);
-                        }}
-                        onDragEnd={() => setDraggingId(null)}
-                    >
-                        <DealCard
-                            deal={deal}
-                            handlers={handlers}
-                            isBusy={busyId === deal.id}
-                            isDragging={draggingId === deal.id}
-                        />
-                    </div>
-                ))}
-
-                {deals.length === 0 ? (
-                    <p
-                        className={cn(
-                            `
-                              body-xs rounded-inner border border-dashed border-border-warm px-3
-                              py-6 text-center text-ink-subtle
-                            `,
-                            isOver && "border-brand text-brand-text",
-                        )}
-                    >
-                        {isOver ? `Move here` : `Nothing in ${meta.label.toLowerCase()}`}
-                    </p>
-                ) : null}
-            </div>
+            {deals.length > 0 ? (
+                <WindowVirtualGrid
+                    items={deals}
+                    getKey={(deal) => deal.id}
+                    estimateRowHeight={520}
+                    gap={10}
+                    overscan={2}
+                    ariaLabel={`${meta.label} deals`}
+                    renderItem={(deal) => (
+                        <div
+                            draggable
+                            onDragStart={(event) => {
+                                event.dataTransfer.setData("text/deal-id", deal.id);
+                                event.dataTransfer.effectAllowed = "move";
+                                setDraggingId(deal.id);
+                            }}
+                            onDragEnd={() => setDraggingId(null)}
+                        >
+                            <DealCard
+                                deal={deal}
+                                handlers={handlers}
+                                isBusy={busyId === deal.id}
+                                isDragging={draggingId === deal.id}
+                            />
+                        </div>
+                    )}
+                />
+            ) : (
+                <p
+                    className={cn(
+                        `
+                          body-xs rounded-inner border border-dashed border-border-warm px-3 py-6
+                          text-center text-ink-subtle
+                        `,
+                        isOver && "border-brand text-brand-text",
+                    )}
+                >
+                    {isOver ? `Move here` : `Nothing in ${meta.label.toLowerCase()}`}
+                </p>
+            )}
         </div>
     );
 }

@@ -57,15 +57,11 @@ export const ownerInvitesApi = {
     async list(filters: InvitesFilters): Promise<InvitesResult> {
         const items = await loadInvites();
         const matched = sortInvites(filterInvites(items, filters), filters.sort);
-        const totalPages = Math.max(1, Math.ceil(matched.length / filters.limit));
-        const page = Math.min(Math.max(1, filters.page), totalPages);
-        const start = (page - 1) * filters.limit;
-
         return {
-            items: matched.slice(start, start + filters.limit),
+            items: matched,
             total: matched.length,
-            page,
-            totalPages,
+            page: 1,
+            totalPages: 1,
         };
     },
 

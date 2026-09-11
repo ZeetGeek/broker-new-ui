@@ -10,6 +10,7 @@ import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -230,11 +231,17 @@ export function VisitDetailModal({
                 {/* History — the conversation, in the absence of a chat. */}
                 <div className="flex flex-col gap-2">
                     <p className="eyebrow">History</p>
-                    <ol className="flex flex-col gap-3">
-                        {visit.history.map((event, index) => {
+                    <VirtualListBox
+                        items={visit.history}
+                        getKey={(event) => event.id}
+                        estimateItemHeight={64}
+                        gap={0}
+                        ariaLabel="Visit history"
+                        className="max-block-96"
+                        renderItem={(event, index) => {
                             const isLast = index === visit.history.length - 1;
                             return (
-                                <li key={event.id} className="flex gap-3">
+                                <div className="flex gap-3">
                                     <span
                                         aria-hidden
                                         className="flex flex-col items-center gap-1 pbs-1"
@@ -257,10 +264,10 @@ export function VisitDetailModal({
                                             {formatRelativePast(new Date(event.at), now)}
                                         </span>
                                     </span>
-                                </li>
+                                </div>
                             );
-                        })}
-                    </ol>
+                        }}
+                    />
                 </div>
 
                 {(actions.primary ||

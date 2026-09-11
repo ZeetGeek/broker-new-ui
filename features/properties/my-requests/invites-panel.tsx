@@ -8,8 +8,8 @@ import { Inbox, ListFilter, Search } from "lucide-react";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { cn } from "@/lib/utils";
 
-import { AppPagination } from "@/components/shared/app-pagination";
 import { EmptyState } from "@/components/shared/empty-state";
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -29,10 +29,6 @@ import type {
     InvitesSummary,
     InviteStageFilter,
 } from "@/features/properties/my-requests/invite-types";
-import {
-    REQUESTS_GRID_CLASS,
-    REQUESTS_LIST_CLASS,
-} from "@/features/properties/my-requests/requests-grid-class";
 import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 import { RequestsViewToggle } from "@/features/properties/my-requests/requests-view-toggle";
 import { useInvitesFilters } from "@/features/properties/my-requests/use-invites-filters";
@@ -47,13 +43,20 @@ const STAGE_LABELS: Record<InviteStageFilter, string> = {
     expired: INVITE_STAGE_META.expired.label,
 };
 
+const REQUEST_GRID_BREAKPOINTS = [
+    { minWidth: 640, columns: 2 },
+    { minWidth: 1024, columns: 3 },
+    { minWidth: 1280, columns: 4 },
+];
+const SINGLE_COLUMN_BREAKPOINTS: [] = [];
+
 function countFor(summary: InvitesSummary | null, stage: InviteStageFilter): number {
     if (!summary) return 0;
     return stage === "all" ? summary.counts.all : summary.counts[stage];
 }
 
 export function InvitesPanel({ onSummary }: { onSummary?: (summary: InvitesSummary) => void }) {
-    const { filters, setFilters, patchFilters, clearFilters, hasActiveFilters, filterSignature } =
+    const { filters, patchFilters, clearFilters, hasActiveFilters, filterSignature } =
         useInvitesFilters();
     const { view, setView } = useRequestsView();
 
@@ -148,14 +151,6 @@ export function InvitesPanel({ onSummary }: { onSummary?: (summary: InvitesSumma
 
     const handleRefresh = useCallback(() => setRevision((prev) => prev + 1), []);
 
-    const handlePageChange = useCallback(
-        (page: number) => {
-            setFilters((prev) => ({ ...prev, page: Math.max(1, page) }));
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        },
-        [setFilters],
-    );
-
     if (!result && isFetching) {
         return <RequestsListSkeleton view={view} />;
     }
@@ -216,9 +211,9 @@ export function InvitesPanel({ onSummary }: { onSummary?: (summary: InvitesSumma
                                         value={stage}
                                         className={cn(
                                             `
-                                              my-0.5 cursor-pointer! items-center gap-3 rounded-inner
-                                              border border-transparent px-2.5 py-2 pe-9 font-normal
-                                              text-ink
+                                              my-0.5 cursor-pointer! items-center gap-3
+                                              rounded-inner border border-transparent px-2.5 py-2
+                                              pe-9 font-normal text-ink
                                             `,
                                             `
                                               **:data-[slot=dropdown-menu-radio-item-indicator]:text-brand
@@ -298,10 +293,17 @@ export function InvitesPanel({ onSummary }: { onSummary?: (summary: InvitesSumma
                         isFetching && "opacity-60 transition-opacity duration-160",
                     )}
                 >
-                    <ul className={view === "list" ? REQUESTS_LIST_CLASS : REQUESTS_GRID_CLASS}>
-                        {result.items.map((item) => (
+                    <WindowVirtualGrid
+                        items={result.items}
+                        getKey={(item) => item.id}
+                        estimateRowHeight={view === "list" ? 340 : 560}
+                        gap={view === "list" ? 16 : 20}
+                        breakpoints={
+                            view === "list" ? SINGLE_COLUMN_BREAKPOINTS : REQUEST_GRID_BREAKPOINTS
+                        }
+                        ariaLabel="Owner invitations"
+                        renderItem={(item) => (
                             <InviteCard
-                                key={item.id}
                                 item={item}
                                 view={view}
                                 onAccept={handleAccept}
@@ -309,19 +311,8 @@ export function InvitesPanel({ onSummary }: { onSummary?: (summary: InvitesSumma
                                 onBuyersChanged={handleRefresh}
                                 isBusy={busyId === item.id}
                             />
-                        ))}
-                    </ul>
-
-                    {result.totalPages > 1 ? (
-                        <AppPagination
-                            page={result.page}
-                            totalPages={result.totalPages}
-                            onPageChange={handlePageChange}
-                            pageSize={filters.limit}
-                            onPageSizeChange={(limit) => patchFilters({ limit })}
-                            aria-label="Invite pages"
-                        />
-                    ) : null}
+                        )}
+                    />
                 </div>
             )}
         </div>

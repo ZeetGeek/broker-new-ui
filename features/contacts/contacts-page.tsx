@@ -1,15 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+import { useQuery } from "@tanstack/react-query";
 import { ArrowDownUp, ChevronDown, Search, UserPlus, UserRound, Users } from "lucide-react";
 
-import { contactsApi, type ContactsResult } from "@/lib/api/contacts";
+import { contactsApi, sortBuyerRows } from "@/lib/api/contacts";
 import { cn } from "@/lib/utils";
+import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { AddFab } from "@/components/shared/add-fab";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -41,7 +45,10 @@ const SORT_OPTIONS: { value: ContactsSort; label: string }[] = [
     { value: "most_active", label: "Most active" },
 ];
 
-const GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3";
+const CONTACT_GRID_BREAKPOINTS = [
+    { minWidth: 640, columns: 2 },
+    { minWidth: 1280, columns: 3 },
+];
 
 /** Debounced so typing does not refetch on every keystroke. */
 function ContactsQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
@@ -115,18 +122,12 @@ function buildHeadline(
 
     return {
         fact: `${summary.buyerCount} ${summary.buyerCount === 1 ? "buyer" : "buyers"}.`,
-        meaning:
-            summary.unmatchedBuyerCount > 0
-                ? `${summary.unmatchedBuyerCount} on no property yet.`
-                : "All matched to a property.",
+        meaning: "Everyone you’re helping find a property.",
     };
 }
 
 export function ContactsPage() {
     const [filters, setFilters] = useState<ContactsFilters>(DEFAULT_CONTACTS_FILTERS);
-    const [data, setData] = useState<ContactsResult | null>(null);
-    const [isFetching, setIsFetching] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
     const [attachingBuyer, setAttachingBuyer] = useState<BuyerRow | null>(null);
@@ -134,39 +135,20 @@ export function ContactsPage() {
     /** Bumped after a create/update/attach so the list and counts both refetch. */
     const [revision, setRevision] = useState(0);
 
-    useEffect(() => {
-        let cancelled = false;
-
-        // Deferred so the loading flag does not set state during the effect
-        // body, which would cascade an extra render on every filter change.
-        const timer = window.setTimeout(() => {
-            if (cancelled) return;
-
-            setIsFetching(true);
-            setError(null);
-
-            void contactsApi
-                .list(filters)
-                .then((next) => {
-                    if (!cancelled) setData(next);
-                })
-                .catch(() => {
-                    if (!cancelled) {
-                        setError(
-                            "Could not load your contacts. Check your connection and try again.",
-                        );
-                    }
-                })
-                .finally(() => {
-                    if (!cancelled) setIsFetching(false);
-                });
-        }, 0);
-
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timer);
-        };
-    }, [filters, revision]);
+    const buyersQuery = useInfiniteItems({
+        queryKey: ["contacts", "buyers", filters.q, filters.sort, revision],
+        queryFn: ({ cursor, signal }) => contactsApi.listBuyersPage(filters, cursor, signal),
+        enabled: filters.tab === "buyers",
+    });
+    const ownersQuery = useInfiniteItems({
+        queryKey: ["contacts", "owners", filters.q, filters.sort, revision],
+        queryFn: ({ cursor, signal }) => contactsApi.listOwnersPage(filters, cursor, signal),
+        enabled: filters.tab === "owners",
+    });
+    const summaryQuery = useQuery({
+        queryKey: ["contacts", "summary", revision],
+        queryFn: ({ signal }) => contactsApi.summary(signal),
+    });
 
     const handleCreated = useCallback((name: string) => {
         setRevision((prev) => prev + 1);
@@ -188,11 +170,15 @@ export function ContactsPage() {
         setFilters((prev) => ({ ...prev, tab }));
     }, []);
 
-    const isFirstLoad = data === null;
     const hasSearch = filters.q.trim().length > 0;
-    const summary = data?.summary ?? null;
+    const summary = summaryQuery.data ?? null;
     const isBuyers = filters.tab === "buyers";
-    const rows = isBuyers ? (data?.buyers ?? []) : (data?.owners ?? []);
+    const buyers = useMemo(
+        () => sortBuyerRows(buyersQuery.items, filters.sort),
+        [buyersQuery.items, filters.sort],
+    );
+    const rows = isBuyers ? buyers : ownersQuery.items;
+    const activeQuery = isBuyers ? buyersQuery : ownersQuery;
     const headline = buildHeadline(summary, filters.tab);
 
     return (
@@ -330,13 +316,13 @@ export function ContactsPage() {
                     </div>
                 </div>
 
-                {error ? (
+                {activeQuery.isError && rows.length === 0 ? (
                     <p role="alert" className="body-sm text-urgent">
-                        {error}
+                        Could not load your contacts. Check your connection and try again.
                     </p>
                 ) : null}
 
-                {isFirstLoad && isFetching ? (
+                {activeQuery.isError && rows.length === 0 ? null : activeQuery.isPending ? (
                     <ContactsSkeleton />
                 ) : rows.length === 0 ? (
                     hasSearch ? (
@@ -375,25 +361,41 @@ export function ContactsPage() {
                         />
                     )
                 ) : (
-                    <div
-                        className={cn(
-                            GRID_CLASS,
-                            isFetching && "opacity-60 transition-opacity duration-160",
+                    <div className="flex flex-col gap-2">
+                        {isBuyers ? (
+                            <WindowVirtualGrid
+                                items={buyers}
+                                getKey={(buyer) => buyer.id}
+                                estimateRowHeight={430}
+                                gap={12}
+                                breakpoints={CONTACT_GRID_BREAKPOINTS}
+                                ariaLabel="Buyers"
+                                renderItem={(buyer) => (
+                                    <BuyerCard
+                                        buyer={buyer}
+                                        onEdit={setEditingBuyer}
+                                        onAttachProperties={setAttachingBuyer}
+                                        onViewLeads={setViewingBuyer}
+                                    />
+                                )}
+                            />
+                        ) : (
+                            <WindowVirtualGrid
+                                items={ownersQuery.items}
+                                getKey={(owner) => owner.id}
+                                estimateRowHeight={260}
+                                gap={12}
+                                breakpoints={CONTACT_GRID_BREAKPOINTS}
+                                ariaLabel="Owners"
+                                renderItem={(owner) => <OwnerCard owner={owner} />}
+                            />
                         )}
-                    >
-                        {isBuyers
-                            ? (data?.buyers ?? []).map((buyer) => (
-                                  <BuyerCard
-                                      key={buyer.id}
-                                      buyer={buyer}
-                                      onEdit={setEditingBuyer}
-                                      onAttachProperties={setAttachingBuyer}
-                                      onViewLeads={setViewingBuyer}
-                                  />
-                              ))
-                            : (data?.owners ?? []).map((owner) => (
-                                  <OwnerCard key={owner.id} owner={owner} />
-                              ))}
+                        <InfiniteListStatus
+                            hasNextPage={Boolean(activeQuery.hasNextPage)}
+                            isFetchingNextPage={activeQuery.isFetchingNextPage}
+                            error={activeQuery.isFetchNextPageError ? activeQuery.error : null}
+                            onLoadMore={() => void activeQuery.fetchNextPage()}
+                        />
                     </div>
                 )}
 

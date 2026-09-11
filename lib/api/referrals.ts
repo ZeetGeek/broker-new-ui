@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import type { InfinitePage } from "@/lib/pagination/infinite-page";
 
 import { isStaleReferral } from "@/features/referrals/referral-meta";
 import {
@@ -319,17 +320,86 @@ function sortReferrals(items: ReferralItem[], now: Date): ReferralItem[] {
     });
 }
 
+export function filterAndSortReferrals(
+    items: ReferralItem[],
+    filters: ReferralsFilters,
+    now: Date,
+): ReferralItem[] {
+    return sortReferrals(
+        items.filter(
+            (referral) =>
+                matchesQuery(referral, filters.q) && matchesStatus(referral, filters.status),
+        ),
+        now,
+    );
+}
+
+export type ReferralItemsPage = InfinitePage<ReferralItem> & {
+    summary: ReferralInvitesResponse["summary"];
+};
+
+export function buildReferralPresentation(
+    overview: ReferralOverviewResponse,
+    invitesSummary: ReferralInvitesResponse["summary"],
+    items: ReferralItem[],
+    ledger: CreditEntry[],
+    now: Date,
+) {
+    return {
+        referralCode: {
+            code: overview.referralCode,
+            shareUrl: overview.inviteUrl,
+        } satisfies ReferralCode,
+        earnings: buildEarnings(ledger, items),
+        summary: summarizeFromApi(invitesSummary, items, ledger, overview.balance, now),
+    };
+}
+
 export const referralsApi = {
-    overview() {
-        return apiFetch<ReferralOverviewResponse>("/referrals");
+    overview(signal?: AbortSignal) {
+        return apiFetch<ReferralOverviewResponse>("/referrals", { signal });
     },
 
-    invites(page = 1, limit = 50) {
-        return apiFetch<ReferralInvitesResponse>(`/referrals/invites?page=${page}&limit=${limit}`);
+    invites(page = 1, limit = 50, signal?: AbortSignal) {
+        return apiFetch<ReferralInvitesResponse>(`/referrals/invites?page=${page}&limit=${limit}`, {
+            signal,
+        });
     },
 
-    history(page = 1, limit = 50) {
-        return apiFetch<ReferralHistoryResponse>(`/referrals/history?page=${page}&limit=${limit}`);
+    history(page = 1, limit = 50, signal?: AbortSignal) {
+        return apiFetch<ReferralHistoryResponse>(`/referrals/history?page=${page}&limit=${limit}`, {
+            signal,
+        });
+    },
+
+    async listInvitesPage(cursor: string | null, signal?: AbortSignal): Promise<ReferralItemsPage> {
+        const page = cursor ? Number(cursor) || 1 : 1;
+        const limit = 50;
+        const response = await this.invites(page, limit, signal);
+
+        return {
+            items: response.items.map(mapInviteToReferralItem),
+            total: response.total,
+            nextCursor: page * response.limit < response.total ? String(page + 1) : null,
+            summary: response.summary,
+        };
+    },
+
+    async listHistoryPage(
+        cursor: string | null,
+        signal?: AbortSignal,
+    ): Promise<InfinitePage<CreditEntry>> {
+        const page = cursor ? Number(cursor) || 1 : 1;
+        const limit = 50;
+        const response = await this.history(page, limit, signal);
+
+        return {
+            items: response.items
+                .map(mapTxn)
+                .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()),
+            total: response.total,
+            nextCursor: page * response.limit < response.total ? String(page + 1) : null,
+        };
     },
 
     /**
@@ -350,10 +420,7 @@ export const referralsApi = {
             .map(mapTxn)
             .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
-        const filtered = allItems.filter(
-            (referral) =>
-                matchesQuery(referral, filters.q) && matchesStatus(referral, filters.status),
-        );
+        const filtered = filterAndSortReferrals(allItems, filters, now);
 
         const referralCode: ReferralCode = {
             code: overview.referralCode,
@@ -361,7 +428,7 @@ export const referralsApi = {
         };
 
         return {
-            items: sortReferrals(filtered, now),
+            items: filtered,
             ledger,
             earnings: buildEarnings(ledger, allItems),
             summary: summarizeFromApi(invites.summary, allItems, ledger, overview.balance, now),

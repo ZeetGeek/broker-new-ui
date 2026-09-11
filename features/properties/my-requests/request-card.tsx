@@ -459,7 +459,7 @@ export function RequestCard({
 
     return (
         <TooltipProvider>
-            <li
+            <article
                 className={cn(
                     `
                       group flex flex-col gap-4 rounded-card border border-border-warm bg-surface
@@ -516,9 +516,7 @@ export function RequestCard({
                             </div>
 
                             <div
-                                className="
-                              flex shrink-0 flex-wrap items-center justify-end gap-1.5
-                            "
+                                className="flex shrink-0 flex-wrap items-center justify-end gap-1.5"
                             >
                                 <Tooltip>
                                     <TooltipTrigger
@@ -688,7 +686,7 @@ export function RequestCard({
                         onSaved={onBuyersChanged}
                     />
                 ) : null}
-            </li>
+            </article>
         </TooltipProvider>
     );
 }

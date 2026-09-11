@@ -10,6 +10,7 @@ import { brokerRequestsApi } from "@/lib/api/broker-requests";
 import { cn } from "@/lib/utils";
 
 import { Price } from "@/components/shared/price";
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 
 import { MyListingsRequestsEmpty } from "@/features/properties/your-listings/my-listings-empty";
@@ -75,7 +76,9 @@ function RequestRow({
     const isRemind = item.action.kind === "remind";
 
     return (
-        <li className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4">
+        <article className="
+          flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4
+        ">
             <RequestIcon type={item.type} />
             <div
                 className="
@@ -115,7 +118,7 @@ function RequestRow({
                     </Button>
                 )}
             </div>
-        </li>
+        </article>
     );
 }
 
@@ -241,16 +244,16 @@ export function MyListingsRequestsPanel() {
                     <p className="body-sm mbs-2 text-ink-muted">Try another filter.</p>
                 </div>
             ) : result ? (
-                <ul className="flex flex-col gap-3">
-                    {result.items.map((item) => (
-                        <RequestRow
-                            key={item.id}
-                            item={item}
-                            busy={busyId === item.id}
-                            onRemind={handleRemind}
-                        />
-                    ))}
-                </ul>
+                <WindowVirtualGrid
+                    items={result.items}
+                    getKey={(item) => item.id}
+                    estimateRowHeight={128}
+                    gap={12}
+                    ariaLabel="Requests for your properties"
+                    renderItem={(item) => (
+                        <RequestRow item={item} busy={busyId === item.id} onRemind={handleRemind} />
+                    )}
+                />
             ) : null}
         </div>
     );

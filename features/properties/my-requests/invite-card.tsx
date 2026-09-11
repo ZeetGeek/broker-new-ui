@@ -230,7 +230,7 @@ export function InviteCard({
 
     return (
         <TooltipProvider>
-            <li
+            <article
                 className={cn(
                     `
                       group flex flex-col gap-4 rounded-card border bg-surface p-4
@@ -492,7 +492,7 @@ export function InviteCard({
                         onSaved={onBuyersChanged}
                     />
                 ) : null}
-            </li>
+            </article>
         </TooltipProvider>
     );
 }

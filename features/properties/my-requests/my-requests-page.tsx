@@ -8,7 +8,7 @@ import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
-import { AppPagination } from "@/components/shared/app-pagination";
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import type { InvitesSummary } from "@/features/properties/my-requests/invite-types";
 import { InvitesIntro } from "@/features/properties/my-requests/invites-intro";
@@ -18,10 +18,6 @@ import {
     RequestsFilteredEmpty,
     RequestsFirstRunEmpty,
 } from "@/features/properties/my-requests/requests-empty";
-import {
-    REQUESTS_GRID_CLASS,
-    REQUESTS_LIST_CLASS,
-} from "@/features/properties/my-requests/requests-grid-class";
 import { RequestsHeader } from "@/features/properties/my-requests/requests-header";
 import { RequestsIntro } from "@/features/properties/my-requests/requests-intro";
 import {
@@ -33,8 +29,15 @@ import type { RequestsResult, RequestsSummary } from "@/features/properties/my-r
 import { useRequestsFilters } from "@/features/properties/my-requests/use-requests-filters";
 import { useRequestsView } from "@/features/properties/my-requests/use-requests-view";
 
+const REQUEST_GRID_BREAKPOINTS = [
+    { minWidth: 640, columns: 2 },
+    { minWidth: 1024, columns: 3 },
+    { minWidth: 1280, columns: 4 },
+];
+const SINGLE_COLUMN_BREAKPOINTS: [] = [];
+
 function SentRequestsPanel({ onSummary }: { onSummary?: (summary: RequestsSummary) => void }) {
-    const { filters, patchFilters, setFilters, clearFilters, hasActiveFilters, filterSignature } =
+    const { filters, patchFilters, clearFilters, hasActiveFilters, filterSignature } =
         useRequestsFilters();
     const { view, setView } = useRequestsView();
 
@@ -137,22 +140,6 @@ function SentRequestsPanel({ onSummary }: { onSummary?: (summary: RequestsSummar
         [runMutation],
     );
 
-    const handlePageChange = useCallback(
-        (page: number) => {
-            setFilters((prev) => ({ ...prev, page: Math.max(1, page) }));
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        },
-        [setFilters],
-    );
-
-    const handlePageSizeChange = useCallback(
-        (limit: number) => {
-            patchFilters({ limit });
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        },
-        [patchFilters],
-    );
-
     if (!result && isFetching) {
         return <RequestsPageSkeleton />;
     }
@@ -203,14 +190,19 @@ function SentRequestsPanel({ onSummary }: { onSummary?: (summary: RequestsSummar
                                 isFetching && "opacity-60 transition-opacity duration-160",
                             )}
                         >
-                            <ul
-                                className={
-                                    view === "list" ? REQUESTS_LIST_CLASS : REQUESTS_GRID_CLASS
+                            <WindowVirtualGrid
+                                items={result.items}
+                                getKey={(item) => item.id}
+                                estimateRowHeight={view === "list" ? 360 : 620}
+                                gap={view === "list" ? 16 : 20}
+                                breakpoints={
+                                    view === "list"
+                                        ? SINGLE_COLUMN_BREAKPOINTS
+                                        : REQUEST_GRID_BREAKPOINTS
                                 }
-                            >
-                                {result.items.map((item) => (
+                                ariaLabel="Representation requests"
+                                renderItem={(item) => (
                                     <RequestCard
-                                        key={item.id}
                                         item={item}
                                         view={view}
                                         onNudge={handleNudge}
@@ -219,19 +211,8 @@ function SentRequestsPanel({ onSummary }: { onSummary?: (summary: RequestsSummar
                                         onBuyersChanged={handleRefresh}
                                         isBusy={busyId === item.id}
                                     />
-                                ))}
-                            </ul>
-
-                            {result.totalPages > 1 ? (
-                                <AppPagination
-                                    page={result.page}
-                                    totalPages={result.totalPages}
-                                    onPageChange={handlePageChange}
-                                    pageSize={filters.limit}
-                                    onPageSizeChange={handlePageSizeChange}
-                                    aria-label="Request pages"
-                                />
-                            ) : null}
+                                )}
+                            />
                         </div>
                     )}
                 </>
