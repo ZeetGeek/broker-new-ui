@@ -19,12 +19,12 @@ export function MyListingsPageSkeleton({ view = "grid" }: { view?: MyListingsVie
                     <div
                         key={index}
                         className="
-                          animate-pulse rounded-full bg-surface-muted block-[38px] inline-28
+                          animate-pulse rounded-control bg-surface-muted block-[38px] inline-28
                         "
                     />
                 ))}
                 <div className="
-                  ms-auto animate-pulse rounded-full bg-surface-muted block-[38px] inline-52
+                  ms-auto animate-pulse rounded-control bg-surface-muted block-[38px] inline-52
                 " />
             </div>
             <div className={isList ? MY_LISTINGS_LIST_CLASS : MY_LISTINGS_GRID_CLASS}>

@@ -216,7 +216,7 @@ export function InvitesPanel({ onSummary }: { onSummary?: (summary: InvitesSumma
                                         value={stage}
                                         className={cn(
                                             `
-                                              my-0.5 cursor-pointer! items-center gap-3 rounded-lg
+                                              my-0.5 cursor-pointer! items-center gap-3 rounded-inner
                                               border border-transparent px-2.5 py-2 pe-9 font-normal
                                               text-ink
                                             `,
@@ -260,7 +260,7 @@ export function InvitesPanel({ onSummary }: { onSummary?: (summary: InvitesSumma
                           sm:min-inline-52 sm:inline-52
                         "
                         className="
-                          rounded-full border! border-border-warm bg-surface text-sm font-medium
+                          rounded-control border! border-border-warm bg-surface text-sm font-medium
                           shadow-sm block-[38px]!
                           hover:border-ink/25!
                           focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20

@@ -205,7 +205,8 @@ export function ButtonThemePage() {
                             punctuation.
                         </li>
                         <li>
-                            Pill-shaped via `rounded-control`. Never `rounded-md` or `rounded-lg`.
+                            Standard 10px corners via `rounded-control`. Use the same token for every
+                            button size.
                         </li>
                         <li>
                             `lg` is 48px (`control-xl`), matching input `lg`. Use it on primary

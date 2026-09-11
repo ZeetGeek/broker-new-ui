@@ -96,9 +96,9 @@ function ShareCardSkeleton({ className }: { className?: string }) {
             aria-label="Loading your invite link"
         >
             <div className="flex flex-col gap-4">
-                <span className="animate-pulse rounded-full bg-white/10 block-4 inline-32" />
+                <span className="animate-pulse rounded-sm bg-white/10 block-4 inline-32" />
                 <span className="animate-pulse rounded-inner bg-white/10 block-12 inline-full" />
-                <span className="animate-pulse rounded-full bg-white/10 block-10 inline-full" />
+                <span className="animate-pulse rounded-control bg-white/10 block-10 inline-full" />
             </div>
         </div>
     );

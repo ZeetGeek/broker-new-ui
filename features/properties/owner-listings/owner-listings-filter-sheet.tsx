@@ -166,7 +166,7 @@ function ChoiceChip({
             onClick={onClick}
             className={cn(
                 `
-                  inline-flex items-center justify-center rounded-full border px-3.5 py-2 text-sm
+                  inline-flex items-center justify-center rounded-control border px-3.5 py-2 text-sm
                   font-semibold whitespace-nowrap
                 `,
                 SELECT_TRANSITION,
@@ -202,7 +202,7 @@ function OptionCard({
             aria-pressed={active}
             onClick={onClick}
             className={cn(
-                `flex flex-col justify-center gap-2 rounded-2xl border p-3.5 text-start block-full`,
+                `flex flex-col justify-center gap-2 rounded-inner border p-3.5 text-start block-full`,
                 SELECT_TRANSITION,
                 active
                     ? "border-brand bg-brand-soft text-brand-text"
@@ -245,7 +245,7 @@ function DealToggle({
     return (
         <div
             className={cn(
-                "flex items-start gap-3 rounded-2xl border p-3.5 sm:p-4",
+                "flex items-start gap-3 rounded-inner border p-3.5 sm:p-4",
                 SELECT_TRANSITION,
                 active
                     ? "border-brand bg-transparent"
@@ -395,7 +395,7 @@ export function OwnerListingsFilterSheet({
                             render={
                                 <DialogClose
                                     className="
-                                      flex shrink-0 items-center justify-center rounded-full border
+                                      flex shrink-0 items-center justify-center rounded-control border
                                       border-border-warm bg-surface text-ink-muted
                                       transition-[background-color,border-color,color,transform]
                                       duration-160 block-10 inline-10

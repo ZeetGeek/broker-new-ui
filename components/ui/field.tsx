@@ -126,7 +126,7 @@ function FieldLabel({ className, ...props }: React.ComponentProps<typeof Label>)
                   group/field-label peer/field-label flex gap-2 leading-snug inline-fit
                   group-data-[disabled=true]/field:opacity-50
                   has-data-checked:bg-input/30
-                  has-[>[data-slot=field]]:rounded-2xl has-[>[data-slot=field]]:border
+                  has-[>[data-slot=field]]:rounded-inner has-[>[data-slot=field]]:border
                   has-[>[data-slot=field]]:not-has-[:disabled,[data-disabled]]:hover:bg-input/40
                   has-[>[data-slot=field]]:has-focus-visible:border-ring
                   has-[>[data-slot=field]]:has-focus-visible:ring-3

@@ -275,7 +275,7 @@ export function DocumentUploader({
                 <span
                     aria-hidden
                     className="
-                      flex items-center justify-center rounded-full bg-surface-muted text-ink-muted
+                      flex items-center justify-center rounded-control bg-surface-muted text-ink-muted
                       block-10 inline-10
                     "
                 >

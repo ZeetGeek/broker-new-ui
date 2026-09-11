@@ -21,19 +21,19 @@ export function OwnerListingsPageSkeleton() {
                         >
                             <div
                                 className="
-                                  shrink-0 animate-pulse rounded-full bg-surface-muted block-4
+                                  shrink-0 animate-pulse rounded-sm bg-surface-muted block-4
                                   inline-4
                                 "
                             />
                             <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
                                 <div
                                     className="
-                                      animate-pulse rounded-full bg-surface-muted block-3 inline-16
+                                      animate-pulse rounded-sm bg-surface-muted block-3 inline-16
                                     "
                                 />
                                 <div
                                     className="
-                                      animate-pulse rounded-full bg-surface-muted block-4 inline-28
+                                      animate-pulse rounded-sm bg-surface-muted block-4 inline-28
                                     "
                                 />
                             </div>
@@ -54,19 +54,19 @@ export function OwnerListingsPageSkeleton() {
                         >
                             <div
                                 className="
-                                  shrink-0 animate-pulse rounded-full bg-surface-muted block-4
+                                  shrink-0 animate-pulse rounded-sm bg-surface-muted block-4
                                   inline-4
                                 "
                             />
                             <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
                                 <div
                                     className="
-                                      animate-pulse rounded-full bg-surface-muted block-3 inline-20
+                                      animate-pulse rounded-sm bg-surface-muted block-3 inline-20
                                     "
                                 />
                                 <div
                                     className="
-                                      animate-pulse rounded-full bg-surface-muted block-4 inline-16
+                                      animate-pulse rounded-sm bg-surface-muted block-4 inline-16
                                     "
                                 />
                             </div>
@@ -85,12 +85,12 @@ export function OwnerListingsPageSkeleton() {
                         >
                             <div
                                 className="
-                                  animate-pulse rounded-full bg-surface-muted block-3 inline-14
+                                  animate-pulse rounded-sm bg-surface-muted block-3 inline-14
                                 "
                             />
                             <div
                                 className="
-                                  animate-pulse rounded-full bg-surface-muted block-4 inline-24
+                                  animate-pulse rounded-sm bg-surface-muted block-4 inline-24
                                 "
                             />
                         </div>
@@ -110,19 +110,19 @@ export function OwnerListingsPageSkeleton() {
                         >
                             <div
                                 className="
-                                  shrink-0 animate-pulse rounded-full bg-surface-muted block-4
+                                  shrink-0 animate-pulse rounded-sm bg-surface-muted block-4
                                   inline-4
                                 "
                             />
                             <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
                                 <div
                                     className="
-                                      animate-pulse rounded-full bg-surface-muted block-3 inline-10
+                                      animate-pulse rounded-sm bg-surface-muted block-3 inline-10
                                     "
                                 />
                                 <div
                                     className="
-                                      animate-pulse rounded-full bg-surface-muted block-4 inline-12
+                                      animate-pulse rounded-sm bg-surface-muted block-4 inline-12
                                     "
                                 />
                             </div>
@@ -131,7 +131,7 @@ export function OwnerListingsPageSkeleton() {
                     <div className="flex shrink-0 items-center pe-1">
                         <div
                             className="
-                              animate-pulse rounded-full bg-surface-muted block-10 inline-10
+                              animate-pulse rounded-control bg-surface-muted block-10 inline-10
                             "
                         />
                     </div>
@@ -141,7 +141,7 @@ export function OwnerListingsPageSkeleton() {
                     <div className="flex flex-1 gap-2.5 overflow-hidden min-inline-0">
                         <div
                             className="
-                              shrink-0 animate-pulse rounded-full bg-surface shadow-sm block-9
+                              shrink-0 animate-pulse rounded-control bg-surface shadow-sm block-9
                               inline-28
                             "
                         />
@@ -149,7 +149,7 @@ export function OwnerListingsPageSkeleton() {
                             <div
                                 key={index}
                                 className="
-                                  shrink-0 animate-pulse rounded-full bg-surface shadow-sm block-9
+                                  shrink-0 animate-pulse rounded-control bg-surface shadow-sm block-9
                                   inline-32
                                 "
                             />
@@ -158,12 +158,12 @@ export function OwnerListingsPageSkeleton() {
                     <div className="flex shrink-0 items-center gap-2.5">
                         <div
                             className="
-                              animate-pulse rounded-full bg-surface shadow-sm block-9 inline-16
+                              animate-pulse rounded-control bg-surface shadow-sm block-9 inline-16
                             "
                         />
                         <div
                             className="
-                              shrink-0 animate-pulse rounded-full bg-surface shadow-sm block-9
+                              shrink-0 animate-pulse rounded-control bg-surface shadow-sm block-9
                               inline-28
                             "
                         />

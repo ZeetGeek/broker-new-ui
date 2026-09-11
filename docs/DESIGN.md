@@ -70,7 +70,7 @@ ink-subtle      #A9A79D   captions, metadata, placeholder
 brand-ink       #0B1F17   primary button fill (reads black, is green)
 brand-deep      #0F3D2E   dark attention cards
 brand           #1B7A5A   prices, match %, active state, links
-brand-soft      #E3F2EA   badge and pill backgrounds
+brand-soft      #E3F2EA   badge and chip backgrounds
 brand-text      #0B5A41   text sitting on brand-soft
 ```
 
@@ -279,15 +279,19 @@ instead of inventing their own heights.
 
 ### 3.2 Radius
 
-The design is generously rounded. Sharp corners look wrong in it.
+The design uses compact, conventional rounded rectangles. Radius supports grouping and
+touch affordance without making every surface look soft or capsule-shaped.
 
 ```
---radius-card    20px   cards, photo containers, dark panels
---radius-inner   14px   inset strips, images inside cards
---radius-control  9999px  buttons, badges, inputs, pills, filter chips, tabs
+--radius-card    14px   cards, photo containers, dialogs, floating panels
+--radius-inner   10px   inset strips, menu items, images inside cards
+--radius-control 10px   buttons, inputs, selects, tabs, segmented controls
 ```
 
-Buttons, badges, and inputs are fully pill-shaped. Not `rounded-md`. Not `rounded-lg`. Not `rounded-inner` on a field.
+Badges use `rounded-md` (about 8px). Checkboxes use `rounded-sm` (5px). Controls use
+`rounded-control` (10px); cards and overlays use `rounded-card` (14px). `rounded-full`
+is reserved for genuinely circular geometry such as avatars, radio indicators, status
+dots, and switch thumbs. It is not the default for buttons, badges, filters, or tabs.
 
 Never apply a radius to a single-sided border. If a row uses `border-l` as an accent,
 its radius is 0.
@@ -328,7 +332,7 @@ sits on `surface` rather than `canvas`, but never stack more than one shadow ste
 
 ### 4.1 Card
 
-White surface, 20px radius, no shadow. Optional eyebrow at top-left, optional status
+White surface, 14px radius, no shadow. Optional eyebrow at top-left, optional status
 badge at top-right, then content.
 
 ```
@@ -338,13 +342,13 @@ badge at top-right, then content.
 │ Today, 9:30 AM               │  h2, ink
 │ Vesu · meet at the gate      │  small, ink-muted
 │                              │
-│ [Directions]  [Reschedule]   │  primary pill · secondary pill
+│ [Directions]  [Reschedule]   │  primary action · secondary action
 └──────────────────────────────┘
 ```
 
 ### 4.2 Dark attention card
 
-`brand-deep` or `brand-ink` background, same 20px radius, light text. Reserved for
+`brand-deep` or `brand-ink` background, same 14px radius, light text. Reserved for
 the one thing on the screen that needs action: pending requests, overdue follow-ups,
 expiring listings.
 
@@ -366,7 +370,7 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 | Destructive       | transparent, 1px `danger`    | `danger`        | Reject, Delete                                                                                                                                              |
 | Ghost             | none                         | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
 
-All are pill-shaped. Height comes from the control-height scale (§3.1a):
+All use the standard 10px control radius. Height comes from the control-height scale (§3.1a):
 `xs`/`sm`/`default`/`md`/`lg` map to `control-xs`/`control-sm`/`control-md`/
 `control-lg`/`control-xl`. Icon sizes follow the same steps (`icon-xs` through
 `icon-lg`). Button `lg` and input `lg` are the same height — never mix steps in
@@ -383,7 +387,7 @@ one spinner, one place, `components/ui/button.tsx`. `loading` disables the contr
 `aria-busy`, and keeps the label on screen next to the spinner — it never replaces the
 label with the spinner alone.
 
-### 4.4 Badges and pills
+### 4.4 Badges and chips
 
 Soft background plus the matching dark text from the same family. Never white text
 on a soft fill, never `ink` on a coloured fill.
@@ -395,7 +399,7 @@ on a soft fill, never `ink` on a coloured fill.
 | Rejected, inactive         | `danger-soft`   | `danger`     |
 | Neutral status, filters    | `surface-muted` | `ink-muted`  |
 
-12px, weight 500, `4px 10px` padding, pill radius.
+12px, weight 500, `4px 10px` padding, approximately 8px radius.
 
 ### 4.5 Property card
 
@@ -404,7 +408,7 @@ top corners, 4:3 aspect ratio, `object-cover`.
 
 ```
 ┌──────────────────────────────┐
-│ [Active]                 [♡] │  overlay pills on photo
+│ [Active]                 [♡] │  compact overlay controls on photo
 │                              │
 │         photo 4:3            │
 │                              │
@@ -425,13 +429,13 @@ get 5× more interest`. Never a gray box, never a broken image icon.
 
 ### 4.6 Metric strip
 
-Inset `surface-muted` row inside a card, 14px radius, two to three columns divided by
+Inset `surface-muted` row inside a card, 10px radius, two to three columns divided by
 1px `border`. Label above at 11px `ink-subtle`, value below at 16px `ink`, tabular.
 Used for loan breakdowns, property stats, deal summaries.
 
 ### 4.7 Stage / progress strip
 
-Full-width `brand-deep` bar, pill radius, showing pipeline position. Completed stages
+Full-width `brand-deep` bar, 10px radius, showing pipeline position. Completed stages
 carry a `brand` dot and white label; the current stage carries a `highlight` dot and
 white label; future stages are `#7E9A8D` with no dot.
 
@@ -506,7 +510,7 @@ three.
 └──────────────────────────────┘
 ```
 
-Pill radius (`rounded-control`), 2px `border-warm`, `surface` fill. Rest state
+Standard control radius (`rounded-control`), 2px `border-warm`, `surface` fill. Rest state
 carries no shadow — `shadow-xs` is reserved for the rare case an input sits
 directly on `canvas` rather than inside a card that already separates it.
 
@@ -658,7 +662,7 @@ Things that will be rejected in review:
 - Gradients anywhere, including on photo overlays
 - Orange used decoratively rather than for a deadline
 - Lime appearing more than once per card, or as text on a light surface
-- `rounded-md` or `rounded-lg` on a button, badge, or input
+- `rounded-full` on a button, badge, filter chip, input, or tab without a documented circular purpose
 - Title Case or ALL CAPS outside the eyebrow label
 - Arbitrary spacing values (`p-[13px]`, `gap-[7px]`)
 - Emoji in production UI

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 export type AppModalFooterProps = {
-    /** Primary action — the pill button on the trailing edge. */
+    /** Primary action on the trailing edge. */
     primaryLabel: ReactNode;
     onPrimary?: () => void;
     primaryType?: "button" | "submit";
@@ -26,7 +26,7 @@ export type AppModalFooterProps = {
 };
 
 /**
- * The shared modal action bar: quiet secondary on the leading edge, brand pill
+ * The shared modal action bar: quiet secondary on the leading edge, brand action
  * on the trailing edge, stacking to full width on small screens.
  *
  * Pass to `AppModal`'s `footer` prop, which supplies the border and inset.
@@ -79,7 +79,7 @@ export function AppModalFooter({
                 disabled={primaryDisabled}
                 onClick={onPrimary}
                 className="
-                  rounded-full bg-brand px-8 text-surface
+                  rounded-control bg-brand px-8 text-surface
                   hover:bg-brand-text
                   sm:min-inline-56
                 "

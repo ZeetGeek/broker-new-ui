@@ -155,7 +155,7 @@ function VerificationStatus({
         return (
             <div
                 className="
-                  body-xs rounded-full border border-border-warm bg-surface-muted/80 px-3 py-1.5
+                  body-xs rounded-md border border-border-warm bg-surface-muted/80 px-3 py-1.5
                   font-medium text-ink-muted
                 "
             >

@@ -4,8 +4,8 @@ export default function Loading() {
     return (
         <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2" aria-hidden>
-                <div className="animate-pulse rounded-full bg-surface-muted block-8 inline-72" />
-                <div className="animate-pulse rounded-full bg-surface-muted block-5 inline-56" />
+                <div className="animate-pulse rounded-sm bg-surface-muted block-8 inline-72" />
+                <div className="animate-pulse rounded-sm bg-surface-muted block-5 inline-56" />
             </div>
 
             {/* Heights track the real cards — the earnings card carries a

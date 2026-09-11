@@ -53,7 +53,7 @@ export function mosaicLayout(photoCount: number): { grid: string; hero: string; 
 export type PropertyGalleryProps = {
     title: string;
     imageSrcs: string[];
-    /** Pills laid over the top of the hero tile — status, listing age. */
+    /** Badges laid over the top of the hero tile: status and listing age. */
     overlay?: ReactNode;
     /** Target for the empty state's "Add photos" action. */
     editHref?: string;
@@ -278,7 +278,7 @@ export function PropertyGallery({ title, imageSrcs, overlay, editHref }: Propert
                                 aria-label="Previous photo"
                                 onClick={() => step(-1)}
                                 className="
-                                  absolute inset-s-3 z-10 rounded-full bg-surface/15 p-2
+                                  absolute inset-s-3 z-10 rounded-control bg-surface/15 p-2
                                   text-surface transition-colors duration-160
                                   hover:bg-surface/25
                                 "
@@ -307,7 +307,7 @@ export function PropertyGallery({ title, imageSrcs, overlay, editHref }: Propert
                                 aria-label="Next photo"
                                 onClick={() => step(1)}
                                 className="
-                                  absolute inset-e-3 z-10 rounded-full bg-surface/15 p-2
+                                  absolute inset-e-3 z-10 rounded-control bg-surface/15 p-2
                                   text-surface transition-colors duration-160
                                   hover:bg-surface/25
                                 "

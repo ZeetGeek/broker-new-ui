@@ -52,9 +52,9 @@ export function CreditsLedger({ ledger, className }: CreditsLedgerProps) {
                 aria-busy
                 aria-label="Loading your credits"
             >
-                <span className="animate-pulse rounded-full bg-surface-muted block-5 inline-32" />
-                <span className="animate-pulse rounded-full bg-surface-muted block-4 inline-full" />
-                <span className="animate-pulse rounded-full bg-surface-muted block-4 inline-52" />
+                <span className="animate-pulse rounded-sm bg-surface-muted block-5 inline-32" />
+                <span className="animate-pulse rounded-sm bg-surface-muted block-4 inline-full" />
+                <span className="animate-pulse rounded-sm bg-surface-muted block-4 inline-52" />
             </section>
         );
     }
@@ -121,7 +121,7 @@ export function CreditsLedger({ ledger, className }: CreditsLedgerProps) {
                                 aria-hidden
                                 className={cn(
                                     `
-                                      flex shrink-0 items-center justify-center rounded-full block-8
+                                      flex shrink-0 items-center justify-center rounded-control block-8
                                       inline-8
                                     `,
                                     // A spend in the earn colour reads as

@@ -10,8 +10,8 @@ export function ProfileSkeleton() {
     return (
         <div className="flex flex-col gap-6" aria-busy aria-label="Loading your profile">
             <div className="flex flex-col gap-2">
-                <div className="animate-pulse rounded-full bg-surface-muted block-8 inline-72" />
-                <div className="animate-pulse rounded-full bg-surface-muted block-4 inline-56" />
+                <div className="animate-pulse rounded-sm bg-surface-muted block-8 inline-72" />
+                <div className="animate-pulse rounded-sm bg-surface-muted block-4 inline-56" />
             </div>
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

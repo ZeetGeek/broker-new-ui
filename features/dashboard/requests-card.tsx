@@ -249,7 +249,7 @@ export function RequestsCard({ data, className }: RequestsCardProps) {
                                 type="button"
                                 aria-label={`${remainingLabel}. ${quotaHint}`}
                                 className="
-                                  eyebrow shrink-0 rounded-full text-ink-muted outline-none
+                                  eyebrow shrink-0 rounded-sm text-ink-muted outline-none
                                   focus-visible:ring-2 focus-visible:ring-ring
                                 "
                             >

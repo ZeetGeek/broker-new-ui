@@ -14,23 +14,23 @@ function DealCardSkeleton() {
                   sm:block-18 sm:inline-22
                 " />
                 <div className="flex flex-1 flex-col gap-2">
-                    <div className="rounded-full bg-surface-muted block-3 inline-28" />
-                    <div className="rounded-full bg-surface-muted block-3 inline-16" />
+                    <div className="rounded-sm bg-surface-muted block-3 inline-28" />
+                    <div className="rounded-sm bg-surface-muted block-3 inline-16" />
                 </div>
             </div>
 
             <div className="flex flex-col gap-2.5 rounded-inner bg-surface-muted/60 p-2.5">
                 <div className="flex items-center gap-2">
                     <div className="
-                      shrink-0 rounded-full bg-surface-muted block-control-sm inline-control-sm
+                      shrink-0 rounded-control bg-surface-muted block-control-sm inline-control-sm
                     " />
-                    <div className="rounded-full bg-surface-muted block-3 inline-24" />
+                    <div className="rounded-sm bg-surface-muted block-3 inline-24" />
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="
-                      shrink-0 rounded-full bg-surface-muted block-control-sm inline-control-sm
+                      shrink-0 rounded-control bg-surface-muted block-control-sm inline-control-sm
                     " />
-                    <div className="rounded-full bg-surface-muted block-3 inline-20" />
+                    <div className="rounded-sm bg-surface-muted block-3 inline-20" />
                 </div>
             </div>
 
@@ -52,7 +52,7 @@ export function PipelineBoardSkeleton() {
                       flex flex-col gap-3 rounded-card bg-surface-muted/40 p-2
                     ">
                         <div className="flex items-center justify-between px-1 pbs-1">
-                            <div className="rounded-full bg-surface-muted block-3 inline-20" />
+                            <div className="rounded-sm bg-surface-muted block-3 inline-20" />
                             <div className="rounded-full bg-surface-muted block-3 inline-3" />
                         </div>
                         <div className="flex flex-col gap-2.5">

@@ -43,7 +43,7 @@ function PaginationLink({ className, isActive, size = "icon", ...props }: Pagina
             variant={isActive ? "accent" : "ghost"}
             size={size}
             className={cn(
-                "rounded-full font-semibold tabular-nums",
+                "rounded-control font-semibold tabular-nums",
                 isActive
                     ? "pointer-events-none shadow-sm"
                     : "text-ink-muted hover:bg-surface-muted hover:text-ink",
@@ -105,7 +105,7 @@ function PaginationEllipsis({ className, ...props }: React.ComponentProps<"span"
             data-slot="pagination-ellipsis"
             className={cn(
                 `
-                  flex items-center justify-center rounded-full text-ink-subtle block-control-md
+                  flex items-center justify-center rounded-control text-ink-subtle block-control-md
                   inline-control-md
                   [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
                 `,

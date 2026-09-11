@@ -291,7 +291,7 @@ export function RegisterWizard({
                                 onClick={goToRole}
                                 aria-label={`Signed up as ${selected.label}. Change role`}
                                 className="
-                                  rounded-full
+                                  rounded-card
                                   focus-visible:ring-3 focus-visible:ring-ring/30
                                   focus-visible:outline-none
                                 "
@@ -303,7 +303,7 @@ export function RegisterWizard({
                                     height={120}
                                     unoptimized
                                     draggable={false}
-                                    className="pointer-events-none rounded-full block-30 inline-30"
+                                    className="pointer-events-none rounded-card block-30 inline-30"
                                 />
                             </button>
                             <AuthHeading

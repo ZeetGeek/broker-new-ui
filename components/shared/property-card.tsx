@@ -68,7 +68,7 @@ const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[5/4] w-full";
 
 const BROWSE_CARD_PHOTO_NAV_BTN_CLASS = `
   absolute inset-bs-1/2 z-10 flex -translate-y-1/2 items-center justify-center
-  rounded-full bg-surface/95 text-ink transition-[opacity,transform] duration-160
+  rounded-control bg-surface/95 text-ink transition-[opacity,transform] duration-160
   block-7 inline-7
   shadow-[inset_0_-2px_0_0_rgba(111,123,144,0.1)]
   hover:bg-surface
@@ -596,7 +596,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                     role="group"
                     aria-label="Price type"
                     className="
-                      inline-flex shrink-0 items-center gap-0.5 rounded-full border
+                       inline-flex shrink-0 items-center gap-0.5 rounded-control border
                       border-border-warm bg-surface p-0.5 shadow-sm
                     "
                 >
@@ -605,7 +605,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                         onValueChange={(id) => {
                             if (id === "sale" || id === "rent") setMode(id);
                         }}
-                        className="rounded-full border border-brand bg-brand-soft shadow-none"
+                        className="rounded-md border border-brand bg-brand-soft shadow-none"
                         transition={reduceMotion ? { duration: 0 } : spring.snappy}
                     >
                         {(
@@ -624,7 +624,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                                     aria-pressed={isActive}
                                     className={cn(
                                         `
-                                          body-xs rounded-full px-2.5 py-0.5 font-semibold
+                                           body-xs rounded-md px-2.5 py-0.5 font-semibold
                                           transition-[color] duration-160
                                         `,
                                         isActive
@@ -1148,7 +1148,7 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
                     role="group"
                     aria-label="Price type"
                     className="
-                      inline-flex shrink-0 items-center gap-0.5 rounded-full border
+                       inline-flex shrink-0 items-center gap-0.5 rounded-control border
                       border-border-warm bg-surface p-0.5 shadow-sm
                     "
                 >
@@ -1157,7 +1157,7 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
                         onValueChange={(id) => {
                             if (id === "sale" || id === "rent") setMode(id);
                         }}
-                        className="rounded-full border border-brand bg-brand-soft shadow-none"
+                        className="rounded-md border border-brand bg-brand-soft shadow-none"
                         transition={reduceMotion ? { duration: 0 } : spring.snappy}
                     >
                         {(
@@ -1176,7 +1176,7 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
                                     aria-pressed={isActive}
                                     className={cn(
                                         `
-                                          body-xs rounded-full px-2.5 py-0.5 font-semibold
+                                           body-xs rounded-md px-2.5 py-0.5 font-semibold
                                           transition-[color] duration-160
                                         `,
                                         isActive

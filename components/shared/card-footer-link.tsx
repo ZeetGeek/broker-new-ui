@@ -14,7 +14,7 @@ export type CardFooterLinkProps = {
 };
 
 /**
- * Full-width pill link that closes a dashboard card. Reads as a real target on a
+ * Full-width action link that closes a dashboard card. Reads as a real target on a
  * phone (the whole strip is tappable) without competing with the card's primary
  * action — border and hover stay in the warm neutral range, not brand.
  */

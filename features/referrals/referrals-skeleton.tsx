@@ -12,9 +12,9 @@ function ReferralRowSkeleton() {
             />
 
             <div className="flex flex-1 flex-col gap-2 min-inline-0">
-                <div className="rounded-full bg-surface-muted block-4 inline-44" />
-                <div className="rounded-full bg-surface-muted block-3 inline-56" />
-                <div className="rounded-full bg-surface-muted block-3 inline-40" />
+                <div className="rounded-sm bg-surface-muted block-4 inline-44" />
+                <div className="rounded-sm bg-surface-muted block-3 inline-56" />
+                <div className="rounded-sm bg-surface-muted block-3 inline-40" />
             </div>
 
             <div className="shrink-0 rounded-control bg-surface-muted block-control-sm inline-20" />

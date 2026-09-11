@@ -50,7 +50,7 @@ export function PropertyActionRail({
                     <span
                         className={cn(
                             `
-                              flex shrink-0 items-center justify-center rounded-full block-9
+                              flex shrink-0 items-center justify-center rounded-control block-9
                               inline-9
                             `,
                             isPublished ? "bg-brand text-surface" : "bg-surface text-ink-muted",

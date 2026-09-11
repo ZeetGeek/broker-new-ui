@@ -7,8 +7,8 @@ function VisitRowSkeleton() {
     return (
         <div className="flex gap-3 border-be border-border-warm px-3 py-3.5 sm:gap-4 sm:px-4">
             <div className="flex shrink-0 flex-col gap-1.5 inline-16 sm:inline-20">
-                <div className="rounded-full bg-surface-muted block-4 inline-14" />
-                <div className="rounded-full bg-surface-muted block-3 inline-8" />
+                <div className="rounded-sm bg-surface-muted block-4 inline-14" />
+                <div className="rounded-sm bg-surface-muted block-3 inline-8" />
             </div>
 
             <div className="shrink-0 rounded-full bg-surface-muted inline-0.5" />
@@ -21,9 +21,9 @@ function VisitRowSkeleton() {
             />
 
             <div className="flex flex-1 flex-col gap-2 min-inline-0">
-                <div className="rounded-full bg-surface-muted block-4 inline-40" />
-                <div className="rounded-full bg-surface-muted block-3 inline-52" />
-                <div className="rounded-full bg-surface-muted block-3 inline-36" />
+                <div className="rounded-sm bg-surface-muted block-4 inline-40" />
+                <div className="rounded-sm bg-surface-muted block-3 inline-52" />
+                <div className="rounded-sm bg-surface-muted block-3 inline-36" />
             </div>
 
             <div className="shrink-0 rounded-control bg-surface-muted block-control-sm inline-20" />
@@ -43,7 +43,7 @@ export function VisitsListSkeleton({
             {Array.from({ length: days }, (_, dayIndex) => (
                 <section key={dayIndex} className="flex flex-col">
                     <div className="border-be border-border-warm pbe-2">
-                        <div className="rounded-full bg-surface-muted block-4 inline-44" />
+                        <div className="rounded-sm bg-surface-muted block-4 inline-44" />
                     </div>
 
                     <div

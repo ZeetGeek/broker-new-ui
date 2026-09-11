@@ -23,7 +23,7 @@ const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 50] as const;
 /** Matches owner-listings sort / filter chip surface (Newest first). */
 const controlChipClass = cn(
     `
-      rounded-full border border-border-warm bg-surface font-semibold text-ink shadow-sm
+      rounded-control border border-border-warm bg-surface font-semibold text-ink shadow-sm
       transition-[background-color,border-color,color] duration-160 outline-none
       hover:border-ink/25 hover:bg-surface-muted/60
       focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/30
@@ -33,7 +33,7 @@ const controlChipClass = cn(
 /** Outer shell — same as owner-listings view toggle. */
 const arrowGroupClass = cn(
     `
-      inline-flex shrink-0 items-center gap-1 rounded-full border border-border-warm bg-surface p-1
+      inline-flex shrink-0 items-center gap-1 rounded-control border border-border-warm bg-surface p-1
       shadow-sm
     `,
 );
@@ -41,14 +41,14 @@ const arrowGroupClass = cn(
 /** Page-number cluster — same height as arrow groups, a bit more inner padding. */
 const pageGroupClass = cn(
     `
-      inline-flex shrink-0 items-center gap-0.5 rounded-full border border-border-warm bg-surface
+      inline-flex shrink-0 items-center gap-0.5 rounded-control border border-border-warm bg-surface
       px-1.5 py-1 shadow-sm
     `,
 );
 
 const arrowButtonClass = cn(
     `
-      inline-flex shrink-0 items-center justify-center rounded-full border border-transparent
+      inline-flex shrink-0 items-center justify-center rounded-md border border-transparent
       text-ink-muted transition-[color] duration-160 outline-none block-8 inline-8
       focus-visible:ring-2 focus-visible:ring-brand
       disabled:pointer-events-none disabled:opacity-35
@@ -58,7 +58,7 @@ const arrowButtonClass = cn(
 
 const pageButtonClass = cn(
     `
-      body-sm inline-flex items-center justify-center rounded-full px-2.5 font-semibold tabular-nums
+      body-sm inline-flex items-center justify-center rounded-md px-2.5 font-semibold tabular-nums
       transition-[color] duration-160 outline-none block-8 min-inline-8
       focus-visible:ring-2 focus-visible:ring-brand
     `,
@@ -171,7 +171,7 @@ export function AppPagination({
                 <div className={arrowGroupClass}>
                     <AnimatedBackground
                         enableHover
-                        className="rounded-full border border-brand bg-brand-soft shadow-none"
+                        className="rounded-md border border-brand bg-brand-soft shadow-none"
                         transition={reduceMotion ? { duration: 0 } : spring.snappy}
                     >
                         <button
@@ -205,7 +205,7 @@ export function AppPagination({
                             const next = Number(id);
                             if (Number.isFinite(next)) onPageChange(next);
                         }}
-                        className="rounded-full bg-brand shadow-sm"
+                        className="rounded-md bg-brand shadow-sm"
                         transition={reduceMotion ? { duration: 0 } : spring.snappy}
                     >
                         {tokens.map((token, index) =>
@@ -245,7 +245,7 @@ export function AppPagination({
                 <div className={arrowGroupClass}>
                     <AnimatedBackground
                         enableHover
-                        className="rounded-full border border-brand bg-brand-soft shadow-none"
+                        className="rounded-md border border-brand bg-brand-soft shadow-none"
                         transition={reduceMotion ? { duration: 0 } : spring.snappy}
                     >
                         <button

@@ -18,10 +18,10 @@ function Tabs({ className, orientation = "horizontal", ...props }: TabsPrimitive
 
 const tabsListVariants = cva(
     `
-      group/tabs-list inline-flex items-center justify-center rounded-full p-1 text-muted-foreground
+      group/tabs-list inline-flex items-center justify-center rounded-control p-1 text-muted-foreground
       inline-fit
       group-data-horizontal/tabs:block-9
-      group-data-vertical/tabs:flex-col group-data-vertical/tabs:rounded-2xl
+      group-data-vertical/tabs:flex-col group-data-vertical/tabs:rounded-control
       group-data-vertical/tabs:block-fit
       data-[variant=line]:rounded-none
     `,
@@ -59,10 +59,10 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
             data-slot="tabs-trigger"
             className={cn(
                 `
-                  relative inline-flex flex-1 items-center justify-center gap-2 rounded-full border
+                  relative inline-flex flex-1 items-center justify-center gap-2 rounded-md border
                   border-transparent! px-3 py-1 text-sm font-medium whitespace-nowrap
                   text-foreground/60 transition-all block-[calc(100%-1px)]
-                  group-data-vertical/tabs:justify-start group-data-vertical/tabs:rounded-2xl
+                  group-data-vertical/tabs:justify-start group-data-vertical/tabs:rounded-md
                   group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5
                   group-data-vertical/tabs:inline-full
                   hover:text-foreground

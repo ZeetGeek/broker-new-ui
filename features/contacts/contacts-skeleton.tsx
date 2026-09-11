@@ -15,28 +15,28 @@ function ContactCardSkeleton() {
                       shrink-0 rounded-full bg-surface-muted block-control-md inline-control-md
                     " />
                     <div className="flex flex-col gap-2">
-                        <div className="rounded-full bg-surface-muted block-3 inline-24" />
-                        <div className="rounded-full bg-surface-muted block-3 inline-20" />
+                        <div className="rounded-sm bg-surface-muted block-3 inline-24" />
+                        <div className="rounded-sm bg-surface-muted block-3 inline-20" />
                     </div>
                 </div>
                 <div className="flex gap-1.5">
-                    <div className="rounded-full bg-surface-muted block-6 inline-6" />
-                    <div className="rounded-full bg-surface-muted block-6 inline-6" />
+                    <div className="rounded-control bg-surface-muted block-6 inline-6" />
+                    <div className="rounded-control bg-surface-muted block-6 inline-6" />
                 </div>
             </div>
 
             <div className="flex gap-1.5">
-                <div className="rounded-full bg-surface-muted block-5 inline-16" />
-                <div className="rounded-full bg-surface-muted block-5 inline-12" />
+                <div className="rounded-sm bg-surface-muted block-5 inline-16" />
+                <div className="rounded-sm bg-surface-muted block-5 inline-12" />
             </div>
 
-            <div className="rounded-full bg-surface-muted block-3 inline-32" />
+            <div className="rounded-sm bg-surface-muted block-3 inline-32" />
 
             <div className="
               flex items-center justify-between gap-2 border-bs border-border-warm pbs-3
             ">
-                <div className="rounded-full bg-surface-muted block-3 inline-28" />
-                <div className="rounded-full bg-surface-muted block-3 inline-16" />
+                <div className="rounded-sm bg-surface-muted block-3 inline-28" />
+                <div className="rounded-sm bg-surface-muted block-3 inline-16" />
             </div>
         </div>
     );

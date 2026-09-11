@@ -43,7 +43,7 @@ function SelectTrigger({
             data-size={size}
             className={cn(
                 `
-                  flex items-center justify-between gap-1.5 rounded-3xl border border-transparent
+                  flex items-center justify-between gap-1.5 rounded-control border border-transparent
                   bg-input/50 px-3 py-2 text-sm whitespace-nowrap
                   transition-[color,box-shadow,background-color] outline-none inline-fit
                   focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
@@ -103,7 +103,7 @@ function SelectContent({
                     className={cn(
                         `
                           dark relative isolate z-50 origin-(--transform-origin) animate-none!
-                          overflow-x-hidden overflow-y-auto rounded-3xl bg-popover/70
+                          overflow-x-hidden overflow-y-auto rounded-card bg-popover/70
                           text-popover-foreground shadow-lg ring-1 ring-foreground/5 duration-100
                           inline-(--anchor-width) max-block-(--available-height) min-inline-36
                           before:pointer-events-none before:absolute before:inset-0 before:-z-1
@@ -157,7 +157,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
             data-slot="select-item"
             className={cn(
                 `
-                  relative flex cursor-default items-center gap-2.5 rounded-2xl py-2 ps-3 pe-8
+                  relative flex cursor-default items-center gap-2.5 rounded-inner py-2 ps-3 pe-8
                   text-sm font-medium outline-hidden select-none inline-full
                   focus:bg-accent focus:text-accent-foreground
                   not-data-[variant=destructive]:focus:**:text-accent-foreground

@@ -204,7 +204,7 @@ When one component needs several looks, use `class-variance-authority` — the
 same tool shadcn already uses. Not boolean props.
 
 ```tsx
-const badge = cva("inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-medium", {
+const badge = cva("inline-flex items-center rounded-md px-2.5 py-0.5 text-caption font-medium", {
     variants: {
         status: {
             available: "bg-status-available/10 text-status-available",

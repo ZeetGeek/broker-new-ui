@@ -146,7 +146,7 @@ export function AppModal({
                                     render={
                                         <DialogClose
                                             className="
-                                              flex shrink-0 items-center justify-center rounded-full
+                                              flex shrink-0 items-center justify-center rounded-control
                                               border border-border-warm bg-surface text-ink-muted
                                               transition-[background-color,border-color,color,transform]
                                               duration-160 block-10 inline-10

@@ -283,7 +283,7 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
                 >
                     Requests
                     {item.inboundRequestCount > 0 ? (
-                        <span className="tabular ms-1 rounded-full bg-brand px-1.5 text-surface">
+                        <span className="tabular ms-1 rounded-md bg-brand px-1.5 text-surface">
                             {item.inboundRequestCount}
                         </span>
                     ) : null}

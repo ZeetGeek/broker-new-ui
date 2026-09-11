@@ -69,8 +69,8 @@ export function ReferralsIntro({ summary, isLoading }: ReferralsIntroProps) {
     if (!summary) {
         return (
             <div className="flex flex-col gap-2" aria-hidden={isLoading}>
-                <span className="animate-pulse rounded-full bg-surface-muted block-8 inline-72" />
-                <span className="animate-pulse rounded-full bg-surface-muted block-5 inline-56" />
+                <span className="animate-pulse rounded-sm bg-surface-muted block-8 inline-72" />
+                <span className="animate-pulse rounded-sm bg-surface-muted block-5 inline-56" />
             </div>
         );
     }

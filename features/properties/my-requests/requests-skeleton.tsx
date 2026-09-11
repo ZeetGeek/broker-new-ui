@@ -31,7 +31,7 @@ export function RequestsPageSkeleton() {
                 {Array.from({ length: 5 }).map((_, index) => (
                     <div
                         key={index}
-                        className="animate-pulse rounded-full bg-surface-muted block-9 inline-24"
+                        className="animate-pulse rounded-control bg-surface-muted block-9 inline-24"
                     />
                 ))}
             </div>

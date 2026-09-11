@@ -194,7 +194,7 @@ function UnreadBadge({ count }: { count: number }) {
             aria-hidden
             className="
               tabular body-xs absolute -inset-e-1 -inset-bs-1 flex items-center justify-center
-              rounded-full bg-brand px-1 font-semibold text-canvas ring-2 ring-surface-muted block-5
+              rounded-md bg-brand px-1 font-semibold text-canvas ring-2 ring-surface-muted block-5
               min-inline-5
             "
         >
@@ -211,7 +211,7 @@ function NotificationTypeIcon({ item }: { item: NotificationItem }) {
             data-notification-icon
             className={cn(
                 `
-                  inline-flex items-center justify-center rounded-full bg-surface-muted block-8
+                  inline-flex items-center justify-center rounded-control bg-surface-muted block-8
                   inline-8
                 `,
                 colorClass,
@@ -614,7 +614,7 @@ function NotificationRowContent({
                     <span
                         data-notification-body
                         className="
-                          body-xs inline-flex items-center gap-1 rounded-full border
+                          body-xs inline-flex items-center gap-1 rounded-md border
                           border-border-warm bg-surface-muted/80 px-2 py-0.5 font-medium
                           text-ink-muted inline-fit
                         "
@@ -633,7 +633,7 @@ function NotificationRowContent({
                     <span
                         data-notification-status
                         className="
-                          body-xs rounded-full border border-border-warm bg-surface-muted/80 px-2
+                          body-xs rounded-md border border-border-warm bg-surface-muted/80 px-2
                           py-0.5 font-medium text-ink-muted inline-fit
                         "
                     >

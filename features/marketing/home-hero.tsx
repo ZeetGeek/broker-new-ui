@@ -150,7 +150,7 @@ export function HomeHero() {
                             <li key={label} className="flex items-center gap-2 sm:px-5">
                                 <span
                                     className="
-                                      flex items-center justify-center rounded-full border
+                                      flex items-center justify-center rounded-control border
                                       border-canvas/25 bg-canvas/10 backdrop-blur-md block-6
                                       inline-6
                                     "

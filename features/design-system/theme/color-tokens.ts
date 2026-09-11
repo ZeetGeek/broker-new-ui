@@ -112,7 +112,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
                 variable: "--color-brand-soft",
                 hex: "#E3F2EA",
                 className: "bg-brand-soft",
-                usage: "Badge and pill backgrounds",
+                usage: "Badge and chip backgrounds",
             },
             {
                 name: "Brand text",

@@ -47,7 +47,7 @@ export function CardLabel({ children, className, tone = "light", info }: CardLab
                                 aria-label={`About ${typeof children === "string" ? children : "this card"}`}
                                 className={cn(
                                     `
-                                      inline-flex shrink-0 items-center justify-center rounded-full
+                                      inline-flex shrink-0 items-center justify-center rounded-sm
                                       outline-none
                                       focus-visible:ring-2 focus-visible:ring-ring
                                     `,

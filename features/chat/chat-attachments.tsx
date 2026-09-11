@@ -132,7 +132,7 @@ function AudioAttachment({ url, durationLabel }: { url: string; durationLabel?: 
                 onClick={toggle}
                 aria-label={isPlaying ? "Pause voice note" : "Play voice note"}
                 className="
-                  flex shrink-0 items-center justify-center rounded-full bg-surface/20 text-surface
+                  flex shrink-0 items-center justify-center rounded-control bg-surface/20 text-surface
                   transition-colors duration-160 block-9 inline-9
                   hover:bg-surface/30
                   focus-visible:ring-2 focus-visible:ring-surface/60 focus-visible:outline-none
@@ -230,7 +230,7 @@ function MediaTile({
                     {item.durationLabel ? (
                         <span
                             className="
-                              tabular absolute inset-e-2 inset-be-2 rounded-full bg-ink/70 px-1.5
+                              tabular absolute inset-e-2 inset-be-2 rounded-md bg-ink/70 px-1.5
                               py-0.5 text-[11px] font-semibold text-surface
                             "
                         >

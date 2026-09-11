@@ -42,7 +42,7 @@ export function RequestsTabs({
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
                             `
-                              body-sm flex items-center gap-2 rounded-full px-4 py-2
+                              body-sm flex items-center gap-2 rounded-control px-4 py-2
                               transition-colors duration-160
                             `,
                             isActive
@@ -60,7 +60,7 @@ export function RequestsTabs({
                             <span
                                 aria-label={`${waitingCount} waiting for you`}
                                 className="
-                                  body-xs flex items-center justify-center rounded-full bg-urgent
+                                  body-xs flex items-center justify-center rounded-md bg-urgent
                                   px-1 font-semibold text-surface block-5 min-inline-5
                                 "
                             >

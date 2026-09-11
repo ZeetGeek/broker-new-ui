@@ -89,7 +89,7 @@ export function InputThemePage() {
         <DesignSystemShell
             eyebrow="Components"
             title="Input."
-            description="One base-ui primitive, wrapped once in components/ui/input.tsx. Pill-shaped like buttons via rounded-control. Three sizes, icon slots on either edge, a built-in password toggle, clearable, loading, and error/success states — all sharing the same aria-invalid and data-success wiring so a form only sets props, never inline styles."
+            description="One base-ui primitive, wrapped once in components/ui/input.tsx. Uses the same compact rounded-control corners as buttons. Three sizes, icon slots on either edge, a built-in password toggle, clearable, loading, and error/success states; all sharing the same aria-invalid and data-success wiring so a form only sets props, never inline styles."
         >
             <div className="space-y-10">
                 <section>
@@ -203,8 +203,8 @@ export function InputThemePage() {
                             once.
                         </li>
                         <li>
-                            Pill-shaped via `rounded-control`, same as buttons and badges. Never
-                            `rounded-md`, `rounded-lg`, or `rounded-inner` on a field.
+                            Standard 10px corners via `rounded-control`, matching buttons and selects.
+                            Never override the field radius at the call site.
                         </li>
                     </ul>
                 </section>

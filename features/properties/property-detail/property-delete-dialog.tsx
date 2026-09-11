@@ -50,7 +50,7 @@ export function PropertyDeleteDialog({
                         disabled={busy}
                         onClick={onConfirm}
                         className="
-                          rounded-full bg-danger px-8 text-surface
+                          rounded-control bg-danger px-8 text-surface
                           hover:bg-danger/90
                           sm:min-inline-56
                         "

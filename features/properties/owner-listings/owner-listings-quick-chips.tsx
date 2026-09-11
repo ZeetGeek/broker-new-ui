@@ -119,7 +119,7 @@ function OwnerListingsQueryInput({
               lg:min-inline-64 lg:inline-64
             "
             className="
-              rounded-full border! border-border-warm bg-surface text-sm font-medium shadow-sm
+              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
               block-[38px]!
               hover:border-ink/25!
               focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20

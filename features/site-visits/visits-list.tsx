@@ -508,7 +508,7 @@ function WeekStrip({
                                 onSelectDay(dayKey(now));
                             }}
                             className="
-                              body-sm rounded-full border border-border-warm bg-surface px-3 py-1
+                              body-sm rounded-md border border-border-warm bg-surface px-3 py-1
                               font-medium text-ink transition-colors duration-160
                               hover:bg-surface-muted
                             "
@@ -663,7 +663,7 @@ function StripArrow({ direction, onClick }: { direction: "prev" | "next"; onClic
             aria-label={direction === "prev" ? "Previous week" : "Next week"}
             onClick={onClick}
             className="
-              flex shrink-0 items-center justify-center rounded-full border border-border-warm
+              flex shrink-0 items-center justify-center rounded-control border border-border-warm
               bg-surface text-ink transition-colors duration-160 block-8 inline-8
               hover:bg-surface-muted
             "

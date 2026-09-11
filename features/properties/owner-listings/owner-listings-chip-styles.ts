@@ -5,7 +5,7 @@ const CHIP_HOVER_TRANSITION = "transition-[background-color,border-color,color] 
 export function ownerListingsChipClassName(isActive: boolean) {
     return cn(
         `
-          inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold
+          inline-flex shrink-0 items-center gap-1.5 rounded-control border px-4 text-sm font-semibold
           whitespace-nowrap block-[38px]
         `,
         CHIP_HOVER_TRANSITION,

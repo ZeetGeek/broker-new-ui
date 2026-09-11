@@ -213,7 +213,7 @@ export function MyListingsRequestsPanel() {
                         type="button"
                         onClick={() => setStatus(chip.value)}
                         className={cn(
-                            "body-sm rounded-full px-4 py-2 transition-colors duration-160",
+                            "body-sm rounded-control px-4 py-2 transition-colors duration-160",
                             status === chip.value
                                 ? "bg-ink font-semibold text-surface"
                                 : "bg-surface font-normal text-ink-muted hover:text-ink",

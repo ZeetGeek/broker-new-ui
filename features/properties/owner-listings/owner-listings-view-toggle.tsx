@@ -34,7 +34,7 @@ export function OwnerListingsViewToggle({
             aria-label="Results layout"
             className={cn(
                 `
-                  inline-flex shrink-0 items-center gap-1 rounded-full border border-border-warm
+                  inline-flex shrink-0 items-center gap-1 rounded-control border border-border-warm
                   bg-surface p-1 shadow-sm block-[38px]
                 `,
                 className,
@@ -47,7 +47,7 @@ export function OwnerListingsViewToggle({
                         onViewChange(id as OwnerListingsView);
                     }
                 }}
-                className="rounded-full border border-brand bg-brand-soft shadow-none"
+                className="rounded-md border border-brand bg-brand-soft shadow-none"
                 transition={reduceMotion ? { duration: 0 } : spring.snappy}
             >
                 {VIEW_OPTIONS.map((option) => {
@@ -63,7 +63,7 @@ export function OwnerListingsViewToggle({
                             aria-pressed={isActive}
                             className={cn(
                                 `
-                                  flex items-center justify-center rounded-full border
+                                  flex items-center justify-center rounded-md border
                                   border-transparent transition-[color] duration-160 block-7
                                   inline-7
                                 `,

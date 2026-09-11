@@ -99,7 +99,7 @@ export function OwnerListingsBhkMenu({
                                         className={cn(
                                             `
                                               group/tile flex flex-col items-center justify-center
-                                              gap-2.5 rounded-2xl border px-3 py-5
+                                              gap-2.5 rounded-inner border px-3 py-5
                                               transition-[background-color,border-color,box-shadow,transform]
                                               duration-160 outline-none
                                               focus-visible:ring-2 focus-visible:ring-brand

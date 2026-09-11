@@ -107,7 +107,7 @@ function fromRadioValue(radioValue: string): PropertyTypeValue {
 const rowClass = (checked: boolean) =>
     cn(
         `
-          group/row my-1 cursor-pointer! items-center gap-3 rounded-xl border border-transparent
+          group/row my-1 cursor-pointer! items-center gap-3 rounded-inner border border-transparent
           px-2.5 py-3 pe-10
         `,
         "font-normal text-ink transition-[background-color,border-color,box-shadow] duration-160",

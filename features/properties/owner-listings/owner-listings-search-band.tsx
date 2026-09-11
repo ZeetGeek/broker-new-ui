@@ -205,7 +205,7 @@ export function OwnerListingsSearchBand({
                     type="button"
                     size="icon-md"
                     variant="accent"
-                    className="rounded-full"
+                    className="rounded-control"
                     aria-label="Search properties"
                     onClick={handleSearch}
                 >

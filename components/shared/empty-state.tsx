@@ -40,7 +40,7 @@ export function EmptyState({
                 <span
                     aria-hidden
                     className="
-                      flex items-center justify-center rounded-full text-brand block-12 inline-12
+                      flex items-center justify-center rounded-control text-brand block-12 inline-12
                     "
                 >
                     <Icon className="block-7 inline-7" strokeWidth={1.75} />

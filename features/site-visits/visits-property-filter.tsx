@@ -81,7 +81,7 @@ export function VisitsPropertyFilter({ properties, value, onChange }: VisitsProp
                         }
                         className={cn(
                             `
-                              body-sm flex shrink-0 items-center gap-2 rounded-full border px-3
+                              body-sm flex shrink-0 items-center gap-2 rounded-control border px-3
                               py-1.5 transition-colors duration-160
                             `,
                             selected

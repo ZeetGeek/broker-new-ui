@@ -110,7 +110,7 @@ function StatusBadge({
                         type="button"
                         aria-label={`Visit status: ${label}. ${hint}`}
                         className="
-                          shrink-0 rounded-full outline-none
+                          shrink-0 rounded-sm outline-none
                           focus-visible:ring-2 focus-visible:ring-ring
                         "
                     >

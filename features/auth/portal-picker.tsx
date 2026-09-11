@@ -67,7 +67,7 @@ export function PortalPicker({
                                 unoptimized
                                 draggable={false}
                                 className="
-                                  pointer-events-none shrink-0 rounded-full block-32 inline-32
+                                  pointer-events-none shrink-0 rounded-card block-32 inline-32
                                 "
                             />
                             <span className="flex flex-col gap-1">

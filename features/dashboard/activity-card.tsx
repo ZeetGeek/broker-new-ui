@@ -93,7 +93,7 @@ function ActivityIcon({ type }: { type: ActivityEventType }) {
     return (
         <span
             className={cn(
-                `mbs-0.5 flex shrink-0 items-center justify-center rounded-full block-8 inline-8`,
+                `mbs-0.5 flex shrink-0 items-center justify-center rounded-control block-8 inline-8`,
                 isApproved ? "bg-brand-soft text-brand" : "bg-surface-muted text-ink-muted",
             )}
         >

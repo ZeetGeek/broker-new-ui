@@ -40,7 +40,7 @@ export function AddFab({
             <span
                 aria-hidden
                 className="
-                  pointer-events-none absolute inset-0 z-0 animate-fab-pulse rounded-full bg-brand
+                  pointer-events-none absolute inset-0 z-0 animate-fab-pulse rounded-card bg-brand
                   motion-reduce:hidden
                 "
             />
@@ -55,7 +55,7 @@ export function AddFab({
                                 aria-label={label}
                                 title={label}
                                 className="
-                                  relative z-10 flex items-center justify-center rounded-full
+                                  relative z-10 flex items-center justify-center rounded-card
                                   bg-brand text-surface shadow-lg
                                   transition-[background-color,transform] duration-160 block-14
                                   inline-14

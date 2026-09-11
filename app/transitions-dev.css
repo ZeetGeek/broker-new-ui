@@ -415,16 +415,15 @@
 
 /* --- 16 tabs sliding --- */
 
-/* The bar is just a flex container with padding for the pill
-   to sit inside. Tabs sit on z-index: 1, the pill on z-index: 0,
-   so labels read above the pill background. */
+/* The bar is a flex container with padding for the active indicator.
+   Tabs sit on z-index: 1 and the indicator on z-index: 0. */
 .t-tabs {
     position: relative;
     display: inline-flex;
     align-items: center;
     gap: 3px;
     padding: 3px;
-    border-radius: 48px;
+    border-radius: var(--radius-control);
     background: var(--tabs-bar-bg);
 }
 .t-tab {
@@ -436,7 +435,7 @@
     padding: 4px 12px;
     color: var(--tabs-text-muted);
     cursor: pointer;
-    border-radius: 48px;
+    border-radius: var(--radius-control);
     z-index: 1;
     transition: color var(--tabs-dur) var(--tabs-ease);
 }
@@ -445,7 +444,7 @@
     color: var(--tabs-text-active);
 }
 
-/* The pill: width + transform are written inline by JS so
+/* The active indicator: width + transform are written inline by JS so
    the transition tweens between the previous and next
    measured positions. */
 .t-tabs-pill {
@@ -455,7 +454,7 @@
     height: 30px;
     width: 0;
     background: var(--tabs-pill-bg);
-    border-radius: 48px;
+    border-radius: var(--radius-control);
     transform: translateX(0);
     transition:
         transform var(--tabs-dur) var(--tabs-ease),
@@ -480,7 +479,7 @@
     color: var(--color-ink);
 }
 
-/* Notification filter — transitions.dev 16-tabs-sliding, light track + white pill. */
+/* Notification filter: transitions.dev 16-tabs-sliding, light track + white indicator. */
 .t-notif-filter-tabs {
     position: relative;
     display: flex;

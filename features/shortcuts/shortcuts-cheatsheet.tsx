@@ -72,7 +72,7 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutDef }) {
             <span
                 className={cn(
                     `
-                      flex shrink-0 items-center justify-center rounded-full bg-surface-muted
+                      flex shrink-0 items-center justify-center rounded-control bg-surface-muted
                       text-ink-muted transition-colors duration-160 block-8 inline-8
                       group-hover:bg-surface
                     `,
@@ -117,7 +117,7 @@ export function ShortcutsCheatsheet({ open, onOpenChange }: ShortcutsCheatsheetP
                 >
                     <span
                         className="
-                          flex shrink-0 items-center justify-center rounded-full bg-brand-soft
+                          flex shrink-0 items-center justify-center rounded-control bg-brand-soft
                           text-brand block-10 inline-10
                         "
                     >

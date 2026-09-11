@@ -125,7 +125,7 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
                             type="button"
                             className={cn(
                                 `
-                                  body-sm flex shrink-0 items-center gap-2 rounded-full border px-3
+                                  body-sm flex shrink-0 items-center gap-2 rounded-control border px-3
                                   py-1.5 transition-colors duration-160
                                 `,
                                 hasRange
@@ -217,7 +217,7 @@ function ModeButton({
             onClick={onClick}
             className={cn(
                 `
-                  body-sm flex-1 rounded-full border px-3 py-1 font-medium transition-colors
+                  body-sm flex-1 rounded-md border px-3 py-1 font-medium transition-colors
                   duration-160
                 `,
                 isActive

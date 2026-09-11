@@ -87,7 +87,7 @@ function MenuRow({
             value={view}
             className={cn(
                 `
-                  my-0.5 cursor-pointer! items-center gap-3 rounded-lg border border-transparent
+                  my-0.5 cursor-pointer! items-center gap-3 rounded-inner border border-transparent
                   px-2.5 py-2 pe-9 font-normal text-ink transition-[background-color,border-color]
                   duration-160
                 `,

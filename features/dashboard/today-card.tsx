@@ -110,7 +110,7 @@ export function TodayCard({ agenda, now, className }: TodayCardProps) {
                                     `items done today, ${agenda.remainingCount} still to go`
                                 }
                                 className="
-                                  eyebrow shrink-0 rounded-full text-ink-muted outline-none
+                                  eyebrow shrink-0 rounded-sm text-ink-muted outline-none
                                   focus-visible:ring-2 focus-visible:ring-ring
                                 "
                             >

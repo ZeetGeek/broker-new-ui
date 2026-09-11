@@ -280,12 +280,12 @@ export function PropertyForm({
         <div
             role="tablist"
             aria-label="Property form steps"
-            className="flex gap-1 rounded-full bg-surface-muted p-1 inline-full"
+            className="flex gap-1 rounded-control bg-surface-muted p-1 inline-full"
         >
             <AnimatedBackground
                 defaultValue={step}
                 onValueChange={(value) => handleTabChange(value)}
-                className="rounded-full bg-surface shadow-xs"
+                className="rounded-md bg-surface shadow-xs"
                 transition={{ duration: duration.tabs, ease: ease.smoothOut }}
             >
                 {PROPERTY_FORM_STEPS.map((item) => {
@@ -300,7 +300,7 @@ export function PropertyForm({
                             aria-selected={isActive}
                             className={cn(
                                 `
-                                  body-sm flex-1 items-center justify-center rounded-full px-4
+                                  body-sm flex-1 items-center justify-center rounded-md px-4
                                   font-medium transition-colors duration-160 block-10
                                   [&>div]:text-center [&>div]:inline-full
                                 `,

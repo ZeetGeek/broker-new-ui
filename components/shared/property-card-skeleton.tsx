@@ -55,12 +55,12 @@ export function PropertyCardSkeleton({
                             <div className="flex flex-col gap-1.5">
                                 <div
                                     className="
-                                      animate-pulse rounded-full bg-surface-muted block-4 inline-4/5
+                                      animate-pulse rounded-sm bg-surface-muted block-4 inline-4/5
                                     "
                                 />
                                 <div
                                     className="
-                                      animate-pulse rounded-full bg-surface-muted block-3.5
+                                      animate-pulse rounded-sm bg-surface-muted block-3.5
                                       inline-3/5
                                     "
                                 />
@@ -68,13 +68,13 @@ export function PropertyCardSkeleton({
 
                             <div
                                 className="
-                                  animate-pulse rounded-full bg-surface-muted block-3.5 inline-full
+                                  animate-pulse rounded-sm bg-surface-muted block-3.5 inline-full
                                 "
                             />
                         </div>
                         <div
                             className="
-                              mbs-0.5 shrink-0 animate-pulse rounded-full bg-surface-muted block-4
+                              mbs-0.5 shrink-0 animate-pulse rounded-sm bg-surface-muted block-4
                               inline-4
                             "
                         />
@@ -84,12 +84,12 @@ export function PropertyCardSkeleton({
                         <div className="flex items-baseline gap-2">
                             <div
                                 className="
-                                  animate-pulse rounded-full bg-surface-muted block-6 inline-24
+                                  animate-pulse rounded-sm bg-surface-muted block-6 inline-24
                                 "
                             />
                             <div
                                 className="
-                                  animate-pulse rounded-full bg-surface-muted block-4 inline-10
+                                  animate-pulse rounded-sm bg-surface-muted block-4 inline-10
                                 "
                             />
                         </div>
@@ -123,15 +123,15 @@ export function PropertyCardSkeleton({
 
             <div className="flex flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-3">
-                    <div className="animate-pulse rounded-full bg-surface-muted block-7 inline-24" />
-                    <div className="animate-pulse rounded-full bg-surface-muted block-6 inline-16" />
+                    <div className="animate-pulse rounded-sm bg-surface-muted block-7 inline-24" />
+                    <div className="animate-pulse rounded-sm bg-surface-muted block-6 inline-16" />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <div className="animate-pulse rounded-full bg-surface-muted block-4 inline-4/5" />
+                    <div className="animate-pulse rounded-sm bg-surface-muted block-4 inline-4/5" />
                     <div
                         className="
-                      animate-pulse rounded-full bg-surface-muted block-3.5 inline-3/5
+                      animate-pulse rounded-sm bg-surface-muted block-3.5 inline-3/5
                     "
                     />
                 </div>
@@ -140,12 +140,12 @@ export function PropertyCardSkeleton({
                     <div className="flex items-center gap-2">
                         <div
                             className="
-                          animate-pulse rounded-full bg-surface-muted block-8 inline-8
+                          animate-pulse rounded-control bg-surface-muted block-8 inline-8
                         "
                         />
                         <div
                             className="
-                              animate-pulse rounded-full bg-surface-muted block-4 inline-28
+                              animate-pulse rounded-sm bg-surface-muted block-4 inline-28
                             "
                         />
                     </div>

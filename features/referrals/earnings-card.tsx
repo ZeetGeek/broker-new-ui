@@ -75,9 +75,9 @@ export function EarningsCard({ summary, earnings, className }: EarningsCardProps
                 aria-busy
                 aria-label="Loading your credits"
             >
-                <span className="animate-pulse rounded-full bg-surface-muted block-9 inline-32" />
+                <span className="animate-pulse rounded-sm bg-surface-muted block-9 inline-32" />
                 <span className="animate-pulse rounded-inner bg-surface-muted block-40" />
-                <span className="animate-pulse rounded-full bg-surface-muted block-8 inline-52" />
+                <span className="animate-pulse rounded-sm bg-surface-muted block-8 inline-52" />
             </section>
         );
     }
