@@ -203,7 +203,7 @@ export function InputThemePage() {
                             once.
                         </li>
                         <li>
-                            Standard 10px corners via `rounded-control`, matching buttons and selects.
+                            Standard 12px corners via `rounded-control`, matching buttons and selects.
                             Never override the field radius at the call site.
                         </li>
                     </ul>

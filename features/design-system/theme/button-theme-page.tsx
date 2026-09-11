@@ -205,7 +205,7 @@ export function ButtonThemePage() {
                             punctuation.
                         </li>
                         <li>
-                            Standard 10px corners via `rounded-control`. Use the same token for every
+                            Standard 12px corners via `rounded-control`. Use the same token for every
                             button size.
                         </li>
                         <li>

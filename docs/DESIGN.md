@@ -283,13 +283,13 @@ The design uses compact, conventional rounded rectangles. Radius supports groupi
 touch affordance without making every surface look soft or capsule-shaped.
 
 ```
---radius-card    14px   cards, photo containers, dialogs, floating panels
---radius-inner   10px   inset strips, menu items, images inside cards
---radius-control 10px   buttons, inputs, selects, tabs, segmented controls
+--radius-card    16px   cards, photo containers, dialogs, floating panels
+--radius-inner   12px   inset strips, menu items, images inside cards
+--radius-control 12px   buttons, inputs, selects, tabs, segmented controls
 ```
 
-Badges use `rounded-md` (about 8px). Checkboxes use `rounded-sm` (5px). Controls use
-`rounded-control` (10px); cards and overlays use `rounded-card` (14px). `rounded-full`
+Badges use `rounded-md` (9px). Checkboxes use `rounded-sm` (6px). Controls use
+`rounded-control` (12px); cards and overlays use `rounded-card` (16px). `rounded-full`
 is reserved for genuinely circular geometry such as avatars, radio indicators, status
 dots, and switch thumbs. It is not the default for buttons, badges, filters, or tabs.
 
@@ -332,7 +332,7 @@ sits on `surface` rather than `canvas`, but never stack more than one shadow ste
 
 ### 4.1 Card
 
-White surface, 14px radius, no shadow. Optional eyebrow at top-left, optional status
+White surface, 16px radius, no shadow. Optional eyebrow at top-left, optional status
 badge at top-right, then content.
 
 ```
@@ -348,7 +348,7 @@ badge at top-right, then content.
 
 ### 4.2 Dark attention card
 
-`brand-deep` or `brand-ink` background, same 14px radius, light text. Reserved for
+`brand-deep` or `brand-ink` background, same 16px radius, light text. Reserved for
 the one thing on the screen that needs action: pending requests, overdue follow-ups,
 expiring listings.
 
@@ -370,7 +370,7 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 | Destructive       | transparent, 1px `danger`    | `danger`        | Reject, Delete                                                                                                                                              |
 | Ghost             | none                         | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
 
-All use the standard 10px control radius. Height comes from the control-height scale (§3.1a):
+All use the standard 12px control radius. Height comes from the control-height scale (§3.1a):
 `xs`/`sm`/`default`/`md`/`lg` map to `control-xs`/`control-sm`/`control-md`/
 `control-lg`/`control-xl`. Icon sizes follow the same steps (`icon-xs` through
 `icon-lg`). Button `lg` and input `lg` are the same height — never mix steps in
@@ -399,7 +399,7 @@ on a soft fill, never `ink` on a coloured fill.
 | Rejected, inactive         | `danger-soft`   | `danger`     |
 | Neutral status, filters    | `surface-muted` | `ink-muted`  |
 
-12px, weight 500, `4px 10px` padding, approximately 8px radius.
+12px, weight 500, `4px 10px` padding, 9px radius.
 
 ### 4.5 Property card
 
@@ -429,13 +429,13 @@ get 5× more interest`. Never a gray box, never a broken image icon.
 
 ### 4.6 Metric strip
 
-Inset `surface-muted` row inside a card, 10px radius, two to three columns divided by
+Inset `surface-muted` row inside a card, 12px radius, two to three columns divided by
 1px `border`. Label above at 11px `ink-subtle`, value below at 16px `ink`, tabular.
 Used for loan breakdowns, property stats, deal summaries.
 
 ### 4.7 Stage / progress strip
 
-Full-width `brand-deep` bar, 10px radius, showing pipeline position. Completed stages
+Full-width `brand-deep` bar, 12px radius, showing pipeline position. Completed stages
 carry a `brand` dot and white label; the current stage carries a `highlight` dot and
 white label; future stages are `#7E9A8D` with no dot.
 

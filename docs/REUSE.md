@@ -73,8 +73,8 @@ propagates everywhere, with no find-and-replace.
     --color-status-rented: var(--color-info);
 
     /* Shape */
-    --radius-card: 0.75rem;
-    --radius-field: 0.5rem;
+    --radius-card: 1rem;
+    --radius-field: 0.75rem;
 
     --shadow-card: 0 1px 3px oklch(0 0 0 / 0.08);
     --shadow-card-hover: 0 4px 12px oklch(0 0 0 / 0.12);
