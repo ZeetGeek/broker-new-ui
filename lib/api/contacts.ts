@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import { listClientsPageWithLeadSummary, listClientsWithLeadSummary } from "@/lib/api/clients";
+import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
 
 import type {
@@ -9,6 +10,8 @@ import type {
     OwnerRow,
 } from "@/features/contacts/types";
 import { DEFAULT_CONTACTS_FILTERS } from "@/features/contacts/types";
+import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
+import { isLiveStage } from "@/features/pipeline/types";
 
 type ApiOwnerItem = {
     id: string;
@@ -35,6 +38,42 @@ type ApiOwnersResponse = {
         lapsedOwnerCount: number;
     };
 };
+
+function mockOwnerRows(): OwnerRow[] {
+    const byName = new Map<string, OwnerRow>();
+    for (const deal of MOCK_DEALS) {
+        const existing = byName.get(deal.owner.name);
+        if (!existing) {
+            byName.set(deal.owner.name, {
+                id: `owner_${deal.owner.name.toLowerCase().replace(/\s+/g, "_")}`,
+                name: deal.owner.name,
+                avatarUrl: deal.owner.avatarUrl,
+                phoneDigits: deal.owner.phoneDigits,
+                hasActiveRepresentation: deal.owner.isRepresentationActive,
+                propertyCount: 1,
+                propertyTitles: [deal.property.title],
+                localities: [deal.property.locality],
+                totalValueInr: deal.property.isRent ? 0 : deal.property.amountInr,
+                isAllRent: deal.property.isRent,
+                liveDealCount: isLiveStage(deal.status) ? 1 : 0,
+            });
+            continue;
+        }
+        existing.propertyCount += 1;
+        if (!existing.propertyTitles.includes(deal.property.title)) {
+            existing.propertyTitles.push(deal.property.title);
+        }
+        if (!existing.localities.includes(deal.property.locality)) {
+            existing.localities.push(deal.property.locality);
+        }
+        if (!deal.property.isRent) existing.totalValueInr += deal.property.amountInr;
+        existing.isAllRent = existing.isAllRent && deal.property.isRent;
+        if (isLiveStage(deal.status)) existing.liveDealCount += 1;
+        existing.hasActiveRepresentation =
+            existing.hasActiveRepresentation || deal.owner.isRepresentationActive;
+    }
+    return [...byName.values()];
+}
 
 function digitsOnly(value: string | null | undefined): string {
     return (value ?? "").replace(/\D/g, "");
@@ -77,6 +116,28 @@ async function listOwners(
     totalPages: number;
     summary: Pick<ContactsSummary, "ownerCount" | "lapsedOwnerCount">;
 }> {
+    if (isMockMode()) {
+        const needle = filters.q.trim().toLowerCase();
+        const all = mockOwnerRows().filter((owner) => {
+            if (!needle) return true;
+            return [owner.name, ...owner.localities, ...owner.propertyTitles]
+                .join(" ")
+                .toLowerCase()
+                .includes(needle);
+        });
+        const paged = paginateItems(all, page, limit);
+        return {
+            owners: paged.items,
+            total: paged.total,
+            page: paged.page,
+            totalPages: paged.totalPages,
+            summary: {
+                ownerCount: all.length,
+                lapsedOwnerCount: all.filter((owner) => !owner.hasActiveRepresentation).length,
+            },
+        };
+    }
+
     const params = new URLSearchParams();
     if (filters.q.trim()) params.set("search", filters.q.trim());
     params.set("sort", filters.sort);

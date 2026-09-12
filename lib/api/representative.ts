@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
 
 export type RepresentationRespondStatus = "accepted" | "rejected";
 
@@ -71,6 +72,16 @@ export type BrokerInvitationListQuery = {
 
 export const representativeApi = {
     requestRepresentation(propertyId: string, message?: string) {
+        if (isMockMode()) {
+            return Promise.resolve({
+                id: `rep_${propertyId}`,
+                propertyId,
+                status: "pending",
+                initiatedBy: "broker",
+                message: message ?? null,
+                createdAt: new Date().toISOString(),
+            } satisfies RepresentationItem);
+        }
         return apiFetch<RepresentationItem>("/representative/broker/request", {
             method: "POST",
             body: JSON.stringify({ propertyId, ...(message ? { message } : {}) }),
@@ -79,6 +90,7 @@ export const representativeApi = {
 
     /** Broker-side representations (outbound requests + inbound invites). */
     brokerList(status?: string) {
+        if (isMockMode()) return Promise.resolve([]);
         const qs = status ? `?status=${encodeURIComponent(status)}` : "";
         return apiFetch<RepresentationItem[]>(`/representative/broker/list${qs}`);
     },
@@ -88,6 +100,7 @@ export const representativeApi = {
      * Without page/limit the API returns the full array; with either it pages.
      */
     brokerInvitationList(params?: BrokerInvitationListQuery) {
+        if (isMockMode()) return Promise.resolve([]);
         const q = new URLSearchParams();
         if (params?.status) q.set("status", params.status);
         if (params?.search) q.set("search", params.search);
@@ -101,12 +114,28 @@ export const representativeApi = {
 
     /** Remind the owner about a pending request (capped server-side). */
     remind(representationId: string) {
+        if (isMockMode()) {
+            return Promise.resolve({
+                id: representationId,
+                propertyId: "",
+                status: "pending",
+                initiatedBy: "broker",
+            } satisfies RepresentationItem);
+        }
         return apiFetch<RepresentationItem>(`/representative/${representationId}/remind`, {
             method: "POST",
         });
     },
 
     withdraw(representationId: string) {
+        if (isMockMode()) {
+            return Promise.resolve({
+                id: representationId,
+                propertyId: "",
+                status: "withdrawn",
+                initiatedBy: "broker",
+            } satisfies RepresentationItem);
+        }
         return apiFetch<RepresentationItem>(`/representative/${representationId}/withdraw`, {
             method: "PUT",
         });
@@ -120,6 +149,14 @@ export const representativeApi = {
     },
 
     brokerRespond(representationId: string, body: RepresentationRespondBody) {
+        if (isMockMode()) {
+            return Promise.resolve({
+                id: representationId,
+                propertyId: "",
+                status: body.status === "accepted" ? "accepted" : "rejected",
+                initiatedBy: "owner",
+            } satisfies RepresentationItem);
+        }
         return apiFetch<RepresentationItem>(`/representative/${representationId}/broker/respond`, {
             method: "PUT",
             body: JSON.stringify(body),

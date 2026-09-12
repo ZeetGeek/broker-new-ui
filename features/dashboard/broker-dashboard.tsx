@@ -2,9 +2,12 @@
 
 import { useEffect } from "react";
 
+import { isMockMode } from "@/lib/api/mock-mode";
+
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 
-import { mapBrokerDashboardView } from "@/features/dashboard/map-dashboard";
+import { mapBrokerDashboardView, mapBrokerDashboardViewFromMock } from "@/features/dashboard/map-dashboard";
+import { dashboardMock } from "@/features/dashboard/mock-data";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
@@ -49,11 +52,13 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
 
 export function BrokerDashboard() {
     const dispatch = useAppDispatch();
+    const authHydrated = useAppSelector((state) => state.auth.hydrated);
     const { data, profile, status, error } = useAppSelector((state) => state.dashboard);
 
     useEffect(() => {
+        if (!authHydrated) return;
         void dispatch(fetchBrokerDashboard());
-    }, [dispatch]);
+    }, [authHydrated, dispatch]);
 
     if (status === "idle" || status === "loading") {
         return <DashboardLoading />;
@@ -71,7 +76,9 @@ export function BrokerDashboard() {
     }
 
     const now = new Date();
-    const view = mapBrokerDashboardView(data, profile, now);
+    const view = isMockMode()
+        ? mapBrokerDashboardViewFromMock(dashboardMock, profile, now)
+        : mapBrokerDashboardView(data, profile, now);
 
     return (
         <div className="flex flex-col gap-6 min-block-[calc(100dvh-5rem)] md:gap-6">

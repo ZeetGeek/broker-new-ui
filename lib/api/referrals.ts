@@ -1,6 +1,12 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
 
+import {
+    MOCK_CREDIT_LEDGER,
+    MOCK_REFERRAL_CODE,
+    MOCK_REFERRALS,
+} from "@/features/referrals/mock-referrals";
 import { isStaleReferral } from "@/features/referrals/referral-meta";
 import {
     type CreditEntry,
@@ -356,8 +362,17 @@ export function buildReferralPresentation(
 }
 
 export const referralsApi = {
-    overview(signal?: AbortSignal) {
-        return apiFetch<ReferralOverviewResponse>("/referrals", { signal });
+    overview(_signal?: AbortSignal) {
+        if (isMockMode()) {
+            const balance = MOCK_CREDIT_LEDGER.reduce((sum, entry) => sum + entry.amount, 0);
+            return Promise.resolve({
+                balance,
+                listingCost: 20,
+                referralCode: MOCK_REFERRAL_CODE.code,
+                inviteUrl: MOCK_REFERRAL_CODE.shareUrl,
+            } satisfies ReferralOverviewResponse);
+        }
+        return apiFetch<ReferralOverviewResponse>("/referrals", { signal: _signal });
     },
 
     invites(page = 1, limit = 50, signal?: AbortSignal) {
@@ -373,6 +388,27 @@ export const referralsApi = {
     },
 
     async listInvitesPage(cursor: string | null, signal?: AbortSignal): Promise<ReferralItemsPage> {
+        if (isMockMode()) {
+            const page = cursor ? Number(cursor) || 1 : 1;
+            const qualified = MOCK_REFERRALS.filter((item) => item.status === "qualified").length;
+            const pendingVerification = MOCK_REFERRALS.filter(
+                (item) => item.status === "joined",
+            ).length;
+            const awaitingAction = MOCK_REFERRALS.filter(
+                (item) => item.status === "verified" || item.status === "awaiting_approval",
+            ).length;
+            return {
+                items: MOCK_REFERRALS,
+                total: MOCK_REFERRALS.length,
+                nextCursor: page > 1 ? null : null,
+                summary: {
+                    totalInvites: MOCK_REFERRALS.length,
+                    credited: qualified,
+                    pendingVerification,
+                    awaitingAction,
+                },
+            };
+        }
         const page = cursor ? Number(cursor) || 1 : 1;
         const limit = 50;
         const response = await this.invites(page, limit, signal);
@@ -389,6 +425,13 @@ export const referralsApi = {
         cursor: string | null,
         signal?: AbortSignal,
     ): Promise<InfinitePage<CreditEntry>> {
+        if (isMockMode()) {
+            return {
+                items: MOCK_CREDIT_LEDGER,
+                total: MOCK_CREDIT_LEDGER.length,
+                nextCursor: null,
+            };
+        }
         const page = cursor ? Number(cursor) || 1 : 1;
         const limit = 50;
         const response = await this.history(page, limit, signal);

@@ -1,4 +1,8 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
+
+import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
+import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-my-listings";
 
 export type PropertyBrowseSort = "newest" | "price_asc" | "price_desc";
 export type PropertyPublishStatus = "draft" | "published";
@@ -283,6 +287,86 @@ function appendFormFields(
     });
 }
 
+function mockListingById(id: string): PropertyListing | null {
+    const owner = MOCK_OWNER_LISTINGS.find((item) => item.id === id);
+    if (owner) {
+        const isRent = owner.rentAmountInr != null && owner.saleAmountInr == null;
+        const isBoth = owner.rentAmountInr != null && owner.saleAmountInr != null;
+        return {
+            id: owner.id,
+            title: `${owner.configLabel} in ${owner.locality}`,
+            transactionType: isBoth ? "both" : isRent ? "rent" : "sale",
+            propertyType: owner.propertyTypeLabel,
+            subtype: owner.propertyTypeLabel,
+            bedrooms: owner.bhk,
+            areaSqft: owner.areaSqft,
+            city: owner.city,
+            address: owner.locality,
+            salePrice: owner.saleAmountInr,
+            monthlyRent: owner.rentAmountInr,
+            commissionPercent: owner.commissionPercent,
+            photos: owner.imageSrcs,
+            furnishingStatus: owner.furnishing,
+            isNew: owner.isNew,
+            ownerName: owner.ownerName,
+            ownerAvatarUrl: owner.ownerAvatarUrl,
+            ownerUserId: owner.ownerUserId,
+            ownerPhone: undefined,
+            representation: owner.hasRequested
+                ? {
+                      id: owner.pendingRepresentationId ?? `rep_${owner.id}`,
+                      status: "pending",
+                      initiatedBy: "broker",
+                  }
+                : owner.isRepresenting
+                  ? {
+                        id: `rep_${owner.id}`,
+                        status: "accepted",
+                        initiatedBy: "broker",
+                    }
+                  : owner.isInvitePending
+                    ? {
+                          id: owner.pendingInvitationId ?? `inv_${owner.id}`,
+                          status: "pending",
+                          initiatedBy: "owner",
+                      }
+                    : null,
+        };
+    }
+
+    const mine = MOCK_MY_LISTINGS_SEED.find((item) => item.id === id);
+    if (!mine) return null;
+    return {
+        id: mine.id,
+        title: mine.title,
+        transactionType: mine.transactionType,
+        propertyType: mine.category,
+        subtype: mine.propertyType,
+        bedrooms: mine.bhk,
+        bathrooms: mine.bathrooms,
+        balconyCount: mine.balconies,
+        floorNumber: mine.floorNumber,
+        totalFloors: mine.totalFloors,
+        areaSqft: mine.areaSqft,
+        city: mine.city,
+        address: mine.address || mine.locality,
+        postalCode: mine.pinCode,
+        salePrice: mine.saleAmountInr,
+        monthlyRent: mine.rentAmountInr,
+        photos: mine.imageSrcs,
+        furnishingStatus: mine.furnishing,
+        facingDirection: mine.facing,
+        description: mine.description,
+        amenities: mine.amenities,
+        availableFrom: mine.availableFrom,
+        publishStatus: mine.status === "published" ? "published" : "draft",
+        isDraft: mine.status !== "published",
+        createdAt: mine.createdAt,
+        updatedAt: mine.updatedAt,
+        maintenanceCharges: mine.maintenanceInr,
+    };
+}
+
 export const propertiesApi = {
     browse(params?: PropertyBrowseQuery, signal?: AbortSignal) {
         return apiFetch<PropertyBrowsePage>(`/properties/browse${buildBrowseQuery(params)}`, {
@@ -296,6 +380,13 @@ export const propertiesApi = {
 
     /** One public owner listing for the Owner-listings detail page. */
     browseById(id: string) {
+        if (isMockMode()) {
+            const listing = mockListingById(id);
+            if (!listing) {
+                return Promise.reject(new Error("Listing not found"));
+            }
+            return Promise.resolve(listing);
+        }
         return apiFetch<
             PropertyListing & {
                 representation?: PropertyRepresentationStanding | null;
@@ -314,6 +405,13 @@ export const propertiesApi = {
     },
 
     get(id: string) {
+        if (isMockMode()) {
+            const listing = mockListingById(id);
+            if (!listing) {
+                return Promise.reject(new Error("Listing not found"));
+            }
+            return Promise.resolve(listing);
+        }
         return apiFetch<PropertyListing>(`/properties/${id}`);
     },
 

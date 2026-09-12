@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/tool
 
 import { ApiError } from "@/lib/api/client";
 import { dashboardApi, type DashboardResponse } from "@/lib/api/dashboard";
+import { isMockMode, MOCK_PROFILE } from "@/lib/api/mock-mode";
 import { profileApi, type UserProfile } from "@/lib/api/profile";
 
 type DashboardState = {
@@ -21,6 +22,9 @@ const initialState: DashboardState = {
 export const fetchBrokerDashboard = createAsyncThunk(
     "dashboard/fetchBroker",
     async (_, { rejectWithValue }) => {
+        if (isMockMode()) {
+            return { data: null, profile: MOCK_PROFILE };
+        }
         try {
             const [data, profile] = await Promise.all([dashboardApi.get(), profileApi.get()]);
             return { data, profile };

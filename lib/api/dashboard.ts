@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
 
 export type DashboardVisit = {
     id: string;
@@ -179,6 +180,31 @@ export type DashboardResponse = {
 
 export const dashboardApi = {
     get() {
+        if (isMockMode()) {
+            return Promise.resolve({
+                portal: "broker",
+                greeting: { firstName: "Zeet", fullName: "Zeet Patel" },
+                dayStreak: 2,
+                summary: {
+                    pendingBrokerRequests: 4,
+                    requestQuota: {
+                        limit: 10,
+                        used: 8,
+                        remaining: 2,
+                        resetsOn: new Date(Date.now() + 9 * 86_400_000).toISOString(),
+                    },
+                },
+                quickActions: [],
+                charts: {
+                    pipelineFunnel: [
+                        { stage: "new", label: "New", count: 5 },
+                        { stage: "contacted", label: "Contacted", count: 3 },
+                        { stage: "site_visit", label: "Site visit", count: 3 },
+                        { stage: "negotiation", label: "Negotiation", count: 1 },
+                    ],
+                },
+            } satisfies DashboardResponse);
+        }
         return apiFetch<DashboardResponse>("/dashboard");
     },
 };

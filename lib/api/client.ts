@@ -4,6 +4,7 @@ import axios, {
     type InternalAxiosRequestConfig,
 } from "axios";
 
+import { isMockMode } from "@/lib/api/mock-mode";
 import { type AuthUser, clearSession, getAccessToken, setSession } from "@/lib/auth/session";
 
 import { API_URL } from "@/config";
@@ -129,8 +130,19 @@ async function refreshAccessToken(): Promise<string> {
                 return accessToken;
             })
             .catch((error) => {
+                const apiError = toApiError(error);
+                const message = apiError.message.toLowerCase();
+                const refreshUnavailable =
+                    message.includes("refresh token") ||
+                    message.includes("missing") ||
+                    apiError.status === 0;
+                // Login JWT is still valid when the httpOnly refresh cookie is
+                // blocked (localhost → third-party API) or Path=/auth.
+                if (refreshUnavailable && getAccessToken()) {
+                    throw apiError;
+                }
                 forceLogout();
-                throw toApiError(error);
+                throw apiError;
             })
             .finally(() => {
                 refreshPromise = null;
@@ -147,8 +159,16 @@ export const api = axios.create({
 
 api.interceptors.request.use((config: RetryConfig) => {
     const headers = AxiosHeaders.from(config.headers);
+    const method = (config.method ?? "get").toLowerCase();
+    const hasBody = config.data != null && config.data !== "";
 
-    if (!(config.data instanceof FormData) && !headers.has("Content-Type")) {
+    if (
+        hasBody &&
+        !(config.data instanceof FormData) &&
+        !headers.has("Content-Type") &&
+        method !== "get" &&
+        method !== "head"
+    ) {
         headers.set("Content-Type", "application/json");
     }
 
@@ -182,6 +202,19 @@ api.interceptors.response.use(
 
         original!._retry = true;
 
+        const currentToken = getAccessToken();
+        const sentAuth = AxiosHeaders.from(original!.headers).get("Authorization");
+        if (currentToken && !sentAuth) {
+            const headers = AxiosHeaders.from(original!.headers);
+            headers.set("Authorization", `Bearer ${currentToken}`);
+            original!.headers = headers;
+            try {
+                return await api.request(original!);
+            } catch {
+                // Fall through to refresh.
+            }
+        }
+
         try {
             const accessToken = await refreshAccessToken();
             const headers = AxiosHeaders.from(original!.headers);
@@ -199,6 +232,10 @@ api.interceptors.response.use(
  * Backed by axios so expired access tokens are refreshed via interceptor.
  */
 export async function apiFetch<T = unknown>(path: string, options: ApiOptions = {}): Promise<T> {
+    if (isMockMode()) {
+        return Promise.resolve({} as T);
+    }
+
     const { token, skipAuth, headers, body, method, signal } = options;
     const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 

@@ -1,4 +1,7 @@
 import { ApiError, apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
+
+import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
 
 export type BrokerOwnerProfile = {
     ownerUserId: string;
@@ -89,6 +92,21 @@ export const ownersApi = {
      * contacts at `/clients/owners/:id` if that is all the API exposes.
      */
     async get(ownerUserId: string, signal?: AbortSignal): Promise<BrokerOwnerProfile> {
+        if (isMockMode()) {
+            const listing = MOCK_OWNER_LISTINGS.find((item) => item.ownerUserId === ownerUserId);
+            const name = listing?.ownerName ?? "Owner";
+            return {
+                ownerUserId,
+                name,
+                city: listing?.city,
+                locality: listing?.locality,
+                locationLabel: listing?.ownerLocationLabel,
+                verified: true,
+                listingCount: MOCK_OWNER_LISTINGS.filter((item) => item.ownerUserId === ownerUserId)
+                    .length,
+                localities: listing ? [listing.locality] : [],
+            };
+        }
         try {
             const raw = await apiFetch<OwnerProfileApi>(`/owners/${ownerUserId}`, { signal });
             return mapOwnerProfile(raw, ownerUserId);

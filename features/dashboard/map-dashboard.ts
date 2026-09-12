@@ -19,6 +19,7 @@ import type {
     ActivityData,
     ActivityEventType,
     AreaPropertyItem,
+    DashboardMock,
     FollowUp,
     FollowUpsData,
     NextShowingMock,
@@ -469,6 +470,51 @@ export function mapBrokerDashboardView(
         activity: mapActivity(data?.activity),
         youRepresent: mapYouRepresent(data?.youRepresent),
         newInAreas: mapNewInAreas(data?.newInAreas),
+        userName: fullName,
+        avatarUrl: profile?.avatarUrl ?? undefined,
+        unreadCount: profile?.notifications?.unreadCount ?? 0,
+    };
+}
+
+export function mapBrokerDashboardViewFromMock(
+    mock: DashboardMock,
+    profile: UserProfile | null,
+    now = new Date(),
+): BrokerDashboardView {
+    const showing = mock.nextShowing;
+    const fullName = profile?.fullName?.trim() || mock.email.split("@")[0] || "Broker";
+
+    return {
+        siteVisitCount: mock.siteVisitCount,
+        requestsWaitingCount: mock.requestsWaitingCount,
+        reraStatus: mock.reraStatus,
+        serviceAreas: profile?.broker?.serviceAreas ?? mock.serviceAreas,
+        phoneDigits: phoneDigits(profile?.phone) || mock.phoneDigits,
+        email: profile?.email ?? mock.email,
+        nextShowing: showing
+            ? {
+                  id: showing.id,
+                  scheduledAt: new Date(now.getTime() + showing.minutesUntil * 60_000),
+                  configLabel: showing.configLabel,
+                  locality: showing.locality,
+                  address: showing.address,
+                  amountInr: showing.amountInr,
+                  isRent: showing.isRent,
+                  meetNote: showing.meetNote,
+                  distanceKm: showing.distanceKm,
+                  brokerNote: showing.brokerNote,
+                  status: showing.status,
+                  clientName: showing.clientName,
+                  clientPhoneDigits: showing.clientPhoneDigits,
+              }
+            : null,
+        today: mock.today,
+        requests: mock.requests,
+        pipelineCard: mock.pipelineCard,
+        followUps: mock.followUps,
+        activity: mock.activity,
+        youRepresent: mock.youRepresent,
+        newInAreas: mock.newInAreas,
         userName: fullName,
         avatarUrl: profile?.avatarUrl ?? undefined,
         unreadCount: profile?.notifications?.unreadCount ?? 0,

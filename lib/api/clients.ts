@@ -1,8 +1,12 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { BuyerPropertyKind, BuyerSource } from "@/lib/validation/buyer";
 
+import { MOCK_CLIENTS, MOCK_PROPERTY_CLIENTS } from "@/features/clients/mock-clients";
 import type { ClientItem, ClientLookingFor } from "@/features/clients/types";
 import type { BuyerDocument } from "@/features/contacts/document-rules";
+import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
+import { isLiveStage } from "@/features/pipeline/types";
 
 export type PropertyClientsResult = {
     /** Every buyer on the broker's book. */
@@ -92,6 +96,47 @@ export type ClientLeadSummary = {
     /** Every lead on this buyer, including closed/lost — for the view modal. */
     leads: ClientLeadDetail[];
 };
+
+function mockLeadSummary(clientId: string): ClientLeadSummary {
+    const deals = MOCK_DEALS.filter((deal) => deal.buyer.id === clientId);
+    const live = deals.filter((deal) => isLiveStage(deal.status));
+    const closed = deals.filter((deal) => deal.status === "closed");
+    const details: ClientLeadDetail[] = deals.map((deal) => ({
+        leadId: deal.id,
+        propertyId: deal.property.id,
+        title: deal.property.title,
+        city: deal.property.city,
+        stage: deal.status,
+        updatedAt: deal.lastContactedAt,
+        offerAmountInr: deal.offerAmountInr,
+        listPriceInr: deal.property.amountInr,
+        closedAmountInr: deal.closedAmountInr,
+        isRent: deal.property.isRent,
+    }));
+
+    return {
+        liveDealCount: live.length,
+        closedDealCount: closed.length,
+        activePropertyTitles: [...new Set(live.map((deal) => deal.property.title))],
+        attachedProperties: live.map((deal) => ({
+            id: deal.property.id,
+            leadId: deal.id,
+            title: deal.property.title,
+        })),
+        leads: details,
+    };
+}
+
+function mockClientsWithLeads(search?: string) {
+    const needle = search?.trim().toLowerCase() ?? "";
+    return MOCK_CLIENTS.filter((client) => {
+        if (!needle) return true;
+        return [client.name, client.phoneDigits, ...(client.preferredLocalities ?? [])]
+            .join(" ")
+            .toLowerCase()
+            .includes(needle);
+    }).map((client) => ({ ...client, ...mockLeadSummary(client.id) }));
+}
 
 export type ClientsListResponse = {
     items: ApiClientContact[];
@@ -287,6 +332,9 @@ function mapContact(contact: ApiClientContact): ClientItem {
 export async function listClientsWithLeadSummary(options?: {
     search?: string;
 }): Promise<Array<ClientItem & ClientLeadSummary>> {
+    if (isMockMode()) {
+        return mockClientsWithLeads(options?.search);
+    }
     const contacts = await fetchAllContacts(options);
     return contacts.map((contact) => ({
         ...mapContact(contact),
@@ -301,6 +349,16 @@ export async function listClientsPageWithLeadSummary(options: {
     limit: number;
     signal?: AbortSignal;
 }): Promise<ClientListPageWithLeadSummary> {
+    if (isMockMode()) {
+        const all = mockClientsWithLeads(options.search);
+        const paged = paginateItems(all, options.page, options.limit);
+        return {
+            items: paged.items,
+            total: paged.total,
+            page: paged.page,
+            totalPages: paged.totalPages,
+        };
+    }
     const qs = new URLSearchParams({
         page: String(options.page),
         limit: String(options.limit),
@@ -396,6 +454,13 @@ function leadClientRef(lead: ApiPropertyLead): AttachedClientRef | null {
  * Buyers already linked to a property (from live leads). Used by request/invite cards.
  */
 export async function attachedClientsFor(propertyId: string): Promise<AttachedClientRef[]> {
+    if (isMockMode()) {
+        const ids = MOCK_PROPERTY_CLIENTS[propertyId] ?? [];
+        return MOCK_CLIENTS.filter((client) => ids.includes(client.id)).map((client) => ({
+            id: client.id,
+            name: client.name,
+        }));
+    }
     const leads = await fetchLeadsForProperty(propertyId);
     const seen = new Set<string>();
     const attached: AttachedClientRef[] = [];
@@ -414,6 +479,19 @@ export async function attachedClientsFor(propertyId: string): Promise<AttachedCl
  * Group attached buyers by property in one leads scan — avoids N+1 on list pages.
  */
 export async function attachedClientsByProperty(): Promise<Map<string, AttachedClientRef[]>> {
+    if (isMockMode()) {
+        const map = new Map<string, AttachedClientRef[]>();
+        for (const [propertyId, ids] of Object.entries(MOCK_PROPERTY_CLIENTS)) {
+            map.set(
+                propertyId,
+                MOCK_CLIENTS.filter((client) => ids.includes(client.id)).map((client) => ({
+                    id: client.id,
+                    name: client.name,
+                })),
+            );
+        }
+        return map;
+    }
     const leads = await fetchAllLeads();
     const map = new Map<string, AttachedClientRef[]>();
 
@@ -434,6 +512,9 @@ export async function attachedClientsByProperty(): Promise<Map<string, AttachedC
 export const clientsApi = {
     /** Every buyer on the broker's book. */
     async list(options?: { search?: string }): Promise<ClientItem[]> {
+        if (isMockMode()) {
+            return mockClientsWithLeads(options?.search);
+        }
         const contacts = await fetchAllContacts(options);
         return contacts.map(mapContact);
     },
@@ -442,6 +523,27 @@ export const clientsApi = {
      * Add a buyer. Backend rejects duplicate phones for the same broker scope.
      */
     async create(input: NewBuyerInput): Promise<ClientItem> {
+        if (isMockMode()) {
+            const created: ClientItem = {
+                id: `cl_${Date.now()}`,
+                name: input.name,
+                phoneDigits: input.phoneDigits,
+                email: input.email ?? null,
+                lookingFor: input.lookingFor,
+                propertyKind: input.propertyKind,
+                preferredLocalities: input.preferredLocalities,
+                budgetMinInr: input.budgetMinInr,
+                budgetMaxInr: input.budgetMaxInr,
+                bhk: input.bhk,
+                source: input.source,
+                notes: input.notes ?? null,
+                lastContactedAt: new Date().toISOString(),
+                attachedPropertyCount: 0,
+                documents: input.documents ?? [],
+            };
+            MOCK_CLIENTS.unshift(created);
+            return created;
+        }
         const contact = await apiFetch<ApiClientContact>("/clients", {
             method: "POST",
             body: JSON.stringify(toClientPayload(input)),
@@ -451,6 +553,46 @@ export const clientsApi = {
 
     /** Update an existing buyer contact. */
     async update(clientId: string, input: NewBuyerInput): Promise<ClientItem> {
+        if (isMockMode()) {
+            const index = MOCK_CLIENTS.findIndex((client) => client.id === clientId);
+            if (index < 0) {
+                return {
+                    id: clientId,
+                    name: input.name,
+                    phoneDigits: input.phoneDigits,
+                    email: input.email ?? null,
+                    lookingFor: input.lookingFor,
+                    propertyKind: input.propertyKind,
+                    preferredLocalities: input.preferredLocalities,
+                    budgetMinInr: input.budgetMinInr,
+                    budgetMaxInr: input.budgetMaxInr,
+                    bhk: input.bhk,
+                    source: input.source,
+                    notes: input.notes ?? null,
+                    lastContactedAt: new Date().toISOString(),
+                    attachedPropertyCount: 0,
+                    documents: input.documents ?? [],
+                };
+            }
+            const next: ClientItem = {
+                ...MOCK_CLIENTS[index]!,
+                name: input.name,
+                phoneDigits: input.phoneDigits,
+                email: input.email ?? null,
+                lookingFor: input.lookingFor,
+                propertyKind: input.propertyKind,
+                preferredLocalities: input.preferredLocalities,
+                budgetMinInr: input.budgetMinInr,
+                budgetMaxInr: input.budgetMaxInr,
+                bhk: input.bhk,
+                source: input.source,
+                notes: input.notes ?? null,
+                lastContactedAt: new Date().toISOString(),
+                documents: input.documents ?? MOCK_CLIENTS[index]!.documents,
+            };
+            MOCK_CLIENTS[index] = next;
+            return next;
+        }
         const contact = await apiFetch<ApiClientContact>(`/clients/${clientId}`, {
             method: "PATCH",
             body: JSON.stringify(toClientPayload(input)),
@@ -460,6 +602,10 @@ export const clientsApi = {
 
     /** Buyers plus who is already on this property, for the attach picker. */
     async listForProperty(propertyId: string): Promise<PropertyClientsResult> {
+        if (isMockMode()) {
+            const attachedIds = MOCK_PROPERTY_CLIENTS[propertyId] ?? [];
+            return { clients: MOCK_CLIENTS, attachedIds };
+        }
         const [contacts, leads] = await Promise.all([
             fetchAllContacts(),
             fetchLeadsForProperty(propertyId),
@@ -485,6 +631,7 @@ export const clientsApi = {
      * (no detach endpoint yet) — the next open still shows them as attached.
      */
     async setPropertyClients(propertyId: string, clientIds: string[]): Promise<void> {
+        if (isMockMode()) return;
         if (clientIds.length === 0) return;
 
         await apiFetch<AttachClientsResponse>("/clients/leads", {
@@ -498,6 +645,7 @@ export const clientsApi = {
 
     /** Attach one buyer to one or more properties (skips already-linked pairs). */
     async attachClientToProperties(clientId: string, propertyIds: string[]): Promise<void> {
+        if (isMockMode()) return;
         const unique = [...new Set(propertyIds.filter(Boolean))];
         if (unique.length === 0) return;
 

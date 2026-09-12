@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode, MOCK_PROFILE } from "@/lib/api/mock-mode";
 
 export type NotificationPreferences = {
     unreadCount?: number;
@@ -123,6 +124,9 @@ export type UpdateNotificationsInput = {
 
 export const profileApi = {
     get() {
+        if (isMockMode()) {
+            return Promise.resolve(MOCK_PROFILE);
+        }
         return apiFetch<UserProfile>("/profile");
     },
 
@@ -134,6 +138,9 @@ export const profileApi = {
      * de-duplicate, say — instead of what the client hoped it stored.
      */
     update(input: UpdateProfileInput) {
+        if (isMockMode()) {
+            return Promise.resolve({ ...MOCK_PROFILE, ...input });
+        }
         return apiFetch<UserProfile>("/profile", {
             method: "PATCH",
             body: JSON.stringify(input),

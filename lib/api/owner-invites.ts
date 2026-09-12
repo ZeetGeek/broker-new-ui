@@ -1,4 +1,5 @@
 import { attachedClientsByProperty } from "@/lib/api/clients";
+import { isMockMode } from "@/lib/api/mock-mode";
 import {
     type RepresentationItem,
     type RepresentationListPage,
@@ -17,6 +18,7 @@ import type {
     InvitesSummary,
 } from "@/features/properties/my-requests/invite-types";
 import { mapRepresentationToInviteItem } from "@/features/properties/my-requests/map-invite";
+import { MOCK_INVITES } from "@/features/properties/my-requests/mock-invites";
 
 function isPaged(
     value: RepresentationItem[] | RepresentationListPage,
@@ -55,6 +57,15 @@ async function loadInvites(): Promise<InviteItem[]> {
 
 export const ownerInvitesApi = {
     async list(filters: InvitesFilters): Promise<InvitesResult> {
+        if (isMockMode()) {
+            const matched = sortInvites(filterInvites(MOCK_INVITES, filters), filters.sort);
+            return {
+                items: matched,
+                total: matched.length,
+                page: 1,
+                totalPages: 1,
+            };
+        }
         const items = await loadInvites();
         const matched = sortInvites(filterInvites(items, filters), filters.sort);
         return {
@@ -67,15 +78,20 @@ export const ownerInvitesApi = {
 
     /** Summary is over the whole invite inbox, not the filtered page. */
     async summary(): Promise<InvitesSummary> {
+        if (isMockMode()) {
+            return summarizeInvites(MOCK_INVITES);
+        }
         const items = await loadInvites();
         return summarizeInvites(items);
     },
 
-    async accept(inviteId: string): Promise<void> {
-        await representativeApi.brokerRespond(inviteId, { status: "accepted" });
+    async accept(_inviteId: string): Promise<void> {
+        if (isMockMode()) return;
+        await representativeApi.brokerRespond(_inviteId, { status: "accepted" });
     },
 
-    async decline(inviteId: string): Promise<void> {
-        await representativeApi.brokerRespond(inviteId, { status: "rejected" });
+    async decline(_inviteId: string): Promise<void> {
+        if (isMockMode()) return;
+        await representativeApi.brokerRespond(_inviteId, { status: "rejected" });
     },
 };
