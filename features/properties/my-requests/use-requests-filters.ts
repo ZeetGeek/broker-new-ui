@@ -2,8 +2,8 @@
 
 import { useCallback } from "react";
 
-import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
 import { PREF_KEYS } from "@/lib/prefs/keys";
+import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
 
 import {
     hasActiveRequestsFilters,
@@ -15,7 +15,7 @@ import {
     type RequestsFilters,
 } from "@/features/properties/my-requests/types";
 
-const REQUESTS_URL_KEYS = ["q", "view", "sort", "limit"] as const;
+const REQUESTS_URL_KEYS = ["q", "view", "sort", "type", "limit"] as const;
 
 function isRequestsFilters(value: unknown): value is RequestsFilters {
     if (typeof value !== "object" || value === null) return false;
@@ -73,13 +73,19 @@ export function useRequestsFilters() {
         setFilters({ ...DEFAULT_REQUESTS_FILTERS, limit: filters.limit });
     }, [filters.limit, setFilters]);
 
+    const resolved: RequestsFilters = {
+        ...DEFAULT_REQUESTS_FILTERS,
+        ...filters,
+        type: filters.type === "sale" || filters.type === "rent" ? filters.type : "",
+    };
+
     return {
-        filters,
+        filters: resolved,
         setFilters,
         patchFilters,
         clearFilters,
-        hasActiveFilters: hasActiveRequestsFilters(filters),
-        filterSignature: serializeRequestsFilters(filters).toString(),
+        hasActiveFilters: hasActiveRequestsFilters(resolved),
+        filterSignature: serializeRequestsFilters(resolved).toString(),
         scopeReady: ready,
     };
 }

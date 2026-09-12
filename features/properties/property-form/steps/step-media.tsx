@@ -4,10 +4,25 @@ import { type MutableRefObject, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { Check, FileText, ImagePlus, ShieldCheck, Star, Trash2, Upload } from "lucide-react";
+import {
+    ArrowLeft,
+    ArrowRight,
+    Check,
+    CircleAlert,
+    FileText,
+    ImagePlus,
+    LoaderCircle,
+    RefreshCw,
+    ShieldCheck,
+    Star,
+    Trash2,
+    Upload,
+} from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
+import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { Button } from "@/components/ui/button";
@@ -23,6 +38,7 @@ import {
 
 const MAX_PHOTOS = 30;
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 
 export function StepMedia({
     photoFilesRef,
@@ -31,37 +47,102 @@ export function StepMedia({
 }) {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const photos = watch("media.photos");
+    const usablePhotoCount = photos.filter((photo) => photo.status !== "error").length;
     const documents = watch("documents");
     const [documentType, setDocumentType] = useState(
         DOCUMENT_TYPE_OPTIONS[0]?.value ?? "sale_deed",
     );
+    const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+    async function processPhoto(photoId: string, file: File, url: string) {
+        updatePhoto(photoId, { status: "processing" });
+        try {
+            const prepared = await preparePhotoForUpload(file);
+            photoFilesRef.current.set(photoId, prepared);
+            photoFilesRef.current.set(url, prepared);
+            updatePhoto(photoId, { status: "queued", name: prepared.name });
+        } catch {
+            updatePhoto(photoId, {
+                status: "error",
+                errorMessage: "This photo could not be compressed on this device.",
+            });
+        }
+    }
+
+    function updatePhoto(
+        photoId: string,
+        patch: Partial<PropertyDraftValues["media"]["photos"][number]>,
+    ) {
+        setValue(
+            "media.photos",
+            watch("media.photos").map((photo) =>
+                photo.id === photoId ? { ...photo, ...patch } : photo,
+            ),
+            { shouldDirty: true, shouldValidate: true },
+        );
+    }
 
     function addPhotos(files: FileList | null) {
         if (!files) return;
         const accepted: PropertyDraftValues["media"]["photos"] = [];
         for (const file of Array.from(files)) {
+            if (photos.length + accepted.length >= MAX_PHOTOS) {
+                toast.error(`You can add up to ${MAX_PHOTOS} photos.`);
+                break;
+            }
+            const id = createClientId("photo");
             if (file.size > MAX_PHOTO_BYTES) {
-                toast.error(`${file.name} is larger than 10 MB.`);
+                photoFilesRef.current.set(id, file);
+                accepted.push({
+                    id,
+                    url: "",
+                    name: file.name,
+                    tag: "other",
+                    isCover: false,
+                    order: photos.length + accepted.length,
+                    alt: "",
+                    status: "error",
+                    errorMessage: "File is larger than 10 MB. Choose a smaller copy.",
+                });
                 continue;
             }
-            if (photos.length + accepted.length >= MAX_PHOTOS) break;
+            if (!PHOTO_TYPES.has(file.type)) {
+                photoFilesRef.current.set(id, file);
+                accepted.push({
+                    id,
+                    url: "",
+                    name: file.name,
+                    tag: "other",
+                    isCover: false,
+                    order: photos.length + accepted.length,
+                    alt: "",
+                    status: "error",
+                    errorMessage: "Use a JPG, PNG, WebP, HEIC, or HEIF photo.",
+                });
+                continue;
+            }
             const url = URL.createObjectURL(file);
             photoFilesRef.current.set(url, file);
+            photoFilesRef.current.set(id, file);
             accepted.push({
-                id: createClientId("photo"),
+                id,
                 url,
                 name: file.name,
                 tag: "other",
                 isCover: photos.length === 0 && accepted.length === 0,
                 order: photos.length + accepted.length,
                 alt: "",
-                status: "ready",
+                status: "processing",
             });
         }
         setValue("media.photos", [...photos, ...accepted], {
             shouldDirty: true,
             shouldValidate: true,
         });
+        for (const photo of accepted) {
+            const file = photoFilesRef.current.get(photo.id);
+            if (file && photo.url) void processPhoto(photo.id, file, photo.url);
+        }
     }
 
     function removePhoto(index: number) {
@@ -70,6 +151,7 @@ export function StepMedia({
             URL.revokeObjectURL(removed.url);
             photoFilesRef.current.delete(removed.url);
         }
+        if (removed) photoFilesRef.current.delete(removed.id);
         const next = photos
             .filter((_, itemIndex) => itemIndex !== index)
             .map((photo, order) => ({ ...photo, order }));
@@ -84,6 +166,39 @@ export function StepMedia({
             photos.map((photo, itemIndex) => ({ ...photo, isCover: itemIndex === index })),
             { shouldDirty: true },
         );
+    }
+
+    function movePhoto(from: number, to: number) {
+        if (from === to || to < 0 || to >= photos.length) return;
+        const next = [...photos];
+        const [moved] = next.splice(from, 1);
+        if (!moved) return;
+        next.splice(to, 0, moved);
+        setValue(
+            "media.photos",
+            next.map((photo, order) => ({ ...photo, order })),
+            { shouldDirty: true, shouldValidate: true },
+        );
+    }
+
+    function retryPhoto(photoId: string) {
+        const photo = photos.find((item) => item.id === photoId);
+        const file = photoFilesRef.current.get(photoId);
+        if (!photo || !file) {
+            toast.error("Choose this photo again to retry.");
+            return;
+        }
+        if (file.size > MAX_PHOTO_BYTES || !PHOTO_TYPES.has(file.type)) {
+            toast.error(
+                file.size > MAX_PHOTO_BYTES
+                    ? "This photo is still larger than 10 MB."
+                    : "Use a JPG, PNG, WebP, HEIC, or HEIF photo.",
+            );
+            return;
+        }
+        const url = photo.url || URL.createObjectURL(file);
+        if (!photo.url) updatePhoto(photoId, { url });
+        void processPhoto(photoId, file, url);
     }
 
     function addDocument(file: File | undefined) {
@@ -136,23 +251,27 @@ export function StepMedia({
                     <input
                         type="file"
                         multiple
-                        accept="image/jpeg,image/png,image/webp,image/heic"
+                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
                         className="sr-only"
-                        onChange={(event) => addPhotos(event.target.files)}
+                        onChange={(event) => {
+                            addPhotos(event.target.files);
+                            event.currentTarget.value = "";
+                        }}
                     />
                 </label>
                 <div className="mbs-4 flex items-center justify-between gap-4">
                     <p
                         className={`text-sm font-semibold ${
-                            photos.length >= 3
+                            usablePhotoCount >= 3
                                 ? "text-brand-text"
                                 : `text-ink-muted`
                         }`}
                     >
-                        {photos.length >= 3 ? (
+                        {usablePhotoCount >= 3 ? (
                             <Check className="me-1.5 inline block-4 inline-4" aria-hidden />
                         ) : null}
-                        {photos.length}/3 minimum · {photos.length}/{MAX_PHOTOS} total
+                        {usablePhotoCount}/3 minimum ·{" "}
+                        {photos.length}/{MAX_PHOTOS} total
                     </p>
                     <p className="text-xs text-ink-muted">
                         Photos stay queued locally until the current API upload runs.
@@ -164,17 +283,65 @@ export function StepMedia({
                         {photos.map((photo, index) => (
                             <article
                                 key={photo.id}
+                                draggable={photo.status !== "processing"}
+                                onDragStart={() => setDragIndex(index)}
+                                onDragOver={(event) => event.preventDefault()}
+                                onDrop={() => {
+                                    if (dragIndex != null) movePhoto(dragIndex, index);
+                                    setDragIndex(null);
+                                }}
                                 className="
                                   overflow-hidden rounded-card border border-border-warm bg-surface
                                 "
                             >
                                 <div className="relative aspect-4/3 bg-surface-muted">
-                                    <AppImage
-                                        src={photo.url}
-                                        alt={photo.alt || `Property photo ${index + 1}`}
-                                        fill
-                                        sizes="(max-width: 640px) 100vw, 33vw"
-                                    />
+                                    {photo.url ? (
+                                        <AppImage
+                                            src={photo.url}
+                                            alt={photo.alt || `Property photo ${index + 1}`}
+                                            fill
+                                            sizes="(max-width: 640px) 100vw, 33vw"
+                                        />
+                                    ) : (
+                                        <div className="
+                                          flex flex-col items-center justify-center gap-2 px-4
+                                          text-center block-full
+                                        ">
+                                            <CircleAlert className="text-danger block-6 inline-6" aria-hidden />
+                                            <p className="
+                                              line-clamp-2 text-xs font-semibold text-ink
+                                            ">{photo.name}</p>
+                                        </div>
+                                    )}
+                                    <span
+                                        className={cn(
+                                            `
+                                              absolute inset-e-3 inset-be-3 inline-flex items-center
+                                              gap-1 rounded-control px-2.5 py-1.5 text-xs
+                                              font-semibold
+                                            `,
+                                            photo.status === "error"
+                                                ? "bg-danger-soft text-danger"
+                                                : "bg-brand-ink text-surface",
+                                        )}
+                                    >
+                                        {photo.status === "processing" ? (
+                                            <LoaderCircle className="
+                                              animate-spin block-3.5 inline-3.5
+                                            " aria-hidden />
+                                        ) : photo.status === "error" ? (
+                                            <CircleAlert className="block-3.5 inline-3.5" aria-hidden />
+                                        ) : (
+                                            <Check className="block-3.5 inline-3.5" aria-hidden />
+                                        )}
+                                        {photo.status === "processing"
+                                            ? "Compressing"
+                                            : photo.status === "error"
+                                              ? "Needs attention"
+                                              : photo.status === "queued"
+                                                ? "Queued"
+                                                : "Ready"}
+                                    </span>
                                     {photo.isCover ? (
                                         <span
                                             className="
@@ -202,6 +369,15 @@ export function StepMedia({
                                     </button>
                                 </div>
                                 <div className="space-y-3 p-3">
+                                    {photo.status === "error" ? (
+                                        <div className="
+                                          rounded-control bg-danger-soft px-3 py-2 text-xs/5
+                                          text-danger
+                                        ">
+                                            {photo.errorMessage ??
+                                                "This format could not be prepared. Retry or choose another file."}
+                                        </div>
+                                    ) : null}
                                     <SelectField
                                         name={`media.photos.${index}.tag`}
                                         label="Photo tag"
@@ -212,16 +388,24 @@ export function StepMedia({
                                         label="Alt text"
                                         placeholder="Describe this view"
                                     />
-                                    {!photo.isCover ? (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => makeCover(index)}
-                                        >
-                                            <Star aria-hidden /> Make cover
+                                    <div className="flex flex-wrap gap-2">
+                                        {!photo.isCover && photo.status !== "error" ? (
+                                            <Button type="button" variant="outline" size="sm" onClick={() => makeCover(index)}>
+                                                <Star aria-hidden /> Make cover
+                                            </Button>
+                                        ) : null}
+                                        <Button type="button" variant="ghost" size="sm" aria-label={`Move ${photo.name} left`} disabled={index === 0} onClick={() => movePhoto(index, index - 1)}>
+                                            <ArrowLeft aria-hidden />
                                         </Button>
-                                    ) : null}
+                                        <Button type="button" variant="ghost" size="sm" aria-label={`Move ${photo.name} right`} disabled={index === photos.length - 1} onClick={() => movePhoto(index, index + 1)}>
+                                            <ArrowRight aria-hidden />
+                                        </Button>
+                                        {photo.status === "error" ? (
+                                            <Button type="button" variant="outline" size="sm" onClick={() => retryPhoto(photo.id)}>
+                                                <RefreshCw aria-hidden /> Retry
+                                            </Button>
+                                        ) : null}
+                                    </div>
                                 </div>
                             </article>
                         ))}

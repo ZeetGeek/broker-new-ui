@@ -16,7 +16,7 @@ import {
     representativeApi,
 } from "@/lib/api/representative";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
-import { BROKER_OWNER_LISTINGS_HREF, BROKER_REQUESTS_HREF } from "@/lib/routes/broker";
+import { BROKER_MY_DEALS_HREF, BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
@@ -197,9 +197,9 @@ function OwnerListingActionRail({
                     <Button
                         size="lg"
                         className="rounded-control bg-brand text-surface hover:bg-brand-text"
-                        render={<Link href={BROKER_REQUESTS_HREF} />}
+                        render={<Link href={BROKER_MY_DEALS_HREF} />}
                     >
-                        Open in Requests
+                        Open in My Deals
                     </Button>
                 ) : ownerInvite ? (
                     <div className="flex flex-col gap-2">
@@ -622,10 +622,10 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                     <Button
                         size="lg"
                         className="flex-1 rounded-control bg-brand text-surface hover:bg-brand-text"
-                        render={<Link href={BROKER_REQUESTS_HREF} />}
+                        render={<Link href={BROKER_MY_DEALS_HREF} />}
                     >
                         {detail.representation?.status === "accepted"
-                            ? "Open in Requests"
+                            ? "Open in My Deals"
                             : "View request"}
                     </Button>
                 )}

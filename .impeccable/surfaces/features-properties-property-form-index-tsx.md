@@ -17,4 +17,4 @@ FIRST VIEWPORT: A narrow persistent step rail sits left, the active step owns th
 
 FORM: Local extension of the established Operate surface; no concept seed was required by the precise supplied specification. Signature interaction: live commission figures re-enter softly as pricing changes, while the mobile deal strip expands into an in-context panel.
 
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+FINISH: Reviewed and documented on 2026-09-12 from the implemented source and the desktop/mobile review captures. The completed surface keeps the incumbent system: cream canvas, white work surfaces, ink and restrained green hierarchy, 12–16px corners, existing control/elevation tokens, and existing motion utilities. Its ten-step rail, live listing score, live deal summary, local-draft recovery, duplicate warning, and media-processing states are task-local patterns; they do not add or change a global visual token or component rule. `docs/DESIGN.md` remains the system source of truth and needs no change for this surface.

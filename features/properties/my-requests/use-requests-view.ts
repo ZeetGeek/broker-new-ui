@@ -1,8 +1,8 @@
 "use client";
 
-import { usePersistedJson } from "@/hooks/use-persisted-json";
 import { LEGACY_PREF_KEYS, PREF_KEYS } from "@/lib/prefs/keys";
 import { migrateLegacyPref } from "@/lib/prefs/storage";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 export type RequestsView = "grid" | "list";
 
@@ -15,13 +15,13 @@ function ensureMigrated() {
     if (migrated || typeof window === "undefined") return;
     migrated = true;
     migrateLegacyPref(LEGACY_PREF_KEYS.myRequestsView, PREF_KEYS.broker.requests.view, (raw) =>
-        raw === "list" || raw === "grid" ? raw : "list",
+        raw === "list" || raw === "grid" ? raw : "grid",
     );
 }
 
 export function useRequestsView() {
     ensureMigrated();
-    const [view, setView] = usePersistedJson<RequestsView>(PREF_KEYS.broker.requests.view, "list", {
+    const [view, setView] = usePersistedJson<RequestsView>(PREF_KEYS.broker.requests.view, "grid", {
         isValid: isView,
     });
     return { view, setView };

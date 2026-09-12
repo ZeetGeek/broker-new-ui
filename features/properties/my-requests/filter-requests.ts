@@ -37,8 +37,18 @@ function matchesView(item: RequestItem, view: RequestsFilters["view"]): boolean 
     }
 }
 
+function matchesType(isRent: boolean, type: RequestsFilters["type"]): boolean {
+    if (!type) return true;
+    return type === "rent" ? isRent : !isRent;
+}
+
 export function filterRequests(items: RequestItem[], filters: RequestsFilters): RequestItem[] {
-    return items.filter((item) => matchesView(item, filters.view) && matchesQuery(item, filters.q));
+    return items.filter(
+        (item) =>
+            matchesView(item, filters.view) &&
+            matchesQuery(item, filters.q) &&
+            matchesType(item.isRent, filters.type),
+    );
 }
 
 function toTime(iso: string | null): number {

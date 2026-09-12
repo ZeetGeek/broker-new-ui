@@ -50,8 +50,9 @@ export function useListingScore(values: PropertyDraftValues): {
             {
                 done: Boolean(
                     values.location.landmark &&
-                    Number.isFinite(values.location.lat) &&
-                    Number.isFinite(values.location.lng),
+                    values.location.mapPinPlaced &&
+                    values.location.lat != null &&
+                    values.location.lng != null,
                 ),
                 points: 10,
                 label: "Add a landmark and map pin",

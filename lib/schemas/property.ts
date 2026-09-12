@@ -11,6 +11,9 @@ const optionalText = z.string().max(3000).optional().default("");
 const optionalNumber = z.number().finite().nonnegative().nullable();
 const requiredNumber = z.number().finite().positive("Enter a value above 0");
 const stringArray = z.array(z.string());
+const todayIso = () => new Date().toISOString().slice(0, 10);
+const isPastDate = (value: string) =>
+    Boolean(value && (value.length === 7 ? value < todayIso().slice(0, 7) : value < todayIso()));
 
 const basicsSchema = z
     .object({
@@ -52,25 +55,36 @@ const nearbyPlaceSchema = z.object({
     distanceKm: optionalNumber,
 });
 
-const locationSchema = z.object({
-    country: z.string().min(1),
-    state: z.string().min(1, "Choose a state"),
-    city: z.string().min(1, "Choose a city"),
-    locality: z.string().trim().min(1, "Enter the locality"),
-    subLocality: optionalText,
-    projectOrSociety: optionalText,
-    towerOrBlock: optionalText,
-    unitNumber: optionalText,
-    streetOrRoad: optionalText,
-    pincode: z.string().regex(/^[1-9]\d{5}$/, "Enter a valid 6 digit pincode"),
-    fullAddress: optionalText,
-    addressVisibility: z.enum(["exact", "society_only", "locality_only"]),
-    landmark: z.string().trim().min(1, "Add a nearby landmark"),
-    nearbyPlaces: z.array(nearbyPlaceSchema),
-    lat: z.number().min(-90).max(90),
-    lng: z.number().min(-180).max(180),
-    mapZoomHint: z.number().min(1).max(22),
-});
+const locationSchema = z
+    .object({
+        country: z.string().min(1),
+        state: z.string().min(1, "Choose a state"),
+        city: z.string().min(1, "Choose a city"),
+        locality: z.string().trim().min(1, "Enter the locality"),
+        subLocality: optionalText,
+        projectOrSociety: optionalText,
+        towerOrBlock: optionalText,
+        unitNumber: optionalText,
+        streetOrRoad: optionalText,
+        pincode: z.string().regex(/^[1-9]\d{5}$/, "Enter a valid 6 digit pincode"),
+        fullAddress: optionalText,
+        addressVisibility: z.enum(["exact", "society_only", "locality_only"]),
+        landmark: z.string().trim().min(1, "Add a nearby landmark"),
+        nearbyPlaces: z.array(nearbyPlaceSchema),
+        lat: z.number().finite().min(-90).max(90).nullable(),
+        lng: z.number().finite().min(-180).max(180).nullable(),
+        mapPinPlaced: z.boolean(),
+        mapZoomHint: z.number().min(1).max(22),
+    })
+    .superRefine((value, context) => {
+        if (!value.mapPinPlaced || value.lat == null || value.lng == null) {
+            context.addIssue({
+                code: "custom",
+                path: ["mapPinPlaced"],
+                message: "Drop a pin on the map",
+            });
+        }
+    });
 
 const commercialDetailsSchema = z.object({
     cabins: optionalNumber,
@@ -191,7 +205,12 @@ const chargeSchema = z.object({
 
 const saleSchema = z
     .object({
-        expectedPrice: optionalNumber,
+        expectedPrice: z
+            .number()
+            .finite()
+            .positive("Enter a valid price")
+            .max(100_000_000_000, "Enter a valid price")
+            .nullable(),
         pricePerSqft: optionalNumber,
         priceNegotiable: z.boolean(),
         allInclusivePrice: z.boolean(),
@@ -231,39 +250,60 @@ const saleSchema = z
         }
     });
 
-const rentSchema = z.object({
-    monthlyRent: optionalNumber,
-    rentNegotiable: z.boolean(),
-    securityDepositMode: z.enum(["amount", "months_of_rent"]),
-    securityDeposit: optionalNumber,
-    maintenanceMode: z.enum(["included_in_rent", "extra"]),
-    maintenanceAmount: optionalNumber,
-    maintenanceFrequency: z.string(),
-    electricityBilling: optionalText,
-    waterCharges: optionalText,
-    lockInMonths: optionalNumber,
-    noticePeriodMonths: optionalNumber,
-    agreementDurationMonths: optionalNumber,
-    rentEscalationPercent: optionalNumber,
-    availableFrom: optionalText,
-    preferredTenant: stringArray,
-    nonVegAllowed: z.boolean(),
-    petsAllowed: z.boolean(),
-    smokingAllowed: z.boolean(),
-    partyAllowed: z.boolean(),
-    ownerMinimumRent: optionalNumber,
-    currentStatus: optionalText,
-    tenantVacatingOn: optionalText,
-    pg: z.object({
-        bedType: optionalText,
-        foodIncluded: z.boolean(),
-        genderAllowed: optionalText,
-        gateClosingTime: optionalText,
-        laundry: z.boolean(),
-        housekeepingFrequency: optionalText,
-        perBedRent: optionalNumber,
-    }),
-});
+const rentSchema = z
+    .object({
+        monthlyRent: optionalNumber,
+        rentNegotiable: z.boolean(),
+        securityDepositMode: z.enum(["amount", "months_of_rent"]),
+        securityDeposit: optionalNumber,
+        maintenanceMode: z.enum(["included_in_rent", "extra"]),
+        maintenanceAmount: optionalNumber,
+        maintenanceFrequency: z.string(),
+        electricityBilling: optionalText,
+        waterCharges: optionalText,
+        lockInMonths: optionalNumber,
+        noticePeriodMonths: optionalNumber,
+        agreementDurationMonths: optionalNumber,
+        rentEscalationPercent: optionalNumber,
+        availableFrom: optionalText,
+        preferredTenant: stringArray,
+        nonVegAllowed: z.boolean(),
+        petsAllowed: z.boolean(),
+        smokingAllowed: z.boolean(),
+        partyAllowed: z.boolean(),
+        ownerMinimumRent: optionalNumber,
+        currentStatus: optionalText,
+        tenantVacatingOn: optionalText,
+        pg: z.object({
+            bedType: optionalText,
+            foodIncluded: z.boolean(),
+            genderAllowed: optionalText,
+            gateClosingTime: optionalText,
+            laundry: z.boolean(),
+            housekeepingFrequency: optionalText,
+            perBedRent: optionalNumber,
+        }),
+    })
+    .superRefine((value, context) => {
+        if (
+            value.securityDepositMode === "months_of_rent" &&
+            value.securityDeposit != null &&
+            value.securityDeposit > 24
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["securityDeposit"],
+                message: "Deposit months must be between 0 and 24",
+            });
+        }
+        if (isPastDate(value.availableFrom ?? "")) {
+            context.addIssue({
+                code: "custom",
+                path: ["availableFrom"],
+                message: "Pick today or a future date",
+            });
+        }
+    });
 
 const pricingStepSchema = z
     .object({
@@ -350,7 +390,7 @@ const commissionSchema = z.object({
 const dealSchema = z.object({
     assignedAgentId: optionalText,
     coBrokerId: optionalText,
-    coBrokerSharePercent: optionalNumber,
+    coBrokerSharePercent: z.number().min(0).max(100).nullable(),
     mandateType: optionalText,
     mandateStartDate: optionalText,
     mandateEndDate: optionalText,
@@ -363,7 +403,11 @@ const dealSchema = z.object({
 });
 
 const commissionStepSchema = z
-    .object({ commission: commissionSchema, deal: dealSchema })
+    .object({
+        basics: z.object({ listingFor: z.enum(["sell", "rent", "lease", "pg"]) }),
+        commission: commissionSchema,
+        deal: dealSchema,
+    })
     .superRefine((value, context) => {
         const total = value.commission.sale.paymentMilestones.reduce(
             (sum, item) => sum + item.percent,
@@ -376,10 +420,61 @@ const commissionStepSchema = z
                 message: "Milestones must add up to 100%",
             });
         }
+        if (value.basics.listingFor === "sell") {
+            const sale = value.commission.sale;
+            if (
+                sale.mode === "percent" &&
+                ((sale.value > 0 && sale.value < 0.1) || sale.value > 10)
+            ) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["commission", "sale", "value"],
+                    message: "Commission looks too high. Please check.",
+                });
+            }
+            if (sale.separateRates && (sale.ownerPercent ?? 0) > 10) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["commission", "sale", "ownerPercent"],
+                    message: "Owner rate must be 10% or less",
+                });
+            }
+            if (sale.separateRates && (sale.buyerPercent ?? 0) > 10) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["commission", "sale", "buyerPercent"],
+                    message: "Buyer rate must be 10% or less",
+                });
+            }
+            if (sale.value === 0 && !value.commission.notes.trim()) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["commission", "notes"],
+                    message: "Add a note explaining who pays the broker",
+                });
+            }
+        } else {
+            const rent = value.commission.rent;
+            const percentageMode = rent.mode.startsWith("percent_");
+            if (rent.mode === "months" && rent.value > 24) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["commission", "rent", "value"],
+                    message: "Brokerage months must be between 0 and 24",
+                });
+            }
+            if (percentageMode && rent.value > 100) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["commission", "rent", "value"],
+                    message: "Brokerage percentage must be 100% or less",
+                });
+            }
+        }
     });
 
 const furnishingSchema = z.object({
-    status: z.enum(["unfurnished", "semi_furnished", "fully_furnished"]),
+    status: z.enum(["", "unfurnished", "semi_furnished", "fully_furnished"]),
     items: z.record(z.string(), z.number().int().min(0)),
     negotiable: z.boolean(),
     furnitureRentExtra: optionalNumber,
@@ -401,25 +496,52 @@ const highlightsSchema = z.object({
     uniqueSellingPoint: z.string().max(120),
 });
 
-const constructionSchema = z.object({
-    possessionType: optionalText,
-    possessionDate: optionalText,
-    stage: optionalText,
-    slabsDone: optionalNumber,
-    totalSlabs: optionalNumber,
-    progressPercent: z.number().min(0).max(100),
-    builderName: optionalText,
-    projectName: optionalText,
-    reraId: optionalText,
-    reraPossessionDate: optionalText,
-    builderPromisedDate: optionalText,
-    paymentPlan: optionalText,
-    paymentSchedule: z.array(
-        z.object({ id: z.string(), milestone: z.string(), percent: z.number(), dueOn: z.string() }),
-    ),
-    ocCcExpectedDate: optionalText,
-    bookingOpen: z.boolean(),
-});
+const constructionSchema = z
+    .object({
+        possessionType: optionalText,
+        possessionDate: optionalText,
+        stage: optionalText,
+        slabsDone: optionalNumber,
+        totalSlabs: optionalNumber,
+        progressPercent: z.number().min(0).max(100),
+        builderName: optionalText,
+        projectName: optionalText,
+        reraId: optionalText,
+        reraPossessionDate: optionalText,
+        builderPromisedDate: optionalText,
+        paymentPlan: optionalText,
+        paymentSchedule: z.array(
+            z.object({
+                id: z.string(),
+                milestone: z.string(),
+                percent: z.number(),
+                dueOn: z.string(),
+            }),
+        ),
+        ocCcExpectedDate: optionalText,
+        bookingOpen: z.boolean(),
+    })
+    .superRefine((value, context) => {
+        if (isPastDate(value.possessionDate ?? "")) {
+            context.addIssue({
+                code: "custom",
+                path: ["possessionDate"],
+                message: "Pick today or a future date",
+            });
+        }
+        if (
+            value.reraId &&
+            !/^(?:(?:PR|AA|CA)\/GJ\/[A-Z0-9 .&/-]{8,}|GJ[-/][A-Z0-9/-]{6,})$/i.test(
+                value.reraId.trim(),
+            )
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["reraId"],
+                message: "RERA ID does not look correct",
+            });
+        }
+    });
 
 const availabilitySchema = z.object({
     visitDays: stringArray,
@@ -439,7 +561,8 @@ const photoSchema = z.object({
     isCover: z.boolean(),
     order: z.number(),
     alt: z.string(),
-    status: z.enum(["ready", "uploading", "error"]),
+    status: z.enum(["processing", "queued", "ready", "uploading", "error"]),
+    errorMessage: z.string().optional(),
 });
 
 const mediaSchema = z.object({
@@ -495,7 +618,10 @@ export const stepSchemas = {
     basics: z.object({ basics: basicsSchema }),
     location: z.object({ location: locationSchema }),
     details: z
-        .object({ basics: z.object({ category: z.string() }), details: detailsSchema })
+        .object({
+            basics: z.object({ category: z.string(), propertyType: z.string() }),
+            details: detailsSchema,
+        })
         .superRefine((value, context) => {
             if (value.basics.category === "residential") {
                 if (!value.details.bedrooms)
@@ -510,6 +636,22 @@ export const stepSchemas = {
                         path: ["details", "bathrooms"],
                         message: "Enter the bathrooms",
                     });
+                if (!value.details.propertyAge)
+                    context.addIssue({
+                        code: "custom",
+                        path: ["details", "propertyAge"],
+                        message: "Choose the property age",
+                    });
+                if (
+                    value.basics.propertyType !== "independent_house" &&
+                    (!value.details.floorNumber || !value.details.totalFloors)
+                ) {
+                    context.addIssue({
+                        code: "custom",
+                        path: ["details", "floorNumber"],
+                        message: "Add the floor and total floors",
+                    });
+                }
             }
         }),
     area: z
@@ -529,6 +671,12 @@ export const stepSchemas = {
                     path: ["area", "carpetArea"],
                     message: "Enter the carpet area",
                 });
+            if (!value.area.areaSqft)
+                context.addIssue({
+                    code: "custom",
+                    path: ["area", "areaSqft"],
+                    message: "Enter a valid area",
+                });
         }),
     pricing: pricingStepSchema,
     commission: commissionStepSchema,
@@ -542,7 +690,10 @@ export const stepSchemas = {
     publish: z
         .object({ owner: ownerSchema, publish: publishSchema, media: mediaSchema })
         .superRefine((value, context) => {
-            if (value.publish.status === "active" && value.media.photos.length < 3) {
+            if (
+                value.publish.status === "active" &&
+                value.media.photos.filter((photo) => photo.status !== "error").length < 3
+            ) {
                 context.addIssue({
                     code: "custom",
                     path: ["media", "photos"],
@@ -635,14 +786,15 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         addressVisibility: "society_only",
         landmark: "",
         nearbyPlaces: [],
-        lat: 21.1702,
-        lng: 72.8311,
+        lat: null,
+        lng: null,
+        mapPinPlaced: false,
         mapZoomHint: 13,
     },
     details: {
-        bedrooms: "2",
-        bathrooms: 2,
-        balconies: 1,
+        bedrooms: "",
+        bathrooms: null,
+        balconies: null,
         additionalRooms: [],
         floorNumber: "",
         totalFloors: null,
@@ -652,12 +804,12 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         roadWidthFt: null,
         propertyAge: "",
         constructionYear: null,
-        ownershipType: "freehold",
-        propertyCondition: "ready_to_move",
-        coveredParking: 1,
-        openParking: 0,
+        ownershipType: "",
+        propertyCondition: "",
+        coveredParking: null,
+        openParking: null,
         waterSource: [],
-        powerBackup: "none",
+        powerBackup: "",
         electricityLoadKva: null,
         vastuCompliant: false,
         wheelchairFriendly: false,
@@ -696,11 +848,11 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
     },
     area: {
         unit: "sqft",
-        carpetArea: 1050,
+        carpetArea: null,
         builtUpArea: null,
         superBuiltUpArea: null,
         plotArea: null,
-        areaSqft: 1050,
+        areaSqft: 0,
         loadingPercent: null,
     },
     sale: {
@@ -734,18 +886,18 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         monthlyRent: null,
         rentNegotiable: true,
         securityDepositMode: "months_of_rent",
-        securityDeposit: 2,
+        securityDeposit: null,
         maintenanceMode: "included_in_rent",
         maintenanceAmount: null,
         maintenanceFrequency: "monthly",
         electricityBilling: "separate_meter",
         waterCharges: "included",
-        lockInMonths: 6,
-        noticePeriodMonths: 1,
-        agreementDurationMonths: 11,
-        rentEscalationPercent: 5,
+        lockInMonths: null,
+        noticePeriodMonths: null,
+        agreementDurationMonths: null,
+        rentEscalationPercent: null,
         availableFrom: "",
-        preferredTenant: ["family"],
+        preferredTenant: [],
         nonVegAllowed: true,
         petsAllowed: false,
         smokingAllowed: false,
@@ -805,11 +957,11 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         siteVisitedOn: "",
     },
     furnishing: {
-        status: "semi_furnished",
+        status: "",
         items: {},
         negotiable: false,
         furnitureRentExtra: null,
-        kitchenType: "modular",
+        kitchenType: "",
     },
     amenities: {
         society: [],
@@ -840,11 +992,11 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
     availability: {
         visitDays: [],
         visitTimeSlots: [],
-        advanceNoticeHours: 4,
-        keyHeldBy: "owner",
+        advanceNoticeHours: null,
+        keyHeldBy: "",
         caretakerName: "",
         caretakerPhone: "",
-        showingContactPerson: "owner",
+        showingContactPerson: "",
     },
     media: {
         photos: [],

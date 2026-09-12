@@ -1,8 +1,8 @@
 import {
     BROKER_CONTACTS_HREF,
+    BROKER_MY_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_PIPELINE_HREF,
-    BROKER_REQUESTS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
 import type { ShortcutId } from "@/lib/shortcuts";
@@ -37,9 +37,11 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
     {
         // Covers both directions — requests the broker sent and invites owners
         // sent them. "Requests" only named half the page.
-        label: "Requests",
-        href: BROKER_REQUESTS_HREF,
-        shortcutId: "my_requests",
+        label: "My Deals",
+        mobileLabel: "Deals",
+        href: BROKER_MY_DEALS_HREF,
+        shortcutId: "my_deals",
+        activePrefixes: ["/broker/requests"],
     },
     {
         label: "Your listings",

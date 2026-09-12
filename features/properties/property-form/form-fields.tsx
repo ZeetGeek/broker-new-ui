@@ -80,6 +80,7 @@ export function TextField({
     hint,
     visibility,
     className,
+    onBlur: onInputBlur,
     ...props
 }: {
     name: Path;
@@ -93,6 +94,7 @@ export function TextField({
         formState: { errors },
     } = useFormContext<PropertyDraftValues>();
     const error = errorAt(errors, name);
+    const registration = register(name);
     return (
         <FieldShell
             name={name}
@@ -105,8 +107,12 @@ export function TextField({
                 id={name.replace(/\./g, "-")}
                 size="lg"
                 errorText={error}
-                {...register(name)}
+                {...registration}
                 {...props}
+                onBlur={(event) => {
+                    void registration.onBlur(event);
+                    onInputBlur?.(event);
+                }}
             />
         </FieldShell>
     );
@@ -120,6 +126,7 @@ export function TextAreaField({
     rows = 4,
     placeholder,
     className,
+    onBlur: onInputBlur,
 }: {
     name: Path;
     label: string;
@@ -128,6 +135,7 @@ export function TextAreaField({
     rows?: number;
     placeholder?: string;
     className?: string;
+    onBlur?: () => void;
 }) {
     const {
         register,
@@ -135,6 +143,7 @@ export function TextAreaField({
     } = useFormContext<PropertyDraftValues>();
     const error = errorAt(errors, name);
     const messageId = `${name.replace(/\./g, "-")}-message`;
+    const registration = register(name);
     return (
         <FieldShell
             name={name}
@@ -157,7 +166,11 @@ export function TextAreaField({
                   focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
                   aria-invalid:border-danger-mid
                 "
-                {...register(name)}
+                {...registration}
+                onBlur={(event) => {
+                    void registration.onBlur(event);
+                    onInputBlur?.();
+                }}
             />
             {error ? (
                 <p id={messageId} role="alert" className="text-sm text-danger">
@@ -176,6 +189,7 @@ export function SelectField({
     hint,
     visibility,
     className,
+    onBlur: onInputBlur,
 }: {
     name: Path;
     label: string;
@@ -184,6 +198,7 @@ export function SelectField({
     hint?: ReactNode;
     visibility?: FieldVisibility;
     className?: string;
+    onBlur?: () => void;
 }) {
     const {
         control,
@@ -207,7 +222,10 @@ export function SelectField({
                         id={name.replace(/\./g, "-")}
                         value={String(field.value ?? "")}
                         onChange={field.onChange}
-                        onBlur={field.onBlur}
+                        onBlur={() => {
+                            field.onBlur();
+                            onInputBlur?.();
+                        }}
                         ref={field.ref}
                         aria-invalid={Boolean(error) || undefined}
                         aria-describedby={error ? messageId : undefined}

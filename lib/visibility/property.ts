@@ -22,7 +22,9 @@ export const PROPERTY_VISIBLE_WHEN = {
             "na_plot",
             "independent_house",
         ].includes(values.basics.propertyType),
-    furnishingItems: (values) => values.furnishing.status !== "unfurnished",
+    furnishingItems: (values) =>
+        values.furnishing.status === "semi_furnished" ||
+        values.furnishing.status === "fully_furnished",
     construction: (values) =>
         ["under_construction", "new_launch"].includes(values.details.propertyCondition),
     rera: (values) =>

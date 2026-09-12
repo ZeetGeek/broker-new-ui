@@ -211,7 +211,7 @@ function EmptyRequests({ className }: { className?: string }) {
             aria-labelledby="requests-card-heading"
         >
             <CardLabel info={REQUESTS_INFO}>
-                <span id="requests-card-heading">Your requests</span>
+                <span id="requests-card-heading">My deals</span>
             </CardLabel>
 
             <EmptyState
@@ -245,7 +245,7 @@ export function RequestsCard({ data, className }: RequestsCardProps) {
         >
             <div className="flex shrink-0 items-start justify-between gap-3">
                 <CardLabel info={REQUESTS_INFO}>
-                    <span id="requests-card-heading">Your requests</span>
+                    <span id="requests-card-heading">My deals</span>
                 </CardLabel>
                 <Tooltip>
                     <TooltipTrigger

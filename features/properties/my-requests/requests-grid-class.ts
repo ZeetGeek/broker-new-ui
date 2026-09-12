@@ -1,6 +1,18 @@
-/** Photo-forward cards — request rows carry more text than a browse card. */
-export const REQUESTS_GRID_CLASS =
-    "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+import {
+    MY_LISTINGS_GRID_CLASS,
+    MY_LISTINGS_LIST_CLASS,
+} from "@/features/properties/your-listings/my-listings-grid-class";
 
-/** Wide horizontal rows — one across, so the status line has room to read. */
-export const REQUESTS_LIST_CLASS = "grid grid-cols-1 gap-4";
+export const REQUESTS_GRID_CLASS = MY_LISTINGS_GRID_CLASS;
+
+/** Compact horizontal cards — two across from md up. */
+export const REQUESTS_LIST_CLASS = MY_LISTINGS_LIST_CLASS;
+
+export const REQUESTS_GRID_BREAKPOINTS = [
+    { minWidth: 640, columns: 2 },
+    { minWidth: 768, columns: 3 },
+    { minWidth: 1024, columns: 4 },
+    { minWidth: 1280, columns: 5 },
+];
+
+export const REQUESTS_LIST_BREAKPOINTS = [{ minWidth: 768, columns: 2 }];

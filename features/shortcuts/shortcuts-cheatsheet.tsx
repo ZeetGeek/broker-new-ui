@@ -35,7 +35,7 @@ const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<LucideProps>> = {
     shortcuts_cheatsheet: Keyboard,
     dashboard: LayoutDashboard,
     owner_listings: Building2,
-    my_requests: Send,
+    my_deals: Send,
     your_listings: KeyRound,
     pipeline: Users,
     contacts: Contact,

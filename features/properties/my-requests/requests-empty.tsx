@@ -1,6 +1,8 @@
 import Link from "next/link";
 
-import { Inbox, SearchX } from "lucide-react";
+import { Inbox } from "lucide-react";
+
+import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
@@ -13,24 +15,53 @@ export function RequestsFirstRunEmpty() {
             heading="You have not sent any requests yet"
             description="Browse what owners have listed, then send a request for the ones your buyers want."
         >
-            <Button render={<Link href="/broker/owner-listings" />}>See owner properties</Button>
+            <Button
+                size="lg"
+                nativeButton={false}
+                className="bg-brand-ink text-surface hover:bg-brand-ink/90"
+                render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
+            >
+                See owner properties
+            </Button>
         </EmptyState>
     );
 }
 
 /** Filters hid everything — the fix is clearing them, not leaving the page. */
-export function RequestsFilteredEmpty({ onClearFilters }: { onClearFilters?: () => void }) {
+export function RequestsFilteredEmpty({
+    onClearFilters,
+    searchQuery,
+}: {
+    onClearFilters?: () => void;
+    searchQuery?: string;
+}) {
+    return (
+        <div className="flex flex-col items-center gap-4 py-12 text-center">
+            <p className="h6 text-ink">Nothing matches what you picked</p>
+            <p className="body-sm max-w-prose text-ink-muted">
+                {searchQuery?.trim()
+                    ? `No results for "${searchQuery.trim()}". Try clearing a filter.`
+                    : "Try another option above, or clear it to see every deal."}
+            </p>
+            {onClearFilters ? (
+                <button
+                    type="button"
+                    onClick={onClearFilters}
+                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
+                >
+                    Clear filters
+                </button>
+            ) : null}
+        </div>
+    );
+}
+
+export function InvitesFirstRunEmpty() {
     return (
         <EmptyState
-            icon={SearchX}
-            heading="Nothing matches what you picked"
-            description="Try another option above, or clear it to see every request you have sent."
-        >
-            {onClearFilters ? (
-                <Button variant="outline" className="border-border-warm" onClick={onClearFilters}>
-                    Clear filters
-                </Button>
-            ) : null}
-        </EmptyState>
+            icon={Inbox}
+            heading="No invites yet"
+            description="When an owner picks you to sell their property, their invite shows up here."
+        />
     );
 }

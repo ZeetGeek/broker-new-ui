@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare } from "lucide-react";
+import { addCollection, Icon } from "@iconify/react/offline";
 
 import { cn } from "@/lib/utils";
 
@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { useChat } from "@/features/chat/chat-provider";
+import chatIcons from "@/features/chat/mdi-chat.json";
 import type { ChatPeer } from "@/features/chat/types";
+
+addCollection(chatIcons as Parameters<typeof addCollection>[0]);
 
 /**
  * Opens the one global chat modal for this person. Every card that shows a
@@ -31,13 +34,25 @@ export function ChatButton({
                 render={
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size={size}
                         onClick={() => openChat(peer)}
                         aria-label={`Message ${peer.name}`}
-                        className={cn("shrink-0 border-border-warm text-ink-muted", className)}
+                        className={cn(
+                            `
+                              shrink-0 bg-transparent p-0 text-ink-muted block-6! inline-6!
+                              hover:bg-transparent hover:text-ink
+                            `,
+                            className,
+                        )}
                     >
-                        <MessageSquare aria-hidden strokeWidth={1.75} />
+                        <Icon
+                            icon="mdi:chat"
+                            width={24}
+                            height={24}
+                            className="block-6 inline-6"
+                            aria-hidden
+                        />
                     </Button>
                 }
             />

@@ -34,6 +34,8 @@ export function StepArea() {
         const nextSqft = areaToSqft(source, unit, state);
         if (nextSqft > 0 && nextSqft !== areaSqft) {
             setValue("area.areaSqft", nextSqft, { shouldDirty: true, shouldValidate: true });
+        } else if (nextSqft === 0 && areaSqft !== 0) {
+            setValue("area.areaSqft", 0, { shouldDirty: true, shouldValidate: true });
         }
         const loading = calculateLoadingPercent(carpet, superBuiltUp);
         setValue("area.loadingPercent", loading, { shouldDirty: false });
@@ -83,7 +85,9 @@ export function StepArea() {
                     <div className="p-4 sm:border-e sm:border-border-warm">
                         <p className="text-xs text-ink-muted">Normalised area</p>
                         <p className="tabular mbs-1 text-xl font-bold text-ink">
-                            {areaSqft.toLocaleString("en-IN")} sq ft
+                            {areaSqft > 0
+                                ? `${areaSqft.toLocaleString("en-IN")} sq ft`
+                                : "Area not added"}
                         </p>
                     </div>
                     <div className="border-bs border-border-warm p-4 sm:border-bs-0">

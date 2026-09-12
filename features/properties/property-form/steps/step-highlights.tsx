@@ -132,6 +132,7 @@ export function StepHighlights() {
                                 name="construction.possessionDate"
                                 label="Possession month"
                                 type="month"
+                                min={new Date().toISOString().slice(0, 7)}
                             />
                         ) : null}
                         <div className={FORM_GRID_CLASS}>
@@ -152,7 +153,12 @@ export function StepHighlights() {
                         </div>
                         {PROPERTY_VISIBLE_WHEN.rera(values) ? (
                             <div className={FORM_GRID_CLASS}>
-                                <TextField name="construction.reraId" label="RERA ID" />
+                                <TextField
+                                    name="construction.reraId"
+                                    label="RERA ID"
+                                    placeholder="e.g. PR/GJ/SURAT/..."
+                                    hint="Use the complete Gujarat RERA registration ID."
+                                />
                                 <TextField
                                     name="construction.reraPossessionDate"
                                     label="RERA possession date"

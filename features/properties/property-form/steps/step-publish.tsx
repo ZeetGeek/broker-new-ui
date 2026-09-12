@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { BadgeCheck, CircleAlert } from "lucide-react";
+import { BadgeCheck, CircleAlert, TriangleAlert } from "lucide-react";
 
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 
@@ -35,6 +35,22 @@ export function StepPublish() {
     const verified = watch("owner.phoneVerified");
     const sameWhatsApp = watch("owner.whatsappSameAsPhone");
     const isNri = watch("owner.isNri");
+    const values = watch();
+    const photoTags = new Set(values.media.photos.map((photo) => photo.tag));
+    const softWarnings = [
+        values.basics.listingFor === "sell" &&
+        values.commission.sale.mode === "percent" &&
+        (values.commission.sale.value < 1 || values.commission.sale.value > 4)
+            ? "Commission is outside the usual 1%–4% review range."
+            : null,
+        !photoTags.has("kitchen") || !photoTags.has("bathroom")
+            ? "Add both a kitchen and bathroom photo when they apply."
+            : null,
+        values.documents.length === 0 ? "No property documents have been added yet." : null,
+        values.basics.description.trim().length < 100
+            ? "A description of 100+ characters helps people qualify the property."
+            : null,
+    ].filter((warning): warning is string => Boolean(warning));
 
     function verifyPhone() {
         if (!/^[6-9]\d{9}$/.test(ownerPhone)) {
@@ -47,6 +63,25 @@ export function StepPublish() {
 
     return (
         <div className="space-y-8">
+            {softWarnings.length ? (
+                <div
+                    role="status"
+                    className="rounded-card border border-urgent/30 bg-urgent-soft p-4 text-urgent"
+                >
+                    <div className="flex items-center gap-2">
+                        <TriangleAlert className="block-4 inline-4" aria-hidden />
+                        <p className="text-sm font-bold">Review before publishing</p>
+                    </div>
+                    <ul className="mbs-3 list-disc space-y-1 ps-5 text-sm/6">
+                        {softWarnings.map((warning) => (
+                            <li key={warning}>{warning}</li>
+                        ))}
+                    </ul>
+                    <p className="text-xs text-urgent/75">
+                        These are helpful checks, not blockers. Locality price comparison will appear when market data is connected.
+                    </p>
+                </div>
+            ) : null}
             <WizardSection
                 title="Owner record"
                 description="Contact details stay private and are used only to work the listing."

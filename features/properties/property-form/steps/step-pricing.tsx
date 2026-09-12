@@ -324,7 +324,12 @@ export function StepPricing() {
                     ) : (
                         <CurrencyField name="rent.securityDeposit" label="Security deposit" />
                     )}
-                    <TextField name="rent.availableFrom" label="Available from" type="date" />
+                    <TextField
+                        name="rent.availableFrom"
+                        label="Available from"
+                        type="date"
+                        min={new Date().toISOString().slice(0, 10)}
+                    />
                 </div>
                 <div className="mbs-3 flex justify-end">
                     <Button

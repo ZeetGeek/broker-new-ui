@@ -29,7 +29,7 @@ export type PortalMobileNavProps = {
 const NAV_ICONS: Record<string, LucideIcon> = {
     "/broker/dashboard": LayoutDashboard,
     "/broker/owner-listings": Building2,
-    "/broker/deals": Send,
+    "/broker/my-deals": Send,
     "/broker/your-listings": Briefcase,
     "/broker/pipeline": Users,
     "/broker/contacts": Contact,

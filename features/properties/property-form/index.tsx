@@ -4,6 +4,7 @@ import {
     type FormEvent,
     type MutableRefObject,
     type ReactNode,
+    useCallback,
     useEffect,
     useMemo,
     useRef,
@@ -13,7 +14,15 @@ import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-import { ChevronDown, ChevronLeft, ChevronRight, Cloud, RotateCcw, Save, X } from "lucide-react";
+import {
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    HardDrive,
+    RotateCcw,
+    Save,
+    X,
+} from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { useListingScore } from "@/lib/hooks/use-listing-score";
@@ -97,6 +106,7 @@ export function PropertyForm({
 }: PropertyFormProps) {
     const router = useRouter();
     const isDialog = variant === "dialog";
+    const formIsActive = !isDialog || open;
     const [step, setStep] = useState<PropertyFormStep>("basics");
     const [highestUnlocked, setHighestUnlocked] = useState(
         mode === "edit" ? FORM_STEPS.length - 1 : 0,
@@ -108,9 +118,13 @@ export function PropertyForm({
     const [recoveryDraft, setRecoveryDraft] = useState<PropertyDraftValues | null>(null);
     const [formBanner, setFormBanner] = useState<string | null>(null);
     const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
+    const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [networkSavedAt, setNetworkSavedAt] = useState<Date | null>(null);
     const photoFilesRef = useRef<Map<string, File>>(new Map());
     const autosaveReadyRef = useRef(false);
+    const recoveryCheckedRef = useRef(false);
+    const networkSaveBusyRef = useRef(false);
     const localStorageKey = `property-draft:v${LOCAL_DRAFT_VERSION}:${propertyId ?? "new"}`;
 
     const defaultValues = useMemo(
@@ -155,6 +169,8 @@ export function PropertyForm({
     }, [initialListing, methods, mode, propertyId]);
 
     useEffect(() => {
+        if (!formIsActive || recoveryCheckedRef.current) return;
+        recoveryCheckedRef.current = true;
         if (mode !== "create") {
             autosaveReadyRef.current = true;
             return;
@@ -176,10 +192,10 @@ export function PropertyForm({
             window.localStorage.removeItem(localStorageKey);
             autosaveReadyRef.current = true;
         }
-    }, [localStorageKey, mode]);
+    }, [formIsActive, localStorageKey, mode]);
 
     useEffect(() => {
-        if (!autosaveReadyRef.current) return;
+        if (!formIsActive || !autosaveReadyRef.current) return;
         const timer = window.setTimeout(() => {
             try {
                 const safe = draftForStorage(values);
@@ -197,7 +213,30 @@ export function PropertyForm({
             }
         }, 500);
         return () => window.clearTimeout(timer);
-    }, [localStorageKey, values]);
+    }, [formIsActive, localStorageKey, values]);
+
+    const syncLegacyProjection = useCallback(async () => {
+        if (!formIsActive || mode !== "edit" || !propertyId || networkSaveBusyRef.current) return;
+        networkSaveBusyRef.current = true;
+        try {
+            const current = methods.getValues();
+            const updated = await myListingsApi.update(propertyId, {
+                ...draftToLegacyInput(current, photoFilesRef),
+                status: current.publish.status === "active" ? "published" : "draft",
+            });
+            if (updated) setNetworkSavedAt(new Date());
+        } catch {
+            // The device copy remains the source of truth until a later sync succeeds.
+        } finally {
+            networkSaveBusyRef.current = false;
+        }
+    }, [formIsActive, methods, mode, propertyId]);
+
+    useEffect(() => {
+        if (!formIsActive || mode !== "edit" || !propertyId) return;
+        const interval = window.setInterval(() => void syncLegacyProjection(), 10_000);
+        return () => window.clearInterval(interval);
+    }, [formIsActive, mode, propertyId, syncLegacyProjection]);
 
     useEffect(() => {
         function onKeyDown(event: KeyboardEvent) {
@@ -254,8 +293,10 @@ export function PropertyForm({
         if (nextIndex > highestUnlocked) return;
         setFormBanner(null);
         setMobileSummaryOpen(false);
+        setMobileScoreOpen(false);
         setStep(next);
         saveSilent();
+        void syncLegacyProjection();
     }
 
     function goBack() {
@@ -265,15 +306,16 @@ export function PropertyForm({
 
     function goNext() {
         setFormBanner(null);
-        const requiredBeforePublish = stepIndex <= 5;
-        if (requiredBeforePublish && !validateStep(step)) return;
+        if (!validateStep(step)) return;
         setCompletedSteps((current) => new Set(current).add(step));
         const next = FORM_STEPS[stepIndex + 1];
         if (!next) return;
         setHighestUnlocked((current) => Math.max(current, stepIndex + 1));
         setStep(next.id);
         setMobileSummaryOpen(false);
+        setMobileScoreOpen(false);
         saveSilent();
+        void syncLegacyProjection();
     }
 
     function saveSilent() {
@@ -296,15 +338,7 @@ export function PropertyForm({
         setFormBanner(null);
         const current = methods.getValues();
         if (!forceDraft && current.publish.status === "active") {
-            const required: PropertyFormStep[] = [
-                "basics",
-                "location",
-                "details",
-                "area",
-                "pricing",
-                "commission",
-                "publish",
-            ];
+            const required = FORM_STEPS.map((item) => item.id);
             for (const requiredStep of required) {
                 if (!validateStep(requiredStep)) {
                     const problemIndex = FORM_STEPS.findIndex((item) => item.id === requiredStep);
@@ -428,9 +462,13 @@ export function PropertyForm({
                     entryMode={entryMode}
                     onEntryModeChange={setEntryMode}
                     savedLabel={
-                        savedAt
-                            ? `Saved ${formatAgo(savedAt, clock)}`
-                            : "Draft saves on this device"
+                        mode === "edit" && networkSavedAt
+                            ? `API synced ${formatAgo(networkSavedAt, clock)} · device copy current`
+                            : savedAt
+                              ? `Saved on this device ${formatAgo(savedAt, clock)}`
+                              : mode === "edit"
+                                ? "Saved on this device · API syncs every 10 sec"
+                                : "Changes save on this device"
                     }
                     onSaveDraft={saveDraftLocally}
                     onClose={requestClose}
@@ -439,18 +477,32 @@ export function PropertyForm({
 
                 {entryMode === "full" ? (
                     <>
-                        <div className="border-be border-border-warm bg-surface xl:hidden">
+                        <div className="shrink-0 border-be border-border-warm bg-surface xl:hidden">
                             <StepNav
                                 activeStep={step}
                                 highestUnlocked={highestUnlocked}
                                 completedSteps={completedSteps}
                                 onStepChange={changeStep}
                             />
+                            <MobileListingScore
+                                score={listingScore.score}
+                                tips={listingScore.tips}
+                                open={mobileScoreOpen}
+                                onOpenChange={(next) => {
+                                    setMobileScoreOpen(next);
+                                    if (next) setMobileSummaryOpen(false);
+                                }}
+                                onTip={(tipStep) => {
+                                    setHighestUnlocked(FORM_STEPS.length - 1);
+                                    setStep(tipStep);
+                                    setMobileScoreOpen(false);
+                                }}
+                            />
                         </div>
                         <div
                             className="
                               grid flex-1 min-block-0
-                              xl:grid-cols-[224px_minmax(0,1fr)_336px]
+                              xl:grid-cols-[272px_minmax(0,1fr)_336px]
                             "
                         >
                             <div
@@ -520,7 +572,11 @@ export function PropertyForm({
                                         </div>
                                     ) : null}
                                     <StepTransition step={step}>
-                                        <StepContent step={step} photoFilesRef={photoFilesRef} />
+                                        <StepContent
+                                            step={step}
+                                            currentPropertyId={propertyId}
+                                            photoFilesRef={photoFilesRef}
+                                        />
                                     </StepTransition>
                                 </div>
                             </main>
@@ -588,7 +644,10 @@ export function PropertyForm({
                             values={values}
                             stepIndex={stepIndex}
                             open={mobileSummaryOpen}
-                            onOpenChange={setMobileSummaryOpen}
+                            onOpenChange={(next) => {
+                                setMobileSummaryOpen(next);
+                                if (next) setMobileScoreOpen(false);
+                            }}
                         />
                     </>
                 ) : (
@@ -698,7 +757,7 @@ function PropertyFormHeader({
                         A ten-step full-screen form for property and commission details.
                     </DialogDescription>
                     <div className="mbs-0.5 flex items-center gap-1.5 text-xs text-ink-muted">
-                        <Cloud
+                        <HardDrive
                             className="block-3.5 inline-3.5"
                             aria-hidden
                         />{" "}
@@ -711,7 +770,7 @@ function PropertyFormHeader({
                         {mode === "edit" ? "Edit property" : "Add property"}
                     </h1>
                     <div className="mbs-0.5 flex items-center gap-1.5 text-xs text-ink-muted">
-                        <Cloud
+                        <HardDrive
                             className="block-3.5 inline-3.5"
                             aria-hidden
                         />{" "}
@@ -859,13 +918,15 @@ function PropertyFormFooter({
 
 function StepContent({
     step,
+    currentPropertyId,
     photoFilesRef,
 }: {
     step: PropertyFormStep;
+    currentPropertyId?: string;
     photoFilesRef: MutableRefObject<Map<string, File>>;
 }) {
     if (step === "basics") return <StepBasics />;
-    if (step === "location") return <StepLocation />;
+    if (step === "location") return <StepLocation currentPropertyId={currentPropertyId} />;
     if (step === "details") return <StepDetails />;
     if (step === "area") return <StepArea />;
     if (step === "pricing") return <StepPricing />;
@@ -883,6 +944,96 @@ function StepTransition({ step, children }: { step: PropertyFormStep; children: 
         return () => cancelAnimationFrame(frame);
     }, [step]);
     return <div className={cn("t-auth-enter", shown && "is-shown")}>{children}</div>;
+}
+
+function MobileListingScore({
+    score,
+    tips,
+    open,
+    onOpenChange,
+    onTip,
+}: {
+    score: number;
+    tips: { label: string; step: PropertyFormStep; points: number }[];
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onTip: (step: PropertyFormStep) => void;
+}) {
+    return (
+        <div className="border-brand-hover border-bs bg-brand-ink text-surface xl:hidden">
+            <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => onOpenChange(!open)}
+                className="
+                  hover:bg-brand-hover
+                  flex items-center justify-between gap-3 px-4 text-start text-surface inline-full
+                  min-block-11
+                  focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:ring-inset
+                "
+            >
+                <span className="flex items-center gap-2 text-xs font-semibold text-surface">
+                    <span className="
+                      tabular flex items-center justify-center rounded-full bg-highlight
+                      text-brand-ink block-7 inline-7
+                    ">
+                        {score}%
+                    </span>
+                    Listing score
+                </span>
+                <span className="flex items-center gap-2 text-xs text-surface/80 min-inline-0">
+                    <span className="hidden truncate sm:block">
+                        {tips[0]?.label ?? "Ready to publish"}
+                    </span>
+                    <ChevronDown
+                        className={cn("shrink-0 transition-transform duration-160 block-4 inline-4", open && `
+                          rotate-180
+                        `)}
+                        aria-hidden
+                    />
+                </span>
+            </button>
+            <div
+                data-open={open}
+                className="
+                  t-panel-slide absolute inset-x-0
+                  inset-be-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 overflow-y-auto border-bs
+                  border-border-warm bg-surface p-4 shadow-xl max-block-[60dvh]
+                "
+            >
+                <div className="mx-auto max-inline-md">
+                    <div className="flex items-center gap-4">
+                        <ListingScoreRing score={score} />
+                        <div>
+                            <p className="font-bold text-ink">Listing score</p>
+                            <p className="mbs-1 text-sm/5 text-ink-muted">
+                                Add useful details to improve broker confidence.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="mbs-4 space-y-2">
+                        {tips.map((tip) => (
+                            <button
+                                key={tip.label}
+                                type="button"
+                                onClick={() => onTip(tip.step)}
+                                className="
+                                  flex items-center justify-between gap-3 rounded-control border
+                                  border-border-warm bg-canvas px-3 text-start text-sm text-ink
+                                  inline-full min-block-11
+                                  hover:border-brand/40 hover:bg-brand-soft
+                                  focus-visible:ring-3 focus-visible:ring-ring/30
+                                "
+                            >
+                                <span>{tip.label}</span>
+                                <span className="tabular font-semibold text-brand-text">+{tip.points}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 function MobileDealSummary({
@@ -995,14 +1146,16 @@ function mergeDraft(
         }
     }
     merged.media.photos = (merged.media.photos ?? []).filter(
-        (photo) => !photo.url.startsWith("blob:"),
+        (photo) => Boolean(photo.url) && !photo.url.startsWith("blob:"),
     );
     return merged;
 }
 
 function draftForStorage(values: PropertyDraftValues): PropertyDraftValues {
     const safe = JSON.parse(JSON.stringify(values)) as PropertyDraftValues;
-    safe.media.photos = safe.media.photos.filter((photo) => !photo.url.startsWith("blob:"));
+    safe.media.photos = safe.media.photos.filter(
+        (photo) => Boolean(photo.url) && !photo.url.startsWith("blob:"),
+    );
     return safe;
 }
 
@@ -1106,9 +1259,12 @@ function draftToLegacyInput(
 ): CreateMyListingInput {
     const propertyType = draftPropertyTypeToLegacy(values);
     const bhk = values.details.bedrooms === "1rk" ? 1 : Number(values.details.bedrooms) || 0;
-    const imageSrcs = values.media.photos.map((photo) => photo.url);
-    const photoFiles = imageSrcs
-        .map((src) => photoFilesRef.current.get(src))
+    const usablePhotos = values.media.photos.filter(
+        (photo) => photo.status !== "error" && Boolean(photo.url),
+    );
+    const imageSrcs = usablePhotos.map((photo) => photo.url);
+    const photoFiles = usablePhotos
+        .map((photo) => photoFilesRef.current.get(photo.url) ?? photoFilesRef.current.get(photo.id))
         .filter((file): file is File => Boolean(file))
         .slice(0, 10);
     const listingFor = values.basics.listingFor;

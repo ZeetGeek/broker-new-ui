@@ -18,7 +18,7 @@ export function StepNav({
     onStepChange: (step: PropertyFormStep) => void;
 }) {
     return (
-        <nav aria-label="Property form steps" className="block-full">
+        <nav aria-label="Property form steps" className="xl:block-full">
             <ol
                 className="
                   flex gap-2 overflow-x-auto px-4 py-3
@@ -73,7 +73,9 @@ export function StepNav({
                                     )}
                                 </span>
                                 <span className="hidden min-inline-0 xl:block">
-                                    <span className="block truncate text-sm font-semibold">
+                                    <span className="
+                                      block text-sm/5 font-semibold whitespace-normal
+                                    ">
                                         {step.label}
                                     </span>
                                     <span
