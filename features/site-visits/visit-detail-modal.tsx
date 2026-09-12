@@ -1,14 +1,18 @@
 "use client";
 
+import Link from "next/link";
+
 import { CalendarClock, Clock3, Lock, MapPin, PhoneCall, StickyNote } from "lucide-react";
 
 import { formatRelativePast, formatShowingWhen } from "@/lib/format/date";
+import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
@@ -109,9 +113,35 @@ export function VisitDetailModal({
 
                 {/* The property. */}
                 <div className="flex items-start gap-3">
-                    <PropertyThumb src={visit.property.imageSrc} alt={visit.property.title} />
-                    <div className="flex flex-col gap-1">
-                        <p className="body font-semibold text-ink">{visit.property.title}</p>
+                    {viewer === "broker" ? (
+                        <Link
+                            href={brokerOwnerListingDetailHref(visit.property.id)}
+                            prefetch={false}
+                            className="
+                              shrink-0 rounded-inner
+                              focus-visible:outline-2 focus-visible:outline-brand
+                            "
+                            aria-label={`Open ${visit.property.title}`}
+                        >
+                            <PropertyThumb
+                                src={visit.property.imageSrc}
+                                alt={visit.property.title}
+                            />
+                        </Link>
+                    ) : (
+                        <PropertyThumb src={visit.property.imageSrc} alt={visit.property.title} />
+                    )}
+                    <div className="flex flex-col gap-1 min-inline-0">
+                        {viewer === "broker" ? (
+                            <PropertyTitleLink
+                                href={brokerOwnerListingDetailHref(visit.property.id)}
+                                className="body font-semibold"
+                            >
+                                {visit.property.title}
+                            </PropertyTitleLink>
+                        ) : (
+                            <p className="body font-semibold text-ink">{visit.property.title}</p>
+                        )}
                         <Price
                             amountInr={visit.property.amountInr}
                             isRent={visit.property.isRent}

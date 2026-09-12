@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-
 import {
     Eye,
     Home,
@@ -21,6 +19,7 @@ import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { PhoneNumber } from "@/components/shared/phone-number";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -112,9 +111,7 @@ export function BuyerCard({
                                     <TooltipTrigger
                                         render={
                                             <span
-                                                className="
-                                              flex shrink-0 items-center text-success
-                                            "
+                                                className="flex shrink-0 items-center text-success"
                                             >
                                                 <TrendingUp
                                                     aria-hidden
@@ -245,12 +242,12 @@ export function BuyerCard({
                 <ul className="flex flex-col gap-1">
                     {buyer.attachedProperties.slice(0, 3).map((property) => (
                         <li key={property.leadId}>
-                            <Link
+                            <PropertyTitleLink
                                 href={brokerPropertyDetailHref(property.id)}
-                                className="body-xs text-brand-text hover:underline"
+                                className="body-xs font-medium"
                             >
                                 {property.title}
-                            </Link>
+                            </PropertyTitleLink>
                         </li>
                     ))}
                     {buyer.attachedProperties.length > 3 ? (

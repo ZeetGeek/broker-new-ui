@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -429,9 +430,14 @@ export function DealCard({
 
                 <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
                     <div className="flex items-start justify-between gap-2">
-                        <p className="body-sm truncate font-semibold text-ink">
-                            {deal.property.configLabel} · {deal.property.locality}
-                        </p>
+                        <h3 className="max-inline-full min-inline-0">
+                            <PropertyTitleLink
+                                href={brokerPropertyDetailHref(deal.property.id)}
+                                className="body-sm truncate font-semibold"
+                            >
+                                {deal.property.configLabel} · {deal.property.locality}
+                            </PropertyTitleLink>
+                        </h3>
                         <DealCardMenu deal={deal} handlers={handlers} isBusy={isBusy} />
                     </div>
 

@@ -173,10 +173,18 @@ This is where reuse actually pays on this platform. Each of these exists
 | `<DateDisplay>`         | dd/mm/yyyy everywhere, with relative form ("2 days ago") in one place.                                                                                                            |
 | `<AreaDisplay>`         | sq ft with thousands separators, carpet vs built-up labelling.                                                                                                                    |
 | `<PropertyCard>`        | One card used by browse, my-properties, and the owner list. Three cards means three photo-loading strategies and three inconsistent layouts.                                      |
+| `<AppImage>`            | The only raster image primitive. Wraps `next/image` with lazy loading, responsive output, shared quality/placeholder policy, and fallback handling.                               |
 | `<EmptyState>`          | Every empty screen must teach the next action. One component, one shape: icon, headline, action.                                                                                  |
 | `<UserAvatar>`          | Photo, initials fallback, verified badge.                                                                                                                                         |
 | `<VerifiedBadge>`       | The trust signal on the approve screen. Its meaning must never drift.                                                                                                             |
 | `<LoadingSkeleton>`     | Per-shape skeletons. No blank white flashes.                                                                                                                                      |
+
+Use `<AppImage>` for every rendered raster photo, including property photos,
+avatars, upload previews, and remote media. A `fill` image must sit in a
+positioned, dimensioned frame and pass a `sizes` value that matches its real
+breakpoints. Use `preload` only for the single likely LCP image; everything
+else stays lazy. SVG logos and browser/video metadata attributes are the only
+normal exceptions.
 
 The `<Price>` pattern generalizes to all of them — a thin component wrapping a
 pure function:

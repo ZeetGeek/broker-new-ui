@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -18,6 +17,7 @@ import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 import { PASSWORD_REQUIREMENTS, registerSchema, type RegisterValues } from "@/lib/validation/auth";
 
+import { AppImage } from "@/components/shared/app-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -296,12 +296,13 @@ export function RegisterWizard({
                                   focus-visible:outline-none
                                 "
                             >
-                                <Image
+                                <AppImage
                                     src={selected.avatarSrc}
                                     alt=""
                                     width={120}
                                     height={120}
                                     unoptimized
+                                    loading="eager"
                                     draggable={false}
                                     className="pointer-events-none rounded-card block-30 inline-30"
                                 />

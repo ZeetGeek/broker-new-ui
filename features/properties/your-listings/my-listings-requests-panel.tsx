@@ -8,10 +8,12 @@ import { Check, Clock, Send, X } from "lucide-react";
 
 import { brokerRequestsApi } from "@/lib/api/broker-requests";
 import { PREF_KEYS } from "@/lib/prefs/keys";
+import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { Price } from "@/components/shared/price";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 
@@ -83,9 +85,7 @@ function RequestRow({
 
     return (
         <article
-            className="
-          flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4
-        "
+            className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4"
         >
             <RequestIcon type={item.type} />
             <div
@@ -96,7 +96,12 @@ function RequestRow({
             >
                 <div className="flex flex-col gap-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <p className="body font-semibold text-ink">{item.title}</p>
+                        <PropertyTitleLink
+                            href={brokerOwnerListingDetailHref(item.propertyId)}
+                            className="body font-semibold"
+                        >
+                            {item.title}
+                        </PropertyTitleLink>
                         <Price
                             amountInr={item.amountInr}
                             isRent={item.isRent}

@@ -279,13 +279,15 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
                             pendingRepresentationId,
                         }}
                         detailsHref={brokerOwnerListingDetailHref(item.id)}
-                        priority={index < 5}
+                        priority={index === 0}
                         imageSizes={
                             isListView
                                 ? "(max-width: 768px) 55vw, 320px"
                                 : "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                         }
-                        isRequestPending={isBusy && (busyKind === "request" || busyKind === "cancel")}
+                        isRequestPending={
+                            isBusy && (busyKind === "request" || busyKind === "cancel")
+                        }
                         inviteActionPending={inviteActionPending}
                         onRequest={() => void handleRequest(item)}
                         onCancelRequest={

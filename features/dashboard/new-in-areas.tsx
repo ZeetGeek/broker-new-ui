@@ -2,17 +2,20 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 import { Bookmark, Clock3, MapPin, Users } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
 import { formatAreaSqft } from "@/lib/format/area";
+import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -81,13 +84,24 @@ function PropertyRow({
 }) {
     const isNew = property.listedHoursAgo < NEW_BADGE_HOURS;
     const competition = competitionStatus(property.brokerRequestCount);
+    const detailsHref = brokerOwnerListingDetailHref(property.id);
 
     return (
         <li className="flex items-center gap-3 sm:gap-4">
-            <PropertyThumb
-                src={property.imageSrc}
-                alt={`${property.configLabel} in ${property.locality}`}
-            />
+            <Link
+                href={detailsHref}
+                prefetch={false}
+                className="
+                  shrink-0 rounded-inner
+                  focus-visible:outline-2 focus-visible:outline-brand
+                "
+                aria-label={`Open ${property.configLabel} in ${property.locality}`}
+            >
+                <PropertyThumb
+                    src={property.imageSrc}
+                    alt={`${property.configLabel} in ${property.locality}`}
+                />
+            </Link>
 
             <div
                 className="
@@ -97,9 +111,9 @@ function PropertyRow({
             >
                 <div className="flex flex-col gap-1.5 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <p className="body font-semibold text-ink">
+                        <PropertyTitleLink href={detailsHref} className="body font-semibold">
                             {property.configLabel} · {property.locality}
-                        </p>
+                        </PropertyTitleLink>
                         <Price
                             amountInr={property.amountInr}
                             isRent={property.isRent}

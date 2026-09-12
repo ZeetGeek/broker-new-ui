@@ -8,6 +8,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { normalizeAvatarUrl } from "@/lib/auth/avatar";
 import { cn } from "@/lib/utils";
 
+import { AppImage } from "@/components/shared/app-image";
+
 const avatarVariants = cva("relative block overflow-hidden rounded-full", {
     variants: {
         size: {
@@ -23,6 +25,13 @@ const avatarVariants = cva("relative block overflow-hidden rounded-full", {
 });
 
 const avatarMediaClass = "block-full inline-full object-cover object-center";
+
+const avatarSizes = {
+    sm: "32px",
+    md: "40px",
+    lg: "48px",
+    fill: "(max-width: 768px) 40px, 48px",
+} as const;
 
 /**
  * boring-avatars renders a raw <svg>, where `object-cover` does nothing. It needs
@@ -48,10 +57,15 @@ export function UserAvatar({ name, imageUrl, size, className }: UserAvatarProps)
 
     return (
         <span className={cn(avatarVariants({ size }), className)}>
-            {showPhoto ? (
-                <img
+            {showPhoto && resolvedImageUrl ? (
+                <AppImage
                     src={resolvedImageUrl}
                     alt={name}
+                    fill
+                    sizes={avatarSizes[size ?? "md"]}
+                    quality={75}
+                    unoptimized={!resolvedImageUrl.includes("googleusercontent.com")}
+                    fallbackSrc={null}
                     className={avatarMediaClass}
                     onError={() => setFailedImageUrl(resolvedImageUrl)}
                 />

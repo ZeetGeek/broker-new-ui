@@ -16,6 +16,7 @@ import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
@@ -207,12 +208,12 @@ export function DealDetailModal({
                             <PropertyThumb src={deal.property.imageSrc} alt={deal.property.title} />
                         </Link>
                         <div className="flex flex-col gap-1 min-inline-0">
-                            <Link
+                            <PropertyTitleLink
                                 href={brokerPropertyDetailHref(deal.property.id)}
-                                className="body font-semibold text-ink hover:text-brand-text"
+                                className="body font-semibold"
                             >
                                 {deal.property.title}
-                            </Link>
+                            </PropertyTitleLink>
                             <Price
                                 amountInr={deal.property.amountInr}
                                 isRent={deal.property.isRent}

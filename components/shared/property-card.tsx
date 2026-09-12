@@ -40,9 +40,11 @@ import { cn } from "@/lib/utils";
 
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { AppImage } from "@/components/shared/app-image";
+import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertySharePopover } from "@/components/shared/property-share-popover";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -206,10 +208,9 @@ function BrowseRequestAction({
                                 size="md"
                                 variant="outline"
                                 className="
-                                  border-2 border-brand bg-brand-soft font-semibold
-                                  text-brand-text inline-full
-                                  hover:border-brand hover:bg-brand-soft-hover
-                                  hover:text-brand-text
+                                  border-2 border-brand bg-brand-soft font-semibold text-brand-text
+                                  inline-full
+                                  hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
                                 "
                                 disabled={inviteBusy}
                                 loading={inviteActionPending === "cancel"}
@@ -291,7 +292,9 @@ function BrowseRequestAction({
     return (
         <TooltipProvider>
             <Tooltip>
-                <TooltipTrigger render={<span className="inline-flex inline-full">{action}</span>} />
+                <TooltipTrigger
+                    render={<span className="inline-flex inline-full">{action}</span>}
+                />
                 <TooltipContent side="top" className="text-center max-inline-xs">
                     {tooltip}
                 </TooltipContent>
@@ -441,6 +444,7 @@ function BrowsePropertyCardPhoto({
               : [];
     const canCarousel = images.length > 1;
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [preparedThrough, setPreparedThrough] = useState(0);
     const [canScrollPrev, setCanScrollPrev] = useState(false);
     const [canScrollNext, setCanScrollNext] = useState(false);
 
@@ -455,7 +459,9 @@ function BrowsePropertyCardPhoto({
     useEffect(() => {
         if (!emblaApi) return;
         const onSelect = () => {
-            setSelectedIndex(emblaApi.selectedScrollSnap());
+            const nextIndex = emblaApi.selectedScrollSnap();
+            setSelectedIndex(nextIndex);
+            setPreparedThrough((current) => Math.max(current, nextIndex));
             setCanScrollPrev(emblaApi.canScrollPrev());
             setCanScrollNext(emblaApi.canScrollNext());
         };
@@ -482,7 +488,13 @@ function BrowsePropertyCardPhoto({
 
     const scrollNext = (event: MouseEvent) => {
         stopLinkNav(event);
+        setPreparedThrough((current) => Math.max(current, selectedIndex + 1));
         emblaApi?.scrollNext();
+    };
+
+    const prepareNextImage = () => {
+        if (!canScrollNext) return;
+        setPreparedThrough((current) => Math.max(current, selectedIndex + 1));
     };
 
     const dotCount = Math.min(images.length || 1, 5);
@@ -506,7 +518,7 @@ function BrowsePropertyCardPhoto({
                     : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
             )}
         >
-            <div
+            <HoverScaleRoot
                 className={cn(
                     BROWSE_CARD_PHOTO_INNER_CLASS,
                     "group/photo",
@@ -516,33 +528,43 @@ function BrowsePropertyCardPhoto({
                 )}
             >
                 {images.length > 0 ? (
-                    <div
-                        ref={emblaRef}
-                        className="overflow-hidden block-full inline-full"
-                        aria-roledescription="carousel"
-                        aria-label={`${alt} photos`}
-                    >
-                        <div className="flex touch-pan-y block-full">
-                            {images.map((src, index) => (
-                                <div
-                                    key={`${src}-${index}`}
-                                    className="relative shrink-0 grow-0 basis-full min-inline-0"
-                                    role="group"
-                                    aria-roledescription="slide"
-                                    aria-label={`Photo ${index + 1} of ${images.length}`}
-                                >
-                                    <AppImage
-                                        src={src}
-                                        alt={index === 0 ? alt : `${alt} — photo ${index + 1}`}
-                                        fill
-                                        sizes={imageSizes}
-                                        priority={priority && index === 0}
-                                        className="object-cover"
-                                    />
-                                </div>
-                            ))}
+                    <HoverScaleLayer className="absolute inset-0">
+                        <div
+                            ref={emblaRef}
+                            className="overflow-hidden block-full inline-full"
+                            onPointerEnter={prepareNextImage}
+                            onPointerDown={prepareNextImage}
+                            aria-roledescription="carousel"
+                            aria-label={`${alt} photos`}
+                        >
+                            <div className="flex touch-pan-y block-full">
+                                {images.map((src, index) => (
+                                    <div
+                                        key={`${src}-${index}`}
+                                        className="relative shrink-0 grow-0 basis-full min-inline-0"
+                                        role="group"
+                                        aria-roledescription="slide"
+                                        aria-label={`Photo ${index + 1} of ${images.length}`}
+                                    >
+                                        {index <= preparedThrough ? (
+                                            <AppImage
+                                                src={src}
+                                                alt={
+                                                    index === 0
+                                                        ? alt
+                                                        : `${alt} — photo ${index + 1}`
+                                                }
+                                                fill
+                                                sizes={imageSizes}
+                                                priority={priority && index === 0}
+                                                className="object-cover"
+                                            />
+                                        ) : null}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    </HoverScaleLayer>
                 ) : (
                     <div
                         className="
@@ -625,7 +647,10 @@ function BrowsePropertyCardPhoto({
                             aria-label="Next photo"
                             disabled={!canScrollNext}
                             onClick={scrollNext}
-                            onPointerDown={stopLinkNav}
+                            onPointerDown={(event) => {
+                                stopLinkNav(event);
+                                prepareNextImage();
+                            }}
                             className={cn(
                                 BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
                                 "inset-e-3.5",
@@ -668,7 +693,7 @@ function BrowsePropertyCardPhoto({
                         </div>
                     </>
                 ) : null}
-            </div>
+            </HoverScaleRoot>
         </div>
     );
 }
@@ -694,7 +719,7 @@ function BrowsePropertyCardOwner({ owner }: { owner: PropertyCardOwner }) {
                     }
                     className="
                       body-sm justify-start gap-1.5 truncate p-0 font-medium tracking-wide text-ink
-                      capitalize block-auto min-inline-0 max-inline-full
+                      capitalize block-auto max-inline-full min-inline-0
                     "
                 >
                     {owner.name}
@@ -900,27 +925,28 @@ function BrowsePropertyCard({
             >
                 <div className="flex flex-1 items-stretch gap-2 min-block-0">
                     <div className="flex flex-1 flex-col gap-1.5 min-block-0 min-inline-0">
-                        <Link
-                            href={detailsHref}
-                            prefetch={false}
-                            className="flex flex-col gap-1.5 min-inline-0"
-                        >
-                            <div className="flex flex-col gap-1.5 min-inline-0">
-                                <h3 className={PROPERTY_CARD_TITLE_CLASS}>{listing.title}</h3>
-                                <p className={PROPERTY_CARD_LOCATION_CLASS}>
-                                    <MapPin
-                                        aria-hidden
-                                        className="shrink-0 block-3.5 inline-3.5"
-                                        strokeWidth={1.75}
-                                    />
-                                    <span className="truncate capitalize">
-                                        {listing.locality}, {listing.city}
-                                    </span>
-                                </p>
-                            </div>
+                        <div className="flex flex-col gap-1.5 min-inline-0">
+                            <h3 className="max-inline-full min-inline-0">
+                                <PropertyTitleLink
+                                    href={detailsHref}
+                                    className={PROPERTY_CARD_TITLE_CLASS}
+                                >
+                                    {listing.title}
+                                </PropertyTitleLink>
+                            </h3>
+                            <p className={PROPERTY_CARD_LOCATION_CLASS}>
+                                <MapPin
+                                    aria-hidden
+                                    className="shrink-0 block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
+                                <span className="truncate capitalize">
+                                    {listing.locality}, {listing.city}
+                                </span>
+                            </p>
+                        </div>
 
-                            <BrowsePropertyCardSpecs listing={listing} />
-                        </Link>
+                        <BrowsePropertyCardSpecs listing={listing} />
 
                         <BrowsePropertyCardOwner owner={listing.owner} />
                     </div>
@@ -986,24 +1012,23 @@ function PropertyCardPhoto({
     const alt = `${listing.configLabel} ${listing.propertyTypeLabel}`;
 
     return (
-        <div
+        <HoverScaleRoot
             className={cn(
                 PROPERTY_CARD_PHOTO_CLASS,
                 layout === "list" ? PROPERTY_CARD_PHOTO_LIST_CLASS : PROPERTY_CARD_PHOTO_GRID_CLASS,
             )}
         >
             {listing.imageSrc ? (
-                <AppImage
-                    src={listing.imageSrc}
-                    alt={alt}
-                    fill
-                    sizes={imageSizes}
-                    priority={priority}
-                    className="
-                      object-cover transition-transform duration-160
-                      group-hover:scale-[1.02]
-                    "
-                />
+                <HoverScaleLayer className="absolute inset-0">
+                    <AppImage
+                        src={listing.imageSrc}
+                        alt={alt}
+                        fill
+                        sizes={imageSizes}
+                        priority={priority}
+                        className="object-cover"
+                    />
+                </HoverScaleLayer>
             ) : (
                 <div
                     className="
@@ -1034,7 +1059,7 @@ function PropertyCardPhoto({
                     </Badge>
                 ) : null}
             </div>
-        </div>
+        </HoverScaleRoot>
     );
 }
 
@@ -1135,7 +1160,7 @@ function RepresentedMeta({ listing }: { listing: RepresentedPropertyCardListing 
 function RepresentedPropertyCard({
     listing,
     layout = "grid",
-    detailsHref: _detailsHref,
+    detailsHref,
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     onShare,
@@ -1148,7 +1173,7 @@ function RepresentedPropertyCard({
     return (
         <article
             className={cn(
-                "group overflow-hidden rounded-card border border-border-warm bg-surface",
+                "overflow-hidden rounded-card border border-border-warm bg-surface",
                 layout === "list" ? "flex flex-row" : "flex flex-col",
                 className,
             )}
@@ -1160,12 +1185,14 @@ function RepresentedPropertyCard({
                 </p>
             </div>
 
-            <PropertyCardPhoto
-                listing={listing}
-                priority={priority}
-                imageSizes={imageSizes}
-                layout={layout}
-            />
+            <Link href={detailsHref} prefetch={false} className="block min-inline-0">
+                <PropertyCardPhoto
+                    listing={listing}
+                    priority={priority}
+                    imageSizes={imageSizes}
+                    layout={layout}
+                />
+            </Link>
 
             <div className="flex flex-1 flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -1178,7 +1205,11 @@ function RepresentedPropertyCard({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                    <p className="body-sm font-medium text-ink">{titleLine}</p>
+                    <h3 className="max-inline-full min-inline-0">
+                        <PropertyTitleLink href={detailsHref} className="body-sm font-medium">
+                            {titleLine}
+                        </PropertyTitleLink>
+                    </h3>
                     <p className="body-xs flex items-start gap-1.5 text-ink-muted">
                         <MapPin
                             aria-hidden
@@ -1353,9 +1384,7 @@ function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
     if (status === "published") {
         return (
             <Badge
-                className="
-              body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs
-            "
+                className="body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs"
             >
                 {OWNED_STATUS_LABEL[status]}
             </Badge>
@@ -1512,13 +1541,16 @@ function OwnedPropertyCard({
                 )}
             >
                 <div className="flex items-start gap-2">
-                    <Link
-                        href={detailsHref}
-                        prefetch={false}
-                        className="flex flex-1 flex-col gap-1.5 min-inline-0"
-                    >
+                    <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
                         <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h3 className={PROPERTY_CARD_TITLE_CLASS}>{listing.title}</h3>
+                            <h3 className="max-inline-full min-inline-0">
+                                <PropertyTitleLink
+                                    href={detailsHref}
+                                    className={PROPERTY_CARD_TITLE_CLASS}
+                                >
+                                    {listing.title}
+                                </PropertyTitleLink>
+                            </h3>
                             <p className={PROPERTY_CARD_LOCATION_CLASS}>
                                 <MapPin
                                     aria-hidden
@@ -1531,7 +1563,7 @@ function OwnedPropertyCard({
                             </p>
                         </div>
                         <BrowsePropertyCardSpecs listing={browse} />
-                    </Link>
+                    </div>
 
                     <PropertySharePopover
                         listing={{

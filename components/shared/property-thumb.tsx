@@ -3,6 +3,7 @@ import { Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "./app-image";
+import { HoverScaleMedia } from "./hover-scale-media";
 
 const THUMB_FRAME = `
   relative shrink-0 overflow-hidden rounded-inner bg-surface-muted
@@ -40,13 +41,15 @@ export function PropertyThumb({ src, alt, className, priority = false }: Propert
 
     return (
         <span className={cn(THUMB_FRAME, className)}>
-            <AppImage
-                src={src}
-                alt={alt}
-                fill
-                sizes="(max-width: 640px) 72px, 88px"
-                priority={priority}
-            />
+            <HoverScaleMedia className="absolute inset-0">
+                <AppImage
+                    src={src}
+                    alt={alt}
+                    fill
+                    sizes="(max-width: 640px) 72px, 88px"
+                    priority={priority}
+                />
+            </HoverScaleMedia>
         </span>
     );
 }

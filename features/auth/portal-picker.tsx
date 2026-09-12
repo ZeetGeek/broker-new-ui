@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
-
 import { cn } from "@/lib/utils";
+
+import { AppImage } from "@/components/shared/app-image";
 
 import { type Portal, PORTAL_OPTIONS } from "./portal";
 
@@ -59,12 +59,13 @@ export function PortalPicker({
                                     <span className="rounded-full bg-surface block-2 inline-2" />
                                 ) : null}
                             </span>
-                            <Image
+                            <AppImage
                                 src={option.avatarSrc}
                                 alt=""
                                 width={144}
                                 height={144}
                                 unoptimized
+                                loading="eager"
                                 draggable={false}
                                 className="
                                   pointer-events-none shrink-0 rounded-card block-32 inline-32

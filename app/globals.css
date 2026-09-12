@@ -234,6 +234,10 @@
     --shadow-xl: var(--shadow-xl);
 }
 
+::-webkit-scrollbar {
+    display: none;
+}
+
 /* Control height utilities — Tailwind's block/inline logical-size utilities
    only read the --spacing scale, not named --size- tokens, so the
    size-control steps (app/globals.css :root) need explicit @utility rules

@@ -55,7 +55,7 @@ export function MyListingsGrid({
                         editHref={brokerPropertyEditHref(item.id)}
                         onEdit={onEditListing ? () => onEditListing(item) : undefined}
                         onAddBuyer={onAddBuyer ? () => onAddBuyer(item) : undefined}
-                        priority={index < 5}
+                        priority={index === 0}
                         imageSizes={
                             isListView
                                 ? "(max-width: 768px) 55vw, 320px"

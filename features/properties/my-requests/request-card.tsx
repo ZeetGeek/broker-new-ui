@@ -26,8 +26,10 @@ import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { AvatarStack } from "@/components/shared/avatar-stack";
+import { HoverScaleMedia } from "@/components/shared/hover-scale-media";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -483,28 +485,28 @@ export function RequestCard({
                                 : `aspect-4/3 inline-full`,
                         )}
                     >
-                        <AppImage
-                            src={item.imageSrc}
-                            alt=""
-                            fill
-                            sizes="(max-width: 640px) 100vw, 13rem"
-                            className="object-cover"
-                        />
+                        <HoverScaleMedia className="absolute inset-0">
+                            <AppImage
+                                src={item.imageSrc}
+                                alt=""
+                                fill
+                                sizes="(max-width: 640px) 100vw, 13rem"
+                                className="object-cover"
+                            />
+                        </HoverScaleMedia>
                     </Link>
 
                     <div className="flex flex-1 flex-col gap-3 min-inline-0">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                             <div className="flex flex-col gap-1 min-inline-0">
-                                <Link
-                                    href={brokerOwnerListingDetailHref(item.propertyId)}
-                                    className="
-                                      body font-semibold text-ink transition-colors duration-160
-                                      hover:text-brand
-                                      focus-visible:underline focus-visible:outline-none
-                                    "
-                                >
-                                    {item.title}
-                                </Link>
+                                <h3 className="max-inline-full min-inline-0">
+                                    <PropertyTitleLink
+                                        href={brokerOwnerListingDetailHref(item.propertyId)}
+                                        className="body font-semibold"
+                                    >
+                                        {item.title}
+                                    </PropertyTitleLink>
+                                </h3>
                                 <p className="body-sm flex items-center gap-1 text-ink-muted">
                                     <MapPin
                                         aria-hidden
@@ -515,9 +517,9 @@ export function RequestCard({
                                 </p>
                             </div>
 
-                            <div
-                                className="flex shrink-0 flex-wrap items-center justify-end gap-1.5"
-                            >
+                            <div className="
+                              flex shrink-0 flex-wrap items-center justify-end gap-1.5
+                            ">
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={

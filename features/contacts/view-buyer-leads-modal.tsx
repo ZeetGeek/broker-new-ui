@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-
 import { Building2 } from "lucide-react";
 
 import { formatRelativePast } from "@/lib/format/date";
@@ -11,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
 
@@ -58,17 +57,17 @@ function LeadRow({ lead }: { lead: BuyerLead }) {
     const money = moneyLine(lead);
 
     return (
-        <article className="
-          flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-3
-        ">
+        <article
+            className="flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-3"
+        >
             <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5 min-inline-0">
-                    <Link
+                    <PropertyTitleLink
                         href={brokerPropertyDetailHref(lead.propertyId)}
-                        className="body-sm truncate font-semibold text-ink hover:text-brand-text"
+                        className="body-sm truncate font-semibold"
                     >
                         {lead.title}
-                    </Link>
+                    </PropertyTitleLink>
                     {lead.city ? <p className="body-xs text-ink-muted">{lead.city}</p> : null}
                 </div>
                 <Badge

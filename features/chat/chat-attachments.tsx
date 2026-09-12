@@ -6,6 +6,7 @@ import { Download, ExternalLink, FileText, Pause, Play } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { AppImage } from "@/components/shared/app-image";
 import { Button } from "@/components/ui/button";
 
 import type { ChatAttachment, ChatMedia } from "@/features/chat/types";
@@ -162,11 +163,6 @@ function AudioAttachment({ url, durationLabel }: { url: string; durationLabel?: 
     );
 }
 
-/**
- * Chat media uses a plain <img>, not next/image. Attachment hosts (R2) change
- * per environment; a failed remotePatterns check previously collapsed the
- * bubble to an empty green chip.
- */
 function MediaTile({
     item,
     overlayCount,
@@ -196,12 +192,15 @@ function MediaTile({
                       : "Open photo"
             }
         >
-            {/* eslint-disable-next-line @next/next/no-img-element -- dynamic R2 hosts */}
-            <img
+            <AppImage
                 src={item.src}
                 alt=""
+                fill
+                sizes="(max-width: 640px) 256px, 256px"
+                quality={75}
+                unoptimized
                 className="
-                  block object-cover transition-transform duration-160 block-full inline-full
+                  object-cover transition-transform duration-160
                   group-hover/tile:scale-[1.03]
                 "
             />
