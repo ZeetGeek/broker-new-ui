@@ -101,6 +101,19 @@ export type DealItem = {
     lastContactMethod?: DealContactMethod;
     /** ISO instant of the next follow-up. Optional — hide if missing. */
     nextFollowUpAt?: string | null;
+    /**
+     * Teammate currently working this deal, when the account is an
+     * organization with a team. Optional — hide the "Handled by" line when
+     * absent, and also when it matches the signed-in broker.
+     */
+    assignedAgent?: DealAssignedAgent | null;
+};
+
+/** A teammate a deal is assigned to. See `DealItem.assignedAgent`. */
+export type DealAssignedAgent = {
+    id: string;
+    name: string;
+    avatarUrl?: string;
 };
 
 /** One stage-change entry from the API `stageHistory` array. */

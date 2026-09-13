@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
+import { Fragment, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 
 import {
     Check,
@@ -18,12 +18,12 @@ import {
 } from "lucide-react";
 
 import { isOverBudget } from "@/lib/api/pipeline";
+import { getStoredUser } from "@/lib/auth/session";
 import { formatAreaSqft } from "@/lib/format/area";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
 import { Price } from "@/components/shared/price";
-import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,11 +34,15 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { ChipOverflowPopover, type ChipTone } from "@/features/pipeline/chip-overflow-popover";
 import {
+    type AttentionTone,
     daysInStage,
     daysWithoutMovement,
+    dealAttention,
     type OtherBuyer,
 } from "@/features/pipeline/deal-attention";
+import { DealPartiesPanel } from "@/features/pipeline/deal-parties-panel";
 import { MoreBuyersPopover } from "@/features/pipeline/more-buyers-popover";
 import { ContactedStageBlock } from "@/features/pipeline/stage-blocks/contacted-stage-block";
 import { NegotiationStageBlock } from "@/features/pipeline/stage-blocks/negotiation-stage-block";
@@ -52,8 +56,6 @@ import {
     type DealStatus,
     isLiveStage,
     nextStage,
-    SLOW_AFTER_DAYS,
-    STALLED_AFTER_DAYS,
 } from "@/features/pipeline/types";
 
 export type DealCardHandlers = {
@@ -76,77 +78,114 @@ function stopCard(event: MouseEvent) {
     event.stopPropagation();
 }
 
-function warningChip(deal: DealItem): { label: string; tone: "urgent" | "danger" } | null {
-    const days = daysWithoutMovement(deal);
-    if (days >= STALLED_AFTER_DAYS) return { label: `No response · ${days} days`, tone: "danger" };
-    if (days >= SLOW_AFTER_DAYS) return { label: `No response · ${days} days`, tone: "urgent" };
-    return null;
+type ChipCandidate = {
+    key: string;
+    label: string;
+    tone: ChipTone;
+    /** Overrides the plain label span — e.g. the other-buyers popover trigger. */
+    render?: ReactNode;
+};
+
+/** Blocker facts outrank money facts, which outrank plain neutral facts. */
+const CHIP_TONE_RANK: Record<ChipTone, number> = { danger: 0, urgent: 1, neutral: 2 };
+
+function chipToneClass(tone: ChipTone): string {
+    if (tone === "danger") return "bg-danger-soft text-danger";
+    if (tone === "urgent") return "bg-urgent-soft text-urgent";
+    return "bg-surface-muted text-ink";
 }
 
+function buildChipCandidates(
+    deal: DealItem,
+    live: boolean,
+    attention: AttentionTone,
+    otherBuyers: OtherBuyer[],
+    onView: (dealId: string) => void,
+): ChipCandidate[] {
+    const items: ChipCandidate[] = [];
+
+    if (!deal.owner.isRepresentationActive) {
+        items.push({ key: "repr", label: "Representation ended", tone: "danger" });
+    }
+
+    if (live) {
+        if (attention !== "healthy") {
+            const days = daysWithoutMovement(deal);
+            items.push({
+                key: "warning",
+                label: `No response · ${days} ${days === 1 ? "day" : "days"}`,
+                tone: attention === "quiet" ? "danger" : "urgent",
+            });
+        }
+
+        if (isOverBudget(deal)) {
+            items.push({ key: "budget", label: "Over budget", tone: "urgent" });
+        }
+
+        if (otherBuyers.length > 0) {
+            items.push({
+                key: "buyers",
+                label: `${otherBuyers.length} more ${otherBuyers.length === 1 ? "buyer" : "buyers"}`,
+                tone: "neutral",
+                render: (
+                    <MoreBuyersPopover
+                        count={otherBuyers.length}
+                        buyers={otherBuyers}
+                        onView={onView}
+                    />
+                ),
+            });
+        }
+    }
+
+    return items;
+}
+
+/**
+ * Never more than two chips on a card face. Everything past that ranks by
+ * urgency into a "+N" pill instead of competing for the same two slots.
+ */
 function CardChips({
     deal,
+    live,
+    attention,
     otherBuyers,
     onView,
 }: {
     deal: DealItem;
+    live: boolean;
+    attention: AttentionTone;
     otherBuyers: OtherBuyer[];
     onView: (dealId: string) => void;
 }) {
-    const chips: ReactNode[] = [];
-    const warning = warningChip(deal);
-    const overBudget = isOverBudget(deal);
-    const stageDays = daysInStage(deal);
+    const ranked = buildChipCandidates(deal, live, attention, otherBuyers, onView).sort(
+        (a, b) => CHIP_TONE_RANK[a.tone] - CHIP_TONE_RANK[b.tone],
+    );
+    const visible = ranked.slice(0, 2);
+    const overflow = ranked.slice(2);
 
-    if (warning) {
-        chips.push(
-            <span
-                key="warning"
-                className={cn(
-                    "body-xs rounded-sm px-2 py-0.5 font-semibold",
-                    warning.tone === "danger"
-                        ? "bg-danger-soft text-danger"
-                        : "bg-urgent-soft text-urgent",
-                )}
-            >
-                {warning.label}
-            </span>,
-        );
-    }
+    if (visible.length === 0) return null;
 
-    if (overBudget && chips.length < 2) {
-        chips.push(
-            <span
-                key="budget"
-                className="body-xs rounded-sm bg-urgent-soft px-2 py-0.5 font-medium text-urgent"
-            >
-                Over budget
-            </span>,
-        );
-    }
-
-    if (otherBuyers.length > 0 && chips.length < 2) {
-        chips.push(
-            <MoreBuyersPopover
-                key="buyers"
-                count={otherBuyers.length}
-                buyers={otherBuyers}
-                onView={onView}
-            />,
-        );
-    }
-
-    if (chips.length < 2) {
-        chips.push(
-            <span
-                key="stage"
-                className="body-xs rounded-sm bg-surface-muted px-2 py-0.5 font-medium text-ink"
-            >
-                in stage {stageDays} {stageDays === 1 ? "day" : "days"}
-            </span>,
-        );
-    }
-
-    return <div className="flex flex-wrap items-center gap-1.5">{chips}</div>;
+    return (
+        <div className="flex flex-wrap items-center gap-1.5">
+            {visible.map((chip) =>
+                chip.render ? (
+                    <Fragment key={chip.key}>{chip.render}</Fragment>
+                ) : (
+                    <span
+                        key={chip.key}
+                        className={cn(
+                            "body-xs rounded-sm px-2 py-0.5 font-semibold",
+                            chipToneClass(chip.tone),
+                        )}
+                    >
+                        {chip.label}
+                    </span>
+                ),
+            )}
+            {overflow.length > 0 ? <ChipOverflowPopover items={overflow} /> : null}
+        </div>
+    );
 }
 
 function FooterAction({
@@ -161,7 +200,7 @@ function FooterAction({
     children: ReactNode;
 }) {
     const className = `
-      body-xs flex flex-col items-center gap-0.5 rounded-sm px-1 py-0.5 font-medium text-ink
+      body-xs flex items-center gap-1 rounded-sm px-1.5 py-1 font-medium text-ink
       hover:bg-surface-muted
     `;
 
@@ -315,10 +354,19 @@ export function DealCard({
     dragHandleProps?: Record<string, unknown>;
 }) {
     const live = isLiveStage(deal.status);
+    const attention: AttentionTone = live ? dealAttention(deal) : "healthy";
     const advance = live ? nextStage(deal.status as DealStage) : null;
     const outcome = isOutcome(deal.status) ? DEAL_OUTCOME_META[deal.status] : null;
     const OutcomeIcon = outcome?.icon;
     const canCall = Boolean(deal.buyer.phoneDigits);
+    const stageDays = live ? daysInStage(deal) : 0;
+    const currentUserId = getStoredUser()?.id ?? null;
+    // The stage block itself already runs two lines in these cases — the
+    // "in stage" caption would be a third, redundant time-reference and
+    // would blow the card's height budget, so it steps aside instead.
+    const stageBlockIsTwoLine =
+        (deal.status === "contacted" && Boolean(deal.nextFollowUpAt)) ||
+        (deal.status === "negotiation" && deal.offerAmountInr != null && deal.offerStatus != null);
 
     const primary = (() => {
         if (!live) return null;
@@ -361,23 +409,30 @@ export function DealCard({
             className={cn(
                 `
                   flex cursor-pointer flex-col justify-between gap-2 overflow-hidden rounded-card
-                  border border-border-warm bg-surface p-3.5 shadow-xs
-                  transition-[box-shadow,transform] duration-160 max-block-65 min-block-58
+                  border p-4 shadow-xs transition-[box-shadow,transform] duration-160 max-block-80
+                  min-block-62
                   hover:-translate-y-0.5 hover:shadow-md
                 `,
                 isBusy && "pointer-events-none opacity-60",
                 isDragging && "cursor-grabbing opacity-40 shadow-md",
-                !live && "bg-surface-muted/40",
+                !live
+                    ? "border-border-warm bg-surface-muted/40"
+                    : attention === "quiet"
+                      ? "border-danger/35 bg-danger/3"
+                      : attention === "slow"
+                        ? "border-urgent/35 bg-urgent/3"
+                        : "border-border-warm bg-surface",
             )}
         >
             <div className="flex flex-col gap-2 min-block-0">
-                <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-inline-0">
-                        <UserAvatar name={deal.buyer.name} size="sm" fallback="initials" />
-                        <span className="body truncate font-semibold text-ink">
-                            {deal.buyer.name}
-                        </span>
-                    </div>
+                <div className="flex items-center gap-1.5">
+                    <p className="body-sm flex-1 truncate text-ink min-inline-0">
+                        {deal.property.configLabel} · {deal.property.locality} ·{" "}
+                        {formatAreaSqft(deal.property.areaSqft)}
+                    </p>
+                    <Badge variant="outline" className="shrink-0">
+                        {deal.property.isRent ? "Rent" : "Sale"}
+                    </Badge>
                     <DealCardMenu
                         deal={deal}
                         handlers={handlers}
@@ -386,21 +441,27 @@ export function DealCard({
                     />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="body-sm text-ink">
-                        {deal.property.configLabel} · {deal.property.locality} ·{" "}
-                        {formatAreaSqft(deal.property.areaSqft)}
-                    </p>
-                    <Badge variant="outline">{deal.property.isRent ? "Rent" : "Sale"}</Badge>
-                </div>
-
                 <Price
                     amountInr={deal.property.amountInr}
                     isRent={deal.property.isRent}
                     className="body font-bold"
                 />
 
-                <CardChips deal={deal} otherBuyers={otherBuyers} onView={handlers.onView} />
+                <DealPartiesPanel
+                    buyer={deal.buyer}
+                    owner={deal.owner}
+                    attention={live ? attention : null}
+                    assignedAgent={deal.assignedAgent}
+                    currentUserId={currentUserId}
+                />
+
+                <CardChips
+                    deal={deal}
+                    live={live}
+                    attention={attention}
+                    otherBuyers={otherBuyers}
+                    onView={handlers.onView}
+                />
 
                 {outcome && OutcomeIcon ? (
                     <Badge variant={outcome.badgeVariant} className="gap-1 inline-fit">
@@ -409,18 +470,28 @@ export function DealCard({
                     </Badge>
                 ) : null}
 
-                {live ? <StageMiddle deal={deal} /> : null}
+                {live ? (
+                    <div className="flex flex-col gap-3">
+                        <StageMiddle deal={deal} />
+                        {deal.status !== "new" && stageDays >= 1 && !stageBlockIsTwoLine ? (
+                            <p className="body-xs text-ink-muted">
+                                In stage {stageDays} {stageDays === 1 ? "day" : "days"}
+                            </p>
+                        ) : null}
+                    </div>
+                ) : null}
             </div>
 
             <div className="flex items-end justify-between gap-2">
                 <div className="flex items-end gap-1">
                     {canCall ? (
                         <>
-                            <FooterAction
-                                href={formatTelUrl(deal.buyer.phoneDigits)}
-                                label="Call"
-                            >
-                                <Phone aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                            <FooterAction href={formatTelUrl(deal.buyer.phoneDigits)} label="Call">
+                                <Phone
+                                    aria-hidden
+                                    className="block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
                             </FooterAction>
                             <FooterAction
                                 href={formatWhatsAppUrl(

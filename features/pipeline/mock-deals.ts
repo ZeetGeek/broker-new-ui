@@ -210,6 +210,8 @@ export const MOCK_DEALS: DealItem[] = [
         createdAt: daysAgo(12),
         lastContactMethod: "call",
         nextFollowUpAt: daysAhead(1, 4),
+        // A teammate is working this one — exercises the "Handled by" line.
+        assignedAgent: { id: "user_milan", name: "Milan Patel" },
     },
     // Stalled: no contact in 19 days, well past the 14-day mark.
     {

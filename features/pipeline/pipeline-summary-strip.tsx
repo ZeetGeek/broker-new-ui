@@ -57,12 +57,11 @@ export function PipelineSummaryStrip({
                     <div
                         key={chip.id}
                         className={cn(
-                            "body-sm flex items-center rounded-sm border font-medium",
-                            isActive &&
-                                !isUrgent &&
-                                "border-brand bg-brand-soft text-brand-text",
+                            "body-sm flex items-center rounded-sm border",
+                            isActive ? "font-semibold" : "font-medium",
+                            isActive && !isUrgent && "border-brand bg-brand-soft text-brand-text",
                             isActive && isUrgent && "border-urgent bg-urgent-soft text-urgent",
-                            !isActive && "border-border-warm bg-surface text-ink",
+                            !isActive && "border-border-warm bg-surface text-ink-muted",
                         )}
                     >
                         <button
