@@ -8,15 +8,21 @@ export function ConditionalField({ path, children }: { path: string; children: R
     const { isVisible, showHidden } = useFieldRules();
     const fieldIsVisible = isVisible(path);
     const [rendered, setRendered] = useState(fieldIsVisible);
+    const [open, setOpen] = useState(fieldIsVisible);
 
     useEffect(() => {
-        if (fieldIsVisible) {
-            setRendered(true);
-            return;
-        }
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        const timer = window.setTimeout(() => setRendered(false), reducedMotion ? 0 : 250);
-        return () => window.clearTimeout(timer);
+        const timers: number[] = [];
+
+        if (fieldIsVisible) {
+            timers.push(window.setTimeout(() => setRendered(true), 0));
+            timers.push(window.setTimeout(() => setOpen(true), reducedMotion ? 0 : 16));
+        } else {
+            timers.push(window.setTimeout(() => setOpen(false), 0));
+            timers.push(window.setTimeout(() => setRendered(false), reducedMotion ? 0 : 250));
+        }
+
+        return () => timers.forEach((timer) => window.clearTimeout(timer));
     }, [fieldIsVisible]);
 
     if (!rendered && !showHidden) return null;
@@ -33,7 +39,7 @@ export function ConditionalField({ path, children }: { path: string; children: R
                     `
                     : "t-acc min-inline-0"
             }
-            data-open={fieldIsVisible}
+            data-open={open}
             inert={!fieldIsVisible || undefined}
         >
             {!fieldIsVisible && showHidden ? (

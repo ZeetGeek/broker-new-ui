@@ -6,7 +6,6 @@ import { Clock3, Plus, Trash2 } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { PROPERTY_VISIBLE_WHEN } from "@/lib/visibility/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
@@ -133,7 +132,7 @@ export function StepHighlights() {
                             options={POSSESSION_TYPE_OPTIONS}
                             columns={3}
                         />
-                        {values.construction.possessionType === "custom_date" ? (
+                        {isVisible("construction.possessionDate") ? (
                             <TextField
                                 name="construction.possessionDate"
                                 label="Possession month"
@@ -191,78 +190,79 @@ export function StepHighlights() {
                             <ToggleField name="construction.bookingOpen" label="Booking open" />
                         </div>
                         {isVisible("construction.paymentSchedule") ? (
-                        <div className="space-y-3">
-                            {schedule.map((row, index) => (
-                                <div
-                                    key={row.id}
-                                    className="
-                                      grid items-end gap-3 rounded-control border border-border-warm
-                                      bg-surface p-3
-                                      md:grid-cols-[1fr_0.35fr_0.6fr_auto]
-                                    "
-                                >
-                                    <TextField
-                                        name={`construction.paymentSchedule.${index}.milestone`}
-                                        label="Payment milestone"
-                                    />
-                                    <NumberField
-                                        name={`construction.paymentSchedule.${index}.percent`}
-                                        label="Percent"
-                                        max={100}
-                                    />
-                                    <TextField
-                                        name={`construction.paymentSchedule.${index}.dueOn`}
-                                        label="Due on"
-                                        type="date"
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="icon-lg"
-                                        aria-label="Remove payment milestone"
-                                        onClick={() =>
-                                            setValue(
-                                                "construction.paymentSchedule",
-                                                schedule.filter(
-                                                    (_, itemIndex) => itemIndex !== index,
-                                                ),
-                                                { shouldDirty: true },
-                                            )
-                                        }
+                            <div className="space-y-3">
+                                {schedule.map((row, index) => (
+                                    <div
+                                        key={row.id}
                                         className="
-                                          flex items-center justify-center rounded-control border
-                                          border-border-warm text-danger block-12 inline-12
-                                          hover:bg-danger-soft
-                                          focus-visible:ring-3 focus-visible:ring-danger/20
+                                          grid items-end gap-3 rounded-control border
+                                          border-border-warm bg-surface p-3
+                                          md:grid-cols-[1fr_0.35fr_0.6fr_auto]
                                         "
                                     >
-                                        <Trash2 className="block-4 inline-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="md"
-                                onClick={() =>
-                                    setValue(
-                                        "construction.paymentSchedule",
-                                        [
-                                            ...schedule,
-                                            {
-                                                id: createClientId("payment"),
-                                                milestone: "",
-                                                percent: 0,
-                                                dueOn: "",
-                                            },
-                                        ],
-                                        { shouldDirty: true },
-                                    )
-                                }
-                            >
-                                <Plus aria-hidden /> Add payment milestone
-                            </Button>
-                        </div>
+                                        <TextField
+                                            name={`construction.paymentSchedule.${index}.milestone`}
+                                            label="Payment milestone"
+                                        />
+                                        <NumberField
+                                            name={`construction.paymentSchedule.${index}.percent`}
+                                            label="Percent"
+                                            max={100}
+                                        />
+                                        <TextField
+                                            name={`construction.paymentSchedule.${index}.dueOn`}
+                                            label="Due on"
+                                            type="date"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon-lg"
+                                            aria-label="Remove payment milestone"
+                                            onClick={() =>
+                                                setValue(
+                                                    "construction.paymentSchedule",
+                                                    schedule.filter(
+                                                        (_, itemIndex) => itemIndex !== index,
+                                                    ),
+                                                    { shouldDirty: true },
+                                                )
+                                            }
+                                            className="
+                                              flex items-center justify-center rounded-control
+                                              border border-border-warm text-danger block-12
+                                              inline-12
+                                              hover:bg-danger-soft
+                                              focus-visible:ring-3 focus-visible:ring-danger/20
+                                            "
+                                        >
+                                            <Trash2 className="block-4 inline-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="md"
+                                    onClick={() =>
+                                        setValue(
+                                            "construction.paymentSchedule",
+                                            [
+                                                ...schedule,
+                                                {
+                                                    id: createClientId("payment"),
+                                                    milestone: "",
+                                                    percent: 0,
+                                                    dueOn: "",
+                                                },
+                                            ],
+                                            { shouldDirty: true },
+                                        )
+                                    }
+                                >
+                                    <Plus aria-hidden /> Add payment milestone
+                                </Button>
+                            </div>
                         ) : null}
                     </div>
                 </WizardSection>
@@ -294,7 +294,7 @@ export function StepHighlights() {
                             options={SHOWING_CONTACT_OPTIONS}
                         />
                     </div>
-                    {PROPERTY_VISIBLE_WHEN.caretaker(values) ? (
+                    {isVisible("availability.caretakerName") ? (
                         <div className={FORM_GRID_CLASS}>
                             <TextField
                                 name="availability.caretakerName"

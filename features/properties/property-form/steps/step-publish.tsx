@@ -33,7 +33,6 @@ export function StepPublish() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const ownerPhone = watch("owner.phone");
     const verified = watch("owner.phoneVerified");
-    const sameWhatsApp = watch("owner.whatsappSameAsPhone");
     const isNri = watch("owner.isNri");
     const values = watch();
     const photoTags = new Set(values.media.photos.map((photo) => photo.tag));
@@ -78,7 +77,8 @@ export function StepPublish() {
                         ))}
                     </ul>
                     <p className="text-xs text-urgent/75">
-                        These are helpful checks, not blockers. Locality price comparison will appear when market data is connected.
+                        These are helpful checks, not blockers. Locality price comparison will
+                        appear when market data is connected.
                     </p>
                 </div>
             ) : null}
@@ -153,14 +153,12 @@ export function StepPublish() {
                         label="WhatsApp is the same number"
                         visibility="private"
                     />
-                    {!sameWhatsApp ? (
-                        <TextField
-                            name="owner.whatsappNumber"
-                            label="WhatsApp number"
-                            inputMode="tel"
-                            visibility="private"
-                        />
-                    ) : null}
+                    <TextField
+                        name="owner.whatsappNumber"
+                        label="WhatsApp number"
+                        inputMode="tel"
+                        visibility="private"
+                    />
                     <ToggleField
                         name="owner.isNri"
                         label="NRI owner"

@@ -10,6 +10,7 @@ export type FieldRule = {
     label?: (derived: DerivedPropertyFlags, values: PropertyDraftValues) => string;
     help?: string;
     minItems?: number;
+    keepWhenHidden?: boolean;
 };
 
 type RuleMap = Record<string, FieldRule>;
@@ -207,7 +208,7 @@ export const FIELD_RULES = {
         level: (d) => (d.isPlot ? "required" : "optional"),
         label: (d) => (d.isPlot ? "Plot area" : "Land area"),
     },
-    "area.areaSqft": { visible: () => false },
+    "area.areaSqft": { visible: () => false, keepWhenHidden: true },
     "area.loadingPercent": {
         visible: (_d, v) => Boolean(v.area.carpetArea && v.area.superBuiltUpArea),
     },
@@ -374,8 +375,10 @@ export const FIELD_RULES = {
         level: required,
         minItems: 1,
     },
-    "furnishing.negotiable": { visible: (d) => d.isFurnished },
-    "furnishing.furnitureRentExtra": { visible: (d) => d.isFurnished && d.isRentLike },
+    "furnishing.negotiable": { visible: (d) => !d.isPlot && d.isFurnished },
+    "furnishing.furnitureRentExtra": {
+        visible: (d) => !d.isPlot && d.isFurnished && d.isRentLike,
+    },
     "furnishing.kitchenType": {
         visible: (d, v) =>
             (d.isResidential && !d.isPlot) || v.basics.propertyType === "restaurant_space",
@@ -385,10 +388,10 @@ export const FIELD_RULES = {
     "amenities.convenience": { visible: (d) => d.isInBuilding },
     "amenities.flatFeatures": { visible: (d) => d.isResidential && !d.isPlot, level: recommended },
     "amenities.commercial": {
-        visible: (d) => d.isCommercial || d.isIndustrial,
+        visible: (d) => !d.isPlot && (d.isCommercial || d.isIndustrial),
         level: recommended,
     },
-    "amenities.land": { visible: (d) => d.isPlot },
+    "amenities.land": { visible: () => false },
 
     "highlights.chips": { level: recommended, label: () => "Highlights" },
     "highlights.whyBuyThis": {},
@@ -598,9 +601,12 @@ export function levelOf(path: string, values: PropertyDraftValues): FieldLevel {
 }
 
 export function labelOf(path: string, values: PropertyDraftValues, fallback?: string): string {
-    return (
-        ruleFor(path)?.label?.(derive(values), values) ?? fallback ?? path.split(".").at(-1) ?? path
-    );
+    const leaf = path.split(".").at(-1) ?? path;
+    const humanLeaf = leaf
+        .replace(/([a-z\d])([A-Z])/g, "$1 $2")
+        .replace(/_/g, " ")
+        .replace(/^\w/, (character) => character.toUpperCase());
+    return ruleFor(path)?.label?.(derive(values), values) ?? fallback ?? humanLeaf;
 }
 
 export function isStepVisible(step: PropertyFormStep, values: PropertyDraftValues): boolean {
@@ -659,7 +665,9 @@ function deleteAtPath(target: Record<string, unknown>, path: string) {
 export function stripHidden(values: PropertyDraftValues): PropertyDraftValues {
     const stripped = structuredClone(values) as unknown as Record<string, unknown>;
     for (const path of Object.keys(FIELD_RULES as RuleMap)) {
-        if (!path.includes("*") && !isVisible(path, values)) deleteAtPath(stripped, path);
+        const rule = (FIELD_RULES as RuleMap)[path];
+        if (!path.includes("*") && !rule?.keepWhenHidden && !isVisible(path, values))
+            deleteAtPath(stripped, path);
     }
     return stripped as unknown as PropertyDraftValues;
 }

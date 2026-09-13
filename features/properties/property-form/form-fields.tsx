@@ -934,7 +934,7 @@ export function WizardSection({
     children,
     tone = "default",
 }: {
-    title: string;
+    title: ReactNode;
     description?: string;
     children: ReactNode;
     tone?: "default" | "private";

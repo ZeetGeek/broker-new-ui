@@ -162,7 +162,7 @@ export function StepCommission() {
                                 description="Enter a different percentage for the owner and buyer."
                                 visibility="private"
                             />
-                            {values.commission.sale.separateRates ? (
+                            {isVisible("commission.sale.ownerPercent") ? (
                                 <div className={FORM_GRID_CLASS}>
                                     <NumberField
                                         name="commission.sale.ownerPercent"
@@ -347,7 +347,7 @@ export function StepCommission() {
                     />
                 </div>
                 <div className={`mbs-5 ${FORM_GRID_CLASS}`}>
-                    {values.commission.tax.gstApplicable ? (
+                    {isVisible("commission.tax.gstMode") ? (
                         <SelectField
                             name="commission.tax.gstMode"
                             label="GST treatment"
@@ -355,7 +355,7 @@ export function StepCommission() {
                             visibility="private"
                         />
                     ) : null}
-                    {values.commission.tax.tdsApplicable ? (
+                    {isVisible("commission.tax.tdsRate") ? (
                         <NumberField
                             name="commission.tax.tdsRate"
                             label="TDS rate (%)"
@@ -455,9 +455,7 @@ export function StepCommission() {
                             </Button>
                             <p
                                 className={`text-sm font-semibold ${
-                                    milestoneTotal === 100
-                                        ? `text-brand-text`
-                                        : `text-danger`
+                                    milestoneTotal === 100 ? `text-brand-text` : `text-danger`
                                 }`}
                             >
                                 Total: {milestoneTotal}%{" "}

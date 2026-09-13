@@ -1309,13 +1309,17 @@
     transform-origin: center;
     transition: transform var(--acc-chevron) var(--acc-ease);
 }
-.t-acc-chevron path { vector-effect: non-scaling-stroke; }
+.t-acc-chevron path {
+    vector-effect: non-scaling-stroke;
+}
 .t-acc[data-open="true"] .t-acc-chevron {
     transform: scaleY(-1);
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .t-acc-panel, .t-acc-panel-inner, .t-acc-chevron {
+    .t-acc-panel,
+    .t-acc-panel-inner,
+    .t-acc-chevron {
         transition: none !important;
     }
 }

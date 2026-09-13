@@ -133,7 +133,7 @@ export function StepPricing() {
                     </div>
                 </WizardSection>
 
-                {!values.sale.allInclusivePrice ? (
+                {isVisible("sale.otherCharges") ? (
                     <WizardSection
                         title="Charges"
                         description="Add every amount a buyer should know before making an offer."
@@ -165,7 +165,7 @@ export function StepPricing() {
                                 <ToggleField name="sale.gstOnProperty" label="GST on property" />
                             ) : null}
                         </div>
-                        {values.sale.gstOnProperty ? (
+                        {isVisible("sale.gstOnPropertyPercent") ? (
                             <div className="mbs-5 max-inline-xs">
                                 <NumberField
                                     name="sale.gstOnPropertyPercent"
@@ -263,7 +263,7 @@ export function StepPricing() {
                             visibility="private"
                         />
                     </div>
-                    {values.sale.loanAvailable ? (
+                    {isVisible("sale.approvedBanks") ? (
                         <div className="mbs-5">
                             <MultiChipField
                                 name="sale.approvedBanks"
@@ -272,7 +272,7 @@ export function StepPricing() {
                             />
                         </div>
                     ) : null}
-                    {values.sale.existingLoanOnProperty ? (
+                    {isVisible("sale.existingLoanBank") ? (
                         <div className={`mbs-5 ${FORM_GRID_CLASS}`}>
                             <SelectField
                                 name="sale.existingLoanBank"
@@ -295,7 +295,7 @@ export function StepPricing() {
     return (
         <div className="space-y-8">
             <WizardSection
-                title={values.basics.listingFor === "pg" ? "PG rent" : "Rent and deposit"}
+                title={derived.isPg ? "PG rent" : "Rent and deposit"}
                 description="Record the full move-in amount, not only the monthly rent."
             >
                 <div className={FORM_GRID_CLASS}>
@@ -379,7 +379,7 @@ export function StepPricing() {
                         options={MAINTENANCE_MODE_OPTIONS}
                         columns={2}
                     />
-                    {values.rent.maintenanceMode === "extra" ? (
+                    {isVisible("rent.maintenanceAmount") ? (
                         <div className={FORM_GRID_CLASS}>
                             <CurrencyField
                                 name="rent.maintenanceAmount"

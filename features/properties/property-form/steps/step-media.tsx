@@ -84,9 +84,13 @@ export function StepMedia({
             (type) => relevantDocumentTypes.add(type),
         );
     } else {
-        ["sale_deed", "index_2", "property_tax_receipt", "society_noc", "share_certificate"].forEach(
-            (type) => relevantDocumentTypes.add(type),
-        );
+        [
+            "sale_deed",
+            "index_2",
+            "property_tax_receipt",
+            "society_noc",
+            "share_certificate",
+        ].forEach((type) => relevantDocumentTypes.add(type));
     }
     if (derived.isCommercial || derived.isIndustrial) {
         ["occupancy_certificate", "fire_noc", "property_tax_receipt"].forEach((type) =>
@@ -312,16 +316,13 @@ export function StepMedia({
                 <div className="mbs-4 flex items-center justify-between gap-4">
                     <p
                         className={`text-sm font-semibold ${
-                            usablePhotoCount >= 3
-                                ? "text-brand-text"
-                                : `text-ink-muted`
+                            usablePhotoCount >= 3 ? "text-brand-text" : `text-ink-muted`
                         }`}
                     >
                         {usablePhotoCount >= 3 ? (
                             <Check className="me-1.5 inline block-4 inline-4" aria-hidden />
                         ) : null}
-                        {usablePhotoCount}/3 minimum ·{" "}
-                        {photos.length}/{MAX_PHOTOS} total
+                        {usablePhotoCount}/3 minimum · {photos.length}/{MAX_PHOTOS} total
                     </p>
                     <p className="text-xs text-ink-muted">
                         Photos stay queued locally until the current API upload runs.
@@ -353,14 +354,23 @@ export function StepMedia({
                                             sizes="(max-width: 640px) 100vw, 33vw"
                                         />
                                     ) : (
-                                        <div className="
-                                          flex flex-col items-center justify-center gap-2 px-4
-                                          text-center block-full
-                                        ">
-                                            <CircleAlert className="text-danger block-6 inline-6" aria-hidden />
-                                            <p className="
-                                              line-clamp-2 text-xs font-semibold text-ink
-                                            ">{photo.name}</p>
+                                        <div
+                                            className="
+                                              flex flex-col items-center justify-center gap-2 px-4
+                                              text-center block-full
+                                            "
+                                        >
+                                            <CircleAlert
+                                                className="text-danger block-6 inline-6"
+                                                aria-hidden
+                                            />
+                                            <p
+                                                className="
+                                                  line-clamp-2 text-xs font-semibold text-ink
+                                                "
+                                            >
+                                                {photo.name}
+                                            </p>
                                         </div>
                                     )}
                                     <span
@@ -376,11 +386,15 @@ export function StepMedia({
                                         )}
                                     >
                                         {photo.status === "processing" ? (
-                                            <LoaderCircle className="
-                                              animate-spin block-3.5 inline-3.5
-                                            " aria-hidden />
+                                            <LoaderCircle
+                                                className="animate-spin block-3.5 inline-3.5"
+                                                aria-hidden
+                                            />
                                         ) : photo.status === "error" ? (
-                                            <CircleAlert className="block-3.5 inline-3.5" aria-hidden />
+                                            <CircleAlert
+                                                className="block-3.5 inline-3.5"
+                                                aria-hidden
+                                            />
                                         ) : (
                                             <Check className="block-3.5 inline-3.5" aria-hidden />
                                         )}
@@ -422,10 +436,12 @@ export function StepMedia({
                                 </div>
                                 <div className="space-y-3 p-3">
                                     {photo.status === "error" ? (
-                                        <div className="
-                                          rounded-control bg-danger-soft px-3 py-2 text-xs/5
-                                          text-danger
-                                        ">
+                                        <div
+                                            className="
+                                              rounded-control bg-danger-soft px-3 py-2 text-xs/5
+                                              text-danger
+                                            "
+                                        >
                                             {photo.errorMessage ??
                                                 "This format could not be prepared. Retry or choose another file."}
                                         </div>
@@ -442,18 +458,42 @@ export function StepMedia({
                                     />
                                     <div className="flex flex-wrap gap-2">
                                         {!photo.isCover && photo.status !== "error" ? (
-                                            <Button type="button" variant="outline" size="sm" onClick={() => makeCover(index)}>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => makeCover(index)}
+                                            >
                                                 <Star aria-hidden /> Make cover
                                             </Button>
                                         ) : null}
-                                        <Button type="button" variant="ghost" size="sm" aria-label={`Move ${photo.name} left`} disabled={index === 0} onClick={() => movePhoto(index, index - 1)}>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            aria-label={`Move ${photo.name} left`}
+                                            disabled={index === 0}
+                                            onClick={() => movePhoto(index, index - 1)}
+                                        >
                                             <ArrowLeft aria-hidden />
                                         </Button>
-                                        <Button type="button" variant="ghost" size="sm" aria-label={`Move ${photo.name} right`} disabled={index === photos.length - 1} onClick={() => movePhoto(index, index + 1)}>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            aria-label={`Move ${photo.name} right`}
+                                            disabled={index === photos.length - 1}
+                                            onClick={() => movePhoto(index, index + 1)}
+                                        >
                                             <ArrowRight aria-hidden />
                                         </Button>
                                         {photo.status === "error" ? (
-                                            <Button type="button" variant="outline" size="sm" onClick={() => retryPhoto(photo.id)}>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => retryPhoto(photo.id)}
+                                            >
                                                 <RefreshCw aria-hidden /> Retry
                                             </Button>
                                         ) : null}
@@ -579,9 +619,8 @@ export function StepMedia({
                             >
                                 <SelectValue>
                                     {(value) =>
-                                        documentTypeOptions.find(
-                                            (option) => option.value === value,
-                                        )?.label ?? "Choose a document type"
+                                        documentTypeOptions.find((option) => option.value === value)
+                                            ?.label ?? "Choose a document type"
                                     }
                                 </SelectValue>
                             </SelectTrigger>
@@ -627,14 +666,10 @@ export function StepMedia({
                                             aria-hidden
                                         />
                                         <div className="min-inline-0">
-                                            <p
-                                                className="truncate text-sm font-bold text-ink"
-                                            >
+                                            <p className="truncate text-sm font-bold text-ink">
                                                 {document.fileName}
                                             </p>
-                                            <p
-                                                className="text-xs text-ink-muted"
-                                            >
+                                            <p className="text-xs text-ink-muted">
                                                 {
                                                     DOCUMENT_TYPE_OPTIONS.find(
                                                         (option) => option.value === document.type,
@@ -725,8 +760,11 @@ function FilePicker({
             >
                 <Upload className="text-brand block-5 inline-5" aria-hidden />
                 <span className="mbs-2 text-sm font-semibold text-ink">
-                    {value || <FieldLabel path={path}>{label}</FieldLabel>}
+                    <FieldLabel path={path}>{label}</FieldLabel>
                 </span>
+                {value ? (
+                    <span className="truncate text-xs text-ink-muted max-inline-full">{value}</span>
+                ) : null}
                 <Input
                     id={inputId}
                     type="file"

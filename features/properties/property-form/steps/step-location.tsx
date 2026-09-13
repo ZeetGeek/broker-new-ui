@@ -12,6 +12,8 @@ import { createClientId } from "@/lib/client-id";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 
+import { ConditionalField } from "@/components/property/fields/conditional-field";
+import { FieldLabel } from "@/components/property/fields/field-label";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -122,8 +124,8 @@ function scoreDuplicateCandidate(
     const matchedWeight = matched.reduce((total, field) => total + field.weight, 0);
     const score = totalWeight > 0 ? matchedWeight / totalWeight : 0;
     const matchedKeys = new Set(matched.map(({ key }) => key));
-    const hasContext = ["city", "locality", "subLocality", "pincode", "project"].some(
-        (key) => matchedKeys.has(key as keyof LocationIdentity),
+    const hasContext = ["city", "locality", "subLocality", "pincode", "project"].some((key) =>
+        matchedKeys.has(key as keyof LocationIdentity),
     );
     const likely =
         matchedKeys.has("fullAddress") ||
@@ -238,7 +240,9 @@ export function StepLocation({ currentPropertyId }: { currentPropertyId?: string
             );
             if (requestId !== checkRequestRef.current) return;
             const fulfilled = pages.filter(
-                (page): page is PromiseFulfilledResult<Awaited<ReturnType<typeof myListingsApi.list>>> =>
+                (
+                    page,
+                ): page is PromiseFulfilledResult<Awaited<ReturnType<typeof myListingsApi.list>>> =>
                     page.status === "fulfilled",
             );
             if (!fulfilled.length) throw new Error("All duplicate searches failed");
@@ -468,7 +472,9 @@ export function StepLocation({ currentPropertyId }: { currentPropertyId?: string
                         <div>
                             <MapPin className="mx-auto text-brand block-8 inline-8" aria-hidden />
                             <p className="mbs-3 text-sm font-semibold text-ink">
-                                {lat != null && lng != null ? "Pin ready to confirm" : "No map pin yet"}
+                                {lat != null && lng != null
+                                    ? "Pin ready to confirm"
+                                    : "No map pin yet"}
                             </p>
                             <p className="mbs-1 text-xs text-ink-muted">
                                 {lat != null && lng != null
@@ -536,64 +542,68 @@ export function StepLocation({ currentPropertyId }: { currentPropertyId?: string
                 </div>
             </WizardSection>
 
-            <WizardSection
-                title="Nearby places"
-                description="Add useful places and the distance from the property."
-            >
-                <div className="space-y-3">
-                    {nearbyPlaces.map((place, index) => (
-                        <div
-                            key={place.id}
-                            className="
-                              grid items-end gap-3 rounded-control border border-border-warm
-                              bg-surface p-3
-                              md:grid-cols-[0.8fr_1.3fr_0.6fr_auto]
-                            "
-                        >
-                            <SelectField
-                                name={`location.nearbyPlaces.${index}.type`}
-                                label="Place type"
-                                options={NEARBY_PLACE_TYPE_OPTIONS}
-                            />
-                            <TextField
-                                name={`location.nearbyPlaces.${index}.name`}
-                                label="Name"
-                                placeholder="e.g. Fountainhead School"
-                            />
-                            <NumberField
-                                name={`location.nearbyPlaces.${index}.distanceKm`}
-                                label="Distance (km)"
-                                step={0.1}
-                            />
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="icon-lg"
-                                aria-label="Remove nearby place"
-                                onClick={() =>
-                                    setValue(
-                                        "location.nearbyPlaces",
-                                        nearbyPlaces.filter((_, itemIndex) => itemIndex !== index),
-                                        { shouldDirty: true },
-                                    )
-                                }
+            <ConditionalField path="location.nearbyPlaces">
+                <WizardSection
+                    title={<FieldLabel path="location.nearbyPlaces">Nearby places</FieldLabel>}
+                    description="Add useful places and the distance from the property."
+                >
+                    <div className="space-y-3">
+                        {nearbyPlaces.map((place, index) => (
+                            <div
+                                key={place.id}
                                 className="
-                                  flex items-center justify-center rounded-control border
-                                  border-border-warm text-danger block-12 inline-12
-                                  hover:bg-danger-soft
-                                  focus-visible:ring-3 focus-visible:ring-danger/20
+                                  grid items-end gap-3 rounded-control border border-border-warm
+                                  bg-surface p-3
+                                  md:grid-cols-[0.8fr_1.3fr_0.6fr_auto]
                                 "
                             >
-                                <Trash2 className="block-4 inline-4" aria-hidden />
-                            </Button>
-                        </div>
-                    ))}
-                    <Button type="button" variant="outline" size="md" onClick={addNearbyPlace}>
-                        <Plus aria-hidden />
-                        Add nearby place
-                    </Button>
-                </div>
-            </WizardSection>
+                                <SelectField
+                                    name={`location.nearbyPlaces.${index}.type`}
+                                    label="Place type"
+                                    options={NEARBY_PLACE_TYPE_OPTIONS}
+                                />
+                                <TextField
+                                    name={`location.nearbyPlaces.${index}.name`}
+                                    label="Name"
+                                    placeholder="e.g. Fountainhead School"
+                                />
+                                <NumberField
+                                    name={`location.nearbyPlaces.${index}.distanceKm`}
+                                    label="Distance (km)"
+                                    step={0.1}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-lg"
+                                    aria-label="Remove nearby place"
+                                    onClick={() =>
+                                        setValue(
+                                            "location.nearbyPlaces",
+                                            nearbyPlaces.filter(
+                                                (_, itemIndex) => itemIndex !== index,
+                                            ),
+                                            { shouldDirty: true },
+                                        )
+                                    }
+                                    className="
+                                      flex items-center justify-center rounded-control border
+                                      border-border-warm text-danger block-12 inline-12
+                                      hover:bg-danger-soft
+                                      focus-visible:ring-3 focus-visible:ring-danger/20
+                                    "
+                                >
+                                    <Trash2 className="block-4 inline-4" aria-hidden />
+                                </Button>
+                            </div>
+                        ))}
+                        <Button type="button" variant="outline" size="md" onClick={addNearbyPlace}>
+                            <Plus aria-hidden />
+                            Add nearby place
+                        </Button>
+                    </div>
+                </WizardSection>
+            </ConditionalField>
         </div>
     );
 }
