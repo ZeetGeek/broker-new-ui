@@ -1,5 +1,12 @@
 import type { LucideIcon } from "lucide-react";
-import { CalendarCheck, CircleCheck, CircleSlash, Handshake, PhoneCall, Sparkles } from "lucide-react";
+import {
+    CalendarCheck,
+    CircleCheck,
+    CircleSlash,
+    Handshake,
+    PhoneCall,
+    Sparkles,
+} from "lucide-react";
 
 import type { DealLostReason, DealOutcome, DealStage, DealStatus } from "@/features/pipeline/types";
 
@@ -17,6 +24,10 @@ export type StageMeta = {
     dotClass: string;
     /** Verb for the button that advances a deal into this stage. */
     advanceLabel: string;
+    /** Soft pill on the column header. Pipeline board only. */
+    pillClass: string;
+    /** Soft tint for the whole column track. */
+    trackClass: string;
 };
 
 export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
@@ -26,6 +37,8 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: Sparkles,
         dotClass: "bg-stage-1",
         advanceLabel: "Move to new",
+        pillClass: "bg-pipe-new-soft text-pipe-new",
+        trackClass: "bg-pipe-new-soft/20",
     },
     contacted: {
         label: "Contacted",
@@ -33,6 +46,8 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: PhoneCall,
         dotClass: "bg-stage-2",
         advanceLabel: "Mark contacted",
+        pillClass: "bg-urgent-soft text-urgent",
+        trackClass: "bg-urgent-soft/20",
     },
     visit: {
         label: "Site visit",
@@ -40,6 +55,8 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: CalendarCheck,
         dotClass: "bg-stage-3",
         advanceLabel: "Book a visit",
+        pillClass: "bg-pipe-visit-soft text-pipe-visit",
+        trackClass: "bg-pipe-visit-soft/20",
     },
     negotiation: {
         label: "Negotiation",
@@ -47,6 +64,8 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: Handshake,
         dotClass: "bg-stage-4",
         advanceLabel: "Start negotiating",
+        pillClass: "bg-brand-soft text-brand-text",
+        trackClass: "bg-brand-soft/20",
     },
 };
 

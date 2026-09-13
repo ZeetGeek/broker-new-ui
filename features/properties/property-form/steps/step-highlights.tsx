@@ -6,6 +6,7 @@ import { Clock3, Plus, Trash2 } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { PROPERTY_VISIBLE_WHEN } from "@/lib/visibility/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";

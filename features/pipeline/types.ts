@@ -93,6 +93,14 @@ export type DealItem = {
     offerAmountInr: number | null;
     /** Owner response on the latest offer. Null when no offer yet. */
     offerStatus: "pending" | "accepted" | "rejected" | null;
+    /** When the lead was created. Optional — hide "Added N days ago" if missing. */
+    createdAt?: string | null;
+    /** How the buyer arrived. Optional — hide the source chip if missing. */
+    source?: DealSource;
+    /** How the last contact happened. Optional — hide the method if missing. */
+    lastContactMethod?: DealContactMethod;
+    /** ISO instant of the next follow-up. Optional — hide if missing. */
+    nextFollowUpAt?: string | null;
 };
 
 /** One stage-change entry from the API `stageHistory` array. */
@@ -119,11 +127,24 @@ export type DealsFilters = {
     /** "" means every live stage. Terminal states use the `done` view. */
     stage: DealStage | "";
     sort: DealSort;
+    dealType: DealTypeFilter;
+    locality: string;
+    ownerName: string;
 };
 
 export type DealSort = "recent" | "stalled" | "price_desc" | "price_asc" | "visit_soon";
 
 export type DealsView = "board" | "done";
+
+export type DealBoardLayout = "board" | "list";
+
+export type PipelineSummaryChip = "running" | "in_play" | "quiet" | "finished";
+
+export type DealTypeFilter = "" | "rent" | "sale";
+
+export type DealSource = "website" | "walk_in" | "reference";
+
+export type DealContactMethod = "call" | "whatsapp" | "visit";
 
 export type StageCounts = Record<DealStage, number>;
 
@@ -152,6 +173,9 @@ export const DEFAULT_DEALS_FILTERS: DealsFilters = {
     q: "",
     stage: "",
     sort: "recent",
+    dealType: "",
+    locality: "",
+    ownerName: "",
 };
 
 /**
@@ -160,6 +184,8 @@ export const DEFAULT_DEALS_FILTERS: DealsFilters = {
  * places disagreeing about what "gone quiet" means would be worse than the
  * number being slightly wrong.
  */
+export const SLOW_AFTER_DAYS = 7;
+
 export const STALLED_AFTER_DAYS = 14;
 
 /** Board order. Also the order a deal advances through. */

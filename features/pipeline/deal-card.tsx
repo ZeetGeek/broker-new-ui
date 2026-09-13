@@ -1,35 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 import {
-    ArrowRight,
-    CalendarClock,
     Check,
     CircleSlash,
     Eye,
     Handshake,
-    Lock,
     MessageCircle,
     MoreHorizontal,
+    Phone,
     PhoneCall,
-    TriangleAlert,
+    Pin,
+    PinOff,
+    StickyNote,
     Undo2,
 } from "lucide-react";
 
-import { daysSince, hasUpcomingVisit, isOverBudget, isStalled } from "@/lib/api/pipeline";
+import { isOverBudget } from "@/lib/api/pipeline";
 import { formatAreaSqft } from "@/lib/format/area";
-import { formatRelativePast, formatShowingWhen } from "@/lib/format/date";
-import { formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatPriceInr } from "@/lib/format/price";
-import { brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
-import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
-import { PropertyThumb } from "@/components/shared/property-thumb";
-import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,14 +33,18 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import {
-    DEAL_LOST_REASON_LABEL,
-    DEAL_OUTCOME_META,
-    DEAL_STAGE_META,
-    isOutcome,
-} from "@/features/pipeline/stage-meta";
+    daysInStage,
+    daysWithoutMovement,
+    type OtherBuyer,
+} from "@/features/pipeline/deal-attention";
+import { MoreBuyersPopover } from "@/features/pipeline/more-buyers-popover";
+import { ContactedStageBlock } from "@/features/pipeline/stage-blocks/contacted-stage-block";
+import { NegotiationStageBlock } from "@/features/pipeline/stage-blocks/negotiation-stage-block";
+import { NewStageBlock } from "@/features/pipeline/stage-blocks/new-stage-block";
+import { VisitStageBlock } from "@/features/pipeline/stage-blocks/visit-stage-block";
+import { DEAL_OUTCOME_META, DEAL_STAGE_META, isOutcome } from "@/features/pipeline/stage-meta";
 import {
     DEAL_STAGE_ORDER,
     type DealItem,
@@ -55,6 +52,8 @@ import {
     type DealStatus,
     isLiveStage,
     nextStage,
+    SLOW_AFTER_DAYS,
+    STALLED_AFTER_DAYS,
 } from "@/features/pipeline/types";
 
 export type DealCardHandlers = {
@@ -65,219 +64,128 @@ export type DealCardHandlers = {
     onLose: (dealId: string) => void;
     onReopen: (dealId: string, stage: DealStage) => void;
     onMakeOffer: (dealId: string) => void;
+    onPin: (dealId: string) => void;
+    onNote: (dealId: string) => void;
 };
 
-/** Broker can submit/revise unless the lead is closed or an offer is already pending. */
-export function canMakeOffer(deal: DealItem): boolean {
-    if (!isLiveStage(deal.status)) return false;
-    return deal.offerStatus !== "pending";
+function whatsappMessage(deal: DealItem): string {
+    return `Hi ${deal.buyer.name}, this is about ${deal.property.title}. When can we talk?`;
 }
 
-/**
- * The single line telling the broker what to do next. Ordered by urgency so
- * only the most pressing thing speaks — a card that nags three times is a
- * card the broker learns to ignore.
- */
-function nextStepLine(deal: DealItem): { text: string; tone: "urgent" | "muted" | "brand" } | null {
-    if (isOutcome(deal.status)) {
-        if (deal.status === "lost" && deal.lostReason) {
-            return { text: DEAL_LOST_REASON_LABEL[deal.lostReason], tone: "muted" };
-        }
-        if (deal.status === "closed" && deal.closedAmountInr != null) {
-            return { text: `Sold for ${formatPriceInr(deal.closedAmountInr)}`, tone: "brand" };
-        }
-        return null;
-    }
+function stopCard(event: MouseEvent) {
+    event.stopPropagation();
+}
 
-    if (hasUpcomingVisit(deal) && deal.nextVisitAt) {
-        return {
-            text: `Visit ${formatShowingWhen(new Date(deal.nextVisitAt), new Date())}`,
-            tone: "brand",
-        };
-    }
-
-    if (deal.offerStatus === "pending" && deal.offerAmountInr != null) {
-        return {
-            text: `Offer of ${formatPriceInr(deal.offerAmountInr)} pending owner response.`,
-            tone: "brand",
-        };
-    }
-
-    if (deal.offerStatus === "rejected") {
-        return {
-            text:
-                deal.offerAmountInr != null
-                    ? `Offer of ${formatPriceInr(deal.offerAmountInr)} was rejected. Revise it.`
-                    : "Offer was rejected. Revise it.",
-            tone: "urgent",
-        };
-    }
-
-    if (isStalled(deal)) {
-        const since = daysSince(deal.lastContactedAt ?? deal.stageEnteredAt) ?? 0;
-        return { text: `No contact for ${since} days. Call them.`, tone: "urgent" };
-    }
-
-    if (deal.status === "new" && !deal.lastContactedAt) {
-        return { text: "Call the buyer about this property.", tone: "muted" };
-    }
-
-    if (deal.status === "visit" && !deal.nextVisitAt) {
-        return { text: "Book the visit.", tone: "muted" };
-    }
-
+function warningChip(deal: DealItem): { label: string; tone: "urgent" | "danger" } | null {
+    const days = daysWithoutMovement(deal);
+    if (days >= STALLED_AFTER_DAYS) return { label: `No response · ${days} days`, tone: "danger" };
+    if (days >= SLOW_AFTER_DAYS) return { label: `No response · ${days} days`, tone: "urgent" };
     return null;
 }
 
-/**
- * Who owns the property, and how to reach them. The broker typed none of
- * this: it arrived with the listing when the owner approved them.
- *
- * The number is consent-gated the same way it is on a request card. If
- * representation has lapsed, the name stays and the contact buttons go, so
- * the card never offers a call the broker is no longer allowed to make.
- */
-function DealOwnerRow({ deal }: { deal: DealItem }) {
-    const { owner } = deal;
-    const canContact = owner.isRepresentationActive && Boolean(owner.phoneDigits);
+function CardChips({
+    deal,
+    otherBuyers,
+    onView,
+}: {
+    deal: DealItem;
+    otherBuyers: OtherBuyer[];
+    onView: (dealId: string) => void;
+}) {
+    const chips: ReactNode[] = [];
+    const warning = warningChip(deal);
+    const overBudget = isOverBudget(deal);
+    const stageDays = daysInStage(deal);
 
-    return (
-        <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-inline-0">
-                <UserAvatar name={owner.name} imageUrl={owner.avatarUrl} size="sm" />
+    if (warning) {
+        chips.push(
+            <span
+                key="warning"
+                className={cn(
+                    "body-xs rounded-sm px-2 py-0.5 font-semibold",
+                    warning.tone === "danger"
+                        ? "bg-danger-soft text-danger"
+                        : "bg-urgent-soft text-urgent",
+                )}
+            >
+                {warning.label}
+            </span>,
+        );
+    }
 
-                <div className="min-inline-0">
-                    <div className="flex items-center gap-1.5">
-                        <span className="body-sm truncate font-medium text-ink">{owner.name}</span>
-                        {!owner.isRepresentationActive ? (
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <span className="flex shrink-0 items-center text-ink-muted">
-                                            <Lock
-                                                aria-hidden
-                                                className="block-3.5 inline-3.5"
-                                                strokeWidth={1.75}
-                                            />
-                                        </span>
-                                    }
-                                />
-                                <TooltipContent>
-                                    You no longer represent this property, so the owner&apos;s
-                                    number is hidden.
-                                </TooltipContent>
-                            </Tooltip>
-                        ) : null}
-                    </div>
+    if (overBudget && chips.length < 2) {
+        chips.push(
+            <span
+                key="budget"
+                className="body-xs rounded-sm bg-urgent-soft px-2 py-0.5 font-medium text-urgent"
+            >
+                Over budget
+            </span>,
+        );
+    }
 
-                    {canContact && owner.phoneDigits ? (
-                        <PhoneNumber
-                            phoneDigits={owner.phoneDigits}
-                            className="body-xs text-ink-muted"
-                        />
-                    ) : (
-                        <span className="body-xs text-ink-muted">Owner</span>
-                    )}
-                </div>
-            </div>
+    if (otherBuyers.length > 0 && chips.length < 2) {
+        chips.push(
+            <MoreBuyersPopover
+                key="buyers"
+                count={otherBuyers.length}
+                buyers={otherBuyers}
+                onView={onView}
+            />,
+        );
+    }
 
-            {canContact && owner.phoneDigits ? (
-                <div className="flex shrink-0 items-center gap-1.5">
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button
-                                    variant="outline"
-                                    size="icon-xs"
-                                    nativeButton={false}
-                                    className="shrink-0 border-border-warm text-brand"
-                                    render={
-                                        <a
-                                            href={formatWhatsAppUrl(owner.phoneDigits)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            aria-label={`Message ${owner.name} on WhatsApp`}
-                                        />
-                                    }
-                                />
-                            }
-                        >
-                            <MessageCircle aria-hidden strokeWidth={1.75} />
-                        </TooltipTrigger>
-                        <TooltipContent>Message {owner.name} on WhatsApp.</TooltipContent>
-                    </Tooltip>
-                </div>
-            ) : null}
-        </div>
-    );
+    if (chips.length < 2) {
+        chips.push(
+            <span
+                key="stage"
+                className="body-xs rounded-sm bg-surface-muted px-2 py-0.5 font-medium text-ink"
+            >
+                in stage {stageDays} {stageDays === 1 ? "day" : "days"}
+            </span>,
+        );
+    }
+
+    return <div className="flex flex-wrap items-center gap-1.5">{chips}</div>;
 }
 
-/** The buyer, and the one-tap way to reach them. */
-function DealBuyerRow({ deal }: { deal: DealItem }) {
-    const overBudget = isOverBudget(deal);
+function FooterAction({
+    href,
+    label,
+    onClick,
+    children,
+}: {
+    href?: string;
+    label: string;
+    onClick?: (event: MouseEvent<HTMLElement>) => void;
+    children: ReactNode;
+}) {
+    const className = `
+      body-xs flex flex-col items-center gap-0.5 rounded-sm px-1 py-0.5 font-medium text-ink
+      hover:bg-surface-muted
+    `;
+
+    if (href) {
+        return (
+            <a
+                href={href}
+                target={href.startsWith("http") ? "_blank" : undefined}
+                rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                aria-label={label}
+                onClick={stopCard}
+                className={className}
+            >
+                {children}
+                <span>{label}</span>
+            </a>
+        );
+    }
 
     return (
-        <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-inline-0">
-                <UserAvatar name={deal.buyer.name} imageUrl={deal.buyer.avatarUrl} size="sm" />
-
-                <div className="min-inline-0">
-                    <div className="flex items-center gap-1.5">
-                        <span className="body-sm truncate font-medium text-ink">
-                            {deal.buyer.name}
-                        </span>
-                        {overBudget ? (
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <span className="flex shrink-0 items-center text-urgent">
-                                            <TriangleAlert
-                                                aria-hidden
-                                                className="block-3.5 inline-3.5"
-                                                strokeWidth={1.75}
-                                            />
-                                        </span>
-                                    }
-                                />
-                                <TooltipContent>
-                                    Asking price is above what this buyer said they would pay
-                                    {deal.buyer.budgetMaxInr != null
-                                        ? ` (${formatPriceInr(deal.buyer.budgetMaxInr)}).`
-                                        : "."}
-                                </TooltipContent>
-                            </Tooltip>
-                        ) : null}
-                    </div>
-                    <span className="body-xs text-ink-muted">Buyer</span>
-                </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-1.5">
-                <Tooltip>
-                    <TooltipTrigger
-                        render={
-                            <Button
-                                variant="outline"
-                                size="icon-xs"
-                                nativeButton={false}
-                                className="shrink-0 border-border-warm text-brand"
-                                render={
-                                    <a
-                                        href={formatWhatsAppUrl(deal.buyer.phoneDigits)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label={`Message ${deal.buyer.name} on WhatsApp`}
-                                    />
-                                }
-                            />
-                        }
-                    >
-                        <MessageCircle aria-hidden strokeWidth={1.75} />
-                    </TooltipTrigger>
-                    <TooltipContent>Message {deal.buyer.name} on WhatsApp.</TooltipContent>
-                </Tooltip>
-            </div>
-        </div>
+        <button type="button" aria-label={label} onClick={onClick} className={className}>
+            {children}
+            <span>{label}</span>
+        </button>
     );
 }
 
@@ -285,10 +193,12 @@ function DealCardMenu({
     deal,
     handlers,
     isBusy,
+    isPinned,
 }: {
     deal: DealItem;
     handlers: DealCardHandlers;
     isBusy: boolean;
+    isPinned: boolean;
 }) {
     const live = isLiveStage(deal.status);
 
@@ -301,7 +211,8 @@ function DealCardMenu({
                         size="icon-xs"
                         disabled={isBusy}
                         aria-label={`More actions for ${deal.buyer.name}`}
-                        className="shrink-0 text-ink-muted"
+                        className="shrink-0 text-ink"
+                        onClick={stopCard}
                     />
                 }
             >
@@ -313,27 +224,31 @@ function DealCardMenu({
                     <Eye aria-hidden strokeWidth={1.75} />
                     View details
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handlers.onPin(deal.id)}>
+                    {isPinned ? (
+                        <PinOff aria-hidden strokeWidth={1.75} />
+                    ) : (
+                        <Pin aria-hidden strokeWidth={1.75} />
+                    )}
+                    {isPinned ? "Unpin" : "Pin to top"}
+                </DropdownMenuItem>
 
                 {live ? (
                     <>
                         <DropdownMenuSeparator />
-
                         <DropdownMenuItem
                             onClick={() => handlers.onLogContact(deal.id, deal.status)}
                         >
                             <PhoneCall aria-hidden strokeWidth={1.75} />
                             Log a call
                         </DropdownMenuItem>
-
-                        {canMakeOffer(deal) ? (
-                            <DropdownMenuItem onClick={() => handlers.onMakeOffer(deal.id)}>
-                                <Handshake aria-hidden strokeWidth={1.75} />
-                                {deal.offerStatus === "rejected" ? "Revise offer" : "Make offer"}
-                            </DropdownMenuItem>
-                        ) : null}
-
+                        <DropdownMenuItem onClick={() => handlers.onMakeOffer(deal.id)}>
+                            <Handshake aria-hidden strokeWidth={1.75} />
+                            {deal.offerStatus === "rejected" || deal.offerStatus === "pending"
+                                ? "Revise offer"
+                                : "Make offer"}
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-
                         {DEAL_STAGE_ORDER.filter((stage) => stage !== deal.status).map((stage) => (
                             <DropdownMenuItem
                                 key={stage}
@@ -349,9 +264,7 @@ function DealCardMenu({
                                 Move to {DEAL_STAGE_META[stage].label.toLowerCase()}
                             </DropdownMenuItem>
                         ))}
-
                         <DropdownMenuSeparator />
-
                         <DropdownMenuItem onClick={() => handlers.onClose(deal.id)}>
                             <Check aria-hidden strokeWidth={1.75} />
                             Mark as sold
@@ -375,13 +288,21 @@ function DealCardMenu({
     );
 }
 
+function StageMiddle({ deal }: { deal: DealItem }) {
+    if (deal.status === "new") return <NewStageBlock deal={deal} />;
+    if (deal.status === "contacted") return <ContactedStageBlock deal={deal} />;
+    if (deal.status === "visit") return <VisitStageBlock deal={deal} />;
+    if (deal.status === "negotiation") return <NegotiationStageBlock deal={deal} />;
+    return null;
+}
+
 export function DealCard({
     deal,
     handlers,
     isBusy = false,
-    /** Board columns are narrow; the list view has room for more. */
-    layout = "board",
     isDragging = false,
+    isPinned = false,
+    otherBuyers = [],
     dragHandleProps,
 }: {
     deal: DealItem;
@@ -389,208 +310,162 @@ export function DealCard({
     isBusy?: boolean;
     layout?: "board" | "list";
     isDragging?: boolean;
+    isPinned?: boolean;
+    otherBuyers?: OtherBuyer[];
     dragHandleProps?: Record<string, unknown>;
 }) {
-    const [showDetail, setShowDetail] = useState(false);
-
     const live = isLiveStage(deal.status);
-    const step = nextStepLine(deal);
     const advance = live ? nextStage(deal.status as DealStage) : null;
     const outcome = isOutcome(deal.status) ? DEAL_OUTCOME_META[deal.status] : null;
     const OutcomeIcon = outcome?.icon;
+    const canCall = Boolean(deal.buyer.phoneDigits);
+
+    const primary = (() => {
+        if (!live) return null;
+        if (deal.status === "negotiation") {
+            return {
+                label:
+                    deal.offerStatus === "rejected" || deal.offerStatus === "pending"
+                        ? "Revise offer"
+                        : "Make offer",
+                onClick: () => handlers.onMakeOffer(deal.id),
+            };
+        }
+        if (advance) {
+            return {
+                label: DEAL_STAGE_META[advance].advanceLabel,
+                onClick: () => handlers.onAdvance(deal.id, advance),
+            };
+        }
+        return null;
+    })();
+
+    function openCard() {
+        if (!isBusy) handlers.onView(deal.id);
+    }
+
+    function onKeyDown(event: KeyboardEvent<HTMLElement>) {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openCard();
+        }
+    }
 
     return (
         <article
             {...dragHandleProps}
             aria-label={`${deal.buyer.name} on ${deal.property.title}`}
+            tabIndex={0}
+            onClick={openCard}
+            onKeyDown={onKeyDown}
             className={cn(
                 `
-                  group/deal flex flex-col gap-3 rounded-card border border-border-warm bg-surface
-                  p-3 transition-[box-shadow,border-color,opacity] duration-160
-                  hover:border-ink/15 hover:shadow-md
+                  flex cursor-pointer flex-col justify-between gap-2 overflow-hidden rounded-card
+                  border border-border-warm bg-surface p-3.5 shadow-xs
+                  transition-[box-shadow,transform] duration-160 max-block-65 min-block-58
+                  hover:-translate-y-0.5 hover:shadow-md
                 `,
                 isBusy && "pointer-events-none opacity-60",
-                isDragging && "opacity-40",
+                isDragging && "cursor-grabbing opacity-40 shadow-md",
                 !live && "bg-surface-muted/40",
             )}
         >
-            {/* Property leads: it is the thing being sold, and the photo is
-                the fastest way for a broker to recognise which deal this is. */}
-            <div className="flex items-start gap-2.5">
-                <Link
-                    href={brokerPropertyDetailHref(deal.property.id)}
-                    className="
-                      shrink-0 rounded-inner
-                      focus-visible:outline-2 focus-visible:outline-brand
-                    "
-                    aria-label={`Open ${deal.property.title}`}
-                >
-                    <PropertyThumb src={deal.property.imageSrc} alt={deal.property.title} />
-                </Link>
-
-                <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
-                    <div className="flex items-start justify-between gap-2">
-                        <h3 className="max-inline-full min-inline-0">
-                            <PropertyTitleLink
-                                href={brokerPropertyDetailHref(deal.property.id)}
-                                className="body-sm truncate font-semibold"
-                            >
-                                {deal.property.configLabel} · {deal.property.locality}
-                            </PropertyTitleLink>
-                        </h3>
-                        <DealCardMenu deal={deal} handlers={handlers} isBusy={isBusy} />
-                    </div>
-
-                    <div className="flex flex-wrap items-baseline gap-x-2">
-                        <Price
-                            amountInr={deal.property.amountInr}
-                            isRent={deal.property.isRent}
-                            className="body-sm font-semibold"
-                        />
-                        <span className="body-xs text-ink-subtle">
-                            {formatAreaSqft(deal.property.areaSqft)}
+            <div className="flex flex-col gap-2 min-block-0">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-inline-0">
+                        <UserAvatar name={deal.buyer.name} size="sm" fallback="initials" />
+                        <span className="body truncate font-semibold text-ink">
+                            {deal.buyer.name}
                         </span>
                     </div>
+                    <DealCardMenu
+                        deal={deal}
+                        handlers={handlers}
+                        isBusy={isBusy}
+                        isPinned={isPinned}
+                    />
                 </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="body-sm text-ink">
+                        {deal.property.configLabel} · {deal.property.locality} ·{" "}
+                        {formatAreaSqft(deal.property.areaSqft)}
+                    </p>
+                    <Badge variant="outline">{deal.property.isRent ? "Rent" : "Sale"}</Badge>
+                </div>
+
+                <Price
+                    amountInr={deal.property.amountInr}
+                    isRent={deal.property.isRent}
+                    className="body font-bold"
+                />
+
+                <CardChips deal={deal} otherBuyers={otherBuyers} onView={handlers.onView} />
+
+                {outcome && OutcomeIcon ? (
+                    <Badge variant={outcome.badgeVariant} className="gap-1 inline-fit">
+                        <OutcomeIcon aria-hidden className="block-3 inline-3" strokeWidth={2} />
+                        {outcome.label}
+                    </Badge>
+                ) : null}
+
+                {live ? <StageMiddle deal={deal} /> : null}
             </div>
 
-            {outcome && OutcomeIcon ? (
-                <Badge variant={outcome.badgeVariant} className="gap-1 inline-fit">
-                    <OutcomeIcon aria-hidden className="block-3 inline-3" strokeWidth={2} />
-                    {outcome.label}
-                </Badge>
-            ) : null}
-
-            {/* Both sides of the deal, in a quiet inset so they read as one
-                unit rather than two more rows of card content. */}
-            <div className="flex flex-col gap-2.5 rounded-inner bg-surface-muted/60 p-2.5">
-                <DealBuyerRow deal={deal} />
-                <div className="border-bs border-border-warm" />
-                <DealOwnerRow deal={deal} />
-            </div>
-
-            {step ? (
-                <p
-                    className={cn(
-                        "body-xs flex items-start gap-1.5",
-                        step.tone === "urgent" && "text-urgent",
-                        step.tone === "brand" && "text-brand-text",
-                        step.tone === "muted" && "text-ink-muted",
-                    )}
-                >
-                    {step.tone === "urgent" ? (
-                        <TriangleAlert
-                            aria-hidden
-                            className="mbs-px shrink-0 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                    ) : step.tone === "brand" ? (
-                        <CalendarClock
-                            aria-hidden
-                            className="mbs-px shrink-0 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
+            <div className="flex items-end justify-between gap-2">
+                <div className="flex items-end gap-1">
+                    {canCall ? (
+                        <>
+                            <FooterAction
+                                href={formatTelUrl(deal.buyer.phoneDigits)}
+                                label="Call"
+                            >
+                                <Phone aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                            </FooterAction>
+                            <FooterAction
+                                href={formatWhatsAppUrl(
+                                    deal.buyer.phoneDigits,
+                                    whatsappMessage(deal),
+                                )}
+                                label="WhatsApp"
+                            >
+                                <MessageCircle
+                                    aria-hidden
+                                    className="block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
+                            </FooterAction>
+                        </>
                     ) : null}
-                    <span className="text-pretty">{step.text}</span>
-                </p>
-            ) : null}
-
-            {deal.note && (layout === "list" || showDetail) ? (
-                <p className="body-xs text-pretty text-ink-muted">{deal.note}</p>
-            ) : null}
-
-            {live && advance ? (
-                <div className="flex flex-col gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isBusy}
-                        onClick={() => handlers.onView(deal.id)}
-                        className="justify-center inline-full"
+                    <FooterAction
+                        label="Note"
+                        onClick={(event) => {
+                            stopCard(event);
+                            handlers.onNote(deal.id);
+                        }}
                     >
-                        <Eye aria-hidden strokeWidth={1.75} />
-                        View
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled={isBusy}
-                        onClick={() => handlers.onAdvance(deal.id, advance)}
-                        className="justify-center inline-full"
-                    >
-                        {DEAL_STAGE_META[advance].advanceLabel}
-                        <ArrowRight aria-hidden strokeWidth={1.75} />
-                    </Button>
+                        <StickyNote
+                            aria-hidden
+                            className="block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
+                    </FooterAction>
                 </div>
-            ) : null}
 
-            {live && !advance && canMakeOffer(deal) ? (
-                <div className="flex flex-col gap-2">
+                {primary ? (
                     <Button
-                        variant="outline"
-                        size="sm"
+                        variant="default"
+                        size="xs"
                         disabled={isBusy}
-                        onClick={() => handlers.onView(deal.id)}
-                        className="justify-center inline-full"
+                        onClick={(event) => {
+                            stopCard(event);
+                            primary.onClick();
+                        }}
                     >
-                        <Eye aria-hidden strokeWidth={1.75} />
-                        View
+                        {primary.label}
                     </Button>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled={isBusy}
-                        onClick={() => handlers.onMakeOffer(deal.id)}
-                        className="justify-center inline-full"
-                    >
-                        {deal.offerStatus === "rejected" ? "Revise offer" : "Make offer"}
-                        <Handshake aria-hidden strokeWidth={1.75} />
-                    </Button>
-                </div>
-            ) : null}
-
-            {live && !advance && !canMakeOffer(deal) ? (
-                <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={isBusy}
-                    onClick={() => handlers.onView(deal.id)}
-                    className="justify-center inline-full"
-                >
-                    <Eye aria-hidden strokeWidth={1.75} />
-                    View
-                </Button>
-            ) : null}
-
-            {!live ? (
-                <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={isBusy}
-                    onClick={() => handlers.onView(deal.id)}
-                    className="justify-center inline-full"
-                >
-                    <Eye aria-hidden strokeWidth={1.75} />
-                    View
-                </Button>
-            ) : null}
-
-            {deal.note && layout === "board" && !showDetail ? (
-                <button
-                    type="button"
-                    onClick={() => setShowDetail(true)}
-                    className="body-xs text-start text-ink-subtle hover:text-ink-muted"
-                >
-                    Show note
-                </button>
-            ) : null}
-
-            {!live && deal.resolvedAt ? (
-                <p className="body-xs text-ink-subtle">
-                    {deal.status === "closed" ? "Sold" : "Lost"}{" "}
-                    {formatRelativePast(new Date(deal.resolvedAt), new Date())}
-                </p>
-            ) : null}
+                ) : null}
+            </div>
         </article>
     );
 }

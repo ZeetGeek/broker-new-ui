@@ -265,6 +265,7 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             lead.offerStatus === "rejected"
                 ? lead.offerStatus
                 : null,
+        createdAt: lead.createdAt ?? null,
     };
 }
 

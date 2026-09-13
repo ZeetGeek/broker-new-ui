@@ -42,13 +42,30 @@ const avatarSvgClass = "block-full! inline-full!";
 /** Palette handed to boring-avatars; it picks deterministically from `name`. */
 const avatarPalette = ["#F97316", "#FACC15", "#0F172A", "#38BDF8", "#F43F5E"];
 
+function initialsFromName(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    const first = parts[0][0] ?? "";
+    const last = parts[parts.length - 1][0] ?? "";
+    return `${first}${last}`.toUpperCase();
+}
+
 export type UserAvatarProps = VariantProps<typeof avatarVariants> & {
     name: string;
     imageUrl?: string;
     className?: string;
+    /** Initials for pipeline cards; marble stays the default elsewhere. */
+    fallback?: "marble" | "initials";
 };
 
-export function UserAvatar({ name, imageUrl, size, className }: UserAvatarProps) {
+export function UserAvatar({
+    name,
+    imageUrl,
+    size,
+    className,
+    fallback = "marble",
+}: UserAvatarProps) {
     const resolvedImageUrl = normalizeAvatarUrl(imageUrl);
     // Track the URL that failed, not a flag, so a new src retries without an effect.
     const [failedImageUrl, setFailedImageUrl] = useState<string>();
@@ -69,6 +86,16 @@ export function UserAvatar({ name, imageUrl, size, className }: UserAvatarProps)
                     className={avatarMediaClass}
                     onError={() => setFailedImageUrl(resolvedImageUrl)}
                 />
+            ) : fallback === "initials" ? (
+                <span
+                    aria-hidden
+                    className="
+                      body-xs flex items-center justify-center bg-brand-soft font-semibold
+                      text-brand-text block-full inline-full
+                    "
+                >
+                    {initialsFromName(name)}
+                </span>
             ) : (
                 <BoringAvatar
                     name={name}

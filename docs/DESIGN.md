@@ -80,6 +80,11 @@ stage-1         #7FD9B9   pipeline bar — New
 stage-2         #2FAE85   pipeline bar — Contacted
 stage-3         #0F6E56   pipeline bar — Site visit
 stage-4         #04342C   pipeline bar — Negotiation
+
+pipe-new        #334155   board column pill text — New (slate)
+pipe-new-soft   #EEF2F6   board column pill / track — New
+pipe-visit      #5B21B6   board column pill text — Site visit (violet)
+pipe-visit-soft #F3E8FF   board column pill / track — Site visit
 ```
 
 ```
@@ -127,6 +132,12 @@ number submitted, waiting on verification. It is dark yellow so it does not stea
 `stage-1` … `stage-4` are **pipeline funnel fills only** — New → Contacted → Site
 visit → Negotiation. They deepen within the brand green family. Do not use them
 for buttons, badges, or any surface outside the pipeline bar / its legend.
+
+`pipe-new` / `pipe-visit` (and their `-soft` fills) are **pipeline board column
+pills and tracks only**. They exist so the four columns are distinguishable at
+a glance (slate / amber / violet / emerald). Contacted reuses `urgent` +
+`urgent-soft`; Negotiation reuses `brand-text` + `brand-soft`. Do not use
+`pipe-*` on any other surface.
 
 ### 1.4 Contrast
 

@@ -75,6 +75,12 @@
     --color-stage-3: #0f6e56;
     --color-stage-4: #04342c;
 
+    /* Pipeline board column pills only — not a second brand. See DESIGN.md §1.3. */
+    --color-pipe-new: #334155;
+    --color-pipe-new-soft: #eef2f6;
+    --color-pipe-visit: #5b21b6;
+    --color-pipe-visit-soft: #f3e8ff;
+
     /* shadcn chart tokens mapped onto the pipeline greens */
     --chart-1: var(--color-stage-1);
     --chart-2: var(--color-stage-2);
@@ -209,6 +215,10 @@
     --color-stage-2: var(--color-stage-2);
     --color-stage-3: var(--color-stage-3);
     --color-stage-4: var(--color-stage-4);
+    --color-pipe-new: var(--color-pipe-new);
+    --color-pipe-new-soft: var(--color-pipe-new-soft);
+    --color-pipe-visit: var(--color-pipe-visit);
+    --color-pipe-visit-soft: var(--color-pipe-visit-soft);
 
     --radius-sm: calc(var(--radius) * 0.5);
     --radius-md: calc(var(--radius) * 0.75);
