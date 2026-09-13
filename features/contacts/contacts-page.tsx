@@ -4,7 +4,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownUp, ChevronDown, Search, UserPlus, UserRound, Users } from "lucide-react";
+import {
+    ArrowDownUp,
+    ChevronDown,
+    Plus,
+    Search,
+    UserPlus,
+    UserRound,
+    UserRoundPlus,
+    Users,
+} from "lucide-react";
 
 import { contactsApi, sortBuyerRows } from "@/lib/api/contacts";
 import { PREF_KEYS } from "@/lib/prefs/keys";
@@ -12,7 +21,6 @@ import { cn } from "@/lib/utils";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
-import { AddFab } from "@/components/shared/add-fab";
 import { EmptyState } from "@/components/shared/empty-state";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -27,9 +35,11 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
+import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
 import { AttachBuyerPropertiesModal } from "@/features/contacts/attach-buyer-properties-modal";
 import { BuyerCard } from "@/features/contacts/buyer-card";
 import { ContactsSkeleton } from "@/features/contacts/contacts-skeleton";
+import { ContactsSpeedDial } from "@/features/contacts/contacts-speed-dial";
 import { OwnerCard } from "@/features/contacts/owner-card";
 import {
     type BuyerRow,
@@ -38,6 +48,7 @@ import {
     type ContactsSummary,
     type ContactsTab,
     DEFAULT_CONTACTS_FILTERS,
+    type OwnerRow,
 } from "@/features/contacts/types";
 import { ViewBuyerLeadsModal } from "@/features/contacts/view-buyer-leads-modal";
 
@@ -58,7 +69,8 @@ function isContactsFilters(value: unknown): value is ContactsFilters {
     return (
         typeof v.q === "string" &&
         (v.tab === "buyers" || v.tab === "owners") &&
-        (v.sort === "recent" || v.sort === "name" || v.sort === "most_active")
+        (v.sort === "recent" || v.sort === "name" || v.sort === "most_active") &&
+        (v.ownerOrigin === "all" || v.ownerOrigin === "platform" || v.ownerOrigin === "custom")
     );
 }
 
@@ -145,7 +157,9 @@ export function ContactsPage() {
         { isValid: isContactsFilters },
     );
     const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isOwnerAddOpen, setIsOwnerAddOpen] = useState(false);
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
+    const [editingOwner, setEditingOwner] = useState<OwnerRow | null>(null);
     const [attachingBuyer, setAttachingBuyer] = useState<BuyerRow | null>(null);
     const [viewingBuyer, setViewingBuyer] = useState<BuyerRow | null>(null);
     /** Bumped after a create/update/attach so the list and counts both refetch. */
@@ -157,7 +171,7 @@ export function ContactsPage() {
         enabled: filters.tab === "buyers",
     });
     const ownersQuery = useInfiniteItems({
-        queryKey: ["contacts", "owners", filters.q, filters.sort, revision],
+        queryKey: ["contacts", "owners", filters.q, filters.sort, filters.ownerOrigin, revision],
         queryFn: ({ cursor, signal }) => contactsApi.listOwnersPage(filters, cursor, signal),
         enabled: filters.tab === "owners",
     });
@@ -182,9 +196,18 @@ export function ContactsPage() {
         setAttachingBuyer(null);
     }, []);
 
-    const setTab = useCallback((tab: ContactsTab) => {
-        setFilters((prev) => ({ ...prev, tab }));
+    const handleOwnerSaved = useCallback((name: string, mode: "created" | "updated") => {
+        setRevision((prev) => prev + 1);
+        setEditingOwner(null);
+        toast.success(mode === "created" ? `${name} added to your owners` : `${name} updated`);
     }, []);
+
+    const setTab = useCallback(
+        (tab: ContactsTab) => {
+            setFilters((prev) => ({ ...prev, tab }));
+        },
+        [setFilters],
+    );
 
     const hasSearch = filters.q.trim().length > 0;
     const summary = summaryQuery.data ?? null;
@@ -206,58 +229,72 @@ export function ContactsPage() {
                 </h1>
 
                 <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-                    <div
-                        role="group"
-                        aria-label="Which contacts to show"
-                        className="flex items-center gap-1 rounded-control bg-surface-muted p-1"
-                    >
-                        {(
-                            [
-                                {
-                                    value: "buyers",
-                                    label: "Buyers",
-                                    icon: Users,
-                                    count: summary?.buyerCount,
-                                },
-                                {
-                                    value: "owners",
-                                    label: "Owners",
-                                    icon: UserRound,
-                                    count: summary?.ownerCount,
-                                },
-                            ] as const
-                        ).map((option) => {
-                            const Icon = option.icon;
-                            const isActive = filters.tab === option.value;
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div
+                            role="group"
+                            aria-label="Which contacts to show"
+                            className="flex items-center gap-1 rounded-control bg-surface-muted p-1"
+                        >
+                            {(
+                                [
+                                    {
+                                        value: "buyers",
+                                        label: "Buyers",
+                                        icon: Users,
+                                        count: summary?.buyerCount,
+                                    },
+                                    {
+                                        value: "owners",
+                                        label: "Owners",
+                                        icon: UserRound,
+                                        count: summary?.ownerCount,
+                                    },
+                                ] as const
+                            ).map((option) => {
+                                const Icon = option.icon;
+                                const isActive = filters.tab === option.value;
 
-                            return (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    aria-pressed={isActive}
-                                    onClick={() => setTab(option.value)}
-                                    className={cn(
-                                        `
-                                          body-sm flex items-center gap-2 rounded-control px-3.5
-                                          transition-colors duration-160 block-control-sm
-                                        `,
-                                        isActive
-                                            ? "bg-surface font-semibold text-ink shadow-xs"
-                                            : "font-normal text-ink-muted hover:text-ink",
-                                    )}
-                                >
-                                    <Icon
-                                        aria-hidden
-                                        className="block-4 inline-4"
-                                        strokeWidth={1.75}
-                                    />
-                                    {option.label}
-                                    {option.count != null ? (
-                                        <span className="tabular">{option.count}</span>
-                                    ) : null}
-                                </button>
-                            );
-                        })}
+                                return (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        aria-pressed={isActive}
+                                        onClick={() => setTab(option.value)}
+                                        className={cn(
+                                            `
+                                              body-sm flex items-center gap-2 rounded-control px-3.5
+                                              transition-colors duration-160 block-control-sm
+                                            `,
+                                            isActive
+                                                ? "bg-surface font-semibold text-ink shadow-xs"
+                                                : "font-normal text-ink-muted hover:text-ink",
+                                        )}
+                                    >
+                                        <Icon
+                                            aria-hidden
+                                            className="block-4 inline-4"
+                                            strokeWidth={1.75}
+                                        />
+                                        {option.label}
+                                        {option.count != null ? (
+                                            <span className="tabular">{option.count}</span>
+                                        ) : null}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-brand"
+                            onClick={() =>
+                                isBuyers ? setIsAddOpen(true) : setIsOwnerAddOpen(true)
+                            }
+                        >
+                            <Plus aria-hidden />
+                            {isBuyers ? "Add buyer" : "Add owner"}
+                        </Button>
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2.5">
@@ -332,6 +369,41 @@ export function ContactsPage() {
                     </div>
                 </div>
 
+                {!isBuyers ? (
+                    <div role="group" aria-label="Owner origin" className="flex flex-wrap gap-2">
+                        {(
+                            [
+                                ["all", "All", summary?.ownerCount],
+                                ["platform", "Platform", summary?.platformOwnerCount],
+                                ["custom", "Added by you", summary?.customOwnerCount],
+                            ] as const
+                        ).map(([value, label, count]) => (
+                            <button
+                                key={value}
+                                type="button"
+                                aria-pressed={filters.ownerOrigin === value}
+                                onClick={() =>
+                                    setFilters((prev) => ({ ...prev, ownerOrigin: value }))
+                                }
+                                className={cn(
+                                    `
+                                      body-sm rounded-control border px-3 py-2 font-medium
+                                      transition-colors duration-160
+                                    `,
+                                    filters.ownerOrigin === value
+                                        ? "border-brand bg-brand-soft text-brand-text"
+                                        : `
+                                          border-border-warm bg-surface text-ink-muted
+                                          hover:text-ink
+                                        `,
+                                )}
+                            >
+                                {label} <span className="tabular">{count ?? "—"}</span>
+                            </button>
+                        ))}
+                    </div>
+                ) : null}
+
                 {activeQuery.isError && rows.length === 0 ? (
                     <p role="alert" className="body-sm text-urgent">
                         Could not load your contacts. Check your connection and try again.
@@ -372,9 +444,14 @@ export function ContactsPage() {
                         <EmptyState
                             icon={UserRound}
                             heading="No owners yet"
-                            description="Owners appear here once one accepts your request to sell their property."
+                            description="Platform owners appear after accepting your request. You can also add an owner for a private listing."
                             className="py-16"
-                        />
+                        >
+                            <Button size="lg" onClick={() => setIsOwnerAddOpen(true)}>
+                                <UserRoundPlus aria-hidden strokeWidth={1.75} />
+                                Add your first owner
+                            </Button>
+                        </EmptyState>
                     )
                 ) : (
                     <div className="flex flex-col gap-2">
@@ -403,7 +480,9 @@ export function ContactsPage() {
                                 gap={12}
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
                                 ariaLabel="Owners"
-                                renderItem={(owner) => <OwnerCard owner={owner} />}
+                                renderItem={(owner) => (
+                                    <OwnerCard owner={owner} onEdit={setEditingOwner} />
+                                )}
                             />
                         )}
                         <InfiniteListStatus
@@ -415,20 +494,30 @@ export function ContactsPage() {
                     </div>
                 )}
 
-                {/* Owners are never created here — they sign up themselves and
-                    arrive with a property — so the action belongs to buyers. */}
-                {isBuyers ? (
-                    <AddFab
-                        onClick={() => setIsAddOpen(true)}
-                        label="Add buyer"
-                        hint="Add someone looking to buy or rent"
-                    />
-                ) : null}
+                <ContactsSpeedDial
+                    onAddBuyer={() => setIsAddOpen(true)}
+                    onAddOwner={() => setIsOwnerAddOpen(true)}
+                />
 
                 <AddBuyerModal
                     open={isAddOpen}
                     onOpenChange={setIsAddOpen}
                     onCreated={handleCreated}
+                />
+
+                <AddOwnerModal
+                    open={isOwnerAddOpen}
+                    onOpenChange={setIsOwnerAddOpen}
+                    onSaved={handleOwnerSaved}
+                />
+
+                <AddOwnerModal
+                    open={editingOwner != null}
+                    onOpenChange={(next) => {
+                        if (!next) setEditingOwner(null);
+                    }}
+                    owner={editingOwner}
+                    onSaved={handleOwnerSaved}
                 />
 
                 <AddBuyerModal

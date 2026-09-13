@@ -1,9 +1,10 @@
 "use client";
 
-import { Building2, Lock, MapPin, MessageCircle } from "lucide-react";
+import { BadgeCheck, Building2, Lock, MapPin, MessageCircle, Pencil } from "lucide-react";
 
+import { formatRelativePast } from "@/lib/format/date";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatIndianPrice } from "@/lib/format/price";
 
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -13,14 +14,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import type { OwnerRow } from "@/features/contacts/types";
 
-/**
- * An owner the broker represents. Contact details appear only while the
- * representation is live — the same consent rule the request and deal cards
- * follow. A lapsed owner keeps their name and loses the buttons, rather than
- * disappearing, so the broker can still see who they used to work with.
- */
-export function OwnerCard({ owner }: { owner: OwnerRow }) {
-    const canContact = owner.hasActiveRepresentation && Boolean(owner.phoneDigits);
+export function OwnerCard({
+    owner,
+    onEdit,
+}: {
+    owner: OwnerRow;
+    onEdit?: (owner: OwnerRow) => void;
+}) {
+    const isPlatform = owner.origin === "platform";
+    const canContact = (!isPlatform || owner.hasActiveRepresentation) && Boolean(owner.phoneDigits);
+    const spoke = owner.lastSpokeAt
+        ? `Spoke ${formatRelativePast(new Date(owner.lastSpokeAt), new Date())}`
+        : "No conversation logged";
 
     return (
         <article
@@ -34,50 +39,68 @@ export function OwnerCard({ owner }: { owner: OwnerRow }) {
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5 min-inline-0">
                     <UserAvatar name={owner.name} imageUrl={owner.avatarUrl} size="md" />
-
                     <div className="min-inline-0">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
                             <span className="body-sm truncate font-semibold text-ink">
                                 {owner.name}
                             </span>
-                            {!owner.hasActiveRepresentation ? (
+                            {isPlatform ? (
+                                <Badge variant="brand" className="gap-1">
+                                    <BadgeCheck aria-hidden className="block-3 inline-3" /> Platform
+                                </Badge>
+                            ) : (
+                                <Badge variant="neutral">Added by you</Badge>
+                            )}
+                            {isPlatform ? (
                                 <Tooltip>
                                     <TooltipTrigger
                                         render={
-                                            <span
-                                                className="
-                                              flex shrink-0 items-center text-ink-muted
-                                            "
-                                            >
+                                            <span className="inline-flex text-ink-muted">
                                                 <Lock
                                                     aria-hidden
                                                     className="block-3.5 inline-3.5"
-                                                    strokeWidth={1.75}
                                                 />
                                             </span>
                                         }
                                     />
                                     <TooltipContent>
-                                        You no longer represent this owner, so their number is
-                                        hidden.
+                                        Owner details come from the platform
                                     </TooltipContent>
                                 </Tooltip>
                             ) : null}
                         </div>
-
                         {canContact && owner.phoneDigits ? (
                             <PhoneNumber
                                 phoneDigits={owner.phoneDigits}
                                 className="body-xs text-ink-muted"
                             />
                         ) : (
-                            <span className="body-xs text-ink-muted">Owner</span>
+                            <span className="body-xs text-ink-muted">Number hidden</span>
                         )}
                     </div>
                 </div>
-
-                {canContact && owner.phoneDigits ? (
-                    <div className="flex shrink-0 items-center gap-1.5">
+                <div className="flex shrink-0 gap-1.5">
+                    {onEdit ? (
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon-xs"
+                                        onClick={() => onEdit(owner)}
+                                        aria-label={`Edit ${owner.name}`}
+                                    >
+                                        <Pencil aria-hidden />
+                                    </Button>
+                                }
+                            />
+                            <TooltipContent>
+                                {isPlatform ? "Edit tracking notes" : "Edit owner"}
+                            </TooltipContent>
+                        </Tooltip>
+                    ) : null}
+                    {canContact && owner.phoneDigits ? (
                         <Tooltip>
                             <TooltipTrigger
                                 render={
@@ -85,7 +108,7 @@ export function OwnerCard({ owner }: { owner: OwnerRow }) {
                                         variant="outline"
                                         size="icon-xs"
                                         nativeButton={false}
-                                        className="shrink-0 border-border-warm text-brand"
+                                        className="border-border-warm text-brand"
                                         render={
                                             <a
                                                 href={formatWhatsAppUrl(owner.phoneDigits)}
@@ -94,35 +117,43 @@ export function OwnerCard({ owner }: { owner: OwnerRow }) {
                                                 aria-label={`Message ${owner.name} on WhatsApp`}
                                             />
                                         }
-                                    />
+                                    >
+                                        <MessageCircle aria-hidden />
+                                    </Button>
                                 }
-                            >
-                                <MessageCircle aria-hidden strokeWidth={1.75} />
-                            </TooltipTrigger>
-                            <TooltipContent>Message {owner.name} on WhatsApp.</TooltipContent>
+                            />
+                            <TooltipContent>Message {owner.name} on WhatsApp</TooltipContent>
                         </Tooltip>
-                    </div>
-                ) : null}
+                    ) : null}
+                </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5">
+                {owner.propertyIntent ? (
+                    <Badge variant="neutral" className="capitalize">
+                        {owner.propertyIntent}
+                    </Badge>
+                ) : null}
                 <Badge variant="neutral" className="gap-1">
-                    <Building2 aria-hidden className="block-3 inline-3" strokeWidth={2} />
-                    {owner.propertyCount} {owner.propertyCount === 1 ? "property" : "properties"}
+                    <Building2 aria-hidden className="block-3 inline-3" />
+                    {owner.propertyType ??
+                        `${owner.propertyCount} ${owner.propertyCount === 1 ? "property" : "properties"}`}
                 </Badge>
-                {owner.liveDealCount > 0 ? (
-                    <Badge variant="brand">
-                        {owner.liveDealCount} {owner.liveDealCount === 1 ? "deal" : "deals"} running
+                {owner.configuration ? (
+                    <Badge variant="neutral">{owner.configuration}</Badge>
+                ) : null}
+                {owner.totalValueInr > 0 ? (
+                    <Badge variant="neutral">
+                        {formatIndianPrice(
+                            owner.totalValueInr,
+                            owner.propertyIntent ?? (owner.isAllRent ? "rent" : "sell"),
+                        )}
                     </Badge>
                 ) : null}
             </div>
 
             <p className="body-xs flex items-start gap-1.5 text-ink-muted">
-                <MapPin
-                    aria-hidden
-                    className="mbs-px shrink-0 block-3.5 inline-3.5"
-                    strokeWidth={1.75}
-                />
+                <MapPin aria-hidden className="mbs-px shrink-0 block-3.5 inline-3.5" />
                 <span className="text-pretty">{owner.localities.join(", ")}</span>
             </p>
 
@@ -131,12 +162,10 @@ export function OwnerCard({ owner }: { owner: OwnerRow }) {
               flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm pbs-3
             "
             >
-                <p className="body-xs truncate text-ink-muted">{owner.propertyTitles[0]}</p>
-                <p className="body-xs tabular shrink-0 text-brand">
-                    {owner.isAllRent
-                        ? formatRentInr(owner.totalValueInr)
-                        : formatPriceInr(owner.totalValueInr)}
+                <p className="body-xs truncate text-ink-muted">
+                    {owner.linkedListingTitle ?? owner.propertyTitles[0] ?? "No listing linked"}
                 </p>
+                <p className="body-xs tabular shrink-0 text-ink-muted">{spoke}</p>
             </div>
         </article>
     );

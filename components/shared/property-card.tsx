@@ -19,6 +19,7 @@ import {
     Maximize2,
     MessageCircle,
     UserPlus,
+    UserRound,
     Users,
     X,
 } from "lucide-react";
@@ -366,6 +367,8 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     listedDaysAgo: number;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
+    ownerName?: string | null;
+    visibility?: "private" | "marketplace";
 };
 
 export type PropertyCardProps = {
@@ -1384,7 +1387,9 @@ function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
     if (status === "published") {
         return (
             <Badge
-                className="body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs"
+                className="
+              body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs
+            "
             >
                 {OWNED_STATUS_LABEL[status]}
             </Badge>
@@ -1563,6 +1568,17 @@ function OwnedPropertyCard({
                             </p>
                         </div>
                         <BrowsePropertyCardSpecs listing={browse} />
+                        {listing.ownerName ? (
+                            <p className="body-xs flex items-center gap-1.5 text-ink-muted">
+                                <UserRound aria-hidden className="shrink-0 block-3.5 inline-3.5" />
+                                <span className="truncate">Owner: {listing.ownerName}</span>
+                                {listing.visibility === "private" ? (
+                                    <Badge variant="neutral" className="shrink-0">
+                                        Private
+                                    </Badge>
+                                ) : null}
+                            </p>
+                        ) : null}
                     </div>
 
                     <PropertySharePopover

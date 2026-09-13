@@ -36,5 +36,7 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         listedDaysAgo: item.listedDaysAgo,
         saleAmountInr: item.saleAmountInr,
         rentAmountInr: item.rentAmountInr,
+        ownerName: item.ownerName,
+        visibility: item.visibility,
     };
 }

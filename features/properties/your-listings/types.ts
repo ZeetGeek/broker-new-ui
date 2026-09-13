@@ -68,6 +68,12 @@ export type MyListingItem = {
     imageSrcs: string[];
     createdAt: string;
     updatedAt: string;
+    /** Contact linkage for broker-owned inventory. Legacy listings may not have it yet. */
+    ownerId?: string | null;
+    ownerOrigin?: "platform" | "custom" | null;
+    ownerName?: string | null;
+    visibility?: "private" | "marketplace";
+    interestedBuyerIds?: string[];
 };
 
 export type MyListingsFilters = {
