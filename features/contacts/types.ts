@@ -29,7 +29,17 @@ export type BuyerRow = ClientItem & {
     /** Localities of the properties they are actually being shown. */
     activePropertyTitles: string[];
     /** Live attachments — used for deep-links and the attach modal. */
-    attachedProperties: Array<{ id: string; leadId: string; title: string }>;
+    attachedProperties: Array<{
+        id: string;
+        leadId: string;
+        title: string;
+        /** Optional presentation data. Older API responses can omit every field. */
+        locality?: string;
+        priceLabel?: string;
+        coverUrl?: string;
+        propertyType?: string;
+        configuration?: string;
+    }>;
     /** All leads with latest stage — drives the View modal. */
     leads: BuyerLead[];
     /** Full lead-capture fields returned by the contacts API when available. */
@@ -59,6 +69,16 @@ export type OwnerRow = {
     propertyCount: number;
     /** Titles of those properties, for the secondary line. */
     propertyTitles: string[];
+    /** Optional card-ready property summaries; deterministic fallbacks cover older responses. */
+    properties?: Array<{
+        id: string;
+        title: string;
+        locality?: string;
+        priceLabel?: string;
+        coverUrl?: string;
+        propertyType?: string;
+        configuration?: string;
+    }>;
     /** Localities they own in, deduped. */
     localities: string[];
     /** Sum of the ask across their properties, in INR. */

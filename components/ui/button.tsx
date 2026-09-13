@@ -31,6 +31,11 @@ const buttonVariants = cva(
                   dark:bg-transparent
                   dark:hover:bg-input/30
                 `,
+                surface: `
+                  border-border-warm bg-surface text-ink shadow-sm
+                  hover:border-ink/25 hover:shadow-md
+                  aria-expanded:border-ink/25 aria-expanded:shadow-md
+                `,
                 secondary: `
                   bg-secondary text-secondary-foreground
                   hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]

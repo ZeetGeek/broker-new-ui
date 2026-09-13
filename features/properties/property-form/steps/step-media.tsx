@@ -610,13 +610,7 @@ export function StepMedia({
                             value={resolvedDocumentType}
                             onValueChange={(value) => setDocumentType(value ?? "sale_deed")}
                         >
-                            <SelectTrigger
-                                id="document-type"
-                                className="
-                                  border-2 border-border-warm bg-surface px-4 text-[15px] text-ink
-                                  block-control-xl inline-full
-                                "
-                            >
+                            <SelectTrigger id="document-type" size="lg">
                                 <SelectValue>
                                     {(value) =>
                                         documentTypeOptions.find((option) => option.value === value)

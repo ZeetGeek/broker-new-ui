@@ -305,11 +305,7 @@ export function AppPagination({
                         >
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent
-                            align="end"
-                            alignItemWithTrigger={false}
-                            className="min-inline-24"
-                        >
+                        <SelectContent align="end" className="min-inline-24">
                             {pageSizeOptions.map((option) => (
                                 <SelectItem key={option} value={String(option)}>
                                     {option}

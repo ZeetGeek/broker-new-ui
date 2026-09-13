@@ -1,11 +1,17 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { VisitsPage } from "@/features/site-visits/visits-page";
+import { BrokerSiteVisitsPage } from "@/features/site-visits/broker/broker-site-visits-page";
+import { VisitsPageSkeleton } from "@/features/site-visits/broker/visits-page-skeleton";
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
 };
 
 export default function Page() {
-    return <VisitsPage viewer="broker" />;
+    return (
+        <Suspense fallback={<VisitsPageSkeleton />}>
+            <BrokerSiteVisitsPage />
+        </Suspense>
+    );
 }

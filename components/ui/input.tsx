@@ -5,7 +5,7 @@ import * as React from "react";
 import { Input as InputPrimitive } from "@base-ui/react/input";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tailspin } from "ldrs/react";
-import { AlertCircle, CheckCircle2, Eye, EyeOff, XCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff, X } from "lucide-react";
 
 import {
     copyInputTypeMetrics,
@@ -40,8 +40,10 @@ const inputVariants = cva(
     {
         variants: {
             size: {
+                xs: "px-2.5 text-xs block-control-xs",
                 sm: "px-3 text-[13px] block-control-sm",
                 default: "px-3.5 block-control-md",
+                md: "px-4 block-control-lg",
                 lg: "px-4 text-base block-control-xl",
             },
             hasStartSlot: {
@@ -54,11 +56,15 @@ const inputVariants = cva(
             },
         },
         compoundVariants: [
+            { size: "xs", hasStartSlot: true, className: "ps-7" },
             { size: "sm", hasStartSlot: true, className: "ps-8" },
             { size: "default", hasStartSlot: true, className: "ps-9.5" },
+            { size: "md", hasStartSlot: true, className: "ps-10" },
             { size: "lg", hasStartSlot: true, className: "ps-11" },
+            { size: "xs", hasEndSlot: true, className: "pe-7" },
             { size: "sm", hasEndSlot: true, className: "pe-8" },
             { size: "default", hasEndSlot: true, className: "pe-9.5" },
+            { size: "md", hasEndSlot: true, className: "pe-10" },
             { size: "lg", hasEndSlot: true, className: "pe-11" },
         ],
         defaultVariants: {
@@ -72,8 +78,10 @@ const iconSlotVariants = cva(
     {
         variants: {
             size: {
+                xs: "[&_svg]:block-3 [&_svg]:inline-3",
                 sm: "[&_svg]:block-3.5 [&_svg]:inline-3.5",
                 default: "[&_svg]:block-4 [&_svg]:inline-4",
+                md: "[&_svg]:block-4 [&_svg]:inline-4",
                 lg: "[&_svg]:block-4.5 [&_svg]:inline-4.5",
             },
             side: {
@@ -82,11 +90,15 @@ const iconSlotVariants = cva(
             },
         },
         compoundVariants: [
+            { side: "start", size: "xs", className: "inset-s-2" },
             { side: "start", size: "sm", className: "inset-s-2.5" },
             { side: "start", size: "default", className: "inset-s-3" },
+            { side: "start", size: "md", className: "inset-s-3.5" },
             { side: "start", size: "lg", className: "inset-s-3.5" },
+            { side: "end", size: "xs", className: "inset-e-2" },
             { side: "end", size: "sm", className: "inset-e-2.5" },
             { side: "end", size: "default", className: "inset-e-3" },
+            { side: "end", size: "md", className: "inset-e-3.5" },
             { side: "end", size: "lg", className: "inset-e-3.5" },
         ],
     },
@@ -426,7 +438,7 @@ function Input({
                                 "
                                 aria-label="Clear"
                             >
-                                <XCircle />
+                                <X aria-hidden strokeWidth={2} />
                             </button>
                         ) : resolvedEndIcon ? (
                             <EndIcon aria-hidden="true" />

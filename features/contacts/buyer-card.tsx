@@ -1,344 +1,247 @@
 "use client";
 
-import {
-    Eye,
-    Home,
-    KeyRound,
-    Link2,
-    MapPin,
-    MessageCircle,
-    Paperclip,
-    Pencil,
-    TrendingUp,
-} from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
 
-import { formatRelativePast } from "@/lib/format/date";
-import { formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
-import { brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { calendarDaysBetween, formatRelativePast } from "@/lib/format/date";
+import { formatPhoneIn } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
-import { PhoneNumber } from "@/components/shared/phone-number";
-import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { PROPERTY_KIND_OPTIONS } from "@/features/contacts/buyer-options";
-import {
-    BUYER_DOCUMENT_KIND_LABEL,
-    documentIcon,
-    formatFileSize,
-} from "@/features/contacts/document-rules";
+import { toBuyerContactCardModel } from "@/features/contacts/contact-card-model";
+import { ContactCardActions } from "@/features/contacts/contact-card-actions";
+import { PropertyCoverStack } from "@/features/contacts/property-cover-stack";
 import type { BuyerRow } from "@/features/contacts/types";
 
-function budgetLabel(buyer: BuyerRow): string | null {
-    if (buyer.budgetMaxInr === null && buyer.budgetMinInr === null) return null;
-    const amount =
-        buyer.lookingFor === "rent"
-            ? formatRentInr(buyer.budgetMaxInr ?? buyer.budgetMinInr ?? 0)
-            : formatPriceInr(buyer.budgetMaxInr ?? buyer.budgetMinInr ?? 0);
-    if (buyer.budgetMaxInr != null) return `Up to ${amount}`;
-    return `From ${amount}`;
+function priorityTitle(priority: "hot" | "warm" | "cold") {
+    return `${priority[0]?.toUpperCase()}${priority.slice(1)} priority`;
 }
 
-function kindLabel(buyer: BuyerRow): string | null {
-    if (buyer.propertyKind === "any") return null;
+function followUpLabel(value: string): { label: string; overdue: boolean } {
+    const date = new Date(`${value}T12:00:00`);
+    const overdue = date.getTime() < new Date(new Date().toDateString()).getTime();
+    const day = new Intl.DateTimeFormat("en-IN", { weekday: "short" }).format(date);
+    return { label: overdue ? `Follow-up overdue` : `Follow up ${day}`, overdue };
+}
+
+function Recency({ value, onLogCall }: { value: string | null; onLogCall: () => void }) {
+    if (!value) {
+        return (
+            <div className="flex items-center gap-2 text-ink-muted">
+                <span
+                    className="rounded-full border border-ink-subtle block-2 inline-2"
+                    aria-hidden
+                />
+                <span>Not contacted yet</span>
+                <button
+                    type="button"
+                    className="font-semibold text-brand-text underline-offset-4 hover:underline"
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onLogCall();
+                    }}
+                >
+                    Log a call
+                </button>
+            </div>
+        );
+    }
+
+    const date = new Date(value);
+    const days = calendarDaysBetween(date, new Date());
     return (
-        PROPERTY_KIND_OPTIONS.find((option) => option.value === buyer.propertyKind)?.label ?? null
+        <div className="flex items-center gap-2 text-ink-muted">
+            <span
+                className={cn(
+                    "rounded-full block-2 inline-2",
+                    days <= 3 && "bg-success",
+                    days > 3 && days <= 14 && "bg-pending",
+                    days > 14 && "bg-ink-subtle",
+                )}
+                aria-hidden
+            />
+            <span>Spoke {formatRelativePast(date, new Date())}</span>
+        </div>
     );
-}
-
-/**
- * The one line that says what to do with this buyer. A buyer on no property
- * is the whole reason this page exists, so that case speaks loudest.
- */
-function statusLine(buyer: BuyerRow): { text: string; tone: "urgent" | "muted" | "brand" } {
-    if (buyer.liveDealCount === 0) {
-        return { text: "Not on any property yet.", tone: "urgent" };
-    }
-
-    if (buyer.activePropertyTitles.length === 1) {
-        return { text: buyer.activePropertyTitles[0], tone: "muted" };
-    }
-
-    if (buyer.activePropertyTitles.length > 1) {
-        return { text: buyer.activePropertyTitles.join(" · "), tone: "muted" };
-    }
-
-    return {
-        text: `On ${buyer.liveDealCount} properties`,
-        tone: "muted",
-    };
 }
 
 export function BuyerCard({
     buyer,
+    onOpen,
     onEdit,
     onAttachProperties,
-    onViewLeads,
+    onOpenProperties,
 }: {
     buyer: BuyerRow;
+    onOpen: (buyer: BuyerRow) => void;
     onEdit: (buyer: BuyerRow) => void;
     onAttachProperties: (buyer: BuyerRow) => void;
-    onViewLeads: (buyer: BuyerRow) => void;
+    onOpenProperties?: (buyer: BuyerRow) => void;
+    onViewLeads?: (buyer: BuyerRow) => void;
 }) {
-    const budget = budgetLabel(buyer);
-    const status = statusLine(buyer);
-    const LookingIcon = buyer.lookingFor === "rent" ? KeyRound : Home;
+    const model = toBuyerContactCardModel(buyer);
+    const followUp = model.nextFollowUpAt ? followUpLabel(model.nextFollowUpAt) : null;
+
+    const open = () => onOpen(buyer);
+    const attach = () => onAttachProperties(buyer);
 
     return (
         <article
+            role="button"
+            data-contact-id={buyer.id}
+            tabIndex={0}
+            aria-label={`Open ${buyer.name}`}
+            onClick={open}
+            onKeyDown={(event) => {
+                if (event.key === "Enter") open();
+            }}
             className="
-              flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-4
-              transition-[box-shadow,border-color] duration-160
-              hover:border-ink/15 hover:shadow-md
+              contact-card group/card flex cursor-pointer flex-col rounded-card border
+              border-border-warm bg-surface p-4 outline-none min-block-[292px]
+              focus-visible:border-brand focus-visible:ring-3 focus-visible:ring-brand/20
             "
-            aria-label={buyer.name}
         >
             <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5 min-inline-0">
-                    <UserAvatar name={buyer.name} size="md" />
-
+                <div className="flex items-center gap-3 min-inline-0">
+                    <UserAvatar
+                        name={buyer.name}
+                        size="md"
+                        fallback="initials-color"
+                        className="shrink-0 rounded-[12px]"
+                    />
                     <div className="min-inline-0">
-                        <div className="flex items-center gap-1.5">
-                            <span className="body-sm truncate font-semibold text-ink">
-                                {buyer.name}
-                            </span>
-                            {buyer.closedDealCount > 0 ? (
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={
-                                            <span
-                                                className="flex shrink-0 items-center text-success"
-                                            >
-                                                <TrendingUp
-                                                    aria-hidden
-                                                    className="block-3.5 inline-3.5"
-                                                    strokeWidth={2}
-                                                />
-                                            </span>
-                                        }
-                                    />
-                                    <TooltipContent>
-                                        You have closed {buyer.closedDealCount}{" "}
-                                        {buyer.closedDealCount === 1 ? "deal" : "deals"} with this
-                                        buyer.
-                                    </TooltipContent>
-                                </Tooltip>
-                            ) : null}
-                        </div>
-                        <PhoneNumber
-                            phoneDigits={buyer.phoneDigits}
-                            className="body-xs text-ink-muted"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex shrink-0 items-center gap-1.5">
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button
-                                    variant="outline"
-                                    size="icon-xs"
-                                    className="shrink-0 border-border-warm"
-                                    aria-label={`View leads for ${buyer.name}`}
-                                    onClick={() => onViewLeads(buyer)}
-                                />
-                            }
-                        >
-                            <Eye aria-hidden strokeWidth={1.75} />
-                        </TooltipTrigger>
-                        <TooltipContent>View properties and status</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button
-                                    variant="outline"
-                                    size="icon-xs"
-                                    className="shrink-0 border-border-warm"
-                                    aria-label={`Edit ${buyer.name}`}
-                                    onClick={() => onEdit(buyer)}
-                                />
-                            }
-                        >
-                            <Pencil aria-hidden strokeWidth={1.75} />
-                        </TooltipTrigger>
-                        <TooltipContent>Edit buyer</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button
-                                    variant="outline"
-                                    size="icon-xs"
-                                    className="shrink-0 border-border-warm"
-                                    aria-label={`Attach properties for ${buyer.name}`}
-                                    onClick={() => onAttachProperties(buyer)}
-                                />
-                            }
-                        >
-                            <Link2 aria-hidden strokeWidth={1.75} />
-                        </TooltipTrigger>
-                        <TooltipContent>Attach to properties</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button
-                                    variant="outline"
-                                    size="icon-xs"
-                                    nativeButton={false}
-                                    className="shrink-0 border-border-warm text-brand"
+                        <div className="flex items-center gap-2">
+                            <h2 className="body-sm truncate font-bold text-ink">{buyer.name}</h2>
+                            <Tooltip>
+                                <TooltipTrigger
                                     render={
-                                        <a
-                                            href={formatWhatsAppUrl(buyer.phoneDigits)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            aria-label={`Message ${buyer.name} on WhatsApp`}
+                                        <span
+                                            role="img"
+                                            title={priorityTitle(model.priority)}
+                                            aria-label={priorityTitle(model.priority)}
+                                            className={cn(
+                                                "shrink-0 rounded-full block-2 inline-2",
+                                                model.priority === "hot" && "bg-urgent",
+                                                model.priority === "warm" && "bg-pending",
+                                                model.priority === "cold" && "bg-ink-subtle",
+                                            )}
                                         />
                                     }
                                 />
-                            }
+                                <TooltipContent>{priorityTitle(model.priority)}</TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <a
+                            href={`tel:+91${buyer.phoneDigits}`}
+                            onClick={(event) => event.stopPropagation()}
+                            className="body-xs tabular text-ink-muted hover:text-brand-text hover:underline"
                         >
-                            <MessageCircle aria-hidden strokeWidth={1.75} />
-                        </TooltipTrigger>
-                        <TooltipContent>Message {buyer.name} on WhatsApp.</TooltipContent>
-                    </Tooltip>
+                            {formatPhoneIn(buyer.phoneDigits)}
+                        </a>
+                    </div>
                 </div>
+
+                <ContactCardActions
+                    name={buyer.name}
+                    phoneDigits={buyer.phoneDigits}
+                    onOpen={open}
+                    onEdit={() => onEdit(buyer)}
+                    onAttach={attach}
+                    onNotes={open}
+                />
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
-                <Badge variant="neutral" className="gap-1">
-                    <LookingIcon aria-hidden className="block-3 inline-3" strokeWidth={2} />
+            <div className="mbs-4 flex flex-wrap items-center gap-1.5">
+                <Badge
+                    variant="brand"
+                    className={cn(
+                        buyer.lookingFor === "rent" &&
+                            "border-pending/20 bg-urgent-soft/65 text-pending",
+                    )}
+                >
                     {buyer.lookingFor === "rent" ? "Renting" : "Buying"}
                 </Badge>
-                {kindLabel(buyer) ? <Badge variant="neutral">{kindLabel(buyer)}</Badge> : null}
-                {buyer.bhk !== null ? <Badge variant="neutral">{buyer.bhk} BHK</Badge> : null}
-                {budget ? (
-                    <Badge variant="neutral" className="tabular">
-                        {budget}
+                {model.propertyTypes.slice(0, 1).map((type) => (
+                    <Badge key={type} variant="outline" className="text-ink">
+                        {type}
                     </Badge>
+                ))}
+                {model.configurations.slice(0, 1).map((configuration) => (
+                    <Badge key={configuration} variant="outline" className="text-ink">
+                        {configuration}
+                    </Badge>
+                ))}
+                <Badge variant="neutral" className="tabular font-bold text-ink">
+                    {model.budgetLabel}
+                </Badge>
+            </div>
+
+            <div className="mbs-3 flex items-center gap-1.5 min-block-5">
+                <MapPin
+                    aria-hidden
+                    className="shrink-0 text-ink-subtle block-3.5 inline-3.5"
+                    strokeWidth={1.75}
+                />
+                <p className="body-xs truncate text-ink-muted">
+                    {model.localities.slice(0, 2).join(", ") || "Localities not set"}
+                </p>
+                {model.localities.length > 2 ? (
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <span className="body-xs shrink-0 font-semibold text-brand-text">
+                                    +{model.localities.length - 2}
+                                </span>
+                            }
+                        />
+                        <TooltipContent>{model.localities.slice(2).join(", ")}</TooltipContent>
+                    </Tooltip>
                 ) : null}
             </div>
 
-            <p className="body-xs flex items-start gap-1.5 text-ink-muted">
-                <MapPin
-                    aria-hidden
-                    className="mbs-px shrink-0 block-3.5 inline-3.5"
-                    strokeWidth={1.75}
-                />
-                <span className="text-pretty">
-                    {buyer.preferredLocalities.length > 0
-                        ? buyer.preferredLocalities.join(", ")
-                        : "No preferred areas"}
-                </span>
-            </p>
-
-            {buyer.attachedProperties.length > 0 ? (
-                <ul className="flex flex-col gap-1">
-                    {buyer.attachedProperties.slice(0, 3).map((property) => (
-                        <li key={property.leadId}>
-                            <PropertyTitleLink
-                                href={brokerPropertyDetailHref(property.id)}
-                                className="body-xs font-medium"
-                            >
-                                {property.title}
-                            </PropertyTitleLink>
-                        </li>
-                    ))}
-                    {buyer.attachedProperties.length > 3 ? (
-                        <li className="body-xs text-ink-subtle">
-                            +{buyer.attachedProperties.length - 3} more
-                        </li>
-                    ) : null}
-                </ul>
-            ) : null}
-
-            {buyer.documents.length > 0 ? (
-                <details className="group/docs">
-                    <summary
+            <div className="mbs-3 flex-1">
+                {model.properties.length ? (
+                    <PropertyCoverStack
+                        properties={model.properties}
+                        onAttach={attach}
+                        onOpenOverflow={() => (onOpenProperties ? onOpenProperties(buyer) : open())}
+                    />
+                ) : (
+                    <button
+                        type="button"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            attach();
+                        }}
                         className="
-                          body-xs flex cursor-pointer list-none items-center gap-1.5 text-ink-muted
-                          hover:text-ink
+                          body-xs flex items-center justify-center gap-2 rounded-inner border
+                          border-dashed border-brand/35 bg-brand-soft/25 px-3 font-semibold
+                          text-brand-text transition-colors block-12 inline-full
+                          hover:bg-brand-soft/60
+                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30
                         "
                     >
-                        <Paperclip
-                            aria-hidden
-                            className="shrink-0 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                        {buyer.documents.length}{" "}
-                        {buyer.documents.length === 1 ? "document" : "documents"}
-                    </summary>
-
-                    <ul className="mbs-2 flex flex-col gap-1.5">
-                        {buyer.documents.map((doc) => {
-                            const DocIcon = documentIcon(doc.mimeType);
-                            return (
-                                <li key={doc.id}>
-                                    <a
-                                        href={doc.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="
-                                          flex items-center gap-2 rounded-inner bg-surface-muted/60
-                                          px-2.5 py-2 transition-colors duration-160
-                                          hover:bg-surface-muted
-                                        "
-                                    >
-                                        <DocIcon
-                                            aria-hidden
-                                            className="shrink-0 text-ink-muted block-4 inline-4"
-                                            strokeWidth={1.75}
-                                        />
-                                        <span
-                                            className="
-                                              body-xs flex-1 truncate text-ink min-inline-0
-                                            "
-                                        >
-                                            {doc.fileName}
-                                        </span>
-                                        <span className="body-xs shrink-0 text-ink-subtle">
-                                            {BUYER_DOCUMENT_KIND_LABEL[doc.kind]} ·{" "}
-                                            <span className="tabular">
-                                                {formatFileSize(doc.sizeBytes)}
-                                            </span>
-                                        </span>
-                                    </a>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </details>
-            ) : null}
-
-            <div
-                className="
-                  flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm
-                  pbs-3
-                "
-            >
-                <p
-                    className={cn(
-                        "body-xs",
-                        status.tone === "urgent" && "text-urgent",
-                        status.tone === "brand" && "text-brand-text",
-                        status.tone === "muted" && "text-ink-muted",
-                    )}
-                >
-                    {status.text}
-                </p>
-
-                <p className="body-xs text-ink-subtle">
-                    {buyer.lastContactedAt
-                        ? `Spoke ${formatRelativePast(new Date(buyer.lastContactedAt), new Date())}`
-                        : "Never contacted"}
-                </p>
+                        <Plus aria-hidden className="block-4 inline-4" />
+                        Attach property
+                    </button>
+                )}
             </div>
+
+            <footer className="body-xs mbs-3 flex items-center justify-between gap-2 border-bs border-border-warm pbs-3 min-block-8">
+                <Recency value={buyer.lastContactedAt} onLogCall={open} />
+                {followUp ? (
+                    <span
+                        className={cn(
+                            "tabular shrink-0 rounded-md bg-surface-muted px-2 py-1 font-semibold text-ink-muted",
+                            followUp.overdue && "bg-urgent-soft text-urgent",
+                        )}
+                    >
+                        {followUp.label}
+                    </span>
+                ) : null}
+            </footer>
         </article>
     );
 }

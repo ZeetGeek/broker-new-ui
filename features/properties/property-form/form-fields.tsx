@@ -230,7 +230,6 @@ export function SelectField({
         formState: { errors },
     } = useFormContext<PropertyDraftValues>();
     const error = errorAt(errors, name);
-    const messageId = `${name.replace(/\./g, "-")}-message`;
     return (
         <FieldShell
             name={name}
@@ -260,14 +259,8 @@ export function SelectField({
                         <SelectTrigger
                             id={name.replace(/\./g, "-")}
                             ref={field.ref}
-                            aria-invalid={Boolean(error) || undefined}
-                            aria-describedby={error ? messageId : undefined}
-                            className="
-                              border-2 border-border-warm bg-surface px-4 text-[15px] text-ink
-                              block-control-xl inline-full
-                              hover:border-ink-subtle
-                              aria-invalid:border-danger-mid
-                            "
+                            size="lg"
+                            errorText={error}
                         >
                             <SelectValue placeholder={placeholder}>
                                 {(value) =>
@@ -286,11 +279,6 @@ export function SelectField({
                     </Select>
                 )}
             />
-            {error ? (
-                <p id={messageId} role="alert" className="text-sm text-danger">
-                    {error}
-                </p>
-            ) : null}
         </FieldShell>
     );
 }

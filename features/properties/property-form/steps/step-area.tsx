@@ -154,13 +154,7 @@ export function StepArea() {
                             value={converterUnit}
                             onValueChange={(value) => setConverterUnit(value ?? "bigha")}
                         >
-                            <SelectTrigger
-                                id="area-converter-unit"
-                                className="
-                                  border-2 border-border-warm bg-surface px-4 text-[15px] text-ink
-                                  block-control-xl inline-full
-                                "
-                            >
+                            <SelectTrigger id="area-converter-unit" size="lg">
                                 <SelectValue>
                                     {(value) =>
                                         AREA_UNIT_OPTIONS.find((option) => option.value === value)

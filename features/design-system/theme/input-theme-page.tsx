@@ -89,17 +89,20 @@ export function InputThemePage() {
         <DesignSystemShell
             eyebrow="Components"
             title="Input."
-            description="One base-ui primitive, wrapped once in components/ui/input.tsx. Uses the same compact rounded-control corners as buttons. Three sizes, icon slots on either edge, a built-in password toggle, clearable, loading, and error/success states; all sharing the same aria-invalid and data-success wiring so a form only sets props, never inline styles."
+            description="One base-ui primitive, wrapped once in components/ui/input.tsx. Uses the same compact rounded-control corners and the same five control-height steps as buttons. Icon slots on either edge, a built-in password toggle, clearable, loading, and error/success states; all sharing the same aria-invalid and data-success wiring so a form only sets props, never inline styles."
         >
             <div className="space-y-10">
                 <section>
                     <h2 className="h4 text-ink">Sizes</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        Default is 36px, same as button default. Use{" "}
-                        <code className="body-xs">size=&quot;lg&quot;</code> for the primary mobile
-                        form — 48px, matching button <code className="body-xs">lg</code>.
+                        Same five steps as buttons, from{" "}
+                        <code className="body-xs">block-control-xs</code> through{" "}
+                        <code className="body-xs">block-control-xl</code>. Default is 36px.{" "}
+                        <code className="body-xs">md</code> is 44px (desktop tap-target).{" "}
+                        <code className="body-xs">lg</code> is 48px, matching button{" "}
+                        <code className="body-xs">lg</code> — use it on primary mobile forms.
                     </p>
-                    <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {INPUT_SIZES.map((s) => (
                             <Swatch key={s.name} label={s.label}>
                                 <Input size={s.name} placeholder="Property title" />

@@ -379,6 +379,7 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 | Highlight         | `highlight`                  | `highlight-ink` | Dark surfaces only (`brand-deep`/`brand-ink` cards). One per screen, max — the one action that leads on a dark attention card. Never on `canvas`/`surface`. |
 | Highlight outline | transparent, 1px `highlight` | `highlight-ink` | Same dark-surface restriction as Highlight, lower emphasis.                                                                                                 |
 | Secondary         | transparent, 1px `border`    | `ink`           | Reschedule, Cancel, Map view                                                                                                                                |
+| Surface           | `surface`, 1px `border-warm`, `shadow-sm` | `ink` | White fill on canvas. Filter chips and quiet contained actions. Hover keeps the white fill and darkens the border so it does not blend into `canvas`. |
 | Destructive       | transparent, 1px `danger`    | `danger`        | Reject, Delete                                                                                                                                              |
 | Ghost             | none                         | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
 
@@ -504,12 +505,13 @@ placeholder and lives in `config/site.ts` only.
 
 ### 4.10 Input
 
-One base-ui primitive, wrapped once in `components/ui/input.tsx`. Three
-sizes (`sm` / `default` / `lg`) off the control-height scale (§3.1a) —
-`control-sm` / `control-md` / `control-xl` (48px). Input `lg` and button `lg`
-share that height — `lg` is the primary-mobile-form size — an optional icon in either
-end slot, and error/success/loading states that share one wiring instead of
-three.
+One base-ui primitive, wrapped once in `components/ui/input.tsx`. Five
+sizes (`xs` / `sm` / `default` / `md` / `lg`) off the same control-height
+scale as buttons (§3.1a) — `control-xs` / `control-sm` / `control-md` /
+`control-lg` / `control-xl`. Input `md`/`lg` and button `md`/`lg` share
+those heights — `md` is the desktop tap-target, `lg` is the
+primary-mobile-form size — an optional icon in either end slot, and
+error/success/loading states that share one wiring instead of three.
 
 ```
 ┌──────────────────────────────┐
@@ -564,6 +566,43 @@ field's own value.
 
 Placeholder text is `ink-subtle`, sentence case, describes what to enter
 (`Search locality`) rather than repeating a visible label (`Locality`).
+
+### 4.11 Select
+
+One base-ui primitive, wrapped once in `components/ui/select.tsx`. Compound
+API: `Select` / `SelectTrigger` / `SelectValue` / `SelectContent` /
+`SelectItem` (plus optional `SelectGroup`, `SelectLabel`, `SelectSeparator`).
+The trigger uses the same five control-height steps, `rounded-control`, 2px
+`border-warm`, and `surface` fill as Input (§4.10). Default trigger is 36px
+(`control-md`); `lg` is 48px for primary mobile forms sitting next to an
+Input of the same size.
+
+```
+┌──────────────────────────────┐
+│ 📍  Vesu                  ▾  │  start icon · value · chevron
+├──────────────────────────────┤
+│ 🏢  Choose type           ▾  │  placeholder is ink-subtle
+├──────────────────────────────┤
+│ 📍  Adajan                ◌  │  loading — Tailspin replaces chevron
+├──────────────────────────────┤
+│    Choose a locality      ▾  │  error — danger border + ring
+│ Choose a locality to continue│  message region, danger text
+└──────────────────────────────┘
+```
+
+**Chevron owns the end slot.** `startIcon` is optional. `loading` disables
+the trigger, sets `aria-busy`, and swaps the chevron for the same Tailspin
+as Input and Button. Never add a second end icon.
+
+**Error and success** on `SelectTrigger`: pass `errorText` and the border,
+focus ring, shake, and message region switch together. `success` sets
+`data-success` and a `success-mid` border; it is suppressed when the field
+is also invalid.
+
+**Popup** is `bg-surface`, `rounded-card`, `shadow-lg`, origin-aware via
+`t-dropdown`. Highlighted items use `brand-soft` / `brand-text`. Never a
+dark glass overlay. Keep the list as this compound select — do not flatten
+to a native `<select>`.
 
 ---
 

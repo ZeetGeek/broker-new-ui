@@ -47,6 +47,7 @@ type ApiOwnerItem = {
     status?: string | null;
     tags?: string[] | null;
     notes?: string | null;
+    properties?: OwnerRow["properties"];
 };
 
 type ApiOwnersResponse = {
@@ -102,6 +103,16 @@ function mockOwnerRows(): OwnerRow[] {
                 hasActiveRepresentation: deal.owner.isRepresentationActive,
                 propertyCount: 1,
                 propertyTitles: [deal.property.title],
+                properties: [
+                    {
+                        id: deal.property.id,
+                        title: deal.property.title,
+                        locality: deal.property.locality,
+                        coverUrl: deal.property.imageSrc,
+                        propertyType: deal.property.propertyTypeLabel,
+                        configuration: deal.property.configLabel,
+                    },
+                ],
                 localities: [deal.property.locality],
                 totalValueInr: deal.property.isRent ? 0 : deal.property.amountInr,
                 isAllRent: deal.property.isRent,
@@ -113,6 +124,14 @@ function mockOwnerRows(): OwnerRow[] {
         existing.propertyCount += 1;
         if (!existing.propertyTitles.includes(deal.property.title)) {
             existing.propertyTitles.push(deal.property.title);
+            existing.properties?.push({
+                id: deal.property.id,
+                title: deal.property.title,
+                locality: deal.property.locality,
+                coverUrl: deal.property.imageSrc,
+                propertyType: deal.property.propertyTypeLabel,
+                configuration: deal.property.configLabel,
+            });
         }
         if (!existing.localities.includes(deal.property.locality)) {
             existing.localities.push(deal.property.locality);
@@ -160,6 +179,7 @@ function toOwnerRow(item: ApiOwnerItem): OwnerRow {
         hasActiveRepresentation: Boolean(item.hasActiveRepresentation),
         propertyCount: item.propertyCount ?? 0,
         propertyTitles: item.propertyTitles ?? [],
+        properties: item.properties,
         localities: item.localities?.length ? item.localities : ["—"],
         totalValueInr: Number(item.totalValueInr) || 0,
         isAllRent: Boolean(item.isAllRent),
@@ -181,7 +201,21 @@ function toOwnerRow(item: ApiOwnerItem): OwnerRow {
 function toBuyerRow(
     client: Awaited<ReturnType<typeof listClientsWithLeadSummary>>[number],
 ): BuyerRow {
-    return { ...client, details: mockAdvancedBuyers.get(client.id) };
+    return {
+        ...client,
+        attachedProperties: client.attachedProperties.map((property) => {
+            const deal = MOCK_DEALS.find(
+                (item) => item.buyer.id === client.id && item.property.id === property.id,
+            );
+            return {
+                ...property,
+                locality: deal?.property.locality,
+                coverUrl: deal?.property.imageSrc,
+                propertyType: deal?.property.propertyTypeLabel,
+            };
+        }),
+        details: mockAdvancedBuyers.get(client.id),
+    };
 }
 
 function apiBuyerToRow(item: ApiBuyerItem): BuyerRow {

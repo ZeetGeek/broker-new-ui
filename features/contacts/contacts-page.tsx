@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useQuery } from "@tanstack/react-query";
@@ -38,6 +38,13 @@ import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
 import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
 import { AttachBuyerPropertiesModal } from "@/features/contacts/attach-buyer-properties-modal";
 import { BuyerCard } from "@/features/contacts/buyer-card";
+import { ContactDetailPanel } from "@/features/contacts/contact-detail-panel";
+import {
+    emptyBuyerForm,
+    emptyOwnerForm,
+    type BuyerContactForm,
+    type OwnerContactForm,
+} from "@/features/contacts/contact-form-model";
 import { ContactsSkeleton } from "@/features/contacts/contacts-skeleton";
 import { ContactsSpeedDial } from "@/features/contacts/contacts-speed-dial";
 import { OwnerCard } from "@/features/contacts/owner-card";
@@ -50,7 +57,6 @@ import {
     DEFAULT_CONTACTS_FILTERS,
     type OwnerRow,
 } from "@/features/contacts/types";
-import { ViewBuyerLeadsModal } from "@/features/contacts/view-buyer-leads-modal";
 
 const SORT_OPTIONS: { value: ContactsSort; label: string }[] = [
     { value: "recent", label: "Recent first" },
@@ -161,7 +167,12 @@ export function ContactsPage() {
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
     const [editingOwner, setEditingOwner] = useState<OwnerRow | null>(null);
     const [attachingBuyer, setAttachingBuyer] = useState<BuyerRow | null>(null);
-    const [viewingBuyer, setViewingBuyer] = useState<BuyerRow | null>(null);
+    const [selectedContact, setSelectedContact] = useState<
+        { type: "buyer"; row: BuyerRow } | { type: "owner"; row: OwnerRow } | null
+    >(null);
+    const [detailSection, setDetailSection] = useState<"properties" | undefined>();
+    const [hasContactQuery, setHasContactQuery] = useState(false);
+    const openerIdRef = useRef<string | null>(null);
     /** Bumped after a create/update/attach so the list and counts both refetch. */
     const [revision, setRevision] = useState(0);
 
@@ -219,6 +230,121 @@ export function ContactsPage() {
     const rows = isBuyers ? buyers : ownersQuery.items;
     const activeQuery = isBuyers ? buyersQuery : ownersQuery;
     const headline = buildHeadline(summary, filters.tab);
+
+    const restoreCardFocus = useCallback(() => {
+        const id = openerIdRef.current;
+        if (!id) return;
+        window.requestAnimationFrame(() => {
+            document.querySelector<HTMLElement>(`[data-contact-id="${CSS.escape(id)}"]`)?.focus();
+        });
+    }, []);
+
+    const openContact = useCallback(
+        (type: "buyer" | "owner", row: BuyerRow | OwnerRow, section?: "properties") => {
+            openerIdRef.current = row.id;
+            setHasContactQuery(true);
+            setDetailSection(section);
+            setSelectedContact(
+                type === "buyer" ? { type, row: row as BuyerRow } : { type, row: row as OwnerRow },
+            );
+            const url = new URL(window.location.href);
+            url.searchParams.set("contact", row.id);
+            window.history.pushState({ ...window.history.state, contactPanel: true }, "", url);
+        },
+        [],
+    );
+
+    const closeContact = useCallback(() => {
+        const url = new URL(window.location.href);
+        setSelectedContact(null);
+        setHasContactQuery(false);
+        setDetailSection(undefined);
+        if (url.searchParams.has("contact")) {
+            if (window.history.state?.contactPanel) window.history.back();
+            else {
+                url.searchParams.delete("contact");
+                window.history.replaceState(window.history.state, "", url);
+            }
+        }
+        restoreCardFocus();
+    }, [restoreCardFocus]);
+
+    useEffect(() => {
+        const syncFromUrl = () => {
+            const id = new URL(window.location.href).searchParams.get("contact");
+            setHasContactQuery(Boolean(id));
+            if (!id) {
+                setSelectedContact(null);
+                restoreCardFocus();
+                return;
+            }
+            const buyer = buyers.find((item) => item.id === id);
+            const owner = ownersQuery.items.find((item) => item.id === id);
+            if (buyer) setSelectedContact({ type: "buyer", row: buyer });
+            else if (owner) setSelectedContact({ type: "owner", row: owner });
+            else if (
+                (id.startsWith("owner_") || id.startsWith("custom_owner_")) &&
+                filters.tab !== "owners"
+            ) {
+                setFilters((previous) => ({ ...previous, tab: "owners" }));
+            } else if (filters.tab !== "buyers") {
+                setFilters((previous) => ({ ...previous, tab: "buyers" }));
+            }
+        };
+        syncFromUrl();
+        window.addEventListener("popstate", syncFromUrl);
+        return () => window.removeEventListener("popstate", syncFromUrl);
+    }, [buyers, filters.tab, ownersQuery.items, restoreCardFocus, setFilters]);
+
+    const quickUpdateBuyer = useCallback(
+        async (buyer: BuyerRow, patch: Partial<BuyerContactForm>) => {
+            const values: BuyerContactForm = {
+                ...emptyBuyerForm(),
+                name: buyer.name,
+                phone: buyer.phoneDigits,
+                intent: buyer.lookingFor,
+                propertyTypes: buyer.propertyKind === "any" ? [] : [buyer.propertyKind],
+                configurations: buyer.bhk ? [`${buyer.bhk} BHK`] : [],
+                localities: buyer.preferredLocalities,
+                notes: buyer.notes ?? "",
+                lastSpokeAt: buyer.lastContactedAt?.slice(0, 10) ?? "",
+                ...buyer.details,
+                ...patch,
+            };
+            await contactsApi.saveBuyer(values, buyer.id);
+            setSelectedContact({
+                type: "buyer",
+                row: {
+                    ...buyer,
+                    details: values,
+                    notes: values.notes,
+                    lastContactedAt: values.lastSpokeAt || buyer.lastContactedAt,
+                },
+            });
+            setRevision((value) => value + 1);
+        },
+        [],
+    );
+
+    const quickUpdateOwner = useCallback(
+        async (owner: OwnerRow, patch: Partial<OwnerContactForm>) => {
+            const values: OwnerContactForm = {
+                ...emptyOwnerForm(),
+                name: owner.name,
+                phone: owner.phoneDigits ?? "",
+                status: owner.status ?? "active",
+                lastSpokeAt: owner.lastSpokeAt?.slice(0, 10) ?? "",
+                tags: owner.tags ?? [],
+                notes: owner.notes ?? "",
+                ...owner.details,
+                ...patch,
+            };
+            const saved = await contactsApi.saveOwner(values, owner.id, owner.origin);
+            setSelectedContact({ type: "owner", row: saved });
+            setRevision((value) => value + 1);
+        },
+        [],
+    );
 
     return (
         <TooltipProvider>
@@ -405,13 +531,22 @@ export function ContactsPage() {
                 ) : null}
 
                 {activeQuery.isError && rows.length === 0 ? (
-                    <p role="alert" className="body-sm text-urgent">
-                        Could not load your contacts. Check your connection and try again.
-                    </p>
+                    <div role="alert" className="flex flex-col items-start gap-3 py-12">
+                        <p className="body-sm font-medium text-ink">
+                            Contacts could not load. Check your connection and try again.
+                        </p>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => void activeQuery.refetch()}
+                        >
+                            Try again
+                        </Button>
+                    </div>
                 ) : null}
 
                 {activeQuery.isError && rows.length === 0 ? null : activeQuery.isPending ? (
-                    <ContactsSkeleton />
+                    <ContactsSkeleton variant={isBuyers ? "buyer" : "owner"} />
                 ) : rows.length === 0 ? (
                     hasSearch ? (
                         <EmptyState
@@ -459,16 +594,19 @@ export function ContactsPage() {
                             <WindowVirtualGrid
                                 items={buyers}
                                 getKey={(buyer) => buyer.id}
-                                estimateRowHeight={430}
+                                estimateRowHeight={320}
                                 gap={12}
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
                                 ariaLabel="Buyers"
                                 renderItem={(buyer) => (
                                     <BuyerCard
                                         buyer={buyer}
+                                        onOpen={(row) => openContact("buyer", row)}
+                                        onOpenProperties={(row) =>
+                                            openContact("buyer", row, "properties")
+                                        }
                                         onEdit={setEditingBuyer}
                                         onAttachProperties={setAttachingBuyer}
-                                        onViewLeads={setViewingBuyer}
                                     />
                                 )}
                             />
@@ -476,12 +614,20 @@ export function ContactsPage() {
                             <WindowVirtualGrid
                                 items={ownersQuery.items}
                                 getKey={(owner) => owner.id}
-                                estimateRowHeight={260}
+                                estimateRowHeight={384}
                                 gap={12}
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
                                 ariaLabel="Owners"
                                 renderItem={(owner) => (
-                                    <OwnerCard owner={owner} onEdit={setEditingOwner} />
+                                    <OwnerCard
+                                        owner={owner}
+                                        onOpen={(row) => openContact("owner", row)}
+                                        onOpenProperties={(row) =>
+                                            openContact("owner", row, "properties")
+                                        }
+                                        onEdit={setEditingOwner}
+                                        onAttachProperty={setEditingOwner}
+                                    />
                                 )}
                             />
                         )}
@@ -541,15 +687,28 @@ export function ContactsPage() {
                     />
                 ) : null}
 
-                {viewingBuyer ? (
-                    <ViewBuyerLeadsModal
-                        open
-                        onOpenChange={(next) => {
-                            if (!next) setViewingBuyer(null);
-                        }}
-                        buyer={viewingBuyer}
-                    />
-                ) : null}
+                <ContactDetailPanel
+                    contact={selectedContact}
+                    open={selectedContact != null || (hasContactQuery && activeQuery.isPending)}
+                    initialSection={detailSection}
+                    onOpenChange={(next) => {
+                        if (!next) closeContact();
+                    }}
+                    onEditBuyer={(buyer) => {
+                        closeContact();
+                        setEditingBuyer(buyer);
+                    }}
+                    onEditOwner={(owner) => {
+                        closeContact();
+                        setEditingOwner(owner);
+                    }}
+                    onAttachBuyer={(buyer) => {
+                        closeContact();
+                        setAttachingBuyer(buyer);
+                    }}
+                    onQuickUpdateBuyer={quickUpdateBuyer}
+                    onQuickUpdateOwner={quickUpdateOwner}
+                />
             </div>
         </TooltipProvider>
     );
