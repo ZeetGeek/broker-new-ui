@@ -6,6 +6,8 @@ import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { Button } from "@/components/ui/button";
+
 export function SelectionChip({
     active,
     children,
@@ -23,8 +25,10 @@ export function SelectionChip({
     icon?: ReactNode;
 }) {
     return (
-        <button
+        <Button
             type="button"
+            variant="outline"
+            size="md"
             aria-pressed={active}
             onClick={onClick}
             className={cn(
@@ -53,6 +57,6 @@ export function SelectionChip({
                 </span>
             ) : null}
             {children}
-        </button>
+        </Button>
     );
 }

@@ -453,6 +453,20 @@ export const FURNISHING_ITEM_OPTIONS = [
     "crockery_unit",
     "false_ceiling",
 ].map((value) => ({ value, label: toLabel(value) }));
+export const COMMERCIAL_FURNISHING_ITEMS = new Set([
+    "sofa",
+    "chairs",
+    "tv",
+    "fridge",
+    "microwave",
+    "water_purifier",
+    "ac",
+    "fan",
+    "light_fixtures",
+    "curtains",
+    "inverter",
+    "false_ceiling",
+]);
 export const KITCHEN_TYPE_OPTIONS = ["modular", "semi_modular", "open", "covered"].map((value) => ({
     value,
     label: toLabel(value),
@@ -623,6 +637,10 @@ export const PHOTO_TAG_OPTIONS = [
     "master_plan",
     "location_map",
     "other",
+    "plot_view",
+    "road_access",
+    "frontage",
+    "interior",
 ].map((value) => ({ value, label: toLabel(value) }));
 export const DOCUMENT_TYPE_OPTIONS = [
     "sale_deed",
@@ -646,6 +664,12 @@ export const DOCUMENT_TYPE_OPTIONS = [
     "existing_rent_agreement",
     "loan_noc",
     "possession_letter",
+    "8a_extract",
+    "allotment_letter",
+    "builder_agreement",
+    "survey_map",
+    "property_ownership_proof",
+    "fire_noc",
 ].map((value) => ({ value, label: toLabel(value) }));
 
 export const LISTER_TYPE_OPTIONS = [

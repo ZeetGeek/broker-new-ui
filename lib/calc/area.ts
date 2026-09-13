@@ -41,6 +41,21 @@ export function areaToSqft(
     return Math.round(value * (factor ?? 1));
 }
 
+export function convertArea(
+    value: number | null | undefined,
+    fromUnit: string,
+    toUnit: string,
+    state = "Gujarat",
+): number | null {
+    if (value == null || !Number.isFinite(value) || value <= 0) return value ?? null;
+    const targetFactor =
+        toUnit === "bigha"
+            ? (BIGHA_SQFT_BY_STATE[state] ?? BIGHA_SQFT_BY_STATE.Gujarat)
+            : AREA_TO_SQFT[toUnit as Exclude<AreaUnit, "bigha">];
+    if (!targetFactor) return value;
+    return Math.round((areaToSqft(value, fromUnit, state) / targetFactor) * 100) / 100;
+}
+
 export function calculateLoadingPercent(
     carpet: number | null | undefined,
     superBuiltUp: number | null | undefined,

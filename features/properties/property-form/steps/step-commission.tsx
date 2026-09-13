@@ -8,9 +8,11 @@ import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/com
 import { createClientId } from "@/lib/client-id";
 import { formatInr } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { PROPERTY_VISIBLE_WHEN } from "@/lib/visibility/property";
+import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import {
     ASSIGNED_BROKER_OPTIONS,
@@ -39,7 +41,8 @@ import {
 export function StepCommission() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const values = watch();
-    const isSale = values.basics.listingFor === "sell";
+    const { derived, isVisible } = useFieldRules();
+    const isSale = derived.isSell;
     const milestones = values.commission.sale.paymentMilestones;
     const milestoneTotal = milestones.reduce((total, item) => total + (item.percent || 0), 0);
 
@@ -92,10 +95,21 @@ export function StepCommission() {
                             <ChoiceField
                                 name="commission.sale.mode"
                                 label="Commission mode"
-                                options={SALE_COMMISSION_MODE_OPTIONS}
+                                options={
+                                    derived.hasArea
+                                        ? SALE_COMMISSION_MODE_OPTIONS
+                                        : SALE_COMMISSION_MODE_OPTIONS.filter(
+                                              (option) => option.value !== "per_sqft",
+                                          )
+                                }
                                 columns={3}
                                 visibility="private"
                             />
+                            {!derived.hasArea ? (
+                                <p className="text-xs text-ink-muted">
+                                    Fill the property area first to use per-sq-ft commission.
+                                </p>
+                            ) : null}
                             <div className={FORM_GRID_CLASS}>
                                 {values.commission.sale.mode === "flat" ? (
                                     <CurrencyField
@@ -133,7 +147,7 @@ export function StepCommission() {
                                 columns={3}
                                 visibility="private"
                             />
-                            {PROPERTY_VISIBLE_WHEN.saleSplit(values) ? (
+                            {isVisible("commission.sale.ownerSharePercent") ? (
                                 <NumberField
                                     name="commission.sale.ownerSharePercent"
                                     label="Owner share (%)"
@@ -177,7 +191,11 @@ export function StepCommission() {
                             <ChoiceField
                                 name="commission.rent.mode"
                                 label="Brokerage mode"
-                                options={RENT_COMMISSION_MODE_OPTIONS}
+                                options={RENT_COMMISSION_MODE_OPTIONS.filter(
+                                    (option) =>
+                                        option.value !== "percent_lease_value" ||
+                                        (values.rent.agreementDurationMonths ?? 0) >= 12,
+                                )}
                                 columns={3}
                                 visibility="private"
                             />
@@ -203,7 +221,7 @@ export function StepCommission() {
                                 columns={3}
                                 visibility="private"
                             />
-                            {PROPERTY_VISIBLE_WHEN.rentSplit(values) ? (
+                            {isVisible("commission.rent.ownerSharePercent") ? (
                                 <NumberField
                                     name="commission.rent.ownerSharePercent"
                                     label="Owner share (%)"
@@ -218,7 +236,7 @@ export function StepCommission() {
                                 description="Earn again if the tenant renews."
                                 visibility="private"
                             />
-                            {PROPERTY_VISIBLE_WHEN.renewal(values) ? (
+                            {isVisible("commission.rent.renewalFeeValue") ? (
                                 <NumberField
                                     name="commission.rent.renewalFeeValue"
                                     label="Renewal fee (months of rent)"
@@ -253,9 +271,11 @@ export function StepCommission() {
                               values.commission.rent.value ===
                                   (scenario as (typeof rentScenarios)[number]).months;
                         return (
-                            <button
+                            <Button
                                 key={key}
                                 type="button"
+                                variant="outline"
+                                size="lg"
                                 aria-pressed={active}
                                 onClick={() => {
                                     if (isSale && "rate" in scenario) {
@@ -301,7 +321,7 @@ export function StepCommission() {
                                               ).ownerFirstPayout,
                                     )}
                                 </p>
-                            </button>
+                            </Button>
                         );
                     })}
                 </div>
@@ -386,8 +406,10 @@ export function StepCommission() {
                                     max={100}
                                     visibility="private"
                                 />
-                                <button
+                                <Button
                                     type="button"
+                                    variant="outline"
+                                    size="icon-lg"
                                     aria-label="Remove milestone"
                                     onClick={() =>
                                         setValue(
@@ -406,7 +428,7 @@ export function StepCommission() {
                                     "
                                 >
                                     <Trash2 className="block-4 inline-4" />
-                                </button>
+                                </Button>
                             </div>
                         ))}
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -513,7 +535,8 @@ export function StepCommission() {
                         visibility="private"
                     />
                 </div>
-                <label
+                <Label
+                    htmlFor="commission-mandate-document"
                     className="
                       mbs-5 flex cursor-pointer items-center gap-3 rounded-control border
                       border-dashed border-brand/35 bg-surface px-4 py-3 text-sm font-semibold
@@ -523,7 +546,8 @@ export function StepCommission() {
                 >
                     <FileSignature className="block-5 inline-5" aria-hidden />
                     <span>{values.deal.mandateDocumentName || "Add signed mandate document"}</span>
-                    <input
+                    <Input
+                        id="commission-mandate-document"
                         type="file"
                         className="sr-only"
                         accept=".pdf,image/*"
@@ -535,7 +559,7 @@ export function StepCommission() {
                             )
                         }
                     />
-                </label>
+                </Label>
                 <TextAreaField
                     name="deal.internalNotes"
                     label="Internal notes"

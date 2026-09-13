@@ -12,6 +12,9 @@ import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function LiveSummaryPanel({
     values,
@@ -165,7 +168,7 @@ export function LiveSummaryPanel({
 
     return (
         <aside className="space-y-5">
-            <div className="overflow-hidden rounded-card border border-border-warm bg-surface">
+            <Card className="gap-0 border border-border-warm bg-surface py-0 shadow-none">
                 <div className="relative aspect-video bg-surface-muted">
                     {cover ? (
                         <AppImage src={cover.url} alt={cover.alt || title} fill sizes="320px" />
@@ -198,10 +201,10 @@ export function LiveSummaryPanel({
                         </p>
                     </div>
                 </div>
-            </div>
+            </Card>
 
             {stepIndex >= 4 ? (
-                <div className="overflow-hidden rounded-card bg-brand-ink text-surface">
+                <Card className="gap-0 bg-brand-ink py-0 text-surface ring-0">
                     <div className="p-5">
                         <div className="flex items-center justify-between gap-3">
                             <div>
@@ -275,31 +278,32 @@ export function LiveSummaryPanel({
                         ) : null}
                     </div>
                     <div className="grid grid-cols-2 border-bs border-surface/15">
-                        <button type="button" onClick={() => void copySummary()} className="
+                        <Button type="button" variant="ghost" onClick={() => void copySummary()} className="
                           flex items-center justify-center gap-2 border-e border-surface/15 text-xs
                           font-semibold text-surface min-block-12
-                          hover:bg-surface/10
+                          hover:bg-surface/10 hover:text-surface
                           focus-visible:ring-2 focus-visible:ring-highlight
                         ">
                             <Copy className="block-4 inline-4" /> Copy summary
-                        </button>
-                        <button type="button" onClick={downloadDealSheet} className="
+                        </Button>
+                        <Button type="button" variant="ghost" onClick={downloadDealSheet} className="
                           flex items-center justify-center gap-2 text-xs font-semibold text-surface
                           min-block-12
-                          hover:bg-surface/10
+                          hover:bg-surface/10 hover:text-surface
                           focus-visible:ring-2 focus-visible:ring-highlight
                         ">
                             <FileDown className="block-4 inline-4" /> Download PDF
-                        </button>
+                        </Button>
                     </div>
-                </div>
+                </Card>
             ) : (
-                <div className="
+                <Card className="
                   rounded-card border border-dashed border-border-warm bg-surface-muted p-5
+                  shadow-none
                 ">
                     <p className="text-sm font-bold text-ink">Live deal summary</p>
                     <p className="mbs-1 text-sm/6 text-ink-muted">Add the price in step 5 to see broker income, owner proceeds, and buyer or tenant cost.</p>
-                </div>
+                </Card>
             )}
         </aside>
     );
@@ -344,21 +348,24 @@ function MoneyRow({
         ` : `text-surface/70`)}>
             <span className="flex items-center gap-1.5">
                 {label}
-                <details className="group/help relative inline-flex">
-                    <summary aria-label={`Explain ${label}`} className="
-                      cursor-pointer list-none rounded-full text-surface/45
-                      focus-visible:ring-2 focus-visible:ring-highlight
-                      [&::-webkit-details-marker]:hidden
-                    ">
+                <Popover>
+                    <PopoverTrigger
+                        render={
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-xs"
+                                aria-label={`Explain ${label}`}
+                                className="text-surface/55 hover:bg-surface/10 hover:text-surface"
+                            />
+                        }
+                    >
                         <CircleHelp className="block-3.5 inline-3.5" aria-hidden />
-                    </summary>
-                    <span role="tooltip" className="
-                      absolute inset-s-0 inset-bs-5 z-30 rounded-control bg-surface px-3 py-2
-                      text-xs/5 font-normal text-ink shadow-lg inline-56
-                    ">
+                    </PopoverTrigger>
+                    <PopoverContent side="top" align="start" className="text-xs/5 inline-56">
                         {title}
-                    </span>
-                </details>
+                    </PopoverContent>
+                </Popover>
             </span>
             <span className="tabular whitespace-nowrap">
                 {value == null ? "— — —" : `${prefix ? `${prefix} ` : ""}${formatInr(value)}`}

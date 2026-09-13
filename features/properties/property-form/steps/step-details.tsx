@@ -1,9 +1,6 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
-
-import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { PROPERTY_VISIBLE_WHEN } from "@/lib/visibility/property";
+import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import {
     ADDITIONAL_ROOM_OPTIONS,
@@ -38,15 +35,14 @@ import {
 } from "@/features/properties/property-form/form-fields";
 
 export function StepDetails() {
-    const { watch } = useFormContext<PropertyDraftValues>();
-    const values = watch();
-    const residential = PROPERTY_VISIBLE_WHEN.residentialDetails(values);
-    const commercial = PROPERTY_VISIBLE_WHEN.commercialDetails(values);
-    const land = PROPERTY_VISIBLE_WHEN.landDetails(values);
+    const { isVisible } = useFieldRules();
+    const roomDetails = isVisible("details.bedrooms") || isVisible("details.bathrooms");
+    const commercial = isVisible("details.commercial.fireNoc");
+    const land = isVisible("details.land.openSides");
 
     return (
         <div className="space-y-8">
-            {residential ? (
+            {roomDetails ? (
                 <WizardSection
                     title="Rooms and layout"
                     description="Record the configuration people compare first."
@@ -85,20 +81,12 @@ export function StepDetails() {
                 description="These details help brokers qualify a visit before they call."
             >
                 <div className={FORM_GRID_CLASS}>
-                    {PROPERTY_VISIBLE_WHEN.floorDetails(values) ? (
-                        <>
-                            <SelectField
-                                name="details.floorNumber"
-                                label="Floor number"
-                                options={FLOOR_OPTIONS}
-                            />
-                            <NumberField
-                                name="details.totalFloors"
-                                label="Total floors"
-                                max={200}
-                            />
-                        </>
-                    ) : null}
+                    <SelectField
+                        name="details.floorNumber"
+                        label="Floor number"
+                        options={FLOOR_OPTIONS}
+                    />
+                    <NumberField name="details.totalFloors" label="Total floors" max={200} />
                     <SelectField
                         name="details.facing"
                         label="Facing"
@@ -221,21 +209,19 @@ export function StepDetails() {
                             label="Currently leased"
                             description="Record the existing tenant for a pre-leased property."
                         />
-                        {PROPERTY_VISIBLE_WHEN.existingLease(values) ? (
-                            <div className={FORM_GRID_CLASS}>
-                                <TextField
-                                    name="details.commercial.existingTenantName"
-                                    label="Existing tenant"
-                                    visibility="private"
-                                />
-                                <TextField
-                                    name="details.commercial.existingLeaseEndDate"
-                                    label="Lease ends"
-                                    type="date"
-                                    visibility="private"
-                                />
-                            </div>
-                        ) : null}
+                        <div className={FORM_GRID_CLASS}>
+                            <TextField
+                                name="details.commercial.existingTenantName"
+                                label="Existing tenant"
+                                visibility="private"
+                            />
+                            <TextField
+                                name="details.commercial.existingLeaseEndDate"
+                                label="Lease ends"
+                                type="date"
+                                visibility="private"
+                            />
+                        </div>
                     </div>
                 </WizardSection>
             ) : null}
@@ -270,20 +256,16 @@ export function StepDetails() {
                             label="Zoning"
                             options={ZONING_TYPE_OPTIONS}
                         />
-                        {values.basics.category === "agricultural" ? (
-                            <>
-                                <SelectField
-                                    name="details.land.soilType"
-                                    label="Soil type"
-                                    options={SOIL_TYPE_OPTIONS}
-                                />
-                                <SelectField
-                                    name="details.land.waterAvailability"
-                                    label="Water availability"
-                                    options={WATER_AVAILABILITY_OPTIONS}
-                                />
-                            </>
-                        ) : null}
+                        <SelectField
+                            name="details.land.soilType"
+                            label="Soil type"
+                            options={SOIL_TYPE_OPTIONS}
+                        />
+                        <SelectField
+                            name="details.land.waterAvailability"
+                            label="Water availability"
+                            options={WATER_AVAILABILITY_OPTIONS}
+                        />
                     </div>
                     <div className="mbs-5 space-y-5">
                         <MultiChipField

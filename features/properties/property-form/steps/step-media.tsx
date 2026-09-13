@@ -1,6 +1,6 @@
 "use client";
 
-import { type MutableRefObject, useState } from "react";
+import { type MutableRefObject, useId, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -23,9 +23,21 @@ import { createClientId } from "@/lib/client-id";
 import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
+import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
+import { ConditionalField } from "@/components/property/fields/conditional-field";
+import { FieldLabel } from "@/components/property/fields/field-label";
 import { AppImage } from "@/components/shared/app-image";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import { DOCUMENT_TYPE_OPTIONS, PHOTO_TAG_OPTIONS } from "@/constants/property";
 import {
@@ -46,6 +58,7 @@ export function StepMedia({
     photoFilesRef: MutableRefObject<Map<string, File>>;
 }) {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
+    const { derived } = useFieldRules();
     const photos = watch("media.photos");
     const usablePhotoCount = photos.filter((photo) => photo.status !== "error").length;
     const documents = watch("documents");
@@ -53,6 +66,39 @@ export function StepMedia({
         DOCUMENT_TYPE_OPTIONS[0]?.value ?? "sale_deed",
     );
     const [dragIndex, setDragIndex] = useState<number | null>(null);
+    const relevantDocumentTypes = new Set<string>();
+    if (derived.isRentLike) {
+        ["owner_id_proof", "property_ownership_proof", "society_noc"].forEach((type) =>
+            relevantDocumentTypes.add(type),
+        );
+    } else if (derived.isNewBooking) {
+        ["rera_certificate", "approved_plan", "allotment_letter", "builder_agreement"].forEach(
+            (type) => relevantDocumentTypes.add(type),
+        );
+    } else if (derived.isAgricultural) {
+        ["7_12_extract", "8a_extract", "mutation_entry"].forEach((type) =>
+            relevantDocumentTypes.add(type),
+        );
+    } else if (derived.isPlot) {
+        ["7_12_extract", "na_order", "property_card", "mutation_entry", "survey_map"].forEach(
+            (type) => relevantDocumentTypes.add(type),
+        );
+    } else {
+        ["sale_deed", "index_2", "property_tax_receipt", "society_noc", "share_certificate"].forEach(
+            (type) => relevantDocumentTypes.add(type),
+        );
+    }
+    if (derived.isCommercial || derived.isIndustrial) {
+        ["occupancy_certificate", "fire_noc", "property_tax_receipt"].forEach((type) =>
+            relevantDocumentTypes.add(type),
+        );
+    }
+    const documentTypeOptions = DOCUMENT_TYPE_OPTIONS.filter((option) =>
+        relevantDocumentTypes.has(option.value),
+    );
+    const resolvedDocumentType = documentTypeOptions.some((option) => option.value === documentType)
+        ? documentType
+        : (documentTypeOptions[0]?.value ?? "owner_id_proof");
 
     async function processPhoto(photoId: string, file: File, url: string) {
         updatePhoto(photoId, { status: "processing" });
@@ -209,7 +255,7 @@ export function StepMedia({
                 ...documents,
                 {
                     id: createClientId("document"),
-                    type: documentType,
+                    type: resolvedDocumentType,
                     fileName: file.name,
                     uploadedOn: new Date().toISOString(),
                     verified: false,
@@ -228,7 +274,8 @@ export function StepMedia({
                 title="Property photos"
                 description="Add at least 3 clear photos to publish. The first photo becomes the cover unless you choose another."
             >
-                <label
+                <Label
+                    htmlFor="property-photo-upload"
                     className="
                       flex cursor-pointer flex-col items-center justify-center rounded-card border-2
                       border-dashed border-brand/35 bg-brand-soft/30 px-6 py-8 text-center
@@ -244,11 +291,14 @@ export function StepMedia({
                     >
                         <ImagePlus className="block-5 inline-5" aria-hidden />
                     </span>
-                    <span className="mbs-4 text-base font-bold text-ink">Add property photos</span>
+                    <span className="mbs-4 text-base font-bold text-ink">
+                        <FieldLabel path="media.photos">Add property photos</FieldLabel>
+                    </span>
                     <span className="mbs-1 text-sm text-ink-muted">
                         JPG, PNG, WebP or HEIC · up to 10 MB each · maximum 30
                     </span>
-                    <input
+                    <Input
+                        id="property-photo-upload"
                         type="file"
                         multiple
                         accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
@@ -258,7 +308,7 @@ export function StepMedia({
                             event.currentTarget.value = "";
                         }}
                     />
-                </label>
+                </Label>
                 <div className="mbs-4 flex items-center justify-between gap-4">
                     <p
                         className={`text-sm font-semibold ${
@@ -354,8 +404,10 @@ export function StepMedia({
                                             Cover
                                         </span>
                                     ) : null}
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="outline"
+                                        size="icon-md"
                                         aria-label={`Remove ${photo.name}`}
                                         onClick={() => removePhoto(index)}
                                         className="
@@ -366,7 +418,7 @@ export function StepMedia({
                                         "
                                     >
                                         <Trash2 className="block-4 inline-4" />
-                                    </button>
+                                    </Button>
                                 </div>
                                 <div className="space-y-3 p-3">
                                     {photo.status === "error" ? (
@@ -445,6 +497,7 @@ export function StepMedia({
                 </div>
                 <div className="mbs-5 grid gap-3 sm:grid-cols-3">
                     <FilePicker
+                        path="media.videoUploadName"
                         label="Upload video"
                         accept="video/*"
                         value={watch("media.videoUploadName")}
@@ -455,6 +508,7 @@ export function StepMedia({
                         }
                     />
                     <FilePicker
+                        path="media.floorPlanFiles"
                         label="Add floor plan"
                         accept="image/*,.pdf"
                         value={watch("media.floorPlanFiles").at(-1) ?? ""}
@@ -468,6 +522,7 @@ export function StepMedia({
                         }
                     />
                     <FilePicker
+                        path="media.brochureFileName"
                         label="Add brochure"
                         accept=".pdf"
                         value={watch("media.brochureFileName")}
@@ -508,28 +563,39 @@ export function StepMedia({
                 </div>
                 <div className="grid items-end gap-3 md:grid-cols-[1fr_1fr]">
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="document-type" className="text-sm font-semibold text-ink">
+                        <Label htmlFor="document-type" className="text-sm font-semibold text-ink">
                             Document type
-                        </label>
-                        <select
-                            id="document-type"
-                            value={documentType}
-                            onChange={(event) => setDocumentType(event.target.value)}
-                            className="
-                              rounded-control border-2 border-border-warm bg-surface px-4
-                              text-[15px] text-ink outline-none block-control-xl inline-full
-                              focus-visible:border-ring focus-visible:ring-3
-                              focus-visible:ring-ring/30
-                            "
+                        </Label>
+                        <Select
+                            value={resolvedDocumentType}
+                            onValueChange={(value) => setDocumentType(value ?? "sale_deed")}
                         >
-                            {DOCUMENT_TYPE_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger
+                                id="document-type"
+                                className="
+                                  border-2 border-border-warm bg-surface px-4 text-[15px] text-ink
+                                  block-control-xl inline-full
+                                "
+                            >
+                                <SelectValue>
+                                    {(value) =>
+                                        documentTypeOptions.find(
+                                            (option) => option.value === value,
+                                        )?.label ?? "Choose a document type"
+                                    }
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent align="start">
+                                {documentTypeOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <label
+                    <Label
+                        htmlFor="property-document-upload"
                         className="
                           flex cursor-pointer items-center justify-center gap-2 rounded-control
                           border border-dashed border-brand/35 bg-surface px-4 text-sm font-semibold
@@ -538,13 +604,14 @@ export function StepMedia({
                         "
                     >
                         <Upload className="block-4 inline-4" aria-hidden /> Upload document
-                        <input
+                        <Input
+                            id="property-document-upload"
                             type="file"
                             accept="image/*,.pdf"
                             className="sr-only"
                             onChange={(event) => addDocument(event.target.files?.[0])}
                         />
-                    </label>
+                    </Label>
                 </div>
                 {documents.length ? (
                     <div className="mbs-5 space-y-3">
@@ -576,8 +643,10 @@ export function StepMedia({
                                             </p>
                                         </div>
                                     </div>
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="ghost"
+                                        size="icon-md"
                                         aria-label={`Remove ${document.fileName}`}
                                         onClick={() =>
                                             setValue(
@@ -596,7 +665,7 @@ export function StepMedia({
                                         "
                                     >
                                         <Trash2 className="block-4 inline-4" />
-                                    </button>
+                                    </Button>
                                 </div>
                                 <div className="mbs-4 grid gap-3 sm:grid-cols-2">
                                     <ToggleField
@@ -631,32 +700,41 @@ export function StepMedia({
 }
 
 function FilePicker({
+    path,
     label,
     accept,
     value,
     onFile,
 }: {
+    path: string;
     label: string;
     accept: string;
     value: string;
     onFile: (file: File | undefined) => void;
 }) {
+    const inputId = useId();
     return (
-        <label
-            className="
-              flex cursor-pointer flex-col items-center justify-center rounded-control border
-              border-dashed border-border-warm bg-surface px-4 py-3 text-center min-block-24
-              focus-within:ring-3 focus-within:ring-ring/30
-            "
-        >
-            <Upload className="text-brand block-5 inline-5" aria-hidden />
-            <span className="mbs-2 text-sm font-semibold text-ink">{value || label}</span>
-            <input
-                type="file"
-                accept={accept}
-                className="sr-only"
-                onChange={(event) => onFile(event.target.files?.[0])}
-            />
-        </label>
+        <ConditionalField path={path}>
+            <Label
+                htmlFor={inputId}
+                className="
+                  flex cursor-pointer flex-col items-center justify-center rounded-control border
+                  border-dashed border-border-warm bg-surface px-4 py-3 text-center min-block-24
+                  focus-within:ring-3 focus-within:ring-ring/30
+                "
+            >
+                <Upload className="text-brand block-5 inline-5" aria-hidden />
+                <span className="mbs-2 text-sm font-semibold text-ink">
+                    {value || <FieldLabel path={path}>{label}</FieldLabel>}
+                </span>
+                <Input
+                    id={inputId}
+                    type="file"
+                    accept={accept}
+                    className="sr-only"
+                    onChange={(event) => onFile(event.target.files?.[0])}
+                />
+            </Label>
+        </ConditionalField>
     );
 }

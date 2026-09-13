@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { Copy, Sparkles } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
-import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
 
 import { Button } from "@/components/ui/button";
 
@@ -32,6 +32,7 @@ import {
 export function StepBasics() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const [copying, setCopying] = useState(false);
+    const dealSwitchNotified = useRef(false);
     const category = watch("basics.category");
     const listingFor = watch("basics.listingFor");
     const propertyType = watch("basics.propertyType");
@@ -109,18 +110,56 @@ export function StepBasics() {
                         label="Listing for"
                         options={LISTING_FOR_OPTIONS}
                         columns={4}
+                        onValueChange={() => {
+                            if (dealSwitchNotified.current) return;
+                            dealSwitchNotified.current = true;
+                            toast("Sale and rent details are kept if you switch back.");
+                        }}
                     />
                     <ChoiceField
                         name="basics.category"
                         label="Category"
                         options={PROPERTY_CATEGORY_OPTIONS}
                         columns={3}
+                        onValueChange={(nextCategory) => {
+                            setValue("basics.propertyType", "", { shouldDirty: true });
+                            setValue("basics.propertySubType", "", { shouldDirty: true });
+                            setValue(
+                                "details.commercial",
+                                structuredClone(DEFAULT_PROPERTY_DRAFT.details.commercial),
+                                { shouldDirty: true },
+                            );
+                            setValue(
+                                "details.land",
+                                structuredClone(DEFAULT_PROPERTY_DRAFT.details.land),
+                                { shouldDirty: true },
+                            );
+                            if (!watch("area.carpetArea") && !watch("area.plotArea")) {
+                                setValue(
+                                    "area.unit",
+                                    nextCategory === "agricultural" ? "bigha" : "sqft",
+                                    { shouldDirty: true },
+                                );
+                            }
+                        }}
                     />
                     <div className={FORM_GRID_CLASS}>
                         <SelectField
                             name="basics.propertyType"
                             label="Property type"
                             options={propertyTypeOptions(category)}
+                            onValueChange={() => {
+                                setValue(
+                                    "details.commercial",
+                                    structuredClone(DEFAULT_PROPERTY_DRAFT.details.commercial),
+                                    { shouldDirty: true },
+                                );
+                                setValue(
+                                    "details.land",
+                                    structuredClone(DEFAULT_PROPERTY_DRAFT.details.land),
+                                    { shouldDirty: true },
+                                );
+                            }}
                         />
                         <SelectField
                             name="basics.propertySubType"
@@ -129,14 +168,12 @@ export function StepBasics() {
                             placeholder="Optional"
                         />
                     </div>
-                    {listingFor === "sell" ? (
-                        <ChoiceField
-                            name="basics.transactionType"
-                            label="Transaction"
-                            options={TRANSACTION_TYPE_OPTIONS}
-                            columns={2}
-                        />
-                    ) : null}
+                    <ChoiceField
+                        name="basics.transactionType"
+                        label="Transaction"
+                        options={TRANSACTION_TYPE_OPTIONS}
+                        columns={2}
+                    />
                 </div>
             </WizardSection>
 
@@ -150,8 +187,10 @@ export function StepBasics() {
                         label="Listing title"
                         placeholder={suggestedTitle}
                     />
-                    <button
+                    <Button
                         type="button"
+                        variant="link"
+                        size="md"
                         onClick={() =>
                             setValue("basics.title", suggestedTitle, {
                                 shouldDirty: true,
@@ -167,7 +206,7 @@ export function StepBasics() {
                     >
                         <Sparkles className="block-4 inline-4" aria-hidden />
                         Use suggested title
-                    </button>
+                    </Button>
                     <TextAreaField
                         name="basics.description"
                         label="Description"

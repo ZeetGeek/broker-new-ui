@@ -1,12 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 import { ArrowRightLeft } from "lucide-react";
 
-import { areaToSqft, calculateLoadingPercent } from "@/lib/calc/area";
+import { areaToSqft, calculateLoadingPercent, convertArea } from "@/lib/calc/area";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { useFieldRules } from "@/lib/visibility/use-field-rules";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import { AREA_UNIT_OPTIONS } from "@/constants/property";
 import {
@@ -18,7 +29,7 @@ import {
 
 export function StepArea() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
-    const category = watch("basics.category");
+    const { derived } = useFieldRules();
     const state = watch("location.state");
     const unit = watch("area.unit");
     const carpet = watch("area.carpetArea");
@@ -27,7 +38,21 @@ export function StepArea() {
     const areaSqft = watch("area.areaSqft");
     const [converterValue, setConverterValue] = useState(1);
     const [converterUnit, setConverterUnit] = useState("bigha");
-    const isPlot = category === "land" || category === "agricultural";
+    const previousUnit = useRef(unit);
+    const isPlot = derived.isPlot;
+
+    useEffect(() => {
+        const fromUnit = previousUnit.current;
+        if (fromUnit === unit) return;
+        previousUnit.current = unit;
+        for (const path of ["carpetArea", "builtUpArea", "superBuiltUpArea", "plotArea"] as const) {
+            const current = watch(`area.${path}`);
+            if (current == null) continue;
+            setValue(`area.${path}`, convertArea(current, fromUnit, unit, state), {
+                shouldDirty: true,
+            });
+        }
+    }, [setValue, state, unit, watch]);
 
     useEffect(() => {
         const source = isPlot ? plotArea : carpet;
@@ -49,30 +74,19 @@ export function StepArea() {
             >
                 <div className={FORM_GRID_CLASS}>
                     <SelectField name="area.unit" label="Area unit" options={AREA_UNIT_OPTIONS} />
-                    {isPlot ? (
-                        <NumberField name="area.plotArea" label="Plot area" step={0.01} />
-                    ) : (
-                        <NumberField
-                            name="area.carpetArea"
-                            label="Carpet area"
-                            step={0.01}
-                            hint="The usable space inside the property."
-                        />
-                    )}
-                    {!isPlot ? (
-                        <>
-                            <NumberField
-                                name="area.builtUpArea"
-                                label="Built-up area"
-                                step={0.01}
-                            />
-                            <NumberField
-                                name="area.superBuiltUpArea"
-                                label="Super built-up area"
-                                step={0.01}
-                            />
-                        </>
-                    ) : null}
+                    <NumberField name="area.plotArea" label="Plot area" step={0.01} />
+                    <NumberField
+                        name="area.carpetArea"
+                        label="Carpet area"
+                        step={0.01}
+                        hint="The usable space inside the property."
+                    />
+                    <NumberField name="area.builtUpArea" label="Built-up area" step={0.01} />
+                    <NumberField
+                        name="area.superBuiltUpArea"
+                        label="Super built-up area"
+                        step={0.01}
+                    />
                 </div>
 
                 <div
@@ -107,19 +121,20 @@ export function StepArea() {
             >
                 <div className="grid items-end gap-4 md:grid-cols-[1fr_1fr_auto_1fr]">
                     <div className="flex flex-col gap-2">
-                        <label
+                        <Label
                             htmlFor="area-converter-value"
                             className="text-sm font-semibold text-ink"
                         >
                             Amount
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                             id="area-converter-value"
                             type="number"
                             min={0}
                             step="0.01"
                             value={converterValue}
-                            onChange={(event) => setConverterValue(Number(event.target.value))}
+                            onValueChange={(value) => setConverterValue(Number(value))}
+                            size="lg"
                             className="
                               rounded-control border-2 border-border-warm bg-surface px-4
                               text-[15px] text-ink outline-none block-control-xl inline-full
@@ -129,36 +144,47 @@ export function StepArea() {
                         />
                     </div>
                     <div className="flex flex-col gap-2">
-                        <label
+                        <Label
                             htmlFor="area-converter-unit"
                             className="text-sm font-semibold text-ink"
                         >
                             Unit
-                        </label>
-                        <select
-                            id="area-converter-unit"
+                        </Label>
+                        <Select
                             value={converterUnit}
-                            onChange={(event) => setConverterUnit(event.target.value)}
-                            className="
-                              rounded-control border-2 border-border-warm bg-surface px-4
-                              text-[15px] text-ink outline-none block-control-xl inline-full
-                              focus-visible:border-ring focus-visible:ring-3
-                              focus-visible:ring-ring/30
-                            "
+                            onValueChange={(value) => setConverterUnit(value ?? "bigha")}
                         >
-                            {AREA_UNIT_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger
+                                id="area-converter-unit"
+                                className="
+                                  border-2 border-border-warm bg-surface px-4 text-[15px] text-ink
+                                  block-control-xl inline-full
+                                "
+                            >
+                                <SelectValue>
+                                    {(value) =>
+                                        AREA_UNIT_OPTIONS.find((option) => option.value === value)
+                                            ?.label ?? "Choose a unit"
+                                    }
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent align="start">
+                                {AREA_UNIT_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <ArrowRightLeft
                         className="mbe-3 hidden text-ink-muted block-5 inline-5 md:block"
                         aria-hidden
                     />
                     <div
-                        className="rounded-control bg-brand-ink px-4 py-3 text-surface min-block-12"
+                        className="
+                      rounded-control bg-brand-ink px-4 py-3 text-surface min-block-12
+                    "
                     >
                         <p className="text-xs text-surface/70">Sq ft equivalent</p>
                         <p className="tabular text-lg font-bold">

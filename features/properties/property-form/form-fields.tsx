@@ -9,8 +9,23 @@ import { formatInrInput, inrWordHint, parseInr } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { type FieldVisibility, visibilityForField } from "@/lib/visibility/property";
+import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
+import { ConditionalField } from "@/components/property/fields/conditional-field";
+import { FieldLabel } from "@/components/property/fields/field-label";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 import type { PropertyOption } from "@/constants/property";
 
@@ -48,6 +63,7 @@ function FieldShell({
     visibility,
     children,
     className,
+    composite = false,
 }: {
     name: string;
     label: string;
@@ -55,22 +71,29 @@ function FieldShell({
     visibility?: FieldVisibility;
     children: ReactNode;
     className?: string;
+    composite?: boolean;
 }) {
     const resolvedVisibility = visibility ?? visibilityForField(name);
+    const fieldId = name.replace(/\./g, "-");
+    const { labelOf } = useFieldRules();
+    const resolvedLabel = labelOf(name, label);
     return (
-        <div className={cn("flex flex-col gap-2 min-inline-0", className)}>
-            <div className="flex items-center justify-between gap-3 min-block-5">
-                <label
-                    htmlFor={name.replace(/\./g, "-")}
-                    className="text-sm font-semibold text-ink"
-                >
-                    {label}
-                </label>
-                <VisibilityMark visibility={resolvedVisibility} />
+        <ConditionalField path={name}>
+            <div className={cn("flex flex-col gap-2 min-inline-0", className)}>
+                <div className="flex items-center justify-between gap-3 min-block-5">
+                    <Label
+                        id={`${fieldId}-label`}
+                        htmlFor={composite ? undefined : fieldId}
+                        className="text-sm font-semibold text-ink"
+                    >
+                        <FieldLabel path={name}>{resolvedLabel}</FieldLabel>
+                    </Label>
+                    <VisibilityMark visibility={resolvedVisibility} />
+                </div>
+                {children}
+                {hint ? <div className="text-xs/5 text-ink-muted">{hint}</div> : null}
             </div>
-            {children}
-            {hint ? <div className="text-xs/5 text-ink-muted">{hint}</div> : null}
-        </div>
+        </ConditionalField>
     );
 }
 
@@ -152,15 +175,15 @@ export function TextAreaField({
             visibility={visibility}
             className={className}
         >
-            <textarea
+            <Textarea
                 id={name.replace(/\./g, "-")}
                 rows={rows}
                 placeholder={placeholder}
                 aria-invalid={Boolean(error) || undefined}
                 aria-describedby={error ? messageId : undefined}
                 className="
-                  resize-y rounded-control border-2 border-border-warm bg-surface px-4 py-3
-                  text-[15px]/6 text-ink outline-none min-block-28
+                  field-sizing-fixed resize-y rounded-control border-2 border-border-warm bg-surface
+                  px-4 py-3 text-[15px]/6 text-ink outline-none min-block-28
                   placeholder:text-ink-subtle
                   hover:border-ink-subtle
                   focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
@@ -190,6 +213,7 @@ export function SelectField({
     visibility,
     className,
     onBlur: onInputBlur,
+    onValueChange,
 }: {
     name: Path;
     label: string;
@@ -199,6 +223,7 @@ export function SelectField({
     visibility?: FieldVisibility;
     className?: string;
     onBlur?: () => void;
+    onValueChange?: (value: string) => void;
 }) {
     const {
         control,
@@ -218,32 +243,47 @@ export function SelectField({
                 name={name}
                 control={control}
                 render={({ field }) => (
-                    <select
-                        id={name.replace(/\./g, "-")}
-                        value={String(field.value ?? "")}
-                        onChange={field.onChange}
-                        onBlur={() => {
-                            field.onBlur();
-                            onInputBlur?.();
+                    <Select
+                        value={String(field.value ?? "") || null}
+                        onValueChange={(value) => {
+                            const next = value ?? "";
+                            field.onChange(next);
+                            onValueChange?.(next);
                         }}
-                        ref={field.ref}
-                        aria-invalid={Boolean(error) || undefined}
-                        aria-describedby={error ? messageId : undefined}
-                        className="
-                          rounded-control border-2 border-border-warm bg-surface px-4 text-[15px]
-                          text-ink outline-none block-control-xl inline-full
-                          hover:border-ink-subtle
-                          focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
-                          aria-invalid:border-danger-mid
-                        "
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                field.onBlur();
+                                onInputBlur?.();
+                            }
+                        }}
                     >
-                        <option value="">{placeholder}</option>
-                        {options.map((option) => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
+                        <SelectTrigger
+                            id={name.replace(/\./g, "-")}
+                            ref={field.ref}
+                            aria-invalid={Boolean(error) || undefined}
+                            aria-describedby={error ? messageId : undefined}
+                            className="
+                              border-2 border-border-warm bg-surface px-4 text-[15px] text-ink
+                              block-control-xl inline-full
+                              hover:border-ink-subtle
+                              aria-invalid:border-danger-mid
+                            "
+                        >
+                            <SelectValue placeholder={placeholder}>
+                                {(value) =>
+                                    options.find((option) => option.value === value)?.label ??
+                                    placeholder
+                                }
+                            </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent align="start">
+                            {options.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 )}
             />
             {error ? (
@@ -433,6 +473,7 @@ export function ChoiceField({
     visibility,
     columns = 3,
     className,
+    onValueChange,
 }: {
     name: Path;
     label: string;
@@ -441,6 +482,7 @@ export function ChoiceField({
     visibility?: FieldVisibility;
     columns?: 2 | 3 | 4;
     className?: string;
+    onValueChange?: (value: string) => void;
 }) {
     const {
         control,
@@ -454,13 +496,21 @@ export function ChoiceField({
             hint={hint}
             visibility={visibility}
             className={className}
+            composite
         >
             <Controller
                 name={name}
                 control={control}
                 render={({ field }) => (
-                    <div
-                        role="radiogroup"
+                    <RadioGroup
+                        value={String(field.value ?? "")}
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            onValueChange?.(value);
+                        }}
+                        aria-labelledby={`${name.replace(/\./g, "-")}-label`}
+                        aria-describedby={error ? `${name.replace(/\./g, "-")}-error` : undefined}
+                        aria-invalid={Boolean(error) || undefined}
                         className={cn(
                             "grid gap-2",
                             columns === 2
@@ -473,19 +523,16 @@ export function ChoiceField({
                         {options.map((option) => {
                             const active = field.value === option.value;
                             return (
-                                <button
+                                <Label
                                     key={option.value}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={active}
-                                    onClick={() => field.onChange(option.value)}
+                                    htmlFor={`${name.replace(/\./g, "-")}-${option.value}`}
                                     className={cn(
                                         `
-                                          flex items-center gap-2 rounded-control border px-3 py-2.5
-                                          text-start
+                                          flex cursor-pointer items-center gap-2 rounded-control
+                                          border px-3 py-2.5 text-start
                                           transition-[background-color,border-color,color]
                                           duration-160 min-block-12
-                                          focus-visible:ring-3 focus-visible:ring-ring/30
+                                          has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                         `,
                                         active
                                             ? "border-brand bg-brand-soft text-brand-text"
@@ -495,44 +542,33 @@ export function ChoiceField({
                                             `,
                                     )}
                                 >
-                                    <span
-                                        className={cn(
-                                            `
-                                              flex shrink-0 items-center justify-center rounded-full
-                                              border block-4 inline-4
-                                            `,
-                                            active
-                                                ? `border-brand bg-brand text-surface`
-                                                : `border-ink-subtle`,
-                                        )}
-                                    >
-                                        {active ? (
-                                            <Check
-                                                className="block-2.5 inline-2.5"
-                                                strokeWidth={3}
-                                            />
-                                        ) : null}
-                                    </span>
+                                    <RadioGroupItem
+                                        id={`${name.replace(/\./g, "-")}-${option.value}`}
+                                        value={option.value}
+                                        className="border-ink-subtle data-checked:bg-brand"
+                                    />
                                     <span className="min-inline-0">
                                         <span className="block text-sm font-semibold">
                                             {option.label}
                                         </span>
                                         {option.description ? (
-                                            <span
-                                                className="mbs-0.5 block text-xs text-ink-muted"
-                                            >
+                                            <span className="mbs-0.5 block text-xs text-ink-muted">
                                                 {option.description}
                                             </span>
                                         ) : null}
                                     </span>
-                                </button>
+                                </Label>
                             );
                         })}
-                    </div>
+                    </RadioGroup>
                 )}
             />
             {error ? (
-                <p role="alert" className="text-sm text-danger">
+                <p
+                    id={`${name.replace(/\./g, "-")}-error`}
+                    role="alert"
+                    className="text-sm text-danger"
+                >
                     {error}
                 </p>
             ) : null}
@@ -563,6 +599,7 @@ export function MultiChipField({
             hint={hint}
             visibility={visibility}
             className={className}
+            composite
         >
             <Controller
                 name={name}
@@ -570,13 +607,19 @@ export function MultiChipField({
                 render={({ field }) => {
                     const selected = Array.isArray(field.value) ? field.value.map(String) : [];
                     return (
-                        <div className="flex flex-wrap gap-2">
+                        <div
+                            role="group"
+                            aria-labelledby={`${name.replace(/\./g, "-")}-label`}
+                            className="flex flex-wrap gap-2"
+                        >
                             {options.map((option) => {
                                 const active = selected.includes(option.value);
                                 return (
-                                    <button
+                                    <Button
                                         key={option.value}
                                         type="button"
+                                        variant="outline"
+                                        size="md"
                                         aria-pressed={active}
                                         onClick={() =>
                                             field.onChange(
@@ -610,7 +653,7 @@ export function MultiChipField({
                                             />
                                         ) : null}
                                         {option.label}
-                                    </button>
+                                    </Button>
                                 );
                             })}
                         </div>
@@ -637,61 +680,56 @@ export function ToggleField({
     const { control } = useFormContext<PropertyDraftValues>();
     const id = useId();
     const resolvedVisibility = visibility ?? visibilityForField(name);
+    const { labelOf } = useFieldRules();
+    const resolvedLabel = labelOf(name, label);
     return (
-        <Controller
-            name={name}
-            control={control}
-            render={({ field }) => {
-                const checked = Boolean(field.value);
-                return (
-                    <div
-                        className={cn(
-                            `
-                              flex items-center justify-between gap-4 rounded-control border
-                              border-border-warm bg-surface px-4 py-3 min-block-14
-                            `,
-                            className,
-                        )}
-                    >
-                        <div className="min-inline-0">
-                            <label htmlFor={id} className="block text-sm font-semibold text-ink">
-                                {label}
-                            </label>
-                            {description ? (
-                                <p className="mbs-0.5 text-xs/5 text-ink-muted">{description}</p>
-                            ) : null}
-                            <VisibilityMark visibility={resolvedVisibility} />
-                        </div>
-                        <button
-                            id={id}
-                            type="button"
-                            role="switch"
-                            aria-checked={checked}
-                            onClick={() => field.onChange(!checked)}
+        <ConditionalField path={name}>
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => {
+                    const checked = Boolean(field.value);
+                    return (
+                        <div
                             className={cn(
                                 `
-                                  relative shrink-0 rounded-full transition-colors duration-160
-                                  block-7 inline-12
-                                  focus-visible:ring-3 focus-visible:ring-ring/30
+                                  flex items-center justify-between gap-4 rounded-control border
+                                  border-border-warm bg-surface px-4 py-3 min-block-14
                                 `,
-                                checked ? `bg-brand` : `bg-border-warm`,
+                                className,
                             )}
                         >
-                            <span
-                                className={cn(
-                                    `
-                                      absolute inset-bs-1 rounded-full bg-surface shadow-xs
-                                      transition-transform duration-160 block-5 inline-5
-                                    `,
-                                    checked ? `translate-x-6` : `translate-x-1`,
-                                )}
+                            <div className="min-inline-0">
+                                <Label
+                                    htmlFor={id}
+                                    className="block text-sm font-semibold text-ink"
+                                >
+                                    <FieldLabel path={name}>{resolvedLabel}</FieldLabel>
+                                </Label>
+                                {description ? (
+                                    <p className="mbs-0.5 text-xs/5 text-ink-muted">
+                                        {description}
+                                    </p>
+                                ) : null}
+                                <VisibilityMark visibility={resolvedVisibility} />
+                            </div>
+                            <Switch
+                                id={id}
+                                checked={checked}
+                                onCheckedChange={(next) => field.onChange(next)}
+                                onBlur={field.onBlur}
+                                aria-label={resolvedLabel}
+                                className="
+                                  block-7 inline-12
+                                  data-checked:border-brand data-checked:bg-brand
+                                  data-unchecked:border-border-warm data-unchecked:bg-border-warm
+                                "
                             />
-                            <span className="sr-only">{checked ? "On" : "Off"}</span>
-                        </button>
-                    </div>
-                );
-            }}
-        />
+                        </div>
+                    );
+                }}
+            />
+        </ConditionalField>
     );
 }
 
@@ -713,7 +751,7 @@ export function TagInputField({
     const { control } = useFormContext<PropertyDraftValues>();
     const [draft, setDraft] = useState("");
     return (
-        <FieldShell name={name} label={label} hint={hint} visibility={visibility}>
+        <FieldShell name={name} label={label} hint={hint} visibility={visibility} composite>
             <Controller
                 name={name}
                 control={control}
@@ -726,13 +764,19 @@ export function TagInputField({
                         setDraft("");
                     };
                     return (
-                        <div className="space-y-3">
+                        <div
+                            role="group"
+                            aria-labelledby={`${name.replace(/\./g, "-")}-label`}
+                            className="space-y-3"
+                        >
                             {values.length ? (
                                 <div className="flex flex-wrap gap-2">
                                     {values.map((value) => (
-                                        <button
+                                        <Button
                                             key={value}
                                             type="button"
+                                            variant="outline"
+                                            size="sm"
                                             onClick={() =>
                                                 field.onChange(
                                                     values.filter((item) => item !== value),
@@ -751,15 +795,17 @@ export function TagInputField({
                                                 className="ms-1 inline block-3.5 inline-3.5"
                                                 aria-hidden
                                             />
-                                        </button>
+                                        </Button>
                                     ))}
                                 </div>
                             ) : null}
                             <div className="flex gap-2">
                                 <Input
+                                    id={name.replace(/\./g, "-")}
                                     size="lg"
                                     value={draft}
                                     placeholder={placeholder}
+                                    aria-labelledby={`${name.replace(/\./g, "-")}-label`}
                                     onValueChange={setDraft}
                                     onKeyDown={(event) => {
                                         if (event.key === "Enter" || event.key === ",") {
@@ -768,8 +814,10 @@ export function TagInputField({
                                         }
                                     }}
                                 />
-                                <button
+                                <Button
                                     type="button"
+                                    variant="outline"
+                                    size="lg"
                                     onClick={add}
                                     disabled={!draft.trim() || values.length >= max}
                                     className="
@@ -781,7 +829,7 @@ export function TagInputField({
                                     "
                                 >
                                     Add
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     );
@@ -805,66 +853,78 @@ export function CounterField({
     visibility?: FieldVisibility;
 }) {
     const { control } = useFormContext<PropertyDraftValues>();
+    const { labelOf } = useFieldRules();
+    const resolvedLabel = labelOf(name, label);
     return (
-        <Controller
-            name={name}
-            control={control}
-            render={({ field }) => {
-                const value = typeof field.value === "number" ? field.value : 0;
-                return (
-                    <div
-                        className="
-                          flex items-center justify-between gap-3 rounded-control border
-                          border-border-warm bg-surface px-3 py-2 min-block-14
-                        "
-                    >
-                        <div>
-                            <p className="text-sm font-semibold text-ink">{label}</p>
-                            <VisibilityMark visibility={visibility ?? visibilityForField(name)} />
+        <ConditionalField path={name}>
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => {
+                    const value = typeof field.value === "number" ? field.value : 0;
+                    return (
+                        <div
+                            className="
+                              flex items-center justify-between gap-3 rounded-control border
+                              border-border-warm bg-surface px-3 py-2 min-block-14
+                            "
+                        >
+                            <div>
+                                <p className="text-sm font-semibold text-ink">
+                                    <FieldLabel path={name}>{resolvedLabel}</FieldLabel>
+                                </p>
+                                <VisibilityMark
+                                    visibility={visibility ?? visibilityForField(name)}
+                                />
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-md"
+                                    aria-label={`Decrease ${resolvedLabel}`}
+                                    disabled={value <= min}
+                                    onClick={() => field.onChange(Math.max(min, value - 1))}
+                                    className="
+                                      flex items-center justify-center rounded-control
+                                      text-ink-muted block-10 inline-10
+                                      hover:bg-surface-muted
+                                      focus-visible:ring-3 focus-visible:ring-ring/30
+                                      disabled:opacity-30
+                                    "
+                                >
+                                    <Minus className="block-4 inline-4" />
+                                </Button>
+                                <span
+                                    className="
+                                      tabular text-center text-base font-bold text-ink min-inline-8
+                                    "
+                                >
+                                    {value}
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-md"
+                                    aria-label={`Increase ${resolvedLabel}`}
+                                    disabled={value >= max}
+                                    onClick={() => field.onChange(Math.min(max, value + 1))}
+                                    className="
+                                      flex items-center justify-center rounded-control
+                                      text-ink-muted block-10 inline-10
+                                      hover:bg-surface-muted
+                                      focus-visible:ring-3 focus-visible:ring-ring/30
+                                      disabled:opacity-30
+                                    "
+                                >
+                                    <Plus className="block-4 inline-4" />
+                                </Button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                            <button
-                                type="button"
-                                aria-label={`Decrease ${label}`}
-                                disabled={value <= min}
-                                onClick={() => field.onChange(Math.max(min, value - 1))}
-                                className="
-                                  flex items-center justify-center rounded-control text-ink-muted
-                                  block-10 inline-10
-                                  hover:bg-surface-muted
-                                  focus-visible:ring-3 focus-visible:ring-ring/30
-                                  disabled:opacity-30
-                                "
-                            >
-                                <Minus className="block-4 inline-4" />
-                            </button>
-                            <span
-                                className="
-                                  tabular text-center text-base font-bold text-ink min-inline-8
-                                "
-                            >
-                                {value}
-                            </span>
-                            <button
-                                type="button"
-                                aria-label={`Increase ${label}`}
-                                disabled={value >= max}
-                                onClick={() => field.onChange(Math.min(max, value + 1))}
-                                className="
-                                  flex items-center justify-center rounded-control text-ink-muted
-                                  block-10 inline-10
-                                  hover:bg-surface-muted
-                                  focus-visible:ring-3 focus-visible:ring-ring/30
-                                  disabled:opacity-30
-                                "
-                            >
-                                <Plus className="block-4 inline-4" />
-                            </button>
-                        </div>
-                    </div>
-                );
-            }}
-        />
+                    );
+                }}
+            />
+        </ConditionalField>
     );
 }
 

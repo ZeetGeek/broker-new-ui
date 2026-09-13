@@ -29,13 +29,17 @@ import { useListingScore } from "@/lib/hooks/use-listing-score";
 import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import {
     DEFAULT_PROPERTY_DRAFT,
+    fieldRuleSchemas,
     type PropertyDraftValues,
     STEP_ROOT_FIELDS,
     stepSchemas,
 } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
+import { isStepVisible as ruleStepIsVisible, stripHidden } from "@/lib/visibility/rules";
+import { FieldRulesProvider, useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
     Dialog,
     DialogClose,
@@ -44,6 +48,7 @@ import {
     DialogPopup,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { FORM_STEPS, type PropertyFormStep, toLabel } from "@/constants/property";
 import { ListingScoreRing } from "@/features/properties/property-form/listing-score-ring";
@@ -137,8 +142,12 @@ export function PropertyForm({
         shouldUnregister: false,
     });
     const values = useWatch({ control: methods.control }) as PropertyDraftValues;
-    const stepIndex = FORM_STEPS.findIndex((item) => item.id === step);
-    const isLastStep = stepIndex === FORM_STEPS.length - 1;
+    const activeSteps = useMemo(
+        () => FORM_STEPS.filter((item) => ruleStepIsVisible(item.id, values)),
+        [values],
+    );
+    const stepIndex = activeSteps.findIndex((item) => item.id === step);
+    const isLastStep = stepIndex === activeSteps.length - 1;
     const isPublishing = values.publish.status === "active";
 
     const listingScore = useListingScore(values);
@@ -246,12 +255,27 @@ export function PropertyForm({
                 saveDraftLocally();
                 return;
             }
+            const target = event.target as HTMLElement | null;
+            const isEditing =
+                target?.matches("input, textarea, select, [contenteditable='true']") ?? false;
+            if (isEditing) return;
             if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[1-9]$/.test(event.key)) {
                 const index = Number(event.key) - 1;
-                if (index <= highestUnlocked && FORM_STEPS[index]) setStep(FORM_STEPS[index]!.id);
+                const targetStep = activeSteps[index];
+                if (
+                    targetStep &&
+                    FORM_STEPS.findIndex((item) => item.id === targetStep.id) <= highestUnlocked
+                )
+                    setStep(targetStep.id);
             }
-            if (!event.ctrlKey && !event.metaKey && event.key === "0" && highestUnlocked >= 9)
-                setStep("publish");
+            if (!event.ctrlKey && !event.metaKey && event.key === "0") {
+                const targetStep = activeSteps[9];
+                if (
+                    targetStep &&
+                    FORM_STEPS.findIndex((item) => item.id === targetStep.id) <= highestUnlocked
+                )
+                    setStep(targetStep.id);
+            }
         }
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
@@ -276,14 +300,21 @@ export function PropertyForm({
 
     function validateStep(target: PropertyFormStep): boolean {
         methods.clearErrors(STEP_ROOT_FIELDS[target] as FieldPath<PropertyDraftValues>[]);
-        const result = stepSchemas[target].safeParse(methods.getValues());
-        if (result.success) return true;
-        for (const issue of result.error.issues) {
+        const current = methods.getValues();
+        const result = stepSchemas[target].safeParse(current);
+        const ruleResult = fieldRuleSchemas[target].safeParse(current);
+        if (result.success && ruleResult.success) return true;
+        const issues = [
+            ...(result.success ? [] : result.error.issues),
+            ...(ruleResult.success ? [] : ruleResult.error.issues),
+        ];
+        for (const issue of issues) {
             const path = issue.path.join(".") as FieldPath<PropertyDraftValues>;
             methods.setError(path, { type: "zod", message: issue.message });
         }
+        const issueCount = issues.length;
         setFormBanner(
-            `${result.error.issues.length} field${result.error.issues.length === 1 ? "" : "s"} need attention before continuing.`,
+            `${issueCount} field${issueCount === 1 ? "" : "s"} need attention before continuing.`,
         );
         return false;
     }
@@ -301,16 +332,17 @@ export function PropertyForm({
 
     function goBack() {
         if (stepIndex <= 0) return;
-        changeStep(FORM_STEPS[stepIndex - 1]!.id);
+        changeStep(activeSteps[stepIndex - 1]!.id);
     }
 
     function goNext() {
         setFormBanner(null);
         if (!validateStep(step)) return;
         setCompletedSteps((current) => new Set(current).add(step));
-        const next = FORM_STEPS[stepIndex + 1];
+        const next = activeSteps[stepIndex + 1];
         if (!next) return;
-        setHighestUnlocked((current) => Math.max(current, stepIndex + 1));
+        const nextOriginalIndex = FORM_STEPS.findIndex((item) => item.id === next.id);
+        setHighestUnlocked((current) => Math.max(current, nextOriginalIndex));
         setStep(next.id);
         setMobileSummaryOpen(false);
         setMobileScoreOpen(false);
@@ -338,7 +370,7 @@ export function PropertyForm({
         setFormBanner(null);
         const current = methods.getValues();
         if (!forceDraft && current.publish.status === "active") {
-            const required = FORM_STEPS.map((item) => item.id);
+            const required = activeSteps.map((item) => item.id);
             for (const requiredStep of required) {
                 if (!validateStep(requiredStep)) {
                     const problemIndex = FORM_STEPS.findIndex((item) => item.id === requiredStep);
@@ -356,7 +388,7 @@ export function PropertyForm({
             }
         }
 
-        const input = draftToLegacyInput(current, photoFilesRef);
+        const input = draftToLegacyInput(stripHidden(current), photoFilesRef);
         setSaving(true);
         try {
             if (mode === "edit" && propertyId) {
@@ -448,246 +480,260 @@ export function PropertyForm({
 
     const surface = (
         <FormProvider {...methods}>
-            <form
-                onSubmit={handleFormSubmit}
-                onKeyDown={handleFormKeyDown}
-                noValidate
-                className={cn(
-                    `relative flex flex-1 flex-col overflow-hidden bg-surface min-block-0`,
-                    className,
-                )}
-            >
-                <PropertyFormHeader
-                    mode={mode}
-                    entryMode={entryMode}
-                    onEntryModeChange={setEntryMode}
-                    savedLabel={
-                        mode === "edit" && networkSavedAt
-                            ? `API synced ${formatAgo(networkSavedAt, clock)} · device copy current`
-                            : savedAt
-                              ? `Saved on this device ${formatAgo(savedAt, clock)}`
-                              : mode === "edit"
-                                ? "Saved on this device · API syncs every 10 sec"
-                                : "Changes save on this device"
-                    }
-                    onSaveDraft={saveDraftLocally}
-                    onClose={requestClose}
-                    showClose={isDialog}
-                />
+            <FieldRulesProvider>
+                <form
+                    onSubmit={handleFormSubmit}
+                    onKeyDown={handleFormKeyDown}
+                    noValidate
+                    className={cn(
+                        `relative flex flex-1 flex-col overflow-hidden bg-surface min-block-0`,
+                        className,
+                    )}
+                >
+                    <PropertyFormHeader
+                        mode={mode}
+                        entryMode={entryMode}
+                        onEntryModeChange={setEntryMode}
+                        savedLabel={
+                            mode === "edit" && networkSavedAt
+                                ? `API synced ${formatAgo(networkSavedAt, clock)} · device copy current`
+                                : savedAt
+                                  ? `Saved on this device ${formatAgo(savedAt, clock)}`
+                                  : mode === "edit"
+                                    ? "Saved on this device · API syncs every 10 sec"
+                                    : "Changes save on this device"
+                        }
+                        onSaveDraft={saveDraftLocally}
+                        onClose={requestClose}
+                        showClose={isDialog}
+                    />
 
-                {entryMode === "full" ? (
-                    <>
-                        <div className="shrink-0 border-be border-border-warm bg-surface xl:hidden">
-                            <StepNav
-                                activeStep={step}
-                                highestUnlocked={highestUnlocked}
-                                completedSteps={completedSteps}
-                                onStepChange={changeStep}
-                            />
-                            <MobileListingScore
-                                score={listingScore.score}
-                                tips={listingScore.tips}
-                                open={mobileScoreOpen}
-                                onOpenChange={(next) => {
-                                    setMobileScoreOpen(next);
-                                    if (next) setMobileSummaryOpen(false);
-                                }}
-                                onTip={(tipStep) => {
-                                    setHighestUnlocked(FORM_STEPS.length - 1);
-                                    setStep(tipStep);
-                                    setMobileScoreOpen(false);
-                                }}
-                            />
-                        </div>
-                        <div
-                            className="
-                              grid flex-1 min-block-0
-                              xl:grid-cols-[272px_minmax(0,1fr)_336px]
-                            "
-                        >
+                    {entryMode === "full" ? (
+                        <>
                             <div
                                 className="
-                                  hidden overflow-y-auto border-e border-border-warm bg-surface px-4
-                                  py-6
-                                  xl:block
-                                "
+                              shrink-0 border-be border-border-warm bg-surface
+                              xl:hidden
+                            "
                             >
                                 <StepNav
+                                    steps={activeSteps}
                                     activeStep={step}
                                     highestUnlocked={highestUnlocked}
                                     completedSteps={completedSteps}
                                     onStepChange={changeStep}
                                 />
+                                <MobileListingScore
+                                    score={listingScore.score}
+                                    tips={listingScore.tips}
+                                    open={mobileScoreOpen}
+                                    onOpenChange={(next) => {
+                                        setMobileScoreOpen(next);
+                                        if (next) setMobileSummaryOpen(false);
+                                    }}
+                                    onTip={(tipStep) => {
+                                        setHighestUnlocked(FORM_STEPS.length - 1);
+                                        setStep(tipStep);
+                                        setMobileScoreOpen(false);
+                                    }}
+                                />
                             </div>
-                            <main
-                                className="
-                                  overflow-y-auto bg-canvas px-4 py-6 min-block-0
-                                  sm:px-6
-                                  lg:px-10
-                                "
-                            >
-                                <div className="mx-auto pbe-8 max-inline-3xl">
-                                    {recoveryDraft ? (
-                                        <RecoveryBanner
-                                            onContinue={() => {
-                                                autosaveReadyRef.current = true;
-                                                methods.reset(recoveryDraft);
-                                                setRecoveryDraft(null);
-                                                toast.success("Draft restored.");
-                                            }}
-                                            onStartFresh={() => {
-                                                autosaveReadyRef.current = true;
-                                                window.localStorage.removeItem(localStorageKey);
-                                                setRecoveryDraft(null);
-                                                methods.reset(defaultValues);
-                                            }}
-                                        />
-                                    ) : null}
-                                    <div className="mbe-7">
-                                        <p className="text-sm font-semibold text-brand-text">
-                                            Step {stepIndex + 1} of {FORM_STEPS.length}
-                                        </p>
-                                        <h1
-                                            className="
-                                              mbs-1 text-3xl font-bold tracking-[-0.03em] text-ink
-                                              sm:text-4xl
-                                            "
-                                        >
-                                            {FORM_STEPS[stepIndex]?.label}
-                                        </h1>
-                                        <p className="mbs-2 text-sm/6 text-ink-muted max-inline-2xl">
-                                            {STEP_DESCRIPTIONS[step]}
-                                        </p>
-                                    </div>
-                                    {formBanner ? (
-                                        <div
-                                            role="alert"
-                                            className="
-                                              mbe-5 rounded-control border border-danger/30
-                                              bg-danger-soft px-4 py-3 text-sm font-medium
-                                              text-danger
-                                            "
-                                        >
-                                            {formBanner}
-                                        </div>
-                                    ) : null}
-                                    <StepTransition step={step}>
-                                        <StepContent
-                                            step={step}
-                                            currentPropertyId={propertyId}
-                                            photoFilesRef={photoFilesRef}
-                                        />
-                                    </StepTransition>
-                                </div>
-                            </main>
                             <div
                                 className="
-                                  hidden overflow-y-auto border-s border-border-warm bg-surface p-5
-                                  min-block-0
-                                  xl:block
+                                  grid flex-1 min-block-0
+                                  xl:grid-cols-[272px_minmax(0,1fr)_336px]
                                 "
                             >
-                                <LiveSummaryPanel values={values} stepIndex={stepIndex} />
                                 <div
                                     className="
-                                      mbs-5 rounded-card border border-border-warm bg-surface-muted
-                                      p-4
+                                      hidden overflow-y-auto border-e border-border-warm bg-surface
+                                      px-4 py-6
+                                      xl:block
                                     "
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <ListingScoreRing score={listingScore.score} />
-                                        <div>
-                                            <p className="text-sm font-bold text-ink">
-                                                Listing score
+                                    <StepNav
+                                        steps={activeSteps}
+                                        activeStep={step}
+                                        highestUnlocked={highestUnlocked}
+                                        completedSteps={completedSteps}
+                                        onStepChange={changeStep}
+                                    />
+                                </div>
+                                <main
+                                    className="
+                                      overflow-y-auto bg-canvas px-4 py-6 min-block-0
+                                      sm:px-6
+                                      lg:px-10
+                                    "
+                                >
+                                    <div className="mx-auto pbe-8 max-inline-3xl">
+                                        {recoveryDraft ? (
+                                            <RecoveryBanner
+                                                onContinue={() => {
+                                                    autosaveReadyRef.current = true;
+                                                    methods.reset(recoveryDraft);
+                                                    setRecoveryDraft(null);
+                                                    toast.success("Draft restored.");
+                                                }}
+                                                onStartFresh={() => {
+                                                    autosaveReadyRef.current = true;
+                                                    window.localStorage.removeItem(localStorageKey);
+                                                    setRecoveryDraft(null);
+                                                    methods.reset(defaultValues);
+                                                }}
+                                            />
+                                        ) : null}
+                                        <div className="mbe-7">
+                                            <p className="text-sm font-semibold text-brand-text">
+                                                Step {stepIndex + 1} of {activeSteps.length}
                                             </p>
-                                            <p
-                                                className="mbs-1 text-xs/5 text-ink-muted"
+                                            <h1
+                                                className="
+                                                  mbs-1 text-3xl font-bold tracking-[-0.03em]
+                                                  text-ink
+                                                  sm:text-4xl
+                                                "
                                             >
-                                                Complete useful details to improve broker
-                                                confidence.
+                                                {activeSteps[stepIndex]?.label}
+                                            </h1>
+                                            <p
+                                                className="
+                                              mbs-2 text-sm/6 text-ink-muted max-inline-2xl
+                                            "
+                                            >
+                                                {STEP_DESCRIPTIONS[step]}
                                             </p>
+                                            <StepRequiredStatus step={step} />
                                         </div>
+                                        {formBanner ? (
+                                            <div
+                                                role="alert"
+                                                className="
+                                                  mbe-5 rounded-control border border-danger/30
+                                                  bg-danger-soft px-4 py-3 text-sm font-medium
+                                                  text-danger
+                                                "
+                                            >
+                                                {formBanner}
+                                            </div>
+                                        ) : null}
+                                        <StepTransition step={step}>
+                                            <StepContent
+                                                step={step}
+                                                currentPropertyId={propertyId}
+                                                photoFilesRef={photoFilesRef}
+                                            />
+                                        </StepTransition>
                                     </div>
-                                    {listingScore.tips.length ? (
-                                        <div className="mbs-4 space-y-1">
-                                            {listingScore.tips.map((tip) => (
-                                                <button
-                                                    key={tip.label}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setHighestUnlocked(FORM_STEPS.length - 1);
-                                                        setStep(tip.step);
-                                                    }}
-                                                    className="
-                                                      flex items-center justify-between gap-3
-                                                      rounded-control px-2 text-start text-xs
-                                                      text-ink-muted inline-full min-block-9
-                                                      hover:bg-surface hover:text-ink
-                                                      focus-visible:ring-3
-                                                      focus-visible:ring-ring/30
-                                                    "
-                                                >
-                                                    <span>{tip.label}</span>
-                                                    <span
-                                                        className="tabular text-brand-text"
-                                                    >
-                                                        +{tip.points}
-                                                    </span>
-                                                </button>
-                                            ))}
+                                </main>
+                                <div
+                                    className="
+                                      hidden overflow-y-auto border-s border-border-warm bg-surface
+                                      p-5 min-block-0
+                                      xl:block
+                                    "
+                                >
+                                    <LiveSummaryPanel values={values} stepIndex={stepIndex} />
+                                    <Card
+                                        className="
+                                          mbs-5 gap-0 rounded-card border border-border-warm
+                                          bg-surface-muted p-4 shadow-none
+                                        "
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <ListingScoreRing score={listingScore.score} />
+                                            <div>
+                                                <p className="text-sm font-bold text-ink">
+                                                    Listing score
+                                                </p>
+                                                <p className="mbs-1 text-xs/5 text-ink-muted">
+                                                    Complete useful details to improve broker
+                                                    confidence.
+                                                </p>
+                                            </div>
                                         </div>
-                                    ) : null}
+                                        {listingScore.tips.length ? (
+                                            <div className="mbs-4 space-y-1">
+                                                {listingScore.tips.map((tip) => (
+                                                    <Button
+                                                        key={tip.label}
+                                                        type="button"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            setHighestUnlocked(
+                                                                FORM_STEPS.length - 1,
+                                                            );
+                                                            setStep(tip.step);
+                                                        }}
+                                                        className="
+                                                          flex items-center justify-between gap-3
+                                                          rounded-control px-2 text-start text-xs
+                                                          text-ink-muted inline-full min-block-9
+                                                          hover:bg-surface hover:text-ink
+                                                          focus-visible:ring-3
+                                                          focus-visible:ring-ring/30
+                                                        "
+                                                    >
+                                                        <span>{tip.label}</span>
+                                                        <span className="tabular text-brand-text">
+                                                            +{tip.points}
+                                                        </span>
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        ) : null}
+                                    </Card>
                                 </div>
                             </div>
-                        </div>
-                        <MobileDealSummary
-                            values={values}
-                            stepIndex={stepIndex}
-                            open={mobileSummaryOpen}
-                            onOpenChange={(next) => {
-                                setMobileSummaryOpen(next);
-                                if (next) setMobileScoreOpen(false);
-                            }}
-                        />
-                    </>
-                ) : (
-                    <main
-                        className="
-                          flex-1 overflow-y-auto bg-canvas px-4 py-7 min-block-0
-                          sm:px-6
-                          lg:px-10
-                        "
-                    >
-                        {formBanner ? (
-                            <div
-                                role="alert"
-                                className="
-                                  mx-auto mbe-5 rounded-control border border-danger/30
-                                  bg-danger-soft px-4 py-3 text-sm font-medium text-danger
-                                  max-inline-3xl
-                                "
-                            >
-                                {formBanner}
-                            </div>
-                        ) : null}
-                        <QuickAdd photoFilesRef={photoFilesRef} />
-                    </main>
-                )}
+                            <MobileDealSummary
+                                values={values}
+                                stepIndex={stepIndex}
+                                open={mobileSummaryOpen}
+                                onOpenChange={(next) => {
+                                    setMobileSummaryOpen(next);
+                                    if (next) setMobileScoreOpen(false);
+                                }}
+                            />
+                        </>
+                    ) : (
+                        <main
+                            className="
+                              flex-1 overflow-y-auto bg-canvas px-4 py-7 min-block-0
+                              sm:px-6
+                              lg:px-10
+                            "
+                        >
+                            {formBanner ? (
+                                <div
+                                    role="alert"
+                                    className="
+                                      mx-auto mbe-5 rounded-control border border-danger/30
+                                      bg-danger-soft px-4 py-3 text-sm font-medium text-danger
+                                      max-inline-3xl
+                                    "
+                                >
+                                    {formBanner}
+                                </div>
+                            ) : null}
+                            <QuickAdd photoFilesRef={photoFilesRef} />
+                        </main>
+                    )}
 
-                <PropertyFormFooter
-                    entryMode={entryMode}
-                    stepIndex={stepIndex}
-                    isLastStep={isLastStep}
-                    isPublishing={isPublishing}
-                    isSubmitting={saving}
-                    onBack={stepIndex === 0 ? requestClose : goBack}
-                    onNext={() =>
-                        entryMode === "quick" || isLastStep
-                            ? void persistProperty(entryMode === "quick")
-                            : goNext()
-                    }
-                />
-            </form>
+                    <PropertyFormFooter
+                        entryMode={entryMode}
+                        stepIndex={stepIndex}
+                        isLastStep={isLastStep}
+                        isPublishing={isPublishing}
+                        isSubmitting={saving}
+                        onBack={stepIndex === 0 ? requestClose : goBack}
+                        onNext={() =>
+                            entryMode === "quick" || isLastStep
+                                ? void persistProperty(entryMode === "quick")
+                                : goNext()
+                        }
+                    />
+                </form>
+            </FieldRulesProvider>
         </FormProvider>
     );
 
@@ -740,6 +786,7 @@ function PropertyFormHeader({
     onClose: () => void;
     showClose: boolean;
 }) {
+    const { showHidden, setShowHidden } = useFieldRules();
     return (
         <header
             className="
@@ -757,12 +804,9 @@ function PropertyFormHeader({
                         A ten-step full-screen form for property and commission details.
                     </DialogDescription>
                     <div className="mbs-0.5 flex items-center gap-1.5 text-xs text-ink-muted">
-                        <HardDrive
-                            className="block-3.5 inline-3.5"
-                            aria-hidden
-                        />{" "}
-                        {savedLabel}
+                        <HardDrive className="block-3.5 inline-3.5" aria-hidden /> {savedLabel}
                     </div>
+                    <FieldMarkerLegend />
                 </DialogHeader>
             ) : (
                 <div className="flex-1 min-inline-0">
@@ -770,58 +814,41 @@ function PropertyFormHeader({
                         {mode === "edit" ? "Edit property" : "Add property"}
                     </h1>
                     <div className="mbs-0.5 flex items-center gap-1.5 text-xs text-ink-muted">
-                        <HardDrive
-                            className="block-3.5 inline-3.5"
-                            aria-hidden
-                        />{" "}
-                        {savedLabel}
+                        <HardDrive className="block-3.5 inline-3.5" aria-hidden /> {savedLabel}
                     </div>
+                    <FieldMarkerLegend />
                 </div>
             )}
-            <div className="flex items-center rounded-control bg-surface-muted p-1">
-                <button
+            {process.env.NODE_ENV === "development" ? (
+                <Button
                     type="button"
-                    aria-pressed={entryMode === "full"}
-                    onClick={() => onEntryModeChange("full")}
-                    className={cn(
-                        `
-                          rounded-md px-3 text-sm font-semibold
-                          transition-[background-color,color,box-shadow] duration-160 min-block-10
-                          focus-visible:ring-3 focus-visible:ring-ring/30
-                          sm:px-4
-                        `,
-                        entryMode === "full" ? `bg-surface text-ink shadow-xs` : `text-ink-muted`,
-                    )}
+                    variant="ghost"
+                    size="sm"
+                    aria-pressed={showHidden}
+                    onClick={() => setShowHidden(!showHidden)}
+                    className="hidden lg:inline-flex"
                 >
-                    <span
-                        className="sm:hidden"
-                    >
-                        Full
-                    </span>
-                    <span className="hidden sm:inline">Full details</span>
-                </button>
-                <button
-                    type="button"
-                    aria-pressed={entryMode === "quick"}
-                    onClick={() => onEntryModeChange("quick")}
-                    className={cn(
-                        `
-                          rounded-md px-3 text-sm font-semibold
-                          transition-[background-color,color,box-shadow] duration-160 min-block-10
-                          focus-visible:ring-3 focus-visible:ring-ring/30
-                          sm:px-4
-                        `,
-                        entryMode === "quick" ? `bg-surface text-ink shadow-xs` : `text-ink-muted`,
-                    )}
-                >
-                    <span
-                        className="sm:hidden"
-                    >
-                        Quick
-                    </span>
-                    <span className="hidden sm:inline">Quick add</span>
-                </button>
-            </div>
+                    {showHidden ? "Hide rule fields" : "Show hidden fields"}
+                </Button>
+            ) : null}
+            <Tabs
+                value={entryMode}
+                onValueChange={(value) => {
+                    if (value === "full" || value === "quick") onEntryModeChange(value);
+                }}
+                className="gap-0"
+            >
+                <TabsList className="bg-surface-muted block-12">
+                    <TabsTrigger value="full" className="px-3 sm:px-4">
+                        <span className="sm:hidden">Full</span>
+                        <span className="hidden sm:inline">Full details</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="quick" className="px-3 sm:px-4">
+                        <span className="sm:hidden">Quick</span>
+                        <span className="hidden sm:inline">Quick add</span>
+                    </TabsTrigger>
+                </TabsList>
+            </Tabs>
             <Button
                 type="button"
                 variant="outline"
@@ -869,6 +896,9 @@ function PropertyFormFooter({
     onBack: () => void;
     onNext: () => void;
 }) {
+    const { missingRequiredFields: getMissingRequiredFields } = useFieldRules();
+    const missing = getMissingRequiredFields();
+    const publishBlocked = entryMode === "full" && isLastStep && isPublishing && missing.length > 0;
     const primaryLabel =
         entryMode === "quick"
             ? "Save quick draft"
@@ -891,11 +921,7 @@ function PropertyFormFooter({
                 size="lg"
                 onClick={onBack}
                 disabled={entryMode === "quick" && false}
-                className={
-                    entryMode === "quick"
-                        ? `invisible`
-                        : undefined
-                }
+                className={entryMode === "quick" ? `invisible` : undefined}
             >
                 <ChevronLeft aria-hidden /> {stepIndex === 0 ? "Close" : "Back"}
             </Button>
@@ -906,6 +932,12 @@ function PropertyFormFooter({
                 type="button"
                 size="lg"
                 loading={isSubmitting}
+                disabled={isSubmitting || publishBlocked}
+                title={
+                    publishBlocked
+                        ? `Still required: ${missing.map((item) => item.label).join(", ")}`
+                        : undefined
+                }
                 onClick={onNext}
                 className="bg-brand-ink text-surface hover:bg-brand-deep"
             >
@@ -913,6 +945,32 @@ function PropertyFormFooter({
                 {entryMode === "full" && !isLastStep ? <ChevronRight aria-hidden /> : null}
             </Button>
         </footer>
+    );
+}
+
+function FieldMarkerLegend() {
+    return (
+        <p className="mbs-1 hidden text-[11px] text-ink-subtle sm:block">
+            <span className="font-bold text-danger">*</span> must fill ·{" "}
+            <span className="text-urgent">●</span> recommended · rest optional
+        </p>
+    );
+}
+
+function StepRequiredStatus({ step }: { step: PropertyFormStep }) {
+    const { requiredLeftInStep } = useFieldRules();
+    const remaining = requiredLeftInStep(step).length;
+    return (
+        <p
+            className={cn(
+                "text-xs font-semibold",
+                remaining ? "text-ink-muted" : "text-brand-text",
+            )}
+        >
+            {remaining
+                ? `${remaining} required field${remaining === 1 ? "" : "s"} left`
+                : "All required fields done ✓"}
+        </p>
     );
 }
 
@@ -961,9 +1019,11 @@ function MobileListingScore({
 }) {
     return (
         <div className="border-brand-hover border-bs bg-brand-ink text-surface xl:hidden">
-            <button
+            <Button
                 type="button"
+                variant="ghost"
                 aria-expanded={open}
+                aria-controls="mobile-listing-score-panel"
                 onClick={() => onOpenChange(!open)}
                 className="
                   hover:bg-brand-hover
@@ -973,10 +1033,12 @@ function MobileListingScore({
                 "
             >
                 <span className="flex items-center gap-2 text-xs font-semibold text-surface">
-                    <span className="
-                      tabular flex items-center justify-center rounded-full bg-highlight
-                      text-brand-ink block-7 inline-7
-                    ">
+                    <span
+                        className="
+                          tabular flex items-center justify-center rounded-full bg-highlight
+                          text-brand-ink block-7 inline-7
+                        "
+                    >
                         {score}%
                     </span>
                     Listing score
@@ -986,52 +1048,60 @@ function MobileListingScore({
                         {tips[0]?.label ?? "Ready to publish"}
                     </span>
                     <ChevronDown
-                        className={cn("shrink-0 transition-transform duration-160 block-4 inline-4", open && `
-                          rotate-180
-                        `)}
+                        className={cn(
+                            "shrink-0 transition-transform duration-160 block-4 inline-4",
+                            open && `rotate-180`,
+                        )}
                         aria-hidden
                     />
                 </span>
-            </button>
-            <div
-                data-open={open}
-                className="
-                  t-panel-slide absolute inset-x-0
-                  inset-be-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 overflow-y-auto border-bs
-                  border-border-warm bg-surface p-4 shadow-xl max-block-[60dvh]
-                "
-            >
-                <div className="mx-auto max-inline-md">
-                    <div className="flex items-center gap-4">
-                        <ListingScoreRing score={score} />
-                        <div>
-                            <p className="font-bold text-ink">Listing score</p>
-                            <p className="mbs-1 text-sm/5 text-ink-muted">
-                                Add useful details to improve broker confidence.
-                            </p>
+            </Button>
+            {open ? (
+                <div
+                    id="mobile-listing-score-panel"
+                    data-open={open}
+                    className="
+                      t-panel-slide absolute inset-x-0
+                      inset-be-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 overflow-y-auto
+                      border-bs border-border-warm bg-surface p-4 shadow-xl max-block-[60dvh]
+                    "
+                >
+                    <div className="mx-auto max-inline-md">
+                        <div className="flex items-center gap-4">
+                            <ListingScoreRing score={score} />
+                            <div>
+                                <p className="font-bold text-ink">Listing score</p>
+                                <p className="mbs-1 text-sm/5 text-ink-muted">
+                                    Add useful details to improve broker confidence.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="mbs-4 space-y-2">
+                            {tips.map((tip) => (
+                                <Button
+                                    key={tip.label}
+                                    type="button"
+                                    variant="outline"
+                                    size="md"
+                                    onClick={() => onTip(tip.step)}
+                                    className="
+                                      flex items-center justify-between gap-3 rounded-control border
+                                      border-border-warm bg-canvas px-3 text-start text-sm text-ink
+                                      inline-full min-block-11
+                                      hover:border-brand/40 hover:bg-brand-soft
+                                      focus-visible:ring-3 focus-visible:ring-ring/30
+                                    "
+                                >
+                                    <span>{tip.label}</span>
+                                    <span className="tabular font-semibold text-brand-text">
+                                        +{tip.points}
+                                    </span>
+                                </Button>
+                            ))}
                         </div>
                     </div>
-                    <div className="mbs-4 space-y-2">
-                        {tips.map((tip) => (
-                            <button
-                                key={tip.label}
-                                type="button"
-                                onClick={() => onTip(tip.step)}
-                                className="
-                                  flex items-center justify-between gap-3 rounded-control border
-                                  border-border-warm bg-canvas px-3 text-start text-sm text-ink
-                                  inline-full min-block-11
-                                  hover:border-brand/40 hover:bg-brand-soft
-                                  focus-visible:ring-3 focus-visible:ring-ring/30
-                                "
-                            >
-                                <span>{tip.label}</span>
-                                <span className="tabular font-semibold text-brand-text">+{tip.points}</span>
-                            </button>
-                        ))}
-                    </div>
                 </div>
-            </div>
+            ) : null}
         </div>
     );
 }
@@ -1050,9 +1120,11 @@ function MobileDealSummary({
     if (stepIndex < 4) return null;
     return (
         <div className="shrink-0 xl:hidden">
-            <button
+            <Button
                 type="button"
+                variant="ghost"
                 aria-expanded={open}
+                aria-controls="mobile-deal-summary-panel"
                 onClick={() => onOpenChange(!open)}
                 className="
                   flex items-center justify-between gap-4 bg-brand-ink px-4 text-start inline-full
@@ -1070,19 +1142,22 @@ function MobileDealSummary({
                     )}
                     aria-hidden
                 />
-            </button>
-            <div
-                className="
-                  t-panel-slide absolute inset-x-0
-                  inset-be-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 overflow-y-auto bg-canvas
-                  shadow-xl max-block-[72dvh]
-                "
-                data-open={open}
-            >
-                <div className="mx-auto p-4 max-inline-md">
-                    <LiveSummaryPanel values={values} stepIndex={stepIndex} />
+            </Button>
+            {open ? (
+                <div
+                    id="mobile-deal-summary-panel"
+                    className="
+                      t-panel-slide absolute inset-x-0
+                      inset-be-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 overflow-y-auto
+                      bg-canvas shadow-xl max-block-[72dvh]
+                    "
+                    data-open={open}
+                >
+                    <div className="mx-auto p-4 max-inline-md">
+                        <LiveSummaryPanel values={values} stepIndex={stepIndex} />
+                    </div>
                 </div>
-            </div>
+            ) : null}
         </div>
     );
 }
@@ -1105,9 +1180,7 @@ function RecoveryBanner({
                 <p className="text-sm font-bold text-brand-ink">
                     Continue your unfinished property?
                 </p>
-                <p
-                    className="mbs-1 text-sm text-brand-text"
-                >
+                <p className="mbs-1 text-sm text-brand-text">
                     A draft from this device is ready to restore.
                 </p>
             </div>

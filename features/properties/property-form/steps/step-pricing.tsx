@@ -7,7 +7,7 @@ import { CalendarCheck, Plus, Trash2 } from "lucide-react";
 import { createClientId } from "@/lib/client-id";
 import { formatInr, formatInrCompact, inrWordHint } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { PROPERTY_VISIBLE_WHEN } from "@/lib/visibility/property";
+import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
 
@@ -50,7 +50,8 @@ const SELL_EXTRA_CHARGES = [
 export function StepPricing() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const values = watch();
-    const sale = PROPERTY_VISIBLE_WHEN.salePricing(values);
+    const { derived, isVisible } = useFieldRules();
+    const sale = derived.isSell;
     const areaSqft = values.area.areaSqft;
     const expectedPrice = values.sale.expectedPrice;
     const otherCharges = values.sale.otherCharges;
@@ -160,7 +161,7 @@ export function StepPricing() {
                                 name="sale.registrationIncluded"
                                 label="Registration included"
                             />
-                            {PROPERTY_VISIBLE_WHEN.propertyGst(values) ? (
+                            {isVisible("sale.gstOnProperty") ? (
                                 <ToggleField name="sale.gstOnProperty" label="GST on property" />
                             ) : null}
                         </div>
@@ -199,8 +200,10 @@ export function StepPricing() {
                                         label="Paid by"
                                         options={PAID_BY_OPTIONS}
                                     />
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="outline"
+                                        size="icon-lg"
                                         aria-label="Remove charge"
                                         onClick={() =>
                                             setValue(
@@ -219,7 +222,7 @@ export function StepPricing() {
                                         "
                                     >
                                         <Trash2 className="block-4 inline-4" />
-                                    </button>
+                                    </Button>
                                 </div>
                             ))}
                             <Button
@@ -353,7 +356,7 @@ export function StepPricing() {
                         options={CURRENT_STATUS_OPTIONS}
                     />
                 </div>
-                {PROPERTY_VISIBLE_WHEN.tenantVacating(values) ? (
+                {isVisible("rent.tenantVacatingOn") ? (
                     <div className="mbs-5 max-inline-sm">
                         <TextField
                             name="rent.tenantVacatingOn"
@@ -404,7 +407,7 @@ export function StepPricing() {
                 </div>
             </WizardSection>
 
-            {PROPERTY_VISIBLE_WHEN.rentTerm(values) ? (
+            {derived.isRent || derived.isLease ? (
                 <WizardSection
                     title="Agreement terms"
                     description="Capture the dates and clauses that affect the tenancy."
@@ -430,24 +433,26 @@ export function StepPricing() {
                 </WizardSection>
             ) : null}
 
-            <WizardSection
-                title="Tenant preference"
-                description="Plain restrictions prevent avoidable calls and visits."
-            >
-                <MultiChipField
-                    name="rent.preferredTenant"
-                    label="Preferred tenant"
-                    options={PREFERRED_TENANT_OPTIONS}
-                />
-                <div className="mbs-5 grid gap-3 sm:grid-cols-2">
-                    <ToggleField name="rent.nonVegAllowed" label="Non-veg allowed" />
-                    <ToggleField name="rent.petsAllowed" label="Pets allowed" />
-                    <ToggleField name="rent.smokingAllowed" label="Smoking allowed" />
-                    <ToggleField name="rent.partyAllowed" label="Parties allowed" />
-                </div>
-            </WizardSection>
+            {isVisible("rent.preferredTenant") ? (
+                <WizardSection
+                    title="Tenant preference"
+                    description="Plain restrictions prevent avoidable calls and visits."
+                >
+                    <MultiChipField
+                        name="rent.preferredTenant"
+                        label="Preferred tenant"
+                        options={PREFERRED_TENANT_OPTIONS}
+                    />
+                    <div className="mbs-5 grid gap-3 sm:grid-cols-2">
+                        <ToggleField name="rent.nonVegAllowed" label="Non-veg allowed" />
+                        <ToggleField name="rent.petsAllowed" label="Pets allowed" />
+                        <ToggleField name="rent.smokingAllowed" label="Smoking allowed" />
+                        <ToggleField name="rent.partyAllowed" label="Parties allowed" />
+                    </div>
+                </WizardSection>
+            ) : null}
 
-            {PROPERTY_VISIBLE_WHEN.pg(values) ? (
+            {derived.isPg ? (
                 <WizardSection
                     title="PG details"
                     description="Record the service and price per bed."

@@ -565,8 +565,10 @@ export function StepLocation({ currentPropertyId }: { currentPropertyId?: string
                                 label="Distance (km)"
                                 step={0.1}
                             />
-                            <button
+                            <Button
                                 type="button"
+                                variant="outline"
+                                size="icon-lg"
                                 aria-label="Remove nearby place"
                                 onClick={() =>
                                     setValue(
@@ -583,7 +585,7 @@ export function StepLocation({ currentPropertyId }: { currentPropertyId?: string
                                 "
                             >
                                 <Trash2 className="block-4 inline-4" aria-hidden />
-                            </button>
+                            </Button>
                         </div>
                     ))}
                     <Button type="button" variant="outline" size="md" onClick={addNearbyPlace}>

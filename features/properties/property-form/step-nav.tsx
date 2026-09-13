@@ -3,20 +3,26 @@
 import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useFieldRules } from "@/lib/visibility/use-field-rules";
+
+import { Button } from "@/components/ui/button";
 
 import { FORM_STEPS, type PropertyFormStep } from "@/constants/property";
 
 export function StepNav({
+    steps,
     activeStep,
     highestUnlocked,
     completedSteps,
     onStepChange,
 }: {
+    steps: readonly (typeof FORM_STEPS)[number][];
     activeStep: PropertyFormStep;
     highestUnlocked: number;
     completedSteps: Set<PropertyFormStep>;
     onStepChange: (step: PropertyFormStep) => void;
 }) {
+    const { requiredLeftInStep } = useFieldRules();
     return (
         <nav aria-label="Property form steps" className="xl:block-full">
             <ol
@@ -25,14 +31,17 @@ export function StepNav({
                   xl:block xl:space-y-1 xl:overflow-visible xl:p-0
                 "
             >
-                {FORM_STEPS.map((step, index) => {
+                {steps.map((step, index) => {
                     const active = step.id === activeStep;
-                    const unlocked = index <= highestUnlocked;
-                    const complete = completedSteps.has(step.id);
+                    const originalIndex = FORM_STEPS.findIndex((item) => item.id === step.id);
+                    const unlocked = originalIndex <= highestUnlocked;
+                    const requiredLeft = requiredLeftInStep(step.id).length;
+                    const complete = completedSteps.has(step.id) || requiredLeft === 0;
                     return (
                         <li key={step.id} className="shrink-0 xl:inline-full">
-                            <button
+                            <Button
                                 type="button"
+                                variant="ghost"
                                 disabled={!unlocked}
                                 aria-current={active ? "step" : undefined}
                                 onClick={() => onStepChange(step.id)}
@@ -73,32 +82,28 @@ export function StepNav({
                                     )}
                                 </span>
                                 <span className="hidden min-inline-0 xl:block">
-                                    <span className="
-                                      block text-sm/5 font-semibold whitespace-normal
-                                    ">
+                                    <span className="block text-sm/5 font-semibold whitespace-normal">
                                         {step.label}
                                     </span>
                                     <span
                                         className={cn(
                                             "mbs-0.5 block text-xs",
-                                            active
-                                                ? `text-surface/60`
-                                                : `text-ink-subtle`,
+                                            active ? `text-surface/60` : `text-ink-subtle`,
                                         )}
                                     >
                                         {complete
                                             ? "Complete"
                                             : active
-                                              ? "In progress"
+                                              ? `${requiredLeft} required left`
                                               : unlocked
-                                                ? "Ready"
+                                                ? `${requiredLeft} required left`
                                                 : "Locked"}
                                     </span>
                                 </span>
                                 <span className="text-sm font-semibold whitespace-nowrap xl:hidden">
                                     {step.shortLabel}
                                 </span>
-                            </button>
+                            </Button>
                         </li>
                     );
                 })}

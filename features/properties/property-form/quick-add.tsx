@@ -10,6 +10,8 @@ import { createClientId } from "@/lib/client-id";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 
 import { AppImage } from "@/components/shared/app-image";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { BEDROOM_OPTIONS, LISTING_FOR_OPTIONS, propertyTypeOptions } from "@/constants/property";
 import {
@@ -113,7 +115,8 @@ export function QuickAdd({
                 title="One reference photo"
                 description="A quick photo makes this draft easier to recognise later."
             >
-                <label
+                <Label
+                    htmlFor="quick-property-photo"
                     className="
                       relative flex cursor-pointer items-center justify-center overflow-hidden
                       rounded-card border-2 border-dashed border-brand/35 bg-brand-soft/30
@@ -154,14 +157,15 @@ export function QuickAdd({
                             </span>
                         </span>
                     )}
-                    <input
+                    <Input
+                        id="quick-property-photo"
                         type="file"
                         accept="image/*"
                         capture="environment"
                         className="sr-only"
                         onChange={(event) => addPhoto(event.target.files?.[0])}
                     />
-                </label>
+                </Label>
             </WizardSection>
         </div>
     );

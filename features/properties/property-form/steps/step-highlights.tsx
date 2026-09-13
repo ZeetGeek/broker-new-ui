@@ -6,7 +6,7 @@ import { Clock3, Plus, Trash2 } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { PROPERTY_VISIBLE_WHEN } from "@/lib/visibility/property";
+import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +33,7 @@ import {
 
 export function StepHighlights() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
+    const { isVisible } = useFieldRules();
     const values = watch();
     const highlights = values.highlights.chips;
     const schedule = values.construction.paymentSchedule;
@@ -64,9 +65,11 @@ export function StepHighlights() {
                         </p>
                         <div className="flex flex-wrap gap-2">
                             {suggestions.map((suggestion) => (
-                                <button
+                                <Button
                                     key={suggestion}
                                     type="button"
+                                    variant="outline"
+                                    size="md"
                                     onClick={() => addSuggestion(suggestion)}
                                     disabled={
                                         highlights.includes(suggestion) || highlights.length >= 8
@@ -84,7 +87,7 @@ export function StepHighlights() {
                                         aria-hidden
                                     />{" "}
                                     {suggestion}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                     </div>
@@ -115,7 +118,9 @@ export function StepHighlights() {
                 </div>
             </WizardSection>
 
-            {PROPERTY_VISIBLE_WHEN.construction(values) ? (
+            {isVisible("construction.possessionType") ||
+            isVisible("construction.builderName") ||
+            isVisible("construction.reraId") ? (
                 <WizardSection
                     title="Construction and possession"
                     description="Show the official timeline beside the builder's working promise."
@@ -151,7 +156,7 @@ export function StepHighlights() {
                             <TextField name="construction.builderName" label="Builder name" />
                             <TextField name="construction.projectName" label="Project name" />
                         </div>
-                        {PROPERTY_VISIBLE_WHEN.rera(values) ? (
+                        {isVisible("construction.reraId") ? (
                             <div className={FORM_GRID_CLASS}>
                                 <TextField
                                     name="construction.reraId"
@@ -184,6 +189,7 @@ export function StepHighlights() {
                             />
                             <ToggleField name="construction.bookingOpen" label="Booking open" />
                         </div>
+                        {isVisible("construction.paymentSchedule") ? (
                         <div className="space-y-3">
                             {schedule.map((row, index) => (
                                 <div
@@ -208,8 +214,10 @@ export function StepHighlights() {
                                         label="Due on"
                                         type="date"
                                     />
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="outline"
+                                        size="icon-lg"
                                         aria-label="Remove payment milestone"
                                         onClick={() =>
                                             setValue(
@@ -228,7 +236,7 @@ export function StepHighlights() {
                                         "
                                     >
                                         <Trash2 className="block-4 inline-4" />
-                                    </button>
+                                    </Button>
                                 </div>
                             ))}
                             <Button
@@ -254,6 +262,7 @@ export function StepHighlights() {
                                 <Plus aria-hidden /> Add payment milestone
                             </Button>
                         </div>
+                        ) : null}
                     </div>
                 </WizardSection>
             ) : null}
@@ -319,8 +328,10 @@ export function StepHighlights() {
                                     label="To"
                                     type="time"
                                 />
-                                <button
+                                <Button
                                     type="button"
+                                    variant="outline"
+                                    size="icon-lg"
                                     aria-label="Remove visit time"
                                     onClick={() =>
                                         setValue(
@@ -339,7 +350,7 @@ export function StepHighlights() {
                                     "
                                 >
                                     <Trash2 className="block-4 inline-4" />
-                                </button>
+                                </Button>
                             </div>
                         ))}
                         <Button

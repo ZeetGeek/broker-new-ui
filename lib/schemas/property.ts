@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { labelOf, missingRequiredFields } from "@/lib/visibility/rules";
+
 import {
     FORM_STEPS,
     PAYMENT_MILESTONE_TEMPLATE,
@@ -9,7 +11,6 @@ import {
 
 const optionalText = z.string().max(3000).optional().default("");
 const optionalNumber = z.number().finite().nonnegative().nullable();
-const requiredNumber = z.number().finite().positive("Enter a value above 0");
 const stringArray = z.array(z.string());
 const todayIso = () => new Date().toISOString().slice(0, 10);
 const isPastDate = (value: string) =>
@@ -133,8 +134,8 @@ const detailsSchema = z
         roadWidthFt: optionalNumber,
         propertyAge: optionalText,
         constructionYear: optionalNumber,
-        ownershipType: z.string().min(1, "Choose the ownership type"),
-        propertyCondition: z.string().min(1, "Choose the property condition"),
+        ownershipType: optionalText,
+        propertyCondition: optionalText,
         coveredParking: optionalNumber,
         openParking: optionalNumber,
         waterSource: stringArray,
@@ -168,7 +169,7 @@ const areaSchema = z
         builtUpArea: optionalNumber,
         superBuiltUpArea: optionalNumber,
         plotArea: optionalNumber,
-        areaSqft: requiredNumber,
+        areaSqft: z.number().finite().nonnegative(),
         loadingPercent: optionalNumber,
     })
     .superRefine((value, context) => {
@@ -313,26 +314,6 @@ const pricingStepSchema = z
     })
     .superRefine((value, context) => {
         if (
-            value.basics.listingFor === "sell" &&
-            (!value.sale.expectedPrice || value.sale.expectedPrice <= 0)
-        ) {
-            context.addIssue({
-                code: "custom",
-                path: ["sale", "expectedPrice"],
-                message: "Enter a valid price",
-            });
-        }
-        if (
-            value.basics.listingFor !== "sell" &&
-            (!value.rent.monthlyRent || value.rent.monthlyRent <= 0)
-        ) {
-            context.addIssue({
-                code: "custom",
-                path: ["rent", "monthlyRent"],
-                message: "Enter the monthly rent",
-            });
-        }
-        if (
             value.rent.lockInMonths != null &&
             value.rent.agreementDurationMonths != null &&
             value.rent.lockInMonths > value.rent.agreementDurationMonths
@@ -405,6 +386,7 @@ const dealSchema = z.object({
 const commissionStepSchema = z
     .object({
         basics: z.object({ listingFor: z.enum(["sell", "rent", "lease", "pg"]) }),
+        area: z.object({ areaSqft: z.number() }),
         commission: commissionSchema,
         deal: dealSchema,
     })
@@ -413,7 +395,7 @@ const commissionStepSchema = z
             (sum, item) => sum + item.percent,
             0,
         );
-        if (Math.abs(total - 100) > 0.01) {
+        if (value.basics.listingFor === "sell" && Math.abs(total - 100) > 0.01) {
             context.addIssue({
                 code: "custom",
                 path: ["commission", "sale", "paymentMilestones"],
@@ -422,6 +404,13 @@ const commissionStepSchema = z
         }
         if (value.basics.listingFor === "sell") {
             const sale = value.commission.sale;
+            if (sale.mode === "per_sqft" && value.area.areaSqft <= 0) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["commission", "sale", "mode"],
+                    message: "Fill the area first",
+                });
+            }
             if (
                 sale.mode === "percent" &&
                 ((sale.value > 0 && sale.value < 0.1) || sale.value > 10)
@@ -617,67 +606,8 @@ const publishSchema = z.object({
 export const stepSchemas = {
     basics: z.object({ basics: basicsSchema }),
     location: z.object({ location: locationSchema }),
-    details: z
-        .object({
-            basics: z.object({ category: z.string(), propertyType: z.string() }),
-            details: detailsSchema,
-        })
-        .superRefine((value, context) => {
-            if (value.basics.category === "residential") {
-                if (!value.details.bedrooms)
-                    context.addIssue({
-                        code: "custom",
-                        path: ["details", "bedrooms"],
-                        message: "Choose the BHK",
-                    });
-                if (!value.details.bathrooms)
-                    context.addIssue({
-                        code: "custom",
-                        path: ["details", "bathrooms"],
-                        message: "Enter the bathrooms",
-                    });
-                if (!value.details.propertyAge)
-                    context.addIssue({
-                        code: "custom",
-                        path: ["details", "propertyAge"],
-                        message: "Choose the property age",
-                    });
-                if (
-                    value.basics.propertyType !== "independent_house" &&
-                    (!value.details.floorNumber || !value.details.totalFloors)
-                ) {
-                    context.addIssue({
-                        code: "custom",
-                        path: ["details", "floorNumber"],
-                        message: "Add the floor and total floors",
-                    });
-                }
-            }
-        }),
-    area: z
-        .object({ basics: z.object({ category: z.string() }), area: areaSchema })
-        .superRefine((value, context) => {
-            const plot =
-                value.basics.category === "land" || value.basics.category === "agricultural";
-            if (plot && !value.area.plotArea)
-                context.addIssue({
-                    code: "custom",
-                    path: ["area", "plotArea"],
-                    message: "Enter the plot area",
-                });
-            if (!plot && !value.area.carpetArea)
-                context.addIssue({
-                    code: "custom",
-                    path: ["area", "carpetArea"],
-                    message: "Enter the carpet area",
-                });
-            if (!value.area.areaSqft)
-                context.addIssue({
-                    code: "custom",
-                    path: ["area", "areaSqft"],
-                    message: "Enter a valid area",
-                });
-        }),
+    details: z.object({ details: detailsSchema }),
+    area: z.object({ area: areaSchema }),
     pricing: pricingStepSchema,
     commission: commissionStepSchema,
     furnishing: z.object({ furnishing: furnishingSchema, amenities: amenitiesSchema }),
@@ -702,6 +632,24 @@ export const stepSchemas = {
             }
         }),
 } satisfies Record<PropertyFormStep, z.ZodType>;
+
+function makeFieldRuleSchema(step: PropertyFormStep) {
+    return z
+        .custom<PropertyDraftValues>((value) => Boolean(value && typeof value === "object"))
+        .superRefine((values, context) => {
+            for (const missing of missingRequiredFields(values, step)) {
+                context.addIssue({
+                    code: "custom",
+                    path: missing.path.split("."),
+                    message: `Enter ${labelOf(missing.path, values).toLowerCase()}`,
+                });
+            }
+        });
+}
+
+export const fieldRuleSchemas = Object.fromEntries(
+    FORM_STEPS.map((step) => [step.id, makeFieldRuleSchema(step.id)]),
+) as unknown as Record<PropertyFormStep, z.ZodType<PropertyDraftValues>>;
 
 export const propertyDraftSchema = z.object({
     basics: basicsSchema,
