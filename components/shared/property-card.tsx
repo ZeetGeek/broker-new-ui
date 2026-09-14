@@ -1,6 +1,6 @@
 "use client";
 
-import { type MouseEvent, type PointerEvent, useEffect, useState } from "react";
+import { type MouseEvent, type PointerEvent, type ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
@@ -70,8 +70,40 @@ const BROWSE_CARD_PHOTO_INNER_CLASS =
 const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full";
 const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[5/4] w-full";
 
+/*
+ * Overlay (grid) browse card: the photo fills the whole card and the details sit
+ * on a blurred panel over its lower part. The card is an `@container`, so the
+ * clear photo band is `aspect-5/4` of the card width = 80cqi. The panel starts
+ * 3.5rem above that band and fades in. Only the cover photo shows — no carousel.
+ */
+// `transform-gpu` gives the card its own layer: without it Chrome lets the
+// backdrop-blur panel paint past `overflow-hidden` and the corners go square.
+const OVERLAY_CARD_CLASS = `
+  @container relative isolate flex flex-1 transform-gpu flex-col overflow-hidden rounded-card
+  bg-brand-ink shadow-md transition-[box-shadow,translate] duration-160
+  hover:-translate-y-0.5 hover:shadow-lg
+`;
+const OVERLAY_PHOTO_BAND_CLASS = "pointer-events-none aspect-5/4 shrink-0 inline-full";
+const OVERLAY_PANEL_CLASS = `
+  pointer-events-none relative z-10 -mbs-14 flex flex-col gap-3 px-4 pbs-14 pbe-4 text-surface
+`;
+const OVERLAY_PANEL_BLUR_CLASS = `
+  absolute inset-0 -z-10 rounded-b-card backdrop-blur-xl
+  [mask-image:linear-gradient(to_bottom,transparent,black_3.5rem)]
+`;
+const OVERLAY_PANEL_SCRIM_CLASS = `
+  absolute inset-0 -z-10 rounded-b-card
+  bg-[linear-gradient(to_bottom,transparent,color-mix(in_oklab,var(--color-brand-ink)_40%,transparent)_3.5rem,color-mix(in_oklab,var(--color-brand-ink)_80%,transparent))]
+`;
+const OVERLAY_ICON_BTN_CLASS = `
+  pointer-events-auto relative rounded-full bg-ink/30 text-surface backdrop-blur-md block-10
+  inline-10
+  after:absolute after:-inset-1
+  hover:bg-ink/45 hover:text-surface
+`;
+
 const BROWSE_CARD_PHOTO_NAV_BTN_CLASS = `
-  absolute inset-bs-1/2 z-10 flex -translate-y-1/2 items-center justify-center
+  absolute z-10 flex -translate-y-1/2 items-center justify-center
   rounded-control bg-surface/95 text-ink transition-[opacity,transform] duration-160
   block-7 inline-7
   shadow-[inset_0_-2px_0_0_rgba(111,123,144,0.1)]
@@ -433,19 +465,26 @@ function BrowsePropertyCardPhoto({
     priority,
     imageSizes,
     layout = "grid",
+    fill = false,
 }: {
     listing: BrowsePropertyCardListing;
     priority: boolean;
     imageSizes: string;
     layout?: "grid" | "list";
+    /**
+     * Fill the parent edge to edge with the cover photo only — no frame, chips,
+     * or carousel (the overlay card renders its own chrome).
+     */
+    fill?: boolean;
 }) {
     const alt = listing.title;
-    const images =
+    const gallery =
         listing.imageSrcs && listing.imageSrcs.length > 0
             ? listing.imageSrcs
             : listing.imageSrc
               ? [listing.imageSrc]
               : [];
+    const images = fill ? gallery.slice(0, 1) : gallery;
     const canCarousel = images.length > 1;
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [preparedThrough, setPreparedThrough] = useState(0);
@@ -512,23 +551,31 @@ function BrowsePropertyCardPhoto({
 
     return (
         <div
-            className={cn(
-                BROWSE_CARD_PHOTO_FRAME_CLASS,
-                listing.isNew
-                    ? BROWSE_CARD_PHOTO_FRAME_NEW_CLASS
-                    : BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS,
-                layout === "list"
-                    ? BROWSE_CARD_PHOTO_FRAME_LIST_CLASS
-                    : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
-            )}
+            className={
+                fill
+                    ? "absolute inset-0"
+                    : cn(
+                          BROWSE_CARD_PHOTO_FRAME_CLASS,
+                          listing.isNew
+                              ? BROWSE_CARD_PHOTO_FRAME_NEW_CLASS
+                              : BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS,
+                          layout === "list"
+                              ? BROWSE_CARD_PHOTO_FRAME_LIST_CLASS
+                              : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
+                      )
+            }
         >
             <HoverScaleRoot
                 className={cn(
-                    BROWSE_CARD_PHOTO_INNER_CLASS,
                     "group/photo",
-                    layout === "list"
-                        ? BROWSE_CARD_PHOTO_INNER_LIST_CLASS
-                        : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
+                    fill
+                        ? "relative overflow-hidden block-full inline-full"
+                        : cn(
+                              BROWSE_CARD_PHOTO_INNER_CLASS,
+                              layout === "list"
+                                  ? BROWSE_CARD_PHOTO_INNER_LIST_CLASS
+                                  : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
+                          ),
                 )}
             >
                 {images.length > 0 ? (
@@ -571,10 +618,10 @@ function BrowsePropertyCardPhoto({
                     </HoverScaleLayer>
                 ) : (
                     <div
-                        className="
-                          flex flex-col items-center justify-center gap-2 px-4 text-center
-                          block-full inline-full
-                        "
+                        className={cn(
+                            "flex flex-col items-center justify-center gap-2 px-4 text-center",
+                            fill ? "aspect-5/4 inline-full" : "block-full inline-full",
+                        )}
                     >
                         <Building2
                             aria-hidden
@@ -585,20 +632,24 @@ function BrowsePropertyCardPhoto({
                     </div>
                 )}
 
-                <div
-                    className="
-                      absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
-                    "
-                >
-                    {offersSale(listing) ? <Badge variant="brand">For sale</Badge> : null}
-                    {offersRent(listing) ? <Badge variant="urgent">For rent</Badge> : null}
-                </div>
+                {fill ? null : (
+                    <>
+                        <div
+                            className="
+                              absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
+                            "
+                        >
+                            {offersSale(listing) ? <Badge variant="brand">For sale</Badge> : null}
+                            {offersRent(listing) ? <Badge variant="urgent">For rent</Badge> : null}
+                        </div>
 
-                {listing.isNew ? (
-                    <Badge variant="brand" className="absolute inset-e-3 inset-bs-3 z-10">
-                        New
-                    </Badge>
-                ) : null}
+                        {listing.isNew ? (
+                            <Badge variant="brand" className="absolute inset-e-3 inset-bs-3 z-10">
+                                New
+                            </Badge>
+                        ) : null}
+                    </>
+                )}
 
                 {canCarousel ? (
                     <>
@@ -610,7 +661,7 @@ function BrowsePropertyCardPhoto({
                             onPointerDown={stopLinkNav}
                             className={cn(
                                 BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
-                                "inset-s-3.5",
+                                "inset-bs-1/2 inset-s-3.5",
                                 `
                                   opacity-0
                                   group-focus-within/photo:opacity-100
@@ -635,7 +686,7 @@ function BrowsePropertyCardPhoto({
                             }}
                             className={cn(
                                 BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
-                                "inset-e-3.5",
+                                "inset-bs-1/2 inset-e-3.5",
                                 `
                                   opacity-0
                                   group-focus-within/photo:opacity-100
@@ -821,7 +872,230 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
     );
 }
 
-function BrowsePropertyCard({
+/** Glass chip for the overlay card photo — matches the Share / Save icon buttons. */
+function OverlayChip({ dotClassName, children }: { dotClassName: string; children: ReactNode }) {
+    return (
+        <span
+            className="
+              body-xs inline-flex items-center gap-1.5 rounded-full bg-ink/30 px-2.5 py-1
+              font-semibold tracking-wide whitespace-nowrap text-surface backdrop-blur-md
+            "
+        >
+            <span aria-hidden className={cn("shrink-0 rounded-full block-1.5 inline-1.5", dotClassName)} />
+            {children}
+        </span>
+    );
+}
+
+function OverlayStat({ label, children }: { label: string; children: ReactNode }) {
+    return (
+        <div className="flex flex-col gap-0.5 px-3 min-inline-0 first:ps-0 last:pe-0">
+            <span className="body-xs truncate tracking-wide text-surface/70">{label}</span>
+            <span className="body-sm truncate font-semibold tracking-wide tabular-nums">
+                {children}
+            </span>
+        </div>
+    );
+}
+
+function BrowseOverlayCommission({ listing }: { listing: BrowsePropertyCardListing }) {
+    const isRentOnly = offersRent(listing) && !offersSale(listing);
+    const baseAmountInr = isRentOnly ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0);
+    const commissionInr = Math.round((baseAmountInr * listing.commissionPercent) / 100);
+    const commissionLabel = isRentOnly ? formatRentInr(commissionInr) : formatPriceInr(commissionInr);
+    const baseLabel = isRentOnly ? formatRentInr(baseAmountInr) : formatPriceInr(baseAmountInr);
+
+    return (
+        <Tooltip>
+            <TooltipTrigger
+                delay={200}
+                render={
+                    <button
+                        type="button"
+                        className="
+                          pointer-events-auto cursor-help border-0 bg-transparent p-0 text-start
+                          text-inherit underline decoration-surface/30 underline-offset-2
+                        "
+                        aria-label={`${listing.commissionPercent}% commission`}
+                    />
+                }
+            >
+                {listing.commissionPercent}%
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-center max-inline-xs">
+                <p className="font-semibold tabular-nums">You get {commissionLabel}</p>
+                <p className="body-xs mbs-0.5 opacity-90">
+                    {listing.commissionPercent}% of {baseLabel}
+                </p>
+            </TooltipContent>
+        </Tooltip>
+    );
+}
+
+/** Grid browse card: full-bleed photo with the details on a blurred panel. */
+function BrowseOverlayPropertyCard({
+    listing,
+    detailsHref,
+    priority = false,
+    imageSizes = "(max-width: 768px) 100vw, 50vw",
+    onRequest,
+    onCancelRequest,
+    isRequestPending = false,
+    onAcceptInvite,
+    onCancelInvite,
+    inviteActionPending,
+    isSaved = false,
+    onToggleSave,
+    className,
+}: Extract<PropertyCardProps, { variant: "browse" }>) {
+    const isRentOnly = offersRent(listing) && !offersSale(listing);
+    const priceLabel = isRentOnly
+        ? formatRentInr(listing.rentAmountInr ?? 0)
+        : formatPriceInr(listing.saleAmountInr ?? 0);
+    const hasCommission =
+        listing.commissionPercent > 0 &&
+        (isRentOnly ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0)) > 0;
+    const specsLabel = [formatBrowseCardArea(listing.areaSqft), listing.configLabel]
+        .filter(Boolean)
+        .join(" · ");
+
+    return (
+        <article className={cn(OVERLAY_CARD_CLASS, className)}>
+            <Link href={detailsHref} prefetch={false} className="absolute inset-0">
+                <BrowsePropertyCardPhoto
+                    listing={listing}
+                    priority={priority}
+                    imageSizes={imageSizes}
+                    fill
+                />
+            </Link>
+
+            <div
+                className="
+                  pointer-events-none absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start
+                  gap-1.5 pe-16
+                "
+            >
+                {offersSale(listing) ? (
+                    <OverlayChip dotClassName="bg-success-mid">For sale</OverlayChip>
+                ) : null}
+                {offersRent(listing) ? (
+                    <OverlayChip dotClassName="bg-urgent-mid">For rent</OverlayChip>
+                ) : null}
+                {listing.isNew ? <OverlayChip dotClassName="bg-highlight">New</OverlayChip> : null}
+            </div>
+
+            <div className="absolute inset-e-3 inset-bs-3 z-20 flex flex-col gap-2">
+                <PropertySharePopover
+                    iconOnly
+                    listing={{
+                        id: listing.id,
+                        title: listing.title,
+                        locality: listing.locality,
+                        city: listing.city,
+                        priceLabel,
+                        imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                        configLabel: listing.configLabel,
+                        propertyTypeLabel: listing.propertyTypeLabel,
+                        areaSqft: listing.areaSqft,
+                        bhk: listing.bhk,
+                        listingKind: isRentOnly ? "rent" : "sale",
+                    }}
+                    className={OVERLAY_ICON_BTN_CLASS}
+                />
+                {onToggleSave ? (
+                    <PropertySaveButton
+                        iconOnly
+                        isSaved={isSaved}
+                        title={listing.title}
+                        onToggle={onToggleSave}
+                        className={OVERLAY_ICON_BTN_CLASS}
+                    />
+                ) : null}
+            </div>
+
+            <div aria-hidden className={OVERLAY_PHOTO_BAND_CLASS} />
+
+            <div className={OVERLAY_PANEL_CLASS}>
+                <div aria-hidden className={OVERLAY_PANEL_BLUR_CLASS} />
+                <div aria-hidden className={OVERLAY_PANEL_SCRIM_CLASS} />
+
+                <div className="flex flex-col gap-1 min-inline-0">
+                    <div className="flex items-baseline justify-between gap-3 min-inline-0">
+                        <h3 className="max-inline-full min-inline-0">
+                            <PropertyTitleLink
+                                href={detailsHref}
+                                className={cn(
+                                    PROPERTY_CARD_TITLE_CLASS,
+                                    "pointer-events-auto text-surface hover:text-surface",
+                                )}
+                            >
+                                {listing.title}
+                            </PropertyTitleLink>
+                        </h3>
+                        <span className="h5 shrink-0 font-semibold tracking-wide tabular-nums">
+                            {priceLabel}
+                        </span>
+                    </div>
+                    <p className="body-sm flex items-center gap-1.5 tracking-wide text-surface/75 min-inline-0">
+                        <MapPin aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
+                        <span className="truncate capitalize">
+                            {listing.locality}, {listing.city}
+                        </span>
+                    </p>
+                    <p className="body-sm flex items-center gap-1.5 tracking-wide text-surface/75 min-inline-0">
+                        <Maximize2 aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
+                        <span className="truncate">{specsLabel}</span>
+                    </p>
+                </div>
+
+                <div
+                    className="
+                      grid auto-cols-fr grid-flow-col divide-x divide-surface/20 border-t
+                      border-surface/20 pbs-3
+                    "
+                >
+                    {hasCommission ? (
+                        <OverlayStat label="Commission">
+                            <BrowseOverlayCommission listing={listing} />
+                        </OverlayStat>
+                    ) : null}
+                    {offersBoth(listing) ? (
+                        <OverlayStat label="Rent">
+                            {formatRentInr(listing.rentAmountInr ?? 0)}
+                        </OverlayStat>
+                    ) : null}
+                    <OverlayStat label="Owner">
+                        <span className="capitalize">{listing.owner.name}</span>
+                    </OverlayStat>
+                </div>
+
+                <div className="pointer-events-auto">
+                    <BrowseRequestAction
+                        hasRequested={listing.hasRequested}
+                        isRepresenting={listing.isRepresenting}
+                        isInvitePending={listing.isInvitePending}
+                        isRequestPending={isRequestPending}
+                        inviteActionPending={inviteActionPending}
+                        onRequest={onRequest}
+                        onCancelRequest={onCancelRequest}
+                        onAcceptInvite={onAcceptInvite}
+                        onCancelInvite={onCancelInvite}
+                    />
+                </div>
+            </div>
+        </article>
+    );
+}
+
+function BrowsePropertyCard(props: Extract<PropertyCardProps, { variant: "browse" }>) {
+    if (props.layout !== "list") {
+        return <BrowseOverlayPropertyCard {...props} />;
+    }
+    return <BrowseListPropertyCard {...props} />;
+}
+
+function BrowseListPropertyCard({
     listing,
     layout = "grid",
     detailsHref,

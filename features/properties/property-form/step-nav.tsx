@@ -3,9 +3,10 @@
 import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { Progress, ProgressLabel } from "@/components/ui/progress";
 
 import { FORM_STEPS, type PropertyFormStep } from "@/constants/property";
 
@@ -22,21 +23,31 @@ export function StepNav({
     completedSteps: Set<PropertyFormStep>;
     onStepChange: (step: PropertyFormStep) => void;
 }) {
-    const { requiredLeftInStep } = useFieldRules();
+    const currentIndex = Math.max(
+        0,
+        steps.findIndex((item) => item.id === activeStep),
+    );
+    const progressPct = steps.length
+        ? Math.round(((currentIndex + 1) / steps.length) * 100)
+        : 0;
+
     return (
-        <nav aria-label="Property form steps" className="xl:block-full">
+        <nav
+            aria-label="Property form steps"
+            className="flex flex-1 flex-col min-block-0 xl:block-full"
+        >
             <ol
                 className="
-                  flex gap-2 overflow-x-auto px-4 py-3
-                  xl:block xl:space-y-1 xl:overflow-visible xl:p-0
+                  flex gap-1 overflow-x-auto px-4 py-2
+                  xl:flex-1 xl:flex-col xl:gap-3 xl:overflow-y-auto xl:p-0 xl:min-block-0
                 "
             >
                 {steps.map((step, index) => {
                     const active = step.id === activeStep;
                     const originalIndex = FORM_STEPS.findIndex((item) => item.id === step.id);
                     const unlocked = originalIndex <= highestUnlocked;
-                    const requiredLeft = requiredLeftInStep(step.id).length;
-                    const complete = completedSteps.has(step.id) || requiredLeft === 0;
+                    const complete = completedSteps.has(step.id);
+
                     return (
                         <li key={step.id} className="shrink-0 xl:inline-full">
                             <Button
@@ -47,67 +58,84 @@ export function StepNav({
                                 onClick={() => onStepChange(step.id)}
                                 className={cn(
                                     `
-                                      group flex items-center gap-3 rounded-control px-3 text-start
-                                      transition-[background-color,color] duration-160 min-block-12
-                                      focus-visible:ring-3 focus-visible:ring-ring/30
-                                      xl:inline-full
+                                      flex items-center justify-start gap-3 px-3 text-start
+                                      xl:inline-full xl:min-block-12
                                     `,
                                     active
-                                        ? "bg-brand-ink text-surface"
-                                        : `text-ink-muted hover:bg-surface-muted hover:text-ink`,
-                                    !unlocked && "cursor-not-allowed opacity-40",
+                                        ? `
+                                          bg-brand-soft text-brand-text
+                                          hover:bg-brand-soft-hover hover:text-brand-text
+                                        `
+                                        : "text-ink-muted hover:bg-surface-muted hover:text-ink",
                                 )}
                             >
                                 <span
                                     className={cn(
                                         `
                                           tabular flex shrink-0 items-center justify-center
-                                          rounded-full border text-xs font-bold block-7 inline-7
+                                          rounded-full text-xs font-semibold block-7 inline-7
                                         `,
                                         active
-                                            ? "border-brand bg-highlight text-highlight-ink"
+                                            ? "bg-brand text-surface"
                                             : complete
-                                              ? `border-brand bg-brand-soft text-brand-text`
-                                              : `border-border-warm bg-surface text-ink-muted`,
+                                              ? "bg-brand-soft text-brand-text"
+                                              : "bg-surface-muted text-ink-subtle",
                                     )}
                                 >
-                                    {complete ? (
+                                    {complete && !active ? (
                                         <Check
                                             className="block-3.5 inline-3.5"
-                                            strokeWidth={3}
+                                            strokeWidth={2.5}
                                             aria-hidden
                                         />
                                     ) : (
                                         index + 1
                                     )}
                                 </span>
-                                <span className="hidden min-inline-0 xl:block">
-                                    <span className="block text-sm/5 font-semibold whitespace-normal">
-                                        {step.label}
-                                    </span>
-                                    <span
-                                        className={cn(
-                                            "mbs-0.5 block text-xs",
-                                            active ? `text-surface/60` : `text-ink-subtle`,
-                                        )}
-                                    >
-                                        {complete
-                                            ? "Complete"
-                                            : active
-                                              ? `${requiredLeft} required left`
-                                              : unlocked
-                                                ? `${requiredLeft} required left`
-                                                : "Locked"}
-                                    </span>
+                                <span className="hidden text-sm font-semibold min-inline-0 xl:block">
+                                    {step.label}
                                 </span>
                                 <span className="text-sm font-semibold whitespace-nowrap xl:hidden">
                                     {step.shortLabel}
+                                </span>
+                                <span className="sr-only">
+                                    {complete ? "Complete" : unlocked ? null : "Locked"}
                                 </span>
                             </Button>
                         </li>
                     );
                 })}
             </ol>
+            <div
+                className="
+                  mbs-auto hidden shrink-0 flex-col gap-3 border-bs border-border-warm pbs-4
+                  xl:flex
+                "
+            >
+                <Progress
+                    value={progressPct}
+                    className="
+                      flex-row flex-nowrap items-center gap-2
+                      **:data-[slot=progress-indicator]:bg-brand
+                      **:data-[slot=progress-track]:flex-1
+                      **:data-[slot=progress-track]:bg-surface-muted
+                      **:data-[slot=progress-track]:block-1.5
+                    "
+                >
+                    <ProgressLabel className="body-xs tabular shrink-0 font-medium text-ink-subtle">
+                        {currentIndex + 1} of {steps.length}
+                    </ProgressLabel>
+                </Progress>
+                <p className="body-xs flex flex-wrap items-center gap-1.5 text-ink-subtle">
+                    Press
+                    <KbdGroup className="gap-1">
+                        <Kbd className="px-1.5 text-[10px] min-inline-4">1</Kbd>
+                        <span aria-hidden>+</span>
+                        <Kbd className="px-1.5 text-[10px] min-inline-4">2</Kbd>
+                    </KbdGroup>
+                    to navigate
+                </p>
+            </div>
         </nav>
     );
 }

@@ -523,6 +523,22 @@
     box-sizing: border-box;
 }
 
+/* Toolbar density — 36px track, matches button `default` / `icon`. */
+.t-tabs-surface.t-tabs-compact {
+    gap: 3px;
+    padding: 3px;
+}
+
+.t-tabs-surface.t-tabs-compact .t-tab {
+    height: 30px;
+    padding: 4px 12px;
+}
+
+.t-tabs-surface.t-tabs-compact .t-tabs-pill {
+    top: 3px;
+    height: 30px;
+}
+
 .t-tabs-surface.t-tabs-stretch {
     display: flex;
     width: 100%;

@@ -16,10 +16,37 @@ export function PropertyCardSkeleton({
     layout = "grid",
 }: {
     className?: string;
-    variant?: "browse" | "represented";
+    variant?: "browse" | "browse-overlay" | "represented";
     layout?: "grid" | "list";
 }) {
     const isListView = layout === "list";
+
+    if (variant === "browse-overlay") {
+        return (
+            <div
+                className={cn(
+                    "flex flex-1 flex-col overflow-hidden rounded-card bg-surface-muted shadow-md",
+                    className,
+                )}
+                aria-hidden
+            >
+                <div className="aspect-5/4 animate-pulse inline-full" />
+                <div className="flex flex-col gap-3 bg-border-warm/40 px-4 pbs-4 pbe-4">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="animate-pulse rounded-sm bg-surface block-5 inline-1/2" />
+                        <div className="animate-pulse rounded-sm bg-surface block-6 inline-20" />
+                    </div>
+                    <div className="animate-pulse rounded-sm bg-surface block-4 inline-2/5" />
+                    <div className="animate-pulse rounded-sm bg-surface block-4 inline-1/3" />
+                    <div className="grid grid-cols-2 gap-3 pbs-1">
+                        <div className="animate-pulse rounded-sm bg-surface block-9" />
+                        <div className="animate-pulse rounded-sm bg-surface block-9" />
+                    </div>
+                    <div className="animate-pulse rounded-control bg-surface block-11 inline-full" />
+                </div>
+            </div>
+        );
+    }
 
     if (variant === "browse") {
         return (

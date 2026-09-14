@@ -14,7 +14,7 @@ import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-import { ChevronDown, ChevronLeft, ChevronRight, RotateCcw, X } from "lucide-react";
+import { ChevronDown, RotateCcw, X } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { useListingScore } from "@/lib/hooks/use-listing-score";
@@ -500,9 +500,9 @@ export function PropertyForm({
                         <>
                             <div
                                 className="
-                              shrink-0 border-be border-border-warm bg-surface
-                              xl:hidden
-                            "
+                                  shrink-0 border-be border-border-warm bg-surface
+                                  xl:hidden
+                                "
                             >
                                 <StepNav
                                     steps={activeSteps}
@@ -534,9 +534,9 @@ export function PropertyForm({
                             >
                                 <div
                                     className="
-                                      hidden overflow-y-auto border-e border-border-warm bg-surface
-                                      px-4 py-6
-                                      xl:block
+                                      hidden flex-col border-e border-border-warm bg-surface px-4
+                                      py-5 min-block-0
+                                      xl:flex xl:block-full
                                     "
                                 >
                                     <StepNav
@@ -586,8 +586,8 @@ export function PropertyForm({
                                             </h1>
                                             <p
                                                 className="
-                                              mbs-2 text-sm/6 text-ink-muted max-inline-2xl
-                                            "
+                                                  mbs-2 text-sm/6 text-ink-muted max-inline-2xl
+                                                "
                                             >
                                                 {STEP_DESCRIPTIONS[step]}
                                             </p>
@@ -835,8 +835,14 @@ function PropertyFormHeader({
                         onValueChange={onEntryModeChange}
                         ariaLabel="Entry mode"
                         options={ENTRY_MODE_TABS}
+                        className="t-tabs-compact"
                     />
-                    <Button type="button" onClick={onSaveDraft} className="hidden md:inline-flex">
+                    <Button
+                        type="button"
+                        variant="accent"
+                        onClick={onSaveDraft}
+                        className="hidden md:inline-flex"
+                    >
                         Save draft
                     </Button>
                     {showClose ? (
@@ -852,7 +858,7 @@ function PropertyFormHeader({
                                             <Button
                                                 type="button"
                                                 variant="outline"
-                                                size="icon-sm"
+                                                size="icon"
                                                 aria-label="Close"
                                                 className="shrink-0"
                                             />
@@ -906,27 +912,22 @@ function PropertyFormFooter({
     return (
         <footer
             className="
-              flex shrink-0 items-center justify-between gap-3 border-bs border-border-warm
-              bg-surface px-4 py-3 pbe-[calc(0.75rem+env(safe-area-inset-bottom))]
+              flex shrink-0 items-center justify-between gap-2 border-bs border-border-warm
+              bg-surface px-4 py-2.5 pbe-[calc(0.625rem+env(safe-area-inset-bottom))]
               sm:px-6
             "
         >
             <Button
                 type="button"
                 variant="outline"
-                size="lg"
                 onClick={onBack}
                 disabled={entryMode === "quick" && false}
                 className={entryMode === "quick" ? `invisible` : undefined}
             >
-                <ChevronLeft aria-hidden /> {stepIndex === 0 ? "Close" : "Back"}
+                {stepIndex === 0 ? "Close" : "Back"}
             </Button>
-            <div className="hidden text-xs text-ink-muted md:block">
-                Enter moves forward · Ctrl+S saves · 1–0 jumps to unlocked steps
-            </div>
             <Button
                 type="button"
-                size="lg"
                 loading={isSubmitting}
                 disabled={isSubmitting || publishBlocked}
                 title={
@@ -935,10 +936,14 @@ function PropertyFormFooter({
                         : undefined
                 }
                 onClick={onNext}
-                className="bg-brand-ink text-surface hover:bg-brand-deep"
             >
-                {primaryLabel}{" "}
-                {entryMode === "full" && !isLastStep ? <ChevronRight aria-hidden /> : null}
+                {primaryLabel}
+                <Kbd
+                    variant="surface"
+                    className="hidden px-1.5 text-[10px] min-inline-4 md:inline-flex"
+                >
+                    Enter
+                </Kbd>
             </Button>
         </footer>
     );

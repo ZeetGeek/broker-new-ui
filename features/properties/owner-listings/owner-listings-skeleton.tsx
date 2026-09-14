@@ -173,7 +173,7 @@ export function OwnerListingsPageSkeleton() {
 
             <div className={OWNER_LISTINGS_GRID_CLASS}>
                 {Array.from({ length: 10 }).map((_, index) => (
-                    <PropertyCardSkeleton key={index} />
+                    <PropertyCardSkeleton key={index} variant="browse-overlay" />
                 ))}
             </div>
         </div>

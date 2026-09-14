@@ -48,6 +48,8 @@ type ShareChannel = {
 
 export type PropertySharePopoverProps = {
     listing: PropertyShareInput;
+    /** Icon-only trigger for photo overlays. Style it through `className`. */
+    iconOnly?: boolean;
     className?: string;
 };
 
@@ -72,7 +74,11 @@ const rowClassName = `
   focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset
 `;
 
-export function PropertySharePopover({ listing, className }: PropertySharePopoverProps) {
+export function PropertySharePopover({
+    listing,
+    iconOnly = false,
+    className,
+}: PropertySharePopoverProps) {
     const [open, setOpen] = useState(false);
     const [copied, setCopied] = useState(false);
 
@@ -164,16 +170,20 @@ export function PropertySharePopover({ listing, className }: PropertySharePopove
             render={
                 <Button
                     type="button"
-                    variant="link"
-                    size="sm"
+                    variant={iconOnly ? "ghost" : "link"}
+                    size={iconOnly ? "icon" : "sm"}
                     aria-label="Share listing"
                     aria-haspopup="menu"
-                    className={cn("gap-1.5 p-0 font-medium block-auto", className)}
+                    className={cn(!iconOnly && "gap-1.5 p-0 font-medium block-auto", className)}
                 />
             }
         >
-            <Share2 aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-            Share
+            <Share2
+                aria-hidden
+                className={iconOnly ? "block-4 inline-4" : "block-3.5 inline-3.5"}
+                strokeWidth={1.75}
+            />
+            {iconOnly ? null : "Share"}
         </DropdownMenuTrigger>
     );
 
