@@ -184,7 +184,11 @@ function OwnerListingsResults({
                     : "flex flex-col gap-2"
             }
         >
-            <OwnerListingsGrid items={query.items} view={view} />
+            <OwnerListingsGrid
+                items={query.items}
+                view={view}
+                serviceAreas={filterContext.serviceAreas}
+            />
             <InfiniteListStatus
                 hasNextPage={Boolean(query.hasNextPage)}
                 isFetchingNextPage={query.isFetchingNextPage}

@@ -4,7 +4,7 @@ import { useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { Sparkles } from "lucide-react";
+import { Building2, FileText, Layers2, Sparkles, Type } from "lucide-react";
 
 import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
 
@@ -16,7 +16,6 @@ import {
     PROPERTY_SUBTYPE_OPTIONS,
     propertyTypeOptions,
     toLabel,
-    // TRANSACTION_TYPE_OPTIONS,
 } from "@/constants/property";
 import {
     ChoiceField,
@@ -26,6 +25,10 @@ import {
     TextField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
+import {
+    CATEGORY_ICONS,
+    LISTING_FOR_ICONS,
+} from "@/features/properties/property-form/option-icons";
 
 export function StepBasics() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
@@ -51,17 +54,27 @@ export function StepBasics() {
     }, [bedrooms, category, city, listingFor, locality, propertyType]);
 
     return (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8">
             <WizardSection
-                title="What are you listing?"
+                title={
+                    <>
+                        <Building2
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        What are you listing?
+                    </>
+                }
                 description="Start with the property and the kind of deal the owner wants."
             >
-                <div className="space-y-6">
+                <div className="flex flex-col gap-5">
                     <ChoiceField
                         name="basics.listingFor"
                         label="Listing for"
                         options={LISTING_FOR_OPTIONS}
-                        columns={4}
+                        columns={2}
+                        icons={LISTING_FOR_ICONS}
                         onValueChange={() => {
                             if (dealSwitchNotified.current) return;
                             dealSwitchNotified.current = true;
@@ -72,7 +85,8 @@ export function StepBasics() {
                         name="basics.category"
                         label="Category"
                         options={PROPERTY_CATEGORY_OPTIONS}
-                        columns={3}
+                        columns={5}
+                        icons={CATEGORY_ICONS}
                         onValueChange={() => {
                             setValue("basics.propertyType", "", { shouldDirty: true });
                             setValue("basics.propertySubType", "", { shouldDirty: true });
@@ -97,6 +111,7 @@ export function StepBasics() {
                             name="basics.propertyType"
                             label="Property type"
                             options={propertyTypeOptions(category)}
+                            startIcon={Building2}
                             onValueChange={() => {
                                 setValue(
                                     "details.commercial",
@@ -115,47 +130,51 @@ export function StepBasics() {
                             label="Property subtype"
                             options={PROPERTY_SUBTYPE_OPTIONS}
                             placeholder="Optional"
+                            startIcon={Layers2}
                         />
                     </div>
-                    {/* <ChoiceField
-                        name="basics.transactionType"
-                        label="Transaction"
-                        options={TRANSACTION_TYPE_OPTIONS}
-                        columns={2}
-                    /> */}
                 </div>
             </WizardSection>
 
             <WizardSection
-                title="Listing story"
+                title={
+                    <>
+                        <FileText
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        Listing story
+                    </>
+                }
                 description="Use plain details an owner or broker can scan quickly."
             >
-                <div className="space-y-5">
-                    <TextField
-                        name="basics.title"
-                        label="Listing title"
-                        placeholder={suggestedTitle}
-                    />
-                    <Button
-                        type="button"
-                        variant="link"
-                        size="md"
-                        onClick={() =>
-                            setValue("basics.title", suggestedTitle, {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        className="
-                          inline-flex items-center gap-2 rounded-control text-sm font-semibold
-                          text-brand-text min-block-10
-                          hover:underline
-                          focus-visible:ring-3 focus-visible:ring-ring/30
-                        "
-                    >
-                        <Sparkles className="block-4 inline-4" aria-hidden />
-                        Use suggested title
-                    </Button>
+                <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-2">
+                        <TextField
+                            name="basics.title"
+                            label="Listing title"
+                            placeholder={suggestedTitle}
+                            startIcon={Type}
+                        />
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() =>
+                                setValue("basics.title", suggestedTitle, {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                })
+                            }
+                            className="
+                              gap-2 self-start font-semibold text-brand-text
+                              hover:bg-brand-soft hover:text-brand-text
+                            "
+                        >
+                            <Sparkles className="block-4 inline-4" aria-hidden />
+                            Use suggested title
+                        </Button>
+                    </div>
                     <TextAreaField
                         name="basics.description"
                         label="Description"

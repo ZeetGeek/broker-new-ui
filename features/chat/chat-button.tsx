@@ -4,6 +4,7 @@ import { addCollection, Icon } from "@iconify/react/offline";
 
 import { cn } from "@/lib/utils";
 
+import { OVERLAY_ICON_BUTTON_CLASS } from "@/components/shared/overlay-card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -21,12 +22,16 @@ export function ChatButton({
     peer,
     className,
     size = "icon-sm",
+    appearance = "bare",
 }: {
     peer: ChatPeer;
     className?: string;
     size?: "icon-xs" | "icon-sm" | "icon";
+    /** `overlay`: round glass button for the top of a photo card. */
+    appearance?: "bare" | "overlay";
 }) {
     const { openChat } = useChat();
+    const isOverlay = appearance === "overlay";
 
     return (
         <Tooltip>
@@ -35,22 +40,24 @@ export function ChatButton({
                     <Button
                         type="button"
                         variant="ghost"
-                        size={size}
+                        size={isOverlay ? "icon" : size}
                         onClick={() => openChat(peer)}
                         aria-label={`Message ${peer.name}`}
                         className={cn(
-                            `
-                              shrink-0 bg-transparent p-0 text-ink-muted block-6! inline-6!
-                              hover:bg-transparent hover:text-ink
-                            `,
+                            isOverlay
+                                ? OVERLAY_ICON_BUTTON_CLASS
+                                : `
+                                  shrink-0 bg-transparent p-0 text-ink-muted block-6! inline-6!
+                                  hover:bg-transparent hover:text-ink
+                                `,
                             className,
                         )}
                     >
                         <Icon
                             icon="mdi:chat"
-                            width={24}
-                            height={24}
-                            className="block-6 inline-6"
+                            width={isOverlay ? 18 : 24}
+                            height={isOverlay ? 18 : 24}
+                            className={isOverlay ? "block-4.5 inline-4.5" : "block-6 inline-6"}
                             aria-hidden
                         />
                     </Button>

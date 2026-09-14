@@ -60,7 +60,7 @@ export function QuickAdd({
     }
 
     return (
-        <div className="mx-auto space-y-8 max-inline-3xl">
+        <div className="space-y-8">
             <div>
                 <h2 className="text-2xl font-bold tracking-tight text-ink">
                     Save the lead from the site

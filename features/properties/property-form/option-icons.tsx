@@ -20,6 +20,8 @@ import {
 
 import type { PropertyCategory, PropertyFormValues, PropertyType } from "@/lib/validation/property";
 
+import type { ListingFor } from "@/constants/property";
+
 /** Deal type — sale, rent, or both. */
 export const TRANSACTION_TYPE_ICONS: Record<PropertyFormValues["transactionType"], ReactNode> = {
     sale: <Tag />,
@@ -27,11 +29,17 @@ export const TRANSACTION_TYPE_ICONS: Record<PropertyFormValues["transactionType"
     both: <Repeat />,
 };
 
-export const CATEGORY_ICONS: Record<PropertyCategory, ReactNode> = {
+export const LISTING_FOR_ICONS: Record<ListingFor, ReactNode> = {
+    sell: <Tag />,
+    rent: <Key />,
+};
+
+export const CATEGORY_ICONS: Record<PropertyCategory | "agricultural", ReactNode> = {
     residential: <Home />,
     commercial: <Store />,
     industrial: <Factory />,
     land: <Map />,
+    agricultural: <Trees />,
 };
 
 export const PROPERTY_TYPE_ICONS: Record<PropertyType, ReactNode> = {

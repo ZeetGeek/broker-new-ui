@@ -14,6 +14,16 @@ import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
+import {
+    OVERLAY_GLASS_BUTTON_CLASS,
+    OVERLAY_ICON_BUTTON_CLASS,
+    OverlayCard,
+    OverlayCardSummary,
+    OverlayChip,
+    OverlayStat,
+    OverlayStatsRow,
+} from "@/components/shared/overlay-card";
+import { PhoneNumber } from "@/components/shared/phone-number";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -244,16 +254,21 @@ const BARE_ICON_BUTTON_CLASS =
 export function DealWhatsAppButton({
     name,
     phoneDigits,
+    appearance = "bare",
 }: {
     name: string;
     phoneDigits: string;
+    /** `overlay`: round glass button for the top of a photo card. */
+    appearance?: "bare" | "overlay";
 }) {
+    const isOverlay = appearance === "overlay";
+
     return (
         <Button
             variant="ghost"
-            size="icon-sm"
+            size={isOverlay ? "icon" : "icon-sm"}
             nativeButton={false}
-            className={BARE_ICON_BUTTON_CLASS}
+            className={isOverlay ? OVERLAY_ICON_BUTTON_CLASS : BARE_ICON_BUTTON_CLASS}
             render={
                 <a
                     href={formatWhatsAppUrl(phoneDigits)}
@@ -265,11 +280,133 @@ export function DealWhatsAppButton({
         >
             <Icon
                 icon="selfhst:whatsapp"
-                width={24}
-                height={24}
-                className="block-6 inline-6"
+                width={isOverlay ? 20 : 24}
+                height={isOverlay ? 20 : 24}
+                className={isOverlay ? "block-5 inline-5" : "block-6 inline-6"}
                 aria-hidden
             />
         </Button>
     );
+}
+
+/* ------------------------------------------------------------------ */
+/* Grid view: overlay card (full-bleed photo, details on a blur panel) */
+/* ------------------------------------------------------------------ */
+
+export type DealStatusTone = "waiting" | "action" | "success" | "danger" | "closed";
+
+const STATUS_DOT_CLASS: Record<DealStatusTone, string> = {
+    waiting: "bg-surface/70",
+    action: "bg-urgent-mid",
+    success: "bg-success-mid",
+    danger: "bg-danger-mid",
+    closed: "bg-ink-subtle",
+};
+
+const OVERLAY_IMAGE_SIZES = "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw";
+
+export function dealPriceLabel(listing: DealCardListing): string {
+    return listing.isRent ? formatRentInr(listing.amountInr) : formatPriceInr(listing.amountInr);
+}
+
+/**
+ * Grid deal card. Status leads the chips. `muted` desaturates the photo for a
+ * deal the broker can no longer act on, so live deals stand out while
+ * scanning. `actions` go top-right (menu, chat, WhatsApp); `children` go under
+ * the summary (message, stats, footer).
+ */
+export function DealOverlayCard({
+    listing,
+    configLabel,
+    statusLabel,
+    statusTone,
+    muted = false,
+    isBusy = false,
+    actions,
+    children,
+}: {
+    listing: DealCardListing;
+    configLabel: string;
+    statusLabel: string;
+    statusTone: DealStatusTone;
+    muted?: boolean;
+    isBusy?: boolean;
+    actions?: ReactNode;
+    children: ReactNode;
+}) {
+    const href = brokerOwnerListingDetailHref(listing.propertyId);
+    const specsLabel = [formatAreaSqft(listing.areaSqft), configLabel].filter(Boolean).join(" · ");
+
+    return (
+        <OverlayCard
+            href={href}
+            imageSrc={listing.imageSrc}
+            imageAlt={listing.title}
+            imageSizes={OVERLAY_IMAGE_SIZES}
+            muted={muted}
+            className={cn(isBusy && "pointer-events-none opacity-60")}
+            chips={
+                <>
+                    <OverlayChip
+                        dotClassName={STATUS_DOT_CLASS[statusTone]}
+                        pulse={statusTone === "action"}
+                    >
+                        {statusLabel}
+                    </OverlayChip>
+                    <OverlayChip dotClassName={listing.isRent ? "bg-urgent-mid" : "bg-success-mid"}>
+                        {listing.isRent ? "For rent" : "For sale"}
+                    </OverlayChip>
+                </>
+            }
+            actions={actions}
+        >
+            <OverlayCardSummary
+                href={href}
+                title={listing.title}
+                priceLabel={dealPriceLabel(listing)}
+                locationLabel={`${listing.locality}, ${listing.city}`}
+                specsLabel={specsLabel}
+            />
+            {children}
+        </OverlayCard>
+    );
+}
+
+/** Commission + owner. The owner's number shows once the deal is live. */
+export function DealOverlayStats({
+    listing,
+    ownerName,
+    ownerPhoneDigits,
+}: {
+    listing: DealCardListing;
+    ownerName: string;
+    ownerPhoneDigits?: string;
+}) {
+    return (
+        <OverlayStatsRow>
+            {listing.commissionPercent > 0 ? (
+                <OverlayStat label="Commission">{listing.commissionPercent}%</OverlayStat>
+            ) : null}
+            <OverlayStat
+                label="Owner"
+                hint={
+                    ownerPhoneDigits ? (
+                        <PhoneNumber phoneDigits={ownerPhoneDigits} className="text-inherit" />
+                    ) : undefined
+                }
+            >
+                <span className="capitalize">{ownerName}</span>
+            </OverlayStat>
+        </OverlayStatsRow>
+    );
+}
+
+/** Footer wrapper for the overlay panel — re-enables the pointer for tooltip wrappers. */
+export function DealOverlayFooter({ children }: { children: ReactNode }) {
+    return <div className="pointer-events-auto flex gap-2">{children}</div>;
+}
+
+/** Outline-button class for the footer's secondary action, per card tone. */
+export function dealSecondaryButtonClass(tone: "light" | "overlay"): string {
+    return tone === "overlay" ? OVERLAY_GLASS_BUTTON_CLASS : "border-border-warm";
 }

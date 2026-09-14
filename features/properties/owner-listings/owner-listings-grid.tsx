@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
@@ -15,6 +15,7 @@ import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
+import { isNewInServiceAreas } from "@/features/properties/owner-listings/count-new-listings-this-week";
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
@@ -22,7 +23,11 @@ import type { OwnerListingsView } from "@/features/properties/owner-listings/use
 export type OwnerListingsGridProps = {
     items: OwnerListingItem[];
     view?: OwnerListingsView;
+    /** Broker's service areas — listings new in these get the highlighted card. */
+    serviceAreas?: string[];
 };
+
+const NO_SERVICE_AREAS: string[] = [];
 
 const GRID_BREAKPOINTS = [
     { minWidth: 640, columns: 2 },
@@ -63,7 +68,12 @@ function initialInviteOverrides(items: OwnerListingItem[]): Record<string, Invit
     );
 }
 
-export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridProps) {
+export function OwnerListingsGrid({
+    items,
+    view = "grid",
+    serviceAreas = NO_SERVICE_AREAS,
+}: OwnerListingsGridProps) {
+    const serviceAreaSet = useMemo(() => new Set(serviceAreas), [serviceAreas]);
     const [busyId, setBusyId] = useState<string | null>(null);
     const [busyKind, setBusyKind] = useState<BusyKind | null>(null);
     const [requestOverrides, setRequestOverrides] = useState<Record<string, RequestOverride>>(() =>
@@ -317,6 +327,7 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
                         }
                         isSaved={isSaved(item)}
                         onToggleSave={() => handleToggleSave(item)}
+                        isNewInYourArea={isNewInServiceAreas(item, serviceAreaSet)}
                     />
                 );
             }}

@@ -2,6 +2,14 @@ import type { OwnerListingItem } from "@/features/properties/owner-listings/type
 
 const HOURS_IN_WEEK = 7 * 24;
 
+/** Listed this week in one of the broker's service areas (locality or city). */
+export function isNewInServiceAreas(item: OwnerListingItem, serviceAreaSet: Set<string>): boolean {
+    return (
+        (serviceAreaSet.has(item.locality) || serviceAreaSet.has(item.city)) &&
+        (item.isNew || item.listedHoursAgo < HOURS_IN_WEEK)
+    );
+}
+
 export function countNewListingsInServiceAreasThisWeek(
     items: OwnerListingItem[],
     serviceAreas: string[],
@@ -10,13 +18,9 @@ export function countNewListingsInServiceAreasThisWeek(
         return 0;
     }
 
-    const areaSet = new Set(serviceAreas);
+    const serviceAreaSet = new Set(serviceAreas);
 
-    return items.filter(
-        (item) =>
-            (areaSet.has(item.locality) || areaSet.has(item.city)) &&
-            (item.isNew || item.listedHoursAgo < HOURS_IN_WEEK),
-    ).length;
+    return items.filter((item) => isNewInServiceAreas(item, serviceAreaSet)).length;
 }
 
 export function formatNewInAreasThisWeekLine(count: number, serviceAreas: string[]): string | null {

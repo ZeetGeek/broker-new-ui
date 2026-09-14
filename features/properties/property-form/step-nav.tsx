@@ -5,8 +5,6 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { Progress, ProgressLabel } from "@/components/ui/progress";
 
 import { FORM_STEPS, type PropertyFormStep } from "@/constants/property";
 
@@ -23,14 +21,6 @@ export function StepNav({
     completedSteps: Set<PropertyFormStep>;
     onStepChange: (step: PropertyFormStep) => void;
 }) {
-    const currentIndex = Math.max(
-        0,
-        steps.findIndex((item) => item.id === activeStep),
-    );
-    const progressPct = steps.length
-        ? Math.round(((currentIndex + 1) / steps.length) * 100)
-        : 0;
-
     return (
         <nav
             aria-label="Property form steps"
@@ -106,36 +96,6 @@ export function StepNav({
                     );
                 })}
             </ol>
-            <div
-                className="
-                  mbs-auto hidden shrink-0 flex-col gap-3 border-bs border-border-warm pbs-4
-                  xl:flex
-                "
-            >
-                <Progress
-                    value={progressPct}
-                    className="
-                      flex-row flex-nowrap items-center gap-2
-                      **:data-[slot=progress-indicator]:bg-brand
-                      **:data-[slot=progress-track]:flex-1
-                      **:data-[slot=progress-track]:bg-surface-muted
-                      **:data-[slot=progress-track]:block-1.5
-                    "
-                >
-                    <ProgressLabel className="body-xs tabular shrink-0 font-medium text-ink-subtle">
-                        {currentIndex + 1} of {steps.length}
-                    </ProgressLabel>
-                </Progress>
-                <p className="body-xs flex flex-wrap items-center gap-1.5 text-ink-subtle">
-                    Press
-                    <KbdGroup className="gap-1">
-                        <Kbd className="px-1.5 text-[10px] min-inline-4">1</Kbd>
-                        <span aria-hidden>+</span>
-                        <Kbd className="px-1.5 text-[10px] min-inline-4">2</Kbd>
-                    </KbdGroup>
-                    to navigate
-                </p>
-            </div>
         </nav>
     );
 }

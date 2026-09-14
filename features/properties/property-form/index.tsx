@@ -40,7 +40,8 @@ import {
     DialogPopup,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Kbd } from "@/components/ui/kbd";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { Progress, ProgressLabel } from "@/components/ui/progress";
 import {
     Tooltip,
     TooltipContent,
@@ -74,19 +75,6 @@ import type {
 // v3: area units went international; bigha/guntha/kanal/marla/cent/ground no longer exist.
 // v4: commission is owner-paid only; paidBy/mode are now fixed literals.
 const LOCAL_DRAFT_VERSION = 4;
-
-const STEP_DESCRIPTIONS: Record<PropertyFormStep, string> = {
-    basics: "Choose the deal type and property shape.",
-    location: "Pin the property and control what people can see.",
-    details: "Record the configuration, condition, and approvals.",
-    area: "Capture measurements in the owner's preferred unit.",
-    pricing: "Make the full sale or rental cost clear.",
-    commission: "Agree who pays the broker and how much.",
-    furnishing: "Count what stays and group the amenities.",
-    highlights: "Explain why it is worth a visit and when it is available.",
-    media: "Add listing media and private deal documents.",
-    publish: "Confirm the owner record and visibility.",
-};
 
 export type PropertyFormProps = {
     mode: "create" | "edit";
@@ -549,12 +537,11 @@ export function PropertyForm({
                                 </div>
                                 <main
                                     className="
-                                      overflow-y-auto bg-canvas px-4 py-6 min-block-0
+                                      overflow-y-auto bg-surface px-5 py-6 min-block-0
                                       sm:px-6
-                                      lg:px-10
                                     "
                                 >
-                                    <div className="mx-auto pbe-8 max-inline-3xl">
+                                    <div className="pbe-8">
                                         {recoveryDraft ? (
                                             <RecoveryBanner
                                                 onContinue={() => {
@@ -571,28 +558,9 @@ export function PropertyForm({
                                                 }}
                                             />
                                         ) : null}
-                                        <div className="mbe-7">
-                                            <p className="text-sm font-semibold text-brand-text">
-                                                Step {stepIndex + 1} of {activeSteps.length}
-                                            </p>
-                                            <h1
-                                                className="
-                                                  mbs-1 text-3xl font-bold tracking-[-0.03em]
-                                                  text-ink
-                                                  sm:text-4xl
-                                                "
-                                            >
-                                                {activeSteps[stepIndex]?.label}
-                                            </h1>
-                                            <p
-                                                className="
-                                                  mbs-2 text-sm/6 text-ink-muted max-inline-2xl
-                                                "
-                                            >
-                                                {STEP_DESCRIPTIONS[step]}
-                                            </p>
-                                            <StepRequiredStatus step={step} />
-                                        </div>
+                                        <h1 className="sr-only">
+                                            {activeSteps[stepIndex]?.label}
+                                        </h1>
                                         {formBanner ? (
                                             <div
                                                 role="alert"
@@ -685,18 +653,16 @@ export function PropertyForm({
                     ) : (
                         <main
                             className="
-                              flex-1 overflow-y-auto bg-canvas px-4 py-7 min-block-0
+                              flex-1 overflow-y-auto bg-surface px-5 py-7 min-block-0
                               sm:px-6
-                              lg:px-10
                             "
                         >
                             {formBanner ? (
                                 <div
                                     role="alert"
                                     className="
-                                      mx-auto mbe-5 rounded-control border border-danger/30
-                                      bg-danger-soft px-4 py-3 text-sm font-medium text-danger
-                                      max-inline-3xl
+                                      mbe-5 rounded-control border border-danger/30 bg-danger-soft
+                                      px-4 py-3 text-sm font-medium text-danger
                                     "
                                 >
                                     {formBanner}
@@ -709,10 +675,11 @@ export function PropertyForm({
                     <PropertyFormFooter
                         entryMode={entryMode}
                         stepIndex={stepIndex}
+                        stepCount={activeSteps.length}
                         isLastStep={isLastStep}
                         isPublishing={isPublishing}
                         isSubmitting={saving}
-                        onBack={stepIndex === 0 ? requestClose : goBack}
+                        onBack={goBack}
                         onNext={() =>
                             entryMode === "quick" || isLastStep
                                 ? void persistProperty(entryMode === "quick")
@@ -884,6 +851,7 @@ function PropertyFormHeader({
 function PropertyFormFooter({
     entryMode,
     stepIndex,
+    stepCount,
     isLastStep,
     isPublishing,
     isSubmitting,
@@ -892,6 +860,7 @@ function PropertyFormFooter({
 }: {
     entryMode: "full" | "quick";
     stepIndex: number;
+    stepCount: number;
     isLastStep: boolean;
     isPublishing: boolean;
     isSubmitting: boolean;
@@ -901,6 +870,8 @@ function PropertyFormFooter({
     const { missingRequiredFields: getMissingRequiredFields } = useFieldRules();
     const missing = getMissingRequiredFields();
     const publishBlocked = entryMode === "full" && isLastStep && isPublishing && missing.length > 0;
+    const showBack = entryMode === "full" && stepIndex > 0;
+    const progressPct = stepCount ? Math.round(((stepIndex + 1) / stepCount) * 100) : 0;
     const primaryLabel =
         entryMode === "quick"
             ? "Save quick draft"
@@ -909,60 +880,71 @@ function PropertyFormFooter({
                   ? "Publish property"
                   : "Save property"
               : "Continue";
+
     return (
         <footer
             className="
-              flex shrink-0 items-center justify-between gap-2 border-bs border-border-warm
-              bg-surface px-4 py-2.5 pbe-[calc(0.625rem+env(safe-area-inset-bottom))]
+              flex shrink-0 items-center gap-3 border-bs border-border-warm bg-surface px-4 py-2.5
+              pbe-[calc(0.625rem+env(safe-area-inset-bottom))]
               sm:px-6
             "
         >
-            <Button
-                type="button"
-                variant="outline"
-                onClick={onBack}
-                disabled={entryMode === "quick" && false}
-                className={entryMode === "quick" ? `invisible` : undefined}
-            >
-                {stepIndex === 0 ? "Close" : "Back"}
-            </Button>
-            <Button
-                type="button"
-                loading={isSubmitting}
-                disabled={isSubmitting || publishBlocked}
-                title={
-                    publishBlocked
-                        ? `Still required: ${missing.map((item) => item.label).join(", ")}`
-                        : undefined
-                }
-                onClick={onNext}
-            >
-                {primaryLabel}
-                <Kbd
-                    variant="surface"
-                    className="hidden px-1.5 text-[10px] min-inline-4 md:inline-flex"
+            {entryMode === "full" ? (
+                <div
+                    className="hidden flex-1 items-center gap-4 min-inline-0 md:flex"
                 >
-                    Enter
-                </Kbd>
-            </Button>
+                    <Progress
+                        value={progressPct}
+                        className="
+                          flex-row flex-nowrap items-center gap-2 max-inline-56 min-inline-40
+                          **:data-[slot=progress-indicator]:bg-brand
+                          **:data-[slot=progress-track]:flex-1
+                          **:data-[slot=progress-track]:bg-surface-muted
+                          **:data-[slot=progress-track]:block-1.5
+                        "
+                    >
+                        <ProgressLabel className="
+                          body-xs tabular shrink-0 font-medium text-ink-subtle
+                        ">
+                            {stepIndex + 1} of {stepCount}
+                        </ProgressLabel>
+                    </Progress>
+                    <p className="body-xs flex flex-wrap items-center gap-1.5 text-ink-subtle">
+                        Press
+                        <KbdGroup className="gap-1">
+                            <Kbd className="px-1.5 text-[10px] min-inline-4">1</Kbd>
+                            <span aria-hidden>+</span>
+                            <Kbd className="px-1.5 text-[10px] min-inline-4">2</Kbd>
+                        </KbdGroup>
+                        to navigate
+                    </p>
+                </div>
+            ) : null}
+            <div className="ms-auto flex shrink-0 items-center gap-2">
+                {showBack ? (
+                    <Button type="button" variant="ghost" onClick={onBack}>
+                        Back
+                    </Button>
+                ) : null}
+                <Button
+                    type="button"
+                    variant="outline"
+                    loading={isSubmitting}
+                    disabled={isSubmitting || publishBlocked}
+                    title={
+                        publishBlocked
+                            ? `Still required: ${missing.map((item) => item.label).join(", ")}`
+                            : undefined
+                    }
+                    onClick={onNext}
+                >
+                    {primaryLabel}
+                    <Kbd className="hidden px-1.5 text-[10px] min-inline-4 md:inline-flex">
+                        Enter
+                    </Kbd>
+                </Button>
+            </div>
         </footer>
-    );
-}
-
-function StepRequiredStatus({ step }: { step: PropertyFormStep }) {
-    const { requiredLeftInStep } = useFieldRules();
-    const remaining = requiredLeftInStep(step).length;
-    return (
-        <p
-            className={cn(
-                "text-xs font-semibold",
-                remaining ? "text-ink-muted" : "text-brand-text",
-            )}
-        >
-            {remaining
-                ? `${remaining} required field${remaining === 1 ? "" : "s"} left`
-                : "All required fields done ✓"}
-        </p>
     );
 }
 

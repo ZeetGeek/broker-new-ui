@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Check, UserPlus, X } from "lucide-react";
 
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
+import { cn } from "@/lib/utils";
 
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ChatButton } from "@/features/chat/chat-button";
+import type { ChatPeer } from "@/features/chat/types";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import {
     DealCardBody,
@@ -22,12 +24,27 @@ import {
     DealCardPhoto,
     DealCardPrice,
     DealCardShell,
+    DealOverlayCard,
+    DealOverlayFooter,
+    DealOverlayStats,
+    dealSecondaryButtonClass,
+    type DealStatusTone,
     DealWhatsAppButton,
 } from "@/features/properties/my-requests/deal-card-chrome";
 import { INVITE_STAGE_META } from "@/features/properties/my-requests/invite-stage-meta";
-import type { InviteItem } from "@/features/properties/my-requests/invite-types";
+import type { InviteItem, InviteStage } from "@/features/properties/my-requests/invite-types";
 import type { RequestItem } from "@/features/properties/my-requests/types";
 import type { RequestsView } from "@/features/properties/my-requests/use-requests-view";
+
+type CardTone = "light" | "overlay";
+
+const STATUS_TONE: Record<InviteStage, DealStatusTone> = {
+    // The owner is waiting on the broker — the one state here that needs action.
+    pending: "action",
+    accepted: "success",
+    declined: "closed",
+    expired: "closed",
+};
 
 function asRequestShape(item: InviteItem): RequestItem {
     return {
@@ -81,8 +98,27 @@ function StageBadge({ item }: { item: InviteItem }) {
     );
 }
 
+function chatPeerFor(item: InviteItem): ChatPeer {
+    return {
+        id: item.id,
+        name: item.ownerName,
+        avatarUrl: item.ownerAvatarUrl,
+        roleLabel: item.title,
+        isOnline: item.stage === "accepted",
+        representationId: item.id,
+        mySide: "broker",
+        canSend: true,
+        closed: item.stage === "declined" || item.stage === "expired",
+    };
+}
+
+/** The owner's number is shared only once the broker accepts. */
+function ownerPhoneFor(item: InviteItem): string | undefined {
+    return item.stage === "accepted" ? item.ownerPhoneDigits : undefined;
+}
+
 function InviteOwnerRow({ item }: { item: InviteItem }) {
-    const phoneDigits = item.stage === "accepted" ? item.ownerPhoneDigits : undefined;
+    const phoneDigits = ownerPhoneFor(item);
 
     return (
         <div className="flex items-center gap-2 py-1.5 min-inline-0">
@@ -103,19 +139,7 @@ function InviteOwnerRow({ item }: { item: InviteItem }) {
                 )}
             </div>
             <div className="flex shrink-0 items-center gap-0.5">
-                <ChatButton
-                    peer={{
-                        id: item.id,
-                        name: item.ownerName,
-                        avatarUrl: item.ownerAvatarUrl,
-                        roleLabel: item.title,
-                        isOnline: item.stage === "accepted",
-                        representationId: item.id,
-                        mySide: "broker",
-                        canSend: true,
-                        closed: item.stage === "declined" || item.stage === "expired",
-                    }}
-                />
+                <ChatButton peer={chatPeerFor(item)} />
                 {phoneDigits ? (
                     <DealWhatsAppButton name={item.ownerName} phoneDigits={phoneDigits} />
                 ) : null}
@@ -126,28 +150,44 @@ function InviteOwnerRow({ item }: { item: InviteItem }) {
 
 function InviteCardFooter({
     item,
+    tone,
     onAccept,
     onDecline,
     onAddBuyers,
     isBusy,
 }: {
     item: InviteItem;
+    tone: CardTone;
     onAccept: (id: string) => void;
     onDecline: (id: string) => void;
     onAddBuyers: () => void;
     isBusy: boolean;
 }) {
     const detailsHref = brokerOwnerListingDetailHref(item.propertyId);
+    const secondaryClass = dealSecondaryButtonClass(tone);
+    const Footer = tone === "overlay" ? DealOverlayFooter : DealCardFooter;
+
+    const viewDetails = (
+        <Button
+            size="md"
+            variant="accent"
+            nativeButton={false}
+            className="flex-[1.4]"
+            render={<Link href={detailsHref} prefetch={false} />}
+        >
+            View details
+        </Button>
+    );
 
     if (item.stage === "pending") {
         return (
-            <DealCardFooter>
+            <Footer>
                 <Button
                     size="md"
                     variant="outline"
                     disabled={isBusy}
                     onClick={() => onDecline(item.id)}
-                    className="flex-1 border-border-warm"
+                    className={cn("flex-1", secondaryClass)}
                 >
                     <X aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                     Decline
@@ -162,58 +202,42 @@ function InviteCardFooter({
                     <Check aria-hidden className="block-4 inline-4" strokeWidth={2} />
                     Accept
                 </Button>
-            </DealCardFooter>
+            </Footer>
         );
     }
 
     if (item.stage === "accepted") {
         return (
-            <DealCardFooter>
+            <Footer>
                 <Button
                     size="md"
                     variant="outline"
                     type="button"
                     disabled={isBusy}
                     onClick={onAddBuyers}
-                    className="flex-1 border-border-warm"
+                    className={cn("flex-1", secondaryClass)}
                 >
                     <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                     {item.clientsAttached === 0 ? "Add buyer" : "See buyers"}
                 </Button>
-                <Button
-                    size="md"
-                    variant="accent"
-                    nativeButton={false}
-                    className="flex-[1.4]"
-                    render={<Link href={detailsHref} prefetch={false} />}
-                >
-                    View details
-                </Button>
-            </DealCardFooter>
+                {viewDetails}
+            </Footer>
         );
     }
 
     return (
-        <DealCardFooter>
+        <Footer>
             <Button
                 size="md"
                 variant="outline"
                 nativeButton={false}
-                className="flex-1 border-border-warm"
+                className={cn("flex-1", secondaryClass)}
                 render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
             >
                 Find similar
             </Button>
-            <Button
-                size="md"
-                variant="accent"
-                nativeButton={false}
-                className="flex-[1.4]"
-                render={<Link href={detailsHref} prefetch={false} />}
-            >
-                View details
-            </Button>
-        </DealCardFooter>
+            {viewDetails}
+        </Footer>
     );
 }
 
@@ -233,9 +257,21 @@ export function InviteCard({
     isBusy?: boolean;
 }) {
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
+    const ownerPhoneDigits = ownerPhoneFor(item);
 
-    return (
-        <TooltipProvider>
+    const footer = (tone: CardTone) => (
+        <InviteCardFooter
+            item={item}
+            tone={tone}
+            onAccept={onAccept}
+            onDecline={onDecline}
+            onAddBuyers={() => setIsBuyersOpen(true)}
+            isBusy={isBusy}
+        />
+    );
+
+    const card =
+        view === "list" ? (
             <DealCardShell view={view} isBusy={isBusy}>
                 <DealCardPhoto listing={item} view={view} stageBadge={<StageBadge item={item} />} />
 
@@ -247,16 +283,48 @@ export function InviteCard({
                     <InviteOwnerRow item={item} />
                     <div className="mbs-auto flex flex-col gap-2.5">
                         <DealCardPrice listing={item} />
-                        <InviteCardFooter
-                            item={item}
-                            onAccept={onAccept}
-                            onDecline={onDecline}
-                            onAddBuyers={() => setIsBuyersOpen(true)}
-                            isBusy={isBusy}
-                        />
+                        {footer("light")}
                     </div>
                 </DealCardBody>
             </DealCardShell>
+        ) : (
+            <DealOverlayCard
+                listing={item}
+                configLabel={item.configLabel}
+                statusLabel={INVITE_STAGE_META[item.stage].label}
+                statusTone={STATUS_TONE[item.stage]}
+                muted={item.stage === "declined" || item.stage === "expired"}
+                isBusy={isBusy}
+                actions={
+                    <>
+                        <ChatButton peer={chatPeerFor(item)} appearance="overlay" />
+                        {ownerPhoneDigits ? (
+                            <DealWhatsAppButton
+                                name={item.ownerName}
+                                phoneDigits={ownerPhoneDigits}
+                                appearance="overlay"
+                            />
+                        ) : null}
+                    </>
+                }
+            >
+                {item.message ? (
+                    <p className="body-sm line-clamp-2 tracking-wide text-surface/85 italic">
+                        “{item.message}”
+                    </p>
+                ) : null}
+                <DealOverlayStats
+                    listing={item}
+                    ownerName={item.ownerName}
+                    ownerPhoneDigits={ownerPhoneDigits}
+                />
+                {footer("overlay")}
+            </DealOverlayCard>
+        );
+
+    return (
+        <TooltipProvider>
+            {card}
 
             {item.stage === "accepted" ? (
                 <AttachBuyersModal

@@ -287,6 +287,11 @@
     animation: fab-pulse 2.4s ease-in-out infinite;
 }
 
+/* One light pass across a card that just arrived (new listing in your areas). Plays once. */
+@utility animate-card-sweep {
+    animation: card-sweep 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.35s 1 both;
+}
+
 @utility animate-accordion-down {
     animation: accordion-down 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -323,6 +328,15 @@
     50% {
         opacity: 0.75;
         filter: drop-shadow(0 0 3px color-mix(in oklab, var(--color-brand) 60%, transparent));
+    }
+}
+
+@keyframes card-sweep {
+    from {
+        transform: translateX(-100%) skewX(-20deg);
+    }
+    to {
+        transform: translateX(450%) skewX(-20deg);
     }
 }
 

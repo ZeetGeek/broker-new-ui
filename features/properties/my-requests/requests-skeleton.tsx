@@ -18,7 +18,11 @@ export function RequestsListSkeleton({
     return (
         <div className={isList ? REQUESTS_LIST_CLASS : REQUESTS_GRID_CLASS} aria-hidden>
             {Array.from({ length: count }).map((_, index) => (
-                <PropertyCardSkeleton key={index} variant="browse" layout={view} />
+                <PropertyCardSkeleton
+                    key={index}
+                    variant={isList ? "browse" : "browse-overlay"}
+                    layout={view}
+                />
             ))}
         </div>
     );
@@ -51,7 +55,11 @@ export function RequestsPageSkeleton({ view = "grid" }: { view?: RequestsView })
             </div>
             <div className={isList ? REQUESTS_LIST_CLASS : REQUESTS_GRID_CLASS}>
                 {Array.from({ length: 5 }).map((_, index) => (
-                    <PropertyCardSkeleton key={index} variant="browse" layout={view} />
+                    <PropertyCardSkeleton
+                        key={index}
+                        variant={isList ? "browse" : "browse-overlay"}
+                        layout={view}
+                    />
                 ))}
             </div>
         </div>

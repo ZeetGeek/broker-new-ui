@@ -1,6 +1,6 @@
 "use client";
 
-import { type MouseEvent, type PointerEvent, type ReactNode, useEffect, useState } from "react";
+import { type MouseEvent, type PointerEvent, useEffect, useState } from "react";
 import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
@@ -39,6 +39,15 @@ import { cn } from "@/lib/utils";
 import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
+import {
+    OVERLAY_GLASS_BUTTON_CLASS,
+    OVERLAY_ICON_BUTTON_CLASS,
+    OverlayCard,
+    OverlayCardSummary,
+    OverlayChip,
+    OverlayStat,
+    OverlayStatsRow,
+} from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertySaveButton } from "@/components/shared/property-save-button";
@@ -69,38 +78,6 @@ const BROWSE_CARD_PHOTO_INNER_CLASS =
     "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
 const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full";
 const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[5/4] w-full";
-
-/*
- * Overlay (grid) browse card: the photo fills the whole card and the details sit
- * on a blurred panel over its lower part. The card is an `@container`, so the
- * clear photo band is `aspect-5/4` of the card width = 80cqi. The panel starts
- * 3.5rem above that band and fades in. Only the cover photo shows — no carousel.
- */
-// `transform-gpu` gives the card its own layer: without it Chrome lets the
-// backdrop-blur panel paint past `overflow-hidden` and the corners go square.
-const OVERLAY_CARD_CLASS = `
-  @container relative isolate flex flex-1 transform-gpu flex-col overflow-hidden rounded-card
-  bg-brand-ink shadow-md transition-[box-shadow,translate] duration-160
-  hover:-translate-y-0.5 hover:shadow-lg
-`;
-const OVERLAY_PHOTO_BAND_CLASS = "pointer-events-none aspect-5/4 shrink-0 inline-full";
-const OVERLAY_PANEL_CLASS = `
-  pointer-events-none relative z-10 -mbs-14 flex flex-col gap-3 px-4 pbs-14 pbe-4 text-surface
-`;
-const OVERLAY_PANEL_BLUR_CLASS = `
-  absolute inset-0 -z-10 rounded-b-card backdrop-blur-xl
-  [mask-image:linear-gradient(to_bottom,transparent,black_3.5rem)]
-`;
-const OVERLAY_PANEL_SCRIM_CLASS = `
-  absolute inset-0 -z-10 rounded-b-card
-  bg-[linear-gradient(to_bottom,transparent,color-mix(in_oklab,var(--color-brand-ink)_40%,transparent)_3.5rem,color-mix(in_oklab,var(--color-brand-ink)_80%,transparent))]
-`;
-const OVERLAY_ICON_BTN_CLASS = `
-  pointer-events-auto relative rounded-full bg-ink/30 text-surface backdrop-blur-md block-10
-  inline-10
-  after:absolute after:-inset-1
-  hover:bg-ink/45 hover:text-surface
-`;
 
 const BROWSE_CARD_PHOTO_NAV_BTN_CLASS = `
   absolute z-10 flex -translate-y-1/2 items-center justify-center
@@ -153,6 +130,7 @@ function BrowseRequestAction({
     onCancelRequest,
     onAcceptInvite,
     onCancelInvite,
+    tone = "light",
 }: {
     hasRequested: boolean;
     isRepresenting?: boolean;
@@ -163,6 +141,8 @@ function BrowseRequestAction({
     onCancelRequest?: () => void;
     onAcceptInvite?: () => void;
     onCancelInvite?: () => void;
+    /** `overlay` restyles the cancel button as glass for the dark photo panel. */
+    tone?: "light" | "overlay";
 }) {
     const canCancel = Boolean(hasRequested && onCancelRequest);
     const canRespondToInvite = Boolean(isInvitePending && onAcceptInvite && onCancelInvite);
@@ -275,10 +255,14 @@ function BrowseRequestAction({
             type="button"
             size="md"
             variant="outline"
-            className="
-              border-2 border-brand bg-brand-soft font-semibold text-brand-text inline-full
-              hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
-            "
+            className={
+                tone === "overlay"
+                    ? cn(OVERLAY_GLASS_BUTTON_CLASS, "inline-full")
+                    : `
+                      border-2 border-brand bg-brand-soft font-semibold text-brand-text inline-full
+                      hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
+                    `
+            }
             disabled={isRequestPending}
             loading={isRequestPending}
             onClick={onCancelRequest}
@@ -425,6 +409,8 @@ export type PropertyCardProps = {
     /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
     isSaved?: boolean;
     onToggleSave?: () => void;
+    /** Browse grid cards: listed this week in the broker's service areas — highlighted card. */
+    isNewInYourArea?: boolean;
 } & (
     | { variant: "browse"; listing: BrowsePropertyCardListing }
     | { variant: "represented"; listing: RepresentedPropertyCardListing }
@@ -465,26 +451,19 @@ function BrowsePropertyCardPhoto({
     priority,
     imageSizes,
     layout = "grid",
-    fill = false,
 }: {
     listing: BrowsePropertyCardListing;
     priority: boolean;
     imageSizes: string;
     layout?: "grid" | "list";
-    /**
-     * Fill the parent edge to edge with the cover photo only — no frame, chips,
-     * or carousel (the overlay card renders its own chrome).
-     */
-    fill?: boolean;
 }) {
     const alt = listing.title;
-    const gallery =
+    const images =
         listing.imageSrcs && listing.imageSrcs.length > 0
             ? listing.imageSrcs
             : listing.imageSrc
               ? [listing.imageSrc]
               : [];
-    const images = fill ? gallery.slice(0, 1) : gallery;
     const canCarousel = images.length > 1;
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [preparedThrough, setPreparedThrough] = useState(0);
@@ -551,31 +530,23 @@ function BrowsePropertyCardPhoto({
 
     return (
         <div
-            className={
-                fill
-                    ? "absolute inset-0"
-                    : cn(
-                          BROWSE_CARD_PHOTO_FRAME_CLASS,
-                          listing.isNew
-                              ? BROWSE_CARD_PHOTO_FRAME_NEW_CLASS
-                              : BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS,
-                          layout === "list"
-                              ? BROWSE_CARD_PHOTO_FRAME_LIST_CLASS
-                              : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
-                      )
-            }
+            className={cn(
+                BROWSE_CARD_PHOTO_FRAME_CLASS,
+                listing.isNew
+                    ? BROWSE_CARD_PHOTO_FRAME_NEW_CLASS
+                    : BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS,
+                layout === "list"
+                    ? BROWSE_CARD_PHOTO_FRAME_LIST_CLASS
+                    : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
+            )}
         >
             <HoverScaleRoot
                 className={cn(
+                    BROWSE_CARD_PHOTO_INNER_CLASS,
                     "group/photo",
-                    fill
-                        ? "relative overflow-hidden block-full inline-full"
-                        : cn(
-                              BROWSE_CARD_PHOTO_INNER_CLASS,
-                              layout === "list"
-                                  ? BROWSE_CARD_PHOTO_INNER_LIST_CLASS
-                                  : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
-                          ),
+                    layout === "list"
+                        ? BROWSE_CARD_PHOTO_INNER_LIST_CLASS
+                        : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
                 )}
             >
                 {images.length > 0 ? (
@@ -618,10 +589,10 @@ function BrowsePropertyCardPhoto({
                     </HoverScaleLayer>
                 ) : (
                     <div
-                        className={cn(
-                            "flex flex-col items-center justify-center gap-2 px-4 text-center",
-                            fill ? "aspect-5/4 inline-full" : "block-full inline-full",
-                        )}
+                        className="
+                          flex flex-col items-center justify-center gap-2 px-4 text-center
+                          block-full inline-full
+                        "
                     >
                         <Building2
                             aria-hidden
@@ -632,24 +603,20 @@ function BrowsePropertyCardPhoto({
                     </div>
                 )}
 
-                {fill ? null : (
-                    <>
-                        <div
-                            className="
-                              absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
-                            "
-                        >
-                            {offersSale(listing) ? <Badge variant="brand">For sale</Badge> : null}
-                            {offersRent(listing) ? <Badge variant="urgent">For rent</Badge> : null}
-                        </div>
+                <div
+                    className="
+                      absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
+                    "
+                >
+                    {offersSale(listing) ? <Badge variant="brand">For sale</Badge> : null}
+                    {offersRent(listing) ? <Badge variant="urgent">For rent</Badge> : null}
+                </div>
 
-                        {listing.isNew ? (
-                            <Badge variant="brand" className="absolute inset-e-3 inset-bs-3 z-10">
-                                New
-                            </Badge>
-                        ) : null}
-                    </>
-                )}
+                {listing.isNew ? (
+                    <Badge variant="brand" className="absolute inset-e-3 inset-bs-3 z-10">
+                        New
+                    </Badge>
+                ) : null}
 
                 {canCarousel ? (
                     <>
@@ -661,7 +628,7 @@ function BrowsePropertyCardPhoto({
                             onPointerDown={stopLinkNav}
                             className={cn(
                                 BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
-                                "inset-bs-1/2 inset-s-3.5",
+                                "inset-s-3.5 inset-bs-1/2",
                                 `
                                   opacity-0
                                   group-focus-within/photo:opacity-100
@@ -686,7 +653,7 @@ function BrowsePropertyCardPhoto({
                             }}
                             className={cn(
                                 BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
-                                "inset-bs-1/2 inset-e-3.5",
+                                "inset-e-3.5 inset-bs-1/2",
                                 `
                                   opacity-0
                                   group-focus-within/photo:opacity-100
@@ -872,32 +839,6 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
     );
 }
 
-/** Glass chip for the overlay card photo — matches the Share / Save icon buttons. */
-function OverlayChip({ dotClassName, children }: { dotClassName: string; children: ReactNode }) {
-    return (
-        <span
-            className="
-              body-xs inline-flex items-center gap-1.5 rounded-full bg-ink/30 px-2.5 py-1
-              font-semibold tracking-wide whitespace-nowrap text-surface backdrop-blur-md
-            "
-        >
-            <span aria-hidden className={cn("shrink-0 rounded-full block-1.5 inline-1.5", dotClassName)} />
-            {children}
-        </span>
-    );
-}
-
-function OverlayStat({ label, children }: { label: string; children: ReactNode }) {
-    return (
-        <div className="flex flex-col gap-0.5 px-3 min-inline-0 first:ps-0 last:pe-0">
-            <span className="body-xs truncate tracking-wide text-surface/70">{label}</span>
-            <span className="body-sm truncate font-semibold tracking-wide tabular-nums">
-                {children}
-            </span>
-        </div>
-    );
-}
-
 function BrowseOverlayCommission({ listing }: { listing: BrowsePropertyCardListing }) {
     const isRentOnly = offersRent(listing) && !offersSale(listing);
     const baseAmountInr = isRentOnly ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0);
@@ -913,8 +854,8 @@ function BrowseOverlayCommission({ listing }: { listing: BrowsePropertyCardListi
                     <button
                         type="button"
                         className="
-                          pointer-events-auto cursor-help border-0 bg-transparent p-0 text-start
-                          text-inherit underline decoration-surface/30 underline-offset-2
+                          cursor-help border-0 bg-transparent p-0 text-start text-inherit underline
+                          decoration-surface/30 underline-offset-2
                         "
                         aria-label={`${listing.commissionPercent}% commission`}
                     />
@@ -946,6 +887,7 @@ function BrowseOverlayPropertyCard({
     inviteActionPending,
     isSaved = false,
     onToggleSave,
+    isNewInYourArea = false,
     className,
 }: Extract<PropertyCardProps, { variant: "browse" }>) {
     const isRentOnly = offersRent(listing) && !offersSale(listing);
@@ -960,32 +902,33 @@ function BrowseOverlayPropertyCard({
         .join(" · ");
 
     return (
-        <article className={cn(OVERLAY_CARD_CLASS, className)}>
-            <Link href={detailsHref} prefetch={false} className="absolute inset-0">
-                <BrowsePropertyCardPhoto
-                    listing={listing}
-                    priority={priority}
-                    imageSizes={imageSizes}
-                    fill
-                />
-            </Link>
-
-            <div
-                className="
-                  pointer-events-none absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start
-                  gap-1.5 pe-16
-                "
-            >
-                {offersSale(listing) ? (
-                    <OverlayChip dotClassName="bg-success-mid">For sale</OverlayChip>
-                ) : null}
-                {offersRent(listing) ? (
-                    <OverlayChip dotClassName="bg-urgent-mid">For rent</OverlayChip>
-                ) : null}
-                {listing.isNew ? <OverlayChip dotClassName="bg-highlight">New</OverlayChip> : null}
-            </div>
-
-            <div className="absolute inset-e-3 inset-bs-3 z-20 flex flex-col gap-2">
+        <OverlayCard
+            href={detailsHref}
+            imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
+            imageAlt={listing.title}
+            imageSizes={imageSizes}
+            priority={priority}
+            sweep={listing.isNew}
+            className={className}
+            chips={
+                <>
+                    {offersSale(listing) ? (
+                        <OverlayChip dotClassName="bg-success-mid">For sale</OverlayChip>
+                    ) : null}
+                    {offersRent(listing) ? (
+                        <OverlayChip dotClassName="bg-urgent-mid">For rent</OverlayChip>
+                    ) : null}
+                    {listing.isNew && isNewInYourArea ? (
+                        <OverlayChip dotClassName="bg-highlight" pulse>
+                            New in {listing.locality}
+                        </OverlayChip>
+                    ) : listing.isNew ? (
+                        <OverlayChip dotClassName="bg-highlight">New</OverlayChip>
+                    ) : null}
+                </>
+            }
+            actions={
+                <>
                 <PropertySharePopover
                     iconOnly
                     listing={{
@@ -1001,7 +944,7 @@ function BrowseOverlayPropertyCard({
                         bhk: listing.bhk,
                         listingKind: isRentOnly ? "rent" : "sale",
                     }}
-                    className={OVERLAY_ICON_BTN_CLASS}
+                    className={OVERLAY_ICON_BUTTON_CLASS}
                 />
                 {onToggleSave ? (
                     <PropertySaveButton
@@ -1009,82 +952,49 @@ function BrowseOverlayPropertyCard({
                         isSaved={isSaved}
                         title={listing.title}
                         onToggle={onToggleSave}
-                        className={OVERLAY_ICON_BTN_CLASS}
+                        className={OVERLAY_ICON_BUTTON_CLASS}
                     />
                 ) : null}
-            </div>
+                </>
+            }
+        >
+            <OverlayCardSummary
+                href={detailsHref}
+                title={listing.title}
+                priceLabel={priceLabel}
+                locationLabel={`${listing.locality}, ${listing.city}`}
+                specsLabel={specsLabel}
+            />
 
-            <div aria-hidden className={OVERLAY_PHOTO_BAND_CLASS} />
-
-            <div className={OVERLAY_PANEL_CLASS}>
-                <div aria-hidden className={OVERLAY_PANEL_BLUR_CLASS} />
-                <div aria-hidden className={OVERLAY_PANEL_SCRIM_CLASS} />
-
-                <div className="flex flex-col gap-1 min-inline-0">
-                    <div className="flex items-baseline justify-between gap-3 min-inline-0">
-                        <h3 className="max-inline-full min-inline-0">
-                            <PropertyTitleLink
-                                href={detailsHref}
-                                className={cn(
-                                    PROPERTY_CARD_TITLE_CLASS,
-                                    "pointer-events-auto text-surface hover:text-surface",
-                                )}
-                            >
-                                {listing.title}
-                            </PropertyTitleLink>
-                        </h3>
-                        <span className="h5 shrink-0 font-semibold tracking-wide tabular-nums">
-                            {priceLabel}
-                        </span>
-                    </div>
-                    <p className="body-sm flex items-center gap-1.5 tracking-wide text-surface/75 min-inline-0">
-                        <MapPin aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
-                        <span className="truncate capitalize">
-                            {listing.locality}, {listing.city}
-                        </span>
-                    </p>
-                    <p className="body-sm flex items-center gap-1.5 tracking-wide text-surface/75 min-inline-0">
-                        <Maximize2 aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
-                        <span className="truncate">{specsLabel}</span>
-                    </p>
-                </div>
-
-                <div
-                    className="
-                      grid auto-cols-fr grid-flow-col divide-x divide-surface/20 border-t
-                      border-surface/20 pbs-3
-                    "
-                >
-                    {hasCommission ? (
-                        <OverlayStat label="Commission">
-                            <BrowseOverlayCommission listing={listing} />
-                        </OverlayStat>
-                    ) : null}
-                    {offersBoth(listing) ? (
-                        <OverlayStat label="Rent">
-                            {formatRentInr(listing.rentAmountInr ?? 0)}
-                        </OverlayStat>
-                    ) : null}
-                    <OverlayStat label="Owner">
-                        <span className="capitalize">{listing.owner.name}</span>
+            <OverlayStatsRow>
+                {hasCommission ? (
+                    <OverlayStat label="Commission">
+                        <BrowseOverlayCommission listing={listing} />
                     </OverlayStat>
-                </div>
+                ) : null}
+                {offersBoth(listing) ? (
+                    <OverlayStat label="Rent">{formatRentInr(listing.rentAmountInr ?? 0)}</OverlayStat>
+                ) : null}
+                <OverlayStat label="Owner">
+                    <span className="capitalize">{listing.owner.name}</span>
+                </OverlayStat>
+            </OverlayStatsRow>
 
-                <div className="pointer-events-auto">
-                    <BrowseRequestAction
-                        hasRequested={listing.hasRequested}
-                        isRepresenting={listing.isRepresenting}
-                        isInvitePending={listing.isInvitePending}
-                        isRequestPending={isRequestPending}
-                        inviteActionPending={inviteActionPending}
-                        onRequest={onRequest}
-                        onCancelRequest={onCancelRequest}
-                        onAcceptInvite={onAcceptInvite}
-                        onCancelInvite={onCancelInvite}
-                    />
-                </div>
+            <div className="pointer-events-auto">
+                <BrowseRequestAction
+                    tone="overlay"
+                    hasRequested={listing.hasRequested}
+                    isRepresenting={listing.isRepresenting}
+                    isInvitePending={listing.isInvitePending}
+                    isRequestPending={isRequestPending}
+                    inviteActionPending={inviteActionPending}
+                    onRequest={onRequest}
+                    onCancelRequest={onCancelRequest}
+                    onAcceptInvite={onAcceptInvite}
+                    onCancelInvite={onCancelInvite}
+                />
             </div>
-        </article>
+        </OverlayCard>
     );
 }
 

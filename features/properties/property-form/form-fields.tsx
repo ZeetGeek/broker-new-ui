@@ -3,7 +3,7 @@
 import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { Controller, type FieldPath, useFormContext } from "react-hook-form";
 
-import { Check, Eye, LockKeyhole, Minus, Plus, X } from "lucide-react";
+import { Check, Eye, LockKeyhole, type LucideIcon,Minus, Plus, X } from "lucide-react";
 
 import { formatInrInput, inrWordHint, parseInr } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
@@ -212,6 +212,7 @@ export function SelectField({
     hint,
     visibility,
     className,
+    startIcon,
     onBlur: onInputBlur,
     onValueChange,
 }: {
@@ -222,6 +223,7 @@ export function SelectField({
     hint?: ReactNode;
     visibility?: FieldVisibility;
     className?: string;
+    startIcon?: LucideIcon;
     onBlur?: () => void;
     onValueChange?: (value: string) => void;
 }) {
@@ -260,6 +262,7 @@ export function SelectField({
                             id={name.replace(/\./g, "-")}
                             ref={field.ref}
                             size="lg"
+                            startIcon={startIcon}
                             errorText={error}
                         >
                             <SelectValue placeholder={placeholder}>
@@ -461,6 +464,7 @@ export function ChoiceField({
     visibility,
     columns = 3,
     className,
+    icons,
     onValueChange,
 }: {
     name: Path;
@@ -468,8 +472,9 @@ export function ChoiceField({
     options: readonly PropertyOption[];
     hint?: ReactNode;
     visibility?: FieldVisibility;
-    columns?: 2 | 3 | 4;
+    columns?: 2 | 3 | 4 | 5;
     className?: string;
+    icons?: Partial<Record<string, ReactNode>>;
     onValueChange?: (value: string) => void;
 }) {
     const {
@@ -500,30 +505,33 @@ export function ChoiceField({
                         aria-describedby={error ? `${name.replace(/\./g, "-")}-error` : undefined}
                         aria-invalid={Boolean(error) || undefined}
                         className={cn(
-                            "grid gap-2",
+                            "grid gap-2.5",
                             columns === 2
-                                ? "grid-cols-2"
+                                ? "grid-cols-1 sm:grid-cols-2"
                                 : columns === 4
-                                  ? `grid-cols-2 sm:grid-cols-4`
-                                  : `grid-cols-2 sm:grid-cols-3`,
+                                  ? "grid-cols-2 sm:grid-cols-4"
+                                  : columns === 5
+                                    ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5"
+                                    : "grid-cols-2 sm:grid-cols-3",
                         )}
                     >
                         {options.map((option) => {
                             const active = field.value === option.value;
                             const hasDescription = Boolean(option.description);
+                            const icon = icons?.[option.value];
                             return (
                                 <Label
                                     key={option.value}
                                     htmlFor={`${name.replace(/\./g, "-")}-${option.value}`}
                                     className={cn(
                                         `
-                                          flex cursor-pointer gap-3 rounded-control border px-4
-                                          py-3 text-start font-normal leading-normal
+                                          flex cursor-pointer gap-3 rounded-control border-2 px-4
+                                          py-3.5 text-start leading-normal font-normal
                                           transition-[background-color,border-color,color]
                                           duration-160 min-block-12
                                           has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                         `,
-                                        hasDescription ? "items-start" : "items-center",
+                                        icon || !hasDescription ? "items-center" : "items-start",
                                         active
                                             ? "border-brand bg-brand-soft text-brand-text"
                                             : `
@@ -532,27 +540,57 @@ export function ChoiceField({
                                             `,
                                     )}
                                 >
-                                    <RadioGroupItem
-                                        id={`${name.replace(/\./g, "-")}-${option.value}`}
-                                        value={option.value}
-                                        className={cn(
-                                            `
-                                              shrink-0 border-ink-subtle bg-surface
-                                              data-checked:border-brand data-checked:bg-brand
-                                            `,
-                                            hasDescription && "mts-0.5",
-                                        )}
-                                    />
-                                    <span className="min-inline-0">
-                                        <span className="block text-sm leading-5 font-semibold">
+                                    {icon ? (
+                                        <span
+                                            aria-hidden
+                                            className={cn(
+                                                `
+                                                  flex shrink-0 items-center
+                                                  [&_svg]:block-4 [&_svg]:inline-4
+                                                `,
+                                                active ? "text-brand-text" : "text-ink-muted",
+                                            )}
+                                        >
+                                            {icon}
+                                        </span>
+                                    ) : (
+                                        <RadioGroupItem
+                                            id={`${name.replace(/\./g, "-")}-${option.value}`}
+                                            value={option.value}
+                                            className={cn(
+                                                `
+                                                  shrink-0 border-ink-subtle bg-surface
+                                                  data-checked:border-brand data-checked:bg-brand
+                                                `,
+                                                hasDescription && "mts-0.5",
+                                            )}
+                                        />
+                                    )}
+                                    <span className="flex-1 min-inline-0">
+                                        <span className="block text-sm/5 font-semibold">
                                             {option.label}
                                         </span>
                                         {option.description ? (
-                                            <span className="mbs-1 block text-xs leading-4 text-ink-muted">
+                                            <span
+                                                className={cn(
+                                                    "mbs-0.5 block text-xs/4",
+                                                    active ? "text-brand-text/70" : "text-ink-muted",
+                                                )}
+                                            >
                                                 {option.description}
                                             </span>
                                         ) : null}
                                     </span>
+                                    {icon ? (
+                                        <RadioGroupItem
+                                            id={`${name.replace(/\./g, "-")}-${option.value}`}
+                                            value={option.value}
+                                            className="
+                                              ms-auto shrink-0 border-ink-subtle bg-surface
+                                              data-checked:border-brand data-checked:bg-brand
+                                            "
+                                        />
+                                    ) : null}
                                 </Label>
                             );
                         })}
@@ -945,7 +983,11 @@ export function WizardSection({
         >
             <div className="mbe-5 flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-bold tracking-[-0.02em] text-ink">{title}</h2>
+                    <h2 className="
+                      flex items-center gap-2.5 text-xl font-bold tracking-[-0.02em] text-ink
+                    ">
+                        {title}
+                    </h2>
                     {description ? (
                         <p className="mbs-1 text-sm/6 text-ink-muted max-inline-2xl">
                             {description}
