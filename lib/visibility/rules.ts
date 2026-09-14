@@ -204,10 +204,6 @@ export const FIELD_RULES = {
     "sale.pricePerSqft": { visible: (d) => d.isSell && d.hasArea },
     "sale.maintenanceCharge": { visible: (d) => d.isSell && !d.isPlot },
     "sale.maintenanceFrequency": { visible: (d) => d.isSell && !d.isPlot },
-    "sale.gstOnProperty": { visible: (d) => d.isNewBooking || d.isUnderConstruction },
-    "sale.gstOnPropertyPercent": {
-        visible: (d, v) => (d.isNewBooking || d.isUnderConstruction) && v.sale.gstOnProperty,
-    },
     "sale.parkingCharge": {
         visible: (d, v) => d.isSell && !d.isPlot && (v.details.coveredParking ?? 0) > 0,
     },
@@ -260,41 +256,23 @@ export const FIELD_RULES = {
     "rent.pg.housekeepingFrequency": { visible: (d) => d.isPg },
     "rent.pg.laundry": { visible: (d) => d.isPg },
 
-    "commission.sale.mode": { visible: (d) => d.isSell, level: required },
+    // Always percentage; the picker is gone but the value still ships.
+    "commission.sale.mode": { visible: () => false, keepWhenHidden: true, level: required },
     "commission.sale.value": { visible: (d) => d.isSell, level: required },
-    "commission.sale.paidBy": { visible: (d) => d.isSell, level: required },
-    "commission.sale.separateRates": {
-        visible: (d, v) => d.isSell && v.commission.sale.paidBy === "both",
-    },
+    // The owner always pays the full brokerage; both fields ship as fixed values.
+    "commission.sale.paidBy": { visible: () => false, keepWhenHidden: true, level: required },
     "commission.sale.ownerSharePercent": {
-        visible: (d, v) =>
-            d.isSell && v.commission.sale.paidBy === "both" && !v.commission.sale.separateRates,
+        visible: () => false,
+        keepWhenHidden: true,
         level: required,
     },
-    "commission.sale.ownerPercent": {
-        visible: (d, v) =>
-            d.isSell && v.commission.sale.paidBy === "both" && v.commission.sale.separateRates,
-        level: required,
-    },
-    "commission.sale.buyerPercent": {
-        visible: (d, v) =>
-            d.isSell && v.commission.sale.paidBy === "both" && v.commission.sale.separateRates,
-        level: required,
-    },
-    "commission.sale.negotiable": { visible: (d) => d.isSell },
-    "commission.sale.minAcceptable": {
-        visible: (d, v) => d.isSell && v.commission.sale.negotiable,
-    },
-    "commission.rent.mode": { visible: (d) => d.isRentLike, level: required },
+    // Always months of rent; the picker is gone but the value still ships.
+    "commission.rent.mode": { visible: () => false, keepWhenHidden: true, level: required },
     "commission.rent.value": { visible: (d) => d.isRentLike, level: required },
-    "commission.rent.paidBy": { visible: (d) => d.isRentLike, level: required },
+    "commission.rent.paidBy": { visible: () => false, keepWhenHidden: true, level: required },
     "commission.rent.ownerSharePercent": {
-        visible: (d, v) => d.isRentLike && v.commission.rent.paidBy === "both",
-        level: required,
-    },
-    "commission.rent.renewalFeeApplicable": { visible: (d) => d.isRent || d.isLease },
-    "commission.rent.renewalFeeValue": {
-        visible: (d, v) => (d.isRent || d.isLease) && v.commission.rent.renewalFeeApplicable,
+        visible: () => false,
+        keepWhenHidden: true,
         level: required,
     },
     "furnishing.status": { visible: (d) => !d.isPlot, level: required },
@@ -464,15 +442,11 @@ export const RULE_DRIVER_PATHS = [
     "area.areaSqft",
     "area.carpetArea",
     "area.superBuiltUpArea",
-    "sale.gstOnProperty",
     "rent.maintenanceMode",
     "rent.agreementDurationMonths",
     "rent.currentStatus",
     "commission.sale.paidBy",
-    "commission.sale.separateRates",
-    "commission.sale.negotiable",
     "commission.rent.paidBy",
-    "commission.rent.renewalFeeApplicable",
     "furnishing.status",
     "construction.possessionType",
     "construction.stage",

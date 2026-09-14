@@ -18,27 +18,27 @@ const badgeVariants = cva(
             variant: {
                 brand: `
                   text-brand-text
-                  [background:linear-gradient(180deg,var(--color-surface),var(--color-brand-soft))_padding-box,linear-gradient(180deg,color-mix(in_oklab,var(--color-brand)_52%,white),color-mix(in_oklab,var(--color-brand)_28%,white))_border-box]
+                  [background:linear-gradient(180deg,var(--color-surface),var(--color-brand-soft))_padding-box,linear-gradient(180deg,color-mix(in_oklab,var(--color-brand)_28%,white),color-mix(in_oklab,var(--color-brand)_52%,white))_border-box]
                   [box-shadow:0_2px_10px_-2px_color-mix(in_oklab,var(--color-brand)_22%,transparent),0_1px_2px_color-mix(in_oklab,var(--color-brand)_10%,transparent)]
                 `,
                 urgent: `
                   text-urgent
-                  [background:linear-gradient(180deg,var(--color-surface),var(--color-urgent-soft))_padding-box,linear-gradient(180deg,color-mix(in_oklab,var(--color-urgent)_48%,white),color-mix(in_oklab,var(--color-urgent)_26%,white))_border-box]
+                  [background:linear-gradient(180deg,var(--color-surface),var(--color-urgent-soft))_padding-box,linear-gradient(180deg,color-mix(in_oklab,var(--color-urgent)_26%,white),color-mix(in_oklab,var(--color-urgent)_48%,white))_border-box]
                   [box-shadow:0_2px_10px_-2px_color-mix(in_oklab,var(--color-urgent)_20%,transparent),0_1px_2px_color-mix(in_oklab,var(--color-urgent)_10%,transparent)]
                 `,
                 danger: `
                   text-danger
-                  [background:linear-gradient(180deg,var(--color-surface),var(--color-danger-soft))_padding-box,linear-gradient(180deg,color-mix(in_oklab,var(--color-danger)_48%,white),color-mix(in_oklab,var(--color-danger)_26%,white))_border-box]
+                  [background:linear-gradient(180deg,var(--color-surface),var(--color-danger-soft))_padding-box,linear-gradient(180deg,color-mix(in_oklab,var(--color-danger)_26%,white),color-mix(in_oklab,var(--color-danger)_48%,white))_border-box]
                   [box-shadow:0_2px_10px_-2px_color-mix(in_oklab,var(--color-danger)_20%,transparent),0_1px_2px_color-mix(in_oklab,var(--color-danger)_10%,transparent)]
                 `,
                 neutral: `
                   text-ink
-                  [background:linear-gradient(180deg,var(--color-surface),var(--color-surface-muted))_padding-box,linear-gradient(180deg,var(--color-border-warm),color-mix(in_oklab,var(--color-border-warm)_70%,white))_border-box]
+                  [background:linear-gradient(180deg,var(--color-surface),var(--color-surface-muted))_padding-box,linear-gradient(180deg,color-mix(in_oklab,var(--color-border-warm)_70%,white),var(--color-border-warm))_border-box]
                   [box-shadow:0_2px_10px_-2px_oklch(0.153_0.02_155_/_0.1),0_1px_2px_oklch(0.153_0.02_155_/_0.05)]
                 `,
                 outline: `
                   text-ink-muted
-                  [background:linear-gradient(180deg,var(--color-surface),var(--color-surface))_padding-box,linear-gradient(180deg,var(--color-border-warm),color-mix(in_oklab,var(--color-border-warm)_65%,white))_border-box]
+                  [background:linear-gradient(180deg,var(--color-surface),var(--color-surface))_padding-box,linear-gradient(180deg,color-mix(in_oklab,var(--color-border-warm)_65%,white),var(--color-border-warm))_border-box]
                   [box-shadow:0_2px_8px_-2px_oklch(0.153_0.02_155_/_0.08),0_1px_2px_oklch(0.153_0.02_155_/_0.04)]
                 `,
             },

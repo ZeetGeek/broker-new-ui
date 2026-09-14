@@ -126,22 +126,6 @@ export function StepPricing() {
                                 <CurrencyField key={name} name={name} label={label} />
                             ))}
                         </div>
-                        {isVisible("sale.gstOnProperty") ? (
-                            <div className="mbs-5 grid gap-3 sm:grid-cols-3">
-                                <ToggleField name="sale.gstOnProperty" label="GST on property" />
-                            </div>
-                        ) : null}
-                        {isVisible("sale.gstOnPropertyPercent") ? (
-                            <div className="mbs-5 max-inline-xs">
-                                <NumberField
-                                    name="sale.gstOnPropertyPercent"
-                                    label="Property GST (%)"
-                                    max={100}
-                                    step={0.1}
-                                />
-                            </div>
-                        ) : null}
-
                         <div className="mbs-6 space-y-3">
                             {otherCharges.map((charge, index) => (
                                 <div

@@ -295,26 +295,6 @@ export const HOUSEKEEPING_OPTIONS = ["daily", "alternate_days", "weekly", "none"
     label: toLabel(value),
 }));
 
-export const SALE_COMMISSION_MODE_OPTIONS = [
-    { value: "percent", label: "Percentage" },
-    { value: "flat", label: "Flat amount" },
-    { value: "per_sqft", label: "Per sq ft" },
-] as const satisfies readonly PropertyOption[];
-export const RENT_COMMISSION_MODE_OPTIONS = [
-    { value: "months", label: "Months of rent" },
-    { value: "percent_annual", label: "% of yearly rent" },
-    { value: "percent_monthly", label: "% of monthly rent" },
-    { value: "flat", label: "Flat amount" },
-    { value: "percent_lease_value", label: "% of lease value" },
-] as const satisfies readonly PropertyOption[];
-export const SALE_COMMISSION_PAID_BY_OPTIONS = ["owner", "buyer", "both"].map((value) => ({
-    value,
-    label: toLabel(value),
-}));
-export const RENT_COMMISSION_PAID_BY_OPTIONS = ["owner", "tenant", "both"].map((value) => ({
-    value,
-    label: toLabel(value),
-}));
 
 export const FURNISHING_OPTIONS = [
     { value: "unfurnished", label: "Unfurnished" },

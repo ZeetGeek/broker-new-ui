@@ -91,7 +91,7 @@
 
     /* Compact rounded rectangles. Full circles are explicit with `rounded-full`
        and are reserved for avatars, indicators, and circular controls. */
-    --radius-card: 16px;
+    --radius-card: 20px;
     --radius-inner: 12px;
     --radius-control: 12px;
 

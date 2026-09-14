@@ -32,8 +32,6 @@ export const PROPERTY_VISIBLE_WHEN = {
         values.details.propertyCondition === "under_construction",
     tenantVacating: (values) => values.rent.currentStatus === "tenant_occupied",
     caretaker: (values) => values.availability.keyHeldBy === "caretaker",
-    saleSplit: (values) => values.commission.sale.paidBy === "both",
-    rentSplit: (values) => values.commission.rent.paidBy === "both",
     renewal: (values) => isRent(values) && values.commission.rent.renewalFeeApplicable,
     existingLease: (values) => values.details.commercial.currentlyLeased,
     rentTerm: (values) =>

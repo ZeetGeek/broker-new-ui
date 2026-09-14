@@ -295,13 +295,13 @@ The design uses compact, conventional rounded rectangles. Radius supports groupi
 touch affordance without making every surface look soft or capsule-shaped.
 
 ```
---radius-card    16px   cards, photo containers, dialogs, floating panels
+--radius-card    20px   cards, photo containers, dialogs, floating panels
 --radius-inner   12px   inset strips, menu items, images inside cards
 --radius-control 12px   buttons, inputs, selects, tabs, segmented controls
 ```
 
 Badges use `rounded-lg` (12px). Checkboxes use `rounded-sm` (6px). Controls use
-`rounded-control` (12px); cards and overlays use `rounded-card` (16px). `rounded-full`
+`rounded-control` (12px); cards and overlays use `rounded-card` (20px). `rounded-full`
 is reserved for genuinely circular geometry such as avatars, radio indicators, status
 dots, and switch thumbs. It is not the default for buttons, badges, filters, or tabs.
 
@@ -344,7 +344,7 @@ sits on `surface` rather than `canvas`, but never stack more than one shadow ste
 
 ### 4.1 Card
 
-White surface, 16px radius, no shadow. Optional eyebrow at top-left, optional status
+White surface, 20px radius, no shadow. Optional eyebrow at top-left, optional status
 badge at top-right, then content.
 
 ```
@@ -360,7 +360,7 @@ badge at top-right, then content.
 
 ### 4.2 Dark attention card
 
-`brand-deep` or `brand-ink` background, same 16px radius, light text. Reserved for
+`brand-deep` or `brand-ink` background, same 20px radius, light text. Reserved for
 the one thing on the screen that needs action: pending requests, overdue follow-ups,
 expiring listings.
 
@@ -405,8 +405,8 @@ label with the spinner alone.
 ### 4.4 Badges and chips
 
 Soft top→bottom fill gradient (`surface` → tint) plus a vertical gradient border
-(tint mid → lighter), and a soft colour-tinted drop shadow. Never white text on a
-soft fill, never `ink` on a coloured fill.
+(light top → darker bottom), and a soft colour-tinted drop shadow. Never white text
+on a soft fill, never `ink` on a coloured fill.
 
 | Meaning                    | Fill to           | Text         |
 | -------------------------- | ----------------- | ------------ |
@@ -781,6 +781,40 @@ Always pass a real name for alt text and fallbacks. Face stays a circle —
 never a rounded square. Do not edit `components/ui/avatar.tsx` for one-offs;
 pass `className` or wrap in `components/shared/`. Only avatar library:
 `avvvatars-react` (no boring-avatars or other generators).
+
+### 4.18 Checkbox
+
+One base-ui primitive, wrapped once in `components/ui/checkbox.tsx`.
+Multi-select and consent — never a substitute for Radio (one exclusive choice)
+or Switch (binary preference).
+
+```
+┌─────────────────────────────┐
+│ ☑  Morning · 9–12           │  option card — whole tile tappable
+└─────────────────────────────┘
+  ☐  I agree to share…           stack — label beside the box
+```
+
+Fixed 20px square, `rounded-sm` (6px). Unchecked: `bg-surface` +
+`border-border-warm`. Checked and indeterminate: `brand` fill + white mark
+(check or dash). Focus ring snaps in — no fade. Invalid uses `danger-mid`
+border.
+
+Three layouts, same primitive:
+
+| Layout         | When                                                         |
+| -------------- | ------------------------------------------------------------ |
+| Stack          | Consent lines, reminders, short multi-select lists           |
+| Option cards   | Filter sheets (time of day, amenities) — 48px tap height     |
+| Indeterminate  | Parent of a partial group only — never a third preference    |
+
+Always pair with a visible label (`htmlFor`/`id` or a wrapping `<label>`).
+Selected cards use `border-brand` + `bg-brand-soft` + `text-brand-text`.
+Hover only shifts the card border. Motion is `.t-check` from transitions.dev
+25 (`app/transitions-dev.css`) — box fills (`--check-box` 150ms), then the
+check stroke-draws (`--check-draw` 350ms); uncheck reverses in
+`--check-uncheck` (150ms). Path stays mounted so a mid-draw uncheck reverses
+cleanly. No bouncy spring.
 
 ---
 

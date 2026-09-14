@@ -73,7 +73,8 @@ import type {
 
 // v2: nearbyPlaces changed from {id,type,name,distanceKm}[] to a plain string[] of place types.
 // v3: area units went international; bigha/guntha/kanal/marla/cent/ground no longer exist.
-const LOCAL_DRAFT_VERSION = 3;
+// v4: commission is owner-paid only; paidBy/mode are now fixed literals.
+const LOCAL_DRAFT_VERSION = 4;
 
 const STEP_DESCRIPTIONS: Record<PropertyFormStep, string> = {
     basics: "Choose the deal type and property shape.",

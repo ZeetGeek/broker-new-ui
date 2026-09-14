@@ -48,8 +48,8 @@ export function LiveSummaryPanel({
                 areaSqft: values.area.areaSqft,
                 mode: values.commission.sale.mode,
                 value: values.commission.sale.value,
-                paidBy: values.commission.sale.paidBy,
-                ownerSharePercent: values.commission.sale.ownerSharePercent,
+                paidBy: "owner",
+                ownerSharePercent: 100,
                 separateRates: values.commission.sale.separateRates
                     ? {
                           ownerPercent: values.commission.sale.ownerPercent ?? 0,
@@ -74,8 +74,8 @@ export function LiveSummaryPanel({
             escalationPercent: values.rent.rentEscalationPercent ?? 0,
             mode: values.commission.rent.mode,
             value: values.commission.rent.value,
-            paidBy: values.commission.rent.paidBy,
-            ownerSharePercent: values.commission.rent.ownerSharePercent,
+            paidBy: "owner",
+            ownerSharePercent: 100,
             renewalFeeMonths: values.commission.rent.renewalFeeApplicable
                 ? (values.commission.rent.renewalFeeValue ?? 0)
                 : 0,
@@ -99,8 +99,6 @@ export function LiveSummaryPanel({
               `Sale price: ${formatInr(values.sale.expectedPrice)}`,
               `Rate per sq ft: ${formatInr(result.effectiveRatePerSqft)}`,
               `Gross commission: ${formatInr(result.gross)}`,
-              `From owner: ${formatInr(result.ownerGross)}`,
-              `From buyer: ${formatInr(result.buyerGross)}`,
               `GST collected: ${formatInr(result.gst)}`,
               `TDS credit: ${formatInr(result.tdsCredit)}`,
               `Money in bank after co-broker split: ${formatInr(brokerBankAfterSplit)}`,
@@ -117,8 +115,6 @@ export function LiveSummaryPanel({
                 `Yearly rent: ${formatInr(result.annualRent)}`,
                 `Lease value: ${formatInr(result.leaseValue)}`,
                 `Gross brokerage: ${formatInr(result.gross)}`,
-                `From owner: ${formatInr(result.ownerGross)}`,
-                `From tenant: ${formatInr(result.tenantGross)}`,
                 `GST collected: ${formatInr(result.gst)}`,
                 `TDS credit: ${formatInr(result.tdsCredit)}`,
                 `Money in bank after co-broker split: ${formatInr(brokerBankAfterSplit)}`,
@@ -233,8 +229,6 @@ export function LiveSummaryPanel({
                           mbe-3 block text-3xl text-highlight
                         " />
                         <MoneyRow label={isSale ? "Gross commission" : "Gross brokerage"} value={money(result.gross)} title="The agreed fee before GST, TDS, or co-broker sharing." />
-                        <MoneyRow label="From owner" value={money(result.ownerGross)} title="The owner's share of the brokerage base." />
-                        <MoneyRow label={isSale ? "From buyer" : "From tenant"} value={money(isSale && "buyerGross" in result ? result.buyerGross : "tenantGross" in result ? result.tenantGross : 0)} title="The other party's share of the brokerage base." />
                         <MoneyRow label="GST collected" value={money(result.gst)} prefix="+" title="GST collected for payment to the government." />
                         <MoneyRow label="TDS credit" value={money(result.tds)} prefix="−" title="Advance tax withheld on brokerage excluding GST." />
                         <MoneyRow label="Money in bank" value={money(brokerBankAfterSplit)} strong title="Invoice receipt after TDS and the co-broker split." />
@@ -253,7 +247,6 @@ export function LiveSummaryPanel({
                                 <MoneyRow label="Owner receives" value={money(result.ownerNet)} strong title="Sale price after owner brokerage and deductions." />
                                 <SectionLabel>Buyer pays</SectionLabel>
                                 <MoneyRow label="Sale price" value={values.sale.expectedPrice} title="The agreed property sale price." />
-                                <MoneyRow label="Commission + GST" value={money(result.buyerPays)} prefix="+" title="The buyer's invoice share including GST." />
                                 <MoneyRow label="Other charges" value={money(buyerCharges)} prefix="+" title="Entered sale charges marked as buyer-paid." />
                                 <MoneyRow label="Buyer total" value={money(result.buyerTotalCost)} strong title="Sale price plus buyer brokerage and entered charges." />
                             </>
@@ -267,7 +260,6 @@ export function LiveSummaryPanel({
                                 <SectionLabel>Tenant pays on day 1</SectionLabel>
                                 <MoneyRow label="Deposit" value={money(deposit)} title="The entered security deposit." />
                                 <MoneyRow label="First month rent" value={values.rent.monthlyRent} title="The first month's asking rent." />
-                                <MoneyRow label="Brokerage + GST" value={money(result.tenantPays)} title="The tenant's invoice share including GST." />
                                 <MoneyRow label="Move-in cost" value={money(result.tenantMoveInCost)} strong title="Deposit, first rent, tenant brokerage, and tenant-paid maintenance." />
                                 {result.renewalFee > 0 ? <MoneyRow label="Renewal fee" value={money(result.renewalFee)} title="Expected fee each time the lease renews." /> : null}
                                 <MoneyRow label="3-year potential" value={money(result.threeYearEarning)} title="Current brokerage plus two entered renewal fees." />

@@ -24,10 +24,13 @@ const SECTIONS = [
             { href: "/design-system/components/select", label: "Select" },
             { href: "/design-system/components/switch", label: "Switch" },
             { href: "/design-system/components/radio", label: "Radio" },
+            { href: "/design-system/components/checkbox", label: "Checkbox" },
             { href: "/design-system/components/tooltip", label: "Tooltip" },
             { href: "/design-system/components/tabs", label: "Tabs" },
             { href: "/design-system/components/dialog", label: "Dialog" },
             { href: "/design-system/components/avatar", label: "Avatar" },
+            { href: "/design-system/components/badge", label: "Badges" },
+            { href: "/design-system/components/card", label: "Card" },
         ],
     },
 ];

@@ -196,8 +196,6 @@ const saleSchema = z
         pricePerSqft: optionalNumber,
         maintenanceCharge: optionalNumber,
         maintenanceFrequency: z.string(),
-        gstOnProperty: z.boolean(),
-        gstOnPropertyPercent: optionalNumber,
         parkingCharge: optionalNumber,
         plcCharge: optionalNumber,
         floorRiseCharge: optionalNumber,
@@ -287,9 +285,9 @@ const paymentMilestoneSchema = z.object({
 
 const commissionSchema = z.object({
     sale: z.object({
-        mode: z.enum(["percent", "flat", "per_sqft"]),
+        mode: z.literal("percent"),
         value: z.number().min(0).max(1_000_000_000),
-        paidBy: z.enum(["owner", "buyer", "both"]),
+        paidBy: z.literal("owner"),
         ownerSharePercent: z.number().min(0).max(100),
         separateRates: z.boolean(),
         ownerPercent: optionalNumber,
@@ -299,15 +297,9 @@ const commissionSchema = z.object({
         paymentMilestones: z.array(paymentMilestoneSchema),
     }),
     rent: z.object({
-        mode: z.enum([
-            "months",
-            "percent_annual",
-            "percent_monthly",
-            "flat",
-            "percent_lease_value",
-        ]),
+        mode: z.literal("months"),
         value: z.number().min(0).max(1_000_000_000),
-        paidBy: z.enum(["owner", "tenant", "both"]),
+        paidBy: z.literal("owner"),
         ownerSharePercent: z.number().min(0).max(100),
         renewalFeeApplicable: z.boolean(),
         renewalFeeValue: optionalNumber,
@@ -346,13 +338,6 @@ const commissionStepSchema = z
     .superRefine((value, context) => {
         if (value.basics.listingFor === "sell") {
             const sale = value.commission.sale;
-            if (sale.mode === "per_sqft" && value.area.areaSqft <= 0) {
-                context.addIssue({
-                    code: "custom",
-                    path: ["commission", "sale", "mode"],
-                    message: "Fill the area first",
-                });
-            }
             if (
                 sale.mode === "percent" &&
                 ((sale.value > 0 && sale.value < 0.1) || sale.value > 10)
@@ -363,42 +348,13 @@ const commissionStepSchema = z
                     message: "Commission looks too high. Please check.",
                 });
             }
-            if (sale.separateRates && (sale.ownerPercent ?? 0) > 10) {
-                context.addIssue({
-                    code: "custom",
-                    path: ["commission", "sale", "ownerPercent"],
-                    message: "Owner rate must be 10% or less",
-                });
-            }
-            if (sale.separateRates && (sale.buyerPercent ?? 0) > 10) {
-                context.addIssue({
-                    code: "custom",
-                    path: ["commission", "sale", "buyerPercent"],
-                    message: "Buyer rate must be 10% or less",
-                });
-            }
-            if (sale.value === 0 && !value.commission.notes.trim()) {
-                context.addIssue({
-                    code: "custom",
-                    path: ["commission", "notes"],
-                    message: "Add a note explaining who pays the broker",
-                });
-            }
         } else {
             const rent = value.commission.rent;
-            const percentageMode = rent.mode.startsWith("percent_");
             if (rent.mode === "months" && rent.value > 24) {
                 context.addIssue({
                     code: "custom",
                     path: ["commission", "rent", "value"],
                     message: "Brokerage months must be between 0 and 24",
-                });
-            }
-            if (percentageMode && rent.value > 100) {
-                context.addIssue({
-                    code: "custom",
-                    path: ["commission", "rent", "value"],
-                    message: "Brokerage percentage must be 100% or less",
                 });
             }
         }
@@ -737,8 +693,6 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         pricePerSqft: null,
         maintenanceCharge: null,
         maintenanceFrequency: "monthly",
-        gstOnProperty: false,
-        gstOnPropertyPercent: null,
         parkingCharge: null,
         plcCharge: null,
         floorRiseCharge: null,
@@ -781,8 +735,8 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         sale: {
             mode: "percent",
             value: 2,
-            paidBy: "both",
-            ownerSharePercent: 50,
+            paidBy: "owner",
+            ownerSharePercent: 100,
             separateRates: false,
             ownerPercent: 1,
             buyerPercent: 1,
@@ -796,8 +750,8 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         rent: {
             mode: "months",
             value: 1,
-            paidBy: "tenant",
-            ownerSharePercent: 50,
+            paidBy: "owner",
+            ownerSharePercent: 100,
             renewalFeeApplicable: false,
             renewalFeeValue: 0.5,
         },
