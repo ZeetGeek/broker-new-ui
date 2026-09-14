@@ -144,15 +144,11 @@ export function QuickAdd({
                         </>
                     ) : (
                         <span className="flex flex-col items-center p-6 text-center">
-                            <Camera
-                                className="text-brand block-7 inline-7"
-                            />
+                            <Camera className="text-brand block-7 inline-7" />
                             <span className="mbs-3 text-sm font-bold text-ink">
                                 Take or choose a photo
                             </span>
-                            <span
-                                className="mbs-1 text-xs text-ink-muted"
-                            >
+                            <span className="mbs-1 text-xs text-ink-muted">
                                 JPG, PNG, WebP or HEIC
                             </span>
                         </span>

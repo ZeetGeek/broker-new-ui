@@ -41,6 +41,7 @@ import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
+import { PropertySaveButton } from "@/components/shared/property-save-button";
 import { PropertySharePopover } from "@/components/shared/property-share-popover";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -389,6 +390,9 @@ export type PropertyCardProps = {
     onEdit?: () => void;
     /** Owned cards: open the buyer picker for this listing. */
     onAddBuyer?: () => void;
+    /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
+    isSaved?: boolean;
+    onToggleSave?: () => void;
 } & (
     | { variant: "browse"; listing: BrowsePropertyCardListing }
     | { variant: "represented"; listing: RepresentedPropertyCardListing }
@@ -586,34 +590,12 @@ function BrowsePropertyCardPhoto({
                       absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
                     "
                 >
-                    {offersSale(listing) ? (
-                        <Badge
-                            className="
-                              body-xs border-0 bg-brand font-semibold text-surface shadow-xs
-                            "
-                        >
-                            For sale
-                        </Badge>
-                    ) : null}
-                    {offersRent(listing) ? (
-                        <Badge
-                            className="
-                              body-xs border border-urgent/30 bg-urgent-soft font-semibold
-                              text-urgent shadow-xs
-                            "
-                        >
-                            For rent
-                        </Badge>
-                    ) : null}
+                    {offersSale(listing) ? <Badge variant="brand">For sale</Badge> : null}
+                    {offersRent(listing) ? <Badge variant="urgent">For rent</Badge> : null}
                 </div>
 
                 {listing.isNew ? (
-                    <Badge
-                        className="
-                          body-xs absolute inset-e-3 inset-bs-3 z-10 border-0 bg-highlight
-                          font-semibold text-highlight-ink shadow-xs
-                        "
-                    >
+                    <Badge variant="brand" className="absolute inset-e-3 inset-bs-3 z-10">
                         New
                     </Badge>
                 ) : null}
@@ -851,6 +833,8 @@ function BrowsePropertyCard({
     onAcceptInvite,
     onCancelInvite,
     inviteActionPending,
+    isSaved = false,
+    onToggleSave,
     className,
 }: Extract<PropertyCardProps, { variant: "browse" }>) {
     const sharePriceLabel =
@@ -914,23 +898,33 @@ function BrowsePropertyCard({
                         <BrowsePropertyCardOwner owner={listing.owner} />
                     </div>
 
-                    <PropertySharePopover
-                        listing={{
-                            id: listing.id,
-                            title: listing.title,
-                            locality: listing.locality,
-                            city: listing.city,
-                            priceLabel: sharePriceLabel,
-                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
-                            configLabel: listing.configLabel,
-                            propertyTypeLabel: listing.propertyTypeLabel,
-                            areaSqft: listing.areaSqft,
-                            bhk: listing.bhk,
-                            listingKind:
-                                offersRent(listing) && !offersSale(listing) ? "rent" : "sale",
-                        }}
-                        className="mbs-0.5 self-start tracking-wide"
-                    />
+                    <div className="mbs-0.5 flex shrink-0 items-center gap-3 self-start">
+                        {onToggleSave ? (
+                            <PropertySaveButton
+                                isSaved={isSaved}
+                                title={listing.title}
+                                onToggle={onToggleSave}
+                                className="tracking-wide"
+                            />
+                        ) : null}
+                        <PropertySharePopover
+                            listing={{
+                                id: listing.id,
+                                title: listing.title,
+                                locality: listing.locality,
+                                city: listing.city,
+                                priceLabel: sharePriceLabel,
+                                imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                                configLabel: listing.configLabel,
+                                propertyTypeLabel: listing.propertyTypeLabel,
+                                areaSqft: listing.areaSqft,
+                                bhk: listing.bhk,
+                                listingKind:
+                                    offersRent(listing) && !offersSale(listing) ? "rent" : "sale",
+                            }}
+                            className="tracking-wide"
+                        />
+                    </div>
                 </div>
 
                 <div className="mbs-auto flex flex-col gap-2.5">
@@ -1010,13 +1004,13 @@ function PropertyCardPhoto({
 
             <div className="absolute inset-0 flex items-start justify-between gap-2 p-3">
                 {listing.isNew ? (
-                    <Badge className="border-brand-ink/20 bg-brand-ink text-surface">New</Badge>
+                    <Badge variant="brand">New</Badge>
                 ) : (
                     <span aria-hidden />
                 )}
 
                 {listing.photoCount > 0 ? (
-                    <Badge variant="neutral" className="ms-auto gap-1 bg-surface/90">
+                    <Badge variant="neutral" className="ms-auto gap-1">
                         <Camera aria-hidden strokeWidth={1.75} />
                         {listing.photoCount}
                     </Badge>
@@ -1344,29 +1338,8 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
 }
 
 function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
-    if (status === "published") {
-        return (
-            <Badge
-                className="
-              body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs
-            "
-            >
-                {OWNED_STATUS_LABEL[status]}
-            </Badge>
-        );
-    }
-    if (status === "draft") {
-        return (
-            <Badge className="body-xs border-0 bg-surface/95 font-semibold text-ink-muted shadow-xs">
-                {OWNED_STATUS_LABEL[status]}
-            </Badge>
-        );
-    }
-    return (
-        <Badge className="body-xs border-0 bg-urgent-soft font-semibold text-urgent shadow-xs">
-            {OWNED_STATUS_LABEL[status]}
-        </Badge>
-    );
+    const variant = status === "published" ? "brand" : status === "draft" ? "outline" : "urgent";
+    return <Badge variant={variant}>{OWNED_STATUS_LABEL[status]}</Badge>;
 }
 
 function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing }) {
@@ -1454,7 +1427,7 @@ function OwnedPropertyCard({
                 />
                 <div
                     className="
-                      pointer-events-none absolute inset-e-3 inset-bs-3 z-20 flex flex-col items-end
+                      pointer-events-none absolute inset-e-4 inset-bs-4 z-20 flex flex-col items-end
                       gap-1.5
                     "
                 >

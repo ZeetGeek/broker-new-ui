@@ -7,10 +7,7 @@ import { formatInr } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
-import {
-    NumberField,
-    WizardSection,
-} from "@/features/properties/property-form/form-fields";
+import { NumberField, WizardSection } from "@/features/properties/property-form/form-fields";
 
 export function StepCommission() {
     const { watch } = useFormContext<PropertyDraftValues>();

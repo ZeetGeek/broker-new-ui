@@ -72,6 +72,22 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
     const [inviteOverrides, setInviteOverrides] = useState<Record<string, InviteOverride>>(() =>
         initialInviteOverrides(items),
     );
+    // TODO: persist through the API once a saved-properties endpoint exists.
+    const [savedOverrides, setSavedOverrides] = useState<Record<string, boolean>>({});
+
+    const isSaved = useCallback(
+        (item: OwnerListingItem): boolean => savedOverrides[item.id] ?? item.isBookmarked,
+        [savedOverrides],
+    );
+
+    const handleToggleSave = useCallback(
+        (item: OwnerListingItem) => {
+            const nextSaved = !isSaved(item);
+            setSavedOverrides((prev) => ({ ...prev, [item.id]: nextSaved }));
+            if (nextSaved) toast.success("Property saved");
+        },
+        [isSaved],
+    );
 
     const representationIdFor = useCallback(
         (item: OwnerListingItem): string | undefined => {
@@ -299,6 +315,8 @@ export function OwnerListingsGrid({ items, view = "grid" }: OwnerListingsGridPro
                         onCancelInvite={
                             invitePending ? () => void handleCancelInvite(item) : undefined
                         }
+                        isSaved={isSaved(item)}
+                        onToggleSave={() => handleToggleSave(item)}
                     />
                 );
             }}

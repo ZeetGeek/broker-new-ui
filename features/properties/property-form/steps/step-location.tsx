@@ -93,11 +93,7 @@ export function StepLocation() {
                         options={INDIAN_STATE_OPTIONS}
                     />
                     <SelectField name="location.city" label="City" options={CITY_OPTIONS} />
-                    <TextField
-                        name="location.locality"
-                        label="Locality"
-                        placeholder="e.g. Vesu"
-                    />
+                    <TextField name="location.locality" label="Locality" placeholder="e.g. Vesu" />
                     {/* <TextField
                         name="location.subLocality"
                         label="Sub-locality"

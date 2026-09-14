@@ -100,10 +100,7 @@ export function StepPricing() {
                     >
                         <PriceFact label="Price in words" value={inrWordHint(expectedPrice)} />
                         <PriceFact label="Per sq ft" value={formatInr(values.sale.pricePerSqft)} />
-                        <PriceFact
-                            label="All-in price"
-                            value={formatInrCompact(allInPrice)}
-                        />
+                        <PriceFact label="All-in price" value={formatInrCompact(allInPrice)} />
                     </div>
                 </WizardSection>
 
@@ -200,7 +197,6 @@ export function StepPricing() {
                         </div>
                     </WizardSection>
                 ) : null}
-
             </div>
         );
     }

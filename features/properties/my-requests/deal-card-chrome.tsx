@@ -133,18 +133,7 @@ export function DealCardPhoto({
                           absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
                         "
                     >
-                        <Badge
-                            className={
-                                listing.isRent
-                                    ? `
-                                      body-xs border border-urgent/30 bg-urgent-soft font-semibold
-                                      text-urgent shadow-xs
-                                    `
-                                    : `
-                                      body-xs border-0 bg-brand font-semibold text-surface shadow-xs
-                                    `
-                            }
-                        >
+                        <Badge variant={listing.isRent ? "urgent" : "brand"}>
                             {listing.isRent ? "For rent" : "For sale"}
                         </Badge>
                     </div>
@@ -153,7 +142,7 @@ export function DealCardPhoto({
             {stageBadge ? (
                 <div
                     className="
-                      pointer-events-none absolute inset-e-3 inset-bs-3 z-20 flex flex-col items-end
+                      pointer-events-none absolute inset-e-4 inset-bs-4 z-20 flex flex-col items-end
                       gap-1.5
                     "
                 >

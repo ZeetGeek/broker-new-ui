@@ -14,15 +14,7 @@ import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-import {
-    ChevronDown,
-    ChevronLeft,
-    ChevronRight,
-    HardDrive,
-    RotateCcw,
-    Save,
-    X,
-} from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, RotateCcw, X } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { useListingScore } from "@/lib/hooks/use-listing-score";
@@ -48,9 +40,16 @@ import {
     DialogPopup,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Kbd } from "@/components/ui/kbd";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { FORM_STEPS, type PropertyFormStep, toLabel } from "@/constants/property";
+import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import { ListingScoreRing } from "@/features/properties/property-form/listing-score-ring";
 import { LiveSummaryPanel } from "@/features/properties/property-form/live-summary-panel";
 import { QuickAdd } from "@/features/properties/property-form/quick-add";
@@ -122,7 +121,6 @@ export function PropertyForm({
     const [completedSteps, setCompletedSteps] = useState<Set<PropertyFormStep>>(new Set());
     const [entryMode, setEntryMode] = useState<"full" | "quick">("full");
     const [savedAt, setSavedAt] = useState<Date | null>(null);
-    const [clock, setClock] = useState(() => Date.now());
     const [recoveryDraft, setRecoveryDraft] = useState<PropertyDraftValues | null>(null);
     const [formBanner, setFormBanner] = useState<string | null>(null);
     const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
@@ -159,11 +157,6 @@ export function PropertyForm({
             methods.setValue("publish.listingScore", listingScore.score, { shouldDirty: false });
         }
     }, [listingScore.score, methods, values.publish.listingScore]);
-
-    useEffect(() => {
-        const interval = window.setInterval(() => setClock(Date.now()), 1_000);
-        return () => window.clearInterval(interval);
-    }, []);
 
     useEffect(() => {
         if (mode !== "edit" || !initialListing || !propertyId) return;
@@ -497,15 +490,7 @@ export function PropertyForm({
                         mode={mode}
                         entryMode={entryMode}
                         onEntryModeChange={setEntryMode}
-                        savedLabel={
-                            mode === "edit" && networkSavedAt
-                                ? `API synced ${formatAgo(networkSavedAt, clock)} · device copy current`
-                                : savedAt
-                                  ? `Saved on this device ${formatAgo(savedAt, clock)}`
-                                  : mode === "edit"
-                                    ? "Saved on this device · API syncs every 10 sec"
-                                    : "Changes save on this device"
-                        }
+                        isSaved={Boolean(savedAt || networkSavedAt)}
                         onSaveDraft={saveDraftLocally}
                         onClose={requestClose}
                         showClose={isDialog}
@@ -771,11 +756,32 @@ export function PropertyForm({
     );
 }
 
+const ENTRY_MODE_TABS = [
+    {
+        value: "full" as const,
+        label: (
+            <>
+                <span className="sm:hidden">Full</span>
+                <span className="hidden sm:inline">Full details</span>
+            </>
+        ),
+    },
+    {
+        value: "quick" as const,
+        label: (
+            <>
+                <span className="sm:hidden">Quick</span>
+                <span className="hidden sm:inline">Quick add</span>
+            </>
+        ),
+    },
+];
+
 function PropertyFormHeader({
     mode,
     entryMode,
     onEntryModeChange,
-    savedLabel,
+    isSaved,
     onSaveDraft,
     onClose,
     showClose,
@@ -783,100 +789,88 @@ function PropertyFormHeader({
     mode: "create" | "edit";
     entryMode: "full" | "quick";
     onEntryModeChange: (mode: "full" | "quick") => void;
-    savedLabel: string;
+    isSaved: boolean;
     onSaveDraft: () => void;
     onClose: () => void;
     showClose: boolean;
 }) {
-    const { showHidden, setShowHidden } = useFieldRules();
+    const title = mode === "edit" ? "Edit property" : "Add property";
+    const savedHint = isSaved ? (
+        <span className="body-xs hidden text-ink-subtle sm:inline" aria-live="polite">
+            Saved
+        </span>
+    ) : null;
+
     return (
         <header
             className="
               flex shrink-0 items-center justify-between gap-3 border-be border-border-warm
-              bg-surface px-4 py-3 min-block-18
+              bg-surface px-4 py-2.5
               sm:px-6
             "
         >
             {showClose ? (
-                <DialogHeader className="flex-1 pe-0 text-start min-inline-0">
-                    <DialogTitle className="truncate text-xl font-bold tracking-[-0.02em] text-ink">
-                        {mode === "edit" ? "Edit property" : "Add property"}
-                    </DialogTitle>
-                    <DialogDescription className="sr-only">
-                        A ten-step full-screen form for property and commission details.
-                    </DialogDescription>
-                    <div className="mbs-0.5 flex items-center gap-1.5 text-xs text-ink-muted">
-                        <HardDrive className="block-3.5 inline-3.5" aria-hidden /> {savedLabel}
-                    </div>
-                    <FieldMarkerLegend />
-                </DialogHeader>
-            ) : (
-                <div className="flex-1 min-inline-0">
-                    <h1 className="truncate text-xl font-bold tracking-[-0.02em] text-ink">
-                        {mode === "edit" ? "Edit property" : "Add property"}
-                    </h1>
-                    <div className="mbs-0.5 flex items-center gap-1.5 text-xs text-ink-muted">
-                        <HardDrive className="block-3.5 inline-3.5" aria-hidden /> {savedLabel}
-                    </div>
-                    <FieldMarkerLegend />
-                </div>
-            )}
-            {process.env.NODE_ENV === "development" ? (
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    aria-pressed={showHidden}
-                    onClick={() => setShowHidden(!showHidden)}
-                    className="hidden lg:inline-flex"
-                >
-                    {showHidden ? "Hide rule fields" : "Show hidden fields"}
-                </Button>
-            ) : null}
-            <Tabs
-                value={entryMode}
-                onValueChange={(value) => {
-                    if (value === "full" || value === "quick") onEntryModeChange(value);
-                }}
-                className="gap-0"
-            >
-                <TabsList className="bg-surface-muted block-12">
-                    <TabsTrigger value="full" className="px-3 sm:px-4">
-                        <span className="sm:hidden">Full</span>
-                        <span className="hidden sm:inline">Full details</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="quick" className="px-3 sm:px-4">
-                        <span className="sm:hidden">Quick</span>
-                        <span className="hidden sm:inline">Quick add</span>
-                    </TabsTrigger>
-                </TabsList>
-            </Tabs>
-            <Button
-                type="button"
-                variant="outline"
-                size="md"
-                onClick={onSaveDraft}
-                className="hidden md:inline-flex"
-            >
-                <Save aria-hidden /> Save draft
-            </Button>
-            {showClose ? (
-                <DialogClose
-                    onClick={(event) => {
-                        event.preventDefault();
-                        onClose();
-                    }}
+                <DialogHeader
                     className="
-                      flex items-center justify-center rounded-control border border-border-warm
-                      text-ink-muted block-11 inline-11
-                      hover:bg-surface-muted hover:text-ink
-                      focus-visible:ring-3 focus-visible:ring-ring/30
+                      flex flex-1 flex-row items-baseline gap-2.5 pe-0 text-start min-inline-0
                     "
                 >
-                    <X className="block-5 inline-5" />
-                    <span className="sr-only">Close property form</span>
-                </DialogClose>
-            ) : null}
+                    <DialogTitle className="truncate">{title}</DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Property and commission details. Full details walks through every step;
+                        Quick add saves the essentials as a draft.
+                    </DialogDescription>
+                    {savedHint}
+                </DialogHeader>
+            ) : (
+                <div className="flex flex-1 items-baseline gap-2.5 min-inline-0">
+                    <h1 className="truncate font-display text-lg font-medium text-ink">{title}</h1>
+                    {savedHint}
+                </div>
+            )}
+            <TooltipProvider>
+                <div className="flex shrink-0 items-center gap-2">
+                    <SlidingTabs
+                        value={entryMode}
+                        onValueChange={onEntryModeChange}
+                        ariaLabel="Entry mode"
+                        options={ENTRY_MODE_TABS}
+                    />
+                    <Button type="button" onClick={onSaveDraft} className="hidden md:inline-flex">
+                        Save draft
+                    </Button>
+                    {showClose ? (
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <DialogClose
+                                        onClick={(event) => {
+                                            event.preventDefault();
+                                            onClose();
+                                        }}
+                                        render={
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon-sm"
+                                                aria-label="Close"
+                                                className="shrink-0"
+                                            />
+                                        }
+                                    />
+                                }
+                            >
+                                <X className="block-4 inline-4" strokeWidth={2} aria-hidden />
+                                <span className="sr-only">Close</span>
+                            </TooltipTrigger>
+                            <TooltipContent side="inline-start">
+                                Close
+                                <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
+                            </TooltipContent>
+                        </Tooltip>
+                    ) : null}
+                </div>
+            </TooltipProvider>
         </header>
     );
 }
@@ -947,15 +941,6 @@ function PropertyFormFooter({
                 {entryMode === "full" && !isLastStep ? <ChevronRight aria-hidden /> : null}
             </Button>
         </footer>
-    );
-}
-
-function FieldMarkerLegend() {
-    return (
-        <p className="mbs-1 hidden text-[11px] text-ink-subtle sm:block">
-            <span className="font-bold text-danger">*</span> must fill ·{" "}
-            <span className="text-urgent">●</span> recommended · rest optional
-        </p>
     );
 }
 
@@ -1401,9 +1386,3 @@ function validateQuickDraft(values: PropertyDraftValues): string | null {
     return null;
 }
 
-function formatAgo(date: Date, now: number): string {
-    const seconds = Math.max(0, Math.floor((now - date.getTime()) / 1_000));
-    if (seconds < 5) return "just now";
-    if (seconds < 60) return `${seconds}s ago`;
-    return `${Math.floor(seconds / 60)}m ago`;
-}

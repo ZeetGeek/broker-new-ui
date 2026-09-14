@@ -96,9 +96,7 @@ export function StepArea() {
                     <div className="p-4 sm:border-e sm:border-border-warm">
                         <p className="text-xs text-ink-muted">Normalised area</p>
                         <p className="tabular mbs-1 text-xl font-bold text-ink">
-                            {areaSqft > 0
-                                ? `${areaSqft.toLocaleString()} sq ft`
-                                : "Area not added"}
+                            {areaSqft > 0 ? `${areaSqft.toLocaleString()} sq ft` : "Area not added"}
                         </p>
                     </div>
                     <div className="border-bs border-border-warm p-4 sm:border-bs-0">
