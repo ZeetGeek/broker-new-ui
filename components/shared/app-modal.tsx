@@ -7,6 +7,7 @@ import SimpleBar from "simplebar-react";
 
 import { cn } from "@/lib/utils";
 
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogClose,
@@ -85,6 +86,10 @@ export type AppModalProps = {
     descriptionClassName?: string;
 };
 
+/**
+ * Product modal shell — same look as compound Dialog:
+ * one surface, content-height, no header/footer dividers, quiet close.
+ */
 export function AppModal({
     open,
     onOpenChange,
@@ -112,28 +117,36 @@ export function AppModal({
                 showCloseButton={false}
                 style={{ "--dialog-pad": pad } as CSSProperties}
                 className={cn(
-                    `flex flex-col gap-0 overflow-hidden p-0 block-[min(92dvh,calc(100%-1rem))]`,
+                    `
+                      flex flex-col gap-0 overflow-hidden bg-surface p-0
+                      max-block-[min(88dvh,calc(100%-1.5rem))]
+                    `,
                     SIZE_CLASS[size],
                     className,
                 )}
             >
                 <div
                     className={cn(
-                        `
-                          shrink-0 space-y-4 border-be border-border-warm/50 px-(--dialog-pad)
-                          pbs-(--dialog-pad) pbe-4
-                        `,
+                        "shrink-0 space-y-3 px-(--dialog-pad) pbs-(--dialog-pad) pbe-2",
                         headerClassName,
                     )}
                 >
-                    <div className="flex items-start justify-between gap-4">
-                        <DialogHeader className="flex-1 gap-1 pe-0 text-start min-inline-0">
-                            <DialogTitle className={cn("h2 font-bold text-ink", titleClassName)}>
+                    <div className="flex items-start justify-between gap-3">
+                        <DialogHeader className="flex-1 gap-1.5 pe-0 text-start min-inline-0">
+                            <DialogTitle
+                                className={cn(
+                                    "font-display text-lg font-medium text-ink",
+                                    titleClassName,
+                                )}
+                            >
                                 {title}
                             </DialogTitle>
                             {showDescription ? (
                                 <DialogDescription
-                                    className={cn("body-sm text-ink-muted", descriptionClassName)}
+                                    className={cn(
+                                        "body-sm text-ink-muted",
+                                        descriptionClassName,
+                                    )}
                                 >
                                     {description}
                                 </DialogDescription>
@@ -145,23 +158,20 @@ export function AppModal({
                                 <TooltipTrigger
                                     render={
                                         <DialogClose
-                                            className="
-                                              flex shrink-0 items-center justify-center rounded-control
-                                              border border-border-warm bg-surface text-ink-muted
-                                              transition-[background-color,border-color,color,transform]
-                                              duration-160 block-10 inline-10
-                                              hover:border-brand/40 hover:bg-brand-soft
-                                              hover:text-brand-text
-                                              focus-visible:ring-2 focus-visible:ring-brand
-                                              focus-visible:ring-offset-2
-                                              focus-visible:ring-offset-surface
-                                              active:scale-[0.94]
-                                            "
+                                            render={
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="icon-sm"
+                                                    aria-label="Close"
+                                                    className="shrink-0"
+                                                />
+                                            }
                                         />
                                     }
                                 >
                                     <XIcon
-                                        className="block-4.5 inline-4.5"
+                                        className="block-4 inline-4"
                                         strokeWidth={2}
                                         aria-hidden
                                     />
@@ -177,23 +187,22 @@ export function AppModal({
                     {header}
                 </div>
 
-                <div className="flex-1 overflow-hidden min-block-0">
+                <div className="relative min-block-0 flex-1 overflow-hidden">
                     <SimpleBar
                         className="app-modal-simplebar block-full"
-                        style={{ maxHeight: "100%", height: "100%" }}
-                        autoHide={false}
+                        style={{ maxHeight: "100%" }}
+                        autoHide
                     >
-                        <div className={cn("p-(--dialog-pad)", bodyClassName)}>{children}</div>
+                        <div className={cn("px-(--dialog-pad) py-2", bodyClassName)}>
+                            {children}
+                        </div>
                     </SimpleBar>
                 </div>
 
                 {footer ? (
                     <div
                         className={cn(
-                            `
-                              flex shrink-0 flex-wrap items-center justify-between gap-3 border-bs
-                              border-border-warm/50 bg-surface px-(--dialog-pad) py-4
-                            `,
+                            "shrink-0 px-(--dialog-pad) pbs-3 pbe-(--dialog-pad)",
                             footerClassName,
                         )}
                     >

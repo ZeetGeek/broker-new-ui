@@ -75,16 +75,6 @@ export const TRANSACTION_TYPE_OPTIONS = [
     { value: "resale", label: "Resale" },
 ] as const satisfies readonly PropertyOption[];
 
-export const LISTING_SOURCE_OPTIONS = [
-    { value: "owner_walkin", label: "Owner walk-in" },
-    { value: "call", label: "Phone call" },
-    { value: "reference", label: "Reference" },
-    { value: "website", label: "Website" },
-    { value: "whatsapp", label: "WhatsApp" },
-    { value: "field_visit", label: "Field visit" },
-    { value: "other", label: "Other" },
-] as const satisfies readonly PropertyOption[];
-
 export const INDIAN_STATE_OPTIONS = [
     { value: "Gujarat", label: "Gujarat" },
     { value: "Maharashtra", label: "Maharashtra" },
@@ -108,12 +98,6 @@ export const SURAT_LOCALITY_OPTIONS = [
     { value: "Piplod", label: "Piplod" },
     { value: "Pal", label: "Pal" },
     { value: "Katargam", label: "Katargam" },
-] as const satisfies readonly PropertyOption[];
-
-export const ADDRESS_VISIBILITY_OPTIONS = [
-    { value: "exact", label: "Exact address" },
-    { value: "society_only", label: "Society only" },
-    { value: "locality_only", label: "Locality only" },
 ] as const satisfies readonly PropertyOption[];
 
 export const NEARBY_PLACE_TYPE_OPTIONS = [
@@ -154,17 +138,6 @@ export const BEDROOM_OPTIONS = [
     value,
     label: value === "1rk" ? "1 RK" : value === "10_plus" ? "10+" : `${value} BHK`,
 }));
-
-export const ADDITIONAL_ROOM_OPTIONS = [
-    "pooja",
-    "study",
-    "servant",
-    "store",
-    "utility",
-    "home_theatre",
-    "guest_room",
-    "basement",
-].map((value) => ({ value, label: toLabel(value) }));
 
 export const FLOOR_OPTIONS = [
     { value: "basement", label: "Basement" },
@@ -207,13 +180,6 @@ export const PROPERTY_AGE_OPTIONS = [
     { value: "15_20", label: "15–20 years" },
     { value: "20_plus", label: "20+ years" },
 ] as const satisfies readonly PropertyOption[];
-
-export const OWNERSHIP_TYPE_OPTIONS = [
-    "freehold",
-    "leasehold",
-    "co_op_society",
-    "power_of_attorney",
-].map((value) => ({ value, label: toLabel(value) }));
 
 export const PROPERTY_CONDITION_OPTIONS = [
     { value: "ready_to_move", label: "Ready to move" },

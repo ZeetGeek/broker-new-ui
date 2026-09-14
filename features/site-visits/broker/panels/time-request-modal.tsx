@@ -89,9 +89,9 @@ export function TimeRequestModal({
     });
 
     return (
-        <AppModal open={open} onOpenChange={(next) => { if (!next) { setRequestError(undefined); onClose(); } }} title="Request another time" description="Give the owner one preferred time and up to two backups." size="lg" footer={<><p className="
+        <AppModal open={open} onOpenChange={(next) => { if (!next) { setRequestError(undefined); onClose(); } }} title="Request another time" description="Give the owner one preferred time and up to two backups." size="lg" footer={<div className="flex flex-row flex-wrap items-center justify-between gap-2 inline-full"><p className="
           body-xs text-ink-muted
-        ">Requests expire when the preferred time passes.</p><Button type="submit" form="time-request-form" size="lg" loading={mutation.isPending}>Send time request</Button></>}>
+        ">Requests expire when the preferred time passes.</p><Button type="submit" form="time-request-form" variant="default" size="default" loading={mutation.isPending} className="inline-auto">Send time request</Button></div>}>
             <form id="time-request-form" onSubmit={submit} className="space-y-5">
                 {requestError ? <p role="alert" className="
                   body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger

@@ -719,6 +719,36 @@ the pill. Panel swaps use `.t-tabs-panel` (soft rise + fade). Prefer two or
 three tabs. Stage rows on mobile scroll horizontally with count badges.
 Minimum tap target 44px. `prefers-reduced-motion` snaps with no tween.
 
+### 4.16 Dialog
+
+base-ui Dialog, wrapped once in `components/ui/dialog.tsx`. Focused task or
+confirmation on top of the page — not a second page, not a toast.
+
+```
+┌─────────────────────────────────┐
+│ Title                      [×]  │
+│ Short description               │
+│ Body                            │
+│              Cancel  Save note  │  right-aligned · auto width
+└─────────────────────────────────┘
+```
+
+Compound API: `Dialog` + `DialogTrigger` + `DialogPopup` (+ `DialogHeader` /
+`DialogTitle` / `DialogDescription` / `DialogClose`). Product screens use
+`AppModal` from `components/shared/app-modal.tsx` — same visual system: one
+`bg-surface` shell, content-height (`max-block` not forced full viewport), no
+header/footer dividers, quiet close. `AppModalFooter`: ghost cancel + default
+primary, `Button` `size="default"`, auto width, right-aligned.
+
+**Surface:** `rounded-card`, `border-border-warm`, `bg-surface`, `shadow-xl`.
+Backdrop is `bg-ink/50` + light blur. Motion is transitions.dev **06-modal**:
+`.t-modal` / `.t-modal-backdrop`. Prefer `sm` or `md` on phones; override
+height via `className` only for working surfaces (chat, long forms).
+
+Copy follows `docs/MESSAGES.md`. Destructive confirms use
+`Button variant="destructive"`. Never open a dialog for information the user
+did not ask for.
+
 ---
 
 ## 5. Layout

@@ -45,8 +45,6 @@ export const PROPERTY_VISIBLE_WHEN = {
 export type FieldVisibility = "public" | "private";
 
 export const PRIVATE_FIELD_PREFIXES = [
-    "basics.listingSource",
-    "basics.referredBy",
     "location.unitNumber",
     "location.fullAddress",
     "location.mapZoomHint",

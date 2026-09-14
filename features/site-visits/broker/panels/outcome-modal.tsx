@@ -35,9 +35,9 @@ export default function OutcomeModal({ open, visit, onClose, onSave }: { open: b
     const offerAmount = useWatch({ control: form.control, name: "offerAmount" });
     useEffect(() => { if (open) form.reset({ attended: "buyer_and_owner", interest: "warm", objections: [], feedback: "", nextStep: "schedule_followup", followUpAt: inputValueInIst(dateAtIstOffset(2, 11)) }); }, [form, open, visit?.id]);
     if (!visit) return null;
-    return <AppModal open={open} onOpenChange={(next) => { if (!next) { setSaveError(undefined); onClose(); } }} title="Log outcome" description={`${visit.property.title} · ${visit.buyers[0].name}`} size="md" footer={<><p className="
+    return <AppModal open={open} onOpenChange={(next) => { if (!next) { setSaveError(undefined); onClose(); } }} title="Log outcome" description={`${visit.property.title} · ${visit.buyers[0].name}`} size="md" footer={<div className="flex flex-row flex-wrap items-center justify-between gap-2 inline-full"><p className="
       body-xs text-ink-muted
-    ">Saves the visit, pipeline step, and follow-up together.</p><Button type="submit" form="outcome-form" size="lg" loading={form.formState.isSubmitting}>Save outcome</Button></>}>
+    ">Saves the visit, pipeline step, and follow-up together.</p><Button type="submit" form="outcome-form" variant="default" size="default" loading={form.formState.isSubmitting} className="inline-auto">Save outcome</Button></div>}>
         <form id="outcome-form" onSubmit={form.handleSubmit(async (values) => { setSaveError(undefined); try { await onSave(values as VisitOutcome); } catch (error) { setSaveError(error instanceof Error ? error.message : "Could not save this outcome. Check your connection and try again."); } })} className="
           space-y-5
         ">

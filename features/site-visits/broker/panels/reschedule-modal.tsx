@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { formatVisitDate, formatVisitTime, inputValueInIst, inputValueToUtc } from "@/lib/visits/time";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { Button } from "@/components/ui/button";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
 import type { BrokerSiteVisit, PropertyWithSlots } from "@/features/site-visits/broker/model";
 
@@ -26,7 +26,23 @@ export function RescheduleModal({ open, visit, propertySlots, onClose, onSave }:
             setSaveError(error instanceof Error ? error.message : "Could not reschedule this visit. Check your connection and try again.");
         }
     };
-    return <AppModal open={open} onOpenChange={(next) => { if (!next) onClose(); }} title="Reschedule visit" description={`${visit.property.title} · the owner will be asked to confirm the new time.`} footer={<><Button variant="surface" onClick={onClose}>Keep current time</Button><Button onClick={() => void save()}>Ask to reschedule</Button></>}>
+    return (
+        <AppModal
+            open={open}
+            onOpenChange={(next) => {
+                if (!next) onClose();
+            }}
+            title="Reschedule visit"
+            description={`${visit.property.title} · the owner will be asked to confirm the new time.`}
+            footer={
+                <AppModalFooter
+                    primaryLabel="Ask to reschedule"
+                    onPrimary={() => void save()}
+                    secondaryLabel="Keep current time"
+                    onSecondary={onClose}
+                />
+            }
+        >
         <div className="space-y-4">{saveError ? <p role="alert" className="
           body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
         ">{saveError}</p> : null}<div><p className="body-sm font-bold text-ink">Owner’s open slots</p><div className="

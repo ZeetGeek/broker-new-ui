@@ -15,7 +15,7 @@ export type AppModalFooterProps = {
     primaryFormId?: string;
     primaryDisabled?: boolean;
     primaryIcon?: ReactNode;
-    /** Secondary action — quiet text button on the leading edge. */
+    /** Secondary action — ghost, leading. */
     secondaryLabel?: ReactNode;
     onSecondary?: () => void;
     secondaryDisabled?: boolean;
@@ -26,10 +26,8 @@ export type AppModalFooterProps = {
 };
 
 /**
- * The shared modal action bar: quiet secondary on the leading edge, brand action
- * on the trailing edge, stacking to full width on small screens.
- *
- * Pass to `AppModal`'s `footer` prop, which supplies the border and inset.
+ * Modal actions matching compound Dialog: right-aligned, auto width,
+ * ghost cancel + accent (brand) primary (`Button` size default).
  */
 export function AppModalFooter({
     primaryLabel,
@@ -48,41 +46,32 @@ export function AppModalFooter({
     return (
         <div
             className={cn(
-                `
-                  flex flex-col-reverse gap-3 inline-full
-                  sm:flex-row sm:items-center sm:justify-between
-                `,
+                "flex flex-row flex-wrap items-center justify-end gap-2 inline-full",
                 className,
             )}
         >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                {secondaryLabel ? (
-                    <Button
-                        type="button"
-                        variant="link"
-                        size="lg"
-                        disabled={secondaryDisabled}
-                        onClick={onSecondary}
-                        className="px-0 text-ink-muted hover:text-ink"
-                    >
-                        {secondaryIcon}
-                        {secondaryLabel}
-                    </Button>
-                ) : null}
-                {children}
-            </div>
-
+            {children}
+            {secondaryLabel ? (
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="default"
+                    disabled={secondaryDisabled}
+                    onClick={onSecondary}
+                    className="inline-auto"
+                >
+                    {secondaryIcon}
+                    {secondaryLabel}
+                </Button>
+            ) : null}
             <Button
                 type={primaryType}
                 form={primaryFormId}
-                size="lg"
+                variant="accent"
+                size="default"
                 disabled={primaryDisabled}
                 onClick={onPrimary}
-                className="
-                  rounded-control bg-brand px-8 text-surface
-                  hover:bg-brand-text
-                  sm:min-inline-56
-                "
+                className="inline-auto"
             >
                 {primaryLabel}
                 {primaryIcon}

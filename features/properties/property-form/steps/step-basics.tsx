@@ -1,24 +1,22 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { Copy, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
-import { myListingsApi } from "@/lib/api/my-listings";
 import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
 
 import { Button } from "@/components/ui/button";
 
 import {
     LISTING_FOR_OPTIONS,
-    LISTING_SOURCE_OPTIONS,
     PROPERTY_CATEGORY_OPTIONS,
     PROPERTY_SUBTYPE_OPTIONS,
     propertyTypeOptions,
     toLabel,
-    TRANSACTION_TYPE_OPTIONS,
+    // TRANSACTION_TYPE_OPTIONS,
 } from "@/constants/property";
 import {
     ChoiceField,
@@ -31,7 +29,6 @@ import {
 
 export function StepBasics() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
-    const [copying, setCopying] = useState(false);
     const dealSwitchNotified = useRef(false);
     const category = watch("basics.category");
     const listingFor = watch("basics.listingFor");
@@ -52,51 +49,6 @@ export function StepBasics() {
             .filter(Boolean)
             .join(" ");
     }, [bedrooms, category, city, listingFor, locality, propertyType]);
-
-    async function copyFromExisting() {
-        setCopying(true);
-        try {
-            const result = await myListingsApi.list({ page: 1 });
-            const listing = result.items[0];
-            if (!listing) {
-                toast("No existing property is available to copy.");
-                return;
-            }
-            setValue("basics.category", listing.category, { shouldDirty: true });
-            setValue(
-                "basics.propertyType",
-                listing.propertyType === "flat"
-                    ? "apartment"
-                    : listing.propertyType === "farmhouse"
-                      ? "farm_house"
-                      : listing.propertyType === "office"
-                        ? "office_space"
-                        : listing.propertyType === "plot"
-                          ? "residential_plot"
-                          : listing.propertyType === "agricultural"
-                            ? "agricultural_land"
-                            : listing.propertyType,
-                { shouldDirty: true },
-            );
-            setValue("basics.description", listing.description, { shouldDirty: true });
-            setValue("location.city", listing.city, { shouldDirty: true });
-            setValue("location.locality", listing.locality, { shouldDirty: true });
-            setValue("location.pincode", listing.pinCode, { shouldDirty: true });
-            setValue("location.streetOrRoad", listing.address, { shouldDirty: true });
-            setValue("area.carpetArea", listing.areaSqft, { shouldDirty: true });
-            setValue("area.areaSqft", listing.areaSqft, { shouldDirty: true });
-            setValue("details.bedrooms", String(listing.bhk || 2), { shouldDirty: true });
-            setValue("details.bathrooms", listing.bathrooms, { shouldDirty: true });
-            setValue("details.balconies", listing.balconies, { shouldDirty: true });
-            toast.success(
-                "Property details copied. Price, media, and owner details were left blank.",
-            );
-        } catch {
-            toast.error("Couldn't load an existing property.");
-        } finally {
-            setCopying(false);
-        }
-    }
 
     return (
         <div className="space-y-8">
@@ -168,12 +120,12 @@ export function StepBasics() {
                             placeholder="Optional"
                         />
                     </div>
-                    <ChoiceField
+                    {/* <ChoiceField
                         name="basics.transactionType"
                         label="Transaction"
                         options={TRANSACTION_TYPE_OPTIONS}
                         columns={2}
-                    />
+                    /> */}
                 </div>
             </WizardSection>
 
@@ -215,38 +167,6 @@ export function StepBasics() {
                         rows={6}
                     />
                 </div>
-            </WizardSection>
-
-            <WizardSection
-                title="Lead source"
-                description="Keep the origin of this listing in the broker record."
-                tone="private"
-            >
-                <div className={FORM_GRID_CLASS}>
-                    <SelectField
-                        name="basics.listingSource"
-                        label="How did this listing reach you?"
-                        options={LISTING_SOURCE_OPTIONS}
-                        visibility="private"
-                    />
-                    <TextField
-                        name="basics.referredBy"
-                        label="Referred by"
-                        placeholder="Person or company name"
-                        visibility="private"
-                    />
-                </div>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="md"
-                    loading={copying}
-                    onClick={() => void copyFromExisting()}
-                    className="mbs-5"
-                >
-                    <Copy aria-hidden />
-                    Copy from another property
-                </Button>
             </WizardSection>
         </div>
     );

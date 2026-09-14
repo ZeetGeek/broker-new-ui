@@ -29,8 +29,6 @@ const basicsSchema = z
             .min(1, "Enter a title")
             .max(120, "Keep the title under 120 characters"),
         description: z.string().trim().max(3000, "Keep the description under 3,000 characters"),
-        listingSource: optionalText,
-        referredBy: optionalText,
     })
     .superRefine((value, context) => {
         if (!PROPERTY_TYPES[value.category].includes(value.propertyType as never)) {
@@ -69,23 +67,23 @@ const locationSchema = z
         streetOrRoad: optionalText,
         pincode: z.string().regex(/^[1-9]\d{5}$/, "Enter a valid 6 digit pincode"),
         fullAddress: optionalText,
-        addressVisibility: z.enum(["exact", "society_only", "locality_only"]),
         landmark: z.string().trim().min(1, "Add a nearby landmark"),
         nearbyPlaces: z.array(nearbyPlaceSchema),
         lat: z.number().finite().min(-90).max(90).nullable(),
         lng: z.number().finite().min(-180).max(180).nullable(),
         mapPinPlaced: z.boolean(),
         mapZoomHint: z.number().min(1).max(22),
-    })
-    .superRefine((value, context) => {
-        if (!value.mapPinPlaced || value.lat == null || value.lng == null) {
-            context.addIssue({
-                code: "custom",
-                path: ["mapPinPlaced"],
-                message: "Drop a pin on the map",
-            });
-        }
     });
+// Map pin section is commented out in the form; this check would block submit forever.
+// .superRefine((value, context) => {
+//     if (!value.mapPinPlaced || value.lat == null || value.lng == null) {
+//         context.addIssue({
+//             code: "custom",
+//             path: ["mapPinPlaced"],
+//             message: "Drop a pin on the map",
+//         });
+//     }
+// });
 
 const commercialDetailsSchema = z.object({
     cabins: optionalNumber,
@@ -125,7 +123,6 @@ const detailsSchema = z
         bedrooms: z.string(),
         bathrooms: optionalNumber,
         balconies: optionalNumber,
-        additionalRooms: stringArray,
         floorNumber: optionalText,
         totalFloors: optionalNumber,
         facing: optionalText,
@@ -133,8 +130,6 @@ const detailsSchema = z
         cornerProperty: z.boolean(),
         roadWidthFt: optionalNumber,
         propertyAge: optionalText,
-        constructionYear: optionalNumber,
-        ownershipType: optionalText,
         propertyCondition: optionalText,
         coveredParking: optionalNumber,
         openParking: optionalNumber,
@@ -716,8 +711,6 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         transactionType: "resale",
         title: "",
         description: "",
-        listingSource: "owner_walkin",
-        referredBy: "",
     },
     location: {
         country: "India",
@@ -731,7 +724,6 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         streetOrRoad: "",
         pincode: "",
         fullAddress: "",
-        addressVisibility: "society_only",
         landmark: "",
         nearbyPlaces: [],
         lat: null,
@@ -743,7 +735,6 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         bedrooms: "",
         bathrooms: null,
         balconies: null,
-        additionalRooms: [],
         floorNumber: "",
         totalFloors: null,
         facing: "",
@@ -751,8 +742,6 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         cornerProperty: false,
         roadWidthFt: null,
         propertyAge: "",
-        constructionYear: null,
-        ownershipType: "",
         propertyCondition: "",
         coveredParking: null,
         openParking: null,

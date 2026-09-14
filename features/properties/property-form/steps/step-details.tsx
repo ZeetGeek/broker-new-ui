@@ -3,7 +3,6 @@
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import {
-    ADDITIONAL_ROOM_OPTIONS,
     APPROVED_BY_OPTIONS,
     BEDROOM_OPTIONS,
     FACING_OPTIONS,
@@ -11,7 +10,6 @@ import {
     FLOORING_TYPE_OPTIONS,
     OPEN_SIDE_OPTIONS,
     OVERLOOKING_OPTIONS,
-    OWNERSHIP_TYPE_OPTIONS,
     PANTRY_TYPE_OPTIONS,
     POWER_BACKUP_OPTIONS,
     PROPERTY_AGE_OPTIONS,
@@ -67,11 +65,6 @@ export function StepDetails() {
                                 max={10}
                             />
                         </div>
-                        <MultiChipField
-                            name="details.additionalRooms"
-                            label="Additional rooms"
-                            options={ADDITIONAL_ROOM_OPTIONS}
-                        />
                     </div>
                 </WizardSection>
             ) : null}
@@ -98,17 +91,6 @@ export function StepDetails() {
                         name="details.propertyAge"
                         label="Property age"
                         options={PROPERTY_AGE_OPTIONS}
-                    />
-                    <NumberField
-                        name="details.constructionYear"
-                        label="Construction year"
-                        min={1900}
-                        max={new Date().getFullYear() + 10}
-                    />
-                    <SelectField
-                        name="details.ownershipType"
-                        label="Ownership type"
-                        options={OWNERSHIP_TYPE_OPTIONS}
                     />
                     <SelectField
                         name="details.propertyCondition"

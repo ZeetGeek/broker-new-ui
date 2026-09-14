@@ -44,41 +44,39 @@ export const FIELD_RULES = {
     "basics.propertySubType": {
         visible: (_d, v) => subtypeTypes.has(v.basics.propertyType),
     },
-    "basics.transactionType": { visible: (d) => d.isSell, level: required },
+    // Transaction field hidden in the form; keep the rule but never surface it.
+    "basics.transactionType": { visible: () => false, level: required },
     "basics.title": { level: required },
     "basics.description": { level: recommended },
-    "basics.listingSource": {},
-    "basics.referredBy": {
-        visible: (_d, v) => v.basics.listingSource === "reference",
-        level: required,
-    },
 
     "location.country": { level: required },
     "location.state": { level: required },
     "location.city": { level: required },
     "location.locality": { level: required },
-    "location.subLocality": {},
+    // Sub-locality field hidden in the form.
+    "location.subLocality": { visible: () => false },
     "location.projectOrSociety": {
         visible: (d, v) => !d.isPlot || v.details.land.gatedSociety,
         level: (d) => (d.isInBuilding ? "required" : "optional"),
     },
-    "location.towerOrBlock": { visible: (d) => d.isInBuilding },
+    // Tower or block field hidden in the form.
+    "location.towerOrBlock": { visible: () => false },
     "location.unitNumber": {
         label: (d) => (d.isPlot ? "Plot / Survey no." : "Flat / Unit no."),
     },
     "location.streetOrRoad": {},
     "location.pincode": { level: required },
     "location.fullAddress": {},
-    "location.addressVisibility": { level: required },
     "location.landmark": { level: required },
     "location.nearbyPlaces": {
         visible: (d) => !d.isAgricultural,
         level: recommended,
     },
-    "location.mapPinPlaced": { level: required, label: () => "Map pin" },
-    "location.lat": { visible, level: optional },
-    "location.lng": { visible, level: optional },
-    "location.mapZoomHint": {},
+    // Map pin section hidden in the form.
+    "location.mapPinPlaced": { visible: () => false, level: required, label: () => "Map pin" },
+    "location.lat": { visible: () => false, level: optional },
+    "location.lng": { visible: () => false, level: optional },
+    "location.mapZoomHint": { visible: () => false },
 
     "details.bedrooms": {
         visible: (d) => d.isResidential && !d.isPlot,
@@ -90,7 +88,6 @@ export const FIELD_RULES = {
         level: (d) => (d.isResidential ? "required" : "optional"),
     },
     "details.balconies": { visible: (d) => d.isResidential && !d.isPlot },
-    "details.additionalRooms": { visible: (d) => d.isResidential && !d.isPlot },
     "details.floorNumber": { visible: (d) => d.isInBuilding, level: required },
     "details.totalFloors": {
         visible: (d) => !d.isPlot,
@@ -111,8 +108,6 @@ export const FIELD_RULES = {
         visible: (d) => !d.isPlot && !d.isUnderConstruction,
         level: required,
     },
-    "details.constructionYear": { visible: (d) => !d.isPlot && !d.isUnderConstruction },
-    "details.ownershipType": { level: required },
     "details.propertyCondition": { visible: (d) => !d.isPlot, level: required },
     "details.coveredParking": { visible: (d) => !d.isPlot },
     "details.openParking": { visible: (d) => !d.isPlot },
@@ -528,7 +523,6 @@ export const RULE_DRIVER_PATHS = [
     "basics.category",
     "basics.propertyType",
     "basics.transactionType",
-    "basics.listingSource",
     "details.propertyCondition",
     "details.coveredParking",
     "details.commercial.currentlyLeased",

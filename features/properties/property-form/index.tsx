@@ -620,7 +620,6 @@ export function PropertyForm({
                                         <StepTransition step={step}>
                                             <StepContent
                                                 step={step}
-                                                currentPropertyId={propertyId}
                                                 photoFilesRef={photoFilesRef}
                                             />
                                         </StepTransition>
@@ -976,15 +975,13 @@ function StepRequiredStatus({ step }: { step: PropertyFormStep }) {
 
 function StepContent({
     step,
-    currentPropertyId,
     photoFilesRef,
 }: {
     step: PropertyFormStep;
-    currentPropertyId?: string;
     photoFilesRef: MutableRefObject<Map<string, File>>;
 }) {
     if (step === "basics") return <StepBasics />;
-    if (step === "location") return <StepLocation currentPropertyId={currentPropertyId} />;
+    if (step === "location") return <StepLocation />;
     if (step === "details") return <StepDetails />;
     if (step === "area") return <StepArea />;
     if (step === "pricing") return <StepPricing />;

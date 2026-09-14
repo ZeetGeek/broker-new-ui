@@ -48,14 +48,10 @@ export function useListingScore(values: PropertyDraftValues): {
                 step: "furnishing",
             },
             {
-                done: Boolean(
-                    values.location.landmark &&
-                    values.location.mapPinPlaced &&
-                    values.location.lat != null &&
-                    values.location.lng != null,
-                ),
+                // Map pin section is commented out in the form; landmark is all that is reachable.
+                done: Boolean(values.location.landmark),
                 points: 10,
-                label: "Add a landmark and map pin",
+                label: "Add a landmark",
                 step: "location",
             },
             {
