@@ -44,6 +44,7 @@ export const PropertyRow = memo(function PropertyRow({
         return [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b));
     }, [hideFull, item.slots]);
     const shown = expanded ? dates : dates.slice(0, 2);
+    const canBookSlot = (slot: VisitSlot) => item.propertySource === "own_listing" || item.access === "accepted" || slot.visibility === "all_brokers";
 
     return (
         <article tabIndex={-1} className={cn(`
@@ -54,7 +55,7 @@ export const PropertyRow = memo(function PropertyRow({
                 <div className="
                   relative overflow-hidden rounded-inner bg-surface-muted block-[72px] inline-24
                 ">
-                    <AppImage src={item.property.coverUrl ?? "/properties/1.jpg"} alt="" fill sizes="96px" quality={70} />
+                    <AppImage src={item.property.coverUrl ?? "/properties/1.jpg"} alt="" fill sizes="96px" />
                 </div>
                 <div className="min-inline-0">
                     <h3 className="h6 truncate text-ink">{item.property.title}</h3>
@@ -73,7 +74,7 @@ export const PropertyRow = memo(function PropertyRow({
                       bg-brand-soft text-brand-text
                     ` : item.access === "requested" ? `bg-urgent-soft text-pending` : `
                       bg-surface-muted text-ink-muted
-                    `}`}>{item.access === "accepted" ? "Accepted" : item.access === "requested" ? "Access asked" : "Open access"}</span>
+                    `}`}>{item.propertySource === "own_listing" ? "Your listing" : item.access === "accepted" ? "Accepted" : item.access === "requested" ? "Access asked" : "Approval needed"}</span>
                     <span className="body-xs flex items-center gap-1 text-ink-muted"><MapPin aria-hidden className="
                       block-3 inline-3
                     " />{item.distanceKm?.toFixed(1)} km from you</span>
@@ -90,7 +91,7 @@ export const PropertyRow = memo(function PropertyRow({
                       lg:grid-cols-[154px_minmax(0,1fr)] lg:items-center
                     ">
                         <p className="body-xs font-bold text-ink">{formatVisitDayHeading(slots[0].startsAt)}</p>
-                        <SlotRail slots={slots} propertyName={item.property.title} onBook={onBook} onOpenVisit={onOpenVisit} onRequest={onRequest} />
+                        <SlotRail slots={slots} propertyName={item.property.title} canBook={canBookSlot} onBook={onBook} onOpenVisit={onOpenVisit} onRequest={onRequest} />
                     </div>
                 )) : <div className="
                   flex flex-wrap items-center justify-between gap-3 rounded-inner bg-surface-muted

@@ -1,6 +1,8 @@
 "use client";
 
-import { addDays, subDays } from "date-fns";
+import { useState } from "react";
+
+import { addDays, addMonths, subDays } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -23,15 +25,17 @@ export function DayRail({
     onSelect: (day: string) => void;
     onTogglePast: () => void;
 }) {
+    const [monthOffset, setMonthOffset] = useState(0);
     const today = istDayAsDate(new Date());
-    const days = Array.from({ length: 14 }, (_, index) => past ? subDays(today, index) : addDays(today, index));
+    const rangeStart = addMonths(today, monthOffset);
+    const days = Array.from({ length: 14 }, (_, index) => past ? subDays(rangeStart, index) : addDays(rangeStart, index));
 
     return (
         <aside className="md:sticky md:inset-bs-4 md:self-start">
             <div className="mbe-2 hidden items-center justify-between md:flex">
-                <Button type="button" variant="ghost" size="xs" aria-label="Previous month"><ChevronLeft aria-hidden /></Button>
+                <Button type="button" variant="ghost" size="md" aria-label="Previous month" onClick={() => setMonthOffset((value) => value - 1)}><ChevronLeft aria-hidden /></Button>
                 <span className="body-xs font-semibold text-ink">{formatInTimeZone(days[0], VISITS_TIME_ZONE, "MMM yyyy")}</span>
-                <Button type="button" variant="ghost" size="xs" aria-label="Next month"><ChevronRight aria-hidden /></Button>
+                <Button type="button" variant="ghost" size="md" aria-label="Next month" onClick={() => setMonthOffset((value) => value + 1)}><ChevronRight aria-hidden /></Button>
             </div>
 
             <div className="

@@ -4,13 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 
 import { brokerVisitsApi } from "@/lib/api/broker-visits";
 
-import { MOCK_SITE_VISITS } from "@/mocks/visits";
+import type { VisitListFilters } from "@/features/site-visits/broker/model";
 
-export function useSiteVisits() {
+export function useSiteVisits(filters: VisitListFilters = {}) {
     return useQuery({
-        queryKey: ["visits", { scope: "broker" }],
-        queryFn: () => brokerVisitsApi.list(),
-        initialData: () => structuredClone(MOCK_SITE_VISITS),
+        queryKey: ["visits", filters],
+        queryFn: () => brokerVisitsApi.list(filters),
         staleTime: 60_000,
         refetchOnWindowFocus: true,
     });

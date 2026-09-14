@@ -18,6 +18,7 @@ function canNudge(request: TimeRequest) {
 export function RequestRow({
     request,
     busy,
+    error,
     onWithdraw,
     onNudge,
     onAccept,
@@ -27,6 +28,7 @@ export function RequestRow({
 }: {
     request: TimeRequest;
     busy: boolean;
+    error?: string;
     onWithdraw: () => void;
     onNudge: () => void;
     onAccept: () => void;
@@ -42,7 +44,7 @@ export function RequestRow({
             <div className="grid gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-start">
                 <div className="
                   relative overflow-hidden rounded-inner bg-surface-muted block-14 inline-[72px]
-                "><AppImage src={request.property.coverUrl ?? "/properties/1.jpg"} alt="" fill sizes="72px" quality={70} /></div>
+                "><AppImage src={request.property.coverUrl ?? "/properties/1.jpg"} alt="" fill sizes="72px" /></div>
                 <div className="min-inline-0">
                     <div className="flex flex-wrap items-center gap-2"><h3 className="
                       h6 truncate text-ink
@@ -66,6 +68,10 @@ export function RequestRow({
                 ">{formatVisitDate(request.preferredStartsAt)}</p></div>
             </div>
 
+            {error ? <p role="alert" className="
+              body-sm mbs-4 rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
+            ">{error}</p> : null}
+
             {action === "counter" && request.counterOffer ? <div className="
               mbs-4 grid gap-3 rounded-inner bg-urgent-soft p-3
               md:grid-cols-[1fr_auto] md:items-center
@@ -75,7 +81,7 @@ export function RequestRow({
               body-xs mbs-1 text-ink-muted
             ">“{request.counterOffer.ownerMessage}”</p> : null}</div><div className="
               flex flex-wrap gap-2
-            "><Button variant="surface" size="sm" onClick={onDecline} disabled={busy}>Decline</Button><Button size="sm" onClick={onAccept} loading={busy}>Accept {formatVisitTime(request.counterOffer.startsAt)}</Button></div></div> : null}
+            "><Button variant="surface" size="md" onClick={onDecline} disabled={busy}>Decline</Button><Button size="md" onClick={onAccept} loading={busy}>Accept {formatVisitTime(request.counterOffer.startsAt)}</Button></div></div> : null}
 
             {action === "retry" && request.declineReason ? <p className="
               body-xs mbs-4 rounded-inner bg-surface-muted px-3 py-2 text-ink-muted
@@ -84,9 +90,9 @@ export function RequestRow({
             <footer className="
               mbs-4 flex flex-wrap justify-end gap-2 border-bs border-border-warm pbs-3
             ">
-                {action === "pending" ? <><Button variant="ghost" size="sm" onClick={onWithdraw} disabled={busy}>Withdraw</Button><Button variant="surface" size="sm" onClick={onNudge} disabled={!canNudge(request) || busy} title={canNudge(request) ? "Send WhatsApp nudge" : "You can nudge this owner once every 6 hours"}><MessageCircle aria-hidden /> Nudge owner</Button></> : null}
-                {action === "accepted" && request.createdVisitId ? <Button variant="surface" size="sm" onClick={onViewVisit}>View visit</Button> : null}
-                {action === "retry" ? <Button variant="surface" size="sm" onClick={onRetry}><RotateCcw aria-hidden /> Try another time</Button> : null}
+                {action === "pending" ? <><Button variant="ghost" size="md" onClick={onWithdraw} disabled={busy}>Withdraw</Button><Button variant="surface" size="md" onClick={onNudge} disabled={!canNudge(request) || busy} title={canNudge(request) ? "Send WhatsApp nudge" : "You can nudge this owner once every 6 hours"}><MessageCircle aria-hidden /> Nudge owner</Button></> : null}
+                {action === "accepted" && request.createdVisitId ? <Button variant="surface" size="md" onClick={onViewVisit}>View visit</Button> : null}
+                {action === "retry" ? <Button variant="surface" size="md" onClick={onRetry}><RotateCcw aria-hidden /> Try another time</Button> : null}
             </footer>
         </article>
     );

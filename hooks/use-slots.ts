@@ -4,13 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 
 import { brokerVisitsApi } from "@/lib/api/broker-visits";
 
-import { MOCK_PROPERTIES_WITH_SLOTS } from "@/mocks/visits";
+import type { SlotListFilters } from "@/features/site-visits/broker/model";
 
-export function useSlots(active: boolean, filterKey: string) {
+export function useSlots(active: boolean, filters: SlotListFilters) {
     return useQuery({
-        queryKey: ["slots", filterKey],
-        queryFn: () => brokerVisitsApi.slots(),
-        initialData: () => structuredClone(MOCK_PROPERTIES_WITH_SLOTS),
+        queryKey: ["slots", filters],
+        queryFn: () => brokerVisitsApi.slots(filters),
         staleTime: 30_000,
         refetchOnWindowFocus: true,
         refetchInterval: () => active && typeof document !== "undefined" && document.visibilityState === "visible" ? 60_000 : false,

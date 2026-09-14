@@ -8,13 +8,16 @@ import { formatInrCompact } from "@/lib/format/inr";
 import { cn } from "@/lib/utils";
 import { VISIT_STATUS, visitPrimaryAction } from "@/lib/visits/status";
 import { durationMinutes, formatVisitTime } from "@/lib/visits/time";
+import { formatVisitDayHeading } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
+import { APP_NAME } from "@/config";
 import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
+import { useAppSelector } from "@/store/hooks";
 
 function VisitParty({ label, name, avatarUrl }: { label: string; name: string; avatarUrl?: string }) {
     return (
@@ -44,10 +47,12 @@ export const VisitCard = memo(function VisitCard({
     const primary = visitPrimaryAction(visit.status, visit.startsAt, Boolean(visit.outcome));
     const primaryLabel = primary === "outcome" ? "Log outcome" : primary === "withdraw" ? "Withdraw" : "Reschedule";
     const buyer = visit.buyers[0];
+    const broker = useAppSelector((state) => state.auth.user);
+    const brokerName = broker?.fullName?.trim() || broker?.email || "Your broker";
     const mapHref = visit.property.latitude && visit.property.longitude
         ? `https://www.openstreetmap.org/directions?to=${visit.property.latitude},${visit.property.longitude}`
         : `https://www.openstreetmap.org/search?query=${encodeURIComponent(visit.property.address)}`;
-    const whatsAppText = encodeURIComponent(`Hi ${buyer.name}, your site visit for ${visit.property.title}, ${visit.property.locality} is fixed for ${formatVisitTime(visit.startsAt)}. Address: ${visit.property.address}. I will meet you there.`);
+    const whatsAppText = encodeURIComponent(`Hi ${buyer.name}, your site visit for ${visit.property.title}, ${visit.property.locality} is confirmed for ${formatVisitDayHeading(visit.startsAt)} at ${formatVisitTime(visit.startsAt)}. Address: ${visit.property.address}. I’ll meet you there. — ${brokerName}, ${APP_NAME}`);
 
     return (
         <article className="
@@ -77,7 +82,7 @@ export const VisitCard = memo(function VisitCard({
                           relative shrink-0 overflow-hidden rounded-inner bg-surface-muted block-16
                           inline-16
                         ">
-                            <AppImage src={visit.property.coverUrl ?? "/properties/1.jpg"} alt="" fill sizes="64px" quality={70} />
+                            <AppImage src={visit.property.coverUrl ?? "/properties/1.jpg"} alt="" fill sizes="64px" />
                         </div>
                         <div className="flex-1 min-inline-0">
                             <h3 className="h6 truncate text-ink">{visit.property.title}</h3>
@@ -117,21 +122,21 @@ export const VisitCard = memo(function VisitCard({
             <footer className="
               relative z-10 mbs-4 flex flex-wrap gap-2 border-bs border-border-warm pbs-3
             ">
-                <Button render={<a href={`tel:+91${buyer.phoneDigits}`} />} variant="surface" size="sm" className="
-                  flex-1 px-2
-                  sm:flex-none sm:px-3
+                <Button nativeButton={false} render={<a href={`tel:+91${buyer.phoneDigits}`} />} variant="surface" size="sm" className="
+                  flex-1 px-2 min-block-12
+                  sm:flex-none sm:px-3 sm:min-block-9
                 "><Phone aria-hidden /> Call buyer</Button>
-                <Button render={<a href={`https://wa.me/91${buyer.phoneDigits}?text=${whatsAppText}`} target="_blank" rel="noreferrer" />} variant="surface" size="sm" className="
-                  flex-1 px-2
-                  sm:flex-none sm:px-3
+                <Button nativeButton={false} render={<a href={`https://wa.me/91${buyer.phoneDigits}?text=${whatsAppText}`} target="_blank" rel="noreferrer" />} variant="surface" size="sm" className="
+                  flex-1 px-2 min-block-12
+                  sm:flex-none sm:px-3 sm:min-block-9
                 "><MessageCircle aria-hidden /> WhatsApp</Button>
-                <Button render={<a href={mapHref} target="_blank" rel="noreferrer" />} variant="surface" size="sm" className="
-                  flex-1 px-2
-                  sm:flex-none sm:px-3
+                <Button nativeButton={false} render={<a href={mapHref} target="_blank" rel="noreferrer" />} variant="surface" size="sm" className="
+                  flex-1 px-2 min-block-12
+                  sm:flex-none sm:px-3 sm:min-block-9
                 "><Route aria-hidden /> Navigate</Button>
                 {primary ? <Button type="button" size="sm" onClick={() => onAction(primary, visit.id)} className="
-                  inline-full
-                  sm:ms-auto sm:inline-auto
+                  inline-full min-block-12
+                  sm:ms-auto sm:inline-auto sm:min-block-9
                 ">{primaryLabel}</Button> : null}
             </footer>
         </article>

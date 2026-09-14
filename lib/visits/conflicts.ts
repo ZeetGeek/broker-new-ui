@@ -58,9 +58,12 @@ export function checkVisitConflicts(candidate: ConflictCandidate, existingVisits
         .slice(0, 2);
 
     for (const { visit, gap } of neighbours) {
-        const travel = travelEstimates[visit.id]?.minutes ?? visit.driveMinutes ?? 20;
+        const estimate = travelEstimates[visit.id];
+        const travel = estimate?.minutes ?? visit.driveMinutes ?? 20;
+        const distance = estimate?.distanceKm ?? visit.distanceKm;
+        const distanceLabel = distance == null ? "" : `${distance.toFixed(1)} km, `;
         if (gap === 0) reasons.push({ code: "BACK_TO_BACK", message: `Back-to-back with ${visit.property.locality}; there is no travel gap.`, visitId: visit.id });
-        else if (gap < travel + TRAVEL_BUFFER_MINUTES) reasons.push({ code: "TRAVEL_TIGHT", message: `Only ${gap} min gap from ${visit.property.locality} visit, drive takes ${travel} min.`, visitId: visit.id });
+        else if (gap < travel + TRAVEL_BUFFER_MINUTES) reasons.push({ code: "TRAVEL_TIGHT", message: `Only ${gap} min gap from ${visit.property.locality} visit, ${distanceLabel}drive takes ${travel} min.`, visitId: visit.id });
     }
 
     if (active.filter((visit) => istDateKey(visit.startsAt) === istDateKey(candidate.startsAt)).length >= 5) {

@@ -5,10 +5,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { brokerVisitsApi } from "@/lib/api/broker-visits";
 
 import type { BrokerSiteVisit, PersonSummary, PropertyWithSlots, TimeRequest } from "@/features/site-visits/broker/model";
-import { MOCK_TIME_REQUESTS } from "@/mocks/visits";
 
 export function useTimeRequests() {
-    return useQuery({ queryKey: ["timeRequests", "all"], queryFn: () => brokerVisitsApi.requests(), initialData: () => structuredClone(MOCK_TIME_REQUESTS), staleTime: 60_000, refetchOnWindowFocus: true });
+    return useQuery({ queryKey: ["timeRequests", "all"], queryFn: () => brokerVisitsApi.requests(), staleTime: 60_000, refetchOnWindowFocus: true });
 }
 
 export function useCreateTimeRequest() {

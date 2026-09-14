@@ -93,13 +93,14 @@ export const MOCK_PROPERTIES_WITH_SLOTS: PropertyWithSlots[] = MOCK_PROPERTIES.m
     const owner = OWNERS[index % OWNERS.length];
     return {
         property,
+        propertySource: index === 4 ? "own_listing" : "marketplace",
         owner,
         access: index === 4 ? "none" : index === 3 ? "requested" : "accepted",
         matchScore: [92, 78, 86, 69, 58][index],
         matchReasons: index === 0 ? ["budget fits", "Vesu", "3 BHK"] : index === 2 ? ["property type", "Piplod"] : [property.locality, property.configLabel],
         distanceKm: [9.2, 5.8, 11.7, 13.4, 4.6][index],
         slots: [
-            makeSlot(property, owner, `slot_${index}_1`, 1, 10),
+            makeSlot(property, owner, `slot_${index}_1`, 1, 10, 0, index === 4 ? { visibility: "all_brokers", autoConfirm: true } : {}),
             makeSlot(property, owner, `slot_${index}_2`, 1, 12, 0, index === 0 ? { capacity: 2, bookedCount: 1 } : {}),
             makeSlot(property, owner, `slot_${index}_3`, 1, 16),
             makeSlot(property, owner, `slot_${index}_4`, 1, 18, 0, index === 1 ? { status: "full", bookedCount: 1 } : {}),

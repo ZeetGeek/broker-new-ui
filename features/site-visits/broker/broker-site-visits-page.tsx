@@ -5,13 +5,13 @@ import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { addDays } from "date-fns";
-
-import { istDateKey } from "@/lib/visits/time";
+import { slotListFiltersFromParams } from "@/lib/visits/filters";
+import { buildVisitSummary } from "@/lib/visits/summary";
 import { useSiteVisits } from "@/hooks/use-site-visits";
 import { useSlots } from "@/hooks/use-slots";
 import { useTimeRequests } from "@/hooks/use-time-requests";
 import { useVisitActions } from "@/hooks/use-visit-actions";
+import { useVisitSummary } from "@/hooks/use-visit-summary";
 
 import type { BrokerVisitsTab, SummaryFilter } from "@/features/site-visits/broker/model";
 import { MyVisitsTab } from "@/features/site-visits/broker/my-visits/my-visits-tab";
@@ -48,12 +48,15 @@ export function BrokerSiteVisitsPage() {
         : undefined;
     const viewValue = searchParams.get("view");
     const view = viewValue === "week" || viewValue === "route" ? viewValue : "list";
-    const visitsQuery = useSiteVisits();
     const buyerId = searchParams.get("buyer") ?? undefined;
-    const slotsQuery = useSlots(tab === "slots", searchParams.toString());
+    const visitsQuery = useSiteVisits();
+    const slotFilters = useMemo(() => slotListFiltersFromParams(new URLSearchParams(searchParams.toString())), [searchParams]);
+    const slotsQuery = useSlots(tab === "slots", slotFilters);
     const requestsQuery = useTimeRequests();
+    useVisitSummary();
     const visitActions = useVisitActions();
     const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
+    const [actionError, setActionError] = useState<string>();
     const [now, setNow] = useState(() => new Date());
     const updateUrl = useCallback((patch: Record<string, string | undefined>) => {
         const next = new URLSearchParams(searchParams.toString());
@@ -76,26 +79,13 @@ export function BrokerSiteVisitsPage() {
     const visitId = searchParams.get("visit") ?? undefined;
     const outcomeId = searchParams.get("outcome") ?? undefined;
     const rescheduleId = searchParams.get("reschedule") ?? undefined;
-    const allVisits = visitsQuery.data ?? [];
+    const allVisits = useMemo(() => visitsQuery.data ?? [], [visitsQuery.data]);
     const selectedVisit = allVisits.find((visit) => visit.id === visitId);
     const outcomeVisit = allVisits.find((visit) => visit.id === outcomeId);
     const rescheduleVisit = allVisits.find((visit) => visit.id === rescheduleId);
     const rescheduleSlots = (slotsQuery.data ?? []).find((item) => item.property.id === rescheduleVisit?.property.id);
     const summary = useMemo(() => {
-        const today = istDateKey(now);
-        const tomorrow = istDateKey(addDays(now, 1));
-        const nowTime = now.getTime();
-        const nextWeek = addDays(now, 7).getTime();
-        return {
-            today: allVisits.filter((visit) => istDateKey(visit.startsAt) === today).length,
-            tomorrow: allVisits.filter((visit) => istDateKey(visit.startsAt) === tomorrow).length,
-            awaitingOwner: allVisits.filter((visit) => visit.status === "awaiting_owner" || visit.status === "reschedule_pending").length,
-            needsOutcome: allVisits.filter((visit) => !visit.outcome && (visit.status === "completed" || (visit.status === "confirmed" && new Date(visit.startsAt).getTime() < nowTime))).length,
-            weekTotal: allVisits.filter((visit) => new Date(visit.startsAt).getTime() >= nowTime && new Date(visit.startsAt).getTime() <= nextWeek).length,
-            cancelledThisWeek: allVisits.filter((visit) => visit.status === "cancelled_by_broker" || visit.status === "cancelled_by_owner").length,
-            openSlots: (slotsQuery.data ?? []).reduce((total, item) => total + item.slots.filter((slot) => slot.status === "open" && slot.bookedCount < slot.capacity && new Date(slot.startsAt).getTime() > nowTime).length, 0),
-            requestReplies: (requestsQuery.data ?? []).filter((request) => request.status === "pending" || request.status === "counter_offered").length,
-        };
+        return buildVisitSummary(allVisits, slotsQuery.data ?? [], requestsQuery.data ?? [], now);
     }, [allVisits, now, requestsQuery.data, slotsQuery.data]);
 
     useEffect(() => {
@@ -128,7 +118,8 @@ export function BrokerSiteVisitsPage() {
 
     const handleVisitAction = useCallback((action: "outcome" | "reschedule" | "withdraw", id: string) => {
         if (action === "withdraw") {
-            void visitActions.cancel.mutateAsync(id).then(() => toast.success("Request withdrawn"));
+            setActionError(undefined);
+            void visitActions.cancel.mutateAsync(id).then(() => toast.success("Request withdrawn")).catch((error) => setActionError(error instanceof Error ? error.message : "Could not withdraw this visit. Check your connection and try again."));
             return;
         }
         updateUrl({ [action]: id });
@@ -144,6 +135,9 @@ export function BrokerSiteVisitsPage() {
             />
             <SummaryStrip summary={summary} active={focus} onChange={(next) => updateUrl({ tab: "visits", focus: next })} />
             <VisitsTabs value={tab} counts={counts} onChange={(next) => updateUrl({ tab: next, focus: undefined })} />
+            {actionError ? <p role="alert" className="
+              body-sm rounded-inner bg-danger-soft px-4 py-3 font-semibold text-danger
+            ">{actionError}</p> : null}
 
             <div role="tabpanel" aria-label={tab === "visits" ? "My visits" : tab === "slots" ? "Open slots" : "Requests"}>
                 {tab === "visits" ? (
@@ -159,6 +153,7 @@ export function BrokerSiteVisitsPage() {
                     />
                 ) : tab === "slots" ? (
                     <OpenSlotsTab
+                        key={searchParams.get("q") ?? ""}
                         items={slotsQuery.data ?? []}
                         buyers={MOCK_BUYERS}
                         buyerId={buyerId}
@@ -212,7 +207,7 @@ export function BrokerSiteVisitsPage() {
                 onClose={() => updateUrl({ visit: undefined })}
                 onLogOutcome={() => selectedVisit && updateUrl({ visit: undefined, outcome: selectedVisit.id })}
                 onReschedule={() => selectedVisit && updateUrl({ visit: undefined, reschedule: selectedVisit.id })}
-                onCancel={() => selectedVisit && void visitActions.cancel.mutateAsync(selectedVisit.id).then(() => { toast.success("Visit cancelled"); updateUrl({ visit: undefined }); })}
+                onCancel={() => selectedVisit && void visitActions.cancel.mutateAsync(selectedVisit.id).then(() => { setActionError(undefined); toast.success("Visit cancelled"); updateUrl({ visit: undefined }); }).catch((error) => setActionError(error instanceof Error ? error.message : "Could not cancel this visit. Check your connection and try again."))}
                 onChecklist={(value) => selectedVisit && visitActions.checklist(selectedVisit.id, value)}
             />
 
@@ -222,7 +217,7 @@ export function BrokerSiteVisitsPage() {
                 onClose={() => updateUrl({ outcome: undefined })}
                 onSave={async (outcome) => {
                     if (!outcomeVisit) return;
-                    await visitActions.outcome.mutateAsync({ id: outcomeVisit.id, outcome });
+                    await visitActions.outcome.mutateAsync({ visit: outcomeVisit, outcome });
                     toast.success("Outcome logged");
                     if (outcome.nextStep === "show_other_property") updateUrl({ outcome: undefined, tab: "slots", buyer: outcomeVisit.buyers[0]?.id });
                     else updateUrl({ outcome: undefined });

@@ -11,6 +11,10 @@ export function formatVisitDate(value: string | Date): string {
     return formatInTimeZone(value, VISITS_TIME_ZONE, "EEE d MMM");
 }
 
+export function formatVisitA11yDate(value: string | Date): string {
+    return formatInTimeZone(value, VISITS_TIME_ZONE, "EEEE d MMMM yyyy");
+}
+
 export function formatVisitDayHeading(value: string | Date, now = new Date()): string {
     const key = istDateKey(value);
     const today = istDateKey(now);

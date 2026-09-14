@@ -29,10 +29,12 @@ export function EmptyState({
     kind,
     onPrimary,
     onSecondary,
+    detail,
 }: {
     kind: "no-visits" | "no-today" | "no-slots" | "no-property-slots" | "no-requests" | "slots-error";
     onPrimary?: () => void;
     onSecondary?: () => void;
+    detail?: string;
 }) {
     const content = {
         "no-visits": { icon: CalendarDays, title: "No visits booked yet.", detail: "Open slots to book your first one.", primary: "Browse open slots" },
@@ -54,7 +56,7 @@ export function EmptyState({
               inline-12
             "><Icon aria-hidden /></span>
             <h2 className="h5 text-ink">{content.title}</h2>
-            <p className="body-sm mbs-1 text-ink-muted max-inline-md">{content.detail}</p>
+            <p className="body-sm mbs-1 text-ink-muted max-inline-md">{detail ?? content.detail}</p>
             <div className="mbs-5 flex flex-wrap justify-center gap-2">
                 {content.primary && onPrimary ? <Button onClick={onPrimary}>{content.primary}</Button> : null}
                 {content.secondary && onSecondary ? <Button variant="surface" onClick={onSecondary}>{content.secondary}</Button> : null}
@@ -62,4 +64,3 @@ export function EmptyState({
         </section>
     );
 }
-

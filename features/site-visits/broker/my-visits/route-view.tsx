@@ -19,6 +19,23 @@ function minutesBetween(a: BrokerSiteVisit, b: BrokerSiteVisit) {
     return Math.round((new Date(b.startsAt).getTime() - new Date(a.endsAt).getTime()) / 60_000);
 }
 
+function distanceBetween(a: BrokerSiteVisit["property"], b: BrokerSiteVisit["property"]) {
+    if (a.latitude == null || a.longitude == null || b.latitude == null || b.longitude == null) return Infinity;
+    const radians = (value: number) => value * Math.PI / 180;
+    const latitudeDelta = radians(b.latitude - a.latitude);
+    const longitudeDelta = radians(b.longitude - a.longitude);
+    const value = Math.sin(latitudeDelta / 2) ** 2 + Math.cos(radians(a.latitude)) * Math.cos(radians(b.latitude)) * Math.sin(longitudeDelta / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+}
+
+function estimatedRouteMinutes(visits: BrokerSiteVisit[]) {
+    const minutes = visits.slice(1).reduce((total, visit, index) => {
+        const distance = distanceBetween(visits[index].property, visit.property);
+        return Number.isFinite(distance) ? total + distance * 1.25 * 2.4 : total;
+    }, 0);
+    return Math.round(minutes);
+}
+
 export default function RouteView({ visits, onOpen }: { visits: BrokerSiteVisit[]; onOpen: (id: string) => void }) {
     const [suggested, setSuggested] = useState(false);
     const chronological = useMemo(() => [...visits].sort((a, b) => a.startsAt.localeCompare(b.startsAt)), [visits]);
@@ -28,28 +45,26 @@ export default function RouteView({ visits, onOpen }: { visits: BrokerSiteVisit[
         const result = [chronological[0]];
         while (remaining.length) {
             const last = result[result.length - 1].property;
-            const nextIndex = remaining.reduce((best, candidate, index) => {
-                const candidateDistance = Math.hypot((candidate.property.latitude ?? 0) - (last.latitude ?? 0), (candidate.property.longitude ?? 0) - (last.longitude ?? 0));
-                const bestDistance = Math.hypot((remaining[best].property.latitude ?? 0) - (last.latitude ?? 0), (remaining[best].property.longitude ?? 0) - (last.longitude ?? 0));
-                return candidateDistance < bestDistance ? index : best;
-            }, 0);
+            const nextIndex = remaining.reduce((best, candidate, index) => distanceBetween(last, candidate.property) < distanceBetween(last, remaining[best].property) ? index : best, 0);
             result.push(remaining.splice(nextIndex, 1)[0]);
         }
         return result;
     }, [chronological]);
     const ordered = suggested ? bestOrder : chronological;
+    const estimatedSaving = Math.max(0, estimatedRouteMinutes(chronological) - estimatedRouteMinutes(bestOrder));
     return (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(320px,1.1fr)]">
             <div className="rounded-card border border-border-warm bg-surface p-4">
                 <div className="mbe-4 flex items-center justify-between gap-3"><div><h2 className="
                   h5 text-ink
-                ">Today’s route</h2><p className="body-xs text-ink-muted">{suggested ? "Suggested order · saves about 18 min · bookings unchanged" : "Time order · suggestions never change bookings"}</p></div><Button variant="surface" size="sm" onClick={() => setSuggested((value) => !value)}><Route aria-hidden /> {suggested ? "Time order" : "Best order"}</Button></div>
+                ">Today’s route</h2><p className="body-xs text-ink-muted">{suggested ? `Suggested order · saves about ${estimatedSaving} min · bookings unchanged` : "Time order · suggestions never change bookings"}</p></div><Button variant="surface" size="md" onClick={() => setSuggested((value) => !value)}><Route aria-hidden /> {suggested ? "Time order" : "Best order"}</Button></div>
                 <ol className="space-y-0">
                     {ordered.map((visit, index) => {
                         const previous = ordered[index - 1];
                         const gap = previous ? minutesBetween(previous, visit) : null;
                         const drive = visit.driveMinutes ?? 0;
                         const tight = gap != null && gap < drive + 10;
+                        const distance = visit.distanceKm == null ? "Distance unavailable" : `${visit.distanceKm.toFixed(1)} km`;
                         return <li key={visit.id}>
                             {previous ? <div className={`ms-5 border-s border-dashed py-3 ps-6 ${tight ? `
                               border-pending
@@ -61,9 +76,10 @@ export default function RouteView({ visits, onOpen }: { visits: BrokerSiteVisit[
                                 mbs-0.5 shrink-0 block-4 inline-4
                               " /> : <Route aria-hidden className="
                                 mbs-0.5 shrink-0 block-4 inline-4
-                              " />}<span>{tight ? `Only ${gap} min gap, drive takes ${drive} min` : `${visit.distanceKm?.toFixed(1)} km · ${drive} min drive`}</span></div></div> : null}
+                              " />}<span>{tight ? `Only ${gap} min gap, ${distance}, drive takes ${drive} min` : `${distance} · ${drive} min drive`}</span></div></div> : null}
                             <button type="button" onClick={() => onOpen(visit.id)} className="
                               flex items-center gap-3 rounded-inner p-2 text-start inline-full
+                              min-block-12
                               hover:bg-surface-muted
                               focus-visible:ring-3 focus-visible:ring-brand/25
                             "><span className="
@@ -81,7 +97,7 @@ export default function RouteView({ visits, onOpen }: { visits: BrokerSiteVisit[
                 </ol>
             </div>
             <div className="
-              relative overflow-hidden rounded-card border border-border-warm bg-[#e8eee7]
+              relative overflow-hidden rounded-card border border-border-warm bg-brand-soft
               min-block-[360px]
             "><RouteMap visits={ordered} /></div>
         </div>

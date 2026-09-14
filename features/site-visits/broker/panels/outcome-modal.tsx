@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -26,22 +26,27 @@ function Choice<T extends string>({ value, current, label, onChange }: { value: 
 }
 
 export default function OutcomeModal({ open, visit, onClose, onSave }: { open: boolean; visit?: BrokerSiteVisit; onClose: () => void; onSave: (outcome: VisitOutcome) => Promise<void> }) {
+    const [saveError, setSaveError] = useState<string>();
     const form = useForm<OutcomeFormValues>({ resolver: zodResolver(outcomeSchema), defaultValues: { attended: "buyer_and_owner", interest: "warm", objections: [], feedback: "", nextStep: "schedule_followup", followUpAt: inputValueInIst(dateAtIstOffset(2, 11)) } });
-    const interest = form.watch("interest");
-    const nextStep = form.watch("nextStep");
-    const objections = form.watch("objections");
-    const offerAmount = form.watch("offerAmount");
+    const attended = useWatch({ control: form.control, name: "attended" });
+    const interest = useWatch({ control: form.control, name: "interest" });
+    const nextStep = useWatch({ control: form.control, name: "nextStep" });
+    const objections = useWatch({ control: form.control, name: "objections" });
+    const offerAmount = useWatch({ control: form.control, name: "offerAmount" });
     useEffect(() => { if (open) form.reset({ attended: "buyer_and_owner", interest: "warm", objections: [], feedback: "", nextStep: "schedule_followup", followUpAt: inputValueInIst(dateAtIstOffset(2, 11)) }); }, [form, open, visit?.id]);
     if (!visit) return null;
-    return <AppModal open={open} onOpenChange={(next) => { if (!next) onClose(); }} title="Log outcome" description={`${visit.property.title} · ${visit.buyers[0].name}`} size="md" footer={<><p className="
+    return <AppModal open={open} onOpenChange={(next) => { if (!next) { setSaveError(undefined); onClose(); } }} title="Log outcome" description={`${visit.property.title} · ${visit.buyers[0].name}`} size="md" footer={<><p className="
       body-xs text-ink-muted
     ">Saves the visit, pipeline step, and follow-up together.</p><Button type="submit" form="outcome-form" size="lg" loading={form.formState.isSubmitting}>Save outcome</Button></>}>
-        <form id="outcome-form" onSubmit={form.handleSubmit(async (values) => { await onSave(values as VisitOutcome); })} className="
+        <form id="outcome-form" onSubmit={form.handleSubmit(async (values) => { setSaveError(undefined); try { await onSave(values as VisitOutcome); } catch (error) { setSaveError(error instanceof Error ? error.message : "Could not save this outcome. Check your connection and try again."); } })} className="
           space-y-5
         ">
+            {saveError ? <p role="alert" className="
+              body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
+            ">{saveError}</p> : null}
             <fieldset><legend className="body-sm mbe-2 font-bold text-ink">Did it happen?</legend><div className="
               grid grid-cols-3 gap-2
-            "><Choice value="buyer_and_owner" current={form.watch("attended")} label="Both came" onChange={(value) => form.setValue("attended", value)} /><Choice value="buyer_only" current={form.watch("attended")} label="Only buyer came" onChange={(value) => form.setValue("attended", value)} /><Choice value="nobody" current={form.watch("attended")} label="Nobody came" onChange={(value) => form.setValue("attended", value)} /></div></fieldset>
+            "><Choice value="buyer_and_owner" current={attended} label="Both came" onChange={(value) => form.setValue("attended", value)} /><Choice value="buyer_only" current={attended} label="Only buyer came" onChange={(value) => form.setValue("attended", value)} /><Choice value="nobody" current={attended} label="Nobody came" onChange={(value) => form.setValue("attended", value)} /></div></fieldset>
             <fieldset><legend className="body-sm mbe-2 font-bold text-ink">Interest</legend><div className="
               grid grid-cols-3 gap-2
             "><Choice value="hot" current={interest} label="Hot" onChange={(value) => form.setValue("interest", value)} /><Choice value="warm" current={interest} label="Warm" onChange={(value) => form.setValue("interest", value)} /><Choice value="cold" current={interest} label="Cold" onChange={(value) => form.setValue("interest", value)} /></div></fieldset>
@@ -49,7 +54,7 @@ export default function OutcomeModal({ open, visit, onClose, onSave }: { open: b
               flex flex-wrap gap-2
             ">{OBJECTIONS.map((item) => <label key={item} className={cn(`
               body-xs flex cursor-pointer items-center gap-2 rounded-control border px-3
-              font-semibold min-block-10
+              font-semibold min-block-12
             `, objections.includes(item) ? `border-brand bg-brand-soft text-brand-text` : `
               border-border-warm bg-surface text-ink-muted
             `)}><Checkbox checked={objections.includes(item)} onCheckedChange={(checked) => form.setValue("objections", checked ? [...objections, item] : objections.filter((value) => value !== item))} />{item}</label>)}</div></fieldset> : null}

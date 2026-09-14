@@ -12,7 +12,7 @@ function optimisticVisit(input: BookInput): BrokerSiteVisit {
     const now = new Date().toISOString();
     return {
         id: `optimistic_${input.slot.id}`,
-        source: "slot", slotId: input.slot.id, propertyId: input.item.property.id, propertySource: "marketplace", ownerId: input.item.owner.id, brokerId: "broker_me", buyerIds: input.buyers.map((buyer) => buyer.id), startsAt: input.slot.startsAt, endsAt: input.slot.endsAt, status: input.slot.autoConfirm ? "confirmed" : "awaiting_owner", brokerNote: input.note || undefined, ownerNote: input.slot.note, remindBuyer: input.remindBuyer, createdAt: now, updatedAt: now, property: input.item.property, owner: input.item.owner, buyers: input.buyers, distanceKm: input.item.distanceKm,
+        source: input.item.propertySource === "own_listing" ? "broker_created" : "slot", slotId: input.slot.id, propertyId: input.item.property.id, propertySource: input.item.propertySource, ownerId: input.item.owner.id, brokerId: "broker_me", buyerIds: input.buyers.map((buyer) => buyer.id), startsAt: input.slot.startsAt, endsAt: input.slot.endsAt, status: input.item.propertySource === "own_listing" || input.slot.autoConfirm ? "confirmed" : "awaiting_owner", brokerNote: input.note || undefined, ownerNote: input.slot.note, remindBuyer: input.remindBuyer, createdAt: now, updatedAt: now, property: input.item.property, owner: input.item.owner, buyers: input.buyers, distanceKm: input.item.distanceKm,
     };
 }
 
@@ -29,11 +29,18 @@ export function useBookSlot() {
             queryClient.setQueriesData<PropertyWithSlots[]>({ queryKey: ["slots"] }, (old = []) => old.map((item) => item.property.id !== input.item.property.id ? item : { ...item, slots: item.slots.map((slot) => slot.id !== input.slot.id ? slot : { ...slot, bookedVisitId: draft.id, bookedBuyerName: input.buyers[0]?.name }) }));
             return { visitSnapshots, slotSnapshots, draftId: draft.id, input };
         },
-        onError: (error, _input, context) => {
+        onError: async (error, _input, context) => {
             context?.visitSnapshots.forEach(([key, value]) => queryClient.setQueryData(key, value));
             context?.slotSnapshots.forEach(([key, value]) => queryClient.setQueryData(key, value));
             if (error instanceof SlotTakenError && context) {
                 queryClient.setQueriesData<PropertyWithSlots[]>({ queryKey: ["slots"] }, (old = []) => old.map((item) => item.property.id !== context.input.item.property.id ? item : { ...item, slots: item.slots.map((slot) => slot.id !== context.input.slot.id ? slot : { ...slot, status: "full", bookedCount: slot.capacity }) }));
+                try {
+                    const refreshed = await brokerVisitsApi.slots({ propertyIds: [context.input.item.property.id] });
+                    const property = refreshed.find((item) => item.property.id === context.input.item.property.id);
+                    if (property) queryClient.setQueriesData<PropertyWithSlots[]>({ queryKey: ["slots"] }, (old = []) => old.map((item) => item.property.id === property.property.id ? property : item));
+                } catch {
+                    // Keep the server-provided full state when the narrow refresh is offline.
+                }
             }
         },
         onSuccess: (visit, _input, context) => {

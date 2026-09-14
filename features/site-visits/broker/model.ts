@@ -97,12 +97,49 @@ export type VisitSlot = {
 
 export type PropertyWithSlots = {
     property: VisitPropertySummary;
+    propertySource: PropertySource;
     owner: PersonSummary;
     access: "accepted" | "requested" | "none";
     slots: VisitSlot[];
     matchScore?: number;
     matchReasons?: string[];
     distanceKm?: number;
+};
+
+export type VisitListFilters = {
+    from?: string;
+    to?: string;
+    status?: BrokerVisitStatus[];
+    propertyId?: string;
+    buyerId?: string;
+    q?: string;
+    cursor?: string;
+    limit?: number;
+};
+
+export type SlotListFilters = {
+    from?: string;
+    to?: string;
+    propertyIds?: string[];
+    localities?: string[];
+    purpose?: "sale" | "rent";
+    propertyType?: string;
+    bhk?: string;
+    minBudget?: number;
+    maxBudget?: number;
+    timeBuckets?: string[];
+    ownerId?: string;
+    buyerId?: string;
+    q?: string;
+    cursor?: string;
+};
+
+export type OutcomeTransactionResult = {
+    id: string;
+    outcome: VisitOutcome;
+    buyerIds: string[];
+    pipelineUpdated: boolean;
+    followUpCreated: boolean;
 };
 
 export type TimeRequestStatus =

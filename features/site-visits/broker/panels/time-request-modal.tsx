@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,35 +41,61 @@ export function TimeRequestModal({
     onCreated: () => void;
 }) {
     const mutation = useCreateTimeRequest();
+    const [requestError, setRequestError] = useState<string>();
     const form = useForm<TimeRequestFormValues>({ resolver: zodResolver(timeRequestSchema), defaultValues: { propertyId: propertyId ?? "", buyerIds: buyerId ? [buyerId] : [], preferredStartsAt: inputValueInIst(dateAtIstOffset(1, 17)), alternates: [], message: "" } });
-    const selectedPropertyId = form.watch("propertyId");
-    const preferred = form.watch("preferredStartsAt");
-    const alternates = form.watch("alternates");
+    const selectedPropertyId = useWatch({ control: form.control, name: "propertyId" });
+    const selectedBuyerIds = useWatch({ control: form.control, name: "buyerIds" });
+    const preferred = useWatch({ control: form.control, name: "preferredStartsAt" });
+    const alternates = useWatch({ control: form.control, name: "alternates" });
+    const message = useWatch({ control: form.control, name: "message" });
     const selected = properties.find((item) => item.property.id === selectedPropertyId);
     const published = useMemo(() => selected?.slots.filter((slot) => istDateKey(slot.startsAt) === preferred.slice(0, 10)) ?? [], [preferred, selected]);
 
     useEffect(() => {
-        if (open) form.reset({ propertyId: propertyId ?? "", buyerIds: buyerId ? [buyerId] : [], preferredStartsAt: inputValueInIst(dateAtIstOffset(1, 17)), alternates: [], message: "" });
+        if (open) {
+            form.reset({ propertyId: propertyId ?? "", buyerIds: buyerId ? [buyerId] : [], preferredStartsAt: inputValueInIst(dateAtIstOffset(1, 17)), alternates: [], message: "" });
+        }
     }, [buyerId, form, open, propertyId]);
 
     const submit = form.handleSubmit(async (values) => {
+        setRequestError(undefined);
         const startsAt = inputValueToUtc(values.preferredStartsAt);
         const starts = new Date(startsAt).getTime();
-        if (starts - Date.now() < 60 * 60_000) { form.setError("preferredStartsAt", { message: "Choose a time at least 60 minutes from now." }); return; }
-        if (starts - Date.now() > 30 * 86_400_000) { form.setError("preferredStartsAt", { message: "Choose a time within the next 30 days." }); return; }
+        // Submission time is intentionally read at the user action boundary.
+        // eslint-disable-next-line react-hooks/purity
+        const nowMs = Date.now();
+        if (starts - nowMs < 60 * 60_000) { form.setError("preferredStartsAt", { message: "Choose a time at least 60 minutes from now." }); return; }
+        if (starts - nowMs > 30 * 86_400_000) { form.setError("preferredStartsAt", { message: "Choose a time within the next 30 days." }); return; }
         const item = properties.find((property) => property.property.id === values.propertyId);
         if (!item) return;
+        const requestedInputs = [values.preferredStartsAt, ...values.alternates.filter(Boolean)];
+        const requestedTimes = requestedInputs.map(inputValueToUtc);
+        if (new Set(requestedTimes).size !== requestedTimes.length) { setRequestError("Choose different times for the preferred and backup options."); return; }
+        const invalidBackup = requestedTimes.slice(1).find((value) => {
+            const delta = new Date(value).getTime() - nowMs;
+            return delta < 60 * 60_000 || delta > 30 * 86_400_000;
+        });
+        if (invalidBackup) { setRequestError("Every backup must be at least 60 minutes ahead and within the next 30 days."); return; }
+        const publishedTimes = new Set(item.slots.map((slot) => slot.startsAt));
+        if (requestedTimes.some((value) => publishedTimes.has(value))) { setRequestError("That time is already published. Book the available slot instead."); return; }
         const selectedBuyers = buyers.filter((buyer) => values.buyerIds.includes(buyer.id));
-        await mutation.mutateAsync({ item, buyers: selectedBuyers, preferredStartsAt: startsAt, preferredEndsAt: new Date(starts + 45 * 60_000).toISOString(), alternates: values.alternates.filter(Boolean).map((value) => { const start = inputValueToUtc(value); return { startsAt: start, endsAt: new Date(new Date(start).getTime() + 45 * 60_000).toISOString() }; }), message: values.message || undefined });
-        toast.success("Time request sent");
-        onCreated();
+        try {
+            await mutation.mutateAsync({ item, buyers: selectedBuyers, preferredStartsAt: startsAt, preferredEndsAt: new Date(starts + 45 * 60_000).toISOString(), alternates: values.alternates.filter(Boolean).map((value) => { const start = inputValueToUtc(value); return { startsAt: start, endsAt: new Date(new Date(start).getTime() + 45 * 60_000).toISOString() }; }), message: values.message || undefined });
+            toast.success("Time request sent");
+            onCreated();
+        } catch (error) {
+            setRequestError(error instanceof Error ? error.message : "Could not send this request. Check your connection and try again.");
+        }
     });
 
     return (
-        <AppModal open={open} onOpenChange={(next) => { if (!next) onClose(); }} title="Request another time" description="Give the owner one preferred time and up to two backups." size="lg" footer={<><p className="
+        <AppModal open={open} onOpenChange={(next) => { if (!next) { setRequestError(undefined); onClose(); } }} title="Request another time" description="Give the owner one preferred time and up to two backups." size="lg" footer={<><p className="
           body-xs text-ink-muted
         ">Requests expire when the preferred time passes.</p><Button type="submit" form="time-request-form" size="lg" loading={mutation.isPending}>Send time request</Button></>}>
             <form id="time-request-form" onSubmit={submit} className="space-y-5">
+                {requestError ? <p role="alert" className="
+                  body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
+                ">{requestError}</p> : null}
                 <label className="block"><span className="body-sm font-bold text-ink">Property</span><select {...form.register("propertyId")} className="
                   body-sm mbs-2 rounded-control border border-border-warm bg-surface px-3 text-ink
                   outline-none inline-full min-block-11
@@ -77,7 +103,7 @@ export function TimeRequestModal({
                 "><option value="">Choose a property</option>{properties.map((item) => <option key={item.property.id} value={item.property.id}>{item.property.title} · {item.property.locality}</option>)}</select>{form.formState.errors.propertyId ? <span className="
                   body-xs mbs-1 block text-danger
                 ">{form.formState.errors.propertyId.message}</span> : null}</label>
-                <BuyerPicker buyers={buyers} selected={form.watch("buyerIds")} onChange={(ids) => form.setValue("buyerIds", ids, { shouldValidate: true })} />
+                <BuyerPicker buyers={buyers} selected={selectedBuyerIds} onChange={(ids) => form.setValue("buyerIds", ids, { shouldValidate: true })} />
                 {form.formState.errors.buyerIds ? <p className="body-xs text-danger">{form.formState.errors.buyerIds.message}</p> : null}
                 <div><label className="body-sm font-bold text-ink">Preferred time<input type="datetime-local" step={900} {...form.register("preferredStartsAt")} className="
                   body-sm mbs-2 block rounded-control border border-border-warm bg-surface px-3
@@ -113,11 +139,12 @@ export function TimeRequestModal({
                   mbs-2 flex flex-wrap gap-2
                 ">{PRESETS.map((preset) => <button type="button" key={preset} onClick={() => form.setValue("message", preset)} className="
                   body-xs rounded-control border border-border-warm bg-surface px-3 text-start
-                  font-semibold text-ink-muted min-block-9
+                  font-semibold text-ink-muted min-block-12
                   hover:bg-brand-soft hover:text-brand-text
+                  lg:min-block-9
                 ">{preset}</button>)}</div><p className="
                   body-xs tabular mbs-1 text-end text-ink-subtle
-                ">{form.watch("message").length}/240</p></div>
+                ">{message.length}/240</p></div>
             </form>
         </AppModal>
     );
