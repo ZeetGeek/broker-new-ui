@@ -51,10 +51,12 @@ export function PipelineColumn({
         <section
             ref={setNodeRef}
             className={cn(
-                `flex snap-start flex-col gap-3 rounded-card p-3 min-inline-72 lg:min-inline-0`,
-                highlighted
-                    ? "border border-dashed border-brand bg-brand-soft/40"
-                    : cn("border border-transparent", meta.trackClass),
+                `
+                  flex snap-start flex-col gap-3 rounded-card border border-dashed p-3
+                  transition-colors duration-160 min-inline-72
+                  lg:min-inline-0
+                `,
+                highlighted ? "border-brand bg-brand-soft/40" : "border-transparent bg-transparent",
             )}
         >
             <header className="flex items-start justify-between gap-2">
@@ -78,7 +80,7 @@ export function PipelineColumn({
                                 {deals.length}
                             </span>
                         </div>
-                        <div className="body-xs mbs-1 flex flex-col text-ink-muted">
+                        <div className="body-xs mbs-0.5 flex flex-wrap gap-x-2 text-ink-muted">
                             {totals.sale || totals.rent ? (
                                 <>
                                     {totals.sale ? (

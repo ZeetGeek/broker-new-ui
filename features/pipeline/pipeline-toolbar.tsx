@@ -66,7 +66,7 @@ function PipelineQueryInput({ value, onChange }: { value: string; onChange: (q: 
 
     return (
         <Input
-            size="sm"
+            size="default"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder="Search buyer, owner or area"
@@ -75,8 +75,7 @@ function PipelineQueryInput({ value, onChange }: { value: string; onChange: (q: 
             clearable
             wrapperClassName="min-inline-44 inline-44 sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64"
             className="
-              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
-              block-[38px]!
+              rounded-control border! border-border-warm bg-surface font-medium shadow-sm
               hover:border-ink/25!
               focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
             "

@@ -57,18 +57,22 @@ export function PipelineSummaryStrip({
                     <div
                         key={chip.id}
                         className={cn(
-                            "body-sm flex items-center rounded-sm border",
+                            `
+                              body-sm flex items-center rounded-control border transition-colors
+                              duration-160 block-control-sm
+                            `,
                             isActive ? "font-semibold" : "font-medium",
                             isActive && !isUrgent && "border-brand bg-brand-soft text-brand-text",
                             isActive && isUrgent && "border-urgent bg-urgent-soft text-urgent",
-                            !isActive && "border-border-warm bg-surface text-ink-muted",
+                            !isActive &&
+                                "border-border-warm bg-surface text-ink-muted hover:border-ink/25",
                         )}
                     >
                         <button
                             type="button"
                             aria-pressed={isActive}
                             onClick={() => onChange(chip.id)}
-                            className="px-3 py-1.5"
+                            className="flex items-center px-3 block-full"
                         >
                             {chip.label}
                         </button>
@@ -76,7 +80,10 @@ export function PipelineSummaryStrip({
                             <button
                                 type="button"
                                 aria-label="Clear filter"
-                                className="pe-2 text-current hover:opacity-70"
+                                className="
+                                  flex items-center pe-2 text-current block-full
+                                  hover:opacity-70
+                                "
                                 onClick={() => onChange("running")}
                             >
                                 <X aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />

@@ -13,9 +13,5 @@ export function NewStageBlock({ deal }: { deal: DealItem }) {
     const added = `Added ${formatRelativePast(new Date(addedAt), new Date())}`;
     const source = deal.source ? SOURCE_LABEL[deal.source] : null;
 
-    return (
-        <p className="body-xs truncate text-ink">
-            {source ? `${added} · ${source}` : added}
-        </p>
-    );
+    return <p className="body-xs truncate text-ink">{source ? `${added} · ${source}` : added}</p>;
 }

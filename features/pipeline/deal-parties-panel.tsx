@@ -1,10 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-
 import { UserAvatar } from "@/components/shared/user-avatar";
 
-import { ATTENTION_DOT_CLASS, type AttentionTone } from "@/features/pipeline/deal-attention";
 import type { DealAssignedAgent } from "@/features/pipeline/types";
 
 type Party = {
@@ -12,27 +9,9 @@ type Party = {
     avatarUrl?: string;
 };
 
-function PartyRow({
-    party,
-    role,
-    dotTone,
-}: {
-    party: Party;
-    role: string;
-    /** Status dot, buyer row only — sits in line with the buyer's name. */
-    dotTone?: AttentionTone;
-}) {
+function PartyRow({ party, role }: { party: Party; role: string }) {
     return (
         <div className="flex items-center gap-1.5">
-            {dotTone ? (
-                <span
-                    aria-hidden
-                    className={cn(
-                        "shrink-0 rounded-full block-2 inline-2",
-                        ATTENTION_DOT_CLASS[dotTone],
-                    )}
-                />
-            ) : null}
             <UserAvatar
                 name={party.name}
                 imageUrl={party.avatarUrl}
@@ -51,21 +30,18 @@ function PartyRow({
  * price. Both sides of a deal must always be visible — see AGENTS.md, "the
  * core loop" — a card that only names the buyer is telling half the story.
  *
- * Also carries the buyer-row status dot (healthy/slow/quiet) — this is the
- * canonical place the buyer's name appears, so that is where "in line with
- * the buyer's name" lands.
+ * Stall state is not shown here. The card's chip row states it in words
+ * with a day count, so a second colour-only marker on this row would be a
+ * duplicate signal — see docs/DESIGN.md §1.4.
  */
 export function DealPartiesPanel({
     buyer,
     owner,
-    attention,
     assignedAgent,
     currentUserId,
 }: {
     buyer: Party;
     owner: Party;
-    /** Omit for a resolved (closed/lost) deal — no dot once there's nothing to track. */
-    attention?: AttentionTone | null;
     assignedAgent?: DealAssignedAgent | null;
     currentUserId?: string | null;
 }) {
@@ -74,7 +50,7 @@ export function DealPartiesPanel({
     return (
         <div className="flex flex-col gap-1">
             <div className="flex flex-col gap-1 rounded-inner bg-surface-muted p-2.5">
-                <PartyRow party={buyer} role="Buyer" dotTone={attention ?? undefined} />
+                <PartyRow party={buyer} role="Buyer" />
                 <PartyRow party={owner} role="Owner" />
             </div>
 

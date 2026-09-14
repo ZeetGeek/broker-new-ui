@@ -22,6 +22,8 @@ const SECTIONS = [
             { href: "/design-system/components/button", label: "Button" },
             { href: "/design-system/components/input", label: "Input" },
             { href: "/design-system/components/select", label: "Select" },
+            { href: "/design-system/components/switch", label: "Switch" },
+            { href: "/design-system/components/radio", label: "Radio" },
         ],
     },
 ];

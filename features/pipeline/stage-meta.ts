@@ -24,10 +24,12 @@ export type StageMeta = {
     dotClass: string;
     /** Verb for the button that advances a deal into this stage. */
     advanceLabel: string;
-    /** Soft pill on the column header. Pipeline board only. */
+    /**
+     * Column-header pill. One hue (brand green) deepening across the four
+     * stages so the board reads left-to-right as progress rather than as
+     * four unrelated categories — see docs/DESIGN.md §1.1.
+     */
     pillClass: string;
-    /** Soft tint for the whole column track. */
-    trackClass: string;
 };
 
 export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
@@ -37,8 +39,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: Sparkles,
         dotClass: "bg-stage-1",
         advanceLabel: "Move to new",
-        pillClass: "bg-pipe-new-soft text-pipe-new",
-        trackClass: "bg-pipe-new-soft/20",
+        pillClass: "bg-brand-soft/50 text-brand-text",
     },
     contacted: {
         label: "Contacted",
@@ -46,8 +47,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: PhoneCall,
         dotClass: "bg-stage-2",
         advanceLabel: "Mark contacted",
-        pillClass: "bg-urgent-soft text-urgent",
-        trackClass: "bg-urgent-soft/20",
+        pillClass: "bg-brand-soft text-brand-text",
     },
     visit: {
         label: "Site visit",
@@ -55,8 +55,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: CalendarCheck,
         dotClass: "bg-stage-3",
         advanceLabel: "Book a visit",
-        pillClass: "bg-pipe-visit-soft text-pipe-visit",
-        trackClass: "bg-pipe-visit-soft/20",
+        pillClass: "bg-brand/15 text-brand-text",
     },
     negotiation: {
         label: "Negotiation",
@@ -64,8 +63,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: Handshake,
         dotClass: "bg-stage-4",
         advanceLabel: "Start negotiating",
-        pillClass: "bg-brand-soft text-brand-text",
-        trackClass: "bg-brand-soft/20",
+        pillClass: "bg-brand-deep text-canvas",
     },
 };
 

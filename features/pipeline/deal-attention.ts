@@ -6,13 +6,6 @@ import { isLiveStage, SLOW_AFTER_DAYS, STALLED_AFTER_DAYS } from "@/features/pip
 
 export type AttentionTone = "healthy" | "slow" | "quiet";
 
-/** Status-dot colour per attention tier — pipeline card buyer row. */
-export const ATTENTION_DOT_CLASS: Record<AttentionTone, string> = {
-    healthy: "bg-success",
-    slow: "bg-urgent",
-    quiet: "bg-danger",
-};
-
 export type OtherBuyer = {
     dealId: string;
     name: string;

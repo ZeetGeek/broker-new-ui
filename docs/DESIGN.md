@@ -604,6 +604,62 @@ is also invalid.
 dark glass overlay. Keep the list as this compound select — do not flatten
 to a native `<select>`.
 
+### 4.12 Switch
+
+One base-ui primitive, wrapped once in `components/ui/switch.tsx`. Binary
+on/off preference — never a third state, never a substitute for radio when
+there are three or more exclusive options.
+
+```
+┌──────────────────────────────────────┐
+│ SMS alerts                      (●─) │  label + hint · switch on the end
+│ Site-visit reminders                 │
+└──────────────────────────────────────┘
+```
+
+Two sizes: `sm` (dense filter rows) and `default` (preference rows). Track is
+`rounded-full`. Checked fill is `brand` (pass brand utility classes at the
+call site so it matches Checkbox/Radio). Unchecked track uses a warm neutral
+border/fill, not a second brand colour.
+
+Always pair with a visible label (`htmlFor`/`id` or a wrapping `<label>`).
+Label sits on the start side; the control sits on the end. Disabled keeps the
+current checked value visible — do not clear it. Thumb motion uses the
+instant duration token; never a bouncy spring.
+
+**Icon segmented toggle** (grid/list in screenshot) is not this control. Use
+`components/shared/icon-segmented-toggle.tsx`: white pill, `border-warm`,
+`p-1`, icon-only segments, active segment gets sliding `brand-soft` fill +
+`border-brand`. `aria-pressed` per button; `role="group"` + `aria-label` on
+the shell. Owner listings view toggle is the reference call site.
+
+### 4.13 Radio
+
+base-ui Radio + RadioGroup, wrapped once in `components/ui/radio-group.tsx`.
+Compound API only: `RadioGroup` owns the value, `RadioGroupItem` is the
+16px circle. One exclusive choice from a short set.
+
+```
+┌─────────────────┐  ┌─────────────────┐
+│ ◉  For sale     │  │ ○  For rent     │  option cards — whole tile tappable
+│ Owner wants…    │  │ Owner wants…    │  selected: brand-soft + brand-text
+└─────────────────┘  └─────────────────┘
+```
+
+Three layouts, same primitive:
+
+| Layout       | When                                                         |
+| ------------ | ------------------------------------------------------------ |
+| Stack        | Short account-type / role lists                              |
+| Grid         | 2–4 columns — furnishing, looking-for, deal extras           |
+| Option cards | Default on property forms — label wraps the item, 48px tall |
+
+Checked indicator fill is `brand`. Selected cards use `border-brand` +
+`bg-brand-soft` + `text-brand-text`. Put `aria-invalid` on the group when a
+required choice is empty — not on every item. Circle geometry stays
+`rounded-full`; never restyle a radio into a checkbox look. Multi-select is
+Checkbox; binary on/off is Switch.
+
 ---
 
 ## 5. Layout

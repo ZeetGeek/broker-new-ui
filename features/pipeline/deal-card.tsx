@@ -415,13 +415,10 @@ export function DealCard({
                 `,
                 isBusy && "pointer-events-none opacity-60",
                 isDragging && "cursor-grabbing opacity-40 shadow-md",
-                !live
-                    ? "border-border-warm bg-surface-muted/40"
-                    : attention === "quiet"
-                      ? "border-danger/35 bg-danger/3"
-                      : attention === "slow"
-                        ? "border-urgent/35 bg-urgent/3"
-                        : "border-border-warm bg-surface",
+                // Attention never tints the card. The chip row states the
+                // stall in words with a day count; a tint would restate it
+                // in colour alone and leave the board reading as an alarm.
+                !live ? "border-border-warm bg-surface-muted/40" : "border-border-warm bg-surface",
             )}
         >
             <div className="flex flex-col gap-2 min-block-0">
@@ -450,7 +447,6 @@ export function DealCard({
                 <DealPartiesPanel
                     buyer={deal.buyer}
                     owner={deal.owner}
-                    attention={live ? attention : null}
                     assignedAgent={deal.assignedAgent}
                     currentUserId={currentUserId}
                 />
