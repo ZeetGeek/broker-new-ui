@@ -365,7 +365,6 @@ const furnishingSchema = z.object({
     items: z.record(z.string(), z.number().int().min(0)),
     negotiable: z.boolean(),
     furnitureRentExtra: optionalNumber,
-    kitchenType: optionalText,
 });
 
 const amenitiesSchema = z.object({
@@ -379,8 +378,6 @@ const amenitiesSchema = z.object({
 
 const highlightsSchema = z.object({
     chips: z.array(z.string().max(40)).max(8),
-    whyBuyThis: optionalText,
-    uniqueSellingPoint: z.string().max(120),
 });
 
 const constructionSchema = z
@@ -777,7 +774,6 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         items: {},
         negotiable: false,
         furnitureRentExtra: null,
-        kitchenType: "",
     },
     amenities: {
         society: [],
@@ -787,7 +783,7 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         commercial: [],
         land: [],
     },
-    highlights: { chips: [], whyBuyThis: "", uniqueSellingPoint: "" },
+    highlights: { chips: [] },
     construction: {
         possessionType: "",
         possessionDate: "",

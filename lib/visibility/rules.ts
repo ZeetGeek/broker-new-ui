@@ -286,10 +286,6 @@ export const FIELD_RULES = {
     "furnishing.furnitureRentExtra": {
         visible: (d) => !d.isPlot && d.isFurnished && d.isRentLike,
     },
-    "furnishing.kitchenType": {
-        visible: (d, v) =>
-            (d.isResidential && !d.isPlot) || v.basics.propertyType === "restaurant_space",
-    },
     "amenities.society": { visible: (d) => d.isInBuilding, level: recommended },
     "amenities.recreation": { visible: (d) => d.isInBuilding && d.isResidential },
     "amenities.convenience": { visible: (d) => d.isInBuilding },
@@ -301,8 +297,6 @@ export const FIELD_RULES = {
     "amenities.land": { visible: () => false },
 
     "highlights.chips": { level: recommended, label: () => "Highlights" },
-    "highlights.whyBuyThis": {},
-    "highlights.uniqueSellingPoint": {},
     "construction.possessionType": { visible: (d) => d.isUnderConstruction, level: required },
     "construction.possessionDate": {
         visible: (d, v) => d.isUnderConstruction && v.construction.possessionType === "custom_date",

@@ -11,7 +11,6 @@ import {
     FLAT_FEATURES,
     FURNISHING_ITEM_OPTIONS,
     FURNISHING_OPTIONS,
-    KITCHEN_TYPE_OPTIONS,
     optionList,
     RECREATION_AMENITIES,
     SOCIETY_AMENITIES,
@@ -22,7 +21,6 @@ import {
     CurrencyField,
     FORM_GRID_CLASS,
     MultiChipField,
-    SelectField,
     ToggleField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
@@ -63,11 +61,6 @@ export function StepFurnishing() {
                         </div>
                     </ConditionalField>
                     <div className={FORM_GRID_CLASS}>
-                        <SelectField
-                            name="furnishing.kitchenType"
-                            label="Kitchen type"
-                            options={KITCHEN_TYPE_OPTIONS}
-                        />
                         <CurrencyField
                             name="furnishing.furnitureRentExtra"
                             label="Furniture rent extra"

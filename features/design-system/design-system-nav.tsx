@@ -31,6 +31,7 @@ const THEME_LINKS = [
     { href: "/design-system/components/switch", label: "Switch" },
     { href: "/design-system/components/radio", label: "Radio" },
     { href: "/design-system/components/checkbox", label: "Checkbox" },
+    { href: "/design-system/components/date-picker", label: "Date picker" },
     { href: "/design-system/components/tooltip", label: "Tooltip" },
     { href: "/design-system/components/tabs", label: "Tabs" },
     { href: "/design-system/components/dialog", label: "Dialog" },

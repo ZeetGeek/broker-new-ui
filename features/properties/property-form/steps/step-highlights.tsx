@@ -25,7 +25,6 @@ import {
     NumberField,
     SelectField,
     TagInputField,
-    TextAreaField,
     TextField,
     ToggleField,
     WizardSection,
@@ -96,21 +95,6 @@ export function StepHighlights() {
                         max={8}
                         placeholder="e.g. Quiet corner unit"
                         hint={`${highlights.length}/8 highlights`}
-                    />
-                    <TextField
-                        name="highlights.uniqueSellingPoint"
-                        label="One-line selling point"
-                        placeholder="The clearest reason to consider this property"
-                    />
-                    <TextAreaField
-                        name="highlights.whyBuyThis"
-                        label={
-                            values.basics.listingFor === "sell"
-                                ? "Why buy this property?"
-                                : "Why rent this property?"
-                        }
-                        placeholder="Share the owner's strongest practical reason."
-                        rows={5}
                     />
                 </div>
             </WizardSection>

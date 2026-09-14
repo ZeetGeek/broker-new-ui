@@ -349,11 +349,6 @@ export const COMMERCIAL_FURNISHING_ITEMS = new Set([
     "inverter",
     "false_ceiling",
 ]);
-export const KITCHEN_TYPE_OPTIONS = ["modular", "semi_modular", "open", "covered"].map((value) => ({
-    value,
-    label: toLabel(value),
-}));
-
 export const SOCIETY_AMENITIES = [
     "lift",
     "power_backup",

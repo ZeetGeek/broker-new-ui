@@ -816,6 +816,45 @@ check stroke-draws (`--check-draw` 350ms); uncheck reverses in
 `--check-uncheck` (150ms). Path stays mounted so a mid-draw uncheck reverses
 cleanly. No bouncy spring.
 
+### 4.19 Date picker
+
+Popover + outline Button + Calendar, wrapped once as `AppDatePicker` in
+`components/shared/app-date-picker.tsx`. Do not recompose those three at call
+sites. Value in state / forms is `yyyy-MM-dd`; the trigger always shows
+`dd/mm/yyyy` via `formatDateIn` — never month-first `en-US` formatting.
+Empty placeholder is `Pick a date`.
+
+```
+┌──────────────────────────────┐
+│ 18/08/2026              📅   │  filled — calendar icon on the end
+├──────────────────────────────┤
+│ Pick a date             📅   │  empty — placeholder is ink-subtle
+└──────────────────────────────┘
+         ┌ <  Sept ▴▾  2026 ▴▾  > ┐
+         │ Su Mo Tu …               │  Button nav · Select month/year
+         │  ·  · 15  …              │  selected = brand fill circle
+         └──────────────────────────┘
+```
+
+Same five control-height steps as Input and Select (`xs`–`lg`). Default is
+`lg` (48px / `control-xl`) for primary mobile forms — the listing
+"Available from" field is the reference call site. Trigger uses
+`rounded-control`, 1px `border-warm`, `surface` fill; open state sets
+`border-ring` via `aria-expanded`. Calendar icon (not a chevron) owns the
+end slot; the date string sits on the start.
+
+Popup is light only — `bg-surface`, `rounded-card`, `border-warm`,
+`shadow-lg`. Caption is custom: `Button` (ghost, circular hover) for
+prev/next and compact `Select` triggers for month + year (`surface-muted`,
+`ChevronsUpDown`). Day cells are compact and circular; selected day uses a `brand` fill with
+`surface` text — never a under-dot. Unselected today uses a quiet
+`surface-muted` chip. Year range is roughly −10 / +20 years. Month select
+shows short names (`Jan`–`Dec`), not zero-based indices.
+
+Pass `invalid` when validation fails — error copy lives under the field
+(with the form's `FieldError`), not inside the popover. Always pair with a
+visible label (`htmlFor` / `id`).
+
 ---
 
 ## 5. Layout
