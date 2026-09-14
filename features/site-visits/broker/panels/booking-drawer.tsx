@@ -7,10 +7,10 @@ import toast from "react-hot-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarClock, MapPin } from "lucide-react";
 
+import { useBookSlot } from "@/hooks/use-book-slot";
 import { SlotTakenError } from "@/lib/api/broker-visits";
 import { checkVisitConflicts, type ConflictResult } from "@/lib/visits/conflicts";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
-import { useBookSlot } from "@/hooks/use-book-slot";
 
 import { AppImage } from "@/components/shared/app-image";
 import { Button } from "@/components/ui/button";
@@ -47,12 +47,14 @@ export function BookingDrawer({
 }) {
     const mutation = useBookSlot();
     const [inlineError, setInlineError] = useState<string>();
+    const [createdBuyers, setCreatedBuyers] = useState<PersonSummary[]>([]);
     const form = useForm<BookingFormValues>({ resolver: zodResolver(bookingSchema), defaultValues: { buyerIds: preselectedBuyerId ? [preselectedBuyerId] : [], note: "", remindBuyer: true, acceptTight: false } });
     const buyerIds = useWatch({ control: form.control, name: "buyerIds" });
     const acceptTight = useWatch({ control: form.control, name: "acceptTight" });
     const remindBuyer = useWatch({ control: form.control, name: "remindBuyer" });
     const note = useWatch({ control: form.control, name: "note" });
-    const selectedBuyers = buyers.filter((buyer) => buyerIds.includes(buyer.id));
+    const allBuyers = useMemo(() => [...createdBuyers, ...buyers], [buyers, createdBuyers]);
+    const selectedBuyers = allBuyers.filter((buyer) => buyerIds.includes(buyer.id));
     const travelEstimates = useMemo(() => Object.fromEntries(visits.map((visit) => [visit.id, { minutes: visit.driveMinutes ?? Math.max(12, Math.round((visit.distanceKm ?? 5) * 2.4)), distanceKm: visit.distanceKm }])), [visits]);
     const conflict = useMemo<ConflictResult>(() => slot && item ? checkVisitConflicts({ startsAt: slot.startsAt, endsAt: slot.endsAt, buyerIds, locality: item.property.locality }, visits, travelEstimates) : { level: "clear", reasons: [] }, [buyerIds, item, slot, travelEstimates, visits]);
     const hasBookingAccess = item ? item.propertySource === "own_listing" || item.access === "accepted" || slot?.visibility === "all_brokers" : false;
@@ -69,7 +71,7 @@ export function BookingDrawer({
     const submit = form.handleSubmit(async (values) => {
         setInlineError(undefined);
         try {
-            const visit = await mutation.mutateAsync({ item, slot, buyers: buyers.filter((buyer) => values.buyerIds.includes(buyer.id)), note: values.note, remindBuyer: values.remindBuyer });
+            const visit = await mutation.mutateAsync({ item, slot, buyers: allBuyers.filter((buyer) => values.buyerIds.includes(buyer.id)), note: values.note, remindBuyer: values.remindBuyer });
             toast.success(visit.status === "awaiting_owner" ? "Booking sent to owner" : "Visit booked");
             onClose();
         } catch (error) {
@@ -112,7 +114,7 @@ export function BookingDrawer({
                     {!hasBookingAccess ? <p role="alert" className="
                       body-sm rounded-inner bg-urgent-soft px-3 py-2 font-semibold text-pending
                     ">The owner must approve access before this time can be booked.</p> : null}
-                    <BuyerPicker buyers={buyers} selected={buyerIds} onChange={(ids) => form.setValue("buyerIds", ids, { shouldValidate: true })} />
+                    <BuyerPicker buyers={allBuyers} selected={buyerIds} onChange={(ids) => form.setValue("buyerIds", ids, { shouldValidate: true })} onBuyerCreated={(buyer) => setCreatedBuyers((current) => [buyer, ...current.filter((item) => item.id !== buyer.id)])} />
                     {form.formState.errors.buyerIds ? <p className="body-xs text-danger">{form.formState.errors.buyerIds.message}</p> : null}
                     {buyerIds.length ? <ConflictPanel result={conflict} onOpenVisit={onOpenVisit} /> : null}
                     {conflict.level === "tight" ? <label className="

@@ -52,7 +52,7 @@ export function RequestRow({
                       body-xs rounded-md px-2 py-1 font-semibold
                       ${status.tone}
                     `}>{status.label}</span></div>
-                    <div className="mbs-2 flex items-center gap-2"><UserAvatar name={buyer.name} imageUrl={buyer.avatarUrl} size="xs" fallback="initials-color" /><p className="
+                    <div className="mbs-2 flex items-center gap-2"><UserAvatar name={buyer.name} imageUrl={buyer.avatarUrl} size="xs" fallback="character" /><p className="
                       body-xs text-ink
                     "><span className="font-semibold">{buyer.name}</span><span className="
                       text-ink-muted

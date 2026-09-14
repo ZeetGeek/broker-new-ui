@@ -111,7 +111,7 @@ export function AddBuyerModal({
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onCreated: (name: string) => void;
+    onCreated: (name: string, id?: string) => void;
     buyer?: BuyerRow | null;
     onUpdated?: (name: string) => void;
 }) {
@@ -184,10 +184,10 @@ export function AddBuyerModal({
         setBusy(true);
         setSubmitError("");
         try {
-            await contactsApi.saveBuyer(values, buyer?.id);
+            const savedId = await contactsApi.saveBuyer(values, buyer?.id);
             draftState.clear();
             if (buyer) onUpdated?.(values.name.trim());
-            else onCreated(values.name.trim());
+            else onCreated(values.name.trim(), savedId);
             if (addAnother) {
                 setValues(emptyBuyerForm());
                 setStep(0);

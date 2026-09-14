@@ -97,7 +97,7 @@ export function OwnerCard({
                     <UserAvatar
                         name={owner.name}
                         size="md"
-                        fallback="initials-color"
+                        fallback="character"
                         className="shrink-0 rounded-[12px]"
                     />
                     <div className="min-inline-0">

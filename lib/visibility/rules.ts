@@ -98,8 +98,6 @@ export const FIELD_RULES = {
         visible: (d) => d.isPlot && !d.isAgricultural,
     },
     "details.facing": { level: (d) => (d.isPlot ? "recommended" : "optional") },
-    "details.overlooking": { visible: (d) => !d.isAgricultural },
-    "details.cornerProperty": { label: (d) => (d.isPlot ? "Corner plot" : "Corner property") },
     "details.roadWidthFt": {
         visible: (d) => d.isPlot || d.isCommercial || d.isIndependent,
         level: (d) => (d.isPlot ? "required" : "optional"),
@@ -111,15 +109,10 @@ export const FIELD_RULES = {
     "details.propertyCondition": { visible: (d) => !d.isPlot, level: required },
     "details.coveredParking": { visible: (d) => !d.isPlot },
     "details.openParking": { visible: (d) => !d.isPlot },
-    "details.waterSource": { level: (d) => (d.isAgricultural ? "required" : "optional") },
-    "details.powerBackup": { visible: (d) => d.isInBuilding },
     "details.electricityLoadKva": {
         visible: (d) => d.isCommercial || d.isIndustrial,
         level: (d) => (d.isIndustrial ? "recommended" : "optional"),
     },
-    "details.vastuCompliant": { visible: (d) => d.isResidential || d.isPlot },
-    "details.wheelchairFriendly": { visible: (d) => !d.isPlot },
-    "details.flooringType": { visible: (d) => !d.isPlot && !d.isUnderConstruction },
 
     "details.commercial.cabins": {
         visible: (d, v) =>
@@ -194,7 +187,8 @@ export const FIELD_RULES = {
         label: () => "Irrigation / water source",
     },
 
-    "area.unit": { level: required },
+    // Always sq ft, so the picker is hidden; the value still ships with the listing.
+    "area.unit": { visible: () => false, keepWhenHidden: true, level: required },
     "area.carpetArea": { visible: (d) => !d.isPlot, level: required },
     "area.builtUpArea": { visible: (d) => !d.isPlot },
     "area.superBuiltUpArea": { visible: (d) => d.isInBuilding, level: recommended },

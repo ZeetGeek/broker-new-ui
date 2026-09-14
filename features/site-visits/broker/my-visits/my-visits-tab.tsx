@@ -129,7 +129,7 @@ export function MyVisitsTab({
                 <div className="grid gap-4 md:grid-cols-[132px_minmax(0,1fr)]">
                     <DayRail counts={counts} activeDay={activeDay} past={past} onSelect={selectDay} onTogglePast={() => setPast((value) => !value)} />
                     <div className="space-y-6 min-inline-0">
-                        {groups.length === 0 ? <EmptyState kind="no-today" detail={nextVisitDetail} onPrimary={() => nextVisit && onOpen(nextVisit.id)} /> : filtered.length > 40 ? <VirtualStack items={groups} estimateSize={380} getKey={(group) => group.key} renderItem={(group) => <section id={`broker-visits-${group.key}`} data-visit-day={group.key} className="
+                        {groups.length === 0 ? <EmptyState kind="no-today" detail={nextVisitDetail} onPrimary={nextVisit ? () => onOpen(nextVisit.id) : undefined} /> : filtered.length > 40 ? <VirtualStack items={groups} estimateSize={380} getKey={(group) => group.key} renderItem={(group) => <section id={`broker-visits-${group.key}`} data-visit-day={group.key} className="
                           space-y-3
                         "><header className="
                           sticky inset-bs-14 z-20 border-be border-border-warm bg-canvas py-2

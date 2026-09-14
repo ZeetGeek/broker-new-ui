@@ -5,8 +5,10 @@ import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { formatInTimeZone } from "date-fns-tz";
 import { Clock3, Plus, Trash2 } from "lucide-react";
 
+import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
 import { dateAtIstOffset, formatVisitTime, inputValueInIst, inputValueToUtc, istDateKey } from "@/lib/visits/time";
 import { useCreateTimeRequest } from "@/hooks/use-time-requests";
 
@@ -42,6 +44,7 @@ export function TimeRequestModal({
 }) {
     const mutation = useCreateTimeRequest();
     const [requestError, setRequestError] = useState<string>();
+    const [createdBuyers, setCreatedBuyers] = useState<PersonSummary[]>([]);
     const form = useForm<TimeRequestFormValues>({ resolver: zodResolver(timeRequestSchema), defaultValues: { propertyId: propertyId ?? "", buyerIds: buyerId ? [buyerId] : [], preferredStartsAt: inputValueInIst(dateAtIstOffset(1, 17)), alternates: [], message: "" } });
     const selectedPropertyId = useWatch({ control: form.control, name: "propertyId" });
     const selectedBuyerIds = useWatch({ control: form.control, name: "buyerIds" });
@@ -49,7 +52,14 @@ export function TimeRequestModal({
     const alternates = useWatch({ control: form.control, name: "alternates" });
     const message = useWatch({ control: form.control, name: "message" });
     const selected = properties.find((item) => item.property.id === selectedPropertyId);
+    const allBuyers = useMemo(() => [...createdBuyers, ...buyers], [buyers, createdBuyers]);
     const published = useMemo(() => selected?.slots.filter((slot) => istDateKey(slot.startsAt) === preferred.slice(0, 10)) ?? [], [preferred, selected]);
+    const usualPattern = useMemo(() => {
+        if (!selected?.slots.length) return undefined;
+        const byStart = [...selected.slots].sort((a, b) => formatInTimeZone(a.startsAt, VISITS_TIME_ZONE, "HHmm").localeCompare(formatInTimeZone(b.startsAt, VISITS_TIME_ZONE, "HHmm")));
+        const byEnd = [...selected.slots].sort((a, b) => formatInTimeZone(b.endsAt, VISITS_TIME_ZONE, "HHmm").localeCompare(formatInTimeZone(a.endsAt, VISITS_TIME_ZONE, "HHmm")));
+        return `${formatVisitTime(byStart[0].startsAt)}–${formatVisitTime(byEnd[0].endsAt)}`;
+    }, [selected]);
 
     useEffect(() => {
         if (open) {
@@ -78,7 +88,7 @@ export function TimeRequestModal({
         if (invalidBackup) { setRequestError("Every backup must be at least 60 minutes ahead and within the next 30 days."); return; }
         const publishedTimes = new Set(item.slots.map((slot) => slot.startsAt));
         if (requestedTimes.some((value) => publishedTimes.has(value))) { setRequestError("That time is already published. Book the available slot instead."); return; }
-        const selectedBuyers = buyers.filter((buyer) => values.buyerIds.includes(buyer.id));
+        const selectedBuyers = allBuyers.filter((buyer) => values.buyerIds.includes(buyer.id));
         try {
             await mutation.mutateAsync({ item, buyers: selectedBuyers, preferredStartsAt: startsAt, preferredEndsAt: new Date(starts + 45 * 60_000).toISOString(), alternates: values.alternates.filter(Boolean).map((value) => { const start = inputValueToUtc(value); return { startsAt: start, endsAt: new Date(new Date(start).getTime() + 45 * 60_000).toISOString() }; }), message: values.message || undefined });
             toast.success("Time request sent");
@@ -103,7 +113,7 @@ export function TimeRequestModal({
                 "><option value="">Choose a property</option>{properties.map((item) => <option key={item.property.id} value={item.property.id}>{item.property.title} · {item.property.locality}</option>)}</select>{form.formState.errors.propertyId ? <span className="
                   body-xs mbs-1 block text-danger
                 ">{form.formState.errors.propertyId.message}</span> : null}</label>
-                <BuyerPicker buyers={buyers} selected={selectedBuyerIds} onChange={(ids) => form.setValue("buyerIds", ids, { shouldValidate: true })} />
+                <BuyerPicker buyers={allBuyers} selected={selectedBuyerIds} onChange={(ids) => form.setValue("buyerIds", ids, { shouldValidate: true })} onBuyerCreated={(buyer) => setCreatedBuyers((current) => [buyer, ...current.filter((item) => item.id !== buyer.id)])} />
                 {form.formState.errors.buyerIds ? <p className="body-xs text-danger">{form.formState.errors.buyerIds.message}</p> : null}
                 <div><label className="body-sm font-bold text-ink">Preferred time<input type="datetime-local" step={900} {...form.register("preferredStartsAt")} className="
                   body-sm mbs-2 block rounded-control border border-border-warm bg-surface px-3
@@ -111,9 +121,9 @@ export function TimeRequestModal({
                   focus:border-brand focus:ring-3 focus:ring-brand/15
                 " /></label>{form.formState.errors.preferredStartsAt ? <p className="
                   body-xs mbs-1 text-danger
-                ">{form.formState.errors.preferredStartsAt.message}</p> : null}{selected ? <p className="
+                ">{form.formState.errors.preferredStartsAt.message}</p> : null}{usualPattern ? <p className="
                   body-xs mbs-2 flex items-center gap-1.5 text-ink-muted
-                "><Clock3 aria-hidden className="block-3.5 inline-3.5" />This owner usually allows 10 AM–7 PM.</p> : null}</div>
+                "><Clock3 aria-hidden className="block-3.5 inline-3.5" />This owner usually allows {usualPattern}.</p> : null}</div>
                 {published.length ? <div className="rounded-inner bg-surface-muted p-3"><p className="
                   body-xs font-semibold text-ink-muted
                 ">Published times that day</p><div className="mbs-2 flex flex-wrap gap-2">{published.map((slot) => <span key={slot.id} className="

@@ -37,7 +37,7 @@ export const PropertyRow = memo(function PropertyRow({
         const grouped = new Map<string, VisitSlot[]>();
         for (const slot of item.slots) {
             if (new Date(slot.startsAt).getTime() < Date.now()) continue;
-            if (hideFull && (slot.status === "full" || slot.bookedCount >= slot.capacity)) continue;
+            if (hideFull && !slot.bookedVisitId && (slot.status === "full" || slot.bookedCount >= slot.capacity)) continue;
             const key = istDateKey(slot.startsAt);
             grouped.set(key, [...(grouped.get(key) ?? []), slot]);
         }
@@ -65,7 +65,7 @@ export const PropertyRow = memo(function PropertyRow({
                     ">{item.matchScore}% match · {(item.matchReasons ?? []).join(" · ")}</p> : null}
                 </div>
                 <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                    <div className="flex items-center gap-2"><UserAvatar name={item.owner.name} size="xs" fallback="initials-color" /><span className="
+                    <div className="flex items-center gap-2"><UserAvatar name={item.owner.name} size="xs" fallback="character" /><span className="
                       body-xs text-ink
                     "><span className="block text-[10px] text-ink-subtle">Owner</span><span className="
                       font-semibold

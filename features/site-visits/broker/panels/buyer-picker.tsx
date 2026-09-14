@@ -18,10 +18,12 @@ export function BuyerPicker({
     buyers,
     selected,
     onChange,
+    onBuyerCreated,
 }: {
     buyers: PersonSummary[];
     selected: string[];
     onChange: (ids: string[]) => void;
+    onBuyerCreated?: (buyer: PersonSummary) => void;
 }) {
     const [query, setQuery] = useState("");
     const [addOpen, setAddOpen] = useState(false);
@@ -50,7 +52,7 @@ export function BuyerPicker({
                     `, checked ? `border-brand bg-brand-soft` : `
                       border-border-warm bg-surface
                       hover:bg-surface-muted
-                    `, !checked && selected.length >= MAX_BUYERS_PER_VISIT && `opacity-55`)}><UserAvatar name={buyer.name} imageUrl={buyer.avatarUrl} size="sm" fallback="initials-color" /><span className="
+                    `, !checked && selected.length >= MAX_BUYERS_PER_VISIT && `opacity-55`)}><UserAvatar name={buyer.name} imageUrl={buyer.avatarUrl} size="sm" fallback="character" /><span className="
                       flex-1 min-inline-0
                     "><span className="body-sm block truncate font-semibold text-ink">{buyer.name}</span><span className="
                       body-xs block truncate text-ink-muted
@@ -62,9 +64,10 @@ export function BuyerPicker({
                     " /> : null}</span></button>;
                 })}
             </div>
-            <AddBuyerModal open={addOpen} onOpenChange={setAddOpen} onCreated={(name) => {
-                const buyer = { id: `buyer_${Date.now()}`, name, requirement: "New buyer · add requirements in Contacts" };
-                setCreated((current) => [buyer, ...current]);
+            <AddBuyerModal open={addOpen} onOpenChange={setAddOpen} onCreated={(name, savedId) => {
+                const buyer = { id: savedId ?? `buyer_${Date.now()}`, name, requirement: "New buyer · add requirements in Contacts" };
+                if (onBuyerCreated) onBuyerCreated(buyer);
+                else setCreated((current) => [buyer, ...current]);
                 onChange([...selected, buyer.id].slice(0, MAX_BUYERS_PER_VISIT));
                 setAddOpen(false);
             }} />

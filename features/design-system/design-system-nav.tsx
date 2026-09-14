@@ -33,6 +33,7 @@ const THEME_LINKS = [
     { href: "/design-system/components/tooltip", label: "Tooltip" },
     { href: "/design-system/components/tabs", label: "Tabs" },
     { href: "/design-system/components/dialog", label: "Dialog" },
+    { href: "/design-system/components/avatar", label: "Avatar" },
 ];
 
 export function DesignSystemNav() {

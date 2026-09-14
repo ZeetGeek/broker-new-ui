@@ -7,18 +7,14 @@ import {
     BEDROOM_OPTIONS,
     FACING_OPTIONS,
     FLOOR_OPTIONS,
-    FLOORING_TYPE_OPTIONS,
     OPEN_SIDE_OPTIONS,
-    OVERLOOKING_OPTIONS,
     PANTRY_TYPE_OPTIONS,
-    POWER_BACKUP_OPTIONS,
     PROPERTY_AGE_OPTIONS,
     PROPERTY_CONDITION_OPTIONS,
     SOIL_TYPE_OPTIONS,
     SUITABLE_FOR_OPTIONS,
     WASHROOM_TYPE_OPTIONS,
     WATER_AVAILABILITY_OPTIONS,
-    WATER_SOURCE_OPTIONS,
     ZONING_TYPE_OPTIONS,
 } from "@/constants/property";
 import {
@@ -98,41 +94,11 @@ export function StepDetails() {
                         options={PROPERTY_CONDITION_OPTIONS}
                     />
                     <CounterField name="details.openParking" label="Open parking" max={10} />
-                    <SelectField
-                        name="details.powerBackup"
-                        label="Power backup"
-                        options={POWER_BACKUP_OPTIONS}
-                    />
                     <NumberField
                         name="details.electricityLoadKva"
                         label="Electricity load (kVA)"
                         step={0.1}
                     />
-                    <SelectField
-                        name="details.flooringType"
-                        label="Flooring"
-                        options={FLOORING_TYPE_OPTIONS}
-                    />
-                </div>
-                <div className="mbs-5 space-y-5">
-                    <MultiChipField
-                        name="details.overlooking"
-                        label="Overlooking"
-                        options={OVERLOOKING_OPTIONS}
-                    />
-                    <MultiChipField
-                        name="details.waterSource"
-                        label="Water source"
-                        options={WATER_SOURCE_OPTIONS}
-                    />
-                    <div className="grid gap-3 sm:grid-cols-3">
-                        <ToggleField name="details.cornerProperty" label="Corner property" />
-                        <ToggleField name="details.vastuCompliant" label="Vastu compliant" />
-                        <ToggleField
-                            name="details.wheelchairFriendly"
-                            label="Wheelchair friendly"
-                        />
-                    </div>
                 </div>
             </WizardSection>
 

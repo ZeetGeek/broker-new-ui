@@ -58,5 +58,6 @@ export function RescheduleModal({ open, visit, propertySlots, onClose, onSave }:
           body-sm rounded-control border border-border-warm bg-surface px-3 text-ink inline-full
           min-block-11
         " /></div>
-    </AppModal>;
+        </AppModal>
+    );
 }

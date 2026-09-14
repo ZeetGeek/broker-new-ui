@@ -73,7 +73,7 @@ export function StepBasics() {
                         label="Category"
                         options={PROPERTY_CATEGORY_OPTIONS}
                         columns={3}
-                        onValueChange={(nextCategory) => {
+                        onValueChange={() => {
                             setValue("basics.propertyType", "", { shouldDirty: true });
                             setValue("basics.propertySubType", "", { shouldDirty: true });
                             setValue(
@@ -86,12 +86,9 @@ export function StepBasics() {
                                 structuredClone(DEFAULT_PROPERTY_DRAFT.details.land),
                                 { shouldDirty: true },
                             );
+                            // Listings are always measured in sq ft, including agricultural land.
                             if (!watch("area.carpetArea") && !watch("area.plotArea")) {
-                                setValue(
-                                    "area.unit",
-                                    nextCategory === "agricultural" ? "bigha" : "sqft",
-                                    { shouldDirty: true },
-                                );
+                                setValue("area.unit", "sqft", { shouldDirty: true });
                             }
                         }}
                     />

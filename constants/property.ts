@@ -161,16 +161,6 @@ export const FACING_OPTIONS = [
     { value: "north_west", label: "North-west" },
 ] as const satisfies readonly PropertyOption[];
 
-export const OVERLOOKING_OPTIONS = [
-    "garden",
-    "main_road",
-    "pool",
-    "club",
-    "lake",
-    "open_land",
-    "other",
-].map((value) => ({ value, label: toLabel(value) }));
-
 export const PROPERTY_AGE_OPTIONS = [
     { value: "new", label: "New" },
     { value: "0_1", label: "Less than 1 year" },
@@ -188,27 +178,6 @@ export const PROPERTY_CONDITION_OPTIONS = [
     { value: "new_launch", label: "New launch" },
 ] as const satisfies readonly PropertyOption[];
 
-export const WATER_SOURCE_OPTIONS = ["municipal", "borewell", "tanker", "24x7_supply"].map(
-    (value) => ({
-        value,
-        label: toLabel(value),
-    }),
-);
-
-export const POWER_BACKUP_OPTIONS = ["none", "partial", "full"].map((value) => ({
-    value,
-    label: toLabel(value),
-}));
-export const FLOORING_TYPE_OPTIONS = [
-    "vitrified",
-    "marble",
-    "granite",
-    "wooden",
-    "ceramic",
-    "mosaic",
-    "cement",
-    "other",
-].map((value) => ({ value, label: toLabel(value) }));
 export const WASHROOM_TYPE_OPTIONS = ["private", "shared", "both"].map((value) => ({
     value,
     label: toLabel(value),
@@ -259,21 +228,18 @@ export const WATER_AVAILABILITY_OPTIONS = [
 ].map((value) => ({ value, label: toLabel(value) }));
 
 export const AREA_UNIT_OPTIONS = [
-    "sqft",
-    "sqyd",
-    "sqm",
-    "acre",
-    "hectare",
-    "bigha",
-    "guntha",
-    "kanal",
-    "marla",
-    "cent",
-    "ground",
-].map((value) => ({
-    value,
-    label: value === "sqft" ? "sq ft" : value === "sqyd" ? "sq yd" : toLabel(value),
-}));
+    { value: "sqft", label: "sq ft" },
+    { value: "sqin", label: "sq in" },
+    { value: "sqyd", label: "sq yd" },
+    { value: "sqmi", label: "sq mi" },
+    { value: "acre", label: "Acre" },
+    { value: "sqmm", label: "sq mm" },
+    { value: "sqcm", label: "sq cm" },
+    { value: "sqm", label: "sq m" },
+    { value: "sqkm", label: "sq km" },
+    { value: "are", label: "Are" },
+    { value: "hectare", label: "Hectare" },
+] as const satisfies readonly PropertyOption[];
 
 export const MAINTENANCE_FREQUENCY_OPTIONS = [
     "monthly",

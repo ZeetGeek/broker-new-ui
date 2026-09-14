@@ -749,6 +749,34 @@ Copy follows `docs/MESSAGES.md`. Destructive confirms use
 `Button variant="destructive"`. Never open a dialog for information the user
 did not ask for.
 
+### 4.17 Avatar
+
+base-ui Avatar, wrapped once in `components/ui/avatar.tsx`. Circular face for
+a person — photo, initials, or a status badge. Not a logo mark, not a property
+thumbnail.
+
+```
+┌────┐
+│ PS │  rounded-full · size-8 default
+└────┘
+```
+
+Compound API: `Avatar` + `AvatarImage` + `AvatarFallback` (+ `AvatarBadge` /
+`AvatarGroup` / `AvatarGroupCount`). Sizes: `sm` 24px, `default` 32px, `lg`
+40px.
+
+Product screens use `UserAvatar` from `components/shared/user-avatar.tsx` —
+photo when present, then `avvvatars-react` placeholders: `shape` (default) or
+`character` (initials). Extra sizes: `xxs` 16px and `xs` 28px for dense
+pipeline rows; product `lg` is 48px for headers. Overlapping faces use
+`AvatarStack` (tooltips + `+N` overflow) or compound `AvatarGroup` for short
+static lists.
+
+Always pass a real name for alt text and fallbacks. Face stays a circle —
+never a rounded square. Do not edit `components/ui/avatar.tsx` for one-offs;
+pass `className` or wrap in `components/shared/`. Only avatar library:
+`avvvatars-react` (no boring-avatars or other generators).
+
 ---
 
 ## 5. Layout

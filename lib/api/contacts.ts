@@ -500,7 +500,7 @@ export const contactsApi = {
             : null;
     },
 
-    async saveBuyer(values: BuyerContactForm, buyerId?: string): Promise<void> {
+    async saveBuyer(values: BuyerContactForm, buyerId?: string): Promise<string | undefined> {
         const firstType = values.propertyTypes[0]?.toLowerCase() ?? "any";
         const propertyKind =
             firstType === "apartment" || firstType === "plot" || firstType === "office"
@@ -551,9 +551,9 @@ export const contactsApi = {
                     ? normalizeIndianPhone(values.phone)
                     : normalizeIndianPhone(values.whatsapp),
             });
-            return;
+            return saved.id;
         }
-        await apiFetch(`/contacts/buyers${buyerId ? `/${buyerId}` : ""}`, {
+        const response = await apiFetch<ApiBuyerItem | { data?: ApiBuyerItem } | undefined>(`/contacts/buyers${buyerId ? `/${buyerId}` : ""}`, {
             method: buyerId ? "PATCH" : "POST",
             body: JSON.stringify({
                 ...values,
@@ -565,6 +565,9 @@ export const contactsApi = {
                 budgetMax: legacy.budgetMaxInr,
             }),
         });
+        if (!response) return buyerId;
+        const item = "data" in response && response.data ? response.data : response as ApiBuyerItem;
+        return item.id ?? buyerId;
     },
 
     async saveOwner(

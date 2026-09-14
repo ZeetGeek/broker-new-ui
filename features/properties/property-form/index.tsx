@@ -71,7 +71,8 @@ import type {
     MyListingPropertyType,
 } from "@/features/properties/your-listings/types";
 
-const LOCAL_DRAFT_VERSION = 1;
+// v2: nearbyPlaces changed from {id,type,name,distanceKm}[] to a plain string[] of place types.
+const LOCAL_DRAFT_VERSION = 2;
 
 const STEP_DESCRIPTIONS: Record<PropertyFormStep, string> = {
     basics: "Choose the deal type and property shape.",

@@ -22,7 +22,7 @@ import { useAppSelector } from "@/store/hooks";
 function VisitParty({ label, name, avatarUrl }: { label: string; name: string; avatarUrl?: string }) {
     return (
         <div className="flex items-center gap-2 min-inline-0">
-            <UserAvatar name={name} imageUrl={avatarUrl} size="xs" fallback="initials-color" className="
+            <UserAvatar name={name} imageUrl={avatarUrl} size="xs" fallback="character" className="
               shrink-0
             " />
             <span className="min-inline-0">

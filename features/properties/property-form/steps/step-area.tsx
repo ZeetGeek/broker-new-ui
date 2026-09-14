@@ -23,21 +23,19 @@ import { AREA_UNIT_OPTIONS } from "@/constants/property";
 import {
     FORM_GRID_CLASS,
     NumberField,
-    SelectField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 
 export function StepArea() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const { derived } = useFieldRules();
-    const state = watch("location.state");
     const unit = watch("area.unit");
     const carpet = watch("area.carpetArea");
     const superBuiltUp = watch("area.superBuiltUpArea");
     const plotArea = watch("area.plotArea");
     const areaSqft = watch("area.areaSqft");
     const [converterValue, setConverterValue] = useState(1);
-    const [converterUnit, setConverterUnit] = useState("bigha");
+    const [converterUnit, setConverterUnit] = useState("sqm");
     const previousUnit = useRef(unit);
     const isPlot = derived.isPlot;
 
@@ -48,15 +46,15 @@ export function StepArea() {
         for (const path of ["carpetArea", "builtUpArea", "superBuiltUpArea", "plotArea"] as const) {
             const current = watch(`area.${path}`);
             if (current == null) continue;
-            setValue(`area.${path}`, convertArea(current, fromUnit, unit, state), {
+            setValue(`area.${path}`, convertArea(current, fromUnit, unit), {
                 shouldDirty: true,
             });
         }
-    }, [setValue, state, unit, watch]);
+    }, [setValue, unit, watch]);
 
     useEffect(() => {
         const source = isPlot ? plotArea : carpet;
-        const nextSqft = areaToSqft(source, unit, state);
+        const nextSqft = areaToSqft(source, unit);
         if (nextSqft > 0 && nextSqft !== areaSqft) {
             setValue("area.areaSqft", nextSqft, { shouldDirty: true, shouldValidate: true });
         } else if (nextSqft === 0 && areaSqft !== 0) {
@@ -70,10 +68,9 @@ export function StepArea() {
         <div className="space-y-8">
             <WizardSection
                 title="Measure once, compare everywhere"
-                description="The chosen unit stays on the listing; a normalised sq ft value powers filters."
+                description="Enter areas in sq ft. The same unit powers listing filters."
             >
                 <div className={FORM_GRID_CLASS}>
-                    <SelectField name="area.unit" label="Area unit" options={AREA_UNIT_OPTIONS} />
                     <NumberField name="area.plotArea" label="Plot area" step={0.01} />
                     <NumberField
                         name="area.carpetArea"

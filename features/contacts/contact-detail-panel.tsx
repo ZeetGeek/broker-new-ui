@@ -388,7 +388,7 @@ function PanelHeader({
             <UserAvatar
                 name={name}
                 size="lg"
-                fallback="initials-color"
+                fallback="character"
                 className="shrink-0 rounded-[16px]"
             />
             <div className="flex-1 min-inline-0">

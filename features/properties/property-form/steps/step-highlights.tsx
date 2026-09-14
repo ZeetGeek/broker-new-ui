@@ -39,9 +39,6 @@ export function StepHighlights() {
     const schedule = values.construction.paymentSchedule;
     const visitSlots = values.availability.visitTimeSlots;
     const suggestions = [
-        values.details.cornerProperty ? "Corner property" : null,
-        values.details.vastuCompliant ? "Vastu compliant" : null,
-        values.details.overlooking.includes("garden") ? "Garden facing" : null,
         values.details.coveredParking ? "Covered parking" : null,
         values.location.landmark ? `Near ${values.location.landmark}`.slice(0, 40) : null,
         values.furnishing.status === "fully_furnished" ? "Fully furnished" : null,

@@ -175,7 +175,7 @@ This is where reuse actually pays on this platform. Each of these exists
 | `<PropertyCard>`        | One card used by browse, my-properties, and the owner list. Three cards means three photo-loading strategies and three inconsistent layouts.                                      |
 | `<AppImage>`            | The only raster image primitive. Wraps `next/image` with lazy loading, responsive output, shared quality/placeholder policy, and fallback handling.                               |
 | `<EmptyState>`          | Every empty screen must teach the next action. One component, one shape: icon, headline, action.                                                                                  |
-| `<UserAvatar>`          | Photo, initials fallback, verified badge.                                                                                                                                         |
+| `<UserAvatar>`          | Photo or avvvatars-react shape/character fallback.                                                                                                                                |
 | `<VerifiedBadge>`       | The trust signal on the approve screen. Its meaning must never drift.                                                                                                             |
 | `<LoadingSkeleton>`     | Per-shape skeletons. No blank white flashes.                                                                                                                                      |
 

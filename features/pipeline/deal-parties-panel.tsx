@@ -16,7 +16,7 @@ function PartyRow({ party, role }: { party: Party; role: string }) {
                 name={party.name}
                 imageUrl={party.avatarUrl}
                 size="xs"
-                fallback="initials-color"
+                fallback="character"
                 className="shrink-0"
             />
             <span className="body-sm truncate font-semibold text-ink">{party.name}</span>
@@ -61,7 +61,7 @@ export function DealPartiesPanel({
                         name={assignedAgent.name}
                         imageUrl={assignedAgent.avatarUrl}
                         size="xxs"
-                        fallback="initials-color"
+                        fallback="character"
                     />
                     <span className="body-xs truncate font-medium text-ink-muted">
                         {assignedAgent.name}

@@ -23,7 +23,7 @@ const VisitDetailMap = dynamic(() => import("@/features/site-visits/broker/panel
 
 function ContactBlock({ label, person, message }: { label: string; person: BrokerSiteVisit["owner"]; message: string }) {
     const whatsapp = person.phoneDigits ? `https://wa.me/91${person.phoneDigits}?text=${encodeURIComponent(message)}` : undefined;
-    return <div className="flex items-center gap-3 rounded-inner bg-surface-muted p-3"><UserAvatar name={person.name} imageUrl={person.avatarUrl} size="md" fallback="initials-color" /><div className="
+    return <div className="flex items-center gap-3 rounded-inner bg-surface-muted p-3"><UserAvatar name={person.name} imageUrl={person.avatarUrl} size="md" fallback="character" /><div className="
       flex-1 min-inline-0
     "><p className="text-[10px] text-ink-subtle">{label}</p><p className="
       body-sm truncate font-bold text-ink

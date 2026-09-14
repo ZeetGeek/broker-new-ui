@@ -47,13 +47,6 @@ const basicsSchema = z
         }
     });
 
-const nearbyPlaceSchema = z.object({
-    id: z.string(),
-    type: z.string(),
-    name: z.string(),
-    distanceKm: optionalNumber,
-});
-
 const locationSchema = z
     .object({
         country: z.string().min(1),
@@ -68,7 +61,7 @@ const locationSchema = z
         pincode: z.string().regex(/^[1-9]\d{5}$/, "Enter a valid 6 digit pincode"),
         fullAddress: optionalText,
         landmark: z.string().trim().min(1, "Add a nearby landmark"),
-        nearbyPlaces: z.array(nearbyPlaceSchema),
+        nearbyPlaces: stringArray,
         lat: z.number().finite().min(-90).max(90).nullable(),
         lng: z.number().finite().min(-180).max(180).nullable(),
         mapPinPlaced: z.boolean(),
@@ -126,19 +119,12 @@ const detailsSchema = z
         floorNumber: optionalText,
         totalFloors: optionalNumber,
         facing: optionalText,
-        overlooking: stringArray,
-        cornerProperty: z.boolean(),
         roadWidthFt: optionalNumber,
         propertyAge: optionalText,
         propertyCondition: optionalText,
         coveredParking: optionalNumber,
         openParking: optionalNumber,
-        waterSource: stringArray,
-        powerBackup: optionalText,
         electricityLoadKva: optionalNumber,
-        vastuCompliant: z.boolean(),
-        wheelchairFriendly: z.boolean(),
-        flooringType: optionalText,
         commercial: commercialDetailsSchema,
         land: landDetailsSchema,
     })
@@ -738,19 +724,12 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         floorNumber: "",
         totalFloors: null,
         facing: "",
-        overlooking: [],
-        cornerProperty: false,
         roadWidthFt: null,
         propertyAge: "",
         propertyCondition: "",
         coveredParking: null,
         openParking: null,
-        waterSource: [],
-        powerBackup: "",
         electricityLoadKva: null,
-        vastuCompliant: false,
-        wheelchairFriendly: false,
-        flooringType: "",
         commercial: {
             cabins: null,
             meetingRooms: null,

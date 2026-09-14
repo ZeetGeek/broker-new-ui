@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import BoringAvatar from "boring-avatars";
+import Avvvatars from "avvvatars-react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { normalizeAvatarUrl } from "@/lib/auth/avatar";
@@ -30,49 +30,32 @@ const avatarVariants = cva("relative block overflow-hidden rounded-full", {
 
 const avatarMediaClass = "block-full inline-full object-cover object-center";
 
-const avatarSizes = {
+const avatarImageSizes = {
     xxs: "16px",
     xs: "28px",
     sm: "32px",
-    md: "40px",
+    md: "36px",
     lg: "48px",
     fill: "(max-width: 768px) 40px, 48px",
 } as const;
 
+/** Pixel sizes passed to avvvatars-react (it needs a number, not CSS). */
+const avvatarPixelSizes = {
+    xxs: 16,
+    xs: 28,
+    sm: 32,
+    md: 36,
+    lg: 48,
+    /** Parent sets the box; we paint at 80 and stretch to fill. */
+    fill: 80,
+} as const;
+
 /**
- * boring-avatars renders a raw <svg>, where `object-cover` does nothing. It needs
- * explicit 100% sizing plus a slice aspect ratio to fill the round frame.
+ * avvvatars paints a fixed-size wrapper. Force it to fill our round frame when
+ * the parent uses `size="fill"` or a one-off className size.
  */
-const avatarSvgClass = "block-full! inline-full!";
-
-/** Palette handed to boring-avatars; it picks deterministically from `name`. */
-const avatarPalette = ["#F97316", "#FACC15", "#0F172A", "#38BDF8", "#F43F5E"];
-
-/**
- * Muted, low-saturation pairs for the `initials-color` fallback — a stable
- * per-person identity colour (pipeline buyer/owner rows) rather than a brand
- * colour, so it deliberately sits outside the one-hue brand palette the same
- * way `avatarPalette` above already does for the marble fallback.
- */
-const mutedInitialsPalette = [
-    { bg: "#E4E1F5", text: "#423F82" }, // violet
-    { bg: "#E3EEE9", text: "#285C48" }, // teal-green
-    { bg: "#F3E5D8", text: "#7A4E22" }, // terracotta
-    { bg: "#E6EAF2", text: "#34496B" }, // denim
-    { bg: "#F1E3E8", text: "#7C4055" }, // rose
-    { bg: "#EDEAD9", text: "#5C5C2E" }, // olive
-    { bg: "#E0ECEF", text: "#2F5F6C" }, // slate-teal
-    { bg: "#EFE3E3", text: "#7A4438" }, // brick
-] as const;
-
-function mutedColorFromName(name: string): { bg: string; text: string } {
-    const key = name.trim().toLowerCase();
-    let hash = 0;
-    for (let i = 0; i < key.length; i++) {
-        hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-    }
-    return mutedInitialsPalette[hash % mutedInitialsPalette.length];
-}
+const avvatarFillClass =
+    "[&>div]:block-full! [&>div]:inline-full! [&>div]:max-w-none! [&>div]:rounded-full!";
 
 function initialsFromName(name: string): string {
     const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -83,18 +66,18 @@ function initialsFromName(name: string): string {
     return `${first}${last}`.toUpperCase();
 }
 
+export type UserAvatarFallback = "shape" | "character";
+
 export type UserAvatarProps = VariantProps<typeof avatarVariants> & {
     name: string;
     imageUrl?: string;
     className?: string;
     /**
-     * Initials for pipeline cards; marble stays the default elsewhere.
-     * `initials-color` is the same initials glyph on a stable, muted,
-     * per-name background — for rows where several different people
-     * (buyer, owner, teammate) appear together and need to stay visually
-     * distinct without resorting to random gradients.
+     * No-photo placeholder from `avvvatars-react`.
+     * `shape` — unique abstract shape (product default).
+     * `character` — initials; use in dense multi-person rows.
      */
-    fallback?: "marble" | "initials" | "initials-color";
+    fallback?: UserAvatarFallback;
 };
 
 export function UserAvatar({
@@ -102,13 +85,17 @@ export function UserAvatar({
     imageUrl,
     size,
     className,
-    fallback = "marble",
+    fallback = "shape",
 }: UserAvatarProps) {
     const resolvedImageUrl = normalizeAvatarUrl(imageUrl);
     // Track the URL that failed, not a flag, so a new src retries without an effect.
     const [failedImageUrl, setFailedImageUrl] = useState<string>();
 
+    const resolvedSize = size ?? "md";
     const showPhoto = Boolean(resolvedImageUrl) && resolvedImageUrl !== failedImageUrl;
+    const initials = initialsFromName(name);
+    const displayValue =
+        resolvedSize === "xxs" ? initials.slice(0, 1) : initials;
 
     return (
         <span className={cn(avatarVariants({ size }), className)}>
@@ -117,53 +104,23 @@ export function UserAvatar({
                     src={resolvedImageUrl}
                     alt={name}
                     fill
-                    sizes={avatarSizes[size ?? "md"]}
+                    sizes={avatarImageSizes[resolvedSize]}
                     quality={75}
                     unoptimized={!resolvedImageUrl.includes("googleusercontent.com")}
                     fallbackSrc={null}
                     className={avatarMediaClass}
                     onError={() => setFailedImageUrl(resolvedImageUrl)}
                 />
-            ) : fallback === "initials" ? (
-                <span
-                    aria-hidden
-                    className="
-                      body-xs flex items-center justify-center bg-brand-soft font-semibold
-                      text-brand-text block-full inline-full
-                    "
-                >
-                    {initialsFromName(name)}
-                </span>
-            ) : fallback === "initials-color" ? (
-                (() => {
-                    const { bg, text } = mutedColorFromName(name);
-                    const glyph =
-                        size === "xxs"
-                            ? initialsFromName(name).slice(0, 1)
-                            : initialsFromName(name);
-                    return (
-                        <span
-                            aria-hidden
-                            style={{ backgroundColor: bg, color: text }}
-                            className="
-                              body-xs flex items-center justify-center font-semibold block-full
-                              inline-full
-                            "
-                        >
-                            {glyph}
-                        </span>
-                    );
-                })()
             ) : (
-                <BoringAvatar
-                    name={name}
-                    variant="marble"
-                    colors={avatarPalette}
-                    square
-                    size="100%"
-                    preserveAspectRatio="xMidYMid slice"
-                    className={avatarSvgClass}
-                />
+                <span aria-hidden className={cn("block-full inline-full", avvatarFillClass)}>
+                    <Avvvatars
+                        value={name}
+                        displayValue={fallback === "character" ? displayValue : undefined}
+                        style={fallback === "character" ? "character" : "shape"}
+                        size={avvatarPixelSizes[resolvedSize]}
+                        shadow={false}
+                    />
+                </span>
             )}
         </span>
     );

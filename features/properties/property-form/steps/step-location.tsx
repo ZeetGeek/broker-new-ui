@@ -4,9 +4,8 @@ import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { Crosshair, MapPin, Plus, Trash2 } from "lucide-react";
+import { Crosshair, MapPin } from "lucide-react";
 
-import { createClientId } from "@/lib/client-id";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 
 import { ConditionalField } from "@/components/property/fields/conditional-field";
@@ -20,6 +19,7 @@ import {
 } from "@/constants/property";
 import {
     FORM_GRID_CLASS,
+    MultiChipField,
     NumberField,
     SelectField,
     TextAreaField,
@@ -34,7 +34,6 @@ export function StepLocation() {
         formState: { errors },
     } = useFormContext<PropertyDraftValues>();
     const pincode = watch("location.pincode");
-    const nearbyPlaces = watch("location.nearbyPlaces");
     const lat = watch("location.lat");
     const lng = watch("location.lng");
 
@@ -78,17 +77,6 @@ export function StepLocation() {
             shouldValidate: true,
         });
         toast.success("Map pin confirmed.");
-    }
-
-    function addNearbyPlace() {
-        setValue(
-            "location.nearbyPlaces",
-            [
-                ...nearbyPlaces,
-                { id: createClientId("nearby"), type: "school", name: "", distanceKm: null },
-            ],
-            { shouldDirty: true },
-        );
     }
 
     return (
@@ -259,63 +247,13 @@ export function StepLocation() {
             <ConditionalField path="location.nearbyPlaces">
                 <WizardSection
                     title={<FieldLabel path="location.nearbyPlaces">Nearby places</FieldLabel>}
-                    description="Add useful places and the distance from the property."
+                    description="Pick the useful places close to this property."
                 >
-                    <div className="space-y-3">
-                        {nearbyPlaces.map((place, index) => (
-                            <div
-                                key={place.id}
-                                className="
-                                  grid items-end gap-3 rounded-control border border-border-warm
-                                  bg-surface p-3
-                                  md:grid-cols-[0.8fr_1.3fr_0.6fr_auto]
-                                "
-                            >
-                                <SelectField
-                                    name={`location.nearbyPlaces.${index}.type`}
-                                    label="Place type"
-                                    options={NEARBY_PLACE_TYPE_OPTIONS}
-                                />
-                                <TextField
-                                    name={`location.nearbyPlaces.${index}.name`}
-                                    label="Name"
-                                    placeholder="e.g. Fountainhead School"
-                                />
-                                <NumberField
-                                    name={`location.nearbyPlaces.${index}.distanceKm`}
-                                    label="Distance (km)"
-                                    step={0.1}
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon-lg"
-                                    aria-label="Remove nearby place"
-                                    onClick={() =>
-                                        setValue(
-                                            "location.nearbyPlaces",
-                                            nearbyPlaces.filter(
-                                                (_, itemIndex) => itemIndex !== index,
-                                            ),
-                                            { shouldDirty: true },
-                                        )
-                                    }
-                                    className="
-                                      flex items-center justify-center rounded-control border
-                                      border-border-warm text-danger block-12 inline-12
-                                      hover:bg-danger-soft
-                                      focus-visible:ring-3 focus-visible:ring-danger/20
-                                    "
-                                >
-                                    <Trash2 className="block-4 inline-4" aria-hidden />
-                                </Button>
-                            </div>
-                        ))}
-                        <Button type="button" variant="outline" size="md" onClick={addNearbyPlace}>
-                            <Plus aria-hidden />
-                            Add nearby place
-                        </Button>
-                    </div>
+                    <MultiChipField
+                        name="location.nearbyPlaces"
+                        label="What is nearby?"
+                        options={NEARBY_PLACE_TYPE_OPTIONS}
+                    />
                 </WizardSection>
             </ConditionalField>
         </div>

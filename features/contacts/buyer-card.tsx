@@ -108,7 +108,7 @@ export function BuyerCard({
                     <UserAvatar
                         name={buyer.name}
                         size="md"
-                        fallback="initials-color"
+                        fallback="character"
                         className="shrink-0 rounded-[12px]"
                     />
                     <div className="min-inline-0">
