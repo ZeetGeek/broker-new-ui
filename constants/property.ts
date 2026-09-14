@@ -7,8 +7,6 @@ export type PropertyOption<T extends string = string> = {
 export const LISTING_FOR_OPTIONS = [
     { value: "sell", label: "Sell", description: "Find a buyer" },
     { value: "rent", label: "Rent", description: "Find a tenant" },
-    { value: "lease", label: "Lease", description: "Long-term tenancy" },
-    { value: "pg", label: "PG", description: "Price by bed" },
 ] as const satisfies readonly PropertyOption[];
 
 export const PROPERTY_CATEGORY_OPTIONS = [

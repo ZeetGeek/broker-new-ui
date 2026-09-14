@@ -481,6 +481,101 @@
     }
 }
 
+/* Surface tabs — same 16-tabs-sliding motion, muted track + white pill. */
+.t-tabs-surface {
+    --tabs-bar-bg: var(--color-surface-muted);
+    --tabs-pill-bg: var(--color-surface);
+    --tabs-text-muted: var(--color-ink-muted);
+    --tabs-text-active: var(--color-ink);
+    gap: 4px;
+    padding: 4px;
+}
+
+.t-tabs-surface .t-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    padding: 6px 14px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    outline: none;
+}
+
+.t-tabs-surface .t-tab:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-brand) 25%, transparent);
+}
+
+.t-tabs-surface .t-tabs-pill {
+    top: 4px;
+    height: 36px;
+    border: 1px solid var(--color-border-warm);
+    box-shadow: var(--shadow-sm);
+    box-sizing: border-box;
+}
+
+.t-tabs-surface.t-tabs-stretch {
+    display: flex;
+    width: 100%;
+}
+
+.t-tabs-surface.t-tabs-stretch .t-tab {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.t-tabs-surface.t-tabs-vertical {
+    flex-direction: column;
+    align-items: stretch;
+    width: 10rem;
+}
+
+.t-tabs-surface.t-tabs-vertical .t-tab {
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.t-tabs-surface.t-tabs-vertical .t-tabs-pill {
+    top: 0;
+    left: 4px;
+    width: calc(100% - 8px);
+    height: 0;
+    transform: translateY(0);
+    transition:
+        transform var(--tabs-dur) var(--tabs-ease),
+        height var(--tabs-dur) var(--tabs-ease);
+}
+
+.t-tabs-panel {
+    animation: t-tabs-panel-in var(--duration-fast) var(--ease-smooth-out) both;
+}
+
+@keyframes t-tabs-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(var(--page-slide-distance));
+        filter: blur(var(--icon-swap-blur));
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-tabs-surface .t-tabs-pill,
+    .t-tabs-surface .t-tab {
+        transition: none !important;
+    }
+
+    .t-tabs-panel {
+        animation: none !important;
+    }
+}
+
 /* Nav uses aria-current="page" instead of aria-selected. */
 .t-tab[aria-current="page"] {
     color: var(--tabs-text-active);

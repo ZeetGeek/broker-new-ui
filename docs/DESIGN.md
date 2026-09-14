@@ -702,20 +702,22 @@ chrome — not binary form choices (those are `TextSegmentedToggle` /
 
 ```
 ┌─────────────────────────────┐
-│ [ Full details ] Quick add  │  surface-muted track · surface active pill
+│ [ Full details ] Quick add  │  surface-muted track · sliding surface pill
 └─────────────────────────────┘
 ```
 
-Compound API: `Tabs` + `TabsList` + `TabsTrigger` (+ `TabsContent` when a panel
-is needed). Default list is a pill track: `bg-surface-muted`,
-`rounded-control`, active trigger `bg-surface` + `shadow-sm`. Line variant uses
-an underline indicator for quieter chrome.
+Compound API for product screens can still use base-ui `Tabs` + `TabsList` +
+`TabsTrigger` (+ `TabsContent`). The design-system reference motion is
+**transitions.dev 16-tabs-sliding**: `.t-tabs` / `.t-tabs-surface` /
+`.t-tabs-pill` in `app/transitions-dev.css`. JS measures the active tab;
+CSS tweens `transform` + `width` (or `height` when vertical) with
+`--tabs-dur` / `--ease-smooth-out`.
 
-Sliding filter bars (design-system nav, notification filters) use `.t-tabs` /
-`.t-tabs-pill` in `app/transitions-dev.css` — JS measures the active tab;
-CSS tweens width and translate. Prefer two or three tabs. Stage rows on mobile
-scroll horizontally with count badges; they do not compress into a crowded bar.
-Minimum tap target 44px.
+**One visual style:** `surface-muted` track; active pill is `surface` +
+`border-border-warm` + `shadow-sm` + `ink` text. No brand / brand-soft fill on
+the pill. Panel swaps use `.t-tabs-panel` (soft rise + fade). Prefer two or
+three tabs. Stage rows on mobile scroll horizontally with count badges.
+Minimum tap target 44px. `prefers-reduced-motion` snaps with no tween.
 
 ---
 
