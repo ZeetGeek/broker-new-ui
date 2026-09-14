@@ -694,6 +694,29 @@ hints use `ShortcutTooltip` from `components/shared/shortcut-tooltip.tsx` (or
 `docs/SHORTCUTS.md`. Prefer a visible label on mobile — tooltips assist
 desktop, they do not replace affordance.
 
+### 4.15 Tabs
+
+base-ui Tabs, wrapped once in `components/ui/tabs.tsx`. Peer views and section
+chrome — not binary form choices (those are `TextSegmentedToggle` /
+`IconSegmentedToggle`).
+
+```
+┌─────────────────────────────┐
+│ [ Full details ] Quick add  │  surface-muted track · surface active pill
+└─────────────────────────────┘
+```
+
+Compound API: `Tabs` + `TabsList` + `TabsTrigger` (+ `TabsContent` when a panel
+is needed). Default list is a pill track: `bg-surface-muted`,
+`rounded-control`, active trigger `bg-surface` + `shadow-sm`. Line variant uses
+an underline indicator for quieter chrome.
+
+Sliding filter bars (design-system nav, notification filters) use `.t-tabs` /
+`.t-tabs-pill` in `app/transitions-dev.css` — JS measures the active tab;
+CSS tweens width and translate. Prefer two or three tabs. Stage rows on mobile
+scroll horizontally with count badges; they do not compress into a crowded bar.
+Minimum tap target 44px.
+
 ---
 
 ## 5. Layout
