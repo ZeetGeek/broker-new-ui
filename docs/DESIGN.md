@@ -667,6 +667,33 @@ required choice is empty — not on every item. Circle geometry stays
 `rounded-full`; never restyle a radio into a checkbox look. Multi-select is
 Checkbox; binary on/off is Switch.
 
+### 4.14 Tooltip
+
+base-ui Tooltip, wrapped once in `components/ui/tooltip.tsx`. Short
+hover/focus hint for icon-only controls and truncated labels — never the only
+label for a primary action.
+
+```
+┌────┐
+│ 🔔 │ ← hover/focus
+└────┘
+   ▼
+┌──────────────────────────┐
+│ Send the owner a reminder│  body-xs · border-warm · shadow-sm
+└──────────────────────────┘
+```
+
+Compound API: optional `TooltipProvider` on a tree, then `Tooltip` +
+`TooltipTrigger` + `TooltipContent`. Default side is `top` with an 8px gap;
+open delay 80ms (intent), close immediate. Motion is `.t-tooltip` in
+`app/transitions-dev.css` — fade + scale, faster on leave.
+
+Copy stays short and plain (no full stop on a fragment). Keyboard shortcut
+hints use `ShortcutTooltip` from `components/shared/shortcut-tooltip.tsx` (or
+`Kbd` / `KbdGroup` inside content) so keys match the registry in
+`docs/SHORTCUTS.md`. Prefer a visible label on mobile — tooltips assist
+desktop, they do not replace affordance.
+
 ---
 
 ## 5. Layout

@@ -30,6 +30,7 @@ const THEME_LINKS = [
     { href: "/design-system/components/select", label: "Select" },
     { href: "/design-system/components/switch", label: "Switch" },
     { href: "/design-system/components/radio", label: "Radio" },
+    { href: "/design-system/components/tooltip", label: "Tooltip" },
 ];
 
 export function DesignSystemNav() {
