@@ -194,42 +194,14 @@ const saleSchema = z
             .max(100_000_000_000, "Enter a valid price")
             .nullable(),
         pricePerSqft: optionalNumber,
-        priceNegotiable: z.boolean(),
-        allInclusivePrice: z.boolean(),
-        ownerMinimumPrice: optionalNumber,
-        tokenAmount: optionalNumber,
         maintenanceCharge: optionalNumber,
         maintenanceFrequency: z.string(),
-        stampDutyIncluded: z.boolean(),
-        registrationIncluded: z.boolean(),
         gstOnProperty: z.boolean(),
         gstOnPropertyPercent: optionalNumber,
         parkingCharge: optionalNumber,
-        clubMembershipCharge: optionalNumber,
         plcCharge: optionalNumber,
         floorRiseCharge: optionalNumber,
-        corpusFund: optionalNumber,
-        legalCharge: optionalNumber,
         otherCharges: z.array(chargeSchema),
-        priceOnRequest: z.boolean(),
-        loanAvailable: z.boolean(),
-        approvedBanks: stringArray,
-        existingLoanOnProperty: z.boolean(),
-        existingLoanBank: optionalText,
-        existingLoanOutstanding: optionalNumber,
-    })
-    .superRefine((value, context) => {
-        if (
-            value.expectedPrice != null &&
-            value.ownerMinimumPrice != null &&
-            value.ownerMinimumPrice > value.expectedPrice
-        ) {
-            context.addIssue({
-                code: "custom",
-                path: ["ownerMinimumPrice"],
-                message: "Minimum price cannot be more than the asking price",
-            });
-        }
     });
 
 const rentSchema = z
@@ -372,17 +344,6 @@ const commissionStepSchema = z
         deal: dealSchema,
     })
     .superRefine((value, context) => {
-        const total = value.commission.sale.paymentMilestones.reduce(
-            (sum, item) => sum + item.percent,
-            0,
-        );
-        if (value.basics.listingFor === "sell" && Math.abs(total - 100) > 0.01) {
-            context.addIssue({
-                code: "custom",
-                path: ["commission", "sale", "paymentMilestones"],
-                message: "Milestones must add up to 100%",
-            });
-        }
         if (value.basics.listingFor === "sell") {
             const sale = value.commission.sale;
             if (sale.mode === "per_sqft" && value.area.areaSqft <= 0) {
@@ -774,29 +735,14 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
     sale: {
         expectedPrice: null,
         pricePerSqft: null,
-        priceNegotiable: true,
-        allInclusivePrice: false,
-        ownerMinimumPrice: null,
-        tokenAmount: null,
         maintenanceCharge: null,
         maintenanceFrequency: "monthly",
-        stampDutyIncluded: false,
-        registrationIncluded: false,
         gstOnProperty: false,
         gstOnPropertyPercent: null,
         parkingCharge: null,
-        clubMembershipCharge: null,
         plcCharge: null,
         floorRiseCharge: null,
-        corpusFund: null,
-        legalCharge: null,
         otherCharges: [],
-        priceOnRequest: false,
-        loanAvailable: false,
-        approvedBanks: [],
-        existingLoanOnProperty: false,
-        existingLoanBank: "",
-        existingLoanOutstanding: null,
     },
     rent: {
         monthlyRent: null,

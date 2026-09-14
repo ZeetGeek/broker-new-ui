@@ -34,6 +34,7 @@ const THEME_LINKS = [
     { href: "/design-system/components/tabs", label: "Tabs" },
     { href: "/design-system/components/dialog", label: "Dialog" },
     { href: "/design-system/components/avatar", label: "Avatar" },
+    { href: "/design-system/components/badge", label: "Badges" },
 ];
 
 export function DesignSystemNav() {

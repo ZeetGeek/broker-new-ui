@@ -37,17 +37,14 @@ export function LiveSummaryPanel({
             .reduce((sum, charge) => sum + (charge.amount ?? 0), 0) +
         [
             values.sale.parkingCharge,
-            values.sale.clubMembershipCharge,
             values.sale.plcCharge,
             values.sale.floorRiseCharge,
-            values.sale.corpusFund,
-            values.sale.legalCharge,
         ].reduce<number>((sum, amount) => sum + (amount ?? 0), 0);
     const deposit = resolveDeposit(values);
     const result = useMemo(() => {
         if (isSale) {
             return calculateSaleCommission({
-                salePrice: values.sale.expectedPrice ?? values.sale.ownerMinimumPrice ?? 0,
+                salePrice: values.sale.expectedPrice ?? 0,
                 areaSqft: values.area.areaSqft,
                 mode: values.commission.sale.mode,
                 value: values.commission.sale.value,

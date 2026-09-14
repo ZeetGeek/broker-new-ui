@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 
 import {
     AGREEMENT_DURATION_OPTIONS,
-    BANK_OPTIONS,
     CURRENT_STATUS_OPTIONS,
     ELECTRICITY_BILLING_OPTIONS,
     HOUSEKEEPING_OPTIONS,
@@ -40,11 +39,8 @@ import {
 
 const SELL_EXTRA_CHARGES = [
     ["sale.parkingCharge", "Parking charge"],
-    ["sale.clubMembershipCharge", "Club membership"],
     ["sale.plcCharge", "Preferred location charge"],
     ["sale.floorRiseCharge", "Floor-rise charge"],
-    ["sale.corpusFund", "Corpus fund"],
-    ["sale.legalCharge", "Legal charge"],
 ] as const;
 
 export function StepPricing() {
@@ -94,13 +90,6 @@ export function StepPricing() {
                             label="Price per sq ft"
                             onValueChange={setPricePerSqft}
                         />
-                        <CurrencyField
-                            name="sale.ownerMinimumPrice"
-                            label="Owner's minimum price"
-                            visibility="private"
-                            hint="The lowest amount the owner will accept."
-                        />
-                        <CurrencyField name="sale.tokenAmount" label="Token amount" />
                     </div>
                     <div
                         className="
@@ -113,22 +102,7 @@ export function StepPricing() {
                         <PriceFact label="Per sq ft" value={formatInr(values.sale.pricePerSqft)} />
                         <PriceFact
                             label="All-in price"
-                            value={formatInrCompact(
-                                values.sale.allInclusivePrice ? expectedPrice : allInPrice,
-                            )}
-                        />
-                    </div>
-                    <div className="mbs-5 grid gap-3 sm:grid-cols-3">
-                        <ToggleField name="sale.priceNegotiable" label="Price negotiable" />
-                        <ToggleField
-                            name="sale.priceOnRequest"
-                            label="Price on request"
-                            description="Hide the amount on the public listing."
-                        />
-                        <ToggleField
-                            name="sale.allInclusivePrice"
-                            label="All-inclusive price"
-                            description="Extra charges are already included."
+                            value={formatInrCompact(allInPrice)}
                         />
                     </div>
                 </WizardSection>
@@ -152,19 +126,11 @@ export function StepPricing() {
                                 <CurrencyField key={name} name={name} label={label} />
                             ))}
                         </div>
-                        <div className="mbs-5 grid gap-3 sm:grid-cols-3">
-                            <ToggleField
-                                name="sale.stampDutyIncluded"
-                                label="Stamp duty included"
-                            />
-                            <ToggleField
-                                name="sale.registrationIncluded"
-                                label="Registration included"
-                            />
-                            {isVisible("sale.gstOnProperty") ? (
+                        {isVisible("sale.gstOnProperty") ? (
+                            <div className="mbs-5 grid gap-3 sm:grid-cols-3">
                                 <ToggleField name="sale.gstOnProperty" label="GST on property" />
-                            ) : null}
-                        </div>
+                            </div>
+                        ) : null}
                         {isVisible("sale.gstOnPropertyPercent") ? (
                             <div className="mbs-5 max-inline-xs">
                                 <NumberField
@@ -251,43 +217,6 @@ export function StepPricing() {
                     </WizardSection>
                 ) : null}
 
-                <WizardSection
-                    title="Loan details"
-                    description="Public loan availability and private liabilities stay separate."
-                >
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        <ToggleField name="sale.loanAvailable" label="Buyer loan available" />
-                        <ToggleField
-                            name="sale.existingLoanOnProperty"
-                            label="Existing loan on property"
-                            visibility="private"
-                        />
-                    </div>
-                    {isVisible("sale.approvedBanks") ? (
-                        <div className="mbs-5">
-                            <MultiChipField
-                                name="sale.approvedBanks"
-                                label="Approved banks"
-                                options={BANK_OPTIONS}
-                            />
-                        </div>
-                    ) : null}
-                    {isVisible("sale.existingLoanBank") ? (
-                        <div className={`mbs-5 ${FORM_GRID_CLASS}`}>
-                            <SelectField
-                                name="sale.existingLoanBank"
-                                label="Loan bank"
-                                options={BANK_OPTIONS}
-                                visibility="private"
-                            />
-                            <CurrencyField
-                                name="sale.existingLoanOutstanding"
-                                label="Outstanding amount"
-                                visibility="private"
-                            />
-                        </div>
-                    ) : null}
-                </WizardSection>
             </div>
         );
     }

@@ -48,8 +48,6 @@ export const PRIVATE_FIELD_PREFIXES = [
     "location.unitNumber",
     "location.fullAddress",
     "location.mapZoomHint",
-    "sale.ownerMinimumPrice",
-    "sale.existingLoan",
     "rent.ownerMinimumRent",
     "rent.tenantVacatingOn",
     "commission",

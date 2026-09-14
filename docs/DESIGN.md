@@ -300,7 +300,7 @@ touch affordance without making every surface look soft or capsule-shaped.
 --radius-control 12px   buttons, inputs, selects, tabs, segmented controls
 ```
 
-Badges use `rounded-md` (9px). Checkboxes use `rounded-sm` (6px). Controls use
+Badges use `rounded-lg` (12px). Checkboxes use `rounded-sm` (6px). Controls use
 `rounded-control` (12px); cards and overlays use `rounded-card` (16px). `rounded-full`
 is reserved for genuinely circular geometry such as avatars, radio indicators, status
 dots, and switch thumbs. It is not the default for buttons, badges, filters, or tabs.
@@ -404,17 +404,21 @@ label with the spinner alone.
 
 ### 4.4 Badges and chips
 
-Soft background plus the matching dark text from the same family. Never white text
-on a soft fill, never `ink` on a coloured fill.
+Soft top→bottom fill gradient (`surface` → tint) plus a vertical gradient border
+(tint mid → lighter), and a soft colour-tinted drop shadow. Never white text on a
+soft fill, never `ink` on a coloured fill.
 
-| Meaning                    | Background      | Text         |
-| -------------------------- | --------------- | ------------ |
-| Verified, approved, active | `brand-soft`    | `brand-text` |
-| Expiring, overdue, due now | `urgent-soft`   | `urgent`     |
-| Rejected, inactive         | `danger-soft`   | `danger`     |
-| Neutral status, filters    | `surface-muted` | `ink-muted`  |
+| Meaning                    | Fill to           | Text         |
+| -------------------------- | ----------------- | ------------ |
+| Verified, approved, active | `brand-soft`      | `brand-text` |
+| Expiring, overdue, due now | `urgent-soft`     | `urgent`     |
+| Rejected, inactive         | `danger-soft`     | `danger`     |
+| Neutral status             | `surface-muted`   | `ink`        |
+| Filters, tags (outline)    | `surface`         | `ink-muted`  |
 
-12px, weight 500, `4px 10px` padding, 9px radius.
+12px, weight 600, `4px 12px` padding, `rounded-lg` (12px) — soft corners, not
+`rounded-full`. Border is a gradient via dual `background` (padding-box +
+border-box), not a flat `border-color`.
 
 ### 4.5 Property card
 
@@ -757,20 +761,21 @@ thumbnail.
 
 ```
 ┌────┐
-│ PS │  rounded-full · size-8 default
+│ PS │  rounded-full · size-10 default · ring-border-warm · shadow-xs
 └────┘
 ```
 
 Compound API: `Avatar` + `AvatarImage` + `AvatarFallback` (+ `AvatarBadge` /
-`AvatarGroup` / `AvatarGroupCount`). Sizes: `sm` 24px, `default` 32px, `lg`
-40px.
+`AvatarGroup` / `AvatarGroupCount`). Sizes: `sm` 32px, `default` 40px, `lg`
+48px. Frame: `bg-surface`, `ring-1 ring-border-warm`, `shadow-xs` (depth without
+a heavy drop shadow).
 
 Product screens use `UserAvatar` from `components/shared/user-avatar.tsx` —
 photo when present, then `avvvatars-react` placeholders: `shape` (default) or
-`character` (initials). Extra sizes: `xxs` 16px and `xs` 28px for dense
-pipeline rows; product `lg` is 48px for headers. Overlapping faces use
+`character` (initials). Extra sizes: `xxs` 20px and `xs` 32px for dense
+pipeline rows; product `md` 40px, `lg` 56px for headers. Overlapping faces use
 `AvatarStack` (tooltips + `+N` overflow) or compound `AvatarGroup` for short
-static lists.
+static lists — stack faces keep a `ring-surface` so they separate on overlap.
 
 Always pass a real name for alt text and fallbacks. Face stays a circle —
 never a rounded square. Do not edit `components/ui/avatar.tsx` for one-offs;

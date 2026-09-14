@@ -117,7 +117,7 @@ export function AvatarThemePage() {
         <DesignSystemShell
             eyebrow="Components"
             title="Avatar."
-            description="base-ui Avatar + UserAvatar — circular face for people. Prefer UserAvatar in product UI (avvvatars-react for placeholders). Reach for the compound Avatar when you need a badge or a one-off group. See docs/DESIGN.md §4.17."
+            description="base-ui Avatar + UserAvatar — circular face for people. Slightly larger frames, warm ring, shadow-xs. Prefer UserAvatar in product UI (avvvatars-react for placeholders). See docs/DESIGN.md §4.17."
         >
             <div className="space-y-10">
                 <section>
@@ -146,11 +146,13 @@ export function AvatarThemePage() {
                     <h2 className="h4 text-ink">Sizes</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Compound <code className="body-xs">Avatar</code> sizes. Default is{" "}
-                        <code className="body-xs">default</code> (32px).{" "}
+                        <code className="body-xs">default</code> (40px). Frame uses{" "}
+                        <code className="body-xs">ring-border-warm</code> +{" "}
+                        <code className="body-xs">shadow-xs</code>.{" "}
                         <code className="body-xs">UserAvatar</code> adds{" "}
                         <code className="body-xs">xxs</code> / <code className="body-xs">xs</code>{" "}
                         for dense pipeline rows and{" "}
-                        <code className="body-xs">lg</code> at 48px for headers.
+                        <code className="body-xs">lg</code> at 56px for headers.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         {AVATAR_SIZES.map((size) => (
@@ -195,8 +197,9 @@ export function AvatarThemePage() {
                             and avvvatars seed.
                         </li>
                         <li>
-                            Face is always a circle — never a rounded square. Separation from the
-                            canvas uses a light ring or the soft border on the primitive, not a
+                            Face is always a circle — never a rounded square. Frame is{" "}
+                            <code className="body-xs">ring-1 ring-border-warm</code> +{" "}
+                            <code className="body-xs">shadow-xs</code> — soft depth, not a heavy
                             drop shadow.
                         </li>
                         <li>

@@ -13,6 +13,8 @@ import { useTimeRequests } from "@/hooks/use-time-requests";
 import { useVisitActions } from "@/hooks/use-visit-actions";
 import { useVisitSummary } from "@/hooks/use-visit-summary";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+
 import type { BrokerVisitsTab, SummaryFilter } from "@/features/site-visits/broker/model";
 import { MyVisitsTab } from "@/features/site-visits/broker/my-visits/my-visits-tab";
 import { OpenSlotsTab } from "@/features/site-visits/broker/open-slots/open-slots-tab";
@@ -128,13 +130,21 @@ export function BrokerSiteVisitsPage() {
     const counts = useMemo(() => ({ visits: summary.weekTotal, slots: summary.openSlots, requests: summary.requestReplies }), [summary]);
 
     return (
-        <main className="flex flex-col gap-5 pbe-24 md:gap-6 md:pbe-10">
-            <BrokerVisitsHeader
-                onBook={() => updateUrl({ tab: "slots", book: "ready" })}
-                onRequest={() => updateUrl({ request: "new" })}
-            />
-            <SummaryStrip summary={summary} active={focus} onChange={(next) => updateUrl({ tab: "visits", focus: next })} />
-            <VisitsTabs value={tab} counts={counts} onChange={(next) => updateUrl({ tab: next, focus: undefined })} />
+        <main className="flex flex-col gap-6 pbe-24 md:pbe-10">
+            <PortalSectionNav>
+                <BrokerVisitsHeader summary={summary} />
+            </PortalSectionNav>
+
+            <section className="flex flex-col gap-3">
+                <VisitsTabs
+                    value={tab}
+                    counts={counts}
+                    onChange={(next) => updateUrl({ tab: next, focus: undefined })}
+                    onBook={() => updateUrl({ tab: "slots", book: "ready" })}
+                    onRequest={() => updateUrl({ request: "new" })}
+                />
+                <SummaryStrip summary={summary} active={focus} onChange={(next) => updateUrl({ tab: "visits", focus: next })} />
+            </section>
             {actionError ? <p role="alert" className="
               body-sm rounded-inner bg-danger-soft px-4 py-3 font-semibold text-danger
             ">{actionError}</p> : null}

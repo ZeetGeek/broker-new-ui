@@ -62,7 +62,7 @@ export function StepArea() {
         }
         const loading = calculateLoadingPercent(carpet, superBuiltUp);
         setValue("area.loadingPercent", loading, { shouldDirty: false });
-    }, [areaSqft, carpet, isPlot, plotArea, setValue, state, superBuiltUp, unit]);
+    }, [areaSqft, carpet, isPlot, plotArea, setValue, superBuiltUp, unit]);
 
     return (
         <div className="space-y-8">
@@ -97,7 +97,7 @@ export function StepArea() {
                         <p className="text-xs text-ink-muted">Normalised area</p>
                         <p className="tabular mbs-1 text-xl font-bold text-ink">
                             {areaSqft > 0
-                                ? `${areaSqft.toLocaleString("en-IN")} sq ft`
+                                ? `${areaSqft.toLocaleString()} sq ft`
                                 : "Area not added"}
                         </p>
                     </div>
@@ -114,7 +114,7 @@ export function StepArea() {
 
             <WizardSection
                 title="Unit converter"
-                description="Check a local land unit without changing the saved property area."
+                description="Check another unit without changing the saved property area."
             >
                 <div className="grid items-end gap-4 md:grid-cols-[1fr_1fr_auto_1fr]">
                     <div className="flex flex-col gap-2">
@@ -149,7 +149,7 @@ export function StepArea() {
                         </Label>
                         <Select
                             value={converterUnit}
-                            onValueChange={(value) => setConverterUnit(value ?? "bigha")}
+                            onValueChange={(value) => setConverterUnit(value ?? "sqm")}
                         >
                             <SelectTrigger id="area-converter-unit" size="lg">
                                 <SelectValue>
@@ -179,18 +179,13 @@ export function StepArea() {
                     >
                         <p className="text-xs text-surface/70">Sq ft equivalent</p>
                         <p className="tabular text-lg font-bold">
-                            {areaToSqft(converterValue, converterUnit, state).toLocaleString(
-                                "en-IN",
-                            )}{" "}
+                            {(
+                                convertArea(converterValue, converterUnit, "sqft") ?? 0
+                            ).toLocaleString(undefined, { maximumFractionDigits: 2 })}{" "}
                             sq ft
                         </p>
                     </div>
                 </div>
-                {converterUnit === "bigha" ? (
-                    <p className="mbs-3 text-xs text-ink-muted">
-                        Bigha uses the Gujarat conversion for Surat. This varies by state.
-                    </p>
-                ) : null}
             </WizardSection>
         </div>
     );

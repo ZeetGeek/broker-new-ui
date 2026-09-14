@@ -25,17 +25,17 @@ export const AVATAR_SIZES = [
     {
         name: "sm",
         label: "SM",
-        note: "24px — dense rows, chips, stacked faces.",
+        note: "32px — dense rows, chips, stacked faces.",
     },
     {
         name: "default",
         label: "MD",
-        note: "32px — default. Lists, cards, menus.",
+        note: "40px — default. Lists, cards, menus.",
     },
     {
         name: "lg",
         label: "LG",
-        note: "40px — profile headers and focus faces.",
+        note: "48px — profile headers and focus faces.",
     },
 ] as const;
 

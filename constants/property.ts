@@ -252,9 +252,6 @@ export const PAID_BY_OPTIONS = [
     { value: "owner", label: "Owner" },
     { value: "buyer", label: "Buyer" },
 ] as const satisfies readonly PropertyOption[];
-export const BANK_OPTIONS = ["SBI", "HDFC", "ICICI", "LIC HFL", "Bajaj", "Axis", "Kotak"].map(
-    (value) => ({ value, label: value }),
-);
 export const SECURITY_DEPOSIT_MODE_OPTIONS = [
     { value: "amount", label: "Fixed amount" },
     { value: "months_of_rent", label: "Months of rent" },
@@ -318,31 +315,6 @@ export const RENT_COMMISSION_PAID_BY_OPTIONS = ["owner", "tenant", "both"].map((
     value,
     label: toLabel(value),
 }));
-export const GST_MODE_OPTIONS = [
-    { value: "exclusive", label: "Add GST on top" },
-    { value: "inclusive", label: "GST included" },
-] as const satisfies readonly PropertyOption[];
-export const MANDATE_TYPE_OPTIONS = ["exclusive", "open", "co_exclusive"].map((value) => ({
-    value,
-    label: toLabel(value),
-}));
-export const PRIORITY_OPTIONS = ["hot", "warm", "cold"].map((value) => ({
-    value,
-    label: toLabel(value),
-}));
-export const VERIFICATION_STATUS_OPTIONS = [
-    "unverified",
-    "phone_verified",
-    "site_visited",
-    "docs_verified",
-    "fully_verified",
-].map((value) => ({ value, label: toLabel(value) }));
-export const ASSIGNED_BROKER_OPTIONS = [
-    { value: "me", label: "Me" },
-] as const satisfies readonly PropertyOption[];
-export const CO_BROKER_OPTIONS = [
-    { value: "", label: "No co-broker" },
-] as const satisfies readonly PropertyOption[];
 
 export const FURNISHING_OPTIONS = [
     { value: "unfurnished", label: "Unfurnished" },

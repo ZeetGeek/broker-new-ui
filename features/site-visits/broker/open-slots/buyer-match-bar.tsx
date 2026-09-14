@@ -2,28 +2,51 @@
 
 import { Sparkles, UserRoundSearch } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import type { PersonSummary } from "@/features/site-visits/broker/model";
 
 export function BuyerMatchBar({ buyers, value, onChange }: { buyers: PersonSummary[]; value?: string; onChange: (id?: string) => void }) {
+    const selected = buyers.find((buyer) => buyer.id === value);
+
     return (
-        <section className="
-          flex flex-col gap-3 rounded-card bg-brand-ink p-4 text-surface
-          md:flex-row md:items-center md:justify-between
-        ">
-            <div className="flex items-center gap-3"><span className="
-              grid place-items-center rounded-inner bg-surface/10 block-10 inline-10
-            "><UserRoundSearch aria-hidden /></span><div><p className="
-              body-sm font-semibold text-surface
-            ">Booking for</p><p className="body-xs text-surface/65">Choose a buyer to rank properties by fit and keep their schedule clear.</p></div></div>
-            <label className="relative min-inline-[230px]"><span className="sr-only">Pick a buyer</span><select value={value ?? ""} onChange={(event) => onChange(event.target.value || undefined)} className="
-              body-sm appearance-none rounded-control border border-surface/20 bg-surface px-3 pe-10
-              font-semibold text-ink outline-none inline-full min-block-11
-              focus:ring-3 focus:ring-highlight/30
-            "><option value="">Pick a buyer</option>{buyers.map((buyer) => <option key={buyer.id} value={buyer.id}>{buyer.name} · {buyer.requirement}</option>)}</select><Sparkles aria-hidden className="
-              pointer-events-none absolute inset-e-3 inset-bs-1/2 -translate-y-1/2 text-brand-text
-              block-4 inline-4
-            " /></label>
+        <section className="grid gap-3 rounded-card border border-border-warm bg-surface p-3 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] md:items-center md:p-4">
+            <div className="flex items-center gap-3 min-inline-0">
+                <span className="grid shrink-0 place-items-center rounded-control bg-brand-soft text-brand-text block-11 inline-11">
+                    <UserRoundSearch aria-hidden strokeWidth={1.75} />
+                </span>
+                <div className="min-inline-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="h6 text-ink">Plan for a buyer</h2>
+                        {selected ? (
+                            <Badge variant="brand">
+                                <Sparkles aria-hidden /> Match mode on
+                            </Badge>
+                        ) : null}
+                    </div>
+                    <p className="body-sm truncate text-ink-muted">
+                        {selected?.requirement ?? "Choose a buyer to rank properties and check their schedule."}
+                    </p>
+                </div>
+            </div>
+
+            <Select value={value ?? "all"} onValueChange={(next) => onChange(next === "all" ? undefined : next)}>
+                <SelectTrigger size="md" startIcon={UserRoundSearch} aria-label="Choose a buyer">
+                    <SelectValue placeholder="Choose a buyer" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                    <SelectItem value="all">No buyer selected</SelectItem>
+                    {buyers.map((buyer) => (
+                        <SelectItem key={buyer.id} value={buyer.id}>
+                            <span className="flex flex-col min-inline-0">
+                                <span className="truncate font-semibold">{buyer.name}</span>
+                                {buyer.requirement ? <span className="body-xs truncate text-ink-muted">{buyer.requirement}</span> : null}
+                            </span>
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         </section>
     );
 }
-

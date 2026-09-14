@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { addDays, addMonths, subDays } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, History } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
@@ -31,17 +31,27 @@ export function DayRail({
     const days = Array.from({ length: 14 }, (_, index) => past ? subDays(rangeStart, index) : addDays(rangeStart, index));
 
     return (
-        <aside className="md:sticky md:inset-bs-4 md:self-start">
-            <div className="mbe-2 hidden items-center justify-between md:flex">
-                <Button type="button" variant="ghost" size="md" aria-label="Previous month" onClick={() => setMonthOffset((value) => value - 1)}><ChevronLeft aria-hidden /></Button>
-                <span className="body-xs font-semibold text-ink">{formatInTimeZone(days[0], VISITS_TIME_ZONE, "MMM yyyy")}</span>
-                <Button type="button" variant="ghost" size="md" aria-label="Next month" onClick={() => setMonthOffset((value) => value + 1)}><ChevronRight aria-hidden /></Button>
+        <section aria-label="Choose visit date" className="rounded-card border border-border-warm bg-surface p-2 shadow-sm">
+            <div className="flex items-center justify-between gap-2 px-1 pbe-2">
+                <div className="flex items-center gap-1">
+                    <Button type="button" variant="ghost" size="icon-md" aria-label="Previous month" onClick={() => setMonthOffset((value) => value - 1)}>
+                        <ChevronLeft aria-hidden />
+                    </Button>
+                    <span className="body-sm flex items-center gap-2 font-semibold text-ink min-inline-24">
+                        <CalendarDays aria-hidden className="text-brand block-4 inline-4" strokeWidth={1.75} />
+                        {formatInTimeZone(days[0], VISITS_TIME_ZONE, "MMM yyyy")}
+                    </span>
+                    <Button type="button" variant="ghost" size="icon-md" aria-label="Next month" onClick={() => setMonthOffset((value) => value + 1)}>
+                        <ChevronRight aria-hidden />
+                    </Button>
+                </div>
+                <Button type="button" variant="ghost" size="md" onClick={onTogglePast}>
+                    <History aria-hidden />
+                    {past ? "Upcoming" : "Past visits"}
+                </Button>
             </div>
 
-            <div className="
-              flex snap-x scrollbar-none gap-2 overflow-x-auto pbe-2
-              md:flex-col md:gap-1 md:overflow-visible md:pbe-0
-            ">
+            <div className="flex snap-x scrollbar-none gap-2 overflow-x-auto">
                 {days.map((date, index) => {
                     const key = istDateKey(date);
                     const count = counts.get(key) ?? 0;
@@ -51,41 +61,24 @@ export function DayRail({
                             key={key}
                             type="button"
                             onClick={() => onSelect(key)}
+                            aria-pressed={selected}
                             className={cn(
-                                `
-                                  flex snap-start items-center justify-between gap-2 rounded-control
-                                  px-3 py-2 text-start transition-colors outline-none min-block-14
-                                  min-inline-[76px]
-                                  focus-visible:ring-3 focus-visible:ring-brand/25
-                                  md:inline-full md:min-inline-0
-                                `,
-                                selected ? "bg-brand-ink text-surface" : `
-                                  bg-surface text-ink
-                                  hover:bg-brand-soft
-                                `,
+                                "flex snap-start flex-col items-start justify-center rounded-control border px-3 text-start transition-[background-color,border-color,color] duration-160 outline-none block-16 min-inline-20 focus-visible:ring-3 focus-visible:ring-brand/25",
+                                selected
+                                    ? "border-brand-ink bg-brand-ink text-surface"
+                                    : "border-border-warm bg-surface text-ink hover:border-ink/25 hover:bg-surface-muted",
                                 count === 0 && !selected && "text-ink-subtle",
                             )}
                         >
-                            <span>
-                                <span className="block text-[11px] font-medium">{!past && index === 0 ? "Today" : formatInTimeZone(date, VISITS_TIME_ZONE, "EEE")}</span>
-                                <span className="body-sm tabular block font-bold">{formatInTimeZone(date, VISITS_TIME_ZONE, "d MMM")}</span>
+                            <span className="body-xs font-medium">{!past && index === 0 && monthOffset === 0 ? "Today" : formatInTimeZone(date, VISITS_TIME_ZONE, "EEE")}</span>
+                            <span className="body-sm tabular-nums font-bold">{formatInTimeZone(date, VISITS_TIME_ZONE, "d MMM")}</span>
+                            <span className={cn("body-xs tabular-nums", selected ? "text-surface/70" : "text-ink-muted")}>
+                                {count === 0 ? "No visits" : `${count} ${count === 1 ? "visit" : "visits"}`}
                             </span>
-                            <span className={cn(`
-                              tabular grid place-items-center rounded-full bg-surface-muted
-                              text-[10px] text-ink-muted block-5 min-inline-5
-                            `, selected && `bg-surface/15 text-surface`)}>{count}</span>
                         </button>
                     );
                 })}
             </div>
-            <button type="button" onClick={onTogglePast} className="
-              body-xs mbs-2 hidden py-2 text-center font-semibold text-brand-text inline-full
-              hover:underline
-              md:block
-            ">
-                {past ? "Upcoming visits" : "Past visits"}
-            </button>
-        </aside>
+        </section>
     );
 }
-

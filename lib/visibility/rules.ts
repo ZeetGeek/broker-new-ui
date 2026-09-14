@@ -17,7 +17,6 @@ type RuleMap = Record<string, FieldRule>;
 const required = (): FieldLevel => "required";
 const recommended = (): FieldLevel => "recommended";
 const optional = (): FieldLevel => "optional";
-const visible = () => true;
 const officeTypes = new Set(["office_space", "coworking_space", "business_center"]);
 const pantryTypes = new Set([
     "office_space",
@@ -35,7 +34,6 @@ const tallCommercialTypes = new Set([
 const frontageTypes = new Set(["shop", "showroom", "retail_space", "restaurant_space"]);
 const shopTypes = new Set(["shop", "showroom", "retail_space"]);
 const subtypeTypes = new Set(["apartment", "office_space"]);
-const verifiedSiteStatuses = new Set(["site_visited", "docs_verified", "fully_verified"]);
 
 export const FIELD_RULES = {
     "basics.listingFor": { level: required },
@@ -204,14 +202,8 @@ export const FIELD_RULES = {
 
     "sale.expectedPrice": { visible: (d) => d.isSell, level: required },
     "sale.pricePerSqft": { visible: (d) => d.isSell && d.hasArea },
-    "sale.priceNegotiable": { visible: (d) => d.isSell },
-    "sale.allInclusivePrice": { visible: (d) => d.isSell },
-    "sale.ownerMinimumPrice": { visible: (d) => d.isSell, level: recommended },
-    "sale.tokenAmount": { visible: (d) => d.isSell },
     "sale.maintenanceCharge": { visible: (d) => d.isSell && !d.isPlot },
     "sale.maintenanceFrequency": { visible: (d) => d.isSell && !d.isPlot },
-    "sale.stampDutyIncluded": { visible: (d) => d.isSell },
-    "sale.registrationIncluded": { visible: (d) => d.isSell },
     "sale.gstOnProperty": { visible: (d) => d.isNewBooking || d.isUnderConstruction },
     "sale.gstOnPropertyPercent": {
         visible: (d, v) => (d.isNewBooking || d.isUnderConstruction) && v.sale.gstOnProperty,
@@ -219,24 +211,9 @@ export const FIELD_RULES = {
     "sale.parkingCharge": {
         visible: (d, v) => d.isSell && !d.isPlot && (v.details.coveredParking ?? 0) > 0,
     },
-    "sale.clubMembershipCharge": { visible: (d) => d.isSell && d.isInBuilding },
     "sale.plcCharge": { visible: (d) => d.isSell && d.isNewBooking },
     "sale.floorRiseCharge": { visible: (d) => d.isSell && d.isNewBooking && d.isInBuilding },
-    "sale.corpusFund": { visible: (d) => d.isSell && d.isInBuilding },
-    "sale.legalCharge": { visible: (d) => d.isSell },
-    "sale.otherCharges": { visible: (d, v) => d.isSell && !v.sale.allInclusivePrice },
-    "sale.priceOnRequest": { visible: (d) => d.isSell },
-    "sale.loanAvailable": { visible: (d) => d.isSell },
-    "sale.approvedBanks": { visible: (d, v) => d.isSell && v.sale.loanAvailable },
-    "sale.existingLoanOnProperty": { visible: (d) => d.isSell },
-    "sale.existingLoanBank": {
-        visible: (d, v) => d.isSell && v.sale.existingLoanOnProperty,
-        level: required,
-    },
-    "sale.existingLoanOutstanding": {
-        visible: (d, v) => d.isSell && v.sale.existingLoanOnProperty,
-        level: required,
-    },
+    "sale.otherCharges": { visible: (d) => d.isSell },
 
     "rent.monthlyRent": { visible: (d) => d.isRentLike && !d.isPg, level: required },
     "rent.rentNegotiable": { visible: (d) => d.isRentLike },
@@ -308,7 +285,6 @@ export const FIELD_RULES = {
     "commission.sale.minAcceptable": {
         visible: (d, v) => d.isSell && v.commission.sale.negotiable,
     },
-    "commission.sale.paymentMilestones": { visible: (d) => d.isSell, level: required, minItems: 1 },
     "commission.rent.mode": { visible: (d) => d.isRentLike, level: required },
     "commission.rent.value": { visible: (d) => d.isRentLike, level: required },
     "commission.rent.paidBy": { visible: (d) => d.isRentLike, level: required },
@@ -321,42 +297,6 @@ export const FIELD_RULES = {
         visible: (d, v) => (d.isRent || d.isLease) && v.commission.rent.renewalFeeApplicable,
         level: required,
     },
-    "commission.tax.gstApplicable": {},
-    "commission.tax.gstMode": {
-        visible: (_d, v) => v.commission.tax.gstApplicable,
-        level: required,
-    },
-    "commission.tax.tdsApplicable": {},
-    "commission.tax.tdsRate": {
-        visible: (_d, v) => v.commission.tax.tdsApplicable,
-        level: required,
-    },
-    "commission.notes": {},
-    "deal.assignedAgentId": { level: required },
-    "deal.coBrokerId": {},
-    "deal.coBrokerSharePercent": { visible: (d) => d.hasCoBroker, level: required },
-    "deal.mandateType": { level: required },
-    "deal.mandateStartDate": {
-        visible: (_d, v) => ["exclusive", "co_exclusive"].includes(v.deal.mandateType),
-        level: required,
-    },
-    "deal.mandateEndDate": {
-        visible: (_d, v) => ["exclusive", "co_exclusive"].includes(v.deal.mandateType),
-        level: required,
-    },
-    "deal.mandateDocumentName": {
-        visible: (_d, v) => v.deal.mandateType === "exclusive",
-        level: recommended,
-    },
-    "deal.priority": {},
-    "deal.expectedClosureDate": {},
-    "deal.internalNotes": {},
-    "deal.verificationStatus": { level: required },
-    "deal.siteVisitedOn": {
-        visible: (_d, v) => verifiedSiteStatuses.has(v.deal.verificationStatus),
-        level: required,
-    },
-
     "furnishing.status": { visible: (d) => !d.isPlot, level: required },
     "furnishing.items": {
         visible: (d, v) =>
@@ -524,10 +464,7 @@ export const RULE_DRIVER_PATHS = [
     "area.areaSqft",
     "area.carpetArea",
     "area.superBuiltUpArea",
-    "sale.allInclusivePrice",
     "sale.gstOnProperty",
-    "sale.loanAvailable",
-    "sale.existingLoanOnProperty",
     "rent.maintenanceMode",
     "rent.agreementDurationMonths",
     "rent.currentStatus",
@@ -536,11 +473,6 @@ export const RULE_DRIVER_PATHS = [
     "commission.sale.negotiable",
     "commission.rent.paidBy",
     "commission.rent.renewalFeeApplicable",
-    "commission.tax.gstApplicable",
-    "commission.tax.tdsApplicable",
-    "deal.coBrokerId",
-    "deal.mandateType",
-    "deal.verificationStatus",
     "furnishing.status",
     "construction.possessionType",
     "construction.stage",

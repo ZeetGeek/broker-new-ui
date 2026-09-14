@@ -72,7 +72,8 @@ import type {
 } from "@/features/properties/your-listings/types";
 
 // v2: nearbyPlaces changed from {id,type,name,distanceKm}[] to a plain string[] of place types.
-const LOCAL_DRAFT_VERSION = 2;
+// v3: area units went international; bigha/guntha/kanal/marla/cent/ground no longer exist.
+const LOCAL_DRAFT_VERSION = 3;
 
 const STEP_DESCRIPTIONS: Record<PropertyFormStep, string> = {
     basics: "Choose the deal type and property shape.",
