@@ -510,37 +510,45 @@ export function ChoiceField({
                     >
                         {options.map((option) => {
                             const active = field.value === option.value;
+                            const hasDescription = Boolean(option.description);
                             return (
                                 <Label
                                     key={option.value}
                                     htmlFor={`${name.replace(/\./g, "-")}-${option.value}`}
                                     className={cn(
                                         `
-                                          flex cursor-pointer items-center gap-2 rounded-control
-                                          border px-3 py-2.5 text-start
+                                          flex cursor-pointer gap-3 rounded-control border px-4
+                                          py-3 text-start font-normal leading-normal
                                           transition-[background-color,border-color,color]
                                           duration-160 min-block-12
                                           has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                         `,
+                                        hasDescription ? "items-start" : "items-center",
                                         active
                                             ? "border-brand bg-brand-soft text-brand-text"
                                             : `
                                               border-border-warm bg-surface text-ink
-                                              hover:border-brand/40 hover:bg-brand-soft/40
+                                              hover:border-brand/40
                                             `,
                                     )}
                                 >
                                     <RadioGroupItem
                                         id={`${name.replace(/\./g, "-")}-${option.value}`}
                                         value={option.value}
-                                        className="border-ink-subtle data-checked:bg-brand"
+                                        className={cn(
+                                            `
+                                              shrink-0 border-ink-subtle bg-surface
+                                              data-checked:border-brand data-checked:bg-brand
+                                            `,
+                                            hasDescription && "mts-0.5",
+                                        )}
                                     />
                                     <span className="min-inline-0">
-                                        <span className="block text-sm font-semibold">
+                                        <span className="block text-sm leading-5 font-semibold">
                                             {option.label}
                                         </span>
                                         {option.description ? (
-                                            <span className="mbs-0.5 block text-xs text-ink-muted">
+                                            <span className="mbs-1 block text-xs leading-4 text-ink-muted">
                                                 {option.description}
                                             </span>
                                         ) : null}

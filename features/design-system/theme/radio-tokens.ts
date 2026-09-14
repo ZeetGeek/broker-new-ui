@@ -12,7 +12,7 @@ export const RADIO_LAYOUTS = [
     {
         name: "cards",
         label: "Option cards",
-        note: "Label wraps the radio. Brand-soft fill when selected. Mobile tap-friendly.",
+        note: "Label wraps the radio. Brand-soft fill when selected; hover is border only.",
     },
 ] as const;
 

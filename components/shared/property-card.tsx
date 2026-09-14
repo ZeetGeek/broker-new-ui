@@ -23,8 +23,6 @@ import {
     Users,
     X,
 } from "lucide-react";
-import { useReducedMotion } from "motion/react";
-
 import { formatAreaSqft } from "@/lib/format/area";
 import {
     defaultPriceMode,
@@ -36,10 +34,9 @@ import {
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
-import { spring } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
-import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
+import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import { PhoneNumber } from "@/components/shared/phone-number";
@@ -767,7 +764,6 @@ function BrowsePropertyCardSpecs({ listing }: { listing: BrowsePropertyCardListi
 
 function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListing }) {
     const both = offersBoth(listing);
-    const reduceMotion = useReducedMotion();
     const [mode, setMode] = useState<ListingPriceMode>(() => defaultPriceMode(listing));
 
     const activeMode: ListingPriceMode = both ? mode : offersSale(listing) ? "sale" : "rent";
@@ -828,52 +824,16 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
             </div>
 
             {both ? (
-                <div
-                    role="group"
-                    aria-label="Price type"
-                    className="
-                      inline-flex shrink-0 items-center gap-0.5 rounded-control border
-                      border-border-warm bg-surface p-0.5 shadow-sm
-                    "
-                >
-                    <AnimatedBackground
-                        defaultValue={activeMode}
-                        onValueChange={(id) => {
-                            if (id === "sale" || id === "rent") setMode(id);
-                        }}
-                        className="rounded-md border border-brand bg-brand-soft shadow-none"
-                        transition={reduceMotion ? { duration: 0 } : spring.snappy}
-                    >
-                        {(
-                            [
-                                { id: "sale", label: "Sale" },
-                                { id: "rent", label: "Rent" },
-                            ] as const
-                        ).map((option) => {
-                            const isActive = activeMode === option.id;
-
-                            return (
-                                <button
-                                    key={option.id}
-                                    data-id={option.id}
-                                    type="button"
-                                    aria-pressed={isActive}
-                                    className={cn(
-                                        `
-                                          body-xs rounded-md px-2.5 py-0.5 font-semibold
-                                          transition-[color] duration-160
-                                        `,
-                                        isActive
-                                            ? "text-brand-text"
-                                            : "text-ink-muted hover:text-ink",
-                                    )}
-                                >
-                                    {option.label}
-                                </button>
-                            );
-                        })}
-                    </AnimatedBackground>
-                </div>
+                <TextSegmentedToggle
+                    size="sm"
+                    value={activeMode}
+                    onValueChange={setMode}
+                    ariaLabel="Price type"
+                    options={[
+                        { value: "sale", label: "Sale" },
+                        { value: "rent", label: "Rent" },
+                    ]}
+                />
             ) : null}
         </div>
     );
@@ -1412,7 +1372,6 @@ function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
 function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing }) {
     const browse = ownedToBrowseListing(listing);
     const both = offersBoth(browse);
-    const reduceMotion = useReducedMotion();
     const [mode, setMode] = useState<ListingPriceMode>(() => defaultPriceMode(browse));
     const activeMode: ListingPriceMode = both ? mode : offersSale(browse) ? "sale" : "rent";
     const priceLabel =
@@ -1438,52 +1397,16 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
                 </span>
             </div>
             {both ? (
-                <div
-                    role="group"
-                    aria-label="Price type"
-                    className="
-                      inline-flex shrink-0 items-center gap-0.5 rounded-control border
-                      border-border-warm bg-surface p-0.5 shadow-sm
-                    "
-                >
-                    <AnimatedBackground
-                        defaultValue={activeMode}
-                        onValueChange={(id) => {
-                            if (id === "sale" || id === "rent") setMode(id);
-                        }}
-                        className="rounded-md border border-brand bg-brand-soft shadow-none"
-                        transition={reduceMotion ? { duration: 0 } : spring.snappy}
-                    >
-                        {(
-                            [
-                                { id: "sale", label: "Sale" },
-                                { id: "rent", label: "Rent" },
-                            ] as const
-                        ).map((option) => {
-                            const isActive = activeMode === option.id;
-
-                            return (
-                                <button
-                                    key={option.id}
-                                    data-id={option.id}
-                                    type="button"
-                                    aria-pressed={isActive}
-                                    className={cn(
-                                        `
-                                          body-xs rounded-md px-2.5 py-0.5 font-semibold
-                                          transition-[color] duration-160
-                                        `,
-                                        isActive
-                                            ? "text-brand-text"
-                                            : "text-ink-muted hover:text-ink",
-                                    )}
-                                >
-                                    {option.label}
-                                </button>
-                            );
-                        })}
-                    </AnimatedBackground>
-                </div>
+                <TextSegmentedToggle
+                    size="sm"
+                    value={activeMode}
+                    onValueChange={setMode}
+                    ariaLabel="Price type"
+                    options={[
+                        { value: "sale", label: "Sale" },
+                        { value: "rent", label: "Rent" },
+                    ]}
+                />
             ) : null}
         </div>
     );

@@ -633,6 +633,12 @@ instant duration token; never a bouncy spring.
 `border-brand`. `aria-pressed` per button; `role="group"` + `aria-label` on
 the shell. Owner listings view toggle is the reference call site.
 
+**Text segmented toggle** — same sliding highlight, text labels (Sale / Rent).
+`components/shared/text-segmented-toggle.tsx`. Default: outer + active
+segment `rounded-full`, equal-width segments. `size="sm"`: compact
+`rounded-control` variant on property cards. Not for long option lists — use
+radio option cards or a select.
+
 ### 4.13 Radio
 
 base-ui Radio + RadioGroup, wrapped once in `components/ui/radio-group.tsx`.
@@ -642,7 +648,7 @@ Compound API only: `RadioGroup` owns the value, `RadioGroupItem` is the
 ```
 ┌─────────────────┐  ┌─────────────────┐
 │ ◉  For sale     │  │ ○  For rent     │  option cards — whole tile tappable
-│ Owner wants…    │  │ Owner wants…    │  selected: brand-soft + brand-text
+│ Owner wants…    │  │ Owner wants…    │  selected: brand border + brand-soft fill
 └─────────────────┘  └─────────────────┘
 ```
 
@@ -655,7 +661,8 @@ Three layouts, same primitive:
 | Option cards | Default on property forms — label wraps the item, 48px tall |
 
 Checked indicator fill is `brand`. Selected cards use `border-brand` +
-`bg-brand-soft` + `text-brand-text`. Put `aria-invalid` on the group when a
+`bg-brand-soft` + `text-brand-text`. Hover only shifts the border — no soft
+fill until selected. Put `aria-invalid` on the group when a
 required choice is empty — not on every item. Circle geometry stays
 `rounded-full`; never restyle a radio into a checkbox look. Multi-select is
 Checkbox; binary on/off is Switch.

@@ -5,11 +5,13 @@ import { useState } from "react";
 import { LayoutGrid, List } from "lucide-react";
 
 import { IconSegmentedToggle } from "@/components/shared/icon-segmented-toggle";
+import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
 import { ICON_SEGMENTED_TOGGLE_USES } from "@/features/design-system/theme/icon-segmented-toggle-tokens";
+import { TEXT_SEGMENTED_TOGGLE_USES } from "@/features/design-system/theme/text-segmented-toggle-tokens";
 import { SWITCH_SIZES } from "@/features/design-system/theme/switch-tokens";
 
 function Swatch({ label, children }: { label: string; children: React.ReactNode }) {
@@ -71,6 +73,30 @@ function PreferenceRow({
 }
 
 type LayoutView = "grid" | "list";
+
+type DealType = "sale" | "rent";
+
+function SaleRentDemo() {
+    const [deal, setDeal] = useState<DealType>("sale");
+
+    return (
+        <div className="flex flex-col items-start gap-3">
+            <TextSegmentedToggle
+                size="sm"
+                value={deal}
+                onValueChange={setDeal}
+                ariaLabel="Listing deal type"
+                options={[
+                    { value: "sale", label: "Sale" },
+                    { value: "rent", label: "Rent" },
+                ]}
+            />
+            <p className="body-xs text-ink-muted">
+                Active: <span className="font-medium text-ink">{deal}</span>
+            </p>
+        </div>
+    );
+}
 
 function ViewLayoutDemo() {
     const [view, setView] = useState<LayoutView>("grid");
@@ -192,6 +218,26 @@ export function SwitchThemePage() {
                 </section>
 
                 <section>
+                    <h2 className="h4 text-ink">Text segmented toggle</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
+                        Sale / rent pill — labels not icons.{" "}
+                        <code className="body-xs">components/shared/text-segmented-toggle.tsx</code>
+                        . Reference demo uses <code className="body-xs">size="sm"</code> — same as
+                        property-card price row.
+                    </p>
+                    <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <Swatch label="Sale / rent — live">
+                            <SaleRentDemo />
+                        </Swatch>
+                        {TEXT_SEGMENTED_TOGGLE_USES.map((use) => (
+                            <Swatch key={use.name} label={use.label}>
+                                <p className="body-xs text-ink-subtle">{use.note}</p>
+                            </Swatch>
+                        ))}
+                    </div>
+                </section>
+
+                <section>
                     <h2 className="h4 text-ink">Preference row</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Label and optional hint on the start side, switch on the end. This is the
@@ -259,9 +305,10 @@ export function SwitchThemePage() {
                     <p className="eyebrow text-highlight">Rules</p>
                     <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-[#B8CFC4]">
                         <li>
-                            Switch is binary on/off only. Two layout modes with icons →{" "}
-                            <code className="body-xs">IconSegmentedToggle</code>. Three+ labeled
-                            options in a form → <code className="body-xs">RadioGroup</code>.
+                            Switch is binary on/off only. Icon layouts →{" "}
+                            <code className="body-xs">IconSegmentedToggle</code>. Short text pair
+                            (Sale/Rent) → <code className="body-xs">TextSegmentedToggle</code>.
+                            Three+ form options → <code className="body-xs">RadioGroup</code>.
                         </li>
                         <li>
                             Always pair with a visible label via{" "}

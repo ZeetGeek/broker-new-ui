@@ -30,6 +30,32 @@ const FURNISHING = [
     { value: "furnished", label: "Furnished" },
 ] as const;
 
+const RADIO_OPTION_ITEM_CLASS =
+    "shrink-0 border-ink-subtle bg-surface data-checked:border-brand data-checked:bg-brand";
+
+function optionCardClassName(
+    active: boolean,
+    hasDescription: boolean,
+    disabled?: boolean,
+) {
+    return cn(
+        `
+          flex cursor-pointer gap-3 rounded-control border px-4 py-3 text-start font-normal
+          leading-normal
+          transition-[background-color,border-color,color] duration-160 min-block-12
+          has-focus-visible:ring-3 has-focus-visible:ring-ring/30
+        `,
+        hasDescription ? "items-start" : "items-center",
+        active
+            ? "border-brand bg-brand-soft text-brand-text"
+            : `
+              border-border-warm bg-surface text-ink
+              hover:border-brand/40
+            `,
+        disabled && "pointer-events-none opacity-50",
+    );
+}
+
 function OptionCardGroup({
     name,
     options,
@@ -54,44 +80,35 @@ function OptionCardGroup({
             disabled={disabled}
             aria-invalid={invalid || undefined}
             className={cn(
-                "grid gap-2 inline-full",
+                "grid gap-3 inline-full",
                 columns === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3",
             )}
         >
             {options.map((option) => {
                 const active = value === option.value;
                 const id = `${name}-${option.value}`;
+                const hasDescription = Boolean(option.description);
                 return (
                     <Label
                         key={option.value}
                         htmlFor={id}
-                        className={cn(
-                            `
-                              flex cursor-pointer items-center gap-2 rounded-control border px-3
-                              py-2.5 text-start
-                              transition-[background-color,border-color,color] duration-160
-                              min-block-12
-                              has-focus-visible:ring-3 has-focus-visible:ring-ring/30
-                            `,
-                            active
-                                ? "border-brand bg-brand-soft text-brand-text"
-                                : `
-                                  border-border-warm bg-surface text-ink
-                                  hover:border-brand/40 hover:bg-brand-soft/40
-                                `,
-                            disabled && "pointer-events-none opacity-50",
-                        )}
+                        className={optionCardClassName(active, hasDescription, disabled)}
                     >
                         <RadioGroupItem
                             id={id}
                             value={option.value}
                             disabled={disabled}
-                            className="border-ink-subtle data-checked:bg-brand"
+                            className={cn(
+                                RADIO_OPTION_ITEM_CLASS,
+                                hasDescription && "mts-0.5",
+                            )}
                         />
                         <span className="min-inline-0">
-                            <span className="block text-sm font-semibold">{option.label}</span>
+                            <span className="block text-sm leading-5 font-semibold">
+                                {option.label}
+                            </span>
                             {option.description ? (
-                                <span className="mbs-0.5 block text-xs text-ink-muted">
+                                <span className="mbs-1 block text-xs leading-4 text-ink-muted">
                                     {option.description}
                                 </span>
                             ) : null}
@@ -140,7 +157,7 @@ function LiveListingDemo() {
                 value={value}
                 onValueChange={setValue}
                 aria-invalid={!touched || undefined}
-                className="grid grid-cols-2 gap-2"
+                className="grid grid-cols-2 gap-3"
             >
                 {LISTING_TYPES.map((option) => {
                     const active = value === option.value;
@@ -149,30 +166,18 @@ function LiveListingDemo() {
                         <Label
                             key={option.value}
                             htmlFor={id}
-                            className={cn(
-                                `
-                                  flex cursor-pointer items-center gap-2 rounded-control border px-3
-                                  py-2.5 text-start
-                                  transition-[background-color,border-color,color] duration-160
-                                  min-block-12
-                                  has-focus-visible:ring-3 has-focus-visible:ring-ring/30
-                                `,
-                                active
-                                    ? "border-brand bg-brand-soft text-brand-text"
-                                    : `
-                                      border-border-warm bg-surface text-ink
-                                      hover:border-brand/40 hover:bg-brand-soft/40
-                                    `,
-                            )}
+                            className={optionCardClassName(active, true)}
                         >
                             <RadioGroupItem
                                 id={id}
                                 value={option.value}
-                                className="border-ink-subtle data-checked:bg-brand"
+                                className={cn(RADIO_OPTION_ITEM_CLASS, "mts-0.5")}
                             />
                             <span className="min-inline-0">
-                                <span className="block text-sm font-semibold">{option.label}</span>
-                                <span className="mbs-0.5 block text-xs text-ink-muted">
+                                <span className="block text-sm leading-5 font-semibold">
+                                    {option.label}
+                                </span>
+                                <span className="mbs-1 block text-xs leading-4 text-ink-muted">
                                     {option.description}
                                 </span>
                             </span>
@@ -295,8 +300,8 @@ export function RadioThemePage() {
                             Checked indicator fill is <code className="body-xs">brand</code>.
                             Selected option cards use{" "}
                             <code className="body-xs">border-brand</code> +{" "}
-                            <code className="body-xs">bg-brand-soft</code> +{" "}
-                            <code className="body-xs">text-brand-text</code>.
+                            <code className="body-xs">bg-brand-soft</code>. Hover only changes
+                            the border.
                         </li>
                         <li>
                             Put <code className="body-xs">aria-invalid</code> on the group when
