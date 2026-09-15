@@ -1,4 +1,4 @@
-import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
+import { isMockMode } from "@/lib/api/mock-mode";
 import { propertiesApi } from "@/lib/api/properties";
 
 import {
@@ -119,10 +119,31 @@ function mockOwnerListingsCities() {
     };
 }
 
+/** Mock-only id cursor so infinite scroll still works offline. */
+function paginateMockByCursor(
+    items: OwnerListingItem[],
+    cursor: string | null | undefined,
+    limit: number,
+): OwnerListingsResult {
+    const start = cursor ? items.findIndex((item) => item.id === cursor) + 1 : 0;
+    const safeStart = start < 0 ? 0 : start;
+    const slice = items.slice(safeStart, safeStart + limit);
+    const last = slice[slice.length - 1];
+    const hasMore = safeStart + limit < items.length;
+
+    return {
+        items: slice,
+        totalCount: items.length,
+        marketValueInr: slice.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0),
+        nextCursor: hasMore && last ? last.id : null,
+        hasMore,
+    };
+}
+
 type BrowsePageInput = {
     filters: OwnerListingsFilters;
     allAreas: boolean;
-    page: number;
+    cursor: string | null;
     limit: number;
     signal?: AbortSignal;
 };
@@ -130,7 +151,7 @@ type BrowsePageInput = {
 async function fetchBrowsePage({
     filters,
     allAreas,
-    page,
+    cursor,
     limit,
     signal,
 }: BrowsePageInput): Promise<OwnerListingsResult> {
@@ -169,7 +190,7 @@ async function fetchBrowsePage({
             readyToMove: filters.readyToMove || undefined,
             furnishingStatus: filters.furnishing || undefined,
             sort: filters.sort,
-            page,
+            cursor: cursor || undefined,
             limit,
         },
         signal,
@@ -183,15 +204,13 @@ async function fetchBrowsePage({
     }
 
     const marketValueInr = items.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0);
-    const nextPage = result.page < result.totalPages ? String(result.page + 1) : null;
 
     return {
         items,
         totalCount: result.total,
         marketValueInr,
-        nextCursor: nextPage,
-        page: result.page,
-        totalPages: result.totalPages,
+        nextCursor: result.nextCursor ?? null,
+        hasMore: Boolean(result.hasMore && result.nextCursor),
     };
 }
 
@@ -200,73 +219,58 @@ async function fetchBrowsePage({
  * - Explicit city/locality: filter to those places
  * - Your areas chip on: only broker service-area listings (`allAreas` omitted)
  * - Your areas chip off / Anywhere: `allAreas=true` → all public owner listings
- * - Advanced sheet filters (area / listed / commission / ready-to-move) go to the API
+ * - Cursor keyset pagination via `cursor` / `nextCursor`
  */
 export async function fetchOwnerListings(
     filters: OwnerListingsFilters,
     context: OwnerListingsFilterContext = {},
     signal?: AbortSignal,
 ): Promise<OwnerListingsResult> {
+    const limit = filters.limit || DEFAULT_OWNER_LISTINGS_FILTERS.limit;
+    const cursor = filters.cursor?.trim() || null;
+
     if (isMockMode()) {
-        const limit = filters.limit || DEFAULT_OWNER_LISTINGS_FILTERS.limit;
-        const page = filters.cursor ? Number(filters.cursor) || 1 : 1;
         const matched = filterMockOwnerListings(filters, context);
-        const paged = paginateItems(matched, page, limit);
-        return {
-            items: paged.items,
-            totalCount: paged.total,
-            marketValueInr: matched.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0),
-            nextCursor: paged.nextCursor,
-            page: paged.page,
-            totalPages: paged.totalPages,
-        };
+        return paginateMockByCursor(matched, cursor, limit);
     }
 
-    const limit = filters.limit || DEFAULT_OWNER_LISTINGS_FILTERS.limit;
     const hasLocationFilter = filters.cities.length > 0 || filters.localities.length > 0;
-    const page = filters.cursor ? Number(filters.cursor) || 1 : 1;
 
-    // Specific Where areas — browse those places only.
     if (hasLocationFilter) {
         return fetchBrowsePage({
             filters,
             allAreas: true,
-            page,
+            cursor,
             limit,
             signal,
         });
     }
 
-    // Your areas chip on — strictly broker coverage. Never fall through to
-    // nationwide results (that used to make the chip look broken).
     if (filters.yourAreas) {
         const serviceAreas = context.serviceAreas ?? [];
-        // No coverage configured → empty pool, not "all India".
         if (serviceAreas.length === 0) {
             return {
                 items: [],
                 totalCount: 0,
                 marketValueInr: 0,
                 nextCursor: null,
-                page: 1,
-                totalPages: 0,
+                hasMore: false,
             };
         }
 
         return fetchBrowsePage({
             filters,
             allAreas: false,
-            page,
+            cursor,
             limit,
             signal,
         });
     }
 
-    // Anywhere (Your areas chip off).
     return fetchBrowsePage({
         filters,
         allAreas: true,
-        page,
+        cursor,
         limit,
         signal,
     });

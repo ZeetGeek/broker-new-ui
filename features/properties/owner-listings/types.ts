@@ -138,10 +138,9 @@ export type OwnerListingsResult = {
     totalCount: number;
     /** Sum of sale listing prices in the filtered set (excludes rent). */
     marketValueInr: number;
+    /** Opaque keyset cursor for the next page; null when exhausted. */
     nextCursor: string | null;
-    /** 1-based page from the browse API. */
-    page: number;
-    totalPages: number;
+    hasMore: boolean;
 };
 
 export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
