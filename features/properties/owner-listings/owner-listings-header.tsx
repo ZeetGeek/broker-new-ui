@@ -61,6 +61,7 @@ export function OwnerListingsHeader({
                 <OwnerListingsSearchBand
                     appliedFilters={filters}
                     listings={listings}
+                    serviceAreas={filterContext.serviceAreas}
                     onApplyBand={onApplyBand}
                 />
 

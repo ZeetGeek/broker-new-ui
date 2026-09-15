@@ -7,10 +7,6 @@ import {
     propertyTypeToApiFilters,
 } from "@/features/properties/owner-listings/map-browse-listing";
 import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
-import {
-    encodeOwnerListingsCursor,
-    parseOwnerListingsCursor,
-} from "@/features/properties/owner-listings/owner-listings-area-scope";
 import type {
     OwnerListingItem,
     OwnerListingsFilterContext,
@@ -78,7 +74,15 @@ function filterMockOwnerListings(
         if (filters.commissionSet && item.commissionPercent <= 0) return false;
         if (filters.readyToMove && !item.readyToMove) return false;
         if (filters.yourAreas && serviceAreas.length > 0) {
-            return serviceAreas.includes(item.locality.toLowerCase());
+            const locality = item.locality.toLowerCase();
+            const city = item.city.toLowerCase();
+            return serviceAreas.some(
+                (area) =>
+                    locality === area ||
+                    city === area ||
+                    locality.includes(area) ||
+                    city.includes(area),
+            );
         }
         return true;
     });
@@ -194,8 +198,8 @@ async function fetchBrowsePage({
 /**
  * Broker owner-listings pool from `GET /properties/browse`.
  * - Explicit city/locality: filter to those places
- * - Your areas chip: broker-area listings first, then elsewhere (two-phase cursor)
- * - Anywhere: `allAreas=true` → all public owner listings
+ * - Your areas chip on: only broker service-area listings (`allAreas` omitted)
+ * - Your areas chip off / Anywhere: `allAreas=true` → all public owner listings
  * - Advanced sheet filters (area / listed / commission / ready-to-move) go to the API
  */
 export async function fetchOwnerListings(
@@ -220,10 +224,10 @@ export async function fetchOwnerListings(
 
     const limit = filters.limit || DEFAULT_OWNER_LISTINGS_FILTERS.limit;
     const hasLocationFilter = filters.cities.length > 0 || filters.localities.length > 0;
+    const page = filters.cursor ? Number(filters.cursor) || 1 : 1;
 
-    // Specific Where areas — single-phase browse for those places.
+    // Specific Where areas — browse those places only.
     if (hasLocationFilter) {
-        const page = filters.cursor ? Number(filters.cursor) || 1 : 1;
         return fetchBrowsePage({
             filters,
             allAreas: true,
@@ -233,77 +237,39 @@ export async function fetchOwnerListings(
         });
     }
 
-    // Anywhere (Your areas chip off) — single-phase all-areas browse.
-    if (!filters.yourAreas) {
-        const page = filters.cursor ? Number(filters.cursor) || 1 : 1;
+    // Your areas chip on — strictly broker coverage. Never fall through to
+    // nationwide results (that used to make the chip look broken).
+    if (filters.yourAreas) {
+        const serviceAreas = context.serviceAreas ?? [];
+        // No coverage configured → empty pool, not "all India".
+        if (serviceAreas.length === 0) {
+            return {
+                items: [],
+                totalCount: 0,
+                marketValueInr: 0,
+                nextCursor: null,
+                page: 1,
+                totalPages: 0,
+            };
+        }
+
         return fetchBrowsePage({
-            filters,
-            allAreas: true,
-            page,
-            limit,
-            signal,
-        });
-    }
-
-    // Your areas chip on — phase 1: broker coverage, phase 2: remaining listings.
-    const { phase, page } = parseOwnerListingsCursor(filters.cursor);
-
-    if (phase === "serviceable") {
-        const result = await fetchBrowsePage({
             filters,
             allAreas: false,
             page,
             limit,
             signal,
         });
-
-        if (result.page < result.totalPages) {
-            return {
-                ...result,
-                nextCursor: encodeOwnerListingsCursor("serviceable", result.page + 1),
-            };
-        }
-
-        // Exhausted serviceable inventory. If this page is empty (nothing in coverage),
-        // jump straight into the anywhere phase so the UI does not flash an empty state.
-        if (result.items.length === 0 && page === 1) {
-            const anywhere = await fetchBrowsePage({
-                filters,
-                allAreas: true,
-                page: 1,
-                limit,
-                signal,
-            });
-            return {
-                ...anywhere,
-                nextCursor:
-                    anywhere.page < anywhere.totalPages
-                        ? encodeOwnerListingsCursor("anywhere", anywhere.page + 1)
-                        : null,
-            };
-        }
-
-        return {
-            ...result,
-            nextCursor: encodeOwnerListingsCursor("anywhere", 1),
-        };
     }
 
-    const result = await fetchBrowsePage({
+    // Anywhere (Your areas chip off).
+    return fetchBrowsePage({
         filters,
         allAreas: true,
         page,
         limit,
         signal,
     });
-
-    return {
-        ...result,
-        nextCursor:
-            result.page < result.totalPages
-                ? encodeOwnerListingsCursor("anywhere", result.page + 1)
-                : null,
-    };
 }
 
 export async function fetchOwnerListingCities() {
