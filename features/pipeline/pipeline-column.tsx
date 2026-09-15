@@ -1,9 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { GripVertical, Plus } from "lucide-react";
 
 import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
@@ -17,31 +17,6 @@ import type { DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DraggableDealCard } from "@/features/pipeline/draggable-deal-card";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import type { DealItem, DealStage } from "@/features/pipeline/types";
-
-/**
- * The dashed slot a dragged card leaves behind. It measures its own sibling —
- * the dragged card is still mounted next to it, just positioned out of flow —
- * so the placeholder is exactly as tall as the card it stands in for whatever
- * the card's content happens to be.
- */
-function DragGhost({ dealId }: { dealId: string }) {
-    const ref = useRef<HTMLDivElement>(null);
-    const [blockSize, setBlockSize] = useState<number>();
-
-    useLayoutEffect(() => {
-        const card = ref.current?.parentElement?.querySelector("article");
-        if (card) setBlockSize(card.getBoundingClientRect().height);
-    }, [dealId]);
-
-    return (
-        <div
-            ref={ref}
-            aria-hidden
-            style={blockSize ? { blockSize } : undefined}
-            className="rounded-card border border-dashed border-border-warm bg-surface-muted/60"
-        />
-    );
-}
 
 /**
  * Rent sits beside the sale total, deliberately quieter — the two are
@@ -60,7 +35,6 @@ export function PipelineColumn({
     pinnedDealIds,
     otherBuyersByDealId,
     isDropTarget,
-    draggingId,
 }: {
     stage: DealStage;
     deals: DealItem[];
@@ -69,7 +43,6 @@ export function PipelineColumn({
     pinnedDealIds: string[];
     otherBuyersByDealId: Record<string, OtherBuyer[]>;
     isDropTarget: boolean;
-    draggingId: string | null;
 }) {
     const { setNodeRef, isOver } = useDroppable({ id: stage });
     const meta = DEAL_STAGE_META[stage];
@@ -147,27 +120,26 @@ export function PipelineColumn({
             </header>
 
             {deals.length > 0 ? (
-                <div className="flex flex-col gap-3">
-                    {deals.map((deal) => (
-                        <div key={deal.id} className="relative">
-                            {draggingId === deal.id ? (
-                                // Holds the exact slot the dragged card left.
-                                // The card goes `absolute` while dragging, so a
-                                // fixed height here would collapse the column by
-                                // the difference on every pick-up.
-                                <DragGhost dealId={deal.id} />
-                            ) : null}
+                // SortableContext is what makes the neighbours slide aside
+                // under the pointer instead of the card jumping to its new
+                // slot on drop.
+                <SortableContext
+                    items={deals.map((deal) => deal.id)}
+                    strategy={verticalListSortingStrategy}
+                >
+                    <div className="flex flex-col gap-3">
+                        {deals.map((deal) => (
                             <DraggableDealCard
+                                key={deal.id}
                                 deal={deal}
                                 handlers={handlers}
                                 isBusy={busyId === deal.id}
                                 isPinned={pinnedDealIds.includes(deal.id)}
                                 otherBuyers={otherBuyersByDealId[deal.id] ?? []}
-                                isHidden={draggingId === deal.id}
                             />
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                </SortableContext>
             ) : (
                 <p
                     className={cn(

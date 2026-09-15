@@ -17,7 +17,7 @@ import {
 import { isOverBudget } from "@/lib/api/pipeline";
 import { getStoredUser } from "@/lib/auth/session";
 import { formatAreaSqft } from "@/lib/format/area";
-import { formatDateShort, formatRelativePast,formatShowingWhen } from "@/lib/format/date";
+import { formatDateShort, formatRelativePast, formatShowingWhen } from "@/lib/format/date";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
@@ -30,12 +30,7 @@ import { Button } from "@/components/ui/button";
 import { daysInStage, type OtherBuyer } from "@/features/pipeline/deal-attention";
 import type { DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DEAL_OUTCOME_META, DEAL_STAGE_META, isOutcome } from "@/features/pipeline/stage-meta";
-import {
-    type DealItem,
-    type DealStage,
-    isLiveStage,
-    nextStage,
-} from "@/features/pipeline/types";
+import { type DealItem, type DealStage, isLiveStage, nextStage } from "@/features/pipeline/types";
 
 function stopCard(event: MouseEvent) {
     event.stopPropagation();
@@ -90,15 +85,7 @@ function budgetGap(deal: DealItem): string | null {
     )}`;
 }
 
-function PartyCell({
-    name,
-    role,
-    avatarUrl,
-}: {
-    name: string;
-    role: string;
-    avatarUrl?: string;
-}) {
+function PartyCell({ name, role, avatarUrl }: { name: string; role: string; avatarUrl?: string }) {
     return (
         <div className="flex items-center gap-2.5 min-inline-0">
             <UserAvatar
@@ -186,8 +173,7 @@ export function DealCardRich({
     const gap = budgetGap(deal);
     const stageDays = live ? daysInStage(deal) : 0;
     const currentUserId = getStoredUser()?.id ?? null;
-    const showHandledBy =
-        Boolean(deal.assignedAgent) && deal.assignedAgent?.id !== currentUserId;
+    const showHandledBy = Boolean(deal.assignedAgent) && deal.assignedAgent?.id !== currentUserId;
 
     const primary = (() => {
         if (!live) return null;
@@ -279,7 +265,10 @@ export function DealCardRich({
                         >
                             <span
                                 aria-hidden
-                                className={cn("rounded-full block-1.5 inline-1.5", stageMeta.dotClass)}
+                                className={cn(
+                                    "rounded-full block-1.5 inline-1.5",
+                                    stageMeta.dotClass,
+                                )}
                             />
                             {stageMeta.label}
                         </span>
@@ -317,9 +306,11 @@ export function DealCardRich({
                         {deal.property.configLabel} · {deal.property.locality}
                     </h3>
 
-                    <div className="
-                      body-sm flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-muted
-                    ">
+                    <div
+                        className="
+                          body-sm flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-muted
+                        "
+                    >
                         <span className="flex items-center gap-1.5">
                             <MapPin aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                             {deal.property.locality}, {deal.property.city}

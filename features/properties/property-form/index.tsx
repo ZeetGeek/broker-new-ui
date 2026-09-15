@@ -680,17 +680,24 @@ export function PropertyForm({
                                 </main>
                                 <div
                                     className="
-                                      hidden overflow-y-auto border-s border-border-warm bg-surface
-                                      p-5 min-block-0 min-inline-0
+                                      hidden overflow-y-auto border-s border-border-warm
+                                      bg-surface-muted/40 p-4 min-block-0 min-inline-0
                                       xl:block
                                     "
                                 >
-                                    <div className="p-1 -m-1">
-                                        <LiveSummaryPanel values={values} stepIndex={stepIndex} />
+                                    <div className="flex flex-col gap-4 p-1 -m-1">
+                                        <LiveSummaryPanel
+                                            values={values}
+                                            stepIndex={stepIndex}
+                                            onGoToMedia={() => {
+                                                setHighestUnlocked(FORM_STEPS.length - 1);
+                                                setStep("media");
+                                            }}
+                                        />
                                         <Card
                                             className="
-                                              mbs-5 gap-0 rounded-card border border-border-warm
-                                              bg-surface-muted p-4 shadow-none
+                                              gap-0 rounded-card border border-border-warm
+                                              bg-surface p-4 shadow-none
                                             "
                                         >
                                             <div className="flex items-center gap-4">

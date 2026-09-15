@@ -3,35 +3,95 @@
 import { useMemo } from "react";
 import toast from "react-hot-toast";
 
-import { Building2, CircleHelp, Copy, LockKeyhole } from "lucide-react";
+import {
+    Bath,
+    BedDouble,
+    CircleHelp,
+    Copy,
+    Eye,
+    ImageIcon,
+    LockKeyhole,
+    MapPin,
+    Scaling,
+    Upload,
+} from "lucide-react";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
 import { formatInr, formatInrCompact } from "@/lib/format/inr";
+import { buildPropertyTitle } from "@/lib/format/property-title";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
+import { type PropertyType } from "@/lib/validation/property";
 
 import { AppImage } from "@/components/shared/app-image";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+function resolveDeposit(values: PropertyDraftValues): number {
+    const rent = values.rent.monthlyRent ?? 0;
+    const deposit = values.rent.securityDeposit ?? 0;
+    if (values.rent.securityDepositMode === "months_of_rent") return rent * deposit;
+    return deposit;
+}
+
+function draftTitle(values: PropertyDraftValues): string {
+    const custom = values.basics.title?.trim();
+    if (custom) return custom;
+    const propertyType = (values.basics.propertyType || "apartment") as PropertyType;
+    const bedrooms = Number(values.details.bedrooms);
+    const bhk = Number.isFinite(bedrooms) ? bedrooms : 0;
+    if (!values.location.locality && !values.location.city) return "Untitled property";
+    try {
+        return buildPropertyTitle({
+            bhk,
+            propertyType,
+            locality: values.location.locality,
+            city: values.location.city,
+        });
+    } catch {
+        return "Untitled property";
+    }
+}
+
+function bedsLabel(values: PropertyDraftValues): string {
+    const bedrooms = String(values.details.bedrooms ?? "").trim();
+    if (!bedrooms || bedrooms === "0") return "-- Beds";
+    if (bedrooms === "5" || bedrooms === "5+") return "5+ Beds";
+    return `${bedrooms} Beds`;
+}
+
+function bathsLabel(values: PropertyDraftValues): string {
+    const baths = values.details.bathrooms;
+    if (baths == null || baths <= 0) return "-- Baths";
+    return `${baths} Baths`;
+}
+
+function areaLabel(values: PropertyDraftValues): string {
+    if (!values.area.areaSqft) return "-- Sq ft";
+    return `${values.area.areaSqft.toLocaleString("en-US")} Sq ft`;
+}
 
 export function LiveSummaryPanel({
     values,
     stepIndex,
     compact = false,
+    onGoToMedia,
 }: {
     values: PropertyDraftValues;
     stepIndex: number;
     compact?: boolean;
+    onGoToMedia?: () => void;
 }) {
     const isSale = values.basics.listingFor === "sell";
     const cover = values.media.photos.find((photo) => photo.isCover) ?? values.media.photos[0];
     const price = isSale ? values.sale.expectedPrice : values.rent.monthlyRent;
     const ownerDeductions = 0;
-    const buyerCharges = [
-        values.sale.plcCharge,
-        values.sale.floorRiseCharge,
-    ].reduce<number>((sum, amount) => sum + (amount ?? 0), 0);
+    const buyerCharges = [values.sale.plcCharge, values.sale.floorRiseCharge].reduce<number>(
+        (sum, amount) => sum + (amount ?? 0),
+        0,
+    );
     const deposit = resolveDeposit(values);
     const result = useMemo(() => {
         if (isSale) {
@@ -82,7 +142,10 @@ export function LiveSummaryPanel({
     const coBrokerPercent = values.deal.coBrokerSharePercent ?? 0;
     const coBrokerShare = (result.brokerRealIncome * coBrokerPercent) / 100;
     const brokerAfterSplit = Math.max(0, result.brokerRealIncome - coBrokerShare);
-    const title = values.basics.title || "Untitled property";
+    const title = draftTitle(values);
+    const locationLabel =
+        [values.location.locality, values.location.city].filter(Boolean).join(", ") ||
+        "Location not added";
     const money = (value: number) => (hasPrice ? value : null);
     const dealSheetLines =
         isSale && "ownerNet" in result
@@ -126,9 +189,7 @@ export function LiveSummaryPanel({
                     <p className="text-xs text-surface/65">Broker earns</p>
                     <AnimatedMoney
                         value={money(brokerAfterSplit)}
-                        className="
-                      text-base text-surface
-                    "
+                        className="text-base text-surface"
                     />
                 </div>
                 <p className="truncate text-xs text-surface/70">
@@ -139,61 +200,107 @@ export function LiveSummaryPanel({
     }
 
     return (
-        <aside className="space-y-5">
-            <Card className="gap-0 border border-border-warm bg-surface py-0 shadow-none">
-                <div className="relative aspect-video bg-surface-muted">
-                    {cover ? (
-                        <AppImage src={cover.url} alt={cover.alt || title} fill sizes="320px" />
-                    ) : (
-                        <div
-                            className="
-                          flex flex-col items-center justify-center px-6 text-center block-full
-                        "
-                        >
-                            <Building2 className="text-ink-subtle block-7 inline-7" aria-hidden />
-                            <p className="mbs-2 text-sm font-semibold text-ink">
-                                Add a cover photo
+        <aside className="flex flex-col gap-4">
+            <Card
+                className="
+                  gap-0 overflow-hidden rounded-card border border-border-warm bg-surface py-0
+                  shadow-none ring-0
+                "
+            >
+                <div className="flex flex-col gap-4 p-4">
+                    <div className="flex items-center gap-2 text-ink">
+                        <Eye className="block-4 inline-4 text-ink-muted" aria-hidden />
+                        <p className="text-sm font-bold">Listing preview</p>
+                    </div>
+
+                    <div className="relative overflow-hidden rounded-inner bg-surface-muted aspect-16/10">
+                        {cover ? (
+                            <AppImage
+                                src={cover.url}
+                                alt={cover.alt || title}
+                                fill
+                                sizes="320px"
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center gap-3 px-5 py-6 text-center block-full">
+                                <ImageIcon
+                                    className="text-ink-subtle block-7 inline-7"
+                                    strokeWidth={1.5}
+                                    aria-hidden
+                                />
+                                <div className="space-y-1">
+                                    <p className="text-sm font-bold text-ink">Add a cover photo</p>
+                                    <p className="text-xs text-ink-muted">JPG, PNG up to 10 MB</p>
+                                </div>
+                                {onGoToMedia ? (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={onGoToMedia}
+                                        className="gap-1.5 bg-surface"
+                                    >
+                                        <Upload className="block-3.5 inline-3.5" aria-hidden />
+                                        Upload photo
+                                    </Button>
+                                ) : null}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col gap-2.5">
+                        <div className="flex items-start justify-between gap-3">
+                            <p className="min-inline-0 line-clamp-2 text-base/6 font-bold text-ink">
+                                {title}
                             </p>
-                            <p className="mbs-1 text-xs text-ink-muted">
-                                The listing preview will appear here.
-                            </p>
+                            <Badge
+                                variant="urgent"
+                                className="shrink-0 rounded-md px-2 py-0.5 text-[11px]"
+                            >
+                                Draft
+                            </Badge>
                         </div>
-                    )}
-                </div>
-                <div className="p-4">
-                    <p className="line-clamp-2 text-base/6 font-bold text-ink">{title}</p>
-                    <p className="mbs-1 text-sm text-ink-muted">
-                        {[values.location.locality, values.location.city]
-                            .filter(Boolean)
-                            .join(", ") || "Location not added"}
-                    </p>
-                    <div
-                        className="
-                      mbs-3 flex items-end justify-between gap-3 border-bs border-border-warm pbs-3
-                    "
-                    >
-                        <div>
+                        <p className="flex items-center gap-1.5 text-sm text-ink-muted">
+                            <MapPin className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                            <span className="truncate">{locationLabel}</span>
+                        </p>
+                        <div className="flex flex-col gap-0.5">
                             <p className="text-xs text-ink-muted">
                                 {isSale ? "Asking price" : "Monthly rent"}
                             </p>
-                            <p className="tabular mbs-0.5 text-lg font-bold text-brand-text">
-                                {price ? formatInrCompact(price) : "— — —"}
+                            <p className="tabular text-lg font-bold text-ink">
+                                {price && price > 0 ? formatInrCompact(price) : "— — —"}
                             </p>
                         </div>
-                        <p className="tabular text-sm font-semibold text-ink">
-                            {values.area.areaSqft
-                                ? `${values.area.areaSqft.toLocaleString("en-US")} sq ft`
-                                : "Area not added"}
-                        </p>
                     </div>
+                </div>
+
+                <div
+                    className="
+                      mx-4 flex items-center justify-between gap-3 border-bs border-border-warm
+                      py-3.5 text-xs font-medium text-ink-muted
+                    "
+                >
+                    <span className="inline-flex min-inline-0 items-center gap-1.5">
+                        <BedDouble className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                        <span className="truncate">{bedsLabel(values)}</span>
+                    </span>
+                    <span className="inline-flex min-inline-0 items-center gap-1.5">
+                        <Bath className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                        <span className="truncate">{bathsLabel(values)}</span>
+                    </span>
+                    <span className="inline-flex min-inline-0 items-center gap-1.5">
+                        <Scaling className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                        <span className="truncate">{areaLabel(values)}</span>
+                    </span>
                 </div>
             </Card>
 
             {stepIndex >= 2 ? (
-                <Card className="gap-0 bg-brand-ink py-0 text-surface ring-0">
-                    <div className="p-5">
-                        <div className="flex items-center justify-between gap-3">
-                            <div>
+                <Card className="gap-0 overflow-hidden bg-brand-ink py-0 text-surface ring-0">
+                    <div className="space-y-1 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-inline-0">
                                 <p className="text-sm font-bold">
                                     {isSale ? "Sale deal summary" : "Rent deal summary"}
                                 </p>
@@ -201,8 +308,9 @@ export function LiveSummaryPanel({
                                     Broker income · updates as you type
                                 </p>
                             </div>
-                            <span className="inline-flex items-center gap-1 text-xs text-surface/60">
-                                <LockKeyhole className="block-3.5 inline-3.5" /> Private
+                            <span className="inline-flex shrink-0 items-center gap-1 text-xs text-surface/60">
+                                <LockKeyhole className="block-3.5 inline-3.5" aria-hidden />
+                                Private
                             </span>
                         </div>
 
@@ -242,7 +350,7 @@ export function LiveSummaryPanel({
                         <SectionLabel>You earn</SectionLabel>
                         <AnimatedMoney
                             value={money(brokerAfterSplit)}
-                            className="mbe-3 block text-3xl text-highlight"
+                            className="mbe-2 block text-2xl text-highlight"
                         />
                         <MoneyRow
                             label={isSale ? "Gross commission" : "Gross brokerage"}
@@ -265,25 +373,25 @@ export function LiveSummaryPanel({
                             onClick={() => void copySummary()}
                             className="
                               flex inline-full items-center justify-center gap-2 text-xs
-                              font-semibold text-surface min-block-12
+                              font-semibold text-surface min-block-11
                               hover:bg-surface/10 hover:text-surface
                               focus-visible:ring-2 focus-visible:ring-highlight
                             "
                         >
-                            <Copy className="block-4 inline-4" /> Copy summary
+                            <Copy className="block-4 inline-4" aria-hidden /> Copy summary
                         </Button>
                     </div>
                 </Card>
             ) : (
                 <Card
                     className="
-                  rounded-card border border-dashed border-border-warm bg-surface-muted p-5
-                  shadow-none
-                "
+                      rounded-card border border-dashed border-border-warm bg-surface-muted p-4
+                      shadow-none
+                    "
                 >
                     <p className="text-sm font-bold text-ink">Live deal summary</p>
                     <p className="mbs-1 text-sm/6 text-ink-muted">
-                        Add the price in step 5 to see what you earn on this deal.
+                        Add the price on Price & deal to see what you earn.
                     </p>
                 </Card>
             )}
@@ -295,9 +403,9 @@ function SectionLabel({ children }: { children: string }) {
     return (
         <p
             className="
-      mbs-5 mbe-2 border-bs border-surface/15 pbs-4 text-[11px] font-bold tracking-[0.12em]
-      text-surface/55 uppercase
-    "
+              mbs-4 mbe-1.5 border-bs border-surface/15 pbs-3 text-[11px] font-bold
+              tracking-[0.12em] text-surface/55 uppercase
+            "
         >
             {children}
         </p>
@@ -344,11 +452,7 @@ function MoneyRow({
         <div
             className={cn(
                 "flex items-baseline justify-between gap-4 py-1 text-xs",
-                strong
-                    ? `
-          font-bold text-surface
-        `
-                    : `text-surface/70`,
+                strong ? "font-bold text-surface" : "text-surface/70",
             )}
         >
             <span className="flex items-center gap-1.5">
@@ -377,11 +481,4 @@ function MoneyRow({
             </span>
         </div>
     );
-}
-
-function resolveDeposit(values: PropertyDraftValues): number {
-    const value = values.rent.securityDeposit ?? 0;
-    return values.rent.securityDepositMode === "months_of_rent"
-        ? value * (values.rent.monthlyRent ?? 0)
-        : value;
 }

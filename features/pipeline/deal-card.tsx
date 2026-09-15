@@ -6,6 +6,7 @@ import {
     Check,
     CircleSlash,
     Eye,
+    GripVertical,
     Handshake,
     MapPin,
     Maximize2,
@@ -241,6 +242,47 @@ function FooterAction({
     );
 }
 
+/**
+ * The grip that starts a drag. Only this starts one — the card face stays a
+ * link to the deal, and the call / WhatsApp / note buttons keep working.
+ *
+ * `touch-none` is required, not cosmetic: without it the browser claims the
+ * gesture for scrolling and the drag never begins on a phone.
+ */
+function DragHandle({
+    ref,
+    label,
+    ...props
+}: {
+    ref?: (element: HTMLElement | null) => void;
+    label: string;
+} & Record<string, unknown>) {
+    return (
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <button
+                        ref={ref}
+                        type="button"
+                        aria-label={label}
+                        onClick={stopCard}
+                        className="
+                          flex cursor-grab touch-none items-center justify-center rounded-control
+                          text-ink-muted block-control-sm inline-control-sm
+                          hover:bg-surface-muted hover:text-ink
+                          active:cursor-grabbing
+                        "
+                        {...props}
+                    />
+                }
+            >
+                <GripVertical aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Drag to move</TooltipContent>
+        </Tooltip>
+    );
+}
+
 function DealCardMenu({
     deal,
     handlers,
@@ -367,6 +409,7 @@ export function DealCard({
     isDragging = false,
     isPinned = false,
     otherBuyers = [],
+    dragHandleRef,
     dragHandleProps,
 }: {
     deal: DealItem;
@@ -376,6 +419,9 @@ export function DealCard({
     isDragging?: boolean;
     isPinned?: boolean;
     otherBuyers?: OtherBuyer[];
+    /** dnd-kit's activator ref. Marks the handle as what starts a drag. */
+    dragHandleRef?: (element: HTMLElement | null) => void;
+    /** Listeners + a11y attributes for the handle. Absent on a static card. */
     dragHandleProps?: Record<string, unknown>;
 }) {
     const live = isLiveStage(deal.status);
@@ -420,7 +466,6 @@ export function DealCard({
 
     return (
         <article
-            {...dragHandleProps}
             aria-label={`${deal.buyer.name} on ${deal.property.title}`}
             tabIndex={0}
             onClick={openCard}
@@ -594,6 +639,14 @@ export function DealCard({
                         isBusy={isBusy}
                         isPinned={isPinned}
                     />
+
+                    {dragHandleProps ? (
+                        <DragHandle
+                            ref={dragHandleRef}
+                            label={`Reorder or move ${deal.buyer.name} on ${deal.property.title}`}
+                            {...dragHandleProps}
+                        />
+                    ) : null}
                 </div>
 
                 {primary ? (
