@@ -23,16 +23,25 @@ export type PropertyBrowseListing = {
     bedrooms?: number | null;
     bathrooms?: number | null;
     areaSqft?: number | null;
+    carpetAreaSqft?: number | null;
     city?: string | null;
+    state?: string | null;
     address?: string | null;
+    society?: string | null;
+    flatNo?: string | null;
+    landmark?: string | null;
     country?: string | null;
     status?: string | null;
     salePrice?: string | number | null;
     monthlyRent?: string | number | null;
+    pricePerSqft?: number | null;
     /** Owner-shared broker commission percent (optional). */
     commissionPercent?: string | number | null;
     photos?: string[] | null;
     furnishingStatus?: "furnished" | "semi" | "unfurnished" | string | null;
+    propertyAge?: string | null;
+    propertyCondition?:
+        "ready_to_move" | "under_construction" | "needs_renovation" | "new_launch" | string | null;
     availableFrom?: string | null;
     publishedAt?: string | null;
     createdAt?: string | null;
@@ -163,6 +172,7 @@ export type CreatePropertyInput = {
     publishStatus?: PropertyPublishStatus;
     transactionType: "sale" | "rent" | "both";
     city: string;
+    state?: string;
     propertyType?: string;
     subtype?: string;
     bhkConfig?: string;
@@ -173,15 +183,22 @@ export type CreatePropertyInput = {
     floorNumber?: number;
     totalFloors?: number;
     areaSqft?: number;
+    carpetAreaSqft?: number;
     address?: string;
+    society?: string;
+    flatNo?: string;
+    landmark?: string;
     postalCode?: string;
     country?: string;
     status?: string;
     salePrice?: number;
     monthlyRent?: number;
     maintenanceCharges?: number;
+    pricePerSqft?: number;
     commissionPercent?: number;
     furnishingStatus?: string;
+    propertyAge?: string;
+    propertyCondition?: string;
     facingDirection?: string;
     parkingSpaces?: number;
     availableFrom?: string;

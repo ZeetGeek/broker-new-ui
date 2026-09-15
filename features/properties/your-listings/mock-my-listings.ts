@@ -74,14 +74,22 @@ export function listingFromCreateInput(
         bhk: input.bhk,
         locality: input.locality,
         city: input.city,
+        state: input.state,
         address: input.address,
+        society: input.society,
+        flatNo: input.flatNo,
+        landmark: input.landmark,
         pinCode: input.pinCode,
         transactionType: input.transactionType,
         saleAmountInr: input.saleAmountInr,
         rentAmountInr: input.rentAmountInr,
         areaSqft: input.areaSqft,
+        carpetAreaSqft: input.carpetAreaSqft,
+        pricePerSqft: input.pricePerSqft,
         furnishing: input.furnishing,
         furnishingLabel: FURNISHING_LABELS[input.furnishing],
+        propertyAge: input.propertyAge,
+        propertyCondition: input.propertyCondition,
         bathrooms: input.bathrooms,
         balconies: input.balconies,
         floorNumber: input.floorNumber,
@@ -121,15 +129,23 @@ export function applyListingUpdate(
     if (input.bhk != null) next.bhk = input.bhk;
     if (input.locality != null) next.locality = input.locality;
     if (input.city != null) next.city = input.city;
+    if (input.state != null) next.state = input.state;
     if (input.address != null) next.address = input.address;
+    if (input.society != null) next.society = input.society;
+    if (input.flatNo != null) next.flatNo = input.flatNo;
+    if (input.landmark != null) next.landmark = input.landmark;
     if (input.pinCode != null) next.pinCode = input.pinCode;
     if (input.saleAmountInr !== undefined) next.saleAmountInr = input.saleAmountInr;
     if (input.rentAmountInr !== undefined) next.rentAmountInr = input.rentAmountInr;
     if (input.areaSqft != null) next.areaSqft = input.areaSqft;
+    if (input.carpetAreaSqft !== undefined) next.carpetAreaSqft = input.carpetAreaSqft;
+    if (input.pricePerSqft !== undefined) next.pricePerSqft = input.pricePerSqft;
     if (input.furnishing != null) {
         next.furnishing = input.furnishing;
         next.furnishingLabel = FURNISHING_LABELS[input.furnishing];
     }
+    if (input.propertyAge != null) next.propertyAge = input.propertyAge;
+    if (input.propertyCondition !== undefined) next.propertyCondition = input.propertyCondition;
     if (input.imageSrcs != null) {
         next.imageSrcs = input.imageSrcs.length > 0 ? input.imageSrcs : ["/properties/1.jpg"];
         next.imageSrc = next.imageSrcs[0]!;
@@ -183,6 +199,14 @@ type SeedDraft = Omit<
     | "facing"
     | "parking"
     | "maintenanceInr"
+    | "state"
+    | "society"
+    | "flatNo"
+    | "landmark"
+    | "carpetAreaSqft"
+    | "pricePerSqft"
+    | "propertyAge"
+    | "propertyCondition"
 > & {
     category?: MyListingCategory;
     bathrooms?: number | null;
@@ -192,6 +216,14 @@ type SeedDraft = Omit<
     facing?: MyListingItem["facing"];
     parking?: MyListingParking;
     maintenanceInr?: number | null;
+    state?: string;
+    society?: string;
+    flatNo?: string;
+    landmark?: string;
+    carpetAreaSqft?: number | null;
+    pricePerSqft?: number | null;
+    propertyAge?: string;
+    propertyCondition?: MyListingItem["propertyCondition"];
 };
 
 function hydrateSeed(item: SeedDraft): MyListingItem {
@@ -205,6 +237,14 @@ function hydrateSeed(item: SeedDraft): MyListingItem {
         totalFloors: item.totalFloors ?? null,
         facing: item.facing ?? null,
         maintenanceInr: item.maintenanceInr ?? null,
+        state: item.state ?? "Gujarat",
+        society: item.society ?? "",
+        flatNo: item.flatNo ?? "",
+        landmark: item.landmark ?? "",
+        carpetAreaSqft: item.carpetAreaSqft ?? null,
+        pricePerSqft: item.pricePerSqft ?? null,
+        propertyAge: item.propertyAge ?? "",
+        propertyCondition: item.propertyCondition ?? null,
     };
 }
 

@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import {
     buildPropertyFacts,
     factColumnsClass,
+    formatListingAddressLine,
     listedAgoLabel,
 } from "@/features/properties/property-detail/property-detail-facts";
 import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
@@ -303,10 +304,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                                 className="mbs-0.5 shrink-0 block-4 inline-4"
                                 strokeWidth={1.75}
                             />
-                            <span>
-                                {item.locality}
-                                {item.city ? `, ${item.city}` : ""}
-                            </span>
+                            <span>{formatListingAddressLine(item)}</span>
                         </p>
                     </header>
 

@@ -7,7 +7,9 @@ import { Sofa, Sparkles } from "lucide-react";
 
 import {
     amenityLabel,
+    PROPERTY_AGE_OPTIONS,
     PROPERTY_AMENITY_OPTIONS,
+    PROPERTY_CONDITION_OPTIONS,
     PROPERTY_FACING_OPTIONS,
     PROPERTY_PARKING_OPTIONS,
     type PropertyFormValues,
@@ -47,6 +49,8 @@ export function ListingExtraFields() {
     const amenities = watch("amenities");
     const furnishing = watch("furnishing");
     const bathrooms = watch("bathrooms");
+    const propertyAge = watch("propertyAge");
+    const propertyCondition = watch("propertyCondition");
     const [customAmenity, setCustomAmenity] = useState("");
 
     const interiorSummary =
@@ -58,6 +62,11 @@ export function ListingExtraFields() {
                   : "Unfurnished",
             bathrooms != null && bathrooms > 0
                 ? `${bathrooms} ${bathrooms === 1 ? "bathroom" : "bathrooms"}`
+                : null,
+            propertyAge.trim() || null,
+            propertyCondition
+                ? (PROPERTY_CONDITION_OPTIONS.find((o) => o.value === propertyCondition)?.label ??
+                  null)
                 : null,
         ]
             .filter(Boolean)
@@ -95,7 +104,9 @@ export function ListingExtraFields() {
                         errors.floorNumber != null ||
                         errors.totalFloors != null ||
                         errors.maintenanceInr != null ||
-                        errors.availableFrom != null
+                        errors.availableFrom != null ||
+                        errors.propertyAge != null ||
+                        errors.propertyCondition != null
                     }
                     summary={interiorSummary}
                 >
@@ -126,6 +137,62 @@ export function ListingExtraFields() {
                                 ))}
                             </div>
                             <FieldError>{errors.furnishing?.message}</FieldError>
+                        </Field>
+
+                        <Field>
+                            <FieldLabel className="body-sm text-ink">Property age</FieldLabel>
+                            <div className="flex flex-wrap gap-2">
+                                {PROPERTY_AGE_OPTIONS.map((option) => (
+                                    <Controller
+                                        key={option.value}
+                                        name="propertyAge"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <SelectionChip
+                                                active={field.value === option.value}
+                                                onClick={() =>
+                                                    field.onChange(
+                                                        field.value === option.value
+                                                            ? ""
+                                                            : option.value,
+                                                    )
+                                                }
+                                            >
+                                                {option.label}
+                                            </SelectionChip>
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                            <FieldError>{errors.propertyAge?.message}</FieldError>
+                        </Field>
+
+                        <Field>
+                            <FieldLabel className="body-sm text-ink">Property condition</FieldLabel>
+                            <div className="flex flex-wrap gap-2">
+                                {PROPERTY_CONDITION_OPTIONS.map((option) => (
+                                    <Controller
+                                        key={option.value}
+                                        name="propertyCondition"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <SelectionChip
+                                                active={field.value === option.value}
+                                                onClick={() =>
+                                                    field.onChange(
+                                                        field.value === option.value
+                                                            ? null
+                                                            : option.value,
+                                                    )
+                                                }
+                                            >
+                                                {option.label}
+                                            </SelectionChip>
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                            <FieldError>{errors.propertyCondition?.message}</FieldError>
                         </Field>
 
                         <div className="grid gap-4 sm:grid-cols-2">

@@ -1,7 +1,11 @@
 import { formatAreaSqft } from "@/lib/format/area";
 import { formatDateShort } from "@/lib/format/date";
 import { formatPriceInr } from "@/lib/format/price";
-import { PROPERTY_FACING_OPTIONS, PROPERTY_PARKING_OPTIONS } from "@/lib/validation/property";
+import {
+    PROPERTY_CONDITION_OPTIONS,
+    PROPERTY_FACING_OPTIONS,
+    PROPERTY_PARKING_OPTIONS,
+} from "@/lib/validation/property";
 
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
@@ -19,6 +23,11 @@ function facingLabel(facing: MyListingItem["facing"]): string | null {
 function parkingLabel(parking: MyListingItem["parking"]): string | null {
     if (parking === "none") return "None";
     return PROPERTY_PARKING_OPTIONS.find((option) => option.value === parking)?.label ?? null;
+}
+
+function conditionLabel(condition: MyListingItem["propertyCondition"]): string | null {
+    if (!condition) return null;
+    return PROPERTY_CONDITION_OPTIONS.find((option) => option.value === condition)?.label ?? null;
 }
 
 /**
@@ -43,6 +52,22 @@ function floorLabel(item: MyListingItem): string | null {
     const floor = item.floorNumber === 0 ? "Ground" : `${item.floorNumber}`;
     if (item.totalFloors == null) return floor;
     return `${floor} of ${item.totalFloors}`;
+}
+
+/** One-line address for detail headers — skips empty parts. */
+export function formatListingAddressLine(item: MyListingItem): string {
+    const parts = [
+        item.flatNo.trim() ? `Flat ${item.flatNo.trim()}` : null,
+        item.society.trim() || null,
+        item.address.trim() || null,
+        item.locality.trim() || null,
+        item.landmark.trim() ? `Near ${item.landmark.trim()}` : null,
+        item.city.trim() || null,
+        item.state.trim() || null,
+        item.pinCode.trim() || null,
+    ].filter((part): part is string => Boolean(part));
+
+    return parts.join(", ");
 }
 
 /**
@@ -70,9 +95,38 @@ export function buildPropertyFacts(item: MyListingItem): PropertyFact[] {
         });
     }
 
-    facts.push({ key: "area", label: "Area", value: formatAreaSqft(item.areaSqft) });
+    facts.push({ key: "area", label: "Built-up area", value: formatAreaSqft(item.areaSqft) });
+    if (item.carpetAreaSqft != null && item.carpetAreaSqft > 0) {
+        facts.push({
+            key: "carpet",
+            label: "Carpet area",
+            value: formatAreaSqft(item.carpetAreaSqft),
+        });
+    }
     facts.push({ key: "type", label: "Property type", value: item.propertyTypeLabel });
     facts.push({ key: "furnishing", label: "Furnishing", value: item.furnishingLabel });
+
+    if (item.propertyAge.trim()) {
+        facts.push({ key: "age", label: "Property age", value: item.propertyAge.trim() });
+    }
+
+    const condition = conditionLabel(item.propertyCondition);
+    if (condition) {
+        facts.push({ key: "condition", label: "Condition", value: condition });
+    }
+
+    if (item.society.trim()) {
+        facts.push({ key: "society", label: "Society", value: item.society.trim() });
+    }
+    if (item.flatNo.trim()) {
+        facts.push({ key: "flat", label: "Flat no.", value: item.flatNo.trim() });
+    }
+    if (item.landmark.trim()) {
+        facts.push({ key: "landmark", label: "Landmark", value: item.landmark.trim() });
+    }
+    if (item.state.trim()) {
+        facts.push({ key: "state", label: "State", value: item.state.trim() });
+    }
 
     const floor = floorLabel(item);
     if (floor) facts.push({ key: "floor", label: "Floor", value: floor });
@@ -82,6 +136,14 @@ export function buildPropertyFacts(item: MyListingItem): PropertyFact[] {
 
     const parking = parkingLabel(item.parking);
     if (parking) facts.push({ key: "parking", label: "Parking", value: parking });
+
+    if (item.pricePerSqft != null && item.pricePerSqft > 0) {
+        facts.push({
+            key: "ppsqft",
+            label: "Price / sq.ft",
+            value: formatPriceInr(item.pricePerSqft),
+        });
+    }
 
     if (item.maintenanceInr != null && item.maintenanceInr > 0) {
         facts.push({

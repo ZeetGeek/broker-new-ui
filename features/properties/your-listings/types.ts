@@ -29,6 +29,9 @@ export type MyListingFacing =
 
 export type MyListingParking = "none" | "1" | "2" | "3plus";
 
+export type MyListingCondition =
+    "ready_to_move" | "under_construction" | "needs_renovation" | "new_launch";
+
 /** Known amenity keys plus free-form custom labels. */
 export type MyListingAmenity = string;
 
@@ -42,14 +45,22 @@ export type MyListingItem = {
     bhk: number;
     locality: string;
     city: string;
+    state: string;
     address: string;
+    society: string;
+    flatNo: string;
+    landmark: string;
     pinCode: string;
     transactionType: MyListingTransactionType;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
     areaSqft: number;
+    carpetAreaSqft: number | null;
+    pricePerSqft: number | null;
     furnishing: MyListingFurnishing;
     furnishingLabel: string;
+    propertyAge: string;
+    propertyCondition: MyListingCondition | null;
     bathrooms: number | null;
     balconies: number | null;
     floorNumber: number | null;
@@ -136,12 +147,20 @@ export type CreateMyListingInput = {
     title: string;
     locality: string;
     city: string;
+    state: string;
     address: string;
+    society: string;
+    flatNo: string;
+    landmark: string;
     pinCode: string;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
     areaSqft: number;
+    carpetAreaSqft: number | null;
+    pricePerSqft: number | null;
     furnishing: MyListingFurnishing;
+    propertyAge: string;
+    propertyCondition: MyListingCondition | null;
     imageSrcs: string[];
     /** Newly picked files (blob previews in imageSrcs). */
     photoFiles?: File[];

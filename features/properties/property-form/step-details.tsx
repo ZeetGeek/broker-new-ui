@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { type ChangeEvent, useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
 import { Building2, IndianRupee, MapPin } from "lucide-react";
@@ -33,6 +33,19 @@ import {
 } from "@/features/properties/property-form/option-icons";
 import { SelectionChip } from "@/features/properties/property-form/selection-chip";
 
+function optionalNumberRegister(
+    onChange: (value: number | null) => void,
+    value: number | null | undefined,
+) {
+    return {
+        value: value ?? "",
+        onChange: (event: ChangeEvent<HTMLInputElement>) => {
+            const raw = event.target.value;
+            onChange(raw === "" ? null : Number(raw));
+        },
+    };
+}
+
 export function StepDetails({
     titleTouched,
     onTitleTouched,
@@ -53,6 +66,8 @@ export function StepDetails({
     const bhk = watch("bhk");
     const locality = watch("locality");
     const city = watch("city");
+    const state = watch("state");
+    const society = watch("society");
     const transactionType = watch("transactionType");
     const showBhk = needsBhk(propertyType);
     const needsSale = transactionType === "sale" || transactionType === "both";
@@ -61,6 +76,7 @@ export function StepDetails({
     const subtypeOptions = PROPERTY_TYPE_OPTIONS.filter((option) => option.category === category);
 
     const areaSqft = watch("areaSqft");
+    const carpetAreaSqft = watch("carpetAreaSqft");
 
     const listingSummary = [
         transactionType === "both"
@@ -71,11 +87,16 @@ export function StepDetails({
         showBhk && bhk > 0 ? `${bhk} BHK` : null,
         PROPERTY_TYPE_LABELS[propertyType],
         areaSqft > 0 ? formatAreaSqft(areaSqft) : null,
+        carpetAreaSqft != null && carpetAreaSqft > 0
+            ? `Carpet ${formatAreaSqft(carpetAreaSqft)}`
+            : null,
     ]
         .filter(Boolean)
         .join(" · ");
 
-    const locationSummary = [locality, city].filter((part) => part?.trim()).join(", ");
+    const locationSummary = [society, locality, city, state]
+        .filter((part) => part?.trim())
+        .join(", ");
 
     useEffect(() => {
         const allowed = PROPERTY_TYPES_BY_CATEGORY[category];
@@ -221,21 +242,45 @@ export function StepDetails({
                             </Field>
                         ) : null}
 
-                        <Field>
-                            <FieldLabel htmlFor="areaSqft" className="body-sm text-ink">
-                                Area (sq.ft)
-                            </FieldLabel>
-                            <Input
-                                id="areaSqft"
-                                aria-invalid={errors.areaSqft != null}
-                                type="number"
-                                min={1}
-                                className={FORM_CONTROL_CLASS}
-                                placeholder="e.g. 1050"
-                                {...register("areaSqft", { valueAsNumber: true })}
-                            />
-                            <FieldError>{errors.areaSqft?.message}</FieldError>
-                        </Field>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field>
+                                <FieldLabel htmlFor="areaSqft" className="body-sm text-ink">
+                                    Built-up area (sq.ft)
+                                </FieldLabel>
+                                <Input
+                                    id="areaSqft"
+                                    aria-invalid={errors.areaSqft != null}
+                                    type="number"
+                                    min={1}
+                                    className={FORM_CONTROL_CLASS}
+                                    placeholder="e.g. 1050"
+                                    {...register("areaSqft", { valueAsNumber: true })}
+                                />
+                                <FieldError>{errors.areaSqft?.message}</FieldError>
+                            </Field>
+                            <Field>
+                                <FieldLabel htmlFor="carpetAreaSqft" className="body-sm text-ink">
+                                    Carpet area (sq.ft)
+                                </FieldLabel>
+                                <Controller
+                                    name="carpetAreaSqft"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input
+                                            id="carpetAreaSqft"
+                                            aria-invalid={errors.carpetAreaSqft != null}
+                                            type="number"
+                                            min={1}
+                                            className={FORM_CONTROL_CLASS}
+                                            placeholder="Optional · e.g. 880"
+                                            {...optionalNumberRegister(field.onChange, field.value)}
+                                            onBlur={field.onBlur}
+                                        />
+                                    )}
+                                />
+                                <FieldError>{errors.carpetAreaSqft?.message}</FieldError>
+                            </Field>
+                        </div>
                     </FieldGroup>
                 </FormSection>
 
@@ -245,7 +290,11 @@ export function StepDetails({
                     description="City and locality help brokers find the right matches."
                     hasError={
                         errors.city != null ||
+                        errors.state != null ||
                         errors.locality != null ||
+                        errors.society != null ||
+                        errors.flatNo != null ||
+                        errors.landmark != null ||
                         errors.pinCode != null ||
                         errors.address != null ||
                         errors.title != null
@@ -268,6 +317,22 @@ export function StepDetails({
                                 <FieldError>{errors.city?.message}</FieldError>
                             </Field>
                             <Field>
+                                <FieldLabel htmlFor="state" className="body-sm text-ink">
+                                    State
+                                </FieldLabel>
+                                <Input
+                                    id="state"
+                                    aria-invalid={errors.state != null}
+                                    className={FORM_CONTROL_CLASS}
+                                    placeholder="Optional · e.g. Gujarat"
+                                    {...register("state")}
+                                />
+                                <FieldError>{errors.state?.message}</FieldError>
+                            </Field>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field>
                                 <FieldLabel htmlFor="locality" className="body-sm text-ink">
                                     Locality / Sector
                                 </FieldLabel>
@@ -279,6 +344,48 @@ export function StepDetails({
                                     {...register("locality")}
                                 />
                                 <FieldError>{errors.locality?.message}</FieldError>
+                            </Field>
+                            <Field>
+                                <FieldLabel htmlFor="society" className="body-sm text-ink">
+                                    Society
+                                </FieldLabel>
+                                <Input
+                                    id="society"
+                                    aria-invalid={errors.society != null}
+                                    className={FORM_CONTROL_CLASS}
+                                    placeholder="Optional · society / complex"
+                                    {...register("society")}
+                                />
+                                <FieldError>{errors.society?.message}</FieldError>
+                            </Field>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field>
+                                <FieldLabel htmlFor="flatNo" className="body-sm text-ink">
+                                    Flat no.
+                                </FieldLabel>
+                                <Input
+                                    id="flatNo"
+                                    aria-invalid={errors.flatNo != null}
+                                    className={FORM_CONTROL_CLASS}
+                                    placeholder="Optional · e.g. A-1204"
+                                    {...register("flatNo")}
+                                />
+                                <FieldError>{errors.flatNo?.message}</FieldError>
+                            </Field>
+                            <Field>
+                                <FieldLabel htmlFor="landmark" className="body-sm text-ink">
+                                    Landmark
+                                </FieldLabel>
+                                <Input
+                                    id="landmark"
+                                    aria-invalid={errors.landmark != null}
+                                    className={FORM_CONTROL_CLASS}
+                                    placeholder="Optional · nearby landmark"
+                                    {...register("landmark")}
+                                />
+                                <FieldError>{errors.landmark?.message}</FieldError>
                             </Field>
                         </div>
 
@@ -339,7 +446,11 @@ export function StepDetails({
                 title="Price"
                 icon={<IndianRupee />}
                 description="Enter the asking price for this listing."
-                hasError={errors.saleAmountInr != null || errors.rentAmountInr != null}
+                hasError={
+                    errors.saleAmountInr != null ||
+                    errors.rentAmountInr != null ||
+                    errors.pricePerSqft != null
+                }
             >
                 <FieldGroup className="gap-5">
                     <div
@@ -406,6 +517,35 @@ export function StepDetails({
                             </Field>
                         ) : null}
                     </div>
+
+                    {needsSale ? (
+                        <Field>
+                            <FieldLabel htmlFor="pricePerSqft" className="body-sm text-ink">
+                                Price per sq.ft (₹)
+                            </FieldLabel>
+                            <Controller
+                                name="pricePerSqft"
+                                control={control}
+                                render={({ field }) => (
+                                    <Input
+                                        id="pricePerSqft"
+                                        aria-invalid={errors.pricePerSqft != null}
+                                        type="number"
+                                        inputMode="numeric"
+                                        min={0}
+                                        className={FORM_CONTROL_CLASS}
+                                        placeholder="Optional · e.g. 8500"
+                                        {...optionalNumberRegister(field.onChange, field.value)}
+                                        onBlur={field.onBlur}
+                                    />
+                                )}
+                            />
+                            <FieldDescription className="body-xs text-ink-muted">
+                                Leave blank to derive from sale price ÷ area when shown.
+                            </FieldDescription>
+                            <FieldError>{errors.pricePerSqft?.message}</FieldError>
+                        </Field>
+                    ) : null}
                 </FieldGroup>
             </FormSection>
 

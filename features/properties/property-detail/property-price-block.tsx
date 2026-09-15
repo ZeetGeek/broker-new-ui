@@ -27,16 +27,27 @@ export function PropertyPriceBlock({ item }: { item: MyListingItem }) {
     const showsSale = both ? mode === "sale" : offersSale(item);
     const amount = showsSale ? item.saleAmountInr : item.rentAmountInr;
 
-    const perSqft =
-        showsSale && item.saleAmountInr != null && item.areaSqft > 0
-            ? Math.round(item.saleAmountInr / item.areaSqft)
-            : null;
+    const perSqft = (() => {
+        if (!showsSale) return null;
+        if (item.pricePerSqft != null && item.pricePerSqft > 0) return item.pricePerSqft;
+        const areaForRate =
+            item.carpetAreaSqft != null && item.carpetAreaSqft > 0
+                ? item.carpetAreaSqft
+                : item.areaSqft;
+        if (item.saleAmountInr != null && areaForRate > 0) {
+            return Math.round(item.saleAmountInr / areaForRate);
+        }
+        return null;
+    })();
 
     // The price alone leaves half the card empty on a sale-only listing, so the
     // headline numbers a broker quotes on a call sit beside it.
     const headlineStats = [
         item.bhk > 0 ? { label: "Config", value: item.configLabel } : null,
         { label: "Area", value: formatAreaSqft(item.areaSqft) },
+        item.carpetAreaSqft != null && item.carpetAreaSqft > 0
+            ? { label: "Carpet", value: formatAreaSqft(item.carpetAreaSqft) }
+            : null,
         { label: "Furnishing", value: item.furnishingLabel },
     ].filter((stat): stat is { label: string; value: string } => stat != null);
 

@@ -26,6 +26,7 @@ import { PropertyDeleteDialog } from "@/features/properties/property-detail/prop
 import {
     buildPropertyFacts,
     factColumnsClass,
+    formatListingAddressLine,
     listedAgoLabel,
 } from "@/features/properties/property-detail/property-detail-facts";
 import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
@@ -151,14 +152,15 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
                                 className="mbs-0.5 shrink-0 block-4 inline-4"
                                 strokeWidth={1.75}
                             />
-                            <span>
-                                {item.address}, {item.locality}, {item.city} {item.pinCode}
-                            </span>
+                            <span>{formatListingAddressLine(item)}</span>
                         </p>
                     </header>
 
                     <section
-                        className="rounded-card border border-border-warm bg-surface p-5 sm:p-6"
+                        className="
+                      rounded-card border border-border-warm bg-surface p-5
+                      sm:p-6
+                    "
                     >
                         <PropertyPriceBlock item={item} />
                     </section>

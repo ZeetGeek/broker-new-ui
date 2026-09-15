@@ -21,6 +21,13 @@ export const propertyTypeSchema = z.enum([
 
 export const furnishingSchema = z.enum(["furnished", "semi", "unfurnished"]);
 
+export const propertyConditionSchema = z.enum([
+    "ready_to_move",
+    "under_construction",
+    "needs_renovation",
+    "new_launch",
+]);
+
 export const facingSchema = z.enum([
     "north",
     "east",
@@ -38,6 +45,7 @@ export type PropertyCategory = z.infer<typeof propertyCategorySchema>;
 export type PropertyType = z.infer<typeof propertyTypeSchema>;
 export type PropertyFacing = z.infer<typeof facingSchema>;
 export type PropertyParking = z.infer<typeof parkingSchema>;
+export type PropertyCondition = z.infer<typeof propertyConditionSchema>;
 
 export const PROPERTY_TYPES_BY_CATEGORY: Record<PropertyCategory, PropertyType[]> = {
     residential: [
@@ -114,7 +122,11 @@ export const propertyFormSchema = z
             .trim()
             .min(1, "Enter the city")
             .max(80, "Keep the city under 80 characters"),
+        state: z.string().trim().max(80, "Keep the state under 80 characters"),
         address: z.string().trim().max(200, "Keep the address under 200 characters"),
+        society: z.string().trim().max(120, "Keep the society name under 120 characters"),
+        flatNo: z.string().trim().max(40, "Keep the flat number under 40 characters"),
+        landmark: z.string().trim().max(120, "Keep the landmark under 120 characters"),
         pinCode: z
             .string()
             .trim()
@@ -127,7 +139,21 @@ export const propertyFormSchema = z
             .number({ message: "Enter area in sq.ft." })
             .positive("Enter area in sq.ft.")
             .max(1_000_000, "Enter area up to 10,00,000 sq.ft."),
+        carpetAreaSqft: z
+            .number()
+            .int("Enter carpet area as a whole number")
+            .min(0, "Carpet area cannot be negative")
+            .max(1_000_000, "Enter carpet area up to 10,00,000 sq.ft.")
+            .nullable(),
+        pricePerSqft: z
+            .number()
+            .int("Enter price per sq.ft as a whole number")
+            .min(0, "Price per sq.ft cannot be negative")
+            .max(10_000_000, "Enter a realistic price per sq.ft")
+            .nullable(),
         furnishing: furnishingSchema,
+        propertyAge: z.string().trim().max(40, "Keep property age under 40 characters"),
+        propertyCondition: propertyConditionSchema.nullable(),
         // Drafts may have no photos; publish requires ≥1 via superRefine below.
         imageSrcs: z
             .array(z.string().min(1))
@@ -255,12 +281,20 @@ export const PROPERTY_FORM_STEP_FIELDS: Record<PropertyFormStep, (keyof Property
         "title",
         "locality",
         "city",
+        "state",
         "address",
+        "society",
+        "flatNo",
+        "landmark",
         "pinCode",
         "areaSqft",
+        "carpetAreaSqft",
+        "pricePerSqft",
         "saleAmountInr",
         "rentAmountInr",
         "furnishing",
+        "propertyAge",
+        "propertyCondition",
         "bathrooms",
         "balconies",
         "floorNumber",
@@ -283,12 +317,20 @@ export const DEFAULT_PROPERTY_FORM_VALUES: PropertyFormValues = {
     title: "",
     locality: "",
     city: "Surat",
+    state: "",
     address: "",
+    society: "",
+    flatNo: "",
+    landmark: "",
     pinCode: "",
     saleAmountInr: null,
     rentAmountInr: null,
     areaSqft: 1050,
+    carpetAreaSqft: null,
+    pricePerSqft: null,
     furnishing: "semi",
+    propertyAge: "",
+    propertyCondition: null,
     imageSrcs: [],
     bathrooms: null,
     balconies: null,
@@ -371,6 +413,20 @@ export const PROPERTY_PARKING_OPTIONS: { value: PropertyParking; label: string }
     { value: "1", label: "1" },
     { value: "2", label: "2" },
     { value: "3plus", label: "3+" },
+];
+
+export const PROPERTY_AGE_OPTIONS: { value: string; label: string }[] = [
+    { value: "0-1 Year", label: "0–1 Year" },
+    { value: "1-5 Years", label: "1–5 Years" },
+    { value: "5-10 Years", label: "5–10 Years" },
+    { value: "10+ Years", label: "10+ Years" },
+];
+
+export const PROPERTY_CONDITION_OPTIONS: { value: PropertyCondition; label: string }[] = [
+    { value: "ready_to_move", label: "Ready to move" },
+    { value: "under_construction", label: "Under construction" },
+    { value: "needs_renovation", label: "Needs renovation" },
+    { value: "new_launch", label: "New launch" },
 ];
 
 export const PROPERTY_AMENITY_OPTIONS: { value: string; label: string }[] = [

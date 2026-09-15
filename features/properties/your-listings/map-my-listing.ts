@@ -9,6 +9,7 @@ import {
 
 import type {
     CreateMyListingInput,
+    MyListingCondition,
     MyListingFacing,
     MyListingFurnishing,
     MyListingItem,
@@ -91,6 +92,18 @@ function mapFurnishing(value: string | null | undefined): MyListingFurnishing {
         return value;
     }
     return "unfurnished";
+}
+
+function mapCondition(value: string | null | undefined): MyListingCondition | null {
+    if (
+        value === "ready_to_move" ||
+        value === "under_construction" ||
+        value === "needs_renovation" ||
+        value === "new_launch"
+    ) {
+        return value;
+    }
+    return null;
 }
 
 function mapPropertyType(listing: PropertyListing): MyListingPropertyType {
@@ -232,14 +245,32 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         bhk,
         locality,
         city,
+        state: listing.state?.trim() || "",
         address: listing.address?.trim() || locality,
+        society: listing.society?.trim() || "",
+        flatNo: listing.flatNo?.trim() || "",
+        landmark: listing.landmark?.trim() || "",
         pinCode: listing.postalCode?.trim() || "",
         transactionType: mapTransactionType(listing.transactionType),
         saleAmountInr,
         rentAmountInr,
         areaSqft: listing.areaSqft ?? 0,
+        carpetAreaSqft: (() => {
+            const raw = listing.carpetAreaSqft;
+            return raw != null && raw > 0 ? raw : null;
+        })(),
+        pricePerSqft: (() => {
+            const raw = listing.pricePerSqft;
+            if (raw != null && raw > 0) return raw;
+            if (saleAmountInr != null && (listing.areaSqft ?? 0) > 0) {
+                return Math.round(saleAmountInr / (listing.areaSqft as number));
+            }
+            return null;
+        })(),
         furnishing,
         furnishingLabel: FURNISHING_LABELS[furnishing],
+        propertyAge: listing.propertyAge?.trim() || "",
+        propertyCondition: mapCondition(listing.propertyCondition),
         bathrooms: listing.bathrooms ?? null,
         balconies: listing.balconyCount ?? null,
         floorNumber: listing.floorNumber ?? null,
@@ -295,13 +326,21 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
         floorNumber: input.floorNumber ?? undefined,
         totalFloors: input.totalFloors ?? undefined,
         areaSqft: input.areaSqft,
+        carpetAreaSqft: input.carpetAreaSqft ?? undefined,
         address: input.locality.trim(),
+        state: input.state.trim() || undefined,
+        society: input.society.trim() || undefined,
+        flatNo: input.flatNo.trim() || undefined,
+        landmark: input.landmark.trim() || undefined,
         postalCode: input.pinCode.trim() || undefined,
         country: "India",
         salePrice: input.saleAmountInr ?? undefined,
         monthlyRent: input.rentAmountInr ?? undefined,
         maintenanceCharges: input.maintenanceInr ?? undefined,
+        pricePerSqft: input.pricePerSqft ?? undefined,
         furnishingStatus: input.furnishing,
+        propertyAge: input.propertyAge.trim() || undefined,
+        propertyCondition: input.propertyCondition ?? undefined,
         facingDirection: input.facing ?? undefined,
         parkingSpaces: parkingToSpaces(input.parking),
         availableFrom: input.availableFrom || undefined,
@@ -331,14 +370,30 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.title != null) payload.title = input.title.trim();
     if (input.locality != null) payload.address = input.locality.trim();
     if (input.city != null) payload.city = input.city.trim();
+    if (input.state != null) payload.state = input.state.trim() || undefined;
+    if (input.society != null) payload.society = input.society.trim() || undefined;
+    if (input.flatNo != null) payload.flatNo = input.flatNo.trim() || undefined;
+    if (input.landmark != null) payload.landmark = input.landmark.trim() || undefined;
     if (input.pinCode != null) payload.postalCode = input.pinCode.trim();
     if (input.areaSqft != null) payload.areaSqft = input.areaSqft;
+    if (input.carpetAreaSqft !== undefined) {
+        payload.carpetAreaSqft = input.carpetAreaSqft ?? undefined;
+    }
     if (input.saleAmountInr !== undefined) payload.salePrice = input.saleAmountInr ?? undefined;
     if (input.rentAmountInr !== undefined) payload.monthlyRent = input.rentAmountInr ?? undefined;
     if (input.maintenanceInr !== undefined) {
         payload.maintenanceCharges = input.maintenanceInr ?? undefined;
     }
+    if (input.pricePerSqft !== undefined) {
+        payload.pricePerSqft = input.pricePerSqft ?? undefined;
+    }
     if (input.furnishing != null) payload.furnishingStatus = input.furnishing;
+    if (input.propertyAge != null) {
+        payload.propertyAge = input.propertyAge.trim() || undefined;
+    }
+    if (input.propertyCondition !== undefined) {
+        payload.propertyCondition = input.propertyCondition ?? undefined;
+    }
     if (input.bathrooms !== undefined) payload.bathrooms = input.bathrooms ?? undefined;
     if (input.balconies !== undefined) payload.balconyCount = input.balconies ?? undefined;
     if (input.floorNumber !== undefined) payload.floorNumber = input.floorNumber ?? undefined;

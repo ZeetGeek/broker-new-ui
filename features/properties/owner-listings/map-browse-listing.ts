@@ -197,6 +197,7 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         locality,
         city,
         country: listing.country?.trim() || "India",
+        state: listing.state?.trim() || undefined,
         saleAmountInr,
         rentAmountInr,
         areaSqft: listing.areaSqft ?? 0,
