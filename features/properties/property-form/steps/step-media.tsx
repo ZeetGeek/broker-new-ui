@@ -1,6 +1,6 @@
 "use client";
 
-import { type MutableRefObject, type ReactNode } from "react";
+import { type MutableRefObject, type ReactNode, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -17,6 +17,12 @@ import {
 } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
+import {
+    hasNonEmptyUrl,
+    parseTourEmbed,
+    parseVideoEmbed,
+    type MediaEmbed,
+} from "@/lib/media/embed-url";
 import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
@@ -91,6 +97,10 @@ export function StepMedia({
 }) {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const photos = watch("media.photos");
+    const videoUrl = watch("media.videoUrl") ?? "";
+    const virtualTourUrl = watch("media.virtualTourUrl") ?? "";
+    const videoEmbed = useMemo(() => parseVideoEmbed(videoUrl), [videoUrl]);
+    const tourEmbed = useMemo(() => parseTourEmbed(virtualTourUrl), [virtualTourUrl]);
     const usablePhotoCount = photos.filter((photo) => photo.status !== "error").length;
     const publishReady = usablePhotoCount >= 3;
     const coverPhoto = photos.find((photo) => photo.isCover) ?? null;
@@ -457,22 +467,76 @@ export function StepMedia({
                 description="Optional links for buyers. Paste a hosted URL — no file upload here."
             >
                 <div className={FORM_GRID_CLASS}>
-                    <TextField
-                        name="media.videoUrl"
-                        label="YouTube or Vimeo link"
-                        type="url"
-                        placeholder="https://youtube.com/… or https://vimeo.com/…"
-                        startIcon={Video}
-                    />
-                    <TextField
-                        name="media.virtualTourUrl"
-                        label="Virtual tour link"
-                        type="url"
-                        placeholder="Matterport or 360° tour"
-                        startIcon={View}
-                    />
+                    <div className="flex flex-col gap-3 min-inline-0">
+                        <TextField
+                            name="media.videoUrl"
+                            label="YouTube or Vimeo link"
+                            type="url"
+                            placeholder="https://youtube.com/… or https://vimeo.com/…"
+                            startIcon={Video}
+                        />
+                        {videoEmbed ? (
+                            <MediaEmbedPreview embed={videoEmbed} />
+                        ) : hasNonEmptyUrl(videoUrl) ? (
+                            <p className="text-sm text-ink-muted">
+                                Paste a full YouTube or Vimeo link to see a preview.
+                            </p>
+                        ) : null}
+                    </div>
+                    <div className="flex flex-col gap-3 min-inline-0">
+                        <TextField
+                            name="media.virtualTourUrl"
+                            label="Virtual tour link"
+                            type="url"
+                            placeholder="Matterport or 360° tour"
+                            startIcon={View}
+                        />
+                        {tourEmbed ? (
+                            <MediaEmbedPreview embed={tourEmbed} />
+                        ) : hasNonEmptyUrl(virtualTourUrl) ? (
+                            <p className="text-sm text-ink-muted">
+                                Paste a full https link to preview the tour.
+                            </p>
+                        ) : null}
+                    </div>
                 </div>
             </WizardSection>
+        </div>
+    );
+}
+
+function MediaEmbedPreview({ embed }: { embed: MediaEmbed }) {
+    return (
+        <div
+            className="
+              overflow-hidden rounded-card border border-border-warm bg-surface
+            "
+        >
+            <div className="relative aspect-video bg-surface-muted">
+                <iframe
+                    title={embed.title}
+                    src={embed.embedUrl}
+                    className="absolute inset-0 block-full inline-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                />
+            </div>
+            <div className="flex items-center justify-between gap-3 px-3 py-2">
+                <p className="truncate text-sm font-medium text-ink">{embed.title}</p>
+                <a
+                    href={embed.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="
+                      shrink-0 text-sm font-semibold text-brand
+                      hover:text-brand-text hover:underline
+                    "
+                >
+                    Open
+                </a>
+            </div>
         </div>
     );
 }

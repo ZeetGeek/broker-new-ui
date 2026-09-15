@@ -1,14 +1,11 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import Link from "next/link";
 
-import { ArrowDownUp, ChevronDown, LayoutGrid, List, Plus, Search } from "lucide-react";
+import { ArrowDownUp, ChevronDown, LayoutGrid, List, Search } from "lucide-react";
 
-import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -131,6 +128,7 @@ export function PipelineToolbar({
     owners,
     onPatch,
     onBoardLayoutChange,
+    trailing,
 }: {
     filters: DealsFilters;
     boardLayout: DealBoardLayout;
@@ -138,6 +136,11 @@ export function PipelineToolbar({
     owners: string[];
     onPatch: (patch: Partial<DealsFilters>) => void;
     onBoardLayoutChange: (layout: DealBoardLayout) => void;
+    /**
+     * Pushed to the end of the same row. The summary chips live here so the
+     * board opens with one control line instead of two.
+     */
+    trailing?: ReactNode;
 }) {
     return (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -288,16 +291,7 @@ export function PipelineToolbar({
                 })}
             </div>
 
-            <Button
-                variant="default"
-                size="sm"
-                nativeButton={false}
-                className="ms-auto"
-                render={<Link href={BROKER_MY_DEALS_HREF} />}
-            >
-                <Plus aria-hidden strokeWidth={1.75} />
-                Add deal
-            </Button>
+            {trailing ? <div className="ms-auto flex items-center gap-2">{trailing}</div> : null}
         </div>
     );
 }

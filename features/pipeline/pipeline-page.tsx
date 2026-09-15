@@ -531,14 +531,6 @@ export function PipelinePage() {
 
     return (
         <div className="flex flex-col gap-5">
-            {summary && !isFirstRun ? (
-                <PipelineSummaryStrip
-                    summary={summary}
-                    active={summaryChip}
-                    onChange={setSummaryChip}
-                />
-            ) : null}
-
             {!isFirstRun ? (
                 <PipelineToolbar
                     filters={filters}
@@ -547,6 +539,15 @@ export function PipelinePage() {
                     owners={owners}
                     onPatch={handlePatch}
                     onBoardLayoutChange={setBoardLayout}
+                    trailing={
+                        summary ? (
+                            <PipelineSummaryStrip
+                                summary={summary}
+                                active={summaryChip}
+                                onChange={setSummaryChip}
+                            />
+                        ) : null
+                    }
                 />
             ) : null}
 
