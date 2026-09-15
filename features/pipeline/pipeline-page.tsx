@@ -576,7 +576,7 @@ export function PipelinePage() {
                         <WindowVirtualGrid
                             items={doneDeals}
                             getKey={(deal) => deal.id}
-                            estimateRowHeight={264}
+                            estimateRowHeight={470}
                             gap={12}
                             breakpoints={DONE_GRID_BREAKPOINTS}
                             ariaLabel="Completed and lost deals"
@@ -642,7 +642,7 @@ export function PipelinePage() {
                             <WindowVirtualGrid
                                 items={dealsByStage[mobileStage]}
                                 getKey={(deal) => deal.id}
-                                estimateRowHeight={264}
+                                estimateRowHeight={470}
                                 gap={12}
                                 ariaLabel={`${DEAL_STAGE_META[mobileStage].label} deals`}
                                 renderItem={renderDealCard}

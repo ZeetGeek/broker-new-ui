@@ -10,11 +10,10 @@ import {
     ImageIcon,
     ImagePlus,
     Images,
-    LoaderCircle,
     RefreshCw,
-    Trash2,
     Video,
     View,
+    X,
 } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
@@ -23,6 +22,15 @@ import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { AppImage } from "@/components/shared/app-image";
+import {
+    Attachment,
+    AttachmentAction,
+    AttachmentActions,
+    AttachmentContent,
+    AttachmentDescription,
+    AttachmentMedia,
+    AttachmentTitle,
+} from "@/components/ui/attachment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -278,10 +286,10 @@ export function StepMedia({
                             </div>
 
                             {coverPhoto ? (
-                                <div className="space-y-3">
-                                    <PhotoPreviewCard
+                                <div className="space-y-2">
+                                    <PhotoAttachment
                                         photo={coverPhoto}
-                                        aspectClass="aspect-3/4"
+                                        badge="Cover"
                                         onRemove={() => removePhotoById(coverPhoto.id)}
                                         onRetry={() => retryPhoto(coverPhoto.id)}
                                     />
@@ -400,12 +408,15 @@ export function StepMedia({
                     </div>
 
                     {galleryPhotos.length ? (
-                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        <div
+                            className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                            role="list"
+                            aria-label="Property photos"
+                        >
                             {galleryPhotos.map((photo) => (
-                                <PhotoPreviewCard
+                                <PhotoAttachment
                                     key={photo.id}
                                     photo={photo}
-                                    aspectClass="aspect-4/3"
                                     onRemove={() => removePhotoById(photo.id)}
                                     onRetry={() => retryPhoto(photo.id)}
                                 />
@@ -466,93 +477,89 @@ export function StepMedia({
     );
 }
 
-function PhotoPreviewCard({
+function photoAttachmentState(status: DraftPhoto["status"]): "error" | "done" {
+    // Keep visual state quiet — uploading/processing shimmer is too loud for this list.
+    return status === "error" ? "error" : "done";
+}
+
+function photoStatusLabel(photo: DraftPhoto, badge?: string): string {
+    const status =
+        photo.status === "processing"
+            ? "Compressing…"
+            : photo.status === "error"
+              ? (photo.errorMessage ?? "Upload failed. Try again.")
+              : photo.status === "queued"
+                ? "Queued · waiting for upload"
+                : "Ready";
+    return badge ? `${badge} · ${status}` : status;
+}
+
+function PhotoAttachment({
     photo,
-    aspectClass,
+    badge,
     onRemove,
     onRetry,
 }: {
     photo: DraftPhoto;
-    aspectClass: string;
+    badge?: string;
     onRemove: () => void;
     onRetry: () => void;
 }) {
+    const state = photoAttachmentState(photo.status);
+
     return (
-        <article className="overflow-hidden rounded-card border-2 border-border-warm bg-surface">
-            <div className={cn("relative bg-surface-muted", aspectClass)}>
+        <Attachment
+            state={state}
+            orientation="horizontal"
+            className="
+              min-w-0 w-full max-w-none gap-2.5 p-2.5 shadow-none
+              hover:bg-surface
+              has-[>a,>button]:hover:bg-surface
+              focus-within:border-border-warm focus-within:ring-0
+            "
+            role="listitem"
+        >
+            <AttachmentMedia variant="image" className="size-11 shrink-0 opacity-100">
                 {photo.url ? (
                     <AppImage
                         src={photo.url}
                         alt={photo.name}
-                        fill
-                        sizes="(max-width: 640px) 100vw, 33vw"
+                        width={88}
+                        height={88}
+                        className="size-full object-cover"
+                        sizes="44px"
                     />
                 ) : (
-                    <div
-                        className="
-                          flex flex-col items-center justify-center gap-2 px-4 text-center
-                          block-full
-                        "
-                    >
-                        <CircleAlert className="text-danger block-6 inline-6" aria-hidden />
-                        <p className="line-clamp-2 text-xs font-semibold text-ink">{photo.name}</p>
-                    </div>
+                    <CircleAlert className="text-danger block-5 inline-5" aria-hidden />
                 )}
-                <span
-                    className={cn(
-                        `
-                          absolute inset-e-3 inset-be-3 inline-flex items-center gap-1
-                          rounded-control px-2.5 py-1.5 text-xs font-semibold
-                        `,
-                        photo.status === "error"
-                            ? "bg-danger-soft text-danger"
-                            : "bg-brand-ink text-surface",
-                    )}
-                >
-                    {photo.status === "processing" ? (
-                        <LoaderCircle
-                            className="animate-spin block-3.5 inline-3.5"
-                            aria-hidden
-                        />
-                    ) : photo.status === "error" ? (
-                        <CircleAlert className="block-3.5 inline-3.5" aria-hidden />
-                    ) : (
-                        <Check className="block-3.5 inline-3.5" aria-hidden />
-                    )}
-                    {photo.status === "processing"
-                        ? "Compressing"
-                        : photo.status === "error"
-                          ? "Needs attention"
-                          : photo.status === "queued"
-                            ? "Queued"
-                            : "Ready"}
-                </span>
-                <Button
+            </AttachmentMedia>
+            <AttachmentContent className="min-w-0">
+                <AttachmentTitle className="text-sm [&.shimmer]:animate-none">
+                    {photo.name}
+                </AttachmentTitle>
+                <AttachmentDescription>
+                    {photoStatusLabel(photo, badge)}
+                </AttachmentDescription>
+            </AttachmentContent>
+            <AttachmentActions className="gap-0.5">
+                {photo.status === "error" ? (
+                    <AttachmentAction
+                        type="button"
+                        aria-label={`Retry ${photo.name}`}
+                        onClick={onRetry}
+                    >
+                        <RefreshCw aria-hidden strokeWidth={2} />
+                    </AttachmentAction>
+                ) : null}
+                <AttachmentAction
                     type="button"
-                    variant="outline"
-                    size="icon-md"
                     aria-label={`Remove ${photo.name}`}
                     onClick={onRemove}
-                    className="
-                      absolute inset-e-3 inset-bs-3 flex items-center justify-center rounded-full
-                      bg-surface text-danger shadow-sm block-10 inline-10
-                      focus-visible:ring-3 focus-visible:ring-danger/20
-                    "
+                    className="text-danger hover:bg-danger-soft hover:text-danger"
                 >
-                    <Trash2 className="block-4 inline-4" />
-                </Button>
-            </div>
-            {photo.status === "error" ? (
-                <div className="space-y-2 p-3">
-                    <div className="rounded-control bg-danger-soft px-3 py-2 text-xs/5 text-danger">
-                        {photo.errorMessage ??
-                            "This format could not be prepared. Retry or choose another file."}
-                    </div>
-                    <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-                        <RefreshCw aria-hidden /> Retry
-                    </Button>
-                </div>
-            ) : null}
-        </article>
+                    <X aria-hidden strokeWidth={2} />
+                </AttachmentAction>
+            </AttachmentActions>
+        </Attachment>
     );
 }

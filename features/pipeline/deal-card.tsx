@@ -246,11 +246,14 @@ function DealCardMenu({
     handlers,
     isBusy,
     isPinned,
+    className,
 }: {
     deal: DealItem;
     handlers: DealCardHandlers;
     isBusy: boolean;
     isPinned: boolean;
+    /** Lets the board card recolour the trigger for use over a photo. */
+    className?: string;
 }) {
     const live = isLiveStage(deal.status);
 
@@ -260,15 +263,24 @@ function DealCardMenu({
                 render={
                     <Button
                         variant="ghost"
-                        size="icon-xs"
+                        size="icon-sm"
                         disabled={isBusy}
                         aria-label={`More actions for ${deal.buyer.name}`}
-                        className="shrink-0 text-ink"
+                        // Same box, radius and ink as FooterAction, so the
+                        // menu reads as one of the card's field actions.
+                        className={cn(
+                            `
+                              shrink-0 rounded-control text-ink-muted block-control-sm
+                              inline-control-sm
+                              hover:bg-surface-muted hover:text-ink
+                            `,
+                            className,
+                        )}
                         onClick={stopCard}
                     />
                 }
             >
-                <MoreHorizontal aria-hidden strokeWidth={1.75} />
+                <MoreHorizontal aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="min-inline-52">
@@ -437,73 +449,70 @@ export function DealCard({
             )}
         >
             <div className="flex flex-col gap-4 min-block-0">
-                <div className="flex items-center gap-3">
-                    <PropertyThumb
-                        src={deal.property.imageSrc || null}
-                        alt={deal.property.title}
-                        className="
-                          border border-border-warm shadow-sm block-18 inline-18
-                          sm:block-18 sm:inline-18
-                        "
-                        sizes="72px"
-                        iconClassName="block-6 inline-6"
-                        hoverScale={false}
-                    />
+                {/* The photo spans the card instead of sitting as a square
+                    beside the text. In a 288px column a thumb left the title
+                    about 160px to live in, which is what made the header read
+                    as cramped — full width gives every line the whole card and
+                    gives the photo enough area to be worth showing. */}
+                <PropertyThumb
+                    src={deal.property.imageSrc || null}
+                    alt={deal.property.title}
+                    className="border border-border-warm"
+                    // Aspect ratio, not a fixed height. `fill` + object-cover
+                    // always crops to the box, so a hard height decided how
+                    // much of every photo to throw away; 4:3 is the shape most
+                    // property photos are already taken in, so the crop is
+                    // close to none.
+                    sizeClassName="aspect-[4/3] inline-full"
+                    sizes="(max-width: 1024px) 288px, 320px"
+                    iconClassName="block-8 inline-8"
+                    hoverScale={false}
+                />
 
-                    <div className="flex grow flex-col gap-1 min-inline-0">
-                        {/* The property's own name leads — it is how the
-                            broker refers to the place out loud. The specs
-                            below identify it; they do not replace it. */}
+                <div className="flex flex-col gap-1.5 min-inline-0">
+                    {/* Title and price share the top line — the two facts a
+                        broker matches on first, and pairing them keeps the
+                        card from spending three stacked lines on the header. */}
+                    <div className="flex items-baseline justify-between gap-2">
                         <p className="body-sm truncate font-semibold text-ink">
                             {deal.property.title}
-                        </p>
-                        {/* Locality and area on one line, iconed the way the
-                            property cards spec them (MapPin / Maximize2, 12px,
-                            1.75 stroke) so the same facts look the same across
-                            the product. Wraps rather than truncating the pair
-                            away when the column is narrow. */}
-                        <p
-                            className="
-                              body-xs flex flex-wrap items-center gap-x-2 gap-y-0.5 font-semibold
-                              text-ink-muted min-inline-0
-                            "
-                        >
-                            <span className="flex items-center gap-1 min-inline-0">
-                                <MapPin
-                                    aria-hidden
-                                    className="shrink-0 block-3 inline-3"
-                                    strokeWidth={1.75}
-                                />
-                                <span className="truncate">{deal.property.locality}</span>
-                            </span>
-                            <span className="flex items-center gap-1 whitespace-nowrap">
-                                <Maximize2
-                                    aria-hidden
-                                    className="shrink-0 block-3 inline-3"
-                                    strokeWidth={1.75}
-                                />
-                                {formatAreaSqft(deal.property.areaSqft)} ·{" "}
-                                {deal.property.configLabel}
-                                {live && deal.status !== "new" && stageDays >= 1
-                                    ? ` · ${stageDays}d in stage`
-                                    : ""}
-                            </span>
                         </p>
                         <Price
                             amountInr={deal.property.amountInr}
                             isRent={deal.property.isRent}
-                            className="body-sm font-semibold text-brand"
+                            className="body-sm shrink-0 font-semibold text-brand"
                         />
                     </div>
 
-                    <div className="self-start">
-                        <DealCardMenu
-                            deal={deal}
-                            handlers={handlers}
-                            isBusy={isBusy}
-                            isPinned={isPinned}
-                        />
-                    </div>
+                    {/* Locality and area, iconed the way the property cards
+                        spec them (MapPin / Maximize2, 12px, 1.75 stroke) so the
+                        same facts look the same across the product. */}
+                    <p
+                        className="
+                          body-xs flex flex-wrap items-center gap-x-2 gap-y-0.5 font-semibold
+                          text-ink-muted min-inline-0
+                        "
+                    >
+                        <span className="flex items-center gap-1 min-inline-0">
+                            <MapPin
+                                aria-hidden
+                                className="shrink-0 block-3 inline-3"
+                                strokeWidth={1.75}
+                            />
+                            <span className="truncate">{deal.property.locality}</span>
+                        </span>
+                        <span className="flex items-center gap-1 whitespace-nowrap">
+                            <Maximize2
+                                aria-hidden
+                                className="shrink-0 block-3 inline-3"
+                                strokeWidth={1.75}
+                            />
+                            {formatAreaSqft(deal.property.areaSqft)} · {deal.property.configLabel}
+                            {live && deal.status !== "new" && stageDays >= 1
+                                ? ` · ${stageDays}d in stage`
+                                : ""}
+                        </span>
+                    </p>
                 </div>
 
                 <DealPartiesPanel
@@ -576,18 +585,27 @@ export function DealCard({
                     >
                         <StickyNote aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                     </FooterAction>
+                    {/* The overflow menu is one more field action, so it sits
+                        with the others and is styled as one rather than
+                        floating over the photo. */}
+                    <DealCardMenu
+                        deal={deal}
+                        handlers={handlers}
+                        isBusy={isBusy}
+                        isPinned={isPinned}
+                    />
                 </div>
 
                 {primary ? (
                     <Button
-                        variant="secondary"
-                        size="xs"
+                        variant="surface"
+                        size="sm"
                         disabled={isBusy}
-                        className="
-                          shrink-0
-                          group-hover:border-brand-ink group-hover:bg-brand-ink
-                          group-hover:text-white
-                        "
+                        // The card's own hover no longer repaints this button.
+                        // Swapping it to solid dark on card-hover made the
+                        // whole row twitch every time the pointer crossed a
+                        // card; the button now answers to its own hover only.
+                        className="shrink-0 font-semibold"
                         onClick={(event) => {
                             stopCard(event);
                             primary.onClick();

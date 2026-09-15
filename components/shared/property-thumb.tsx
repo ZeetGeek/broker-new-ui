@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 import { AppImage } from "./app-image";
 import { HoverScaleMedia } from "./hover-scale-media";
 
-const THUMB_FRAME = `
-  relative shrink-0 overflow-hidden rounded-inner bg-surface-muted
-  block-14 inline-18 sm:block-18 sm:inline-22
-`;
+const THUMB_FRAME = `relative shrink-0 overflow-hidden rounded-inner bg-surface-muted`;
+
+/** Default frame size. Replaced wholesale by `sizeClassName`, never merged. */
+const THUMB_SIZE = `block-14 inline-18 sm:block-18 sm:inline-22`;
 
 export type PropertyThumbProps = {
     /** Public path or absolute URL. Omit / null shows the missing-photo state. */
@@ -30,6 +30,13 @@ export type PropertyThumbProps = {
      * where a card under the cursor should change colour, not move.
      */
     hoverScale?: boolean;
+    /**
+     * Replaces the default frame size outright. Use this rather than passing
+     * `block-*` / `inline-*` through `className`: tailwind-merge does not know
+     * those share an axis with the defaults, so both would survive and the
+     * default would win. See the `inline-auto` note in app/globals.css.
+     */
+    sizeClassName?: string;
 };
 
 /**
@@ -44,15 +51,13 @@ export function PropertyThumb({
     sizes = "(max-width: 640px) 72px, 88px",
     iconClassName = "block-5 inline-5",
     hoverScale = true,
+    sizeClassName,
 }: PropertyThumbProps) {
+    const frame = cn(THUMB_FRAME, sizeClassName ?? THUMB_SIZE);
     if (!src) {
         return (
             <span
-                className={cn(
-                    THUMB_FRAME,
-                    "flex items-center justify-center text-ink-subtle",
-                    className,
-                )}
+                className={cn(frame, "flex items-center justify-center text-ink-subtle", className)}
                 aria-hidden
             >
                 <Building2 className={iconClassName} strokeWidth={1.75} />
@@ -63,7 +68,7 @@ export function PropertyThumb({
     const image = <AppImage src={src} alt={alt} fill sizes={sizes} priority={priority} />;
 
     return (
-        <span className={cn(THUMB_FRAME, className)}>
+        <span className={cn(frame, className)}>
             {hoverScale ? (
                 <HoverScaleMedia className="absolute inset-0">{image}</HoverScaleMedia>
             ) : (
