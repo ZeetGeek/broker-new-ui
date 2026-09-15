@@ -4,5 +4,5 @@
  */
 export function formatAreaSqft(areaSqft: number): string {
     const abs = Math.abs(Math.round(areaSqft));
-    return `${abs.toLocaleString("en-IN")} sq ft`;
+    return `${abs.toLocaleString("en-US")} sq ft`;
 }

@@ -608,6 +608,18 @@ is also invalid.
 dark glass overlay. Keep the list as this compound select — do not flatten
 to a native `<select>`.
 
+### 4.11b Combobox
+
+Filterable cousin of Select. One base-ui primitive, wrapped once in
+`components/ui/combobox.tsx`. Compound API: `Combobox` / `ComboboxInput` /
+`ComboboxContent` / `ComboboxList` / `ComboboxItem` (plus optional group,
+label, separator, empty, chips). Visual tokens match Select exactly —
+`rounded-control` input shell, five control-height steps, `startIcon`,
+loading Tailspin, error/success message region, and a `bg-surface` +
+`shadow-lg` + `t-dropdown` popup. Items use the same option styling as
+`SelectItem`. Prefer Combobox when the list is long enough to type-filter;
+short exclusive sets stay on Select or Radio.
+
 ### 4.12 Switch
 
 One base-ui primitive, wrapped once in `components/ui/switch.tsx`. Binary

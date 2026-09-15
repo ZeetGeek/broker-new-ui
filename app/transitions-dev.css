@@ -835,7 +835,10 @@
 }
 .t-auth-enter.is-shown {
     opacity: 1;
-    transform: translateY(0);
+    /* `translateY(0)` still creates a containing layer that clips focus rings /
+       box-shadows of inputs inside overflow parents — drop the transform once shown. */
+    transform: none;
+    will-change: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

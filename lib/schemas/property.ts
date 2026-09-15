@@ -442,9 +442,11 @@ const documentSchema = z.object({
 });
 
 const ownerSchema = z.object({
+    /** Contacts owner id when attached from the broker book. */
+    contactId: optionalText,
     listerType: z.string(),
-    name: z.string().trim().min(1, "Enter the owner's name"),
-    phone: z.string().regex(/^[6-9]\d{9}$/, "Enter a valid mobile number"),
+    name: z.string().trim().min(1, "Attach an owner from contacts"),
+    phone: z.string(),
     phoneVerified: z.boolean(),
     whatsappSameAsPhone: z.boolean(),
     whatsappNumber: z.string(),
@@ -455,6 +457,12 @@ const ownerSchema = z.object({
     city: z.string(),
     isNri: z.boolean(),
     notes: z.string(),
+});
+
+const attachedBuyerSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    phoneDigits: z.string(),
 });
 
 const publishSchema = z.object({
@@ -531,6 +539,7 @@ export const propertyDraftSchema = z.object({
     media: mediaSchema,
     documents: z.array(documentSchema),
     owner: ownerSchema,
+    attachedBuyers: z.array(attachedBuyerSchema),
     publish: publishSchema,
 });
 
@@ -561,7 +570,7 @@ export const STEP_ROOT_FIELDS: Record<PropertyFormStep, (keyof PropertyDraftValu
     furnishing: ["furnishing", "amenities"],
     highlights: ["highlights", "construction"],
     media: ["media", "documents"],
-    publish: ["owner", "publish"],
+    publish: ["owner", "attachedBuyers", "publish"],
 };
 
 const ninetyDaysFromNow = () => {
@@ -773,6 +782,7 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
     },
     documents: [],
     owner: {
+        contactId: "",
         listerType: "owner",
         name: "",
         phone: "",
@@ -787,6 +797,7 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         isNri: false,
         notes: "",
     },
+    attachedBuyers: [],
     publish: {
         status: "draft",
         visibility: "public",

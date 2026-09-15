@@ -14,16 +14,17 @@ import { useFieldRules } from "@/lib/visibility/use-field-rules";
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { Button } from "@/components/ui/button";
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -79,7 +80,7 @@ function FieldShell({
     const resolvedLabel = labelOf(name, label);
     return (
         <ConditionalField path={name}>
-            <div className={cn("flex flex-col gap-2 min-inline-0", className)}>
+            <div className={cn("flex flex-col gap-2 p-1 -m-1 min-inline-0", className)}>
                 <div className="flex items-center justify-between gap-3 min-block-5">
                     <Label
                         id={`${fieldId}-label`}
@@ -232,6 +233,10 @@ export function SelectField({
         formState: { errors },
     } = useFormContext<PropertyDraftValues>();
     const error = errorAt(errors, name);
+    const optionValues = options.map((option) => option.value);
+    const labelFor = (value: string) =>
+        options.find((option) => option.value === value)?.label ?? value;
+
     return (
         <FieldShell
             name={name}
@@ -244,7 +249,7 @@ export function SelectField({
                 name={name}
                 control={control}
                 render={({ field }) => (
-                    <Select
+                    <Combobox
                         value={String(field.value ?? "") || null}
                         onValueChange={(value) => {
                             const next = value ?? "";
@@ -257,29 +262,28 @@ export function SelectField({
                                 onInputBlur?.();
                             }
                         }}
+                        items={optionValues}
+                        itemToStringLabel={labelFor}
                     >
-                        <SelectTrigger
+                        <ComboboxInput
                             id={name.replace(/\./g, "-")}
                             ref={field.ref}
                             size="lg"
                             startIcon={startIcon}
+                            placeholder={placeholder}
                             errorText={error}
-                        >
-                            <SelectValue placeholder={placeholder}>
-                                {(value) =>
-                                    options.find((option) => option.value === value)?.label ??
-                                    placeholder
-                                }
-                            </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent align="start">
-                            {options.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                        />
+                        <ComboboxContent>
+                            <ComboboxEmpty>No matches</ComboboxEmpty>
+                            <ComboboxList>
+                                {(item: string) => (
+                                    <ComboboxItem key={item} value={item}>
+                                        {labelFor(item)}
+                                    </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                        </ComboboxContent>
+                    </Combobox>
                 )}
             />
         </FieldShell>
@@ -296,6 +300,7 @@ export function NumberField({
     step,
     placeholder,
     className,
+    onValueChange,
 }: {
     name: Path;
     label: string;
@@ -306,6 +311,7 @@ export function NumberField({
     step?: number;
     placeholder?: string;
     className?: string;
+    onValueChange?: (value: number | null) => void;
 }) {
     const {
         control,
@@ -334,9 +340,11 @@ export function NumberField({
                         size="lg"
                         placeholder={placeholder}
                         value={field.value == null ? "" : String(field.value)}
-                        onValueChange={(value) =>
-                            field.onChange(value === "" ? null : Number(value))
-                        }
+                        onValueChange={(value) => {
+                            const next = value === "" ? null : Number(value);
+                            field.onChange(next);
+                            onValueChange?.(next);
+                        }}
                         onBlur={field.onBlur}
                         errorText={error}
                     />
@@ -352,6 +360,7 @@ function CurrencyControl({
     onBlur,
     error,
     placeholder,
+    helperText,
     id,
 }: {
     value: unknown;
@@ -359,6 +368,7 @@ function CurrencyControl({
     onBlur: () => void;
     error?: string;
     placeholder?: string;
+    helperText?: string;
     id: string;
 }) {
     const numericValue = typeof value === "number" ? value : null;
@@ -371,7 +381,7 @@ function CurrencyControl({
             inputMode="text"
             size="lg"
             value={focused ? display : formatInrInput(numericValue)}
-            placeholder={placeholder ?? "e.g. 85 lakh"}
+            placeholder={placeholder ?? "e.g. 800000 or 800k"}
             onFocus={() => {
                 setDisplay(formatInrInput(numericValue));
                 setFocused(true);
@@ -390,7 +400,7 @@ function CurrencyControl({
             helperText={
                 numericValue
                     ? inrWordHint(numericValue)
-                    : "Type 85 lakh, 1.2 cr, or the full amount"
+                    : (helperText ?? "Type 800000, 800k, or 1.2m")
             }
         />
     );
@@ -411,6 +421,7 @@ export function CurrencyField({
     visibility,
     className,
     placeholder,
+    helperText,
     onValueChange,
 }: {
     name: Path;
@@ -419,6 +430,7 @@ export function CurrencyField({
     visibility?: FieldVisibility;
     className?: string;
     placeholder?: string;
+    helperText?: string;
     onValueChange?: (value: number | null) => void;
 }) {
     const {
@@ -449,6 +461,7 @@ export function CurrencyField({
                         onBlur={field.onBlur}
                         error={error}
                         placeholder={placeholder}
+                        helperText={helperText}
                     />
                 )}
             />

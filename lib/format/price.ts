@@ -1,36 +1,27 @@
-const LAKH = 100_000;
-const CRORE = 10_000_000;
-
 /**
- * Drops a trailing `.0` / `.50` from a decimal, leaving whole numbers alone.
- * Anchoring on the decimal point matters: a bare `/0+$/` turned "60" into "6",
- * rendering ₹60 L as ₹6 L.
- */
-function trimTrailingZeros(value: string): string {
-    if (!value.includes(".")) return value;
-    return value.replace(/\.?0+$/, "");
-}
-
-/**
- * Formats an INR amount for display (sale or general).
- * ≥ 1 Cr → ₹X.XX Cr · 1 L–1 Cr → ₹XX L · &lt; 1 L → ₹XX,XXX (en-IN).
+ * Formats a listing price for display using international grouping.
+ * Compact notation for large amounts (e.g. ₹1.2M) — never lakh/crore.
  */
 export function formatPriceInr(amountInr: number): string {
     const abs = Math.abs(amountInr);
+    if (!Number.isFinite(abs)) return "—";
 
-    if (abs >= CRORE) {
-        const crores = abs / CRORE;
-        const fixed = crores >= 10 ? crores.toFixed(1) : crores.toFixed(2);
-        return `₹${trimTrailingZeros(fixed)} Cr`;
+    if (abs >= 1_000_000) {
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "INR",
+            currencyDisplay: "narrowSymbol",
+            notation: "compact",
+            maximumFractionDigits: 1,
+        }).format(abs);
     }
 
-    if (abs >= LAKH) {
-        const lakhs = abs / LAKH;
-        const fixed = Number.isInteger(lakhs) ? String(lakhs) : lakhs.toFixed(1);
-        return `₹${trimTrailingZeros(fixed)} L`;
-    }
-
-    return `₹${abs.toLocaleString("en-IN")}`;
+    return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "INR",
+        currencyDisplay: "narrowSymbol",
+        maximumFractionDigits: 0,
+    }).format(abs);
 }
 
 /** Rent display: same rules as {@link formatPriceInr}, with `/mo` appended. */
@@ -38,7 +29,7 @@ export function formatRentInr(amountInr: number): string {
     return `${formatPriceInr(amountInr)}/mo`;
 }
 
-/** Shared contact/listing formatter. Values are always plain integer rupees. */
+/** Shared contact/listing formatter. Values are always plain integer currency units. */
 export function formatIndianPrice(
     amountInr: number | null | undefined,
     intent: "buy" | "sell" | "rent" | "lease" | "sale" = "buy",

@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { CalendarCheck, Plus, Trash2 } from "lucide-react";
+import { CalendarCheck } from "lucide-react";
 
-import { createClientId } from "@/lib/client-id";
-import { formatInr, formatInrCompact, inrWordHint } from "@/lib/format/inr";
+import { areaToSqft } from "@/lib/calc/area";
+import { calculateSaleCommission } from "@/lib/calc/commission";
+import { formatInr, formatInrCompact } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
@@ -18,7 +20,6 @@ import {
     HOUSEKEEPING_OPTIONS,
     MAINTENANCE_FREQUENCY_OPTIONS,
     MAINTENANCE_MODE_OPTIONS,
-    PAID_BY_OPTIONS,
     PG_BED_TYPE_OPTIONS,
     PG_GENDER_OPTIONS,
     PREFERRED_TENANT_OPTIONS,
@@ -38,38 +39,129 @@ import {
 } from "@/features/properties/property-form/form-fields";
 
 const SELL_EXTRA_CHARGES = [
-    ["sale.parkingCharge", "Parking charge"],
     ["sale.plcCharge", "Preferred location charge"],
     ["sale.floorRiseCharge", "Floor-rise charge"],
 ] as const;
+
+function rateFromPrice(expectedPrice: number, areaSqft: number): number {
+    if (areaSqft <= 0) return 0;
+    return Math.round(expectedPrice / areaSqft);
+}
+
+function priceFromRate(rate: number, areaSqft: number): number {
+    if (areaSqft <= 0) return 0;
+    return Math.round(rate * areaSqft);
+}
 
 export function StepPricing() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const values = watch();
     const { derived, isVisible } = useFieldRules();
     const sale = derived.isSell;
+    const unit = values.area.unit;
+    const carpet = values.area.carpetArea;
+    const listingArea = values.area.plotArea;
     const areaSqft = values.area.areaSqft;
     const expectedPrice = values.sale.expectedPrice;
-    const otherCharges = values.sale.otherCharges;
+    const pricePerSqft = values.sale.pricePerSqft;
+    const editingRef = useRef<"price" | "rate" | null>(null);
 
     const fixedCharges = SELL_EXTRA_CHARGES.reduce((total, [name]) => {
         const key = name.split(".")[1] as keyof PropertyDraftValues["sale"];
         const amount = values.sale[key];
         return total + (typeof amount === "number" ? amount : 0);
     }, 0);
-    const customCharges = otherCharges.reduce((total, charge) => total + (charge.amount ?? 0), 0);
-    const allInPrice = (expectedPrice ?? 0) + fixedCharges + customCharges;
+    const allInPrice =
+        (expectedPrice ?? 0) +
+        fixedCharges +
+        (typeof values.sale.maintenanceCharge === "number" ? values.sale.maintenanceCharge : 0);
 
-    function setExpectedPrice(value: number | null) {
-        if (value != null && areaSqft > 0) {
-            setValue("sale.pricePerSqft", Math.round(value / areaSqft), { shouldDirty: true });
+    const coBrokerPercent = values.deal.coBrokerSharePercent ?? 0;
+    const saleDeal = useMemo(() => {
+        if (!sale || expectedPrice == null || expectedPrice <= 0) return null;
+        return calculateSaleCommission({
+            salePrice: expectedPrice,
+            areaSqft,
+            mode: values.commission.sale.mode,
+            value: values.commission.sale.value,
+            paidBy: "owner",
+            ownerSharePercent: 100,
+            separateRates: values.commission.sale.separateRates
+                ? {
+                      ownerPercent: values.commission.sale.ownerPercent ?? 0,
+                      buyerPercent: values.commission.sale.buyerPercent ?? 0,
+                  }
+                : undefined,
+            gstApplicable: values.commission.tax.gstApplicable,
+            gstMode: values.commission.tax.gstMode,
+            tdsApplicable: values.commission.tax.tdsApplicable,
+            tdsRate: values.commission.tax.tdsRate,
+            otherOwnerDeductions: 0,
+            buyerSideCharges: fixedCharges,
+        });
+    }, [
+        areaSqft,
+        expectedPrice,
+        fixedCharges,
+        sale,
+        values.commission.sale.buyerPercent,
+        values.commission.sale.mode,
+        values.commission.sale.ownerPercent,
+        values.commission.sale.separateRates,
+        values.commission.sale.value,
+        values.commission.tax.gstApplicable,
+        values.commission.tax.gstMode,
+        values.commission.tax.tdsApplicable,
+        values.commission.tax.tdsRate,
+    ]);
+
+    const brokerGross = saleDeal?.gross ?? 0;
+    const brokerGst = saleDeal?.gst ?? 0;
+    const brokerTds = saleDeal?.tds ?? 0;
+    const brokerReal = saleDeal?.brokerRealIncome ?? 0;
+    const coBrokerShare = (brokerReal * coBrokerPercent) / 100;
+    const brokerNet = Math.max(0, brokerReal - coBrokerShare);
+    const brokerBank = Math.max(
+        0,
+        (saleDeal?.brokerReceives ?? 0) * (1 - coBrokerPercent / 100),
+    );
+
+    // Keep normalised sq ft in sync even if user left the area step earlier.
+    useEffect(() => {
+        const source = listingArea != null && listingArea > 0 ? listingArea : carpet;
+        const nextSqft = areaToSqft(source, unit);
+        if (nextSqft !== areaSqft) {
+            setValue("area.areaSqft", nextSqft, { shouldDirty: true });
+        }
+    }, [areaSqft, carpet, listingArea, setValue, unit]);
+
+    // Expected price → price / sq ft
+    useEffect(() => {
+        if (!sale || editingRef.current === "rate") return;
+        if (expectedPrice == null || expectedPrice <= 0 || areaSqft <= 0) return;
+        const next = rateFromPrice(expectedPrice, areaSqft);
+        if (pricePerSqft !== next) {
+            setValue("sale.pricePerSqft", next, { shouldDirty: true });
+        }
+    }, [areaSqft, expectedPrice, pricePerSqft, sale, setValue]);
+
+    function handleExpectedPriceChange(value: number | null) {
+        editingRef.current = "price";
+        if (value != null && value > 0 && areaSqft > 0) {
+            setValue("sale.pricePerSqft", rateFromPrice(value, areaSqft), { shouldDirty: true });
+        } else if (value == null || value <= 0) {
+            setValue("sale.pricePerSqft", null, { shouldDirty: true });
         }
     }
 
-    function setPricePerSqft(value: number | null) {
-        if (value != null && areaSqft > 0) {
-            setValue("sale.expectedPrice", Math.round(value * areaSqft), { shouldDirty: true });
+    function handlePricePerSqftChange(value: number | null) {
+        editingRef.current = "rate";
+        if (value != null && value >= 0 && areaSqft > 0) {
+            setValue("sale.expectedPrice", priceFromRate(value, areaSqft), { shouldDirty: true });
         }
+        window.requestAnimationFrame(() => {
+            editingRef.current = null;
+        });
     }
 
     if (sale) {
@@ -83,28 +175,93 @@ export function StepPricing() {
                         <CurrencyField
                             name="sale.expectedPrice"
                             label="Expected price"
-                            onValueChange={setExpectedPrice}
+                            onValueChange={handleExpectedPriceChange}
                         />
-                        <CurrencyField
+                        <NumberField
                             name="sale.pricePerSqft"
                             label="Price per sq ft"
-                            onValueChange={setPricePerSqft}
+                            min={0}
+                            step={1}
+                            placeholder="e.g. 5500"
+                            hint={
+                                areaSqft > 0
+                                    ? `Based on ${areaSqft.toLocaleString("en-US")} sq ft — edit either side to sync`
+                                    : "Add Area on the previous step to sync these fields"
+                            }
+                            onValueChange={handlePricePerSqftChange}
                         />
                     </div>
                     <div
                         className="
-                          mbs-5 grid overflow-hidden rounded-control border border-border-warm
+                          mbs-5 overflow-hidden rounded-control border border-border-warm
                           bg-surface-muted
-                          sm:grid-cols-3
                         "
                     >
-                        <PriceFact label="Price in words" value={inrWordHint(expectedPrice)} />
-                        <PriceFact label="Per sq ft" value={formatInr(values.sale.pricePerSqft)} />
-                        <PriceFact label="All-in price" value={formatInrCompact(allInPrice)} />
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-4">
+                            <PriceFact
+                                label="Property price"
+                                value={
+                                    expectedPrice != null && expectedPrice > 0
+                                        ? formatInr(expectedPrice)
+                                        : "Add a price"
+                                }
+                            />
+                            <PriceFact
+                                label="Area"
+                                value={
+                                    areaSqft > 0
+                                        ? `${areaSqft.toLocaleString("en-US")} sq ft`
+                                        : "Area not added"
+                                }
+                            />
+                            <PriceFact
+                                label="Per sq ft"
+                                value={formatInr(values.sale.pricePerSqft)}
+                            />
+                            <PriceFact label="All-in price" value={formatInrCompact(allInPrice)} />
+                        </div>
+
+                        <div className="border-bs border-border-warm p-4">
+                            <div className="flex flex-wrap items-end justify-between gap-3">
+                                <div>
+                                    <p className="text-xs text-ink-muted">Broker earns (live)</p>
+                                    <p className="tabular mbs-1 text-xl font-bold text-brand-text">
+                                        {saleDeal ? formatInr(brokerNet) : "— — —"}
+                                    </p>
+                                </div>
+                                {saleDeal ? (
+                                    <p className="tabular text-sm text-ink-muted">
+                                        Bank receipt {formatInr(brokerBank)}
+                                    </p>
+                                ) : null}
+                            </div>
+                            {saleDeal ? (
+                                <div className="mbs-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+                                    <span>Gross {formatInr(brokerGross)}</span>
+                                    {brokerGst > 0 ? (
+                                        <span className="text-success">+ GST {formatInr(brokerGst)}</span>
+                                    ) : null}
+                                    {brokerTds > 0 ? (
+                                        <span className="text-danger">− TDS {formatInr(brokerTds)}</span>
+                                    ) : null}
+                                    {coBrokerShare > 0 ? (
+                                        <span className="text-danger">
+                                            − Co-broker ({coBrokerPercent}%) {formatInr(coBrokerShare)}
+                                        </span>
+                                    ) : null}
+                                </div>
+                            ) : (
+                                <p className="mbs-2 text-xs text-ink-muted">
+                                    Enter an expected price to calculate brokerage in real time.
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </WizardSection>
 
-                {isVisible("sale.otherCharges") ? (
+                {(isVisible("sale.maintenanceCharge") ||
+                    isVisible("sale.plcCharge") ||
+                    isVisible("sale.floorRiseCharge")) ? (
                     <WizardSection
                         title="Charges"
                         description="Add every amount a buyer should know before making an offer."
@@ -113,6 +270,8 @@ export function StepPricing() {
                             <CurrencyField
                                 name="sale.maintenanceCharge"
                                 label="Maintenance charge"
+                                placeholder="e.g. 3,000"
+                                helperText="Type 3000 or 3,000 — monthly society charge"
                             />
                             <SelectField
                                 name="sale.maintenanceFrequency"
@@ -122,78 +281,6 @@ export function StepPricing() {
                             {SELL_EXTRA_CHARGES.map(([name, label]) => (
                                 <CurrencyField key={name} name={name} label={label} />
                             ))}
-                        </div>
-                        <div className="mbs-6 space-y-3">
-                            {otherCharges.map((charge, index) => (
-                                <div
-                                    key={charge.id}
-                                    className="
-                                      grid items-end gap-3 rounded-control border border-border-warm
-                                      bg-surface p-3
-                                      md:grid-cols-[1.2fr_0.8fr_0.7fr_auto]
-                                    "
-                                >
-                                    <TextField
-                                        name={`sale.otherCharges.${index}.label`}
-                                        label="Charge name"
-                                        placeholder="Other charge"
-                                    />
-                                    <CurrencyField
-                                        name={`sale.otherCharges.${index}.amount`}
-                                        label="Amount"
-                                    />
-                                    <SelectField
-                                        name={`sale.otherCharges.${index}.paidBy`}
-                                        label="Paid by"
-                                        options={PAID_BY_OPTIONS}
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="icon-lg"
-                                        aria-label="Remove charge"
-                                        onClick={() =>
-                                            setValue(
-                                                "sale.otherCharges",
-                                                otherCharges.filter(
-                                                    (_, itemIndex) => itemIndex !== index,
-                                                ),
-                                                { shouldDirty: true },
-                                            )
-                                        }
-                                        className="
-                                          flex items-center justify-center rounded-control border
-                                          border-border-warm text-danger block-12 inline-12
-                                          hover:bg-danger-soft
-                                          focus-visible:ring-3 focus-visible:ring-danger/20
-                                        "
-                                    >
-                                        <Trash2 className="block-4 inline-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="md"
-                                onClick={() =>
-                                    setValue(
-                                        "sale.otherCharges",
-                                        [
-                                            ...otherCharges,
-                                            {
-                                                id: createClientId("charge"),
-                                                label: "",
-                                                amount: null,
-                                                paidBy: "buyer",
-                                            },
-                                        ],
-                                        { shouldDirty: true },
-                                    )
-                                }
-                            >
-                                <Plus aria-hidden /> Add charge
-                            </Button>
                         </div>
                     </WizardSection>
                 ) : null}
@@ -293,6 +380,8 @@ export function StepPricing() {
                             <CurrencyField
                                 name="rent.maintenanceAmount"
                                 label="Maintenance amount"
+                                placeholder="e.g. 3,000"
+                                helperText="Type 3000 or 3,000 — monthly society charge"
                             />
                             <SelectField
                                 name="rent.maintenanceFrequency"

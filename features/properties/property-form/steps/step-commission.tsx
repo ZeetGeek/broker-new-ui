@@ -14,10 +14,14 @@ export function StepCommission() {
     const values = watch();
     const { derived } = useFieldRules();
     const isSale = derived.isSell;
+    const expectedPrice = values.sale.expectedPrice ?? 0;
+    const areaSqft = values.area.areaSqft;
+    const pricePerSqft = values.sale.pricePerSqft;
+    const monthlyRent = values.rent.monthlyRent ?? 0;
 
     const saleResult = calculateSaleCommission({
-        salePrice: values.sale.expectedPrice ?? 0,
-        areaSqft: values.area.areaSqft,
+        salePrice: expectedPrice,
+        areaSqft,
         mode: "percent",
         value: values.commission.sale.value,
         // The owner pays the whole brokerage; nothing is charged to the buyer.
@@ -29,7 +33,7 @@ export function StepCommission() {
         tdsRate: values.commission.tax.tdsRate,
     });
     const rentResult = calculateRentCommission({
-        monthlyRent: values.rent.monthlyRent ?? 0,
+        monthlyRent,
         securityDeposit: resolveDeposit(values),
         maintenanceAmount: values.rent.maintenanceAmount ?? 0,
         maintenancePaidBy: "tenant",
@@ -47,10 +51,14 @@ export function StepCommission() {
         tdsRate: values.commission.tax.tdsRate,
     });
     const result = isSale ? saleResult : rentResult;
-    const hasBasis = isSale
-        ? (values.sale.expectedPrice ?? 0) > 0
-        : (values.rent.monthlyRent ?? 0) > 0;
+    const hasBasis = isSale ? expectedPrice > 0 : monthlyRent > 0;
     const earned = result.gross > 0 || hasBasis;
+    const ratePerSqft =
+        pricePerSqft != null && pricePerSqft > 0
+            ? pricePerSqft
+            : isSale && "effectiveRatePerSqft" in result
+              ? result.effectiveRatePerSqft
+              : 0;
 
     return (
         <div className="space-y-8">
@@ -92,12 +100,47 @@ export function StepCommission() {
                           overflow-hidden rounded-control border border-border-warm bg-surface
                         "
                     >
+                        <div className="grid border-be border-border-warm sm:grid-cols-3">
+                            <SummaryFact
+                                label={isSale ? "Property price" : "Monthly rent"}
+                                value={formatInr(isSale ? expectedPrice : monthlyRent)}
+                            />
+                            <SummaryFact
+                                label="Area"
+                                value={
+                                    areaSqft > 0
+                                        ? `${areaSqft.toLocaleString("en-US")} sq ft`
+                                        : "Area not added"
+                                }
+                            />
+                            <SummaryFact
+                                label={isSale ? "Per sq ft" : "Yearly rent"}
+                                value={
+                                    isSale
+                                        ? ratePerSqft > 0
+                                            ? formatInr(ratePerSqft)
+                                            : "— — —"
+                                        : formatInr(rentResult.annualRent)
+                                }
+                            />
+                        </div>
+
                         <div className="border-be border-border-warm bg-brand-soft p-4">
                             <p className="text-xs text-ink-muted">Broker income</p>
                             <p className="tabular mbs-1 text-2xl font-bold text-brand-text">
                                 {formatInr(result.brokerRealIncome)}
                             </p>
+                            <div className="mbs-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+                                <span>Gross {formatInr(result.gross)}</span>
+                                {result.gst > 0 ? (
+                                    <span className="text-success">+ GST {formatInr(result.gst)}</span>
+                                ) : null}
+                                {result.tds > 0 ? (
+                                    <span className="text-danger">− TDS {formatInr(result.tds)}</span>
+                                ) : null}
+                            </div>
                         </div>
+
                         <dl className="divide-y divide-border-warm">
                             <EarningRow
                                 label={
@@ -114,6 +157,11 @@ export function StepCommission() {
                                 value={formatInr(result.invoiceTotal)}
                                 muted
                             />
+                            <EarningRow
+                                label="Money in bank"
+                                value={formatInr(result.brokerReceives)}
+                                strong
+                            />
                         </dl>
                     </div>
                 ) : (
@@ -129,6 +177,15 @@ export function StepCommission() {
                     </p>
                 )}
             </WizardSection>
+        </div>
+    );
+}
+
+function SummaryFact({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="border-bs border-border-warm p-4 first:border-bs-0 sm:border-e sm:border-bs-0 sm:last:border-e-0">
+            <p className="text-xs text-ink-muted">{label}</p>
+            <p className="tabular mbs-1 text-base font-bold text-ink">{value}</p>
         </div>
     );
 }

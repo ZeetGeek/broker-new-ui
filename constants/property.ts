@@ -566,6 +566,38 @@ export const PAYMENT_MILESTONE_TEMPLATE = [
     { stage: "Registration", percent: 50 },
 ] as const;
 
+/** Short listing-card lines — pick or search, max 8 on the form. */
+export const LISTING_HIGHLIGHT_SUGGESTIONS = [
+    "Corner unit",
+    "Ready to move",
+    "East facing",
+    "Sunlight and ventilation",
+    "Peaceful neighbourhood",
+    "Wide road access",
+    "Covered parking",
+    "Power backup",
+    "Gated community",
+    "Near schools",
+    "Near hospital",
+    "Close to main road",
+    "Garden view",
+    "Vastu compliant",
+    "Pet friendly",
+    "Low maintenance",
+    "Senior citizen friendly",
+    "Modular kitchen",
+    "Private terrace",
+    "24×7 water supply",
+    "Near metro",
+    "Investment friendly",
+    "Fully furnished",
+    "Semi furnished",
+    "Corner plot",
+    "Clear title",
+] as const;
+
+export const POPULAR_LISTING_HIGHLIGHTS = LISTING_HIGHLIGHT_SUGGESTIONS.slice(0, 12);
+
 export const FORM_STEPS = [
     { id: "basics", label: "Basics", shortLabel: "Basics" },
     { id: "location", label: "Location", shortLabel: "Location" },

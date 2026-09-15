@@ -1,5 +1,14 @@
-const indianNumber = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+const intlNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+const intlCompact = new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+});
 
+/**
+ * Parses a typed money amount.
+ * Accepts plain numbers and common short suffixes (k / m / b).
+ * Legacy India suffixes (lakh / cr) still parse so older drafts keep working.
+ */
 export function parseInr(value: string | number | null | undefined): number | null {
     if (typeof value === "number") return Number.isFinite(value) ? Math.max(0, value) : null;
     if (!value) return null;
@@ -7,51 +16,49 @@ export function parseInr(value: string | number | null | undefined): number | nu
     const normalized = value
         .trim()
         .toLowerCase()
-        .replace(/[₹,\s]/g, "");
+        .replace(/[₹$€£,\s]/g, "");
     if (!normalized) return null;
 
-    const match = normalized.match(/^(-?\d+(?:\.\d+)?)(crores?|cr|lakhs?|l|thousands?|k)?$/);
+    const match = normalized.match(
+        /^(-?\d+(?:\.\d+)?)(crores?|cr|lakhs?|l|thousands?|k|millions?|m|billions?|b)?$/,
+    );
     if (!match) return null;
 
     const amount = Number(match[1]);
     if (!Number.isFinite(amount) || amount < 0) return null;
+    const suffix = match[2];
     const multiplier =
-        match[2] === "cr" || match[2]?.startsWith("crore")
-            ? 10_000_000
-            : match[2] === "l" || match[2]?.startsWith("lakh")
-              ? 100_000
-              : match[2] === "k" || match[2]?.startsWith("thousand")
-                ? 1_000
-                : 1;
+        suffix === "b" || suffix?.startsWith("billion")
+            ? 1_000_000_000
+            : suffix === "m" || suffix?.startsWith("million")
+              ? 1_000_000
+              : suffix === "cr" || suffix?.startsWith("crore")
+                ? 10_000_000
+                : suffix === "l" || suffix?.startsWith("lakh")
+                  ? 100_000
+                  : suffix === "k" || suffix?.startsWith("thousand")
+                    ? 1_000
+                    : 1;
     return Math.round(amount * multiplier);
 }
 
 export function formatInr(value: number | null | undefined): string {
     if (value == null || !Number.isFinite(value)) return "— — —";
-    return `₹${indianNumber.format(Math.round(value))}`;
+    return `₹${intlNumber.format(Math.round(value))}`;
 }
 
 export function formatInrInput(value: number | null | undefined): string {
     if (value == null || !Number.isFinite(value) || value === 0) return "";
-    return indianNumber.format(Math.round(value));
+    return intlNumber.format(Math.round(value));
 }
 
 export function formatInrCompact(value: number | null | undefined): string {
     if (value == null || !Number.isFinite(value)) return "— — —";
-    const amount = Math.max(0, value);
-    if (amount >= 10_000_000) return `₹${trimZeros(amount / 10_000_000, 2)} Cr`;
-    if (amount >= 100_000) return `₹${trimZeros(amount / 100_000, 2)} L`;
-    return formatInr(amount);
+    return `₹${intlCompact.format(Math.max(0, value))}`;
 }
 
+/** Short readable hint under money fields — international compact, never lakh/crore. */
 export function inrWordHint(value: number | null | undefined): string {
     if (value == null || !Number.isFinite(value) || value <= 0) return "";
-    if (value >= 10_000_000) return `${trimZeros(value / 10_000_000, 2)} Crore`;
-    if (value >= 100_000) return `${trimZeros(value / 100_000, 2)} Lakh`;
-    if (value >= 1_000) return `${trimZeros(value / 1_000, 1)} Thousand`;
-    return `${Math.round(value)} Rupees`;
-}
-
-function trimZeros(value: number, digits: number): string {
-    return value.toFixed(digits).replace(/\.?0+$/, "");
+    return formatInrCompact(value).replace(/^₹/, "");
 }

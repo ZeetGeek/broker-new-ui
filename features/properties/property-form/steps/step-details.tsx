@@ -3,19 +3,14 @@
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import {
-    APPROVED_BY_OPTIONS,
     BEDROOM_OPTIONS,
     FACING_OPTIONS,
     FLOOR_OPTIONS,
-    OPEN_SIDE_OPTIONS,
     PANTRY_TYPE_OPTIONS,
     PROPERTY_AGE_OPTIONS,
     PROPERTY_CONDITION_OPTIONS,
-    SOIL_TYPE_OPTIONS,
     SUITABLE_FOR_OPTIONS,
     WASHROOM_TYPE_OPTIONS,
-    WATER_AVAILABILITY_OPTIONS,
-    ZONING_TYPE_OPTIONS,
 } from "@/constants/property";
 import {
     CounterField,
@@ -32,7 +27,6 @@ export function StepDetails() {
     const { isVisible } = useFieldRules();
     const roomDetails = isVisible("details.bedrooms") || isVisible("details.bathrooms");
     const commercial = isVisible("details.commercial.fireNoc");
-    const land = isVisible("details.land.openSides");
 
     return (
         <div className="space-y-8">
@@ -168,65 +162,6 @@ export function StepDetails() {
                                 label="Lease ends"
                                 type="date"
                                 visibility="private"
-                            />
-                        </div>
-                    </div>
-                </WizardSection>
-            ) : null}
-
-            {land ? (
-                <WizardSection
-                    title="Plot and land facts"
-                    description="Measurements and approvals are the main decision points for land."
-                >
-                    <div className={FORM_GRID_CLASS}>
-                        <NumberField
-                            name="details.land.plotLengthFt"
-                            label="Plot length (ft)"
-                            step={0.1}
-                        />
-                        <NumberField
-                            name="details.land.plotWidthFt"
-                            label="Plot width (ft)"
-                            step={0.1}
-                        />
-                        <SelectField
-                            name="details.land.openSides"
-                            label="Open sides"
-                            options={OPEN_SIDE_OPTIONS}
-                        />
-                        <NumberField
-                            name="details.land.constructionAllowedFloors"
-                            label="Allowed floors"
-                        />
-                        <SelectField
-                            name="details.land.zoningType"
-                            label="Zoning"
-                            options={ZONING_TYPE_OPTIONS}
-                        />
-                        <SelectField
-                            name="details.land.soilType"
-                            label="Soil type"
-                            options={SOIL_TYPE_OPTIONS}
-                        />
-                        <SelectField
-                            name="details.land.waterAvailability"
-                            label="Water availability"
-                            options={WATER_AVAILABILITY_OPTIONS}
-                        />
-                    </div>
-                    <div className="mbs-5 space-y-5">
-                        <MultiChipField
-                            name="details.land.approvedBy"
-                            label="Approved by"
-                            options={APPROVED_BY_OPTIONS}
-                        />
-                        <div className="grid gap-3 sm:grid-cols-3">
-                            <ToggleField name="details.land.boundaryWall" label="Boundary wall" />
-                            <ToggleField name="details.land.gatedSociety" label="Gated society" />
-                            <ToggleField
-                                name="details.land.naOrderAvailable"
-                                label="NA order available"
                             />
                         </div>
                     </div>

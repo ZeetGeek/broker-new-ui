@@ -3,10 +3,9 @@
 import { useMemo } from "react";
 import toast from "react-hot-toast";
 
-import { Building2, CircleHelp, Copy, FileDown, LockKeyhole } from "lucide-react";
+import { Building2, CircleHelp, Copy, LockKeyhole } from "lucide-react";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
-import { downloadDealSheetPdf } from "@/lib/export/deal-sheet-pdf";
 import { formatInr, formatInrCompact } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
@@ -28,18 +27,11 @@ export function LiveSummaryPanel({
     const isSale = values.basics.listingFor === "sell";
     const cover = values.media.photos.find((photo) => photo.isCover) ?? values.media.photos[0];
     const price = isSale ? values.sale.expectedPrice : values.rent.monthlyRent;
-    const ownerDeductions = values.sale.otherCharges
-        .filter((charge) => charge.paidBy === "owner")
-        .reduce((sum, charge) => sum + (charge.amount ?? 0), 0);
-    const buyerCharges =
-        values.sale.otherCharges
-            .filter((charge) => charge.paidBy === "buyer")
-            .reduce((sum, charge) => sum + (charge.amount ?? 0), 0) +
-        [
-            values.sale.parkingCharge,
-            values.sale.plcCharge,
-            values.sale.floorRiseCharge,
-        ].reduce<number>((sum, amount) => sum + (amount ?? 0), 0);
+    const ownerDeductions = 0;
+    const buyerCharges = [
+        values.sale.plcCharge,
+        values.sale.floorRiseCharge,
+    ].reduce<number>((sum, amount) => sum + (amount ?? 0), 0);
     const deposit = resolveDeposit(values);
     const result = useMemo(() => {
         if (isSale) {
@@ -90,42 +82,31 @@ export function LiveSummaryPanel({
     const coBrokerPercent = values.deal.coBrokerSharePercent ?? 0;
     const coBrokerShare = (result.brokerRealIncome * coBrokerPercent) / 100;
     const brokerAfterSplit = Math.max(0, result.brokerRealIncome - coBrokerShare);
-    const brokerBankAfterSplit = Math.max(0, result.brokerReceives * (1 - coBrokerPercent / 100));
-    const tdsAfterSplit = Math.max(0, result.tdsCredit * (1 - coBrokerPercent / 100));
     const title = values.basics.title || "Untitled property";
     const money = (value: number) => (hasPrice ? value : null);
     const dealSheetLines =
         isSale && "ownerNet" in result
             ? [
                   `Sale price: ${formatInr(values.sale.expectedPrice)}`,
-                  `Rate per sq ft: ${formatInr(result.effectiveRatePerSqft)}`,
+                  values.area.areaSqft
+                      ? `Rate per sq ft: ${formatInr(result.effectiveRatePerSqft)}`
+                      : null,
                   `Gross commission: ${formatInr(result.gross)}`,
-                  `GST collected: ${formatInr(result.gst)}`,
-                  `TDS credit: ${formatInr(result.tdsCredit)}`,
-                  `Money in bank after co-broker split: ${formatInr(brokerBankAfterSplit)}`,
-                  `Broker real income after co-broker split: ${formatInr(brokerAfterSplit)}`,
-                  `Owner deductions: ${formatInr(ownerDeductions)}`,
-                  `Owner receives: ${formatInr(result.ownerNet)}`,
-                  `Buyer-side charges: ${formatInr(buyerCharges)}`,
-                  `Buyer total cost: ${formatInr(result.buyerTotalCost)}`,
-              ]
+                  coBrokerShare > 0
+                      ? `Co-broker (${coBrokerPercent}%): ${formatInr(coBrokerShare)}`
+                      : null,
+                  `Broker earns: ${formatInr(brokerAfterSplit)}`,
+              ].filter((line): line is string => Boolean(line))
             : "ownerFirstPayout" in result
               ? [
                     `Monthly rent: ${formatInr(values.rent.monthlyRent)}`,
-                    `Deposit: ${formatInr(deposit)}`,
-                    `Yearly rent: ${formatInr(result.annualRent)}`,
-                    `Lease value: ${formatInr(result.leaseValue)}`,
+                    deposit > 0 ? `Deposit: ${formatInr(deposit)}` : null,
                     `Gross brokerage: ${formatInr(result.gross)}`,
-                    `GST collected: ${formatInr(result.gst)}`,
-                    `TDS credit: ${formatInr(result.tdsCredit)}`,
-                    `Money in bank after co-broker split: ${formatInr(brokerBankAfterSplit)}`,
-                    `Broker real income after co-broker split: ${formatInr(brokerAfterSplit)}`,
-                    `Owner first payout: ${formatInr(result.ownerFirstPayout)}`,
-                    `Owner year 1 net: ${formatInr(result.ownerYearOneNet)}`,
-                    `Tenant move-in cost: ${formatInr(result.tenantMoveInCost)}`,
-                    `Renewal fee: ${formatInr(result.renewalFee)}`,
-                    `3-year potential: ${formatInr(result.threeYearEarning)}`,
-                ]
+                    coBrokerShare > 0
+                        ? `Co-broker (${coBrokerPercent}%): ${formatInr(coBrokerShare)}`
+                        : null,
+                    `Broker earns: ${formatInr(brokerAfterSplit)}`,
+                ].filter((line): line is string => Boolean(line))
               : [];
     const summaryText = [title, ...dealSheetLines].join("\n");
 
@@ -136,17 +117,6 @@ export function LiveSummaryPanel({
         } catch {
             toast.error("Couldn't copy the summary.");
         }
-    }
-
-    function downloadDealSheet() {
-        const filename = `${
-            title
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .replace(/^-|-$/g, "") || "property"
-        }-deal-sheet`;
-        downloadDealSheetPdf({ title: `${title} — deal summary`, lines: dealSheetLines, filename });
-        toast.success("PDF deal sheet downloaded.");
     }
 
     if (compact) {
@@ -212,7 +182,7 @@ export function LiveSummaryPanel({
                         </div>
                         <p className="tabular text-sm font-semibold text-ink">
                             {values.area.areaSqft
-                                ? `${values.area.areaSqft.toLocaleString("en-IN")} sq ft`
+                                ? `${values.area.areaSqft.toLocaleString("en-US")} sq ft`
                                 : "Area not added"}
                         </p>
                     </div>
@@ -228,7 +198,7 @@ export function LiveSummaryPanel({
                                     {isSale ? "Sale deal summary" : "Rent deal summary"}
                                 </p>
                                 <p className="mbs-0.5 text-xs text-surface/60">
-                                    Updates as you type
+                                    Broker income · updates as you type
                                 </p>
                             </div>
                             <span className="inline-flex items-center gap-1 text-xs text-surface/60">
@@ -236,7 +206,7 @@ export function LiveSummaryPanel({
                             </span>
                         </div>
 
-                        <SectionLabel>Property value</SectionLabel>
+                        <SectionLabel>Property</SectionLabel>
                         {isSale && "ownerNet" in result ? (
                             <>
                                 <MoneyRow
@@ -244,11 +214,13 @@ export function LiveSummaryPanel({
                                     value={values.sale.expectedPrice}
                                     title="The current asking price."
                                 />
-                                <MoneyRow
-                                    label="Rate per sq ft"
-                                    value={money(result.effectiveRatePerSqft)}
-                                    title="Sale price divided by normalised area."
-                                />
+                                {values.area.areaSqft ? (
+                                    <MoneyRow
+                                        label="Rate per sq ft"
+                                        value={money(result.effectiveRatePerSqft)}
+                                        title="Sale price divided by area."
+                                    />
+                                ) : null}
                             </>
                         ) : "ownerFirstPayout" in result ? (
                             <>
@@ -257,201 +229,48 @@ export function LiveSummaryPanel({
                                     value={values.rent.monthlyRent}
                                     title="The agreed monthly asking rent."
                                 />
-                                <MoneyRow
-                                    label="Deposit"
-                                    value={money(deposit)}
-                                    title="The security deposit in rupees."
-                                />
-                                <MoneyRow
-                                    label="Yearly rent"
-                                    value={money(result.annualRent)}
-                                    title="Monthly rent multiplied by 12."
-                                />
-                                <MoneyRow
-                                    label="Lease value"
-                                    value={money(result.leaseValue)}
-                                    title="Rent across the agreement, including entered escalation."
-                                />
+                                {deposit > 0 ? (
+                                    <MoneyRow
+                                        label="Deposit"
+                                        value={money(deposit)}
+                                        title="The security deposit in rupees."
+                                    />
+                                ) : null}
                             </>
                         ) : null}
 
-                        <SectionLabel>Broker earns</SectionLabel>
+                        <SectionLabel>You earn</SectionLabel>
                         <AnimatedMoney
                             value={money(brokerAfterSplit)}
-                            className="
-                          mbe-3 block text-3xl text-highlight
-                        "
+                            className="mbe-3 block text-3xl text-highlight"
                         />
                         <MoneyRow
                             label={isSale ? "Gross commission" : "Gross brokerage"}
                             value={money(result.gross)}
-                            title="The agreed fee before GST, TDS, or co-broker sharing."
-                        />
-                        <MoneyRow
-                            label="GST collected"
-                            value={money(result.gst)}
-                            prefix="+"
-                            title="GST collected for payment to the government."
-                        />
-                        <MoneyRow
-                            label="TDS credit"
-                            value={money(result.tds)}
-                            prefix="−"
-                            title="Advance tax withheld on brokerage excluding GST."
-                        />
-                        <MoneyRow
-                            label="Money in bank"
-                            value={money(brokerBankAfterSplit)}
-                            strong
-                            title="Invoice receipt after TDS and the co-broker split."
-                        />
-                        <MoneyRow
-                            label="Real income"
-                            value={money(brokerAfterSplit)}
-                            strong
-                            title="Brokerage excluding GST after the co-broker split."
-                        />
-                        <MoneyRow
-                            label="TDS claimable"
-                            value={money(tdsAfterSplit)}
-                            title="TDS credit available for the broker's tax return."
+                            title="Agreed fee before any co-broker split."
                         />
                         {coBrokerShare > 0 ? (
                             <MoneyRow
-                                label={`Co-broker share (${coBrokerPercent}%)`}
+                                label={`Co-broker (${coBrokerPercent}%)`}
                                 value={money(coBrokerShare)}
-                                title="The amount assigned to the selected co-broker."
+                                prefix="−"
+                                title="Share paid to the co-broker."
                             />
                         ) : null}
-
-                        {isSale && "ownerNet" in result ? (
-                            <>
-                                <SectionLabel>Owner gets</SectionLabel>
-                                <MoneyRow
-                                    label="Sale price"
-                                    value={values.sale.expectedPrice}
-                                    title="The agreed property sale price."
-                                />
-                                <MoneyRow
-                                    label="Commission + GST"
-                                    value={money(result.ownerPays)}
-                                    prefix="−"
-                                    title="The owner's invoice share including GST."
-                                />
-                                <MoneyRow
-                                    label="Other deductions"
-                                    value={money(ownerDeductions)}
-                                    prefix="−"
-                                    title="Other sale charges marked as owner-paid."
-                                />
-                                <MoneyRow
-                                    label="Owner receives"
-                                    value={money(result.ownerNet)}
-                                    strong
-                                    title="Sale price after owner brokerage and deductions."
-                                />
-                                <SectionLabel>Buyer pays</SectionLabel>
-                                <MoneyRow
-                                    label="Sale price"
-                                    value={values.sale.expectedPrice}
-                                    title="The agreed property sale price."
-                                />
-                                <MoneyRow
-                                    label="Other charges"
-                                    value={money(buyerCharges)}
-                                    prefix="+"
-                                    title="Entered sale charges marked as buyer-paid."
-                                />
-                                <MoneyRow
-                                    label="Buyer total"
-                                    value={money(result.buyerTotalCost)}
-                                    strong
-                                    title="Sale price plus buyer brokerage and entered charges."
-                                />
-                            </>
-                        ) : "ownerFirstPayout" in result ? (
-                            <>
-                                <SectionLabel>Owner gets</SectionLabel>
-                                <MoneyRow
-                                    label="First payout"
-                                    value={money(result.ownerFirstPayout)}
-                                    title="Deposit plus first rent, less owner brokerage."
-                                />
-                                <MoneyRow
-                                    label="Owner brokerage"
-                                    value={money(result.ownerPays)}
-                                    prefix="−"
-                                    title="The owner's invoice share including GST."
-                                />
-                                <MoneyRow
-                                    label="Year 1 net"
-                                    value={money(result.ownerYearOneNet)}
-                                    strong
-                                    title="First-year rent after owner brokerage and owner-paid maintenance."
-                                />
-                                <MoneyRow
-                                    label="Lease net"
-                                    value={money(result.ownerLeaseNet)}
-                                    title="Lease value after the owner's brokerage share."
-                                />
-                                <SectionLabel>Tenant pays on day 1</SectionLabel>
-                                <MoneyRow
-                                    label="Deposit"
-                                    value={money(deposit)}
-                                    title="The entered security deposit."
-                                />
-                                <MoneyRow
-                                    label="First month rent"
-                                    value={values.rent.monthlyRent}
-                                    title="The first month's asking rent."
-                                />
-                                <MoneyRow
-                                    label="Move-in cost"
-                                    value={money(result.tenantMoveInCost)}
-                                    strong
-                                    title="Deposit, first rent, tenant brokerage, and tenant-paid maintenance."
-                                />
-                                {result.renewalFee > 0 ? (
-                                    <MoneyRow
-                                        label="Renewal fee"
-                                        value={money(result.renewalFee)}
-                                        title="Expected fee each time the lease renews."
-                                    />
-                                ) : null}
-                                <MoneyRow
-                                    label="3-year potential"
-                                    value={money(result.threeYearEarning)}
-                                    title="Current brokerage plus two entered renewal fees."
-                                />
-                            </>
-                        ) : null}
                     </div>
-                    <div className="grid grid-cols-2 border-bs border-surface/15">
+                    <div className="border-bs border-surface/15">
                         <Button
                             type="button"
                             variant="ghost"
                             onClick={() => void copySummary()}
                             className="
-                          flex items-center justify-center gap-2 border-e border-surface/15 text-xs
-                          font-semibold text-surface min-block-12
-                          hover:bg-surface/10 hover:text-surface
-                          focus-visible:ring-2 focus-visible:ring-highlight
-                        "
+                              flex inline-full items-center justify-center gap-2 text-xs
+                              font-semibold text-surface min-block-12
+                              hover:bg-surface/10 hover:text-surface
+                              focus-visible:ring-2 focus-visible:ring-highlight
+                            "
                         >
                             <Copy className="block-4 inline-4" /> Copy summary
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={downloadDealSheet}
-                            className="
-                          flex items-center justify-center gap-2 text-xs font-semibold text-surface
-                          min-block-12
-                          hover:bg-surface/10 hover:text-surface
-                          focus-visible:ring-2 focus-visible:ring-highlight
-                        "
-                        >
-                            <FileDown className="block-4 inline-4" /> Download PDF
                         </Button>
                     </div>
                 </Card>
@@ -464,8 +283,7 @@ export function LiveSummaryPanel({
                 >
                     <p className="text-sm font-bold text-ink">Live deal summary</p>
                     <p className="mbs-1 text-sm/6 text-ink-muted">
-                        Add the price in step 5 to see broker income, owner proceeds, and buyer or
-                        tenant cost.
+                        Add the price in step 5 to see what you earn on this deal.
                     </p>
                 </Card>
             )}
