@@ -55,8 +55,8 @@ export const VISIT_STATUS_META: Record<VisitStatus, VisitStatusMeta> = {
         label: "Done",
         icon: HeartHandshake,
         badgeVariant: "neutral",
-        accentClass: "border-l-stage-4",
-        dotClass: "bg-stage-4",
+        accentClass: "border-l-brand-deep",
+        dotClass: "bg-brand-deep",
     },
     cancelled: {
         label: "Cancelled",

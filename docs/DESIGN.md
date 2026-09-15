@@ -76,15 +76,14 @@ brand-text       #0B5A41   text sitting on brand-soft
 ```
 
 ```
-stage-1         #7FD9B9   pipeline bar — New
-stage-2         #2FAE85   pipeline bar — Contacted
-stage-3         #0F6E56   pipeline bar — Site visit
-stage-4         #04342C   pipeline bar — Negotiation
-
-pipe-new        #334155   board column pill text — New (slate)
-pipe-new-soft   #EEF2F6   board column pill / track — New
-pipe-visit      #5B21B6   board column pill text — Site visit (violet)
-pipe-visit-soft #F3E8FF   board column pill / track — Site visit
+stage-1         #0284C7   pipeline — New (sky-600)
+stage-1-soft    #BAE6FD   pipeline — New, pill + column fill (sky-200)
+stage-2         #7C3AED   pipeline — Contacted (violet-600)
+stage-2-soft    #DDD6FE   pipeline — Contacted, pill + column fill (violet-200)
+stage-3         #D97706   pipeline — Site visit (amber-600)
+stage-3-soft    #FDE68A   pipeline — Site visit, pill + column fill (amber-200)
+stage-4         #059669   pipeline — Negotiation (emerald-600)
+stage-4-soft    #A7F3D0   pipeline — Negotiation, pill + column fill (emerald-200)
 ```
 
 ```
@@ -129,15 +128,17 @@ adding a colour to the palette.
 number submitted, waiting on verification. It is dark yellow so it does not steal
 `urgent` orange. Never use it for a deadline.
 
-`stage-1` … `stage-4` are **pipeline funnel fills only** — New → Contacted → Site
-visit → Negotiation. They deepen within the brand green family. Do not use them
-for buttons, badges, or any surface outside the pipeline bar / its legend.
+`stage-1` … `stage-4` and their `-soft` fills are **pipeline surfaces only** —
+New → Contacted → Site visit → Negotiation. Each stage owns one Tailwind hue,
+ordered cool to warm to resolved (sky → violet → amber → emerald) so the board
+reads left-to-right as forward motion and the four columns are told apart at a
+glance. The solid tone carries dots and pill text; the `-soft` fill backs the
+pill, and at 40% it tints the column.
 
-`pipe-new` / `pipe-visit` (and their `-soft` fills) are **pipeline board column
-pills and tracks only**. They exist so the four columns are distinguishable at
-a glance (slate / amber / violet / emerald). Contacted reuses `urgent` +
-`urgent-soft`; Negotiation reuses `brand-text` + `brand-soft`. Do not use
-`pipe-*` on any other surface.
+These four hues are **the documented exception to the one-hue rule in §1.1**,
+and the exception stops at the board. Do not use `stage-*` for buttons, badges,
+or any surface outside the pipeline — outside it, green remains the only brand
+hue.
 
 ### 1.4 Contrast
 
@@ -372,16 +373,16 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 
 ### 4.3 Buttons
 
-| Variant           | Fill                         | Text            | Use                                                                                                                                                         |
-| ----------------- | ---------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Primary           | `brand-ink`                  | white           | One per screen. Request to represent, Approve, Add property                                                                                                 |
-| Accent            | `brand`                      | `canvas`        | One per screen, marketing/hero CTAs only. Not for in-app screens — `Primary` owns those                                                                     |
-| Highlight         | `highlight`                  | `highlight-ink` | Dark surfaces only (`brand-deep`/`brand-ink` cards). One per screen, max — the one action that leads on a dark attention card. Never on `canvas`/`surface`. |
-| Highlight outline | transparent, 1px `highlight` | `highlight-ink` | Same dark-surface restriction as Highlight, lower emphasis.                                                                                                 |
-| Secondary         | transparent, 1px `border`    | `ink`           | Reschedule, Cancel, Map view                                                                                                                                |
-| Surface           | `surface`, 1px `border-warm`, `shadow-sm` | `ink` | White fill on canvas. Filter chips and quiet contained actions. Hover keeps the white fill and darkens the border so it does not blend into `canvas`. |
-| Destructive       | transparent, 1px `danger`    | `danger`        | Reject, Delete                                                                                                                                              |
-| Ghost             | none                         | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
+| Variant           | Fill                                      | Text            | Use                                                                                                                                                         |
+| ----------------- | ----------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary           | `brand-ink`                               | white           | One per screen. Request to represent, Approve, Add property                                                                                                 |
+| Accent            | `brand`                                   | `canvas`        | One per screen, marketing/hero CTAs only. Not for in-app screens — `Primary` owns those                                                                     |
+| Highlight         | `highlight`                               | `highlight-ink` | Dark surfaces only (`brand-deep`/`brand-ink` cards). One per screen, max — the one action that leads on a dark attention card. Never on `canvas`/`surface`. |
+| Highlight outline | transparent, 1px `highlight`              | `highlight-ink` | Same dark-surface restriction as Highlight, lower emphasis.                                                                                                 |
+| Secondary         | transparent, 1px `border`                 | `ink`           | Reschedule, Cancel, Map view                                                                                                                                |
+| Surface           | `surface`, 1px `border-warm`, `shadow-sm` | `ink`           | White fill on canvas. Filter chips and quiet contained actions. Hover keeps the white fill and darkens the border so it does not blend into `canvas`.       |
+| Destructive       | transparent, 1px `danger`                 | `danger`        | Reject, Delete                                                                                                                                              |
+| Ghost             | none                                      | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
 
 `brand-soft` fills hover to `brand-soft-hover` — one step deeper in the same green, never a different hue.
 
@@ -408,13 +409,13 @@ Soft top→bottom fill gradient (`surface` → tint) plus a vertical gradient bo
 (light top → darker bottom), and a soft colour-tinted drop shadow. Never white text
 on a soft fill, never `ink` on a coloured fill.
 
-| Meaning                    | Fill to           | Text         |
-| -------------------------- | ----------------- | ------------ |
-| Verified, approved, active | `brand-soft`      | `brand-text` |
-| Expiring, overdue, due now | `urgent-soft`     | `urgent`     |
-| Rejected, inactive         | `danger-soft`     | `danger`     |
-| Neutral status             | `surface-muted`   | `ink`        |
-| Filters, tags (outline)    | `surface`         | `ink-muted`  |
+| Meaning                    | Fill to         | Text         |
+| -------------------------- | --------------- | ------------ |
+| Verified, approved, active | `brand-soft`    | `brand-text` |
+| Expiring, overdue, due now | `urgent-soft`   | `urgent`     |
+| Rejected, inactive         | `danger-soft`   | `danger`     |
+| Neutral status             | `surface-muted` | `ink`        |
+| Filters, tags (outline)    | `surface`       | `ink-muted`  |
 
 12px, weight 600, `4px 12px` padding, `rounded-lg` (12px) — soft corners, not
 `rounded-full`. Border is a gradient via dual `background` (padding-box +
@@ -670,10 +671,10 @@ Compound API only: `RadioGroup` owns the value, `RadioGroupItem` is the
 
 Three layouts, same primitive:
 
-| Layout       | When                                                         |
-| ------------ | ------------------------------------------------------------ |
-| Stack        | Short account-type / role lists                              |
-| Grid         | 2–4 columns — furnishing, looking-for, deal extras           |
+| Layout       | When                                                        |
+| ------------ | ----------------------------------------------------------- |
+| Stack        | Short account-type / role lists                             |
+| Grid         | 2–4 columns — furnishing, looking-for, deal extras          |
 | Option cards | Default on property forms — label wraps the item, 48px tall |
 
 Checked indicator fill is `brand`. Selected cards use `border-brand` +
@@ -814,11 +815,11 @@ border.
 
 Three layouts, same primitive:
 
-| Layout         | When                                                         |
-| -------------- | ------------------------------------------------------------ |
-| Stack          | Consent lines, reminders, short multi-select lists           |
-| Option cards   | Filter sheets (time of day, amenities) — 48px tap height     |
-| Indeterminate  | Parent of a partial group only — never a third preference    |
+| Layout        | When                                                      |
+| ------------- | --------------------------------------------------------- |
+| Stack         | Consent lines, reminders, short multi-select lists        |
+| Option cards  | Filter sheets (time of day, amenities) — 48px tap height  |
+| Indeterminate | Parent of a partial group only — never a third preference |
 
 Always pair with a visible label (`htmlFor`/`id` or a wrapping `<label>`).
 Selected cards use `border-brand` + `bg-brand-soft` + `text-brand-text`.

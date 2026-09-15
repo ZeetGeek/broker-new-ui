@@ -17,7 +17,7 @@ import {
 import { isOverBudget } from "@/lib/api/pipeline";
 import { getStoredUser } from "@/lib/auth/session";
 import { formatAreaSqft } from "@/lib/format/area";
-import { formatShowingWhen, formatDateShort, formatRelativePast } from "@/lib/format/date";
+import { formatDateShort, formatRelativePast,formatShowingWhen } from "@/lib/format/date";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
@@ -232,8 +232,8 @@ export function DealCardRich({
             onKeyDown={onKeyDown}
             className={cn(
                 `
-                  flex cursor-pointer flex-col overflow-hidden rounded-card border border-border-warm
-                  shadow-sm
+                  flex cursor-pointer flex-col overflow-hidden rounded-card border
+                  border-border-warm shadow-sm
                   hover:border-ink/25
                 `,
                 isBusy && "pointer-events-none opacity-60",
@@ -270,7 +270,10 @@ export function DealCardRich({
                     {stageMeta ? (
                         <span
                             className={cn(
-                                "body-xs flex items-center gap-1.5 rounded-control px-2.5 py-1 font-semibold",
+                                `
+                                  body-xs flex items-center gap-1.5 rounded-control px-2.5 py-1
+                                  font-semibold
+                                `,
                                 stageMeta.pillClass,
                             )}
                         >
@@ -283,8 +286,8 @@ export function DealCardRich({
                     ) : outcome && OutcomeIcon ? (
                         <span
                             className="
-                              body-xs flex items-center gap-1.5 rounded-control bg-surface px-2.5 py-1
-                              font-semibold text-ink
+                              body-xs flex items-center gap-1.5 rounded-control bg-surface px-2.5
+                              py-1 font-semibold text-ink
                             "
                         >
                             <OutcomeIcon aria-hidden className="block-3 inline-3" strokeWidth={2} />
@@ -314,7 +317,9 @@ export function DealCardRich({
                         {deal.property.configLabel} · {deal.property.locality}
                     </h3>
 
-                    <div className="body-sm flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-muted">
+                    <div className="
+                      body-sm flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-muted
+                    ">
                         <span className="flex items-center gap-1.5">
                             <MapPin aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                             {deal.property.locality}, {deal.property.city}
@@ -339,8 +344,8 @@ export function DealCardRich({
                     {!deal.owner.isRepresentationActive ? (
                         <span
                             className="
-                              body-xs flex items-center gap-1.5 rounded-control bg-danger-soft px-2.5
-                              py-1 font-semibold text-danger
+                              body-xs flex items-center gap-1.5 rounded-control bg-danger-soft
+                              px-2.5 py-1 font-semibold text-danger
                             "
                         >
                             <AlertCircle aria-hidden className="block-4 inline-4" strokeWidth={2} />
@@ -349,8 +354,8 @@ export function DealCardRich({
                     ) : gap ? (
                         <span
                             className="
-                              body-xs flex items-center gap-1.5 rounded-control bg-urgent-soft px-2.5
-                              py-1 font-semibold text-urgent
+                              body-xs flex items-center gap-1.5 rounded-control bg-urgent-soft
+                              px-2.5 py-1 font-semibold text-urgent
                             "
                         >
                             <AlertCircle aria-hidden className="block-4 inline-4" strokeWidth={2} />

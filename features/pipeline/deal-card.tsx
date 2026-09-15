@@ -436,7 +436,7 @@ export function DealCard({
                 !live ? "border-border-warm bg-surface-muted/40" : "border-border-warm bg-surface",
             )}
         >
-            <div className="flex flex-col gap-3 min-block-0">
+            <div className="flex flex-col gap-4 min-block-0">
                 <div className="flex items-center gap-3">
                     <PropertyThumb
                         src={deal.property.imageSrc || null}
@@ -517,7 +517,7 @@ export function DealCard({
                     the one part of the card whose height varies. It sizes to
                     its content: capping it here is what cut the stage block
                     off mid-line. */}
-                <div className="flex flex-col gap-1.5 font-medium">
+                <div className="flex flex-col gap-2 font-medium">
                     <CardChips
                         deal={deal}
                         live={live}
@@ -539,7 +539,7 @@ export function DealCard({
 
             <div
                 className="
-                  mbs-1 flex items-center justify-between gap-2 border-bs border-border-warm pbs-2.5
+                  mbs-2 flex items-center justify-between gap-2 border-bs border-border-warm pbs-3
                 "
             >
                 <div className="flex items-center gap-1">

@@ -3,7 +3,7 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { Check, Search, TriangleAlert, UserRound, Users, X } from "lucide-react";
+import { Check, Search, UserRound, Users, X } from "lucide-react";
 
 import { contactsApi } from "@/lib/api/contacts";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { DEFAULT_CONTACTS_FILTERS } from "@/features/contacts/types";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 import {
+    FORM_SECTIONS_CLASS,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
@@ -32,19 +33,6 @@ export function StepPublish() {
     const values = watch();
     const attachedOwnerId = values.owner.contactId;
     const attachedBuyers = values.attachedBuyers ?? [];
-
-    const softWarnings = [
-        values.commission.sale.mode === "percent" &&
-        values.basics.listingFor === "sell" &&
-        (values.commission.sale.value < 1 || values.commission.sale.value > 4)
-            ? "Commission is outside the usual 1%–4% review range."
-            : null,
-        // Private documents UI temporarily commented out
-        // values.documents.length === 0 ? "No property documents have been added yet." : null,
-        values.basics.description.trim().length < 100
-            ? "A description of 100+ characters helps people qualify the property."
-            : null,
-    ].filter((warning): warning is string => Boolean(warning));
 
     function attachOwner(owner: OwnerRow) {
         const phone = owner.phoneDigits?.replace(/\D/g, "").slice(-10) ?? "";
@@ -88,30 +76,18 @@ export function StepPublish() {
     }
 
     return (
-        <div className="flex flex-col gap-8">
-            {softWarnings.length ? (
-                <div
-                    role="status"
-                    className="rounded-card border border-urgent/30 bg-urgent-soft p-4 text-urgent"
-                >
-                    <div className="flex items-center gap-2">
-                        <TriangleAlert className="block-4 inline-4" aria-hidden />
-                        <p className="text-sm font-bold">Review before publishing</p>
-                    </div>
-                    <ul className="mbs-3 list-disc space-y-1 ps-5 text-sm/6">
-                        {softWarnings.map((warning) => (
-                            <li key={warning}>{warning}</li>
-                        ))}
-                    </ul>
-                    <p className="text-xs text-urgent/75">
-                        These are helpful checks, not blockers. Locality price comparison will
-                        appear when market data is connected.
-                    </p>
-                </div>
-            ) : null}
-
+        <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title="Attach owner"
+                title={
+                    <>
+                        <UserRound
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        Attach owner
+                    </>
+                }
                 description="Pick the property owner from your contacts. One owner per listing."
                 tone="private"
             >
@@ -132,7 +108,16 @@ export function StepPublish() {
             </WizardSection>
 
             <WizardSection
-                title="Attach buyers"
+                title={
+                    <>
+                        <Users
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        Attach buyers
+                    </>
+                }
                 description="Optional. Add one or more buyers from contacts who should see this property."
                 tone="private"
             >
@@ -142,23 +127,20 @@ export function StepPublish() {
                             <p className="text-sm font-semibold text-ink">
                                 Selected · {attachedBuyers.length}
                             </p>
-                            <button
+                            <Button
                                 type="button"
+                                variant="link"
+                                size="xs"
                                 onClick={() =>
                                     setValue("attachedBuyers", [], {
                                         shouldDirty: true,
                                         shouldValidate: true,
                                     })
                                 }
-                                className="
-                                  text-sm font-medium text-ink-muted
-                                  hover:text-ink
-                                  focus-visible:rounded-sm focus-visible:ring-3
-                                  focus-visible:ring-ring/30
-                                "
+                                className="shrink-0 px-0 text-ink-muted hover:text-ink"
                             >
                                 Clear all
-                            </button>
+                            </Button>
                         </div>
                         <div className="flex flex-wrap gap-2" role="list" aria-label="Attached buyers">
                             {attachedBuyers.map((buyer) => (
@@ -282,29 +264,18 @@ function ContactSearchPanel({
 
             {mode === "owner" && selectedId ? null : (
                 <>
-                    <div className="relative">
-                        <Search
-                            className="
-                              pointer-events-none absolute inset-s-3 top-1/2 block-4 inline-4
-                              -translate-y-1/2 text-ink-subtle
-                            "
-                            aria-hidden
-                        />
-                        <Input
-                            size="lg"
-                            value={query}
-                            onValueChange={setQuery}
-                            placeholder={
-                                mode === "owner"
-                                    ? "Search owners by name or phone"
-                                    : "Search buyers by name or phone"
-                            }
-                            aria-label={
-                                mode === "owner" ? "Search owners" : "Search buyers"
-                            }
-                            className="ps-10"
-                        />
-                    </div>
+                    <Input
+                        size="lg"
+                        value={query}
+                        onValueChange={setQuery}
+                        startIcon={Search}
+                        placeholder={
+                            mode === "owner"
+                                ? "Search owners by name or phone"
+                                : "Search buyers by name or phone"
+                        }
+                        aria-label={mode === "owner" ? "Search owners" : "Search buyers"}
+                    />
 
                     <div
                         className="

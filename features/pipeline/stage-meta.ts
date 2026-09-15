@@ -17,19 +17,31 @@ export type StageMeta = {
     hint: string;
     icon: LucideIcon;
     /**
-     * The stage token that fills the column dot and progress bar. These
-     * deepen through the brand green family and are pipeline-only — see
-     * docs/DESIGN.md §1.3.
+     * The stage token that fills the column dot and progress bar. One
+     * Tailwind hue per stage, pipeline-only — see docs/DESIGN.md §1.3.
      */
     dotClass: string;
     /** Verb for the button that advances a deal into this stage. */
     advanceLabel: string;
     /**
-     * Column-header pill. One hue (brand green) deepening across the four
-     * stages so the board reads left-to-right as progress rather than as
-     * four unrelated categories — see docs/DESIGN.md §1.1.
+     * Column-header pill: the stage's soft fill carrying its solid tone as
+     * text. One hue per stage so the four columns are told apart at a
+     * glance — see docs/DESIGN.md §1.3.
      */
     pillClass: string;
+    /**
+     * The whole board column: a wash of the stage's soft token plus a solid
+     * border in that same token. The border carries the separation, which
+     * lets the fill stay light enough that the white cards on top of it are
+     * still the thing the eye lands on.
+     */
+    columnClass: string;
+    /**
+     * The stage name above a column's total, as an eyebrow in the stage's own
+     * solid tone. `pillClass` still backs the compact pill used in menus and
+     * on the mobile stage tabs.
+     */
+    labelClass: string;
 };
 
 export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
@@ -39,7 +51,9 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: Sparkles,
         dotClass: "bg-stage-1",
         advanceLabel: "Move to new",
-        pillClass: "bg-brand-soft/50 text-brand-text",
+        pillClass: "bg-stage-1-soft text-stage-1",
+        columnClass: "border-stage-1-soft bg-stage-1-soft/25",
+        labelClass: "text-stage-1",
     },
     contacted: {
         label: "Contacted",
@@ -47,7 +61,9 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: PhoneCall,
         dotClass: "bg-stage-2",
         advanceLabel: "Mark contacted",
-        pillClass: "bg-brand-soft text-brand-text",
+        pillClass: "bg-stage-2-soft text-stage-2",
+        columnClass: "border-stage-2-soft bg-stage-2-soft/25",
+        labelClass: "text-stage-2",
     },
     visit: {
         label: "Site visit",
@@ -55,7 +71,9 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: CalendarCheck,
         dotClass: "bg-stage-3",
         advanceLabel: "Book a visit",
-        pillClass: "bg-brand/15 text-brand-text",
+        pillClass: "bg-stage-3-soft text-stage-3",
+        columnClass: "border-stage-3-soft bg-stage-3-soft/25",
+        labelClass: "text-stage-3",
     },
     negotiation: {
         label: "Negotiation",
@@ -63,7 +81,9 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: Handshake,
         dotClass: "bg-stage-4",
         advanceLabel: "Start negotiating",
-        pillClass: "bg-brand-deep text-canvas",
+        pillClass: "bg-stage-4-soft text-stage-4",
+        columnClass: "border-stage-4-soft bg-stage-4-soft/25",
+        labelClass: "text-stage-4",
     },
 };
 

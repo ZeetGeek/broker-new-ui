@@ -21,6 +21,8 @@ const avatarFrameVariants = cva(
             size: {
                 /** 20px — tiny credit faces on dense cards. */
                 xxs: "block-5 inline-5",
+                /** 24px — buyer/owner rows on pipeline board cards. */
+                "2xs": "block-6 inline-6",
                 /** 32px — buyer/owner rows on pipeline cards. */
                 xs: "block-8 inline-8",
                 sm: "block-9 inline-9",
@@ -39,6 +41,7 @@ const avatarMediaClass = "block-full inline-full object-cover object-center";
 
 const avatarImageSizes = {
     xxs: "20px",
+    "2xs": "24px",
     xs: "32px",
     sm: "36px",
     md: "40px",
@@ -49,6 +52,7 @@ const avatarImageSizes = {
 /** Pixel sizes passed to avvvatars-react (it needs a number, not CSS). */
 const avvatarPixelSizes = {
     xxs: 20,
+    "2xs": 24,
     xs: 32,
     sm: 36,
     md: 40,
@@ -62,7 +66,7 @@ const avvatarPixelSizes = {
  * character text). Stretch to fill our frame and force DM Sans semibold.
  */
 const avvatarFillClass = cn(
-    "[&>div]:block-full! [&>div]:inline-full! [&>div]:max-w-none! [&>div]:rounded-full!",
+    "[&>div]:rounded-full! [&>div]:block-full! [&>div]:inline-full! [&>div]:max-inline-none!",
     "[&_p]:font-sans! [&_p]:font-semibold!",
 );
 
@@ -104,7 +108,7 @@ export function UserAvatar({
     const showPhoto = Boolean(resolvedImageUrl) && resolvedImageUrl !== failedImageUrl;
     const initials = initialsFromName(name);
     const displayValue =
-        resolvedSize === "xxs" ? initials.slice(0, 1) : initials;
+        resolvedSize === "xxs" || resolvedSize === "2xs" ? initials.slice(0, 1) : initials;
 
     return (
         <span className={cn(avatarFrameVariants({ size }), className)}>

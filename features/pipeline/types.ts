@@ -1,8 +1,8 @@
 /**
  * The four funnel stages a deal moves through. These are the stages the
  * `--color-stage-1` … `--color-stage-4` tokens are named for in
- * `app/globals.css`; adding a fifth means adding a colour, which §1.1 of
- * docs/DESIGN.md forbids.
+ * `app/globals.css`; adding a fifth means adding a colour, which
+ * §1.3 of docs/DESIGN.md limits to these four.
  */
 export type DealStage = "new" | "contacted" | "visit" | "negotiation";
 

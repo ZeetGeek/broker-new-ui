@@ -346,11 +346,11 @@ export function StepFurnishing() {
                     isOn
                         ? `
                           border-brand bg-brand-soft text-brand-text
-                          hover:bg-brand-soft-hover
+                          hover:bg-brand-soft-hover hover:text-brand-text
                         `
                         : `
                           border-border-warm bg-surface text-ink-muted
-                          hover:border-brand/40 hover:text-ink
+                          hover:border-brand/40 hover:bg-surface hover:text-ink-muted
                         `,
                 )}
             >
@@ -463,12 +463,9 @@ export function StepFurnishing() {
                                     <Button
                                         type="button"
                                         variant="link"
-                                        size="sm"
+                                        size="xs"
                                         onClick={clearAll}
-                                        className="
-                                          h-auto px-0 text-ink-muted
-                                          hover:text-ink hover:no-underline
-                                        "
+                                        className="shrink-0 px-0 text-ink-muted hover:text-ink"
                                     >
                                         Clear all
                                     </Button>
@@ -606,13 +603,10 @@ export function StepFurnishing() {
                             <Button
                                 type="button"
                                 variant="link"
-                                size="sm"
+                                size="xs"
                                 aria-expanded={browseAll}
                                 onClick={() => setBrowseAll((open) => !open)}
-                                className="
-                                  t-acc-head mt-1 h-auto gap-1.5 px-0 text-brand
-                                  hover:text-brand-text hover:no-underline
-                                "
+                                className="t-acc-head mt-1 shrink-0 gap-1.5 px-0 text-brand"
                             >
                                 {browseAll
                                     ? "Show fewer"

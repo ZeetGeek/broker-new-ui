@@ -11,11 +11,11 @@ type Party = {
 
 function PartyRow({ party, role }: { party: Party; role: string }) {
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
             <UserAvatar
                 name={party.name}
                 imageUrl={party.avatarUrl}
-                size="xxs"
+                size="2xs"
                 fallback="character"
                 className="shrink-0"
             />
@@ -52,12 +52,12 @@ export function DealPartiesPanel({
     const showHandledBy = Boolean(assignedAgent) && assignedAgent?.id !== currentUserId;
 
     return (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2.5">
             <PartyRow party={buyer} role="Buyer" />
             <PartyRow party={owner} role="Owner" />
 
             {showHandledBy && assignedAgent ? (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                     <span className="body-xs text-ink-subtle">Handled by</span>
                     <UserAvatar
                         name={assignedAgent.name}
