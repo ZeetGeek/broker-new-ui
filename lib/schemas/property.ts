@@ -384,15 +384,8 @@ const constructionSchema = z
     .object({
         possessionType: optionalText,
         possessionDate: optionalText,
-        stage: optionalText,
-        slabsDone: optionalNumber,
-        totalSlabs: optionalNumber,
-        progressPercent: z.number().min(0).max(100),
         builderName: optionalText,
         projectName: optionalText,
-        reraId: optionalText,
-        reraPossessionDate: optionalText,
-        builderPromisedDate: optionalText,
         paymentPlan: optionalText,
         paymentSchedule: z.array(
             z.object({
@@ -402,7 +395,6 @@ const constructionSchema = z
                 dueOn: z.string(),
             }),
         ),
-        ocCcExpectedDate: optionalText,
         bookingOpen: z.boolean(),
     })
     .superRefine((value, context) => {
@@ -413,29 +405,7 @@ const constructionSchema = z
                 message: "Pick today or a future date",
             });
         }
-        if (
-            value.reraId &&
-            !/^(?:(?:PR|AA|CA)\/GJ\/[A-Z0-9 .&/-]{8,}|GJ[-/][A-Z0-9/-]{6,})$/i.test(
-                value.reraId.trim(),
-            )
-        ) {
-            context.addIssue({
-                code: "custom",
-                path: ["reraId"],
-                message: "RERA ID does not look correct",
-            });
-        }
     });
-
-const availabilitySchema = z.object({
-    visitDays: stringArray,
-    visitTimeSlots: z.array(z.object({ id: z.string(), from: z.string(), to: z.string() })),
-    advanceNoticeHours: optionalNumber,
-    keyHeldBy: optionalText,
-    caretakerName: optionalText,
-    caretakerPhone: optionalText,
-    showingContactPerson: optionalText,
-});
 
 const photoSchema = z.object({
     id: z.string(),
@@ -509,7 +479,6 @@ export const stepSchemas = {
     highlights: z.object({
         highlights: highlightsSchema,
         construction: constructionSchema,
-        availability: availabilitySchema,
     }),
     media: z.object({ media: mediaSchema, documents: z.array(documentSchema) }),
     publish: z
@@ -559,7 +528,6 @@ export const propertyDraftSchema = z.object({
     amenities: amenitiesSchema,
     highlights: highlightsSchema,
     construction: constructionSchema,
-    availability: availabilitySchema,
     media: mediaSchema,
     documents: z.array(documentSchema),
     owner: ownerSchema,
@@ -591,7 +559,7 @@ export const STEP_ROOT_FIELDS: Record<PropertyFormStep, (keyof PropertyDraftValu
     pricing: ["sale", "rent"],
     commission: ["commission", "deal"],
     furnishing: ["furnishing", "amenities"],
-    highlights: ["highlights", "construction", "availability"],
+    highlights: ["highlights", "construction"],
     media: ["media", "documents"],
     publish: ["owner", "publish"],
 };
@@ -787,28 +755,11 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
     construction: {
         possessionType: "",
         possessionDate: "",
-        stage: "",
-        slabsDone: null,
-        totalSlabs: null,
-        progressPercent: 0,
         builderName: "",
         projectName: "",
-        reraId: "",
-        reraPossessionDate: "",
-        builderPromisedDate: "",
         paymentPlan: "",
         paymentSchedule: [],
-        ocCcExpectedDate: "",
         bookingOpen: false,
-    },
-    availability: {
-        visitDays: [],
-        visitTimeSlots: [],
-        advanceNoticeHours: null,
-        keyHeldBy: "",
-        caretakerName: "",
-        caretakerPhone: "",
-        showingContactPerson: "",
     },
     media: {
         photos: [],

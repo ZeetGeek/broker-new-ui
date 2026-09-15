@@ -461,18 +461,6 @@ export const POSSESSION_TYPE_OPTIONS = [
     "within_1y",
     "custom_date",
 ].map((value) => ({ value, label: toLabel(value) }));
-export const CONSTRUCTION_STAGE_OPTIONS = [
-    "land_acquired",
-    "excavation",
-    "foundation",
-    "plinth",
-    "slab_casting",
-    "brickwork",
-    "plastering",
-    "flooring",
-    "finishing",
-    "handover_ready",
-].map((value) => ({ value, label: toLabel(value) }));
 export const PAYMENT_PLAN_OPTIONS = [
     "clp",
     "down_payment",
@@ -480,21 +468,6 @@ export const PAYMENT_PLAN_OPTIONS = [
     "subvention",
     "possession_linked",
 ].map((value) => ({ value, label: toLabel(value) }));
-export const VISIT_DAY_OPTIONS = [
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-    "sunday",
-].map((value) => ({ value, label: toLabel(value) }));
-export const KEY_HELD_BY_OPTIONS = ["owner", "broker", "caretaker", "security", "tenant"].map(
-    (value) => ({ value, label: toLabel(value) }),
-);
-export const SHOWING_CONTACT_OPTIONS = ["owner", "broker", "caretaker", "security", "tenant"].map(
-    (value) => ({ value, label: toLabel(value) }),
-);
 
 export const PHOTO_TAG_OPTIONS = [
     "living_room",

@@ -39,7 +39,7 @@ export function MyListingsGrid({
         <WindowVirtualGrid
             items={items}
             getKey={(item) => item.id}
-            estimateRowHeight={isListView ? 224 : 480}
+            estimateRowHeight={isListView ? 224 : 580}
             gap={24}
             breakpoints={isListView ? LIST_BREAKPOINTS : GRID_BREAKPOINTS}
             ariaLabel="Your listings"

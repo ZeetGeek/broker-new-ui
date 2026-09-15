@@ -302,53 +302,15 @@ export const FIELD_RULES = {
         visible: (d, v) => d.isUnderConstruction && v.construction.possessionType === "custom_date",
         level: required,
     },
-    "construction.stage": { visible: (d) => d.isUnderConstruction && !d.isPlot, level: required },
-    "construction.slabsDone": {
-        visible: (d, v) => d.isUnderConstruction && v.construction.stage === "slab_casting",
-        level: required,
-    },
-    "construction.totalSlabs": {
-        visible: (d, v) => d.isUnderConstruction && v.construction.stage === "slab_casting",
-        level: required,
-    },
-    "construction.progressPercent": { visible: (d) => d.isUnderConstruction, level: recommended },
     "construction.builderName": { visible: (d) => d.isNewBooking, level: required },
     "construction.projectName": { visible: (d) => d.isNewBooking, level: required },
-    "construction.reraId": {
-        visible: (d) => d.isNewBooking || d.isUnderConstruction,
-        level: required,
-    },
-    "construction.reraPossessionDate": {
-        visible: (_d, v) => Boolean(v.construction.reraId.trim()),
-        level: required,
-    },
-    "construction.builderPromisedDate": { visible: (d) => d.isUnderConstruction },
     "construction.paymentPlan": { visible: (d) => d.isNewBooking, level: recommended },
     "construction.paymentSchedule": {
         visible: (_d, v) => v.construction.paymentPlan === "clp",
         level: required,
         minItems: 1,
     },
-    "construction.ocCcExpectedDate": { visible: (d) => d.isUnderConstruction },
     "construction.bookingOpen": { visible: (d) => d.isNewBooking },
-    "availability.visitDays": { level: recommended },
-    "availability.visitTimeSlots": {
-        visible: (_d, v) => v.availability.visitDays.length > 0,
-        level: required,
-        minItems: 1,
-    },
-    "availability.advanceNoticeHours": { visible: (_d, v) => v.availability.visitDays.length > 0 },
-    "availability.keyHeldBy": { visible: (d) => !d.isPlot, level: required },
-    "availability.caretakerName": {
-        visible: (_d, v) => v.availability.keyHeldBy === "caretaker",
-        level: required,
-    },
-    "availability.caretakerPhone": {
-        visible: (_d, v) => v.availability.keyHeldBy === "caretaker",
-        level: required,
-    },
-    "availability.showingContactPerson": { visible: (d) => !d.isPlot },
-
     "media.photos": { level: required, minItems: 3, label: () => "Property photos" },
     "media.videoUploadName": {},
     "media.videoUrl": {},
@@ -411,10 +373,7 @@ export const STEP_FIELD_PATHS: Record<PropertyFormStep, readonly string[]> = {
         (path) => path.startsWith("furnishing.") || path.startsWith("amenities."),
     ),
     highlights: Object.keys(FIELD_RULES).filter(
-        (path) =>
-            path.startsWith("highlights.") ||
-            path.startsWith("construction.") ||
-            path.startsWith("availability."),
+        (path) => path.startsWith("highlights.") || path.startsWith("construction."),
     ),
     media: Object.keys(FIELD_RULES).filter(
         (path) => path.startsWith("media.") || path === "documents",
@@ -443,11 +402,7 @@ export const RULE_DRIVER_PATHS = [
     "commission.rent.paidBy",
     "furnishing.status",
     "construction.possessionType",
-    "construction.stage",
-    "construction.reraId",
     "construction.paymentPlan",
-    "availability.visitDays",
-    "availability.keyHeldBy",
     "owner.whatsappSameAsPhone",
     "owner.isNri",
 ] as const;

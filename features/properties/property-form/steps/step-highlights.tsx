@@ -2,7 +2,7 @@
 
 import { useFormContext } from "react-hook-form";
 
-import { Clock3, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
@@ -10,18 +10,10 @@ import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
 
-import {
-    CONSTRUCTION_STAGE_OPTIONS,
-    KEY_HELD_BY_OPTIONS,
-    PAYMENT_PLAN_OPTIONS,
-    POSSESSION_TYPE_OPTIONS,
-    SHOWING_CONTACT_OPTIONS,
-    VISIT_DAY_OPTIONS,
-} from "@/constants/property";
+import { PAYMENT_PLAN_OPTIONS, POSSESSION_TYPE_OPTIONS } from "@/constants/property";
 import {
     ChoiceField,
     FORM_GRID_CLASS,
-    MultiChipField,
     NumberField,
     SelectField,
     TagInputField,
@@ -36,7 +28,6 @@ export function StepHighlights() {
     const values = watch();
     const highlights = values.highlights.chips;
     const schedule = values.construction.paymentSchedule;
-    const visitSlots = values.availability.visitTimeSlots;
     const suggestions = [
         values.details.coveredParking ? "Covered parking" : null,
         values.location.landmark ? `Near ${values.location.landmark}`.slice(0, 40) : null,
@@ -100,8 +91,7 @@ export function StepHighlights() {
             </WizardSection>
 
             {isVisible("construction.possessionType") ||
-            isVisible("construction.builderName") ||
-            isVisible("construction.reraId") ? (
+            isVisible("construction.builderName") ? (
                 <WizardSection
                     title="Construction and possession"
                     description="Show the official timeline beside the builder's working promise."
@@ -122,46 +112,9 @@ export function StepHighlights() {
                             />
                         ) : null}
                         <div className={FORM_GRID_CLASS}>
-                            <SelectField
-                                name="construction.stage"
-                                label="Construction stage"
-                                options={CONSTRUCTION_STAGE_OPTIONS}
-                            />
-                            <NumberField
-                                name="construction.progressPercent"
-                                label="Progress (%)"
-                                max={100}
-                            />
-                            <NumberField name="construction.slabsDone" label="Slabs complete" />
-                            <NumberField name="construction.totalSlabs" label="Total slabs" />
                             <TextField name="construction.builderName" label="Builder name" />
                             <TextField name="construction.projectName" label="Project name" />
                         </div>
-                        {isVisible("construction.reraId") ? (
-                            <div className={FORM_GRID_CLASS}>
-                                <TextField
-                                    name="construction.reraId"
-                                    label="RERA ID"
-                                    placeholder="e.g. PR/GJ/SURAT/..."
-                                    hint="Use the complete Gujarat RERA registration ID."
-                                />
-                                <TextField
-                                    name="construction.reraPossessionDate"
-                                    label="RERA possession date"
-                                    type="date"
-                                />
-                                <TextField
-                                    name="construction.builderPromisedDate"
-                                    label="Builder promised date"
-                                    type="date"
-                                />
-                                <TextField
-                                    name="construction.ocCcExpectedDate"
-                                    label="OC / CC expected"
-                                    type="date"
-                                />
-                            </div>
-                        ) : null}
                         <div className={FORM_GRID_CLASS}>
                             <SelectField
                                 name="construction.paymentPlan"
@@ -248,113 +201,6 @@ export function StepHighlights() {
                     </div>
                 </WizardSection>
             ) : null}
-
-            <WizardSection
-                title="Visits and availability"
-                description="Make it clear when the property can be shown and who has access."
-            >
-                <div className="space-y-5">
-                    <MultiChipField
-                        name="availability.visitDays"
-                        label="Visit days"
-                        options={VISIT_DAY_OPTIONS}
-                    />
-                    <div className={FORM_GRID_CLASS}>
-                        <NumberField
-                            name="availability.advanceNoticeHours"
-                            label="Advance notice (hours)"
-                        />
-                        <SelectField
-                            name="availability.keyHeldBy"
-                            label="Key held by"
-                            options={KEY_HELD_BY_OPTIONS}
-                        />
-                        <SelectField
-                            name="availability.showingContactPerson"
-                            label="Showing contact"
-                            options={SHOWING_CONTACT_OPTIONS}
-                        />
-                    </div>
-                    {isVisible("availability.caretakerName") ? (
-                        <div className={FORM_GRID_CLASS}>
-                            <TextField
-                                name="availability.caretakerName"
-                                label="Caretaker name"
-                                visibility="private"
-                            />
-                            <TextField
-                                name="availability.caretakerPhone"
-                                label="Caretaker phone"
-                                inputMode="tel"
-                                visibility="private"
-                            />
-                        </div>
-                    ) : null}
-                    <div className="space-y-3">
-                        {visitSlots.map((slot, index) => (
-                            <div
-                                key={slot.id}
-                                className="
-                                  grid items-end gap-3 rounded-control border border-border-warm
-                                  bg-surface p-3
-                                  sm:grid-cols-[1fr_1fr_auto]
-                                "
-                            >
-                                <TextField
-                                    name={`availability.visitTimeSlots.${index}.from`}
-                                    label="From"
-                                    type="time"
-                                />
-                                <TextField
-                                    name={`availability.visitTimeSlots.${index}.to`}
-                                    label="To"
-                                    type="time"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon-lg"
-                                    aria-label="Remove visit time"
-                                    onClick={() =>
-                                        setValue(
-                                            "availability.visitTimeSlots",
-                                            visitSlots.filter(
-                                                (_, itemIndex) => itemIndex !== index,
-                                            ),
-                                            { shouldDirty: true },
-                                        )
-                                    }
-                                    className="
-                                      flex items-center justify-center rounded-control border
-                                      border-border-warm text-danger block-12 inline-12
-                                      hover:bg-danger-soft
-                                      focus-visible:ring-3 focus-visible:ring-danger/20
-                                    "
-                                >
-                                    <Trash2 className="block-4 inline-4" />
-                                </Button>
-                            </div>
-                        ))}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="md"
-                            onClick={() =>
-                                setValue(
-                                    "availability.visitTimeSlots",
-                                    [
-                                        ...visitSlots,
-                                        { id: createClientId("visit"), from: "10:00", to: "13:00" },
-                                    ],
-                                    { shouldDirty: true },
-                                )
-                            }
-                        >
-                            <Clock3 aria-hidden /> Add visit time
-                        </Button>
-                    </div>
-                </div>
-            </WizardSection>
         </div>
     );
 }

@@ -23,6 +23,7 @@ import {
     Users,
     X,
 } from "lucide-react";
+
 import { formatAreaSqft } from "@/lib/format/area";
 import {
     defaultPriceMode,
@@ -36,7 +37,6 @@ import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
 import { cn } from "@/lib/utils";
 
-import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import {
@@ -53,6 +53,7 @@ import { Price } from "@/components/shared/price";
 import { PropertySaveButton } from "@/components/shared/property-save-button";
 import { PropertySharePopover } from "@/components/shared/property-share-popover";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
+import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -99,8 +100,8 @@ const BROWSE_REQUEST_CANCELLING_LABEL = "Cancelling…";
 const BROWSE_REPRESENTING_LABEL = "Representing";
 const BROWSE_INVITE_ACCEPT_LABEL = "Accept";
 const BROWSE_INVITE_ACCEPTING_LABEL = "Accepting…";
-const BROWSE_INVITE_CANCEL_LABEL = "Cancel invitation";
-const BROWSE_INVITE_CANCELLING_LABEL = "Cancelling…";
+const BROWSE_INVITE_CANCEL_LABEL = "Decline";
+const BROWSE_INVITE_CANCELLING_LABEL = "Declining…";
 
 const PROPERTY_CARD_TITLE_CLASS = "body truncate font-semibold tracking-wide text-ink capitalize";
 const PROPERTY_CARD_LOCATION_CLASS = `
@@ -159,28 +160,69 @@ function BrowseRequestAction({
               ? BROWSE_REQUEST_TOOLTIP.pending
               : BROWSE_REQUEST_TOOLTIP.idle;
 
-    const statusClassName = `
-      body-sm flex items-center justify-center gap-2 rounded-control border-2 border-brand
-      bg-brand-soft px-4 font-semibold text-brand-text block-control-lg inline-full
-    `;
+    const statusClassName = cn(
+        `
+          body-sm flex items-center justify-center gap-2 rounded-control px-4 font-semibold
+          block-control-lg inline-full
+        `,
+        tone === "overlay"
+            ? "border border-surface/35 bg-surface/10 text-surface"
+            : "border-2 border-brand bg-brand-soft text-brand-text",
+    );
 
     const representingStatus = (
         <div role="status" className={statusClassName}>
-            <CircleCheck
-                aria-hidden
-                className="shrink-0 text-brand-text block-4 inline-4"
-                strokeWidth={2}
-            />
+            <CircleCheck aria-hidden className="shrink-0 block-4 inline-4" strokeWidth={2} />
             {BROWSE_REPRESENTING_LABEL}
         </div>
     );
 
+    // Same footer shape as every other two-action card (invite, deal, owned):
+    // one row, secondary on the start side, primary wider on the end side.
     const inviteButtons = (
-        <div className="flex flex-col gap-2 inline-full">
+        <div className="flex gap-2">
             <Tooltip>
                 <TooltipTrigger
                     render={
-                        <span className="inline-flex inline-full">
+                        <span className="inline-flex flex-1">
+                            <Button
+                                type="button"
+                                size="md"
+                                variant="outline"
+                                className={cn(
+                                    "inline-full",
+                                    tone === "overlay"
+                                        ? OVERLAY_GLASS_BUTTON_CLASS
+                                        : "border-border-warm",
+                                )}
+                                disabled={inviteBusy}
+                                loading={inviteActionPending === "cancel"}
+                                onClick={onCancelInvite}
+                            >
+                                {inviteActionPending === "cancel" ? (
+                                    BROWSE_INVITE_CANCELLING_LABEL
+                                ) : (
+                                    <>
+                                        <X
+                                            aria-hidden
+                                            className="block-4 inline-4"
+                                            strokeWidth={1.75}
+                                        />
+                                        {BROWSE_INVITE_CANCEL_LABEL}
+                                    </>
+                                )}
+                            </Button>
+                        </span>
+                    }
+                />
+                <TooltipContent side="top" className="text-center max-inline-xs">
+                    {BROWSE_REQUEST_TOOLTIP.inviteCancel}
+                </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <span className="inline-flex flex-[1.4]">
                             <Button
                                 type="button"
                                 size="md"
@@ -208,43 +250,6 @@ function BrowseRequestAction({
                 />
                 <TooltipContent side="top" className="text-center max-inline-xs">
                     {BROWSE_REQUEST_TOOLTIP.inviteAccept}
-                </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger
-                    render={
-                        <span className="inline-flex inline-full">
-                            <Button
-                                type="button"
-                                size="md"
-                                variant="outline"
-                                className="
-                                  border-2 border-brand bg-brand-soft font-semibold text-brand-text
-                                  inline-full
-                                  hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
-                                "
-                                disabled={inviteBusy}
-                                loading={inviteActionPending === "cancel"}
-                                onClick={onCancelInvite}
-                            >
-                                {inviteActionPending === "cancel" ? (
-                                    BROWSE_INVITE_CANCELLING_LABEL
-                                ) : (
-                                    <>
-                                        <X
-                                            aria-hidden
-                                            className="block-4 inline-4"
-                                            strokeWidth={2}
-                                        />
-                                        {BROWSE_INVITE_CANCEL_LABEL}
-                                    </>
-                                )}
-                            </Button>
-                        </span>
-                    }
-                />
-                <TooltipContent side="top" className="text-center max-inline-xs">
-                    {BROWSE_REQUEST_TOOLTIP.inviteCancel}
                 </TooltipContent>
             </Tooltip>
         </div>
@@ -1526,6 +1531,154 @@ function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
     return <Badge variant={variant}>{OWNED_STATUS_LABEL[status]}</Badge>;
 }
 
+/** Dot colour per listing status, for the overlay card's status chip. */
+const OWNED_STATUS_DOT_CLASS: Record<OwnedPropertyCardStatus, string> = {
+    published: "bg-success-mid",
+    draft: "bg-highlight",
+    unpublished: "bg-ink-subtle",
+};
+
+function formatListedLabel(listedDaysAgo: number): string {
+    if (listedDaysAgo <= 0) return "Today";
+    if (listedDaysAgo === 1) return "1 day";
+    if (listedDaysAgo < 30) return `${listedDaysAgo} days`;
+    const months = Math.round(listedDaysAgo / 30);
+    return months === 1 ? "1 month" : `${months} months`;
+}
+
+function formatRequestsValue(inboundRequestCount: number): string {
+    if (inboundRequestCount === 0) return "None yet";
+    return inboundRequestCount === 1 ? "1 broker" : `${inboundRequestCount} brokers`;
+}
+
+/** Grid owned card: full-bleed photo with the details on a blurred panel. */
+function OwnedOverlayPropertyCard({
+    listing,
+    detailsHref,
+    priority = false,
+    imageSizes = "(max-width: 768px) 100vw, 50vw",
+    editHref,
+    onEdit,
+    onAddBuyer,
+    className,
+}: Extract<PropertyCardProps, { variant: "owned" }>) {
+    const browse = ownedToBrowseListing(listing);
+    const both = offersBoth(browse);
+    // Headline price matches the browse overlay card: sale leads, rent gets its
+    // own stat below. A light toggle would fight the dark panel.
+    const isRentOnly = offersRent(browse) && !offersSale(browse);
+    const priceLabel = isRentOnly
+        ? formatRentInr(listing.rentAmountInr ?? 0)
+        : formatPriceInr(listing.saleAmountInr ?? 0);
+    const sharePriceLabel =
+        offersRent(browse) && !offersSale(browse)
+            ? formatRentInr(listing.rentAmountInr ?? 0)
+            : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
+    const specsLabel = [formatBrowseCardArea(listing.areaSqft), listing.configLabel]
+        .filter(Boolean)
+        .join(" · ");
+    const isEdit = Boolean(editHref);
+    const editTarget = editHref ?? detailsHref;
+    const opensInModal = isEdit && onEdit != null;
+
+    return (
+        <OverlayCard
+            href={detailsHref}
+            imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
+            imageAlt={listing.title}
+            imageSizes={imageSizes}
+            priority={priority}
+            // A listing nobody can see yet reads as inactive while scanning.
+            muted={listing.status !== "published"}
+            className={className}
+            chips={
+                <>
+                    <OverlayChip dotClassName={OWNED_STATUS_DOT_CLASS[listing.status]}>
+                        {OWNED_STATUS_LABEL[listing.status]}
+                    </OverlayChip>
+                    {offersSale(browse) ? (
+                        <OverlayChip dotClassName="bg-success-mid">For sale</OverlayChip>
+                    ) : null}
+                    {offersRent(browse) ? (
+                        <OverlayChip dotClassName="bg-urgent-mid">For rent</OverlayChip>
+                    ) : null}
+                    {listing.visibility === "private" ? (
+                        <OverlayChip dotClassName="bg-surface/70">Private</OverlayChip>
+                    ) : null}
+                </>
+            }
+            actions={
+                <PropertySharePopover
+                    iconOnly
+                    listing={{
+                        id: listing.id,
+                        title: listing.title,
+                        locality: listing.locality,
+                        city: listing.city,
+                        priceLabel: sharePriceLabel,
+                        imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                        configLabel: listing.configLabel,
+                        propertyTypeLabel: listing.propertyTypeLabel,
+                        areaSqft: listing.areaSqft,
+                        bhk: listing.bhk,
+                        listingKind: offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
+                    }}
+                    className={OVERLAY_ICON_BUTTON_CLASS}
+                />
+            }
+        >
+            <OverlayCardSummary
+                href={detailsHref}
+                title={listing.title}
+                priceLabel={priceLabel}
+                locationLabel={`${listing.locality}, ${listing.city}`}
+                specsLabel={specsLabel}
+            />
+
+            <OverlayStatsRow>
+                <OverlayStat label="Requests">
+                    {formatRequestsValue(listing.inboundRequestCount)}
+                </OverlayStat>
+                <OverlayStat label="Listed">{formatListedLabel(listing.listedDaysAgo)}</OverlayStat>
+                {both ? (
+                    <OverlayStat label="Rent">
+                        {formatRentInr(listing.rentAmountInr ?? 0)}
+                    </OverlayStat>
+                ) : listing.ownerName ? (
+                    <OverlayStat label="Owner">
+                        <span className="capitalize">{listing.ownerName}</span>
+                    </OverlayStat>
+                ) : null}
+            </OverlayStatsRow>
+
+            <div className="pointer-events-auto flex gap-2">
+                {onAddBuyer ? (
+                    <Button
+                        size="md"
+                        variant="outline"
+                        type="button"
+                        className={cn("flex-1", OVERLAY_GLASS_BUTTON_CLASS)}
+                        onClick={onAddBuyer}
+                    >
+                        <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                        {OWNED_ADD_BUYER_LABEL}
+                    </Button>
+                ) : null}
+                <Button
+                    size="md"
+                    variant="accent"
+                    className={onAddBuyer ? "flex-[1.4]" : "inline-full"}
+                    type={opensInModal ? "button" : undefined}
+                    onClick={opensInModal ? onEdit : undefined}
+                    render={opensInModal ? undefined : <Link href={editTarget} prefetch={false} />}
+                >
+                    {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
+                </Button>
+            </div>
+        </OverlayCard>
+    );
+}
+
 function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing }) {
     const browse = ownedToBrowseListing(listing);
     const both = offersBoth(browse);
@@ -1569,7 +1722,14 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
     );
 }
 
-function OwnedPropertyCard({
+function OwnedPropertyCard(props: Extract<PropertyCardProps, { variant: "owned" }>) {
+    if (props.layout !== "list") {
+        return <OwnedOverlayPropertyCard {...props} />;
+    }
+    return <OwnedListPropertyCard {...props} />;
+}
+
+function OwnedListPropertyCard({
     listing,
     layout = "grid",
     detailsHref,

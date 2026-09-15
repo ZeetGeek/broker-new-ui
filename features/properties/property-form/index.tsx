@@ -74,7 +74,9 @@ import type {
 // v2: nearbyPlaces changed from {id,type,name,distanceKm}[] to a plain string[] of place types.
 // v3: area units went international; bigha/guntha/kanal/marla/cent/ground no longer exist.
 // v4: commission is owner-paid only; paidBy/mode are now fixed literals.
-const LOCAL_DRAFT_VERSION = 4;
+// v5: construction stage/progress/slabs and the RERA + handover dates were removed.
+// v6: the availability block (visit days, times, key holder, caretaker) was removed.
+const LOCAL_DRAFT_VERSION = 6;
 
 export type PropertyFormProps = {
     mode: "create" | "edit";

@@ -31,7 +31,6 @@ export const PROPERTY_VISIBLE_WHEN = {
         values.basics.transactionType === "new_booking" ||
         values.details.propertyCondition === "under_construction",
     tenantVacating: (values) => values.rent.currentStatus === "tenant_occupied",
-    caretaker: (values) => values.availability.keyHeldBy === "caretaker",
     renewal: (values) => isRent(values) && values.commission.rent.renewalFeeApplicable,
     existingLease: (values) => values.details.commercial.currentlyLeased,
     rentTerm: (values) =>
@@ -52,7 +51,6 @@ export const PRIVATE_FIELD_PREFIXES = [
     "deal",
     "documents",
     "owner",
-    "availability.caretaker",
 ] as const;
 
 export function visibilityForField(path: string): FieldVisibility {
