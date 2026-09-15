@@ -94,11 +94,13 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
 
     const handleDelete = useCallback(async () => {
         setBusy(true);
-        const ok = await myListingsApi.remove(item.id);
+        const result = await myListingsApi.remove(item.id);
         setBusy(false);
 
-        if (!ok) {
-            toast.error("Couldn't remove property");
+        if (!result.ok) {
+            // The refusal explains itself (live representation, closed business),
+            // so it is shown as sent rather than replaced with a generic failure.
+            toast.error(result.message);
             return;
         }
 
@@ -156,12 +158,7 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
                         </p>
                     </header>
 
-                    <section
-                        className="
-                      rounded-card border border-border-warm bg-surface p-5
-                      sm:p-6
-                    "
-                    >
+                    <section className="rounded-card border border-border-warm bg-surface p-5 sm:p-6">
                         <PropertyPriceBlock item={item} />
                     </section>
 

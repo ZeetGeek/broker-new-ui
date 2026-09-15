@@ -344,4 +344,16 @@ export const propertiesApi = {
             body: JSON.stringify({ publishStatus }),
         });
     },
+
+    /**
+     * Permanently deletes one of the caller's own listings. The API scopes this
+     * to their inventory, so somebody else's id is a 404; a listing under live
+     * representation, or one with closed deals or leases, comes back 409 with a
+     * message worth showing the user verbatim.
+     */
+    remove(id: string) {
+        return apiFetch<{ id: string; deleted: boolean }>(`/properties/${id}`, {
+            method: "DELETE",
+        });
+    },
 };

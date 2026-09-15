@@ -1,3 +1,4 @@
+import { ApiError } from "@/lib/api/client";
 import {
     type CreatePropertyInput,
     propertiesApi,
@@ -24,6 +25,8 @@ import type {
 import { DEFAULT_MY_LISTINGS_FILTERS } from "@/features/properties/your-listings/types";
 
 const PAGE_SIZE = 6;
+
+export type MyListingRemoveResult = { ok: true } | { ok: false; message: string };
 
 export type MyListingsSummary = {
     total: number;
@@ -151,8 +154,23 @@ export const myListingsApi = {
         }
     },
 
-    async remove(_propertyId: string): Promise<boolean> {
-        // Inventory delete is not exposed by the API yet.
-        return false;
+    /**
+     * Refusals carry a reason the user can act on — a broker is representing the
+     * listing, or it has closed business on it — so the API message is passed
+     * back rather than collapsed into a bare `false`.
+     */
+    async remove(propertyId: string): Promise<MyListingRemoveResult> {
+        try {
+            await propertiesApi.remove(propertyId);
+            return { ok: true };
+        } catch (error) {
+            return {
+                ok: false,
+                message:
+                    error instanceof ApiError && error.message
+                        ? error.message
+                        : "Couldn't remove property",
+            };
+        }
     },
 };
