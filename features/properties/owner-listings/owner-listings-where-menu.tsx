@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 
-import { type LucideIcon, MapPin, MapPinOff, Search } from "lucide-react";
+import { type LucideIcon, MapPin, MapPinned, MapPinOff, Search } from "lucide-react";
 
 import {
-    formatLocationPathLabel,
     formatLocalitiesLabel,
     formatLocalitiesTooltip,
+    formatLocationPathLabel,
     formatPlaceName,
 } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
@@ -114,11 +114,11 @@ function formatListingCount(count: number): string {
 }
 
 const WHERE_META_CLASS = cn(
-    "truncate text-[12px] font-medium leading-snug tracking-[0.04em] text-ink-muted",
+    "truncate text-[12px] leading-snug font-medium tracking-[0.04em] text-ink-muted",
 );
 
 const WHERE_TITLE_CLASS = cn(
-    "truncate text-[15px] font-medium leading-snug tracking-[-0.01em] text-ink",
+    "truncate text-[15px] leading-snug font-medium tracking-[-0.01em] text-ink",
 );
 
 function HighlightMatch({ text, query }: { text: string; query: string }) {
@@ -145,9 +145,9 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
     );
 }
 
-function LocationIcon() {
+function LocationIcon({ icon: Icon = MapPin }: { icon?: LucideIcon }) {
     return (
-        <MapPin
+        <Icon
             aria-hidden
             data-slot="where-location-pin"
             color="var(--row-icon)"
@@ -174,7 +174,7 @@ function WhereLocationMeta({
                     <span className="mx-1.5 text-ink-subtle" aria-hidden>
                         ·
                     </span>
-                    <span className="tabular-nums tracking-[0.02em]">
+                    <span className="tracking-[0.02em] tabular-nums">
                         {formatListingCount(listingCount)}
                     </span>
                 </>
@@ -279,6 +279,8 @@ export type OwnerListingsWhereMenuProps = {
     listings: OwnerListingItem[];
     selectedCities: string[];
     selectedLocalities: string[];
+    yourAreas: boolean;
+    serviceAreas?: string[];
     onWhereChange: (next: { cities: string[]; localities: string[]; yourAreas: boolean }) => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
@@ -288,6 +290,8 @@ export function OwnerListingsWhereMenu({
     listings,
     selectedCities,
     selectedLocalities,
+    yourAreas,
+    serviceAreas = [],
     onWhereChange,
     onOpenChange,
     className,
@@ -310,7 +314,19 @@ export function OwnerListingsWhereMenu({
     const hasListings = locationTree.length > 0;
     const isSearching = query.trim().length > 0;
     const showEmptyState = !hasListings || (isSearching && searchHits.length === 0);
-    const isAnywhereSelected = selectedCities.length === 0 && selectedLocalities.length === 0;
+    const hasNoPinnedPlace = selectedCities.length === 0 && selectedLocalities.length === 0;
+    const isServiceableSelected = hasNoPinnedPlace && yourAreas;
+    const isAnywhereSelected = hasNoPinnedPlace && !yourAreas;
+
+    const serviceableMeta =
+        serviceAreas.length > 0
+            ? serviceAreas.map(formatPlaceName).join(" · ")
+            : "Set areas in your profile";
+
+    const selectServiceable = () => {
+        setQuery("");
+        onWhereChange({ cities: [], localities: [], yourAreas: true });
+    };
 
     const selectAnywhere = () => {
         setQuery("");
@@ -318,7 +334,8 @@ export function OwnerListingsWhereMenu({
     };
 
     const clearSelection = () => {
-        selectAnywhere();
+        // Clear pinned places back to the default serviceable scope.
+        selectServiceable();
     };
 
     const handleOpenChange = (nextOpen: boolean) => {
@@ -336,7 +353,7 @@ export function OwnerListingsWhereMenu({
             : [...selectedLocalities, locality];
 
         if (nextLocalities.length === 0) {
-            onWhereChange({ cities: [], localities: [], yourAreas: false });
+            onWhereChange({ cities: [], localities: [], yourAreas: true });
             return;
         }
 
@@ -357,7 +374,11 @@ export function OwnerListingsWhereMenu({
         });
     };
 
-    const whereTooltipLabel = formatLocalitiesTooltip(selectedLocalities, selectedCities, false);
+    const whereTooltipLabel = formatLocalitiesTooltip(
+        selectedLocalities,
+        selectedCities,
+        yourAreas,
+    );
 
     return (
         <div className={cn("inline-full min-inline-0", className)}>
@@ -376,7 +397,7 @@ export function OwnerListingsWhereMenu({
                                             value={formatLocalitiesLabel(
                                                 selectedLocalities,
                                                 selectedCities,
-                                                false,
+                                                yourAreas,
                                             )}
                                             className="inline-full"
                                             isOpen={open}
@@ -446,26 +467,52 @@ export function OwnerListingsWhereMenu({
                             <ScrollArea className="overflow-hidden block-full">
                                 <div className="px-3 pe-3 pbs-0 pbe-3">
                                     {!isSearching ? (
-                                        <DropdownMenuCheckboxItem
-                                            checked={isAnywhereSelected}
-                                            onCheckedChange={selectAnywhere}
-                                            className={rowClass(isAnywhereSelected)}
-                                        >
-                                            <LocationIcon />
-                                            <span
-                                                className="
-                                                  flex flex-1 flex-col gap-1 text-start min-inline-0
-                                                "
+                                        <>
+                                            <DropdownMenuCheckboxItem
+                                                checked={isServiceableSelected}
+                                                onCheckedChange={selectServiceable}
+                                                className={rowClass(isServiceableSelected)}
                                             >
+                                                <LocationIcon icon={MapPinned} />
                                                 <span
-                                                    data-slot="where-location-title"
-                                                    className={WHERE_TITLE_CLASS}
+                                                    className="
+                                                      flex flex-1 flex-col gap-1 text-start
+                                                      min-inline-0
+                                                    "
                                                 >
-                                                    Anywhere
+                                                    <span
+                                                        data-slot="where-location-title"
+                                                        className={WHERE_TITLE_CLASS}
+                                                    >
+                                                        Serviceable areas
+                                                    </span>
+                                                    <WhereLocationMeta
+                                                        pathLabel={serviceableMeta}
+                                                    />
                                                 </span>
-                                                <WhereLocationMeta pathLabel="All listed properties" />
-                                            </span>
-                                        </DropdownMenuCheckboxItem>
+                                            </DropdownMenuCheckboxItem>
+                                            <DropdownMenuCheckboxItem
+                                                checked={isAnywhereSelected}
+                                                onCheckedChange={selectAnywhere}
+                                                className={rowClass(isAnywhereSelected)}
+                                            >
+                                                <LocationIcon icon={MapPinOff} />
+                                                <span
+                                                    className="
+                                                      flex flex-1 flex-col gap-1 text-start
+                                                      min-inline-0
+                                                    "
+                                                >
+                                                    <span
+                                                        data-slot="where-location-title"
+                                                        className={WHERE_TITLE_CLASS}
+                                                    >
+                                                        Anywhere
+                                                    </span>
+                                                    <WhereLocationMeta pathLabel="All listed properties" />
+                                                </span>
+                                            </DropdownMenuCheckboxItem>
+                                        </>
                                     ) : null}
 
                                     {isSearching ? (

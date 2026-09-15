@@ -301,6 +301,20 @@ export function filterOwnerListings(
             return false;
         }
 
+        if (filters.yourAreas && serviceAreas.length > 0) {
+            const areaSet = new Set(serviceAreas.map((area) => area.toLowerCase()));
+            const locality = item.locality.toLowerCase();
+            const city = item.city.toLowerCase();
+            const inArea = [...areaSet].some(
+                (area) =>
+                    locality === area ||
+                    city === area ||
+                    locality.includes(area) ||
+                    city.includes(area),
+            );
+            if (!inArea) return false;
+        }
+
         const compareAmount = listingCompareAmountInr(item, filters.type);
         if (minInr !== null && !Number.isNaN(minInr) && compareAmount < minInr) return false;
         if (maxInr !== null && !Number.isNaN(maxInr) && compareAmount > maxInr) return false;
@@ -308,12 +322,6 @@ export function filterOwnerListings(
     });
 
     filtered = [...filtered].sort((a, b) => {
-        if (filters.yourAreas && serviceAreas.length > 0) {
-            const areaSet = new Set(serviceAreas);
-            const aIn = areaSet.has(a.locality) || areaSet.has(a.city) ? 0 : 1;
-            const bIn = areaSet.has(b.locality) || areaSet.has(b.city) ? 0 : 1;
-            if (aIn !== bIn) return aIn - bIn;
-        }
         if (filters.sort === "price_asc") {
             return (
                 listingCompareAmountInr(a, filters.type) - listingCompareAmountInr(b, filters.type)

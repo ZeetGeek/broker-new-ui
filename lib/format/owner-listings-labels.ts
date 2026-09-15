@@ -40,7 +40,7 @@ export function formatLocationPathLabel(city: string, state: string): string {
 export function formatLocalitiesLabel(
     localities: string[],
     cities: string[] = [],
-    _yourAreas = false,
+    yourAreas = false,
 ): string {
     if (localities.length > 0) {
         const labels = localities.map(formatPlaceName);
@@ -52,14 +52,14 @@ export function formatLocalitiesLabel(
         if (labels.length <= 2) return labels.join(", ");
         return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
     }
-    return "Anywhere";
+    return yourAreas ? "Serviceable areas" : "Anywhere";
 }
 
 /** Full list for tooltips when the band label is truncated. */
 export function formatLocalitiesTooltip(
     localities: string[],
     cities: string[] = [],
-    _yourAreas = false,
+    yourAreas = false,
 ): string | null {
     if (localities.length > 2) {
         return localities.map(formatPlaceName).join(", ");
@@ -68,7 +68,7 @@ export function formatLocalitiesTooltip(
         return cities.map(formatPlaceName).join(", ");
     }
     if (localities.length === 0 && cities.length === 0) {
-        return "All listed properties";
+        return yourAreas ? "Listings in your serviceable areas" : "All listed properties";
     }
     if (localities.length === 0 && cities.length > 0 && cities.length <= 2) {
         return null;
