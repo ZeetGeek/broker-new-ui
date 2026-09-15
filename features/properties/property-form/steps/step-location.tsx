@@ -1,10 +1,23 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { Crosshair, MapPin } from "lucide-react";
+import {
+    Building2,
+    Check,
+    Crosshair,
+    Globe2,
+    Hash,
+    Landmark,
+    Map,
+    MapPin,
+    MapPinned,
+    Pencil,
+    RotateCcw,
+    Route,
+} from "lucide-react";
 
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 
@@ -19,6 +32,9 @@ import {
 } from "@/constants/property";
 import {
     FORM_GRID_CLASS,
+    FORM_GRID_3_CLASS,
+    FORM_SECTIONS_CLASS,
+    FORM_STACK_CLASS,
     MultiChipField,
     NumberField,
     SelectField,
@@ -27,15 +43,72 @@ import {
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 
+function normalizeAddress(value: string): string {
+    return value
+        .replace(/\s*\n\s*/g, ", ")
+        .replace(/,\s*,+/g, ",")
+        .replace(/\s+,/g, ",")
+        .replace(/,\s+/g, ", ")
+        .trim();
+}
+
+function buildFullAddress(location: PropertyDraftValues["location"]): string {
+    const unit = location.unitNumber.trim();
+    const project = location.projectOrSociety.trim();
+    const street = location.streetOrRoad.trim();
+    const locality = location.locality.trim();
+    const landmark = location.landmark.trim();
+    const city = location.city.trim();
+    const state = location.state.trim();
+    const pincode = location.pincode.trim();
+    const country = location.country.trim();
+
+    const line1 = [unit, project].filter(Boolean).join(", ");
+    const line2 = street;
+    const line3 = locality;
+    const line4 = landmark
+        ? landmark.toLowerCase().startsWith("near ")
+            ? landmark
+            : `Near ${landmark}`
+        : "";
+    const cityState = [city, state].filter(Boolean).join(", ");
+    const line5 = [cityState, pincode].filter(Boolean).join(" ");
+    const line6 = country;
+
+    return [line1, line2, line3, line4, line5, line6].filter(Boolean).join(", ");
+}
+
 export function StepLocation() {
     const {
         watch,
         setValue,
         formState: { errors },
     } = useFormContext<PropertyDraftValues>();
-    const pincode = watch("location.pincode");
-    const lat = watch("location.lat");
-    const lng = watch("location.lng");
+    const location = watch("location");
+    const pincode = location.pincode;
+    const lat = location.lat;
+    const lng = location.lng;
+    const fullAddress = location.fullAddress;
+    const lastAutoAddress = useRef("");
+    const [editingAddress, setEditingAddress] = useState(false);
+    const addressFieldId = "location-fullAddress";
+
+    const generatedAddress = useMemo(
+        () => buildFullAddress(location),
+        // Explicit parts — avoid regenerating on unrelated location keys (lat/lng/etc).
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional field list
+        [
+            location.unitNumber,
+            location.projectOrSociety,
+            location.streetOrRoad,
+            location.locality,
+            location.landmark,
+            location.city,
+            location.state,
+            location.pincode,
+            location.country,
+        ],
+    );
 
     useEffect(() => {
         if (/^395\d{3}$/.test(pincode)) {
@@ -43,6 +116,60 @@ export function StepLocation() {
             setValue("location.state", "Gujarat", { shouldDirty: true });
         }
     }, [pincode, setValue]);
+
+    useEffect(() => {
+        if (editingAddress) return;
+
+        const currentRaw = fullAddress;
+        const current = normalizeAddress(currentRaw);
+        const auto = generatedAddress.trim();
+
+        // Restored / multiline auto draft that already matches → keep managing + flatten.
+        if (!lastAutoAddress.current && current && current === auto) {
+            lastAutoAddress.current = auto;
+            if (currentRaw !== auto) {
+                setValue("location.fullAddress", auto, { shouldDirty: true });
+            }
+            return;
+        }
+
+        // Sync while empty or still equal to last auto value — stop after manual edit.
+        const shouldSync = !current || current === lastAutoAddress.current;
+        if (!shouldSync) return;
+        if (current === auto && currentRaw === auto) {
+            lastAutoAddress.current = auto;
+            return;
+        }
+        lastAutoAddress.current = auto;
+        setValue("location.fullAddress", auto, { shouldDirty: true });
+    }, [editingAddress, fullAddress, generatedAddress, setValue]);
+
+    function startEditingAddress() {
+        setEditingAddress(true);
+        requestAnimationFrame(() => {
+            const field = document.getElementById(addressFieldId) as HTMLTextAreaElement | null;
+            field?.focus();
+            field?.setSelectionRange(field.value.length, field.value.length);
+        });
+    }
+
+    function finishEditingAddress() {
+        setEditingAddress(false);
+        const current = normalizeAddress(watch("location.fullAddress"));
+        if (current && current !== lastAutoAddress.current) {
+            // Keep custom text as-is (normalized to one line for display consistency).
+            if (watch("location.fullAddress") !== current) {
+                setValue("location.fullAddress", current, { shouldDirty: true });
+            }
+        }
+    }
+
+    function resetToGeneratedAddress() {
+        setEditingAddress(false);
+        const auto = generatedAddress.trim();
+        lastAutoAddress.current = auto;
+        setValue("location.fullAddress", auto, { shouldDirty: true });
+    }
 
     function useCurrentLocation() {
         if (!navigator.geolocation) {
@@ -80,67 +207,147 @@ export function StepLocation() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title="Where is the property?"
+                title={
+                    <>
+                        <MapPin
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        Where is the property?
+                    </>
+                }
                 description="Start broad, then add the details people use to find it."
             >
-                <div className={FORM_GRID_CLASS}>
-                    <TextField name="location.country" label="Country" disabled />
-                    <SelectField
-                        name="location.state"
-                        label="State"
-                        options={INDIAN_STATE_OPTIONS}
-                    />
-                    <SelectField name="location.city" label="City" options={CITY_OPTIONS} />
-                    <TextField name="location.locality" label="Locality" placeholder="e.g. Vesu" />
-                    {/* <TextField
-                        name="location.subLocality"
-                        label="Sub-locality"
-                        placeholder="Optional"
-                    /> */}
-                    <TextField
-                        name="location.pincode"
-                        label="PIN code"
-                        inputMode="numeric"
-                        maxLength={6}
-                        placeholder="395007"
-                        hint="Surat PIN codes fill the city and state automatically."
-                    />
-                    <TextField
-                        name="location.projectOrSociety"
-                        label="Project or society"
-                        placeholder="e.g. Happy Glorious"
-                    />
-                    {/* <TextField
-                        name="location.towerOrBlock"
-                        label="Tower or block"
-                        placeholder="e.g. Tower B"
-                    /> */}
-                    <TextField
-                        name="location.unitNumber"
-                        label="Unit number"
-                        placeholder="Flat, shop, or plot number"
-                        visibility="private"
-                    />
-                    <TextField
-                        name="location.streetOrRoad"
-                        label="Street or road"
-                        placeholder="Road name"
-                    />
-                    <TextField
-                        name="location.landmark"
-                        label="Nearby landmark"
-                        placeholder="Near D-Mart, opposite VR Mall"
-                        className="md:col-span-2"
-                    />
-                    <TextAreaField
-                        name="location.fullAddress"
-                        label="Full address"
-                        placeholder="Complete address for the broker file"
-                        visibility="private"
-                        className="md:col-span-2"
-                    />
+                <div className={FORM_STACK_CLASS}>
+                    <div className={FORM_GRID_3_CLASS}>
+                        <TextField
+                            name="location.country"
+                            label="Country"
+                            disabled
+                            startIcon={Globe2}
+                        />
+                        <SelectField
+                            name="location.state"
+                            label="State"
+                            options={INDIAN_STATE_OPTIONS}
+                            startIcon={Map}
+                        />
+                        <SelectField
+                            name="location.city"
+                            label="City"
+                            options={CITY_OPTIONS}
+                            startIcon={Building2}
+                        />
+                    </div>
+                    <div className={FORM_GRID_CLASS}>
+                        <TextField
+                            name="location.locality"
+                            label="Locality"
+                            placeholder="e.g. Vesu"
+                            startIcon={MapPinned}
+                        />
+                        <TextField
+                            name="location.pincode"
+                            label="PIN code"
+                            inputMode="numeric"
+                            maxLength={6}
+                            placeholder="395007"
+                            hint="Surat PIN codes fill the city and state automatically."
+                            startIcon={Hash}
+                        />
+                        <TextField
+                            name="location.projectOrSociety"
+                            label="Project or society"
+                            placeholder="e.g. Happy Glorious"
+                            startIcon={Building2}
+                        />
+                        <TextField
+                            name="location.unitNumber"
+                            label="Unit number"
+                            placeholder="Flat, shop, or plot number"
+                            visibility="private"
+                            startIcon={Hash}
+                        />
+                        <TextField
+                            name="location.streetOrRoad"
+                            label="Street or road"
+                            placeholder="Road name"
+                            startIcon={Route}
+                        />
+                        <TextField
+                            name="location.landmark"
+                            label="Nearby landmark"
+                            placeholder="Near D-Mart, opposite VR Mall"
+                            startIcon={Landmark}
+                        />
+                        <TextAreaField
+                            name="location.fullAddress"
+                            label="Full address"
+                            placeholder="Fills from the fields above — tap Edit to customize"
+                            hint="Auto-built as one line. Edit to customize, Clear to restore the generated address."
+                            visibility="private"
+                            className="md:col-span-2"
+                            rows={3}
+                            readOnly={!editingAddress}
+                            onBlur={() => {
+                                if (editingAddress) finishEditingAddress();
+                            }}
+                            endAction={
+                                <div className="flex items-center gap-1.5">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onMouseDown={(event) => event.preventDefault()}
+                                        onClick={resetToGeneratedAddress}
+                                        className="
+                                          gap-1.5 rounded-control bg-surface px-2.5 font-semibold
+                                          text-ink-muted shadow-sm
+                                          hover:bg-surface-muted hover:text-ink
+                                        "
+                                    >
+                                        <RotateCcw className="block-3.5 inline-3.5" aria-hidden />
+                                        Clear
+                                    </Button>
+                                    {editingAddress ? (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onMouseDown={(event) => event.preventDefault()}
+                                            onClick={finishEditingAddress}
+                                            className="
+                                              gap-1.5 rounded-control bg-surface px-2.5 font-semibold
+                                              text-brand-text shadow-sm
+                                              hover:bg-brand-soft hover:text-brand-text
+                                            "
+                                        >
+                                            <Check className="block-3.5 inline-3.5" aria-hidden />
+                                            Done
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={startEditingAddress}
+                                            className="
+                                              gap-1.5 rounded-control bg-surface px-2.5 font-semibold
+                                              text-brand-text shadow-sm
+                                              hover:bg-brand-soft hover:text-brand-text
+                                            "
+                                        >
+                                            <Pencil className="block-3.5 inline-3.5" aria-hidden />
+                                            Edit
+                                        </Button>
+                                    )}
+                                </div>
+                            }
+                        />
+                    </div>
                 </div>
             </WizardSection>
 
@@ -242,7 +449,16 @@ export function StepLocation() {
 
             <ConditionalField path="location.nearbyPlaces">
                 <WizardSection
-                    title={<FieldLabel path="location.nearbyPlaces">Nearby places</FieldLabel>}
+                    title={
+                        <>
+                            <Landmark
+                                className="shrink-0 text-brand block-5 inline-5"
+                                strokeWidth={1.75}
+                                aria-hidden
+                            />
+                            <FieldLabel path="location.nearbyPlaces">Nearby places</FieldLabel>
+                        </>
+                    }
                     description="Pick the useful places close to this property."
                 >
                     <MultiChipField

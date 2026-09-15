@@ -2,12 +2,18 @@
 
 import { useFormContext } from "react-hook-form";
 
+import { BadgePercent, Wallet } from "lucide-react";
+
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
 import { formatInr } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
-import { NumberField, WizardSection } from "@/features/properties/property-form/form-fields";
+import {
+    FORM_SECTIONS_CLASS,
+    NumberField,
+    WizardSection,
+} from "@/features/properties/property-form/form-fields";
 
 export function StepCommission() {
     const { watch } = useFormContext<PropertyDraftValues>();
@@ -61,36 +67,56 @@ export function StepCommission() {
               : 0;
 
     return (
-        <div className="space-y-8">
+        <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title={isSale ? "Sale commission" : "Rental brokerage"}
+                title={
+                    <>
+                        <BadgePercent
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        {isSale ? "Sale commission" : "Rental brokerage"}
+                    </>
+                }
                 description="Record the agreed fee and who pays it. These terms stay in the broker file."
                 tone="private"
             >
-                <div className="space-y-6">
-                    {isSale ? (
-                        <NumberField
-                            name="commission.sale.value"
-                            label="Commission (%)"
-                            step={0.1}
-                            max={10}
-                            visibility="private"
-                            hint="Charged to the owner on the sale price."
-                        />
-                    ) : (
-                        <NumberField
-                            name="commission.rent.value"
-                            label="Months of rent"
-                            step={0.25}
-                            visibility="private"
-                            hint="Charged to the owner."
-                        />
-                    )}
-                </div>
+                {isSale ? (
+                    <NumberField
+                        name="commission.sale.value"
+                        label="Commission (%)"
+                        step={0.1}
+                        max={10}
+                        placeholder="e.g. 2"
+                        visibility="private"
+                        startIcon={BadgePercent}
+                        hint="Charged to the owner on the sale price."
+                    />
+                ) : (
+                    <NumberField
+                        name="commission.rent.value"
+                        label="Months of rent"
+                        step={0.25}
+                        placeholder="e.g. 1"
+                        visibility="private"
+                        startIcon={BadgePercent}
+                        hint="Charged to the owner."
+                    />
+                )}
             </WizardSection>
 
             <WizardSection
-                title="Broker income"
+                title={
+                    <>
+                        <Wallet
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        Broker income
+                    </>
+                }
                 description="Updates as you change the rate above."
                 tone="private"
             >
@@ -109,7 +135,7 @@ export function StepCommission() {
                                 label="Area"
                                 value={
                                     areaSqft > 0
-                                        ? `${areaSqft.toLocaleString("en-US")} sq ft`
+                                        ? `${areaSqft.toLocaleString("en-IN")} sq ft`
                                         : "Area not added"
                                 }
                             />
@@ -172,8 +198,8 @@ export function StepCommission() {
                         "
                     >
                         {isSale
-                            ? "Add the expected price in step 5 to see the broker income."
-                            : "Add the monthly rent in step 5 to see the broker income."}
+                            ? "Add the expected price above to see the broker income."
+                            : "Add the monthly rent above to see the broker income."}
                     </p>
                 )}
             </WizardSection>

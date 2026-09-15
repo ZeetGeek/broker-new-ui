@@ -7,6 +7,8 @@ import {
     CircleSlash,
     Eye,
     Handshake,
+    MapPin,
+    Maximize2,
     MessageCircle,
     MoreHorizontal,
     Phone,
@@ -414,10 +416,16 @@ export function DealCard({
             className={cn(
                 // Hover changes the border only — no lift, no shadow step. At
                 // fourteen cards a column the card does not need to move to
-                // show it is the one under the cursor.
+                // show it is the one under the cursor. The resting shadow is
+                // `sm`, so hover has somewhere to go later if it ever needs it.
+                //
+                // Height is auto. A fixed height clipped the stage block on
+                // whichever stage happened to carry two lines, and no single
+                // number is right for all four — so the card sizes to what it
+                // actually holds.
                 `
-                  group flex cursor-pointer flex-col justify-between gap-2 overflow-hidden
-                  rounded-card border p-4 shadow-xs
+                  group flex cursor-pointer flex-col justify-between gap-2 rounded-card border p-5
+                  shadow-sm
                   hover:border-ink/25
                 `,
                 isBusy && "pointer-events-none opacity-60",
@@ -429,28 +437,57 @@ export function DealCard({
             )}
         >
             <div className="flex flex-col gap-3 min-block-0">
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                     <PropertyThumb
                         src={deal.property.imageSrc || null}
                         alt={deal.property.title}
-                        className="block-14 inline-14 sm:block-14 sm:inline-14"
-                        sizes="56px"
-                        iconClassName="block-5 inline-5"
+                        className="
+                          border border-border-warm shadow-sm block-18 inline-18
+                          sm:block-18 sm:inline-18
+                        "
+                        sizes="72px"
+                        iconClassName="block-6 inline-6"
                         hoverScale={false}
                     />
 
-                    <div className="flex flex-col gap-0.5 min-inline-0">
-                        <p className="body-sm truncate font-medium text-ink">
-                            {deal.property.configLabel} · {deal.property.locality}
+                    <div className="flex grow flex-col gap-1 min-inline-0">
+                        {/* The property's own name leads — it is how the
+                            broker refers to the place out loud. The specs
+                            below identify it; they do not replace it. */}
+                        <p className="body-sm truncate font-semibold text-ink">
+                            {deal.property.title}
                         </p>
-                        {/* Area and time-in-stage share a line: both are quiet
-                            context for the title above, and pairing them keeps
-                            the footer free for actions alone. */}
-                        <p className="body-xs truncate text-ink-subtle">
-                            {formatAreaSqft(deal.property.areaSqft)}
-                            {live && deal.status !== "new" && stageDays >= 1
-                                ? ` · ${stageDays}d in stage`
-                                : ""}
+                        {/* Locality and area on one line, iconed the way the
+                            property cards spec them (MapPin / Maximize2, 12px,
+                            1.75 stroke) so the same facts look the same across
+                            the product. Wraps rather than truncating the pair
+                            away when the column is narrow. */}
+                        <p
+                            className="
+                              body-xs flex flex-wrap items-center gap-x-2 gap-y-0.5 font-semibold
+                              text-ink-muted min-inline-0
+                            "
+                        >
+                            <span className="flex items-center gap-1 min-inline-0">
+                                <MapPin
+                                    aria-hidden
+                                    className="shrink-0 block-3 inline-3"
+                                    strokeWidth={1.75}
+                                />
+                                <span className="truncate">{deal.property.locality}</span>
+                            </span>
+                            <span className="flex items-center gap-1 whitespace-nowrap">
+                                <Maximize2
+                                    aria-hidden
+                                    className="shrink-0 block-3 inline-3"
+                                    strokeWidth={1.75}
+                                />
+                                {formatAreaSqft(deal.property.areaSqft)} ·{" "}
+                                {deal.property.configLabel}
+                                {live && deal.status !== "new" && stageDays >= 1
+                                    ? ` · ${stageDays}d in stage`
+                                    : ""}
+                            </span>
                         </p>
                         <Price
                             amountInr={deal.property.amountInr}
@@ -459,12 +496,14 @@ export function DealCard({
                         />
                     </div>
 
-                    <DealCardMenu
-                        deal={deal}
-                        handlers={handlers}
-                        isBusy={isBusy}
-                        isPinned={isPinned}
-                    />
+                    <div className="self-start">
+                        <DealCardMenu
+                            deal={deal}
+                            handlers={handlers}
+                            isBusy={isBusy}
+                            isPinned={isPinned}
+                        />
+                    </div>
                 </div>
 
                 <DealPartiesPanel
@@ -474,22 +513,28 @@ export function DealCard({
                     currentUserId={currentUserId}
                 />
 
-                <CardChips
-                    deal={deal}
-                    live={live}
-                    attention={attention}
-                    otherBuyers={otherBuyers}
-                    onView={handlers.onView}
-                />
+                {/* Everything below the parties is stage-dependent, and so is
+                    the one part of the card whose height varies. It sizes to
+                    its content: capping it here is what cut the stage block
+                    off mid-line. */}
+                <div className="flex flex-col gap-1.5 font-medium">
+                    <CardChips
+                        deal={deal}
+                        live={live}
+                        attention={attention}
+                        otherBuyers={otherBuyers}
+                        onView={handlers.onView}
+                    />
 
-                {outcome && OutcomeIcon ? (
-                    <Badge variant={outcome.badgeVariant} className="gap-1 inline-fit">
-                        <OutcomeIcon aria-hidden className="block-3 inline-3" strokeWidth={2} />
-                        {outcome.label}
-                    </Badge>
-                ) : null}
+                    {outcome && OutcomeIcon ? (
+                        <Badge variant={outcome.badgeVariant} className="gap-1 inline-fit">
+                            <OutcomeIcon aria-hidden className="block-3 inline-3" strokeWidth={2} />
+                            {outcome.label}
+                        </Badge>
+                    ) : null}
 
-                {live ? <StageMiddle deal={deal} /> : null}
+                    {live ? <StageMiddle deal={deal} /> : null}
+                </div>
             </div>
 
             <div

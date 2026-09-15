@@ -2,9 +2,18 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
+import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
-export function ConditionalField({ path, children }: { path: string; children: ReactNode }) {
+export function ConditionalField({
+    path,
+    children,
+    className,
+}: {
+    path: string;
+    children: ReactNode;
+    className?: string;
+}) {
     const { isVisible, showHidden } = useFieldRules();
     const fieldIsVisible = isVisible(path);
     const [rendered, setRendered] = useState(fieldIsVisible);
@@ -31,14 +40,15 @@ export function ConditionalField({ path, children }: { path: string; children: R
         <div
             data-field-path={path}
             data-hidden-field={!fieldIsVisible || undefined}
-            className={
+            className={cn(
                 !fieldIsVisible && showHidden
                     ? `
                       pointer-events-none rounded-control bg-surface-muted/70 p-2 opacity-45
                       grayscale min-inline-0
                     `
-                    : "t-acc min-inline-0"
-            }
+                    : "t-acc min-inline-0",
+                className,
+            )}
             data-open={open}
             inert={!fieldIsVisible || undefined}
         >

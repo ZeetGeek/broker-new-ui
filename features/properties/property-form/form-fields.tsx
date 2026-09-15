@@ -3,7 +3,7 @@
 import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { Controller, type FieldPath, useFormContext } from "react-hook-form";
 
-import { Check, LockKeyhole, type LucideIcon, Minus, Plus, X } from "lucide-react";
+import { Check, type LucideIcon, Minus, Plus, X } from "lucide-react";
 
 import { formatInrInput, inrWordHint, parseInr } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
@@ -42,16 +42,9 @@ function errorAt(errors: unknown, path: string): string | undefined {
     return typeof message === "string" ? message : undefined;
 }
 
-export function VisibilityMark({ visibility }: { visibility: FieldVisibility }) {
-    // Public "Listing" badge hidden across the property form; keep Broker-only mark.
-    if (visibility !== "private") return null;
-
-    return (
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-text">
-            <LockKeyhole className="block-3 inline-3" aria-hidden />
-            Broker only
-        </span>
-    );
+export function VisibilityMark({ visibility: _visibility }: { visibility: FieldVisibility }) {
+    // Visibility badges hidden across the property form for a cleaner field row.
+    return null;
 }
 
 function FieldShell({
@@ -76,8 +69,8 @@ function FieldShell({
     const { labelOf } = useFieldRules();
     const resolvedLabel = labelOf(name, label);
     return (
-        <ConditionalField path={name}>
-            <div className={cn("flex flex-col gap-2 p-1 -m-1 min-inline-0", className)}>
+        <ConditionalField path={name} className={className}>
+            <div className="flex flex-col gap-2 p-1 -m-1 min-inline-0">
                 <div className="flex items-center justify-between gap-3 min-block-5">
                     <Label
                         id={`${fieldId}-label`}
@@ -102,6 +95,7 @@ export function TextField({
     visibility,
     className,
     onBlur: onInputBlur,
+    endAction,
     ...props
 }: {
     name: Path;
@@ -109,6 +103,7 @@ export function TextField({
     hint?: ReactNode;
     visibility?: FieldVisibility;
     className?: string;
+    endAction?: ReactNode;
 } & Omit<ComponentProps<typeof Input>, "name" | "errorText" | "size">) {
     const {
         register,
@@ -116,6 +111,20 @@ export function TextField({
     } = useFormContext<PropertyDraftValues>();
     const error = errorAt(errors, name);
     const registration = register(name);
+    const input = (
+        <Input
+            id={name.replace(/\./g, "-")}
+            size="lg"
+            errorText={error}
+            className={endAction ? "pe-40 sm:pe-44" : undefined}
+            {...registration}
+            {...props}
+            onBlur={(event) => {
+                void registration.onBlur(event);
+                onInputBlur?.(event);
+            }}
+        />
+    );
     return (
         <FieldShell
             name={name}
@@ -124,17 +133,21 @@ export function TextField({
             visibility={visibility}
             className={className}
         >
-            <Input
-                id={name.replace(/\./g, "-")}
-                size="lg"
-                errorText={error}
-                {...registration}
-                {...props}
-                onBlur={(event) => {
-                    void registration.onBlur(event);
-                    onInputBlur?.(event);
-                }}
-            />
+            {endAction ? (
+                <div className="relative">
+                    {input}
+                    <div
+                        className="
+                          absolute inset-e-1.5 top-0 z-10 flex items-center
+                          block-control-xl
+                        "
+                    >
+                        {endAction}
+                    </div>
+                </div>
+            ) : (
+                input
+            )}
         </FieldShell>
     );
 }
@@ -148,6 +161,8 @@ export function TextAreaField({
     placeholder,
     className,
     onBlur: onInputBlur,
+    endAction,
+    readOnly,
 }: {
     name: Path;
     label: string;
@@ -157,6 +172,8 @@ export function TextAreaField({
     placeholder?: string;
     className?: string;
     onBlur?: () => void;
+    endAction?: ReactNode;
+    readOnly?: boolean;
 }) {
     const {
         register,
@@ -165,6 +182,33 @@ export function TextAreaField({
     const error = errorAt(errors, name);
     const messageId = `${name.replace(/\./g, "-")}-message`;
     const registration = register(name);
+    const textarea = (
+        <Textarea
+            id={name.replace(/\./g, "-")}
+            rows={rows}
+            placeholder={placeholder}
+            readOnly={readOnly}
+            aria-invalid={Boolean(error) || undefined}
+            aria-describedby={error ? messageId : undefined}
+            className={cn(
+                `
+                  field-sizing-fixed resize-y rounded-control border-2 border-border-warm bg-surface
+                  px-4 py-3 text-[15px]/6 text-ink outline-none min-block-28
+                  placeholder:text-ink-subtle
+                  hover:border-ink-subtle
+                  focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
+                  aria-invalid:border-danger-mid
+                  read-only:bg-surface-muted read-only:hover:border-border-warm
+                `,
+                endAction && "pbe-12 pe-4",
+            )}
+            {...registration}
+            onBlur={(event) => {
+                void registration.onBlur(event);
+                onInputBlur?.();
+            }}
+        />
+    );
     return (
         <FieldShell
             name={name}
@@ -173,26 +217,16 @@ export function TextAreaField({
             visibility={visibility}
             className={className}
         >
-            <Textarea
-                id={name.replace(/\./g, "-")}
-                rows={rows}
-                placeholder={placeholder}
-                aria-invalid={Boolean(error) || undefined}
-                aria-describedby={error ? messageId : undefined}
-                className="
-                  field-sizing-fixed resize-y rounded-control border-2 border-border-warm bg-surface
-                  px-4 py-3 text-[15px]/6 text-ink outline-none min-block-28
-                  placeholder:text-ink-subtle
-                  hover:border-ink-subtle
-                  focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
-                  aria-invalid:border-danger-mid
-                "
-                {...registration}
-                onBlur={(event) => {
-                    void registration.onBlur(event);
-                    onInputBlur?.();
-                }}
-            />
+            {endAction ? (
+                <div className="relative">
+                    {textarea}
+                    <div className="absolute inset-e-2 inset-be-2 z-10 flex items-center">
+                        {endAction}
+                    </div>
+                </div>
+            ) : (
+                textarea
+            )}
             {error ? (
                 <p id={messageId} role="alert" className="text-sm text-danger">
                     {error}
@@ -297,6 +331,7 @@ export function NumberField({
     step,
     placeholder,
     className,
+    startIcon,
     onValueChange,
 }: {
     name: Path;
@@ -308,6 +343,7 @@ export function NumberField({
     step?: number;
     placeholder?: string;
     className?: string;
+    startIcon?: LucideIcon;
     onValueChange?: (value: number | null) => void;
 }) {
     const {
@@ -336,6 +372,7 @@ export function NumberField({
                         step={step}
                         size="lg"
                         placeholder={placeholder}
+                        startIcon={startIcon}
                         value={field.value == null ? "" : String(field.value)}
                         onValueChange={(value) => {
                             const next = value === "" ? null : Number(value);
@@ -515,7 +552,7 @@ export function ChoiceField({
                         aria-describedby={error ? `${name.replace(/\./g, "-")}-error` : undefined}
                         aria-invalid={Boolean(error) || undefined}
                         className={cn(
-                            "grid gap-2.5",
+                            "grid gap-4",
                             columns === 2
                                 ? "grid-cols-1 sm:grid-cols-2"
                                 : columns === 4
@@ -554,10 +591,10 @@ export function ChoiceField({
                                         <span
                                             aria-hidden
                                             className={cn(
-                                                `
-                                                  flex shrink-0 items-center
-                                                  [&_svg]:block-4 [&_svg]:inline-4
-                                                `,
+                                                "flex shrink-0 items-center",
+                                                hasDescription
+                                                    ? "[&_svg]:block-5 [&_svg]:inline-5"
+                                                    : "[&_svg]:block-4 [&_svg]:inline-4",
                                                 active ? "text-brand-text" : "text-ink-muted",
                                             )}
                                         >
@@ -889,12 +926,14 @@ export function CounterField({
     min = 0,
     max = 10,
     visibility,
+    startIcon: StartIcon,
 }: {
     name: Path;
     label: string;
     min?: number;
     max?: number;
     visibility?: FieldVisibility;
+    startIcon?: LucideIcon;
 }) {
     const { control } = useFormContext<PropertyDraftValues>();
     const { labelOf } = useFieldRules();
@@ -909,39 +948,48 @@ export function CounterField({
                     return (
                         <div
                             className="
-                              flex items-center justify-between gap-3 rounded-control border
+                              flex items-center justify-between gap-3 rounded-control border-2
                               border-border-warm bg-surface px-3 py-2 min-block-14
                             "
                         >
-                            <div>
-                                <p className="text-sm font-semibold text-ink">
-                                    <FieldLabel path={name}>{resolvedLabel}</FieldLabel>
-                                </p>
-                                <VisibilityMark
-                                    visibility={visibility ?? visibilityForField(name)}
-                                />
+                            <div className="flex items-center gap-2.5 min-inline-0">
+                                {StartIcon ? (
+                                    <StartIcon
+                                        className="shrink-0 text-ink-muted block-4.5 inline-4.5"
+                                        strokeWidth={1.75}
+                                        aria-hidden
+                                    />
+                                ) : null}
+                                <div className="min-inline-0">
+                                    <p className="text-sm font-semibold text-ink">
+                                        <FieldLabel path={name}>{resolvedLabel}</FieldLabel>
+                                    </p>
+                                    <VisibilityMark
+                                        visibility={visibility ?? visibilityForField(name)}
+                                    />
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-0.5">
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    size="icon-md"
+                                    size="icon-sm"
                                     aria-label={`Decrease ${resolvedLabel}`}
                                     disabled={value <= min}
                                     onClick={() => field.onChange(Math.max(min, value - 1))}
                                     className="
                                       flex items-center justify-center rounded-control
-                                      text-ink-muted block-10 inline-10
+                                      text-ink-muted block-8 inline-8
                                       hover:bg-surface-muted
                                       focus-visible:ring-3 focus-visible:ring-ring/30
                                       disabled:opacity-30
                                     "
                                 >
-                                    <Minus className="block-4 inline-4" />
+                                    <Minus className="block-3.5 inline-3.5" strokeWidth={2} />
                                 </Button>
                                 <span
                                     className="
-                                      tabular text-center text-base font-bold text-ink min-inline-8
+                                      tabular text-center text-sm font-bold text-ink min-inline-6
                                     "
                                 >
                                     {value}
@@ -949,19 +997,19 @@ export function CounterField({
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    size="icon-md"
+                                    size="icon-sm"
                                     aria-label={`Increase ${resolvedLabel}`}
                                     disabled={value >= max}
                                     onClick={() => field.onChange(Math.min(max, value + 1))}
                                     className="
                                       flex items-center justify-center rounded-control
-                                      text-ink-muted block-10 inline-10
+                                      text-ink-muted block-8 inline-8
                                       hover:bg-surface-muted
                                       focus-visible:ring-3 focus-visible:ring-ring/30
                                       disabled:opacity-30
                                     "
                                 >
-                                    <Plus className="block-4 inline-4" />
+                                    <Plus className="block-3.5 inline-3.5" strokeWidth={2} />
                                 </Button>
                             </div>
                         </div>
@@ -986,12 +1034,11 @@ export function WizardSection({
     return (
         <section
             className={cn(
-                "border-be border-border-warm pbe-8 last:border-be-0 last:pbe-0",
                 tone === "private" &&
-                    `rounded-card border border-brand/15 bg-brand-soft/35 p-5 last:border-be sm:p-6`,
+                    "rounded-card border border-brand/15 bg-brand-soft/35 p-5 sm:p-6",
             )}
         >
-            <div className="mbe-5 flex items-start justify-between gap-4">
+            <div className="mbe-4 flex items-start justify-between gap-4">
                 <div>
                     <h2 className="
                       flex items-center gap-2.5 text-xl font-bold tracking-[-0.02em] text-ink
@@ -1011,4 +1058,9 @@ export function WizardSection({
     );
 }
 
-export const FORM_GRID_CLASS = "grid gap-5 md:grid-cols-2";
+/** Field groups inside a section. */
+export const FORM_STACK_CLASS = "flex flex-col gap-4";
+/** Space between wizard sections — no divider lines. */
+export const FORM_SECTIONS_CLASS = "flex flex-col gap-8";
+export const FORM_GRID_CLASS = "grid gap-4 md:grid-cols-2";
+export const FORM_GRID_3_CLASS = "grid gap-4 sm:grid-cols-3";

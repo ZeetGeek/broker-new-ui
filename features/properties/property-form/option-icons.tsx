@@ -5,15 +5,15 @@ import {
     Building,
     Building2,
     Factory,
+    HandCoins,
     Home,
     Hotel,
-    Key,
+    KeyRound,
     Landmark,
     LayoutPanelTop,
     Map,
     Repeat,
     Store,
-    Tag,
     Trees,
     Warehouse,
 } from "lucide-react";
@@ -24,14 +24,14 @@ import type { ListingFor } from "@/constants/property";
 
 /** Deal type — sale, rent, or both. */
 export const TRANSACTION_TYPE_ICONS: Record<PropertyFormValues["transactionType"], ReactNode> = {
-    sale: <Tag />,
-    rent: <Key />,
+    sale: <HandCoins />,
+    rent: <KeyRound />,
     both: <Repeat />,
 };
 
 export const LISTING_FOR_ICONS: Record<ListingFor, ReactNode> = {
-    sell: <Tag />,
-    rent: <Key />,
+    sell: <HandCoins />,
+    rent: <KeyRound />,
 };
 
 export const CATEGORY_ICONS: Record<PropertyCategory | "agricultural", ReactNode> = {

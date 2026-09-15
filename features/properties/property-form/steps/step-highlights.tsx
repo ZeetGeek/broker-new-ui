@@ -259,13 +259,13 @@ export function StepHighlights() {
     */
 
     return (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8">
             {/* Highlights UI temporarily commented out (kept for restore).
             <WizardSection
                 title="Why should someone visit?"
                 description="Short lines for the listing card. Search, pick defaults, or add your own."
             >
-                <div className="space-y-5">
+                <div className="flex flex-col gap-4">
                     <div className="flex gap-2">
                         <div className="relative min-inline-0 flex-1">
                             <Search
@@ -477,7 +477,7 @@ export function StepHighlights() {
                     title="Construction and possession"
                     description="Show the official timeline beside the builder's working promise."
                 >
-                    <div className="space-y-5">
+                    <div className="flex flex-col gap-4">
                         <ChoiceField
                             name="construction.possessionType"
                             label="Possession"

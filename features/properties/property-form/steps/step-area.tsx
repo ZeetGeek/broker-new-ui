@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft, Hash, Ruler, Scale } from "lucide-react";
 
 import { areaToSqft, convertArea } from "@/lib/calc/area";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
@@ -22,6 +22,7 @@ import {
 import { AREA_UNIT_OPTIONS } from "@/constants/property";
 import {
     FORM_GRID_CLASS,
+    FORM_SECTIONS_CLASS,
     NumberField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
@@ -61,9 +62,18 @@ export function StepArea() {
     }, [area, areaSqft, carpet, setValue, unit]);
 
     return (
-        <div className="space-y-8">
+        <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title="Measure once, compare everywhere"
+                title={
+                    <>
+                        <Ruler
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        Measure once, compare everywhere
+                    </>
+                }
                 description="Enter areas in sq ft. The same unit powers listing filters."
             >
                 <div className={FORM_GRID_CLASS}>
@@ -71,19 +81,23 @@ export function StepArea() {
                         name="area.plotArea"
                         label="Area"
                         step={0.01}
+                        placeholder="e.g. 1450"
                         hint="Total area used on the listing."
+                        startIcon={Ruler}
                     />
                     <NumberField
                         name="area.carpetArea"
                         label="Carpet area"
                         step={0.01}
+                        placeholder="e.g. 1200"
                         hint="The usable space inside the property."
+                        startIcon={Scale}
                     />
                 </div>
 
                 <div
                     className="
-                      mbs-6 rounded-control border border-border-warm bg-surface-muted p-4
+                      mbs-4 rounded-control border border-border-warm bg-surface-muted p-4
                     "
                 >
                     <p className="text-xs text-ink-muted">Normalised area</p>
@@ -94,7 +108,16 @@ export function StepArea() {
             </WizardSection>
 
             <WizardSection
-                title="Unit converter"
+                title={
+                    <>
+                        <ArrowRightLeft
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        Unit converter
+                    </>
+                }
                 description="Check another unit without changing the saved property area."
             >
                 <div className="grid items-end gap-4 md:grid-cols-[1fr_1fr_auto_1fr]">
@@ -113,12 +136,8 @@ export function StepArea() {
                             value={converterValue}
                             onValueChange={(value) => setConverterValue(Number(value))}
                             size="lg"
-                            className="
-                              rounded-control border-2 border-border-warm bg-surface px-4
-                              text-[15px] text-ink outline-none block-control-xl inline-full
-                              focus-visible:border-ring focus-visible:ring-3
-                              focus-visible:ring-ring/30
-                            "
+                            startIcon={Hash}
+                            placeholder="e.g. 100"
                         />
                     </div>
                     <div className="flex flex-col gap-2">
@@ -141,6 +160,7 @@ export function StepArea() {
                                 id="area-converter-unit"
                                 size="lg"
                                 placeholder="Choose a unit"
+                                startIcon={Ruler}
                             />
                             <ComboboxContent>
                                 <ComboboxEmpty>No matches</ComboboxEmpty>

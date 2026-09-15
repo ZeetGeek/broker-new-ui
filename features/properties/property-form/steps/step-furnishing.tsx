@@ -333,7 +333,7 @@ export function StepFurnishing() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8">
             <WizardSection
                 title="Furnishing"
                 description="Pick how the property is handed over."
@@ -350,7 +350,7 @@ export function StepFurnishing() {
                 title="Amenities"
                 description="Search what’s on site, or add your own. Keep it to what’s really there."
             >
-                <div className="space-y-5">
+                <div className="flex flex-col gap-4">
                     <div className="flex gap-2">
                         <div className="relative min-inline-0 flex-1">
                             <Search

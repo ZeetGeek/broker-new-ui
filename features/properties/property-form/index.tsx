@@ -71,7 +71,7 @@ import type {
 // v4: commission is owner-paid only; paidBy/mode are now fixed literals.
 // v5: construction stage/progress/slabs and the RERA + handover dates were removed.
 // v6: the availability block (visit days, times, key holder, caretaker) was removed.
-const LOCAL_DRAFT_VERSION = 7;
+const LOCAL_DRAFT_VERSION = 8;
 
 /** Map old 10-step draft UI ids onto the merged 5-step wizard. */
 const LEGACY_STEP_MAP: Record<string, PropertyFormStep> = {
@@ -1084,7 +1084,7 @@ function StepContent({
 }) {
     if (step === "basics") {
         return (
-            <div className="space-y-8">
+            <div className="flex flex-col gap-8">
                 <StepBasics />
                 <StepLocation />
             </div>
@@ -1092,7 +1092,7 @@ function StepContent({
     }
     if (step === "details") {
         return (
-            <div className="space-y-8">
+            <div className="flex flex-col gap-8">
                 <StepDetails />
                 <StepArea />
             </div>
@@ -1100,7 +1100,7 @@ function StepContent({
     }
     if (step === "pricing") {
         return (
-            <div className="space-y-8">
+            <div className="flex flex-col gap-8">
                 <StepPricing />
                 <StepCommission />
             </div>
@@ -1108,14 +1108,14 @@ function StepContent({
     }
     if (step === "furnishing") {
         return (
-            <div className="space-y-8">
+            <div className="flex flex-col gap-8">
                 <StepFurnishing />
                 <StepHighlights />
             </div>
         );
     }
     return (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8">
             <StepMedia photoFilesRef={photoFilesRef} />
             <StepPublish />
         </div>
@@ -1339,7 +1339,7 @@ function listingToDraft(listing: MyListingItem): PropertyDraftValues {
     draft.details.bedrooms = String(listing.bhk || 2);
     draft.details.bathrooms = listing.bathrooms;
     draft.details.balconies = listing.balconies;
-    draft.details.floorNumber = listing.floorNumber == null ? "" : String(listing.floorNumber);
+    draft.details.floorNumber = listing.floorNumber ?? null;
     draft.details.totalFloors = listing.totalFloors;
     draft.details.facing = listing.facing ?? "";
     draft.details.coveredParking =
@@ -1467,7 +1467,7 @@ function draftToLegacyInput(
         photoFiles,
         bathrooms: values.details.bathrooms,
         balconies: values.details.balconies,
-        floorNumber: Number(values.details.floorNumber) || null,
+        floorNumber: values.details.floorNumber,
         totalFloors: values.details.totalFloors,
         facing: (values.details.facing || null) as CreateMyListingInput["facing"],
         parking: parking <= 0 ? "none" : parking === 1 ? "1" : parking === 2 ? "2" : "3plus",

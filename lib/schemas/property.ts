@@ -116,11 +116,11 @@ const detailsSchema = z
         bedrooms: z.string(),
         bathrooms: optionalNumber,
         balconies: optionalNumber,
-        floorNumber: optionalText,
+        floorNumber: optionalNumber,
         totalFloors: optionalNumber,
         facing: optionalText,
         roadWidthFt: optionalNumber,
-        propertyAge: optionalText,
+        propertyAge: optionalNumber,
         propertyCondition: optionalText,
         coveredParking: optionalNumber,
         openParking: optionalNumber,
@@ -129,11 +129,10 @@ const detailsSchema = z
         land: landDetailsSchema,
     })
     .superRefine((value, context) => {
-        const numericFloor = Number(value.floorNumber);
         if (
-            Number.isFinite(numericFloor) &&
+            value.floorNumber != null &&
             value.totalFloors != null &&
-            numericFloor > value.totalFloors
+            value.floorNumber > value.totalFloors
         ) {
             context.addIssue({
                 code: "custom",
@@ -601,11 +600,11 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
         bedrooms: "",
         bathrooms: null,
         balconies: null,
-        floorNumber: "",
+        floorNumber: null,
         totalFloors: null,
         facing: "",
         roadWidthFt: null,
-        propertyAge: "",
+        propertyAge: null,
         propertyCondition: "",
         coveredParking: null,
         openParking: null,

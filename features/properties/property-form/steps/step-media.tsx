@@ -253,12 +253,12 @@ export function StepMedia({
     */
 
     return (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8">
             <WizardSection
                 title="Property photos"
                 description="Upload one vertical cover for the listing card, then add property photos. Need 3 usable photos total to publish."
             >
-                <div className="space-y-8">
+                <div className="flex flex-col gap-4">
                     <div className="space-y-3">
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
                             <p className="text-sm font-semibold text-ink">Cover image</p>
@@ -492,7 +492,7 @@ export function StepMedia({
                     />
                 </Label>
                 {documents.length ? (
-                    <div className="mbs-5 space-y-3">
+                    <div className="mbs-4 space-y-3">
                         {documents.map((document, index) => (
                             <div
                                 key={document.id}
@@ -537,7 +537,7 @@ export function StepMedia({
                                         <Trash2 className="block-4 inline-4" />
                                     </Button>
                                 </div>
-                                <div className="mbs-4 grid gap-3 sm:grid-cols-2">
+                                <div className="mbs-4 grid gap-4 sm:grid-cols-2">
                                     <ToggleField
                                         name={`documents.${index}.verified`}
                                         label="Verified"

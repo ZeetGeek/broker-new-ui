@@ -60,7 +60,7 @@ export function QuickAdd({
     }
 
     return (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8">
             <div>
                 <h2 className="text-2xl font-bold tracking-tight text-ink">
                     Save the lead from the site
@@ -71,7 +71,7 @@ export function QuickAdd({
                 </p>
             </div>
             <WizardSection title="Property essentials">
-                <div className="space-y-5">
+                <div className="flex flex-col gap-4">
                     <ChoiceField
                         name="basics.listingFor"
                         label="Listing for"

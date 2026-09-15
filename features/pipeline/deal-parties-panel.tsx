@@ -19,8 +19,8 @@ function PartyRow({ party, role }: { party: Party; role: string }) {
                 fallback="character"
                 className="shrink-0"
             />
-            <span className="body-sm truncate font-medium text-ink">{party.name}</span>
-            <span className="body-xs ms-auto shrink-0 text-ink-subtle">{role}</span>
+            <span className="body-sm truncate font-semibold text-ink capitalize">{party.name}</span>
+            <span className="body-xs ms-auto shrink-0 text-ink-subtle capitalize">{role}</span>
         </div>
     );
 }
@@ -65,7 +65,7 @@ export function DealPartiesPanel({
                         size="xxs"
                         fallback="character"
                     />
-                    <span className="body-xs truncate font-medium text-ink-muted">
+                    <span className="body-xs truncate font-semibold text-ink-muted capitalize">
                         {assignedAgent.name}
                     </span>
                 </div>

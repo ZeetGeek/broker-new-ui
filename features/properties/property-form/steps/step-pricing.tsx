@@ -3,7 +3,25 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { CalendarCheck } from "lucide-react";
+import {
+    BadgePercent,
+    BedDouble,
+    CalendarCheck,
+    CalendarClock,
+    CircleDollarSign,
+    Clock3,
+    Droplets,
+    FileText,
+    HandCoins,
+    LockKeyhole,
+    Receipt,
+    Repeat,
+    Ruler,
+    Shield,
+    Users,
+    Utensils,
+    Zap,
+} from "lucide-react";
 
 import { areaToSqft } from "@/lib/calc/area";
 import { calculateSaleCommission } from "@/lib/calc/commission";
@@ -30,6 +48,8 @@ import {
     ChoiceField,
     CurrencyField,
     FORM_GRID_CLASS,
+    FORM_SECTIONS_CLASS,
+    FORM_STACK_CLASS,
     MultiChipField,
     NumberField,
     SelectField,
@@ -166,15 +186,25 @@ export function StepPricing() {
 
     if (sale) {
         return (
-            <div className="space-y-8">
+            <div className={FORM_SECTIONS_CLASS}>
                 <WizardSection
-                    title="Asking price"
+                    title={
+                        <>
+                            <CircleDollarSign
+                                className="shrink-0 text-brand block-5 inline-5"
+                                strokeWidth={1.75}
+                                aria-hidden
+                            />
+                            Asking price
+                        </>
+                    }
                     description="The asking price is public. The owner's floor stays in the broker file."
                 >
                     <div className={FORM_GRID_CLASS}>
                         <CurrencyField
                             name="sale.expectedPrice"
                             label="Expected price"
+                            placeholder="e.g. 85 L or 8500000"
                             onValueChange={handleExpectedPriceChange}
                         />
                         <NumberField
@@ -183,9 +213,10 @@ export function StepPricing() {
                             min={0}
                             step={1}
                             placeholder="e.g. 5500"
+                            startIcon={Ruler}
                             hint={
                                 areaSqft > 0
-                                    ? `Based on ${areaSqft.toLocaleString("en-US")} sq ft — edit either side to sync`
+                                    ? `Based on ${areaSqft.toLocaleString("en-IN")} sq ft — edit either side to sync`
                                     : "Add Area on the previous step to sync these fields"
                             }
                             onValueChange={handlePricePerSqftChange}
@@ -193,8 +224,8 @@ export function StepPricing() {
                     </div>
                     <div
                         className="
-                          mbs-5 overflow-hidden rounded-control border border-border-warm
-                          bg-surface-muted
+                          mbs-4 overflow-hidden rounded-control border-2 border-border-warm
+                          bg-surface
                         "
                     >
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4">
@@ -210,7 +241,7 @@ export function StepPricing() {
                                 label="Area"
                                 value={
                                     areaSqft > 0
-                                        ? `${areaSqft.toLocaleString("en-US")} sq ft`
+                                        ? `${areaSqft.toLocaleString("en-IN")} sq ft`
                                         : "Area not added"
                                 }
                             />
@@ -221,7 +252,7 @@ export function StepPricing() {
                             <PriceFact label="All-in price" value={formatInrCompact(allInPrice)} />
                         </div>
 
-                        <div className="border-bs border-border-warm p-4">
+                        <div className="border-bs-2 border-border-warm p-4">
                             <div className="flex flex-wrap items-end justify-between gap-3">
                                 <div>
                                     <p className="text-xs text-ink-muted">Broker earns (live)</p>
@@ -239,14 +270,19 @@ export function StepPricing() {
                                 <div className="mbs-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
                                     <span>Gross {formatInr(brokerGross)}</span>
                                     {brokerGst > 0 ? (
-                                        <span className="text-success">+ GST {formatInr(brokerGst)}</span>
+                                        <span className="text-success">
+                                            + GST {formatInr(brokerGst)}
+                                        </span>
                                     ) : null}
                                     {brokerTds > 0 ? (
-                                        <span className="text-danger">− TDS {formatInr(brokerTds)}</span>
+                                        <span className="text-danger">
+                                            − TDS {formatInr(brokerTds)}
+                                        </span>
                                     ) : null}
                                     {coBrokerShare > 0 ? (
                                         <span className="text-danger">
-                                            − Co-broker ({coBrokerPercent}%) {formatInr(coBrokerShare)}
+                                            − Co-broker ({coBrokerPercent}%){" "}
+                                            {formatInr(coBrokerShare)}
                                         </span>
                                     ) : null}
                                 </div>
@@ -263,23 +299,33 @@ export function StepPricing() {
                     isVisible("sale.plcCharge") ||
                     isVisible("sale.floorRiseCharge")) ? (
                     <WizardSection
-                        title="Charges"
+                        title={
+                            <>
+                                <Receipt
+                                    className="shrink-0 text-brand block-5 inline-5"
+                                    strokeWidth={1.75}
+                                    aria-hidden
+                                />
+                                Charges
+                            </>
+                        }
                         description="Add every amount a buyer should know before making an offer."
                     >
                         <div className={FORM_GRID_CLASS}>
                             <CurrencyField
                                 name="sale.maintenanceCharge"
-                                label="Maintenance charge"
+                                label="Monthly maintenance"
                                 placeholder="e.g. 3,000"
                                 helperText="Type 3000 or 3,000 — monthly society charge"
-                            />
-                            <SelectField
-                                name="sale.maintenanceFrequency"
-                                label="Maintenance frequency"
-                                options={MAINTENANCE_FREQUENCY_OPTIONS}
+                                className="md:col-span-2"
                             />
                             {SELL_EXTRA_CHARGES.map(([name, label]) => (
-                                <CurrencyField key={name} name={name} label={label} />
+                                <CurrencyField
+                                    key={name}
+                                    name={name}
+                                    label={label}
+                                    placeholder="e.g. 50,000"
+                                />
                             ))}
                         </div>
                     </WizardSection>
@@ -289,86 +335,122 @@ export function StepPricing() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title={derived.isPg ? "PG rent" : "Rent and deposit"}
+                title={
+                    <>
+                        <HandCoins
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        {derived.isPg ? "PG rent" : "Rent and deposit"}
+                    </>
+                }
                 description="Record the full move-in amount, not only the monthly rent."
             >
-                <div className={FORM_GRID_CLASS}>
-                    <CurrencyField name="rent.monthlyRent" label="Monthly rent" />
-                    <CurrencyField
-                        name="rent.ownerMinimumRent"
-                        label="Owner's minimum rent"
-                        visibility="private"
-                    />
-                    <ChoiceField
-                        name="rent.securityDepositMode"
-                        label="Deposit mode"
-                        options={SECURITY_DEPOSIT_MODE_OPTIONS}
-                        columns={2}
-                        className="md:col-span-2"
-                    />
-                    {values.rent.securityDepositMode === "months_of_rent" ? (
-                        <NumberField
-                            name="rent.securityDeposit"
-                            label="Deposit (months of rent)"
-                            max={24}
-                            step={0.5}
-                            hint={
-                                values.rent.monthlyRent
-                                    ? `${formatInr((values.rent.securityDeposit ?? 0) * values.rent.monthlyRent)} deposit`
-                                    : undefined
-                            }
+                <div className={FORM_STACK_CLASS}>
+                    <div className={FORM_GRID_CLASS}>
+                        <CurrencyField
+                            name="rent.monthlyRent"
+                            label="Monthly rent"
+                            placeholder="e.g. 25,000"
                         />
-                    ) : (
-                        <CurrencyField name="rent.securityDeposit" label="Security deposit" />
-                    )}
-                    <TextField
-                        name="rent.availableFrom"
-                        label="Available from"
-                        type="date"
-                        min={new Date().toISOString().slice(0, 10)}
-                    />
-                </div>
-                <div className="mbs-3 flex justify-end">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                            setValue("rent.availableFrom", new Date().toISOString().slice(0, 10), {
-                                shouldDirty: true,
-                            })
-                        }
-                    >
-                        <CalendarCheck aria-hidden /> Available immediately
-                    </Button>
-                </div>
-                <div className="mbs-5 grid gap-3 sm:grid-cols-2">
-                    <ToggleField name="rent.rentNegotiable" label="Rent negotiable" />
-                    <SelectField
-                        name="rent.currentStatus"
-                        label="Current status"
-                        options={CURRENT_STATUS_OPTIONS}
-                    />
-                </div>
-                {isVisible("rent.tenantVacatingOn") ? (
-                    <div className="mbs-5 max-inline-sm">
+                        <CurrencyField
+                            name="rent.ownerMinimumRent"
+                            label="Owner's minimum rent"
+                            placeholder="e.g. 22,000"
+                            visibility="private"
+                        />
+                        <ChoiceField
+                            name="rent.securityDepositMode"
+                            label="Deposit mode"
+                            options={SECURITY_DEPOSIT_MODE_OPTIONS}
+                            columns={2}
+                            className="md:col-span-2"
+                        />
+                        {values.rent.securityDepositMode === "months_of_rent" ? (
+                            <NumberField
+                                name="rent.securityDeposit"
+                                label="Deposit (months of rent)"
+                                max={24}
+                                step={0.5}
+                                placeholder="e.g. 2"
+                                startIcon={Shield}
+                                hint={
+                                    values.rent.monthlyRent
+                                        ? `${formatInr((values.rent.securityDeposit ?? 0) * values.rent.monthlyRent)} deposit`
+                                        : undefined
+                                }
+                            />
+                        ) : (
+                            <CurrencyField
+                                name="rent.securityDeposit"
+                                label="Security deposit"
+                                placeholder="e.g. 50,000"
+                            />
+                        )}
+                        <TextField
+                            name="rent.availableFrom"
+                            label="Available from"
+                            type="date"
+                            min={new Date().toISOString().slice(0, 10)}
+                            startIcon={CalendarClock}
+                        />
+                    </div>
+                    <div className="flex justify-end">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                                setValue(
+                                    "rent.availableFrom",
+                                    new Date().toISOString().slice(0, 10),
+                                    { shouldDirty: true },
+                                )
+                            }
+                        >
+                            <CalendarCheck aria-hidden /> Available immediately
+                        </Button>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <ToggleField name="rent.rentNegotiable" label="Rent negotiable" />
+                        <SelectField
+                            name="rent.currentStatus"
+                            label="Current status"
+                            options={CURRENT_STATUS_OPTIONS}
+                            placeholder="Select status"
+                            startIcon={FileText}
+                        />
+                    </div>
+                    {isVisible("rent.tenantVacatingOn") ? (
                         <TextField
                             name="rent.tenantVacatingOn"
                             label="Tenant vacating on"
                             type="date"
                             visibility="private"
+                            startIcon={CalendarClock}
+                            className="max-inline-sm"
                         />
-                    </div>
-                ) : null}
+                    ) : null}
+                </div>
             </WizardSection>
 
             <WizardSection
-                title="Monthly charges"
+                title={
+                    <>
+                        <Receipt
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        Monthly charges
+                    </>
+                }
                 description="Make recurring costs clear before the first visit."
             >
-                <div className="space-y-5">
+                <div className={FORM_STACK_CLASS}>
                     <ChoiceField
                         name="rent.maintenanceMode"
                         label="Maintenance"
@@ -387,6 +469,8 @@ export function StepPricing() {
                                 name="rent.maintenanceFrequency"
                                 label="Frequency"
                                 options={MAINTENANCE_FREQUENCY_OPTIONS}
+                                placeholder="Select frequency"
+                                startIcon={Repeat}
                             />
                         </div>
                     ) : null}
@@ -395,11 +479,15 @@ export function StepPricing() {
                             name="rent.electricityBilling"
                             label="Electricity billing"
                             options={ELECTRICITY_BILLING_OPTIONS}
+                            placeholder="Select billing"
+                            startIcon={Zap}
                         />
                         <SelectField
                             name="rent.waterCharges"
                             label="Water charges"
                             options={WATER_CHARGE_OPTIONS}
+                            placeholder="Select water charges"
+                            startIcon={Droplets}
                         />
                     </div>
                 </div>
@@ -407,25 +495,45 @@ export function StepPricing() {
 
             {derived.isRent || derived.isLease ? (
                 <WizardSection
-                    title="Agreement terms"
+                    title={
+                        <>
+                            <FileText
+                                className="shrink-0 text-brand block-5 inline-5"
+                                strokeWidth={1.75}
+                                aria-hidden
+                            />
+                            Agreement terms
+                        </>
+                    }
                     description="Capture the dates and clauses that affect the tenancy."
                 >
                     <div className={FORM_GRID_CLASS}>
-                        <NumberField name="rent.lockInMonths" label="Lock-in (months)" />
+                        <NumberField
+                            name="rent.lockInMonths"
+                            label="Lock-in (months)"
+                            placeholder="e.g. 6"
+                            startIcon={LockKeyhole}
+                        />
                         <NumberField
                             name="rent.noticePeriodMonths"
                             label="Notice period (months)"
+                            placeholder="e.g. 1"
+                            startIcon={CalendarClock}
                         />
                         <SelectField
                             name="rent.agreementDurationMonths"
                             label="Agreement duration"
                             options={AGREEMENT_DURATION_OPTIONS}
+                            placeholder="Select duration"
+                            startIcon={FileText}
                         />
                         <NumberField
                             name="rent.rentEscalationPercent"
                             label="Yearly rent increase (%)"
                             max={100}
                             step={0.1}
+                            placeholder="e.g. 5"
+                            startIcon={BadgePercent}
                         />
                     </div>
                 </WizardSection>
@@ -433,54 +541,87 @@ export function StepPricing() {
 
             {isVisible("rent.preferredTenant") ? (
                 <WizardSection
-                    title="Tenant preference"
+                    title={
+                        <>
+                            <Users
+                                className="shrink-0 text-brand block-5 inline-5"
+                                strokeWidth={1.75}
+                                aria-hidden
+                            />
+                            Tenant preference
+                        </>
+                    }
                     description="Plain restrictions prevent avoidable calls and visits."
                 >
-                    <MultiChipField
-                        name="rent.preferredTenant"
-                        label="Preferred tenant"
-                        options={PREFERRED_TENANT_OPTIONS}
-                    />
-                    <div className="mbs-5 grid gap-3 sm:grid-cols-2">
-                        <ToggleField name="rent.nonVegAllowed" label="Non-veg allowed" />
-                        <ToggleField name="rent.petsAllowed" label="Pets allowed" />
-                        <ToggleField name="rent.smokingAllowed" label="Smoking allowed" />
-                        <ToggleField name="rent.partyAllowed" label="Parties allowed" />
+                    <div className={FORM_STACK_CLASS}>
+                        <MultiChipField
+                            name="rent.preferredTenant"
+                            label="Preferred tenant"
+                            options={PREFERRED_TENANT_OPTIONS}
+                        />
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <ToggleField name="rent.nonVegAllowed" label="Non-veg allowed" />
+                            <ToggleField name="rent.petsAllowed" label="Pets allowed" />
+                            <ToggleField name="rent.smokingAllowed" label="Smoking allowed" />
+                            <ToggleField name="rent.partyAllowed" label="Parties allowed" />
+                        </div>
                     </div>
                 </WizardSection>
             ) : null}
 
             {derived.isPg ? (
                 <WizardSection
-                    title="PG details"
+                    title={
+                        <>
+                            <BedDouble
+                                className="shrink-0 text-brand block-5 inline-5"
+                                strokeWidth={1.75}
+                                aria-hidden
+                            />
+                            PG details
+                        </>
+                    }
                     description="Record the service and price per bed."
                 >
-                    <div className={FORM_GRID_CLASS}>
-                        <SelectField
-                            name="rent.pg.bedType"
-                            label="Bed type"
-                            options={PG_BED_TYPE_OPTIONS}
-                        />
-                        <SelectField
-                            name="rent.pg.genderAllowed"
-                            label="Gender allowed"
-                            options={PG_GENDER_OPTIONS}
-                        />
-                        <CurrencyField name="rent.pg.perBedRent" label="Rent per bed" />
-                        <TextField
-                            name="rent.pg.gateClosingTime"
-                            label="Gate closing time"
-                            type="time"
-                        />
-                        <SelectField
-                            name="rent.pg.housekeepingFrequency"
-                            label="Housekeeping"
-                            options={HOUSEKEEPING_OPTIONS}
-                        />
-                    </div>
-                    <div className="mbs-5 grid gap-3 sm:grid-cols-2">
-                        <ToggleField name="rent.pg.foodIncluded" label="Food included" />
-                        <ToggleField name="rent.pg.laundry" label="Laundry included" />
+                    <div className={FORM_STACK_CLASS}>
+                        <div className={FORM_GRID_CLASS}>
+                            <SelectField
+                                name="rent.pg.bedType"
+                                label="Bed type"
+                                options={PG_BED_TYPE_OPTIONS}
+                                placeholder="Select bed type"
+                                startIcon={BedDouble}
+                            />
+                            <SelectField
+                                name="rent.pg.genderAllowed"
+                                label="Gender allowed"
+                                options={PG_GENDER_OPTIONS}
+                                placeholder="Select gender"
+                                startIcon={Users}
+                            />
+                            <CurrencyField
+                                name="rent.pg.perBedRent"
+                                label="Rent per bed"
+                                placeholder="e.g. 8,000"
+                            />
+                            <TextField
+                                name="rent.pg.gateClosingTime"
+                                label="Gate closing time"
+                                type="time"
+                                startIcon={Clock3}
+                            />
+                            <SelectField
+                                name="rent.pg.housekeepingFrequency"
+                                label="Housekeeping"
+                                options={HOUSEKEEPING_OPTIONS}
+                                placeholder="Select frequency"
+                                startIcon={Utensils}
+                            />
+                        </div>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <ToggleField name="rent.pg.foodIncluded" label="Food included" />
+                            <ToggleField name="rent.pg.laundry" label="Laundry included" />
+                        </div>
                     </div>
                 </WizardSection>
             ) : null}
@@ -492,9 +633,9 @@ function PriceFact({ label, value }: { label: string; value: string }) {
     return (
         <div
             className="
-              border-bs border-border-warm p-4
+              border-bs-2 border-border-warm p-4
               first:border-bs-0
-              sm:border-e sm:border-bs-0
+              sm:border-e-2 sm:border-bs-0
               sm:last:border-e-0
             "
         >
