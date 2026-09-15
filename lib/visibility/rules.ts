@@ -274,7 +274,9 @@ export const FIELD_RULES = {
     },
     "amenities.land": { visible: () => false },
 
-    "highlights.chips": { level: recommended, label: () => "Highlights" },
+    // Highlights UI temporarily commented out in step-highlights.tsx
+    // "highlights.chips": { level: recommended, label: () => "Highlights" },
+    "highlights.chips": { visible: () => false, level: recommended, label: () => "Highlights" },
     "construction.possessionType": { visible: (d) => d.isUnderConstruction, level: required },
     "construction.possessionDate": {
         visible: (d, v) => d.isUnderConstruction && v.construction.possessionType === "custom_date",
@@ -297,7 +299,9 @@ export const FIELD_RULES = {
     "media.brochureFileName": { visible: () => false },
     "media.agencyWatermark": { visible: () => false },
     "media.autoBlurSensitiveDetails": { visible: () => false },
-    documents: {},
+    // Private documents UI temporarily commented out in step-media.tsx
+    // documents: {},
+    documents: { visible: () => false },
 
     "owner.contactId": { level: required, label: () => "Owner" },
     "owner.listerType": { visible: () => false },
@@ -324,40 +328,40 @@ export const FIELD_RULES = {
 
 export const STEP_RULES: Record<PropertyFormStep, (d: DerivedPropertyFlags) => boolean> = {
     basics: () => true,
-    location: () => true,
     details: () => true,
-    area: () => true,
     pricing: () => true,
-    commission: () => true,
-    furnishing: (d) => !d.isPlot,
-    highlights: () => true,
+    furnishing: () => true,
     media: () => true,
-    publish: () => true,
 };
 
 export const STEP_FIELD_PATHS: Record<PropertyFormStep, readonly string[]> = {
-    basics: Object.keys(FIELD_RULES).filter((path) => path.startsWith("basics.")),
-    location: Object.keys(FIELD_RULES).filter((path) => path.startsWith("location.")),
-    details: Object.keys(FIELD_RULES).filter((path) => path.startsWith("details.")),
-    area: Object.keys(FIELD_RULES).filter((path) => path.startsWith("area.")),
-    pricing: Object.keys(FIELD_RULES).filter(
-        (path) => path.startsWith("sale.") || path.startsWith("rent."),
+    basics: Object.keys(FIELD_RULES).filter(
+        (path) => path.startsWith("basics.") || path.startsWith("location."),
     ),
-    commission: Object.keys(FIELD_RULES).filter(
-        (path) => path.startsWith("commission.") || path.startsWith("deal."),
+    details: Object.keys(FIELD_RULES).filter(
+        (path) => path.startsWith("details.") || path.startsWith("area."),
+    ),
+    pricing: Object.keys(FIELD_RULES).filter(
+        (path) =>
+            path.startsWith("sale.") ||
+            path.startsWith("rent.") ||
+            path.startsWith("commission.") ||
+            path.startsWith("deal."),
     ),
     furnishing: Object.keys(FIELD_RULES).filter(
-        (path) => path.startsWith("furnishing.") || path.startsWith("amenities."),
-    ),
-    highlights: Object.keys(FIELD_RULES).filter(
-        (path) => path.startsWith("highlights.") || path.startsWith("construction."),
+        (path) =>
+            path.startsWith("furnishing.") ||
+            path.startsWith("amenities.") ||
+            path.startsWith("highlights.") ||
+            path.startsWith("construction."),
     ),
     media: Object.keys(FIELD_RULES).filter(
-        (path) => path.startsWith("media.") || path === "documents",
-    ),
-    publish: Object.keys(FIELD_RULES).filter(
         (path) =>
-            path.startsWith("owner.") || path.startsWith("publish.") || path === "attachedBuyers",
+            path.startsWith("media.") ||
+            path === "documents" ||
+            path.startsWith("owner.") ||
+            path.startsWith("publish.") ||
+            path === "attachedBuyers",
     ),
 };
 

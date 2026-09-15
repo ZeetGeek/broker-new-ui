@@ -1,22 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+// Highlights UI + logic temporarily commented out (kept for restore).
+// import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { Check, Plus, Search, Trash2, X } from "lucide-react";
+// import { Check, Plus, Search, Trash2, X } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input";
 
 import {
-    LISTING_HIGHLIGHT_SUGGESTIONS,
+    // LISTING_HIGHLIGHT_SUGGESTIONS,
     PAYMENT_PLAN_OPTIONS,
-    POPULAR_LISTING_HIGHLIGHTS,
+    // POPULAR_LISTING_HIGHLIGHTS,
     POSSESSION_TYPE_OPTIONS,
 } from "@/constants/property";
 import {
@@ -29,6 +31,7 @@ import {
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 
+/*
 const MAX_HIGHLIGHTS = 8;
 
 function normalizeHighlight(value: string): string {
@@ -52,13 +55,15 @@ function dedupeHighlights(values: string[]): string[] {
     }
     return ordered;
 }
+*/
 
 export function StepHighlights() {
-    const { watch, setValue, getValues } = useFormContext<PropertyDraftValues>();
+    const { watch, setValue /* , getValues */ } = useFormContext<PropertyDraftValues>();
     const { isVisible } = useFieldRules();
     const values = watch();
-    const highlights = dedupeHighlights(values.highlights.chips ?? []);
+    // const highlights = dedupeHighlights(values.highlights.chips ?? []);
     const schedule = values.construction.paymentSchedule;
+    /*
     const [query, setQuery] = useState("");
     const [browseAll, setBrowseAll] = useState(false);
 
@@ -251,9 +256,11 @@ export function StepHighlights() {
             </Button>
         );
     }
+    */
 
     return (
         <div className="space-y-8">
+            {/* Highlights UI temporarily commented out (kept for restore).
             <WizardSection
                 title="Why should someone visit?"
                 description="Short lines for the listing card. Search, pick defaults, or add your own."
@@ -462,6 +469,7 @@ export function StepHighlights() {
                     ) : null}
                 </div>
             </WizardSection>
+            */}
 
             {isVisible("construction.possessionType") ||
             isVisible("construction.builderName") ? (

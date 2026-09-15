@@ -1,20 +1,15 @@
 "use client";
 
+import { useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { useDroppable } from "@dnd-kit/core";
-import { GripVertical, MoreHorizontal, Plus } from "lucide-react";
+import { GripVertical, Plus } from "lucide-react";
 
 import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { columnValue, type OtherBuyer } from "@/features/pipeline/deal-attention";
@@ -22,6 +17,33 @@ import type { DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DraggableDealCard } from "@/features/pipeline/draggable-deal-card";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import type { DealItem, DealStage } from "@/features/pipeline/types";
+
+/**
+ * The dashed slot a dragged card leaves behind. It measures its own sibling —
+ * the dragged card is still mounted next to it, just positioned out of flow —
+ * so the placeholder is exactly as tall as the card it stands in for whatever
+ * the card's content happens to be.
+ */
+function DragGhost({ dealId }: { dealId: string }) {
+    const ref = useRef<HTMLDivElement>(null);
+    const [blockSize, setBlockSize] = useState<number>();
+
+    useLayoutEffect(() => {
+        const card = ref.current?.parentElement?.querySelector("article");
+        if (card) setBlockSize(card.getBoundingClientRect().height);
+    }, [dealId]);
+
+    return (
+        <div
+            ref={ref}
+            aria-hidden
+            style={blockSize ? { blockSize } : undefined}
+            className="
+              rounded-card border border-dashed border-border-warm bg-surface-muted/60
+            "
+        />
+    );
+}
 
 export function PipelineColumn({
     stage,
@@ -80,7 +102,7 @@ export function PipelineColumn({
                                 {deals.length}
                             </span>
                         </div>
-                        <div className="body-xs mbs-0.5 flex flex-wrap gap-x-2 text-ink-muted">
+                        <div className="body-xs mbs-1.5 flex flex-wrap gap-x-2 text-ink-muted">
                             {totals.sale || totals.rent ? (
                                 <>
                                     {totals.sale ? (
@@ -97,52 +119,26 @@ export function PipelineColumn({
                     </div>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-0.5">
-                    <DropdownMenu>
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <DropdownMenuTrigger
-                                        render={
-                                            <Button
-                                                variant="ghost"
-                                                size="icon-xs"
-                                                aria-label={`${meta.label} column menu`}
-                                                className="text-ink-muted"
-                                            />
-                                        }
-                                    >
-                                        <MoreHorizontal aria-hidden strokeWidth={1.75} />
-                                    </DropdownMenuTrigger>
-                                }
+                {/* The `+` is the whole menu. A dropdown whose only item was
+                    "Add a deal", pointing at this same href, was two controls
+                    for one action. */}
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                nativeButton={false}
+                                aria-label={`Add a deal to ${meta.label}`}
+                                className="shrink-0 text-ink-subtle hover:text-ink"
+                                render={<Link href={BROKER_MY_DEALS_HREF} />}
                             />
-                            <TooltipContent>Column menu</TooltipContent>
-                        </Tooltip>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem render={<Link href={BROKER_MY_DEALS_HREF} />}>
-                                Add a deal
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button
-                                    variant="ghost"
-                                    size="icon-xs"
-                                    nativeButton={false}
-                                    aria-label={`Add a deal to ${meta.label}`}
-                                    className="text-ink-muted"
-                                    render={<Link href={BROKER_MY_DEALS_HREF} />}
-                                />
-                            }
-                        >
-                            <Plus aria-hidden strokeWidth={1.75} />
-                        </TooltipTrigger>
-                        <TooltipContent>Add deal</TooltipContent>
-                    </Tooltip>
-                </div>
+                        }
+                    >
+                        <Plus aria-hidden strokeWidth={1.75} />
+                    </TooltipTrigger>
+                    <TooltipContent>Add deal</TooltipContent>
+                </Tooltip>
             </header>
 
             {deals.length > 0 ? (
@@ -150,13 +146,11 @@ export function PipelineColumn({
                     {deals.map((deal) => (
                         <div key={deal.id} className="relative">
                             {draggingId === deal.id ? (
-                                <div
-                                    aria-hidden
-                                    className="
-                                      rounded-card border border-dashed border-border-warm
-                                      bg-surface-muted/60 block-48
-                                    "
-                                />
+                                // Holds the exact slot the dragged card left.
+                                // The card goes `absolute` while dragging, so a
+                                // fixed height here would collapse the column by
+                                // the difference on every pick-up.
+                                <DragGhost dealId={deal.id} />
                             ) : null}
                             <DraggableDealCard
                                 deal={deal}

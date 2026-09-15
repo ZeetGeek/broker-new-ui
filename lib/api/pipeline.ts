@@ -235,7 +235,11 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             bhk,
             amountInr,
             isRent,
-            imageSrc: property.photos?.find(Boolean) || "/properties/1.jpg",
+            // Empty, never a stock photo. A listing with no photos is a real
+            // state the card renders deliberately (docs/DESIGN.md §4.5);
+            // substituting someone else's building here would be a lie.
+            imageSrc: property.photos?.find(Boolean) ?? "",
+            photoCount: property.photos?.filter(Boolean).length ?? 0,
         },
         owner: {
             name: lead.owner?.fullName?.trim() || "Owner",

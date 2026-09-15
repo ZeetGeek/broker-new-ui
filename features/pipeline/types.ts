@@ -50,6 +50,11 @@ export type DealProperty = {
     amountInr: number;
     isRent: boolean;
     imageSrc: string;
+    /**
+     * Total photos on the listing. Optional — absent means the payload did not
+     * say, which is not the same as zero, so the gallery count stays hidden.
+     */
+    photoCount?: number;
 };
 
 /** The buyer side. Mirrors `ClientItem`, trimmed to what a card renders. */

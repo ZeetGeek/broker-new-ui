@@ -6,7 +6,7 @@ import type { PropertyDraftValues } from "@/lib/schemas/property";
 
 export type ListingScoreTip = {
     label: string;
-    step: "basics" | "location" | "furnishing" | "media";
+    step: "basics" | "furnishing" | "media";
     points: number;
 };
 
@@ -52,7 +52,7 @@ export function useListingScore(values: PropertyDraftValues): {
                 done: Boolean(values.location.landmark),
                 points: 10,
                 label: "Add a landmark",
-                step: "location",
+                step: "basics",
             },
             {
                 done: Boolean(values.furnishing.status),
@@ -72,12 +72,13 @@ export function useListingScore(values: PropertyDraftValues): {
                 label: "Add a floor plan",
                 step: "media",
             },
-            {
-                done: values.documents.length > 0,
-                points: 5,
-                label: "Add a property document",
-                step: "media",
-            },
+            // Private documents UI temporarily commented out
+            // {
+            //     done: values.documents.length > 0,
+            //     points: 5,
+            //     label: "Add a property document",
+            //     step: "media",
+            // },
         ];
 
         return {

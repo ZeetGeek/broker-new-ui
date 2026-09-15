@@ -257,26 +257,6 @@ const rentSchema = z
         }
     });
 
-const pricingStepSchema = z
-    .object({
-        basics: z.object({ listingFor: z.enum(["sell", "rent", "lease", "pg"]) }),
-        sale: saleSchema,
-        rent: rentSchema,
-    })
-    .superRefine((value, context) => {
-        if (
-            value.rent.lockInMonths != null &&
-            value.rent.agreementDurationMonths != null &&
-            value.rent.lockInMonths > value.rent.agreementDurationMonths
-        ) {
-            context.addIssue({
-                code: "custom",
-                path: ["rent", "lockInMonths"],
-                message: "Lock-in cannot be longer than the agreement",
-            });
-        }
-    });
-
 const paymentMilestoneSchema = z.object({
     id: z.string(),
     stage: z.string(),
@@ -327,38 +307,6 @@ const dealSchema = z.object({
     verificationStatus: z.string(),
     siteVisitedOn: optionalText,
 });
-
-const commissionStepSchema = z
-    .object({
-        basics: z.object({ listingFor: z.enum(["sell", "rent", "lease", "pg"]) }),
-        area: z.object({ areaSqft: z.number() }),
-        commission: commissionSchema,
-        deal: dealSchema,
-    })
-    .superRefine((value, context) => {
-        if (value.basics.listingFor === "sell") {
-            const sale = value.commission.sale;
-            if (
-                sale.mode === "percent" &&
-                ((sale.value > 0 && sale.value < 0.1) || sale.value > 10)
-            ) {
-                context.addIssue({
-                    code: "custom",
-                    path: ["commission", "sale", "value"],
-                    message: "Commission looks too high. Please check.",
-                });
-            }
-        } else {
-            const rent = value.commission.rent;
-            if (rent.mode === "months" && rent.value > 24) {
-                context.addIssue({
-                    code: "custom",
-                    path: ["commission", "rent", "value"],
-                    message: "Brokerage months must be between 0 and 24",
-                });
-            }
-        }
-    });
 
 const furnishingSchema = z.object({
     status: z.enum(["", "unfurnished", "semi_furnished", "fully_furnished"]),
@@ -477,20 +425,66 @@ const publishSchema = z.object({
 });
 
 export const stepSchemas = {
-    basics: z.object({ basics: basicsSchema }),
-    location: z.object({ location: locationSchema }),
-    details: z.object({ details: detailsSchema }),
-    area: z.object({ area: areaSchema }),
-    pricing: pricingStepSchema,
-    commission: commissionStepSchema,
-    furnishing: z.object({ furnishing: furnishingSchema, amenities: amenitiesSchema }),
-    highlights: z.object({
+    basics: z.object({ basics: basicsSchema, location: locationSchema }),
+    details: z.object({ details: detailsSchema, area: areaSchema }),
+    pricing: z
+        .object({
+            basics: z.object({ listingFor: z.enum(["sell", "rent", "lease", "pg"]) }),
+            sale: saleSchema,
+            rent: rentSchema,
+            area: z.object({ areaSqft: z.number() }),
+            commission: commissionSchema,
+            deal: dealSchema,
+        })
+        .superRefine((value, context) => {
+            if (
+                value.rent.lockInMonths != null &&
+                value.rent.agreementDurationMonths != null &&
+                value.rent.lockInMonths > value.rent.agreementDurationMonths
+            ) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["rent", "lockInMonths"],
+                    message: "Lock-in cannot be longer than the agreement",
+                });
+            }
+            if (value.basics.listingFor === "sell") {
+                const sale = value.commission.sale;
+                if (
+                    sale.mode === "percent" &&
+                    ((sale.value > 0 && sale.value < 0.1) || sale.value > 10)
+                ) {
+                    context.addIssue({
+                        code: "custom",
+                        path: ["commission", "sale", "value"],
+                        message: "Commission looks too high. Please check.",
+                    });
+                }
+            } else {
+                const rent = value.commission.rent;
+                if (rent.mode === "months" && rent.value > 24) {
+                    context.addIssue({
+                        code: "custom",
+                        path: ["commission", "rent", "value"],
+                        message: "Brokerage months must be between 0 and 24",
+                    });
+                }
+            }
+        }),
+    furnishing: z.object({
+        furnishing: furnishingSchema,
+        amenities: amenitiesSchema,
         highlights: highlightsSchema,
         construction: constructionSchema,
     }),
-    media: z.object({ media: mediaSchema, documents: z.array(documentSchema) }),
-    publish: z
-        .object({ owner: ownerSchema, publish: publishSchema, media: mediaSchema })
+    media: z
+        .object({
+            media: mediaSchema,
+            documents: z.array(documentSchema),
+            owner: ownerSchema,
+            attachedBuyers: z.array(attachedBuyerSchema),
+            publish: publishSchema,
+        })
         .superRefine((value, context) => {
             if (
                 value.publish.status === "active" &&
@@ -561,16 +555,11 @@ export type Property = PropertyDraftValues & {
 };
 
 export const STEP_ROOT_FIELDS: Record<PropertyFormStep, (keyof PropertyDraftValues)[]> = {
-    basics: ["basics"],
-    location: ["location"],
-    details: ["details"],
-    area: ["area"],
-    pricing: ["sale", "rent"],
-    commission: ["commission", "deal"],
-    furnishing: ["furnishing", "amenities"],
-    highlights: ["highlights", "construction"],
-    media: ["media", "documents"],
-    publish: ["owner", "attachedBuyers", "publish"],
+    basics: ["basics", "location"],
+    details: ["details", "area"],
+    pricing: ["sale", "rent", "commission", "deal"],
+    furnishing: ["furnishing", "amenities", "highlights", "construction"],
+    media: ["media", "documents", "owner", "attachedBuyers", "publish"],
 };
 
 const ninetyDaysFromNow = () => {

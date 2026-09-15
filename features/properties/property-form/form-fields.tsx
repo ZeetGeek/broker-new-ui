@@ -3,7 +3,7 @@
 import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { Controller, type FieldPath, useFormContext } from "react-hook-form";
 
-import { Check, Eye, LockKeyhole, type LucideIcon,Minus, Plus, X } from "lucide-react";
+import { Check, LockKeyhole, type LucideIcon, Minus, Plus, X } from "lucide-react";
 
 import { formatInrInput, inrWordHint, parseInr } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
@@ -43,16 +43,13 @@ function errorAt(errors: unknown, path: string): string | undefined {
 }
 
 export function VisibilityMark({ visibility }: { visibility: FieldVisibility }) {
-    const Icon = visibility === "private" ? LockKeyhole : Eye;
+    // Public "Listing" badge hidden across the property form; keep Broker-only mark.
+    if (visibility !== "private") return null;
+
     return (
-        <span
-            className={cn(
-                "inline-flex items-center gap-1 text-[11px] font-medium",
-                visibility === "private" ? "text-brand-text" : "text-ink-subtle",
-            )}
-        >
-            <Icon className="block-3 inline-3" aria-hidden />
-            {visibility === "private" ? "Broker only" : "Listing"}
+        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-text">
+            <LockKeyhole className="block-3 inline-3" aria-hidden />
+            Broker only
         </span>
     );
 }

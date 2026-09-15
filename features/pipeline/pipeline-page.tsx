@@ -18,6 +18,7 @@ import {
     uniqueOwners,
 } from "@/features/pipeline/deal-attention";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
+import { DealCardRich } from "@/features/pipeline/deal-card-rich";
 import { DealDetailModal } from "@/features/pipeline/deal-detail-modal";
 import { DealNoteModal } from "@/features/pipeline/deal-note-modal";
 import { MakeOfferModal } from "@/features/pipeline/make-offer-modal";
@@ -596,9 +597,19 @@ export function PipelinePage() {
                     }
                 >
                     {boardLayout === "list" ? (
-                        <div className="hidden flex-col gap-3 md:flex lg:grid lg:grid-cols-2">
+                        // List view gives one deal a whole row, so it leads with
+                        // the photo and shows the full detail set. The board
+                        // keeps the compact card — see DealCardRich.
+                        <div className="hidden flex-col gap-4 md:flex lg:grid lg:grid-cols-2">
                             {liveDeals.map((deal) => (
-                                <div key={deal.id}>{renderDealCard(deal)}</div>
+                                <DealCardRich
+                                    key={deal.id}
+                                    deal={deal}
+                                    handlers={handlers}
+                                    isBusy={busyId === deal.id}
+                                    otherBuyers={otherBuyersByDealId[deal.id] ?? []}
+                                    photoCount={deal.property.photoCount}
+                                />
                             ))}
                         </div>
                     ) : (

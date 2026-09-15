@@ -11,16 +11,16 @@ type Party = {
 
 function PartyRow({ party, role }: { party: Party; role: string }) {
     return (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
             <UserAvatar
                 name={party.name}
                 imageUrl={party.avatarUrl}
-                size="xs"
+                size="xxs"
                 fallback="character"
                 className="shrink-0"
             />
-            <span className="body-sm truncate font-semibold text-ink">{party.name}</span>
-            <span className="body-xs ms-auto shrink-0 text-ink-muted">{role}</span>
+            <span className="body-sm truncate font-medium text-ink">{party.name}</span>
+            <span className="body-xs ms-auto shrink-0 text-ink-subtle">{role}</span>
         </div>
     );
 }
@@ -29,6 +29,10 @@ function PartyRow({ party, role }: { party: Party; role: string }) {
  * The buyer + owner block every pipeline card shows, directly under the
  * price. Both sides of a deal must always be visible — see AGENTS.md, "the
  * core loop" — a card that only names the buyer is telling half the story.
+ *
+ * Deliberately unboxed. An inset `surface-muted` panel here would be a card
+ * inside a card, which docs/DESIGN.md §3.3 and the spatial rules both reject:
+ * separation on this card comes from spacing, not from a second surface.
  *
  * Stall state is not shown here. The card's chip row states it in words
  * with a day count, so a second colour-only marker on this row would be a
@@ -48,15 +52,13 @@ export function DealPartiesPanel({
     const showHandledBy = Boolean(assignedAgent) && assignedAgent?.id !== currentUserId;
 
     return (
-        <div className="flex flex-col gap-1">
-            <div className="flex flex-col gap-1 rounded-inner bg-surface-muted p-2.5">
-                <PartyRow party={buyer} role="Buyer" />
-                <PartyRow party={owner} role="Owner" />
-            </div>
+        <div className="flex flex-col gap-1.5">
+            <PartyRow party={buyer} role="Buyer" />
+            <PartyRow party={owner} role="Owner" />
 
             {showHandledBy && assignedAgent ? (
-                <div className="flex items-center gap-1.5 ps-0.5">
-                    <span className="body-xs text-ink-muted">Handled by</span>
+                <div className="flex items-center gap-1.5">
+                    <span className="body-xs text-ink-subtle">Handled by</span>
                     <UserAvatar
                         name={assignedAgent.name}
                         imageUrl={assignedAgent.avatarUrl}

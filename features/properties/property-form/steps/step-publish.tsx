@@ -39,7 +39,8 @@ export function StepPublish() {
         (values.commission.sale.value < 1 || values.commission.sale.value > 4)
             ? "Commission is outside the usual 1%–4% review range."
             : null,
-        values.documents.length === 0 ? "No property documents have been added yet." : null,
+        // Private documents UI temporarily commented out
+        // values.documents.length === 0 ? "No property documents have been added yet." : null,
         values.basics.description.trim().length < 100
             ? "A description of 100+ characters helps people qualify the property."
             : null,

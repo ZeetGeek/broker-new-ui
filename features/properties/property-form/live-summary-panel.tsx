@@ -189,7 +189,7 @@ export function LiveSummaryPanel({
                 </div>
             </Card>
 
-            {stepIndex >= 4 ? (
+            {stepIndex >= 2 ? (
                 <Card className="gap-0 bg-brand-ink py-0 text-surface ring-0">
                     <div className="p-5">
                         <div className="flex items-center justify-between gap-3">

@@ -71,7 +71,26 @@ import type {
 // v4: commission is owner-paid only; paidBy/mode are now fixed literals.
 // v5: construction stage/progress/slabs and the RERA + handover dates were removed.
 // v6: the availability block (visit days, times, key holder, caretaker) was removed.
-const LOCAL_DRAFT_VERSION = 6;
+const LOCAL_DRAFT_VERSION = 7;
+
+/** Map old 10-step draft UI ids onto the merged 5-step wizard. */
+const LEGACY_STEP_MAP: Record<string, PropertyFormStep> = {
+    basics: "basics",
+    location: "basics",
+    details: "details",
+    area: "details",
+    pricing: "pricing",
+    commission: "pricing",
+    furnishing: "furnishing",
+    highlights: "furnishing",
+    media: "media",
+    publish: "media",
+};
+
+function resolveDraftStep(step: string | undefined): PropertyFormStep | null {
+    if (!step) return null;
+    return LEGACY_STEP_MAP[step] ?? (FORM_STEPS.some((item) => item.id === step) ? (step as PropertyFormStep) : null);
+}
 
 export type PropertyFormProps = {
     mode: "create" | "edit";
@@ -190,7 +209,10 @@ export function PropertyForm({
             return;
         }
         try {
-            const stored = window.localStorage.getItem(localStorageKey);
+            const legacyKey = `property-draft:v6:${propertyId ?? "new"}`;
+            const stored =
+                window.localStorage.getItem(localStorageKey) ??
+                window.localStorage.getItem(legacyKey);
             if (!stored) {
                 autosaveReadyRef.current = true;
                 return;
@@ -198,10 +220,10 @@ export function PropertyForm({
             const parsed = JSON.parse(stored) as {
                 values?: Partial<PropertyDraftValues>;
                 ui?: {
-                    step?: PropertyFormStep;
+                    step?: string;
                     highestUnlocked?: number;
                     entryMode?: "full" | "quick";
-                    completedSteps?: PropertyFormStep[];
+                    completedSteps?: string[];
                 };
                 savedAt?: string;
             };
@@ -211,10 +233,10 @@ export function PropertyForm({
             }
             const recovered = mergeDraft(cloneDefaultDraft(), parsed.values);
             methods.reset(recovered);
-            if (parsed.ui?.step && FORM_STEPS.some((item) => item.id === parsed.ui?.step)) {
-                setStep(parsed.ui.step);
-            }
+            const restoredStep = resolveDraftStep(parsed.ui?.step);
+            if (restoredStep) setStep(restoredStep);
             if (typeof parsed.ui?.highestUnlocked === "number") {
+                // Old drafts unlocked up to 9; clamp to the new 5-step range.
                 setHighestUnlocked(
                     Math.min(Math.max(parsed.ui.highestUnlocked, 0), FORM_STEPS.length - 1),
                 );
@@ -223,11 +245,15 @@ export function PropertyForm({
                 setEntryMode(parsed.ui.entryMode);
             }
             if (Array.isArray(parsed.ui?.completedSteps)) {
-                setCompletedSteps(new Set(parsed.ui.completedSteps));
+                const mapped = parsed.ui.completedSteps
+                    .map((item) => resolveDraftStep(item))
+                    .filter((item): item is PropertyFormStep => Boolean(item));
+                setCompletedSteps(new Set(mapped));
             }
             setHasRestoredDraft(true);
             setSavedAt(parsed.savedAt ? new Date(parsed.savedAt) : new Date());
             toast.success("Picked up where you left off.");
+            window.localStorage.removeItem(legacyKey);
             autosaveReadyRef.current = true;
         } catch {
             window.localStorage.removeItem(localStorageKey);
@@ -315,7 +341,7 @@ export function PropertyForm({
                     setStep(targetStep.id);
             }
             if (!event.ctrlKey && !event.metaKey && event.key === "0") {
-                const targetStep = activeSteps[9];
+                const targetStep = activeSteps[activeSteps.length - 1];
                 if (
                     targetStep &&
                     FORM_STEPS.findIndex((item) => item.id === targetStep.id) <= highestUnlocked
@@ -1056,16 +1082,44 @@ function StepContent({
     step: PropertyFormStep;
     photoFilesRef: MutableRefObject<Map<string, File>>;
 }) {
-    if (step === "basics") return <StepBasics />;
-    if (step === "location") return <StepLocation />;
-    if (step === "details") return <StepDetails />;
-    if (step === "area") return <StepArea />;
-    if (step === "pricing") return <StepPricing />;
-    if (step === "commission") return <StepCommission />;
-    if (step === "furnishing") return <StepFurnishing />;
-    if (step === "highlights") return <StepHighlights />;
-    if (step === "media") return <StepMedia photoFilesRef={photoFilesRef} />;
-    return <StepPublish />;
+    if (step === "basics") {
+        return (
+            <div className="space-y-8">
+                <StepBasics />
+                <StepLocation />
+            </div>
+        );
+    }
+    if (step === "details") {
+        return (
+            <div className="space-y-8">
+                <StepDetails />
+                <StepArea />
+            </div>
+        );
+    }
+    if (step === "pricing") {
+        return (
+            <div className="space-y-8">
+                <StepPricing />
+                <StepCommission />
+            </div>
+        );
+    }
+    if (step === "furnishing") {
+        return (
+            <div className="space-y-8">
+                <StepFurnishing />
+                <StepHighlights />
+            </div>
+        );
+    }
+    return (
+        <div className="space-y-8">
+            <StepMedia photoFilesRef={photoFilesRef} />
+            <StepPublish />
+        </div>
+    );
 }
 
 function StepTransition({ step, children }: { step: PropertyFormStep; children: ReactNode }) {

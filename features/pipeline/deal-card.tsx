@@ -24,6 +24,7 @@ import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
 import { Price } from "@/components/shared/price";
+import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +34,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { ChipOverflowPopover, type ChipTone } from "@/features/pipeline/chip-overflow-popover";
 import {
@@ -92,7 +94,7 @@ const CHIP_TONE_RANK: Record<ChipTone, number> = { danger: 0, urgent: 1, neutral
 function chipToneClass(tone: ChipTone): string {
     if (tone === "danger") return "bg-danger-soft text-danger";
     if (tone === "urgent") return "bg-urgent-soft text-urgent";
-    return "bg-surface-muted text-ink";
+    return "bg-surface-muted text-ink-muted";
 }
 
 function buildChipCandidates(
@@ -118,8 +120,11 @@ function buildChipCandidates(
             });
         }
 
+        // Neutral, not urgent. This fires on a large share of a typical board,
+        // and docs/DESIGN.md §1.3 reserves orange for an actual deadline — an
+        // "alert" that appears on half the cards has stopped being one.
         if (isOverBudget(deal)) {
-            items.push({ key: "budget", label: "Over budget", tone: "urgent" });
+            items.push({ key: "budget", label: "Over budget", tone: "neutral" });
         }
 
         if (otherBuyers.length > 0) {
@@ -142,8 +147,9 @@ function buildChipCandidates(
 }
 
 /**
- * Never more than two chips on a card face. Everything past that ranks by
- * urgency into a "+N" pill instead of competing for the same two slots.
+ * One chip on a card face. Everything past that ranks by urgency into a "+N"
+ * pill instead of competing for the same slot — at fourteen cards a column,
+ * a second chip per card reads as texture rather than as a signal.
  */
 function CardChips({
     deal,
@@ -161,8 +167,8 @@ function CardChips({
     const ranked = buildChipCandidates(deal, live, attention, otherBuyers, onView).sort(
         (a, b) => CHIP_TONE_RANK[a.tone] - CHIP_TONE_RANK[b.tone],
     );
-    const visible = ranked.slice(0, 2);
-    const overflow = ranked.slice(2);
+    const visible = ranked.slice(0, 1);
+    const overflow = ranked.slice(1);
 
     if (visible.length === 0) return null;
 
@@ -199,32 +205,37 @@ function FooterAction({
     onClick?: (event: MouseEvent<HTMLElement>) => void;
     children: ReactNode;
 }) {
+    // Always visible, icon-only. The accessible name lives on `aria-label` and
+    // the tooltip explains the glyph on pointer devices — these are the
+    // broker's most frequent field actions, so they never hide behind hover.
     const className = `
-      body-xs flex items-center gap-1 rounded-sm px-1.5 py-1 font-medium text-ink
-      hover:bg-surface-muted
+      flex items-center justify-center rounded-control text-ink-muted block-control-sm
+      inline-control-sm
+      hover:bg-surface-muted hover:text-ink
     `;
 
-    if (href) {
-        return (
-            <a
-                href={href}
-                target={href.startsWith("http") ? "_blank" : undefined}
-                rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-                aria-label={label}
-                onClick={stopCard}
-                className={className}
-            >
-                {children}
-                <span>{label}</span>
-            </a>
-        );
-    }
-
-    return (
+    const trigger = href ? (
+        <a
+            href={href}
+            target={href.startsWith("http") ? "_blank" : undefined}
+            rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+            aria-label={label}
+            onClick={stopCard}
+            className={className}
+        >
+            {children}
+        </a>
+    ) : (
         <button type="button" aria-label={label} onClick={onClick} className={className}>
             {children}
-            <span>{label}</span>
         </button>
+    );
+
+    return (
+        <Tooltip>
+            <TooltipTrigger render={trigger} />
+            <TooltipContent side="bottom">{label}</TooltipContent>
+        </Tooltip>
     );
 }
 
@@ -361,12 +372,6 @@ export function DealCard({
     const canCall = Boolean(deal.buyer.phoneDigits);
     const stageDays = live ? daysInStage(deal) : 0;
     const currentUserId = getStoredUser()?.id ?? null;
-    // The stage block itself already runs two lines in these cases — the
-    // "in stage" caption would be a third, redundant time-reference and
-    // would blow the card's height budget, so it steps aside instead.
-    const stageBlockIsTwoLine =
-        (deal.status === "contacted" && Boolean(deal.nextFollowUpAt)) ||
-        (deal.status === "negotiation" && deal.offerAmountInr != null && deal.offerStatus != null);
 
     const primary = (() => {
         if (!live) return null;
@@ -407,29 +412,53 @@ export function DealCard({
             onClick={openCard}
             onKeyDown={onKeyDown}
             className={cn(
+                // Hover changes the border only — no lift, no shadow step. At
+                // fourteen cards a column the card does not need to move to
+                // show it is the one under the cursor.
                 `
-                  flex cursor-pointer flex-col justify-between gap-2 overflow-hidden rounded-card
-                  border p-4 shadow-xs transition-[box-shadow,transform] duration-160 max-block-80
-                  min-block-62
-                  hover:-translate-y-0.5 hover:shadow-md
+                  group flex cursor-pointer flex-col justify-between gap-2 overflow-hidden
+                  rounded-card border p-4 shadow-xs
+                  hover:border-ink/25
                 `,
                 isBusy && "pointer-events-none opacity-60",
-                isDragging && "cursor-grabbing opacity-40 shadow-md",
+                isDragging && "cursor-grabbing opacity-40",
                 // Attention never tints the card. The chip row states the
                 // stall in words with a day count; a tint would restate it
                 // in colour alone and leave the board reading as an alarm.
                 !live ? "border-border-warm bg-surface-muted/40" : "border-border-warm bg-surface",
             )}
         >
-            <div className="flex flex-col gap-2 min-block-0">
-                <div className="flex items-center gap-1.5">
-                    <p className="body-sm flex-1 truncate text-ink min-inline-0">
-                        {deal.property.configLabel} · {deal.property.locality} ·{" "}
-                        {formatAreaSqft(deal.property.areaSqft)}
-                    </p>
-                    <Badge variant="outline" className="shrink-0">
-                        {deal.property.isRent ? "Rent" : "Sale"}
-                    </Badge>
+            <div className="flex flex-col gap-3 min-block-0">
+                <div className="flex items-start gap-3">
+                    <PropertyThumb
+                        src={deal.property.imageSrc || null}
+                        alt={deal.property.title}
+                        className="block-14 inline-14 sm:block-14 sm:inline-14"
+                        sizes="56px"
+                        iconClassName="block-5 inline-5"
+                        hoverScale={false}
+                    />
+
+                    <div className="flex flex-col gap-0.5 min-inline-0">
+                        <p className="body-sm truncate font-medium text-ink">
+                            {deal.property.configLabel} · {deal.property.locality}
+                        </p>
+                        {/* Area and time-in-stage share a line: both are quiet
+                            context for the title above, and pairing them keeps
+                            the footer free for actions alone. */}
+                        <p className="body-xs truncate text-ink-subtle">
+                            {formatAreaSqft(deal.property.areaSqft)}
+                            {live && deal.status !== "new" && stageDays >= 1
+                                ? ` · ${stageDays}d in stage`
+                                : ""}
+                        </p>
+                        <Price
+                            amountInr={deal.property.amountInr}
+                            isRent={deal.property.isRent}
+                            className="body-sm font-semibold text-brand"
+                        />
+                    </div>
+
                     <DealCardMenu
                         deal={deal}
                         handlers={handlers}
@@ -437,12 +466,6 @@ export function DealCard({
                         isPinned={isPinned}
                     />
                 </div>
-
-                <Price
-                    amountInr={deal.property.amountInr}
-                    isRent={deal.property.isRent}
-                    className="body font-bold"
-                />
 
                 <DealPartiesPanel
                     buyer={deal.buyer}
@@ -466,26 +489,21 @@ export function DealCard({
                     </Badge>
                 ) : null}
 
-                {live ? (
-                    <div className="flex flex-col gap-3">
-                        <StageMiddle deal={deal} />
-                        {deal.status !== "new" && stageDays >= 1 && !stageBlockIsTwoLine ? (
-                            <p className="body-xs text-ink-muted">
-                                In stage {stageDays} {stageDays === 1 ? "day" : "days"}
-                            </p>
-                        ) : null}
-                    </div>
-                ) : null}
+                {live ? <StageMiddle deal={deal} /> : null}
             </div>
 
-            <div className="flex items-end justify-between gap-2">
-                <div className="flex items-end gap-1">
+            <div
+                className="
+                  mbs-1 flex items-center justify-between gap-2 border-bs border-border-warm pbs-2.5
+                "
+            >
+                <div className="flex items-center gap-1">
                     {canCall ? (
                         <>
                             <FooterAction href={formatTelUrl(deal.buyer.phoneDigits)} label="Call">
                                 <Phone
                                     aria-hidden
-                                    className="block-3.5 inline-3.5"
+                                    className="block-4 inline-4"
                                     strokeWidth={1.75}
                                 />
                             </FooterAction>
@@ -498,7 +516,7 @@ export function DealCard({
                             >
                                 <MessageCircle
                                     aria-hidden
-                                    className="block-3.5 inline-3.5"
+                                    className="block-4 inline-4"
                                     strokeWidth={1.75}
                                 />
                             </FooterAction>
@@ -511,19 +529,20 @@ export function DealCard({
                             handlers.onNote(deal.id);
                         }}
                     >
-                        <StickyNote
-                            aria-hidden
-                            className="block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
+                        <StickyNote aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                     </FooterAction>
                 </div>
 
                 {primary ? (
                     <Button
-                        variant="default"
+                        variant="secondary"
                         size="xs"
                         disabled={isBusy}
+                        className="
+                          shrink-0
+                          group-hover:border-brand-ink group-hover:bg-brand-ink
+                          group-hover:text-white
+                        "
                         onClick={(event) => {
                             stopCard(event);
                             primary.onClick();

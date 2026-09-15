@@ -7,13 +7,13 @@ import toast from "react-hot-toast";
 import {
     Check,
     CircleAlert,
-    FileText,
+    // FileText,
     ImagePlus,
     LoaderCircle,
     RefreshCw,
-    ShieldCheck,
+    // ShieldCheck,
     Trash2,
-    Upload,
+    // Upload,
 } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
@@ -29,11 +29,12 @@ import { Label } from "@/components/ui/label";
 import {
     FORM_GRID_CLASS,
     TextField,
-    ToggleField,
+    // ToggleField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 
-const DEFAULT_DOCUMENT_TYPE = "owner_id_proof";
+// Private documents UI temporarily commented out
+// const DEFAULT_DOCUMENT_TYPE = "owner_id_proof";
 
 const MAX_PHOTOS = 30;
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
@@ -72,7 +73,8 @@ export function StepMedia({
     const photos = watch("media.photos");
     const usablePhotoCount = photos.filter((photo) => photo.status !== "error").length;
     const publishReady = usablePhotoCount >= 3;
-    const documents = watch("documents");
+    // Private documents UI temporarily commented out
+    // const documents = watch("documents");
     const coverPhoto = photos.find((photo) => photo.isCover) ?? null;
     const galleryPhotos = photos.filter((photo) => !photo.isCover);
     const usableGalleryCount = galleryPhotos.filter((photo) => photo.status !== "error").length;
@@ -227,6 +229,7 @@ export function StepMedia({
         void processPhoto(photoId, file, url);
     }
 
+    /*
     function addDocument(file: File | undefined) {
         if (!file) return;
         setValue(
@@ -247,6 +250,7 @@ export function StepMedia({
             { shouldDirty: true },
         );
     }
+    */
 
     return (
         <div className="space-y-8">
@@ -439,6 +443,7 @@ export function StepMedia({
                 </div>
             </WizardSection>
 
+            {/* Private documents UI temporarily commented out (kept for restore).
             <WizardSection
                 title="Private documents"
                 description="Legal and owner documents never appear on the public listing."
@@ -560,6 +565,7 @@ export function StepMedia({
                     </div>
                 ) : null}
             </WizardSection>
+            */}
         </div>
     );
 }

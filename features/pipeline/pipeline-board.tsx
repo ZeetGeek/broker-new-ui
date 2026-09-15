@@ -41,9 +41,9 @@ export function PipelineBoard({
         >
             <div
                 className="
-                  hidden snap-x snap-mandatory gap-5 overflow-x-auto
+                  hidden snap-x snap-mandatory gap-3 overflow-x-auto
                   md:flex
-                  lg:grid lg:snap-none lg:grid-cols-4 lg:overflow-visible
+                  lg:grid lg:snap-none lg:grid-cols-4 lg:gap-0 lg:overflow-visible
                 "
             >
                 {DEAL_STAGE_ORDER.map((stage) => (

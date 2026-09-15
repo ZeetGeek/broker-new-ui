@@ -600,15 +600,11 @@ export const POPULAR_LISTING_HIGHLIGHTS = LISTING_HIGHLIGHT_SUGGESTIONS.slice(0,
 
 export const FORM_STEPS = [
     { id: "basics", label: "Basics", shortLabel: "Basics" },
-    { id: "location", label: "Location", shortLabel: "Location" },
-    { id: "details", label: "Property details", shortLabel: "Details" },
-    { id: "area", label: "Area & measurement", shortLabel: "Area" },
-    { id: "pricing", label: "Price & charges", shortLabel: "Price" },
-    { id: "commission", label: "Commission deal", shortLabel: "Deal" },
-    { id: "furnishing", label: "Furnishing & amenities", shortLabel: "Amenities" },
-    { id: "highlights", label: "Highlights & availability", shortLabel: "Highlights" },
-    { id: "media", label: "Media & documents", shortLabel: "Media" },
-    { id: "publish", label: "Owner & publish", shortLabel: "Publish" },
+    { id: "details", label: "Property", shortLabel: "Property" },
+    { id: "pricing", label: "Price & deal", shortLabel: "Deal" },
+    // Highlights UI commented out — was "Amenities & highlights"
+    { id: "furnishing", label: "Amenities", shortLabel: "Extras" },
+    { id: "media", label: "Media & contacts", shortLabel: "Publish" },
 ] as const;
 
 export type PropertyFormStep = (typeof FORM_STEPS)[number]["id"];
