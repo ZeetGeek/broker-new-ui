@@ -101,12 +101,16 @@ function OwnerListingsResults({
                 {
                     ...filters,
                     cursor: cursor ?? "",
-                    limit: 20,
+                    limit: 5,
                 },
                 filterContext,
                 signal,
             );
-            return { ...page, total: page.totalCount };
+            return {
+                items: page.items,
+                total: page.totalCount,
+                nextCursor: page.nextCursor,
+            };
         },
     });
 
@@ -126,8 +130,7 @@ function OwnerListingsResults({
             totalCount,
             marketValueInr: query.items.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0),
             nextCursor: lastPage.nextCursor,
-            page: lastPage.page,
-            totalPages: lastPage.totalPages,
+            hasMore: Boolean(lastPage.nextCursor),
         });
     }, [onLoaded, query.data?.pages, query.items, query.total]);
 

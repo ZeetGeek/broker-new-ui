@@ -92,9 +92,12 @@ export type PropertyListing = PropertyBrowseListing & {
 export type PropertyBrowsePage = {
     items: PropertyBrowseListing[];
     total: number;
-    page: number;
     limit: number;
-    totalPages: number;
+    nextCursor: string | null;
+    hasMore: boolean;
+    /** @deprecated Offset fields — browse is cursor-based now. */
+    page?: number;
+    totalPages?: number;
 };
 
 export type PropertyListPage = {
@@ -158,8 +161,11 @@ export type PropertyBrowseQuery = {
     readyToMove?: boolean;
     furnishingStatus?: "furnished" | "semi" | "unfurnished";
     sort?: PropertyBrowseSort;
-    page?: number;
+    /** Opaque keyset cursor from a previous `nextCursor`. */
+    cursor?: string;
     limit?: number;
+    /** @deprecated Prefer `cursor` for browse infinite scroll. */
+    page?: number;
 };
 
 export type PropertyListQuery = {
@@ -251,7 +257,7 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     if (params.readyToMove) q.set("readyToMove", "1");
     if (params.furnishingStatus) q.set("furnishingStatus", params.furnishingStatus);
     if (params.sort) q.set("sort", params.sort);
-    if (params.page != null && params.page > 1) q.set("page", String(params.page));
+    if (params.cursor) q.set("cursor", params.cursor);
     if (params.limit != null) q.set("limit", String(params.limit));
 
     const qs = q.toString();
