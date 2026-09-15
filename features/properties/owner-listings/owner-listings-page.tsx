@@ -101,7 +101,7 @@ function OwnerListingsResults({
                 {
                     ...filters,
                     cursor: cursor ?? "",
-                    limit: 5,
+                    limit: 20,
                 },
                 filterContext,
                 signal,
