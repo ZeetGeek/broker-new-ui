@@ -86,7 +86,10 @@ function SentRequestsPanel({
             cancelled = true;
             window.clearTimeout(timer);
         };
-    }, [filterSignature, filters, revision]);
+        // Intentionally omit `filters`: its contents are encoded in `filterSignature`.
+        // Depending on the object identity retriggers broker/list + clients/leads forever.
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- signature is the stable key
+    }, [filterSignature, revision]);
 
     useEffect(() => {
         let cancelled = false;

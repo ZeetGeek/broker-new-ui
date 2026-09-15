@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import { PREF_KEYS } from "@/lib/prefs/keys";
 import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
@@ -102,11 +102,15 @@ export function useInvitesFilters() {
         setFilters({ ...DEFAULT_INVITES_FILTERS, limit: filters.limit });
     }, [filters.limit, setFilters]);
 
-    const resolved: InvitesFilters = {
-        ...DEFAULT_INVITES_FILTERS,
-        ...filters,
-        type: filters.type === "sale" || filters.type === "rent" ? filters.type : "",
-    };
+    const resolved = useMemo((): InvitesFilters => {
+        return {
+            ...DEFAULT_INVITES_FILTERS,
+            ...filters,
+            type: filters.type === "sale" || filters.type === "rent" ? filters.type : "",
+        };
+    }, [filters]);
+
+    const filterSignature = useMemo(() => serialize(resolved).toString(), [resolved]);
 
     return {
         filters: resolved,
@@ -115,7 +119,7 @@ export function useInvitesFilters() {
         clearFilters,
         hasActiveFilters:
             resolved.q.trim().length > 0 || resolved.stage !== "all" || Boolean(resolved.type),
-        filterSignature: serialize(resolved).toString(),
+        filterSignature,
         scopeReady: ready,
     };
 }
