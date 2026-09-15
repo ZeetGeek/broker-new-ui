@@ -69,7 +69,9 @@ export function InvitesPanel({
             cancelled = true;
             window.clearTimeout(timer);
         };
-    }, [filterSignature, filters, revision]);
+        // Intentionally omit `filters`: contents live in `filterSignature`.
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- signature is the stable key
+    }, [filterSignature, revision]);
 
     useEffect(() => {
         let cancelled = false;

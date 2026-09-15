@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import { PREF_KEYS } from "@/lib/prefs/keys";
 import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
@@ -73,11 +73,18 @@ export function useRequestsFilters() {
         setFilters({ ...DEFAULT_REQUESTS_FILTERS, limit: filters.limit });
     }, [filters.limit, setFilters]);
 
-    const resolved: RequestsFilters = {
-        ...DEFAULT_REQUESTS_FILTERS,
-        ...filters,
-        type: filters.type === "sale" || filters.type === "rent" ? filters.type : "",
-    };
+    const resolved = useMemo((): RequestsFilters => {
+        return {
+            ...DEFAULT_REQUESTS_FILTERS,
+            ...filters,
+            type: filters.type === "sale" || filters.type === "rent" ? filters.type : "",
+        };
+    }, [filters]);
+
+    const filterSignature = useMemo(
+        () => serializeRequestsFilters(resolved).toString(),
+        [resolved],
+    );
 
     return {
         filters: resolved,
@@ -85,7 +92,7 @@ export function useRequestsFilters() {
         patchFilters,
         clearFilters,
         hasActiveFilters: hasActiveRequestsFilters(resolved),
-        filterSignature: serializeRequestsFilters(resolved).toString(),
+        filterSignature,
         scopeReady: ready,
     };
 }
