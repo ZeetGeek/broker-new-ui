@@ -5,31 +5,46 @@
 import { useFormContext } from "react-hook-form";
 
 // import { Check, Plus, Search, Trash2, X } from "lucide-react";
-import { Plus, Trash2 } from "lucide-react";
+import {
+    Building2,
+    CalendarClock,
+    CalendarDays,
+    Clock3,
+    FileText,
+    HardHat,
+    Plus,
+    Trash2,
+} from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
-// import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
 
 import {
-    // LISTING_HIGHLIGHT_SUGGESTIONS,
     PAYMENT_PLAN_OPTIONS,
-    // POPULAR_LISTING_HIGHLIGHTS,
     POSSESSION_TYPE_OPTIONS,
 } from "@/constants/property";
 import {
     ChoiceField,
     FORM_GRID_CLASS,
+    FORM_SECTIONS_CLASS,
+    FORM_STACK_CLASS,
     NumberField,
     SelectField,
     TextField,
     ToggleField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
+
+const POSSESSION_ICONS = {
+    immediate: <HardHat />,
+    within_3m: <Clock3 />,
+    within_6m: <CalendarDays />,
+    within_1y: <CalendarClock />,
+    custom_date: <FileText />,
+} as const;
 
 /*
 const MAX_HIGHLIGHTS = 8;
@@ -259,7 +274,7 @@ export function StepHighlights() {
     */
 
     return (
-        <div className="flex flex-col gap-8">
+        <div className={FORM_SECTIONS_CLASS}>
             {/* Highlights UI temporarily commented out (kept for restore).
             <WizardSection
                 title="Why should someone visit?"
@@ -474,15 +489,25 @@ export function StepHighlights() {
             {isVisible("construction.possessionType") ||
             isVisible("construction.builderName") ? (
                 <WizardSection
-                    title="Construction and possession"
+                    title={
+                        <>
+                            <HardHat
+                                className="shrink-0 text-brand block-5 inline-5"
+                                strokeWidth={1.75}
+                                aria-hidden
+                            />
+                            Construction and possession
+                        </>
+                    }
                     description="Show the official timeline beside the builder's working promise."
                 >
-                    <div className="flex flex-col gap-4">
+                    <div className={FORM_STACK_CLASS}>
                         <ChoiceField
                             name="construction.possessionType"
                             label="Possession"
                             options={POSSESSION_TYPE_OPTIONS}
                             columns={3}
+                            icons={POSSESSION_ICONS}
                         />
                         {isVisible("construction.possessionDate") ? (
                             <TextField
@@ -490,17 +515,31 @@ export function StepHighlights() {
                                 label="Possession month"
                                 type="month"
                                 min={new Date().toISOString().slice(0, 7)}
+                                placeholder="Select month"
+                                startIcon={CalendarClock}
                             />
                         ) : null}
                         <div className={FORM_GRID_CLASS}>
-                            <TextField name="construction.builderName" label="Builder name" />
-                            <TextField name="construction.projectName" label="Project name" />
+                            <TextField
+                                name="construction.builderName"
+                                label="Builder name"
+                                placeholder="e.g. Happy Homes"
+                                startIcon={Building2}
+                            />
+                            <TextField
+                                name="construction.projectName"
+                                label="Project name"
+                                placeholder="e.g. Happy Glorious"
+                                startIcon={Building2}
+                            />
                         </div>
                         <div className={FORM_GRID_CLASS}>
                             <SelectField
                                 name="construction.paymentPlan"
                                 label="Payment plan"
                                 options={PAYMENT_PLAN_OPTIONS}
+                                placeholder="Select payment plan"
+                                startIcon={FileText}
                             />
                             <ToggleField name="construction.bookingOpen" label="Booking open" />
                         </div>
@@ -510,7 +549,7 @@ export function StepHighlights() {
                                     <div
                                         key={row.id}
                                         className="
-                                          grid items-end gap-3 rounded-control border
+                                          grid items-end gap-3 rounded-control border-2
                                           border-border-warm bg-surface p-3
                                           md:grid-cols-[1fr_0.35fr_0.6fr_auto]
                                         "
@@ -518,16 +557,19 @@ export function StepHighlights() {
                                         <TextField
                                             name={`construction.paymentSchedule.${index}.milestone`}
                                             label="Payment milestone"
+                                            placeholder="e.g. On booking"
                                         />
                                         <NumberField
                                             name={`construction.paymentSchedule.${index}.percent`}
                                             label="Percent"
                                             max={100}
+                                            placeholder="e.g. 10"
                                         />
                                         <TextField
                                             name={`construction.paymentSchedule.${index}.dueOn`}
                                             label="Due on"
                                             type="date"
+                                            startIcon={CalendarClock}
                                         />
                                         <Button
                                             type="button"
@@ -545,7 +587,7 @@ export function StepHighlights() {
                                             }
                                             className="
                                               flex items-center justify-center rounded-control
-                                              border border-border-warm text-danger block-12
+                                              border-2 border-border-warm text-danger block-12
                                               inline-12
                                               hover:bg-danger-soft
                                               focus-visible:ring-3 focus-visible:ring-danger/20

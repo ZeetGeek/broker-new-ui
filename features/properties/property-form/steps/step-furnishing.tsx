@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useFormContext } from "react-hook-form";
+import { AnimatePresence, motion } from "motion/react";
 
-import { Check, Plus, Search, X } from "lucide-react";
+import { Plus, Search, Sofa, Sparkles, X } from "lucide-react";
 
+import { duration, ease } from "@/lib/motion/tokens";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
@@ -25,8 +27,15 @@ import {
 } from "@/constants/property";
 import {
     ChoiceField,
+    FORM_SECTIONS_CLASS,
+    FORM_STACK_CLASS,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
+import {
+    AMENITY_FALLBACK_ICON,
+    AMENITY_ICONS,
+    FURNISHING_ICONS,
+} from "@/features/properties/property-form/option-icons";
 
 type AmenityBucket = keyof PropertyDraftValues["amenities"];
 
@@ -78,6 +87,28 @@ const AMENITY_BUCKETS = [
     "commercial",
     "land",
 ] as const satisfies readonly AmenityBucket[];
+
+const chipMotion = {
+    initial: { opacity: 0, y: 8, scale: 0.97 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, scale: 0.97, y: -4 },
+    transition: { duration: duration.base, ease: ease.smoothOut },
+} as const;
+
+function AccordionChevron() {
+    return (
+        <span className="t-acc-chevron" aria-hidden>
+            <svg viewBox="0 0 16 16" className="block-4 inline-4" fill="none" stroke="currentColor">
+                <path
+                    d="M4 6.5L8 10.5L12 6.5"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    vectorEffect="non-scaling-stroke"
+                />
+            </svg>
+        </span>
+    );
+}
 
 function createEmptyAmenities(): PropertyDraftValues["amenities"] {
     return {
@@ -208,13 +239,10 @@ export function StepFurnishing() {
         [catalog, popularSet],
     );
 
-    const browseList = useMemo(() => {
-        if (trimmedQuery) return filtered;
-        if (browseAll) {
-            return catalog.filter((option) => !popularSet.has(option.value));
-        }
-        return [];
-    }, [browseAll, catalog, filtered, popularSet, trimmedQuery]);
+    const moreAmenities = useMemo(
+        () => catalog.filter((option) => !popularSet.has(option.value)),
+        [catalog, popularSet],
+    );
 
     const exactInCatalog = catalog.some(
         (option) =>
@@ -294,6 +322,8 @@ export function StepFurnishing() {
         removable?: boolean;
     }) {
         const label = option.label || amenityLabel(option.value) || toLabel(option.value);
+        const icon = AMENITY_ICONS[option.value] ?? AMENITY_FALLBACK_ICON;
+        const isOn = Boolean(active || removable);
         return (
             <Button
                 type="button"
@@ -307,35 +337,47 @@ export function StepFurnishing() {
                 }}
                 className={cn(
                     `
-                      rounded-control border px-3 py-2 text-sm font-medium
-                      transition-[background-color,border-color,color]
+                      gap-1.5 rounded-control border-2 px-3 py-2 text-sm font-medium
+                      transition-[background-color,border-color,color,transform]
                       duration-160 min-block-11
                       focus-visible:ring-3 focus-visible:ring-ring/30
                       sm:min-block-10
                     `,
-                    active || removable
-                        ? "border-brand bg-brand-soft text-brand-text"
+                    isOn
+                        ? `
+                          border-brand bg-brand-soft text-brand-text
+                          hover:bg-brand-soft-hover
+                        `
                         : `
                           border-border-warm bg-surface text-ink-muted
                           hover:border-brand/40 hover:text-ink
                         `,
                 )}
             >
-                {active && !removable ? (
-                    <Check className="me-1.5 inline block-3.5 inline-3.5" aria-hidden />
-                ) : null}
+                <span className="shrink-0 [&_svg]:block-3.5 [&_svg]:inline-3.5" aria-hidden>
+                    {icon}
+                </span>
                 {label}
                 {removable ? (
-                    <X className="ms-1.5 inline block-3.5 inline-3.5" aria-hidden />
+                    <X className="block-3.5 inline-3.5 shrink-0" aria-hidden />
                 ) : null}
             </Button>
         );
     }
 
     return (
-        <div className="flex flex-col gap-8">
+        <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title="Furnishing"
+                title={
+                    <>
+                        <Sofa
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        Furnishing
+                    </>
+                }
                 description="Pick how the property is handed over."
             >
                 <ChoiceField
@@ -343,43 +385,48 @@ export function StepFurnishing() {
                     label="Furnishing status"
                     options={FURNISHING_OPTIONS}
                     columns={3}
+                    icons={FURNISHING_ICONS}
                 />
             </WizardSection>
 
             <WizardSection
-                title="Amenities"
+                title={
+                    <>
+                        <Sparkles
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        Amenities
+                    </>
+                }
                 description="Search what’s on site, or add your own. Keep it to what’s really there."
             >
-                <div className="flex flex-col gap-4">
+                <div className={FORM_STACK_CLASS}>
                     <div className="flex gap-2">
-                        <div className="relative min-inline-0 flex-1">
-                            <Search
-                                className="
-                                  pointer-events-none absolute inset-s-3 top-1/2 block-4
-                                  inline-4 -translate-y-1/2 text-ink-subtle
-                                "
-                                aria-hidden
-                            />
-                            <Input
-                                size="lg"
-                                value={query}
-                                onValueChange={setQuery}
-                                placeholder="Search or add amenity"
-                                aria-label="Search or add amenity"
-                                className="ps-10"
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter") {
-                                        event.preventDefault();
-                                        if (filtered.length === 1 && !selectedSet.has(filtered[0].value)) {
-                                            toggleAmenity(filtered[0].value);
-                                            setQuery("");
-                                            return;
-                                        }
-                                        addCustom();
+                        <Input
+                            size="lg"
+                            value={query}
+                            onValueChange={setQuery}
+                            startIcon={Search}
+                            placeholder="e.g. Lift, gym, power backup…"
+                            aria-label="Search or add amenity"
+                            className="min-inline-0 flex-1"
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    if (
+                                        filtered.length === 1 &&
+                                        !selectedSet.has(filtered[0].value)
+                                    ) {
+                                        toggleAmenity(filtered[0].value);
+                                        setQuery("");
+                                        return;
                                     }
-                                }}
-                            />
-                        </div>
+                                    addCustom();
+                                }
+                            }}
+                        />
                         <Button
                             type="button"
                             variant="outline"
@@ -387,7 +434,7 @@ export function StepFurnishing() {
                             onClick={addCustom}
                             disabled={!canAddCustom}
                             className="
-                              shrink-0 rounded-control border border-border-warm bg-surface
+                              shrink-0 rounded-control border-2 border-border-warm bg-surface
                               px-4 text-sm font-semibold text-ink
                               hover:bg-surface-muted
                               focus-visible:ring-3 focus-visible:ring-ring/30
@@ -399,49 +446,81 @@ export function StepFurnishing() {
                         </Button>
                     </div>
 
-                    {selected.length ? (
-                        <div className="space-y-2">
-                            <div className="flex items-baseline justify-between gap-3">
-                                <p className="text-sm font-semibold text-ink">
-                                    Selected · {selected.length}
-                                </p>
-                                <button
-                                    type="button"
-                                    onClick={clearAll}
-                                    className="
-                                      text-sm font-medium text-ink-muted
-                                      hover:text-ink
-                                      focus-visible:rounded-sm focus-visible:ring-3
-                                      focus-visible:ring-ring/30
-                                    "
+                    <AnimatePresence initial={false} mode="popLayout">
+                        {selected.length ? (
+                            <motion.div
+                                key="selected-amenities"
+                                className="space-y-2 overflow-hidden"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: duration.base, ease: ease.smoothOut }}
+                            >
+                                <div className="flex items-baseline justify-between gap-3">
+                                    <p className="text-sm font-semibold text-ink">
+                                        Selected · {selected.length}
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        size="sm"
+                                        onClick={clearAll}
+                                        className="
+                                          h-auto px-0 text-ink-muted
+                                          hover:text-ink hover:no-underline
+                                        "
+                                    >
+                                        Clear all
+                                    </Button>
+                                </div>
+                                <motion.div
+                                    className="flex flex-wrap gap-2"
+                                    layout
+                                    role="list"
+                                    aria-label="Selected amenities"
                                 >
-                                    Clear all
-                                </button>
-                            </div>
-                            <div className="flex flex-wrap gap-2" role="list" aria-label="Selected amenities">
-                                {selected.map((value) => (
-                                    <div key={value} role="listitem">
-                                        <ChipButton
-                                            option={{
-                                                value,
-                                                label: amenityLabel(value),
-                                            }}
-                                            removable
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-ink-muted">
-                            Nothing selected yet. Pick a few common ones below.
-                        </p>
-                    )}
+                                    <AnimatePresence initial={false} mode="popLayout">
+                                        {selected.map((value) => (
+                                            <motion.div
+                                                key={value}
+                                                role="listitem"
+                                                layout
+                                                {...chipMotion}
+                                            >
+                                                <ChipButton
+                                                    option={{
+                                                        value,
+                                                        label: amenityLabel(value),
+                                                    }}
+                                                    removable
+                                                />
+                                            </motion.div>
+                                        ))}
+                                    </AnimatePresence>
+                                </motion.div>
+                            </motion.div>
+                        ) : (
+                            <motion.p
+                                key="amenities-empty"
+                                className="text-sm text-ink-muted"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: duration.fast, ease: ease.smoothOut }}
+                            >
+                                Nothing selected yet. Pick a few common ones below.
+                            </motion.p>
+                        )}
+                    </AnimatePresence>
 
                     {!trimmedQuery ? (
                         <div className="space-y-2">
                             <p className="text-sm font-semibold text-ink">Suggested</p>
-                            <div className="flex flex-wrap gap-2" role="group" aria-label="Suggested amenities">
+                            <div
+                                className="flex flex-wrap gap-2"
+                                role="group"
+                                aria-label="Suggested amenities"
+                            >
                                 {suggested.map((option) => (
                                     <ChipButton
                                         key={option.value}
@@ -454,13 +533,14 @@ export function StepFurnishing() {
                     ) : null}
 
                     {trimmedQuery && canAddCustom && !exactInCatalog ? (
-                        <button
+                        <Button
                             type="button"
+                            variant="outline"
                             onClick={addCustom}
                             className="
-                              flex inline-full items-center gap-2 rounded-control border
-                              border-dashed border-brand/35 bg-brand-soft/40 px-3 py-2.5
-                              text-start text-sm font-medium text-brand-text
+                              flex inline-full items-center justify-start gap-2 rounded-control
+                              border-2 border-dashed border-brand/35 bg-brand-soft/40 px-3
+                              py-2.5 text-start text-sm font-medium text-brand-text
                               transition-colors
                               hover:bg-brand-soft
                               focus-visible:ring-3 focus-visible:ring-ring/30
@@ -469,20 +549,20 @@ export function StepFurnishing() {
                         >
                             <Plus className="block-4 inline-4 shrink-0" aria-hidden />
                             Add “{trimmedQuery}” as custom
-                        </button>
+                        </Button>
                     ) : null}
 
-                    {browseList.length ? (
+                    {trimmedQuery && filtered.length ? (
                         <div className="space-y-2">
                             <p className="text-sm font-semibold text-ink">
-                                {trimmedQuery ? `Matches · ${browseList.length}` : "More amenities"}
+                                Matches · {filtered.length}
                             </p>
                             <div
                                 className="flex flex-wrap gap-2"
                                 role="group"
-                                aria-label={trimmedQuery ? "Matching amenities" : "More amenities"}
+                                aria-label="Matching amenities"
                             >
-                                {browseList.map((option) => (
+                                {filtered.map((option) => (
                                     <ChipButton
                                         key={option.value}
                                         option={option}
@@ -499,20 +579,45 @@ export function StepFurnishing() {
                         </p>
                     ) : null}
 
-                    {!trimmedQuery ? (
-                        <div>
+                    {!trimmedQuery && moreAmenities.length ? (
+                        <div className="t-acc" data-open={browseAll ? "true" : "false"}>
+                            <div className="t-acc-panel">
+                                <div className="t-acc-panel-inner">
+                                    <div className="space-y-2 pbe-1">
+                                        <p className="text-sm font-semibold text-ink">
+                                            More amenities
+                                        </p>
+                                        <div
+                                            className="flex flex-wrap gap-2"
+                                            role="group"
+                                            aria-label="More amenities"
+                                        >
+                                            {moreAmenities.map((option) => (
+                                                <ChipButton
+                                                    key={option.value}
+                                                    option={option}
+                                                    active={selectedSet.has(option.value)}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <Button
                                 type="button"
-                                variant="ghost"
-                                size="md"
+                                variant="link"
+                                size="sm"
+                                aria-expanded={browseAll}
                                 onClick={() => setBrowseAll((open) => !open)}
                                 className="
-                                  -ms-2 rounded-control px-2 text-sm font-medium text-brand
-                                  hover:bg-brand-soft hover:text-brand-text
-                                  focus-visible:ring-3 focus-visible:ring-ring/30
+                                  t-acc-head mt-1 h-auto gap-1.5 px-0 text-brand
+                                  hover:text-brand-text hover:no-underline
                                 "
                             >
-                                {browseAll ? "Show fewer" : `Browse all ${catalog.length} amenities`}
+                                {browseAll
+                                    ? "Show fewer"
+                                    : `Browse all ${catalog.length} amenities`}
+                                <AccordionChevron />
                             </Button>
                         </div>
                     ) : null}

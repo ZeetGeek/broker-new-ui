@@ -7,6 +7,7 @@ import { BadgePercent, Wallet } from "lucide-react";
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
 import { formatInr } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import {
@@ -30,7 +31,6 @@ export function StepCommission() {
         areaSqft,
         mode: "percent",
         value: values.commission.sale.value,
-        // The owner pays the whole brokerage; nothing is charged to the buyer.
         paidBy: "owner",
         ownerSharePercent: 100,
         gstApplicable: values.commission.tax.gstApplicable,
@@ -48,7 +48,6 @@ export function StepCommission() {
         escalationPercent: values.rent.rentEscalationPercent ?? 0,
         mode: values.commission.rent.mode,
         value: values.commission.rent.value,
-        // The owner pays the whole brokerage; nothing is charged to the tenant.
         paidBy: "owner",
         ownerSharePercent: 100,
         gstApplicable: values.commission.tax.gstApplicable,
@@ -65,6 +64,12 @@ export function StepCommission() {
             : isSale && "effectiveRatePerSqft" in result
               ? result.effectiveRatePerSqft
               : 0;
+
+    const commissionLabel = isSale
+        ? `Commission at ${values.commission.sale.value}%`
+        : `Brokerage · ${values.commission.rent.value} month${
+              values.commission.rent.value === 1 ? "" : "s"
+          } rent`;
 
     return (
         <div className={FORM_SECTIONS_CLASS}>
@@ -117,21 +122,20 @@ export function StepCommission() {
                         Broker income
                     </>
                 }
-                description="Updates as you change the rate above."
-                tone="private"
+                description="Live estimate from the rate above. Broker-only."
             >
                 {earned ? (
                     <div
                         className="
-                          overflow-hidden rounded-control border border-border-warm bg-surface
+                          overflow-hidden rounded-control border-2 border-border-warm bg-surface
                         "
                     >
-                        <div className="grid border-be border-border-warm sm:grid-cols-3">
-                            <SummaryFact
+                        <div className="grid sm:grid-cols-3">
+                            <IncomeFact
                                 label={isSale ? "Property price" : "Monthly rent"}
                                 value={formatInr(isSale ? expectedPrice : monthlyRent)}
                             />
-                            <SummaryFact
+                            <IncomeFact
                                 label="Area"
                                 value={
                                     areaSqft > 0
@@ -139,7 +143,7 @@ export function StepCommission() {
                                         : "Area not added"
                                 }
                             />
-                            <SummaryFact
+                            <IncomeFact
                                 label={isSale ? "Per sq ft" : "Yearly rent"}
                                 value={
                                     isSale
@@ -151,55 +155,49 @@ export function StepCommission() {
                             />
                         </div>
 
-                        <div className="border-be border-border-warm bg-brand-soft p-4">
-                            <p className="text-xs text-ink-muted">Broker income</p>
-                            <p className="tabular mbs-1 text-2xl font-bold text-brand-text">
-                                {formatInr(result.brokerRealIncome)}
+                        <div className="border-bs-2 border-border-warm p-5">
+                            <p className="text-xs font-medium text-ink-muted">Money in bank</p>
+                            <p className="tabular mbs-1 text-3xl font-bold tracking-tight text-brand-text">
+                                {formatInr(result.brokerReceives)}
                             </p>
-                            <div className="mbs-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-                                <span>Gross {formatInr(result.gross)}</span>
+                            <div className="mbs-3 flex flex-wrap gap-2">
+                                <IncomeChip label="Gross" value={formatInr(result.gross)} />
                                 {result.gst > 0 ? (
-                                    <span className="text-success">+ GST {formatInr(result.gst)}</span>
+                                    <IncomeChip
+                                        label="+ GST"
+                                        value={formatInr(result.gst)}
+                                        tone="success"
+                                    />
                                 ) : null}
                                 {result.tds > 0 ? (
-                                    <span className="text-danger">− TDS {formatInr(result.tds)}</span>
+                                    <IncomeChip
+                                        label="− TDS"
+                                        value={formatInr(result.tds)}
+                                        tone="danger"
+                                    />
                                 ) : null}
                             </div>
                         </div>
 
-                        <dl className="divide-y divide-border-warm">
-                            <EarningRow
-                                label={
-                                    isSale
-                                        ? `Commission at ${values.commission.sale.value}%`
-                                        : `Brokerage for ${values.commission.rent.value} month${
-                                              values.commission.rent.value === 1 ? "" : "s"
-                                          } of rent`
-                                }
-                                value={formatInr(result.gross)}
-                            />
-                            <EarningRow
+                        <dl className="border-bs-2 border-border-warm">
+                            <IncomeRow label={commissionLabel} value={formatInr(result.gross)} />
+                            <IncomeRow
                                 label="Charged to the owner"
                                 value={formatInr(result.invoiceTotal)}
                                 muted
-                            />
-                            <EarningRow
-                                label="Money in bank"
-                                value={formatInr(result.brokerReceives)}
-                                strong
                             />
                         </dl>
                     </div>
                 ) : (
                     <p
                         className="
-                          rounded-control border border-dashed border-border-warm bg-surface p-4
+                          rounded-control border-2 border-dashed border-border-warm bg-surface p-5
                           text-sm text-ink-muted
                         "
                     >
                         {isSale
-                            ? "Add the expected price above to see the broker income."
-                            : "Add the monthly rent above to see the broker income."}
+                            ? "Add the expected price above to see what you earn."
+                            : "Add the monthly rent above to see what you earn."}
                     </p>
                 )}
             </WizardSection>
@@ -207,36 +205,63 @@ export function StepCommission() {
     );
 }
 
-function SummaryFact({ label, value }: { label: string; value: string }) {
+function IncomeFact({ label, value }: { label: string; value: string }) {
     return (
-        <div className="border-bs border-border-warm p-4 first:border-bs-0 sm:border-e sm:border-bs-0 sm:last:border-e-0">
+        <div
+            className="
+              border-bs-2 border-border-warm p-4
+              first:border-bs-0
+              sm:border-e-2 sm:border-bs-0
+              sm:last:border-e-0
+            "
+        >
             <p className="text-xs text-ink-muted">{label}</p>
             <p className="tabular mbs-1 text-base font-bold text-ink">{value}</p>
         </div>
     );
 }
 
-function EarningRow({
+function IncomeChip({
+    label,
+    value,
+    tone = "default",
+}: {
+    label: string;
+    value: string;
+    tone?: "default" | "success" | "danger";
+}) {
+    return (
+        <span
+            className={cn(
+                "inline-flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium",
+                tone === "success" && "bg-success-soft text-success",
+                tone === "danger" && "bg-danger-soft text-danger",
+                tone === "default" && "bg-surface-muted text-ink-muted",
+            )}
+        >
+            {label} <span className="tabular font-semibold">{value}</span>
+        </span>
+    );
+}
+
+function IncomeRow({
     label,
     value,
     muted,
-    strong,
 }: {
     label: string;
     value: string;
     muted?: boolean;
-    strong?: boolean;
 }) {
     return (
-        <div className="flex items-center justify-between gap-4 px-4 py-3">
-            <dt className={`text-sm ${muted ? `text-ink-muted` : `text-ink`}`}>{label}</dt>
-            <dd
-                className={`tabular text-sm ${
-                    strong ? `font-bold text-brand-text` : `font-semibold text-ink`
-                }`}
-            >
-                {value}
-            </dd>
+        <div
+            className="
+              flex items-center justify-between gap-4 border-bs-2 border-border-warm px-4 py-3.5
+              first:border-bs-0
+            "
+        >
+            <dt className={cn("text-sm", muted ? "text-ink-muted" : "text-ink")}>{label}</dt>
+            <dd className="tabular text-sm font-semibold text-ink">{value}</dd>
         </div>
     );
 }
