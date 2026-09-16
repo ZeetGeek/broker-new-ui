@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
@@ -10,6 +11,7 @@ import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import type { RequestItem } from "@/features/properties/my-requests/types";
+import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
 import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import { MyListingsGrid } from "@/features/properties/your-listings/my-listings-grid";
@@ -68,6 +70,8 @@ export function MyListingsPanel() {
     const [summary, setSummary] = useState<MyListingsSummary | null>(null);
     const [addOpen, setAddOpen] = useState(false);
     const [editingListing, setEditingListing] = useState<MyListingItem | null>(null);
+    const [deletingListing, setDeletingListing] = useState<MyListingItem | null>(null);
+    const [deleteBusy, setDeleteBusy] = useState(false);
     /** Kept after close so the modal can animate out with its listing intact. */
     const [buyersListing, setBuyersListing] = useState<MyListingItem | null>(null);
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
@@ -100,6 +104,21 @@ export function MyListingsPanel() {
         // refreshToken: an edit can flip a listing's status without changing the
         // total, and the summary counts published/draft separately.
     }, [query.total, refreshToken]);
+
+    const confirmDelete = useCallback(async () => {
+        if (!deletingListing) return;
+        setDeleteBusy(true);
+        try {
+            await myListingsApi.remove(deletingListing.id);
+            setDeletingListing(null);
+            toast.success("Property removed");
+            setRefreshToken((token) => token + 1);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Couldn't remove property");
+        } finally {
+            setDeleteBusy(false);
+        }
+    }, [deletingListing]);
 
     const loading = query.isFetching && !query.isFetchingNextPage;
 
@@ -144,6 +163,7 @@ export function MyListingsPanel() {
                         items={query.items}
                         view={view}
                         onEditListing={setEditingListing}
+                        onDeleteListing={setDeletingListing}
                         onAddBuyer={(listing) => {
                             setBuyersListing(listing);
                             setIsBuyersOpen(true);
@@ -176,6 +196,15 @@ export function MyListingsPanel() {
                     setEditingListing(null);
                     setRefreshToken((token) => token + 1);
                 }}
+            />
+            <PropertyDeleteDialog
+                open={deletingListing != null}
+                onOpenChange={(next) => {
+                    if (!next && !deleteBusy) setDeletingListing(null);
+                }}
+                title={deletingListing?.title ?? "Property"}
+                busy={deleteBusy}
+                onConfirm={() => void confirmDelete()}
             />
             {buyersListing ? (
                 <AttachBuyersModal

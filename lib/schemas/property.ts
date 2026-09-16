@@ -38,7 +38,7 @@ const listingCopySchema = z
 /** Basics without title/description requirements — those belong on the Property step. */
 const basicsStepSchema = z
     .object({
-        listingFor: z.enum(["sell", "rent", "lease", "pg"]),
+        listingFor: z.enum(["sell", "rent", "lease", "pg", "both"]),
         category: z.enum(["residential", "commercial", "land", "industrial", "agricultural"]),
         propertyType: z.string().min(1, "Choose a property type"),
         propertySubType: optionalText,
@@ -413,10 +413,10 @@ const documentSchema = z.object({
 });
 
 const ownerSchema = z.object({
-    /** Contacts owner id when attached from the broker book. */
+    /** Contacts owner id when attached from the broker book. Optional until owner contacts API is wired. */
     contactId: optionalText,
     listerType: z.string(),
-    name: z.string().trim().min(1, "Attach an owner from contacts"),
+    name: optionalText,
     phone: z.string(),
     phoneVerified: z.boolean(),
     whatsappSameAsPhone: z.boolean(),
@@ -456,7 +456,7 @@ export const stepSchemas = {
     }),
     pricing: z
         .object({
-            basics: z.object({ listingFor: z.enum(["sell", "rent", "lease", "pg"]) }),
+            basics: z.object({ listingFor: z.enum(["sell", "rent", "lease", "pg", "both"]) }),
             sale: saleSchema,
             rent: rentSchema,
             area: z.object({ areaSqft: z.number() }),
@@ -475,7 +475,7 @@ export const stepSchemas = {
                     message: "Lock-in cannot be longer than the agreement",
                 });
             }
-            if (value.basics.listingFor === "sell") {
+            if (value.basics.listingFor === "sell" || value.basics.listingFor === "both") {
                 const sale = value.commission.sale;
                 if (
                     sale.mode === "percent" &&
@@ -487,7 +487,8 @@ export const stepSchemas = {
                         message: "Commission looks too high. Please check.",
                     });
                 }
-            } else {
+            }
+            if (value.basics.listingFor !== "sell") {
                 const rent = value.commission.rent;
                 if (rent.mode === "months" && rent.value > 24) {
                     context.addIssue({

@@ -91,6 +91,9 @@ export function listingFromCreateInput(
         maintenanceInr: input.maintenanceInr,
         description: input.description,
         amenities: input.amenities,
+        nearbyPlaces: input.nearbyPlaces ?? [],
+        videoUrl: input.videoUrl ?? "",
+        virtualTourUrl: input.virtualTourUrl ?? "",
         availableFrom: input.availableFrom,
         status,
         inboundRequestCount: 0,
@@ -145,6 +148,9 @@ export function applyListingUpdate(
     if (input.availableFrom !== undefined) next.availableFrom = input.availableFrom;
     if (input.description != null) next.description = input.description;
     if (input.amenities != null) next.amenities = input.amenities;
+    if (input.nearbyPlaces != null) next.nearbyPlaces = input.nearbyPlaces;
+    if (input.videoUrl != null) next.videoUrl = input.videoUrl;
+    if (input.virtualTourUrl != null) next.virtualTourUrl = input.virtualTourUrl;
     if (input.status != null) next.status = input.status;
     else if (input.publish === true) next.status = "published";
     else if (input.publish === false && next.status === "published") next.status = "draft";
@@ -183,6 +189,9 @@ type SeedDraft = Omit<
     | "facing"
     | "parking"
     | "maintenanceInr"
+    | "nearbyPlaces"
+    | "videoUrl"
+    | "virtualTourUrl"
 > & {
     category?: MyListingCategory;
     bathrooms?: number | null;
@@ -192,6 +201,9 @@ type SeedDraft = Omit<
     facing?: MyListingItem["facing"];
     parking?: MyListingParking;
     maintenanceInr?: number | null;
+    nearbyPlaces?: string[];
+    videoUrl?: string;
+    virtualTourUrl?: string;
 };
 
 function hydrateSeed(item: SeedDraft): MyListingItem {
@@ -205,6 +217,9 @@ function hydrateSeed(item: SeedDraft): MyListingItem {
         totalFloors: item.totalFloors ?? null,
         facing: item.facing ?? null,
         maintenanceInr: item.maintenanceInr ?? null,
+        nearbyPlaces: item.nearbyPlaces ?? [],
+        videoUrl: item.videoUrl ?? "",
+        virtualTourUrl: item.virtualTourUrl ?? "",
     };
 }
 

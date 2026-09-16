@@ -28,7 +28,7 @@ import {
     stepSchemas,
 } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
-import { isStepVisible as ruleStepIsVisible, stripHidden } from "@/lib/visibility/rules";
+import { isStepVisible as ruleStepIsVisible, labelOf, stripHidden } from "@/lib/visibility/rules";
 import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
@@ -130,7 +130,7 @@ export function PropertyForm({
     const [entryMode, setEntryMode] = useState<"full" | "quick">("full");
     const [savedAt, setSavedAt] = useState<Date | null>(null);
     const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
-    const [formBanner, setFormBanner] = useState<string | null>(null);
+    const [formBanner, setFormBanner] = useState<ReactNode>(null);
     const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
     const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -390,13 +390,31 @@ export function PropertyForm({
             ...(result.success ? [] : result.error.issues),
             ...(ruleResult.success ? [] : ruleResult.error.issues),
         ];
+        const fieldLabels: string[] = [];
+        const seenLabels = new Set<string>();
         for (const issue of issues) {
             const path = issue.path.join(".") as FieldPath<PropertyDraftValues>;
             methods.setError(path, { type: "zod", message: issue.message });
+            const label = labelOf(path, current);
+            if (!seenLabels.has(label)) {
+                seenLabels.add(label);
+                fieldLabels.push(label);
+            }
         }
-        const issueCount = issues.length;
+        const issueCount = fieldLabels.length;
         setFormBanner(
-            `${issueCount} field${issueCount === 1 ? "" : "s"} need attention before continuing.`,
+            <div className="flex flex-col gap-1.5">
+                <p>
+                    {issueCount === 1
+                        ? "1 field needs attention before continuing."
+                        : `${issueCount} fields need attention before continuing.`}
+                </p>
+                <ul className="list-disc space-y-0.5 ps-4 font-normal">
+                    {fieldLabels.map((label) => (
+                        <li key={label}>{label}</li>
+                    ))}
+                </ul>
+            </div>,
         );
         return false;
     }
@@ -484,9 +502,11 @@ export function PropertyForm({
                 publish: !forceDraft && current.publish.status === "active",
             });
             finishSave(created, forceDraft || current.publish.status !== "active");
-        } catch {
+        } catch (error) {
             setFormBanner(
-                "Couldn't save to the current API. Your complete draft is still saved on this device.",
+                error instanceof Error
+                    ? error.message
+                    : "Couldn't save to the current API. Your complete draft is still saved on this device.",
             );
         } finally {
             setSaving(false);
@@ -494,6 +514,8 @@ export function PropertyForm({
     }
 
     function finishSave(listing: MyListingItem, draft: boolean) {
+        // Stop autosave so it cannot rewrite the local draft after we clear it.
+        autosaveReadyRef.current = false;
         try {
             window.localStorage.setItem(
                 `property-extra:v${LOCAL_DRAFT_VERSION}:${listing.id}`,
@@ -506,6 +528,17 @@ export function PropertyForm({
             // The existing API save still succeeded; unsupported fields remain best-effort local data.
         }
         window.localStorage.removeItem(localStorageKey);
+        if (mode === "create") {
+            methods.reset(cloneDefaultDraft());
+            setStep("basics");
+            setHighestUnlocked(0);
+            setCompletedSteps(new Set());
+            setEntryMode("full");
+            setHasRestoredDraft(false);
+            setSavedAt(null);
+            setFormBanner(null);
+            photoFilesRef.current.clear();
+        }
         toast.success(draft ? "Property saved as a draft." : "Property published.");
         onCancel?.();
         onOpenChange?.(false);
@@ -1334,7 +1367,12 @@ function draftForStorage(values: PropertyDraftValues): PropertyDraftValues {
 
 function listingToDraft(listing: MyListingItem): PropertyDraftValues {
     const draft = cloneDefaultDraft();
-    draft.basics.listingFor = listing.transactionType === "sale" ? "sell" : "rent";
+    draft.basics.listingFor =
+        listing.transactionType === "sale"
+            ? "sell"
+            : listing.transactionType === "both"
+              ? "both"
+              : "rent";
     draft.basics.category = listing.category;
     draft.basics.propertyType = legacyPropertyTypeToDraft(listing.propertyType);
     draft.basics.title = listing.title;
@@ -1370,6 +1408,9 @@ function listingToDraft(listing: MyListingItem): PropertyDraftValues {
               ? "semi_furnished"
               : "unfurnished";
     draft.amenities.society = listing.amenities;
+    draft.location.nearbyPlaces = listing.nearbyPlaces ?? [];
+    draft.media.videoUrl = listing.videoUrl ?? "";
+    draft.media.virtualTourUrl = listing.virtualTourUrl ?? "";
     draft.media.photos = listing.imageSrcs.map((url, index) => ({
         id: `existing-${index}`,
         url,
@@ -1441,7 +1482,8 @@ function draftToLegacyInput(
         .filter((file): file is File => Boolean(file))
         .slice(0, 10);
     const listingFor = values.basics.listingFor;
-    const transactionType = listingFor === "sell" ? "sale" : "rent";
+    const transactionType =
+        listingFor === "sell" ? "sale" : listingFor === "both" ? "both" : "rent";
     const generatedTitle =
         buildBasicsSuggestedTitle({
             bedrooms: values.details.bedrooms,
@@ -1470,8 +1512,14 @@ function draftToLegacyInput(
         city: values.location.city,
         address: values.location.streetOrRoad || values.location.fullAddress,
         pinCode: values.location.pincode,
-        saleAmountInr: transactionType === "sale" ? values.sale.expectedPrice : null,
-        rentAmountInr: transactionType === "rent" ? values.rent.monthlyRent : null,
+        saleAmountInr:
+            transactionType === "sale" || transactionType === "both"
+                ? values.sale.expectedPrice
+                : null,
+        rentAmountInr:
+            transactionType === "rent" || transactionType === "both"
+                ? values.rent.monthlyRent
+                : null,
         areaSqft: values.area.areaSqft,
         furnishing:
             values.furnishing.status === "fully_furnished"
@@ -1490,10 +1538,18 @@ function draftToLegacyInput(
         maintenanceInr:
             transactionType === "sale"
                 ? values.sale.maintenanceCharge
-                : values.rent.maintenanceAmount,
-        availableFrom: transactionType === "rent" ? values.rent.availableFrom || null : null,
+                : transactionType === "both"
+                  ? (values.sale.maintenanceCharge ?? values.rent.maintenanceAmount)
+                  : values.rent.maintenanceAmount,
+        availableFrom:
+            transactionType === "rent" || transactionType === "both"
+                ? values.rent.availableFrom || null
+                : null,
         description: values.basics.description,
         amenities,
+        nearbyPlaces: values.location.nearbyPlaces ?? [],
+        videoUrl: values.media.videoUrl?.trim() || "",
+        virtualTourUrl: values.media.virtualTourUrl?.trim() || "",
         publish: values.publish.status === "active",
     };
 }
@@ -1502,10 +1558,17 @@ function validateQuickDraft(values: PropertyDraftValues): string | null {
     if (!values.basics.propertyType) return "Choose a property type.";
     if (!values.location.locality.trim()) return "Enter the locality.";
     if (!values.area.areaSqft) return "Enter the area.";
-    if (values.basics.listingFor === "sell" ? !values.sale.expectedPrice : !values.rent.monthlyRent)
-        return "Enter the price.";
-    if (!values.owner.contactId && !values.owner.name.trim())
-        return "Attach an owner from contacts.";
+    const listingFor = values.basics.listingFor;
+    if ((listingFor === "sell" || listingFor === "both") && !values.sale.expectedPrice)
+        return "Enter the sale price.";
+    if (
+        (listingFor === "rent" ||
+            listingFor === "both" ||
+            listingFor === "lease" ||
+            listingFor === "pg") &&
+        !values.rent.monthlyRent
+    )
+        return "Enter the rent.";
     if (!values.media.photos.length) return "Add one property photo.";
     return null;
 }

@@ -69,6 +69,7 @@ export const TRANSACTION_TYPE_ICONS: Record<PropertyFormValues["transactionType"
 export const LISTING_FOR_ICONS: Record<ListingFor, ReactNode> = {
     sell: <HandCoins />,
     rent: <KeyRound />,
+    both: <Repeat />,
 };
 
 export const CATEGORY_ICONS: Record<PropertyCategory | "agricultural", ReactNode> = {

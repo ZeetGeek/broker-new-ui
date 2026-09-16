@@ -5,9 +5,11 @@ export type PropertyVisibilityRule = (values: PropertyDraftValues) => boolean;
 const isRent = (values: PropertyDraftValues) => values.basics.listingFor !== "sell";
 const isLand = (values: PropertyDraftValues) =>
     values.basics.category === "land" || values.basics.category === "agricultural";
+const needsSale = (values: PropertyDraftValues) =>
+    values.basics.listingFor === "sell" || values.basics.listingFor === "both";
 
 export const PROPERTY_VISIBLE_WHEN = {
-    salePricing: (values) => values.basics.listingFor === "sell",
+    salePricing: needsSale,
     rentPricing: isRent,
     residentialDetails: (values) => values.basics.category === "residential",
     commercialDetails: (values) => values.basics.category === "commercial",

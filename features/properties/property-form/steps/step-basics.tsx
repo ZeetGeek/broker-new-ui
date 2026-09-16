@@ -51,7 +51,7 @@ export function StepBasics() {
                         name="basics.listingFor"
                         label="Listing for"
                         options={LISTING_FOR_OPTIONS}
-                        columns={2}
+                        columns={3}
                         icons={LISTING_FOR_ICONS}
                         onValueChange={() => {
                             if (dealSwitchNotified.current) return;

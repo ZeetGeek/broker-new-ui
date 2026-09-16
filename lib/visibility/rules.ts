@@ -303,9 +303,9 @@ export const FIELD_RULES = {
     // documents: {},
     documents: { visible: () => false },
 
-    "owner.contactId": { level: required, label: () => "Owner" },
+    "owner.contactId": { level: optional, label: () => "Owner" },
     "owner.listerType": { visible: () => false },
-    "owner.name": { visible: () => false, level: required, label: () => "Owner" },
+    "owner.name": { visible: () => false, level: optional, label: () => "Owner" },
     "owner.phone": { visible: () => false },
     "owner.whatsappSameAsPhone": { visible: () => false },
     "owner.whatsappNumber": { visible: () => false },

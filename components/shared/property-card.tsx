@@ -21,6 +21,7 @@ import {
     UserPlus,
     UserRound,
     Users,
+    Trash2,
     X,
 } from "lucide-react";
 
@@ -411,6 +412,8 @@ export type PropertyCardProps = {
     onEdit?: () => void;
     /** Owned cards: open the buyer picker for this listing. */
     onAddBuyer?: () => void;
+    /** Owned cards: ask to delete this listing (caller shows confirm). */
+    onDelete?: () => void;
     /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
     isSaved?: boolean;
     onToggleSave?: () => void;
@@ -848,7 +851,9 @@ function BrowseOverlayCommission({ listing }: { listing: BrowsePropertyCardListi
     const isRentOnly = offersRent(listing) && !offersSale(listing);
     const baseAmountInr = isRentOnly ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0);
     const commissionInr = Math.round((baseAmountInr * listing.commissionPercent) / 100);
-    const commissionLabel = isRentOnly ? formatRentInr(commissionInr) : formatPriceInr(commissionInr);
+    const commissionLabel = isRentOnly
+        ? formatRentInr(commissionInr)
+        : formatPriceInr(commissionInr);
     const baseLabel = isRentOnly ? formatRentInr(baseAmountInr) : formatPriceInr(baseAmountInr);
 
     return (
@@ -934,32 +939,32 @@ function BrowseOverlayPropertyCard({
             }
             actions={
                 <>
-                <PropertySharePopover
-                    iconOnly
-                    listing={{
-                        id: listing.id,
-                        title: listing.title,
-                        locality: listing.locality,
-                        city: listing.city,
-                        priceLabel,
-                        imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
-                        configLabel: listing.configLabel,
-                        propertyTypeLabel: listing.propertyTypeLabel,
-                        areaSqft: listing.areaSqft,
-                        bhk: listing.bhk,
-                        listingKind: isRentOnly ? "rent" : "sale",
-                    }}
-                    className={OVERLAY_ICON_BUTTON_CLASS}
-                />
-                {onToggleSave ? (
-                    <PropertySaveButton
+                    <PropertySharePopover
                         iconOnly
-                        isSaved={isSaved}
-                        title={listing.title}
-                        onToggle={onToggleSave}
+                        listing={{
+                            id: listing.id,
+                            title: listing.title,
+                            locality: listing.locality,
+                            city: listing.city,
+                            priceLabel,
+                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                            configLabel: listing.configLabel,
+                            propertyTypeLabel: listing.propertyTypeLabel,
+                            areaSqft: listing.areaSqft,
+                            bhk: listing.bhk,
+                            listingKind: isRentOnly ? "rent" : "sale",
+                        }}
                         className={OVERLAY_ICON_BUTTON_CLASS}
                     />
-                ) : null}
+                    {onToggleSave ? (
+                        <PropertySaveButton
+                            iconOnly
+                            isSaved={isSaved}
+                            title={listing.title}
+                            onToggle={onToggleSave}
+                            className={OVERLAY_ICON_BUTTON_CLASS}
+                        />
+                    ) : null}
                 </>
             }
         >
@@ -978,7 +983,9 @@ function BrowseOverlayPropertyCard({
                     </OverlayStat>
                 ) : null}
                 {offersBoth(listing) ? (
-                    <OverlayStat label="Rent">{formatRentInr(listing.rentAmountInr ?? 0)}</OverlayStat>
+                    <OverlayStat label="Rent">
+                        {formatRentInr(listing.rentAmountInr ?? 0)}
+                    </OverlayStat>
                 ) : null}
                 <OverlayStat label="Owner">
                     <span className="capitalize">{listing.owner.name}</span>
@@ -1192,11 +1199,7 @@ function PropertyCardPhoto({
             )}
 
             <div className="absolute inset-0 flex items-start justify-between gap-2 p-3">
-                {listing.isNew ? (
-                    <Badge variant="brand">New</Badge>
-                ) : (
-                    <span aria-hidden />
-                )}
+                {listing.isNew ? <Badge variant="brand">New</Badge> : <span aria-hidden />}
 
                 {listing.photoCount > 0 ? (
                     <Badge variant="neutral" className="ms-auto gap-1">
@@ -1414,12 +1417,15 @@ const OWNED_EDIT_TOOLTIP = "Update price, photos, and other listing details";
 const OWNED_OPEN_TOOLTIP = "View this listing's full details";
 const OWNED_ADD_BUYER_LABEL = "Add buyer";
 const OWNED_ADD_BUYER_TOOLTIP = "Pick which buyers you will show this property to";
+const OWNED_DELETE_LABEL = "Delete";
+const OWNED_DELETE_TOOLTIP = "Remove this listing permanently";
 
 function OwnedListingAction({
     href,
     isEdit,
     onEdit,
     onAddBuyer,
+    onDelete,
 }: {
     href: string;
     isEdit: boolean;
@@ -1427,6 +1433,8 @@ function OwnedListingAction({
     onEdit?: () => void;
     /** When set, a second button opens the buyer picker for this listing. */
     onAddBuyer?: () => void;
+    /** When set, shows a delete control; caller owns the confirm dialog. */
+    onDelete?: () => void;
 }) {
     const opensInModal = isEdit && onEdit != null;
 
@@ -1465,7 +1473,7 @@ function OwnedListingAction({
                             <span
                                 className={cn(
                                     "inline-flex",
-                                    onAddBuyer ? "flex-[1.4]" : "inline-full",
+                                    onAddBuyer || onDelete ? "flex-[1.4]" : "inline-full",
                                 )}
                             >
                                 <Button
@@ -1489,6 +1497,35 @@ function OwnedListingAction({
                         {isEdit ? OWNED_EDIT_TOOLTIP : OWNED_OPEN_TOOLTIP}
                     </TooltipContent>
                 </Tooltip>
+
+                {onDelete ? (
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    size="md"
+                                    variant="outline"
+                                    type="button"
+                                    aria-label={OWNED_DELETE_LABEL}
+                                    className="
+                                      shrink-0 border-border-warm text-danger
+                                      hover:bg-danger/10 hover:text-danger
+                                    "
+                                    onClick={onDelete}
+                                >
+                                    <Trash2
+                                        aria-hidden
+                                        className="block-4 inline-4"
+                                        strokeWidth={1.75}
+                                    />
+                                </Button>
+                            }
+                        />
+                        <TooltipContent side="top" className="text-center max-inline-xs">
+                            {OWNED_DELETE_TOOLTIP}
+                        </TooltipContent>
+                    </Tooltip>
+                ) : null}
             </div>
         </TooltipProvider>
     );
@@ -1560,6 +1597,7 @@ function OwnedOverlayPropertyCard({
     editHref,
     onEdit,
     onAddBuyer,
+    onDelete,
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
     const browse = ownedToBrowseListing(listing);
@@ -1667,13 +1705,29 @@ function OwnedOverlayPropertyCard({
                 <Button
                     size="md"
                     variant="accent"
-                    className={onAddBuyer ? "flex-[1.4]" : "inline-full"}
+                    className={onAddBuyer || onDelete ? "flex-[1.4]" : "inline-full"}
                     type={opensInModal ? "button" : undefined}
                     onClick={opensInModal ? onEdit : undefined}
                     render={opensInModal ? undefined : <Link href={editTarget} prefetch={false} />}
                 >
                     {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
                 </Button>
+                {onDelete ? (
+                    <Button
+                        size="md"
+                        variant="outline"
+                        type="button"
+                        aria-label={OWNED_DELETE_LABEL}
+                        title={OWNED_DELETE_TOOLTIP}
+                        className={cn(
+                            "shrink-0 text-danger hover:bg-danger/15 hover:text-danger",
+                            OVERLAY_GLASS_BUTTON_CLASS,
+                        )}
+                        onClick={onDelete}
+                    >
+                        <Trash2 aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                    </Button>
+                ) : null}
             </div>
         </OverlayCard>
     );
@@ -1738,6 +1792,7 @@ function OwnedListPropertyCard({
     editHref,
     onEdit,
     onAddBuyer,
+    onDelete,
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
     const browse = ownedToBrowseListing(listing);
@@ -1847,6 +1902,7 @@ function OwnedListPropertyCard({
                         isEdit={Boolean(editHref)}
                         onEdit={onEdit}
                         onAddBuyer={onAddBuyer}
+                        onDelete={onDelete}
                     />
                 </div>
             </div>

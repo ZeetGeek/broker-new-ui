@@ -93,17 +93,16 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
 
     const handleDelete = useCallback(async () => {
         setBusy(true);
-        const ok = await myListingsApi.remove(item.id);
-        setBusy(false);
-
-        if (!ok) {
-            toast.error("Couldn't remove property");
-            return;
+        try {
+            await myListingsApi.remove(item.id);
+            setDeleteOpen(false);
+            toast.success("Property removed");
+            router.push(BROKER_YOUR_LISTINGS_HREF);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Couldn't remove property");
+        } finally {
+            setBusy(false);
         }
-
-        setDeleteOpen(false);
-        toast.success("Property removed");
-        router.push(BROKER_YOUR_LISTINGS_HREF);
     }, [item.id, router]);
 
     const isLongDescription = item.description.length > 320;
@@ -157,9 +156,7 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
                         </p>
                     </header>
 
-                    <section
-                        className="rounded-card border border-border-warm bg-surface p-5 sm:p-6"
-                    >
+                    <section className="rounded-card border border-border-warm bg-surface p-5 sm:p-6">
                         <PropertyPriceBlock item={item} />
                     </section>
 

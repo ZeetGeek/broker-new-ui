@@ -252,6 +252,9 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         })(),
         description: listing.description?.trim() || "",
         amenities: listing.amenities ?? [],
+        nearbyPlaces: (listing.nearbyPlaces ?? []).filter((place) => Boolean(place?.trim())),
+        videoUrl: listing.videoUrl?.trim() || "",
+        virtualTourUrl: listing.virtualTourUrl?.trim() || "",
         availableFrom: listing.availableFrom ?? null,
         status: mapStatus(listing),
         inboundRequestCount: 0,
@@ -309,6 +312,9 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
             [input.address.trim(), input.description.trim()].filter(Boolean).join("\n\n") ||
             undefined,
         amenities: input.amenities,
+        nearbyPlaces: input.nearbyPlaces?.length ? input.nearbyPlaces : undefined,
+        videoUrl: input.videoUrl.trim() || undefined,
+        virtualTourUrl: input.virtualTourUrl.trim() || undefined,
     };
 }
 
@@ -347,6 +353,9 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.parking != null) payload.parkingSpaces = parkingToSpaces(input.parking);
     if (input.availableFrom !== undefined) payload.availableFrom = input.availableFrom || undefined;
     if (input.amenities != null) payload.amenities = input.amenities;
+    if (input.nearbyPlaces != null) payload.nearbyPlaces = input.nearbyPlaces;
+    if (input.videoUrl != null) payload.videoUrl = input.videoUrl.trim();
+    if (input.virtualTourUrl != null) payload.virtualTourUrl = input.virtualTourUrl.trim();
     if (input.publish != null) {
         payload.publishStatus = input.publish ? "published" : "draft";
     } else if (input.status === "published" || input.status === "draft") {

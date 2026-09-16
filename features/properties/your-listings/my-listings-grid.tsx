@@ -16,6 +16,8 @@ export type MyListingsGridProps = {
     onEditListing?: (listing: MyListingItem) => void;
     /** When set, each card offers "Add buyer" for that listing. */
     onAddBuyer?: (listing: MyListingItem) => void;
+    /** When set, each card offers delete (caller shows confirm). */
+    onDeleteListing?: (listing: MyListingItem) => void;
 };
 
 const GRID_BREAKPOINTS = [
@@ -32,6 +34,7 @@ export function MyListingsGrid({
     view = "grid",
     onEditListing,
     onAddBuyer,
+    onDeleteListing,
 }: MyListingsGridProps) {
     const isListView = view === "list";
 
@@ -55,6 +58,7 @@ export function MyListingsGrid({
                         editHref={brokerPropertyEditHref(item.id)}
                         onEdit={onEditListing ? () => onEditListing(item) : undefined}
                         onAddBuyer={onAddBuyer ? () => onAddBuyer(item) : undefined}
+                        onDelete={onDeleteListing ? () => onDeleteListing(item) : undefined}
                         priority={index === 0}
                         imageSizes={
                             isListView

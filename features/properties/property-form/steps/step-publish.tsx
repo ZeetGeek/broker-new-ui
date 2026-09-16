@@ -88,7 +88,7 @@ export function StepPublish() {
                         Attach owner
                     </>
                 }
-                description="Pick the property owner from your contacts. One owner per listing."
+                description="Optional. Pick the property owner from your contacts. One owner per listing."
                 tone="private"
             >
                 <ContactSearchPanel
@@ -142,7 +142,11 @@ export function StepPublish() {
                                 Clear all
                             </Button>
                         </div>
-                        <div className="flex flex-wrap gap-2" role="list" aria-label="Attached buyers">
+                        <div
+                            className="flex flex-wrap gap-2"
+                            role="list"
+                            aria-label="Attached buyers"
+                        >
                             {attachedBuyers.map((buyer) => (
                                 <Button
                                     key={buyer.id}

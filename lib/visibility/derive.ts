@@ -28,11 +28,13 @@ export function derive(values: PropertyDraftValues) {
     const isUnderConstruction = ["under_construction", "new_launch"].includes(
         values.details.propertyCondition,
     );
+    const isBoth = listingFor === "both";
 
     return {
-        isSell: listingFor === "sell",
+        isBoth,
+        isSell: listingFor === "sell" || isBoth,
         isRentLike: listingFor !== "sell",
-        isRent: listingFor === "rent",
+        isRent: listingFor === "rent" || isBoth,
         isLease: listingFor === "lease",
         isPg: listingFor === "pg",
         isResidential: category === "residential",

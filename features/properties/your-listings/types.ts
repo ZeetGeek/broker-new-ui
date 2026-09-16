@@ -59,6 +59,9 @@ export type MyListingItem = {
     maintenanceInr: number | null;
     description: string;
     amenities: MyListingAmenity[];
+    nearbyPlaces: string[];
+    videoUrl: string;
+    virtualTourUrl: string;
     availableFrom: string | null;
     status: MyListingStatus;
     inboundRequestCount: number;
@@ -161,6 +164,9 @@ export type CreateMyListingInput = {
     availableFrom: string | null;
     description: string;
     amenities: MyListingAmenity[];
+    nearbyPlaces: string[];
+    videoUrl: string;
+    virtualTourUrl: string;
     publish: boolean;
 };
 

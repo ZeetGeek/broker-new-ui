@@ -18,7 +18,10 @@ import {
     propertyTypeToApiFilters,
     urlsToPhotoFiles,
 } from "@/features/properties/your-listings/map-my-listing";
-import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-my-listings";
+import {
+    MOCK_MY_LISTINGS_SEED,
+    applyListingUpdate,
+} from "@/features/properties/your-listings/mock-my-listings";
 import type {
     CreateMyListingInput,
     MyListingItem,
@@ -203,6 +206,9 @@ export const myListingsApi = {
                 maintenanceInr: input.maintenanceInr,
                 description: input.description,
                 amenities: input.amenities,
+                nearbyPlaces: input.nearbyPlaces ?? [],
+                videoUrl: input.videoUrl ?? "",
+                virtualTourUrl: input.virtualTourUrl ?? "",
                 availableFrom: input.availableFrom,
                 status: input.publish ? "published" : "draft",
                 inboundRequestCount: 0,
@@ -291,6 +297,9 @@ export const myListingsApi = {
             availableFrom: owner.availableFrom || null,
             description: owner.notes,
             amenities: owner.amenities,
+            nearbyPlaces: [],
+            videoUrl: "",
+            virtualTourUrl: "",
             publish: false,
         };
 
@@ -341,47 +350,37 @@ export const myListingsApi = {
         if (isMockMode()) {
             const index = mockMyListings.findIndex((item) => item.id === propertyId);
             if (index < 0) return null;
-            const current = mockMyListings[index]!;
-            const next: MyListingItem = {
-                ...current,
-                ...input,
-                imageSrcs: input.imageSrcs ?? current.imageSrcs,
-                imageSrc: (input.imageSrcs ?? current.imageSrcs)[0] ?? current.imageSrc,
-                updatedAt: new Date().toISOString(),
-            };
+            const next = applyListingUpdate(mockMyListings[index]!, input);
             mockMyListings[index] = next;
             return next;
         }
-        try {
-            const existing = await propertiesApi.get(propertyId);
-            const existingPhotos = (existing.photos ?? []).filter(Boolean);
-            const nextPhotos = input.imageSrcs;
 
-            let photos: File[] | undefined;
-            let deletePhotoUrls: string[] | undefined;
+        const existing = await propertiesApi.get(propertyId);
+        const existingPhotos = (existing.photos ?? []).filter(Boolean);
+        const nextPhotos = input.imageSrcs;
 
-            if (nextPhotos) {
-                const keptRemote = nextPhotos.filter((src) => existingPhotos.includes(src));
-                deletePhotoUrls = existingPhotos.filter((src) => !keptRemote.includes(src));
-                photos = input.photoFiles?.length
-                    ? input.photoFiles
-                    : await urlsToPhotoFiles(
-                          nextPhotos.filter(
-                              (src) => !existingPhotos.includes(src) && !src.startsWith("blob:"),
-                          ),
-                      );
-            }
+        let photos: File[] | undefined;
+        let deletePhotoUrls: string[] | undefined;
 
-            const fields = myListingInputToUpdatePayload(input) as UpdatePropertyInput;
-            const updated = await propertiesApi.update(propertyId, {
-                ...fields,
-                ...(photos?.length ? { photos } : {}),
-                ...(deletePhotoUrls?.length ? { deletePhotoUrls } : {}),
-            });
-            return mapPropertyListingToMyItem(updated);
-        } catch {
-            return null;
+        if (nextPhotos) {
+            const keptRemote = nextPhotos.filter((src) => existingPhotos.includes(src));
+            deletePhotoUrls = existingPhotos.filter((src) => !keptRemote.includes(src));
+            photos = input.photoFiles?.length
+                ? input.photoFiles
+                : await urlsToPhotoFiles(
+                      nextPhotos.filter(
+                          (src) => !existingPhotos.includes(src) && !src.startsWith("blob:"),
+                      ),
+                  );
         }
+
+        const fields = myListingInputToUpdatePayload(input) as UpdatePropertyInput;
+        const updated = await propertiesApi.update(propertyId, {
+            ...fields,
+            ...(photos?.length ? { photos } : {}),
+            ...(deletePhotoUrls?.length ? { deletePhotoUrls } : {}),
+        });
+        return mapPropertyListingToMyItem(updated);
     },
 
     async setStatus(propertyId: string, status: MyListingStatus): Promise<MyListingItem | null> {
@@ -397,8 +396,15 @@ export const myListingsApi = {
         }
     },
 
-    async remove(_propertyId: string): Promise<boolean> {
-        // Inventory delete is not exposed by the API yet.
-        return false;
+    async remove(propertyId: string): Promise<void> {
+        if (isMockMode()) {
+            const before = mockMyListings.length;
+            mockMyListings = mockMyListings.filter((item) => item.id !== propertyId);
+            if (mockMyListings.length === before) {
+                throw new Error("Property not found");
+            }
+            return;
+        }
+        await propertiesApi.remove(propertyId);
     },
 };

@@ -75,8 +75,8 @@ export function QuickAdd({
                     <ChoiceField
                         name="basics.listingFor"
                         label="Listing for"
-                        options={LISTING_FOR_OPTIONS.slice(0, 2)}
-                        columns={2}
+                        options={LISTING_FOR_OPTIONS}
+                        columns={3}
                     />
                     <div className={FORM_GRID_CLASS}>
                         <SelectField
@@ -95,11 +95,14 @@ export function QuickAdd({
                             options={BEDROOM_OPTIONS}
                         />
                         <NumberField name="area.carpetArea" label="Area (sq ft)" />
-                        {values.basics.listingFor === "sell" ? (
+                        {values.basics.listingFor === "sell" ||
+                        values.basics.listingFor === "both" ? (
                             <CurrencyField name="sale.expectedPrice" label="Expected price" />
-                        ) : (
+                        ) : null}
+                        {values.basics.listingFor === "rent" ||
+                        values.basics.listingFor === "both" ? (
                             <CurrencyField name="rent.monthlyRent" label="Monthly rent" />
-                        )}
+                        ) : null}
                         <TextField
                             name="owner.phone"
                             label="Owner phone"

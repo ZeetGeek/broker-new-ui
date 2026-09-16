@@ -79,6 +79,9 @@ export type PropertyListing = PropertyBrowseListing & {
     parkingSpaces?: number | null;
     amenities?: string[] | null;
     description?: string | null;
+    nearbyPlaces?: string[] | null;
+    videoUrl?: string | null;
+    virtualTourUrl?: string | null;
     maintenanceCharges?: string | number | null;
     updatedAt?: string | null;
     permissions?: {
@@ -210,6 +213,9 @@ export type CreatePropertyInput = {
     availableFrom?: string;
     description?: string;
     amenities?: string[];
+    nearbyPlaces?: string[];
+    videoUrl?: string;
+    virtualTourUrl?: string;
     photos?: File[];
 };
 
@@ -291,6 +297,16 @@ function appendFormFields(
         if (value === undefined || value === null || value === "") return;
         form.append(key, String(value));
     });
+}
+
+/** Repeated form keys; empty array sends one blank value so the API can clear the field. */
+function appendStringArray(form: FormData, key: string, values: string[] | undefined) {
+    if (values === undefined) return;
+    if (values.length === 0) {
+        form.append(key, "");
+        return;
+    }
+    values.forEach((value) => form.append(key, value));
 }
 
 function mockListingById(id: string): PropertyListing | null {
@@ -423,18 +439,31 @@ export const propertiesApi = {
 
     create(input: CreatePropertyInput) {
         const form = new FormData();
-        const { photos, amenities, ...fields } = input;
+        const { photos, amenities, nearbyPlaces, ...fields } = input;
         appendFormFields(form, fields);
-        (amenities ?? []).forEach((amenity) => form.append("amenities", amenity));
+        appendStringArray(form, "amenities", amenities);
+        appendStringArray(form, "nearbyPlaces", nearbyPlaces);
         (photos ?? []).forEach((file) => form.append("photos", file));
         return apiFetch<PropertyListing>("/properties", { method: "POST", body: form });
     },
 
     update(id: string, input: UpdatePropertyInput) {
         const form = new FormData();
-        const { photos, deletePhotoUrls, amenities, ...fields } = input;
+        const {
+            photos,
+            deletePhotoUrls,
+            amenities,
+            nearbyPlaces,
+            videoUrl,
+            virtualTourUrl,
+            ...fields
+        } = input;
         appendFormFields(form, fields);
-        (amenities ?? []).forEach((amenity) => form.append("amenities", amenity));
+        appendStringArray(form, "amenities", amenities);
+        appendStringArray(form, "nearbyPlaces", nearbyPlaces);
+        // Empty string clears the stored URL; omit when undefined so other fields stay.
+        if (videoUrl !== undefined) form.append("videoUrl", videoUrl);
+        if (virtualTourUrl !== undefined) form.append("virtualTourUrl", virtualTourUrl);
         (deletePhotoUrls ?? []).forEach((url) => form.append("deletePhotoUrls", url));
         (photos ?? []).forEach((file) => form.append("photos", file));
         return apiFetch<PropertyListing>(`/properties/${id}`, { method: "POST", body: form });
@@ -444,6 +473,12 @@ export const propertiesApi = {
         return apiFetch<PropertyListing>(`/properties/${id}/publication`, {
             method: "PATCH",
             body: JSON.stringify({ publishStatus }),
+        });
+    },
+
+    remove(id: string) {
+        return apiFetch<{ id: string; deleted: boolean }>(`/properties/${id}`, {
+            method: "DELETE",
         });
     },
 };
