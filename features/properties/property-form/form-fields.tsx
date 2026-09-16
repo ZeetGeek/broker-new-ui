@@ -70,7 +70,7 @@ function FieldShell({
     const resolvedLabel = labelOf(name, label);
     return (
         <ConditionalField path={name} className={className}>
-            <div className="flex flex-col gap-2 p-1 -m-1 min-inline-0">
+            <div className="-m-1 flex flex-col gap-2 p-1 min-inline-0">
                 <div className="flex items-center justify-between gap-3 min-block-5">
                     <Label
                         id={`${fieldId}-label`}
@@ -95,6 +95,7 @@ export function TextField({
     visibility,
     className,
     onBlur: onInputBlur,
+    onChange: onInputChange,
     endAction,
     ...props
 }: {
@@ -119,6 +120,10 @@ export function TextField({
             className={endAction ? "pe-40 sm:pe-44" : undefined}
             {...registration}
             {...props}
+            onChange={(event) => {
+                void registration.onChange(event);
+                onInputChange?.(event);
+            }}
             onBlur={(event) => {
                 void registration.onBlur(event);
                 onInputBlur?.(event);
@@ -138,8 +143,7 @@ export function TextField({
                     {input}
                     <div
                         className="
-                          absolute inset-e-1.5 top-0 z-10 flex items-center
-                          block-control-xl
+                          absolute inset-e-1.5 inset-bs-0 z-10 flex items-center block-control-xl
                         "
                     >
                         {endAction}
@@ -195,12 +199,13 @@ export function TextAreaField({
                   field-sizing-fixed resize-y rounded-control border-2 border-border-warm bg-surface
                   px-4 py-3 text-[15px]/6 text-ink outline-none min-block-28
                   placeholder:text-ink-subtle
+                  read-only:bg-surface-muted
                   hover:border-ink-subtle
+                  read-only:hover:border-border-warm
                   focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
                   aria-invalid:border-danger-mid
-                  read-only:bg-surface-muted read-only:hover:border-border-warm
                 `,
-                endAction && "pbe-12 pe-4",
+                endAction && "pe-4 pbe-12",
             )}
             {...registration}
             onBlur={(event) => {
@@ -621,7 +626,9 @@ export function ChoiceField({
                                             <span
                                                 className={cn(
                                                     "mbs-0.5 block text-xs/4",
-                                                    active ? "text-brand-text/70" : "text-ink-muted",
+                                                    active
+                                                        ? "text-brand-text/70"
+                                                        : "text-ink-muted",
                                                 )}
                                             >
                                                 {option.description}
@@ -1040,9 +1047,11 @@ export function WizardSection({
         >
             <div className="mbe-4 flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="
+                    <h2
+                        className="
                       flex items-center gap-2.5 text-xl font-bold tracking-[-0.02em] text-ink
-                    ">
+                    "
+                    >
                         {title}
                     </h2>
                     {description ? (

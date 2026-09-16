@@ -33,15 +33,12 @@ const tallCommercialTypes = new Set([
 ]);
 const frontageTypes = new Set(["shop", "showroom", "retail_space", "restaurant_space"]);
 const shopTypes = new Set(["shop", "showroom", "retail_space"]);
-const subtypeTypes = new Set(["apartment", "office_space"]);
 
 export const FIELD_RULES = {
     "basics.listingFor": { level: required },
     "basics.category": { level: required },
     "basics.propertyType": { level: required },
-    "basics.propertySubType": {
-        visible: (_d, v) => subtypeTypes.has(v.basics.propertyType),
-    },
+    "basics.propertySubType": { visible: () => false },
     // Transaction field hidden in the form; keep the rule but never surface it.
     "basics.transactionType": { visible: () => false, level: required },
     "basics.title": { level: required },
@@ -102,8 +99,11 @@ export const FIELD_RULES = {
         level: required,
     },
     "details.propertyCondition": { visible: (d) => !d.isPlot, level: required },
-    "details.coveredParking": { visible: (d) => !d.isPlot },
-    "details.openParking": { visible: (d) => !d.isPlot },
+    "details.coveredParking": {
+        visible: (d) => !d.isPlot,
+        label: () => "No. of parking",
+    },
+    "details.openParking": { visible: () => false },
     "details.electricityLoadKva": {
         visible: (d) => d.isCommercial || d.isIndustrial,
         level: (d) => (d.isIndustrial ? "recommended" : "optional"),
@@ -336,10 +336,17 @@ export const STEP_RULES: Record<PropertyFormStep, (d: DerivedPropertyFlags) => b
 
 export const STEP_FIELD_PATHS: Record<PropertyFormStep, readonly string[]> = {
     basics: Object.keys(FIELD_RULES).filter(
-        (path) => path.startsWith("basics.") || path.startsWith("location."),
+        (path) =>
+            (path.startsWith("basics.") || path.startsWith("location.")) &&
+            path !== "basics.title" &&
+            path !== "basics.description",
     ),
     details: Object.keys(FIELD_RULES).filter(
-        (path) => path.startsWith("details.") || path.startsWith("area."),
+        (path) =>
+            path.startsWith("details.") ||
+            path.startsWith("area.") ||
+            path === "basics.title" ||
+            path === "basics.description",
     ),
     pricing: Object.keys(FIELD_RULES).filter(
         (path) =>

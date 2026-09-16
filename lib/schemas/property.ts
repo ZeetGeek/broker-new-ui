@@ -16,18 +16,34 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 const isPastDate = (value: string) =>
     Boolean(value && (value.length === 7 ? value < todayIso().slice(0, 7) : value < todayIso()));
 
-const basicsSchema = z
+const listingCopySchema = z
+    .object({
+        title: z
+            .string()
+            .trim()
+            .min(1, "Enter a title")
+            .max(120, "Keep the title under 120 characters"),
+        description: z.string().trim().max(3000, "Keep the description under 3,000 characters"),
+    })
+    .superRefine((value, context) => {
+        if (value.description.length > 0 && value.description.length < 50) {
+            context.addIssue({
+                code: "custom",
+                path: ["description"],
+                message: "Write at least 50 characters, or leave this blank",
+            });
+        }
+    });
+
+/** Basics without title/description requirements — those belong on the Property step. */
+const basicsStepSchema = z
     .object({
         listingFor: z.enum(["sell", "rent", "lease", "pg"]),
         category: z.enum(["residential", "commercial", "land", "industrial", "agricultural"]),
         propertyType: z.string().min(1, "Choose a property type"),
         propertySubType: optionalText,
         transactionType: z.enum(["new_booking", "resale"]),
-        title: z
-            .string()
-            .trim()
-            .min(1, "Enter a title")
-            .max(120, "Keep the title under 120 characters"),
+        title: z.string().trim().max(120, "Keep the title under 120 characters"),
         description: z.string().trim().max(3000, "Keep the description under 3,000 characters"),
     })
     .superRefine((value, context) => {
@@ -38,35 +54,44 @@ const basicsSchema = z
                 message: "Choose a type from this category",
             });
         }
-        if (value.description.length > 0 && value.description.length < 50) {
-            context.addIssue({
-                code: "custom",
-                path: ["description"],
-                message: "Write at least 50 characters, or leave this blank",
-            });
-        }
     });
 
-const locationSchema = z
-    .object({
-        country: z.string().min(1),
-        state: z.string().min(1, "Choose a state"),
-        city: z.string().min(1, "Choose a city"),
-        locality: z.string().trim().min(1, "Enter the locality"),
-        subLocality: optionalText,
-        projectOrSociety: optionalText,
-        towerOrBlock: optionalText,
-        unitNumber: optionalText,
-        streetOrRoad: optionalText,
-        pincode: z.string().regex(/^[1-9]\d{5}$/, "Enter a valid 6 digit pincode"),
-        fullAddress: optionalText,
-        landmark: z.string().trim().min(1, "Add a nearby landmark"),
-        nearbyPlaces: stringArray,
-        lat: z.number().finite().min(-90).max(90).nullable(),
-        lng: z.number().finite().min(-180).max(180).nullable(),
-        mapPinPlaced: z.boolean(),
-        mapZoomHint: z.number().min(1).max(22),
-    });
+const basicsSchema = basicsStepSchema.superRefine((value, context) => {
+    if (!value.title.trim()) {
+        context.addIssue({
+            code: "custom",
+            path: ["title"],
+            message: "Enter a title",
+        });
+    }
+    if (value.description.length > 0 && value.description.length < 50) {
+        context.addIssue({
+            code: "custom",
+            path: ["description"],
+            message: "Write at least 50 characters, or leave this blank",
+        });
+    }
+});
+
+const locationSchema = z.object({
+    country: z.string().min(1),
+    state: z.string().min(1, "Choose a state"),
+    city: z.string().min(1, "Choose a city"),
+    locality: z.string().trim().min(1, "Enter the locality"),
+    subLocality: optionalText,
+    projectOrSociety: optionalText,
+    towerOrBlock: optionalText,
+    unitNumber: optionalText,
+    streetOrRoad: optionalText,
+    pincode: z.string().regex(/^[1-9]\d{5}$/, "Enter a valid 6 digit pincode"),
+    fullAddress: optionalText,
+    landmark: z.string().trim().min(1, "Add a nearby landmark"),
+    nearbyPlaces: stringArray,
+    lat: z.number().finite().min(-90).max(90).nullable(),
+    lng: z.number().finite().min(-180).max(180).nullable(),
+    mapPinPlaced: z.boolean(),
+    mapZoomHint: z.number().min(1).max(22),
+});
 // Map pin section is commented out in the form; this check would block submit forever.
 // .superRefine((value, context) => {
 //     if (!value.mapPinPlaced || value.lat == null || value.lng == null) {
@@ -184,22 +209,21 @@ const chargeSchema = z.object({
     paidBy: z.enum(["owner", "buyer"]),
 });
 
-const saleSchema = z
-    .object({
-        expectedPrice: z
-            .number()
-            .finite()
-            .positive("Enter a valid price")
-            .max(100_000_000_000, "Enter a valid price")
-            .nullable(),
-        pricePerSqft: optionalNumber,
-        maintenanceCharge: optionalNumber,
-        maintenanceFrequency: z.string(),
-        parkingCharge: optionalNumber,
-        plcCharge: optionalNumber,
-        floorRiseCharge: optionalNumber,
-        otherCharges: z.array(chargeSchema),
-    });
+const saleSchema = z.object({
+    expectedPrice: z
+        .number()
+        .finite()
+        .positive("Enter a valid price")
+        .max(100_000_000_000, "Enter a valid price")
+        .nullable(),
+    pricePerSqft: optionalNumber,
+    maintenanceCharge: optionalNumber,
+    maintenanceFrequency: z.string(),
+    parkingCharge: optionalNumber,
+    plcCharge: optionalNumber,
+    floorRiseCharge: optionalNumber,
+    otherCharges: z.array(chargeSchema),
+});
 
 const rentSchema = z
     .object({
@@ -424,8 +448,12 @@ const publishSchema = z.object({
 });
 
 export const stepSchemas = {
-    basics: z.object({ basics: basicsSchema, location: locationSchema }),
-    details: z.object({ details: detailsSchema, area: areaSchema }),
+    basics: z.object({ basics: basicsStepSchema, location: locationSchema }),
+    details: z.object({
+        basics: listingCopySchema,
+        details: detailsSchema,
+        area: areaSchema,
+    }),
     pricing: z
         .object({
             basics: z.object({ listingFor: z.enum(["sell", "rent", "lease", "pg"]) }),
@@ -555,7 +583,7 @@ export type Property = PropertyDraftValues & {
 
 export const STEP_ROOT_FIELDS: Record<PropertyFormStep, (keyof PropertyDraftValues)[]> = {
     basics: ["basics", "location"],
-    details: ["details", "area"],
+    details: ["basics", "details", "area"],
     pricing: ["sale", "rent", "commission", "deal"],
     furnishing: ["furnishing", "amenities", "highlights", "construction"],
     media: ["media", "documents", "owner", "attachedBuyers", "publish"],

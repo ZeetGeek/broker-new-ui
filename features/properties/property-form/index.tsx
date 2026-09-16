@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, RotateCcw, X } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
+import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import { useListingScore } from "@/lib/hooks/use-listing-score";
 import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import {
@@ -28,7 +29,7 @@ import {
 } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { isStepVisible as ruleStepIsVisible, stripHidden } from "@/lib/visibility/rules";
-import { FieldRulesProvider, useFieldRules } from "@/lib/visibility/use-field-rules";
+import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -89,7 +90,10 @@ const LEGACY_STEP_MAP: Record<string, PropertyFormStep> = {
 
 function resolveDraftStep(step: string | undefined): PropertyFormStep | null {
     if (!step) return null;
-    return LEGACY_STEP_MAP[step] ?? (FORM_STEPS.some((item) => item.id === step) ? (step as PropertyFormStep) : null);
+    return (
+        LEGACY_STEP_MAP[step] ??
+        (FORM_STEPS.some((item) => item.id === step) ? (step as PropertyFormStep) : null)
+    );
 }
 
 export type PropertyFormProps = {
@@ -651,12 +655,11 @@ export function PropertyForm({
                                 </div>
                                 <main
                                     className="
-                                      overflow-y-auto bg-surface px-5 py-6 min-block-0
-                                      min-inline-0
+                                      overflow-y-auto bg-surface px-5 py-6 min-block-0 min-inline-0
                                       sm:px-6
                                     "
                                 >
-                                    <div className="p-1 -m-1 pbe-8">
+                                    <div className="-m-1 p-1 pbe-8">
                                         <h1 className="sr-only">{activeSteps[stepIndex]?.label}</h1>
                                         {formBanner ? (
                                             <div
@@ -685,7 +688,7 @@ export function PropertyForm({
                                       xl:block
                                     "
                                 >
-                                    <div className="flex flex-col gap-4 p-1 -m-1">
+                                    <div className="-m-1 flex flex-col gap-4 p-1">
                                         <LiveSummaryPanel
                                             values={values}
                                             stepIndex={stepIndex}
@@ -736,7 +739,11 @@ export function PropertyForm({
                                                             "
                                                         >
                                                             <span>{tip.label}</span>
-                                                            <span className="tabular text-brand-text">
+                                                            <span
+                                                                className="
+                                                              tabular text-brand-text
+                                                            "
+                                                            >
                                                                 +{tip.points}
                                                             </span>
                                                         </Button>
@@ -764,7 +771,7 @@ export function PropertyForm({
                               sm:px-6
                             "
                         >
-                            <div className="p-1 -m-1">
+                            <div className="-m-1 p-1">
                                 {formBanner ? (
                                     <div
                                         role="alert"
@@ -1033,11 +1040,7 @@ function PropertyFormFooter({
                               **:data-[slot=progress-track]:block-1.5
                             "
                         >
-                            <ProgressLabel
-                                className="
-                          body-xs tabular shrink-0 font-medium text-ink-subtle
-                        "
-                            >
+                            <ProgressLabel className="body-xs tabular shrink-0 font-medium text-ink-subtle">
                                 {stepIndex + 1} of {stepCount}
                             </ProgressLabel>
                         </Progress>
@@ -1135,9 +1138,7 @@ function StepTransition({ step, children }: { step: PropertyFormStep; children: 
         const frame = requestAnimationFrame(() => setShown(true));
         return () => cancelAnimationFrame(frame);
     }, [step]);
-    return (
-        <div className={cn("t-auth-enter p-1 -m-1", shown && "is-shown")}>{children}</div>
-    );
+    return <div className={cn("t-auth-enter -m-1 p-1", shown && "is-shown")}>{children}</div>;
 }
 
 function MobileListingScore({
@@ -1441,16 +1442,24 @@ function draftToLegacyInput(
         .slice(0, 10);
     const listingFor = values.basics.listingFor;
     const transactionType = listingFor === "sell" ? "sale" : "rent";
-    const generatedTitle = [
-        bhk ? `${bhk} BHK` : null,
-        toLabel(values.basics.propertyType),
-        transactionType === "sale" ? "for Sale" : "for Rent",
-        values.location.locality ? `in ${values.location.locality}, ${values.location.city}` : null,
-    ]
-        .filter(Boolean)
-        .join(" ");
+    const generatedTitle =
+        buildBasicsSuggestedTitle({
+            bedrooms: values.details.bedrooms,
+            propertyType: values.basics.propertyType,
+            locality: values.location.locality,
+            city: values.location.city,
+        }) ||
+        [
+            bhk ? `${bhk} BHK` : null,
+            toLabel(values.basics.propertyType),
+            values.location.locality
+                ? `in ${values.location.locality}, ${values.location.city}`
+                : null,
+        ]
+            .filter(Boolean)
+            .join(" ");
     const amenities = Object.values(values.amenities).flat();
-    const parking = (values.details.coveredParking ?? 0) + (values.details.openParking ?? 0);
+    const parking = values.details.coveredParking ?? 0;
     return {
         transactionType,
         category: values.basics.category === "agricultural" ? "land" : values.basics.category,

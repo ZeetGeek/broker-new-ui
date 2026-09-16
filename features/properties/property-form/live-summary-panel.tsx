@@ -18,10 +18,9 @@ import {
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
 import { formatInr, formatInrCompact } from "@/lib/format/inr";
-import { buildPropertyTitle } from "@/lib/format/property-title";
+import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
-import { type PropertyType } from "@/lib/validation/property";
 
 import { AppImage } from "@/components/shared/app-image";
 import { Badge } from "@/components/ui/badge";
@@ -39,20 +38,14 @@ function resolveDeposit(values: PropertyDraftValues): number {
 function draftTitle(values: PropertyDraftValues): string {
     const custom = values.basics.title?.trim();
     if (custom) return custom;
-    const propertyType = (values.basics.propertyType || "apartment") as PropertyType;
-    const bedrooms = Number(values.details.bedrooms);
-    const bhk = Number.isFinite(bedrooms) ? bedrooms : 0;
-    if (!values.location.locality && !values.location.city) return "Untitled property";
-    try {
-        return buildPropertyTitle({
-            bhk,
-            propertyType,
+    return (
+        buildBasicsSuggestedTitle({
+            bedrooms: values.details.bedrooms,
+            propertyType: values.basics.propertyType,
             locality: values.location.locality,
             city: values.location.city,
-        });
-    } catch {
-        return "Untitled property";
-    }
+        }) || "Untitled property"
+    );
 }
 
 function bedsLabel(values: PropertyDraftValues): string {
@@ -209,20 +202,24 @@ export function LiveSummaryPanel({
             >
                 <div className="flex flex-col gap-4 p-4">
                     <div className="flex items-center gap-2 text-ink">
-                        <Eye className="block-4 inline-4 text-ink-muted" aria-hidden />
+                        <Eye className="text-ink-muted block-4 inline-4" aria-hidden />
                         <p className="text-sm font-bold">Listing preview</p>
                     </div>
 
-                    <div className="relative overflow-hidden rounded-inner bg-surface-muted aspect-16/10">
+                    <div
+                        className="
+                      relative aspect-16/10 overflow-hidden rounded-inner bg-surface-muted
+                    "
+                    >
                         {cover ? (
-                            <AppImage
-                                src={cover.url}
-                                alt={cover.alt || title}
-                                fill
-                                sizes="320px"
-                            />
+                            <AppImage src={cover.url} alt={cover.alt || title} fill sizes="320px" />
                         ) : (
-                            <div className="flex flex-col items-center justify-center gap-3 px-5 py-6 text-center block-full">
+                            <div
+                                className="
+                              flex flex-col items-center justify-center gap-3 px-5 py-6 text-center
+                              block-full
+                            "
+                            >
                                 <ImageIcon
                                     className="text-ink-subtle block-7 inline-7"
                                     strokeWidth={1.5}
@@ -250,7 +247,7 @@ export function LiveSummaryPanel({
 
                     <div className="flex flex-col gap-2.5">
                         <div className="flex items-start justify-between gap-3">
-                            <p className="min-inline-0 line-clamp-2 text-base/6 font-bold text-ink">
+                            <p className="line-clamp-2 text-base/6 font-bold text-ink min-inline-0">
                                 {title}
                             </p>
                             <Badge
@@ -281,15 +278,15 @@ export function LiveSummaryPanel({
                       py-3.5 text-xs font-medium text-ink-muted
                     "
                 >
-                    <span className="inline-flex min-inline-0 items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1.5 min-inline-0">
                         <BedDouble className="shrink-0 block-3.5 inline-3.5" aria-hidden />
                         <span className="truncate">{bedsLabel(values)}</span>
                     </span>
-                    <span className="inline-flex min-inline-0 items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1.5 min-inline-0">
                         <Bath className="shrink-0 block-3.5 inline-3.5" aria-hidden />
                         <span className="truncate">{bathsLabel(values)}</span>
                     </span>
-                    <span className="inline-flex min-inline-0 items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1.5 min-inline-0">
                         <Scaling className="shrink-0 block-3.5 inline-3.5" aria-hidden />
                         <span className="truncate">{areaLabel(values)}</span>
                     </span>
@@ -308,7 +305,11 @@ export function LiveSummaryPanel({
                                     Broker income · updates as you type
                                 </p>
                             </div>
-                            <span className="inline-flex shrink-0 items-center gap-1 text-xs text-surface/60">
+                            <span
+                                className="
+                              inline-flex shrink-0 items-center gap-1 text-xs text-surface/60
+                            "
+                            >
                                 <LockKeyhole className="block-3.5 inline-3.5" aria-hidden />
                                 Private
                             </span>
@@ -372,8 +373,8 @@ export function LiveSummaryPanel({
                             variant="ghost"
                             onClick={() => void copySummary()}
                             className="
-                              flex inline-full items-center justify-center gap-2 text-xs
-                              font-semibold text-surface min-block-11
+                              flex items-center justify-center gap-2 text-xs font-semibold
+                              text-surface inline-full min-block-11
                               hover:bg-surface/10 hover:text-surface
                               focus-visible:ring-2 focus-visible:ring-highlight
                             "

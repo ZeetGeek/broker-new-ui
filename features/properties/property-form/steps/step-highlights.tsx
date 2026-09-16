@@ -22,10 +22,7 @@ import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
 
-import {
-    PAYMENT_PLAN_OPTIONS,
-    POSSESSION_TYPE_OPTIONS,
-} from "@/constants/property";
+import { PAYMENT_PLAN_OPTIONS, POSSESSION_TYPE_OPTIONS } from "@/constants/property";
 import {
     ChoiceField,
     FORM_GRID_CLASS,
@@ -98,7 +95,7 @@ export function StepHighlights() {
 
     const fromListing = useMemo(() => {
         const items: string[] = [];
-        if (values.details.coveredParking) items.push("Covered parking");
+        if (values.details.coveredParking) items.push("Parking");
         if (values.location.landmark?.trim()) {
             items.push(`Near ${values.location.landmark.trim()}`.slice(0, 40));
         }
@@ -486,8 +483,7 @@ export function StepHighlights() {
             </WizardSection>
             */}
 
-            {isVisible("construction.possessionType") ||
-            isVisible("construction.builderName") ? (
+            {isVisible("construction.possessionType") || isVisible("construction.builderName") ? (
                 <WizardSection
                     title={
                         <>
