@@ -377,29 +377,8 @@ export const contactsApi = {
         signal?: AbortSignal,
     ): Promise<InfinitePage<BuyerRow>> {
         const page = cursor ? Number(cursor) || 1 : 1;
-        if (!isMockMode()) {
-            const params = new URLSearchParams({
-                page: String(page),
-                limit: "20",
-                sort: filters.sort,
-            });
-            if (filters.q.trim()) params.set("search", filters.q.trim());
-            try {
-                const result = await apiFetch<ApiBuyersResponse>(`/contacts/buyers?${params}`, {
-                    signal,
-                });
-                return {
-                    items: (result.items ?? []).map(apiBuyerToRow),
-                    total: result.total ?? 0,
-                    nextCursor:
-                        (result.page ?? page) < (result.totalPages ?? 1)
-                            ? String((result.page ?? page) + 1)
-                            : null,
-                };
-            } catch {
-                // The legacy clients endpoint remains the rollout fallback.
-            }
-        }
+        // Buyers are broker Client contacts — `GET /clients` (with lead summary).
+        // There is no `/contacts/buyers` route on the API.
         const result = await listClientsPageWithLeadSummary({
             search: filters.q,
             sort: filters.sort,
@@ -553,20 +532,24 @@ export const contactsApi = {
             });
             return saved.id;
         }
-        const response = await apiFetch<ApiBuyerItem | { data?: ApiBuyerItem } | undefined>(`/contacts/buyers${buyerId ? `/${buyerId}` : ""}`, {
-            method: buyerId ? "PATCH" : "POST",
-            body: JSON.stringify({
-                ...values,
-                phone: normalizeIndianPhone(values.phone),
-                whatsapp: values.whatsappSame
-                    ? normalizeIndianPhone(values.phone)
-                    : normalizeIndianPhone(values.whatsapp),
-                budgetMin: legacy.budgetMinInr,
-                budgetMax: legacy.budgetMaxInr,
-            }),
-        });
+        const response = await apiFetch<ApiBuyerItem | { data?: ApiBuyerItem } | undefined>(
+            `/contacts/buyers${buyerId ? `/${buyerId}` : ""}`,
+            {
+                method: buyerId ? "PATCH" : "POST",
+                body: JSON.stringify({
+                    ...values,
+                    phone: normalizeIndianPhone(values.phone),
+                    whatsapp: values.whatsappSame
+                        ? normalizeIndianPhone(values.phone)
+                        : normalizeIndianPhone(values.whatsapp),
+                    budgetMin: legacy.budgetMinInr,
+                    budgetMax: legacy.budgetMaxInr,
+                }),
+            },
+        );
         if (!response) return buyerId;
-        const item = "data" in response && response.data ? response.data : response as ApiBuyerItem;
+        const item =
+            "data" in response && response.data ? response.data : (response as ApiBuyerItem);
         return item.id ?? buyerId;
     },
 
