@@ -65,7 +65,9 @@ function summarizePool(items: OwnerListingsResult["items"]): OwnerListingsPoolSu
     return {
         slotsOpenCount: items.filter((item) => item.brokerSlotsOpen > 0).length,
         newTodayCount: items.filter((item) => item.isNew).length,
-        commissionSetCount: items.filter((item) => item.commissionPercent > 0).length,
+        commissionSetCount: items.filter(
+            (item) => item.commissionPercent > 0 || item.commissionAmount > 0,
+        ).length,
         readyToMoveCount: items.filter((item) => item.readyToMove).length,
     };
 }

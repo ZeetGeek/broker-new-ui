@@ -38,6 +38,7 @@ type MockOwnerListingSeed = Omit<
     | "brokerSlotsTotal"
     | "brokerSlotsOpen"
     | "commissionPercent"
+    | "commissionAmount"
     | "ownerName"
     | "ownerAvatarUrl"
     | "ownerLocationLabel"
@@ -461,6 +462,7 @@ export const MOCK_OWNER_LISTINGS: OwnerListingItem[] = ENTRIES.map((entry, index
         brokerSlotsTotal: 3,
         brokerSlotsOpen: Math.max(0, 3 - entry.brokerRequestCount),
         commissionPercent: index % 4 === 0 ? 0 : index % 3 === 0 ? 2.5 : 2,
+        commissionAmount: index % 5 === 0 ? 25_000 : index % 4 === 0 ? 0 : 15_000,
         ownerName: OWNER_NAMES[index % OWNER_NAMES.length]!,
         ownerUserId: `owner-user-${(index % OWNER_NAMES.length) + 1}`,
         ownerLocationLabel: OWNER_LOCATIONS[index % OWNER_LOCATIONS.length]!,

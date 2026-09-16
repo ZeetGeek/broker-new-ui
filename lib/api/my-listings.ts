@@ -204,6 +204,10 @@ export const myListingsApi = {
                 facing: input.facing,
                 parking: input.parking,
                 maintenanceInr: input.maintenanceInr,
+                commissionPercent: input.commissionPercent ?? null,
+                commissionAmount: input.commissionAmount ?? null,
+                securityDeposit: input.securityDeposit ?? null,
+                securityDepositMode: input.securityDepositMode ?? null,
                 description: input.description,
                 amenities: input.amenities,
                 nearbyPlaces: input.nearbyPlaces ?? [],
@@ -300,6 +304,10 @@ export const myListingsApi = {
             nearbyPlaces: [],
             videoUrl: "",
             virtualTourUrl: "",
+            securityDeposit: moneyToRupees(owner.deposit) || null,
+            securityDepositMode: moneyToRupees(owner.deposit) ? "amount" : null,
+            commissionPercent: null,
+            commissionAmount: null,
             publish: false,
         };
 

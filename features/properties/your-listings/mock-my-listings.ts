@@ -89,6 +89,10 @@ export function listingFromCreateInput(
         facing: input.facing,
         parking: input.parking,
         maintenanceInr: input.maintenanceInr,
+        commissionPercent: input.commissionPercent ?? null,
+        commissionAmount: input.commissionAmount ?? null,
+        securityDeposit: input.securityDeposit ?? null,
+        securityDepositMode: input.securityDepositMode ?? null,
         description: input.description,
         amenities: input.amenities,
         nearbyPlaces: input.nearbyPlaces ?? [],
@@ -145,6 +149,12 @@ export function applyListingUpdate(
     if (input.facing !== undefined) next.facing = input.facing;
     if (input.parking != null) next.parking = input.parking;
     if (input.maintenanceInr !== undefined) next.maintenanceInr = input.maintenanceInr;
+    if (input.commissionPercent !== undefined) next.commissionPercent = input.commissionPercent;
+    if (input.commissionAmount !== undefined) next.commissionAmount = input.commissionAmount;
+    if (input.securityDeposit !== undefined) next.securityDeposit = input.securityDeposit;
+    if (input.securityDepositMode !== undefined) {
+        next.securityDepositMode = input.securityDepositMode;
+    }
     if (input.availableFrom !== undefined) next.availableFrom = input.availableFrom;
     if (input.description != null) next.description = input.description;
     if (input.amenities != null) next.amenities = input.amenities;
@@ -189,6 +199,10 @@ type SeedDraft = Omit<
     | "facing"
     | "parking"
     | "maintenanceInr"
+    | "commissionPercent"
+    | "commissionAmount"
+    | "securityDeposit"
+    | "securityDepositMode"
     | "nearbyPlaces"
     | "videoUrl"
     | "virtualTourUrl"
@@ -201,6 +215,10 @@ type SeedDraft = Omit<
     facing?: MyListingItem["facing"];
     parking?: MyListingParking;
     maintenanceInr?: number | null;
+    commissionPercent?: number | null;
+    commissionAmount?: number | null;
+    securityDeposit?: number | null;
+    securityDepositMode?: MyListingItem["securityDepositMode"];
     nearbyPlaces?: string[];
     videoUrl?: string;
     virtualTourUrl?: string;
@@ -217,6 +235,10 @@ function hydrateSeed(item: SeedDraft): MyListingItem {
         totalFloors: item.totalFloors ?? null,
         facing: item.facing ?? null,
         maintenanceInr: item.maintenanceInr ?? null,
+        commissionPercent: item.commissionPercent ?? null,
+        commissionAmount: item.commissionAmount ?? null,
+        securityDeposit: item.securityDeposit ?? null,
+        securityDepositMode: item.securityDepositMode ?? null,
         nearbyPlaces: item.nearbyPlaces ?? [],
         videoUrl: item.videoUrl ?? "",
         virtualTourUrl: item.virtualTourUrl ?? "",

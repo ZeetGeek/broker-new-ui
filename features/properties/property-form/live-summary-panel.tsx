@@ -117,7 +117,7 @@ export function LiveSummaryPanel({
             lockInMonths: values.rent.lockInMonths ?? 0,
             agreementMonths: values.rent.agreementDurationMonths ?? 11,
             escalationPercent: values.rent.rentEscalationPercent ?? 0,
-            mode: values.commission.rent.mode,
+            mode: "flat",
             value: values.commission.rent.value,
             paidBy: "owner",
             ownerSharePercent: 100,
@@ -212,7 +212,16 @@ export function LiveSummaryPanel({
                     "
                     >
                         {cover ? (
-                            <AppImage src={cover.url} alt={cover.alt || title} fill sizes="320px" />
+                            <AppImage
+                                src={cover.url}
+                                alt={cover.alt || title}
+                                fill
+                                sizes="320px"
+                                unoptimized={
+                                    cover.url.startsWith("http://") ||
+                                    cover.url.startsWith("https://")
+                                }
+                            />
                         ) : (
                             <div
                                 className="

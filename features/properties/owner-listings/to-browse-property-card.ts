@@ -31,6 +31,7 @@ export function toBrowsePropertyCardListing(item: OwnerListingItem): BrowsePrope
         brokerSlotsOpen: item.brokerSlotsOpen,
         brokerSlotsTotal: item.brokerSlotsTotal,
         commissionPercent: item.commissionPercent,
+        commissionAmount: item.commissionAmount,
         hasRequested: item.hasRequested,
         isRepresenting: item.isRepresenting,
         isInvitePending: item.isInvitePending,

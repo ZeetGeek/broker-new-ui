@@ -56,7 +56,6 @@ import { StepBasics } from "@/features/properties/property-form/steps/step-basic
 import { StepCommission } from "@/features/properties/property-form/steps/step-commission";
 import { StepDetails } from "@/features/properties/property-form/steps/step-details";
 import { StepFurnishing } from "@/features/properties/property-form/steps/step-furnishing";
-import { StepHighlights } from "@/features/properties/property-form/steps/step-highlights";
 import { StepLocation } from "@/features/properties/property-form/steps/step-location";
 import { StepMedia } from "@/features/properties/property-form/steps/step-media";
 import { StepPricing } from "@/features/properties/property-form/steps/step-pricing";
@@ -72,7 +71,7 @@ import type {
 // v4: commission is owner-paid only; paidBy/mode are now fixed literals.
 // v5: construction stage/progress/slabs and the RERA + handover dates were removed.
 // v6: the availability block (visit days, times, key holder, caretaker) was removed.
-const LOCAL_DRAFT_VERSION = 8;
+const LOCAL_DRAFT_VERSION = 9;
 
 /** Map old 10-step draft UI ids onto the merged 5-step wizard. */
 const LEGACY_STEP_MAP: Record<string, PropertyFormStep> = {
@@ -134,11 +133,11 @@ export function PropertyForm({
     const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
     const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [networkSavedAt, setNetworkSavedAt] = useState<Date | null>(null);
+    const [savingIntent, setSavingIntent] = useState<"draft" | "publish" | null>(null);
     const photoFilesRef = useRef<Map<string, File>>(new Map());
     const autosaveReadyRef = useRef(false);
     const recoveryCheckedRef = useRef(false);
-    const networkSaveBusyRef = useRef(false);
+    const persistInFlightRef = useRef(false);
     const localStorageKey = `property-draft:v${LOCAL_DRAFT_VERSION}:${propertyId ?? "new"}`;
 
     const defaultValues = useMemo(
@@ -300,29 +299,6 @@ export function PropertyForm({
         };
     }, [formIsActive, methods, mode, writeLocalDraft]);
 
-    const syncLegacyProjection = useCallback(async () => {
-        if (!formIsActive || mode !== "edit" || !propertyId || networkSaveBusyRef.current) return;
-        networkSaveBusyRef.current = true;
-        try {
-            const current = methods.getValues();
-            const updated = await myListingsApi.update(propertyId, {
-                ...draftToLegacyInput(current, photoFilesRef),
-                status: current.publish.status === "active" ? "published" : "draft",
-            });
-            if (updated) setNetworkSavedAt(new Date());
-        } catch {
-            // The device copy remains the source of truth until a later sync succeeds.
-        } finally {
-            networkSaveBusyRef.current = false;
-        }
-    }, [formIsActive, methods, mode, propertyId]);
-
-    useEffect(() => {
-        if (!formIsActive || mode !== "edit" || !propertyId) return;
-        const interval = window.setInterval(() => void syncLegacyProjection(), 10_000);
-        return () => window.clearInterval(interval);
-    }, [formIsActive, mode, propertyId, syncLegacyProjection]);
-
     useEffect(() => {
         function onKeyDown(event: KeyboardEvent) {
             if (isDialog && !open) return;
@@ -427,7 +403,6 @@ export function PropertyForm({
         setMobileScoreOpen(false);
         setStep(next);
         saveSilent();
-        void syncLegacyProjection();
     }
 
     function goBack() {
@@ -447,7 +422,6 @@ export function PropertyForm({
         setMobileSummaryOpen(false);
         setMobileScoreOpen(false);
         saveSilent();
-        void syncLegacyProjection();
     }
 
     function saveSilent() {
@@ -459,16 +433,25 @@ export function PropertyForm({
         }
     }
 
-    async function persistProperty(forceDraft = false) {
+    async function persistProperty(intent: "draft" | "publish") {
+        if (persistInFlightRef.current) return;
+        persistInFlightRef.current = true;
         setFormBanner(null);
-        const current = methods.getValues();
-        if (!forceDraft && current.publish.status === "active") {
+        const forceDraft = intent === "draft";
+        const publishStatus = forceDraft ? "draft" : "active";
+        methods.setValue("publish.status", publishStatus, { shouldDirty: true });
+        const current: PropertyDraftValues = {
+            ...methods.getValues(),
+            publish: { ...methods.getValues().publish, status: publishStatus },
+        };
+        if (!forceDraft) {
             const required = activeSteps.map((item) => item.id);
             for (const requiredStep of required) {
                 if (!validateStep(requiredStep)) {
                     const problemIndex = FORM_STEPS.findIndex((item) => item.id === requiredStep);
                     setHighestUnlocked((value) => Math.max(value, problemIndex));
                     setStep(requiredStep);
+                    persistInFlightRef.current = false;
                     return;
                 }
             }
@@ -477,31 +460,34 @@ export function PropertyForm({
             const quickProblem = validateQuickDraft(current);
             if (quickProblem) {
                 setFormBanner(quickProblem);
+                persistInFlightRef.current = false;
                 return;
             }
         }
 
-        const input = draftToLegacyInput(stripHidden(current), photoFilesRef);
+        // Intent wins over draftToLegacyInput: stripHidden removes publish.status, which
+        // would otherwise always serialize as publish: false on edit updates.
+        const input = {
+            ...draftToLegacyInput(stripHidden(current), photoFilesRef),
+            publish: !forceDraft,
+        };
         setSaving(true);
+        setSavingIntent(intent);
         try {
             if (mode === "edit" && propertyId) {
                 const updated = await myListingsApi.update(propertyId, {
                     ...input,
-                    status:
-                        forceDraft || current.publish.status !== "active" ? "draft" : "published",
+                    status: forceDraft ? "draft" : "published",
                 });
                 if (!updated) {
                     setFormBanner("Couldn't find that property.");
                     return;
                 }
-                finishSave(updated, forceDraft || current.publish.status !== "active");
+                finishSave(updated, forceDraft);
                 return;
             }
-            const created = await myListingsApi.create({
-                ...input,
-                publish: !forceDraft && current.publish.status === "active",
-            });
-            finishSave(created, forceDraft || current.publish.status !== "active");
+            const created = await myListingsApi.create(input);
+            finishSave(created, forceDraft);
         } catch (error) {
             setFormBanner(
                 error instanceof Error
@@ -509,7 +495,9 @@ export function PropertyForm({
                     : "Couldn't save to the current API. Your complete draft is still saved on this device.",
             );
         } finally {
+            persistInFlightRef.current = false;
             setSaving(false);
+            setSavingIntent(null);
         }
     }
 
@@ -517,11 +505,24 @@ export function PropertyForm({
         // Stop autosave so it cannot rewrite the local draft after we clear it.
         autosaveReadyRef.current = false;
         try {
+            const stored = draftForStorage(methods.getValues());
+            if (listing.imageSrcs.length > 0) {
+                stored.media.photos = listing.imageSrcs.map((url, index) => ({
+                    id: `existing-${index}`,
+                    url,
+                    name: `Property photo ${index + 1}`,
+                    tag: "other",
+                    isCover: index === 0,
+                    order: index,
+                    alt: listing.title,
+                    status: "ready" as const,
+                }));
+            }
             window.localStorage.setItem(
                 `property-extra:v${LOCAL_DRAFT_VERSION}:${listing.id}`,
                 JSON.stringify({
                     savedAt: new Date().toISOString(),
-                    values: draftForStorage(methods.getValues()),
+                    values: stored,
                 }),
             );
         } catch {
@@ -552,10 +553,10 @@ export function PropertyForm({
     function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (entryMode === "quick") {
-            void persistProperty(true);
+            void persistProperty("draft");
             return;
         }
-        if (isLastStep) void persistProperty(false);
+        if (isLastStep) void persistProperty("publish");
         else goNext();
     }
 
@@ -574,13 +575,11 @@ export function PropertyForm({
         event.preventDefault();
         if (!event.ctrlKey && !event.metaKey) return;
         if (entryMode === "quick") {
-            methods.setValue("publish.status", "draft", { shouldDirty: true });
-            void persistProperty(true);
+            void persistProperty("draft");
             return;
         }
         if (isLastStep) {
-            methods.setValue("publish.status", "active", { shouldDirty: true });
-            void persistProperty(false);
+            void persistProperty("publish");
             return;
         }
         goNext();
@@ -621,15 +620,13 @@ export function PropertyForm({
                         mode={mode}
                         entryMode={entryMode}
                         onEntryModeChange={setEntryMode}
-                        isSaved={Boolean(savedAt || networkSavedAt)}
-                        isSubmitting={saving}
+                        isSaved={Boolean(savedAt)}
+                        savingIntent={savingIntent}
                         onSaveDraft={() => {
-                            methods.setValue("publish.status", "draft", { shouldDirty: true });
-                            void persistProperty(true);
+                            void persistProperty("draft");
                         }}
                         onPublish={() => {
-                            methods.setValue("publish.status", "active", { shouldDirty: true });
-                            void persistProperty(false);
+                            void persistProperty("publish");
                         }}
                         onClose={requestClose}
                         showClose={isDialog}
@@ -832,8 +829,7 @@ export function PropertyForm({
                         onBack={goBack}
                         onNext={() => {
                             if (entryMode === "quick") {
-                                methods.setValue("publish.status", "draft", { shouldDirty: true });
-                                void persistProperty(true);
+                                void persistProperty("draft");
                                 return;
                             }
                             goNext();
@@ -902,7 +898,7 @@ function PropertyFormHeader({
     entryMode,
     onEntryModeChange,
     isSaved,
-    isSubmitting,
+    savingIntent,
     onSaveDraft,
     onPublish,
     onClose,
@@ -912,13 +908,14 @@ function PropertyFormHeader({
     entryMode: "full" | "quick";
     onEntryModeChange: (mode: "full" | "quick") => void;
     isSaved: boolean;
-    isSubmitting: boolean;
+    savingIntent: "draft" | "publish" | null;
     onSaveDraft: () => void;
     onPublish: () => void;
     onClose: () => void;
     showClose: boolean;
 }) {
     const title = mode === "edit" ? "Edit property" : "Add property";
+    const isBusy = savingIntent != null;
     const savedHint = isSaved ? (
         <span className="body-xs hidden text-ink-subtle sm:inline" aria-live="polite">
             Saved on this device
@@ -964,9 +961,13 @@ function PropertyFormHeader({
                     <Button
                         type="button"
                         variant="outline"
-                        loading={isSubmitting}
-                        disabled={isSubmitting}
-                        onClick={onSaveDraft}
+                        loading={savingIntent === "draft"}
+                        disabled={isBusy}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onSaveDraft();
+                        }}
                         className="hidden sm:inline-flex"
                     >
                         Save as draft
@@ -974,9 +975,13 @@ function PropertyFormHeader({
                     <Button
                         type="button"
                         variant="accent"
-                        loading={isSubmitting}
-                        disabled={isSubmitting}
-                        onClick={onPublish}
+                        loading={savingIntent === "publish"}
+                        disabled={isBusy}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onPublish();
+                        }}
                     >
                         Publish
                     </Button>
@@ -1150,12 +1155,7 @@ function StepContent({
         );
     }
     if (step === "furnishing") {
-        return (
-            <div className="flex flex-col gap-8">
-                <StepFurnishing />
-                <StepHighlights />
-            </div>
-        );
+        return <StepFurnishing />;
     }
     return (
         <div className="flex flex-col gap-8">
@@ -1352,8 +1352,21 @@ function mergeDraft(
     merged.media.photos = (merged.media.photos ?? []).filter(
         (photo) => Boolean(photo.url) && !photo.url.startsWith("blob:"),
     );
+    // Local extras often strip blob previews after upload, leaving photos: [].
+    // Never let that wipe server photos already on the listing.
+    const basePhotos = (base.media?.photos ?? []).filter(
+        (photo) => Boolean(photo.url) && !photo.url.startsWith("blob:"),
+    );
+    if (merged.media.photos.length === 0 && basePhotos.length > 0) {
+        merged.media.photos = basePhotos;
+    }
     merged.attachedBuyers = Array.isArray(merged.attachedBuyers) ? merged.attachedBuyers : [];
     if (!merged.owner.contactId) merged.owner.contactId = "";
+    // Legacy drafts may still store removed commission pickers ("months", etc.).
+    merged.commission.sale.mode = "percent";
+    merged.commission.sale.paidBy = "owner";
+    merged.commission.rent.mode = "flat";
+    merged.commission.rent.paidBy = "owner";
     return merged;
 }
 
@@ -1400,6 +1413,11 @@ function listingToDraft(listing: MyListingItem): PropertyDraftValues {
     draft.rent.monthlyRent = listing.rentAmountInr;
     draft.sale.maintenanceCharge = listing.maintenanceInr;
     draft.rent.maintenanceAmount = listing.maintenanceInr;
+    draft.rent.securityDeposit = listing.securityDeposit;
+    draft.rent.securityDepositMode = listing.securityDepositMode ?? "months_of_rent";
+    draft.commission.sale.value = listing.commissionPercent ?? draft.commission.sale.value;
+    draft.commission.rent.mode = "flat";
+    draft.commission.rent.value = listing.commissionAmount ?? 0;
     draft.rent.availableFrom = listing.availableFrom ?? "";
     draft.furnishing.status =
         listing.furnishing === "furnished"
@@ -1544,6 +1562,22 @@ function draftToLegacyInput(
         availableFrom:
             transactionType === "rent" || transactionType === "both"
                 ? values.rent.availableFrom || null
+                : null,
+        securityDeposit:
+            transactionType === "rent" || transactionType === "both"
+                ? values.rent.securityDeposit
+                : null,
+        securityDepositMode:
+            transactionType === "rent" || transactionType === "both"
+                ? values.rent.securityDepositMode
+                : null,
+        commissionPercent:
+            transactionType === "sale" || transactionType === "both"
+                ? values.commission.sale.value
+                : null,
+        commissionAmount:
+            transactionType === "rent" || transactionType === "both"
+                ? values.commission.rent.value
                 : null,
         description: values.basics.description,
         amenities,

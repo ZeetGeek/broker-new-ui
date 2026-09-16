@@ -273,7 +273,8 @@ export function filterOwnerListings(
         if (filters.propertyType && item.propertyTypeLabel !== filters.propertyType) return false;
         if (filters.newToday && !item.isNew) return false;
         if (filters.slotsOpen && item.brokerSlotsOpen <= 0) return false;
-        if (filters.commissionSet && item.commissionPercent <= 0) return false;
+        if (filters.commissionSet && item.commissionPercent <= 0 && item.commissionAmount <= 0)
+            return false;
         if (filters.readyToMove && !item.readyToMove) return false;
 
         const minArea = filters.minAreaSqft ? Number(filters.minAreaSqft) : null;

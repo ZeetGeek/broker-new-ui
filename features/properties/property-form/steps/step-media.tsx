@@ -592,6 +592,9 @@ function PhotoAttachment({
                         height={88}
                         className="size-full object-cover"
                         sizes="44px"
+                        unoptimized={
+                            photo.url.startsWith("http://") || photo.url.startsWith("https://")
+                        }
                     />
                 ) : (
                     <CircleAlert className="text-danger block-5 inline-5" aria-hidden />
@@ -601,9 +604,7 @@ function PhotoAttachment({
                 <AttachmentTitle className="text-sm [&.shimmer]:animate-none">
                     {photo.name}
                 </AttachmentTitle>
-                <AttachmentDescription>
-                    {photoStatusLabel(photo, badge)}
-                </AttachmentDescription>
+                <AttachmentDescription>{photoStatusLabel(photo, badge)}</AttachmentDescription>
             </AttachmentContent>
             <AttachmentActions className="gap-0.5">
                 {photo.status === "error" ? (

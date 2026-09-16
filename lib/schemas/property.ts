@@ -238,7 +238,15 @@ const rentSchema = z
         waterCharges: optionalText,
         lockInMonths: optionalNumber,
         noticePeriodMonths: optionalNumber,
-        agreementDurationMonths: optionalNumber,
+        // Hidden from the form; still accept legacy draft strings from the old select.
+        agreementDurationMonths: z
+            .union([z.number(), z.string(), z.null()])
+            .optional()
+            .transform((value) => {
+                if (value == null || value === "") return null;
+                const parsed = typeof value === "number" ? value : Number(value);
+                return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+            }),
         rentEscalationPercent: optionalNumber,
         availableFrom: optionalText,
         preferredTenant: stringArray,
@@ -288,7 +296,8 @@ const paymentMilestoneSchema = z.object({
 
 const commissionSchema = z.object({
     sale: z.object({
-        mode: z.literal("percent"),
+        // Picker removed — always percent; coerce legacy draft values.
+        mode: z.preprocess(() => "percent" as const, z.literal("percent")),
         value: z.number().min(0).max(1_000_000_000),
         paidBy: z.literal("owner"),
         ownerSharePercent: z.number().min(0).max(100),
@@ -300,7 +309,8 @@ const commissionSchema = z.object({
         paymentMilestones: z.array(paymentMilestoneSchema),
     }),
     rent: z.object({
-        mode: z.literal("months"),
+        // Picker removed — always flat INR; coerce legacy "months" drafts.
+        mode: z.preprocess(() => "flat" as const, z.literal("flat")),
         value: z.number().min(0).max(1_000_000_000),
         paidBy: z.literal("owner"),
         ownerSharePercent: z.number().min(0).max(100),
@@ -464,17 +474,6 @@ export const stepSchemas = {
             deal: dealSchema,
         })
         .superRefine((value, context) => {
-            if (
-                value.rent.lockInMonths != null &&
-                value.rent.agreementDurationMonths != null &&
-                value.rent.lockInMonths > value.rent.agreementDurationMonths
-            ) {
-                context.addIssue({
-                    code: "custom",
-                    path: ["rent", "lockInMonths"],
-                    message: "Lock-in cannot be longer than the agreement",
-                });
-            }
             if (value.basics.listingFor === "sell" || value.basics.listingFor === "both") {
                 const sale = value.commission.sale;
                 if (
@@ -490,11 +489,11 @@ export const stepSchemas = {
             }
             if (value.basics.listingFor !== "sell") {
                 const rent = value.commission.rent;
-                if (rent.mode === "months" && rent.value > 24) {
+                if (rent.value != null && rent.value < 0) {
                     context.addIssue({
                         code: "custom",
                         path: ["commission", "rent", "value"],
-                        message: "Brokerage months must be between 0 and 24",
+                        message: "Commission amount cannot be negative",
                     });
                 }
             }
@@ -739,8 +738,8 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
             })),
         },
         rent: {
-            mode: "months",
-            value: 1,
+            mode: "flat",
+            value: 0,
             paidBy: "owner",
             ownerSharePercent: 100,
             renewalFeeApplicable: false,

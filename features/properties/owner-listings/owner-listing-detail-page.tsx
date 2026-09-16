@@ -16,6 +16,7 @@ import {
     representativeApi,
 } from "@/lib/api/representative";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatPriceInr } from "@/lib/format/price";
 import { BROKER_MY_DEALS_HREF, BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
@@ -48,6 +49,7 @@ type OwnerListingDetail = {
     ownerPhoneDigits?: string;
     representation: RepresentationStanding | null;
     commissionPercent: number | null;
+    commissionAmount: number | null;
 };
 
 function digitsOnly(value: string | null | undefined): string {
@@ -224,9 +226,7 @@ function OwnerListingActionRail({
                               hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
                             "
                         >
-                            {inviteActionPending === "cancel"
-                                ? "Cancelling…"
-                                : "Cancel invitation"}
+                            {inviteActionPending === "cancel" ? "Cancelling…" : "Cancel invitation"}
                         </Button>
                     </div>
                 ) : pending ? (
@@ -260,10 +260,21 @@ function OwnerListingActionRail({
 
             {detail.commissionPercent != null && detail.commissionPercent > 0 ? (
                 <div className="rounded-card border border-border-warm bg-surface p-5">
-                    <p className="eyebrow">Commission</p>
+                    <p className="eyebrow">Sale commission</p>
                     <p className="h5 tabular mbs-1 text-ink">{detail.commissionPercent}%</p>
                     <p className="body-sm mbs-1 text-ink-muted">
                         Shared by the owner for this listing.
+                    </p>
+                </div>
+            ) : null}
+            {detail.commissionAmount != null && detail.commissionAmount > 0 ? (
+                <div className="rounded-card border border-border-warm bg-surface p-5">
+                    <p className="eyebrow">Rent commission</p>
+                    <p className="h5 tabular mbs-1 text-ink">
+                        {formatPriceInr(detail.commissionAmount)}
+                    </p>
+                    <p className="body-sm mbs-1 text-ink-muted">
+                        Fixed brokerage shared by the owner.
                     </p>
                 </div>
             ) : null}
@@ -596,9 +607,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                               hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
                             "
                         >
-                            {inviteActionPending === "cancel"
-                                ? "Cancelling…"
-                                : "Cancel invitation"}
+                            {inviteActionPending === "cancel" ? "Cancelling…" : "Cancel invitation"}
                         </Button>
                     </>
                 ) : detail.representation?.status === "pending" &&
@@ -665,6 +674,7 @@ export function OwnerListingDetailPage() {
                 if (cancelled) return;
                 const listing = mapPropertyListingToMyItem(raw);
                 const commissionRaw = Number(raw.commissionPercent);
+                const commissionAmountRaw = Number(raw.commissionAmount);
                 setDetail({
                     listing,
                     ownerName: raw.ownerName?.trim() || raw.organizationName?.trim() || "Owner",
@@ -679,6 +689,10 @@ export function OwnerListingDetailPage() {
                         : null,
                     commissionPercent:
                         Number.isFinite(commissionRaw) && commissionRaw > 0 ? commissionRaw : null,
+                    commissionAmount:
+                        Number.isFinite(commissionAmountRaw) && commissionAmountRaw > 0
+                            ? commissionAmountRaw
+                            : null,
                 });
             })
             .catch(() => {

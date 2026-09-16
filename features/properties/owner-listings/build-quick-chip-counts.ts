@@ -18,7 +18,9 @@ export function buildQuickChipCounts(
                       .length,
         newToday: items.filter((item) => item.isNew).length,
         slotsOpen: items.filter((item) => item.brokerSlotsOpen > 0).length,
-        commissionSet: items.filter((item) => item.commissionPercent > 0).length,
+        commissionSet: items.filter(
+            (item) => item.commissionPercent > 0 || item.commissionAmount > 0,
+        ).length,
         readyToMove: items.filter((item) => item.readyToMove).length,
     };
 }

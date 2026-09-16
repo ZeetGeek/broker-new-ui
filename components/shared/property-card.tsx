@@ -357,6 +357,8 @@ export type BrowsePropertyCardListing = PropertyCardBase & {
     brokerSlotsOpen: number;
     brokerSlotsTotal: number;
     commissionPercent: number;
+    /** Fixed rent brokerage in INR. 0 when unset. */
+    commissionAmount: number;
     hasRequested: boolean;
     isRepresenting?: boolean;
     isInvitePending?: boolean;
@@ -783,10 +785,15 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
 
     const baseAmountInr =
         activeMode === "rent" ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0);
-    const commissionInr = Math.round((baseAmountInr * listing.commissionPercent) / 100);
+    const rentCommissionInr = listing.commissionAmount > 0 ? listing.commissionAmount : 0;
+    const saleCommissionInr =
+        listing.commissionPercent > 0
+            ? Math.round((baseAmountInr * listing.commissionPercent) / 100)
+            : 0;
+    const commissionInr = activeMode === "rent" ? rentCommissionInr : saleCommissionInr;
     const commissionLabel =
         activeMode === "rent" ? formatRentInr(commissionInr) : formatPriceInr(commissionInr);
-    const hasCommission = listing.commissionPercent > 0 && baseAmountInr > 0;
+    const hasCommission = commissionInr > 0 && (activeMode === "rent" || baseAmountInr > 0);
 
     const commissionBadge = (
         <span
@@ -795,7 +802,9 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                 hasCommission && "cursor-help underline decoration-brand/30 underline-offset-2",
             )}
         >
-            ({listing.commissionPercent}%)
+            {activeMode === "rent"
+                ? formatPriceInr(rentCommissionInr)
+                : `(${listing.commissionPercent}%)`}
         </span>
     );
 
@@ -813,7 +822,11 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                                 <button
                                     type="button"
                                     className="inline-flex border-0 bg-transparent p-0"
-                                    aria-label={`${listing.commissionPercent}% commission`}
+                                    aria-label={
+                                        activeMode === "rent"
+                                            ? `Commission ${formatPriceInr(rentCommissionInr)}`
+                                            : `${listing.commissionPercent}% commission`
+                                    }
                                 >
                                     {commissionBadge}
                                 </button>
@@ -822,7 +835,9 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                         <TooltipContent side="top" className="text-center max-inline-xs">
                             <p className="font-semibold tabular-nums">You get {commissionLabel}</p>
                             <p className="body-xs mbs-0.5 opacity-90">
-                                {listing.commissionPercent}% of {priceLabel}
+                                {activeMode === "rent"
+                                    ? "Fixed rent brokerage"
+                                    : `${listing.commissionPercent}% of ${priceLabel}`}
                             </p>
                         </TooltipContent>
                     </Tooltip>
@@ -850,11 +865,17 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
 function BrowseOverlayCommission({ listing }: { listing: BrowsePropertyCardListing }) {
     const isRentOnly = offersRent(listing) && !offersSale(listing);
     const baseAmountInr = isRentOnly ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0);
-    const commissionInr = Math.round((baseAmountInr * listing.commissionPercent) / 100);
-    const commissionLabel = isRentOnly
-        ? formatRentInr(commissionInr)
-        : formatPriceInr(commissionInr);
+    const rentCommissionInr = listing.commissionAmount > 0 ? listing.commissionAmount : 0;
+    const saleCommissionInr =
+        listing.commissionPercent > 0
+            ? Math.round((baseAmountInr * listing.commissionPercent) / 100)
+            : 0;
+    const commissionInr = isRentOnly ? rentCommissionInr : saleCommissionInr;
+    const commissionLabel = formatPriceInr(commissionInr);
     const baseLabel = isRentOnly ? formatRentInr(baseAmountInr) : formatPriceInr(baseAmountInr);
+    const badgeText = isRentOnly
+        ? formatPriceInr(rentCommissionInr)
+        : `${listing.commissionPercent}%`;
 
     return (
         <Tooltip>
@@ -867,16 +888,22 @@ function BrowseOverlayCommission({ listing }: { listing: BrowsePropertyCardListi
                           cursor-help border-0 bg-transparent p-0 text-start text-inherit underline
                           decoration-surface/30 underline-offset-2
                         "
-                        aria-label={`${listing.commissionPercent}% commission`}
+                        aria-label={
+                            isRentOnly
+                                ? `Commission ${formatPriceInr(rentCommissionInr)}`
+                                : `${listing.commissionPercent}% commission`
+                        }
                     />
                 }
             >
-                {listing.commissionPercent}%
+                {badgeText}
             </TooltipTrigger>
             <TooltipContent side="top" className="text-center max-inline-xs">
                 <p className="font-semibold tabular-nums">You get {commissionLabel}</p>
                 <p className="body-xs mbs-0.5 opacity-90">
-                    {listing.commissionPercent}% of {baseLabel}
+                    {isRentOnly
+                        ? "Fixed rent brokerage"
+                        : `${listing.commissionPercent}% of ${baseLabel}`}
                 </p>
             </TooltipContent>
         </Tooltip>
@@ -905,8 +932,10 @@ function BrowseOverlayPropertyCard({
         ? formatRentInr(listing.rentAmountInr ?? 0)
         : formatPriceInr(listing.saleAmountInr ?? 0);
     const hasCommission =
-        listing.commissionPercent > 0 &&
-        (isRentOnly ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0)) > 0;
+        (isRentOnly ? listing.commissionAmount > 0 : listing.commissionPercent > 0) &&
+        (isRentOnly
+            ? (listing.rentAmountInr ?? 0) > 0 || listing.commissionAmount > 0
+            : (listing.saleAmountInr ?? 0) > 0);
     const specsLabel = [formatBrowseCardArea(listing.areaSqft), listing.configLabel]
         .filter(Boolean)
         .join(" · ");
@@ -1557,6 +1586,7 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
         brokerSlotsOpen: 0,
         brokerSlotsTotal: 0,
         commissionPercent: 0,
+        commissionAmount: 0,
         hasRequested: false,
         saleAmountInr: listing.saleAmountInr,
         rentAmountInr: listing.rentAmountInr,

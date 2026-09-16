@@ -4,23 +4,17 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 
 import {
-    BadgePercent,
     BedDouble,
     CalendarCheck,
     CalendarClock,
     CircleDollarSign,
     Clock3,
-    Droplets,
-    FileText,
     HandCoins,
-    LockKeyhole,
     Receipt,
-    Repeat,
     Ruler,
     Shield,
     Users,
     Utensils,
-    Zap,
 } from "lucide-react";
 
 import { areaToSqft } from "@/lib/calc/area";
@@ -32,17 +26,10 @@ import { useFieldRules } from "@/lib/visibility/use-field-rules";
 import { Button } from "@/components/ui/button";
 
 import {
-    AGREEMENT_DURATION_OPTIONS,
-    CURRENT_STATUS_OPTIONS,
-    ELECTRICITY_BILLING_OPTIONS,
     HOUSEKEEPING_OPTIONS,
-    MAINTENANCE_FREQUENCY_OPTIONS,
-    MAINTENANCE_MODE_OPTIONS,
     PG_BED_TYPE_OPTIONS,
     PG_GENDER_OPTIONS,
-    PREFERRED_TENANT_OPTIONS,
     SECURITY_DEPOSIT_MODE_OPTIONS,
-    WATER_CHARGE_OPTIONS,
 } from "@/constants/property";
 import {
     ChoiceField,
@@ -50,7 +37,6 @@ import {
     FORM_GRID_CLASS,
     FORM_SECTIONS_CLASS,
     FORM_STACK_CLASS,
-    MultiChipField,
     NumberField,
     SelectField,
     TextField,
@@ -62,6 +48,91 @@ const SELL_EXTRA_CHARGES = [
     ["sale.plcCharge", "Preferred location charge"],
     ["sale.floorRiseCharge", "Floor-rise charge"],
 ] as const;
+
+function RentAndDepositSection({
+    isPg,
+    depositMode,
+    monthlyRent,
+    securityDeposit,
+    onAvailableImmediately,
+}: {
+    isPg: boolean;
+    depositMode: PropertyDraftValues["rent"]["securityDepositMode"];
+    monthlyRent: number | null;
+    securityDeposit: number | null;
+    onAvailableImmediately: () => void;
+}) {
+    return (
+        <WizardSection
+            title={
+                <>
+                    <HandCoins
+                        className="shrink-0 text-brand block-5 inline-5"
+                        strokeWidth={1.75}
+                        aria-hidden
+                    />
+                    {isPg ? "PG rent" : "Rent and deposit"}
+                </>
+            }
+            description="Record the full move-in amount, not only the monthly rent."
+        >
+            <div className={FORM_STACK_CLASS}>
+                <div className={FORM_GRID_CLASS}>
+                    <CurrencyField
+                        name="rent.monthlyRent"
+                        label="Monthly rent"
+                        placeholder="e.g. 25,000"
+                    />
+                    <ChoiceField
+                        name="rent.securityDepositMode"
+                        label="Deposit mode"
+                        options={SECURITY_DEPOSIT_MODE_OPTIONS}
+                        columns={2}
+                        className="md:col-span-2"
+                    />
+                    {depositMode === "months_of_rent" ? (
+                        <NumberField
+                            name="rent.securityDeposit"
+                            label="Deposit (months of rent)"
+                            max={24}
+                            step={0.5}
+                            placeholder="e.g. 2"
+                            startIcon={Shield}
+                            hint={
+                                monthlyRent
+                                    ? `${formatInr((securityDeposit ?? 0) * monthlyRent)} deposit`
+                                    : undefined
+                            }
+                        />
+                    ) : (
+                        <CurrencyField
+                            name="rent.securityDeposit"
+                            label="Security deposit"
+                            placeholder="e.g. 50,000"
+                        />
+                    )}
+                    <TextField
+                        name="rent.availableFrom"
+                        label="Available from"
+                        type="date"
+                        min={new Date().toISOString().slice(0, 10)}
+                        startIcon={CalendarClock}
+                    />
+                </div>
+                <div className="flex justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={onAvailableImmediately}
+                    >
+                        <CalendarCheck aria-hidden /> Available immediately
+                    </Button>
+                </div>
+            </div>
+        </WizardSection>
+    );
+}
 
 function rateFromPrice(expectedPrice: number, areaSqft: number): number {
     if (areaSqft <= 0) return 0;
@@ -141,10 +212,7 @@ export function StepPricing() {
     const brokerReal = saleDeal?.brokerRealIncome ?? 0;
     const coBrokerShare = (brokerReal * coBrokerPercent) / 100;
     const brokerNet = Math.max(0, brokerReal - coBrokerShare);
-    const brokerBank = Math.max(
-        0,
-        (saleDeal?.brokerReceives ?? 0) * (1 - coBrokerPercent / 100),
-    );
+    const brokerBank = Math.max(0, (saleDeal?.brokerReceives ?? 0) * (1 - coBrokerPercent / 100));
 
     // Keep normalised sq ft in sync even if user left the area step earlier.
     useEffect(() => {
@@ -295,9 +363,9 @@ export function StepPricing() {
                     </div>
                 </WizardSection>
 
-                {(isVisible("sale.maintenanceCharge") ||
-                    isVisible("sale.plcCharge") ||
-                    isVisible("sale.floorRiseCharge")) ? (
+                {isVisible("sale.maintenanceCharge") ||
+                isVisible("sale.plcCharge") ||
+                isVisible("sale.floorRiseCharge") ? (
                     <WizardSection
                         title={
                             <>
@@ -330,242 +398,59 @@ export function StepPricing() {
                         </div>
                     </WizardSection>
                 ) : null}
+
+                {derived.isRentLike ? (
+                    <RentAndDepositSection
+                        isPg={derived.isPg}
+                        depositMode={values.rent.securityDepositMode}
+                        monthlyRent={values.rent.monthlyRent}
+                        securityDeposit={values.rent.securityDeposit}
+                        onAvailableImmediately={() =>
+                            setValue("rent.availableFrom", new Date().toISOString().slice(0, 10), {
+                                shouldDirty: true,
+                            })
+                        }
+                    />
+                ) : null}
             </div>
         );
     }
 
     return (
         <div className={FORM_SECTIONS_CLASS}>
-            <WizardSection
-                title={
-                    <>
-                        <HandCoins
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        {derived.isPg ? "PG rent" : "Rent and deposit"}
-                    </>
+            <RentAndDepositSection
+                isPg={derived.isPg}
+                depositMode={values.rent.securityDepositMode}
+                monthlyRent={values.rent.monthlyRent}
+                securityDeposit={values.rent.securityDeposit}
+                onAvailableImmediately={() =>
+                    setValue("rent.availableFrom", new Date().toISOString().slice(0, 10), {
+                        shouldDirty: true,
+                    })
                 }
-                description="Record the full move-in amount, not only the monthly rent."
-            >
-                <div className={FORM_STACK_CLASS}>
-                    <div className={FORM_GRID_CLASS}>
-                        <CurrencyField
-                            name="rent.monthlyRent"
-                            label="Monthly rent"
-                            placeholder="e.g. 25,000"
-                        />
-                        <CurrencyField
-                            name="rent.ownerMinimumRent"
-                            label="Owner's minimum rent"
-                            placeholder="e.g. 22,000"
-                            visibility="private"
-                        />
-                        <ChoiceField
-                            name="rent.securityDepositMode"
-                            label="Deposit mode"
-                            options={SECURITY_DEPOSIT_MODE_OPTIONS}
-                            columns={2}
-                            className="md:col-span-2"
-                        />
-                        {values.rent.securityDepositMode === "months_of_rent" ? (
-                            <NumberField
-                                name="rent.securityDeposit"
-                                label="Deposit (months of rent)"
-                                max={24}
-                                step={0.5}
-                                placeholder="e.g. 2"
-                                startIcon={Shield}
-                                hint={
-                                    values.rent.monthlyRent
-                                        ? `${formatInr((values.rent.securityDeposit ?? 0) * values.rent.monthlyRent)} deposit`
-                                        : undefined
-                                }
-                            />
-                        ) : (
-                            <CurrencyField
-                                name="rent.securityDeposit"
-                                label="Security deposit"
-                                placeholder="e.g. 50,000"
-                            />
-                        )}
-                        <TextField
-                            name="rent.availableFrom"
-                            label="Available from"
-                            type="date"
-                            min={new Date().toISOString().slice(0, 10)}
-                            startIcon={CalendarClock}
-                        />
-                    </div>
-                    <div className="flex justify-end">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                                setValue(
-                                    "rent.availableFrom",
-                                    new Date().toISOString().slice(0, 10),
-                                    { shouldDirty: true },
-                                )
-                            }
-                        >
-                            <CalendarCheck aria-hidden /> Available immediately
-                        </Button>
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <ToggleField name="rent.rentNegotiable" label="Rent negotiable" />
-                        <SelectField
-                            name="rent.currentStatus"
-                            label="Current status"
-                            options={CURRENT_STATUS_OPTIONS}
-                            placeholder="Select status"
-                            startIcon={FileText}
-                        />
-                    </div>
-                    {isVisible("rent.tenantVacatingOn") ? (
-                        <TextField
-                            name="rent.tenantVacatingOn"
-                            label="Tenant vacating on"
-                            type="date"
-                            visibility="private"
-                            startIcon={CalendarClock}
-                            className="max-inline-sm"
-                        />
-                    ) : null}
-                </div>
-            </WizardSection>
+            />
 
-            <WizardSection
-                title={
-                    <>
-                        <Receipt
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Monthly charges
-                    </>
-                }
-                description="Make recurring costs clear before the first visit."
-            >
-                <div className={FORM_STACK_CLASS}>
-                    <ChoiceField
-                        name="rent.maintenanceMode"
-                        label="Maintenance"
-                        options={MAINTENANCE_MODE_OPTIONS}
-                        columns={2}
+            {isVisible("rent.maintenanceAmount") ? (
+                <WizardSection
+                    title={
+                        <>
+                            <Receipt
+                                className="shrink-0 text-brand block-5 inline-5"
+                                strokeWidth={1.75}
+                                aria-hidden
+                            />
+                            Charges
+                        </>
+                    }
+                    description="Add the monthly society charge a tenant should know about."
+                >
+                    <CurrencyField
+                        name="rent.maintenanceAmount"
+                        label="Monthly maintenance"
+                        placeholder="e.g. 3,000"
+                        helperText="Type 3000 or 3,000 — monthly society charge"
+                        className="max-inline-sm"
                     />
-                    {isVisible("rent.maintenanceAmount") ? (
-                        <div className={FORM_GRID_CLASS}>
-                            <CurrencyField
-                                name="rent.maintenanceAmount"
-                                label="Maintenance amount"
-                                placeholder="e.g. 3,000"
-                                helperText="Type 3000 or 3,000 — monthly society charge"
-                            />
-                            <SelectField
-                                name="rent.maintenanceFrequency"
-                                label="Frequency"
-                                options={MAINTENANCE_FREQUENCY_OPTIONS}
-                                placeholder="Select frequency"
-                                startIcon={Repeat}
-                            />
-                        </div>
-                    ) : null}
-                    <div className={FORM_GRID_CLASS}>
-                        <SelectField
-                            name="rent.electricityBilling"
-                            label="Electricity billing"
-                            options={ELECTRICITY_BILLING_OPTIONS}
-                            placeholder="Select billing"
-                            startIcon={Zap}
-                        />
-                        <SelectField
-                            name="rent.waterCharges"
-                            label="Water charges"
-                            options={WATER_CHARGE_OPTIONS}
-                            placeholder="Select water charges"
-                            startIcon={Droplets}
-                        />
-                    </div>
-                </div>
-            </WizardSection>
-
-            {derived.isRent || derived.isLease ? (
-                <WizardSection
-                    title={
-                        <>
-                            <FileText
-                                className="shrink-0 text-brand block-5 inline-5"
-                                strokeWidth={1.75}
-                                aria-hidden
-                            />
-                            Agreement terms
-                        </>
-                    }
-                    description="Capture the dates and clauses that affect the tenancy."
-                >
-                    <div className={FORM_GRID_CLASS}>
-                        <NumberField
-                            name="rent.lockInMonths"
-                            label="Lock-in (months)"
-                            placeholder="e.g. 6"
-                            startIcon={LockKeyhole}
-                        />
-                        <NumberField
-                            name="rent.noticePeriodMonths"
-                            label="Notice period (months)"
-                            placeholder="e.g. 1"
-                            startIcon={CalendarClock}
-                        />
-                        <SelectField
-                            name="rent.agreementDurationMonths"
-                            label="Agreement duration"
-                            options={AGREEMENT_DURATION_OPTIONS}
-                            placeholder="Select duration"
-                            startIcon={FileText}
-                        />
-                        <NumberField
-                            name="rent.rentEscalationPercent"
-                            label="Yearly rent increase (%)"
-                            max={100}
-                            step={0.1}
-                            placeholder="e.g. 5"
-                            startIcon={BadgePercent}
-                        />
-                    </div>
-                </WizardSection>
-            ) : null}
-
-            {isVisible("rent.preferredTenant") ? (
-                <WizardSection
-                    title={
-                        <>
-                            <Users
-                                className="shrink-0 text-brand block-5 inline-5"
-                                strokeWidth={1.75}
-                                aria-hidden
-                            />
-                            Tenant preference
-                        </>
-                    }
-                    description="Plain restrictions prevent avoidable calls and visits."
-                >
-                    <div className={FORM_STACK_CLASS}>
-                        <MultiChipField
-                            name="rent.preferredTenant"
-                            label="Preferred tenant"
-                            options={PREFERRED_TENANT_OPTIONS}
-                        />
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <ToggleField name="rent.nonVegAllowed" label="Non-veg allowed" />
-                            <ToggleField name="rent.petsAllowed" label="Pets allowed" />
-                            <ToggleField name="rent.smokingAllowed" label="Smoking allowed" />
-                            <ToggleField name="rent.partyAllowed" label="Parties allowed" />
-                        </div>
-                    </div>
                 </WizardSection>
             ) : null}
 

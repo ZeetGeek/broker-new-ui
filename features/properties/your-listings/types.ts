@@ -2,6 +2,8 @@ export type MyListingStatus = "draft" | "published" | "unpublished";
 
 export type MyListingFurnishing = "furnished" | "semi" | "unfurnished";
 
+export type MyListingSecurityDepositMode = "amount" | "months_of_rent";
+
 export type MyListingSort = "newest" | "price_asc" | "price_desc";
 
 export type MyListingTransactionType = "sale" | "rent" | "both";
@@ -57,6 +59,13 @@ export type MyListingItem = {
     facing: MyListingFacing | null;
     parking: MyListingParking;
     maintenanceInr: number | null;
+    /** Sale commission percent (null when unset / rent-only). */
+    commissionPercent: number | null;
+    /** Rent commission fixed INR amount (null when unset / sale-only). */
+    commissionAmount: number | null;
+    /** Deposit value: INR when mode is amount, months when months_of_rent. */
+    securityDeposit: number | null;
+    securityDepositMode: MyListingSecurityDepositMode | null;
     description: string;
     amenities: MyListingAmenity[];
     nearbyPlaces: string[];
@@ -161,6 +170,10 @@ export type CreateMyListingInput = {
     facing: MyListingFacing | null;
     parking: MyListingParking;
     maintenanceInr: number | null;
+    commissionPercent: number | null;
+    commissionAmount: number | null;
+    securityDeposit: number | null;
+    securityDepositMode: MyListingSecurityDepositMode | null;
     availableFrom: string | null;
     description: string;
     amenities: MyListingAmenity[];

@@ -33,6 +33,8 @@ export type OwnerListingItem = {
     brokerSlotsTotal: number;
     brokerSlotsOpen: number;
     commissionPercent: number;
+    /** Fixed rent brokerage in INR. 0 when unset. */
+    commissionAmount: number;
     ownerName: string;
     ownerAvatarUrl?: string;
     /** `users.id` for the listing owner — used to open their profile. */

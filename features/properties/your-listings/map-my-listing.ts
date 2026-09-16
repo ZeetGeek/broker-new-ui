@@ -203,13 +203,27 @@ export function propertyTypeToApiFilters(propertyType: MyListingPropertyType | "
     return {};
 }
 
+export function listingPhotoUrls(photos: unknown): string[] {
+    if (!Array.isArray(photos)) return [];
+    return photos
+        .map((item) => {
+            if (typeof item === "string") return item.trim();
+            if (item && typeof item === "object" && "url" in item) {
+                const url = (item as { url?: unknown }).url;
+                return typeof url === "string" ? url.trim() : "";
+            }
+            return "";
+        })
+        .filter(Boolean);
+}
+
 export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingItem {
     const propertyType = mapPropertyType(listing);
     const category = categoryForPropertyType(propertyType as PropertyType);
     const bhk = mapBhk(listing);
     const { saleAmountInr, rentAmountInr } = mapPricing(listing);
     const furnishing = mapFurnishing(listing.furnishingStatus);
-    const photos = (listing.photos ?? []).filter((src): src is string => Boolean(src?.trim()));
+    const photos = listingPhotoUrls(listing.photos);
     const locality = listing.address?.trim() || listing.city?.trim() || "Locality";
     const city = listing.city?.trim() || "City";
     const listedAt = listing.publishedAt ?? listing.createdAt;
@@ -250,6 +264,23 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
             const raw = toNumber(listing.maintenanceCharges);
             return raw > 0 ? raw : null;
         })(),
+        commissionPercent: (() => {
+            const raw = toNumber(listing.commissionPercent);
+            return raw > 0 ? raw : null;
+        })(),
+        commissionAmount: (() => {
+            const raw = toNumber(listing.commissionAmount);
+            return raw > 0 ? raw : null;
+        })(),
+        securityDeposit: (() => {
+            const raw = toNumber(listing.securityDeposit);
+            return raw > 0 ? raw : null;
+        })(),
+        securityDepositMode:
+            listing.securityDepositMode === "amount" ||
+            listing.securityDepositMode === "months_of_rent"
+                ? listing.securityDepositMode
+                : null,
         description: listing.description?.trim() || "",
         amenities: listing.amenities ?? [],
         nearbyPlaces: (listing.nearbyPlaces ?? []).filter((place) => Boolean(place?.trim())),
@@ -303,7 +334,17 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
         country: "India",
         salePrice: input.saleAmountInr ?? undefined,
         monthlyRent: input.rentAmountInr ?? undefined,
+        securityDeposit: input.securityDeposit ?? undefined,
+        securityDepositMode: input.securityDepositMode ?? undefined,
         maintenanceCharges: input.maintenanceInr ?? undefined,
+        commissionPercent:
+            input.transactionType === "sale" || input.transactionType === "both"
+                ? (input.commissionPercent ?? undefined)
+                : undefined,
+        commissionAmount:
+            input.transactionType === "rent" || input.transactionType === "both"
+                ? (input.commissionAmount ?? undefined)
+                : undefined,
         furnishingStatus: input.furnishing,
         facingDirection: input.facing ?? undefined,
         parkingSpaces: parkingToSpaces(input.parking),
@@ -341,8 +382,20 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.areaSqft != null) payload.areaSqft = input.areaSqft;
     if (input.saleAmountInr !== undefined) payload.salePrice = input.saleAmountInr ?? undefined;
     if (input.rentAmountInr !== undefined) payload.monthlyRent = input.rentAmountInr ?? undefined;
+    if (input.securityDeposit !== undefined) {
+        payload.securityDeposit = input.securityDeposit ?? undefined;
+    }
+    if (input.securityDepositMode !== undefined) {
+        payload.securityDepositMode = input.securityDepositMode ?? undefined;
+    }
     if (input.maintenanceInr !== undefined) {
         payload.maintenanceCharges = input.maintenanceInr ?? undefined;
+    }
+    if (input.commissionPercent !== undefined) {
+        payload.commissionPercent = input.commissionPercent ?? undefined;
+    }
+    if (input.commissionAmount !== undefined) {
+        payload.commissionAmount = input.commissionAmount ?? undefined;
     }
     if (input.furnishing != null) payload.furnishingStatus = input.furnishing;
     if (input.bathrooms !== undefined) payload.bathrooms = input.bathrooms ?? undefined;

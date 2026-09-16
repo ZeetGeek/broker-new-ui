@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import {
+    CurrencyField,
     FORM_SECTIONS_CLASS,
     NumberField,
     WizardSection,
@@ -20,7 +21,8 @@ export function StepCommission() {
     const { watch } = useFormContext<PropertyDraftValues>();
     const values = watch();
     const { derived } = useFieldRules();
-    const isSale = derived.isSell;
+    const showSale = derived.isSell;
+    const showRent = derived.isRentLike;
     const expectedPrice = values.sale.expectedPrice ?? 0;
     const areaSqft = values.area.areaSqft;
     const pricePerSqft = values.sale.pricePerSqft;
@@ -46,7 +48,7 @@ export function StepCommission() {
         lockInMonths: values.rent.lockInMonths ?? 0,
         agreementMonths: values.rent.agreementDurationMonths ?? 11,
         escalationPercent: values.rent.rentEscalationPercent ?? 0,
-        mode: values.commission.rent.mode,
+        mode: "flat",
         value: values.commission.rent.value,
         paidBy: "owner",
         ownerSharePercent: 100,
@@ -55,21 +57,23 @@ export function StepCommission() {
         tdsApplicable: values.commission.tax.tdsApplicable,
         tdsRate: values.commission.tax.tdsRate,
     });
-    const result = isSale ? saleResult : rentResult;
-    const hasBasis = isSale ? expectedPrice > 0 : monthlyRent > 0;
+
+    // For "both", lead with sale income; rent-only uses rent figures.
+    const result =
+        showSale && !showRent ? saleResult : showRent && !showSale ? rentResult : saleResult;
+    const primaryIsSale = showSale && (!showRent || values.basics.listingFor === "both");
+    const hasBasis = primaryIsSale ? expectedPrice > 0 : monthlyRent > 0;
     const earned = result.gross > 0 || hasBasis;
     const ratePerSqft =
         pricePerSqft != null && pricePerSqft > 0
             ? pricePerSqft
-            : isSale && "effectiveRatePerSqft" in result
+            : primaryIsSale && "effectiveRatePerSqft" in result
               ? result.effectiveRatePerSqft
               : 0;
 
-    const commissionLabel = isSale
+    const commissionLabel = primaryIsSale
         ? `Commission at ${values.commission.sale.value}%`
-        : `Brokerage · ${values.commission.rent.value} month${
-              values.commission.rent.value === 1 ? "" : "s"
-          } rent`;
+        : `Brokerage · ${formatInr(values.commission.rent.value)}`;
 
     return (
         <div className={FORM_SECTIONS_CLASS}>
@@ -81,34 +85,39 @@ export function StepCommission() {
                             strokeWidth={1.75}
                             aria-hidden
                         />
-                        {isSale ? "Sale commission" : "Rental brokerage"}
+                        {showSale && showRent
+                            ? "Broker commission"
+                            : showSale
+                              ? "Sale commission"
+                              : "Rental brokerage"}
                     </>
                 }
-                description="Record the agreed fee and who pays it. These terms stay in the broker file."
+                description="Record the agreed fee. Sale uses a percent; rent uses a fixed amount. Broker-only."
                 tone="private"
             >
-                {isSale ? (
-                    <NumberField
-                        name="commission.sale.value"
-                        label="Commission (%)"
-                        step={0.1}
-                        max={10}
-                        placeholder="e.g. 2"
-                        visibility="private"
-                        startIcon={BadgePercent}
-                        hint="Charged to the owner on the sale price."
-                    />
-                ) : (
-                    <NumberField
-                        name="commission.rent.value"
-                        label="Months of rent"
-                        step={0.25}
-                        placeholder="e.g. 1"
-                        visibility="private"
-                        startIcon={BadgePercent}
-                        hint="Charged to the owner."
-                    />
-                )}
+                <div className="grid gap-4 md:grid-cols-2">
+                    {showSale ? (
+                        <NumberField
+                            name="commission.sale.value"
+                            label="Sale commission (%)"
+                            step={0.1}
+                            max={10}
+                            placeholder="e.g. 2"
+                            visibility="private"
+                            startIcon={BadgePercent}
+                            hint="Percent of the sale price, charged to the owner."
+                        />
+                    ) : null}
+                    {showRent ? (
+                        <CurrencyField
+                            name="commission.rent.value"
+                            label="Rent commission"
+                            placeholder="e.g. 25,000"
+                            visibility="private"
+                            hint="Fixed amount charged to the owner."
+                        />
+                    ) : null}
+                </div>
             </WizardSection>
 
             <WizardSection
@@ -132,8 +141,8 @@ export function StepCommission() {
                     >
                         <div className="grid sm:grid-cols-3">
                             <IncomeFact
-                                label={isSale ? "Property price" : "Monthly rent"}
-                                value={formatInr(isSale ? expectedPrice : monthlyRent)}
+                                label={primaryIsSale ? "Property price" : "Monthly rent"}
+                                value={formatInr(primaryIsSale ? expectedPrice : monthlyRent)}
                             />
                             <IncomeFact
                                 label="Area"
@@ -144,9 +153,9 @@ export function StepCommission() {
                                 }
                             />
                             <IncomeFact
-                                label={isSale ? "Per sq ft" : "Yearly rent"}
+                                label={primaryIsSale ? "Per sq ft" : "Yearly rent"}
                                 value={
-                                    isSale
+                                    primaryIsSale
                                         ? ratePerSqft > 0
                                             ? formatInr(ratePerSqft)
                                             : "— — —"
@@ -181,6 +190,13 @@ export function StepCommission() {
 
                         <dl className="border-bs-2 border-border-warm">
                             <IncomeRow label={commissionLabel} value={formatInr(result.gross)} />
+                            {showSale && showRent ? (
+                                <IncomeRow
+                                    label={`Rent brokerage · ${formatInr(values.commission.rent.value)}`}
+                                    value={formatInr(rentResult.gross)}
+                                    muted
+                                />
+                            ) : null}
                             <IncomeRow
                                 label="Charged to the owner"
                                 value={formatInr(result.invoiceTotal)}
@@ -195,7 +211,7 @@ export function StepCommission() {
                           text-sm text-ink-muted
                         "
                     >
-                        {isSale
+                        {showSale
                             ? "Add the expected price above to see what you earn."
                             : "Add the monthly rent above to see what you earn."}
                     </p>
@@ -244,15 +260,7 @@ function IncomeChip({
     );
 }
 
-function IncomeRow({
-    label,
-    value,
-    muted,
-}: {
-    label: string;
-    value: string;
-    muted?: boolean;
-}) {
+function IncomeRow({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
     return (
         <div
             className="

@@ -33,8 +33,13 @@ export type PropertyBrowseListing = {
     status?: string | null;
     salePrice?: string | number | null;
     monthlyRent?: string | number | null;
-    /** Owner-shared broker commission percent (optional). */
+    /** Deposit value: INR when mode is `amount`, months when `months_of_rent`. */
+    securityDeposit?: string | number | null;
+    securityDepositMode?: "amount" | "months_of_rent" | string | null;
+    /** Owner-shared broker commission percent (sale / both). */
     commissionPercent?: string | number | null;
+    /** Fixed broker commission in INR (rent / both). */
+    commissionAmount?: string | number | null;
     photos?: string[] | null;
     furnishingStatus?: "furnished" | "semi" | "unfurnished" | string | null;
     availableFrom?: string | null;
@@ -205,8 +210,11 @@ export type CreatePropertyInput = {
     status?: string;
     salePrice?: number;
     monthlyRent?: number;
+    securityDeposit?: number;
+    securityDepositMode?: "amount" | "months_of_rent";
     maintenanceCharges?: number;
     commissionPercent?: number;
+    commissionAmount?: number;
     furnishingStatus?: string;
     facingDirection?: string;
     parkingSpaces?: number;

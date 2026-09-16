@@ -287,6 +287,10 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
             const raw = toNumber(listing.commissionPercent);
             return raw > 0 ? raw : 0;
         })(),
+        commissionAmount: (() => {
+            const raw = toNumber(listing.commissionAmount);
+            return raw > 0 ? raw : 0;
+        })(),
         ownerName,
         ownerAvatarUrl: listing.ownerAvatarUrl ?? undefined,
         ownerUserId: ownerUserIdFromBrowseListing(listing),
@@ -335,6 +339,7 @@ export function citiesToLocationListings(cities: PropertyBrowseCity[]): OwnerLis
                 brokerSlotsTotal: DEFAULT_BROKER_SLOTS_TOTAL,
                 brokerSlotsOpen: DEFAULT_BROKER_SLOTS_TOTAL,
                 commissionPercent: 0,
+                commissionAmount: 0,
                 ownerName: "Owner",
                 photoCount: 0,
                 isNew: false,
