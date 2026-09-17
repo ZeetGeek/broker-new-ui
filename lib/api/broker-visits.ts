@@ -1,18 +1,15 @@
 import { ApiError, apiFetch } from "@/lib/api/client";
 import { clientsApi } from "@/lib/api/clients";
-import { myListingsApi } from "@/lib/api/my-listings";
-import { representativeApi } from "@/lib/api/representative";
 import {
+    type ApiBrokerOpenSlotItem,
+    type ApiPropertyOption,
     type ApiShowing,
     type ApiVisitSlot,
     type Paged,
-    filterPropertyCards,
-    mapApiSlot,
+    mapBrokerOpenSlotItem,
     mapClientToPerson,
     mapShowingToTimeRequest,
     mapShowingToVisit,
-    ownListingToPropertyCard,
-    representationToPropertyCard,
 } from "@/lib/api/broker-visits-map";
 import { buildVisitSummary } from "@/lib/visits/summary";
 
@@ -33,6 +30,15 @@ import {
     MOCK_TIME_REQUESTS,
     USE_MOCK_VISITS,
 } from "@/mocks/visits";
+
+export type BrokerOpenSlotsPage = {
+    items: PropertyWithSlots[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    propertyOptions: ApiPropertyOption[];
+};
 
 async function requestData<T>(
     url: string,
@@ -59,7 +65,6 @@ async function fetchAllBookings(filters: VisitListFilters = {}): Promise<ApiShow
         if (filters.to) params.set("to", filters.to.slice(0, 10));
         if (filters.propertyId) params.set("propertyId", filters.propertyId);
         if (filters.q) params.set("search", filters.q);
-        // Backend accepts a single status; when multiple are requested, fetch all and filter client-side.
         if (filters.status?.length === 1) {
             const mapped = uiStatusToApi(filters.status[0]);
             if (mapped) params.set("status", mapped);
@@ -109,71 +114,25 @@ function filterVisits(visits: BrokerSiteVisit[], filters: VisitListFilters): Bro
     });
 }
 
-async function mapWithConcurrency<T, R>(
-    items: T[],
-    limit: number,
-    mapper: (item: T) => Promise<R>,
-): Promise<R[]> {
-    const results: R[] = [];
-    for (let i = 0; i < items.length; i += limit) {
-        const chunk = items.slice(i, i + limit);
-        results.push(...(await Promise.all(chunk.map(mapper))));
-    }
-    return results;
-}
-
-async function fetchOpenSlotsForProperty(propertyId: string): Promise<ApiVisitSlot[]> {
-    try {
-        return await requestData<ApiVisitSlot[]>(`/slots/property/${propertyId}`);
-    } catch {
-        return [];
-    }
-}
-
-async function listAccessiblePropertyCards(
-    filters: SlotListFilters = {},
-): Promise<PropertyWithSlots[]> {
-    const [activeReps, ownPage] = await Promise.all([
-        representativeApi.brokerList("accepted").catch(() => []),
-        myListingsApi.list({ page: 1, status: "published", q: filters.q ?? "" }).catch(() => ({
-            items: [],
-            total: 0,
-            page: 1,
-            totalPages: 1,
-        })),
-    ]);
-
-    const reps = Array.isArray(activeReps) ? activeReps : [];
-    const ownItems = ownPage.items ?? [];
-    const ownIds = new Set(ownItems.map((item) => item.id));
-
-    const repTargets = reps.filter((rep) => rep.propertyId && !ownIds.has(rep.propertyId));
-    if (filters.propertyIds?.length) {
-        const allowed = new Set(filters.propertyIds);
-        repTargets.splice(
-            0,
-            repTargets.length,
-            ...repTargets.filter((r) => allowed.has(r.propertyId)),
-        );
-        ownItems.splice(0, ownItems.length, ...ownItems.filter((item) => allowed.has(item.id)));
-    }
-
-    const [repCards, ownCards] = await Promise.all([
-        mapWithConcurrency(repTargets, 5, async (rep) => {
-            const slots = (await fetchOpenSlotsForProperty(rep.propertyId)).map((slot) =>
-                mapApiSlot(slot, rep.id),
-            );
-            return representationToPropertyCard(rep, slots);
-        }),
-        mapWithConcurrency(ownItems, 5, async (listing) => {
-            const slots = (await fetchOpenSlotsForProperty(listing.id)).map((slot) =>
-                mapApiSlot(slot, listing.ownerId ?? "me"),
-            );
-            return ownListingToPropertyCard(listing, slots);
-        }),
-    ]);
-
-    return filterPropertyCards([...ownCards, ...repCards], filters);
+function buildOpenSlotsQuery(filters: SlotListFilters): string {
+    const params = new URLSearchParams();
+    params.set("page", String(filters.page ?? 1));
+    params.set("limit", String(filters.limit ?? 20));
+    if (filters.propertyId) params.set("propertyId", filters.propertyId);
+    else if (filters.propertyIds?.length === 1) params.set("propertyId", filters.propertyIds[0]!);
+    if (filters.from) params.set("from", filters.from.slice(0, 10));
+    if (filters.to) params.set("to", filters.to.slice(0, 10));
+    if (filters.localities?.length) params.set("localities", filters.localities.join(","));
+    if (filters.timeBuckets?.length) params.set("timeBuckets", filters.timeBuckets.join(","));
+    if (filters.purpose) params.set("purpose", filters.purpose);
+    if (filters.propertyType) params.set("propertyType", filters.propertyType);
+    if (filters.bhk) params.set("bhk", filters.bhk);
+    if (filters.minBudget != null) params.set("minBudget", String(filters.minBudget));
+    if (filters.maxBudget != null) params.set("maxBudget", String(filters.maxBudget));
+    if (filters.ownerId) params.set("ownerId", filters.ownerId);
+    if (filters.q) params.set("search", filters.q);
+    if (filters.onlyAccepted === false) params.set("onlyAccepted", "false");
+    return params.toString();
 }
 
 async function resolveLeadIdForBuyer(propertyId: string, clientId: string): Promise<string> {
@@ -209,12 +168,12 @@ export const brokerVisitsApi = {
                 structuredClone(MOCK_TIME_REQUESTS),
             );
         }
-        const [visits, slots, requests] = await Promise.all([
+        const [visits, slotsPage, requests] = await Promise.all([
             this.list(),
-            this.slots(),
+            this.slots({ page: 1, limit: 100 }),
             this.requests(),
         ]);
-        return buildVisitSummary(visits, slots, requests);
+        return buildVisitSummary(visits, slotsPage.items, requests);
     },
 
     async list(filters: VisitListFilters = {}): Promise<BrokerSiteVisit[]> {
@@ -225,49 +184,73 @@ export const brokerVisitsApi = {
         return filterVisits(showings.map(mapShowingToVisit), filters);
     },
 
-    async slots(filters: SlotListFilters = {}): Promise<PropertyWithSlots[]> {
+    async slots(filters: SlotListFilters = {}): Promise<BrokerOpenSlotsPage> {
         if (USE_MOCK_VISITS) {
-            return structuredClone(MOCK_PROPERTIES_WITH_SLOTS).filter((item) => {
-                if (filters.propertyIds?.length && !filters.propertyIds.includes(item.property.id))
-                    return false;
-                if (
-                    filters.localities?.length &&
-                    !filters.localities.includes(item.property.locality)
-                )
-                    return false;
-                if (filters.purpose && item.property.purpose !== filters.purpose) return false;
-                if (filters.propertyType && item.property.propertyType !== filters.propertyType)
-                    return false;
-                if (filters.bhk && !item.property.configLabel.startsWith(filters.bhk)) return false;
-                if (filters.minBudget && item.property.amountInr < filters.minBudget) return false;
-                if (filters.maxBudget && item.property.amountInr > filters.maxBudget) return false;
-                if (filters.ownerId && item.owner.id !== filters.ownerId) return false;
-                if (
-                    filters.q &&
-                    !`${item.property.title} ${item.property.locality} ${item.owner.name}`
+            let items = structuredClone(MOCK_PROPERTIES_WITH_SLOTS);
+            if (filters.propertyId)
+                items = items.filter((item) => item.property.id === filters.propertyId);
+            if (filters.propertyIds?.length) {
+                items = items.filter((item) => filters.propertyIds!.includes(item.property.id));
+            }
+            if (filters.localities?.length) {
+                items = items.filter((item) =>
+                    filters.localities!.includes(item.property.locality),
+                );
+            }
+            if (filters.purpose)
+                items = items.filter((item) => item.property.purpose === filters.purpose);
+            if (filters.q) {
+                const q = filters.q.toLowerCase();
+                items = items.filter((item) =>
+                    `${item.property.title} ${item.property.locality} ${item.owner.name}`
                         .toLowerCase()
-                        .includes(filters.q.toLowerCase())
-                ) {
-                    return false;
-                }
-                return true;
-            });
+                        .includes(q),
+                );
+            }
+            const page = filters.page ?? 1;
+            const limit = filters.limit ?? 20;
+            const start = (page - 1) * limit;
+            const paged = items.slice(start, start + limit);
+            return {
+                items: paged,
+                total: items.length,
+                page,
+                limit,
+                totalPages: Math.max(1, Math.ceil(items.length / limit) || 1),
+                propertyOptions: MOCK_PROPERTIES_WITH_SLOTS.map((item) => ({
+                    id: item.property.id,
+                    title: item.property.title,
+                    locality: item.property.locality,
+                    city: item.property.city,
+                })),
+            };
         }
-        return listAccessiblePropertyCards(filters);
+
+        const response = await requestData<
+            Paged<ApiBrokerOpenSlotItem> & { propertyOptions?: ApiPropertyOption[] }
+        >(`/slots/broker/open?${buildOpenSlotsQuery(filters)}`);
+
+        return {
+            items: (response.items ?? []).map(mapBrokerOpenSlotItem),
+            total: response.total ?? 0,
+            page: response.page ?? filters.page ?? 1,
+            limit: response.limit ?? filters.limit ?? 20,
+            totalPages: Math.max(1, response.totalPages ?? 1),
+            propertyOptions: response.propertyOptions ?? [],
+        };
     },
 
+    /** Visit requests use existing broker bookings/showings API. */
     async requests(): Promise<TimeRequest[]> {
         if (USE_MOCK_VISITS) return structuredClone(MOCK_TIME_REQUESTS);
-        const showings = await fetchAllBookings();
-        return showings
+        const [scheduled, confirmed, cancelled] = await Promise.all([
+            fetchAllBookings({ status: ["awaiting_owner"] }),
+            fetchAllBookings({ status: ["confirmed"] }),
+            fetchAllBookings({ status: ["cancelled_by_owner"] }),
+        ]);
+        return [...scheduled, ...confirmed, ...cancelled]
             .map(mapShowingToTimeRequest)
-            .filter(
-                (request) =>
-                    request.status === "pending" ||
-                    request.status === "declined" ||
-                    request.status === "accepted" ||
-                    request.status === "expired",
-            );
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     },
 
     async book(input: {
@@ -462,7 +445,6 @@ export const brokerVisitsApi = {
         visit: BrokerSiteVisit,
         outcome: NonNullable<BrokerSiteVisit["outcome"]>,
     ): Promise<OutcomeTransactionResult> {
-        // Backend has no outcome endpoint yet — keep the UI flow local.
         return {
             id: visit.id,
             outcome,

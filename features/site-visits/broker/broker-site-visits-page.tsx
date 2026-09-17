@@ -57,6 +57,11 @@ export function BrokerSiteVisitsPage() {
         [searchParams],
     );
     const slotsQuery = useSlots(true, slotFilters);
+    const slotItems = useMemo(
+        () => slotsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+        [slotsQuery.data],
+    );
+    const propertyOptions = slotsQuery.data?.pages[0]?.propertyOptions ?? [];
     const requestsQuery = useTimeRequests();
     useVisitSummary();
     const visitActions = useVisitActions();
@@ -84,7 +89,7 @@ export function BrokerSiteVisitsPage() {
     const bookValue = searchParams.get("book");
     const selectedBooking = (() => {
         if (!bookValue || bookValue === "ready") return undefined;
-        for (const item of slotsQuery.data ?? []) {
+        for (const item of slotItems) {
             const slot = item.slots.find((candidate) => candidate.id === bookValue);
             if (slot) return { item, slot };
         }
@@ -97,12 +102,12 @@ export function BrokerSiteVisitsPage() {
     const selectedVisit = allVisits.find((visit) => visit.id === visitId);
     const outcomeVisit = allVisits.find((visit) => visit.id === outcomeId);
     const rescheduleVisit = allVisits.find((visit) => visit.id === rescheduleId);
-    const rescheduleSlots = (slotsQuery.data ?? []).find(
+    const rescheduleSlots = slotItems.find(
         (item) => item.property.id === rescheduleVisit?.property.id,
     );
     const summary = useMemo(() => {
-        return buildVisitSummary(allVisits, slotsQuery.data ?? [], requestsQuery.data ?? [], now);
-    }, [allVisits, now, requestsQuery.data, slotsQuery.data]);
+        return buildVisitSummary(allVisits, slotItems, requestsQuery.data ?? [], now);
+    }, [allVisits, now, requestsQuery.data, slotItems]);
 
     useEffect(() => {
         const timer = window.setInterval(() => setNow(new Date()), 60_000);
@@ -223,17 +228,23 @@ export function BrokerSiteVisitsPage() {
                 ) : tab === "slots" ? (
                     <OpenSlotsTab
                         key={searchParams.get("q") ?? ""}
-                        items={slotsQuery.data ?? []}
+                        items={slotItems}
+                        propertyOptions={propertyOptions}
+                        selectedPropertyId={slotFilters.propertyId}
                         buyers={buyers}
                         buyerId={buyerId}
                         isLoading={slotsQuery.isLoading}
                         isError={slotsQuery.isError}
+                        isFetchingMore={slotsQuery.isFetchingNextPage}
+                        hasMore={Boolean(slotsQuery.hasNextPage)}
                         updatedAt={slotsQuery.dataUpdatedAt}
                         onBuyerChange={(id) => updateUrl({ buyer: id })}
+                        onPropertyChange={(id) => updateUrl({ propertyId: id, tab: "slots" })}
                         onBook={(slot) => updateUrl({ book: slot.id })}
                         onOpenVisit={(id) => updateUrl({ tab: "visits", visit: id })}
                         onRequest={() => updateUrl({ tab: "slots", book: "ready" })}
                         onRefresh={() => void slotsQuery.refetch()}
+                        onLoadMore={() => void slotsQuery.fetchNextPage()}
                         rowErrors={rowErrors}
                     />
                 ) : (

@@ -275,6 +275,91 @@ export function mapApiSlot(slot: ApiVisitSlot, ownerId?: string): VisitSlot {
     };
 }
 
+export type ApiBrokerOpenSlotItem = {
+    property: {
+        id: string;
+        title: string | null;
+        city: string;
+        address: string | null;
+        society?: string | null;
+        landmark?: string | null;
+        salePrice?: string | null;
+        monthlyRent?: string | null;
+        transactionType?: string | null;
+        propertyType?: string | null;
+        subtype?: string | null;
+        bhkConfig?: string | null;
+        bedrooms?: number | null;
+        areaSqft?: number | null;
+        photos?: string[] | null;
+    };
+    propertySource: "marketplace" | "own_listing";
+    access: "accepted" | "none" | "requested";
+    owner: {
+        id: string;
+        fullName: string | null;
+        avatarUrl?: string | null;
+        phone?: string | null;
+    } | null;
+    slots: ApiVisitSlot[];
+};
+
+export type ApiPropertyOption = {
+    id: string;
+    title: string;
+    locality: string;
+    city: string;
+};
+
+export function mapBrokerOpenSlotItem(item: ApiBrokerOpenSlotItem): PropertyWithSlots {
+    const p = item.property;
+    const amount = moneyNumber(p.salePrice) || moneyNumber(p.monthlyRent);
+    const subtypeLabel = p.subtype?.replace(/_/g, " ");
+    const propertyTypeLabel =
+        p.subtype === "apartment" || p.subtype === "flat"
+            ? "Apartment"
+            : p.subtype === "villa"
+              ? "Villa"
+              : p.propertyType === "commercial"
+                ? "Commercial"
+                : subtypeLabel
+                  ? subtypeLabel.charAt(0).toUpperCase() + subtypeLabel.slice(1)
+                  : p.propertyType?.trim() || "Apartment";
+    const owner: PersonSummary = item.owner
+        ? {
+              id: item.owner.id,
+              name: item.owner.fullName?.trim() || "Owner",
+              phoneDigits: phoneDigits(item.owner.phone),
+              avatarUrl: item.owner.avatarUrl ?? undefined,
+          }
+        : { id: "owner", name: "Owner" };
+
+    return {
+        property: {
+            id: p.id,
+            title: p.title?.trim() || "Property",
+            configLabel: configLabel(p.bhkConfig, p.bedrooms, p.subtype),
+            propertyType: propertyTypeLabel,
+            locality: localityFromAddress(p.address ?? p.society, p.city),
+            city: p.city ?? "—",
+            address: p.address?.trim() || p.society?.trim() || p.city || "—",
+            areaSqft: p.areaSqft ?? 0,
+            amountInr: amount,
+            purpose: purposeFromTransaction(p.transactionType),
+            coverUrl: p.photos?.[0] ?? undefined,
+        },
+        propertySource: item.propertySource,
+        owner,
+        access:
+            item.access === "accepted"
+                ? "accepted"
+                : item.propertySource === "own_listing"
+                  ? "none"
+                  : "accepted",
+        slots: (item.slots ?? []).map((slot) => mapApiSlot(slot, owner.id)),
+    };
+}
+
 function listingToPropertySummary(listing: MyListingItem | PropertyListing): VisitPropertySummary {
     if ("configLabel" in listing && "locality" in listing && typeof listing.locality === "string") {
         const mine = listing as MyListingItem;

@@ -42,11 +42,7 @@ export type VisitOutcome = {
     feedback: string;
     objections: string[];
     offerAmount?: number;
-    nextStep:
-        | "move_to_negotiation"
-        | "schedule_followup"
-        | "show_other_property"
-        | "drop";
+    nextStep: "move_to_negotiation" | "schedule_followup" | "show_other_property" | "drop";
     followUpAt?: string;
     photos?: string[];
 };
@@ -120,6 +116,7 @@ export type VisitListFilters = {
 export type SlotListFilters = {
     from?: string;
     to?: string;
+    propertyId?: string;
     propertyIds?: string[];
     localities?: string[];
     purpose?: "sale" | "rent";
@@ -132,6 +129,9 @@ export type SlotListFilters = {
     buyerId?: string;
     q?: string;
     cursor?: string;
+    page?: number;
+    limit?: number;
+    onlyAccepted?: boolean;
 };
 
 export type OutcomeTransactionResult = {
@@ -143,12 +143,7 @@ export type OutcomeTransactionResult = {
 };
 
 export type TimeRequestStatus =
-    | "pending"
-    | "accepted"
-    | "declined"
-    | "counter_offered"
-    | "withdrawn"
-    | "expired";
+    "pending" | "accepted" | "declined" | "counter_offered" | "withdrawn" | "expired";
 
 export type TimeRequest = {
     id: string;
@@ -183,11 +178,4 @@ export type BrokerVisitSummary = {
     requestReplies: number;
 };
 
-export type SummaryFilter =
-    | "today"
-    | "tomorrow"
-    | "awaiting"
-    | "feedback"
-    | "week"
-    | "cancelled";
-
+export type SummaryFilter = "today" | "tomorrow" | "awaiting" | "feedback" | "week" | "cancelled";
