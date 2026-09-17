@@ -11,7 +11,7 @@ export function useSiteVisits(filters: VisitListFilters = {}) {
         queryKey: ["visits", filters],
         queryFn: () => brokerVisitsApi.list(filters),
         staleTime: 60_000,
+        refetchOnMount: "always",
         refetchOnWindowFocus: true,
     });
 }
-

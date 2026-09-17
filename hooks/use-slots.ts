@@ -11,8 +11,11 @@ export function useSlots(active: boolean, filters: SlotListFilters) {
         queryKey: ["slots", filters],
         queryFn: () => brokerVisitsApi.slots(filters),
         staleTime: 30_000,
+        refetchOnMount: "always",
         refetchOnWindowFocus: true,
-        refetchInterval: () => active && typeof document !== "undefined" && document.visibilityState === "visible" ? 60_000 : false,
+        refetchInterval: () =>
+            active && typeof document !== "undefined" && document.visibilityState === "visible"
+                ? 60_000
+                : false,
     });
 }
-

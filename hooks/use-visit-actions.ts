@@ -8,11 +8,20 @@ import type { BrokerSiteVisit, VisitOutcome } from "@/features/site-visits/broke
 
 export function useVisitActions() {
     const queryClient = useQueryClient();
-    const update = (id: string, patch: Partial<BrokerSiteVisit>) => queryClient.setQueriesData<BrokerSiteVisit[]>({ queryKey: ["visits"] }, (old = []) => old.map((visit) => visit.id === id ? { ...visit, ...patch, updatedAt: new Date().toISOString() } : visit));
+    const update = (id: string, patch: Partial<BrokerSiteVisit>) =>
+        queryClient.setQueriesData<BrokerSiteVisit[]>({ queryKey: ["visits"] }, (old = []) =>
+            old.map((visit) =>
+                visit.id === id
+                    ? { ...visit, ...patch, updatedAt: new Date().toISOString() }
+                    : visit,
+            ),
+        );
     const snapshot = () => queryClient.getQueriesData<BrokerSiteVisit[]>({ queryKey: ["visits"] });
-    const restore = (previous?: ReturnType<typeof snapshot>) => previous?.forEach(([key, value]) => queryClient.setQueryData(key, value));
+    const restore = (previous?: ReturnType<typeof snapshot>) =>
+        previous?.forEach(([key, value]) => queryClient.setQueryData(key, value));
     const outcome = useMutation({
-        mutationFn: ({ visit, outcome }: { visit: BrokerSiteVisit; outcome: VisitOutcome }) => brokerVisitsApi.recordOutcome(visit, outcome),
+        mutationFn: ({ visit, outcome }: { visit: BrokerSiteVisit; outcome: VisitOutcome }) =>
+            brokerVisitsApi.recordOutcome(visit, outcome),
         onMutate: async ({ visit, outcome: value }) => {
             await queryClient.cancelQueries({ queryKey: ["visits"] });
             const previous = snapshot();
@@ -27,7 +36,8 @@ export function useVisitActions() {
         },
     });
     const reschedule = useMutation({
-        mutationFn: ({ id, startsAt, endsAt }: { id: string; startsAt: string; endsAt: string }) => brokerVisitsApi.reschedule(id, startsAt, endsAt),
+        mutationFn: ({ id, startsAt, endsAt }: { id: string; startsAt: string; endsAt: string }) =>
+            brokerVisitsApi.reschedule(id, startsAt, endsAt),
         onMutate: async ({ id, startsAt, endsAt }) => {
             await queryClient.cancelQueries({ queryKey: ["visits"] });
             const previous = snapshot();
@@ -35,7 +45,8 @@ export function useVisitActions() {
             return { previous };
         },
         onError: (_error, _input, context) => restore(context?.previous),
-        onSuccess: ({ id, startsAt, endsAt }) => update(id, { startsAt, endsAt, status: "reschedule_pending" }),
+        onSuccess: ({ id, startsAt, endsAt }) =>
+            update(id, { startsAt, endsAt, status: "reschedule_pending" }),
     });
     const cancel = useMutation({
         mutationFn: brokerVisitsApi.cancelVisit,
@@ -46,9 +57,14 @@ export function useVisitActions() {
             return { previous };
         },
         onError: (_error, _input, context) => restore(context?.previous),
-        onSuccess: (id) => update(id, { status: "cancelled_by_broker" }),
+        onSuccess: (id) => {
+            update(id, { status: "cancelled_by_broker" });
+            void queryClient.invalidateQueries({ queryKey: ["timeRequests"] });
+            void queryClient.invalidateQueries({ queryKey: ["visitSummary"] });
+            void queryClient.invalidateQueries({ queryKey: ["slots"] });
+        },
     });
-    const checklist = (id: string, value: NonNullable<BrokerSiteVisit["checklist"]>) => update(id, { checklist: value });
+    const checklist = (id: string, value: NonNullable<BrokerSiteVisit["checklist"]>) =>
+        update(id, { checklist: value });
     return { outcome, reschedule, cancel, checklist };
 }
-

@@ -1,6 +1,12 @@
 "use client";
 
-import { CalendarDays, CalendarPlus, CircleHelp, ClockArrowUp, MessageSquareText } from "lucide-react";
+import {
+    CalendarDays,
+    CalendarPlus,
+    CircleHelp,
+    ClockArrowUp,
+    MessageSquareText,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +43,11 @@ export function VisitsTabs({
 }) {
     return (
         <div className="sticky inset-bs-0 z-30 flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-2 shadow-sm lg:flex-row lg:items-center lg:justify-between">
-            <Tabs value={value} onValueChange={(next) => onChange(next as BrokerVisitsTab)} className="min-inline-0">
+            <Tabs
+                value={value}
+                onValueChange={(next) => onChange(next as BrokerVisitsTab)}
+                className="min-inline-0"
+            >
                 <TabsList className="grid grid-cols-3 bg-surface-muted p-1 block-auto! inline-full lg:inline-fit">
                     {TABS.map((tab) => {
                         const Icon = tab.icon;
@@ -61,7 +71,7 @@ export function VisitsTabs({
             <TooltipProvider>
                 <div className="grid grid-cols-[1fr_1fr_auto] gap-2 lg:flex lg:items-center">
                     <Button variant="surface" size="md" onClick={onRequest}>
-                        Request a time
+                        View requests
                     </Button>
                     <Button size="md" onClick={onBook}>
                         <CalendarPlus aria-hidden />
@@ -73,7 +83,12 @@ export function VisitsTabs({
                                 render={
                                     <PopoverTrigger
                                         render={
-                                            <Button type="button" variant="ghost" size="icon-md" aria-label="Keyboard shortcuts">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon-md"
+                                                aria-label="Keyboard shortcuts"
+                                            >
                                                 <CircleHelp aria-hidden />
                                             </Button>
                                         }
@@ -85,14 +100,21 @@ export function VisitsTabs({
                         <PopoverContent align="end" side="bottom" className="gap-3 p-4 inline-72">
                             <PopoverHeader>
                                 <PopoverTitle>Keyboard shortcuts</PopoverTitle>
-                                <PopoverDescription>Move through the schedule without leaving the keyboard.</PopoverDescription>
+                                <PopoverDescription>
+                                    Move through the schedule without leaving the keyboard.
+                                </PopoverDescription>
                             </PopoverHeader>
                             <dl className="body-xs grid grid-cols-[44px_1fr] gap-y-2 text-ink-muted">
-                                <dt className="font-semibold text-ink">/</dt><dd>Search open slots</dd>
-                                <dt className="font-semibold text-ink">T</dt><dd>Jump to today</dd>
-                                <dt className="font-semibold text-ink">[ ]</dt><dd>Previous or next day</dd>
-                                <dt className="font-semibold text-ink">B</dt><dd>Book the focused slot</dd>
-                                <dt className="font-semibold text-ink">Esc</dt><dd>Close an open panel</dd>
+                                <dt className="font-semibold text-ink">/</dt>
+                                <dd>Search open slots</dd>
+                                <dt className="font-semibold text-ink">T</dt>
+                                <dd>Jump to today</dd>
+                                <dt className="font-semibold text-ink">[ ]</dt>
+                                <dd>Previous or next day</dd>
+                                <dt className="font-semibold text-ink">B</dt>
+                                <dd>Book the focused slot</dd>
+                                <dt className="font-semibold text-ink">Esc</dt>
+                                <dd>Close an open panel</dd>
                             </dl>
                         </PopoverContent>
                     </Popover>

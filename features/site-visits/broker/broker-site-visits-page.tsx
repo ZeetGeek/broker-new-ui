@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
+import { brokerVisitsApi } from "@/lib/api/broker-visits";
 import { slotListFiltersFromParams } from "@/lib/visits/filters";
 import { buildVisitSummary } from "@/lib/visits/summary";
 import { useSiteVisits } from "@/hooks/use-site-visits";
@@ -20,15 +22,15 @@ import { MyVisitsTab } from "@/features/site-visits/broker/my-visits/my-visits-t
 import { OpenSlotsTab } from "@/features/site-visits/broker/open-slots/open-slots-tab";
 import { BookingDrawer } from "@/features/site-visits/broker/panels/booking-drawer";
 import { RescheduleModal } from "@/features/site-visits/broker/panels/reschedule-modal";
-import { TimeRequestModal } from "@/features/site-visits/broker/panels/time-request-modal";
 import { VisitDetailPanel } from "@/features/site-visits/broker/panels/visit-detail-panel";
 import { RequestsTab } from "@/features/site-visits/broker/requests/requests-tab";
 import { SummaryStrip } from "@/features/site-visits/broker/summary-strip";
 import { BrokerVisitsHeader } from "@/features/site-visits/broker/visits-header";
 import { VisitsTabs } from "@/features/site-visits/broker/visits-tabs";
-import { MOCK_BUYERS } from "@/mocks/visits";
 
-const OutcomeModal = dynamic(() => import("@/features/site-visits/broker/panels/outcome-modal"), { ssr: false });
+const OutcomeModal = dynamic(() => import("@/features/site-visits/broker/panels/outcome-modal"), {
+    ssr: false,
+});
 
 function isTab(value: string | null): value is BrokerVisitsTab {
     return value === "visits" || value === "slots" || value === "requests";
@@ -45,30 +47,40 @@ export function BrokerSiteVisitsPage() {
     const tabValue = searchParams.get("tab");
     const focusValue = searchParams.get("focus");
     const tab: BrokerVisitsTab = isTab(tabValue) ? tabValue : "visits";
-    const focus: SummaryFilter | undefined = isSummaryFilter(focusValue)
-        ? focusValue
-        : undefined;
+    const focus: SummaryFilter | undefined = isSummaryFilter(focusValue) ? focusValue : undefined;
     const viewValue = searchParams.get("view");
-    const view = viewValue === "week" || viewValue === "route" ? viewValue : "list";
+    const view = viewValue === "week" ? "week" : "list";
     const buyerId = searchParams.get("buyer") ?? undefined;
     const visitsQuery = useSiteVisits();
-    const slotFilters = useMemo(() => slotListFiltersFromParams(new URLSearchParams(searchParams.toString())), [searchParams]);
-    const slotsQuery = useSlots(tab === "slots", slotFilters);
+    const slotFilters = useMemo(
+        () => slotListFiltersFromParams(new URLSearchParams(searchParams.toString())),
+        [searchParams],
+    );
+    const slotsQuery = useSlots(true, slotFilters);
     const requestsQuery = useTimeRequests();
     useVisitSummary();
     const visitActions = useVisitActions();
+    const buyersQuery = useQuery({
+        queryKey: ["visitBuyers"],
+        queryFn: () => brokerVisitsApi.listBuyers(),
+        staleTime: 60_000,
+    });
+    const buyers = buyersQuery.data ?? [];
     const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
     const [actionError, setActionError] = useState<string>();
     const [now, setNow] = useState(() => new Date());
-    const updateUrl = useCallback((patch: Record<string, string | undefined>) => {
-        const next = new URLSearchParams(searchParams.toString());
-        for (const [key, value] of Object.entries(patch)) {
-            if (value) next.set(key, value);
-            else next.delete(key);
-        }
-        const query = next.toString();
-        router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    }, [pathname, router, searchParams]);
+    const updateUrl = useCallback(
+        (patch: Record<string, string | undefined>) => {
+            const next = new URLSearchParams(searchParams.toString());
+            for (const [key, value] of Object.entries(patch)) {
+                if (value) next.set(key, value);
+                else next.delete(key);
+            }
+            const query = next.toString();
+            router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
+        },
+        [pathname, router, searchParams],
+    );
     const bookValue = searchParams.get("book");
     const selectedBooking = (() => {
         if (!bookValue || bookValue === "ready") return undefined;
@@ -85,7 +97,9 @@ export function BrokerSiteVisitsPage() {
     const selectedVisit = allVisits.find((visit) => visit.id === visitId);
     const outcomeVisit = allVisits.find((visit) => visit.id === outcomeId);
     const rescheduleVisit = allVisits.find((visit) => visit.id === rescheduleId);
-    const rescheduleSlots = (slotsQuery.data ?? []).find((item) => item.property.id === rescheduleVisit?.property.id);
+    const rescheduleSlots = (slotsQuery.data ?? []).find(
+        (item) => item.property.id === rescheduleVisit?.property.id,
+    );
     const summary = useMemo(() => {
         return buildVisitSummary(allVisits, slotsQuery.data ?? [], requestsQuery.data ?? [], now);
     }, [allVisits, now, requestsQuery.data, slotsQuery.data]);
@@ -98,9 +112,17 @@ export function BrokerSiteVisitsPage() {
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             const target = event.target as HTMLElement;
-            const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable;
+            const typing =
+                ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) ||
+                target.isContentEditable;
             if (event.key === "Escape") {
-                updateUrl({ book: undefined, request: undefined, visit: undefined, outcome: undefined, reschedule: undefined });
+                updateUrl({
+                    book: undefined,
+                    request: undefined,
+                    visit: undefined,
+                    outcome: undefined,
+                    reschedule: undefined,
+                });
                 return;
             }
             if (typing) return;
@@ -111,23 +133,44 @@ export function BrokerSiteVisitsPage() {
             } else if (event.key.toLowerCase() === "t") {
                 updateUrl({ tab: "visits", focus: "today" });
             } else if (event.key === "[" || event.key === "]") {
-                window.dispatchEvent(new CustomEvent("site-visits-day-step", { detail: event.key === "]" ? 1 : -1 }));
+                window.dispatchEvent(
+                    new CustomEvent("site-visits-day-step", { detail: event.key === "]" ? 1 : -1 }),
+                );
             }
         };
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [updateUrl]);
 
-    const handleVisitAction = useCallback((action: "outcome" | "reschedule" | "withdraw", id: string) => {
-        if (action === "withdraw") {
-            setActionError(undefined);
-            void visitActions.cancel.mutateAsync(id).then(() => toast.success("Request withdrawn")).catch((error) => setActionError(error instanceof Error ? error.message : "Could not withdraw this visit. Check your connection and try again."));
-            return;
-        }
-        updateUrl({ [action]: id });
-    }, [updateUrl, visitActions.cancel]);
+    const handleVisitAction = useCallback(
+        (action: "outcome" | "reschedule" | "withdraw", id: string) => {
+            if (action === "withdraw") {
+                setActionError(undefined);
+                void visitActions.cancel
+                    .mutateAsync(id)
+                    .then(() => toast.success("Request withdrawn"))
+                    .catch((error) =>
+                        setActionError(
+                            error instanceof Error
+                                ? error.message
+                                : "Could not withdraw this visit. Check your connection and try again.",
+                        ),
+                    );
+                return;
+            }
+            updateUrl({ [action]: id });
+        },
+        [updateUrl, visitActions.cancel],
+    );
 
-    const counts = useMemo(() => ({ visits: summary.weekTotal, slots: summary.openSlots, requests: summary.requestReplies }), [summary]);
+    const counts = useMemo(
+        () => ({
+            visits: summary.weekTotal,
+            slots: summary.openSlots,
+            requests: summary.requestReplies,
+        }),
+        [summary],
+    );
 
     return (
         <main className="flex flex-col gap-6 pbe-24 md:pbe-10">
@@ -141,15 +184,31 @@ export function BrokerSiteVisitsPage() {
                     counts={counts}
                     onChange={(next) => updateUrl({ tab: next, focus: undefined })}
                     onBook={() => updateUrl({ tab: "slots", book: "ready" })}
-                    onRequest={() => updateUrl({ request: "new" })}
+                    onRequest={() => updateUrl({ tab: "requests" })}
                 />
-                <SummaryStrip summary={summary} active={focus} onChange={(next) => updateUrl({ tab: "visits", focus: next })} />
+                <SummaryStrip
+                    summary={summary}
+                    active={focus}
+                    onChange={(next) => updateUrl({ tab: "visits", focus: next })}
+                />
             </section>
-            {actionError ? <p role="alert" className="
+            {actionError ? (
+                <p
+                    role="alert"
+                    className="
               body-sm rounded-inner bg-danger-soft px-4 py-3 font-semibold text-danger
-            ">{actionError}</p> : null}
+            "
+                >
+                    {actionError}
+                </p>
+            ) : null}
 
-            <div role="tabpanel" aria-label={tab === "visits" ? "My visits" : tab === "slots" ? "Open slots" : "Requests"}>
+            <div
+                role="tabpanel"
+                aria-label={
+                    tab === "visits" ? "My visits" : tab === "slots" ? "Open slots" : "Requests"
+                }
+            >
                 {tab === "visits" ? (
                     <MyVisitsTab
                         visits={visitsQuery.data ?? []}
@@ -165,7 +224,7 @@ export function BrokerSiteVisitsPage() {
                     <OpenSlotsTab
                         key={searchParams.get("q") ?? ""}
                         items={slotsQuery.data ?? []}
-                        buyers={MOCK_BUYERS}
+                        buyers={buyers}
                         buyerId={buyerId}
                         isLoading={slotsQuery.isLoading}
                         isError={slotsQuery.isError}
@@ -173,7 +232,7 @@ export function BrokerSiteVisitsPage() {
                         onBuyerChange={(id) => updateUrl({ buyer: id })}
                         onBook={(slot) => updateUrl({ book: slot.id })}
                         onOpenVisit={(id) => updateUrl({ tab: "visits", visit: id })}
-                        onRequest={(propertyId) => updateUrl({ request: propertyId ?? "new" })}
+                        onRequest={() => updateUrl({ tab: "slots", book: "ready" })}
                         onRefresh={() => void slotsQuery.refetch()}
                         rowErrors={rowErrors}
                     />
@@ -181,8 +240,10 @@ export function BrokerSiteVisitsPage() {
                     <RequestsTab
                         requests={requestsQuery.data ?? []}
                         isLoading={requestsQuery.isLoading}
-                        onNew={() => updateUrl({ request: "new" })}
-                        onRetry={(propertyId, retryBuyerId) => updateUrl({ request: propertyId, buyer: retryBuyerId })}
+                        onNew={() => updateUrl({ tab: "slots", book: "ready" })}
+                        onRetry={(propertyId, retryBuyerId) =>
+                            updateUrl({ tab: "slots", book: "ready", buyer: retryBuyerId })
+                        }
                         onViewVisit={(id) => updateUrl({ tab: "visits", visit: id })}
                     />
                 )}
@@ -192,33 +253,47 @@ export function BrokerSiteVisitsPage() {
                 open={Boolean(selectedBooking)}
                 item={selectedBooking?.item}
                 slot={selectedBooking?.slot}
-                buyers={MOCK_BUYERS}
+                buyers={buyers}
                 visits={visitsQuery.data ?? []}
                 preselectedBuyerId={buyerId}
                 onClose={() => updateUrl({ book: undefined })}
                 onOpenVisit={(id) => updateUrl({ book: undefined, tab: "visits", visit: id })}
                 onChooseAlternative={(slotId) => updateUrl({ book: slotId })}
-                onSlotTaken={(propertyId, message) => setRowErrors((current) => ({ ...current, [propertyId]: message }))}
-            />
-
-            <TimeRequestModal
-                open={Boolean(searchParams.get("request"))}
-                propertyId={searchParams.get("request") === "new" ? undefined : searchParams.get("request") ?? undefined}
-                buyerId={buyerId}
-                properties={slotsQuery.data ?? []}
-                buyers={MOCK_BUYERS}
-                onClose={() => updateUrl({ request: undefined })}
-                onCreated={() => updateUrl({ request: undefined, tab: "requests" })}
+                onSlotTaken={(propertyId, message) =>
+                    setRowErrors((current) => ({ ...current, [propertyId]: message }))
+                }
             />
 
             <VisitDetailPanel
                 open={Boolean(selectedVisit)}
                 visit={selectedVisit}
                 onClose={() => updateUrl({ visit: undefined })}
-                onLogOutcome={() => selectedVisit && updateUrl({ visit: undefined, outcome: selectedVisit.id })}
-                onReschedule={() => selectedVisit && updateUrl({ visit: undefined, reschedule: selectedVisit.id })}
-                onCancel={() => selectedVisit && void visitActions.cancel.mutateAsync(selectedVisit.id).then(() => { setActionError(undefined); toast.success("Visit cancelled"); updateUrl({ visit: undefined }); }).catch((error) => setActionError(error instanceof Error ? error.message : "Could not cancel this visit. Check your connection and try again."))}
-                onChecklist={(value) => selectedVisit && visitActions.checklist(selectedVisit.id, value)}
+                onLogOutcome={() =>
+                    selectedVisit && updateUrl({ visit: undefined, outcome: selectedVisit.id })
+                }
+                onReschedule={() =>
+                    selectedVisit && updateUrl({ visit: undefined, reschedule: selectedVisit.id })
+                }
+                onCancel={() =>
+                    selectedVisit &&
+                    void visitActions.cancel
+                        .mutateAsync(selectedVisit.id)
+                        .then(() => {
+                            setActionError(undefined);
+                            toast.success("Visit cancelled");
+                            updateUrl({ visit: undefined });
+                        })
+                        .catch((error) =>
+                            setActionError(
+                                error instanceof Error
+                                    ? error.message
+                                    : "Could not cancel this visit. Check your connection and try again.",
+                            ),
+                        )
+                }
+                onChecklist={(value) =>
+                    selectedVisit && visitActions.checklist(selectedVisit.id, value)
+                }
             />
 
             <OutcomeModal
@@ -229,7 +304,12 @@ export function BrokerSiteVisitsPage() {
                     if (!outcomeVisit) return;
                     await visitActions.outcome.mutateAsync({ visit: outcomeVisit, outcome });
                     toast.success("Outcome logged");
-                    if (outcome.nextStep === "show_other_property") updateUrl({ outcome: undefined, tab: "slots", buyer: outcomeVisit.buyers[0]?.id });
+                    if (outcome.nextStep === "show_other_property")
+                        updateUrl({
+                            outcome: undefined,
+                            tab: "slots",
+                            buyer: outcomeVisit.buyers[0]?.id,
+                        });
                     else updateUrl({ outcome: undefined });
                 }}
             />
@@ -242,7 +322,11 @@ export function BrokerSiteVisitsPage() {
                 onClose={() => updateUrl({ reschedule: undefined })}
                 onSave={async (startsAt, endsAt) => {
                     if (!rescheduleVisit) return;
-                    await visitActions.reschedule.mutateAsync({ id: rescheduleVisit.id, startsAt, endsAt });
+                    await visitActions.reschedule.mutateAsync({
+                        id: rescheduleVisit.id,
+                        startsAt,
+                        endsAt,
+                    });
                     toast.success("Reschedule sent to owner");
                     updateUrl({ reschedule: undefined });
                 }}
