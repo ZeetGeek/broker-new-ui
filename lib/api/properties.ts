@@ -77,6 +77,8 @@ export type PropertyListing = PropertyBrowseListing & {
     publishStatus?: PropertyPublishStatus | string | null;
     isDraft?: boolean;
     postalCode?: string | null;
+    society?: string | null;
+    landmark?: string | null;
     balconyCount?: number | null;
     floorNumber?: number | null;
     totalFloors?: number | null;
@@ -206,6 +208,8 @@ export type CreatePropertyInput = {
     areaSqft?: number;
     address?: string;
     postalCode?: string;
+    society?: string;
+    landmark?: string;
     country?: string;
     status?: string;
     salePrice?: number;

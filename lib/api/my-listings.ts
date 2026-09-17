@@ -186,6 +186,8 @@ export const myListingsApi = {
                 city: input.city,
                 address: input.address,
                 pinCode: input.pinCode,
+                landmark: input.landmark ?? "",
+                society: input.society ?? "",
                 transactionType: input.transactionType,
                 saleAmountInr: input.saleAmountInr,
                 rentAmountInr: input.rentAmountInr,
@@ -270,6 +272,8 @@ export const myListingsApi = {
             city: owner.city || "Surat",
             address: owner.fullAddress,
             pinCode: owner.pincode,
+            landmark: "",
+            society: owner.societyName || "",
             saleAmountInr:
                 owner.intent === "sell"
                     ? moneyToRupees(owner.expectedPrice, owner.priceUnit)

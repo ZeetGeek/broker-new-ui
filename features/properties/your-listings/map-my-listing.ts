@@ -248,6 +248,8 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         city,
         address: listing.address?.trim() || locality,
         pinCode: listing.postalCode?.trim() || "",
+        landmark: listing.landmark?.trim() || "",
+        society: listing.society?.trim() || "",
         transactionType: mapTransactionType(listing.transactionType),
         saleAmountInr,
         rentAmountInr,
@@ -331,6 +333,8 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
         areaSqft: input.areaSqft,
         address: input.locality.trim(),
         postalCode: input.pinCode.trim() || undefined,
+        society: input.society.trim() || undefined,
+        landmark: input.landmark.trim() || undefined,
         country: "India",
         salePrice: input.saleAmountInr ?? undefined,
         monthlyRent: input.rentAmountInr ?? undefined,
@@ -379,6 +383,8 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.locality != null) payload.address = input.locality.trim();
     if (input.city != null) payload.city = input.city.trim();
     if (input.pinCode != null) payload.postalCode = input.pinCode.trim();
+    if (input.society != null) payload.society = input.society.trim() || undefined;
+    if (input.landmark != null) payload.landmark = input.landmark.trim() || undefined;
     if (input.areaSqft != null) payload.areaSqft = input.areaSqft;
     if (input.saleAmountInr !== undefined) payload.salePrice = input.saleAmountInr ?? undefined;
     if (input.rentAmountInr !== undefined) payload.monthlyRent = input.rentAmountInr ?? undefined;

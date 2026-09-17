@@ -7,13 +7,20 @@ import toast from "react-hot-toast";
 import { Camera, Check } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
-import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
+import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { AppImage } from "@/components/shared/app-image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { BEDROOM_OPTIONS, LISTING_FOR_OPTIONS, propertyTypeOptions } from "@/constants/property";
+import {
+    BEDROOM_OPTIONS,
+    CITY_OPTIONS,
+    LISTING_FOR_OPTIONS,
+    PROPERTY_CATEGORY_OPTIONS,
+    propertyTypeOptions,
+} from "@/constants/property";
 import {
     ChoiceField,
     CurrencyField,
@@ -24,14 +31,25 @@ import {
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 
+/**
+ * Minimal create form: every field here maps to a value the create-property API
+ * needs (or a value we must send so the listing is usable after save).
+ *
+ * API-required: visibility (set on save), transactionType ← listingFor, city.
+ * Always sent with create: category/type, locality→address, area, price/rent, photo.
+ */
 export function QuickAdd({
     photoFilesRef,
 }: {
     photoFilesRef: MutableRefObject<Map<string, File>>;
 }) {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
+    const { derived } = useFieldRules();
     const values = watch();
     const firstPhoto = values.media.photos[0];
+    const showBhk = derived.isResidential && !derived.isPlot;
+    const showSalePrice = derived.isSell;
+    const showRent = derived.isRentLike && !derived.isPg;
 
     function addPhoto(file: File | undefined) {
         if (!file) return;
@@ -66,11 +84,14 @@ export function QuickAdd({
                     Save the lead from the site
                 </h2>
                 <p className="mbs-2 text-sm/6 text-ink-muted max-inline-2xl">
-                    Capture seven essentials now. This stays a draft so the complete details can be
-                    added later.
+                    Fill the fields required to create the listing. It saves as a draft so you can
+                    complete the rest later.
                 </p>
             </div>
-            <WizardSection title="Property essentials">
+            <WizardSection
+                title="Property essentials"
+                description="These map to the create-property API required fields (deal type, city) plus the basics needed for a usable draft."
+            >
                 <div className="flex flex-col gap-4">
                     <ChoiceField
                         name="basics.listingFor"
@@ -78,29 +99,85 @@ export function QuickAdd({
                         options={LISTING_FOR_OPTIONS}
                         columns={3}
                     />
+                    <ChoiceField
+                        name="basics.category"
+                        label="Category"
+                        options={PROPERTY_CATEGORY_OPTIONS}
+                        columns={5}
+                        onValueChange={() => {
+                            setValue("basics.propertyType", "", { shouldDirty: true });
+                            setValue("basics.propertySubType", "", { shouldDirty: true });
+                            setValue(
+                                "details.commercial",
+                                structuredClone(DEFAULT_PROPERTY_DRAFT.details.commercial),
+                                { shouldDirty: true },
+                            );
+                            setValue(
+                                "details.land",
+                                structuredClone(DEFAULT_PROPERTY_DRAFT.details.land),
+                                { shouldDirty: true },
+                            );
+                        }}
+                    />
                     <div className={FORM_GRID_CLASS}>
                         <SelectField
                             name="basics.propertyType"
                             label="Property type"
                             options={propertyTypeOptions(values.basics.category)}
                         />
+                        <SelectField name="location.city" label="City" options={CITY_OPTIONS} />
                         <TextField
                             name="location.locality"
                             label="Locality"
                             placeholder="e.g. Vesu"
                         />
-                        <SelectField
-                            name="details.bedrooms"
-                            label="BHK"
-                            options={BEDROOM_OPTIONS}
+                        <TextField
+                            name="location.pincode"
+                            label="PIN code"
+                            inputMode="numeric"
+                            maxLength={6}
+                            placeholder="395007"
                         />
-                        <NumberField name="area.carpetArea" label="Area (sq ft)" />
-                        {values.basics.listingFor === "sell" ||
-                        values.basics.listingFor === "both" ? (
+                        <TextField
+                            name="location.landmark"
+                            label="Landmark"
+                            placeholder="e.g. Near VR Mall"
+                        />
+                        <TextField
+                            name="location.projectOrSociety"
+                            label="Project or society"
+                            placeholder="e.g. Happy Glorious"
+                        />
+                        <TextField
+                            name="basics.title"
+                            label="Property title"
+                            placeholder="e.g. 3 BHK in Vesu"
+                            className="md:col-span-2"
+                        />
+                        {showBhk ? (
+                            <SelectField
+                                name="details.bedrooms"
+                                label="BHK"
+                                options={BEDROOM_OPTIONS}
+                            />
+                        ) : null}
+                        <NumberField
+                            name="area.plotArea"
+                            label="Area (sq ft)"
+                            min={0}
+                            placeholder="e.g. 1200"
+                            onValueChange={(next) => {
+                                const sqft = next != null && next > 0 ? next : 0;
+                                setValue("area.plotArea", next, { shouldDirty: true });
+                                setValue("area.carpetArea", next, { shouldDirty: true });
+                                setValue("area.areaSqft", sqft, { shouldDirty: true });
+                                setValue("area.unit", "sqft", { shouldDirty: true });
+                            }}
+                        />
+                        {showSalePrice ? (
                             <CurrencyField name="sale.expectedPrice" label="Expected price" />
                         ) : null}
-                        {values.basics.listingFor === "rent" ||
-                        values.basics.listingFor === "both" ? (
+                        {showRent ? (
                             <CurrencyField name="rent.monthlyRent" label="Monthly rent" />
                         ) : null}
                         <TextField
@@ -116,7 +193,7 @@ export function QuickAdd({
             </WizardSection>
             <WizardSection
                 title="One reference photo"
-                description="A quick photo makes this draft easier to recognise later."
+                description="Required so the draft can be recognised and the create request can include photos."
             >
                 <Label
                     htmlFor="quick-property-photo"

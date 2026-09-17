@@ -76,6 +76,8 @@ export function listingFromCreateInput(
         city: input.city,
         address: input.address,
         pinCode: input.pinCode,
+        landmark: input.landmark ?? "",
+        society: input.society ?? "",
         transactionType: input.transactionType,
         saleAmountInr: input.saleAmountInr,
         rentAmountInr: input.rentAmountInr,
@@ -130,6 +132,8 @@ export function applyListingUpdate(
     if (input.city != null) next.city = input.city;
     if (input.address != null) next.address = input.address;
     if (input.pinCode != null) next.pinCode = input.pinCode;
+    if (input.landmark != null) next.landmark = input.landmark;
+    if (input.society != null) next.society = input.society;
     if (input.saleAmountInr !== undefined) next.saleAmountInr = input.saleAmountInr;
     if (input.rentAmountInr !== undefined) next.rentAmountInr = input.rentAmountInr;
     if (input.areaSqft != null) next.areaSqft = input.areaSqft;
@@ -206,6 +210,8 @@ type SeedDraft = Omit<
     | "nearbyPlaces"
     | "videoUrl"
     | "virtualTourUrl"
+    | "landmark"
+    | "society"
 > & {
     category?: MyListingCategory;
     bathrooms?: number | null;
@@ -222,6 +228,8 @@ type SeedDraft = Omit<
     nearbyPlaces?: string[];
     videoUrl?: string;
     virtualTourUrl?: string;
+    landmark?: string;
+    society?: string;
 };
 
 function hydrateSeed(item: SeedDraft): MyListingItem {
@@ -242,6 +250,8 @@ function hydrateSeed(item: SeedDraft): MyListingItem {
         nearbyPlaces: item.nearbyPlaces ?? [],
         videoUrl: item.videoUrl ?? "",
         virtualTourUrl: item.virtualTourUrl ?? "",
+        landmark: item.landmark ?? "",
+        society: item.society ?? "",
     };
 }
 

@@ -46,6 +46,8 @@ export type MyListingItem = {
     city: string;
     address: string;
     pinCode: string;
+    landmark: string;
+    society: string;
     transactionType: MyListingTransactionType;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
@@ -156,6 +158,8 @@ export type CreateMyListingInput = {
     city: string;
     address: string;
     pinCode: string;
+    landmark: string;
+    society: string;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
     areaSqft: number;

@@ -444,7 +444,16 @@ export function PropertyForm({
             ...methods.getValues(),
             publish: { ...methods.getValues().publish, status: publishStatus },
         };
-        if (!forceDraft) {
+        // Quick add only validates its own fields (draft and publish). Full details
+        // still runs the full step schemas on publish — leave that path alone.
+        if (entryMode === "quick") {
+            const quickProblem = validateQuickDraft(current);
+            if (quickProblem) {
+                setFormBanner(quickProblem);
+                persistInFlightRef.current = false;
+                return;
+            }
+        } else if (!forceDraft) {
             const required = activeSteps.map((item) => item.id);
             for (const requiredStep of required) {
                 if (!validateStep(requiredStep)) {
@@ -454,14 +463,6 @@ export function PropertyForm({
                     persistInFlightRef.current = false;
                     return;
                 }
-            }
-        }
-        if (forceDraft && entryMode === "quick") {
-            const quickProblem = validateQuickDraft(current);
-            if (quickProblem) {
-                setFormBanner(quickProblem);
-                persistInFlightRef.current = false;
-                return;
             }
         }
 
@@ -1393,8 +1394,9 @@ function listingToDraft(listing: MyListingItem): PropertyDraftValues {
     draft.location.city = listing.city;
     draft.location.locality = listing.locality;
     draft.location.streetOrRoad = listing.address;
-    draft.location.landmark = listing.address || listing.locality;
+    draft.location.landmark = listing.landmark || listing.address || listing.locality;
     draft.location.pincode = listing.pinCode;
+    draft.location.projectOrSociety = listing.society || "";
     draft.details.bedrooms = String(listing.bhk || 2);
     draft.details.bathrooms = listing.bathrooms;
     draft.details.balconies = listing.balconies;
@@ -1530,6 +1532,8 @@ function draftToLegacyInput(
         city: values.location.city,
         address: values.location.streetOrRoad || values.location.fullAddress,
         pinCode: values.location.pincode,
+        landmark: values.location.landmark,
+        society: values.location.projectOrSociety,
         saleAmountInr:
             transactionType === "sale" || transactionType === "both"
                 ? values.sale.expectedPrice
@@ -1588,20 +1592,19 @@ function draftToLegacyInput(
     };
 }
 
+/** Only fields shown on the Quick add surface — never full-details requirements. */
 function validateQuickDraft(values: PropertyDraftValues): string | null {
+    if (!values.basics.listingFor) return "Choose listing for (sale, rent, or both).";
+    if (!values.basics.category) return "Choose a category.";
     if (!values.basics.propertyType) return "Choose a property type.";
+    if (!values.location.city.trim()) return "Choose a city.";
     if (!values.location.locality.trim()) return "Enter the locality.";
-    if (!values.area.areaSqft) return "Enter the area.";
+    const area = values.area.areaSqft || values.area.plotArea || values.area.carpetArea;
+    if (!area) return "Enter the area.";
     const listingFor = values.basics.listingFor;
     if ((listingFor === "sell" || listingFor === "both") && !values.sale.expectedPrice)
         return "Enter the sale price.";
-    if (
-        (listingFor === "rent" ||
-            listingFor === "both" ||
-            listingFor === "lease" ||
-            listingFor === "pg") &&
-        !values.rent.monthlyRent
-    )
+    if ((listingFor === "rent" || listingFor === "both") && !values.rent.monthlyRent)
         return "Enter the rent.";
     if (!values.media.photos.length) return "Add one property photo.";
     return null;
