@@ -23,16 +23,11 @@ const listingCopySchema = z
             .trim()
             .min(1, "Enter a title")
             .max(120, "Keep the title under 120 characters"),
-        description: z.string().trim().max(3000, "Keep the description under 3,000 characters"),
-    })
-    .superRefine((value, context) => {
-        if (value.description.length > 0 && value.description.length < 50) {
-            context.addIssue({
-                code: "custom",
-                path: ["description"],
-                message: "Write at least 50 characters, or leave this blank",
-            });
-        }
+        description: z
+            .string()
+            .trim()
+            .min(50, "Write at least 50 characters")
+            .max(3000, "Keep the description under 3,000 characters"),
     });
 
 /** Basics without title/description requirements — those belong on the Property step. */

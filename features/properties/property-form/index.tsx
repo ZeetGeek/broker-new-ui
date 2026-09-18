@@ -314,19 +314,11 @@ export function PropertyForm({
             if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[1-9]$/.test(event.key)) {
                 const index = Number(event.key) - 1;
                 const targetStep = activeSteps[index];
-                if (
-                    targetStep &&
-                    FORM_STEPS.findIndex((item) => item.id === targetStep.id) <= highestUnlocked
-                )
-                    setStep(targetStep.id);
+                if (targetStep) changeStep(targetStep.id);
             }
             if (!event.ctrlKey && !event.metaKey && event.key === "0") {
                 const targetStep = activeSteps[activeSteps.length - 1];
-                if (
-                    targetStep &&
-                    FORM_STEPS.findIndex((item) => item.id === targetStep.id) <= highestUnlocked
-                )
-                    setStep(targetStep.id);
+                if (targetStep) changeStep(targetStep.id);
             }
         }
         window.addEventListener("keydown", onKeyDown);
@@ -396,8 +388,30 @@ export function PropertyForm({
     }
 
     function changeStep(next: PropertyFormStep) {
-        const nextIndex = FORM_STEPS.findIndex((item) => item.id === next);
-        if (nextIndex > highestUnlocked) return;
+        const nextOriginalIndex = FORM_STEPS.findIndex((item) => item.id === next);
+        if (nextOriginalIndex < 0) return;
+        if (next === step) return;
+
+        const currentActiveIndex = activeSteps.findIndex((item) => item.id === step);
+        const nextActiveIndex = activeSteps.findIndex((item) => item.id === next);
+        if (nextActiveIndex < 0) return;
+
+        const goingForward = currentActiveIndex >= 0 && nextActiveIndex > currentActiveIndex;
+
+        // Already-unlocked steps, or the single next step after the current unlock wall.
+        if (nextOriginalIndex > highestUnlocked + 1) return;
+        if (nextOriginalIndex === highestUnlocked + 1 && !goingForward) return;
+
+        if (goingForward) {
+            setFormBanner(null);
+            if (!validateStep(step)) {
+                document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
+            setCompletedSteps((current) => new Set(current).add(step));
+            setHighestUnlocked((current) => Math.max(current, nextOriginalIndex));
+        }
+
         setFormBanner(null);
         setMobileSummaryOpen(false);
         setMobileScoreOpen(false);
@@ -411,17 +425,9 @@ export function PropertyForm({
     }
 
     function goNext() {
-        setFormBanner(null);
-        if (!validateStep(step)) return;
-        setCompletedSteps((current) => new Set(current).add(step));
         const next = activeSteps[stepIndex + 1];
         if (!next) return;
-        const nextOriginalIndex = FORM_STEPS.findIndex((item) => item.id === next.id);
-        setHighestUnlocked((current) => Math.max(current, nextOriginalIndex));
-        setStep(next.id);
-        setMobileSummaryOpen(false);
-        setMobileScoreOpen(false);
-        saveSilent();
+        changeStep(next.id);
     }
 
     function saveSilent() {
@@ -1087,10 +1093,10 @@ function PropertyFormFooter({
                             Press
                             <KbdGroup className="gap-1">
                                 <Kbd className="px-1.5 text-[10px] min-inline-4">1</Kbd>
-                                <span aria-hidden>+</span>
-                                <Kbd className="px-1.5 text-[10px] min-inline-4">2</Kbd>
+                                <span aria-hidden>–</span>
+                                <Kbd className="px-1.5 text-[10px] min-inline-4">5</Kbd>
                             </KbdGroup>
-                            to navigate
+                            to jump steps
                         </p>
                     </div>
                 ) : null}

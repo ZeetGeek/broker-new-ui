@@ -44,7 +44,7 @@ export const FIELD_RULES = {
     // Transaction field hidden in the form; keep the rule but never surface it.
     "basics.transactionType": { visible: () => false, level: required },
     "basics.title": { level: required },
-    "basics.description": { level: recommended },
+    "basics.description": { level: required },
 
     "location.country": { level: required },
     "location.state": { level: required },
@@ -79,6 +79,10 @@ export const FIELD_RULES = {
         visible: (d) => d.isResidential && !d.isPlot,
         level: required,
         label: () => "BHK",
+        isEmpty: (values) => {
+            const raw = String(values.details.bedrooms ?? "").trim();
+            return !raw || raw === "0";
+        },
     },
     "details.bathrooms": {
         visible: (d) => !d.isPlot,
