@@ -11,6 +11,8 @@ export type FieldRule = {
     help?: string;
     minItems?: number;
     keepWhenHidden?: boolean;
+    /** When set, overrides the default empty check for required-field validation. */
+    isEmpty?: (values: PropertyDraftValues) => boolean;
 };
 
 type RuleMap = Record<string, FieldRule>;
@@ -201,7 +203,12 @@ export const FIELD_RULES = {
     "rent.securityDepositMode": { visible: (d) => d.isRentLike, level: required },
     "rent.securityDeposit": { visible: (d) => d.isRentLike, level: required },
     "rent.maintenanceMode": { visible: () => false, keepWhenHidden: true },
-    "rent.maintenanceAmount": { visible: (d) => d.isRentLike && !d.isPlot },
+    // One UI field only — shown under rent when rent-only; under sale when selling
+    // (including sell+rent). Values stay mirrored in the form.
+    "rent.maintenanceAmount": {
+        visible: (d) => d.isRentLike && !d.isSell && !d.isPlot,
+        keepWhenHidden: true,
+    },
     "rent.maintenanceFrequency": { visible: () => false },
     "rent.electricityBilling": { visible: () => false },
     "rent.waterCharges": { visible: () => false },
@@ -279,7 +286,24 @@ export const FIELD_RULES = {
     "construction.paymentPlan": { visible: () => false },
     "construction.paymentSchedule": { visible: () => false },
     "construction.bookingOpen": { visible: () => false },
-    "media.photos": { level: required, minItems: 3, label: () => "Property photos" },
+    "media.cover": {
+        level: required,
+        label: () => "Cover image",
+        keepWhenHidden: true,
+        isEmpty: (values) =>
+            !values.media.photos.some(
+                (photo) => photo.isCover && photo.status !== "error",
+            ),
+    },
+    "media.photos": {
+        level: required,
+        minItems: 3,
+        label: () => "Property photos",
+        isEmpty: (values) =>
+            values.media.photos.filter(
+                (photo) => !photo.isCover && photo.status !== "error",
+            ).length < 3,
+    },
     "media.videoUploadName": { visible: () => false },
     "media.videoUrl": {},
     "media.virtualTourUrl": { visible: (d) => !d.isPlot },
@@ -460,7 +484,10 @@ export function missingRequiredFields(
         return STEP_FIELD_PATHS[step].flatMap((path) => {
             const rule = ruleFor(path);
             if (!isVisible(path, values) || levelOf(path, values) !== "required") return [];
-            if (!isEmptyFieldValue(valueAtPath(values, path), rule)) return [];
+            const empty = rule?.isEmpty
+                ? rule.isEmpty(values)
+                : isEmptyFieldValue(valueAtPath(values, path), rule);
+            if (!empty) return [];
             return [{ path, label: labelOf(path, values), step }];
         });
     });

@@ -5,14 +5,11 @@ import { useFormContext } from "react-hook-form";
 
 import {
     BedDouble,
-    CalendarCheck,
-    CalendarClock,
     CircleDollarSign,
     Clock3,
     HandCoins,
     Receipt,
     Ruler,
-    Shield,
     Users,
     Utensils,
 } from "lucide-react";
@@ -23,17 +20,19 @@ import { formatInr, formatInrCompact } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
-import { Button } from "@/components/ui/button";
+import { ConditionalField } from "@/components/property/fields/conditional-field";
+import { FieldLabel } from "@/components/property/fields/field-label";
 
 import {
     HOUSEKEEPING_OPTIONS,
     PG_BED_TYPE_OPTIONS,
     PG_GENDER_OPTIONS,
-    SECURITY_DEPOSIT_MODE_OPTIONS,
 } from "@/constants/property";
+import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import {
-    ChoiceField,
+    CounterField,
     CurrencyField,
+    DateField,
     FORM_GRID_CLASS,
     FORM_SECTIONS_CLASS,
     FORM_STACK_CLASS,
@@ -49,19 +48,43 @@ const SELL_EXTRA_CHARGES = [
     ["sale.floorRiseCharge", "Floor-rise charge"],
 ] as const;
 
+const DEPOSIT_MODE_TABS = [
+    { value: "months_of_rent" as const, label: "In months" },
+    { value: "amount" as const, label: "Fixed ₹" },
+];
+
 function RentAndDepositSection({
     isPg,
-    depositMode,
-    monthlyRent,
-    securityDeposit,
-    onAvailableImmediately,
+    showMaintenance,
+    onMaintenanceChange,
 }: {
     isPg: boolean;
-    depositMode: PropertyDraftValues["rent"]["securityDepositMode"];
-    monthlyRent: number | null;
-    securityDeposit: number | null;
-    onAvailableImmediately: () => void;
+    showMaintenance: boolean;
+    onMaintenanceChange: (value: number | null) => void;
 }) {
+    const { watch, setValue } = useFormContext<PropertyDraftValues>();
+    const depositMode = watch("rent.securityDepositMode");
+    const monthlyRent = watch("rent.monthlyRent");
+    const securityDeposit = watch("rent.securityDeposit");
+
+    const depositInRupees =
+        depositMode === "months_of_rent"
+            ? monthlyRent && securityDeposit
+                ? monthlyRent * securityDeposit
+                : null
+            : securityDeposit;
+
+    function changeDepositMode(next: PropertyDraftValues["rent"]["securityDepositMode"]) {
+        if (next === depositMode) return;
+        setValue("rent.securityDepositMode", next, { shouldDirty: true, shouldValidate: true });
+        if (next === "months_of_rent") {
+            setValue("rent.securityDeposit", 2, { shouldDirty: true, shouldValidate: true });
+            return;
+        }
+        const suggested = monthlyRent && monthlyRent > 0 ? monthlyRent * 2 : null;
+        setValue("rent.securityDeposit", suggested, { shouldDirty: true, shouldValidate: true });
+    }
+
     return (
         <WizardSection
             title={
@@ -71,10 +94,10 @@ function RentAndDepositSection({
                         strokeWidth={1.75}
                         aria-hidden
                     />
-                    {isPg ? "PG rent" : "Rent and deposit"}
+                    {isPg ? "PG rent" : "Rent details"}
                 </>
             }
-            description="Record the full move-in amount, not only the monthly rent."
+            description="What the tenant pays each month, the deposit to move in, and when they can start."
         >
             <div className={FORM_STACK_CLASS}>
                 <div className={FORM_GRID_CLASS}>
@@ -82,53 +105,95 @@ function RentAndDepositSection({
                         name="rent.monthlyRent"
                         label="Monthly rent"
                         placeholder="e.g. 25,000"
+                        helperText="Amount the tenant pays every month"
+                        className={showMaintenance ? undefined : "md:col-span-2"}
                     />
-                    <ChoiceField
-                        name="rent.securityDepositMode"
-                        label="Deposit mode"
-                        options={SECURITY_DEPOSIT_MODE_OPTIONS}
-                        columns={2}
-                        className="md:col-span-2"
-                    />
-                    {depositMode === "months_of_rent" ? (
-                        <NumberField
-                            name="rent.securityDeposit"
-                            label="Deposit (months of rent)"
-                            max={24}
-                            step={0.5}
-                            placeholder="e.g. 2"
-                            startIcon={Shield}
-                            hint={
-                                monthlyRent
-                                    ? `${formatInr((securityDeposit ?? 0) * monthlyRent)} deposit`
-                                    : undefined
-                            }
-                        />
-                    ) : (
+                    {showMaintenance ? (
                         <CurrencyField
-                            name="rent.securityDeposit"
-                            label="Security deposit"
-                            placeholder="e.g. 50,000"
+                            name="rent.maintenanceAmount"
+                            label="Society maintenance"
+                            placeholder="e.g. 3,000"
+                            helperText="Monthly society / AMC — same if the flat is later sold"
+                            onValueChange={onMaintenanceChange}
                         />
-                    )}
-                    <TextField
-                        name="rent.availableFrom"
-                        label="Available from"
-                        type="date"
-                        min={new Date().toISOString().slice(0, 10)}
-                        startIcon={CalendarClock}
-                    />
+                    ) : null}
                 </div>
-                <div className="flex justify-end">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={onAvailableImmediately}
+
+                <ConditionalField path="rent.securityDepositMode">
+                    <div
+                        className="
+                          space-y-4 rounded-card border border-border-warm bg-surface-muted/35 p-4
+                          sm:p-5
+                        "
                     >
-                        <CalendarCheck aria-hidden /> Available immediately
-                    </Button>
-                </div>
+                        <div
+                            className="
+                              flex flex-col gap-3
+                              sm:flex-row sm:items-center sm:justify-between
+                            "
+                        >
+                            <div className="min-inline-0">
+                                <p className="text-sm font-semibold text-ink">
+                                    <FieldLabel path="rent.securityDeposit">
+                                        Security deposit
+                                    </FieldLabel>
+                                </p>
+                                <p className="mbs-0.5 text-xs text-ink-muted">
+                                    Refundable amount collected before move-in.
+                                </p>
+                            </div>
+                            <SlidingTabs
+                                value={depositMode}
+                                onValueChange={changeDepositMode}
+                                ariaLabel="How to set the deposit"
+                                options={DEPOSIT_MODE_TABS}
+                                className="t-tabs-compact shrink-0"
+                            />
+                        </div>
+
+                        {depositMode === "months_of_rent" ? (
+                            <div className="grid gap-4 sm:grid-cols-2 sm:items-stretch">
+                                <CounterField
+                                    name="rent.securityDeposit"
+                                    label="Months of rent"
+                                    min={1}
+                                    max={12}
+                                    className="block-full [&_.t-acc-panel]:block-full [&_.t-acc-panel-inner]:block-full"
+                                />
+                                <div
+                                    className="
+                                      flex flex-row items-center justify-between gap-3 rounded-control
+                                      border-2 border-dashed border-border-warm bg-surface px-3 py-2
+                                      block-full min-block-14
+                                    "
+                                >
+                                    <p className="text-xs text-ink-muted min-inline-0">
+                                        Tenant pays upfront
+                                    </p>
+                                    <p className="tabular shrink-0 text-base font-bold text-ink">
+                                        {depositInRupees
+                                            ? formatInr(depositInRupees)
+                                            : "Add rent to see total"}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <CurrencyField
+                                name="rent.securityDeposit"
+                                label="Deposit amount"
+                                placeholder="e.g. 50,000"
+                                helperText="Exact rupees collected as deposit"
+                            />
+                        )}
+                    </div>
+                </ConditionalField>
+
+                <DateField
+                    name="rent.availableFrom"
+                    label="Available from"
+                    placeholder="Pick move-in date"
+                    hint="Date the tenant can move in"
+                />
             </div>
         </WizardSection>
     );
@@ -156,6 +221,13 @@ export function StepPricing() {
     const expectedPrice = values.sale.expectedPrice;
     const pricePerSqft = values.sale.pricePerSqft;
     const editingRef = useRef<"price" | "rate" | null>(null);
+    const showRentMaintenance = isVisible("rent.maintenanceAmount");
+    const showSaleMaintenance = isVisible("sale.maintenanceCharge");
+
+    function syncMaintenance(value: number | null) {
+        setValue("sale.maintenanceCharge", value, { shouldDirty: true, shouldValidate: true });
+        setValue("rent.maintenanceAmount", value, { shouldDirty: true, shouldValidate: true });
+    }
 
     const fixedCharges = SELL_EXTRA_CHARGES.reduce((total, [name]) => {
         const key = name.split(".")[1] as keyof PropertyDraftValues["sale"];
@@ -363,7 +435,7 @@ export function StepPricing() {
                     </div>
                 </WizardSection>
 
-                {isVisible("sale.maintenanceCharge") ||
+                {showSaleMaintenance ||
                 isVisible("sale.plcCharge") ||
                 isVisible("sale.floorRiseCharge") ? (
                     <WizardSection
@@ -374,19 +446,35 @@ export function StepPricing() {
                                     strokeWidth={1.75}
                                     aria-hidden
                                 />
-                                Charges
+                                {showSaleMaintenance &&
+                                !isVisible("sale.plcCharge") &&
+                                !isVisible("sale.floorRiseCharge")
+                                    ? "Society charges"
+                                    : "Extra sale charges"}
                             </>
                         }
-                        description="Add every amount a buyer should know before making an offer."
+                        description={
+                            showSaleMaintenance && derived.isRentLike
+                                ? "Society maintenance is the same for sale or rent. Other charges apply to buyers only."
+                                : "Optional costs a buyer should know on top of the asking price."
+                        }
                     >
                         <div className={FORM_GRID_CLASS}>
-                            <CurrencyField
-                                name="sale.maintenanceCharge"
-                                label="Monthly maintenance"
-                                placeholder="e.g. 3,000"
-                                helperText="Type 3000 or 3,000 — monthly society charge"
-                                className="md:col-span-2"
-                            />
+                            {showSaleMaintenance ? (
+                                <CurrencyField
+                                    name="sale.maintenanceCharge"
+                                    label="Society maintenance"
+                                    placeholder="e.g. 3,000"
+                                    helperText="Monthly society / AMC — same for sale or rent"
+                                    onValueChange={syncMaintenance}
+                                    className={
+                                        isVisible("sale.plcCharge") ||
+                                        isVisible("sale.floorRiseCharge")
+                                            ? undefined
+                                            : "md:col-span-2"
+                                    }
+                                />
+                            ) : null}
                             {SELL_EXTRA_CHARGES.map(([name, label]) => (
                                 <CurrencyField
                                     key={name}
@@ -402,14 +490,8 @@ export function StepPricing() {
                 {derived.isRentLike ? (
                     <RentAndDepositSection
                         isPg={derived.isPg}
-                        depositMode={values.rent.securityDepositMode}
-                        monthlyRent={values.rent.monthlyRent}
-                        securityDeposit={values.rent.securityDeposit}
-                        onAvailableImmediately={() =>
-                            setValue("rent.availableFrom", new Date().toISOString().slice(0, 10), {
-                                shouldDirty: true,
-                            })
-                        }
+                        showMaintenance={showRentMaintenance}
+                        onMaintenanceChange={syncMaintenance}
                     />
                 ) : null}
             </div>
@@ -420,39 +502,9 @@ export function StepPricing() {
         <div className={FORM_SECTIONS_CLASS}>
             <RentAndDepositSection
                 isPg={derived.isPg}
-                depositMode={values.rent.securityDepositMode}
-                monthlyRent={values.rent.monthlyRent}
-                securityDeposit={values.rent.securityDeposit}
-                onAvailableImmediately={() =>
-                    setValue("rent.availableFrom", new Date().toISOString().slice(0, 10), {
-                        shouldDirty: true,
-                    })
-                }
+                showMaintenance={showRentMaintenance}
+                onMaintenanceChange={syncMaintenance}
             />
-
-            {isVisible("rent.maintenanceAmount") ? (
-                <WizardSection
-                    title={
-                        <>
-                            <Receipt
-                                className="shrink-0 text-brand block-5 inline-5"
-                                strokeWidth={1.75}
-                                aria-hidden
-                            />
-                            Charges
-                        </>
-                    }
-                    description="Add the monthly society charge a tenant should know about."
-                >
-                    <CurrencyField
-                        name="rent.maintenanceAmount"
-                        label="Monthly maintenance"
-                        placeholder="e.g. 3,000"
-                        helperText="Type 3000 or 3,000 — monthly society charge"
-                        className="max-inline-sm"
-                    />
-                </WizardSection>
-            ) : null}
 
             {derived.isPg ? (
                 <WizardSection

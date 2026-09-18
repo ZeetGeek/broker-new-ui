@@ -78,7 +78,7 @@ export function LiveSummaryPanel({
     onGoToMedia?: () => void;
 }) {
     const isSale = values.basics.listingFor === "sell" || values.basics.listingFor === "both";
-    const cover = values.media.photos.find((photo) => photo.isCover) ?? values.media.photos[0];
+    const cover = values.media.photos.find((photo) => photo.isCover) ?? null;
     const price = isSale ? values.sale.expectedPrice : values.rent.monthlyRent;
     const ownerDeductions = 0;
     const buyerCharges = [values.sale.plcCharge, values.sale.floorRiseCharge].reduce<number>(

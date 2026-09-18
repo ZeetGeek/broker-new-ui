@@ -513,14 +513,22 @@ export const stepSchemas = {
             publish: publishSchema,
         })
         .superRefine((value, context) => {
-            if (
-                value.publish.status === "active" &&
-                value.media.photos.filter((photo) => photo.status !== "error").length < 3
-            ) {
+            const usable = value.media.photos.filter((photo) => photo.status !== "error");
+            const hasCover = usable.some((photo) => photo.isCover);
+            const galleryCount = usable.filter((photo) => !photo.isCover).length;
+
+            if (!hasCover) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["media", "cover"],
+                    message: "Add a cover image for the listing card",
+                });
+            }
+            if (galleryCount < 3) {
                 context.addIssue({
                     code: "custom",
                     path: ["media", "photos"],
-                    message: "Add at least 3 photos to publish",
+                    message: "Add at least 3 property photos",
                 });
             }
         }),

@@ -95,19 +95,36 @@ export function StepMedia({
 }: {
     photoFilesRef: MutableRefObject<Map<string, File>>;
 }) {
-    const { watch, setValue } = useFormContext<PropertyDraftValues>();
+    const { watch, setValue, formState } = useFormContext<PropertyDraftValues>();
     const photos = watch("media.photos");
     const videoUrl = watch("media.videoUrl") ?? "";
     const virtualTourUrl = watch("media.virtualTourUrl") ?? "";
     const videoEmbed = useMemo(() => parseVideoEmbed(videoUrl), [videoUrl]);
     const tourEmbed = useMemo(() => parseTourEmbed(virtualTourUrl), [virtualTourUrl]);
-    const usablePhotoCount = photos.filter((photo) => photo.status !== "error").length;
-    const publishReady = usablePhotoCount >= 3;
     const coverPhoto = photos.find((photo) => photo.isCover) ?? null;
     const galleryPhotos = photos.filter((photo) => !photo.isCover);
     const usableGalleryCount = galleryPhotos.filter((photo) => photo.status !== "error").length;
     const hasUsableCover = coverPhoto != null && coverPhoto.status !== "error";
+    const publishReady = hasUsableCover && usableGalleryCount >= 3;
     const maxGallery = MAX_PHOTOS - (coverPhoto ? 1 : 0);
+    const coverError =
+        typeof formState.errors.media === "object" &&
+        formState.errors.media &&
+        "cover" in formState.errors.media
+            ? String(
+                  (formState.errors.media as { cover?: { message?: string } }).cover?.message ??
+                      "",
+              )
+            : "";
+    const photosError =
+        formState.errors.media &&
+        typeof formState.errors.media === "object" &&
+        "photos" in formState.errors.media
+            ? String(
+                  (formState.errors.media as { photos?: { message?: string } }).photos?.message ??
+                      "",
+              )
+            : "";
 
     async function processPhoto(photoId: string, file: File, url: string) {
         updatePhoto(photoId, { status: "processing" });
@@ -271,7 +288,7 @@ export function StepMedia({
                         Property photos
                     </>
                 }
-                description="Upload one vertical cover for the listing card, then add property photos. Need 3 usable photos total to publish."
+                description="Upload one vertical cover for the listing card, then at least 3 property photos. Both are required to publish."
             >
                 <div className={FORM_STACK_CLASS}>
                     <div className="grid gap-4 md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] md:items-stretch">
@@ -283,7 +300,7 @@ export function StepMedia({
                                         strokeWidth={1.75}
                                         aria-hidden
                                     />
-                                    Cover image
+                                    <FieldLabel path="media.cover">Cover image</FieldLabel>
                                 </p>
                                 <p
                                     className={cn(
@@ -361,6 +378,11 @@ export function StepMedia({
                                     />
                                 </Label>
                             )}
+                            {coverError ? (
+                                <p role="alert" className="text-sm text-danger">
+                                    {coverError}
+                                </p>
+                            ) : null}
                         </div>
 
                         <div className="flex flex-col gap-3 min-inline-0">
@@ -376,7 +398,7 @@ export function StepMedia({
                                 <p
                                     className={cn(
                                         "text-sm font-medium",
-                                        usableGalleryCount >= 2
+                                        usableGalleryCount >= 3
                                             ? "text-brand-text"
                                             : "text-ink-muted",
                                     )}
@@ -414,6 +436,11 @@ export function StepMedia({
                                     }}
                                 />
                             </Label>
+                            {photosError ? (
+                                <p role="alert" className="text-sm text-danger">
+                                    {photosError}
+                                </p>
+                            ) : null}
                         </div>
                     </div>
 
@@ -444,7 +471,8 @@ export function StepMedia({
                             {publishReady ? (
                                 <Check className="me-1.5 inline block-4 inline-4" aria-hidden />
                             ) : null}
-                            {usablePhotoCount}/3 minimum · {photos.length}/{MAX_PHOTOS} total
+                            Cover {hasUsableCover ? "✓" : "–"} · Gallery {usableGalleryCount}/3 ·{" "}
+                            {photos.length}/{MAX_PHOTOS} total
                         </p>
                         <p className="text-sm text-ink-muted">
                             Photos stay queued locally until the current API upload runs.

@@ -13,6 +13,7 @@ import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
+import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { Button } from "@/components/ui/button";
 import {
     Combobox,
@@ -508,6 +509,59 @@ export function CurrencyField({
     );
 }
 
+export function DateField({
+    name,
+    label,
+    hint,
+    visibility,
+    className,
+    placeholder = "Pick a date",
+}: {
+    name: Path;
+    label: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    className?: string;
+    placeholder?: string;
+}) {
+    const {
+        control,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
+    const error = errorAt(errors, name);
+    const id = name.replace(/\./g, "-");
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+        >
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => (
+                    <AppDatePicker
+                        id={id}
+                        value={typeof field.value === "string" ? field.value || null : null}
+                        onChange={(next) => field.onChange(next ?? "")}
+                        onBlur={field.onBlur}
+                        placeholder={placeholder}
+                        invalid={Boolean(error)}
+                        className="inline-full"
+                    />
+                )}
+            />
+            {error ? (
+                <p id={`${id}-error`} role="alert" className="text-sm text-danger">
+                    {error}
+                </p>
+            ) : null}
+        </FieldShell>
+    );
+}
+
 export function ChoiceField({
     name,
     label,
@@ -927,6 +981,22 @@ export function TagInputField({
     );
 }
 
+function counterNumericValue(raw: unknown): number {
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+    if (typeof raw === "string") {
+        const trimmed = raw.trim().toLowerCase();
+        if (!trimmed || trimmed === "0") return 0;
+        if (trimmed === "1rk") return 1;
+        if (trimmed === "10_plus" || trimmed === "5+" || trimmed.endsWith("+")) {
+            const parsed = Number.parseInt(trimmed, 10);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+        const parsed = Number(trimmed);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+}
+
 export function CounterField({
     name,
     label,
@@ -934,6 +1004,9 @@ export function CounterField({
     max = 10,
     visibility,
     startIcon: StartIcon,
+    /** Persist as string (e.g. BHK `"3"`). Default keeps number / null fields. */
+    storeAsString = false,
+    className,
 }: {
     name: Path;
     label: string;
@@ -941,22 +1014,27 @@ export function CounterField({
     max?: number;
     visibility?: FieldVisibility;
     startIcon?: LucideIcon;
+    storeAsString?: boolean;
+    className?: string;
 }) {
     const { control } = useFormContext<PropertyDraftValues>();
     const { labelOf } = useFieldRules();
     const resolvedLabel = labelOf(name, label);
     return (
-        <ConditionalField path={name}>
+        <ConditionalField path={name} className={className}>
             <Controller
                 name={name}
                 control={control}
                 render={({ field }) => {
-                    const value = typeof field.value === "number" ? field.value : 0;
+                    const value = counterNumericValue(field.value);
+                    function commit(next: number) {
+                        field.onChange(storeAsString ? String(next) : next);
+                    }
                     return (
                         <div
                             className="
                               flex items-center justify-between gap-3 rounded-control border-2
-                              border-border-warm bg-surface px-3 py-2 min-block-14
+                              border-border-warm bg-surface px-3 py-2 block-full min-block-14
                             "
                         >
                             <div className="flex items-center gap-2.5 min-inline-0">
@@ -983,7 +1061,7 @@ export function CounterField({
                                     size="icon-sm"
                                     aria-label={`Decrease ${resolvedLabel}`}
                                     disabled={value <= min}
-                                    onClick={() => field.onChange(Math.max(min, value - 1))}
+                                    onClick={() => commit(Math.max(min, value - 1))}
                                     className="
                                       flex items-center justify-center rounded-control
                                       text-ink-muted block-8 inline-8
@@ -1007,7 +1085,7 @@ export function CounterField({
                                     size="icon-sm"
                                     aria-label={`Increase ${resolvedLabel}`}
                                     disabled={value >= max}
-                                    onClick={() => field.onChange(Math.min(max, value + 1))}
+                                    onClick={() => commit(Math.min(max, value + 1))}
                                     className="
                                       flex items-center justify-center rounded-control
                                       text-ink-muted block-8 inline-8

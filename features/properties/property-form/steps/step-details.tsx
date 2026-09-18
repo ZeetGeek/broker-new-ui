@@ -36,7 +36,6 @@ import { useFieldRules } from "@/lib/visibility/use-field-rules";
 import { Button } from "@/components/ui/button";
 
 import {
-    BEDROOM_OPTIONS,
     FACING_OPTIONS,
     PANTRY_TYPE_OPTIONS,
     PROPERTY_CONDITION_OPTIONS,
@@ -104,35 +103,34 @@ export function StepDetails() {
                     }
                     description="Record the configuration people compare first."
                 >
-                    <div className={FORM_STACK_CLASS}>
-                        <SelectField
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <CounterField
                             name="details.bedrooms"
                             label="BHK"
-                            options={BEDROOM_OPTIONS}
-                            placeholder="Select BHK"
+                            min={1}
+                            max={10}
+                            storeAsString
                             startIcon={BedDouble}
                         />
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            <CounterField
-                                name="details.bathrooms"
-                                label="Bathrooms"
-                                min={1}
-                                max={10}
-                                startIcon={Bath}
-                            />
-                            <CounterField
-                                name="details.balconies"
-                                label="Balconies"
-                                max={5}
-                                startIcon={Wind}
-                            />
-                            <CounterField
-                                name="details.coveredParking"
-                                label="No. of parking"
-                                max={10}
-                                startIcon={SquareParking}
-                            />
-                        </div>
+                        <CounterField
+                            name="details.bathrooms"
+                            label="Bathrooms"
+                            min={1}
+                            max={10}
+                            startIcon={Bath}
+                        />
+                        <CounterField
+                            name="details.balconies"
+                            label="Balconies"
+                            max={5}
+                            startIcon={Wind}
+                        />
+                        <CounterField
+                            name="details.coveredParking"
+                            label="No. of parking"
+                            max={10}
+                            startIcon={SquareParking}
+                        />
                     </div>
                 </WizardSection>
             ) : null}

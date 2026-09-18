@@ -1558,11 +1558,7 @@ function draftToLegacyInput(
         facing: (values.details.facing || null) as CreateMyListingInput["facing"],
         parking: parking <= 0 ? "none" : parking === 1 ? "1" : parking === 2 ? "2" : "3plus",
         maintenanceInr:
-            transactionType === "sale"
-                ? values.sale.maintenanceCharge
-                : transactionType === "both"
-                  ? (values.sale.maintenanceCharge ?? values.rent.maintenanceAmount)
-                  : values.rent.maintenanceAmount,
+            values.sale.maintenanceCharge ?? values.rent.maintenanceAmount ?? null,
         availableFrom:
             transactionType === "rent" || transactionType === "both"
                 ? values.rent.availableFrom || null
