@@ -109,6 +109,10 @@ function buildChipCandidates(
 ): ChipCandidate[] {
     const items: ChipCandidate[] = [];
 
+    if (deal.property.isExclusiveProperty) {
+        items.push({ key: "exclusive", label: "Exclusive property", tone: "neutral" });
+    }
+
     if (!deal.owner.isRepresentationActive) {
         items.push({ key: "repr", label: "Representation ended", tone: "danger" });
     }
@@ -170,8 +174,11 @@ function CardChips({
     const ranked = buildChipCandidates(deal, live, attention, otherBuyers, onView).sort(
         (a, b) => CHIP_TONE_RANK[a.tone] - CHIP_TONE_RANK[b.tone],
     );
-    const visible = ranked.slice(0, 1);
-    const overflow = ranked.slice(1);
+    // Exclusive is informational and should stay visible beside blockers when space allows.
+    const exclusive = ranked.find((chip) => chip.key === "exclusive");
+    const rest = ranked.filter((chip) => chip.key !== "exclusive");
+    const visible = exclusive ? [exclusive, ...rest.slice(0, 1)] : rest.slice(0, 1);
+    const overflow = exclusive ? rest.slice(1) : rest.slice(1);
 
     if (visible.length === 0) return null;
 

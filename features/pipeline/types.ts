@@ -30,10 +30,13 @@ export type DealOwner = {
      * Consent-gated, exactly as on `RequestItem`. The API only sends a number
      * once the owner has approved the broker for this property. A deal whose
      * representation lapsed shows the owner's name and no way to call them.
+     * Exclusive CRM owners always include phone (broker-owned contact).
      */
     phoneDigits?: string;
     /** False once representation ends — the card stops offering contact. */
     isRepresentationActive: boolean;
+    /** Platform represented owner vs broker exclusive CRM contact. */
+    origin?: "platform" | "exclusive";
 };
 
 /** The property side, also denormalized from the owner's listing. */
@@ -55,6 +58,11 @@ export type DealProperty = {
      * say, which is not the same as zero, so the gallery count stays hidden.
      */
     photoCount?: number;
+    /**
+     * Broker inventory with an exclusive owner CRM contact attached.
+     * Drives the "Exclusive property" chip on pipeline cards.
+     */
+    isExclusiveProperty?: boolean;
 };
 
 /** The buyer side. Mirrors `ClientItem`, trimmed to what a card renders. */

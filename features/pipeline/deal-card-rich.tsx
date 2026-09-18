@@ -332,27 +332,47 @@ export function DealCardRich({
                         className="h5 text-brand"
                     />
 
-                    {!deal.owner.isRepresentationActive ? (
-                        <span
-                            className="
-                              body-xs flex items-center gap-1.5 rounded-control bg-danger-soft
-                              px-2.5 py-1 font-semibold text-danger
-                            "
-                        >
-                            <AlertCircle aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                            Representation ended
-                        </span>
-                    ) : gap ? (
-                        <span
-                            className="
-                              body-xs flex items-center gap-1.5 rounded-control bg-urgent-soft
-                              px-2.5 py-1 font-semibold text-urgent
-                            "
-                        >
-                            <AlertCircle aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                            {gap}
-                        </span>
-                    ) : null}
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                        {deal.property.isExclusiveProperty ? (
+                            <span
+                                className="
+                                  body-xs rounded-control bg-surface-muted px-2.5 py-1
+                                  font-semibold text-ink-muted
+                                "
+                            >
+                                Exclusive property
+                            </span>
+                        ) : null}
+                        {!deal.owner.isRepresentationActive ? (
+                            <span
+                                className="
+                                  body-xs flex items-center gap-1.5 rounded-control bg-danger-soft
+                                  px-2.5 py-1 font-semibold text-danger
+                                "
+                            >
+                                <AlertCircle
+                                    aria-hidden
+                                    className="block-4 inline-4"
+                                    strokeWidth={2}
+                                />
+                                Representation ended
+                            </span>
+                        ) : gap ? (
+                            <span
+                                className="
+                                  body-xs flex items-center gap-1.5 rounded-control bg-urgent-soft
+                                  px-2.5 py-1 font-semibold text-urgent
+                                "
+                            >
+                                <AlertCircle
+                                    aria-hidden
+                                    className="block-4 inline-4"
+                                    strokeWidth={2}
+                                />
+                                {gap}
+                            </span>
+                        ) : null}
+                    </div>
                 </div>
 
                 <div

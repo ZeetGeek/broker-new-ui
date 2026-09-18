@@ -51,13 +51,29 @@ type ApiLead = {
         bedrooms?: number | null;
         areaSqft?: number | null;
         photos?: string[] | null;
+        exclusiveOwnerId?: string | null;
+        isBrokerInventory?: boolean;
+        isExclusiveProperty?: boolean;
     } | null;
     owner?: {
         id: string;
         fullName?: string | null;
         phone?: string | null;
+        email?: string | null;
         avatarUrl?: string | null;
         isRepresentationActive?: boolean;
+        origin?: "platform" | "exclusive";
+    } | null;
+    exclusiveOwner?: {
+        id: string;
+        fullName?: string | null;
+        phone?: string | null;
+        email?: string | null;
+        ownerType?: string | null;
+        society?: string | null;
+        area?: string | null;
+        city?: string | null;
+        origin?: "exclusive";
     } | null;
     client?: {
         id: string;
@@ -208,7 +224,14 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
         "Property";
     const phoneDigits = digitsOnly(client.phone);
     const normalizedPhone = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
-    const ownerPhone = digitsOnly(lead.owner?.phone);
+    const ownerPhone = digitsOnly(lead.owner?.phone ?? lead.exclusiveOwner?.phone);
+    const isExclusiveProperty = Boolean(lead.property?.isExclusiveProperty);
+    const ownerOrigin: "platform" | "exclusive" =
+        lead.owner?.origin === "exclusive" || (!lead.owner && Boolean(lead.exclusiveOwner))
+            ? "exclusive"
+            : "platform";
+    const ownerName =
+        lead.owner?.fullName?.trim() || lead.exclusiveOwner?.fullName?.trim() || "Owner";
     const status = fromApiStage(lead.stage);
     const resolved =
         status === "closed" || status === "lost"
@@ -240,17 +263,20 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             // substituting someone else's building here would be a lie.
             imageSrc: property.photos?.find(Boolean) ?? "",
             photoCount: property.photos?.filter(Boolean).length ?? 0,
+            isExclusiveProperty,
         },
         owner: {
-            name: lead.owner?.fullName?.trim() || "Owner",
+            name: ownerName,
             avatarUrl: lead.owner?.avatarUrl ?? undefined,
             phoneDigits:
-                lead.owner?.isRepresentationActive && ownerPhone
+                (lead.owner?.isRepresentationActive || ownerOrigin === "exclusive") && ownerPhone
                     ? ownerPhone.length > 10
                         ? ownerPhone.slice(-10)
                         : ownerPhone
                     : undefined,
-            isRepresentationActive: Boolean(lead.owner?.isRepresentationActive),
+            isRepresentationActive:
+                ownerOrigin === "exclusive" ? true : Boolean(lead.owner?.isRepresentationActive),
+            origin: ownerOrigin,
         },
         stageEnteredAt: stageEnteredAt(lead),
         lastContactedAt: lead.updatedAt ?? null,
@@ -389,7 +415,9 @@ export const pipelineApi = {
     async list(filters: DealsFilters): Promise<DealsResult> {
         if (isMockMode()) {
             const all = mockDeals;
-            let items = filters.q.trim() ? all.filter((deal) => matchesQuery(deal, filters.q)) : all;
+            let items = filters.q.trim()
+                ? all.filter((deal) => matchesQuery(deal, filters.q))
+                : all;
             if (filters.stage) {
                 items = items.filter((deal) => deal.status === filters.stage);
             }
