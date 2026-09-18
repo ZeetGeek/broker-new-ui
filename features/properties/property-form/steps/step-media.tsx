@@ -42,6 +42,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import {
+    normalizePhotoOrder,
+    replaceCoverPhoto,
+    type DraftPhoto,
+} from "@/features/properties/property-form/cover-photo";
+import {
     FORM_GRID_CLASS,
     FORM_SECTIONS_CLASS,
     FORM_STACK_CLASS,
@@ -53,29 +58,7 @@ const MAX_PHOTOS = 30;
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 
-type DraftPhoto = PropertyDraftValues["media"]["photos"][number];
-
-function normalizePhotoOrder(list: DraftPhoto[]): DraftPhoto[] {
-    const cover = list.find((photo) => photo.isCover);
-    const gallery = list.filter((photo) => !photo.isCover);
-    return [...(cover ? [cover] : []), ...gallery].map((photo, order) => ({ ...photo, order }));
-}
-
-function isPortraitImage(file: File): Promise<boolean> {
-    return new Promise((resolve) => {
-        const url = URL.createObjectURL(file);
-        const img = new window.Image();
-        img.onload = () => {
-            URL.revokeObjectURL(url);
-            resolve(img.naturalHeight > img.naturalWidth);
-        };
-        img.onerror = () => {
-            URL.revokeObjectURL(url);
-            resolve(true);
-        };
-        img.src = url;
-    });
-}
+const COVER_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif";
 
 function DropzoneIcon({ children }: { children: ReactNode }) {
     return (
@@ -217,15 +200,13 @@ export function StepMedia({
 
     async function replaceCover(file: File | undefined) {
         if (!file) return;
-        const portrait = await isPortraitImage(file);
-        if (!portrait) {
-            toast.error("Cover works best as a vertical photo (taller than wide).");
-        }
-        revokePhoto(coverPhoto);
-        const entry = buildPhotoEntry(file, true);
-        const gallery = photos.filter((photo) => !photo.isCover);
-        commitPhotos([entry, ...gallery]);
-        if (entry.url) void processPhoto(entry.id, file, entry.url);
+        await replaceCoverPhoto({
+            file,
+            photos,
+            photoFilesRef,
+            commitPhotos,
+            patchPhoto: (photoId, patch) => updatePhoto(photoId, patch),
+        });
     }
 
     function addGalleryPhotos(files: FileList | null) {
@@ -313,39 +294,12 @@ export function StepMedia({
                             </div>
 
                             {coverPhoto ? (
-                                <div className="space-y-2">
-                                    <PhotoAttachment
-                                        photo={coverPhoto}
-                                        badge="Cover"
-                                        onRemove={() => removePhotoById(coverPhoto.id)}
-                                        onRetry={() => retryPhoto(coverPhoto.id)}
-                                    />
-                                    <div>
-                                        <Input
-                                            id="property-cover-replace"
-                                            type="file"
-                                            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                                            className="sr-only"
-                                            onChange={(event) => {
-                                                void replaceCover(event.target.files?.[0]);
-                                                event.currentTarget.value = "";
-                                            }}
-                                        />
-                                        <Button
-                                            type="button"
-                                            variant="link"
-                                            size="xs"
-                                            className="px-0 text-brand"
-                                            onClick={() =>
-                                                document
-                                                    .getElementById("property-cover-replace")
-                                                    ?.click()
-                                            }
-                                        >
-                                            Replace cover
-                                        </Button>
-                                    </div>
-                                </div>
+                                <CoverPreview
+                                    photo={coverPhoto}
+                                    onReplace={(file) => void replaceCover(file)}
+                                    onRemove={() => removePhotoById(coverPhoto.id)}
+                                    onRetry={() => retryPhoto(coverPhoto.id)}
+                                />
                             ) : (
                                 <Label
                                     htmlFor="property-cover-upload"
@@ -369,7 +323,7 @@ export function StepMedia({
                                     <Input
                                         id="property-cover-upload"
                                         type="file"
-                                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                                        accept={COVER_ACCEPT}
                                         className="sr-only"
                                         onChange={(event) => {
                                             void replaceCover(event.target.files?.[0]);
@@ -565,6 +519,116 @@ function MediaEmbedPreview({ embed }: { embed: MediaEmbed }) {
                     Open
                 </a>
             </div>
+        </div>
+    );
+}
+
+function CoverPreview({
+    photo,
+    onReplace,
+    onRemove,
+    onRetry,
+}: {
+    photo: DraftPhoto;
+    onReplace: (file: File) => void;
+    onRemove: () => void;
+    onRetry: () => void;
+}) {
+    const inputId = "property-cover-replace";
+    const hasImage = Boolean(photo.url);
+
+    return (
+        <div
+            className="
+              group relative flex-1 overflow-hidden rounded-card border-2 border-border-warm
+              bg-surface-muted aspect-3/4 min-block-0
+            "
+        >
+            {hasImage ? (
+                <AppImage
+                    src={photo.url}
+                    alt={photo.alt || photo.name || "Cover image"}
+                    fill
+                    sizes="224px"
+                    className="object-cover"
+                    unoptimized={
+                        photo.url.startsWith("blob:") ||
+                        photo.url.startsWith("http://") ||
+                        photo.url.startsWith("https://")
+                    }
+                />
+            ) : (
+                <div className="flex block-full items-center justify-center px-4 text-center">
+                    <p className="text-sm text-ink-muted">
+                        {photo.errorMessage ?? "Cover preview unavailable"}
+                    </p>
+                </div>
+            )}
+
+            <Input
+                id={inputId}
+                type="file"
+                accept={COVER_ACCEPT}
+                className="sr-only"
+                onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) onReplace(file);
+                    event.currentTarget.value = "";
+                }}
+            />
+
+            <div
+                className="
+                  absolute inset-0 flex flex-col items-center justify-center gap-2 bg-ink/55 p-3
+                  opacity-100 transition-opacity duration-160
+                  md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100
+                "
+            >
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 border-0 bg-surface text-ink hover:bg-surface"
+                    onClick={() => document.getElementById(inputId)?.click()}
+                >
+                    <RefreshCw className="block-3.5 inline-3.5" aria-hidden />
+                    Replace cover
+                </Button>
+                <div className="flex items-center gap-2">
+                    {photo.status === "error" ? (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-surface hover:bg-surface/15 hover:text-surface"
+                            onClick={onRetry}
+                        >
+                            Retry
+                        </Button>
+                    ) : null}
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-surface hover:bg-surface/15 hover:text-surface"
+                        onClick={onRemove}
+                    >
+                        <X className="me-1 block-3.5 inline-3.5" aria-hidden />
+                        Remove
+                    </Button>
+                </div>
+            </div>
+
+            {photo.status === "queued" || photo.status === "processing" ? (
+                <p
+                    className="
+                      absolute inset-inline-2 inset-be-2 rounded-control bg-ink/70 px-2 py-1
+                      text-center text-[11px] font-medium text-surface
+                    "
+                >
+                    {photo.status === "processing" ? "Compressing…" : "Queued"}
+                </p>
+            ) : null}
         </div>
     );
 }

@@ -729,6 +729,7 @@ export function PropertyForm({
                                         <LiveSummaryPanel
                                             values={values}
                                             stepIndex={stepIndex}
+                                            photoFilesRef={photoFilesRef}
                                             onGoToMedia={() => {
                                                 setHighestUnlocked(FORM_STEPS.length - 1);
                                                 setStep("media");
@@ -794,6 +795,7 @@ export function PropertyForm({
                             <MobileDealSummary
                                 values={values}
                                 stepIndex={stepIndex}
+                                photoFilesRef={photoFilesRef}
                                 open={mobileSummaryOpen}
                                 onOpenChange={(next) => {
                                     setMobileSummaryOpen(next);
@@ -1286,11 +1288,13 @@ function MobileListingScore({
 function MobileDealSummary({
     values,
     stepIndex,
+    photoFilesRef,
     open,
     onOpenChange,
 }: {
     values: PropertyDraftValues;
     stepIndex: number;
+    photoFilesRef: MutableRefObject<Map<string, File>>;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
@@ -1331,7 +1335,11 @@ function MobileDealSummary({
                     data-open={open}
                 >
                     <div className="mx-auto p-4 max-inline-md">
-                        <LiveSummaryPanel values={values} stepIndex={stepIndex} />
+                        <LiveSummaryPanel
+                            values={values}
+                            stepIndex={stepIndex}
+                            photoFilesRef={photoFilesRef}
+                        />
                     </div>
                 </div>
             ) : null}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef, type MutableRefObject } from "react";
+import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import {
@@ -12,8 +13,10 @@ import {
     ImageIcon,
     LockKeyhole,
     MapPin,
+    RefreshCw,
     Scaling,
     Upload,
+    X,
 } from "lucide-react";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
@@ -27,6 +30,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+import {
+    normalizePhotoOrder,
+    removeCoverPhoto,
+    replaceCoverPhoto,
+} from "@/features/properties/property-form/cover-photo";
 
 function resolveDeposit(values: PropertyDraftValues): number {
     const rent = values.rent.monthlyRent ?? 0;
@@ -71,12 +80,16 @@ export function LiveSummaryPanel({
     stepIndex,
     compact = false,
     onGoToMedia,
+    photoFilesRef,
 }: {
     values: PropertyDraftValues;
     stepIndex: number;
     compact?: boolean;
     onGoToMedia?: () => void;
+    photoFilesRef?: MutableRefObject<Map<string, File>>;
 }) {
+    const { setValue, getValues } = useFormContext<PropertyDraftValues>();
+    const coverInputRef = useRef<HTMLInputElement>(null);
     const isSale = values.basics.listingFor === "sell" || values.basics.listingFor === "both";
     const cover = values.media.photos.find((photo) => photo.isCover) ?? null;
     const price = isSale ? values.sale.expectedPrice : values.rent.monthlyRent;
@@ -175,6 +188,42 @@ export function LiveSummaryPanel({
         }
     }
 
+    function commitPhotos(next: PropertyDraftValues["media"]["photos"]) {
+        setValue("media.photos", normalizePhotoOrder(next), {
+            shouldDirty: true,
+            shouldValidate: true,
+        });
+    }
+
+    async function handleReplaceCover(file: File | undefined) {
+        if (!file || !photoFilesRef) return;
+        await replaceCoverPhoto({
+            file,
+            photos: getValues("media.photos"),
+            photoFilesRef,
+            commitPhotos,
+            patchPhoto: (photoId, patch) => {
+                const current = getValues("media.photos");
+                setValue(
+                    "media.photos",
+                    current.map((photo) =>
+                        photo.id === photoId ? { ...photo, ...patch } : photo,
+                    ),
+                    { shouldDirty: true, shouldValidate: true },
+                );
+            },
+        });
+    }
+
+    function handleRemoveCover() {
+        if (!photoFilesRef) return;
+        removeCoverPhoto({
+            photos: getValues("media.photos"),
+            photoFilesRef,
+            commitPhotos,
+        });
+    }
+
     if (compact) {
         return (
             <div className="flex items-center justify-between gap-4">
@@ -207,30 +256,91 @@ export function LiveSummaryPanel({
                     </div>
 
                     <div
-                        className="
-                      relative aspect-16/10 overflow-hidden rounded-inner bg-surface-muted
-                    "
+                        className={cn(
+                            "group relative overflow-hidden rounded-inner bg-surface-muted",
+                            cover ? "aspect-3/4" : "aspect-4/3",
+                        )}
                     >
                         {cover ? (
-                            <AppImage
-                                src={cover.url}
-                                alt={cover.alt || title}
-                                fill
-                                sizes="320px"
-                                unoptimized={
-                                    cover.url.startsWith("http://") ||
-                                    cover.url.startsWith("https://")
-                                }
-                            />
+                            <>
+                                <AppImage
+                                    src={cover.url}
+                                    alt={cover.alt || title}
+                                    fill
+                                    sizes="320px"
+                                    className="object-cover"
+                                    unoptimized={
+                                        cover.url.startsWith("blob:") ||
+                                        cover.url.startsWith("http://") ||
+                                        cover.url.startsWith("https://")
+                                    }
+                                />
+                                {photoFilesRef ? (
+                                    <>
+                                        <input
+                                            ref={coverInputRef}
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                                            className="sr-only"
+                                            onChange={(event) => {
+                                                void handleReplaceCover(event.target.files?.[0]);
+                                                event.currentTarget.value = "";
+                                            }}
+                                        />
+                                        <div
+                                            className="
+                                              absolute inset-0 flex flex-col items-center
+                                              justify-center gap-2 bg-ink/55 p-3 opacity-100
+                                              transition-opacity duration-160
+                                              md:opacity-0 md:group-hover:opacity-100
+                                              md:group-focus-within:opacity-100
+                                            "
+                                        >
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="
+                                                  gap-1.5 border-0 bg-surface text-ink
+                                                  hover:bg-surface
+                                                "
+                                                onClick={() => coverInputRef.current?.click()}
+                                            >
+                                                <RefreshCw
+                                                    className="block-3.5 inline-3.5"
+                                                    aria-hidden
+                                                />
+                                                Replace cover
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="
+                                                  text-surface hover:bg-surface/15
+                                                  hover:text-surface
+                                                "
+                                                onClick={handleRemoveCover}
+                                            >
+                                                <X
+                                                    className="me-1 block-3.5 inline-3.5"
+                                                    aria-hidden
+                                                />
+                                                Remove
+                                            </Button>
+                                        </div>
+                                    </>
+                                ) : null}
+                            </>
                         ) : (
                             <div
                                 className="
-                              flex flex-col items-center justify-center gap-3 px-5 py-6 text-center
-                              block-full
-                            "
+                                  flex flex-col items-center justify-center gap-3 px-5 py-6
+                                  text-center block-full
+                                "
                             >
                                 <ImageIcon
-                                    className="text-ink-subtle block-7 inline-7"
+                                    className="text-ink-subtle size-8 shrink-0"
                                     strokeWidth={1.5}
                                     aria-hidden
                                 />
@@ -238,7 +348,30 @@ export function LiveSummaryPanel({
                                     <p className="text-sm font-bold text-ink">Add a cover photo</p>
                                     <p className="text-xs text-ink-muted">JPG, PNG up to 10 MB</p>
                                 </div>
-                                {onGoToMedia ? (
+                                {photoFilesRef ? (
+                                    <>
+                                        <input
+                                            ref={coverInputRef}
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                                            className="sr-only"
+                                            onChange={(event) => {
+                                                void handleReplaceCover(event.target.files?.[0]);
+                                                event.currentTarget.value = "";
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => coverInputRef.current?.click()}
+                                            className="gap-1.5 bg-surface"
+                                        >
+                                            <Upload className="block-3.5 inline-3.5" aria-hidden />
+                                            Upload photo
+                                        </Button>
+                                    </>
+                                ) : onGoToMedia ? (
                                     <Button
                                         type="button"
                                         variant="outline"
