@@ -88,7 +88,7 @@ export function StepPublish() {
                         Attach owner
                     </>
                 }
-                description="Optional. Pick the property owner from your contacts. One owner per listing."
+                description="Optional. Pick an exclusive owner from your contacts. One owner per listing."
                 tone="private"
             >
                 <ContactSearchPanel

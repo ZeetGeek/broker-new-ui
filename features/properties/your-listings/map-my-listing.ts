@@ -297,6 +297,10 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         imageSrcs: photos,
         createdAt: listing.createdAt ?? new Date().toISOString(),
         updatedAt: listing.updatedAt ?? listing.createdAt ?? new Date().toISOString(),
+        exclusiveOwnerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
+        ownerName: listing.exclusiveOwner?.fullName ?? listing.ownerName ?? null,
+        ownerOrigin: listing.exclusiveOwnerId || listing.exclusiveOwner?.id ? "custom" : null,
+        ownerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
     };
 }
 
@@ -360,6 +364,7 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
         nearbyPlaces: input.nearbyPlaces?.length ? input.nearbyPlaces : undefined,
         videoUrl: input.videoUrl.trim() || undefined,
         virtualTourUrl: input.virtualTourUrl.trim() || undefined,
+        ...(input.exclusiveOwnerId ? { exclusiveOwnerId: input.exclusiveOwnerId } : {}),
     };
 }
 
@@ -415,6 +420,9 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.nearbyPlaces != null) payload.nearbyPlaces = input.nearbyPlaces;
     if (input.videoUrl != null) payload.videoUrl = input.videoUrl.trim();
     if (input.virtualTourUrl != null) payload.virtualTourUrl = input.virtualTourUrl.trim();
+    if (input.exclusiveOwnerId !== undefined) {
+        payload.exclusiveOwnerId = input.exclusiveOwnerId || undefined;
+    }
     if (input.publish != null) {
         payload.publishStatus = input.publish ? "published" : "draft";
     } else if (input.status === "published" || input.status === "draft") {

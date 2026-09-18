@@ -13,6 +13,7 @@ import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buye
 import type { RequestItem } from "@/features/properties/my-requests/types";
 import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
+import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
 import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import { MyListingsGrid } from "@/features/properties/your-listings/my-listings-grid";
 import { MyListingsHeader } from "@/features/properties/your-listings/my-listings-header";
@@ -75,6 +76,8 @@ export function MyListingsPanel() {
     /** Kept after close so the modal can animate out with its listing intact. */
     const [buyersListing, setBuyersListing] = useState<MyListingItem | null>(null);
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
+    const [ownerListing, setOwnerListing] = useState<MyListingItem | null>(null);
+    const [isOwnerAttachOpen, setIsOwnerAttachOpen] = useState(false);
     /** Bumped after a save so the list refetches without changing filters. */
     const [refreshToken, setRefreshToken] = useState(0);
 
@@ -168,6 +171,10 @@ export function MyListingsPanel() {
                             setBuyersListing(listing);
                             setIsBuyersOpen(true);
                         }}
+                        onAttachOwner={(listing) => {
+                            setOwnerListing(listing);
+                            setIsOwnerAttachOpen(true);
+                        }}
                     />
                     <InfiniteListStatus
                         hasNextPage={Boolean(query.hasNextPage)}
@@ -214,6 +221,12 @@ export function MyListingsPanel() {
                     onSaved={() => setRefreshToken((token) => token + 1)}
                 />
             ) : null}
+            <AttachExclusiveOwnerModal
+                open={isOwnerAttachOpen}
+                onOpenChange={setIsOwnerAttachOpen}
+                listing={ownerListing}
+                onAttached={() => setRefreshToken((token) => token + 1)}
+            />
         </div>
     );
 }

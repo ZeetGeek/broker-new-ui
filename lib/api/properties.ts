@@ -91,6 +91,17 @@ export type PropertyListing = PropertyBrowseListing & {
     virtualTourUrl?: string | null;
     maintenanceCharges?: string | number | null;
     updatedAt?: string | null;
+    exclusiveOwnerId?: string | null;
+    exclusiveOwner?: {
+        id: string;
+        fullName?: string | null;
+        phone?: string | null;
+        email?: string | null;
+        ownerType?: string | null;
+        society?: string | null;
+        area?: string | null;
+        city?: string | null;
+    } | null;
     permissions?: {
         canEdit?: boolean;
         canAssign?: boolean;
@@ -229,6 +240,7 @@ export type CreatePropertyInput = {
     videoUrl?: string;
     virtualTourUrl?: string;
     photos?: File[];
+    exclusiveOwnerId?: string;
 };
 
 export type UpdatePropertyInput = Partial<Omit<CreatePropertyInput, "photos">> & {

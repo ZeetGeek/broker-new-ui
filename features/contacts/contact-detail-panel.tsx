@@ -711,11 +711,12 @@ function BuyerPanel({ buyer, onEdit, onAttach, onQuickUpdate, propertiesRef }: B
 type OwnerPanelProps = {
     owner: OwnerRow;
     onEdit: () => void;
+    onAttach?: () => void;
     onQuickUpdate: (patch: Partial<OwnerContactForm>) => Promise<void>;
     propertiesRef: React.RefObject<HTMLElement | null>;
 };
 
-function OwnerPanel({ owner, onEdit, onQuickUpdate, propertiesRef }: OwnerPanelProps) {
+function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: OwnerPanelProps) {
     const details = owner.details;
     const model = toOwnerContactCardModel(owner);
     const locked = owner.origin === "platform";
@@ -956,6 +957,10 @@ function OwnerPanel({ owner, onEdit, onQuickUpdate, propertiesRef }: OwnerPanelP
                         <ExternalLink aria-hidden className="block-4 inline-4" />
                     </Link>
                 </section>
+            ) : onAttach ? (
+                <DetailSection title="Linked listing" onAdd={onAttach} sectionRef={propertiesRef}>
+                    <AttachedPropertyRows properties={[]} onAttach={onAttach} />
+                </DetailSection>
             ) : null}
 
             <DetailSection title="Interested buyers" locked={locked} entries={[]}>
@@ -1035,6 +1040,7 @@ export type ContactDetailPanelProps = {
     onEditBuyer: (buyer: BuyerRow) => void;
     onEditOwner: (owner: OwnerRow) => void;
     onAttachBuyer: (buyer: BuyerRow) => void;
+    onAttachOwner?: (owner: OwnerRow) => void;
     onQuickUpdateBuyer: (buyer: BuyerRow, patch: Partial<BuyerContactForm>) => Promise<void>;
     onQuickUpdateOwner: (owner: OwnerRow, patch: Partial<OwnerContactForm>) => Promise<void>;
 };
@@ -1074,6 +1080,7 @@ export function ContactDetailPanel({
     onEditBuyer,
     onEditOwner,
     onAttachBuyer,
+    onAttachOwner,
     onQuickUpdateBuyer,
     onQuickUpdateOwner,
 }: ContactDetailPanelProps) {
@@ -1172,6 +1179,11 @@ export function ContactDetailPanel({
                 <OwnerPanel
                     owner={owner}
                     onEdit={edit}
+                    onAttach={
+                        owner.origin === "custom" && onAttachOwner
+                            ? () => onAttachOwner(owner)
+                            : undefined
+                    }
                     onQuickUpdate={(patch) => onQuickUpdateOwner(owner, patch)}
                     propertiesRef={propertiesRef}
                 />

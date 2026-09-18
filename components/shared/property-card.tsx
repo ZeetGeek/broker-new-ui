@@ -414,6 +414,8 @@ export type PropertyCardProps = {
     onEdit?: () => void;
     /** Owned cards: open the buyer picker for this listing. */
     onAddBuyer?: () => void;
+    /** Owned cards: attach an exclusive owner CRM contact. */
+    onAttachOwner?: () => void;
     /** Owned cards: ask to delete this listing (caller shows confirm). */
     onDelete?: () => void;
     /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
@@ -1446,6 +1448,8 @@ const OWNED_EDIT_TOOLTIP = "Update price, photos, and other listing details";
 const OWNED_OPEN_TOOLTIP = "View this listing's full details";
 const OWNED_ADD_BUYER_LABEL = "Add buyer";
 const OWNED_ADD_BUYER_TOOLTIP = "Pick which buyers you will show this property to";
+const OWNED_ATTACH_OWNER_LABEL = "Attach owner";
+const OWNED_ATTACH_OWNER_TOOLTIP = "Link one of your exclusive owner contacts to this listing";
 const OWNED_DELETE_LABEL = "Delete";
 const OWNED_DELETE_TOOLTIP = "Remove this listing permanently";
 
@@ -1454,6 +1458,7 @@ function OwnedListingAction({
     isEdit,
     onEdit,
     onAddBuyer,
+    onAttachOwner,
     onDelete,
 }: {
     href: string;
@@ -1462,14 +1467,43 @@ function OwnedListingAction({
     onEdit?: () => void;
     /** When set, a second button opens the buyer picker for this listing. */
     onAddBuyer?: () => void;
+    /** When set, opens the exclusive-owner picker for this listing. */
+    onAttachOwner?: () => void;
     /** When set, shows a delete control; caller owns the confirm dialog. */
     onDelete?: () => void;
 }) {
     const opensInModal = isEdit && onEdit != null;
+    const hasSecondary = Boolean(onAddBuyer || onAttachOwner || onDelete);
 
     return (
         <TooltipProvider>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+                {onAttachOwner ? (
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    size="md"
+                                    variant="outline"
+                                    type="button"
+                                    className="flex-1 border-border-warm"
+                                    onClick={onAttachOwner}
+                                >
+                                    <UserRound
+                                        aria-hidden
+                                        className="block-4 inline-4"
+                                        strokeWidth={1.75}
+                                    />
+                                    {OWNED_ATTACH_OWNER_LABEL}
+                                </Button>
+                            }
+                        />
+                        <TooltipContent side="top" className="text-center max-inline-xs">
+                            {OWNED_ATTACH_OWNER_TOOLTIP}
+                        </TooltipContent>
+                    </Tooltip>
+                ) : null}
+
                 {onAddBuyer ? (
                     <Tooltip>
                         <TooltipTrigger
@@ -1502,7 +1536,7 @@ function OwnedListingAction({
                             <span
                                 className={cn(
                                     "inline-flex",
-                                    onAddBuyer || onDelete ? "flex-[1.4]" : "inline-full",
+                                    hasSecondary ? "flex-[1.4]" : "inline-full",
                                 )}
                             >
                                 <Button
@@ -1627,6 +1661,7 @@ function OwnedOverlayPropertyCard({
     editHref,
     onEdit,
     onAddBuyer,
+    onAttachOwner,
     onDelete,
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
@@ -1720,6 +1755,18 @@ function OwnedOverlayPropertyCard({
             </OverlayStatsRow>
 
             <div className="pointer-events-auto flex gap-2">
+                {onAttachOwner ? (
+                    <Button
+                        size="md"
+                        variant="outline"
+                        type="button"
+                        className={cn("flex-1", OVERLAY_GLASS_BUTTON_CLASS)}
+                        onClick={onAttachOwner}
+                    >
+                        <UserRound aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                        {OWNED_ATTACH_OWNER_LABEL}
+                    </Button>
+                ) : null}
                 {onAddBuyer ? (
                     <Button
                         size="md"
@@ -1735,7 +1782,9 @@ function OwnedOverlayPropertyCard({
                 <Button
                     size="md"
                     variant="accent"
-                    className={onAddBuyer || onDelete ? "flex-[1.4]" : "inline-full"}
+                    className={
+                        onAddBuyer || onAttachOwner || onDelete ? "flex-[1.4]" : "inline-full"
+                    }
                     type={opensInModal ? "button" : undefined}
                     onClick={opensInModal ? onEdit : undefined}
                     render={opensInModal ? undefined : <Link href={editTarget} prefetch={false} />}
@@ -1822,6 +1871,7 @@ function OwnedListPropertyCard({
     editHref,
     onEdit,
     onAddBuyer,
+    onAttachOwner,
     onDelete,
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
@@ -1932,6 +1982,7 @@ function OwnedListPropertyCard({
                         isEdit={Boolean(editHref)}
                         onEdit={onEdit}
                         onAddBuyer={onAddBuyer}
+                        onAttachOwner={onAttachOwner}
                         onDelete={onDelete}
                     />
                 </div>

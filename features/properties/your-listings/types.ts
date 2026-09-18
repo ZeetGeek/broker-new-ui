@@ -86,6 +86,7 @@ export type MyListingItem = {
     ownerId?: string | null;
     ownerOrigin?: "platform" | "custom" | null;
     ownerName?: string | null;
+    exclusiveOwnerId?: string | null;
     visibility?: "private" | "marketplace";
     interestedBuyerIds?: string[];
 };
@@ -185,6 +186,8 @@ export type CreateMyListingInput = {
     videoUrl: string;
     virtualTourUrl: string;
     publish: boolean;
+    /** Broker exclusive owner CRM contact attached to this listing. */
+    exclusiveOwnerId?: string | null;
 };
 
 export type UpdateMyListingInput = Partial<CreateMyListingInput> & {

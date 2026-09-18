@@ -37,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
 import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
 import { AttachBuyerPropertiesModal } from "@/features/contacts/attach-buyer-properties-modal";
+import { AttachOwnerToListingModal } from "@/features/contacts/attach-owner-to-listing-modal";
 import { BuyerCard } from "@/features/contacts/buyer-card";
 import { ContactDetailPanel } from "@/features/contacts/contact-detail-panel";
 import {
@@ -167,6 +168,7 @@ export function ContactsPage() {
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
     const [editingOwner, setEditingOwner] = useState<OwnerRow | null>(null);
     const [attachingBuyer, setAttachingBuyer] = useState<BuyerRow | null>(null);
+    const [attachingOwner, setAttachingOwner] = useState<OwnerRow | null>(null);
     const [selectedContact, setSelectedContact] = useState<
         { type: "buyer"; row: BuyerRow } | { type: "owner"; row: OwnerRow } | null
     >(null);
@@ -205,6 +207,7 @@ export function ContactsPage() {
     const handleAttached = useCallback(() => {
         setRevision((prev) => prev + 1);
         setAttachingBuyer(null);
+        setAttachingOwner(null);
     }, []);
 
     const handleOwnerSaved = useCallback((name: string, mode: "created" | "updated") => {
@@ -626,7 +629,7 @@ export function ContactsPage() {
                                             openContact("owner", row, "properties")
                                         }
                                         onEdit={setEditingOwner}
-                                        onAttachProperty={setEditingOwner}
+                                        onAttachProperty={setAttachingOwner}
                                     />
                                 )}
                             />
@@ -687,6 +690,17 @@ export function ContactsPage() {
                     />
                 ) : null}
 
+                {attachingOwner ? (
+                    <AttachOwnerToListingModal
+                        open
+                        onOpenChange={(next) => {
+                            if (!next) setAttachingOwner(null);
+                        }}
+                        owner={attachingOwner}
+                        onSaved={handleAttached}
+                    />
+                ) : null}
+
                 <ContactDetailPanel
                     contact={selectedContact}
                     open={selectedContact != null || (hasContactQuery && activeQuery.isPending)}
@@ -705,6 +719,10 @@ export function ContactsPage() {
                     onAttachBuyer={(buyer) => {
                         closeContact();
                         setAttachingBuyer(buyer);
+                    }}
+                    onAttachOwner={(owner) => {
+                        closeContact();
+                        setAttachingOwner(owner);
                     }}
                     onQuickUpdateBuyer={quickUpdateBuyer}
                     onQuickUpdateOwner={quickUpdateOwner}

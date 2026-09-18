@@ -5,8 +5,14 @@ import {
     listClientsWithLeadSummary,
     type NewBuyerInput,
 } from "@/lib/api/clients";
+import {
+    exclusiveOwnerPhoneDigits,
+    exclusiveOwnersApi,
+    type ExclusiveOwnerItem,
+} from "@/lib/api/exclusive-owners";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
+import type { ExclusiveOwnerFormValues } from "@/lib/validation/exclusive-owner";
 
 import {
     type BuyerContactForm,
@@ -266,6 +272,43 @@ function apiBuyerToRow(item: ApiBuyerItem): BuyerRow {
     };
 }
 
+function exclusiveOwnerToRow(item: ExclusiveOwnerItem): OwnerRow {
+    const phoneDigits = exclusiveOwnerPhoneDigits(item.phone);
+    const details: OwnerContactForm = {
+        ...emptyOwnerForm(),
+        name: item.fullName,
+        phone: phoneDigits,
+        email: item.email ?? "",
+        ownerType: item.ownerType,
+        societyName: item.society,
+        locality: item.area ?? "",
+        city: item.city ?? "",
+        pincode: item.pincode ?? "",
+        fullAddress: item.fullAddress ?? "",
+        address: item.fullAddress ?? "",
+        reraNumber: item.reraNumber ?? "",
+        source: item.source ?? "",
+        notes: item.notes ?? "",
+        createPrivateListing: false,
+    };
+
+    return {
+        id: item.id,
+        name: item.fullName,
+        phoneDigits,
+        hasActiveRepresentation: true,
+        propertyCount: item.propertyCount,
+        propertyTitles: item.society ? [item.society] : [],
+        localities: [item.area, item.city].filter((value): value is string => Boolean(value)),
+        totalValueInr: 0,
+        isAllRent: false,
+        liveDealCount: 0,
+        origin: "custom",
+        notes: item.notes ?? undefined,
+        details,
+    };
+}
+
 async function listOwners(
     filters: ContactsFilters,
     page = 1,
@@ -308,44 +351,53 @@ async function listOwners(
         };
     }
 
-    const params = new URLSearchParams();
-    if (filters.q.trim()) params.set("search", filters.q.trim());
-    params.set("origin", filters.ownerOrigin);
-    params.set("sort", filters.sort);
-    params.set("page", String(page));
-    params.set("limit", String(limit));
-
-    const qs = params.toString();
-    let data: ApiOwnersResponse;
-    try {
-        data = await apiFetch<ApiOwnersResponse>(`/contacts/owners${qs ? `?${qs}` : ""}`, {
+    // Exclusive owners are the broker CRM list for the Owners tab.
+    // Platform/represented owners remain available when explicitly filtered.
+    if (filters.ownerOrigin === "platform") {
+        const params = new URLSearchParams();
+        if (filters.q.trim()) params.set("search", filters.q.trim());
+        params.set("origin", "platform");
+        params.set("sort", filters.sort);
+        params.set("page", String(page));
+        params.set("limit", String(limit));
+        const qs = params.toString();
+        const data = await apiFetch<ApiOwnersResponse>(`/clients/owners${qs ? `?${qs}` : ""}`, {
             signal,
         });
-    } catch (error) {
-        // Compatibility while the separate API repository rolls out the new
-        // consolidated contact endpoint. The existing representation owners
-        // remain available and unchanged.
-        if (filters.ownerOrigin === "custom") throw error;
-        data = await apiFetch<ApiOwnersResponse>(`/clients/owners${qs ? `?${qs}` : ""}`, {
-            signal,
-        });
+        return {
+            owners: (data.items ?? []).map(toOwnerRow),
+            total: data.total ?? 0,
+            page: data.page ?? page,
+            totalPages: Math.max(1, data.totalPages ?? 1),
+            summary: {
+                ownerCount: data.summary?.ownerCount ?? data.total ?? 0,
+                lapsedOwnerCount: data.summary?.lapsedOwnerCount ?? 0,
+                platformOwnerCount: data.summary?.platformOwnerCount ?? data.total ?? 0,
+                customOwnerCount: data.summary?.customOwnerCount ?? 0,
+            },
+        };
     }
 
+    const data = await exclusiveOwnersApi.list(
+        {
+            search: filters.q.trim() || undefined,
+            sort: filters.sort === "name" ? "name" : "recent",
+            page,
+            limit,
+        },
+        signal,
+    );
+
     return {
-        owners: (data.items ?? []).map(toOwnerRow),
-        total: data.total ?? 0,
-        page: data.page ?? page,
-        totalPages: Math.max(1, data.totalPages ?? 1),
+        owners: data.items.map(exclusiveOwnerToRow),
+        total: data.total,
+        page: data.page,
+        totalPages: data.totalPages,
         summary: {
-            ownerCount: data.summary?.ownerCount ?? data.total ?? 0,
-            lapsedOwnerCount: data.summary?.lapsedOwnerCount ?? 0,
-            platformOwnerCount:
-                data.summary?.platformOwnerCount ??
-                (data.items ?? []).filter((owner) => (owner.origin ?? "platform") === "platform")
-                    .length,
-            customOwnerCount:
-                data.summary?.customOwnerCount ??
-                (data.items ?? []).filter((owner) => owner.origin === "custom").length,
+            ownerCount: data.total,
+            lapsedOwnerCount: 0,
+            platformOwnerCount: 0,
+            customOwnerCount: data.total,
         },
     };
 }
@@ -425,8 +477,7 @@ export const contactsApi = {
     },
 
     /**
-     * Buyers from `GET /clients`; owners from `GET /clients/owners`
-     * (accepted representations + lapsed revoked/withdrawn).
+     * Buyers from `GET /clients`; exclusive owners from `GET /exclusive-owners`.
      */
     async list(filters: ContactsFilters): Promise<ContactsResult> {
         const search = filters.q.trim();
@@ -522,20 +573,30 @@ export const contactsApi = {
             return toOwnerRow(item);
         }
 
-        const payload = ownerPayload(values);
-        const form = new FormData();
-        form.set("payload", JSON.stringify(payload));
-        if (values.idProof) form.set("idProof", values.idProof);
-        values.photos.forEach((file) => form.append("photos", file));
-        values.documents.forEach((file) => form.append("documents", file));
-        const item = await apiFetch<ApiOwnerItem>(
-            `/contacts/owners${ownerId ? `/${ownerId}` : ""}`,
-            {
-                method: ownerId ? "PATCH" : "POST",
-                body: form,
-            },
-        );
-        return toOwnerRow(item);
+        // Create exclusive owner (broker CRM). Updates are not supported yet.
+        if (ownerId) {
+            throw new Error("Editing exclusive owners is not available yet.");
+        }
+
+        const payload: ExclusiveOwnerFormValues = {
+            fullName: values.name.trim(),
+            phone: normalizeIndianPhone(values.phone),
+            email: values.email.trim(),
+            ownerType:
+                values.ownerType === "builder" || values.ownerType === "company"
+                    ? values.ownerType
+                    : "individual",
+            society: values.societyName.trim(),
+            area: values.locality.trim(),
+            city: values.city.trim(),
+            pincode: values.pincode.trim(),
+            fullAddress: values.fullAddress.trim() || values.address.trim(),
+            reraNumber: values.reraNumber.trim(),
+            source: (values.source as ExclusiveOwnerFormValues["source"]) || "",
+            notes: values.notes.trim(),
+        };
+        const created = await exclusiveOwnersApi.create(payload);
+        return exclusiveOwnerToRow(created);
     },
 
     linkMockOwnerListing(ownerId: string, listingId: string, title: string): void {

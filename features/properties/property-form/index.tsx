@@ -1589,6 +1589,7 @@ function draftToLegacyInput(
         videoUrl: values.media.videoUrl?.trim() || "",
         virtualTourUrl: values.media.virtualTourUrl?.trim() || "",
         publish: values.publish.status === "active",
+        exclusiveOwnerId: values.owner.contactId.trim() || null,
     };
 }
 
