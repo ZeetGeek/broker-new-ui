@@ -3,6 +3,7 @@ import {
     clientsApi,
     listClientsPageWithLeadSummary,
     listClientsWithLeadSummary,
+    type NewBuyerInput,
 } from "@/lib/api/clients";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
@@ -457,100 +458,24 @@ export const contactsApi = {
     ): Promise<{ id: string; name: string; type: "buyer" | "owner" } | null> {
         const phone = normalizeIndianPhone(rawPhone);
         if (!/^[6-9]\d{9}$/.test(phone)) return null;
+        const buyers = await clientsApi.list({ search: phone });
+        const buyer = buyers.find((item) => item.phoneDigits === phone);
+        if (buyer) return { id: buyer.id, name: buyer.name, type: "buyer" };
         if (isMockMode()) {
-            const buyers = await clientsApi.list();
-            const buyer = buyers.find((item) => item.phoneDigits === phone);
-            if (buyer) return { id: buyer.id, name: buyer.name, type: "buyer" };
             const owner = [...mockCustomOwners, ...mockOwnerRows()].find(
                 (item) => item.phoneDigits === phone,
             );
             return owner ? { id: owner.id, name: owner.name, type: "owner" } : null;
         }
-        const params = new URLSearchParams({ phone });
-        const result = await apiFetch<{
-            duplicate?: { id: string; name: string; type: "buyer" | "owner" } | null;
-            id?: string;
-            name?: string;
-            type?: "buyer" | "owner";
-        }>(`/contacts/check-duplicate?${params}`);
-        if (result.duplicate !== undefined) return result.duplicate;
-        return result.id && result.name && result.type
-            ? { id: result.id, name: result.name, type: result.type }
-            : null;
+        return null;
     },
 
-    async saveBuyer(values: BuyerContactForm, buyerId?: string): Promise<string | undefined> {
-        const firstType = values.propertyTypes[0]?.toLowerCase() ?? "any";
-        const propertyKind =
-            firstType === "apartment" || firstType === "plot" || firstType === "office"
-                ? firstType
-                : firstType === "villa" || firstType === "row house" || firstType === "bungalow"
-                  ? "villa"
-                  : firstType === "shop" || firstType === "showroom" || firstType === "warehouse"
-                    ? "shop"
-                    : "any";
-        const source =
-            values.source === "reference"
-                ? "referral"
-                : values.source === "walk_in"
-                  ? "walk_in"
-                  : values.source === "old_client"
-                    ? "repeat"
-                    : values.source === "facebook" || values.source === "instagram"
-                      ? "social"
-                      : "other";
-        const legacy = {
-            name: values.name.trim(),
-            phoneDigits: normalizeIndianPhone(values.phone),
-            email: values.email.trim() || null,
-            lookingFor: values.intent,
-            propertyKind,
-            preferredLocalities: values.localities,
-            budgetMinInr: moneyToRupees(
-                values.budgetMin,
-                values.intent === "buy" ? values.budgetUnit : undefined,
-            ),
-            budgetMaxInr: moneyToRupees(
-                values.budgetMax,
-                values.intent === "buy" ? values.budgetUnit : undefined,
-            ),
-            bhk: Number(values.configurations[0]?.match(/\d+/)?.[0] ?? 0) || null,
-            source,
-            notes: values.notes.trim() || null,
-        } as const;
-
-        if (isMockMode()) {
-            const saved = buyerId
-                ? await clientsApi.update(buyerId, legacy)
-                : await clientsApi.create(legacy);
-            mockAdvancedBuyers.set(saved.id, {
-                ...values,
-                phone: normalizeIndianPhone(values.phone),
-                whatsapp: values.whatsappSame
-                    ? normalizeIndianPhone(values.phone)
-                    : normalizeIndianPhone(values.whatsapp),
-            });
-            return saved.id;
-        }
-        const response = await apiFetch<ApiBuyerItem | { data?: ApiBuyerItem } | undefined>(
-            `/contacts/buyers${buyerId ? `/${buyerId}` : ""}`,
-            {
-                method: buyerId ? "PATCH" : "POST",
-                body: JSON.stringify({
-                    ...values,
-                    phone: normalizeIndianPhone(values.phone),
-                    whatsapp: values.whatsappSame
-                        ? normalizeIndianPhone(values.phone)
-                        : normalizeIndianPhone(values.whatsapp),
-                    budgetMin: legacy.budgetMinInr,
-                    budgetMax: legacy.budgetMaxInr,
-                }),
-            },
-        );
-        if (!response) return buyerId;
-        const item =
-            "data" in response && response.data ? response.data : (response as ApiBuyerItem);
-        return item.id ?? buyerId;
+    /** Create/update buyer via existing `POST|PATCH /clients` — no DB changes. */
+    async saveBuyer(input: NewBuyerInput, buyerId?: string): Promise<string | undefined> {
+        const saved = buyerId
+            ? await clientsApi.update(buyerId, input)
+            : await clientsApi.create(input);
+        return saved.id;
     },
 
     async saveOwner(
