@@ -20,9 +20,12 @@ import {
     Factory,
     Fence,
     Flame,
+    Fuel,
     Gamepad2,
+    GraduationCap,
     HandCoins,
     Home,
+    Hospital,
     Hotel,
     KeyRound,
     Landmark,
@@ -30,13 +33,17 @@ import {
     Leaf,
     Library,
     Map,
+    MapPin,
     Package,
     ParkingCircle,
     PawPrint,
     PersonStanding,
     Pill,
+    Plane,
     Repeat,
+    Route,
     Scissors,
+    School,
     Server,
     Shield,
     Shirt,
@@ -45,6 +52,8 @@ import {
     Sparkles,
     Store,
     Sun,
+    Train,
+    TrainFront,
     Trees,
     Truck,
     Users,
@@ -194,6 +203,31 @@ export const AMENITY_ICONS: Partial<Record<string, ReactNode>> = {
 
 /** Fallback glyph when an amenity has no mapped icon. */
 export const AMENITY_FALLBACK_ICON: ReactNode = <Sparkles />;
+
+/** Icons for nearby-place chips — unknown keys fall back to MapPin. */
+export const NEARBY_PLACE_ICONS: Partial<Record<string, ReactNode>> = {
+    metro: <TrainFront />,
+    bus_stop: <Bus />,
+    railway: <Train />,
+    airport: <Plane />,
+    school: <School />,
+    college: <GraduationCap />,
+    hospital: <Hospital />,
+    mall: <ShoppingBag />,
+    market: <Store />,
+    park: <Trees />,
+    bank_atm: <Landmark />,
+    highway: <Route />,
+    it_park: <Building2 />,
+    temple: <Church />,
+    petrol_pump: <Fuel />,
+    gym: <Dumbbell />,
+    restaurant: <UtensilsCrossed />,
+    police_station: <Shield />,
+};
+
+/** Fallback glyph when a nearby place has no mapped icon. */
+export const NEARBY_PLACE_FALLBACK_ICON: ReactNode = <MapPin />;
 
 /** Every BHK step uses the same glyph — the number carries the meaning. */
 export function bhkIcon(): ReactNode {

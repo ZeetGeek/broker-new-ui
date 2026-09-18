@@ -25,23 +25,19 @@ import { ConditionalField } from "@/components/property/fields/conditional-field
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { Button } from "@/components/ui/button";
 
-import {
-    CITY_OPTIONS,
-    INDIAN_STATE_OPTIONS,
-    NEARBY_PLACE_TYPE_OPTIONS,
-} from "@/constants/property";
+import { CITY_OPTIONS, INDIAN_STATE_OPTIONS } from "@/constants/property";
 import {
     FORM_GRID_CLASS,
     FORM_GRID_3_CLASS,
     FORM_SECTIONS_CLASS,
     FORM_STACK_CLASS,
-    MultiChipField,
     NumberField,
     SelectField,
     TextAreaField,
     TextField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
+import { NearbyPlacesField } from "@/features/properties/property-form/nearby-places-field";
 
 function normalizeAddress(value: string): string {
     return value
@@ -459,13 +455,9 @@ export function StepLocation() {
                             <FieldLabel path="location.nearbyPlaces">Nearby places</FieldLabel>
                         </>
                     }
-                    description="Pick the useful places close to this property."
+                    description="Search what’s nearby, or add your own. Keep it to places that actually help."
                 >
-                    <MultiChipField
-                        name="location.nearbyPlaces"
-                        label="What is nearby?"
-                        options={NEARBY_PLACE_TYPE_OPTIONS}
-                    />
+                    <NearbyPlacesField />
                 </WizardSection>
             </ConditionalField>
         </div>
