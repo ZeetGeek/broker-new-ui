@@ -58,6 +58,9 @@ export function AttachExclusiveOwnerModal({
     const [selectedId, setSelectedId] = useState<string>("");
     const [busy, setBusy] = useState(false);
 
+    const currentOwnerId = listing?.exclusiveOwnerId ?? null;
+    const isReplace = Boolean(currentOwnerId);
+
     useEffect(() => {
         if (!open || !listing) return undefined;
 
@@ -97,51 +100,80 @@ export function AttachExclusiveOwnerModal({
 
     const attach = useCallback(() => {
         if (!listing || !selectedId) return;
+        if (selectedId === currentOwnerId) {
+            onOpenChange(false);
+            return;
+        }
         setBusy(true);
         void propertiesApi
-            .update(listing.id, { exclusiveOwnerId: selectedId })
+            .attachExclusiveOwner(listing.id, selectedId)
             .then(() => {
-                toast.success("Exclusive owner attached");
+                toast.success(isReplace ? "Exclusive owner updated" : "Exclusive owner attached");
                 onAttached?.();
                 onOpenChange(false);
             })
             .catch((error) => {
                 toast.error(
-                    error instanceof Error ? error.message : "Couldn't attach exclusive owner",
+                    error instanceof Error
+                        ? error.message
+                        : isReplace
+                          ? "Couldn't change exclusive owner"
+                          : "Couldn't attach exclusive owner",
                 );
             })
             .finally(() => setBusy(false));
-    }, [listing, onAttached, onOpenChange, selectedId]);
+    }, [currentOwnerId, isReplace, listing, onAttached, onOpenChange, selectedId]);
+
+    const primaryDisabled =
+        !selectedId || busy || loading || !listing || selectedId === currentOwnerId;
 
     return (
         <AppModal
             open={open}
             onOpenChange={onOpenChange}
             size="lg"
-            title="Attach exclusive owner"
+            title={isReplace ? "Change exclusive owner" : "Attach exclusive owner"}
             description={
                 listing
-                    ? `Choose a private owner contact for ${listing.title}.`
-                    : "Choose a private owner contact for this listing."
+                    ? isReplace
+                        ? `Replace the owner on ${listing.title}. One listing has one owner; the same owner can stay on your other listings.`
+                        : `Choose one exclusive owner for ${listing.title}. You can change them later.`
+                    : "Choose one exclusive owner for this listing."
             }
             header={
-                <Input
-                    size="sm"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search exclusive owners"
-                    aria-label="Search exclusive owners"
-                    startIcon={Search}
-                    clearable
-                    wrapperClassName="min-inline-56 flex-1"
-                />
+                <div className="flex flex-col gap-3">
+                    {isReplace && listing?.ownerName ? (
+                        <p className="body-sm rounded-inner bg-surface-muted px-3 py-2 text-ink-muted">
+                            Current owner:{" "}
+                            <span className="font-semibold text-ink">{listing.ownerName}</span>
+                        </p>
+                    ) : null}
+                    <Input
+                        size="sm"
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder="Search exclusive owners"
+                        aria-label="Search exclusive owners"
+                        startIcon={Search}
+                        clearable
+                        wrapperClassName="min-inline-56 flex-1"
+                    />
+                </div>
             }
             footer={
                 <AppModalFooter
-                    primaryLabel={busy ? "Attaching…" : "Attach owner"}
+                    primaryLabel={
+                        busy
+                            ? isReplace
+                                ? "Updating…"
+                                : "Attaching…"
+                            : isReplace
+                              ? "Replace owner"
+                              : "Attach owner"
+                    }
                     primaryIcon={<UserRound aria-hidden strokeWidth={1.75} />}
                     onPrimary={attach}
-                    primaryDisabled={!selectedId || busy || loading || !listing}
+                    primaryDisabled={primaryDisabled}
                     secondaryLabel="Cancel"
                     onSecondary={() => onOpenChange(false)}
                     secondaryDisabled={busy}
@@ -178,6 +210,7 @@ export function AttachExclusiveOwnerModal({
                         renderItem={(owner) => {
                             const digits = exclusiveOwnerPhoneDigits(owner.phone);
                             const selected = selectedId === owner.id;
+                            const isCurrent = owner.id === currentOwnerId;
                             return (
                                 <label
                                     className={cn(
@@ -195,7 +228,7 @@ export function AttachExclusiveOwnerModal({
                                 >
                                     <RadioGroupItem
                                         value={owner.id}
-                                        aria-label={`Attach ${owner.fullName}`}
+                                        aria-label={`${isCurrent ? "Keep" : "Select"} ${owner.fullName}`}
                                         className="mbs-1 shrink-0"
                                     />
                                     <UserAvatar name={owner.fullName} size="sm" />
@@ -207,6 +240,17 @@ export function AttachExclusiveOwnerModal({
                                             <Badge variant="outline" className="capitalize">
                                                 {owner.ownerType}
                                             </Badge>
+                                            {isCurrent ? (
+                                                <Badge variant="brand">Current</Badge>
+                                            ) : null}
+                                            {owner.propertyCount > 0 ? (
+                                                <Badge variant="outline">
+                                                    {owner.propertyCount}{" "}
+                                                    {owner.propertyCount === 1
+                                                        ? "listing"
+                                                        : "listings"}
+                                                </Badge>
+                                            ) : null}
                                         </div>
                                         <PhoneNumber
                                             phoneDigits={digits}

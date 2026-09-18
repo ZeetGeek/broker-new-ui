@@ -1449,7 +1449,9 @@ const OWNED_OPEN_TOOLTIP = "View this listing's full details";
 const OWNED_ADD_BUYER_LABEL = "Add buyer";
 const OWNED_ADD_BUYER_TOOLTIP = "Pick which buyers you will show this property to";
 const OWNED_ATTACH_OWNER_LABEL = "Attach owner";
-const OWNED_ATTACH_OWNER_TOOLTIP = "Link one of your exclusive owner contacts to this listing";
+const OWNED_CHANGE_OWNER_LABEL = "Change owner";
+const OWNED_ATTACH_OWNER_TOOLTIP = "Link one exclusive owner contact to this listing";
+const OWNED_CHANGE_OWNER_TOOLTIP = "Replace the exclusive owner on this listing";
 const OWNED_DELETE_LABEL = "Delete";
 const OWNED_DELETE_TOOLTIP = "Remove this listing permanently";
 
@@ -1459,6 +1461,7 @@ function OwnedListingAction({
     onEdit,
     onAddBuyer,
     onAttachOwner,
+    hasAttachedOwner = false,
     onDelete,
 }: {
     href: string;
@@ -1469,11 +1472,17 @@ function OwnedListingAction({
     onAddBuyer?: () => void;
     /** When set, opens the exclusive-owner picker for this listing. */
     onAttachOwner?: () => void;
+    /** True when an exclusive owner is already linked — button becomes Change owner. */
+    hasAttachedOwner?: boolean;
     /** When set, shows a delete control; caller owns the confirm dialog. */
     onDelete?: () => void;
 }) {
     const opensInModal = isEdit && onEdit != null;
     const hasSecondary = Boolean(onAddBuyer || onAttachOwner || onDelete);
+    const attachLabel = hasAttachedOwner ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL;
+    const attachTooltip = hasAttachedOwner
+        ? OWNED_CHANGE_OWNER_TOOLTIP
+        : OWNED_ATTACH_OWNER_TOOLTIP;
 
     return (
         <TooltipProvider>
@@ -1494,12 +1503,12 @@ function OwnedListingAction({
                                         className="block-4 inline-4"
                                         strokeWidth={1.75}
                                     />
-                                    {OWNED_ATTACH_OWNER_LABEL}
+                                    {attachLabel}
                                 </Button>
                             }
                         />
                         <TooltipContent side="top" className="text-center max-inline-xs">
-                            {OWNED_ATTACH_OWNER_TOOLTIP}
+                            {attachTooltip}
                         </TooltipContent>
                     </Tooltip>
                 ) : null}
@@ -1743,16 +1752,22 @@ function OwnedOverlayPropertyCard({
                     {formatRequestsValue(listing.inboundRequestCount)}
                 </OverlayStat>
                 <OverlayStat label="Listed">{formatListedLabel(listing.listedDaysAgo)}</OverlayStat>
-                {both ? (
-                    <OverlayStat label="Rent">
-                        {formatRentInr(listing.rentAmountInr ?? 0)}
-                    </OverlayStat>
-                ) : listing.ownerName ? (
+                {listing.ownerName ? (
                     <OverlayStat label="Owner">
                         <span className="capitalize">{listing.ownerName}</span>
                     </OverlayStat>
+                ) : both ? (
+                    <OverlayStat label="Rent">
+                        {formatRentInr(listing.rentAmountInr ?? 0)}
+                    </OverlayStat>
                 ) : null}
             </OverlayStatsRow>
+
+            {listing.ownerName && both ? (
+                <p className="body-xs pointer-events-none text-surface/85">
+                    Rent {formatRentInr(listing.rentAmountInr ?? 0)}
+                </p>
+            ) : null}
 
             <div className="pointer-events-auto flex gap-2">
                 {onAttachOwner ? (
@@ -1764,7 +1779,7 @@ function OwnedOverlayPropertyCard({
                         onClick={onAttachOwner}
                     >
                         <UserRound aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        {OWNED_ATTACH_OWNER_LABEL}
+                        {listing.ownerName ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL}
                     </Button>
                 ) : null}
                 {onAddBuyer ? (
@@ -1983,6 +1998,7 @@ function OwnedListPropertyCard({
                         onEdit={onEdit}
                         onAddBuyer={onAddBuyer}
                         onAttachOwner={onAttachOwner}
+                        hasAttachedOwner={Boolean(listing.ownerName)}
                         onDelete={onDelete}
                     />
                 </div>

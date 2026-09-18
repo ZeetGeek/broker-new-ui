@@ -83,7 +83,7 @@ export function AttachOwnerToListingModal({
         if (!selectedId) return;
         setBusy(true);
         void propertiesApi
-            .update(selectedId, { exclusiveOwnerId: owner.id })
+            .attachExclusiveOwner(selectedId, owner.id)
             .then(() => {
                 toast.success(`Attached ${owner.name} to listing`);
                 onSaved();

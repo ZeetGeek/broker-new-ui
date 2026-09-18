@@ -500,6 +500,14 @@ export const propertiesApi = {
         });
     },
 
+    /** Attach or replace the exclusive owner on a broker listing. */
+    attachExclusiveOwner(id: string, exclusiveOwnerId: string) {
+        return apiFetch<PropertyListing>(`/properties/${id}/exclusive-owner`, {
+            method: "PATCH",
+            body: JSON.stringify({ exclusiveOwnerId }),
+        });
+    },
+
     remove(id: string) {
         return apiFetch<{ id: string; deleted: boolean }>(`/properties/${id}`, {
             method: "DELETE",
