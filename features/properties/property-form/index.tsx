@@ -1443,6 +1443,11 @@ function listingToDraft(listing: MyListingItem): PropertyDraftValues {
               : "unfurnished";
     draft.amenities.society = listing.amenities;
     draft.location.nearbyPlaces = listing.nearbyPlaces ?? [];
+    draft.details.commercial.suitableFor = listing.suitableFor ?? [];
+    draft.details.commercial.cabins = listing.cabins ?? null;
+    draft.details.commercial.meetingRooms = listing.meetingRooms ?? null;
+    draft.details.commercial.workstations = listing.workstations ?? null;
+    draft.details.commercial.ceilingHeightFt = listing.ceilingHeightFt ?? null;
     draft.media.videoUrl = listing.videoUrl ?? "";
     draft.media.virtualTourUrl = listing.virtualTourUrl ?? "";
     draft.media.photos = listing.imageSrcs.map((url, index) => ({
@@ -1571,8 +1576,7 @@ function draftToLegacyInput(
         totalFloors: values.details.totalFloors,
         facing: (values.details.facing || null) as CreateMyListingInput["facing"],
         parking: parking <= 0 ? "none" : parking === 1 ? "1" : parking === 2 ? "2" : "3plus",
-        maintenanceInr:
-            values.sale.maintenanceCharge ?? values.rent.maintenanceAmount ?? null,
+        maintenanceInr: values.sale.maintenanceCharge ?? values.rent.maintenanceAmount ?? null,
         availableFrom:
             transactionType === "rent" || transactionType === "both"
                 ? values.rent.availableFrom || null
@@ -1596,6 +1600,11 @@ function draftToLegacyInput(
         description: values.basics.description,
         amenities,
         nearbyPlaces: values.location.nearbyPlaces ?? [],
+        suitableFor: values.details.commercial.suitableFor ?? [],
+        cabins: values.details.commercial.cabins ?? null,
+        meetingRooms: values.details.commercial.meetingRooms ?? null,
+        workstations: values.details.commercial.workstations ?? null,
+        ceilingHeightFt: values.details.commercial.ceilingHeightFt ?? null,
         videoUrl: values.media.videoUrl?.trim() || "",
         virtualTourUrl: values.media.virtualTourUrl?.trim() || "",
         publish: values.publish.status === "active",

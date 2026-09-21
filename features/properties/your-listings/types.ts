@@ -71,6 +71,11 @@ export type MyListingItem = {
     description: string;
     amenities: MyListingAmenity[];
     nearbyPlaces: string[];
+    suitableFor: string[];
+    cabins: number | null;
+    meetingRooms: number | null;
+    workstations: number | null;
+    ceilingHeightFt: number | null;
     videoUrl: string;
     virtualTourUrl: string;
     availableFrom: string | null;
@@ -183,6 +188,11 @@ export type CreateMyListingInput = {
     description: string;
     amenities: MyListingAmenity[];
     nearbyPlaces: string[];
+    suitableFor: string[];
+    cabins: number | null;
+    meetingRooms: number | null;
+    workstations: number | null;
+    ceilingHeightFt: number | null;
     videoUrl: string;
     virtualTourUrl: string;
     publish: boolean;

@@ -87,6 +87,11 @@ export type PropertyListing = PropertyBrowseListing & {
     amenities?: string[] | null;
     description?: string | null;
     nearbyPlaces?: string[] | null;
+    suitableFor?: string[] | null;
+    cabins?: number | null;
+    meetingRooms?: number | null;
+    workstations?: number | null;
+    ceilingHeightFt?: number | null;
     videoUrl?: string | null;
     virtualTourUrl?: string | null;
     maintenanceCharges?: string | number | null;
@@ -237,6 +242,11 @@ export type CreatePropertyInput = {
     description?: string;
     amenities?: string[];
     nearbyPlaces?: string[];
+    suitableFor?: string[];
+    cabins?: number;
+    meetingRooms?: number;
+    workstations?: number;
+    ceilingHeightFt?: number;
     videoUrl?: string;
     virtualTourUrl?: string;
     photos?: File[];
@@ -463,10 +473,11 @@ export const propertiesApi = {
 
     create(input: CreatePropertyInput) {
         const form = new FormData();
-        const { photos, amenities, nearbyPlaces, ...fields } = input;
+        const { photos, amenities, nearbyPlaces, suitableFor, ...fields } = input;
         appendFormFields(form, fields);
         appendStringArray(form, "amenities", amenities);
         appendStringArray(form, "nearbyPlaces", nearbyPlaces);
+        appendStringArray(form, "suitableFor", suitableFor);
         (photos ?? []).forEach((file) => form.append("photos", file));
         return apiFetch<PropertyListing>("/properties", { method: "POST", body: form });
     },
@@ -478,6 +489,7 @@ export const propertiesApi = {
             deletePhotoUrls,
             amenities,
             nearbyPlaces,
+            suitableFor,
             videoUrl,
             virtualTourUrl,
             ...fields
@@ -485,6 +497,7 @@ export const propertiesApi = {
         appendFormFields(form, fields);
         appendStringArray(form, "amenities", amenities);
         appendStringArray(form, "nearbyPlaces", nearbyPlaces);
+        appendStringArray(form, "suitableFor", suitableFor);
         // Empty string clears the stored URL; omit when undefined so other fields stay.
         if (videoUrl !== undefined) form.append("videoUrl", videoUrl);
         if (virtualTourUrl !== undefined) form.append("virtualTourUrl", virtualTourUrl);

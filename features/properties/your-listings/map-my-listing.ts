@@ -286,6 +286,11 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         description: listing.description?.trim() || "",
         amenities: listing.amenities ?? [],
         nearbyPlaces: (listing.nearbyPlaces ?? []).filter((place) => Boolean(place?.trim())),
+        suitableFor: (listing.suitableFor ?? []).filter((use) => Boolean(use?.trim())),
+        cabins: listing.cabins ?? null,
+        meetingRooms: listing.meetingRooms ?? null,
+        workstations: listing.workstations ?? null,
+        ceilingHeightFt: listing.ceilingHeightFt ?? null,
         videoUrl: listing.videoUrl?.trim() || "",
         virtualTourUrl: listing.virtualTourUrl?.trim() || "",
         availableFrom: listing.availableFrom ?? null,
@@ -362,6 +367,11 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
             undefined,
         amenities: input.amenities,
         nearbyPlaces: input.nearbyPlaces?.length ? input.nearbyPlaces : undefined,
+        suitableFor: input.suitableFor?.length ? input.suitableFor : undefined,
+        cabins: input.cabins ?? undefined,
+        meetingRooms: input.meetingRooms ?? undefined,
+        workstations: input.workstations ?? undefined,
+        ceilingHeightFt: input.ceilingHeightFt ?? undefined,
         videoUrl: input.videoUrl.trim() || undefined,
         virtualTourUrl: input.virtualTourUrl.trim() || undefined,
         ...(input.exclusiveOwnerId ? { exclusiveOwnerId: input.exclusiveOwnerId } : {}),
@@ -418,6 +428,17 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.availableFrom !== undefined) payload.availableFrom = input.availableFrom || undefined;
     if (input.amenities != null) payload.amenities = input.amenities;
     if (input.nearbyPlaces != null) payload.nearbyPlaces = input.nearbyPlaces;
+    if (input.suitableFor != null) payload.suitableFor = input.suitableFor;
+    if (input.cabins !== undefined) payload.cabins = input.cabins ?? undefined;
+    if (input.meetingRooms !== undefined) {
+        payload.meetingRooms = input.meetingRooms ?? undefined;
+    }
+    if (input.workstations !== undefined) {
+        payload.workstations = input.workstations ?? undefined;
+    }
+    if (input.ceilingHeightFt !== undefined) {
+        payload.ceilingHeightFt = input.ceilingHeightFt ?? undefined;
+    }
     if (input.videoUrl != null) payload.videoUrl = input.videoUrl.trim();
     if (input.virtualTourUrl != null) payload.virtualTourUrl = input.virtualTourUrl.trim();
     if (input.exclusiveOwnerId !== undefined) {

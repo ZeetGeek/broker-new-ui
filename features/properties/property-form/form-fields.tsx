@@ -725,6 +725,9 @@ export function MultiChipField({
     hint,
     visibility,
     className,
+    allowCustom = false,
+    customPlaceholder = "Add custom…",
+    max = 20,
 }: {
     name: Path;
     label: string;
@@ -732,8 +735,13 @@ export function MultiChipField({
     hint?: ReactNode;
     visibility?: FieldVisibility;
     className?: string;
+    /** When true, brokers can type values beyond the fixed option list (amenities-style). */
+    allowCustom?: boolean;
+    customPlaceholder?: string;
+    max?: number;
 }) {
     const { control } = useFormContext<PropertyDraftValues>();
+    const [draft, setDraft] = useState("");
     return (
         <FieldShell
             name={name}
@@ -748,56 +756,134 @@ export function MultiChipField({
                 control={control}
                 render={({ field }) => {
                     const selected = Array.isArray(field.value) ? field.value.map(String) : [];
+                    const optionValues = new Set(options.map((option) => option.value));
+                    const customSelected = selected.filter((value) => !optionValues.has(value));
+                    const labelFor = (value: string) =>
+                        options.find((option) => option.value === value)?.label ?? value;
+
+                    const toggle = (value: string) => {
+                        field.onChange(
+                            selected.includes(value)
+                                ? selected.filter((item) => item !== value)
+                                : selected.length >= max
+                                  ? selected
+                                  : [...selected, value],
+                        );
+                    };
+
+                    const addCustom = () => {
+                        const next = draft.trim().replace(/\s+/g, " ");
+                        if (!next || selected.length >= max) return;
+                        const match = options.find(
+                            (option) =>
+                                option.value === next.toLowerCase().replace(/\s+/g, "_") ||
+                                option.label.toLowerCase() === next.toLowerCase(),
+                        );
+                        const value = match?.value ?? next;
+                        if (!selected.includes(value)) {
+                            field.onChange([...selected, value]);
+                        }
+                        setDraft("");
+                    };
+
                     return (
                         <div
                             role="group"
                             aria-labelledby={`${name.replace(/\./g, "-")}-label`}
-                            className="flex flex-wrap gap-2"
+                            className="space-y-3"
                         >
-                            {options.map((option) => {
-                                const active = selected.includes(option.value);
-                                return (
+                            <div className="flex flex-wrap gap-2">
+                                {options.map((option) => {
+                                    const active = selected.includes(option.value);
+                                    return (
+                                        <Button
+                                            key={option.value}
+                                            type="button"
+                                            variant="outline"
+                                            size="md"
+                                            aria-pressed={active}
+                                            onClick={() => toggle(option.value)}
+                                            className={cn(
+                                                `
+                                                  rounded-control border px-3 py-2 text-sm font-medium
+                                                  transition-[background-color,border-color,color]
+                                                  duration-160 min-block-11
+                                                  focus-visible:ring-3 focus-visible:ring-ring/30
+                                                  sm:min-block-10
+                                                `,
+                                                active
+                                                    ? "border-brand bg-brand-soft text-brand-text"
+                                                    : `
+                                                      border-border-warm bg-surface text-ink-muted
+                                                      hover:border-brand/40 hover:text-ink
+                                                    `,
+                                            )}
+                                        >
+                                            {active ? (
+                                                <Check
+                                                    className="me-1.5 inline block-3.5 inline-3.5"
+                                                    aria-hidden
+                                                />
+                                            ) : null}
+                                            {option.label}
+                                        </Button>
+                                    );
+                                })}
+                                {customSelected.map((value) => (
                                     <Button
-                                        key={option.value}
+                                        key={value}
                                         type="button"
                                         variant="outline"
                                         size="md"
-                                        aria-pressed={active}
-                                        onClick={() =>
-                                            field.onChange(
-                                                active
-                                                    ? selected.filter(
-                                                          (value) => value !== option.value,
-                                                      )
-                                                    : [...selected, option.value],
-                                            )
-                                        }
-                                        className={cn(
-                                            `
-                                              rounded-control border px-3 py-2 text-sm font-medium
-                                              transition-[background-color,border-color,color]
-                                              duration-160 min-block-11
-                                              focus-visible:ring-3 focus-visible:ring-ring/30
-                                              sm:min-block-10
-                                            `,
-                                            active
-                                                ? "border-brand bg-brand-soft text-brand-text"
-                                                : `
-                                                  border-border-warm bg-surface text-ink-muted
-                                                  hover:border-brand/40 hover:text-ink
-                                                `,
-                                        )}
+                                        aria-pressed
+                                        onClick={() => toggle(value)}
+                                        className="
+                                          rounded-control border border-brand bg-brand-soft px-3 py-2
+                                          text-sm font-medium text-brand-text min-block-11
+                                          focus-visible:ring-3 focus-visible:ring-ring/30
+                                          sm:min-block-10
+                                        "
+                                        aria-label={`Remove ${labelFor(value)}`}
                                     >
-                                        {active ? (
-                                            <Check
-                                                className="me-1.5 inline block-3.5 inline-3.5"
-                                                aria-hidden
-                                            />
-                                        ) : null}
-                                        {option.label}
+                                        <Check
+                                            className="me-1.5 inline block-3.5 inline-3.5"
+                                            aria-hidden
+                                        />
+                                        {labelFor(value)}
+                                        <X
+                                            className="ms-1.5 inline block-3.5 inline-3.5"
+                                            aria-hidden
+                                        />
                                     </Button>
-                                );
-                            })}
+                                ))}
+                            </div>
+                            {allowCustom ? (
+                                <div className="flex gap-2">
+                                    <Input
+                                        size="lg"
+                                        value={draft}
+                                        onValueChange={setDraft}
+                                        placeholder={customPlaceholder}
+                                        aria-label={`Add custom ${label.toLowerCase()}`}
+                                        className="min-inline-0 flex-1"
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter") {
+                                                event.preventDefault();
+                                                addCustom();
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="lg"
+                                        onClick={addCustom}
+                                        disabled={!draft.trim() || selected.length >= max}
+                                    >
+                                        Add
+                                    </Button>
+                                </div>
+                            ) : null}
                         </div>
                     );
                 }}
