@@ -303,7 +303,7 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         isInvitePending: standing.isInvitePending,
         pendingRepresentationId,
         pendingInvitationId: standing.pendingInvitationId,
-        isBookmarked: false,
+        isBookmarked: Boolean(listing.isBookmarked),
         imageSrc,
         imageSrcs: photos.length > 0 ? photos : imageSrc ? [imageSrc] : [],
         status: listing.representation?.status === "pending" ? "pending" : "active",

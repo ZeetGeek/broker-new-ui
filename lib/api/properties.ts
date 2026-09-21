@@ -92,6 +92,7 @@ export type PropertyListing = PropertyBrowseListing & {
     meetingRooms?: number | null;
     workstations?: number | null;
     ceilingHeightFt?: number | null;
+    isBookmarked?: boolean | null;
     videoUrl?: string | null;
     virtualTourUrl?: string | null;
     maintenanceCharges?: string | number | null;
@@ -518,6 +519,27 @@ export const propertiesApi = {
         return apiFetch<PropertyListing>(`/properties/${id}/exclusive-owner`, {
             method: "PATCH",
             body: JSON.stringify({ exclusiveOwnerId }),
+        });
+    },
+
+    /** Save a public owner listing for the caller. */
+    bookmark(id: string) {
+        return apiFetch<{ propertyId: string; isBookmarked: true }>(`/properties/${id}/bookmark`, {
+            method: "POST",
+        });
+    },
+
+    /** Remove the caller’s bookmark for a listing. */
+    unbookmark(id: string) {
+        return apiFetch<{ propertyId: string; isBookmarked: false }>(`/properties/${id}/bookmark`, {
+            method: "DELETE",
+        });
+    },
+
+    /** Caller’s bookmarked owner listings. */
+    listBookmarks(params?: PropertyListQuery, signal?: AbortSignal) {
+        return apiFetch<PropertyListPage>(`/properties/bookmarks${buildListQuery(params)}`, {
+            signal,
         });
     },
 
