@@ -15,7 +15,6 @@ import {
     LayoutGrid,
     Monitor,
     MoveVertical,
-    Route,
     Ruler,
     ShieldCheck,
     Sparkles,
@@ -28,7 +27,6 @@ import {
 
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
@@ -228,12 +226,6 @@ export function StepDetails() {
                         startIcon={Compass}
                     />
                     <NumberField
-                        name="details.roadWidthFt"
-                        label="Road width (ft)"
-                        placeholder="e.g. 40"
-                        startIcon={Route}
-                    />
-                    <NumberField
                         name="details.propertyAge"
                         label="How many years old?"
                         min={0}
@@ -248,7 +240,6 @@ export function StepDetails() {
                         options={PROPERTY_CONDITION_OPTIONS}
                         placeholder="Select condition"
                         startIcon={ShieldCheck}
-                        className={cn(!isVisible("details.roadWidthFt") && "md:col-span-2")}
                     />
                     <NumberField
                         name="details.electricityLoadKva"

@@ -84,8 +84,7 @@ export const FIELD_RULES = {
     },
     "details.facing": { level: (d) => (d.isPlot ? "recommended" : "optional") },
     "details.roadWidthFt": {
-        visible: (d) => d.isPlot || d.isIndependent,
-        level: (d) => (d.isPlot ? "required" : "optional"),
+        visible: () => false,
     },
     "details.propertyAge": {
         visible: (d) => !d.isPlot && !d.isUnderConstruction,
