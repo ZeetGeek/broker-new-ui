@@ -253,6 +253,10 @@ export function SelectField({
     startIcon,
     onBlur: onInputBlur,
     onValueChange,
+    loading = false,
+    disabled = false,
+    emptyText = "No matches",
+    limit,
 }: {
     name: Path;
     label: string;
@@ -264,6 +268,13 @@ export function SelectField({
     startIcon?: LucideIcon;
     onBlur?: () => void;
     onValueChange?: (value: string) => void;
+    /** Shows a spinner and blocks input while the options are being fetched. */
+    loading?: boolean;
+    disabled?: boolean;
+    /** Message when nothing matches — e.g. "Pick a state first". */
+    emptyText?: string;
+    /** Caps rendered matches. Needed for long lists such as a state's cities. */
+    limit?: number;
 }) {
     const {
         control,
@@ -301,6 +312,7 @@ export function SelectField({
                         }}
                         items={optionValues}
                         itemToStringLabel={labelFor}
+                        {...(limit == null ? {} : { limit })}
                     >
                         <ComboboxInput
                             id={name.replace(/\./g, "-")}
@@ -309,9 +321,11 @@ export function SelectField({
                             startIcon={startIcon}
                             placeholder={placeholder}
                             errorText={error}
+                            loading={loading}
+                            disabled={disabled}
                         />
                         <ComboboxContent>
-                            <ComboboxEmpty>No matches</ComboboxEmpty>
+                            <ComboboxEmpty>{emptyText}</ComboboxEmpty>
                             <ComboboxList>
                                 {(item: string) => (
                                     <ComboboxItem key={item} value={item}>

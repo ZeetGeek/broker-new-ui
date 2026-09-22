@@ -16,7 +16,6 @@ import { Label } from "@/components/ui/label";
 
 import {
     BEDROOM_OPTIONS,
-    CITY_OPTIONS,
     LISTING_FOR_OPTIONS,
     PROPERTY_CATEGORY_OPTIONS,
     propertyTypeOptions,
@@ -30,6 +29,8 @@ import {
     TextField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
+
+import { useLocationOptions } from "@/hooks/use-locations";
 
 /**
  * Minimal create form: every field here maps to a value the create-property API
@@ -46,6 +47,13 @@ export function QuickAdd({
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const { derived } = useFieldRules();
     const values = watch();
+    // Quick add has no country / state field — it keeps the draft defaults, so
+    // the city list is the cities of that default state. The full wizard step
+    // is where country and state can be changed.
+    const { cityOptions, citiesLoading, selectedState } = useLocationOptions({
+        countryName: values.location.country,
+        stateName: values.location.state,
+    });
     const firstPhoto = values.media.photos[0];
     const showBhk = derived.isResidential && !derived.isPlot;
     const showSalePrice = derived.isSell;
@@ -125,7 +133,16 @@ export function QuickAdd({
                             label="Property type"
                             options={propertyTypeOptions(values.basics.category)}
                         />
-                        <SelectField name="location.city" label="City" options={CITY_OPTIONS} />
+                        <SelectField
+                            name="location.city"
+                            label="City"
+                            options={cityOptions}
+                            placeholder={selectedState ? "Choose a city" : "Loading cities…"}
+                            loading={citiesLoading}
+                            disabled={!selectedState}
+                            emptyText={citiesLoading ? "Loading cities…" : "No cities match"}
+                            limit={100}
+                        />
                         <TextField
                             name="location.locality"
                             label="Locality"

@@ -76,21 +76,6 @@ export const TRANSACTION_TYPE_OPTIONS = [
     { value: "resale", label: "Resale" },
 ] as const satisfies readonly PropertyOption[];
 
-export const INDIAN_STATE_OPTIONS = [
-    { value: "Gujarat", label: "Gujarat" },
-    { value: "Maharashtra", label: "Maharashtra" },
-    { value: "Rajasthan", label: "Rajasthan" },
-    { value: "Madhya Pradesh", label: "Madhya Pradesh" },
-    { value: "Delhi", label: "Delhi" },
-] as const satisfies readonly PropertyOption[];
-
-export const CITY_OPTIONS = [
-    { value: "Surat", label: "Surat" },
-    { value: "Ahmedabad", label: "Ahmedabad" },
-    { value: "Vadodara", label: "Vadodara" },
-    { value: "Rajkot", label: "Rajkot" },
-] as const satisfies readonly PropertyOption[];
-
 export const SURAT_LOCALITY_OPTIONS = [
     { value: "Vesu", label: "Vesu" },
     { value: "Adajan", label: "Adajan" },
