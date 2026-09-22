@@ -15,8 +15,6 @@ type BookInput = {
     item: PropertyWithSlots;
     slot: VisitSlot;
     buyers: PersonSummary[];
-    note: string;
-    remindBuyer: boolean;
 };
 
 function optimisticVisit(input: BookInput): BrokerSiteVisit {
@@ -36,9 +34,8 @@ function optimisticVisit(input: BookInput): BrokerSiteVisit {
             input.item.propertySource === "own_listing" || input.slot.autoConfirm
                 ? "confirmed"
                 : "awaiting_owner",
-        brokerNote: input.note || undefined,
         ownerNote: input.slot.note,
-        remindBuyer: input.remindBuyer,
+        remindBuyer: false,
         createdAt: now,
         updatedAt: now,
         property: input.item.property,
