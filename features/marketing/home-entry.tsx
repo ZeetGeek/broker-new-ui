@@ -17,9 +17,9 @@ export function HomeEntry({ children }: { children: ReactNode }) {
     const isAuthenticated = Boolean(accessToken && user);
 
     useEffect(() => {
-        if (!hydrated || !isAuthenticated) return;
+        if (!hydrated || !accessToken || !user) return;
         router.replace(portalHomeForRole(user.role));
-    }, [hydrated, isAuthenticated, router, user]);
+    }, [accessToken, hydrated, router, user]);
 
     if (!hydrated || isAuthenticated) {
         return (
