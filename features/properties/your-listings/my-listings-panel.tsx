@@ -65,7 +65,7 @@ function asRequestShape(item: MyListingItem): RequestItem {
     };
 }
 
-export function MyListingsPanel() {
+export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const { filters, setFilters, clearFilters, hasActiveFilters } = useMyListingsFilters();
     const { view, setView } = useMyListingsView();
     const [summary, setSummary] = useState<MyListingsSummary | null>(null);
@@ -80,6 +80,8 @@ export function MyListingsPanel() {
     const [isOwnerAttachOpen, setIsOwnerAttachOpen] = useState(false);
     /** Bumped after a save so the list refetches without changing filters. */
     const [refreshToken, setRefreshToken] = useState(0);
+
+    const isOwnerPortal = portal === "owner";
 
     const infiniteFilters = useMemo(() => ({ ...filters, page: 1 }), [filters]);
     const query = useInfiniteItems({
@@ -165,16 +167,25 @@ export function MyListingsPanel() {
                     <MyListingsGrid
                         items={query.items}
                         view={view}
+                        portal={portal}
                         onEditListing={setEditingListing}
                         onDeleteListing={setDeletingListing}
-                        onAddBuyer={(listing) => {
-                            setBuyersListing(listing);
-                            setIsBuyersOpen(true);
-                        }}
-                        onAttachOwner={(listing) => {
-                            setOwnerListing(listing);
-                            setIsOwnerAttachOpen(true);
-                        }}
+                        onAddBuyer={
+                            isOwnerPortal
+                                ? undefined
+                                : (listing) => {
+                                      setBuyersListing(listing);
+                                      setIsBuyersOpen(true);
+                                  }
+                        }
+                        onAttachOwner={
+                            isOwnerPortal
+                                ? undefined
+                                : (listing) => {
+                                      setOwnerListing(listing);
+                                      setIsOwnerAttachOpen(true);
+                                  }
+                        }
                     />
                     <InfiniteListStatus
                         hasNextPage={Boolean(query.hasNextPage)}

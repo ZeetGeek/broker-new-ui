@@ -1,6 +1,7 @@
 import { CalendarDays } from "lucide-react";
 
 import { formatDateIso, formatDateShort, formatTimeIn } from "@/lib/format/date";
+import { OWNER_VISITS_HREF } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
@@ -21,6 +22,7 @@ export type TodayCardProps = {
     agenda: TodayAgenda;
     now: Date;
     className?: string;
+    portal?: "broker" | "owner";
 };
 
 function sortByTime(items: TodayItem[]): TodayItem[] {
@@ -47,9 +49,18 @@ function buildTimeline(items: TodayItem[], nowLabel: string) {
     return entries;
 }
 
-function EmptyToday({ now, className }: { now: Date; className?: string }) {
+function EmptyToday({
+    now,
+    className,
+    portal,
+}: {
+    now: Date;
+    className?: string;
+    portal: "broker" | "owner";
+}) {
     const dateLabel = formatDateShort(now);
     const dateIso = formatDateIso(now);
+    const isOwner = portal === "owner";
 
     return (
         <section
@@ -67,17 +78,23 @@ function EmptyToday({ now, className }: { now: Date; className?: string }) {
             <EmptyState
                 icon={CalendarDays}
                 heading="Nothing booked today"
-                description="Visits you schedule will appear here."
+                description={
+                    isOwner
+                        ? "Showings on your listings will appear here."
+                        : "Visits you schedule will appear here."
+                }
             >
-                <TextLinkButton href="/broker/visits/new">Book a site visit</TextLinkButton>
+                <TextLinkButton href={isOwner ? OWNER_VISITS_HREF : "/broker/visits/new"}>
+                    {isOwner ? "Manage visits" : "Book a site visit"}
+                </TextLinkButton>
             </EmptyState>
         </section>
     );
 }
 
-export function TodayCard({ agenda, now, className }: TodayCardProps) {
+export function TodayCard({ agenda, now, className, portal = "broker" }: TodayCardProps) {
     if (agenda.items.length === 0) {
-        return <EmptyToday now={now} className={className} />;
+        return <EmptyToday now={now} className={className} portal={portal} />;
     }
 
     const dateLabel = formatDateShort(now);

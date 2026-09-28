@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
-import { OwnerDashboard } from "@/features/dashboard/owner-dashboard";
+import { PropertyDetailPage } from "@/features/properties/property-detail/property-detail-page";
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
 };
 
 export default function Page() {
-    return <OwnerDashboard />;
+    return <PropertyDetailPage portal="owner" />;
 }

@@ -3,24 +3,24 @@ import type { Metadata } from "next";
 
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 
-import { OwnerVisitsPage } from "@/features/owner-visits/owner-visits-page";
+import { OwnerRequestsPage } from "@/features/owner-requests/owner-requests-page";
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
 };
 
-function OwnerVisitsFallback() {
+function OwnerRequestsFallback() {
     return (
         <div className="flex justify-center py-24">
-            <LoadingSpinner label="Loading visits" />
+            <LoadingSpinner label="Loading requests" />
         </div>
     );
 }
 
 export default function Page() {
     return (
-        <Suspense fallback={<OwnerVisitsFallback />}>
-            <OwnerVisitsPage />
+        <Suspense fallback={<OwnerRequestsFallback />}>
+            <OwnerRequestsPage />
         </Suspense>
     );
 }

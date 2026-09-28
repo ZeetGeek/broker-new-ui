@@ -6,16 +6,19 @@ import { useParams } from "next/navigation";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
+import { OWNER_PROPERTIES_HREF } from "@/lib/routes/owner";
 
 import { Button } from "@/components/ui/button";
 
 import { PropertyForm } from "@/features/properties/property-form";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
-export function PropertyEditPage() {
+export function PropertyEditPage({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const params = useParams<{ id: string }>();
     const propertyId = params.id;
     const [listing, setListing] = useState<MyListingItem | null | undefined>(undefined);
+    const listHref = portal === "owner" ? OWNER_PROPERTIES_HREF : BROKER_YOUR_LISTINGS_HREF;
+    const backLabel = portal === "owner" ? "Back to properties" : "Back to your listings";
 
     useEffect(() => {
         let cancelled = false;
@@ -45,9 +48,9 @@ export function PropertyEditPage() {
                 </p>
                 <Button
                     className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                    render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
+                    render={<Link href={listHref} />}
                 >
-                    Back to your listings
+                    {backLabel}
                 </Button>
             </div>
         );

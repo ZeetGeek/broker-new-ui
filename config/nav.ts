@@ -5,6 +5,13 @@ import {
     BROKER_PIPELINE_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
+import {
+    OWNER_LEADS_HREF,
+    OWNER_OVERVIEW_HREF,
+    OWNER_PROPERTIES_HREF,
+    OWNER_REQUESTS_HREF,
+    OWNER_VISITS_HREF,
+} from "@/lib/routes/owner";
 import type { ShortcutId } from "@/lib/shortcuts";
 
 export type NavItem = {
@@ -19,10 +26,20 @@ export type NavItem = {
 };
 
 export const OWNER_NAV_ITEMS: NavItem[] = [
-    { label: "Overview", href: "/owner" },
-    { label: "Properties", href: "/owner/properties" },
-    { label: "Requests", href: "/owner/requests" },
-    { label: "Visits", href: "/owner/visits" },
+    { label: "Overview", href: OWNER_OVERVIEW_HREF, mobileLabel: "Home" },
+    {
+        label: "Properties",
+        href: OWNER_PROPERTIES_HREF,
+        activePrefixes: ["/owner/properties"],
+    },
+    {
+        label: "Requests",
+        href: OWNER_REQUESTS_HREF,
+        mobileLabel: "Brokers",
+        activePrefixes: ["/owner/requests"],
+    },
+    { label: "Visits", href: OWNER_VISITS_HREF },
+    { label: "Leads", href: OWNER_LEADS_HREF, mobileLabel: "Offers" },
 ];
 
 export const BROKER_NAV_ITEMS: NavItem[] = [

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
-import { OwnerDashboard } from "@/features/dashboard/owner-dashboard";
+import { OwnerLeadsPage } from "@/features/owner-leads/owner-leads-page";
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
 };
 
 export default function Page() {
-    return <OwnerDashboard />;
+    return <OwnerLeadsPage />;
 }

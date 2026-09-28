@@ -69,6 +69,8 @@ export type PropertyBrowseListing = {
      * Never trust a nested owner phone on browse payloads.
      */
     ownerPhone?: string | null;
+    /** Present on browse payloads when the caller is authenticated. */
+    isBookmarked?: boolean | null;
 };
 
 /** Inventory listing returned by `GET /properties` (and get/create/update). */
@@ -92,7 +94,6 @@ export type PropertyListing = PropertyBrowseListing & {
     meetingRooms?: number | null;
     workstations?: number | null;
     ceilingHeightFt?: number | null;
-    isBookmarked?: boolean | null;
     videoUrl?: string | null;
     virtualTourUrl?: string | null;
     maintenanceCharges?: string | number | null;

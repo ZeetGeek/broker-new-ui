@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
-import { OwnerDashboard } from "@/features/dashboard/owner-dashboard";
+import { ReferralsPage } from "@/features/referrals/referrals-page";
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
 };
 
 export default function Page() {
-    return <OwnerDashboard />;
+    return <ReferralsPage />;
 }

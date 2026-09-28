@@ -89,13 +89,16 @@ export function DealCardPhoto({
     listing,
     view,
     stageBadge,
+    detailHref,
 }: {
     listing: DealCardListing;
     view: RequestsView;
     stageBadge?: ReactNode;
+    /** Defaults to the broker marketplace listing URL. */
+    detailHref?: string;
 }) {
     const isList = view === "list";
-    const href = brokerOwnerListingDetailHref(listing.propertyId);
+    const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
 
     return (
         <Link
@@ -176,8 +179,15 @@ export function DealCardBody({ view, children }: { view: RequestsView; children:
     );
 }
 
-export function DealCardMeta({ listing }: { listing: DealCardListing }) {
-    const href = brokerOwnerListingDetailHref(listing.propertyId);
+export function DealCardMeta({
+    listing,
+    detailHref,
+}: {
+    listing: DealCardListing;
+    /** Defaults to the broker marketplace listing URL. */
+    detailHref?: string;
+}) {
+    const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
     const showBeds = listing.bhk > 0 && RESIDENTIAL.has(listing.propertyTypeLabel.toLowerCase());
 
     return (
@@ -324,6 +334,7 @@ export function DealOverlayCard({
     isBusy = false,
     actions,
     children,
+    detailHref,
 }: {
     listing: DealCardListing;
     configLabel: string;
@@ -333,8 +344,10 @@ export function DealOverlayCard({
     isBusy?: boolean;
     actions?: ReactNode;
     children: ReactNode;
+    /** Defaults to the broker marketplace listing URL. */
+    detailHref?: string;
 }) {
-    const href = brokerOwnerListingDetailHref(listing.propertyId);
+    const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
     const specsLabel = [formatAreaSqft(listing.areaSqft), configLabel].filter(Boolean).join(" · ");
 
     return (
