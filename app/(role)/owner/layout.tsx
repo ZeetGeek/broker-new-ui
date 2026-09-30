@@ -6,7 +6,7 @@ import { OwnerPortalShell } from "@/features/dashboard/owner-portal-shell";
 
 export default function OwnerLayout({ children }: { children: ReactNode }) {
     return (
-        <AuthGuard>
+        <AuthGuard portal="owner">
             <OwnerPortalShell>{children}</OwnerPortalShell>
         </AuthGuard>
     );

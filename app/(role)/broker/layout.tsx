@@ -6,7 +6,7 @@ import { BrokerPortalShell } from "@/features/dashboard/broker-portal-shell";
 
 export default function BrokerLayout({ children }: { children: ReactNode }) {
     return (
-        <AuthGuard>
+        <AuthGuard portal="broker">
             <BrokerPortalShell>{children}</BrokerPortalShell>
         </AuthGuard>
     );
