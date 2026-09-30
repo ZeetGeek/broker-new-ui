@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function Page() {
     return (
         <div className="py-2">
-            <PropertyForm mode="create" />
+            <PropertyForm mode="create" portal="owner" />
         </div>
     );
 }

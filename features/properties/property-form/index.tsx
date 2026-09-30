@@ -97,6 +97,8 @@ function resolveDraftStep(step: string | undefined): PropertyFormStep | null {
 
 export type PropertyFormProps = {
     mode: "create" | "edit";
+    /** Owner listings are the owner's own. Broker listings can attach a contact owner and buyers. */
+    portal?: "broker" | "owner";
     propertyId?: string;
     initialListing?: MyListingItem | null;
     onCancel?: () => void;
@@ -109,6 +111,7 @@ export type PropertyFormProps = {
 
 export function PropertyForm({
     mode,
+    portal = "broker",
     propertyId,
     initialListing,
     onCancel,
@@ -474,6 +477,10 @@ export function PropertyForm({
 
         // Intent wins over draftToLegacyInput: stripHidden removes publish.status, which
         // would otherwise always serialize as publish: false on edit updates.
+        if (portal === "owner") {
+            current.owner = { ...current.owner, contactId: "" };
+            current.attachedBuyers = [];
+        }
         const input = {
             ...draftToLegacyInput(stripHidden(current), photoFilesRef),
             publish: !forceDraft,
@@ -713,6 +720,7 @@ export function PropertyForm({
                                         <StepTransition step={step}>
                                             <StepContent
                                                 step={step}
+                                                portal={portal}
                                                 photoFilesRef={photoFilesRef}
                                             />
                                         </StepTransition>
@@ -1134,9 +1142,11 @@ function PropertyFormFooter({
 
 function StepContent({
     step,
+    portal,
     photoFilesRef,
 }: {
     step: PropertyFormStep;
+    portal: "broker" | "owner";
     photoFilesRef: MutableRefObject<Map<string, File>>;
 }) {
     if (step === "basics") {
@@ -1169,7 +1179,7 @@ function StepContent({
     return (
         <div className="flex flex-col gap-8">
             <StepMedia photoFilesRef={photoFilesRef} />
-            <StepPublish />
+            {portal === "broker" ? <StepPublish /> : null}
         </div>
     );
 }

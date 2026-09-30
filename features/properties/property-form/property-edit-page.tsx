@@ -58,7 +58,12 @@ export function PropertyEditPage({ portal = "broker" }: { portal?: "broker" | "o
 
     return (
         <div className="py-2">
-            <PropertyForm mode="edit" propertyId={listing.id} initialListing={listing} />
+            <PropertyForm
+                mode="edit"
+                portal={portal}
+                propertyId={listing.id}
+                initialListing={listing}
+            />
         </div>
     );
 }

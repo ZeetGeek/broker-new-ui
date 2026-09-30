@@ -11,14 +11,13 @@ import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import { ownerSlotsApi, type VisitShowing, type VisitSlot } from "@/lib/api/owner-slots";
 import { propertiesApi } from "@/lib/api/properties";
-import { formatDateIn, formatDateIso, formatTime24, formatTimeIn, parseApiInstant, toApiInstantFromLocalParts } from "@/lib/format/date";
 import { getUserTimeZone } from "@/lib/datetime/timezone";
+import { formatDateIso, formatTime24, parseApiInstant, toApiInstantFromLocalParts } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -29,6 +28,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+
+import { ShowingRow } from "@/features/owner-visits/showing-row";
 
 type VisitsTab = "availability" | "scheduled";
 
@@ -122,11 +123,6 @@ function dayParts(iso: string): { weekday: string; date: string; month: string }
         date: format(noon, "d", { in: zone }),
         month: format(noon, "MMM", { in: zone }),
     };
-}
-
-function showingWhen(showing: VisitShowing): string {
-    const when = parseApiInstant(showing.scheduledDate);
-    return `${formatDateIn(when)} · ${formatTimeIn(when)}`;
 }
 
 function slotStartKey(slot: VisitSlot): string | null {
@@ -420,7 +416,7 @@ export function OwnerVisitsPage() {
                         <select
                             className="
                               rounded-control border border-border-warm bg-surface px-3.5
-                              block-[42px] text-[15px] text-ink shadow-sm inline-full
+                              text-[15px] text-ink shadow-sm block-[42px] inline-full
                             "
                             value={propertyId}
                             onChange={(event) => setPropertyId(event.target.value)}
@@ -492,8 +488,8 @@ export function OwnerVisitsPage() {
                                     aria-label="Previous week"
                                     onClick={() => shiftWeek(-1)}
                                     className="
-                                      flex items-center justify-center rounded-control text-ink-muted
-                                      block-8 inline-8
+                                      flex items-center justify-center rounded-control
+                                      text-ink-muted block-8 inline-8
                                       hover:bg-surface-muted hover:text-ink
                                     "
                                 >
@@ -504,8 +500,8 @@ export function OwnerVisitsPage() {
                                     aria-label="Next week"
                                     onClick={() => shiftWeek(1)}
                                     className="
-                                      flex items-center justify-center rounded-control text-ink-muted
-                                      block-8 inline-8
+                                      flex items-center justify-center rounded-control
+                                      text-ink-muted block-8 inline-8
                                       hover:bg-surface-muted hover:text-ink
                                     "
                                 >
@@ -514,7 +510,7 @@ export function OwnerVisitsPage() {
                             </div>
                         </div>
 
-                        <div className="flex gap-2 overflow-x-auto pb-1">
+                        <div className="flex gap-2 overflow-x-auto pbe-1">
                             {weekDates.map((date) => {
                                 const parts = dayParts(date);
                                 const selected = date === selectedDate;
@@ -527,18 +523,23 @@ export function OwnerVisitsPage() {
                                         aria-pressed={selected}
                                         className={cn(
                                             `
-                                              relative flex min-w-[4.5rem] flex-1 flex-col
-                                              items-center gap-0.5 rounded-control border px-2 py-3
+                                              relative flex flex-1 flex-col items-center gap-0.5
+                                              rounded-control border px-2 py-3
+                                              transition-[background-color,border-color,color]
+                                              duration-160 min-inline-18
                                             `,
                                             selected
-                                                ? "border-brand bg-brand text-surface"
-                                                : "border-border-warm bg-surface text-ink hover:border-ink/20",
+                                                ? "border-brand-ink bg-brand-ink text-surface"
+                                                : `
+                                                  border-border-warm bg-surface text-ink
+                                                  hover:border-ink/25 hover:bg-surface-muted
+                                                `,
                                         )}
                                     >
                                         <span
                                             className={cn(
                                                 "body-xs font-medium",
-                                                selected ? "text-surface/80" : "text-ink-muted",
+                                                selected ? "text-surface/70" : "text-ink-muted",
                                             )}
                                         >
                                             {parts.weekday}
@@ -546,8 +547,8 @@ export function OwnerVisitsPage() {
                                         <span className="h5 tabular-nums">{parts.date}</span>
                                         <span
                                             className={cn(
-                                                "body-xs font-medium uppercase tracking-wide",
-                                                selected ? "text-surface/80" : "text-ink-subtle",
+                                                "body-xs font-medium tracking-wide uppercase",
+                                                selected ? "text-surface/70" : "text-ink-subtle",
                                             )}
                                         >
                                             {parts.month}
@@ -556,7 +557,10 @@ export function OwnerVisitsPage() {
                                             <span
                                                 aria-hidden
                                                 className={cn(
-                                                    "absolute inset-e-2 inset-bs-2 rounded-full block-1.5 inline-1.5",
+                                                    `
+                                                      absolute inset-e-2 inset-bs-2 rounded-full
+                                                      block-1.5 inline-1.5
+                                                    `,
                                                     selected ? "bg-surface" : "bg-success",
                                                 )}
                                             />
@@ -588,7 +592,8 @@ export function OwnerVisitsPage() {
                                         className={cn(
                                             `
                                               body-sm rounded-control border px-2 py-2.5 text-center
-                                              font-medium tabular-nums transition-colors duration-160
+                                              font-medium tabular-nums transition-colors
+                                              duration-160
                                             `,
                                             expired
                                                 ? `
@@ -637,51 +642,16 @@ export function OwnerVisitsPage() {
     } else {
         panel = (
             <ul className={cn("flex flex-col gap-3", showingsLoading && "opacity-60")}>
-                {showings.map((showing) => {
-                    const status = showing.status ?? "scheduled";
-                    const canRespond = status === "scheduled";
-                    return (
-                        <li
-                            key={showing.id}
-                            className="
-                              flex flex-col gap-3 rounded-card border border-border-warm bg-surface
-                              p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between
-                            "
-                        >
-                            <div className="flex min-inline-0 flex-col gap-1">
-                                <p className="body font-semibold text-ink">
-                                    {showing.property?.title?.trim() || "Property"}
-                                </p>
-                                <p className="body-sm text-ink-muted">{showingWhen(showing)}</p>
-                                {showing.notes ? (
-                                    <p className="body-sm text-ink-muted">{showing.notes}</p>
-                                ) : null}
-                                <Badge variant="outline" className="mt-1 w-fit bg-surface">
-                                    {status}
-                                </Badge>
-                            </div>
-                            {canRespond ? (
-                                <div className="flex shrink-0 gap-2">
-                                    <Button
-                                        size="sm"
-                                        loading={busyId === showing.id}
-                                        onClick={() => void runShowingAction(showing.id, "confirmed")}
-                                    >
-                                        Confirm
-                                    </Button>
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        loading={busyId === showing.id}
-                                        onClick={() => void runShowingAction(showing.id, "cancelled")}
-                                    >
-                                        Cancel
-                                    </Button>
-                                </div>
-                            ) : null}
-                        </li>
-                    );
-                })}
+                {showings.map((showing) => (
+                    <li key={showing.id}>
+                        <ShowingRow
+                            showing={showing}
+                            busy={busyId === showing.id}
+                            onConfirm={() => void runShowingAction(showing.id, "confirmed")}
+                            onCancel={() => void runShowingAction(showing.id, "cancelled")}
+                        />
+                    </li>
+                ))}
             </ul>
         );
     }
@@ -768,7 +738,7 @@ export function OwnerVisitsPage() {
                                 <select
                                     className="
                                       rounded-control border-2 border-border-warm bg-surface px-3.5
-                                      block-control-md text-[15px] text-ink inline-full
+                                      text-[15px] text-ink block-control-md inline-full
                                     "
                                     value={bulkLength}
                                     onChange={(event) =>

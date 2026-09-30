@@ -198,6 +198,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             <MyListingsAddFab onClick={() => setAddOpen(true)} />
             <PropertyFormDialog
                 open={addOpen}
+                portal={portal}
                 onOpenChange={setAddOpen}
                 onSaved={() => {
                     setAddOpen(false);
@@ -206,6 +207,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             />
             <PropertyFormDialog
                 open={editingListing != null}
+                portal={portal}
                 listing={editingListing}
                 onOpenChange={(next) => {
                     if (!next) setEditingListing(null);

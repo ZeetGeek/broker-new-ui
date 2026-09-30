@@ -54,6 +54,12 @@ export type VisitShowing = {
         title?: string | null;
         city?: string;
         address?: string | null;
+        photos?: string[] | null;
+    } | null;
+    broker?: {
+        id: string;
+        fullName?: string | null;
+        avatarUrl?: string | null;
     } | null;
 };
 

@@ -6,6 +6,7 @@ import type { MyListingItem } from "@/features/properties/your-listings/types";
 export type PropertyFormDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    portal?: "broker" | "owner";
     /** Pass a listing to edit it; omit to add a new property. */
     listing?: MyListingItem | null;
     /** Called after a successful save so the caller can refresh its list. */
@@ -15,6 +16,7 @@ export type PropertyFormDialogProps = {
 export function PropertyFormDialog({
     open,
     onOpenChange,
+    portal = "broker",
     listing,
     onSaved,
 }: PropertyFormDialogProps) {
@@ -26,6 +28,7 @@ export function PropertyFormDialog({
             // property's values.
             key={`${mode}-${listing?.id ?? "new"}-${open ? "open" : "closed"}`}
             mode={mode}
+            portal={portal}
             propertyId={listing?.id}
             initialListing={listing}
             variant="dialog"
