@@ -63,6 +63,28 @@ export type VisitShowing = {
     } | null;
 };
 
+export type OwnerShowingFocus =
+    | "today"
+    | "tomorrow"
+    | "awaiting"
+    | "confirmed"
+    | "week"
+    | "cancelled";
+
+export type OwnerShowingsSummary = {
+    total: number;
+    today: number;
+    tomorrow: number;
+    awaitingOwner: number;
+    confirmed: number;
+    week: number;
+    cancelled: number;
+};
+
+export type OwnerShowingsPage = PagedResult<VisitShowing> & {
+    summary: OwnerShowingsSummary;
+};
+
 export type PagedResult<T> = {
     items: T[];
     total: number;
@@ -92,6 +114,19 @@ const EMPTY_PAGE = <T,>(): PagedResult<T> => ({
     page: 1,
     limit: 12,
     totalPages: 0,
+});
+
+const EMPTY_SHOWINGS_PAGE = (): OwnerShowingsPage => ({
+    ...EMPTY_PAGE<VisitShowing>(),
+    summary: {
+        total: 0,
+        today: 0,
+        tomorrow: 0,
+        awaitingOwner: 0,
+        confirmed: 0,
+        week: 0,
+        cancelled: 0,
+    },
 });
 
 export const ownerSlotsApi = {
@@ -136,25 +171,25 @@ export const ownerSlotsApi = {
     showings(params?: {
         propertyId?: string;
         status?: ShowingStatus;
+        focus?: OwnerShowingFocus;
         from?: string;
         to?: string;
         search?: string;
         page?: number;
         limit?: number;
     }) {
-        if (isMockMode()) return Promise.resolve(EMPTY_PAGE<VisitShowing>());
+        if (isMockMode()) return Promise.resolve(EMPTY_SHOWINGS_PAGE());
         const q = new URLSearchParams();
         if (params?.propertyId) q.set("propertyId", params.propertyId);
         if (params?.status) q.set("status", params.status);
+        if (params?.focus) q.set("focus", params.focus);
         if (params?.from) q.set("from", params.from);
         if (params?.to) q.set("to", params.to);
         if (params?.search) q.set("search", params.search);
         if (params?.page) q.set("page", String(params.page));
         if (params?.limit) q.set("limit", String(params.limit));
         const qs = q.toString();
-        return apiFetch<PagedResult<VisitShowing>>(
-            `/slots/owner/showings${qs ? `?${qs}` : ""}`,
-        );
+        return apiFetch<OwnerShowingsPage>(`/slots/owner/showings${qs ? `?${qs}` : ""}`);
     },
 
     updateShowingStatus(showingId: string, status: "confirmed" | "cancelled") {

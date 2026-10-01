@@ -294,11 +294,12 @@ export function AppPagination({
                             id={`${pageInputId}-rows`}
                             size="sm"
                             aria-label="Rows per page"
+                            wrapperClassName="inline-auto shrink-0"
                             className={cn(
                                 controlChipClass,
                                 `
-                                  gap-2 border-border-warm bg-surface px-3.5 font-semibold text-ink
-                                  tabular-nums shadow-sm block-9.5 min-inline-18
+                                  gap-1.5 border-border-warm bg-surface px-3 font-semibold text-ink
+                                  tabular-nums shadow-sm !inline-[4.75rem] block-9.5
                                   data-[size=sm]:block-9.5
                                 `,
                             )}

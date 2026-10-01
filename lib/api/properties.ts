@@ -187,6 +187,8 @@ export type PropertyBrowseQuery = {
     minCommissionPercent?: number;
     commissionSet?: boolean;
     readyToMove?: boolean;
+    /** Only listings the caller has bookmarked. */
+    bookmarked?: boolean;
     furnishingStatus?: "furnished" | "semi" | "unfurnished";
     sort?: PropertyBrowseSort;
     /** Opaque keyset cursor from a previous `nextCursor`. */
@@ -297,6 +299,7 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     }
     if (params.commissionSet) q.set("commissionSet", "1");
     if (params.readyToMove) q.set("readyToMove", "1");
+    if (params.bookmarked) q.set("bookmarked", "1");
     if (params.furnishingStatus) q.set("furnishingStatus", params.furnishingStatus);
     if (params.sort) q.set("sort", params.sort);
     if (params.cursor) q.set("cursor", params.cursor);

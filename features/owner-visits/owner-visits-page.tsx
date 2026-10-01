@@ -9,13 +9,20 @@ import { addDays, format, startOfWeek } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
-import { ownerSlotsApi, type VisitShowing, type VisitSlot } from "@/lib/api/owner-slots";
+import {
+    ownerSlotsApi,
+    type OwnerShowingFocus,
+    type OwnerShowingsSummary,
+    type VisitShowing,
+    type VisitSlot,
+} from "@/lib/api/owner-slots";
 import { propertiesApi } from "@/lib/api/properties";
 import { getUserTimeZone } from "@/lib/datetime/timezone";
 import { formatDateIso, formatTime24, parseApiInstant, toApiInstantFromLocalParts } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { AppPagination } from "@/components/shared/app-pagination";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { Button } from "@/components/ui/button";
@@ -29,9 +36,44 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { OwnerScheduledFilters } from "@/features/owner-visits/scheduled-filters";
 import { ShowingRow } from "@/features/owner-visits/showing-row";
 
 type VisitsTab = "availability" | "scheduled";
+
+const SHOWING_PAGE_SIZES = [10, 20, 30, 50] as const;
+const EMPTY_SHOWINGS_SUMMARY: OwnerShowingsSummary = {
+    total: 0,
+    today: 0,
+    tomorrow: 0,
+    awaitingOwner: 0,
+    confirmed: 0,
+    week: 0,
+    cancelled: 0,
+};
+
+const FOCUS_KEYS: OwnerShowingFocus[] = [
+    "today",
+    "tomorrow",
+    "awaiting",
+    "confirmed",
+    "week",
+    "cancelled",
+];
+
+function isShowingFocus(value: string | null): value is OwnerShowingFocus {
+    return FOCUS_KEYS.includes(value as OwnerShowingFocus);
+}
+
+function parseShowingPage(value: string | null) {
+    const page = Number(value);
+    return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function parseShowingLimit(value: string | null) {
+    const limit = Number(value);
+    return SHOWING_PAGE_SIZES.includes(limit as (typeof SHOWING_PAGE_SIZES)[number]) ? limit : 10;
+}
 
 const SLOT_TIMES = buildSlotTimes(9 * 60, 19 * 60 + 30, 30);
 
@@ -136,6 +178,10 @@ export function OwnerVisitsPage() {
     const searchParams = useSearchParams();
     const tabParam = searchParams.get("tab");
     const tab: VisitsTab = isVisitsTab(tabParam) ? tabParam : "availability";
+    const focusParam = searchParams.get("focus");
+    const showingFocus = isShowingFocus(focusParam) ? focusParam : undefined;
+    const showingPage = parseShowingPage(searchParams.get("page"));
+    const showingLimit = parseShowingLimit(searchParams.get("limit"));
 
     const [revision, setRevision] = useState(0);
     const [busyId, setBusyId] = useState<string | null>(null);
@@ -151,6 +197,8 @@ export function OwnerVisitsPage() {
 
     const [showings, setShowings] = useState<VisitShowing[]>([]);
     const [showingsTotal, setShowingsTotal] = useState(0);
+    const [showingsPages, setShowingsPages] = useState(1);
+    const [showingsSummary, setShowingsSummary] = useState<OwnerShowingsSummary>(EMPTY_SHOWINGS_SUMMARY);
     const [showingsLoading, setShowingsLoading] = useState(false);
 
     const [weekAnchor, setWeekAnchor] = useState(() => new Date());
@@ -167,15 +215,35 @@ export function OwnerVisitsPage() {
     const todayIso = formatDateIso(new Date());
     const nowTime = formatTime24(new Date());
 
-    const setTab = useCallback(
-        (next: VisitsTab) => {
+    const replaceVisitParams = useCallback(
+        (patch: Record<string, string | undefined>) => {
             const params = new URLSearchParams(searchParams.toString());
-            if (next === "availability") params.delete("tab");
-            else params.set("tab", next);
+            for (const [key, value] of Object.entries(patch)) {
+                if (!value) params.delete(key);
+                else params.set(key, value);
+            }
             const qs = params.toString();
             router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
         },
         [pathname, router, searchParams],
+    );
+
+    const setTab = useCallback(
+        (next: VisitsTab) => {
+            replaceVisitParams({ tab: next === "availability" ? undefined : next });
+        },
+        [replaceVisitParams],
+    );
+
+    const setShowingFocus = useCallback(
+        (next?: OwnerShowingFocus) => {
+            replaceVisitParams({
+                tab: "scheduled",
+                focus: next,
+                page: undefined,
+            });
+        },
+        [replaceVisitParams],
     );
 
     useEffect(() => {
@@ -233,11 +301,20 @@ export function OwnerVisitsPage() {
         let cancelled = false;
         setShowingsLoading(true);
         void ownerSlotsApi
-            .showings({ limit: 50 })
+            .showings({
+                focus: showingFocus,
+                page: showingPage,
+                limit: showingLimit,
+            })
             .then((page) => {
                 if (!cancelled) {
                     setShowings(page.items);
                     setShowingsTotal(page.total);
+                    setShowingsPages(page.totalPages);
+                    setShowingsSummary(page.summary ?? EMPTY_SHOWINGS_SUMMARY);
+                    if (page.totalPages > 0 && showingPage > page.totalPages) {
+                        replaceVisitParams({ page: String(page.totalPages) });
+                    }
                 }
             })
             .catch((err) => {
@@ -245,6 +322,8 @@ export function OwnerVisitsPage() {
                     toast.error(apiMessage(err, "Could not load showings"));
                     setShowings([]);
                     setShowingsTotal(0);
+                    setShowingsPages(1);
+                    setShowingsSummary(EMPTY_SHOWINGS_SUMMARY);
                 }
             })
             .finally(() => {
@@ -253,7 +332,7 @@ export function OwnerVisitsPage() {
         return () => {
             cancelled = true;
         };
-    }, [revision]);
+    }, [replaceVisitParams, revision, showingFocus, showingLimit, showingPage]);
 
     const slotsByStart = useMemo(() => {
         const map = new Map<string, VisitSlot>();
@@ -621,38 +700,75 @@ export function OwnerVisitsPage() {
                 </div>
             );
         }
-    } else if (showingsLoading && showings.length === 0) {
-        panel = (
-            <div className="flex justify-center py-16">
-                <LoadingSpinner label="Loading showings" />
-            </div>
-        );
-    } else if (showings.length === 0) {
-        panel = (
-            <EmptyState
-                icon={CalendarDays}
-                heading="No scheduled showings"
-                description="When brokers book your slots, they'll appear here."
-            >
-                <Button variant="outline" onClick={() => setTab("availability")}>
-                    Manage availability
-                </Button>
-            </EmptyState>
-        );
     } else {
+        const scheduledList =
+            showingsLoading && showings.length === 0 ? (
+                <div className="flex justify-center py-16">
+                    <LoadingSpinner label="Loading showings" />
+                </div>
+            ) : showings.length === 0 ? (
+                <EmptyState
+                    icon={CalendarDays}
+                    heading={showingFocus ? "No visits in this filter" : "No scheduled showings"}
+                    description={
+                        showingFocus
+                            ? "Try another filter, or clear it to see every scheduled visit."
+                            : "When brokers book your slots, they'll appear here."
+                    }
+                >
+                    {showingFocus ? (
+                        <Button variant="outline" onClick={() => setShowingFocus(undefined)}>
+                            Clear filter
+                        </Button>
+                    ) : (
+                        <Button variant="outline" onClick={() => setTab("availability")}>
+                            Manage availability
+                        </Button>
+                    )}
+                </EmptyState>
+            ) : (
+                <ul className={cn("flex flex-col gap-3", showingsLoading && "opacity-60")}>
+                    {showings.map((showing) => (
+                        <li key={showing.id}>
+                            <ShowingRow
+                                showing={showing}
+                                busy={busyId === showing.id}
+                                onConfirm={() => void runShowingAction(showing.id, "confirmed")}
+                                onCancel={() => void runShowingAction(showing.id, "cancelled")}
+                            />
+                        </li>
+                    ))}
+                </ul>
+            );
+
         panel = (
-            <ul className={cn("flex flex-col gap-3", showingsLoading && "opacity-60")}>
-                {showings.map((showing) => (
-                    <li key={showing.id}>
-                        <ShowingRow
-                            showing={showing}
-                            busy={busyId === showing.id}
-                            onConfirm={() => void runShowingAction(showing.id, "confirmed")}
-                            onCancel={() => void runShowingAction(showing.id, "cancelled")}
-                        />
-                    </li>
-                ))}
-            </ul>
+            <div className="flex flex-col gap-4">
+                <OwnerScheduledFilters
+                    summary={showingsSummary}
+                    active={showingFocus}
+                    isLoading={showingsLoading && showings.length === 0}
+                    onChange={setShowingFocus}
+                />
+                {scheduledList}
+                {showingsTotal >= 10 && showingsPages > 1 ? (
+                    <AppPagination
+                        page={showingPage}
+                        totalPages={showingsPages}
+                        pageSize={showingLimit}
+                        pageSizeOptions={SHOWING_PAGE_SIZES}
+                        aria-label="Scheduled visits"
+                        onPageChange={(page) =>
+                            replaceVisitParams({ page: page <= 1 ? undefined : String(page) })
+                        }
+                        onPageSizeChange={(limit) =>
+                            replaceVisitParams({
+                                limit: limit === 10 ? undefined : String(limit),
+                                page: undefined,
+                            })
+                        }
+                    />
+                ) : null}
+            </div>
         );
     }
 
@@ -693,7 +809,7 @@ export function OwnerVisitsPage() {
                                     : "border border-border-warm bg-surface text-ink",
                             )}
                         >
-                            Scheduled ({showingsTotal})
+                            Scheduled ({showingsSummary.total})
                         </button>
                     </div>
                 </div>

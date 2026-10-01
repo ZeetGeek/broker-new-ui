@@ -73,6 +73,7 @@ function filterMockOwnerListings(
         if (filters.slotsOpen && item.brokerSlotsOpen <= 0) return false;
         if (filters.commissionSet && item.commissionPercent <= 0) return false;
         if (filters.readyToMove && !item.readyToMove) return false;
+        if (filters.bookmarked && !item.isBookmarked) return false;
         if (filters.yourAreas && serviceAreas.length > 0) {
             const locality = item.locality.toLowerCase();
             const city = item.city.toLowerCase();
@@ -188,6 +189,7 @@ async function fetchBrowsePage({
                 minCommission != null && !Number.isNaN(minCommission) ? minCommission : undefined,
             commissionSet: filters.commissionSet || undefined,
             readyToMove: filters.readyToMove || undefined,
+            bookmarked: filters.bookmarked || undefined,
             furnishingStatus: filters.furnishing || undefined,
             sort: filters.sort,
             cursor: cursor || undefined,

@@ -111,6 +111,7 @@ export function parseOwnerListingsFilters(
         slotsOpen: parseBoolParam(params, "slotsOpen"),
         commissionSet: parseBoolParam(params, "commissionSet"),
         readyToMove: parseBoolParam(params, "readyToMove"),
+        bookmarked: parseBoolParam(params, "bookmarked"),
         sort: sort === "price_asc" || sort === "price_desc" ? sort : "newest",
         cursor: parseParam(params, "cursor"),
         limit: parseLimitParam(params),
@@ -149,6 +150,7 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     if (filters.slotsOpen) params.set("slotsOpen", "1");
     if (filters.commissionSet) params.set("commissionSet", "1");
     if (filters.readyToMove) params.set("readyToMove", "1");
+    if (filters.bookmarked) params.set("bookmarked", "1");
     if (filters.sort !== "newest") params.set("sort", filters.sort);
     if (filters.cursor) params.set("cursor", filters.cursor);
     if (filters.limit !== DEFAULT_OWNER_LISTINGS_FILTERS.limit) {
@@ -166,6 +168,7 @@ export function countSheetFilters(filters: OwnerListingsFilters): number {
     if (filters.slotsOpen) count++;
     if (filters.commissionSet) count++;
     if (filters.readyToMove) count++;
+    if (filters.bookmarked) count++;
     return count;
 }
 
@@ -188,6 +191,7 @@ export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): bo
         filters.slotsOpen ||
         filters.commissionSet ||
         filters.readyToMove ||
+        filters.bookmarked ||
         filters.sort !== DEFAULT_OWNER_LISTINGS_FILTERS.sort
     );
 }
@@ -212,6 +216,7 @@ export function ownerListingsFilterSignature(filters: OwnerListingsFilters): str
         filters.slotsOpen ? "1" : "0",
         filters.commissionSet ? "1" : "0",
         filters.readyToMove ? "1" : "0",
+        filters.bookmarked ? "1" : "0",
         filters.sort,
         filters.cursor,
         String(filters.limit),
@@ -276,6 +281,7 @@ export function filterOwnerListings(
         if (filters.commissionSet && item.commissionPercent <= 0 && item.commissionAmount <= 0)
             return false;
         if (filters.readyToMove && !item.readyToMove) return false;
+        if (filters.bookmarked && !item.isBookmarked) return false;
 
         const minArea = filters.minAreaSqft ? Number(filters.minAreaSqft) : null;
         const maxArea = filters.maxAreaSqft ? Number(filters.maxAreaSqft) : null;
