@@ -223,6 +223,10 @@ type SeedDraft = Omit<
     | "virtualTourUrl"
     | "landmark"
     | "society"
+    | "cabins"
+    | "meetingRooms"
+    | "workstations"
+    | "ceilingHeightFt"
 > & {
     category?: MyListingCategory;
     bathrooms?: number | null;
@@ -242,6 +246,10 @@ type SeedDraft = Omit<
     virtualTourUrl?: string;
     landmark?: string;
     society?: string;
+    cabins?: number | null;
+    meetingRooms?: number | null;
+    workstations?: number | null;
+    ceilingHeightFt?: number | null;
 };
 
 function hydrateSeed(item: SeedDraft): MyListingItem {

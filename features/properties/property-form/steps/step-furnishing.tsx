@@ -215,7 +215,7 @@ export function StepFurnishing() {
     const popularSet = useMemo(() => {
         const preferred = isCommercial ? POPULAR_COMMERCIAL : POPULAR_RESIDENTIAL;
         const available = new Set(catalog.map((option) => option.value));
-        return new Set(preferred.filter((value) => available.has(value)));
+        return new Set<string>(preferred.filter((value) => available.has(value)));
     }, [catalog, isCommercial]);
 
     const selected = useMemo(() => collectSelected(amenities), [amenities]);

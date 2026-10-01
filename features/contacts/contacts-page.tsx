@@ -15,6 +15,7 @@ import {
     Users,
 } from "lucide-react";
 
+import type { NewBuyerInput } from "@/lib/api/clients";
 import { contactsApi, sortBuyerRows } from "@/lib/api/contacts";
 import { PREF_KEYS } from "@/lib/prefs/keys";
 import { cn } from "@/lib/utils";
@@ -41,7 +42,6 @@ import { AttachOwnerToListingModal } from "@/features/contacts/attach-owner-to-l
 import { BuyerCard } from "@/features/contacts/buyer-card";
 import { ContactDetailPanel } from "@/features/contacts/contact-detail-panel";
 import {
-    emptyBuyerForm,
     emptyOwnerForm,
     type BuyerContactForm,
     type OwnerContactForm,
@@ -301,27 +301,28 @@ export function ContactsPage() {
 
     const quickUpdateBuyer = useCallback(
         async (buyer: BuyerRow, patch: Partial<BuyerContactForm>) => {
-            const values: BuyerContactForm = {
-                ...emptyBuyerForm(),
+            const notes = patch.notes ?? buyer.notes ?? null;
+            const input: NewBuyerInput = {
                 name: buyer.name,
-                phone: buyer.phoneDigits,
-                intent: buyer.lookingFor,
-                propertyTypes: buyer.propertyKind === "any" ? [] : [buyer.propertyKind],
-                configurations: buyer.bhk ? [`${buyer.bhk} BHK`] : [],
-                localities: buyer.preferredLocalities,
-                notes: buyer.notes ?? "",
-                lastSpokeAt: buyer.lastContactedAt?.slice(0, 10) ?? "",
-                ...buyer.details,
-                ...patch,
+                phoneDigits: buyer.phoneDigits,
+                email: buyer.email,
+                lookingFor: buyer.lookingFor,
+                propertyKind: buyer.propertyKind,
+                preferredLocalities: buyer.preferredLocalities,
+                budgetMinInr: buyer.budgetMinInr,
+                budgetMaxInr: buyer.budgetMaxInr,
+                bhk: buyer.bhk,
+                source: buyer.source ?? "walk_in",
+                notes,
             };
-            await contactsApi.saveBuyer(values, buyer.id);
+            await contactsApi.saveBuyer(input, buyer.id);
             setSelectedContact({
                 type: "buyer",
                 row: {
                     ...buyer,
-                    details: values,
-                    notes: values.notes,
-                    lastContactedAt: values.lastSpokeAt || buyer.lastContactedAt,
+                    notes,
+                    lastContactedAt: patch.lastSpokeAt || buyer.lastContactedAt,
+                    details: buyer.details ? { ...buyer.details, ...patch } : buyer.details,
                 },
             });
             setRevision((value) => value + 1);
