@@ -45,7 +45,7 @@ const TAB_CHIPS: {
 }[] = [
     {
         key: "requests",
-        label: "Incoming Request",
+        label: "Incoming Requests",
         mobileLabel: "Incoming Request",
         description: "Brokers waiting for you to say yes or no",
     },
