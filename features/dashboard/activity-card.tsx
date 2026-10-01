@@ -25,12 +25,15 @@ import type { ActivityData, ActivityEventType, ActivityItem } from "./mock-data"
 export type { ActivityData, ActivityItem } from "./mock-data";
 
 const ACTIVITY_INFO = "Recent updates across your properties, clients, and visits.";
+const OWNER_ACTIVITY_INFO =
+    "Recent updates across your properties, broker requests, visits, and offers.";
 
 const MAX_ACTIVITY_ROWS = 6;
 
 export type ActivityCardProps = {
     data: ActivityData;
     className?: string;
+    portal?: "broker" | "owner";
 };
 
 type ActivityDaySection = {
@@ -74,12 +77,16 @@ function groupActivitiesByDay(items: ActivityItem[], now: Date): ActivityDaySect
         }));
 }
 
-function EmptyActivity() {
+function EmptyActivity({ portal }: { portal: "broker" | "owner" }) {
     return (
         <EmptyState
             icon={Activity}
             heading="Nothing yet"
-            description="Owner approvals, views, and updates will appear here."
+            description={
+                portal === "owner"
+                    ? "Broker requests, visit bookings, and offer updates will appear here."
+                    : "Owner approvals, views, and updates will appear here."
+            }
         >
             <ShortcutKbdMessage shortcutId="notifications">to view all activity</ShortcutKbdMessage>
         </EmptyState>
@@ -155,7 +162,7 @@ function DaySection({ section, now }: { section: ActivityDaySection; now: Date }
     );
 }
 
-export function ActivityCard({ data, className }: ActivityCardProps) {
+export function ActivityCard({ data, className, portal = "broker" }: ActivityCardProps) {
     const now = new Date();
     const items = data.items.slice(0, MAX_ACTIVITY_ROWS);
     const sections = groupActivitiesByDay(items, now);
@@ -167,16 +174,13 @@ export function ActivityCard({ data, className }: ActivityCardProps) {
             aria-labelledby="activity-card-heading"
         >
             <div className="flex shrink-0 items-start justify-between gap-3">
-                <CardLabel info={ACTIVITY_INFO}>
+                <CardLabel info={portal === "owner" ? OWNER_ACTIVITY_INFO : ACTIVITY_INFO}>
                     <span id="activity-card-heading">Activity</span>
                 </CardLabel>
-                {/* {!isEmpty ? (
-                    <p className="eyebrow shrink-0 text-ink-muted">Since you last opened</p>
-                ) : null} */}
             </div>
 
             {isEmpty ? (
-                <EmptyActivity />
+                <EmptyActivity portal={portal} />
             ) : (
                 <div className="relative mbs-2 flex-1 min-block-0">
                     <div

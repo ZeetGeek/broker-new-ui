@@ -52,6 +52,47 @@ export type RepresentationItem = {
     propertyOwnerName?: string | null;
     propertyOwnerPhone?: string | null;
     propertyOwnerAvatarUrl?: string | null;
+    brokerName?: string | null;
+    brokerDisplayName?: string | null;
+    brokerIsAgency?: boolean;
+    brokerPhone?: string | null;
+    brokerEmail?: string | null;
+    brokerAvatarUrl?: string | null;
+    brokerOrgName?: string | null;
+    brokerVerified?: boolean;
+    brokerRating?: string | null;
+    brokerRatingCount?: number;
+    brokerExperienceYears?: number | null;
+    brokerServiceAreas?: string[];
+};
+
+export type BrokerProfile = {
+    id: string;
+    userId?: string;
+    fullName?: string | null;
+    displayName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    city?: string | null;
+    avatarUrl?: string | null;
+    orgName?: string | null;
+    accountType?: string | null;
+    isAgency?: boolean;
+    agencyId?: string | null;
+    agencyStaffCount?: number;
+    accountHolderName?: string | null;
+    experienceYears?: number | null;
+    specializations?: string[];
+    serviceAreas?: string[];
+    licenseNumber?: string | null;
+    reraState?: string | null;
+    rating?: string | null;
+    ratingCount?: number | null;
+    verified?: boolean | null;
+    dealsClosed?: number | null;
+    avgDaysToClose?: number | null;
+    bio?: string | null;
+    publicSlug?: string | null;
 };
 
 export type RepresentationListPage = {
@@ -69,6 +110,30 @@ export type BrokerInvitationListQuery = {
     page?: number;
     limit?: number;
 };
+
+export type OwnerRepQueueQuery = {
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+};
+
+export type OwnerBrokersQuery = {
+    search?: string;
+    city?: string;
+    verifiedOnly?: boolean;
+    page?: number;
+    limit?: number;
+};
+
+function queueQuery(params?: OwnerRepQueueQuery): string {
+    const q = new URLSearchParams();
+    if (params?.status) q.set("status", params.status);
+    if (params?.search) q.set("search", params.search);
+    if (params?.page != null && params.page > 1) q.set("page", String(params.page));
+    if (params?.limit != null) q.set("limit", String(params.limit));
+    return q.toString();
+}
 
 export const representativeApi = {
     requestRepresentation(propertyId: string, message?: string) {
@@ -185,6 +250,108 @@ export const representativeApi = {
         return apiFetch<RepresentationMessage>(`/representative/${representationId}/message`, {
             method: "POST",
             body: JSON.stringify({ message: input.message?.trim() ?? "" }),
+        });
+    },
+
+    /** Owner: full representation list (badge counts). */
+    ownerList(status?: string) {
+        if (isMockMode()) return Promise.resolve([]);
+        const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+        return apiFetch<RepresentationItem[]>(`/representative/owner/list${qs}`);
+    },
+
+    ownerRequestList(status?: string) {
+        if (isMockMode()) return Promise.resolve([]);
+        const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+        return apiFetch<RepresentationItem[]>(`/representative/owner/request/list${qs}`);
+    },
+
+    ownerRequestPage(params?: OwnerRepQueueQuery) {
+        if (isMockMode()) {
+            return Promise.resolve({
+                items: [],
+                total: 0,
+                page: 1,
+                limit: 12,
+                totalPages: 0,
+            } satisfies RepresentationListPage);
+        }
+        return apiFetch<RepresentationListPage>(
+            `/representative/owner/request/list?${queueQuery(params)}`,
+        );
+    },
+
+    ownerInvitationList(status?: string) {
+        if (isMockMode()) return Promise.resolve([]);
+        const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+        return apiFetch<RepresentationItem[]>(`/representative/owner/invitation/list${qs}`);
+    },
+
+    ownerInvitationPage(params?: OwnerRepQueueQuery) {
+        if (isMockMode()) {
+            return Promise.resolve({
+                items: [],
+                total: 0,
+                page: 1,
+                limit: 12,
+                totalPages: 0,
+            } satisfies RepresentationListPage);
+        }
+        return apiFetch<RepresentationListPage>(
+            `/representative/owner/invitation/list?${queueQuery(params)}`,
+        );
+    },
+
+    ownerActiveList() {
+        if (isMockMode()) return Promise.resolve([]);
+        return apiFetch<RepresentationItem[]>(`/representative/owner/active/list`);
+    },
+
+    ownerActivePage(params?: Omit<OwnerRepQueueQuery, "status">) {
+        if (isMockMode()) {
+            return Promise.resolve({
+                items: [],
+                total: 0,
+                page: 1,
+                limit: 12,
+                totalPages: 0,
+            } satisfies RepresentationListPage);
+        }
+        return apiFetch<RepresentationListPage>(
+            `/representative/owner/active/list?${queueQuery(params)}`,
+        );
+    },
+
+    ownerBrokers(params?: OwnerBrokersQuery) {
+        if (isMockMode()) {
+            return Promise.resolve({
+                items: [],
+                total: 0,
+                page: 1,
+                limit: 12,
+                totalPages: 0,
+            });
+        }
+        const q = new URLSearchParams();
+        if (params?.search) q.set("search", params.search);
+        if (params?.city) q.set("city", params.city);
+        if (params?.verifiedOnly) q.set("verifiedOnly", "true");
+        if (params?.page != null && params.page > 1) q.set("page", String(params.page));
+        if (params?.limit != null) q.set("limit", String(params.limit));
+        const qs = q.toString();
+        return apiFetch<RepresentationListPage & { items: BrokerProfile[] }>(
+            `/representative/owner/brokers${qs ? `?${qs}` : ""}`,
+        );
+    },
+
+    ownerBrokerProfile(brokerId: string) {
+        return apiFetch<BrokerProfile>(`/representative/owner/brokers/${brokerId}`);
+    },
+
+    ownerInvite(body: { propertyId: string; brokerId: string; message?: string }) {
+        return apiFetch("/representative/owner/invite", {
+            method: "POST",
+            body: JSON.stringify(body),
         });
     },
 };

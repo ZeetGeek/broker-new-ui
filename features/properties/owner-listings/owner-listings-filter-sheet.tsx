@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import {
     BadgePercent,
+    Bookmark,
     CalendarDays,
     DoorOpen,
     KeyRound,
@@ -67,7 +68,7 @@ const COMMISSION_PRESETS: ChoicePreset[] = [
 const DEAL_OPTIONS: {
     key: keyof Pick<
         OwnerListingsSheetFilters,
-        "yourAreas" | "readyToMove" | "slotsOpen" | "commissionSet"
+        "yourAreas" | "readyToMove" | "slotsOpen" | "commissionSet" | "bookmarked"
     >;
     label: string;
     description: string;
@@ -97,6 +98,12 @@ const DEAL_OPTIONS: {
         description: "Owner already shared a rate",
         icon: BadgePercent,
     },
+    {
+        key: "bookmarked",
+        label: "Bookmarked",
+        description: "Properties you have saved",
+        icon: Bookmark,
+    },
 ];
 
 const EMPTY_SHEET_FILTERS: OwnerListingsSheetFilters = {
@@ -109,6 +116,7 @@ const EMPTY_SHEET_FILTERS: OwnerListingsSheetFilters = {
     slotsOpen: false,
     commissionSet: false,
     readyToMove: false,
+    bookmarked: false,
 };
 
 const SELECT_TRANSITION =
@@ -328,7 +336,8 @@ export function OwnerListingsFilterSheet({
             draft.newToday ||
             draft.slotsOpen ||
             draft.commissionSet ||
-            draft.readyToMove
+            draft.readyToMove ||
+            draft.bookmarked
         );
     }, [draft]);
 

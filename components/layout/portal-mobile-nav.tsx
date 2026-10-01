@@ -37,8 +37,9 @@ const NAV_ICONS: Record<string, LucideIcon> = {
     "/broker/referrals": Gift,
     "/owner": LayoutDashboard,
     "/owner/properties": Building2,
-    "/owner/requests": Gift,
-    "/owner/calendar": Calendar,
+    "/owner/requests": Send,
+    "/owner/visits": Calendar,
+    "/owner/leads": Briefcase,
 };
 
 function NavIcon({ href }: { href: string }) {

@@ -151,6 +151,30 @@ export type DashboardAreaProperty = {
     imageSrc: string;
 };
 
+/** Owner dashboard summary counters from GET /dashboard when portal is owner. */
+export type DashboardOwnerSummary = {
+    propertiesListed: number;
+    activeBrokers: number;
+    pendingRequests: number;
+    visitsScheduled: number;
+    dealsClosed: number;
+};
+
+/** Pending broker→owner representation rows on the owner dashboard. */
+export type DashboardOwnerBrokerRequest = {
+    id: string;
+    propertyId: string;
+    propertyTitle: string;
+    brokerId?: string;
+    brokerName?: string;
+    brokerDisplayName?: string;
+    brokerIsAgency?: boolean;
+    brokerVerified?: boolean;
+    rating?: string | null;
+    message?: string | null;
+    createdAt?: string;
+};
+
 export type PipelineFunnelStage = {
     stage: string;
     label: string;
@@ -171,7 +195,8 @@ export type DashboardResponse = {
     };
     upcomingVisits?: DashboardVisit[];
     ownerInvites?: DashboardOwnerInvite[];
-    brokerRequests?: DashboardBrokerRequest[];
+    /** Broker portal: outbound request cards. Owner portal: inbound broker requests. */
+    brokerRequests?: Array<DashboardBrokerRequest | DashboardOwnerBrokerRequest>;
     followUps?: DashboardFollowUps;
     activity?: DashboardActivity;
     youRepresent?: DashboardYouRepresent;

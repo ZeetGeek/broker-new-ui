@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-import { BadgeCheck, Building2, ChevronLeft, MapPin, UserRound } from "lucide-react";
+import { BadgeCheck, Building2, ChevronLeft, Lock, Mail, MapPin, Phone, UserRound } from "lucide-react";
 
-import { ApiError } from "@/lib/api/client";
-import { type BrokerOwnerProfile, ownersApi } from "@/lib/api/owners";
+import { type BrokerOwnerProfile, type OwnerProfileProperty, ownersApi } from "@/lib/api/owners";
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
-import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
+import { formatPhoneIn } from "@/lib/format/phone";
+import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { PhoneNumber } from "@/components/shared/phone-number";
+import { AppImage } from "@/components/shared/app-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +21,46 @@ import { OwnerProfileSkeleton } from "@/features/owners/owner-profile-skeleton";
 
 function listingCountLabel(count: number): string {
     return count === 1 ? "1 property listed" : `${count} properties listed`;
+}
+
+function propertyPrice(property: OwnerProfileProperty): string | null {
+    const rent = Number(property.monthlyRent);
+    if (property.transactionType === "rent" && Number.isFinite(rent) && rent > 0) {
+        return formatRentInr(rent);
+    }
+    const sale = Number(property.salePrice);
+    if (Number.isFinite(sale) && sale > 0) return formatPriceInr(sale);
+    if (Number.isFinite(rent) && rent > 0) return formatRentInr(rent);
+    return null;
+}
+
+function PropertyCard({ property }: { property: OwnerProfileProperty }) {
+    const photo = property.photos[0];
+    const price = propertyPrice(property);
+    const place = [property.address, property.city].filter(Boolean).join(", ");
+
+    return (
+        <Link
+            href={brokerOwnerListingDetailHref(property.id)}
+            className="
+              flex flex-col overflow-hidden rounded-card border border-border-warm bg-surface
+              outline-none
+              hover:border-ink/20
+              focus-visible:ring-3 focus-visible:ring-ring/30
+            "
+        >
+            <div className="relative aspect-[4/3] bg-surface-muted">
+                {photo ? (
+                    <AppImage src={photo} alt="" fill className="object-cover" sizes="320px" />
+                ) : null}
+            </div>
+            <div className="flex flex-col gap-1 p-4">
+                <p className="body truncate font-semibold text-ink">{property.title}</p>
+                {place ? <p className="body-sm truncate text-ink-muted">{place}</p> : null}
+                {price ? <p className="body-sm font-semibold text-brand">{price}</p> : null}
+            </div>
+        </Link>
+    );
 }
 
 function NotFoundState() {
@@ -104,9 +145,40 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                     </p>
                 ) : null}
 
-                {profile.phoneDigits ? (
-                    <PhoneNumber phoneDigits={profile.phoneDigits} className="body-sm text-ink" />
-                ) : null}
+                {profile.contactUnlocked ? (
+                    <div className="flex flex-col gap-1.5">
+                        {profile.phoneDigits ? (
+                            <a
+                                href={`tel:+91${profile.phoneDigits}`}
+                                className="body-sm inline-flex items-center gap-1.5 font-medium text-ink"
+                            >
+                                <Phone aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                                {formatPhoneIn(profile.phoneDigits)}
+                            </a>
+                        ) : null}
+                        {profile.email ? (
+                            <a
+                                href={`mailto:${profile.email}`}
+                                className="body-sm inline-flex items-center gap-1.5 font-medium text-ink"
+                            >
+                                <Mail aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                                {profile.email}
+                            </a>
+                        ) : null}
+                        {!profile.phoneDigits && !profile.email ? (
+                            <p className="body-sm text-ink-muted">
+                                You represent this owner, but they have no contact details on file.
+                            </p>
+                        ) : null}
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-1 rounded-control bg-surface-muted p-3">
+                        <p className="body-sm inline-flex items-center gap-1.5 text-ink-muted">
+                            <Lock aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                            Phone and email stay hidden until you represent one of their properties.
+                        </p>
+                    </div>
+                )}
             </section>
 
             {profile.bio ? (
@@ -122,6 +194,19 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                     <p className="body-sm tracking-wide text-ink capitalize">{areas.join(", ")}</p>
                 </section>
             ) : null}
+
+            <section className="flex flex-col gap-3">
+                <h2 className="eyebrow">Listed properties</h2>
+                {profile.properties.length === 0 ? (
+                    <p className="body-sm text-ink-muted">No published listings yet.</p>
+                ) : (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {profile.properties.map((property) => (
+                            <PropertyCard key={property.id} property={property} />
+                        ))}
+                    </div>
+                )}
+            </section>
         </div>
     );
 }

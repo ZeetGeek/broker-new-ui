@@ -1,6 +1,12 @@
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 
-export type QuickChipKey = "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove";
+export type QuickChipKey =
+    | "yourAreas"
+    | "newToday"
+    | "slotsOpen"
+    | "commissionSet"
+    | "readyToMove"
+    | "bookmarked";
 
 export type QuickChipCounts = Record<QuickChipKey, number>;
 
@@ -22,5 +28,6 @@ export function buildQuickChipCounts(
             (item) => item.commissionPercent > 0 || item.commissionAmount > 0,
         ).length,
         readyToMove: items.filter((item) => item.readyToMove).length,
+        bookmarked: items.filter((item) => item.isBookmarked).length,
     };
 }

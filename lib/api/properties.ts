@@ -69,6 +69,8 @@ export type PropertyBrowseListing = {
      * Never trust a nested owner phone on browse payloads.
      */
     ownerPhone?: string | null;
+    /** Present on browse payloads when the caller is authenticated. */
+    isBookmarked?: boolean | null;
 };
 
 /** Inventory listing returned by `GET /properties` (and get/create/update). */
@@ -92,7 +94,6 @@ export type PropertyListing = PropertyBrowseListing & {
     meetingRooms?: number | null;
     workstations?: number | null;
     ceilingHeightFt?: number | null;
-    isBookmarked?: boolean | null;
     videoUrl?: string | null;
     virtualTourUrl?: string | null;
     maintenanceCharges?: string | number | null;
@@ -186,6 +187,8 @@ export type PropertyBrowseQuery = {
     minCommissionPercent?: number;
     commissionSet?: boolean;
     readyToMove?: boolean;
+    /** Only listings the caller has bookmarked. */
+    bookmarked?: boolean;
     furnishingStatus?: "furnished" | "semi" | "unfurnished";
     sort?: PropertyBrowseSort;
     /** Opaque keyset cursor from a previous `nextCursor`. */
@@ -296,6 +299,7 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     }
     if (params.commissionSet) q.set("commissionSet", "1");
     if (params.readyToMove) q.set("readyToMove", "1");
+    if (params.bookmarked) q.set("bookmarked", "1");
     if (params.furnishingStatus) q.set("furnishingStatus", params.furnishingStatus);
     if (params.sort) q.set("sort", params.sort);
     if (params.cursor) q.set("cursor", params.cursor);

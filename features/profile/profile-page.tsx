@@ -53,6 +53,17 @@ function Section({
     );
 }
 
+function publicSlugHelper(
+    value: string,
+    savedSlug: string | null | undefined,
+    publicProfileUrl: string | null | undefined,
+): string {
+    if (value && publicProfileUrl && value === (savedSlug ?? "")) return publicProfileUrl;
+    if (!value)
+        return "The public address brokers can share. Lowercase letters, numbers and hyphens.";
+    return "Lowercase letters, numbers and hyphens.";
+}
+
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
     return (
         <label htmlFor={htmlFor} className="body-sm font-medium text-ink">
@@ -85,7 +96,9 @@ function toFormValues(profile: UserProfile): ProfileFormValues {
             profile.broker?.experienceYears == null ? "" : String(profile.broker.experienceYears),
         licenseNumber: profile.broker?.licenseNumber ?? profile.licenseNumber ?? "",
         reraState: profile.broker?.reraState ?? profile.reraState ?? "",
-        publicSlug: profile.broker?.publicSlug ?? profile.qr?.publicSlug ?? "",
+        publicSlug: owner
+            ? (profile.owner?.publicSlug ?? profile.qr?.publicSlug ?? "")
+            : (profile.broker?.publicSlug ?? profile.qr?.publicSlug ?? ""),
         serviceAreas: (profile.broker?.serviceAreas ?? []).join(", "),
         specializations: (profile.broker?.specializations ?? []).join(", "),
     };
@@ -201,6 +214,7 @@ export function ProfilePage() {
                     payload.gstin = values.gstin.trim();
                     payload.preferredCities = parseCommaList(values.preferredCities);
                     payload.preferredLocalities = parseCommaList(values.preferredLocalities);
+                    payload.publicSlug = values.publicSlug.trim();
                 } else {
                     payload.experienceYears =
                         values.experienceYears.trim() === ""
@@ -452,6 +466,27 @@ export function ProfilePage() {
                             )}
                         />
                     </div>
+
+                    <Controller
+                        name="publicSlug"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <div className="flex flex-col gap-2">
+                                <FieldLabel htmlFor="profile-slug">Your public page</FieldLabel>
+                                <Input
+                                    {...field}
+                                    id="profile-slug"
+                                    placeholder="desai-estates"
+                                    errorText={fieldState.error?.message}
+                                    helperText={publicSlugHelper(
+                                        field.value,
+                                        profile?.owner?.publicSlug,
+                                        profile?.qr?.publicProfileUrl,
+                                    )}
+                                />
+                            </div>
+                        )}
+                    />
 
                     <Controller
                         name="preferredCities"
