@@ -266,6 +266,7 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
 
     return {
         id: listing.id,
+        title: listing?.title as string,
         configLabel: configLabel(bhk, propertyTypeLabel),
         propertyTypeLabel,
         bhk,
