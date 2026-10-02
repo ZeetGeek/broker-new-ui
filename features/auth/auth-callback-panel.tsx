@@ -33,6 +33,8 @@ export function AuthCallbackPanel() {
                 if (cancelled) return;
                 dispatch(establishSession({ accessToken: token, user }));
 
+                // Backend sets this only for a new Google account from the login
+                // page. Register already chose a role, so those users skip this.
                 const isNewUser = searchParams.get("isNewUser") === "1";
                 if (isNewUser) {
                     sessionStorage.setItem(GOOGLE_ONBOARDING_KEY, "1");

@@ -132,6 +132,8 @@ export const authApi = {
         accountType?: "individual" | "organization";
         orgName?: string;
         referralCode?: string;
+        /** True when the register page already collected owner/broker. */
+        roleChosen?: boolean;
     }) {
         const params = new URLSearchParams();
         params.set("role", options?.role ?? "broker");
@@ -144,6 +146,10 @@ export const authApi = {
         if (options?.referralCode?.trim()) {
             params.set("referralCode", options.referralCode.trim());
         }
+        if (options?.roleChosen) {
+            params.set("roleChosen", "1");
+        }
+        // console.log("options =>",options)
         return `${API_URL}/auth/google?${params.toString()}`;
     },
 };
