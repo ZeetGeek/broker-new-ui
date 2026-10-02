@@ -1,37 +1,20 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { useRouter, useSearchParams } from "next/navigation";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
-import { propertiesApi } from "@/lib/api/properties";
-import {
-    type BrokerProfile,
-    type RepresentationItem,
-    representativeApi,
-} from "@/lib/api/representative";
-import { ownerRequestsHref } from "@/lib/routes/owner";
+import { type RepresentationItem, representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
-import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 
+import { OwnerBrokersBrowse } from "@/features/owner-brokers/owner-brokers-browse";
 import { OwnerBrokersEmpty } from "@/features/owner-brokers/owner-brokers-empty";
 import { OwnerBrokersHeader } from "@/features/owner-brokers/owner-brokers-header";
 import type { OwnerBrokersTab } from "@/features/owner-brokers/types";
 import { mapRepresentationToOwnerCard } from "@/features/owner-requests/map-owner-request";
-import { OwnerBrokerCard } from "@/features/owner-requests/owner-broker-card";
 import { OwnerRequestCard } from "@/features/owner-requests/owner-request-card";
 import { OwnerRequestsFilteredEmpty } from "@/features/owner-requests/owner-requests-empty";
 import type { OwnerRequestsSort } from "@/features/owner-requests/owner-requests-header";
@@ -49,12 +32,6 @@ function isBrokersTab(value: string | null): value is OwnerBrokersTab {
 
 function apiMessage(error: unknown, fallback: string): string {
     return error instanceof ApiError ? error.message : fallback;
-}
-
-function brokerLabel(broker: BrokerProfile): string {
-    return (
-        broker.displayName?.trim() || broker.fullName?.trim() || broker.orgName?.trim() || "Broker"
-    );
 }
 
 function sortCards(items: OwnerRequestCardItem[], sort: OwnerRequestsSort) {
@@ -92,7 +69,6 @@ function mapItems(rows: RepresentationItem[]): OwnerRequestCardItem[] {
 }
 
 export function OwnerBrokersPage() {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const tabParam = searchParams.get("tab");
     const tab: OwnerBrokersTab = isBrokersTab(tabParam) ? tabParam : "browse";
@@ -105,20 +81,10 @@ export function OwnerBrokersPage() {
     const [activeCount, setActiveCount] = useState<number | null>(null);
 
     const [brokerSearch, setBrokerSearch] = useState("");
-    const [brokers, setBrokers] = useState<BrokerProfile[]>([]);
-    const [brokersLoading, setBrokersLoading] = useState(false);
 
     const [queueItems, setQueueItems] = useState<OwnerRequestCardItem[]>([]);
     const [queueLoading, setQueueLoading] = useState(false);
     const [queueError, setQueueError] = useState<string | null>(null);
-
-    const [inviteOpen, setInviteOpen] = useState(false);
-    const [inviteBroker, setInviteBroker] = useState<BrokerProfile | null>(null);
-    const [invitePropertyId, setInvitePropertyId] = useState("");
-    const [inviteMessage, setInviteMessage] = useState("");
-    const [properties, setProperties] = useState<{ id: string; label: string }[]>([]);
-    const [propertiesLoading, setPropertiesLoading] = useState(false);
-    const [inviteSubmitting, setInviteSubmitting] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -134,33 +100,6 @@ export function OwnerBrokersPage() {
             cancelled = true;
         };
     }, [revision]);
-
-    useEffect(() => {
-        if (tab !== "browse") return;
-        let cancelled = false;
-        const timer = window.setTimeout(() => {
-            if (cancelled) return;
-            setBrokersLoading(true);
-            void representativeApi
-                .ownerBrokers({ search: brokerSearch.trim() || undefined, limit: 24 })
-                .then((page) => {
-                    if (!cancelled) setBrokers(page.items);
-                })
-                .catch((err) => {
-                    if (!cancelled) {
-                        toast.error(apiMessage(err, "Could not load brokers"));
-                        setBrokers([]);
-                    }
-                })
-                .finally(() => {
-                    if (!cancelled) setBrokersLoading(false);
-                });
-        }, 0);
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timer);
-        };
-    }, [tab, brokerSearch, revision]);
 
     useEffect(() => {
         if (tab !== "active") return;
@@ -190,65 +129,6 @@ export function OwnerBrokersPage() {
         };
     }, [tab, revision]);
 
-    const openInvite = useCallback((broker: BrokerProfile) => {
-        setInviteBroker(broker);
-        setInvitePropertyId("");
-        setInviteMessage("");
-        setInviteOpen(true);
-    }, []);
-
-    useEffect(() => {
-        if (!inviteOpen) return;
-        let cancelled = false;
-        const timer = window.setTimeout(() => {
-            if (cancelled) return;
-            setPropertiesLoading(true);
-            void propertiesApi
-                .list({ limit: 100, publishStatus: "published" })
-                .then((page) => {
-                    if (cancelled) return;
-                    setProperties(
-                        page.items.map((item) => ({
-                            id: item.id,
-                            label: item.title?.trim() || item.city || "Untitled listing",
-                        })),
-                    );
-                })
-                .catch((err) => {
-                    if (!cancelled) toast.error(apiMessage(err, "Could not load properties"));
-                })
-                .finally(() => {
-                    if (!cancelled) setPropertiesLoading(false);
-                });
-        }, 0);
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timer);
-        };
-    }, [inviteOpen]);
-
-    const submitInvite = useCallback(async () => {
-        if (!inviteBroker?.id || !invitePropertyId) {
-            toast.error("Pick a property to invite this broker.");
-            return;
-        }
-        setInviteSubmitting(true);
-        try {
-            await representativeApi.ownerInvite({
-                propertyId: invitePropertyId,
-                brokerId: inviteBroker.id,
-                message: inviteMessage.trim() || undefined,
-            });
-            toast.success("Invitation sent");
-            setInviteOpen(false);
-            router.push(ownerRequestsHref("invitations"));
-        } catch (err) {
-            toast.error(apiMessage(err, "Could not send invitation"));
-        } finally {
-            setInviteSubmitting(false);
-        }
-    }, [inviteBroker, inviteMessage, invitePropertyId, router]);
-
     const visibleCards = useMemo(
         () => sortCards(filterCards(queueItems, search), sort),
         [queueItems, search, sort],
@@ -257,27 +137,7 @@ export function OwnerBrokersPage() {
     let body: ReactNode;
 
     if (tab === "browse") {
-        if (brokersLoading && brokers.length === 0) {
-            body = (
-                <div className="flex justify-center py-16">
-                    <LoadingSpinner label="Loading brokers" />
-                </div>
-            );
-        } else if (brokers.length === 0) {
-            body = <OwnerBrokersEmpty tab="browse" />;
-        } else {
-            body = (
-                <div className={cn(brokersLoading && "opacity-60 transition-opacity duration-160")}>
-                    <ul className="flex flex-col gap-3">
-                        {brokers.map((broker) => (
-                            <li key={broker.id}>
-                                <OwnerBrokerCard broker={broker} onInvite={openInvite} />
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            );
-        }
+        body = <OwnerBrokersBrowse search={brokerSearch} view={view} onViewChange={setView} />;
     } else if (queueLoading && queueItems.length === 0) {
         body = <RequestsListSkeleton view={view} />;
     } else if (queueError) {
@@ -349,61 +209,6 @@ export function OwnerBrokersPage() {
             />
 
             {body}
-
-            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-                <DialogPopup className="max-inline-lg">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Invite {inviteBroker ? brokerLabel(inviteBroker) : "broker"}
-                        </DialogTitle>
-                        <DialogDescription>
-                            Choose a published listing and add an optional note.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-4">
-                        <label className="flex flex-col gap-1.5">
-                            <span className="body-sm font-semibold text-ink">Property</span>
-                            <select
-                                className="
-                                  rounded-control border-2 border-border-warm bg-surface px-3.5
-                                  text-[15px] text-ink block-control-md inline-full
-                                "
-                                value={invitePropertyId}
-                                disabled={propertiesLoading}
-                                onChange={(event) => setInvitePropertyId(event.target.value)}
-                            >
-                                <option value="">
-                                    {propertiesLoading ? "Loading…" : "Select a property"}
-                                </option>
-                                {properties.map((property) => (
-                                    <option key={property.id} value={property.id}>
-                                        {property.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                        <label className="flex flex-col gap-1.5">
-                            <span className="body-sm font-semibold text-ink">
-                                Message (optional)
-                            </span>
-                            <Textarea
-                                value={inviteMessage}
-                                onChange={(event) => setInviteMessage(event.target.value)}
-                                placeholder="Why you'd like them to represent this listing"
-                                rows={3}
-                            />
-                        </label>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setInviteOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button loading={inviteSubmitting} onClick={() => void submitInvite()}>
-                                Send invite
-                            </Button>
-                        </div>
-                    </div>
-                </DialogPopup>
-            </Dialog>
         </div>
     );
 }
