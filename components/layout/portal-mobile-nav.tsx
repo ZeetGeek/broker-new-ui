@@ -13,6 +13,7 @@ import {
     Gift,
     LayoutDashboard,
     Send,
+    UserRoundSearch,
     Users,
 } from "lucide-react";
 
@@ -37,6 +38,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
     "/broker/referrals": Gift,
     "/owner": LayoutDashboard,
     "/owner/properties": Building2,
+    "/owner/brokers": UserRoundSearch,
     "/owner/requests": Send,
     "/owner/visits": Calendar,
     "/owner/leads": Briefcase,
@@ -85,7 +87,9 @@ export function PortalMobileNav({ items }: PortalMobileNavProps) {
                                 )}
                             >
                                 <NavIcon href={item.href} />
-                                <span className="body-xs truncate font-medium inline-full">{label}</span>
+                                <span className="body-xs truncate font-medium inline-full">
+                                    {label}
+                                </span>
                             </Link>
                         </li>
                     );

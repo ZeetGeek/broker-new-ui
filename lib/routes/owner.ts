@@ -1,5 +1,6 @@
 export const OWNER_OVERVIEW_HREF = "/owner";
 export const OWNER_PROPERTIES_HREF = "/owner/properties";
+export const OWNER_BROKERS_HREF = "/owner/brokers";
 export const OWNER_REQUESTS_HREF = "/owner/requests";
 export const OWNER_VISITS_HREF = "/owner/visits";
 export const OWNER_LEADS_HREF = "/owner/leads";
@@ -16,9 +17,12 @@ export function ownerPropertyEditHref(propertyId: string): string {
     return `/owner/properties/${propertyId}/edit`;
 }
 
-export function ownerRequestsHref(
-    tab?: "browse" | "requests" | "invitations" | "active",
-): string {
+export function ownerBrokersHref(tab?: "browse" | "active"): string {
+    if (!tab || tab === "browse") return OWNER_BROKERS_HREF;
+    return `${OWNER_BROKERS_HREF}?tab=${tab}`;
+}
+
+export function ownerRequestsHref(tab?: "requests" | "invitations"): string {
     if (!tab || tab === "requests") return OWNER_REQUESTS_HREF;
     return `${OWNER_REQUESTS_HREF}?tab=${tab}`;
 }

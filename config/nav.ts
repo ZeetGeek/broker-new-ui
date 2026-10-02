@@ -6,6 +6,7 @@ import {
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
 import {
+    OWNER_BROKERS_HREF,
     OWNER_LEADS_HREF,
     OWNER_OVERVIEW_HREF,
     OWNER_PROPERTIES_HREF,
@@ -28,14 +29,20 @@ export type NavItem = {
 export const OWNER_NAV_ITEMS: NavItem[] = [
     { label: "Overview", href: OWNER_OVERVIEW_HREF, mobileLabel: "Home" },
     {
-        label: "Properties",
+        label: "My Properties",
         href: OWNER_PROPERTIES_HREF,
+        mobileLabel: "Properties",
         activePrefixes: ["/owner/properties"],
+    },
+    {
+        label: "Browse Brokers",
+        href: OWNER_BROKERS_HREF,
+        mobileLabel: "Brokers",
+        activePrefixes: ["/owner/brokers"],
     },
     {
         label: "Requests",
         href: OWNER_REQUESTS_HREF,
-        mobileLabel: "Brokers",
         activePrefixes: ["/owner/requests"],
     },
     { label: "Visits", href: OWNER_VISITS_HREF },
