@@ -34,6 +34,13 @@ export type PropertyLead = {
         address?: string | null;
         salePrice?: string | null;
         monthlyRent?: string | null;
+        transactionType?: string | null;
+        propertyType?: string | null;
+        subtype?: string | null;
+        bhkConfig?: string | null;
+        bedrooms?: number | null;
+        areaSqft?: number | null;
+        photos?: string[] | null;
     } | null;
     broker?: {
         id: string;

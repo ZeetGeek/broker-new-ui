@@ -2,33 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
-import {
-    Building2,
-    Check,
-    ChevronDown,
-    Filter,
-    HandCoins,
-    Search,
-    UserRound,
-    X,
-} from "lucide-react";
+import { ChevronDown, Filter, HandCoins, LayoutGrid, List, Search } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
-import {
-    ownerLeadsApi,
-    type OfferStatus,
-    type PropertyLead,
-} from "@/lib/api/owner-leads";
-import { formatInr } from "@/lib/format/inr";
-import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
-import { ownerPropertyDetailHref } from "@/lib/routes/owner";
+import { type OfferStatus, ownerLeadsApi, type PropertyLead } from "@/lib/api/owner-leads";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { UserAvatar } from "@/components/shared/user-avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -38,6 +19,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+import { OwnerLeadCard } from "@/features/owner-leads/owner-lead-card";
+import { OwnerLeadsBoard } from "@/features/owner-leads/owner-leads-board";
+import { LeadsSkeleton } from "@/features/owner-leads/owner-leads-skeleton";
+import { useOwnerLeadsLayout } from "@/features/owner-leads/use-owner-leads-layout";
 
 type OfferFilter = "all" | "pending" | "accepted" | "rejected";
 
@@ -61,38 +47,6 @@ const OFFER_TABS: { value: OfferFilter; label: string }[] = [
 
 function apiMessage(error: unknown, fallback: string): string {
     return error instanceof ApiError ? error.message : fallback;
-}
-
-function formatOffer(value?: string | null): string {
-    if (!value?.trim()) return "—";
-    const amount = Number(value);
-    return Number.isFinite(amount) ? formatInr(amount) : value;
-}
-
-function leadPropertyLabel(lead: PropertyLead): string {
-    return lead.property?.title?.trim() || lead.property?.city || "Property";
-}
-
-function leadBrokerLabel(lead: PropertyLead): string {
-    return lead.broker?.fullName?.trim() || lead.broker?.email || "Broker";
-}
-
-function leadClientLabel(lead: PropertyLead): string {
-    return lead.client?.name?.trim() || "Client";
-}
-
-function stageLabel(stage?: string | null): string {
-    if (!stage) return "—";
-    return stage.replace(/_/g, " ");
-}
-
-function offerBadgeVariant(
-    status?: string | null,
-): "brand" | "neutral" | "outline" | "danger" | "urgent" {
-    if (status === "accepted") return "brand";
-    if (status === "pending") return "urgent";
-    if (status === "rejected" || status === "withdrawn") return "danger";
-    return "outline";
 }
 
 function buildHeadline(
@@ -169,175 +123,8 @@ function LeadsQueryInput({ value, onChange }: { value: string; onChange: (q: str
     );
 }
 
-function LeadCardSkeleton() {
-    return (
-        <div
-            className="flex flex-col rounded-card border border-border-warm bg-surface p-4 min-block-[260px]"
-            aria-hidden
-        >
-            <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                    <div className="shrink-0 rounded-[12px] bg-surface-muted block-10 inline-10" />
-                    <div className="flex flex-col gap-2">
-                        <div className="rounded-sm bg-surface-muted block-3 inline-24" />
-                        <div className="rounded-sm bg-surface-muted block-2.5 inline-20" />
-                    </div>
-                </div>
-                <div className="rounded-md bg-surface-muted block-6 inline-16" />
-            </div>
-            <div className="mbs-4 flex gap-1.5">
-                <div className="rounded-md bg-surface-muted block-6 inline-16" />
-                <div className="rounded-md bg-surface-muted block-6 inline-14" />
-            </div>
-            <div className="mbs-3 rounded-sm bg-surface-muted block-3 inline-32" />
-            <div className="mbs-auto flex items-center justify-between border-bs border-border-warm pbs-3">
-                <div className="rounded-sm bg-surface-muted block-3 inline-24" />
-                <div className="rounded-sm bg-surface-muted block-5 inline-16" />
-            </div>
-        </div>
-    );
-}
-
-function LeadsSkeleton({ count = 6 }: { count?: number }) {
-    return (
-        <div
-            className="grid grid-cols-1 gap-3 motion-safe:animate-pulse sm:grid-cols-2 xl:grid-cols-3"
-            aria-busy="true"
-            aria-label="Loading your leads"
-        >
-            {Array.from({ length: count }).map((_, index) => (
-                <LeadCardSkeleton key={index} />
-            ))}
-        </div>
-    );
-}
-
-function OwnerLeadCard({
-    lead,
-    busy,
-    onAccept,
-    onReject,
-}: {
-    lead: PropertyLead;
-    busy: boolean;
-    onAccept: () => void;
-    onReject: () => void;
-}) {
-    const pendingOffer = lead.offerStatus === "pending";
-    const brokerName = leadBrokerLabel(lead);
-    const clientName = leadClientLabel(lead);
-    const propertyLabel = leadPropertyLabel(lead);
-    const updatedAt = lead.updatedAt || lead.createdAt;
-    const when = updatedAt ? parseApiInstant(updatedAt) : null;
-
-    return (
-        <article
-            className="
-              contact-card flex flex-col rounded-card border border-border-warm bg-surface p-4
-              min-block-[260px]
-            "
-        >
-            <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 min-inline-0">
-                    <UserAvatar
-                        name={brokerName}
-                        size="md"
-                        fallback="character"
-                        className="shrink-0 rounded-[12px]"
-                    />
-                    <div className="min-inline-0">
-                        <h2 className="body-sm truncate font-bold text-ink">{brokerName}</h2>
-                        <p className="body-xs flex items-center gap-1 text-ink-muted">
-                            <UserRound
-                                aria-hidden
-                                className="shrink-0 block-3 inline-3"
-                                strokeWidth={1.75}
-                            />
-                            <span className="truncate">{clientName}</span>
-                        </p>
-                    </div>
-                </div>
-                {lead.offerStatus ? (
-                    <Badge variant={offerBadgeVariant(lead.offerStatus)} className="shrink-0">
-                        {lead.offerStatus}
-                    </Badge>
-                ) : null}
-            </div>
-
-            <div className="mbs-4 flex flex-wrap gap-1.5">
-                {lead.stage ? (
-                    <Badge variant="neutral">{stageLabel(lead.stage)}</Badge>
-                ) : null}
-                <Badge variant="outline" className="bg-surface">
-                    {formatOffer(lead.offerAmount)}
-                </Badge>
-            </div>
-
-            <Link
-                href={ownerPropertyDetailHref(lead.propertyId)}
-                className="
-                  body-sm flex items-start gap-1.5 font-medium text-brand underline-offset-4
-                  min-inline-0
-                  hover:underline
-                "
-            >
-                <Building2
-                    aria-hidden
-                    className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
-                    strokeWidth={1.75}
-                />
-                <span className="truncate">{propertyLabel}</span>
-            </Link>
-
-            {lead.notes?.trim() ? (
-                <p className="body-sm mbs-2 line-clamp-2 text-ink-muted">{lead.notes.trim()}</p>
-            ) : null}
-
-            <div className="mbs-auto flex flex-col gap-3 border-bs border-border-warm pbs-3 pts-3">
-                <div className="flex items-center justify-between gap-2">
-                    <p className="body-xs text-ink-muted">
-                        {when ? `Updated ${formatRelativePast(when, new Date())}` : "—"}
-                    </p>
-                    {lead.listPrice ? (
-                        <p className="body-xs font-medium text-ink-muted">
-                            List {formatOffer(lead.listPrice)}
-                        </p>
-                    ) : null}
-                </div>
-
-                {pendingOffer ? (
-                    <div className="flex gap-2">
-                        <Button
-                            type="button"
-                            size="sm"
-                            disabled={busy}
-                            loading={busy}
-                            onClick={onAccept}
-                            className="flex-1 rounded-control bg-brand text-surface hover:bg-brand-text"
-                        >
-                            <Check aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
-                            Accept
-                        </Button>
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={busy}
-                            loading={busy}
-                            onClick={onReject}
-                            className="flex-1 rounded-control border-border-warm"
-                        >
-                            <X aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
-                            Reject
-                        </Button>
-                    </div>
-                ) : null}
-            </div>
-        </article>
-    );
-}
-
 export function OwnerLeadsPage() {
+    const { layout, setLayout } = useOwnerLeadsLayout();
     const [search, setSearch] = useState("");
     const [offerFilter, setOfferFilter] = useState<OfferFilter>("all");
     const [stageFilter, setStageFilter] = useState("");
@@ -522,6 +309,48 @@ export function OwnerLeadsPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
 
+                        <div
+                            role="group"
+                            aria-label="Board or list"
+                            className="flex items-center gap-1 rounded-control bg-surface-muted p-1"
+                        >
+                            {(
+                                [
+                                    { value: "board", label: "Board", icon: LayoutGrid },
+                                    { value: "list", label: "List", icon: List },
+                                ] as const
+                            ).map((option) => {
+                                const Icon = option.icon;
+                                const isActive = layout === option.value;
+
+                                return (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        aria-pressed={isActive}
+                                        aria-label={option.label}
+                                        onClick={() => setLayout(option.value)}
+                                        className={cn(
+                                            `
+                                              body-sm flex items-center gap-1.5 rounded-control px-3
+                                              transition-colors duration-160 block-control-sm
+                                            `,
+                                            isActive
+                                                ? "bg-surface font-semibold text-ink shadow-xs"
+                                                : "font-normal text-ink-muted hover:text-ink",
+                                        )}
+                                    >
+                                        <Icon
+                                            aria-hidden
+                                            className="block-4 inline-4"
+                                            strokeWidth={1.75}
+                                        />
+                                        <span className="hidden sm:inline">{option.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
                         {hasActiveFilters ? (
                             <Button
                                 type="button"
@@ -537,7 +366,7 @@ export function OwnerLeadsPage() {
                 </div>
 
                 {loading && items.length === 0 ? (
-                    <LeadsSkeleton />
+                    <LeadsSkeleton layout={layout} />
                 ) : error ? (
                     <div className="flex flex-col items-center gap-3 py-16 text-center">
                         <p className="h5 text-ink">Could not load leads</p>
@@ -566,10 +395,22 @@ export function OwnerLeadsPage() {
                             </Button>
                         ) : null}
                     </EmptyState>
+                ) : layout === "board" ? (
+                    <div className={cn("transition-opacity duration-160", loading && "opacity-60")}>
+                        <OwnerLeadsBoard
+                            leads={items}
+                            busyId={busyId}
+                            onAccept={(leadId) => void respond(leadId, "accept")}
+                            onReject={(leadId) => void respond(leadId, "reject")}
+                        />
+                    </div>
                 ) : (
                     <div
                         className={cn(
-                            "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3",
+                            `
+                              flex flex-col gap-4 transition-opacity duration-160
+                              lg:grid lg:grid-cols-2
+                            `,
                             loading && "opacity-60",
                         )}
                     >
