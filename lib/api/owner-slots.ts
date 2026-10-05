@@ -1,5 +1,7 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import { toApiUtcParts } from "@/lib/datetime/api";
+import { formatTimeIn } from "@/lib/format/date";
 
 export type VisitSlotStatus = "open" | "closed" | "booked";
 
@@ -29,12 +31,7 @@ export type VisitSlot = {
     } | null;
 };
 
-export type ShowingStatus =
-    | "scheduled"
-    | "confirmed"
-    | "completed"
-    | "cancelled"
-    | "no_show";
+export type ShowingStatus = "scheduled" | "confirmed" | "completed" | "cancelled" | "no_show";
 
 export type VisitShowing = {
     id: string;
@@ -64,12 +61,7 @@ export type VisitShowing = {
 };
 
 export type OwnerShowingFocus =
-    | "today"
-    | "tomorrow"
-    | "awaiting"
-    | "confirmed"
-    | "week"
-    | "cancelled";
+    "today" | "tomorrow" | "awaiting" | "confirmed" | "week" | "cancelled";
 
 export type OwnerShowingsSummary = {
     total: number;
@@ -93,6 +85,7 @@ export type PagedResult<T> = {
     totalPages: number;
 };
 
+/** Dates and times are the user's local wall clock; `bulkCreate` sends them in UTC. */
 export type CreateBulkSlotsInput = {
     propertyId: string;
     dates: string[];
@@ -101,6 +94,42 @@ export type CreateBulkSlotsInput = {
     slotLength: 30 | 60;
 };
 
+/**
+ * The bulk API takes one `from`–`to` per UTC day, so a local range that spans
+ * midnight UTC (5:30 am in India) cannot be sent.
+ */
+export class SlotRangeCrossesUtcDayError extends Error {
+    constructor(utcMidnight: Date) {
+        super(
+            `These times can't be added together. Add slots before and after ${formatTimeIn(utcMidnight)} separately.`,
+        );
+        this.name = "SlotRangeCrossesUtcDayError";
+    }
+}
+
+/**
+ * Local dates + times → UTC bulk payloads. Dates whose UTC times differ (a DST
+ * change) go in separate requests; India has no DST, so this is normally one.
+ */
+function toUtcBulkPayloads(input: CreateBulkSlotsInput): CreateBulkSlotsInput[] {
+    const groups = new Map<string, CreateBulkSlotsInput>();
+    for (const date of input.dates) {
+        const start = toApiUtcParts(date, input.from);
+        const end = toApiUtcParts(date, input.to);
+        if (end.date !== start.date) {
+            throw new SlotRangeCrossesUtcDayError(new Date(`${end.date}T00:00:00Z`));
+        }
+        const key = `${start.time}|${end.time}`;
+        const group = groups.get(key);
+        if (group) {
+            group.dates.push(start.date);
+        } else {
+            groups.set(key, { ...input, dates: [start.date], from: start.time, to: end.time });
+        }
+    }
+    return [...groups.values()];
+}
+
 export type BulkSlotsResult = {
     planned: number;
     created: number;
@@ -108,7 +137,7 @@ export type BulkSlotsResult = {
     slots: VisitSlot[];
 };
 
-const EMPTY_PAGE = <T,>(): PagedResult<T> => ({
+const EMPTY_PAGE = <T>(): PagedResult<T> => ({
     items: [],
     total: 0,
     page: 1,
@@ -153,11 +182,24 @@ export const ownerSlotsApi = {
         });
     },
 
-    bulkCreate(body: CreateBulkSlotsInput) {
-        return apiFetch<BulkSlotsResult>("/slots/bulk", {
-            method: "POST",
-            body: JSON.stringify(body),
-        });
+    async bulkCreate(input: CreateBulkSlotsInput): Promise<BulkSlotsResult> {
+        const results = await Promise.all(
+            toUtcBulkPayloads(input).map((body) =>
+                apiFetch<BulkSlotsResult>("/slots/bulk", {
+                    method: "POST",
+                    body: JSON.stringify(body),
+                }),
+            ),
+        );
+        return results.reduce(
+            (total, result) => ({
+                planned: total.planned + result.planned,
+                created: total.created + result.created,
+                skipped: total.skipped + result.skipped,
+                slots: [...total.slots, ...result.slots],
+            }),
+            { planned: 0, created: 0, skipped: 0, slots: [] },
+        );
     },
 
     close(slotId: string) {

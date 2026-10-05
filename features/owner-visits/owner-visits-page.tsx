@@ -11,6 +11,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import {
     ownerSlotsApi,
+    SlotRangeCrossesUtcDayError,
     type OwnerShowingFocus,
     type OwnerShowingsSummary,
     type VisitShowing,
@@ -18,7 +19,12 @@ import {
 } from "@/lib/api/owner-slots";
 import { propertiesApi } from "@/lib/api/properties";
 import { getUserTimeZone } from "@/lib/datetime/timezone";
-import { formatDateIso, formatTime24, parseApiInstant, toApiInstantFromLocalParts } from "@/lib/format/date";
+import {
+    formatDateIso,
+    formatTime24,
+    parseApiInstant,
+    toApiInstantFromLocalParts,
+} from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
@@ -99,7 +105,9 @@ function isVisitsTab(value: string | null): value is VisitsTab {
 }
 
 function apiMessage(error: unknown, fallback: string): string {
-    return error instanceof ApiError ? error.message : fallback;
+    return error instanceof ApiError || error instanceof SlotRangeCrossesUtcDayError
+        ? error.message
+        : fallback;
 }
 
 function parseDateList(raw: string): string[] {
@@ -151,10 +159,13 @@ function weekdayOfIso(iso: string): number {
     return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
 }
 
+/** Monday–Sunday, so a week's Saturday and Sunday are the same weekend (the Weekends preset). */
 function weekIsoDates(anchor: Date): string[] {
     const zone = tz(getUserTimeZone());
-    const start = startOfWeek(anchor, { weekStartsOn: 0, in: zone });
-    return Array.from({ length: 7 }, (_, index) => formatDateIso(addDays(start, index, { in: zone })));
+    const start = startOfWeek(anchor, { weekStartsOn: 1, in: zone });
+    return Array.from({ length: 7 }, (_, index) =>
+        formatDateIso(addDays(start, index, { in: zone })),
+    );
 }
 
 function dayParts(iso: string): { weekday: string; date: string; month: string } {
@@ -187,6 +198,9 @@ export function OwnerVisitsPage() {
     const [busyId, setBusyId] = useState<string | null>(null);
     const [togglingKey, setTogglingKey] = useState<string | null>(null);
     const [presetBusy, setPresetBusy] = useState<string | null>(null);
+    const [closeAllOpen, setCloseAllOpen] = useState(false);
+    const [closingAll, setClosingAll] = useState(false);
+    const [closeAllError, setCloseAllError] = useState<string | null>(null);
 
     const [properties, setProperties] = useState<{ id: string; label: string }[]>([]);
     const [propertyId, setPropertyId] = useState("");
@@ -198,7 +212,8 @@ export function OwnerVisitsPage() {
     const [showings, setShowings] = useState<VisitShowing[]>([]);
     const [showingsTotal, setShowingsTotal] = useState(0);
     const [showingsPages, setShowingsPages] = useState(1);
-    const [showingsSummary, setShowingsSummary] = useState<OwnerShowingsSummary>(EMPTY_SHOWINGS_SUMMARY);
+    const [showingsSummary, setShowingsSummary] =
+        useState<OwnerShowingsSummary>(EMPTY_SHOWINGS_SUMMARY);
     const [showingsLoading, setShowingsLoading] = useState(false);
 
     const [weekAnchor, setWeekAnchor] = useState(() => new Date());
@@ -343,14 +358,24 @@ export function OwnerVisitsPage() {
         return map;
     }, [slots]);
 
+    const openFutureSlots = useMemo(
+        () =>
+            slots.filter((slot) => {
+                if (slot.status !== "open") return false;
+                const [dateIso, time] = (slotStartKey(slot) ?? "").split("|");
+                return !isExpiredSlot(dateIso, time, todayIso, nowTime);
+            }),
+        [nowTime, slots, todayIso],
+    );
+
+    // Only dates with a bookable slot get the dot — past and booked times don't count.
     const datesWithSlots = useMemo(() => {
         const dates = new Set<string>();
-        for (const slot of slots) {
-            if (slot.status === "closed") continue;
+        for (const slot of openFutureSlots) {
             dates.add(formatDateIso(parseApiInstant(slot.startAt)));
         }
         return dates;
-    }, [slots]);
+    }, [openFutureSlots]);
 
     const shiftWeek = useCallback((delta: number) => {
         const zone = tz(getUserTimeZone());
@@ -391,13 +416,57 @@ export function OwnerVisitsPage() {
                 }
                 setRevision((value) => value + 1);
             } catch (err) {
-                toast.error(apiMessage(err, existing ? "Could not remove slot" : "Could not open slot"));
+                toast.error(
+                    apiMessage(err, existing ? "Could not remove slot" : "Could not open slot"),
+                );
             } finally {
                 setTogglingKey(null);
             }
         },
         [nowTime, propertyId, slotsByStart, todayIso],
     );
+
+    const selectedPropertyLabel = properties.find((item) => item.id === propertyId)?.label;
+
+    const closeAllSlots = useCallback(async () => {
+        if (!propertyId) return;
+        setClosingAll(true);
+        setCloseAllError(null);
+        try {
+            // Re-fetch every page so slots beyond the loaded list are closed too.
+            const toClose: VisitSlot[] = [];
+            for (let page = 1; ; page++) {
+                const result = await ownerSlotsApi.list({
+                    propertyId,
+                    status: "open",
+                    page,
+                    limit: 200,
+                });
+                toClose.push(...result.items);
+                if (page >= result.totalPages || result.items.length === 0) break;
+            }
+            const now = Date.now();
+            const future = toClose.filter((slot) => parseApiInstant(slot.startAt).getTime() > now);
+            const results = await Promise.allSettled(
+                future.map((slot) => ownerSlotsApi.remove(slot.id)),
+            );
+            const failed = results.filter((result) => result.status === "rejected").length;
+            const removed = results.length - failed;
+            setRevision((value) => value + 1);
+            if (failed > 0) {
+                setCloseAllError(
+                    `${failed} slot${failed === 1 ? "" : "s"} could not be closed. Try again.`,
+                );
+                return;
+            }
+            toast.success(`Closed ${removed} slot${removed === 1 ? "" : "s"}`);
+            setCloseAllOpen(false);
+        } catch (err) {
+            setCloseAllError(apiMessage(err, "Something went wrong. Try again."));
+        } finally {
+            setClosingAll(false);
+        }
+    }, [propertyId]);
 
     const applyPreset = useCallback(
         async (preset: (typeof QUICK_PRESETS)[number]) => {
@@ -530,7 +599,11 @@ export function OwnerVisitsPage() {
                                       disabled:opacity-60
                                     "
                                 >
-                                    <Plus aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
+                                    <Plus
+                                        aria-hidden
+                                        className="block-3.5 inline-3.5"
+                                        strokeWidth={2}
+                                    />
                                     {presetBusy === preset.id ? "Adding…" : preset.label}
                                 </button>
                             ))}
@@ -544,7 +617,11 @@ export function OwnerVisitsPage() {
                                   hover:border-brand
                                 "
                             >
-                                <Plus aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
+                                <Plus
+                                    aria-hidden
+                                    className="block-3.5 inline-3.5"
+                                    strokeWidth={2}
+                                />
                                 Bulk add…
                             </button>
                         </div>
@@ -649,10 +726,25 @@ export function OwnerVisitsPage() {
                             })}
                         </div>
 
-                        <p className="body-sm text-ink-muted">
-                            Tap a time to open it on {selectedDate.split("-").reverse().join("/")}.
-                            Tap again to remove.
-                        </p>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="body-sm text-ink-muted">
+                                Tap a time to open it on{" "}
+                                {selectedDate.split("-").reverse().join("/")}. Tap again to remove.
+                            </p>
+                            {openFutureSlots.length > 0 ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setCloseAllError(null);
+                                        setCloseAllOpen(true);
+                                    }}
+                                >
+                                    Close all open slots
+                                </Button>
+                            ) : null}
+                        </div>
 
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
                             {SLOT_TIMES.map((time) => {
@@ -660,7 +752,12 @@ export function OwnerVisitsPage() {
                                 const slot = slotsByStart.get(key);
                                 const open = slot?.status === "open" || slot?.status === "booked";
                                 const booked = slot?.status === "booked";
-                                const expired = isExpiredSlot(selectedDate, time, todayIso, nowTime);
+                                const expired = isExpiredSlot(
+                                    selectedDate,
+                                    time,
+                                    todayIso,
+                                    nowTime,
+                                );
                                 return (
                                     <button
                                         key={time}
@@ -816,6 +913,53 @@ export function OwnerVisitsPage() {
             </PortalSectionNav>
 
             {panel}
+
+            <Dialog
+                open={closeAllOpen}
+                onOpenChange={(open) => {
+                    if (!closingAll) setCloseAllOpen(open);
+                }}
+            >
+                <DialogPopup className="max-inline-md">
+                    <DialogHeader>
+                        <DialogTitle>Close all open slots?</DialogTitle>
+                        <DialogDescription>
+                            {openFutureSlots.length} open slot
+                            {openFutureSlots.length === 1 ? "" : "s"} for{" "}
+                            {selectedPropertyLabel ? `"${selectedPropertyLabel}"` : "this property"}{" "}
+                            will be closed, and brokers will no longer be able to book them. Booked
+                            visits stay as they are. You can open slots again any time.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {closeAllError ? (
+                        <p
+                            role="alert"
+                            className="
+                              body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold
+                              text-danger
+                            "
+                        >
+                            {closeAllError}
+                        </p>
+                    ) : null}
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            variant="outline"
+                            disabled={closingAll}
+                            onClick={() => setCloseAllOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            loading={closingAll}
+                            onClick={() => void closeAllSlots()}
+                        >
+                            {closingAll ? "Closing slots…" : "Close all slots"}
+                        </Button>
+                    </div>
+                </DialogPopup>
+            </Dialog>
 
             <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
                 <DialogPopup className="max-inline-lg">
