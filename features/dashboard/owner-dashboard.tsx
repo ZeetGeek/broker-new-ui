@@ -21,7 +21,7 @@ import {
     OWNER_PROPERTIES_HREF,
     OWNER_PROPERTIES_NEW_HREF,
     OWNER_REQUESTS_HREF,
-    ownerRequestsHref,
+    ownerBrokersHref,
     ownerPropertyDetailHref,
 } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
@@ -35,17 +35,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import { ActivityCard } from "@/features/dashboard/activity-card";
 import { CardLabel } from "@/features/dashboard/card-label";
-import {
-    DASHBOARD_CARD_SHELL,
-    DASHBOARD_CARD_SHELL_EMPTY,
-} from "@/features/dashboard/card-shell";
+import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "@/features/dashboard/card-shell";
 import { DigitPopIn } from "@/features/dashboard/digit-pop-in";
 import { mapOwnerDashboardView } from "@/features/dashboard/map-dashboard";
 import { NextShowingCard } from "@/features/dashboard/next-showing-card";
-import {
-    OwnerDashboardHeader,
-    OwnerMetricCell,
-} from "@/features/dashboard/owner-dashboard-header";
+import { OwnerDashboardHeader, OwnerMetricCell } from "@/features/dashboard/owner-dashboard-header";
 import { TodayCard } from "@/features/dashboard/today-card";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setProfile } from "@/store/slices/dashboard-slice";
@@ -79,8 +73,7 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
     );
 }
 
-const GLANCE_INFO =
-    "A quick count of your listings, brokers, requests, and property deals closed.";
+const GLANCE_INFO = "A quick count of your listings, brokers, requests, and property deals closed.";
 
 function GlanceCard({
     summary,
@@ -141,7 +134,11 @@ function GlanceCard({
                 </p>
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
                     <TextLinkButton href={OWNER_PROPERTIES_HREF}>
-                        <Building2 aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                        <Building2
+                            aria-hidden
+                            className="block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
                         Manage listings
                     </TextLinkButton>
                     <TextLinkButton href={OWNER_PROPERTIES_NEW_HREF}>Add a property</TextLinkButton>
@@ -262,9 +259,7 @@ function PendingRequestsCard({
                     heading="No pending requests"
                     description="When a broker asks to represent a listing, it shows up here."
                 >
-                    <TextLinkButton href={ownerRequestsHref("browse")}>
-                        Browse brokers
-                    </TextLinkButton>
+                    <TextLinkButton href={ownerBrokersHref()}>Browse brokers</TextLinkButton>
                 </EmptyState>
             </section>
         );
@@ -294,7 +289,11 @@ function PendingRequestsCard({
                             </button>
                         }
                     />
-                    <TooltipContent side="bottom" align="center" className="text-pretty max-inline-64">
+                    <TooltipContent
+                        side="bottom"
+                        align="center"
+                        className="text-pretty max-inline-64"
+                    >
                         Broker representation requests that still need your reply.
                     </TooltipContent>
                 </Tooltip>
@@ -448,12 +447,7 @@ export function OwnerDashboard() {
                     portal="owner"
                     className="md:col-span-4"
                 />
-                <TodayCard
-                    agenda={view.today}
-                    now={now}
-                    portal="owner"
-                    className="md:col-span-4"
-                />
+                <TodayCard agenda={view.today} now={now} portal="owner" className="md:col-span-4" />
                 <PendingRequestsCard
                     requests={view.pendingRequests}
                     pendingCount={view.pendingRequestsCount}

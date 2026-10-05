@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { ArrowDownUp, ChevronDown, Search } from "lucide-react";
 
-import { ownerRequestsHref } from "@/lib/routes/owner";
+import { ownerBrokersHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import {
@@ -17,7 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import type { OwnerRequestsSummary, OwnerRequestsTab } from "@/features/owner-requests/types";
+import type { OwnerBrokersTab } from "@/features/owner-brokers/types";
+import type { OwnerRequestsSort } from "@/features/owner-requests/owner-requests-header";
 import type { OwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
 import {
     formatChipCount,
@@ -30,38 +31,30 @@ import {
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
 import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
 
-export type OwnerRequestsSort = "recent" | "oldest";
-
 const SORT_OPTIONS: { value: OwnerRequestsSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
     { value: "oldest", label: "Oldest first" },
 ];
 
 const TAB_CHIPS: {
-    key: OwnerRequestsTab;
+    key: OwnerBrokersTab;
     label: string;
     mobileLabel: string;
     description: string;
 }[] = [
     {
-        key: "requests",
-        label: "Incoming Requests",
-        mobileLabel: "Incoming Request",
-        description: "Brokers waiting for you to say yes or no",
+        key: "browse",
+        label: "Browse Brokers",
+        mobileLabel: "Browse Brokers",
+        description: "Find brokers and invite them to your listings",
     },
     {
-        key: "invitations",
-        label: "Sent invites",
-        mobileLabel: "Sent",
-        description: "Invites you sent to brokers",
+        key: "active",
+        label: "My Brokers / Active",
+        mobileLabel: "My Brokers",
+        description: "Brokers currently representing your properties",
     },
 ];
-
-function tabCount(summary: OwnerRequestsSummary | null, key: OwnerRequestsTab): number {
-    if (!summary) return 0;
-    if (key === "requests") return summary.incomingPending;
-    return summary.invitesPending;
-}
 
 function QueryInput({
     value,
@@ -162,9 +155,9 @@ function SortMenu({
     );
 }
 
-export function OwnerRequestsHeader({
+export function OwnerBrokersHeader({
     activeTab,
-    summary,
+    activeCount,
     search,
     onSearchChange,
     sort,
@@ -173,8 +166,8 @@ export function OwnerRequestsHeader({
     onViewChange,
     isLoading = false,
 }: {
-    activeTab: OwnerRequestsTab;
-    summary: OwnerRequestsSummary | null;
+    activeTab: OwnerBrokersTab;
+    activeCount: number | null;
     search: string;
     onSearchChange: (q: string) => void;
     sort: OwnerRequestsSort;
@@ -183,7 +176,7 @@ export function OwnerRequestsHeader({
     onViewChange: (view: OwnerRequestsView) => void;
     isLoading?: boolean;
 }) {
-    const searchPlaceholder = "Search requests";
+    const searchPlaceholder = activeTab === "browse" ? "Search brokers" : "Search active brokers";
 
     return (
         <div className="sticky inset-bs-0 z-10">
@@ -192,7 +185,6 @@ export function OwnerRequestsHeader({
                     <OwnerListingsChipsCarousel>
                         {TAB_CHIPS.map((chip) => {
                             const active = activeTab === chip.key;
-                            const count = tabCount(summary, chip.key);
 
                             return (
                                 <OwnerListingsChipsCarouselSlide key={chip.key}>
@@ -200,7 +192,7 @@ export function OwnerRequestsHeader({
                                         <TooltipTrigger
                                             render={
                                                 <Link
-                                                    href={ownerRequestsHref(chip.key)}
+                                                    href={ownerBrokersHref(chip.key)}
                                                     aria-current={active ? "page" : undefined}
                                                     className={cn(
                                                         ownerListingsChipClassName(active),
@@ -213,28 +205,16 @@ export function OwnerRequestsHeader({
                                                     <span className="hidden md:inline">
                                                         {chip.label}
                                                     </span>
-                                                    <span
-                                                        className={ownerListingsChipCountClassName(
-                                                            active,
-                                                        )}
-                                                    >
-                                                        {formatChipCount(
-                                                            count,
-                                                            isLoading && !summary,
-                                                        )}
-                                                    </span>
-                                                    {chip.key === "requests" &&
-                                                    (summary?.incomingPending ?? 0) > 0 ? (
+                                                    {chip.key === "active" ? (
                                                         <span
-                                                            aria-label={`${summary?.incomingPending} waiting for you`}
-                                                            className="
-                                                              body-xs flex items-center
-                                                              justify-center rounded-md bg-urgent
-                                                              px-1 font-semibold text-surface
-                                                              block-5 min-inline-5
-                                                            "
+                                                            className={ownerListingsChipCountClassName(
+                                                                active,
+                                                            )}
                                                         >
-                                                            {summary?.incomingPending}
+                                                            {formatChipCount(
+                                                                activeCount ?? 0,
+                                                                isLoading && activeCount == null,
+                                                            )}
                                                         </span>
                                                     ) : null}
                                                 </Link>
@@ -255,8 +235,12 @@ export function OwnerRequestsHeader({
                             onChange={onSearchChange}
                             placeholder={searchPlaceholder}
                         />
-                        <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
-                        <SortMenu sort={sort} onSortChange={onSortChange} />
+                        {activeTab === "active" ? (
+                            <>
+                                <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
+                                <SortMenu sort={sort} onSortChange={onSortChange} />
+                            </>
+                        ) : null}
                     </div>
                 </div>
             </TooltipProvider>

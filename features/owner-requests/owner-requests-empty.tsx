@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-import { Handshake, Inbox, Mail, UserRoundSearch } from "lucide-react";
+import { Inbox, Mail } from "lucide-react";
 
-import { ownerRequestsHref } from "@/lib/routes/owner";
+import { ownerBrokersHref } from "@/lib/routes/owner";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
@@ -10,16 +10,6 @@ import { Button } from "@/components/ui/button";
 import type { OwnerRequestsTab } from "@/features/owner-requests/types";
 
 export function OwnerRequestsEmpty({ tab }: { tab: OwnerRequestsTab }) {
-    if (tab === "browse") {
-        return (
-            <EmptyState
-                icon={UserRoundSearch}
-                heading="No brokers match your search"
-                description="Try a different name, agency, or city."
-            />
-        );
-    }
-
     if (tab === "requests") {
         return (
             <EmptyState
@@ -31,7 +21,7 @@ export function OwnerRequestsEmpty({ tab }: { tab: OwnerRequestsTab }) {
                     size="lg"
                     variant="accent"
                     nativeButton={false}
-                    render={<Link href={ownerRequestsHref("browse")} scroll={false} />}
+                    render={<Link href={ownerBrokersHref()} />}
                 >
                     Browse brokers
                 </Button>
@@ -50,7 +40,7 @@ export function OwnerRequestsEmpty({ tab }: { tab: OwnerRequestsTab }) {
                     size="lg"
                     variant="accent"
                     nativeButton={false}
-                    render={<Link href={ownerRequestsHref("browse")} scroll={false} />}
+                    render={<Link href={ownerBrokersHref()} />}
                 >
                     Browse brokers
                 </Button>
@@ -58,13 +48,7 @@ export function OwnerRequestsEmpty({ tab }: { tab: OwnerRequestsTab }) {
         );
     }
 
-    return (
-        <EmptyState
-            icon={Handshake}
-            heading="No active brokers yet"
-            description="Accepted representations will show up here."
-        />
-    );
+    return null;
 }
 
 export function OwnerRequestsFilteredEmpty({

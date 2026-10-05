@@ -1,16 +1,19 @@
 "use client";
 
-import type { MutableRefObject } from "react";
+import { type MutableRefObject, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { Camera, Check } from "lucide-react";
+import { Camera, Check, Sparkles } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
+import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
+import { useLocationOptions } from "@/hooks/use-locations";
 
 import { AppImage } from "@/components/shared/app-image";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -30,8 +33,6 @@ import {
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 
-import { useLocationOptions } from "@/hooks/use-locations";
-
 /**
  * Minimal create form: every field here maps to a value the create-property API
  * needs (or a value we must send so the listing is usable after save).
@@ -44,7 +45,7 @@ export function QuickAdd({
 }: {
     photoFilesRef: MutableRefObject<Map<string, File>>;
 }) {
-    const { watch, setValue } = useFormContext<PropertyDraftValues>();
+    const { watch, setValue, getValues } = useFormContext<PropertyDraftValues>();
     const { derived } = useFieldRules();
     const values = watch();
     // Quick add has no country / state field — it keeps the draft defaults, so
@@ -58,6 +59,32 @@ export function QuickAdd({
     const showBhk = derived.isResidential && !derived.isPlot;
     const showSalePrice = derived.isSell;
     const showRent = derived.isRentLike && !derived.isPg;
+
+    const [titleTouched, setTitleTouched] = useState(() =>
+        Boolean(getValues("basics.title")?.trim()),
+    );
+    const suggestedTitle = useMemo(
+        () =>
+            buildBasicsSuggestedTitle({
+                bedrooms: showBhk ? values.details.bedrooms : undefined,
+                propertyType: values.basics.propertyType,
+                locality: values.location.locality,
+                city: values.location.city,
+            }),
+        [
+            showBhk,
+            values.basics.propertyType,
+            values.details.bedrooms,
+            values.location.city,
+            values.location.locality,
+        ],
+    );
+
+    // Keep the title in sync with the suggestion until the user edits it.
+    useEffect(() => {
+        if (titleTouched || !suggestedTitle) return;
+        setValue("basics.title", suggestedTitle, { shouldDirty: true, shouldValidate: true });
+    }, [setValue, suggestedTitle, titleTouched]);
 
     function addPhoto(file: File | undefined) {
         if (!file) return;
@@ -165,12 +192,6 @@ export function QuickAdd({
                             label="Project or society"
                             placeholder="e.g. Happy Glorious"
                         />
-                        <TextField
-                            name="basics.title"
-                            label="Property title"
-                            placeholder="e.g. 3 BHK in Vesu"
-                            className="md:col-span-2"
-                        />
                         {showBhk ? (
                             <SelectField
                                 name="details.bedrooms"
@@ -190,6 +211,41 @@ export function QuickAdd({
                                 setValue("area.areaSqft", sqft, { shouldDirty: true });
                                 setValue("area.unit", "sqft", { shouldDirty: true });
                             }}
+                        />
+                        <TextField
+                            name="basics.title"
+                            label="Property title"
+                            placeholder={suggestedTitle || "e.g. 3 BHK Apartment in Vesu, Surat"}
+                            hint="Auto-filled from BHK, type, locality, and city. You can edit it anytime."
+                            className="md:col-span-2"
+                            onChange={() => setTitleTouched(true)}
+                            endAction={
+                                suggestedTitle ? (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            setValue("basics.title", suggestedTitle, {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                            });
+                                            setTitleTouched(false);
+                                        }}
+                                        className="
+                                          gap-1.5 rounded-control px-2.5 font-semibold
+                                          text-brand-text
+                                          hover:bg-brand-soft hover:text-brand-text
+                                        "
+                                    >
+                                        <Sparkles className="block-3.5 inline-3.5" aria-hidden />
+                                        <span className="hidden sm:inline">
+                                            Use suggested title
+                                        </span>
+                                        <span className="sm:hidden">Suggest</span>
+                                    </Button>
+                                ) : null
+                            }
                         />
                         {showSalePrice ? (
                             <CurrencyField name="sale.expectedPrice" label="Expected price" />

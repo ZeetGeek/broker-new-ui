@@ -25,10 +25,6 @@ function buildLines(
 ): ReactNode[] {
     if (isLoading && !summary) return ["Getting your broker requests…"];
 
-    if (tab === "browse") {
-        return ["Find brokers and invite them to represent your listings"];
-    }
-
     if (!summary) {
         return ["Every broker request for your listings"];
     }
@@ -63,27 +59,7 @@ function buildLines(
         return lines;
     }
 
-    if (summary.active > 0) {
-        lines.push(
-            <>
-                {countLabel(summary.active, "broker is", "brokers are")} representing your
-                properties
-            </>,
-        );
-    } else {
-        lines.push("No active brokers yet");
-    }
-
-    if (summary.incomingPending > 0) {
-        lines.push(
-            <>
-                {countLabel(summary.incomingPending, "request needs", "requests need")} your
-                decision
-            </>,
-        );
-    }
-
-    return lines.length > 0 ? lines : ["Every broker request for your listings"];
+    return ["Every broker request for your listings"];
 }
 
 function StatusBadge({
@@ -122,11 +98,7 @@ function StatusBadge({
 
 function RequestsStatusMeta({ summary }: { summary: OwnerRequestsSummary | null }) {
     if (!summary) return null;
-    if (
-        summary.incomingPending <= 0 &&
-        summary.invitesPending <= 0 &&
-        summary.active <= 0
-    ) {
+    if (summary.incomingPending <= 0 && summary.invitesPending <= 0) {
         return null;
     }
 
@@ -144,12 +116,6 @@ function RequestsStatusMeta({ summary }: { summary: OwnerRequestsSummary | null 
                     label="Sent invites"
                     count={summary.invitesPending}
                     hint="Invites you sent that brokers have not answered yet."
-                />
-                <StatusBadge
-                    label="Active"
-                    count={summary.active}
-                    tone="success"
-                    hint="Brokers currently representing your properties."
                 />
             </div>
         </div>

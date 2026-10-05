@@ -1,17 +1,11 @@
-export type OwnerRequestsTab = "browse" | "requests" | "invitations" | "active";
+export type OwnerRequestsTab = "requests" | "invitations";
 
 export type OwnerRepStatus =
-    | "pending"
-    | "accepted"
-    | "rejected"
-    | "withdrawn"
-    | "revoked"
-    | "unknown";
+    "pending" | "accepted" | "rejected" | "withdrawn" | "revoked" | "unknown";
 
 export type OwnerRequestsSummary = {
     incomingPending: number;
     invitesPending: number;
-    active: number;
 };
 
 export type OwnerDealListing = {

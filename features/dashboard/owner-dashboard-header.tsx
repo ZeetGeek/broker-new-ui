@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { CalendarDays, Inbox, Mail, MapPin, Phone, Plus } from "lucide-react";
+import { CalendarDays, Inbox, Mail, MapPin, Pencil, Phone, Plus } from "lucide-react";
 import { motion } from "motion/react";
 
 import {
@@ -67,10 +67,7 @@ function buildSummaryLines({
         propertiesListed === 0 ? (
             "Add your first property to get started"
         ) : (
-            <>
-                You have{" "}
-                {countPhrase(propertiesListed, "property listed", "properties listed")}
-            </>
+            <>You have {countPhrase(propertiesListed, "property listed", "properties listed")}</>
         ),
         pendingRequests === 0 ? (
             "No broker requests waiting on you"
@@ -107,13 +104,7 @@ function buildSummaryLines({
                 </>
             )
         ) : (
-            <>
-                {countPhrase(
-                    dealsClosed,
-                    "property deal closed",
-                    "property deals closed",
-                )}
-            </>
+            <>{countPhrase(dealsClosed, "property deal closed", "property deals closed")}</>
         ),
     ];
 }
@@ -136,6 +127,35 @@ function OwnerGreetingSummary(stats: OwnerDashboardSummaryStats) {
                 ))}
             </TextLoop>
         </span>
+    );
+}
+
+/** Mirrors the broker header's edit-profile link. */
+function EditProfileLink() {
+    return (
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <Button
+                        variant="link"
+                        size="sm"
+                        nativeButton={false}
+                        render={<Link href={OWNER_PROFILE_HREF} />}
+                        aria-label="Edit profile"
+                        className="
+                          body-sm gap-1 p-0 font-medium text-ink-muted block-auto
+                          hover:text-ink hover:underline
+                        "
+                    >
+                        <Pencil aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        Edit profile
+                    </Button>
+                }
+            />
+            <TooltipContent side="bottom" className="text-pretty max-inline-64">
+                Update your name, city, and contact details.
+            </TooltipContent>
+        </Tooltip>
     );
 }
 
@@ -256,6 +276,7 @@ export function OwnerDashboardHeader({
                             >
                                 {city}
                             </Link>
+                            <EditProfileLink />
                         </motion.div>
                     ) : (
                         <motion.div variants={dashboardMetaItem}>
