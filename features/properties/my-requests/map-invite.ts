@@ -93,8 +93,8 @@ export function mapRepresentationToInviteItem(
     const config = configLabel(rep);
     const typeLabel = propertyTypeLabel(rep);
     const title =
-        [config, locality || city].filter(Boolean).join(" · ") ||
         rep.propertyTitle?.trim() ||
+        [config, locality || city].filter(Boolean).join(" · ") ||
         "Property";
     const invitedAt = rep.createdAt ?? new Date().toISOString();
     const respondedAt = stage === "pending" ? null : (rep.decidedAt ?? rep.updatedAt ?? invitedAt);
