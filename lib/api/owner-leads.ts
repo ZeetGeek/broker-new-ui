@@ -6,7 +6,7 @@ export type LeadStage =
     | "contacted"
     | "site_visit"
     | "negotiation"
-    | "offer"
+    | "offer_made"
     | "closed_won"
     | "closed_lost"
     | string;

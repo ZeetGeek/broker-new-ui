@@ -17,7 +17,7 @@ export const LEAD_STAGE_TO_DEAL_STAGE: Record<string, DealStage> = {
     contacted: "contacted",
     site_visit: "visit",
     negotiation: "negotiation",
-    offer: "negotiation",
+    offer_made: "negotiation",
 };
 
 const LEAD_STAGE_LABEL: Record<string, string> = {
@@ -25,7 +25,7 @@ const LEAD_STAGE_LABEL: Record<string, string> = {
     contacted: "Contacted",
     site_visit: "Site visit",
     negotiation: "Negotiation",
-    offer: "Offer made",
+    offer_made: "Offer made",
     closed_won: "Sold",
     closed_lost: "Lost",
 };

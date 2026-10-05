@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { AcceptOfferModal } from "@/features/owner-leads/accept-offer-modal";
 import { OwnerLeadCard } from "@/features/owner-leads/owner-lead-card";
 import { OwnerLeadsBoard } from "@/features/owner-leads/owner-leads-board";
 import { LeadsSkeleton } from "@/features/owner-leads/owner-leads-skeleton";
@@ -33,7 +34,7 @@ const STAGE_OPTIONS: { value: string; label: string }[] = [
     { value: "contacted", label: "Contacted" },
     { value: "site_visit", label: "Site visit" },
     { value: "negotiation", label: "Negotiation" },
-    { value: "offer", label: "Offer" },
+    { value: "offer_made", label: "Offer made" },
     { value: "closed_won", label: "Closed won" },
     { value: "closed_lost", label: "Closed lost" },
 ];
@@ -134,6 +135,8 @@ export function OwnerLeadsPage() {
     const [error, setError] = useState<string | null>(null);
     const [revision, setRevision] = useState(0);
     const [busyId, setBusyId] = useState<string | null>(null);
+    const [acceptingLead, setAcceptingLead] = useState<PropertyLead | null>(null);
+    const [acceptError, setAcceptError] = useState<string | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -186,11 +189,11 @@ export function OwnerLeadsPage() {
 
     const hasActiveFilters = Boolean(search.trim() || stageFilter || offerFilter !== "all");
 
-    const respond = useCallback(async (leadId: string, decision: "accept" | "reject") => {
+    const rejectOffer = useCallback(async (leadId: string) => {
         setBusyId(leadId);
         try {
-            await ownerLeadsApi.respond(leadId, { decision });
-            toast.success(decision === "accept" ? "Offer accepted" : "Offer rejected");
+            await ownerLeadsApi.respond(leadId, { decision: "reject" });
+            toast.success("Offer rejected. Your broker will be told.");
             setRevision((value) => value + 1);
         } catch (err) {
             toast.error(apiMessage(err, "Could not respond to offer"));
@@ -198,6 +201,34 @@ export function OwnerLeadsPage() {
             setBusyId(null);
         }
     }, []);
+
+    // Accepting closes the deal as sold, so the card only opens the
+    // confirmation; the API call happens from the modal.
+    const openAccept = useCallback((lead: PropertyLead) => {
+        setAcceptError(null);
+        setAcceptingLead(lead);
+    }, []);
+
+    const closeAccept = useCallback(() => {
+        setAcceptingLead(null);
+        setAcceptError(null);
+    }, []);
+
+    const confirmAccept = useCallback(async () => {
+        if (!acceptingLead) return;
+        setBusyId(acceptingLead.id);
+        setAcceptError(null);
+        try {
+            await ownerLeadsApi.respond(acceptingLead.id, { decision: "accept" });
+            toast.success("Offer accepted. Your property is marked as sold.");
+            setAcceptingLead(null);
+            setRevision((value) => value + 1);
+        } catch (err) {
+            setAcceptError(apiMessage(err, "Could not accept the offer. Try again."));
+        } finally {
+            setBusyId(null);
+        }
+    }, [acceptingLead]);
 
     const clearFilters = useCallback(() => {
         setSearch("");
@@ -400,8 +431,11 @@ export function OwnerLeadsPage() {
                         <OwnerLeadsBoard
                             leads={items}
                             busyId={busyId}
-                            onAccept={(leadId) => void respond(leadId, "accept")}
-                            onReject={(leadId) => void respond(leadId, "reject")}
+                            onAccept={(leadId) => {
+                                const lead = items.find((item) => item.id === leadId);
+                                if (lead) openAccept(lead);
+                            }}
+                            onReject={(leadId) => void rejectOffer(leadId)}
                         />
                     </div>
                 ) : (
@@ -419,13 +453,21 @@ export function OwnerLeadsPage() {
                                 key={lead.id}
                                 lead={lead}
                                 busy={busyId === lead.id}
-                                onAccept={() => void respond(lead.id, "accept")}
-                                onReject={() => void respond(lead.id, "reject")}
+                                onAccept={() => openAccept(lead)}
+                                onReject={() => void rejectOffer(lead.id)}
                             />
                         ))}
                     </div>
                 )}
             </div>
+
+            <AcceptOfferModal
+                lead={acceptingLead}
+                isSaving={acceptingLead != null && busyId === acceptingLead.id}
+                error={acceptError}
+                onConfirm={() => void confirmAccept()}
+                onCancel={closeAccept}
+            />
         </TooltipProvider>
     );
 }

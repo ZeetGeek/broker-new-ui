@@ -129,9 +129,9 @@ export function OwnerLeadCard({
                     </div>
                 )}
 
-                <div className="
-                  absolute inset-bs-0 flex items-start justify-between p-3 inline-full
-                ">
+                <div
+                    className="absolute inset-bs-0 flex items-start justify-between p-3 inline-full"
+                >
                     <StagePill stage={lead.stage} />
                     {facts.photoCount > 1 ? (
                         <span
