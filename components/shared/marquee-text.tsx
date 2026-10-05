@@ -4,9 +4,12 @@ import { type CSSProperties, useLayoutEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-/** ~40px/s reads comfortably; clamp so short overflows don't jerk and long ones don't crawl. */
+/**
+ * Scroll at ~25px/s — slow enough to read along. The scroll takes 60% of each
+ * loop (the rest holds at either end), so the loop is distance / 25 / 0.6.
+ */
 function marqueeDuration(distancePx: number): number {
-    return Math.min(12, Math.max(3, distancePx / 40));
+    return Math.min(20, Math.max(4, distancePx / 25 / 0.6));
 }
 
 /**

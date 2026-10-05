@@ -368,23 +368,21 @@
             max-inline-size: none;
             overflow: visible;
             text-overflow: clip;
-            animation: marquee-scroll var(--marquee-duration, 6s) ease-in-out 0.3s infinite;
+            animation: marquee-scroll var(--marquee-duration, 8s) linear 0.3s infinite;
             will-change: transform;
         }
     }
 }
 
+/* Hold at the start, scroll to the end, hold, then the next loop snaps back to the start. */
 @keyframes marquee-scroll {
     0%,
     15% {
         transform: translateX(0);
     }
-    70%,
-    85% {
-        transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
-    }
+    75%,
     100% {
-        transform: translateX(0);
+        transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
     }
 }
 
