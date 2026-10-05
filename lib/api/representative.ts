@@ -101,7 +101,12 @@ export type RepresentationListPage = {
     page: number;
     limit: number;
     totalPages: number;
+    /** Opaque keyset token for the next page; null on the last one. */
+    nextCursor?: string | null;
+    hasMore?: boolean;
 };
+
+export type OwnerRepQueueSort = "recent" | "oldest";
 
 export type BrokerInvitationListQuery = {
     /** `pending` (default server-side), `accepted`, `rejected`, `closed`, or `all`. */
@@ -116,14 +121,31 @@ export type OwnerRepQueueQuery = {
     search?: string;
     page?: number;
     limit?: number;
+    /** Previous page's `nextCursor`; omit for the first page. */
+    cursor?: string;
+    sort?: OwnerRepQueueSort;
 };
+
+export type OwnerBrokersSort = "relevance" | "experience" | "deals" | "name";
 
 export type OwnerBrokersQuery = {
     search?: string;
     city?: string;
     verifiedOnly?: boolean;
+    minExperience?: number;
+    /** One specialization, matched without regard to case. */
+    specialty?: string;
+    sort?: OwnerBrokersSort;
     page?: number;
     limit?: number;
+    /** Previous page's `nextCursor`; omit for the first page. */
+    cursor?: string;
+};
+
+export type OwnerBrokersPage = Omit<RepresentationListPage, "items"> & {
+    items: BrokerProfile[];
+    /** Whole-pool specializations, most common first — first page only. */
+    specialties?: { label: string; count: number }[];
 };
 
 function queueQuery(params?: OwnerRepQueueQuery): string {
@@ -132,6 +154,8 @@ function queueQuery(params?: OwnerRepQueueQuery): string {
     if (params?.search) q.set("search", params.search);
     if (params?.page != null && params.page > 1) q.set("page", String(params.page));
     if (params?.limit != null) q.set("limit", String(params.limit));
+    if (params?.cursor) q.set("cursor", params.cursor);
+    if (params?.sort) q.set("sort", params.sort);
     return q.toString();
 }
 
@@ -266,18 +290,21 @@ export const representativeApi = {
         return apiFetch<RepresentationItem[]>(`/representative/owner/request/list${qs}`);
     },
 
-    ownerRequestPage(params?: OwnerRepQueueQuery) {
+    ownerRequestPage(params?: OwnerRepQueueQuery, signal?: AbortSignal) {
         if (isMockMode()) {
-            return Promise.resolve({
+            return Promise.resolve<RepresentationListPage>({
                 items: [],
                 total: 0,
                 page: 1,
                 limit: 12,
                 totalPages: 0,
-            } satisfies RepresentationListPage);
+                nextCursor: null,
+                hasMore: false,
+            });
         }
         return apiFetch<RepresentationListPage>(
             `/representative/owner/request/list?${queueQuery(params)}`,
+            { signal },
         );
     },
 
@@ -287,18 +314,21 @@ export const representativeApi = {
         return apiFetch<RepresentationItem[]>(`/representative/owner/invitation/list${qs}`);
     },
 
-    ownerInvitationPage(params?: OwnerRepQueueQuery) {
+    ownerInvitationPage(params?: OwnerRepQueueQuery, signal?: AbortSignal) {
         if (isMockMode()) {
-            return Promise.resolve({
+            return Promise.resolve<RepresentationListPage>({
                 items: [],
                 total: 0,
                 page: 1,
                 limit: 12,
                 totalPages: 0,
-            } satisfies RepresentationListPage);
+                nextCursor: null,
+                hasMore: false,
+            });
         }
         return apiFetch<RepresentationListPage>(
             `/representative/owner/invitation/list?${queueQuery(params)}`,
+            { signal },
         );
     },
 
@@ -307,41 +337,50 @@ export const representativeApi = {
         return apiFetch<RepresentationItem[]>(`/representative/owner/active/list`);
     },
 
-    ownerActivePage(params?: Omit<OwnerRepQueueQuery, "status">) {
+    ownerActivePage(params?: Omit<OwnerRepQueueQuery, "status">, signal?: AbortSignal) {
         if (isMockMode()) {
-            return Promise.resolve({
+            return Promise.resolve<RepresentationListPage>({
                 items: [],
                 total: 0,
                 page: 1,
                 limit: 12,
                 totalPages: 0,
-            } satisfies RepresentationListPage);
+                nextCursor: null,
+                hasMore: false,
+            });
         }
         return apiFetch<RepresentationListPage>(
             `/representative/owner/active/list?${queueQuery(params)}`,
+            { signal },
         );
     },
 
-    ownerBrokers(params?: OwnerBrokersQuery) {
+    ownerBrokers(params?: OwnerBrokersQuery, signal?: AbortSignal) {
         if (isMockMode()) {
-            return Promise.resolve({
+            return Promise.resolve<OwnerBrokersPage>({
                 items: [],
                 total: 0,
                 page: 1,
                 limit: 12,
                 totalPages: 0,
+                nextCursor: null,
+                hasMore: false,
             });
         }
         const q = new URLSearchParams();
         if (params?.search) q.set("search", params.search);
         if (params?.city) q.set("city", params.city);
         if (params?.verifiedOnly) q.set("verifiedOnly", "true");
+        if (params?.minExperience) q.set("minExperience", String(params.minExperience));
+        if (params?.specialty) q.set("specialty", params.specialty);
+        if (params?.sort) q.set("sort", params.sort);
         if (params?.page != null && params.page > 1) q.set("page", String(params.page));
         if (params?.limit != null) q.set("limit", String(params.limit));
+        if (params?.cursor) q.set("cursor", params.cursor);
         const qs = q.toString();
-        return apiFetch<RepresentationListPage & { items: BrokerProfile[] }>(
-            `/representative/owner/brokers${qs ? `?${qs}` : ""}`,
-        );
+        return apiFetch<OwnerBrokersPage>(`/representative/owner/brokers${qs ? `?${qs}` : ""}`, {
+            signal,
+        });
     },
 
     ownerBrokerProfile(brokerId: string) {

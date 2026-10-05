@@ -1,23 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { ShieldCheck, UserRoundSearch } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
+import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { Button } from "@/components/ui/button";
 
 import { BrokerProfileDialog } from "@/features/owner-brokers/broker-profile-dialog";
 import { BrowseBrokerCard } from "@/features/owner-brokers/browse-broker-card";
 import {
     type BrowseBrokersFilters,
-    collectSpecialties,
     DEFAULT_BROWSE_BROKERS_FILTERS,
-    filterAndSortBrokers,
+    hasActiveBrowseFilters,
 } from "@/features/owner-brokers/browse-brokers-filters";
 import {
     browseBrokersGridClass,
@@ -28,8 +29,11 @@ import { InviteBrokerDialog } from "@/features/owner-brokers/invite-broker-dialo
 import { OwnerBrokersEmpty } from "@/features/owner-brokers/owner-brokers-empty";
 import type { OwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
 
-/** First launch is one city with hand-onboarded brokers — one page covers the pool. */
-const BROWSE_LIMIT = 60;
+const BROWSE_PAGE_SIZE = 20;
+
+type Specialty = { key: string; label: string };
+
+const NO_SPECIALTIES: Specialty[] = [];
 
 function TrustNote() {
     return (
@@ -67,11 +71,6 @@ export function OwnerBrokersBrowse({
     view: OwnerRequestsView;
     onViewChange: (view: OwnerRequestsView) => void;
 }) {
-    const [brokers, setBrokers] = useState<BrokerProfile[]>([]);
-    const [total, setTotal] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [revision, setRevision] = useState(0);
     const [filters, setFilters] = useState<BrowseBrokersFilters>(DEFAULT_BROWSE_BROKERS_FILTERS);
 
     const [profileBroker, setProfileBroker] = useState<BrokerProfile | null>(null);
@@ -79,41 +78,55 @@ export function OwnerBrokersBrowse({
     const [inviteBroker, setInviteBroker] = useState<BrokerProfile | null>(null);
     const [inviteOpen, setInviteOpen] = useState(false);
 
-    useEffect(() => {
-        let cancelled = false;
-        const timer = window.setTimeout(() => {
-            if (cancelled) return;
-            setLoading(true);
-            setError(null);
-            void representativeApi
-                .ownerBrokers({ search: search.trim() || undefined, limit: BROWSE_LIMIT })
-                .then((page) => {
-                    if (cancelled) return;
-                    setBrokers(page.items);
-                    setTotal(page.total ?? page.items.length);
-                })
-                .catch((err) => {
-                    if (cancelled) return;
-                    setError(
-                        err instanceof ApiError
-                            ? err.message
-                            : "Check your connection and try again.",
-                    );
-                    setBrokers([]);
-                    setTotal(0);
-                })
-                .finally(() => {
-                    if (!cancelled) setLoading(false);
-                });
-        }, 0);
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timer);
-        };
-    }, [search, revision]);
+    const term = search.trim();
+    const query = useInfiniteItems({
+        queryKey: [
+            "owner-brokers-browse",
+            term,
+            filters.verifiedOnly,
+            filters.minExperience,
+            filters.specialty,
+            filters.sort,
+        ],
+        queryFn: async ({ cursor, signal }) => {
+            const page = await representativeApi.ownerBrokers(
+                {
+                    search: term || undefined,
+                    verifiedOnly: filters.verifiedOnly,
+                    minExperience: filters.minExperience || undefined,
+                    specialty: filters.specialty || undefined,
+                    sort: filters.sort,
+                    cursor: cursor ?? undefined,
+                    limit: BROWSE_PAGE_SIZE,
+                },
+                signal,
+            );
+            return {
+                items: page.items,
+                total: page.total ?? page.items.length,
+                nextCursor: page.nextCursor ?? null,
+                specialties: page.specialties,
+            };
+        },
+    });
 
-    const specialties = useMemo(() => collectSpecialties(brokers), [brokers]);
-    const visible = useMemo(() => filterAndSortBrokers(brokers, filters), [brokers, filters]);
+    // The API sends the whole pool's specialties with each first page; the last
+    // ones seen are kept so the menu does not vanish while a new first page loads.
+    const firstPageSpecialties = query.data?.pages[0]?.specialties;
+    const [specialtyFacet, setSpecialtyFacet] = useState(firstPageSpecialties);
+    if (firstPageSpecialties && firstPageSpecialties !== specialtyFacet) {
+        setSpecialtyFacet(firstPageSpecialties);
+    }
+    const specialties = useMemo<Specialty[]>(
+        () =>
+            specialtyFacet?.map(({ label }) => ({ key: label.toLowerCase(), label })) ??
+            NO_SPECIALTIES,
+        [specialtyFacet],
+    );
+
+    const brokers = query.items;
+    const filtered = hasActiveBrowseFilters(filters);
+    const error = query.isError && brokers.length === 0 ? query.error : null;
 
     const patchFilters = useCallback(
         (patch: Partial<BrowseBrokersFilters>) => setFilters((prev) => ({ ...prev, ...patch })),
@@ -134,21 +147,23 @@ export function OwnerBrokersBrowse({
     }, []);
 
     let results;
-    if (loading && brokers.length === 0) {
+    if (query.isPending) {
         results = <BrowseBrokersSkeleton view={view} />;
     } else if (error) {
         results = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
                 <p className="h6 text-ink">Could not load brokers</p>
-                <p className="body-sm text-ink-muted">{error}</p>
-                <Button variant="surface" onClick={() => setRevision((prev) => prev + 1)}>
+                <p className="body-sm text-ink-muted">
+                    {error instanceof ApiError
+                        ? error.message
+                        : "Check your connection and try again."}
+                </p>
+                <Button variant="surface" onClick={() => void query.refetch()}>
                     Try again
                 </Button>
             </div>
         );
-    } else if (brokers.length === 0) {
-        results = <OwnerBrokersEmpty tab="browse" />;
-    } else if (visible.length === 0) {
+    } else if (brokers.length === 0 && filtered) {
         results = (
             <EmptyState
                 icon={UserRoundSearch}
@@ -160,27 +175,39 @@ export function OwnerBrokersBrowse({
                 </Button>
             </EmptyState>
         );
+    } else if (brokers.length === 0) {
+        results = <OwnerBrokersEmpty tab="browse" />;
     } else {
         results = (
-            <ul
-                className={cn(
-                    browseBrokersGridClass(view),
-                    loading && "opacity-60 transition-opacity duration-160",
-                )}
-            >
-                {visible.map((broker) => (
-                    <li key={broker.id} className="flex">
-                        <div className="flex-1 min-inline-0">
-                            <BrowseBrokerCard
-                                broker={broker}
-                                view={view}
-                                onViewProfile={openProfile}
-                                onInvite={openInvite}
-                            />
-                        </div>
-                    </li>
-                ))}
-            </ul>
+            <div className="flex flex-col gap-2">
+                <ul
+                    className={cn(
+                        browseBrokersGridClass(view),
+                        query.isFetching &&
+                            !query.isFetchingNextPage &&
+                            "opacity-60 transition-opacity duration-160",
+                    )}
+                >
+                    {brokers.map((broker) => (
+                        <li key={broker.id} className="flex">
+                            <div className="flex-1 min-inline-0">
+                                <BrowseBrokerCard
+                                    broker={broker}
+                                    view={view}
+                                    onViewProfile={openProfile}
+                                    onInvite={openInvite}
+                                />
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+                <InfiniteListStatus
+                    hasNextPage={Boolean(query.hasNextPage)}
+                    isFetchingNextPage={query.isFetchingNextPage}
+                    error={query.isFetchNextPageError ? query.error : null}
+                    onLoadMore={() => void query.fetchNextPage()}
+                />
+            </div>
         );
     }
 
@@ -188,28 +215,22 @@ export function OwnerBrokersBrowse({
         <div className="flex flex-col gap-5 md:gap-6">
             <TrustNote />
 
-            {brokers.length > 0 || (loading && !error) ? (
+            {/* Stays up while filters narrow to nothing, so they can be loosened again. */}
+            {!error && (brokers.length > 0 || filtered || query.isPending) ? (
                 <BrowseBrokersToolbar
                     filters={filters}
                     onFiltersChange={patchFilters}
                     onClear={clearFilters}
                     specialties={specialties}
-                    resultCount={visible.length}
-                    totalCount={brokers.length}
-                    isLoading={loading}
+                    resultCount={query.total}
+                    totalCount={query.total}
+                    isLoading={query.isPending}
                     view={view}
                     onViewChange={onViewChange}
                 />
             ) : null}
 
             {results}
-
-            {!loading && total > brokers.length ? (
-                <p className="body-sm text-center text-ink-muted">
-                    Showing the first {brokers.length} of {total}. Search by name or area to find
-                    others.
-                </p>
-            ) : null}
 
             <BrokerProfileDialog
                 broker={profileBroker}

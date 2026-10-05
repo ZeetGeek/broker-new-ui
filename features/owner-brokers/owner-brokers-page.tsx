@@ -1,24 +1,24 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
-import { type RepresentationItem, representativeApi } from "@/lib/api/representative";
+import { representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import { OwnerBrokersBrowse } from "@/features/owner-brokers/owner-brokers-browse";
 import { OwnerBrokersEmpty } from "@/features/owner-brokers/owner-brokers-empty";
 import { OwnerBrokersHeader } from "@/features/owner-brokers/owner-brokers-header";
 import type { OwnerBrokersTab } from "@/features/owner-brokers/types";
-import { mapRepresentationToOwnerCard } from "@/features/owner-requests/map-owner-request";
 import { OwnerRequestCard } from "@/features/owner-requests/owner-request-card";
 import { OwnerRequestsFilteredEmpty } from "@/features/owner-requests/owner-requests-empty";
 import type { OwnerRequestsSort } from "@/features/owner-requests/owner-requests-header";
-import type { OwnerRequestCardItem } from "@/features/owner-requests/types";
+import { useOwnerRepQueue } from "@/features/owner-requests/use-owner-rep-queue";
 import { useOwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
 import {
     REQUESTS_GRID_BREAKPOINTS,
@@ -32,40 +32,6 @@ function isBrokersTab(value: string | null): value is OwnerBrokersTab {
 
 function apiMessage(error: unknown, fallback: string): string {
     return error instanceof ApiError ? error.message : fallback;
-}
-
-function sortCards(items: OwnerRequestCardItem[], sort: OwnerRequestsSort) {
-    const next = [...items];
-    next.sort((a, b) => {
-        const aTime = Date.parse(a.createdAt) || 0;
-        const bTime = Date.parse(b.createdAt) || 0;
-        return sort === "oldest" ? aTime - bTime : bTime - aTime;
-    });
-    return next;
-}
-
-function filterCards(items: OwnerRequestCardItem[], search: string) {
-    const q = search.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((item) => {
-        const haystack = [
-            item.title,
-            item.locality,
-            item.city,
-            item.brokerName,
-            item.brokerOrgName ?? "",
-            item.message ?? "",
-        ]
-            .join(" ")
-            .toLowerCase();
-        return haystack.includes(q);
-    });
-}
-
-function mapItems(rows: RepresentationItem[]): OwnerRequestCardItem[] {
-    return rows
-        .map((row) => mapRepresentationToOwnerCard(row))
-        .filter((row): row is OwnerRequestCardItem => row != null);
 }
 
 export function OwnerBrokersPage() {
@@ -82,10 +48,14 @@ export function OwnerBrokersPage() {
 
     const [brokerSearch, setBrokerSearch] = useState("");
 
-    const [queueItems, setQueueItems] = useState<OwnerRequestCardItem[]>([]);
-    const [queueLoading, setQueueLoading] = useState(false);
-    const [queueError, setQueueError] = useState<string | null>(null);
+    const queue = useOwnerRepQueue({
+        kind: "active",
+        search,
+        sort,
+        enabled: tab === "active",
+    });
 
+    // Kept apart from the scrolled queue so the tab chip has a count on Browse too.
     useEffect(() => {
         let cancelled = false;
         void representativeApi
@@ -101,73 +71,49 @@ export function OwnerBrokersPage() {
         };
     }, [revision]);
 
-    useEffect(() => {
-        if (tab !== "active") return;
-        let cancelled = false;
-        const timer = window.setTimeout(() => {
-            if (cancelled) return;
-            setQueueLoading(true);
-            setQueueError(null);
-            void representativeApi
-                .ownerActivePage({ limit: 100 })
-                .then((page) => {
-                    if (!cancelled) setQueueItems(mapItems(page.items));
-                })
-                .catch((err) => {
-                    if (!cancelled) {
-                        setQueueError(apiMessage(err, "Could not load active brokers"));
-                        setQueueItems([]);
-                    }
-                })
-                .finally(() => {
-                    if (!cancelled) setQueueLoading(false);
-                });
-        }, 0);
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timer);
-        };
-    }, [tab, revision]);
-
-    const visibleCards = useMemo(
-        () => sortCards(filterCards(queueItems, search), sort),
-        [queueItems, search, sort],
-    );
-
     let body: ReactNode;
 
     if (tab === "browse") {
         body = <OwnerBrokersBrowse search={brokerSearch} view={view} onViewChange={setView} />;
-    } else if (queueLoading && queueItems.length === 0) {
+    } else if (queue.isPending) {
         body = <RequestsListSkeleton view={view} />;
-    } else if (queueError) {
+    } else if (queue.isError && queue.items.length === 0) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
                 <p className="h6 text-ink">Could not load active brokers</p>
-                <p className="body-sm text-ink-muted">{queueError}</p>
+                <p className="body-sm text-ink-muted">
+                    {apiMessage(queue.error, "Could not load active brokers")}
+                </p>
                 <button
                     type="button"
-                    onClick={() => setRevision((prev) => prev + 1)}
+                    onClick={() => {
+                        setRevision((prev) => prev + 1);
+                        void queue.refetch();
+                    }}
                     className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                     Try again
                 </button>
             </div>
         );
-    } else if (queueItems.length === 0) {
-        body = <OwnerBrokersEmpty tab="active" />;
-    } else if (visibleCards.length === 0) {
+    } else if (queue.items.length === 0 && search.trim()) {
         body = (
-            <OwnerRequestsFilteredEmpty
-                searchQuery={search}
-                onClearFilters={search.trim() ? () => setSearch("") : undefined}
-            />
+            <OwnerRequestsFilteredEmpty searchQuery={search} onClearFilters={() => setSearch("")} />
         );
+    } else if (queue.items.length === 0) {
+        body = <OwnerBrokersEmpty tab="active" />;
     } else {
         body = (
-            <div className={cn(queueLoading && "opacity-60 transition-opacity duration-160")}>
+            <div
+                className={cn(
+                    "flex flex-col gap-2",
+                    queue.isFetching &&
+                        !queue.isFetchingNextPage &&
+                        "opacity-60 transition-opacity duration-160",
+                )}
+            >
                 <WindowVirtualGrid
-                    items={visibleCards}
+                    items={queue.items}
                     getKey={(item) => item.id}
                     estimateRowHeight={view === "list" ? 224 : 480}
                     gap={24}
@@ -178,6 +124,12 @@ export function OwnerBrokersPage() {
                     renderItem={(item) => (
                         <OwnerRequestCard item={item} view={view} actions="none" />
                     )}
+                />
+                <InfiniteListStatus
+                    hasNextPage={Boolean(queue.hasNextPage)}
+                    isFetchingNextPage={queue.isFetchingNextPage}
+                    error={queue.isFetchNextPageError ? queue.error : null}
+                    onLoadMore={() => void queue.fetchNextPage()}
                 />
             </div>
         );
