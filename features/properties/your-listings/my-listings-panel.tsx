@@ -24,7 +24,6 @@ import {
 import { MyListingsResultsSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
-import { useMyListingsView } from "@/features/properties/your-listings/use-my-listings-view";
 
 /**
  * The buyers modal is written against a request. A listing the broker owns
@@ -52,8 +51,8 @@ function asRequestShape(item: MyListingItem): RequestItem {
         requestedAt: item.createdAt,
         resolvedAt: null,
         daysWaiting: 0,
-        clientsAttached: 0,
-        attachedClients: [],
+        clientsAttached: item.attachedClients?.length ?? 0,
+        attachedClients: item.attachedClients ?? [],
         brokerSlotsOpen: 0,
         brokerSlotsTotal: 0,
         attemptNumber: 1,
@@ -67,7 +66,6 @@ function asRequestShape(item: MyListingItem): RequestItem {
 
 export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const { filters, setFilters, clearFilters, hasActiveFilters } = useMyListingsFilters();
-    const { view, setView } = useMyListingsView();
     const [summary, setSummary] = useState<MyListingsSummary | null>(null);
     const [addOpen, setAddOpen] = useState(false);
     const [editingListing, setEditingListing] = useState<MyListingItem | null>(null);
@@ -141,8 +139,6 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             <MyListingsHeader
                 filters={filters}
                 onFiltersChange={setFilters}
-                view={view}
-                onViewChange={setView}
                 summary={summary}
                 isLoading={loading}
             />
@@ -154,7 +150,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             ) : null}
 
             {query.isError && query.items.length === 0 ? null : query.isPending ? (
-                <MyListingsResultsSkeleton view={view} />
+                <MyListingsResultsSkeleton />
             ) : query.items.length === 0 ? (
                 <MyListingsEmpty
                     variant={hasActiveFilters ? "filtered" : "first_run"}
@@ -166,7 +162,6 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 <div className={loading ? "opacity-60 transition-opacity duration-160" : undefined}>
                     <MyListingsGrid
                         items={query.items}
-                        view={view}
                         portal={portal}
                         onEditListing={setEditingListing}
                         onDeleteListing={setDeletingListing}

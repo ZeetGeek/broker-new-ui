@@ -3,7 +3,18 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { Bookmark, Check, Ellipsis, History, Link2, MessageCircle, Share2, X } from "lucide-react";
+import {
+    Bookmark,
+    Check,
+    Ellipsis,
+    History,
+    Link2,
+    MessageCircle,
+    Pencil,
+    Share2,
+    Trash2,
+    X,
+} from "lucide-react";
 
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import {
@@ -64,6 +75,10 @@ export type PropertyCardMenuProps = {
     contact?: PropertyCardMenuContact;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
+    /** Owned cards: open the edit form. */
+    onEdit?: () => void;
+    /** Owned cards: ask to delete this listing. */
+    onDelete?: () => void;
     /** Extra items after the standard actions. */
     extraItems?: ReactNode;
     /** `overlay` = glass circle on photo. `plain` = muted icon in list rows. */
@@ -84,17 +99,44 @@ async function copyText(value: string) {
     }
 }
 
-const MENU_CONTENT_CLASS = `
-  t-dropdown rounded-card border border-ink/10 bg-surface p-1.5 text-ink shadow-lg
-  ring-0 min-inline-56
+const MENU_SURFACE_CLASS = `
+  t-dropdown t-profile-menu animate-none! rounded-inner border border-border-warm
+  bg-surface p-1.5 text-ink shadow-lg ring-0 min-inline-56
   before:backdrop-blur-none
+  dark:bg-surface dark:text-ink
+  data-closed:animate-none!
+  data-open:animate-none!
+  **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
+  **:data-[slot$=-item]:data-highlighted:text-ink!
+  **:data-[slot$=-item]:focus:bg-surface-muted!
+  **:data-[slot$=-item]:focus:text-ink!
+  **:data-[slot$=-trigger]:data-highlighted:bg-surface-muted!
+  **:data-[slot$=-trigger]:data-highlighted:text-ink!
+  **:data-[slot$=-trigger]:focus:bg-surface-muted!
+  **:data-[slot$=-trigger]:focus:text-ink!
+  **:data-[slot$=-trigger]:aria-expanded:bg-surface-muted!
+  **:data-[slot$=-trigger]:aria-expanded:text-ink!
+  **:data-[variant=destructive]:data-highlighted:bg-danger-soft!
+  **:data-[variant=destructive]:data-highlighted:text-danger!
+  **:data-[variant=destructive]:focus:bg-danger-soft!
+  **:data-[variant=destructive]:focus:text-danger!
 `;
 
+/* Kill shadcn’s focus:**:text-accent-foreground so icons never go white. */
 const ITEM_CLASS = `
-  body-sm gap-3 rounded-inner px-2.5 py-2.5 font-medium text-ink
-  focus:bg-surface-muted focus:text-ink
-  data-highlighted:bg-surface-muted data-highlighted:text-ink
+  body-sm h-10 cursor-pointer gap-3 rounded-inner px-3 font-medium text-ink
+  focus:bg-surface-muted! focus:text-ink!
+  data-highlighted:bg-surface-muted! data-highlighted:text-ink!
+  data-popup-open:bg-surface-muted! data-popup-open:text-ink!
+  data-open:bg-surface-muted! data-open:text-ink!
+  not-data-[variant=destructive]:focus:**:text-ink!
+  not-data-[variant=destructive]:data-highlighted:**:text-ink!
+  data-popup-open:**:text-ink!
+  data-open:**:text-ink!
 `;
+
+const ICON_CLASS = "menu-stroke-icon block-4 inline-4 shrink-0 text-ink!";
+const SEPARATOR_CLASS = "mx-1.5 my-1 bg-border-warm";
 
 /**
  * One ⋯ control for listing cards: Share (submenu), Save, Message, WhatsApp,
@@ -107,6 +149,8 @@ export function PropertyCardMenu({
     contact,
     onOpenTimeline,
     onCancelRequest,
+    onEdit,
+    onDelete,
     extraItems,
     tone = "overlay",
     className,
@@ -198,7 +242,9 @@ export function PropertyCardMenu({
     );
 
     const hasContact = Boolean(contact?.onMessage || contact?.phoneDigits);
-    const hasDealExtras = Boolean(onOpenTimeline || onCancelRequest || extraItems);
+    const hasDealExtras = Boolean(
+        onOpenTimeline || onCancelRequest || onEdit || onDelete || extraItems,
+    );
 
     return (
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>
@@ -226,23 +272,17 @@ export function PropertyCardMenu({
                 align="end"
                 side="bottom"
                 sideOffset={8}
-                className={MENU_CONTENT_CLASS}
+                className={MENU_SURFACE_CLASS}
             >
                 <DropdownMenuSub>
                     <DropdownMenuSubTrigger className={ITEM_CLASS}>
-                        <Share2
-                            aria-hidden
-                            className="block-4 inline-4 text-ink-muted"
-                            strokeWidth={1.75}
-                        />
+                        <Share2 aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                         Share
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent
-                        className={cn(
-                            MENU_CONTENT_CLASS,
-                            "before:hidden dark:bg-surface min-inline-48",
-                        )}
-                        sideOffset={6}
+                        className={cn(MENU_SURFACE_CLASS, "before:hidden block-auto min-inline-48")}
+                        sideOffset={4}
+                        alignOffset={-4}
                     >
                         {channels.map((channel) => {
                             const mark = channel.icon ? (
@@ -257,11 +297,7 @@ export function PropertyCardMenu({
                                     />
                                 </span>
                             ) : (
-                                <Share2
-                                    aria-hidden
-                                    className="block-4 inline-4 text-ink-muted"
-                                    strokeWidth={1.75}
-                                />
+                                <Share2 aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                             );
 
                             if (channel.action === "native-share") {
@@ -314,8 +350,6 @@ export function PropertyCardMenu({
                             );
                         })}
 
-                        <DropdownMenuSeparator className="mx-1.5 my-1 bg-ink/8" />
-
                         <DropdownMenuItem
                             className={ITEM_CLASS}
                             onClick={() => void handleCopyLink()}
@@ -323,15 +357,11 @@ export function PropertyCardMenu({
                             {copied ? (
                                 <Check
                                     aria-hidden
-                                    className="block-4 inline-4 text-brand"
+                                    className={cn(ICON_CLASS, "is-brand")}
                                     strokeWidth={2}
                                 />
                             ) : (
-                                <Link2
-                                    aria-hidden
-                                    className="block-4 inline-4 text-ink-muted"
-                                    strokeWidth={1.75}
-                                />
+                                <Link2 aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                             )}
                             {copied ? "Link copied" : "Copy link"}
                         </DropdownMenuItem>
@@ -342,17 +372,14 @@ export function PropertyCardMenu({
                     <DropdownMenuItem className={ITEM_CLASS} onClick={onToggleSave}>
                         <Bookmark
                             aria-hidden
-                            className={cn(
-                                "block-4 inline-4",
-                                isSaved ? "fill-brand text-brand" : "text-ink-muted",
-                            )}
+                            className={cn(ICON_CLASS, isSaved && "is-brand fill-brand")}
                             strokeWidth={1.75}
                         />
                         {isSaved ? "Remove save" : "Save"}
                     </DropdownMenuItem>
                 ) : null}
 
-                {hasContact ? <DropdownMenuSeparator className="mx-1.5 my-1 bg-ink/8" /> : null}
+                {hasContact ? <DropdownMenuSeparator className={SEPARATOR_CLASS} /> : null}
 
                 {contact?.onMessage ? (
                     <DropdownMenuItem
@@ -362,11 +389,7 @@ export function PropertyCardMenu({
                             setOpen(false);
                         }}
                     >
-                        <MessageCircle
-                            aria-hidden
-                            className="block-4 inline-4 text-ink-muted"
-                            strokeWidth={1.75}
-                        />
+                        <MessageCircle aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                         Message {contact.name.split(" ")[0]}
                     </DropdownMenuItem>
                 ) : null}
@@ -393,15 +416,11 @@ export function PropertyCardMenu({
                     </DropdownMenuItem>
                 ) : null}
 
-                {hasDealExtras ? <DropdownMenuSeparator className="mx-1.5 my-1 bg-ink/8" /> : null}
+                {hasDealExtras ? <DropdownMenuSeparator className={SEPARATOR_CLASS} /> : null}
 
                 {onOpenTimeline ? (
                     <DropdownMenuItem className={ITEM_CLASS} onClick={onOpenTimeline}>
-                        <History
-                            aria-hidden
-                            className="block-4 inline-4 text-ink-muted"
-                            strokeWidth={1.75}
-                        />
+                        <History aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                         What happened
                     </DropdownMenuItem>
                 ) : null}
@@ -411,12 +430,62 @@ export function PropertyCardMenu({
                         variant="destructive"
                         className={cn(
                             ITEM_CLASS,
-                            "text-danger focus:bg-danger/10 focus:text-danger",
+                            `
+                              text-danger!
+                              focus:bg-danger-soft! focus:text-danger!
+                              data-highlighted:bg-danger-soft! data-highlighted:text-danger!
+                              focus:[&>svg]:text-danger!
+                              data-highlighted:[&>svg]:text-danger!
+                            `,
                         )}
                         onClick={onCancelRequest}
                     >
-                        <X aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                        <X
+                            aria-hidden
+                            className="menu-stroke-icon is-danger block-4 inline-4 shrink-0"
+                            strokeWidth={1.75}
+                        />
                         Cancel request
+                    </DropdownMenuItem>
+                ) : null}
+
+                {onEdit ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        onClick={() => {
+                            onEdit();
+                            setOpen(false);
+                        }}
+                    >
+                        <Pencil aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        Edit property
+                    </DropdownMenuItem>
+                ) : null}
+
+                {onDelete ? (
+                    <DropdownMenuItem
+                        variant="destructive"
+                        className={cn(
+                            ITEM_CLASS,
+                            `
+                              text-danger!
+                              focus:bg-danger-soft! focus:text-danger!
+                              data-highlighted:bg-danger-soft! data-highlighted:text-danger!
+                              focus:[&>svg]:text-danger!
+                              data-highlighted:[&>svg]:text-danger!
+                            `,
+                        )}
+                        onClick={() => {
+                            onDelete();
+                            setOpen(false);
+                        }}
+                    >
+                        <Trash2
+                            aria-hidden
+                            className="menu-stroke-icon is-danger block-4 inline-4 shrink-0"
+                            strokeWidth={1.75}
+                        />
+                        Delete listing
                     </DropdownMenuItem>
                 ) : null}
 

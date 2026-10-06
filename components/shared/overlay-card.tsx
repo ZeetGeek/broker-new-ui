@@ -19,8 +19,8 @@ import { PropertyTitleLink } from "@/components/shared/property-title-link";
  */
 const CARD_CLASS = `
   group/marquee relative isolate flex flex-1 transform-gpu flex-col overflow-hidden rounded-card
-  bg-surface shadow-md transition-[box-shadow,translate] duration-160 inline-full
-  hover:-translate-y-0.5 hover:shadow-lg
+  bg-surface shadow-md transition-[box-shadow] duration-160 inline-full
+  hover:shadow-lg
 `;
 const SWEEP_CLASS = `
   pointer-events-none absolute inset-y-0 inset-s-[-40%] inline-[40%]

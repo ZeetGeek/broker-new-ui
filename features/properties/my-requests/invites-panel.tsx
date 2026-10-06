@@ -14,10 +14,7 @@ import {
     InvitesFirstRunEmpty,
     RequestsFilteredEmpty,
 } from "@/features/properties/my-requests/requests-empty";
-import {
-    REQUESTS_GRID_BREAKPOINTS,
-    REQUESTS_LIST_BREAKPOINTS,
-} from "@/features/properties/my-requests/requests-grid-class";
+import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
 import { MyDealsHeader } from "@/features/properties/my-requests/requests-header";
 import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 import {
@@ -25,17 +22,12 @@ import {
     type RequestsSummary,
 } from "@/features/properties/my-requests/types";
 import { useInvitesFilters } from "@/features/properties/my-requests/use-invites-filters";
-import type { RequestsView } from "@/features/properties/my-requests/use-requests-view";
 
 export function InvitesPanel({
-    view,
-    onViewChange,
     sentSummary,
     inviteSummary,
     onSummary,
 }: {
-    view: RequestsView;
-    onViewChange: (view: RequestsView) => void;
     sentSummary: RequestsSummary | null;
     inviteSummary: InvitesSummary | null;
     onSummary: (summary: InvitesSummary) => void;
@@ -128,19 +120,17 @@ export function InvitesPanel({
             inviteFilters={filters}
             onPatchSent={() => undefined}
             onPatchInvites={patchFilters}
-            view={view}
-            onViewChange={onViewChange}
         />
     );
 
     let body: ReactNode;
 
     if (!result && isFetching) {
-        body = <RequestsListSkeleton view={view} />;
+        body = <RequestsListSkeleton />;
     } else if (inviteSummary && inviteSummary.counts.all === 0) {
         body = <InvitesFirstRunEmpty />;
     } else if (!result) {
-        body = <RequestsListSkeleton view={view} />;
+        body = <RequestsListSkeleton />;
     } else if (result.items.length === 0) {
         body = (
             <RequestsFilteredEmpty
@@ -154,16 +144,13 @@ export function InvitesPanel({
                 <WindowVirtualGrid
                     items={result.items}
                     getKey={(item) => item.id}
-                    estimateRowHeight={view === "list" ? 224 : 520}
+                    estimateRowHeight={520}
                     gap={24}
-                    breakpoints={
-                        view === "list" ? REQUESTS_LIST_BREAKPOINTS : REQUESTS_GRID_BREAKPOINTS
-                    }
+                    breakpoints={REQUESTS_GRID_BREAKPOINTS}
                     ariaLabel="Owner invitations"
                     renderItem={(item) => (
                         <InviteCard
                             item={item}
-                            view={view}
                             onAccept={handleAccept}
                             onDecline={handleDecline}
                             onBuyersChanged={handleRefresh}

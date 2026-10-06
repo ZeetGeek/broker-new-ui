@@ -23,12 +23,10 @@ import {
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
 import { OwnerListingsSortMenu } from "@/features/properties/owner-listings/owner-listings-sort-menu";
-import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
 import type {
     OwnerListingsFilters,
     OwnerListingSort,
 } from "@/features/properties/owner-listings/types";
-import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
 
 type QuickChipConfig = {
     key: QuickChipKey;
@@ -85,8 +83,6 @@ export type OwnerListingsQuickChipsProps = {
     onOpenFilters: () => void;
     onQueryChange: (q: string) => void;
     onSortChange: (sort: OwnerListingSort) => void;
-    view: OwnerListingsView;
-    onViewChange: (view: OwnerListingsView) => void;
 };
 
 function OwnerListingsQueryInput({
@@ -224,8 +220,6 @@ export function OwnerListingsQuickChips({
     onOpenFilters,
     onQueryChange,
     onSortChange,
-    view,
-    onViewChange,
 }: OwnerListingsQuickChipsProps) {
     return (
         <TooltipProvider>
@@ -256,7 +250,6 @@ export function OwnerListingsQuickChips({
 
                 <div className="flex shrink-0 items-center gap-2.5">
                     <OwnerListingsQueryInput value={filters.q} onChange={onQueryChange} />
-                    <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
                     <OwnerListingsSortMenu filters={filters} onSortChange={onSortChange} />
                 </div>
             </div>

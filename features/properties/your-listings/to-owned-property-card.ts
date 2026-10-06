@@ -38,5 +38,6 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         rentAmountInr: item.rentAmountInr,
         ownerName: item.ownerName,
         visibility: item.visibility,
+        attachedClients: item.attachedClients ?? [],
     };
 }

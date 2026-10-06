@@ -18,7 +18,6 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { OwnerRequestsSummary, OwnerRequestsTab } from "@/features/owner-requests/types";
-import type { OwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
 import {
     formatChipCount,
     ownerListingsChipClassName,
@@ -28,7 +27,6 @@ import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
-import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
 
 export type OwnerRequestsSort = "recent" | "oldest";
 
@@ -169,8 +167,6 @@ export function OwnerRequestsHeader({
     onSearchChange,
     sort,
     onSortChange,
-    view,
-    onViewChange,
     isLoading = false,
 }: {
     activeTab: OwnerRequestsTab;
@@ -179,8 +175,6 @@ export function OwnerRequestsHeader({
     onSearchChange: (q: string) => void;
     sort: OwnerRequestsSort;
     onSortChange: (sort: OwnerRequestsSort) => void;
-    view: OwnerRequestsView;
-    onViewChange: (view: OwnerRequestsView) => void;
     isLoading?: boolean;
 }) {
     const searchPlaceholder = "Search requests";
@@ -255,7 +249,6 @@ export function OwnerRequestsHeader({
                             onChange={onSearchChange}
                             placeholder={searchPlaceholder}
                         />
-                        <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
                         <SortMenu sort={sort} onSortChange={onSortChange} />
                     </div>
                 </div>

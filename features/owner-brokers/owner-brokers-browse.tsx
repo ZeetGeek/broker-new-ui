@@ -27,7 +27,6 @@ import {
 import { BrowseBrokersToolbar } from "@/features/owner-brokers/browse-brokers-toolbar";
 import { InviteBrokerDialog } from "@/features/owner-brokers/invite-broker-dialog";
 import { OwnerBrokersEmpty } from "@/features/owner-brokers/owner-brokers-empty";
-import type { OwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
 
 const BROWSE_PAGE_SIZE = 20;
 
@@ -62,15 +61,7 @@ function TrustNote() {
     );
 }
 
-export function OwnerBrokersBrowse({
-    search,
-    view,
-    onViewChange,
-}: {
-    search: string;
-    view: OwnerRequestsView;
-    onViewChange: (view: OwnerRequestsView) => void;
-}) {
+export function OwnerBrokersBrowse({ search }: { search: string }) {
     const [filters, setFilters] = useState<BrowseBrokersFilters>(DEFAULT_BROWSE_BROKERS_FILTERS);
 
     const [profileBroker, setProfileBroker] = useState<BrokerProfile | null>(null);
@@ -148,7 +139,7 @@ export function OwnerBrokersBrowse({
 
     let results;
     if (query.isPending) {
-        results = <BrowseBrokersSkeleton view={view} />;
+        results = <BrowseBrokersSkeleton />;
     } else if (error) {
         results = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -182,7 +173,7 @@ export function OwnerBrokersBrowse({
             <div className="flex flex-col gap-2">
                 <ul
                     className={cn(
-                        browseBrokersGridClass(view),
+                        browseBrokersGridClass(),
                         query.isFetching &&
                             !query.isFetchingNextPage &&
                             "opacity-60 transition-opacity duration-160",
@@ -193,7 +184,6 @@ export function OwnerBrokersBrowse({
                             <div className="flex-1 min-inline-0">
                                 <BrowseBrokerCard
                                     broker={broker}
-                                    view={view}
                                     onViewProfile={openProfile}
                                     onInvite={openInvite}
                                 />
@@ -225,8 +215,6 @@ export function OwnerBrokersBrowse({
                     resultCount={query.total}
                     totalCount={query.total}
                     isLoading={query.isPending}
-                    view={view}
-                    onViewChange={onViewChange}
                 />
             ) : null}
 

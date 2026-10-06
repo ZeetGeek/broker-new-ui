@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { fetchOwnerListingCities, fetchOwnerListings } from "@/lib/api/owner-listings";
-import { cn } from "@/lib/utils";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
@@ -19,10 +18,7 @@ import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/ow
 import { citiesToLocationListings } from "@/features/properties/owner-listings/map-browse-listing";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
-import {
-    OWNER_LISTINGS_GRID_CLASS,
-    OWNER_LISTINGS_LIST_CLASS,
-} from "@/features/properties/owner-listings/owner-listings-grid-class";
+import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { OwnerListingsHeader } from "@/features/properties/owner-listings/owner-listings-header";
 import { OwnerListingsIntro } from "@/features/properties/owner-listings/owner-listings-intro";
 import { OwnerListingsPageSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
@@ -35,10 +31,6 @@ import type {
     OwnerListingsResult,
 } from "@/features/properties/owner-listings/types";
 import { useOwnerListingsFilters } from "@/features/properties/owner-listings/use-owner-listings-filters";
-import {
-    type OwnerListingsView,
-    useOwnerListingsView,
-} from "@/features/properties/owner-listings/use-owner-listings-view";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
@@ -81,7 +73,6 @@ function OwnerListingsResults({
     onClearFilters,
     onLoaded,
     onLoadingChange,
-    view,
     enabled,
 }: {
     filterSignature: string;
@@ -92,7 +83,6 @@ function OwnerListingsResults({
     onClearFilters: () => void;
     onLoaded: (result: OwnerListingsResult) => void;
     onLoadingChange: (isLoading: boolean) => void;
-    view: OwnerListingsView;
     enabled: boolean;
 }) {
     const query = useInfiniteItems({
@@ -138,16 +128,11 @@ function OwnerListingsResults({
 
     if (!enabled || query.isPending) {
         return (
-            <div
-                className={view === "list" ? OWNER_LISTINGS_LIST_CLASS : OWNER_LISTINGS_GRID_CLASS}
-            >
-                {Array.from({ length: view === "list" ? 6 : 10 }).map((_, index) => (
+            <div className={OWNER_LISTINGS_GRID_CLASS}>
+                {Array.from({ length: 10 }).map((_, index) => (
                     <div
                         key={index}
-                        className={cn(
-                            "animate-pulse rounded-card bg-surface-muted",
-                            view === "list" ? "min-block-52" : "block-80",
-                        )}
+                        className="animate-pulse rounded-card bg-surface-muted block-80"
                         aria-hidden
                     />
                 ))}
@@ -189,11 +174,7 @@ function OwnerListingsResults({
                     : "flex flex-col gap-2"
             }
         >
-            <OwnerListingsGrid
-                items={query.items}
-                view={view}
-                serviceAreas={filterContext.serviceAreas}
-            />
+            <OwnerListingsGrid items={query.items} serviceAreas={filterContext.serviceAreas} />
             <InfiniteListStatus
                 hasNextPage={Boolean(query.hasNextPage)}
                 isFetchingNextPage={query.isFetchingNextPage}
@@ -220,7 +201,6 @@ export function OwnerListingsPage() {
         filterSignature,
         scopeReady,
     } = useOwnerListingsFilters();
-    const { view, setView } = useOwnerListingsView();
 
     const serviceAreas = profile?.broker?.serviceAreas ?? EMPTY_SERVICE_AREAS;
     const serviceAreasKey = serviceAreas.join("|");
@@ -361,8 +341,6 @@ export function OwnerListingsPage() {
                 onApplySheet={handleApplySheet}
                 onToggleQuickChip={toggleQuickChip}
                 onSortChange={handleSortChange}
-                view={view}
-                onViewChange={setView}
             />
 
             <OwnerListingsResults
@@ -374,7 +352,6 @@ export function OwnerListingsPage() {
                 onClearFilters={clearFilters}
                 onLoaded={handleLoaded}
                 onLoadingChange={setIsResultsLoading}
-                view={view}
                 enabled={scopeReady}
             />
         </div>

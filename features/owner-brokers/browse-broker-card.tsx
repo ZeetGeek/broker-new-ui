@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { brokerDisplayName } from "@/features/owner-brokers/browse-brokers-filters";
-import type { OwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
 
 const MAX_TAGS = 3;
 
@@ -183,12 +182,10 @@ function BrokerActions({
 
 export function BrowseBrokerCard({
     broker,
-    view,
     onViewProfile,
     onInvite,
 }: {
     broker: BrokerProfile;
-    view: OwnerRequestsView;
     onViewProfile: (broker: BrokerProfile) => void;
     onInvite: (broker: BrokerProfile) => void;
 }) {
@@ -198,26 +195,6 @@ export function BrowseBrokerCard({
       hover:border-ink/15 hover:shadow-md
       md:p-5
     `;
-
-    if (view === "list") {
-        return (
-            <article
-                className={cn(shell, "flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6")}
-            >
-                <div className="flex flex-col gap-3 min-inline-0 lg:flex-1">
-                    <BrokerIdentity broker={broker} />
-                    <BrokerSpecialtyTags specializations={broker.specializations} max={4} />
-                </div>
-                <BrokerMetricStrip broker={broker} className="lg:shrink-0 lg:inline-80" />
-                <BrokerActions
-                    broker={broker}
-                    onViewProfile={onViewProfile}
-                    onInvite={onInvite}
-                    className="lg:shrink-0 lg:inline-64"
-                />
-            </article>
-        );
-    }
 
     return (
         <article className={cn(shell, "flex flex-col gap-4 block-full")}>

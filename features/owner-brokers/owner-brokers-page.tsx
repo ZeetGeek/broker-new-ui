@@ -19,11 +19,7 @@ import { OwnerRequestCard } from "@/features/owner-requests/owner-request-card";
 import { OwnerRequestsFilteredEmpty } from "@/features/owner-requests/owner-requests-empty";
 import type { OwnerRequestsSort } from "@/features/owner-requests/owner-requests-header";
 import { useOwnerRepQueue } from "@/features/owner-requests/use-owner-rep-queue";
-import { useOwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
-import {
-    REQUESTS_GRID_BREAKPOINTS,
-    REQUESTS_LIST_BREAKPOINTS,
-} from "@/features/properties/my-requests/requests-grid-class";
+import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
 import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 
 function isBrokersTab(value: string | null): value is OwnerBrokersTab {
@@ -38,8 +34,6 @@ export function OwnerBrokersPage() {
     const searchParams = useSearchParams();
     const tabParam = searchParams.get("tab");
     const tab: OwnerBrokersTab = isBrokersTab(tabParam) ? tabParam : "browse";
-
-    const { view, setView } = useOwnerRequestsView();
     const [revision, setRevision] = useState(0);
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState<OwnerRequestsSort>("recent");
@@ -74,9 +68,9 @@ export function OwnerBrokersPage() {
     let body: ReactNode;
 
     if (tab === "browse") {
-        body = <OwnerBrokersBrowse search={brokerSearch} view={view} onViewChange={setView} />;
+        body = <OwnerBrokersBrowse search={brokerSearch} />;
     } else if (queue.isPending) {
-        body = <RequestsListSkeleton view={view} />;
+        body = <RequestsListSkeleton />;
     } else if (queue.isError && queue.items.length === 0) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -115,15 +109,11 @@ export function OwnerBrokersPage() {
                 <WindowVirtualGrid
                     items={queue.items}
                     getKey={(item) => item.id}
-                    estimateRowHeight={view === "list" ? 224 : 480}
+                    estimateRowHeight={480}
                     gap={24}
-                    breakpoints={
-                        view === "list" ? REQUESTS_LIST_BREAKPOINTS : REQUESTS_GRID_BREAKPOINTS
-                    }
+                    breakpoints={REQUESTS_GRID_BREAKPOINTS}
                     ariaLabel="Active brokers"
-                    renderItem={(item) => (
-                        <OwnerRequestCard item={item} view={view} actions="none" />
-                    )}
+                    renderItem={(item) => <OwnerRequestCard item={item} actions="none" />}
                 />
                 <InfiniteListStatus
                     hasNextPage={Boolean(queue.hasNextPage)}
@@ -155,8 +145,6 @@ export function OwnerBrokersPage() {
                 onSearchChange={tab === "browse" ? setBrokerSearch : setSearch}
                 sort={sort}
                 onSortChange={setSort}
-                view={view}
-                onViewChange={setView}
                 isLoading={activeCount == null}
             />
 

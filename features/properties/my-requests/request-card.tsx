@@ -4,7 +4,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Bell, Lock, Send, UserPlus } from "lucide-react";
+import { Bell, Send, UserPlus } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
@@ -12,9 +12,6 @@ import { formatRelativePast } from "@/lib/format/date";
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { PhoneNumber } from "@/components/shared/phone-number";
-import { UserAvatar } from "@/components/shared/user-avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -25,26 +22,18 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { ChatButton } from "@/features/chat/chat-button";
 import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import { attemptActions } from "@/features/properties/my-requests/attempt-rules";
 import {
-    DealCardBody,
-    DealCardFooter,
-    DealCardMeta,
-    DealCardPhoto,
     DealCardPhotoToolbar,
-    DealCardPrice,
-    DealCardShell,
     DealAttachedBuyers,
     DealOverlayCard,
     DealOverlayFooter,
     DealOverlayStats,
     dealSecondaryButtonClass,
     type DealStatusTone,
-    DealWhatsAppButton,
 } from "@/features/properties/my-requests/deal-card-chrome";
 import { REQUEST_STAGE_META } from "@/features/properties/my-requests/request-stage-meta";
 import { RequestTimeline } from "@/features/properties/my-requests/request-timeline";
@@ -53,10 +42,6 @@ import {
     type RequestItem,
     type RequestStage,
 } from "@/features/properties/my-requests/types";
-import type { RequestsView } from "@/features/properties/my-requests/use-requests-view";
-
-type CardTone = "light" | "overlay";
-
 const STATUS_TONE: Record<RequestStage, DealStatusTone> = {
     pending: "waiting",
     approved: "success",
@@ -64,25 +49,6 @@ const STATUS_TONE: Record<RequestStage, DealStatusTone> = {
     cancelled: "closed",
     locked: "closed",
 };
-
-function StageBadge({ item }: { item: RequestItem }) {
-    const meta = REQUEST_STAGE_META[item.stage];
-
-    return (
-        <Badge
-            className={cn(
-                "body-xs border-0 font-semibold shadow-xs",
-                item.stage === "approved" && "bg-brand-soft text-brand-text",
-                item.stage === "pending" && "bg-surface/95 text-ink-muted",
-                item.stage === "declined" && "bg-danger-soft text-danger",
-                (item.stage === "cancelled" || item.stage === "locked") &&
-                    "bg-surface/95 text-ink-muted",
-            )}
-        >
-            {meta.label}
-        </Badge>
-    );
-}
 
 function chatPeerFor(item: RequestItem): ChatPeer {
     return {
@@ -103,60 +69,26 @@ function ownerPhoneFor(item: RequestItem): string | undefined {
     return item.stage === "approved" ? item.ownerPhoneDigits : undefined;
 }
 
-function RequestOwnerRow({ item }: { item: RequestItem }) {
-    const phoneDigits = ownerPhoneFor(item);
-
-    return (
-        <div className="flex items-center gap-2 py-1.5 min-inline-0">
-            <UserAvatar
-                name={item.ownerName}
-                imageUrl={item.ownerAvatarUrl}
-                size="sm"
-                className="shrink-0"
-            />
-            <div className="flex flex-1 flex-col min-inline-0">
-                <p className="body-sm truncate font-medium tracking-wide text-ink capitalize">
-                    {item.ownerName}
-                </p>
-                {phoneDigits ? (
-                    <PhoneNumber phoneDigits={phoneDigits} className="body-xs text-ink-muted" />
-                ) : (
-                    <p className="body-xs text-ink-muted">Owner</p>
-                )}
-            </div>
-            <div className="flex shrink-0 items-center gap-0.5">
-                <ChatButton peer={chatPeerFor(item)} />
-                {phoneDigits ? (
-                    <DealWhatsAppButton name={item.ownerName} phoneDigits={phoneDigits} />
-                ) : null}
-            </div>
-        </div>
-    );
-}
-
 function RequestCardFooter({
     item,
-    tone,
     onNudge,
     onRetry,
     onAddBuyers,
     isBusy,
 }: {
     item: RequestItem;
-    tone: CardTone;
     onNudge: (id: string) => void;
     onRetry: (id: string) => void;
     onAddBuyers: () => void;
     isBusy: boolean;
 }) {
     const actions = attemptActions(item);
-    const secondaryClass = dealSecondaryButtonClass(tone);
-    const Footer = tone === "overlay" ? DealOverlayFooter : DealCardFooter;
+    const secondaryClass = dealSecondaryButtonClass();
 
     // Card tap already opens the listing — footer only keeps the stage action.
     if (item.stage === "pending") {
         return (
-            <Footer>
+            <DealOverlayFooter>
                 <Tooltip>
                     <TooltipTrigger
                         render={
@@ -187,13 +119,13 @@ function RequestCardFooter({
                             : "You already used both reminders for this attempt."}
                     </TooltipContent>
                 </Tooltip>
-            </Footer>
+            </DealOverlayFooter>
         );
     }
 
     if (actions.canRetry) {
         return (
-            <Footer>
+            <DealOverlayFooter>
                 <Button
                     size="md"
                     variant="accent"
@@ -204,7 +136,7 @@ function RequestCardFooter({
                     <Send aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                     Ask again
                 </Button>
-            </Footer>
+            </DealOverlayFooter>
         );
     }
 
@@ -213,7 +145,7 @@ function RequestCardFooter({
         if (item.attachedClients.length > 0) return null;
 
         return (
-            <Footer>
+            <DealOverlayFooter>
                 <Button
                     size="md"
                     variant="accent"
@@ -225,12 +157,12 @@ function RequestCardFooter({
                     <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                     Add buyer
                 </Button>
-            </Footer>
+            </DealOverlayFooter>
         );
     }
 
     return (
-        <Footer>
+        <DealOverlayFooter>
             <Button
                 size="md"
                 variant="outline"
@@ -240,13 +172,12 @@ function RequestCardFooter({
             >
                 Find similar
             </Button>
-        </Footer>
+        </DealOverlayFooter>
     );
 }
 
 export function RequestCard({
     item,
-    view,
     onNudge,
     onWithdraw,
     onRetry,
@@ -254,7 +185,6 @@ export function RequestCard({
     isBusy = false,
 }: {
     item: RequestItem;
-    view: RequestsView;
     onNudge: (id: string) => void;
     onWithdraw: (id: string) => void;
     onRetry: (id: string) => void;
@@ -283,7 +213,7 @@ export function RequestCard({
         }
     }
 
-    const cardMenu = (tone: CardTone) => (
+    const cardMenu = (
         <DealCardPhotoToolbar
             listing={item}
             isSaved={isSaved}
@@ -295,59 +225,12 @@ export function RequestCard({
             }}
             onOpenTimeline={() => setIsTimelineOpen(true)}
             onCancelRequest={actions.canCancel ? () => onWithdraw(item.id) : undefined}
-            tone={tone === "overlay" ? "overlay" : "plain"}
+            tone="overlay"
         />
     );
 
-    const footer = (tone: CardTone) => (
-        <RequestCardFooter
-            item={item}
-            tone={tone}
-            onNudge={onNudge}
-            onRetry={onRetry}
-            onAddBuyers={() => setIsBuyersOpen(true)}
-            isBusy={isBusy}
-        />
-    );
-
-    const card =
-        view === "list" ? (
-            <DealCardShell view={view} isBusy={isBusy}>
-                <DealCardPhoto listing={item} view={view} stageBadge={<StageBadge item={item} />} />
-
-                <DealCardBody view={view}>
-                    <div className="flex items-start gap-2">
-                        <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                            <DealCardMeta listing={item} />
-                        </div>
-                        {cardMenu("light")}
-                    </div>
-
-                    <RequestOwnerRow item={item} />
-
-                    {item.stage === "approved" && item.attachedClients.length > 0 ? (
-                        <DealAttachedBuyers
-                            buyers={item.attachedClients}
-                            onManage={() => setIsBuyersOpen(true)}
-                        />
-                    ) : null}
-
-                    <div className="mbs-auto flex flex-col gap-2.5">
-                        <div className="flex items-center gap-2 min-inline-0">
-                            <DealCardPrice listing={item} />
-                            {item.stage === "locked" ? (
-                                <Lock
-                                    aria-hidden
-                                    className="shrink-0 text-ink-muted block-4 inline-4"
-                                    strokeWidth={1.75}
-                                />
-                            ) : null}
-                        </div>
-                        {footer("light")}
-                    </div>
-                </DealCardBody>
-            </DealCardShell>
-        ) : (
+    return (
+        <TooltipProvider>
             <DealOverlayCard
                 listing={item}
                 configLabel={item.configLabel}
@@ -355,7 +238,7 @@ export function RequestCard({
                 statusTone={STATUS_TONE[item.stage]}
                 muted={item.stage !== "pending" && item.stage !== "approved" && !actions.canRetry}
                 isBusy={isBusy}
-                actions={cardMenu("overlay")}
+                actions={cardMenu}
             >
                 <DealOverlayStats
                     listing={item}
@@ -368,13 +251,14 @@ export function RequestCard({
                         onManage={() => setIsBuyersOpen(true)}
                     />
                 ) : null}
-                {footer("overlay")}
+                <RequestCardFooter
+                    item={item}
+                    onNudge={onNudge}
+                    onRetry={onRetry}
+                    onAddBuyers={() => setIsBuyersOpen(true)}
+                    isBusy={isBusy}
+                />
             </DealOverlayCard>
-        );
-
-    return (
-        <TooltipProvider>
-            {card}
 
             <Dialog open={isTimelineOpen} onOpenChange={setIsTimelineOpen}>
                 <DialogPopup className="gap-0 p-0 max-inline-md">

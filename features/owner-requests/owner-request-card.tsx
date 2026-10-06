@@ -8,12 +8,9 @@ import { cn } from "@/lib/utils";
 
 import { OverlayPersonLine } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
-import { UserAvatar } from "@/components/shared/user-avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { ChatButton } from "@/features/chat/chat-button";
 import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { ownerRequestDetailHref } from "@/features/owner-requests/map-owner-request";
@@ -22,22 +19,13 @@ import {
     OWNER_REQUEST_STAGE_META,
 } from "@/features/owner-requests/owner-request-stage-meta";
 import type { OwnerRequestCardItem } from "@/features/owner-requests/types";
-import type { OwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
 import {
-    DealCardBody,
-    DealCardFooter,
-    DealCardMeta,
-    DealCardPhoto,
     DealCardPhotoToolbar,
-    DealCardPrice,
-    DealCardShell,
     DealOverlayCard,
     DealOverlayFooter,
     dealSecondaryButtonClass,
-    DealWhatsAppButton,
 } from "@/features/properties/my-requests/deal-card-chrome";
 
-type CardTone = "light" | "overlay";
 type CardActions = "respond" | "withdraw" | "none";
 
 function stageMetaFor(item: OwnerRequestCardItem, actions: CardActions) {
@@ -45,30 +33,6 @@ function stageMetaFor(item: OwnerRequestCardItem, actions: CardActions) {
         return OWNER_INVITE_PENDING_META;
     }
     return OWNER_REQUEST_STAGE_META[item.status];
-}
-
-function StageBadge({ item, actions }: { item: OwnerRequestCardItem; actions: CardActions }) {
-    const meta = stageMetaFor(item, actions);
-
-    return (
-        <Badge
-            className={cn(
-                "body-xs border-0 font-semibold shadow-xs",
-                item.status === "accepted" && "bg-brand-soft text-brand-text",
-                item.status === "pending" && actions === "respond" && "bg-urgent-soft text-urgent",
-                item.status === "pending" &&
-                    actions !== "respond" &&
-                    "bg-surface/95 text-ink-muted",
-                item.status === "rejected" && "bg-danger-soft text-danger",
-                (item.status === "withdrawn" ||
-                    item.status === "revoked" ||
-                    item.status === "unknown") &&
-                    "bg-surface/95 text-ink-muted",
-            )}
-        >
-            {meta.label}
-        </Badge>
-    );
 }
 
 function chatPeerFor(item: OwnerRequestCardItem): ChatPeer {
@@ -84,39 +48,6 @@ function chatPeerFor(item: OwnerRequestCardItem): ChatPeer {
         closed:
             item.status === "rejected" || item.status === "withdrawn" || item.status === "revoked",
     };
-}
-
-function BrokerRow({ item }: { item: OwnerRequestCardItem }) {
-    const phoneDigits = item.brokerPhoneDigits;
-
-    return (
-        <div className="flex items-center gap-2 py-1.5 min-inline-0">
-            <UserAvatar
-                name={item.brokerName}
-                imageUrl={item.brokerAvatarUrl}
-                size="sm"
-                className="shrink-0"
-            />
-            <div className="flex flex-1 flex-col min-inline-0">
-                <p className="body-sm truncate font-medium tracking-wide text-ink capitalize">
-                    {item.brokerName}
-                </p>
-                {phoneDigits ? (
-                    <PhoneNumber phoneDigits={phoneDigits} className="body-xs text-ink-muted" />
-                ) : (
-                    <p className="body-xs text-ink-muted">
-                        {item.brokerOrgName?.trim() || "Broker"}
-                    </p>
-                )}
-            </div>
-            <div className="flex shrink-0 items-center gap-0.5">
-                <ChatButton peer={chatPeerFor(item)} />
-                {phoneDigits ? (
-                    <DealWhatsAppButton name={item.brokerName} phoneDigits={phoneDigits} />
-                ) : null}
-            </div>
-        </div>
-    );
 }
 
 function BrokerOverlayStats({ item }: { item: OwnerRequestCardItem }) {
@@ -138,7 +69,6 @@ function BrokerOverlayStats({ item }: { item: OwnerRequestCardItem }) {
 
 function CardFooter({
     item,
-    tone,
     actions,
     onAccept,
     onReject,
@@ -146,7 +76,6 @@ function CardFooter({
     isBusy,
 }: {
     item: OwnerRequestCardItem;
-    tone: CardTone;
     actions: CardActions;
     onAccept?: () => void;
     onReject?: () => void;
@@ -154,8 +83,7 @@ function CardFooter({
     isBusy: boolean;
 }) {
     const detailsHref = ownerRequestDetailHref(item.propertyId);
-    const secondaryClass = dealSecondaryButtonClass(tone);
-    const Footer = tone === "overlay" ? DealOverlayFooter : DealCardFooter;
+    const secondaryClass = dealSecondaryButtonClass();
 
     const viewDetails = (
         <Button
@@ -171,7 +99,7 @@ function CardFooter({
 
     if (actions === "respond") {
         return (
-            <Footer>
+            <DealOverlayFooter>
                 <Button
                     size="md"
                     variant="outline"
@@ -192,13 +120,13 @@ function CardFooter({
                     <Check aria-hidden className="block-4 inline-4" strokeWidth={2} />
                     Accept
                 </Button>
-            </Footer>
+            </DealOverlayFooter>
         );
     }
 
     if (actions === "withdraw") {
         return (
-            <Footer>
+            <DealOverlayFooter>
                 <Button
                     size="md"
                     variant="outline"
@@ -209,16 +137,15 @@ function CardFooter({
                     Withdraw
                 </Button>
                 {viewDetails}
-            </Footer>
+            </DealOverlayFooter>
         );
     }
 
-    return <Footer>{viewDetails}</Footer>;
+    return <DealOverlayFooter>{viewDetails}</DealOverlayFooter>;
 }
 
 export function OwnerRequestCard({
     item,
-    view,
     actions,
     onAccept,
     onReject,
@@ -226,7 +153,6 @@ export function OwnerRequestCard({
     isBusy = false,
 }: {
     item: OwnerRequestCardItem;
-    view: OwnerRequestsView;
     actions: CardActions;
     onAccept?: () => void;
     onReject?: () => void;
@@ -250,53 +176,8 @@ export function OwnerRequestCard({
         />
     );
 
-    const footer = (tone: CardTone) => (
-        <CardFooter
-            item={item}
-            tone={tone}
-            actions={actions}
-            onAccept={onAccept}
-            onReject={onReject}
-            onWithdraw={onWithdraw}
-            isBusy={isBusy}
-        />
-    );
-
-    const card =
-        view === "list" ? (
-            <DealCardShell view={view} isBusy={isBusy}>
-                <DealCardPhoto
-                    listing={item}
-                    view={view}
-                    detailHref={detailHref}
-                    stageBadge={<StageBadge item={item} actions={actions} />}
-                />
-                <DealCardBody view={view}>
-                    <div className="flex items-start gap-2">
-                        <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                            <DealCardMeta listing={item} detailHref={detailHref} />
-                        </div>
-                        <DealCardPhotoToolbar
-                            listing={item}
-                            contact={{
-                                name: item.brokerName,
-                                phoneDigits: item.brokerPhoneDigits,
-                                onMessage: () => openChat(chatPeerFor(item)),
-                            }}
-                            tone="plain"
-                        />
-                    </div>
-                    {item.message ? (
-                        <p className="body-sm line-clamp-2 text-ink-muted">“{item.message}”</p>
-                    ) : null}
-                    <BrokerRow item={item} />
-                    <div className="mbs-auto flex flex-col gap-2.5">
-                        <DealCardPrice listing={item} />
-                        {footer("light")}
-                    </div>
-                </DealCardBody>
-            </DealCardShell>
-        ) : (
+    return (
+        <TooltipProvider>
             <DealOverlayCard
                 listing={item}
                 configLabel={item.configLabel}
@@ -313,9 +194,15 @@ export function OwnerRequestCard({
                     </p>
                 ) : null}
                 <BrokerOverlayStats item={item} />
-                {footer("overlay")}
+                <CardFooter
+                    item={item}
+                    actions={actions}
+                    onAccept={onAccept}
+                    onReject={onReject}
+                    onWithdraw={onWithdraw}
+                    isBusy={isBusy}
+                />
             </DealOverlayCard>
-        );
-
-    return <TooltipProvider>{card}</TooltipProvider>;
+        </TooltipProvider>
+    );
 }

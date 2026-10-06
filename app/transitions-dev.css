@@ -1191,24 +1191,54 @@
     }
 }
 
-/* --- Menu item hover (profile dropdown + select) ---
-   Light warm tint on white surface; hover uses --menu-item-hover-dur
-   (160ms) and --ease-smooth-out. Select popup already uses .t-dropdown
-   for origin-aware open/close (05-menu-dropdown). */
+/* --- Menu item hover (profile dropdown + select + card ⋯ menus) ---
+   Warm surface-muted fill only — never flip icon/text to accent-foreground
+   (shadcn Item uses focus:**:text-accent-foreground, which turns Lucide
+   icons white on a light menu). */
 
 .t-profile-menu [data-slot="dropdown-menu-item"],
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"],
 .t-dropdown [data-slot="select-item"] {
-    transition:
-        background-color var(--menu-item-hover-dur) var(--menu-item-hover-ease),
-        color var(--menu-item-hover-dur) var(--menu-item-hover-ease);
+    transition: background-color var(--menu-item-hover-dur) var(--menu-item-hover-ease);
 }
 
 .t-profile-menu [data-slot="dropdown-menu-item"][data-highlighted],
 .t-profile-menu [data-slot="dropdown-menu-item"]:focus,
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"][data-highlighted],
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"]:focus,
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"][data-popup-open],
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"][data-open],
 .t-dropdown [data-slot="select-item"][data-highlighted],
 .t-dropdown [data-slot="select-item"]:focus-visible {
     background-color: var(--color-surface-muted);
     color: var(--color-ink);
+}
+
+/* Stroke icons stay ink at rest and on hover (beats focus:**:text-accent-foreground). */
+.t-profile-menu .menu-stroke-icon,
+.t-profile-menu .menu-stroke-icon *,
+.t-profile-menu
+    [data-slot="dropdown-menu-item"][data-highlighted]
+    > svg:not(.is-brand):not(.is-danger),
+.t-profile-menu
+    [data-slot="dropdown-menu-item"][data-highlighted]
+    > svg:not(.is-brand):not(.is-danger)
+    *,
+.t-profile-menu [data-slot="dropdown-menu-item"]:focus > svg:not(.is-brand):not(.is-danger),
+.t-profile-menu [data-slot="dropdown-menu-item"]:focus > svg:not(.is-brand):not(.is-danger) *,
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"] svg,
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"] svg * {
+    color: var(--color-ink) !important;
+}
+
+.t-profile-menu .menu-stroke-icon.is-brand,
+.t-profile-menu .menu-stroke-icon.is-brand * {
+    color: var(--color-brand) !important;
+}
+
+.t-profile-menu .menu-stroke-icon.is-danger,
+.t-profile-menu .menu-stroke-icon.is-danger * {
+    color: var(--color-danger) !important;
 }
 
 .t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"][data-highlighted],
@@ -1217,8 +1247,23 @@
     color: var(--color-danger);
 }
 
+.t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"] .menu-stroke-icon,
+.t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"] .menu-stroke-icon *,
+.t-profile-menu
+    [data-slot="dropdown-menu-item"][data-variant="destructive"][data-highlighted]
+    > svg,
+.t-profile-menu
+    [data-slot="dropdown-menu-item"][data-variant="destructive"][data-highlighted]
+    > svg
+    *,
+.t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"]:focus > svg,
+.t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"]:focus > svg * {
+    color: var(--color-danger) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .t-profile-menu [data-slot="dropdown-menu-item"],
+    .t-profile-menu [data-slot="dropdown-menu-sub-trigger"],
     .t-dropdown [data-slot="select-item"] {
         transition: none !important;
     }

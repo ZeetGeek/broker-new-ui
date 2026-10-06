@@ -48,6 +48,7 @@ import {
     OverlayChip,
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
+import { AttachedBuyersRow, AttachedOwnerRow } from "@/components/shared/attached-people-row";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
@@ -58,26 +59,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted";
-const PROPERTY_CARD_PHOTO_GRID_CLASS = "h-40 w-full";
-const PROPERTY_CARD_PHOTO_LIST_CLASS = "w-36 min-h-36 self-stretch sm:w-44 md:w-52";
+const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted h-40 w-full";
 
 const BROWSE_CARD_PHOTO_FRAME_CLASS =
-    "shrink-0 rounded-card p-1 shadow-md transition-[box-shadow,background] duration-160 group-hover:shadow-lg";
+    "shrink-0 rounded-card p-1 shadow-md transition-[box-shadow,background] duration-160 group-hover:shadow-lg w-full";
 const BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS = "bg-surface";
 const BROWSE_CARD_PHOTO_FRAME_NEW_CLASS = `
   bg-gradient-to-br from-highlight via-brand-soft to-brand/55
   shadow-[0_0_0_1px_color-mix(in_oklch,var(--color-highlight)_35%,transparent),var(--shadow-md)]
   group-hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--color-highlight)_50%,transparent),var(--shadow-lg)]
 `;
-const BROWSE_CARD_PHOTO_FRAME_GRID_CLASS = "w-full";
-const BROWSE_CARD_PHOTO_FRAME_LIST_CLASS =
-    "w-[min(62%,28rem)] min-w-64 shrink-0 self-start sm:min-w-72";
 
 const BROWSE_CARD_PHOTO_INNER_CLASS =
-    "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
-const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full";
-const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[5/4] w-full";
+    "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted aspect-[4/3] w-full";
 
 const BROWSE_CARD_PHOTO_NAV_BTN_CLASS = `
   absolute z-10 flex -translate-y-1/2 items-center justify-center
@@ -402,11 +396,12 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     rentAmountInr: number | null;
     ownerName?: string | null;
     visibility?: "private" | "marketplace";
+    /** Buyers linked to this listing — shown as the My deals avatar stack. */
+    attachedClients?: Array<{ id: string; name: string; avatarUrl?: string }>;
 };
 
 export type PropertyCardProps = {
     className?: string;
-    layout?: "grid" | "list";
     detailsHref: string;
     priority?: boolean;
     imageSizes?: string;
@@ -473,12 +468,10 @@ function BrowsePropertyCardPhoto({
     listing,
     priority,
     imageSizes,
-    layout = "grid",
 }: {
     listing: BrowsePropertyCardListing;
     priority: boolean;
     imageSizes: string;
-    layout?: "grid" | "list";
 }) {
     const alt = listing.title;
     const images =
@@ -558,20 +551,9 @@ function BrowsePropertyCardPhoto({
                 listing.isNew
                     ? BROWSE_CARD_PHOTO_FRAME_NEW_CLASS
                     : BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS,
-                layout === "list"
-                    ? BROWSE_CARD_PHOTO_FRAME_LIST_CLASS
-                    : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
             )}
         >
-            <HoverScaleRoot
-                className={cn(
-                    BROWSE_CARD_PHOTO_INNER_CLASS,
-                    "group/photo",
-                    layout === "list"
-                        ? BROWSE_CARD_PHOTO_INNER_LIST_CLASS
-                        : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
-                )}
-            >
+            <HoverScaleRoot className={cn(BROWSE_CARD_PHOTO_INNER_CLASS, "group/photo")}>
                 {images.length > 0 ? (
                     <HoverScaleLayer className="absolute inset-0">
                         <div
@@ -1084,128 +1066,7 @@ function BrowseOverlayPropertyCard({
 }
 
 function BrowsePropertyCard(props: Extract<PropertyCardProps, { variant: "browse" }>) {
-    if (props.layout !== "list") {
-        return <BrowseOverlayPropertyCard {...props} />;
-    }
-    return <BrowseListPropertyCard {...props} />;
-}
-
-function BrowseListPropertyCard({
-    listing,
-    layout = "grid",
-    detailsHref,
-    priority = false,
-    imageSizes = "(max-width: 768px) 100vw, 50vw",
-    onRequest,
-    onCancelRequest,
-    isRequestPending = false,
-    onAcceptInvite,
-    onCancelInvite,
-    inviteActionPending,
-    isSaved = false,
-    onToggleSave,
-    className,
-}: Extract<PropertyCardProps, { variant: "browse" }>) {
-    const sharePriceLabel =
-        offersRent(listing) && !offersSale(listing)
-            ? formatRentInr(listing.rentAmountInr ?? 0)
-            : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
-    const isListView = layout === "list";
-
-    return (
-        <article
-            className={cn(
-                "flex min-inline-0",
-                isListView ? "flex-row items-stretch gap-4" : "flex-1 flex-col gap-3 block-full",
-                className,
-            )}
-        >
-            <Link
-                href={detailsHref}
-                prefetch={false}
-                className={cn("group block shrink-0 min-inline-0", isListView && "self-start")}
-            >
-                <BrowsePropertyCardPhoto
-                    listing={listing}
-                    priority={priority}
-                    imageSizes={imageSizes}
-                    layout={layout}
-                />
-            </Link>
-
-            <div
-                className={cn(
-                    "flex flex-1 flex-col gap-2.5 px-2 min-inline-0",
-                    isListView ? "self-stretch" : "min-block-0",
-                )}
-            >
-                <div className="flex flex-1 items-stretch gap-2 min-block-0">
-                    <div className="flex flex-1 flex-col gap-1.5 min-block-0 min-inline-0">
-                        <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h3 className="max-inline-full min-inline-0">
-                                <PropertyTitleLink
-                                    href={detailsHref}
-                                    className={PROPERTY_CARD_TITLE_CLASS}
-                                >
-                                    {listing.title}
-                                </PropertyTitleLink>
-                            </h3>
-                            <p className={PROPERTY_CARD_LOCATION_CLASS}>
-                                <MapPin
-                                    aria-hidden
-                                    className="shrink-0 block-3.5 inline-3.5"
-                                    strokeWidth={1.75}
-                                />
-                                <span className="truncate capitalize">
-                                    {listing.locality}, {listing.city}
-                                </span>
-                            </p>
-                        </div>
-
-                        <BrowsePropertyCardSpecs listing={listing} />
-
-                        <BrowsePropertyCardOwner owner={listing.owner} />
-                    </div>
-
-                    <PropertyCardMenu
-                        tone="plain"
-                        listing={{
-                            id: listing.id,
-                            title: listing.title,
-                            locality: listing.locality,
-                            city: listing.city,
-                            priceLabel: sharePriceLabel,
-                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
-                            configLabel: listing.configLabel,
-                            propertyTypeLabel: listing.propertyTypeLabel,
-                            areaSqft: listing.areaSqft,
-                            bhk: listing.bhk,
-                            listingKind:
-                                offersRent(listing) && !offersSale(listing) ? "rent" : "sale",
-                        }}
-                        isSaved={isSaved}
-                        onToggleSave={onToggleSave}
-                    />
-                </div>
-
-                <div className="mbs-auto flex flex-col gap-2.5">
-                    <BrowsePropertyCardPrice listing={listing} />
-
-                    <BrowseRequestAction
-                        hasRequested={listing.hasRequested}
-                        isRepresenting={listing.isRepresenting}
-                        isInvitePending={listing.isInvitePending}
-                        isRequestPending={isRequestPending}
-                        inviteActionPending={inviteActionPending}
-                        onRequest={onRequest}
-                        onCancelRequest={onCancelRequest}
-                        onAcceptInvite={onAcceptInvite}
-                        onCancelInvite={onCancelInvite}
-                    />
-                </div>
-            </div>
-        </article>
-    );
+    return <BrowseOverlayPropertyCard {...props} />;
 }
 
 function TransactionBadge({ isRent }: { isRent: boolean }) {
@@ -1220,22 +1081,15 @@ function PropertyCardPhoto({
     listing,
     priority,
     imageSizes,
-    layout = "grid",
 }: {
     listing: PropertyCardBase;
     priority: boolean;
     imageSizes: string;
-    layout?: "grid" | "list";
 }) {
     const alt = `${listing.configLabel} ${listing.propertyTypeLabel}`;
 
     return (
-        <HoverScaleRoot
-            className={cn(
-                PROPERTY_CARD_PHOTO_CLASS,
-                layout === "list" ? PROPERTY_CARD_PHOTO_LIST_CLASS : PROPERTY_CARD_PHOTO_GRID_CLASS,
-            )}
-        >
+        <HoverScaleRoot className={PROPERTY_CARD_PHOTO_CLASS}>
             {listing.imageSrc ? (
                 <HoverScaleLayer className="absolute inset-0">
                     <AppImage
@@ -1373,7 +1227,6 @@ function RepresentedMeta({ listing }: { listing: RepresentedPropertyCardListing 
 
 function RepresentedPropertyCard({
     listing,
-    layout = "grid",
     detailsHref,
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
@@ -1388,7 +1241,7 @@ function RepresentedPropertyCard({
         <article
             className={cn(
                 "overflow-hidden rounded-card border border-border-warm bg-surface",
-                layout === "list" ? "flex flex-row" : "flex flex-col",
+                "flex flex-col",
                 className,
             )}
         >
@@ -1400,12 +1253,7 @@ function RepresentedPropertyCard({
             </div>
 
             <Link href={detailsHref} prefetch={false} className="block min-inline-0">
-                <PropertyCardPhoto
-                    listing={listing}
-                    priority={priority}
-                    imageSizes={imageSizes}
-                    layout={layout}
-                />
+                <PropertyCardPhoto listing={listing} priority={priority} imageSizes={imageSizes} />
             </Link>
 
             <div className="flex flex-1 flex-col gap-3 p-4">
@@ -1512,7 +1360,6 @@ function OwnedListingAction({
     onDelete?: () => void;
 }) {
     const opensInModal = isEdit && onEdit != null;
-    const hasSecondary = Boolean(onAddBuyer || onAttachOwner || onDelete);
     const attachLabel = hasAttachedOwner ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL;
     const attachTooltip = hasAttachedOwner
         ? OWNED_CHANGE_OWNER_TOOLTIP
@@ -1520,118 +1367,119 @@ function OwnedListingAction({
 
     return (
         <TooltipProvider>
-            <div className="flex flex-wrap gap-2">
-                {onAttachOwner ? (
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button
-                                    size="md"
-                                    variant="outline"
-                                    type="button"
-                                    className="flex-1 border-border-warm"
-                                    onClick={onAttachOwner}
-                                >
-                                    <UserRound
-                                        aria-hidden
-                                        className="block-4 inline-4"
-                                        strokeWidth={1.75}
-                                    />
-                                    {attachLabel}
-                                </Button>
-                            }
-                        />
-                        <TooltipContent side="top" className="text-center max-inline-xs">
-                            {attachTooltip}
-                        </TooltipContent>
-                    </Tooltip>
-                ) : null}
-
-                {onAddBuyer ? (
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button
-                                    size="md"
-                                    variant="outline"
-                                    type="button"
-                                    className="flex-1 border-border-warm"
-                                    onClick={onAddBuyer}
-                                >
-                                    <UserPlus
-                                        aria-hidden
-                                        className="block-4 inline-4"
-                                        strokeWidth={1.75}
-                                    />
-                                    {OWNED_ADD_BUYER_LABEL}
-                                </Button>
-                            }
-                        />
-                        <TooltipContent side="top" className="text-center max-inline-xs">
-                            {OWNED_ADD_BUYER_TOOLTIP}
-                        </TooltipContent>
-                    </Tooltip>
-                ) : null}
-
-                <Tooltip>
-                    <TooltipTrigger
-                        render={
-                            <span
-                                className={cn(
-                                    "inline-flex",
-                                    hasSecondary ? "flex-[1.4]" : "inline-full",
-                                )}
-                            >
-                                <Button
-                                    size="md"
-                                    variant="accent"
-                                    className="inline-full"
-                                    type={opensInModal ? "button" : undefined}
-                                    onClick={opensInModal ? onEdit : undefined}
+            <div className="flex flex-col gap-2">
+                {onAttachOwner || onAddBuyer ? (
+                    <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 -mis-2">
+                        {onAttachOwner ? (
+                            <Tooltip>
+                                <TooltipTrigger
                                     render={
-                                        opensInModal ? undefined : (
-                                            <Link href={href} prefetch={false} />
-                                        )
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            type="button"
+                                            className="text-ink-muted hover:text-ink"
+                                            onClick={onAttachOwner}
+                                        >
+                                            <UserRound
+                                                aria-hidden
+                                                className="block-3.5 inline-3.5"
+                                                strokeWidth={1.75}
+                                            />
+                                            {attachLabel}
+                                        </Button>
                                     }
-                                >
-                                    {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
-                                </Button>
-                            </span>
-                        }
-                    />
-                    <TooltipContent side="top" className="text-center max-inline-xs">
-                        {isEdit ? OWNED_EDIT_TOOLTIP : OWNED_OPEN_TOOLTIP}
-                    </TooltipContent>
-                </Tooltip>
+                                />
+                                <TooltipContent side="top" className="text-center max-inline-xs">
+                                    {attachTooltip}
+                                </TooltipContent>
+                            </Tooltip>
+                        ) : null}
 
-                {onDelete ? (
+                        {onAddBuyer ? (
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            type="button"
+                                            className="text-ink-muted hover:text-ink"
+                                            onClick={onAddBuyer}
+                                        >
+                                            <UserPlus
+                                                aria-hidden
+                                                className="block-3.5 inline-3.5"
+                                                strokeWidth={1.75}
+                                            />
+                                            {OWNED_ADD_BUYER_LABEL}
+                                        </Button>
+                                    }
+                                />
+                                <TooltipContent side="top" className="text-center max-inline-xs">
+                                    {OWNED_ADD_BUYER_TOOLTIP}
+                                </TooltipContent>
+                            </Tooltip>
+                        ) : null}
+                    </div>
+                ) : null}
+
+                <div className="flex gap-2">
                     <Tooltip>
                         <TooltipTrigger
                             render={
-                                <Button
-                                    size="md"
-                                    variant="outline"
-                                    type="button"
-                                    aria-label={OWNED_DELETE_LABEL}
-                                    className="
-                                      shrink-0 border-border-warm text-danger
-                                      hover:bg-danger/10 hover:text-danger
-                                    "
-                                    onClick={onDelete}
-                                >
-                                    <Trash2
-                                        aria-hidden
-                                        className="block-4 inline-4"
-                                        strokeWidth={1.75}
-                                    />
-                                </Button>
+                                <span className="inline-flex flex-1 min-inline-0">
+                                    <Button
+                                        size="md"
+                                        variant="accent"
+                                        className="inline-full"
+                                        type={opensInModal ? "button" : undefined}
+                                        onClick={opensInModal ? onEdit : undefined}
+                                        render={
+                                            opensInModal ? undefined : (
+                                                <Link href={href} prefetch={false} />
+                                            )
+                                        }
+                                    >
+                                        {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
+                                    </Button>
+                                </span>
                             }
                         />
                         <TooltipContent side="top" className="text-center max-inline-xs">
-                            {OWNED_DELETE_TOOLTIP}
+                            {isEdit ? OWNED_EDIT_TOOLTIP : OWNED_OPEN_TOOLTIP}
                         </TooltipContent>
                     </Tooltip>
-                ) : null}
+
+                    {onDelete ? (
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        size="md"
+                                        variant="outline"
+                                        type="button"
+                                        aria-label={OWNED_DELETE_LABEL}
+                                        className="
+                                          shrink-0 border-border-warm text-danger
+                                          hover:bg-danger/10 hover:text-danger
+                                        "
+                                        onClick={onDelete}
+                                    >
+                                        <Trash2
+                                            aria-hidden
+                                            className="block-4 inline-4"
+                                            strokeWidth={1.75}
+                                        />
+                                    </Button>
+                                }
+                            />
+                            <TooltipContent side="top" className="text-center max-inline-xs">
+                                {OWNED_DELETE_TOOLTIP}
+                            </TooltipContent>
+                        </Tooltip>
+                    ) : null}
+                </div>
             </div>
         </TooltipProvider>
     );
@@ -1701,7 +1549,6 @@ function OwnedOverlayPropertyCard({
     detailsHref,
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
-    editHref,
     onEdit,
     onAddBuyer,
     onAttachOwner,
@@ -1721,15 +1568,17 @@ function OwnedOverlayPropertyCard({
     const headline = [listing.configLabel, formatBrowseCardArea(listing.areaSqft)]
         .filter(Boolean)
         .join(" · ");
-    const isEdit = Boolean(editHref);
-    const editTarget = editHref ?? detailsHref;
-    const opensInModal = isEdit && onEdit != null;
     const metaParts = [
         listing.inboundRequestCount === 0
             ? "No requests"
             : formatRequestsValue(listing.inboundRequestCount),
         `Listed ${formatListedLabel(listing.listedDaysAgo)}`,
     ];
+    const buyers = listing.attachedClients ?? [];
+    const hasOwner = Boolean(listing.ownerName?.trim());
+    const hasBuyers = buyers.length > 0;
+    const showAttachOwnerButton = Boolean(onAttachOwner && !hasOwner);
+    const showAddBuyerButton = Boolean(onAddBuyer && !hasBuyers);
 
     return (
         <OverlayCard
@@ -1772,6 +1621,8 @@ function OwnedOverlayPropertyCard({
                         bhk: listing.bhk,
                         listingKind: offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
                     }}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
                 />
             }
         >
@@ -1794,65 +1645,56 @@ function OwnedOverlayPropertyCard({
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />
 
-                {listing.ownerName ? (
-                    <OverlayPersonLine label="Owner" name={listing.ownerName} />
-                ) : null}
-
                 <p className="body-sm tracking-wide text-ink-muted">{metaParts.join(" · ")}</p>
             </div>
 
-            <OverlayCardActions className="flex-row">
-                {onAttachOwner ? (
-                    <Button
-                        size="md"
-                        variant="outline"
-                        type="button"
-                        className={cn("flex-1", OVERLAY_GLASS_BUTTON_CLASS)}
-                        onClick={onAttachOwner}
-                    >
-                        <UserRound aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        {listing.ownerName ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL}
-                    </Button>
+            <OverlayCardActions className="flex-col gap-2">
+                {hasOwner && onAttachOwner ? (
+                    <AttachedOwnerRow name={listing.ownerName!} onManage={onAttachOwner} />
                 ) : null}
-                {onAddBuyer ? (
-                    <Button
-                        size="md"
-                        variant="outline"
-                        type="button"
-                        className={cn("flex-1", OVERLAY_GLASS_BUTTON_CLASS)}
-                        onClick={onAddBuyer}
-                    >
-                        <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        {OWNED_ADD_BUYER_LABEL}
-                    </Button>
+
+                {hasBuyers && onAddBuyer ? (
+                    <AttachedBuyersRow buyers={buyers} onManage={onAddBuyer} />
                 ) : null}
-                <Button
-                    size="md"
-                    variant="accent"
-                    className={
-                        onAddBuyer || onAttachOwner || onDelete ? "flex-[1.4]" : "inline-full"
-                    }
-                    type={opensInModal ? "button" : undefined}
-                    onClick={opensInModal ? onEdit : undefined}
-                    render={opensInModal ? undefined : <Link href={editTarget} prefetch={false} />}
-                >
-                    {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
-                </Button>
-                {onDelete ? (
-                    <Button
-                        size="md"
-                        variant="outline"
-                        type="button"
-                        aria-label={OWNED_DELETE_LABEL}
-                        title={OWNED_DELETE_TOOLTIP}
-                        className={cn(
-                            "shrink-0 text-danger hover:bg-danger/15 hover:text-danger",
-                            OVERLAY_GLASS_BUTTON_CLASS,
-                        )}
-                        onClick={onDelete}
-                    >
-                        <Trash2 aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    </Button>
+
+                {showAttachOwnerButton || showAddBuyerButton ? (
+                    <div className="flex gap-2">
+                        {showAttachOwnerButton ? (
+                            <Button
+                                size="md"
+                                variant="outline"
+                                type="button"
+                                className={cn(
+                                    showAddBuyerButton ? "flex-1" : "inline-full",
+                                    OVERLAY_GLASS_BUTTON_CLASS,
+                                )}
+                                onClick={onAttachOwner}
+                            >
+                                <UserRound
+                                    aria-hidden
+                                    className="block-4 inline-4"
+                                    strokeWidth={1.75}
+                                />
+                                {OWNED_ATTACH_OWNER_LABEL}
+                            </Button>
+                        ) : null}
+                        {showAddBuyerButton ? (
+                            <Button
+                                size="md"
+                                variant="accent"
+                                type="button"
+                                className={showAttachOwnerButton ? "flex-1" : "inline-full"}
+                                onClick={onAddBuyer}
+                            >
+                                <UserPlus
+                                    aria-hidden
+                                    className="block-4 inline-4"
+                                    strokeWidth={1.75}
+                                />
+                                {OWNED_ADD_BUYER_LABEL}
+                            </Button>
+                        ) : null}
+                    </div>
                 ) : null}
             </OverlayCardActions>
         </OverlayCard>
@@ -1903,140 +1745,7 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
 }
 
 function OwnedPropertyCard(props: Extract<PropertyCardProps, { variant: "owned" }>) {
-    if (props.layout !== "list") {
-        return <OwnedOverlayPropertyCard {...props} />;
-    }
-    return <OwnedListPropertyCard {...props} />;
-}
-
-function OwnedListPropertyCard({
-    listing,
-    layout = "grid",
-    detailsHref,
-    priority = false,
-    imageSizes = "(max-width: 768px) 100vw, 50vw",
-    editHref,
-    onEdit,
-    onAddBuyer,
-    onAttachOwner,
-    onDelete,
-    className,
-}: Extract<PropertyCardProps, { variant: "owned" }>) {
-    const browse = ownedToBrowseListing(listing);
-    const isListView = layout === "list";
-    const sharePriceLabel =
-        offersRent(browse) && !offersSale(browse)
-            ? formatRentInr(listing.rentAmountInr ?? 0)
-            : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
-
-    return (
-        <article
-            className={cn(
-                "flex min-inline-0",
-                isListView ? "flex-row items-stretch gap-4" : "flex-1 flex-col gap-3 block-full",
-                className,
-            )}
-        >
-            <Link
-                href={detailsHref}
-                prefetch={false}
-                className={cn(
-                    "group relative block shrink-0 min-inline-0",
-                    isListView && `self-start`,
-                )}
-            >
-                <BrowsePropertyCardPhoto
-                    listing={browse}
-                    priority={priority}
-                    imageSizes={imageSizes}
-                    layout={layout}
-                />
-                <div
-                    className="
-                      pointer-events-none absolute inset-e-4 inset-bs-4 z-20 flex flex-col items-end
-                      gap-1.5
-                    "
-                >
-                    <OwnedStatusBadge status={listing.status} />
-                </div>
-            </Link>
-
-            <div
-                className={cn(
-                    "flex flex-1 flex-col gap-2.5 px-2 min-inline-0",
-                    isListView ? "self-stretch" : "min-block-0",
-                )}
-            >
-                <div className="flex items-start gap-2">
-                    <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                        <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h3 className="max-inline-full min-inline-0">
-                                <PropertyTitleLink
-                                    href={detailsHref}
-                                    className={PROPERTY_CARD_TITLE_CLASS}
-                                >
-                                    {listing.title}
-                                </PropertyTitleLink>
-                            </h3>
-                            <p className={PROPERTY_CARD_LOCATION_CLASS}>
-                                <MapPin
-                                    aria-hidden
-                                    className="shrink-0 block-3.5 inline-3.5"
-                                    strokeWidth={1.75}
-                                />
-                                <span className="truncate capitalize">
-                                    {listing.locality}, {listing.city}
-                                </span>
-                            </p>
-                        </div>
-                        <BrowsePropertyCardSpecs listing={browse} />
-                        {listing.ownerName ? (
-                            <p className="body-xs flex items-center gap-1.5 text-ink-muted">
-                                <UserRound aria-hidden className="shrink-0 block-3.5 inline-3.5" />
-                                <span className="truncate">Owner: {listing.ownerName}</span>
-                                {listing.visibility === "private" ? (
-                                    <Badge variant="neutral" className="shrink-0">
-                                        Private
-                                    </Badge>
-                                ) : null}
-                            </p>
-                        ) : null}
-                    </div>
-
-                    <PropertyCardMenu
-                        tone="plain"
-                        listing={{
-                            id: listing.id,
-                            title: listing.title,
-                            locality: listing.locality,
-                            city: listing.city,
-                            priceLabel: sharePriceLabel,
-                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
-                            configLabel: listing.configLabel,
-                            propertyTypeLabel: listing.propertyTypeLabel,
-                            areaSqft: listing.areaSqft,
-                            bhk: listing.bhk,
-                            listingKind:
-                                offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
-                        }}
-                    />
-                </div>
-
-                <div className="mbs-auto flex flex-col gap-2.5">
-                    <OwnedPropertyCardPrice listing={listing} />
-                    <OwnedListingAction
-                        href={editHref ?? detailsHref}
-                        isEdit={Boolean(editHref)}
-                        onEdit={onEdit}
-                        onAddBuyer={onAddBuyer}
-                        onAttachOwner={onAttachOwner}
-                        hasAttachedOwner={Boolean(listing.ownerName)}
-                        onDelete={onDelete}
-                    />
-                </div>
-            </div>
-        </article>
-    );
+    return <OwnedOverlayPropertyCard {...props} />;
 }
 
 export function PropertyCard(props: PropertyCardProps) {

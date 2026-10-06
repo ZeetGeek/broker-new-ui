@@ -1,19 +1,15 @@
 import { PropertyCardSkeleton } from "@/components/shared/property-card-skeleton";
 
-import {
-    MY_LISTINGS_GRID_CLASS,
-    MY_LISTINGS_LIST_CLASS,
-} from "@/features/properties/your-listings/my-listings-grid-class";
-import type { MyListingsView } from "@/features/properties/your-listings/use-my-listings-view";
+import { MY_LISTINGS_GRID_CLASS } from "@/features/properties/your-listings/my-listings-grid-class";
 
-export function MyListingsPageSkeleton({ view = "grid" }: { view?: MyListingsView }) {
-    const isList = view === "list";
-
+export function MyListingsPageSkeleton() {
     return (
         <div className="flex flex-col gap-6">
-            <div className="
+            <div
+                className="
               animate-pulse rounded-control bg-surface-muted block-8 inline-72 max-inline-full
-            " />
+            "
+            />
             <div className="flex items-center gap-2.5 block-[38px]">
                 {Array.from({ length: 5 }).map((_, index) => (
                     <div
@@ -23,25 +19,26 @@ export function MyListingsPageSkeleton({ view = "grid" }: { view?: MyListingsVie
                         "
                     />
                 ))}
-                <div className="
+                <div
+                    className="
                   ms-auto animate-pulse rounded-control bg-surface-muted block-[38px] inline-52
-                " />
+                "
+                />
             </div>
-            <div className={isList ? MY_LISTINGS_LIST_CLASS : MY_LISTINGS_GRID_CLASS}>
+            <div className={MY_LISTINGS_GRID_CLASS}>
                 {Array.from({ length: 5 }).map((_, index) => (
-                    <PropertyCardSkeleton key={index} variant="browse" layout={view} />
+                    <PropertyCardSkeleton key={index} variant="browse" />
                 ))}
             </div>
         </div>
     );
 }
 
-export function MyListingsResultsSkeleton({ view = "grid" }: { view?: MyListingsView }) {
-    const isList = view === "list";
+export function MyListingsResultsSkeleton() {
     return (
-        <div className={isList ? MY_LISTINGS_LIST_CLASS : MY_LISTINGS_GRID_CLASS}>
+        <div className={MY_LISTINGS_GRID_CLASS}>
             {Array.from({ length: 5 }).map((_, index) => (
-                <PropertyCardSkeleton key={index} variant="browse" layout={view} />
+                <PropertyCardSkeleton key={index} variant="browse" />
             ))}
         </div>
     );

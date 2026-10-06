@@ -19,7 +19,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import type { OwnerBrokersTab } from "@/features/owner-brokers/types";
 import type { OwnerRequestsSort } from "@/features/owner-requests/owner-requests-header";
-import type { OwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
 import {
     formatChipCount,
     ownerListingsChipClassName,
@@ -29,7 +28,6 @@ import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
-import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
 
 const SORT_OPTIONS: { value: OwnerRequestsSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
@@ -162,8 +160,6 @@ export function OwnerBrokersHeader({
     onSearchChange,
     sort,
     onSortChange,
-    view,
-    onViewChange,
     isLoading = false,
 }: {
     activeTab: OwnerBrokersTab;
@@ -172,8 +168,6 @@ export function OwnerBrokersHeader({
     onSearchChange: (q: string) => void;
     sort: OwnerRequestsSort;
     onSortChange: (sort: OwnerRequestsSort) => void;
-    view: OwnerRequestsView;
-    onViewChange: (view: OwnerRequestsView) => void;
     isLoading?: boolean;
 }) {
     const searchPlaceholder = activeTab === "browse" ? "Search brokers" : "Search active brokers";
@@ -237,7 +231,6 @@ export function OwnerBrokersHeader({
                         />
                         {activeTab === "active" ? (
                             <>
-                                <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
                                 <SortMenu sort={sort} onSortChange={onSortChange} />
                             </>
                         ) : null}

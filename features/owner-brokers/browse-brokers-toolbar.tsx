@@ -18,9 +18,7 @@ import type {
     BrowseBrokersSort,
 } from "@/features/owner-brokers/browse-brokers-filters";
 import { hasActiveBrowseFilters } from "@/features/owner-brokers/browse-brokers-filters";
-import type { OwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
 import { ownerListingsChipClassName } from "@/features/properties/owner-listings/owner-listings-chip-styles";
-import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
 
 const EXPERIENCE_OPTIONS: { value: BrowseBrokersExperience; label: string }[] = [
     { value: 0, label: "Any experience" },
@@ -109,8 +107,6 @@ export function BrowseBrokersToolbar({
     resultCount,
     totalCount,
     isLoading,
-    view,
-    onViewChange,
 }: {
     filters: BrowseBrokersFilters;
     onFiltersChange: (patch: Partial<BrowseBrokersFilters>) => void;
@@ -119,8 +115,6 @@ export function BrowseBrokersToolbar({
     resultCount: number;
     totalCount: number;
     isLoading: boolean;
-    view: OwnerRequestsView;
-    onViewChange: (view: OwnerRequestsView) => void;
 }) {
     const experienceLabel = EXPERIENCE_OPTIONS.find(
         (o) => o.value === filters.minExperience,
@@ -215,11 +209,6 @@ export function BrowseBrokersToolbar({
                         options={SORT_OPTIONS}
                         onChange={(sort) => onFiltersChange({ sort })}
                         align="end"
-                    />
-                    <OwnerListingsViewToggle
-                        view={view}
-                        onViewChange={onViewChange}
-                        className="hidden sm:flex"
                     />
                 </div>
             </div>

@@ -277,6 +277,7 @@ function hydrateSeed(item: SeedDraft): MyListingItem {
         virtualTourUrl: item.virtualTourUrl ?? "",
         landmark: item.landmark ?? "",
         society: item.society ?? "",
+        attachedClients: item.attachedClients ?? [],
     };
 }
 
@@ -323,6 +324,13 @@ const SEED_DRAFTS: SeedDraft[] = [
         totalFloors: 12,
         facing: "north_east",
         parking: "2",
+        ownerName: "Ramesh Patel",
+        exclusiveOwnerId: "eo_ramesh",
+        attachedClients: [
+            { id: "buy_01", name: "Ayush" },
+            { id: "buy_02", name: "Shiv" },
+            { id: "buy_03", name: "Client Test" },
+        ],
     },
     {
         id: "own_002",

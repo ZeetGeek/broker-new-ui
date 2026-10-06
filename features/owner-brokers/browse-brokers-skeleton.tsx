@@ -1,7 +1,5 @@
 import { cn } from "@/lib/utils";
 
-import type { OwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
-
 const BAR = "animate-pulse rounded-sm bg-surface-muted";
 
 function CardSkeleton() {
@@ -46,9 +44,9 @@ function CardSkeleton() {
     );
 }
 
-export function BrowseBrokersSkeleton({ view }: { view: OwnerRequestsView }) {
+export function BrowseBrokersSkeleton() {
     return (
-        <div role="status" aria-label="Loading brokers" className={browseBrokersGridClass(view)}>
+        <div role="status" aria-label="Loading brokers" className={browseBrokersGridClass()}>
             {Array.from({ length: 6 }, (_, index) => (
                 <CardSkeleton key={index} />
             ))}
@@ -56,8 +54,6 @@ export function BrowseBrokersSkeleton({ view }: { view: OwnerRequestsView }) {
     );
 }
 
-export function browseBrokersGridClass(view: OwnerRequestsView): string {
-    return view === "list"
-        ? "grid grid-cols-1 gap-3 md:gap-4"
-        : "grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-3";
+export function browseBrokersGridClass(): string {
+    return "grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-3";
 }

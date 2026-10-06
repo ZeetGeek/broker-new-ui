@@ -8,11 +8,9 @@ import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import { toOwnedPropertyCardListing } from "@/features/properties/your-listings/to-owned-property-card";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
-import type { MyListingsView } from "@/features/properties/your-listings/use-my-listings-view";
 
 export type MyListingsGridProps = {
     items: MyListingItem[];
-    view?: MyListingsView;
     /** Owner inventory uses `/owner/properties/*` instead of broker routes. */
     portal?: "broker" | "owner";
     /** When set, "Edit property" opens a modal instead of the edit route. */
@@ -32,18 +30,14 @@ const GRID_BREAKPOINTS = [
     { minWidth: 1280, columns: 5 },
 ];
 
-const LIST_BREAKPOINTS = [{ minWidth: 768, columns: 2 }];
-
 export function MyListingsGrid({
     items,
-    view = "grid",
     portal = "broker",
     onEditListing,
     onAddBuyer,
     onAttachOwner,
     onDeleteListing,
 }: MyListingsGridProps) {
-    const isListView = view === "list";
     const detailHref = portal === "owner" ? ownerPropertyDetailHref : brokerPropertyDetailHref;
     const editHref = portal === "owner" ? ownerPropertyEditHref : brokerPropertyEditHref;
 
@@ -51,9 +45,9 @@ export function MyListingsGrid({
         <WindowVirtualGrid
             items={items}
             getKey={(item) => item.id}
-            estimateRowHeight={isListView ? 224 : 520}
+            estimateRowHeight={520}
             gap={24}
-            breakpoints={isListView ? LIST_BREAKPOINTS : GRID_BREAKPOINTS}
+            breakpoints={GRID_BREAKPOINTS}
             ariaLabel="Your listings"
             renderItem={(item, index) => {
                 const listing = toOwnedPropertyCardListing(item);
@@ -61,7 +55,6 @@ export function MyListingsGrid({
                 return (
                     <PropertyCard
                         variant="owned"
-                        layout={view}
                         listing={listing}
                         detailsHref={detailHref(item.id)}
                         editHref={editHref(item.id)}
@@ -70,11 +63,7 @@ export function MyListingsGrid({
                         onAttachOwner={onAttachOwner ? () => onAttachOwner(item) : undefined}
                         onDelete={onDeleteListing ? () => onDeleteListing(item) : undefined}
                         priority={index === 0}
-                        imageSizes={
-                            isListView
-                                ? "(max-width: 768px) 55vw, 320px"
-                                : "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
-                        }
+                        imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                     />
                 );
             }}

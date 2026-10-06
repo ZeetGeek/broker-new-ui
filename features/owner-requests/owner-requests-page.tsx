@@ -26,11 +26,7 @@ import {
 import { OwnerRequestsIntro } from "@/features/owner-requests/owner-requests-intro";
 import type { OwnerRequestsSummary, OwnerRequestsTab } from "@/features/owner-requests/types";
 import { useOwnerRepQueue } from "@/features/owner-requests/use-owner-rep-queue";
-import { useOwnerRequestsView } from "@/features/owner-requests/use-owner-requests-view";
-import {
-    REQUESTS_GRID_BREAKPOINTS,
-    REQUESTS_LIST_BREAKPOINTS,
-} from "@/features/properties/my-requests/requests-grid-class";
+import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
 import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 
 function isRequestsTab(value: string | null): value is OwnerRequestsTab {
@@ -47,8 +43,6 @@ export function OwnerRequestsPage() {
     const tabParam = searchParams.get("tab");
     const legacyBrokersTab = tabParam === "browse" || tabParam === "active";
     const tab: OwnerRequestsTab = isRequestsTab(tabParam) ? tabParam : "requests";
-
-    const { view, setView } = useOwnerRequestsView();
     const [revision, setRevision] = useState(0);
     const [busyId, setBusyId] = useState<string | null>(null);
     const [search, setSearch] = useState("");
@@ -133,7 +127,7 @@ export function OwnerRequestsPage() {
     let body: ReactNode;
 
     if (!summariesReady || queue.isPending) {
-        body = <RequestsListSkeleton view={view} />;
+        body = <RequestsListSkeleton />;
     } else if (queue.isError && queue.items.length === 0) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -169,16 +163,13 @@ export function OwnerRequestsPage() {
                 <WindowVirtualGrid
                     items={queue.items}
                     getKey={(item) => item.id}
-                    estimateRowHeight={view === "list" ? 224 : 480}
+                    estimateRowHeight={480}
                     gap={24}
-                    breakpoints={
-                        view === "list" ? REQUESTS_LIST_BREAKPOINTS : REQUESTS_GRID_BREAKPOINTS
-                    }
+                    breakpoints={REQUESTS_GRID_BREAKPOINTS}
                     ariaLabel="Broker representation requests"
                     renderItem={(item) => (
                         <OwnerRequestCard
                             item={item}
-                            view={view}
                             actions={cardActions}
                             isBusy={busyId === item.id}
                             onAccept={() =>
@@ -234,8 +225,6 @@ export function OwnerRequestsPage() {
                 onSearchChange={setSearch}
                 sort={sort}
                 onSortChange={setSort}
-                view={view}
-                onViewChange={setView}
                 isLoading={!summariesReady}
             />
 

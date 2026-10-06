@@ -39,7 +39,6 @@ import type {
     RequestsSummary,
     RequestsViewFilter,
 } from "@/features/properties/my-requests/types";
-import type { RequestsView } from "@/features/properties/my-requests/use-requests-view";
 import {
     formatChipCount,
     ownerListingsChipClassName,
@@ -49,7 +48,6 @@ import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
-import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
 
 const SENT_SORT_OPTIONS: { value: RequestSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
@@ -437,8 +435,6 @@ export type MyDealsHeaderProps = {
     inviteFilters: InvitesFilters;
     onPatchSent: (patch: Partial<RequestsFilters>) => void;
     onPatchInvites: (patch: Partial<InvitesFilters>) => void;
-    view: RequestsView;
-    onViewChange: (view: RequestsView) => void;
     isLoading?: boolean;
 };
 
@@ -450,8 +446,6 @@ export function MyDealsHeader({
     inviteFilters,
     onPatchSent,
     onPatchInvites,
-    view,
-    onViewChange,
     isLoading = false,
 }: MyDealsHeaderProps) {
     const [sheetOpen, setSheetOpen] = useState(false);
@@ -709,7 +703,6 @@ export function MyDealsHeader({
                                     onChange={(q) => onPatchSent({ q })}
                                 />
                             )}
-                            <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
                             {isInvites ? (
                                 <DealsSortMenu
                                     sort={inviteFilters.sort}

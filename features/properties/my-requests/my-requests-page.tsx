@@ -20,10 +20,7 @@ import {
     RequestsFilteredEmpty,
     RequestsFirstRunEmpty,
 } from "@/features/properties/my-requests/requests-empty";
-import {
-    REQUESTS_GRID_BREAKPOINTS,
-    REQUESTS_LIST_BREAKPOINTS,
-} from "@/features/properties/my-requests/requests-grid-class";
+import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
 import { MyDealsHeader } from "@/features/properties/my-requests/requests-header";
 import { MyDealsIntro } from "@/features/properties/my-requests/requests-intro";
 import {
@@ -33,20 +30,12 @@ import {
 import type { RequestsTab } from "@/features/properties/my-requests/requests-tabs";
 import type { RequestsResult, RequestsSummary } from "@/features/properties/my-requests/types";
 import { useRequestsFilters } from "@/features/properties/my-requests/use-requests-filters";
-import {
-    type RequestsView,
-    useRequestsView,
-} from "@/features/properties/my-requests/use-requests-view";
 
 function SentRequestsPanel({
-    view,
-    onViewChange,
     sentSummary,
     inviteSummary,
     onSummary,
 }: {
-    view: RequestsView;
-    onViewChange: (view: RequestsView) => void;
     sentSummary: RequestsSummary | null;
     inviteSummary: InvitesSummary | null;
     onSummary: (summary: RequestsSummary) => void;
@@ -159,15 +148,13 @@ function SentRequestsPanel({
             inviteFilters={DEFAULT_INVITES_FILTERS}
             onPatchSent={patchFilters}
             onPatchInvites={() => undefined}
-            view={view}
-            onViewChange={onViewChange}
         />
     );
 
     let body: ReactNode;
 
     if (!result && isFetching) {
-        body = <RequestsListSkeleton view={view} />;
+        body = <RequestsListSkeleton />;
     } else if (sentSummary != null && sentSummary.counts.all === 0) {
         body = <RequestsFirstRunEmpty />;
     } else if (error) {
@@ -185,7 +172,7 @@ function SentRequestsPanel({
             </div>
         );
     } else if (!result) {
-        body = <RequestsListSkeleton view={view} />;
+        body = <RequestsListSkeleton />;
     } else if (result.items.length === 0) {
         body = (
             <RequestsFilteredEmpty
@@ -199,16 +186,13 @@ function SentRequestsPanel({
                 <WindowVirtualGrid
                     items={result.items}
                     getKey={(item) => item.id}
-                    estimateRowHeight={view === "list" ? 224 : 520}
+                    estimateRowHeight={520}
                     gap={24}
-                    breakpoints={
-                        view === "list" ? REQUESTS_LIST_BREAKPOINTS : REQUESTS_GRID_BREAKPOINTS
-                    }
+                    breakpoints={REQUESTS_GRID_BREAKPOINTS}
                     ariaLabel="Representation requests"
                     renderItem={(item) => (
                         <RequestCard
                             item={item}
-                            view={view}
                             onNudge={handleNudge}
                             onWithdraw={handleWithdraw}
                             onRetry={handleRetry}
@@ -230,7 +214,6 @@ function SentRequestsPanel({
 }
 
 export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
-    const { view, setView } = useRequestsView();
     const [sentSummary, setSentSummary] = useState<RequestsSummary | null>(null);
     const [inviteSummary, setInviteSummary] = useState<InvitesSummary | null>(null);
     const [summariesReady, setSummariesReady] = useState(false);
@@ -257,7 +240,7 @@ export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
     }, []);
 
     if (!summariesReady) {
-        return <RequestsPageSkeleton view={view} />;
+        return <RequestsPageSkeleton />;
     }
 
     const isInvites = activeTab === "invites";
@@ -275,16 +258,12 @@ export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
 
             {isInvites ? (
                 <InvitesPanel
-                    view={view}
-                    onViewChange={setView}
                     sentSummary={sentSummary}
                     inviteSummary={inviteSummary}
                     onSummary={setInviteSummary}
                 />
             ) : (
                 <SentRequestsPanel
-                    view={view}
-                    onViewChange={setView}
                     sentSummary={sentSummary}
                     inviteSummary={inviteSummary}
                     onSummary={setSentSummary}

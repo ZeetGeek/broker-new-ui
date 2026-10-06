@@ -19,11 +19,8 @@ import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { isNewInServiceAreas } from "@/features/properties/owner-listings/count-new-listings-this-week";
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
-import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
-
 export type OwnerListingsGridProps = {
     items: OwnerListingItem[];
-    view?: OwnerListingsView;
     /** Broker's service areas — listings new in these get the highlighted card. */
     serviceAreas?: string[];
 };
@@ -36,8 +33,6 @@ const GRID_BREAKPOINTS = [
     { minWidth: 1024, columns: 4 },
     { minWidth: 1280, columns: 5 },
 ];
-
-const LIST_BREAKPOINTS = [{ minWidth: 768, columns: 2 }];
 
 /** `false` cancelled locally; `true` requested but id unknown; a string is the pending id. */
 type RequestOverride = string | false | true;
@@ -71,7 +66,6 @@ function initialInviteOverrides(items: OwnerListingItem[]): Record<string, Invit
 
 export function OwnerListingsGrid({
     items,
-    view = "grid",
     serviceAreas = NO_SERVICE_AREAS,
 }: OwnerListingsGridProps) {
     const serviceAreaSet = useMemo(() => new Set(serviceAreas), [serviceAreas]);
@@ -288,15 +282,13 @@ export function OwnerListingsGrid({
         [busyId, isInvitePending, resolveInvitationId],
     );
 
-    const isListView = view === "list";
-
     return (
         <WindowVirtualGrid
             items={items}
             getKey={(item) => item.id}
-            estimateRowHeight={isListView ? 268 : 520}
-            gap={isListView ? 24 : 24}
-            breakpoints={isListView ? LIST_BREAKPOINTS : GRID_BREAKPOINTS}
+            estimateRowHeight={520}
+            gap={24}
+            breakpoints={GRID_BREAKPOINTS}
             ariaLabel="Owner listings"
             renderItem={(item, index) => {
                 const listing = toBrowsePropertyCardListing(item);
@@ -315,7 +307,6 @@ export function OwnerListingsGrid({
                 return (
                     <PropertyCard
                         variant="browse"
-                        layout={view}
                         listing={{
                             ...listing,
                             hasRequested: requested,
@@ -325,11 +316,7 @@ export function OwnerListingsGrid({
                         }}
                         detailsHref={brokerOwnerListingDetailHref(item.id)}
                         priority={index === 0}
-                        imageSizes={
-                            isListView
-                                ? "(max-width: 768px) 55vw, 320px"
-                                : "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
-                        }
+                        imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                         isRequestPending={
                             isBusy && (busyKind === "request" || busyKind === "cancel")
                         }

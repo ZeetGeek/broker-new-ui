@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import { attachedClientsByProperty } from "@/lib/api/clients";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { PropertyListing } from "@/lib/api/properties";
 import {
@@ -157,9 +158,22 @@ export const myListingsApi = {
             return { items: [], total: 0, page: 1, totalPages: 1 };
         }
 
-        const page = await propertiesApi.list(query, signal);
+        const [page, attachedByProperty] = await Promise.all([
+            propertiesApi.list(query, signal),
+            attachedClientsByProperty(),
+        ]);
         return {
-            items: page.items.map(mapPropertyListingToMyItem),
+            items: page.items.map((listing) => {
+                const item = mapPropertyListingToMyItem(listing);
+                const attached = attachedByProperty.get(item.id) ?? [];
+                return {
+                    ...item,
+                    attachedClients: attached.map((client) => ({
+                        id: client.id,
+                        name: client.name,
+                    })),
+                };
+            }),
             total: page.total,
             page: page.page,
             totalPages: Math.max(1, page.totalPages),

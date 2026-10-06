@@ -34,13 +34,11 @@ import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
-import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
 import type {
     MyListingsFilters,
     MyListingSort,
     MyListingStatus,
 } from "@/features/properties/your-listings/types";
-import type { MyListingsView } from "@/features/properties/your-listings/use-my-listings-view";
 
 type ChipKey = "sale" | "rent" | "published" | "draft" | "unpublished";
 
@@ -341,8 +339,6 @@ function MyListingsFilterDialog({
 export type MyListingsHeaderProps = {
     filters: MyListingsFilters;
     onFiltersChange: (next: MyListingsFilters) => void;
-    view: MyListingsView;
-    onViewChange: (view: MyListingsView) => void;
     summary: MyListingsSummary | null;
     isLoading?: boolean;
 };
@@ -350,8 +346,6 @@ export type MyListingsHeaderProps = {
 export function MyListingsHeader({
     filters,
     onFiltersChange,
-    view,
-    onViewChange,
     summary,
     isLoading = false,
 }: MyListingsHeaderProps) {
@@ -475,7 +469,6 @@ export function MyListingsHeader({
                                 value={filters.q}
                                 onChange={(q) => onFiltersChange({ ...filters, q, page: 1 })}
                             />
-                            <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
                             <MyListingsSortMenu
                                 sort={filters.sort}
                                 onSortChange={(sort) =>

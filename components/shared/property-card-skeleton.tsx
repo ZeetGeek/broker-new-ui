@@ -1,26 +1,16 @@
 import { cn } from "@/lib/utils";
 
-const BROWSE_CARD_PHOTO_FRAME_CLASS = "shrink-0 rounded-card bg-surface p-1 shadow-md";
-const BROWSE_CARD_PHOTO_FRAME_GRID_CLASS = "w-full";
-const BROWSE_CARD_PHOTO_FRAME_LIST_CLASS =
-    "w-[min(62%,28rem)] min-w-64 shrink-0 self-start sm:min-w-72";
-
+const BROWSE_CARD_PHOTO_FRAME_CLASS = "shrink-0 rounded-card bg-surface p-1 shadow-md w-full";
 const BROWSE_CARD_PHOTO_INNER_CLASS =
-    "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
-const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full animate-pulse";
-const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[5/4] w-full animate-pulse";
+    "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted aspect-[4/3] w-full animate-pulse";
 
 export function PropertyCardSkeleton({
     className,
     variant = "browse",
-    layout = "grid",
 }: {
     className?: string;
     variant?: "browse" | "browse-overlay" | "represented";
-    layout?: "grid" | "list";
 }) {
-    const isListView = layout === "list";
-
     if (variant === "browse-overlay") {
         return (
             <div
@@ -45,29 +35,11 @@ export function PropertyCardSkeleton({
     if (variant === "browse") {
         return (
             <div
-                className={cn(
-                    "flex min-inline-0",
-                    isListView ? "flex-row items-start gap-4" : "flex-col gap-3 flex-1 block-full",
-                    className,
-                )}
+                className={cn("flex min-inline-0 flex-col gap-3 flex-1 block-full", className)}
                 aria-hidden
             >
-                <div
-                    className={cn(
-                        BROWSE_CARD_PHOTO_FRAME_CLASS,
-                        isListView
-                            ? BROWSE_CARD_PHOTO_FRAME_LIST_CLASS
-                            : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
-                    )}
-                >
-                    <div
-                        className={cn(
-                            BROWSE_CARD_PHOTO_INNER_CLASS,
-                            isListView
-                                ? BROWSE_CARD_PHOTO_INNER_LIST_CLASS
-                                : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
-                        )}
-                    />
+                <div className={BROWSE_CARD_PHOTO_FRAME_CLASS}>
+                    <div className={BROWSE_CARD_PHOTO_INNER_CLASS} />
                 </div>
 
                 <div className="flex flex-1 flex-col gap-2.5 px-2 min-inline-0">

@@ -1,36 +1,18 @@
 import { PropertyCardSkeleton } from "@/components/shared/property-card-skeleton";
 
-import {
-    REQUESTS_GRID_CLASS,
-    REQUESTS_LIST_CLASS,
-} from "@/features/properties/my-requests/requests-grid-class";
-import type { RequestsView } from "@/features/properties/my-requests/use-requests-view";
+import { REQUESTS_GRID_CLASS } from "@/features/properties/my-requests/requests-grid-class";
 
-export function RequestsListSkeleton({
-    view = "grid",
-    count = 5,
-}: {
-    view?: RequestsView;
-    count?: number;
-}) {
-    const isList = view === "list";
-
+export function RequestsListSkeleton({ count = 5 }: { count?: number }) {
     return (
-        <div className={isList ? REQUESTS_LIST_CLASS : REQUESTS_GRID_CLASS} aria-hidden>
+        <div className={REQUESTS_GRID_CLASS} aria-hidden>
             {Array.from({ length: count }).map((_, index) => (
-                <PropertyCardSkeleton
-                    key={index}
-                    variant={isList ? "browse" : "browse-overlay"}
-                    layout={view}
-                />
+                <PropertyCardSkeleton key={index} variant="browse-overlay" />
             ))}
         </div>
     );
 }
 
-export function RequestsPageSkeleton({ view = "grid" }: { view?: RequestsView }) {
-    const isList = view === "list";
-
+export function RequestsPageSkeleton() {
     return (
         <div className="flex flex-col gap-6">
             <div
@@ -53,13 +35,9 @@ export function RequestsPageSkeleton({ view = "grid" }: { view?: RequestsView })
                     "
                 />
             </div>
-            <div className={isList ? REQUESTS_LIST_CLASS : REQUESTS_GRID_CLASS}>
+            <div className={REQUESTS_GRID_CLASS}>
                 {Array.from({ length: 5 }).map((_, index) => (
-                    <PropertyCardSkeleton
-                        key={index}
-                        variant={isList ? "browse" : "browse-overlay"}
-                        layout={view}
-                    />
+                    <PropertyCardSkeleton key={index} variant="browse-overlay" />
                 ))}
             </div>
         </div>
