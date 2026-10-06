@@ -28,11 +28,14 @@ import {
     stepSchemas,
 } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
-import { isStepVisible as ruleStepIsVisible, labelOf, stripHidden } from "@/lib/visibility/rules";
+import {
+    isStepVisible as ruleStepIsVisible,
+    isVisible as ruleFieldIsVisible,
+    stripHidden,
+} from "@/lib/visibility/rules";
 import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
     Dialog,
     DialogClose,
@@ -141,6 +144,7 @@ export function PropertyForm({
     const autosaveReadyRef = useRef(false);
     const recoveryCheckedRef = useRef(false);
     const persistInFlightRef = useRef(false);
+    const pendingFocusPathRef = useRef<string | null>(null);
     const localStorageKey = `property-draft:v${LOCAL_DRAFT_VERSION}:${propertyId ?? "new"}`;
 
     const defaultValues = useMemo(
@@ -328,6 +332,16 @@ export function PropertyForm({
         return () => window.removeEventListener("keydown", onKeyDown);
     });
 
+    // After a step jump (e.g. Publish), focus the first invalid field once it mounts.
+    useEffect(() => {
+        const path = pendingFocusPathRef.current;
+        if (!path) return;
+        const frame = requestAnimationFrame(() => {
+            if (focusFieldByPath(path)) pendingFocusPathRef.current = null;
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [step]);
+
     function saveDraftLocally() {
         try {
             writeLocalDraft(methods.getValues());
@@ -361,32 +375,23 @@ export function PropertyForm({
             ...(result.success ? [] : result.error.issues),
             ...(ruleResult.success ? [] : ruleResult.error.issues),
         ];
-        const fieldLabels: string[] = [];
-        const seenLabels = new Set<string>();
-        for (const issue of issues) {
+        // Only surface errors for fields the user can see on this listing type.
+        const visibleIssues = issues.filter((issue) => {
+            const path = issue.path.join(".");
+            return path.length > 0 && ruleFieldIsVisible(path, current);
+        });
+        if (visibleIssues.length === 0) return true;
+
+        for (const issue of visibleIssues) {
             const path = issue.path.join(".") as FieldPath<PropertyDraftValues>;
             methods.setError(path, { type: "zod", message: issue.message });
-            const label = labelOf(path, current);
-            if (!seenLabels.has(label)) {
-                seenLabels.add(label);
-                fieldLabels.push(label);
-            }
         }
-        const issueCount = fieldLabels.length;
-        setFormBanner(
-            <div className="flex flex-col gap-1.5">
-                <p>
-                    {issueCount === 1
-                        ? "1 field needs attention before continuing."
-                        : `${issueCount} fields need attention before continuing.`}
-                </p>
-                <ul className="list-disc space-y-0.5 ps-4 font-normal">
-                    {fieldLabels.map((label) => (
-                        <li key={label}>{label}</li>
-                    ))}
-                </ul>
-            </div>,
-        );
+
+        const firstPath = visibleIssues[0]!.path.join(".");
+        pendingFocusPathRef.current = firstPath;
+        requestAnimationFrame(() => {
+            if (focusFieldByPath(firstPath)) pendingFocusPathRef.current = null;
+        });
         return false;
     }
 
@@ -407,10 +412,7 @@ export function PropertyForm({
 
         if (goingForward) {
             setFormBanner(null);
-            if (!validateStep(step)) {
-                document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
-                return;
-            }
+            if (!validateStep(step)) return;
             setCompletedSteps((current) => new Set(current).add(step));
             setHighestUnlocked((current) => Math.max(current, nextOriginalIndex));
         }
@@ -456,9 +458,7 @@ export function PropertyForm({
         // Quick add only validates its own fields (draft and publish). Full details
         // still runs the full step schemas on publish — leave that path alone.
         if (entryMode === "quick") {
-            const quickProblem = validateQuickDraft(current);
-            if (quickProblem) {
-                setFormBanner(quickProblem);
+            if (!validateQuickAdd(methods, current)) {
                 persistInFlightRef.current = false;
                 return;
             }
@@ -682,7 +682,7 @@ export function PropertyForm({
                                   xl:grid-cols-[272px_minmax(0,1fr)_336px]
                                 "
                             >
-                                <div
+                                <aside
                                     className="
                                       hidden flex-col border-e border-border-warm bg-surface px-4
                                       py-5 min-block-0
@@ -696,44 +696,57 @@ export function PropertyForm({
                                         completedSteps={completedSteps}
                                         onStepChange={changeStep}
                                     />
-                                </div>
+                                </aside>
                                 <main
                                     className="
-                                      overflow-y-auto bg-surface px-5 py-6 min-block-0 min-inline-0
-                                      sm:px-6
+                                      overflow-y-auto bg-surface-muted px-4 py-4 min-block-0
+                                      min-inline-0
+                                      sm:px-5 sm:py-5
+                                      xl:px-6 xl:py-6
                                     "
                                 >
-                                    <div className="-m-1 p-1 pbe-8">
-                                        <h1 className="sr-only">{activeSteps[stepIndex]?.label}</h1>
-                                        {formBanner ? (
-                                            <div
-                                                role="alert"
-                                                className="
-                                                  mbe-5 rounded-control border border-danger/30
-                                                  bg-danger-soft px-4 py-3 text-sm font-medium
-                                                  text-danger
-                                                "
-                                            >
-                                                {formBanner}
-                                            </div>
-                                        ) : null}
-                                        <StepTransition step={step}>
-                                            <StepContent
-                                                step={step}
-                                                portal={portal}
-                                                photoFilesRef={photoFilesRef}
-                                            />
-                                        </StepTransition>
+                                    <div
+                                        className="
+                                          rounded-card border border-border-warm bg-surface p-5
+                                          shadow-sm min-block-full
+                                          sm:p-6
+                                          xl:p-7
+                                        "
+                                    >
+                                        <div className="-m-1 p-1 pbe-2">
+                                            <h1 className="sr-only">
+                                                {activeSteps[stepIndex]?.label}
+                                            </h1>
+                                            {formBanner ? (
+                                                <div
+                                                    role="alert"
+                                                    className="
+                                                      mbe-5 rounded-control border border-danger/30
+                                                      bg-danger-soft px-4 py-3 text-sm font-medium
+                                                      text-danger
+                                                    "
+                                                >
+                                                    {formBanner}
+                                                </div>
+                                            ) : null}
+                                            <StepTransition step={step}>
+                                                <StepContent
+                                                    step={step}
+                                                    portal={portal}
+                                                    photoFilesRef={photoFilesRef}
+                                                />
+                                            </StepTransition>
+                                        </div>
                                     </div>
                                 </main>
-                                <div
+                                <aside
                                     className="
-                                      hidden overflow-y-auto border-s border-border-warm
-                                      bg-surface-muted/40 p-4 min-block-0 min-inline-0
+                                      hidden overflow-y-auto bg-surface-muted pt-6 pe-4 pbe-4 ps-0
+                                      min-block-0 min-inline-0
                                       xl:block
                                     "
                                 >
-                                    <div className="-m-1 flex flex-col gap-4 p-1">
+                                    <div className="flex flex-col gap-4">
                                         <LiveSummaryPanel
                                             values={values}
                                             stepIndex={stepIndex}
@@ -743,26 +756,25 @@ export function PropertyForm({
                                                 setStep("media");
                                             }}
                                         />
-                                        <Card
+                                        <article
                                             className="
-                                              gap-0 rounded-card border border-border-warm
-                                              bg-surface p-4 shadow-none
+                                              overflow-hidden rounded-card border border-border-warm
+                                              bg-surface
                                             "
                                         >
-                                            <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-3.5 px-3.5 py-3.5">
                                                 <ListingScoreRing score={listingScore.score} />
-                                                <div>
-                                                    <p className="text-sm font-bold text-ink">
+                                                <div className="min-inline-0">
+                                                    <p className="text-sm font-semibold text-ink">
                                                         Listing score
                                                     </p>
-                                                    <p className="mbs-1 text-xs/5 text-ink-muted">
-                                                        Complete useful details to improve broker
-                                                        confidence.
+                                                    <p className="mbs-0.5 text-xs/5 text-ink-muted">
+                                                        Finish these to raise broker confidence.
                                                     </p>
                                                 </div>
                                             </div>
                                             {listingScore.tips.length ? (
-                                                <div className="mbs-4 space-y-1">
+                                                <div className="flex flex-col gap-1.5 px-3.5 pbe-3.5">
                                                     {listingScore.tips.map((tip) => (
                                                         <Button
                                                             key={tip.label}
@@ -776,19 +788,25 @@ export function PropertyForm({
                                                             }}
                                                             className="
                                                               flex items-center justify-between
-                                                              gap-3 rounded-control px-2 text-start
-                                                              text-xs text-ink-muted inline-full
-                                                              min-block-9
-                                                              hover:bg-surface hover:text-ink
+                                                              gap-3 rounded-control border
+                                                              border-border-warm bg-surface-muted
+                                                              px-3 text-start text-xs text-ink
+                                                              inline-full min-block-10
+                                                              hover:border-brand/35
+                                                              hover:bg-brand-soft/50
                                                               focus-visible:ring-3
                                                               focus-visible:ring-ring/30
                                                             "
                                                         >
-                                                            <span>{tip.label}</span>
+                                                            <span className="min-inline-0">
+                                                                {tip.label}
+                                                            </span>
                                                             <span
                                                                 className="
-                                                              tabular text-brand-text
-                                                            "
+                                                                  tabular shrink-0 rounded-control
+                                                                  bg-brand-soft px-2 py-0.5
+                                                                  font-semibold text-brand-text
+                                                                "
                                                             >
                                                                 +{tip.points}
                                                             </span>
@@ -796,9 +814,9 @@ export function PropertyForm({
                                                     ))}
                                                 </div>
                                             ) : null}
-                                        </Card>
+                                        </article>
                                     </div>
-                                </div>
+                                </aside>
                             </div>
                             <MobileDealSummary
                                 values={values}
@@ -814,23 +832,32 @@ export function PropertyForm({
                     ) : (
                         <main
                             className="
-                              flex flex-1 flex-col overflow-hidden bg-surface min-block-0
-                              min-inline-0
+                              flex flex-1 flex-col overflow-y-auto bg-surface-muted px-4 py-4
+                              min-block-0 min-inline-0
+                              sm:px-5 sm:py-5
                             "
                         >
-                            {formBanner ? (
-                                <div
-                                    role="alert"
-                                    className="
-                                      mx-5 mbs-5 rounded-control border border-danger/30
-                                      bg-danger-soft px-4 py-3 text-sm font-medium text-danger
-                                      sm:mx-6
-                                    "
-                                >
-                                    {formBanner}
-                                </div>
-                            ) : null}
-                            <QuickAdd photoFilesRef={photoFilesRef} />
+                            <div
+                                className="
+                                  flex flex-1 flex-col rounded-card border border-border-warm
+                                  bg-surface p-5 shadow-sm
+                                  sm:p-6 sm:py-7
+                                  xl:p-8
+                                "
+                            >
+                                {formBanner ? (
+                                    <div
+                                        role="alert"
+                                        className="
+                                          mbe-5 rounded-control border border-danger/30
+                                          bg-danger-soft px-4 py-3 text-sm font-medium text-danger
+                                        "
+                                    >
+                                        {formBanner}
+                                    </div>
+                                ) : null}
+                                <QuickAdd photoFilesRef={photoFilesRef} />
+                            </div>
                         </main>
                     )}
 
@@ -942,7 +969,7 @@ function PropertyFormHeader({
         <header
             className="
               flex shrink-0 items-center justify-between gap-3 border-be border-border-warm
-              bg-surface px-4 py-2.5
+              bg-surface px-4 py-2.5 shadow-xs
               sm:px-6
             "
         >
@@ -1067,6 +1094,7 @@ function PropertyFormFooter({
         <footer
             className="
               flex shrink-0 items-center gap-3 border-bs border-border-warm bg-surface px-4 py-2.5
+              shadow-xs
               pbe-[calc(0.625rem+env(safe-area-inset-bottom))]
               sm:px-6
             "
@@ -1119,18 +1147,22 @@ function PropertyFormFooter({
                 {showPrimary ? (
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="accent"
                         loading={isSubmitting}
                         disabled={isSubmitting}
                         onClick={onNext}
                     >
                         {primaryLabel}
                         <KbdGroup className="hidden gap-0.5 md:inline-flex">
-                            <Kbd className="px-1.5 text-[10px] min-inline-4">Ctrl</Kbd>
-                            <span className="text-[10px] text-ink-subtle" aria-hidden>
+                            <Kbd className="bg-surface/20 px-1.5 text-[10px] text-surface min-inline-4">
+                                Ctrl
+                            </Kbd>
+                            <span className="text-[10px] text-surface/70" aria-hidden>
                                 +
                             </span>
-                            <Kbd className="px-1.5 text-[10px] min-inline-4">Enter</Kbd>
+                            <Kbd className="bg-surface/20 px-1.5 text-[10px] text-surface min-inline-4">
+                                Enter
+                            </Kbd>
                         </KbdGroup>
                     </Button>
                 ) : null}
@@ -1206,7 +1238,7 @@ function MobileListingScore({
     onTip: (step: PropertyFormStep) => void;
 }) {
     return (
-        <div className="border-brand-hover border-bs bg-brand-ink text-surface xl:hidden">
+        <div className="border-bs border-border-warm bg-surface xl:hidden">
             <Button
                 type="button"
                 variant="ghost"
@@ -1214,24 +1246,24 @@ function MobileListingScore({
                 aria-controls="mobile-listing-score-panel"
                 onClick={() => onOpenChange(!open)}
                 className="
-                  hover:bg-brand-hover
-                  flex items-center justify-between gap-3 px-4 text-start text-surface inline-full
+                  flex items-center justify-between gap-3 px-4 text-start text-ink inline-full
                   min-block-11
+                  hover:bg-brand-soft/50
                   focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:ring-inset
                 "
             >
-                <span className="flex items-center gap-2 text-xs font-semibold text-surface">
+                <span className="flex items-center gap-2 text-xs font-semibold text-ink">
                     <span
                         className="
-                          tabular flex items-center justify-center rounded-full bg-highlight
-                          text-brand-ink block-7 inline-7
+                          tabular flex items-center justify-center rounded-full bg-brand
+                          text-surface block-7 inline-7
                         "
                     >
                         {score}%
                     </span>
                     Listing score
                 </span>
-                <span className="flex items-center gap-2 text-xs text-surface/80 min-inline-0">
+                <span className="flex items-center gap-2 text-xs text-ink-muted min-inline-0">
                     <span className="hidden truncate sm:block">
                         {tips[0]?.label ?? "Ready to publish"}
                     </span>
@@ -1274,7 +1306,8 @@ function MobileListingScore({
                                     onClick={() => onTip(tip.step)}
                                     className="
                                       flex items-center justify-between gap-3 rounded-control border
-                                      border-border-warm bg-canvas px-3 text-start text-sm text-ink
+                                      border-border-warm bg-surface-muted px-3 text-start text-sm
+                                      text-ink
                                       inline-full min-block-11
                                       hover:border-brand/40 hover:bg-brand-soft
                                       focus-visible:ring-3 focus-visible:ring-ring/30
@@ -1317,9 +1350,9 @@ function MobileDealSummary({
                 aria-controls="mobile-deal-summary-panel"
                 onClick={() => onOpenChange(!open)}
                 className="
-                  flex items-center justify-between gap-4 bg-brand-ink px-4 text-start inline-full
+                  flex items-center justify-between gap-4 bg-brand px-4 text-start inline-full
                   min-block-14
-                  focus-visible:ring-2 focus-visible:ring-highlight focus-visible:ring-inset
+                  focus-visible:ring-2 focus-visible:ring-brand-soft focus-visible:ring-inset
                 "
             >
                 <div className="flex-1 min-inline-0">
@@ -1339,7 +1372,7 @@ function MobileDealSummary({
                     className="
                       t-panel-slide absolute inset-x-0
                       inset-be-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 overflow-y-auto
-                      bg-canvas shadow-xl max-block-[72dvh]
+                      bg-surface-muted shadow-xl max-block-[72dvh]
                     "
                     data-open={open}
                 >
@@ -1621,20 +1654,102 @@ function draftToLegacyInput(
     };
 }
 
-/** Only fields shown on the Quick add surface — never full-details requirements. */
-function validateQuickDraft(values: PropertyDraftValues): string | null {
-    if (!values.basics.listingFor) return "Choose listing for (sale, rent, or both).";
-    if (!values.basics.category) return "Choose a category.";
-    if (!values.basics.propertyType) return "Choose a property type.";
-    if (!values.location.city.trim()) return "Choose a city.";
-    if (!values.location.locality.trim()) return "Enter the locality.";
+/** Scroll to and focus a form control by its draft path (e.g. `rent.availableFrom`). */
+function focusFieldByPath(path: string): boolean {
+    const id = path.replace(/\./g, "-");
+    const byId = document.getElementById(id);
+    const byName = document.querySelector<HTMLElement>(`[name="${CSS.escape(path)}"]`);
+    const byLabel = document.querySelector<HTMLElement>(`[aria-labelledby="${id}-label"]`);
+    const root = byId ?? byName ?? byLabel;
+    if (!root) return false;
+
+    root.scrollIntoView({ behavior: "smooth", block: "center" });
+    const focusable = root.matches("input, select, textarea, button, [tabindex]")
+        ? root
+        : root.querySelector<HTMLElement>("input, select, textarea, button, [tabindex]");
+    focusable?.focus({ preventScroll: true });
+    return true;
+}
+
+const QUICK_ADD_ERROR_FIELDS = [
+    "basics.listingFor",
+    "basics.category",
+    "basics.propertyType",
+    "location.city",
+    "location.locality",
+    "area.plotArea",
+    "sale.expectedPrice",
+    "rent.monthlyRent",
+    "media.cover",
+] as const satisfies readonly FieldPath<PropertyDraftValues>[];
+
+/** Field-level validation for Quick add — same inline errors as Full details. */
+function validateQuickAdd(
+    methods: ReturnType<typeof useForm<PropertyDraftValues>>,
+    values: PropertyDraftValues,
+): boolean {
+    methods.clearErrors([...QUICK_ADD_ERROR_FIELDS]);
+    const issues: { path: FieldPath<PropertyDraftValues>; message: string }[] = [];
+
+    if (!values.basics.listingFor) {
+        issues.push({
+            path: "basics.listingFor",
+            message: "Choose listing for (sale, rent, or both)",
+        });
+    }
+    if (!values.basics.category) {
+        issues.push({ path: "basics.category", message: "Choose a category" });
+    }
+    if (!values.basics.propertyType) {
+        issues.push({ path: "basics.propertyType", message: "Choose a property type" });
+    }
+    if (!values.location.city.trim()) {
+        issues.push({ path: "location.city", message: "Choose a city" });
+    }
+    if (!values.location.locality.trim()) {
+        issues.push({ path: "location.locality", message: "Enter the locality" });
+    }
     const area = values.area.areaSqft || values.area.plotArea || values.area.carpetArea;
-    if (!area) return "Enter the area.";
+    if (!area) {
+        issues.push({ path: "area.plotArea", message: "Enter the area" });
+    }
     const listingFor = values.basics.listingFor;
-    if ((listingFor === "sell" || listingFor === "both") && !values.sale.expectedPrice)
-        return "Enter the sale price.";
-    if ((listingFor === "rent" || listingFor === "both") && !values.rent.monthlyRent)
-        return "Enter the rent.";
-    if (!values.media.photos.length) return "Add one property photo.";
-    return null;
+    if ((listingFor === "sell" || listingFor === "both") && !values.sale.expectedPrice) {
+        issues.push({ path: "sale.expectedPrice", message: "Enter the sale price" });
+    }
+    if (
+        (listingFor === "rent" ||
+            listingFor === "lease" ||
+            listingFor === "pg" ||
+            listingFor === "both") &&
+        !values.rent.monthlyRent
+    ) {
+        issues.push({ path: "rent.monthlyRent", message: "Enter the monthly rent" });
+    }
+    const hasCover = values.media.photos.some(
+        (photo) => photo.isCover && photo.status !== "error" && Boolean(photo.url),
+    );
+    const hasAnyPhoto = values.media.photos.some(
+        (photo) => photo.status !== "error" && Boolean(photo.url),
+    );
+    if (!hasCover && !hasAnyPhoto) {
+        issues.push({ path: "media.cover", message: "Add a cover photo" });
+    }
+
+    if (!issues.length) return true;
+
+    for (const issue of issues) {
+        methods.setError(issue.path, { type: "quick", message: issue.message });
+    }
+    const firstPath = issues[0]!.path;
+    requestAnimationFrame(() => {
+        focusFieldByPath(firstPath);
+        if (firstPath === "media.cover") {
+            document.getElementById("quick-cover-upload")?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+        }
+    });
+    return false;
 }

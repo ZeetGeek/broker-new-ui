@@ -28,7 +28,6 @@ import { cn } from "@/lib/utils";
 import { AppImage } from "@/components/shared/app-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import {
@@ -206,9 +205,7 @@ export function LiveSummaryPanel({
                 const current = getValues("media.photos");
                 setValue(
                     "media.photos",
-                    current.map((photo) =>
-                        photo.id === photoId ? { ...photo, ...patch } : photo,
-                    ),
+                    current.map((photo) => (photo.id === photoId ? { ...photo, ...patch } : photo)),
                     { shouldDirty: true, shouldValidate: true },
                 );
             },
@@ -242,222 +239,219 @@ export function LiveSummaryPanel({
     }
 
     return (
-        <aside className="flex flex-col gap-4">
-            <Card
+        <aside className="flex flex-col gap-3">
+            <article
                 className="
-                  gap-0 overflow-hidden rounded-card border border-border-warm bg-surface py-0
-                  shadow-none ring-0
+                  overflow-hidden rounded-card border border-border-warm bg-surface
                 "
             >
-                <div className="flex flex-col gap-4 p-4">
-                    <div className="flex items-center gap-2 text-ink">
-                        <Eye className="text-ink-muted block-4 inline-4" aria-hidden />
-                        <p className="text-sm font-bold">Listing preview</p>
-                    </div>
-
-                    <div
-                        className={cn(
-                            "group relative overflow-hidden rounded-inner bg-surface-muted",
-                            cover ? "aspect-3/4" : "aspect-4/3",
-                        )}
+                <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                        <Eye className="text-brand block-4 inline-4" aria-hidden />
+                        Listing preview
+                    </p>
+                    <Badge
+                        variant="neutral"
+                        className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
                     >
-                        {cover ? (
-                            <>
-                                <AppImage
-                                    src={cover.url}
-                                    alt={cover.alt || title}
-                                    fill
-                                    sizes="320px"
-                                    className="object-cover"
-                                    unoptimized={
-                                        cover.url.startsWith("blob:") ||
-                                        cover.url.startsWith("http://") ||
-                                        cover.url.startsWith("https://")
-                                    }
-                                />
-                                {photoFilesRef ? (
-                                    <>
-                                        <input
-                                            ref={coverInputRef}
-                                            type="file"
-                                            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                                            className="sr-only"
-                                            onChange={(event) => {
-                                                void handleReplaceCover(event.target.files?.[0]);
-                                                event.currentTarget.value = "";
-                                            }}
-                                        />
-                                        <div
-                                            className="
-                                              absolute inset-0 flex flex-col items-center
-                                              justify-center gap-2 bg-ink/55 p-3 opacity-100
-                                              transition-opacity duration-160
-                                              md:opacity-0 md:group-hover:opacity-100
-                                              md:group-focus-within:opacity-100
-                                            "
-                                        >
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                className="
-                                                  gap-1.5 border-0 bg-surface text-ink
-                                                  hover:bg-surface
-                                                "
-                                                onClick={() => coverInputRef.current?.click()}
-                                            >
-                                                <RefreshCw
-                                                    className="block-3.5 inline-3.5"
-                                                    aria-hidden
-                                                />
-                                                Replace cover
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="
-                                                  text-surface hover:bg-surface/15
-                                                  hover:text-surface
-                                                "
-                                                onClick={handleRemoveCover}
-                                            >
-                                                <X
-                                                    className="me-1 block-3.5 inline-3.5"
-                                                    aria-hidden
-                                                />
-                                                Remove
-                                            </Button>
-                                        </div>
-                                    </>
-                                ) : null}
-                            </>
-                        ) : (
-                            <div
-                                className="
-                                  flex flex-col items-center justify-center gap-3 px-5 py-6
-                                  text-center block-full
-                                "
-                            >
-                                <ImageIcon
-                                    className="text-ink-subtle size-8 shrink-0"
-                                    strokeWidth={1.5}
-                                    aria-hidden
-                                />
-                                <div className="space-y-1">
-                                    <p className="text-sm font-bold text-ink">Add a cover photo</p>
-                                    <p className="text-xs text-ink-muted">JPG, PNG up to 10 MB</p>
-                                </div>
-                                {photoFilesRef ? (
-                                    <>
-                                        <input
-                                            ref={coverInputRef}
-                                            type="file"
-                                            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                                            className="sr-only"
-                                            onChange={(event) => {
-                                                void handleReplaceCover(event.target.files?.[0]);
-                                                event.currentTarget.value = "";
-                                            }}
-                                        />
+                        Draft
+                    </Badge>
+                </div>
+
+                <div className="group relative mx-3.5 aspect-4/3 overflow-hidden rounded-inner bg-surface-muted">
+                    {cover ? (
+                        <>
+                            <AppImage
+                                src={cover.url}
+                                alt={cover.alt || title}
+                                fill
+                                sizes="320px"
+                                className="object-cover"
+                                unoptimized={
+                                    cover.url.startsWith("blob:") ||
+                                    cover.url.startsWith("http://") ||
+                                    cover.url.startsWith("https://")
+                                }
+                            />
+                            {photoFilesRef ? (
+                                <>
+                                    <input
+                                        ref={coverInputRef}
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                                        className="sr-only"
+                                        onChange={(event) => {
+                                            void handleReplaceCover(event.target.files?.[0]);
+                                            event.currentTarget.value = "";
+                                        }}
+                                    />
+                                    <div
+                                        className="
+                                          absolute inset-0 flex flex-col items-center
+                                          justify-center gap-2 bg-ink/55 p-3 opacity-100
+                                          transition-opacity duration-160
+                                          md:opacity-0 md:group-hover:opacity-100
+                                          md:group-focus-within:opacity-100
+                                        "
+                                    >
                                         <Button
                                             type="button"
                                             variant="outline"
                                             size="sm"
+                                            className="gap-1.5 border-0 bg-surface text-ink hover:bg-surface"
                                             onClick={() => coverInputRef.current?.click()}
-                                            className="gap-1.5 bg-surface"
                                         >
-                                            <Upload className="block-3.5 inline-3.5" aria-hidden />
-                                            Upload photo
+                                            <RefreshCw
+                                                className="block-3.5 inline-3.5"
+                                                aria-hidden
+                                            />
+                                            Replace cover
                                         </Button>
-                                    </>
-                                ) : onGoToMedia ? (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="
+                                              text-surface hover:bg-surface/15 hover:text-surface
+                                            "
+                                            onClick={handleRemoveCover}
+                                        >
+                                            <X className="me-1 block-3.5 inline-3.5" aria-hidden />
+                                            Remove
+                                        </Button>
+                                    </div>
+                                </>
+                            ) : null}
+                        </>
+                    ) : (
+                        <div
+                            className="
+                              flex flex-col items-center justify-center gap-2.5 border border-dashed
+                              border-brand/30 bg-brand-soft/25 px-4 py-5 text-center block-full
+                            "
+                        >
+                            <span
+                                className="
+                                  flex items-center justify-center rounded-control bg-surface
+                                  text-brand block-10 inline-10
+                                "
+                            >
+                                <ImageIcon
+                                    className="block-5 inline-5"
+                                    strokeWidth={1.75}
+                                    aria-hidden
+                                />
+                            </span>
+                            <p className="text-sm font-semibold text-ink">Add a cover photo</p>
+                            {photoFilesRef ? (
+                                <>
+                                    <input
+                                        ref={coverInputRef}
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                                        className="sr-only"
+                                        onChange={(event) => {
+                                            void handleReplaceCover(event.target.files?.[0]);
+                                            event.currentTarget.value = "";
+                                        }}
+                                    />
                                     <Button
                                         type="button"
-                                        variant="outline"
+                                        variant="accent"
                                         size="sm"
-                                        onClick={onGoToMedia}
-                                        className="gap-1.5 bg-surface"
+                                        onClick={() => coverInputRef.current?.click()}
+                                        className="gap-1.5"
                                     >
                                         <Upload className="block-3.5 inline-3.5" aria-hidden />
                                         Upload photo
                                     </Button>
-                                ) : null}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex flex-col gap-2.5">
-                        <div className="flex items-start justify-between gap-3">
-                            <p className="line-clamp-2 text-base/6 font-bold text-ink min-inline-0">
-                                {title}
-                            </p>
-                            <Badge
-                                variant="urgent"
-                                className="shrink-0 rounded-md px-2 py-0.5 text-[11px]"
-                            >
-                                Draft
-                            </Badge>
+                                </>
+                            ) : onGoToMedia ? (
+                                <Button
+                                    type="button"
+                                    variant="accent"
+                                    size="sm"
+                                    onClick={onGoToMedia}
+                                    className="gap-1.5"
+                                >
+                                    <Upload className="block-3.5 inline-3.5" aria-hidden />
+                                    Upload photo
+                                </Button>
+                            ) : null}
                         </div>
-                        <p className="flex items-center gap-1.5 text-sm text-ink-muted">
-                            <MapPin className="shrink-0 block-3.5 inline-3.5" aria-hidden />
-                            <span className="truncate">{locationLabel}</span>
-                        </p>
-                        <div className="flex flex-col gap-0.5">
-                            <p className="text-xs text-ink-muted">
-                                {isSale ? "Asking price" : "Monthly rent"}
-                            </p>
-                            <p className="tabular text-lg font-bold text-ink">
-                                {price && price > 0 ? formatInrCompact(price) : "— — —"}
-                            </p>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
-                <div
-                    className="
-                      mx-4 flex items-center justify-between gap-3 border-bs border-border-warm
-                      py-3.5 text-xs font-medium text-ink-muted
-                    "
-                >
-                    <span className="inline-flex items-center gap-1.5 min-inline-0">
-                        <BedDouble className="shrink-0 block-3.5 inline-3.5" aria-hidden />
-                        <span className="truncate">{bedsLabel(values)}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 min-inline-0">
-                        <Bath className="shrink-0 block-3.5 inline-3.5" aria-hidden />
-                        <span className="truncate">{bathsLabel(values)}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 min-inline-0">
-                        <Scaling className="shrink-0 block-3.5 inline-3.5" aria-hidden />
-                        <span className="truncate">{areaLabel(values)}</span>
-                    </span>
+                <div className="flex flex-col gap-2 px-3.5 py-3.5">
+                    <p className="tabular text-xl font-bold tracking-[-0.02em] text-brand">
+                        {price && price > 0 ? formatInrCompact(price) : "Price not set"}
+                    </p>
+                    <p className="line-clamp-2 text-sm/5 font-semibold text-ink">{title}</p>
+                    <p className="flex items-center gap-1.5 text-xs text-ink-muted">
+                        <MapPin className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                        <span className="truncate">{locationLabel}</span>
+                    </p>
+                    <div
+                        className="
+                          mts-1 grid grid-cols-3 gap-2 rounded-control bg-surface-muted px-2.5
+                          py-2 text-[11px] font-medium text-ink-muted
+                        "
+                    >
+                        <span className="inline-flex items-center justify-center gap-1 min-inline-0">
+                            <BedDouble className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                            <span className="truncate">
+                                {bedsLabel(values).replace(" Beds", "")}
+                            </span>
+                        </span>
+                        <span className="inline-flex items-center justify-center gap-1 min-inline-0">
+                            <Bath className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                            <span className="truncate">
+                                {bathsLabel(values).replace(" Baths", "")}
+                            </span>
+                        </span>
+                        <span className="inline-flex items-center justify-center gap-1 min-inline-0">
+                            <Scaling className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                            <span className="truncate">
+                                {areaLabel(values).replace(" Sq ft", "")}
+                            </span>
+                        </span>
+                    </div>
                 </div>
-            </Card>
+            </article>
 
             {stepIndex >= 2 ? (
-                <Card className="gap-0 overflow-hidden bg-brand-ink py-0 text-surface ring-0">
-                    <div className="space-y-1 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="min-inline-0">
-                                <p className="text-sm font-bold">
-                                    {isSale ? "Sale deal summary" : "Rent deal summary"}
-                                </p>
-                                <p className="mbs-0.5 text-xs text-surface/60">
-                                    Broker income · updates as you type
-                                </p>
-                            </div>
-                            <span
-                                className="
-                              inline-flex shrink-0 items-center gap-1 text-xs text-surface/60
-                            "
-                            >
-                                <LockKeyhole className="block-3.5 inline-3.5" aria-hidden />
-                                Private
-                            </span>
+                <article
+                    className="
+                      overflow-hidden rounded-card border border-border-warm bg-surface
+                    "
+                >
+                    <div className="flex items-start justify-between gap-3 px-3.5 py-3">
+                        <div className="min-inline-0">
+                            <p className="text-sm font-semibold text-ink">
+                                {isSale ? "Sale deal summary" : "Rent deal summary"}
+                            </p>
+                            <p className="mbs-0.5 text-xs text-ink-muted">Updates as you type</p>
                         </div>
+                        <span
+                            className="
+                              inline-flex shrink-0 items-center gap-1 rounded-control bg-brand-soft
+                              px-2 py-1 text-xs font-medium text-brand-text
+                            "
+                        >
+                            <LockKeyhole className="block-3.5 inline-3.5" aria-hidden />
+                            Private
+                        </span>
+                    </div>
 
-                        <SectionLabel>Property</SectionLabel>
+                    <div className="mx-3.5 rounded-control bg-brand-soft/50 px-3.5 py-3">
+                        <p className="text-xs font-medium text-brand-text">You earn</p>
+                        <AnimatedMoney
+                            value={money(brokerAfterSplit)}
+                            className="mts-1 block text-2xl tracking-[-0.02em] text-brand"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-2 px-3.5 py-3">
                         {isSale && "ownerNet" in result ? (
                             <>
                                 <MoneyRow
@@ -489,12 +483,6 @@ export function LiveSummaryPanel({
                                 ) : null}
                             </>
                         ) : null}
-
-                        <SectionLabel>You earn</SectionLabel>
-                        <AnimatedMoney
-                            value={money(brokerAfterSplit)}
-                            className="mbe-2 block text-2xl text-highlight"
-                        />
                         <MoneyRow
                             label={isSale ? "Gross commission" : "Gross brokerage"}
                             value={money(result.gross)}
@@ -509,49 +497,37 @@ export function LiveSummaryPanel({
                             />
                         ) : null}
                     </div>
-                    <div className="border-bs border-surface/15">
+
+                    <div className="border-bs border-border-warm px-2 py-1">
                         <Button
                             type="button"
                             variant="ghost"
                             onClick={() => void copySummary()}
                             className="
                               flex items-center justify-center gap-2 text-xs font-semibold
-                              text-surface inline-full min-block-11
-                              hover:bg-surface/10 hover:text-surface
-                              focus-visible:ring-2 focus-visible:ring-highlight
+                              text-brand-text inline-full min-block-10
+                              hover:bg-brand-soft hover:text-brand-text
+                              focus-visible:ring-2 focus-visible:ring-brand
                             "
                         >
-                            <Copy className="block-4 inline-4" aria-hidden /> Copy summary
+                            <Copy className="block-3.5 inline-3.5" aria-hidden /> Copy summary
                         </Button>
                     </div>
-                </Card>
+                </article>
             ) : (
-                <Card
+                <div
                     className="
-                      rounded-card border border-dashed border-border-warm bg-surface-muted p-4
-                      shadow-none
+                      rounded-card border border-dashed border-brand/30 bg-brand-soft/30 px-3.5
+                      py-4
                     "
                 >
-                    <p className="text-sm font-bold text-ink">Live deal summary</p>
-                    <p className="mbs-1 text-sm/6 text-ink-muted">
+                    <p className="text-sm font-semibold text-ink">Live deal summary</p>
+                    <p className="mbs-1 text-sm/5 text-ink-muted">
                         Add the price on Price & deal to see what you earn.
                     </p>
-                </Card>
+                </div>
             )}
         </aside>
-    );
-}
-
-function SectionLabel({ children }: { children: string }) {
-    return (
-        <p
-            className="
-              mbs-4 mbe-1.5 border-bs border-surface/15 pbs-3 text-[11px] font-bold
-              tracking-[0.12em] text-surface/55 uppercase
-            "
-        >
-            {children}
-        </p>
     );
 }
 
@@ -595,7 +571,7 @@ function MoneyRow({
         <div
             className={cn(
                 "flex items-baseline justify-between gap-4 py-1 text-xs",
-                strong ? "font-bold text-surface" : "text-surface/70",
+                strong ? "font-bold text-ink" : "text-ink-muted",
             )}
         >
             <span className="flex items-center gap-1.5">
@@ -608,7 +584,7 @@ function MoneyRow({
                                 variant="ghost"
                                 size="icon-xs"
                                 aria-label={`Explain ${label}`}
-                                className="text-surface/55 hover:bg-surface/10 hover:text-surface"
+                                className="text-ink-subtle hover:bg-brand-soft hover:text-brand-text"
                             />
                         }
                     >
@@ -619,7 +595,7 @@ function MoneyRow({
                     </PopoverContent>
                 </Popover>
             </span>
-            <span className="tabular whitespace-nowrap">
+            <span className="tabular whitespace-nowrap text-ink">
                 {value == null ? "— — —" : `${prefix ? `${prefix} ` : ""}${formatInr(value)}`}
             </span>
         </div>

@@ -647,16 +647,18 @@ export function ChoiceField({
                                         `
                                           flex cursor-pointer gap-3 rounded-control border-2 px-4
                                           py-3.5 text-start leading-normal font-normal
-                                          transition-[background-color,border-color,color]
+                                          transition-[background-color,border-color,color,box-shadow]
                                           duration-160 min-block-12
                                           has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                         `,
                                         icon || !hasDescription ? "items-center" : "items-start",
                                         active
-                                            ? "border-brand bg-brand-soft text-brand-text"
+                                            ? `
+                                              border-brand bg-brand-soft text-brand-text shadow-xs
+                                            `
                                             : `
-                                              border-border-warm bg-surface text-ink
-                                              hover:border-brand/40
+                                              border-border-warm bg-surface-muted text-ink
+                                              hover:border-brand/40 hover:bg-surface
                                             `,
                                     )}
                                 >
@@ -826,10 +828,15 @@ export function MultiChipField({
                                                   sm:min-block-10
                                                 `,
                                                 active
-                                                    ? "border-brand bg-brand-soft text-brand-text"
+                                                    ? `
+                                                      border-brand bg-brand-soft text-brand-text
+                                                      shadow-xs
+                                                    `
                                                     : `
-                                                      border-border-warm bg-surface text-ink-muted
-                                                      hover:border-brand/40 hover:text-ink
+                                                      border-border-warm bg-surface-muted
+                                                      text-ink-muted
+                                                      hover:border-brand/40 hover:bg-surface
+                                                      hover:text-ink
                                                     `,
                                             )}
                                         >
@@ -1219,21 +1226,23 @@ export function WizardSection({
     return (
         <section
             className={cn(
-                tone === "private" &&
-                    "rounded-card border border-brand/15 bg-brand-soft/35 p-5 sm:p-6",
+                tone === "private"
+                    ? "rounded-card border border-brand/20 bg-brand-soft/40 p-5 sm:p-6"
+                    : "border-be border-border-warm/80 pbe-8 last:border-be-0 last:pbe-0",
             )}
         >
-            <div className="mbe-4 flex items-start justify-between gap-4">
+            <div className="mbe-5 flex items-start justify-between gap-4">
                 <div>
                     <h2
                         className="
-                      flex items-center gap-2.5 text-xl font-bold tracking-[-0.02em] text-ink
-                    "
+                          flex items-center gap-2.5 font-display text-xl font-semibold
+                          tracking-[-0.02em] text-ink
+                        "
                     >
                         {title}
                     </h2>
                     {description ? (
-                        <p className="mbs-1 text-sm/6 text-ink-muted max-inline-2xl">
+                        <p className="mbs-1.5 text-sm/6 text-ink-muted max-inline-2xl">
                             {description}
                         </p>
                     ) : null}

@@ -75,10 +75,18 @@ export function AttachedBuyersRow({
 }
 
 /** Exclusive owner attached to a listing — tap opens the owner picker. */
-export function AttachedOwnerRow({ name, onManage }: { name: string; onManage?: () => void }) {
+export function AttachedOwnerRow({
+    name,
+    avatarUrl,
+    onManage,
+}: {
+    name: string;
+    avatarUrl?: string;
+    onManage?: () => void;
+}) {
     return (
         <AttachedPeopleShell
-            people={[{ id: "owner", name }]}
+            people={[{ id: "owner", name, avatarUrl }]}
             title="Owner attached"
             onManage={onManage}
         />

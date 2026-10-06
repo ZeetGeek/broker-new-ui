@@ -1488,7 +1488,6 @@
     transition: grid-template-rows var(--acc-expand) var(--acc-ease);
 }
 .t-acc-panel-inner {
-    overflow: hidden;
     opacity: 0;
     filter: blur(2px);
     transition:

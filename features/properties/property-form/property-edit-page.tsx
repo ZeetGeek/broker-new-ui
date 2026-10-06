@@ -47,7 +47,7 @@ export function PropertyEditPage({ portal = "broker" }: { portal?: "broker" | "o
                     This listing isn&apos;t in your inventory (or was removed).
                 </p>
                 <Button
-                    className="bg-brand-ink text-surface hover:bg-brand-ink/90"
+                    className="bg-brand text-surface hover:bg-brand/90"
                     render={<Link href={listHref} />}
                 >
                     {backLabel}

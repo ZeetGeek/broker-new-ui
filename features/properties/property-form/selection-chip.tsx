@@ -41,10 +41,10 @@ export function SelectionChip({
                   active:scale-[0.98]
                 `,
                 active
-                    ? "border-brand bg-brand-soft text-brand-text"
+                    ? "border-brand bg-brand-soft text-brand-text shadow-xs"
                     : `
-                      border-border-warm bg-surface text-ink-muted
-                      hover:border-brand/40 hover:text-ink
+                      border-border-warm bg-surface-muted text-ink-muted
+                      hover:border-brand/40 hover:bg-surface hover:text-ink
                     `,
                 className,
             )}

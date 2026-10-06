@@ -1,7 +1,6 @@
 "use client";
 
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
-import { DealCardRich } from "@/features/pipeline/deal-card-rich";
 import type { DealItem, DealStatus } from "@/features/pipeline/types";
 
 const NOOP_HANDLERS: DealCardHandlers = {
@@ -161,14 +160,12 @@ export function PipelineCardPreview() {
             <header className="flex flex-col gap-1">
                 <h1 className="h2 text-ink">Pipeline card</h1>
                 <p className="body-sm text-ink-muted">
-                    Every state the deal card has to survive. Column width below matches a
-                    real board column, so truncation here is truncation in production.
+                    Every state the deal card has to survive. Column width below matches a real
+                    board column, so truncation here is truncation in production.
                 </p>
             </header>
 
-            <div
-                className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
-            >
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {CASES.map((item) => (
                     <section key={item.label} className="flex flex-col gap-2">
                         <div className="flex flex-col gap-0.5">
@@ -178,29 +175,6 @@ export function PipelineCardPreview() {
                         <div className="inline-72 max-inline-full">
                             <DealCard deal={item.deal} handlers={NOOP_HANDLERS} />
                         </div>
-                    </section>
-                ))}
-            </div>
-
-            <header className="flex flex-col gap-1 mbs-4">
-                <h2 className="h3 text-ink">List view card</h2>
-                <p className="body-sm text-ink-muted">
-                    The full-detail card. One deal per row, photo leads, every action labelled.
-                </p>
-            </header>
-
-            <div className="grid gap-4 lg:grid-cols-2">
-                {CASES.map((item) => (
-                    <section key={item.label} className="flex flex-col gap-2">
-                        <div className="flex flex-col gap-0.5">
-                            <h3 className="body-sm font-semibold text-ink">{item.label}</h3>
-                            <p className="body-xs text-ink-subtle">{item.note}</p>
-                        </div>
-                        <DealCardRich
-                            deal={item.deal}
-                            handlers={NOOP_HANDLERS}
-                            photoCount={item.deal.property.photoCount}
-                        />
                     </section>
                 ))}
             </div>

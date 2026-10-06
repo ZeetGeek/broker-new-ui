@@ -53,6 +53,8 @@ export type DealProperty = {
     amountInr: number;
     isRent: boolean;
     imageSrc: string;
+    /** Up to a few listing photos for the board card strip. Falls back to `[imageSrc]`. */
+    imageSrcs?: string[];
     /**
      * Total photos on the listing. Optional — absent means the payload did not
      * say, which is not the same as zero, so the gallery count stays hidden.
@@ -161,8 +163,6 @@ export type DealsFilters = {
 export type DealSort = "recent" | "stalled" | "price_desc" | "price_asc" | "visit_soon";
 
 export type DealsView = "board" | "done";
-
-export type DealBoardLayout = "board" | "list";
 
 export type PipelineSummaryChip = "running" | "in_play" | "quiet" | "finished";
 

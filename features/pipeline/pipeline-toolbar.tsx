@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
-import { ArrowDownUp, ChevronDown, LayoutGrid, List, Search } from "lucide-react";
+import { ArrowDownUp, ChevronDown, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -15,12 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import type {
-    DealBoardLayout,
-    DealsFilters,
-    DealSort,
-    DealTypeFilter,
-} from "@/features/pipeline/types";
+import type { DealsFilters, DealSort, DealTypeFilter } from "@/features/pipeline/types";
 
 const SORT_OPTIONS: { value: DealSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
@@ -123,19 +118,15 @@ function FilterMenu({
 
 export function PipelineToolbar({
     filters,
-    boardLayout,
     localities,
     owners,
     onPatch,
-    onBoardLayoutChange,
     trailing,
 }: {
     filters: DealsFilters;
-    boardLayout: DealBoardLayout;
     localities: string[];
     owners: string[];
     onPatch: (patch: Partial<DealsFilters>) => void;
-    onBoardLayoutChange: (layout: DealBoardLayout) => void;
     /**
      * Pushed to the end of the same row. The summary chips live here so the
      * board opens with one control line instead of two.
@@ -253,43 +244,6 @@ export function PipelineToolbar({
                     ))}
                 </DropdownMenuContent>
             </DropdownMenu>
-
-            <div
-                role="group"
-                aria-label="Board or list"
-                className="flex items-center gap-1 rounded-control bg-surface-muted p-1"
-            >
-                {(
-                    [
-                        { value: "board", label: "Board", icon: LayoutGrid },
-                        { value: "list", label: "List", icon: List },
-                    ] as const
-                ).map((option) => {
-                    const Icon = option.icon;
-                    const isActive = boardLayout === option.value;
-
-                    return (
-                        <button
-                            key={option.value}
-                            type="button"
-                            aria-pressed={isActive}
-                            onClick={() => onBoardLayoutChange(option.value)}
-                            className={cn(
-                                `
-                                  body-sm flex items-center gap-1.5 rounded-control px-3
-                                  transition-colors duration-160 block-control-sm
-                                `,
-                                isActive
-                                    ? "bg-surface font-semibold text-ink shadow-xs"
-                                    : "font-normal text-ink-muted hover:text-ink",
-                            )}
-                        >
-                            <Icon aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                            {option.label}
-                        </button>
-                    );
-                })}
-            </div>
 
             {trailing ? <div className="ms-auto flex items-center gap-2">{trailing}</div> : null}
         </div>

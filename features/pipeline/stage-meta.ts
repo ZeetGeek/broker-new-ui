@@ -42,6 +42,10 @@ export type StageMeta = {
      * on the mobile stage tabs.
      */
     labelClass: string;
+    /** Ink class for the pinned dashed SVG border (`text-stage-N`). */
+    pinnedBorderClass: string;
+    /** Pin badge fill/ink when the deal is pinned in this stage. */
+    pinnedBadgeClass: string;
 };
 
 export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
@@ -54,6 +58,8 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         pillClass: "bg-stage-1-soft text-stage-1",
         columnClass: "border-stage-1-soft bg-stage-1-soft/25",
         labelClass: "text-stage-1",
+        pinnedBorderClass: "text-stage-1",
+        pinnedBadgeClass: "border-stage-1/35 bg-surface text-stage-1",
     },
     contacted: {
         label: "Contacted",
@@ -64,6 +70,8 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         pillClass: "bg-stage-2-soft text-stage-2",
         columnClass: "border-stage-2-soft bg-stage-2-soft/25",
         labelClass: "text-stage-2",
+        pinnedBorderClass: "text-stage-2",
+        pinnedBadgeClass: "border-stage-2/35 bg-surface text-stage-2",
     },
     visit: {
         label: "Site visit",
@@ -74,6 +82,8 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         pillClass: "bg-stage-3-soft text-stage-3",
         columnClass: "border-stage-3-soft bg-stage-3-soft/25",
         labelClass: "text-stage-3",
+        pinnedBorderClass: "text-stage-3",
+        pinnedBadgeClass: "border-stage-3/35 bg-surface text-stage-3",
     },
     negotiation: {
         label: "Negotiation",
@@ -84,6 +94,8 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         pillClass: "bg-stage-4-soft text-stage-4",
         columnClass: "border-stage-4-soft bg-stage-4-soft/25",
         labelClass: "text-stage-4",
+        pinnedBorderClass: "text-stage-4",
+        pinnedBadgeClass: "border-stage-4/35 bg-surface text-stage-4",
     },
 };
 

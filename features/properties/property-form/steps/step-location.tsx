@@ -462,7 +462,7 @@ export function StepLocation() {
                             type="button"
                             size="lg"
                             onClick={confirmMapPin}
-                            className="self-end bg-brand-ink text-surface"
+                            className="self-end bg-brand text-surface"
                         >
                             <MapPin aria-hidden />
                             Confirm pin

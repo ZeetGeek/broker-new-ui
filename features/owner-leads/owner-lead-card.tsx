@@ -59,9 +59,9 @@ const actionButtonClass = `
 `;
 
 /**
- * Owner-side lead card. Laid out like the broker's pipeline list card
- * (DealCardRich) — stage pill, property, price, the two people on the deal,
- * then actions — so both portals read a deal the same way.
+ * Owner-side lead card. Laid out like the broker's pipeline deal card —
+ * stage pill, property, price, the two people on the deal, then actions —
+ * so both portals read a deal the same way.
  */
 export function OwnerLeadCard({
     lead,
@@ -129,9 +129,7 @@ export function OwnerLeadCard({
                     </div>
                 )}
 
-                <div
-                    className="absolute inset-bs-0 flex items-start justify-between p-3 inline-full"
-                >
+                <div className="absolute inset-bs-0 flex items-start justify-between p-3 inline-full">
                     <StagePill stage={lead.stage} />
                     {facts.photoCount > 1 ? (
                         <span

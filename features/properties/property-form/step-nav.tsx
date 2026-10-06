@@ -49,6 +49,7 @@ export function StepNav({
                                 className={cn(
                                     `
                                       flex items-center justify-start gap-3 px-3 text-start
+                                      transition-[background-color,color,box-shadow] duration-160
                                       xl:inline-full xl:min-block-12
                                     `,
                                     active
@@ -56,7 +57,10 @@ export function StepNav({
                                           bg-brand-soft text-brand-text
                                           hover:bg-brand-soft-hover hover:text-brand-text
                                         `
-                                        : "text-ink-muted hover:bg-surface-muted hover:text-ink",
+                                        : `
+                                          text-ink-muted
+                                          hover:bg-surface-muted hover:text-ink
+                                        `,
                                 )}
                             >
                                 <span

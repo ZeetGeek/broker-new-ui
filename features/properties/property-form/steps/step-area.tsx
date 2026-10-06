@@ -182,7 +182,7 @@ export function StepArea() {
                     />
                     <div
                         className="
-                          rounded-control bg-brand-ink px-4 py-3 text-surface min-block-12
+                          rounded-control bg-brand px-4 py-3 text-surface min-block-12
                         "
                     >
                         <p className="text-xs text-surface/70">Sq ft equivalent</p>

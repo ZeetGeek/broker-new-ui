@@ -1,63 +1,62 @@
 "use client";
 
+import { AttachedBuyersRow, AttachedOwnerRow } from "@/components/shared/attached-people-row";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
 import type { DealAssignedAgent } from "@/features/pipeline/types";
 
 type Party = {
+    id?: string;
     name: string;
     avatarUrl?: string;
 };
 
-function PartyRow({ party, role }: { party: Party; role: string }) {
-    return (
-        <div className="flex items-center gap-2.5">
-            <UserAvatar
-                name={party.name}
-                imageUrl={party.avatarUrl}
-                size="2xs"
-                fallback="character"
-                className="shrink-0"
-            />
-            <span className="body-sm truncate font-semibold text-ink capitalize">{party.name}</span>
-            <span className="body-xs ms-auto shrink-0 text-ink-subtle capitalize">{role}</span>
-        </div>
-    );
-}
-
 /**
- * The buyer + owner block every pipeline card shows, directly under the
- * price. Both sides of a deal must always be visible — see AGENTS.md, "the
- * core loop" — a card that only names the buyer is telling half the story.
+ * Buyer + owner on every pipeline card — same glass rows as owned property
+ * cards so the two surfaces read as one product. Both sides of a deal must
+ * stay visible (AGENTS.md core loop).
  *
- * Deliberately unboxed. An inset `surface-muted` panel here would be a card
- * inside a card, which docs/DESIGN.md §3.3 and the spatial rules both reject:
- * separation on this card comes from spacing, not from a second surface.
- *
- * Stall state is not shown here. The card's chip row states it in words
- * with a day count, so a second colour-only marker on this row would be a
- * duplicate signal — see docs/DESIGN.md §1.4.
+ * Stall state stays on the chip row, not here — colour-only markers would
+ * duplicate the day-count chip (docs/DESIGN.md §1.4).
  */
 export function DealPartiesPanel({
     buyer,
     owner,
     assignedAgent,
     currentUserId,
+    onOpenBuyer,
+    onOpenOwner,
 }: {
     buyer: Party;
     owner: Party;
     assignedAgent?: DealAssignedAgent | null;
     currentUserId?: string | null;
+    /** Opens deal / buyer context. Matches property-card manage taps. */
+    onOpenBuyer?: () => void;
+    onOpenOwner?: () => void;
 }) {
     const showHandledBy = Boolean(assignedAgent) && assignedAgent?.id !== currentUserId;
 
     return (
-        <div className="flex flex-col gap-2.5">
-            <PartyRow party={buyer} role="Buyer" />
-            <PartyRow party={owner} role="Owner" />
+        <div className="flex flex-col gap-2">
+            <AttachedOwnerRow
+                name={owner.name}
+                avatarUrl={owner.avatarUrl}
+                onManage={onOpenOwner}
+            />
+            <AttachedBuyersRow
+                buyers={[
+                    {
+                        id: buyer.id ?? "buyer",
+                        name: buyer.name,
+                        avatarUrl: buyer.avatarUrl,
+                    },
+                ]}
+                onManage={onOpenBuyer}
+            />
 
             {showHandledBy && assignedAgent ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-1">
                     <span className="body-xs text-ink-subtle">Handled by</span>
                     <UserAvatar
                         name={assignedAgent.name}

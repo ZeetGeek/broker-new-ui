@@ -262,6 +262,7 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             // state the card renders deliberately (docs/DESIGN.md §4.5);
             // substituting someone else's building here would be a lie.
             imageSrc: property.photos?.find(Boolean) ?? "",
+            imageSrcs: property.photos?.filter(Boolean) ?? [],
             photoCount: property.photos?.filter(Boolean).length ?? 0,
             isExclusiveProperty,
         },

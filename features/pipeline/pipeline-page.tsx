@@ -18,7 +18,6 @@ import {
     uniqueOwners,
 } from "@/features/pipeline/deal-attention";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
-import { DealCardRich } from "@/features/pipeline/deal-card-rich";
 import { DealDetailModal } from "@/features/pipeline/deal-detail-modal";
 import { DealNoteModal } from "@/features/pipeline/deal-note-modal";
 import { MakeOfferModal } from "@/features/pipeline/make-offer-modal";
@@ -36,7 +35,6 @@ import { type StageMoveRequest, StageNoteModal } from "@/features/pipeline/stage
 import { StageTabs } from "@/features/pipeline/stage-tabs";
 import {
     DEAL_STAGE_ORDER,
-    type DealBoardLayout,
     type DealDetail,
     type DealItem,
     type DealsFilters,
@@ -58,7 +56,6 @@ const DONE_GRID_BREAKPOINTS = [
 type PipelinePrefs = {
     filters: DealsFilters;
     view: DealsView;
-    boardLayout: DealBoardLayout;
     mobileStage: DealStage;
     pinnedDealIds: string[];
     summaryChip: PipelineSummaryChip;
@@ -67,7 +64,6 @@ type PipelinePrefs = {
 const DEFAULT_PIPELINE_PREFS: PipelinePrefs = {
     filters: DEFAULT_DEALS_FILTERS,
     view: "board",
-    boardLayout: "board",
     mobileStage: "new",
     pinnedDealIds: [],
     summaryChip: "running",
@@ -86,7 +82,6 @@ function isPipelinePrefs(value: unknown): value is PipelinePrefs {
         filters !== null &&
         typeof filters.q === "string" &&
         (v.view === "board" || v.view === "done") &&
-        (v.boardLayout === "board" || v.boardLayout === "list") &&
         isDealStage(v.mobileStage) &&
         Array.isArray(v.pinnedDealIds) &&
         (v.summaryChip === "running" ||
@@ -110,7 +105,7 @@ export function PipelinePage() {
         DEFAULT_PIPELINE_PREFS,
         { isValid: isPipelinePrefs },
     );
-    const { filters, view, boardLayout, mobileStage, pinnedDealIds, summaryChip } = prefs;
+    const { filters, view, mobileStage, pinnedDealIds, summaryChip } = prefs;
 
     const setFilters = useCallback(
         (next: DealsFilters | ((prev: DealsFilters) => DealsFilters)) => {
@@ -125,13 +120,6 @@ export function PipelinePage() {
     const setMobileStage = useCallback(
         (next: DealStage) => {
             setPrefs((prev) => ({ ...prev, mobileStage: next }));
-        },
-        [setPrefs],
-    );
-
-    const setBoardLayout = useCallback(
-        (next: DealBoardLayout) => {
-            setPrefs((prev) => ({ ...prev, boardLayout: next }));
         },
         [setPrefs],
     );
@@ -534,11 +522,9 @@ export function PipelinePage() {
             {!isFirstRun ? (
                 <PipelineToolbar
                     filters={filters}
-                    boardLayout={boardLayout}
                     localities={localities}
                     owners={owners}
                     onPatch={handlePatch}
-                    onBoardLayoutChange={setBoardLayout}
                     trailing={
                         summary ? (
                             <PipelineSummaryStrip
@@ -597,33 +583,15 @@ export function PipelinePage() {
                         isFetching ? "opacity-60 transition-opacity duration-160" : undefined
                     }
                 >
-                    {boardLayout === "list" ? (
-                        // List view gives one deal a whole row, so it leads with
-                        // the photo and shows the full detail set. The board
-                        // keeps the compact card — see DealCardRich.
-                        <div className="hidden flex-col gap-4 md:flex lg:grid lg:grid-cols-2">
-                            {liveDeals.map((deal) => (
-                                <DealCardRich
-                                    key={deal.id}
-                                    deal={deal}
-                                    handlers={handlers}
-                                    isBusy={busyId === deal.id}
-                                    otherBuyers={otherBuyersByDealId[deal.id] ?? []}
-                                    photoCount={deal.property.photoCount}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <PipelineBoard
-                            dealsByStage={dealsByStage}
-                            allLiveDeals={liveDeals}
-                            handlers={handlers}
-                            busyId={busyId}
-                            pinnedDealIds={pinnedDealIds}
-                            otherBuyersByDealId={otherBuyersByDealId}
-                            onDropDeal={moveOptimistically}
-                        />
-                    )}
+                    <PipelineBoard
+                        dealsByStage={dealsByStage}
+                        allLiveDeals={liveDeals}
+                        handlers={handlers}
+                        busyId={busyId}
+                        pinnedDealIds={pinnedDealIds}
+                        otherBuyersByDealId={otherBuyersByDealId}
+                        onDropDeal={moveOptimistically}
+                    />
 
                     <div className="flex flex-col gap-4 md:hidden" {...swipe}>
                         <StageTabs

@@ -29,6 +29,8 @@ const PROPERTIES = {
         amountInr: 1_15_00_000,
         isRent: false,
         imageSrc: "/properties/1.jpg",
+        imageSrcs: ["/properties/1.jpg", "/properties/2.jpg", "/properties/3.jpg"],
+        photoCount: 5,
     },
     palFlat: {
         id: "pr_099",
@@ -42,6 +44,8 @@ const PROPERTIES = {
         amountInr: 42_00_000,
         isRent: false,
         imageSrc: "/properties/2.jpg",
+        imageSrcs: ["/properties/2.jpg", "/properties/4.jpg", "/properties/5.jpg"],
+        photoCount: 3,
     },
     piplodRent: {
         id: "pr_088",
@@ -55,6 +59,8 @@ const PROPERTIES = {
         amountInr: 28_000,
         isRent: true,
         imageSrc: "/properties/3.jpg",
+        imageSrcs: ["/properties/3.jpg", "/properties/1.jpg", "/properties/5.jpg"],
+        photoCount: 4,
     },
     adajanRent: {
         id: "pr_121",
@@ -68,6 +74,8 @@ const PROPERTIES = {
         amountInr: 22_000,
         isRent: true,
         imageSrc: "/properties/4.jpg",
+        imageSrcs: ["/properties/4.jpg", "/properties/2.jpg", "/properties/1.jpg"],
+        photoCount: 3,
     },
     vesuVilla: {
         id: "pr_130",
@@ -81,6 +89,8 @@ const PROPERTIES = {
         amountInr: 1_85_00_000,
         isRent: false,
         imageSrc: "/properties/5.jpg",
+        imageSrcs: ["/properties/5.jpg", "/properties/3.jpg", "/properties/4.jpg"],
+        photoCount: 6,
     },
 } as const;
 
