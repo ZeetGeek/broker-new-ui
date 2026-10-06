@@ -1,13 +1,7 @@
 "use client";
 
-import {
-    brokerPropertyDetailHref,
-    brokerPropertyEditHref,
-} from "@/lib/routes/broker";
-import {
-    ownerPropertyDetailHref,
-    ownerPropertyEditHref,
-} from "@/lib/routes/owner";
+import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
+import { ownerPropertyDetailHref, ownerPropertyEditHref } from "@/lib/routes/owner";
 
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -57,7 +51,7 @@ export function MyListingsGrid({
         <WindowVirtualGrid
             items={items}
             getKey={(item) => item.id}
-            estimateRowHeight={isListView ? 224 : 580}
+            estimateRowHeight={isListView ? 224 : 520}
             gap={24}
             breakpoints={isListView ? LIST_BREAKPOINTS : GRID_BREAKPOINTS}
             ariaLabel="Your listings"

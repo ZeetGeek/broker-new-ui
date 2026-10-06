@@ -21,15 +21,18 @@ import {
     OverlayCard,
     OverlayCardSummary,
     OverlayChip,
-    OverlayStat,
-    OverlayStatsRow,
+    OverlayPersonLine,
 } from "@/components/shared/overlay-card";
+import { AvatarStack } from "@/components/shared/avatar-stack";
 import { PhoneNumber } from "@/components/shared/phone-number";
+import { PropertySaveButton } from "@/components/shared/property-save-button";
+import { PropertySharePopover } from "@/components/shared/property-share-popover";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
+import type { PropertyShareInput } from "@/lib/share/property";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import whatsappIcons from "@/features/properties/my-requests/selfhst-whatsapp.json";
+import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 import type { RequestsView } from "@/features/properties/my-requests/use-requests-view";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
@@ -262,20 +265,54 @@ export function DealWhatsAppButton({
     name,
     phoneDigits,
     appearance = "bare",
+    className,
 }: {
     name: string;
     phoneDigits: string;
-    /** `overlay`: round glass button for the top of a photo card. */
-    appearance?: "bare" | "overlay";
+    /** `overlay`: round glass on photo. `panel`: labeled footer button. */
+    appearance?: "bare" | "overlay" | "panel";
+    className?: string;
 }) {
     const isOverlay = appearance === "overlay";
+    const isPanel = appearance === "panel";
+
+    if (isPanel) {
+        return (
+            <Button
+                size="md"
+                variant="outline"
+                nativeButton={false}
+                className={cn("flex-1", className)}
+                render={
+                    <a
+                        href={formatWhatsAppUrl(phoneDigits)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`WhatsApp ${name}`}
+                    />
+                }
+            >
+                <Icon
+                    icon="bi:whatsapp"
+                    width={18}
+                    height={18}
+                    className="block-4.5 inline-4.5"
+                    aria-hidden
+                />
+                WhatsApp
+            </Button>
+        );
+    }
 
     return (
         <Button
             variant="ghost"
             size={isOverlay ? "icon" : "icon-sm"}
             nativeButton={false}
-            className={isOverlay ? OVERLAY_ICON_BUTTON_CLASS : BARE_ICON_BUTTON_CLASS}
+            className={cn(
+                isOverlay ? OVERLAY_ICON_BUTTON_CLASS : BARE_ICON_BUTTON_CLASS,
+                className,
+            )}
             render={
                 <a
                     href={formatWhatsAppUrl(phoneDigits)}
@@ -286,7 +323,7 @@ export function DealWhatsAppButton({
             }
         >
             <Icon
-                icon="selfhst:whatsapp"
+                icon="bi:whatsapp"
                 width={isOverlay ? 20 : 24}
                 height={isOverlay ? 20 : 24}
                 className={isOverlay ? "block-5 inline-5" : "block-6 inline-6"}
@@ -316,11 +353,60 @@ export function dealPriceLabel(listing: DealCardListing): string {
     return listing.isRent ? formatRentInr(listing.amountInr) : formatPriceInr(listing.amountInr);
 }
 
+export function dealShareInput(listing: DealCardListing): PropertyShareInput {
+    return {
+        id: listing.propertyId,
+        title: listing.title,
+        locality: listing.locality,
+        city: listing.city,
+        priceLabel: dealPriceLabel(listing),
+        imageSrc: listing.imageSrc,
+        configLabel: listing.configLabel,
+        propertyTypeLabel: listing.propertyTypeLabel,
+        areaSqft: listing.areaSqft,
+        bhk: listing.bhk,
+        listingKind: listing.isRent ? "rent" : "sale",
+    };
+}
+
+/** Share + save on the photo; pass ⋯ / chat / WhatsApp as `children`. */
+export function DealCardPhotoToolbar({
+    listing,
+    isSaved = false,
+    onToggleSave,
+    children,
+}: {
+    listing: DealCardListing;
+    isSaved?: boolean;
+    onToggleSave?: () => void;
+    children?: ReactNode;
+}) {
+    return (
+        <div className="flex flex-col gap-2">
+            <PropertySharePopover
+                iconOnly
+                listing={dealShareInput(listing)}
+                className={OVERLAY_ICON_BUTTON_CLASS}
+            />
+            {onToggleSave ? (
+                <PropertySaveButton
+                    iconOnly
+                    isSaved={isSaved}
+                    title={listing.title}
+                    onToggle={onToggleSave}
+                    className={OVERLAY_ICON_BUTTON_CLASS}
+                />
+            ) : null}
+            {children}
+        </div>
+    );
+}
+
 /**
  * Grid deal card. Status leads the chips. `muted` desaturates the photo for a
  * deal the broker can no longer act on, so live deals stand out while
- * scanning. `actions` go top-right (menu, chat, WhatsApp); `children` go under
- * the summary (message, stats, footer).
+ * scanning. Photo `actions` stay light (e.g. more menu); chat / WhatsApp live
+ * in the footer so they read as primary contact actions.
  */
 export function DealOverlayCard({
     listing,
@@ -345,7 +431,7 @@ export function DealOverlayCard({
     detailHref?: string;
 }) {
     const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
-    const specsLabel = [formatAreaSqft(listing.areaSqft), configLabel].filter(Boolean).join(" · ");
+    const specsLabel = [configLabel, formatAreaSqft(listing.areaSqft)].filter(Boolean).join(" · ");
 
     return (
         <OverlayCard
@@ -372,48 +458,110 @@ export function DealOverlayCard({
         >
             <OverlayCardSummary
                 href={href}
-                title={listing.title}
                 priceLabel={dealPriceLabel(listing)}
+                headline={listing.title}
                 locationLabel={`${listing.locality}, ${listing.city}`}
-                specsLabel={specsLabel}
+                specsLabel={specsLabel || undefined}
             />
             {children}
         </OverlayCard>
     );
 }
 
-/** Commission + owner. The owner's number shows once the deal is live. */
+/** Owner line (+ optional commission / phone) under the summary. */
 export function DealOverlayStats({
     listing,
     ownerName,
     ownerPhoneDigits,
+    personLabel = "Owner",
 }: {
     listing: DealCardListing;
     ownerName: string;
     ownerPhoneDigits?: string;
+    /** Owner-side cards pass "Broker". */
+    personLabel?: string;
 }) {
+    const phoneHint = ownerPhoneDigits ? (
+        <PhoneNumber phoneDigits={ownerPhoneDigits} className="text-inherit" />
+    ) : undefined;
+    const commissionHint =
+        listing.commissionPercent > 0 ? `${listing.commissionPercent}% commission` : undefined;
+
     return (
-        <OverlayStatsRow>
-            {listing.commissionPercent > 0 ? (
-                <OverlayStat label="Commission">{listing.commissionPercent}%</OverlayStat>
+        <div className="flex flex-col gap-1 min-inline-0">
+            <OverlayPersonLine label={personLabel} name={ownerName} hint={phoneHint} />
+            {commissionHint ? (
+                <p className="body-sm tracking-wide text-ink-muted tabular-nums">
+                    {commissionHint}
+                </p>
             ) : null}
-            <OverlayStat
-                label="Owner"
-                hint={
-                    ownerPhoneDigits ? (
-                        <PhoneNumber phoneDigits={ownerPhoneDigits} className="text-inherit" />
-                    ) : undefined
-                }
-            >
-                <span className="capitalize">{ownerName}</span>
-            </OverlayStat>
-        </OverlayStatsRow>
+        </div>
     );
 }
 
-/** Footer wrapper for the overlay panel — re-enables the pointer for tooltip wrappers. */
+/** Attached buyers on an approved deal — tap opens the buyers modal. */
+export function DealAttachedBuyers({
+    buyers,
+    onManage,
+}: {
+    buyers: Array<{ id: string; name: string; avatarUrl?: string }>;
+    /** Opens the manage-buyers modal when the row is pressed. */
+    onManage?: () => void;
+}) {
+    if (buyers.length === 0) return null;
+
+    const countLabel = buyers.length === 1 ? "1 buyer" : `${buyers.length} buyers`;
+    const names = buyers.map((buyer) => buyer.name).join(", ");
+
+    const content = (
+        <>
+            <AvatarStack people={buyers} max={3} className="shrink-0" />
+            <span className="flex min-inline-0 flex-col gap-0.5">
+                <span className="body-sm font-semibold tracking-wide text-ink">{countLabel}</span>
+                <span className="body-xs truncate tracking-wide text-ink-muted capitalize">
+                    {names}
+                </span>
+            </span>
+        </>
+    );
+
+    if (onManage) {
+        return (
+            <button
+                type="button"
+                onClick={onManage}
+                className={cn(
+                    `
+                      flex items-center gap-2.5 px-3 py-2.5 text-start transition-colors
+                      duration-160 inline-full rounded-control
+                    `,
+                    OVERLAY_GLASS_BUTTON_CLASS,
+                )}
+            >
+                {content}
+            </button>
+        );
+    }
+
+    return (
+        <div
+            className={cn(
+                "flex items-center gap-2.5 px-3 py-2.5 rounded-control",
+                OVERLAY_GLASS_BUTTON_CLASS,
+            )}
+        >
+            {content}
+        </div>
+    );
+}
+
+/** Footer wrapper — one row of primary actions at the bottom. */
 export function DealOverlayFooter({ children }: { children: ReactNode }) {
-    return <div className="pointer-events-auto flex gap-2">{children}</div>;
+    return <div className="pointer-events-auto mbs-auto flex gap-2 inline-full">{children}</div>;
+}
+
+export function DealOverlayFooterRow({ children }: { children: ReactNode }) {
+    return <div className="flex gap-2 inline-full">{children}</div>;
 }
 
 /** Outline-button class for the footer's secondary action, per card tone. */

@@ -25,24 +25,18 @@ export function PropertyCardSkeleton({
         return (
             <div
                 className={cn(
-                    "flex flex-1 flex-col overflow-hidden rounded-card bg-surface-muted shadow-md",
+                    "flex flex-1 flex-col overflow-hidden rounded-card bg-surface shadow-md",
                     className,
                 )}
                 aria-hidden
             >
-                <div className="aspect-5/4 animate-pulse inline-full" />
-                <div className="flex flex-col gap-3 bg-border-warm/40 px-4 pbs-4 pbe-4">
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="animate-pulse rounded-sm bg-surface block-5 inline-1/2" />
-                        <div className="animate-pulse rounded-sm bg-surface block-6 inline-20" />
-                    </div>
-                    <div className="animate-pulse rounded-sm bg-surface block-4 inline-2/5" />
-                    <div className="animate-pulse rounded-sm bg-surface block-4 inline-1/3" />
-                    <div className="grid grid-cols-2 gap-3 pbs-1">
-                        <div className="animate-pulse rounded-sm bg-surface block-9" />
-                        <div className="animate-pulse rounded-sm bg-surface block-9" />
-                    </div>
-                    <div className="animate-pulse rounded-control bg-surface block-11 inline-full" />
+                <div className="aspect-4/3 animate-pulse bg-surface-muted inline-full" />
+                <div className="flex flex-col gap-2.5 px-4 pbs-3.5 pbe-3">
+                    <div className="animate-pulse rounded-sm bg-surface-muted block-7 inline-1/3" />
+                    <div className="animate-pulse rounded-sm bg-surface-muted block-5 inline-3/5" />
+                    <div className="animate-pulse rounded-sm bg-surface-muted block-4 inline-2/5" />
+                    <div className="animate-pulse rounded-sm bg-surface-muted block-4 inline-1/2" />
+                    <div className="animate-pulse rounded-control bg-surface-muted block-11 inline-full" />
                 </div>
             </div>
         );
@@ -178,9 +172,7 @@ export function PropertyCardSkeleton({
 
                 <div className="flex flex-col gap-2">
                     <div className="animate-pulse rounded-sm bg-surface-muted block-4 inline-4/5" />
-                    <div
-                        className="animate-pulse rounded-sm bg-surface-muted block-3.5 inline-3/5"
-                    />
+                    <div className="animate-pulse rounded-sm bg-surface-muted block-3.5 inline-3/5" />
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -190,9 +182,7 @@ export function PropertyCardSkeleton({
                               animate-pulse rounded-control bg-surface-muted block-8 inline-8
                             "
                         />
-                        <div
-                            className="animate-pulse rounded-sm bg-surface-muted block-4 inline-28"
-                        />
+                        <div className="animate-pulse rounded-sm bg-surface-muted block-4 inline-28" />
                     </div>
                 </div>
 

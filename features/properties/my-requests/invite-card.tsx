@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Check, UserPlus, X } from "lucide-react";
+import { Check, UserPlus } from "lucide-react";
 
-import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
+import { ApiError } from "@/lib/api/client";
+import { propertiesApi } from "@/lib/api/properties";
+import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { PhoneNumber } from "@/components/shared/phone-number";
@@ -22,8 +25,10 @@ import {
     DealCardFooter,
     DealCardMeta,
     DealCardPhoto,
+    DealCardPhotoToolbar,
     DealCardPrice,
     DealCardShell,
+    DealAttachedBuyers,
     DealOverlayCard,
     DealOverlayFooter,
     DealOverlayStats,
@@ -163,22 +168,10 @@ function InviteCardFooter({
     onAddBuyers: () => void;
     isBusy: boolean;
 }) {
-    const detailsHref = brokerOwnerListingDetailHref(item.propertyId);
     const secondaryClass = dealSecondaryButtonClass(tone);
     const Footer = tone === "overlay" ? DealOverlayFooter : DealCardFooter;
 
-    const viewDetails = (
-        <Button
-            size="md"
-            variant="accent"
-            nativeButton={false}
-            className="flex-[1.4]"
-            render={<Link href={detailsHref} prefetch={false} />}
-        >
-            View details
-        </Button>
-    );
-
+    // Card tap already opens the listing — footer only keeps the stage action.
     if (item.stage === "pending") {
         return (
             <Footer>
@@ -189,7 +182,6 @@ function InviteCardFooter({
                     onClick={() => onDecline(item.id)}
                     className={cn("flex-1", secondaryClass)}
                 >
-                    <X aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                     Decline
                 </Button>
                 <Button
@@ -200,27 +192,29 @@ function InviteCardFooter({
                     className="flex-[1.4]"
                 >
                     <Check aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                    Accept
+                    Accept invite
                 </Button>
             </Footer>
         );
     }
 
     if (item.stage === "accepted") {
+        // Buyers already on the card open the modal — no duplicate button.
+        if (item.attachedClients.length > 0) return null;
+
         return (
             <Footer>
                 <Button
                     size="md"
-                    variant="outline"
+                    variant="accent"
                     type="button"
                     disabled={isBusy}
                     onClick={onAddBuyers}
-                    className={cn("flex-1", secondaryClass)}
+                    className="inline-full"
                 >
                     <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    {item.clientsAttached === 0 ? "Add buyer" : "See buyers"}
+                    Add buyer
                 </Button>
-                {viewDetails}
             </Footer>
         );
     }
@@ -231,12 +225,11 @@ function InviteCardFooter({
                 size="md"
                 variant="outline"
                 nativeButton={false}
-                className={cn("flex-1", secondaryClass)}
+                className={cn("inline-full", secondaryClass)}
                 render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
             >
                 Find similar
             </Button>
-            {viewDetails}
         </Footer>
     );
 }
@@ -257,7 +250,40 @@ export function InviteCard({
     isBusy?: boolean;
 }) {
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
     const ownerPhoneDigits = ownerPhoneFor(item);
+
+    async function toggleSave() {
+        const next = !isSaved;
+        setIsSaved(next);
+        try {
+            if (next) {
+                await propertiesApi.bookmark(item.propertyId);
+            } else {
+                await propertiesApi.unbookmark(item.propertyId);
+            }
+        } catch (error) {
+            setIsSaved(!next);
+            toast.error(error instanceof ApiError ? error.message : "Could not update save");
+        }
+    }
+
+    const photoToolbar = (
+        <DealCardPhotoToolbar
+            listing={item}
+            isSaved={isSaved}
+            onToggleSave={() => void toggleSave()}
+        >
+            <ChatButton peer={chatPeerFor(item)} appearance="overlay" />
+            {ownerPhoneDigits ? (
+                <DealWhatsAppButton
+                    name={item.ownerName}
+                    phoneDigits={ownerPhoneDigits}
+                    appearance="overlay"
+                />
+            ) : null}
+        </DealCardPhotoToolbar>
+    );
 
     const footer = (tone: CardTone) => (
         <InviteCardFooter
@@ -281,6 +307,12 @@ export function InviteCard({
                         <p className="body-sm line-clamp-2 text-ink-muted">“{item.message}”</p>
                     ) : null}
                     <InviteOwnerRow item={item} />
+                    {item.stage === "accepted" && item.attachedClients.length > 0 ? (
+                        <DealAttachedBuyers
+                            buyers={item.attachedClients}
+                            onManage={() => setIsBuyersOpen(true)}
+                        />
+                    ) : null}
                     <div className="mbs-auto flex flex-col gap-2.5">
                         <DealCardPrice listing={item} />
                         {footer("light")}
@@ -295,21 +327,10 @@ export function InviteCard({
                 statusTone={STATUS_TONE[item.stage]}
                 muted={item.stage === "declined" || item.stage === "expired"}
                 isBusy={isBusy}
-                actions={
-                    <>
-                        <ChatButton peer={chatPeerFor(item)} appearance="overlay" />
-                        {ownerPhoneDigits ? (
-                            <DealWhatsAppButton
-                                name={item.ownerName}
-                                phoneDigits={ownerPhoneDigits}
-                                appearance="overlay"
-                            />
-                        ) : null}
-                    </>
-                }
+                actions={photoToolbar}
             >
                 {item.message ? (
-                    <p className="body-sm line-clamp-2 tracking-wide text-surface/85 italic">
+                    <p className="body-sm line-clamp-2 tracking-wide text-ink-muted italic">
                         “{item.message}”
                     </p>
                 ) : null}
@@ -318,6 +339,12 @@ export function InviteCard({
                     ownerName={item.ownerName}
                     ownerPhoneDigits={ownerPhoneDigits}
                 />
+                {item.stage === "accepted" && item.attachedClients.length > 0 ? (
+                    <DealAttachedBuyers
+                        buyers={item.attachedClients}
+                        onManage={() => setIsBuyersOpen(true)}
+                    />
+                ) : null}
                 {footer("overlay")}
             </DealOverlayCard>
         );

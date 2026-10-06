@@ -13,44 +13,31 @@ import { MarqueeText } from "@/components/shared/marquee-text";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 
 /*
- * Overlay property card: the cover photo fills the whole card and the details
- * sit on a blurred panel over its lower part. The clear photo band is
- * `aspect-5/4` of the card width and grows when a taller card in the same grid
- * row stretches this one. The panel starts 3.5rem above the band and fades in.
- *
- * `transform-gpu` gives the card its own layer: without it Chrome lets the
- * backdrop-blur panel paint past `overflow-hidden` and the corners go square.
- * `group/marquee` makes long title/location lines scroll while the card is hovered.
+ * Property listing card: clear photo on top, white essentials panel below.
+ * Cards stretch to the row height (`flex-1`); the panel grows and the CTA
+ * sits at the bottom via `OverlayCardActions` / `mbs-auto`.
  */
 const CARD_CLASS = `
-  group/marquee relative isolate flex flex-1 transform-gpu flex-col overflow-hidden rounded-card bg-brand-ink
-  shadow-md transition-[box-shadow,translate] duration-160
+  group/marquee relative isolate flex flex-1 transform-gpu flex-col overflow-hidden rounded-card
+  bg-surface shadow-md transition-[box-shadow,translate] duration-160 inline-full
   hover:-translate-y-0.5 hover:shadow-lg
 `;
-// One light pass across the card when it appears (new listings).
 const SWEEP_CLASS = `
   pointer-events-none absolute inset-y-0 inset-s-[-40%] inline-[40%]
   bg-linear-to-r from-transparent via-surface/35 to-transparent
   motion-safe:animate-card-sweep
 `;
-const PHOTO_BAND_CLASS = "pointer-events-none aspect-5/4 shrink-0 grow inline-full";
-// Panel ignores the pointer so taps on its text open the listing underneath;
-// links and buttons inside it opt back in.
+const PHOTO_CLASS = "relative aspect-4/3 shrink-0 overflow-hidden inline-full";
+// Panel ignores the pointer so taps open the listing; links/buttons opt back in.
 const PANEL_CLASS = `
-  pointer-events-none relative z-10 -mbs-14 flex flex-col gap-3 px-4 pbs-14 pbe-4 text-surface
+  pointer-events-none relative z-10 flex flex-1 flex-col gap-2.5 px-4 py-3.5  text-ink
   [&_a]:pointer-events-auto [&_button]:pointer-events-auto
 `;
-const PANEL_BLUR_CLASS = `
-  absolute inset-0 -z-10 rounded-b-card backdrop-blur-xl
-  [mask-image:linear-gradient(to_bottom,transparent,black_3.5rem)]
-`;
-const PANEL_SCRIM_CLASS = `
-  absolute inset-0 -z-10 rounded-b-card
-  bg-[linear-gradient(to_bottom,transparent,color-mix(in_oklab,var(--color-brand-ink)_40%,transparent)_3.5rem,color-mix(in_oklab,var(--color-brand-ink)_80%,transparent))]
-`;
-const TITLE_CLASS = "body font-semibold tracking-wide text-surface capitalize hover:text-surface";
+const PRICE_CLASS = "h5 font-semibold tracking-wide tabular-nums text-brand";
+const HEADLINE_CLASS = "body font-semibold tracking-wide text-ink capitalize hover:text-ink";
 const META_LINE_CLASS =
-    "body-sm flex items-center gap-1.5 tracking-wide text-surface/75 min-inline-0";
+    "body-sm flex items-center gap-1.5 tracking-wide text-ink-muted min-inline-0";
+const PERSON_CLASS = "body-sm tracking-wide text-ink-muted min-inline-0";
 
 /** Round glass icon button for the top-right corner of the photo. 48px hit area. */
 export const OVERLAY_ICON_BUTTON_CLASS = `
@@ -61,10 +48,10 @@ export const OVERLAY_ICON_BUTTON_CLASS = `
   aria-expanded:bg-ink/45 aria-expanded:text-surface
 `;
 
-/** Secondary text button on the dark panel (the primary stays `accent`). */
+/** Secondary outline button on the light panel (primary stays `accent`). */
 export const OVERLAY_GLASS_BUTTON_CLASS = `
-  border border-surface/35 bg-surface/10 font-semibold text-surface
-  hover:border-surface/50 hover:bg-surface/20 hover:text-surface
+  border border-ink/15 bg-surface font-semibold text-ink
+  hover:border-ink/30 hover:bg-surface-muted hover:text-ink
 `;
 
 /** Glass chip for the photo — status, sale/rent, new. */
@@ -101,12 +88,12 @@ export function OverlayChip({
     );
 }
 
-/** Divided row of small label/value pairs under the summary. */
+/** Divided row of small label/value pairs — keep for deal/owned extras only. */
 export function OverlayStatsRow({ children }: { children: ReactNode }) {
     return (
         <div
             className="
-              grid auto-cols-fr grid-flow-col divide-x divide-surface/20 border-bs border-surface/20
+              grid auto-cols-fr grid-flow-col divide-x divide-border-warm border-bs border-border-warm
               pbs-3
             "
         >
@@ -127,12 +114,12 @@ export function OverlayStat({
 }) {
     return (
         <div className="flex flex-col gap-0.5 px-3 min-inline-0 first:ps-0 last:pe-0">
-            <span className="body-xs truncate tracking-wide text-surface/70">{label}</span>
-            <span className="body-sm truncate font-semibold tracking-wide tabular-nums">
+            <span className="body-xs truncate tracking-wide text-ink-muted">{label}</span>
+            <span className="body-sm truncate font-semibold tracking-wide tabular-nums text-ink">
                 {children}
             </span>
             {hint ? (
-                <span className="body-xs truncate tracking-wide text-surface/75 tabular-nums">
+                <span className="body-xs truncate tracking-wide text-ink-muted tabular-nums">
                     {hint}
                 </span>
             ) : null}
@@ -140,45 +127,89 @@ export function OverlayStat({
     );
 }
 
-/** Title + price, location, and specs — the top of every overlay panel. */
+/**
+ * Price (optional secondary price) → what it is → where.
+ * Pass `price` when the price row needs custom markup (tooltips, dual prices).
+ */
 export function OverlayCardSummary({
     href,
-    title,
     priceLabel,
+    price,
+    headline,
     locationLabel,
     specsLabel,
 }: {
     href: string;
-    title: string;
-    priceLabel: string;
+    priceLabel?: string;
+    /** Custom price block. When set, `priceLabel` is ignored. */
+    price?: ReactNode;
+    /** Short “what” line — property title or config · area. */
+    headline: string;
     locationLabel: string;
-    specsLabel: string;
+    /** Optional quieter specs under the location (config · area). */
+    specsLabel?: string;
 }) {
     return (
         <div className="flex flex-col gap-1 min-inline-0">
-            <div className="flex items-baseline justify-between gap-3 p-1 min-inline-0">
-                <h3 className="max-inline-full min-inline-0">
-                    <PropertyTitleLink href={href} className={TITLE_CLASS}>
-                        <MarqueeText text={title} />
-                    </PropertyTitleLink>
-                </h3>
-                <span className="h5 shrink-0 font-semibold tracking-wide tabular-nums">
-                    {priceLabel}
-                </span>
-            </div>
+            {price ?? (priceLabel ? <p className={PRICE_CLASS}>{priceLabel}</p> : null)}
+            <h3 className="max-inline-full min-inline-0">
+                <PropertyTitleLink href={href} className={HEADLINE_CLASS}>
+                    <MarqueeText text={headline} />
+                </PropertyTitleLink>
+            </h3>
             <p className={META_LINE_CLASS}>
                 <MapPin aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
                 <MarqueeText text={locationLabel} className="capitalize" />
             </p>
-            <p className={META_LINE_CLASS}>
-                <Maximize2
-                    aria-hidden
-                    className="shrink-0 block-3.5 inline-3.5"
-                    strokeWidth={1.75}
-                />
-                <MarqueeText text={specsLabel} />
-            </p>
+            {specsLabel ? (
+                <p className={META_LINE_CLASS}>
+                    <Maximize2
+                        aria-hidden
+                        className="shrink-0 block-3.5 inline-3.5"
+                        strokeWidth={1.75}
+                    />
+                    <MarqueeText text={specsLabel} />
+                </p>
+            ) : null}
         </div>
+    );
+}
+
+/** Quiet person line under the summary (Owner / Broker). */
+export function OverlayPersonLine({
+    label,
+    name,
+    hint,
+}: {
+    label: string;
+    name: string;
+    hint?: ReactNode;
+}) {
+    return (
+        <p className={PERSON_CLASS}>
+            <span className="text-ink-subtle">{label}</span>
+            <span className="text-ink-subtle/60"> · </span>
+            <span className="font-semibold capitalize text-ink">{name}</span>
+            {hint ? (
+                <>
+                    <span className="text-ink-subtle/60"> · </span>
+                    <span className="tabular-nums text-ink-muted">{hint}</span>
+                </>
+            ) : null}
+        </p>
+    );
+}
+
+/** Pins CTAs to the bottom of a stretched card panel. */
+export function OverlayCardActions({
+    children,
+    className,
+}: {
+    children: ReactNode;
+    className?: string;
+}) {
+    return (
+        <div className={cn("pointer-events-auto mbs-auto flex gap-2", className)}>{children}</div>
     );
 }
 
@@ -216,71 +247,67 @@ export function OverlayCard({
 }: OverlayCardProps) {
     return (
         <article className={cn(CARD_CLASS, className)}>
-            {/* Duplicate of the title link for pointer users; hidden from keyboard and AT. */}
-            <Link
-                href={href}
-                prefetch={false}
-                tabIndex={-1}
-                aria-hidden
-                className="absolute inset-0"
-            >
-                <HoverScaleRoot className="relative overflow-hidden block-full inline-full">
-                    {imageSrc ? (
-                        <HoverScaleLayer className="absolute inset-0">
-                            <AppImage
-                                src={imageSrc}
-                                alt={imageAlt}
-                                fill
-                                sizes={imageSizes}
-                                priority={priority}
-                                className={cn("object-cover", muted && "grayscale-60")}
-                            />
-                        </HoverScaleLayer>
-                    ) : (
-                        <div
-                            className="
-                              flex aspect-5/4 flex-col items-center justify-center gap-2 px-4
-                              text-center inline-full
-                            "
-                        >
-                            <Building2
-                                aria-hidden
-                                className="text-surface/50 block-8 inline-8"
-                                strokeWidth={1.5}
-                            />
-                            <p className="body-xs text-surface/60">No photos yet</p>
-                        </div>
+            <div className={PHOTO_CLASS}>
+                {/* Duplicate of the title link for pointer users; hidden from keyboard and AT. */}
+                <Link
+                    href={href}
+                    prefetch={false}
+                    tabIndex={-1}
+                    aria-hidden
+                    className="absolute inset-0"
+                >
+                    <HoverScaleRoot className="relative overflow-hidden block-full inline-full">
+                        {imageSrc ? (
+                            <HoverScaleLayer className="absolute inset-0">
+                                <AppImage
+                                    src={imageSrc}
+                                    alt={imageAlt}
+                                    fill
+                                    sizes={imageSizes}
+                                    priority={priority}
+                                    className={cn("object-cover", muted && "grayscale-60")}
+                                />
+                            </HoverScaleLayer>
+                        ) : (
+                            <div
+                                className="
+                                  flex flex-col items-center justify-center gap-2 bg-surface-muted
+                                  px-4 text-center block-full inline-full
+                                "
+                            >
+                                <Building2
+                                    aria-hidden
+                                    className="text-ink-subtle block-8 inline-8"
+                                    strokeWidth={1.5}
+                                />
+                                <p className="body-xs text-ink-muted">No photos yet</p>
+                            </div>
+                        )}
+                    </HoverScaleRoot>
+                </Link>
+
+                {sweep ? <div aria-hidden className={SWEEP_CLASS} /> : null}
+
+                <div
+                    className={cn(
+                        `
+                          pointer-events-none absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap
+                          items-start gap-1.5
+                        `,
+                        actions ? "pe-16" : "pe-3",
                     )}
-                </HoverScaleRoot>
-            </Link>
-
-            {sweep ? <div aria-hidden className={SWEEP_CLASS} /> : null}
-
-            <div
-                className={cn(
-                    `
-                      pointer-events-none absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap
-                      items-start gap-1.5
-                    `,
-                    actions ? "pe-16" : "pe-3",
-                )}
-            >
-                {chips}
-            </div>
-
-            {actions ? (
-                <div className="absolute inset-e-3 inset-bs-3 z-20 flex flex-col gap-2">
-                    {actions}
+                >
+                    {chips}
                 </div>
-            ) : null}
 
-            <div aria-hidden className={PHOTO_BAND_CLASS} />
-
-            <div className={PANEL_CLASS}>
-                <div aria-hidden className={PANEL_BLUR_CLASS} />
-                <div aria-hidden className={PANEL_SCRIM_CLASS} />
-                {children}
+                {actions ? (
+                    <div className="absolute inset-e-3 inset-bs-3 z-20 flex flex-col gap-2">
+                        {actions}
+                    </div>
+                ) : null}
             </div>
+
+            <div className={PANEL_CLASS}>{children}</div>
         </article>
     );
 }

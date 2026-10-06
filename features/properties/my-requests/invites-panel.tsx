@@ -154,7 +154,7 @@ export function InvitesPanel({
                 <WindowVirtualGrid
                     items={result.items}
                     getKey={(item) => item.id}
-                    estimateRowHeight={view === "list" ? 224 : 480}
+                    estimateRowHeight={view === "list" ? 224 : 520}
                     gap={24}
                     breakpoints={
                         view === "list" ? REQUESTS_LIST_BREAKPOINTS : REQUESTS_GRID_BREAKPOINTS

@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { useChat } from "@/features/chat/chat-provider";
-import chatIcons from "@/features/chat/mdi-chat.json";
+import messageCircleIcons from "@/features/chat/lucide-message-circle.json";
 import type { ChatPeer } from "@/features/chat/types";
 
-addCollection(chatIcons as Parameters<typeof addCollection>[0]);
+addCollection(messageCircleIcons as Parameters<typeof addCollection>[0]);
 
 /**
  * Opens the one global chat modal for this person. Every card that shows a
@@ -27,11 +27,39 @@ export function ChatButton({
     peer: ChatPeer;
     className?: string;
     size?: "icon-xs" | "icon-sm" | "icon";
-    /** `overlay`: round glass button for the top of a photo card. */
-    appearance?: "bare" | "overlay";
+    /** `overlay`: glass on photo. `panel`: labeled footer button. */
+    appearance?: "bare" | "overlay" | "panel";
 }) {
     const { openChat } = useChat();
     const isOverlay = appearance === "overlay";
+    const isPanel = appearance === "panel";
+    const iconSize = isOverlay || isPanel ? 18 : 24;
+
+    const icon = (
+        <Icon
+            icon="lucide:message-circle"
+            width={iconSize}
+            height={iconSize}
+            className={isOverlay || isPanel ? "block-4.5 inline-4.5" : "block-6 inline-6"}
+            aria-hidden
+        />
+    );
+
+    if (isPanel) {
+        return (
+            <Button
+                type="button"
+                size="md"
+                variant="outline"
+                onClick={() => openChat(peer)}
+                aria-label={`Message ${peer.name}`}
+                className={cn("flex-1", className)}
+            >
+                {icon}
+                Message
+            </Button>
+        );
+    }
 
     return (
         <Tooltip>
@@ -53,13 +81,7 @@ export function ChatButton({
                             className,
                         )}
                     >
-                        <Icon
-                            icon="mdi:chat"
-                            width={isOverlay ? 18 : 24}
-                            height={isOverlay ? 18 : 24}
-                            className={isOverlay ? "block-4.5 inline-4.5" : "block-6 inline-6"}
-                            aria-hidden
-                        />
+                        {icon}
                     </Button>
                 }
             />

@@ -6,10 +6,7 @@ import { Check, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import {
-    OverlayStat,
-    OverlayStatsRow,
-} from "@/components/shared/overlay-card";
+import { OverlayPersonLine } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -48,13 +45,7 @@ function stageMetaFor(item: OwnerRequestCardItem, actions: CardActions) {
     return OWNER_REQUEST_STAGE_META[item.status];
 }
 
-function StageBadge({
-    item,
-    actions,
-}: {
-    item: OwnerRequestCardItem;
-    actions: CardActions;
-}) {
+function StageBadge({ item, actions }: { item: OwnerRequestCardItem; actions: CardActions }) {
     const meta = stageMetaFor(item, actions);
 
     return (
@@ -62,9 +53,7 @@ function StageBadge({
             className={cn(
                 "body-xs border-0 font-semibold shadow-xs",
                 item.status === "accepted" && "bg-brand-soft text-brand-text",
-                item.status === "pending" &&
-                    actions === "respond" &&
-                    "bg-urgent-soft text-urgent",
+                item.status === "pending" && actions === "respond" && "bg-urgent-soft text-urgent",
                 item.status === "pending" &&
                     actions !== "respond" &&
                     "bg-surface/95 text-ink-muted",
@@ -91,9 +80,7 @@ function chatPeerFor(item: OwnerRequestCardItem): ChatPeer {
         mySide: "owner",
         canSend: true,
         closed:
-            item.status === "rejected" ||
-            item.status === "withdrawn" ||
-            item.status === "revoked",
+            item.status === "rejected" || item.status === "withdrawn" || item.status === "revoked",
     };
 }
 
@@ -131,25 +118,19 @@ function BrokerRow({ item }: { item: OwnerRequestCardItem }) {
 }
 
 function BrokerOverlayStats({ item }: { item: OwnerRequestCardItem }) {
+    const phoneHint = item.brokerPhoneDigits ? (
+        <PhoneNumber phoneDigits={item.brokerPhoneDigits} className="text-inherit" />
+    ) : undefined;
+
     return (
-        <OverlayStatsRow>
+        <div className="flex flex-col gap-1 min-inline-0">
+            <OverlayPersonLine label="Broker" name={item.brokerName} hint={phoneHint} />
             {item.commissionPercent > 0 ? (
-                <OverlayStat label="Commission">{item.commissionPercent}%</OverlayStat>
+                <p className="body-sm tracking-wide text-ink-muted tabular-nums">
+                    {item.commissionPercent}% commission
+                </p>
             ) : null}
-            <OverlayStat
-                label="Broker"
-                hint={
-                    item.brokerPhoneDigits ? (
-                        <PhoneNumber
-                            phoneDigits={item.brokerPhoneDigits}
-                            className="text-inherit"
-                        />
-                    ) : undefined
-                }
-            >
-                <span className="capitalize">{item.brokerName}</span>
-            </OverlayStat>
-        </OverlayStatsRow>
+        </div>
     );
 }
 
@@ -253,9 +234,7 @@ export function OwnerRequestCard({
     const meta = stageMetaFor(item, actions);
     const detailHref = ownerRequestDetailHref(item.propertyId);
     const muted =
-        item.status === "rejected" ||
-        item.status === "withdrawn" ||
-        item.status === "revoked";
+        item.status === "rejected" || item.status === "withdrawn" || item.status === "revoked";
 
     const footer = (tone: CardTone) => (
         <CardFooter
@@ -313,7 +292,7 @@ export function OwnerRequestCard({
                 }
             >
                 {item.message ? (
-                    <p className="body-sm line-clamp-2 tracking-wide text-surface/85 italic">
+                    <p className="body-sm line-clamp-2 tracking-wide text-ink-muted italic">
                         “{item.message}”
                     </p>
                 ) : null}
