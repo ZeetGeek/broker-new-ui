@@ -4,7 +4,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Bell, Ellipsis, Lock, Send, UserPlus } from "lucide-react";
+import { Bell, Lock, Send, UserPlus } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
@@ -12,7 +12,6 @@ import { formatRelativePast } from "@/lib/format/date";
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { OVERLAY_ICON_BUTTON_CLASS } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,15 +23,10 @@ import {
     DialogPopup,
     DialogTitle,
 } from "@/components/ui/dialog";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { ChatButton } from "@/features/chat/chat-button";
+import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import { attemptActions } from "@/features/properties/my-requests/attempt-rules";
@@ -137,50 +131,6 @@ function RequestOwnerRow({ item }: { item: RequestItem }) {
                 ) : null}
             </div>
         </div>
-    );
-}
-
-function RequestMoreMenu({
-    item,
-    tone,
-    onOpenTimeline,
-    onWithdraw,
-}: {
-    item: RequestItem;
-    tone: CardTone;
-    onOpenTimeline: () => void;
-    onWithdraw: (id: string) => void;
-}) {
-    const actions = attemptActions(item);
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <Button
-                        type="button"
-                        size={tone === "overlay" ? "icon" : "icon-sm"}
-                        variant="ghost"
-                        aria-label="More actions"
-                        className={
-                            tone === "overlay"
-                                ? OVERLAY_ICON_BUTTON_CLASS
-                                : "mbs-0.5 self-start text-ink-muted"
-                        }
-                    >
-                        <Ellipsis aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    </Button>
-                }
-            />
-            <DropdownMenuContent align="end" className="min-inline-44">
-                <DropdownMenuItem onClick={onOpenTimeline}>What happened</DropdownMenuItem>
-                {actions.canCancel ? (
-                    <DropdownMenuItem onClick={() => onWithdraw(item.id)} className="text-danger">
-                        Cancel request
-                    </DropdownMenuItem>
-                ) : null}
-            </DropdownMenuContent>
-        </DropdownMenu>
     );
 }
 
@@ -314,6 +264,7 @@ export function RequestCard({
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+    const { openChat } = useChat();
     const actions = attemptActions(item);
     const ownerPhoneDigits = ownerPhoneFor(item);
 
@@ -332,22 +283,20 @@ export function RequestCard({
         }
     }
 
-    const photoToolbar = (tone: CardTone) => (
+    const cardMenu = (tone: CardTone) => (
         <DealCardPhotoToolbar
             listing={item}
             isSaved={isSaved}
             onToggleSave={() => void toggleSave()}
-        >
-            {tone === "overlay" ? moreMenu("overlay") : null}
-            <ChatButton peer={chatPeerFor(item)} appearance="overlay" />
-            {ownerPhoneDigits ? (
-                <DealWhatsAppButton
-                    name={item.ownerName}
-                    phoneDigits={ownerPhoneDigits}
-                    appearance="overlay"
-                />
-            ) : null}
-        </DealCardPhotoToolbar>
+            contact={{
+                name: item.ownerName,
+                phoneDigits: ownerPhoneDigits,
+                onMessage: () => openChat(chatPeerFor(item)),
+            }}
+            onOpenTimeline={() => setIsTimelineOpen(true)}
+            onCancelRequest={actions.canCancel ? () => onWithdraw(item.id) : undefined}
+            tone={tone === "overlay" ? "overlay" : "plain"}
+        />
     );
 
     const footer = (tone: CardTone) => (
@@ -361,15 +310,6 @@ export function RequestCard({
         />
     );
 
-    const moreMenu = (tone: CardTone) => (
-        <RequestMoreMenu
-            item={item}
-            tone={tone}
-            onOpenTimeline={() => setIsTimelineOpen(true)}
-            onWithdraw={onWithdraw}
-        />
-    );
-
     const card =
         view === "list" ? (
             <DealCardShell view={view} isBusy={isBusy}>
@@ -380,7 +320,7 @@ export function RequestCard({
                         <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
                             <DealCardMeta listing={item} />
                         </div>
-                        {moreMenu("light")}
+                        {cardMenu("light")}
                     </div>
 
                     <RequestOwnerRow item={item} />
@@ -415,7 +355,7 @@ export function RequestCard({
                 statusTone={STATUS_TONE[item.stage]}
                 muted={item.stage !== "pending" && item.stage !== "approved" && !actions.canRetry}
                 isBusy={isBusy}
-                actions={photoToolbar("overlay")}
+                actions={cardMenu("overlay")}
             >
                 <DealOverlayStats
                     listing={item}

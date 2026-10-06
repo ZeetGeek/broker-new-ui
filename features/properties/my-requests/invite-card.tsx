@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ChatButton } from "@/features/chat/chat-button";
+import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import {
@@ -251,6 +252,7 @@ export function InviteCard({
 }) {
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+    const { openChat } = useChat();
     const ownerPhoneDigits = ownerPhoneFor(item);
 
     async function toggleSave() {
@@ -268,21 +270,18 @@ export function InviteCard({
         }
     }
 
-    const photoToolbar = (
+    const cardMenu = (tone: CardTone) => (
         <DealCardPhotoToolbar
             listing={item}
             isSaved={isSaved}
             onToggleSave={() => void toggleSave()}
-        >
-            <ChatButton peer={chatPeerFor(item)} appearance="overlay" />
-            {ownerPhoneDigits ? (
-                <DealWhatsAppButton
-                    name={item.ownerName}
-                    phoneDigits={ownerPhoneDigits}
-                    appearance="overlay"
-                />
-            ) : null}
-        </DealCardPhotoToolbar>
+            contact={{
+                name: item.ownerName,
+                phoneDigits: ownerPhoneDigits,
+                onMessage: () => openChat(chatPeerFor(item)),
+            }}
+            tone={tone === "overlay" ? "overlay" : "plain"}
+        />
     );
 
     const footer = (tone: CardTone) => (
@@ -302,7 +301,12 @@ export function InviteCard({
                 <DealCardPhoto listing={item} view={view} stageBadge={<StageBadge item={item} />} />
 
                 <DealCardBody view={view}>
-                    <DealCardMeta listing={item} />
+                    <div className="flex items-start gap-2">
+                        <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
+                            <DealCardMeta listing={item} />
+                        </div>
+                        {cardMenu("light")}
+                    </div>
                     {item.message ? (
                         <p className="body-sm line-clamp-2 text-ink-muted">“{item.message}”</p>
                     ) : null}
@@ -327,7 +331,7 @@ export function InviteCard({
                 statusTone={STATUS_TONE[item.stage]}
                 muted={item.stage === "declined" || item.stage === "expired"}
                 isBusy={isBusy}
-                actions={photoToolbar}
+                actions={cardMenu("overlay")}
             >
                 {item.message ? (
                     <p className="body-sm line-clamp-2 tracking-wide text-ink-muted italic">

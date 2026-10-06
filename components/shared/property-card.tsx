@@ -42,7 +42,6 @@ import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
-    OVERLAY_ICON_BUTTON_CLASS,
     OverlayCard,
     OverlayCardActions,
     OverlayCardSummary,
@@ -51,8 +50,7 @@ import {
 } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
-import { PropertySaveButton } from "@/components/shared/property-save-button";
-import { PropertySharePopover } from "@/components/shared/property-share-popover";
+import { PropertyCardMenu } from "@/components/shared/property-card-menu";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -1037,34 +1035,23 @@ function BrowseOverlayPropertyCard({
                 </>
             }
             actions={
-                <>
-                    <PropertySharePopover
-                        iconOnly
-                        listing={{
-                            id: listing.id,
-                            title: listing.title,
-                            locality: listing.locality,
-                            city: listing.city,
-                            priceLabel,
-                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
-                            configLabel: listing.configLabel,
-                            propertyTypeLabel: listing.propertyTypeLabel,
-                            areaSqft: listing.areaSqft,
-                            bhk: listing.bhk,
-                            listingKind: isRentOnly ? "rent" : "sale",
-                        }}
-                        className={OVERLAY_ICON_BUTTON_CLASS}
-                    />
-                    {onToggleSave ? (
-                        <PropertySaveButton
-                            iconOnly
-                            isSaved={isSaved}
-                            title={listing.title}
-                            onToggle={onToggleSave}
-                            className={OVERLAY_ICON_BUTTON_CLASS}
-                        />
-                    ) : null}
-                </>
+                <PropertyCardMenu
+                    listing={{
+                        id: listing.id,
+                        title: listing.title,
+                        locality: listing.locality,
+                        city: listing.city,
+                        priceLabel,
+                        imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                        configLabel: listing.configLabel,
+                        propertyTypeLabel: listing.propertyTypeLabel,
+                        areaSqft: listing.areaSqft,
+                        bhk: listing.bhk,
+                        listingKind: isRentOnly ? "rent" : "sale",
+                    }}
+                    isSaved={isSaved}
+                    onToggleSave={onToggleSave}
+                />
             }
         >
             <div className="flex flex-col gap-1.5 min-inline-0">
@@ -1180,33 +1167,25 @@ function BrowseListPropertyCard({
                         <BrowsePropertyCardOwner owner={listing.owner} />
                     </div>
 
-                    <div className="mbs-0.5 flex shrink-0 items-center gap-3 self-start">
-                        {onToggleSave ? (
-                            <PropertySaveButton
-                                isSaved={isSaved}
-                                title={listing.title}
-                                onToggle={onToggleSave}
-                                className="tracking-wide"
-                            />
-                        ) : null}
-                        <PropertySharePopover
-                            listing={{
-                                id: listing.id,
-                                title: listing.title,
-                                locality: listing.locality,
-                                city: listing.city,
-                                priceLabel: sharePriceLabel,
-                                imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
-                                configLabel: listing.configLabel,
-                                propertyTypeLabel: listing.propertyTypeLabel,
-                                areaSqft: listing.areaSqft,
-                                bhk: listing.bhk,
-                                listingKind:
-                                    offersRent(listing) && !offersSale(listing) ? "rent" : "sale",
-                            }}
-                            className="tracking-wide"
-                        />
-                    </div>
+                    <PropertyCardMenu
+                        tone="plain"
+                        listing={{
+                            id: listing.id,
+                            title: listing.title,
+                            locality: listing.locality,
+                            city: listing.city,
+                            priceLabel: sharePriceLabel,
+                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                            configLabel: listing.configLabel,
+                            propertyTypeLabel: listing.propertyTypeLabel,
+                            areaSqft: listing.areaSqft,
+                            bhk: listing.bhk,
+                            listingKind:
+                                offersRent(listing) && !offersSale(listing) ? "rent" : "sale",
+                        }}
+                        isSaved={isSaved}
+                        onToggleSave={onToggleSave}
+                    />
                 </div>
 
                 <div className="mbs-auto flex flex-col gap-2.5">
@@ -1779,8 +1758,7 @@ function OwnedOverlayPropertyCard({
                 </>
             }
             actions={
-                <PropertySharePopover
-                    iconOnly
+                <PropertyCardMenu
                     listing={{
                         id: listing.id,
                         title: listing.title,
@@ -1794,7 +1772,6 @@ function OwnedOverlayPropertyCard({
                         bhk: listing.bhk,
                         listingKind: offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
                     }}
-                    className={OVERLAY_ICON_BUTTON_CLASS}
                 />
             }
         >
@@ -2026,7 +2003,8 @@ function OwnedListPropertyCard({
                         ) : null}
                     </div>
 
-                    <PropertySharePopover
+                    <PropertyCardMenu
+                        tone="plain"
                         listing={{
                             id: listing.id,
                             title: listing.title,
@@ -2041,7 +2019,6 @@ function OwnedListPropertyCard({
                             listingKind:
                                 offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
                         }}
-                        className="mbs-0.5 self-start tracking-wide"
                     />
                 </div>
 

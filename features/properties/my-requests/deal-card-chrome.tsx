@@ -25,8 +25,10 @@ import {
 } from "@/components/shared/overlay-card";
 import { AvatarStack } from "@/components/shared/avatar-stack";
 import { PhoneNumber } from "@/components/shared/phone-number";
-import { PropertySaveButton } from "@/components/shared/property-save-button";
-import { PropertySharePopover } from "@/components/shared/property-share-popover";
+import {
+    PropertyCardMenu,
+    type PropertyCardMenuContact,
+} from "@/components/shared/property-card-menu";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import type { PropertyShareInput } from "@/lib/share/property";
 import { Badge } from "@/components/ui/badge";
@@ -369,44 +371,41 @@ export function dealShareInput(listing: DealCardListing): PropertyShareInput {
     };
 }
 
-/** Share + save on the photo; pass ⋯ / chat / WhatsApp as `children`. */
+/** Single ⋯ menu on the photo: Share › channels, Save, Message, WhatsApp, deal extras. */
 export function DealCardPhotoToolbar({
     listing,
     isSaved = false,
     onToggleSave,
-    children,
+    contact,
+    onOpenTimeline,
+    onCancelRequest,
+    tone = "overlay",
 }: {
     listing: DealCardListing;
     isSaved?: boolean;
     onToggleSave?: () => void;
-    children?: ReactNode;
+    contact?: PropertyCardMenuContact;
+    onOpenTimeline?: () => void;
+    onCancelRequest?: () => void;
+    tone?: "overlay" | "plain";
 }) {
     return (
-        <div className="flex flex-col gap-2">
-            <PropertySharePopover
-                iconOnly
-                listing={dealShareInput(listing)}
-                className={OVERLAY_ICON_BUTTON_CLASS}
-            />
-            {onToggleSave ? (
-                <PropertySaveButton
-                    iconOnly
-                    isSaved={isSaved}
-                    title={listing.title}
-                    onToggle={onToggleSave}
-                    className={OVERLAY_ICON_BUTTON_CLASS}
-                />
-            ) : null}
-            {children}
-        </div>
+        <PropertyCardMenu
+            listing={dealShareInput(listing)}
+            isSaved={isSaved}
+            onToggleSave={onToggleSave}
+            contact={contact}
+            onOpenTimeline={onOpenTimeline}
+            onCancelRequest={onCancelRequest}
+            tone={tone}
+        />
     );
 }
 
 /**
  * Grid deal card. Status leads the chips. `muted` desaturates the photo for a
  * deal the broker can no longer act on, so live deals stand out while
- * scanning. Photo `actions` stay light (e.g. more menu); chat / WhatsApp live
- * in the footer so they read as primary contact actions.
+ * scanning. Photo `actions` is the single ⋯ menu (share / save / contact).
  */
 export function DealOverlayCard({
     listing,

@@ -294,7 +294,7 @@ export function OverlayCard({
                           pointer-events-none absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap
                           items-start gap-1.5
                         `,
-                        actions ? "pe-16" : "pe-3",
+                        actions ? "pe-14" : "pe-3",
                     )}
                 >
                     {chips}
