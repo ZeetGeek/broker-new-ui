@@ -11,7 +11,8 @@ export type ShortcutId =
     | "profile"
     | "settings"
     | "shortcuts_cheatsheet"
-    | "logout";
+    | "logout"
+    | "add_property";
 
 export type ShortcutScope = "global" | "list" | "form" | "dialog";
 
@@ -140,6 +141,14 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
         group: "Account",
         scope: "global",
         showInProfileMenu: true,
+    },
+    {
+        id: "add_property",
+        keys: "KeyN",
+        displayKeys: ["N"],
+        label: "Add property",
+        group: "Listings",
+        scope: "list",
     },
 ] as const;
 

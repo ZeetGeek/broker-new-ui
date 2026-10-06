@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { tinykeys } from "tinykeys";
 
 import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
+import { getShortcut } from "@/lib/shortcuts";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
@@ -24,6 +26,19 @@ import {
 import { MyListingsResultsSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
+
+function isEditable(el: EventTarget | null): boolean {
+    if (!(el instanceof HTMLElement)) return false;
+    const tag = el.tagName;
+    return (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        el.isContentEditable ||
+        el.getAttribute("role") === "textbox" ||
+        el.closest("[contenteditable='true']") !== null
+    );
+}
 
 /**
  * The buyers modal is written against a request. A listing the broker owns
@@ -108,6 +123,23 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         // total, and the summary counts published/draft separately.
     }, [query.total, refreshToken]);
 
+    useEffect(() => {
+        const shortcut = getShortcut("add_property");
+        if (!shortcut) return undefined;
+
+        const unsubscribe = tinykeys(window, {
+            [shortcut.keys]: (event) => {
+                if (isEditable(event.target)) return;
+                if (event.repeat) return;
+                if (addOpen || editingListing != null || deletingListing != null) return;
+                if (isBuyersOpen || isOwnerAttachOpen) return;
+                setAddOpen(true);
+            },
+        });
+
+        return () => unsubscribe();
+    }, [addOpen, editingListing, deletingListing, isBuyersOpen, isOwnerAttachOpen]);
+
     const confirmDelete = useCallback(async () => {
         if (!deletingListing) return;
         setDeleteBusy(true);
@@ -141,6 +173,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 onFiltersChange={setFilters}
                 summary={summary}
                 isLoading={loading}
+                onAddProperty={() => setAddOpen(true)}
             />
 
             {query.isError && query.items.length === 0 ? (

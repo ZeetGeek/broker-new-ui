@@ -13,13 +13,14 @@ import {
     LayoutDashboard,
     LogOut,
     type LucideProps,
+    Plus,
     Send,
     Settings,
     UserRound,
     Users,
 } from "lucide-react";
 
-import { type ShortcutDef, type ShortcutId,SHORTCUTS } from "@/lib/shortcuts";
+import { type ShortcutDef, type ShortcutId, SHORTCUTS } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { Dialog, DialogHeader, DialogPopup, DialogTitle } from "@/components/ui/dialog";
@@ -45,6 +46,7 @@ const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<LucideProps>> = {
     profile: UserRound,
     settings: Settings,
     logout: LogOut,
+    add_property: Plus,
 };
 
 function groupShortcuts(): Map<string, ShortcutDef[]> {
@@ -82,7 +84,9 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutDef }) {
                 <Icon aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
             </span>
 
-            <span className={cn("body-sm flex-1 font-medium text-ink", destructive && "text-danger")}>
+            <span
+                className={cn("body-sm flex-1 font-medium text-ink", destructive && "text-danger")}
+            >
                 {shortcut.label}
             </span>
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { type ReactNode,useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 import type { MyListingsSummary } from "@/lib/api/my-listings";
+import { cn } from "@/lib/utils";
 
 import { TextLoop } from "@/components/motion-primitives/text-loop";
 import { AddFab } from "@/components/shared/add-fab";
@@ -94,7 +95,10 @@ function InventoryStatusMeta({ summary }: { summary: MyListingsSummary | null })
     );
 }
 
-/** Thin wrapper kept so existing call sites and copy stay put. */
+/**
+ * Mobile-only floating add. Desktop uses the toolbar CTA in MyListingsHeader —
+ * one primary action per viewport, thumb-reach on phone while scrolling.
+ */
 export function MyListingsAddFab({
     className,
     onClick,
@@ -107,7 +111,7 @@ export function MyListingsAddFab({
             onClick={onClick}
             label="Add property"
             hint="Add a new property to your inventory"
-            className={className}
+            className={cn("md:hidden", className)}
         />
     );
 }

@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowDownUp, ChevronDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
 import type { MyListingsSummary } from "@/lib/api/my-listings";
 import { formatSortLabel } from "@/lib/format/owner-listings-labels";
+import { getShortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogClose,
@@ -23,6 +25,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import {
@@ -336,11 +339,46 @@ function MyListingsFilterDialog({
     );
 }
 
+function AddPropertyToolbarButton({ onClick }: { onClick: () => void }) {
+    const shortcut = getShortcut("add_property");
+
+    return (
+        <Button
+            type="button"
+            variant="accent"
+            size="sm"
+            onClick={onClick}
+            aria-label="Add property"
+            className="hidden gap-2 px-3.5 block-[38px]! md:inline-flex"
+        >
+            <Plus aria-hidden strokeWidth={1.75} />
+            Add property
+            {shortcut ? (
+                <KbdGroup className="gap-0.5">
+                    {shortcut.displayKeys.map((key) => (
+                        <Kbd
+                            key={key}
+                            className="
+                              border-surface/25 bg-surface/15 px-1.5 text-[10px] text-surface
+                              min-inline-4
+                              [box-shadow:none]
+                            "
+                        >
+                            {key}
+                        </Kbd>
+                    ))}
+                </KbdGroup>
+            ) : null}
+        </Button>
+    );
+}
+
 export type MyListingsHeaderProps = {
     filters: MyListingsFilters;
     onFiltersChange: (next: MyListingsFilters) => void;
     summary: MyListingsSummary | null;
     isLoading?: boolean;
+    onAddProperty?: () => void;
 };
 
 export function MyListingsHeader({
@@ -348,6 +386,7 @@ export function MyListingsHeader({
     onFiltersChange,
     summary,
     isLoading = false,
+    onAddProperty,
 }: MyListingsHeaderProps) {
     const [sheetOpen, setSheetOpen] = useState(false);
     const sheetFilterCount = useMemo(() => countSheetFilters(filters), [filters]);
@@ -475,6 +514,9 @@ export function MyListingsHeader({
                                     onFiltersChange({ ...filters, sort, page: 1 })
                                 }
                             />
+                            {onAddProperty ? (
+                                <AddPropertyToolbarButton onClick={onAddProperty} />
+                            ) : null}
                         </div>
                     </div>
                 </TooltipProvider>
