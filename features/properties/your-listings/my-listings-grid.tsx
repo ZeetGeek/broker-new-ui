@@ -1,6 +1,13 @@
 "use client";
 
-import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
+import {
+    brokerPropertyDetailHref,
+    brokerPropertyEditHref,
+} from "@/lib/routes/broker";
+import {
+    ownerPropertyDetailHref,
+    ownerPropertyEditHref,
+} from "@/lib/routes/owner";
 
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -12,6 +19,8 @@ import type { MyListingsView } from "@/features/properties/your-listings/use-my-
 export type MyListingsGridProps = {
     items: MyListingItem[];
     view?: MyListingsView;
+    /** Owner inventory uses `/owner/properties/*` instead of broker routes. */
+    portal?: "broker" | "owner";
     /** When set, "Edit property" opens a modal instead of the edit route. */
     onEditListing?: (listing: MyListingItem) => void;
     /** When set, each card offers "Add buyer" for that listing. */
@@ -34,12 +43,15 @@ const LIST_BREAKPOINTS = [{ minWidth: 768, columns: 2 }];
 export function MyListingsGrid({
     items,
     view = "grid",
+    portal = "broker",
     onEditListing,
     onAddBuyer,
     onAttachOwner,
     onDeleteListing,
 }: MyListingsGridProps) {
     const isListView = view === "list";
+    const detailHref = portal === "owner" ? ownerPropertyDetailHref : brokerPropertyDetailHref;
+    const editHref = portal === "owner" ? ownerPropertyEditHref : brokerPropertyEditHref;
 
     return (
         <WindowVirtualGrid
@@ -57,8 +69,8 @@ export function MyListingsGrid({
                         variant="owned"
                         layout={view}
                         listing={listing}
-                        detailsHref={brokerPropertyDetailHref(item.id)}
-                        editHref={brokerPropertyEditHref(item.id)}
+                        detailsHref={detailHref(item.id)}
+                        editHref={editHref(item.id)}
                         onEdit={onEditListing ? () => onEditListing(item) : undefined}
                         onAddBuyer={onAddBuyer ? () => onAddBuyer(item) : undefined}
                         onAttachOwner={onAttachOwner ? () => onAttachOwner(item) : undefined}

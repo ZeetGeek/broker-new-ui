@@ -100,6 +100,8 @@ export type UpdateProfileInput = {
     country?: string;
     orgName?: string;
     bio?: string;
+    /** Shared. Owners and brokers both have a public profile address. */
+    publicSlug?: string;
     accountType?: "individual" | "organization";
     // Owner-only
     ownerKind?: "individual" | "builder" | "company";
@@ -111,7 +113,6 @@ export type UpdateProfileInput = {
     experienceYears?: number | null;
     licenseNumber?: string;
     reraState?: string;
-    publicSlug?: string;
     serviceAreas?: string[];
     specializations?: string[];
 };

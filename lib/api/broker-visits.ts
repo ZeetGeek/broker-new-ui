@@ -257,8 +257,6 @@ export const brokerVisitsApi = {
         item: PropertyWithSlots;
         slot: VisitSlot;
         buyers: PersonSummary[];
-        note: string;
-        remindBuyer: boolean;
     }): Promise<BrokerSiteVisit> {
         if (USE_MOCK_VISITS) {
             if (
@@ -289,9 +287,8 @@ export const brokerVisitsApi = {
                     input.item.propertySource === "own_listing" || input.slot.autoConfirm
                         ? "confirmed"
                         : "awaiting_owner",
-                brokerNote: input.note || undefined,
                 ownerNote: input.slot.note,
-                remindBuyer: input.remindBuyer,
+                remindBuyer: false,
                 createdAt: now,
                 updatedAt: now,
                 property: input.item.property,
@@ -319,10 +316,7 @@ export const brokerVisitsApi = {
                     notes: string | null;
                     createdAt: string;
                 };
-            }>(`/slots/${input.slot.id}/book`, "POST", {
-                leadId,
-                notes: input.note || undefined,
-            });
+            }>(`/slots/${input.slot.id}/book`, "POST", { leadId });
 
             const now = new Date().toISOString();
             return {
@@ -337,9 +331,8 @@ export const brokerVisitsApi = {
                 startsAt: input.slot.startsAt,
                 endsAt: input.slot.endsAt,
                 status: result.showing.status === "confirmed" ? "confirmed" : "awaiting_owner",
-                brokerNote: input.note || undefined,
                 ownerNote: input.slot.note,
-                remindBuyer: input.remindBuyer,
+                remindBuyer: false,
                 createdAt: result.showing.createdAt ?? now,
                 updatedAt: now,
                 property: input.item.property,
@@ -350,11 +343,20 @@ export const brokerVisitsApi = {
             };
         } catch (error) {
             if (error instanceof ApiError && (error.status === 409 || error.status === 400)) {
+                const body = error.body;
+                const code =
+                    body && typeof body === "object" && "code" in body
+                        ? (body as { code?: unknown }).code
+                        : undefined;
+                // Lead/time conflict must surface as the API message, not "slot taken".
+                if (code === "LEAD_TIME_CONFLICT") {
+                    throw error;
+                }
                 const message = error.message.toLowerCase();
                 if (
                     message.includes("no longer available") ||
-                    message.includes("not available") ||
-                    message.includes("slot")
+                    message.includes("not available for booking") ||
+                    message.includes("slot is not available")
                 ) {
                     throw new SlotTakenError({
                         ...input.slot,

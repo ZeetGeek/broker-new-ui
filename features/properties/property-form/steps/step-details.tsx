@@ -9,20 +9,17 @@ import {
     Briefcase,
     Building2,
     CalendarClock,
-    Coffee,
     Compass,
     DoorClosed,
     Layers,
     LayoutGrid,
     Monitor,
     MoveVertical,
-    Route,
     Ruler,
     ShieldCheck,
     Sparkles,
     SquareParking,
     Type,
-    UserRound,
     Users,
     Wind,
     Zap,
@@ -30,17 +27,14 @@ import {
 
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { Button } from "@/components/ui/button";
 
 import {
     FACING_OPTIONS,
-    PANTRY_TYPE_OPTIONS,
     PROPERTY_CONDITION_OPTIONS,
     SUITABLE_FOR_OPTIONS,
-    WASHROOM_TYPE_OPTIONS,
 } from "@/constants/property";
 import {
     CounterField,
@@ -52,7 +46,6 @@ import {
     SelectField,
     TextAreaField,
     TextField,
-    ToggleField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 
@@ -60,7 +53,12 @@ export function StepDetails() {
     const { watch, setValue, getValues } = useFormContext<PropertyDraftValues>();
     const { isVisible } = useFieldRules();
     const roomDetails = isVisible("details.bedrooms") || isVisible("details.bathrooms");
-    const commercial = isVisible("details.commercial.fireNoc");
+    const commercial =
+        isVisible("details.commercial.suitableFor") ||
+        isVisible("details.commercial.cabins") ||
+        isVisible("details.commercial.meetingRooms") ||
+        isVisible("details.commercial.ceilingHeightFt") ||
+        isVisible("details.commercial.frontageFt");
     const [titleTouched, setTitleTouched] = useState(() =>
         Boolean(getValues("basics.title")?.trim()),
     );
@@ -228,12 +226,6 @@ export function StepDetails() {
                         startIcon={Compass}
                     />
                     <NumberField
-                        name="details.roadWidthFt"
-                        label="Road width (ft)"
-                        placeholder="e.g. 40"
-                        startIcon={Route}
-                    />
-                    <NumberField
                         name="details.propertyAge"
                         label="How many years old?"
                         min={0}
@@ -248,7 +240,6 @@ export function StepDetails() {
                         options={PROPERTY_CONDITION_OPTIONS}
                         placeholder="Select condition"
                         startIcon={ShieldCheck}
-                        className={cn(!isVisible("details.roadWidthFt") && "md:col-span-2")}
                     />
                     <NumberField
                         name="details.electricityLoadKva"
@@ -300,20 +291,6 @@ export function StepDetails() {
                             placeholder="e.g. 40"
                             startIcon={Users}
                         />
-                        <SelectField
-                            name="details.commercial.washroomType"
-                            label="Washrooms"
-                            options={WASHROOM_TYPE_OPTIONS}
-                            placeholder="Select washroom type"
-                            startIcon={Bath}
-                        />
-                        <SelectField
-                            name="details.commercial.pantryType"
-                            label="Pantry"
-                            options={PANTRY_TYPE_OPTIONS}
-                            placeholder="Select pantry type"
-                            startIcon={Coffee}
-                        />
                         <NumberField
                             name="details.commercial.ceilingHeightFt"
                             label="Ceiling height (ft)"
@@ -336,41 +313,15 @@ export function StepDetails() {
                             startIcon={Ruler}
                         />
                     </div>
-                    <div className="mbs-4 grid gap-4 sm:grid-cols-3">
-                        <ToggleField name="details.commercial.centralAc" label="Central AC" />
-                        <ToggleField name="details.commercial.fireNoc" label="Fire NOC" />
-                        <ToggleField
-                            name="details.commercial.occupancyCertificate"
-                            label="Occupancy certificate"
-                        />
-                    </div>
                     <div className={`mbs-4 ${FORM_STACK_CLASS}`}>
                         <MultiChipField
                             name="details.commercial.suitableFor"
                             label="Suitable for"
                             options={SUITABLE_FOR_OPTIONS}
+                            allowCustom
+                            customPlaceholder="e.g. cafe, tutoring centre…"
+                            hint="Pick from the list or add your own use."
                         />
-                        <ToggleField
-                            name="details.commercial.currentlyLeased"
-                            label="Currently leased"
-                            description="Record the existing tenant for a pre-leased property."
-                        />
-                        <div className={FORM_GRID_CLASS}>
-                            <TextField
-                                name="details.commercial.existingTenantName"
-                                label="Existing tenant"
-                                placeholder="Tenant or company name"
-                                visibility="private"
-                                startIcon={UserRound}
-                            />
-                            <TextField
-                                name="details.commercial.existingLeaseEndDate"
-                                label="Lease ends"
-                                type="date"
-                                visibility="private"
-                                startIcon={CalendarClock}
-                            />
-                        </div>
                     </div>
                 </WizardSection>
             ) : null}

@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
+import { MarqueeText } from "@/components/shared/marquee-text";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
     OVERLAY_ICON_BUTTON_CLASS,
@@ -37,7 +38,7 @@ const PHOTO_FRAME =
     "shrink-0 rounded-card bg-surface p-1 shadow-md transition-[box-shadow] duration-160 group-hover:shadow-lg";
 const PHOTO_INNER =
     "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
-const TITLE_CLASS = "body truncate font-semibold tracking-wide text-ink capitalize";
+const TITLE_CLASS = "body font-semibold tracking-wide text-ink capitalize";
 const LOCATION_CLASS =
     "body-sm flex items-center gap-1.5 tracking-wide text-ink-muted min-inline-0";
 const SPECS_CLASS =
@@ -89,13 +90,16 @@ export function DealCardPhoto({
     listing,
     view,
     stageBadge,
+    detailHref,
 }: {
     listing: DealCardListing;
     view: RequestsView;
     stageBadge?: ReactNode;
+    /** Defaults to the broker marketplace listing URL. */
+    detailHref?: string;
 }) {
     const isList = view === "list";
-    const href = brokerOwnerListingDetailHref(listing.propertyId);
+    const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
 
     return (
         <Link
@@ -117,9 +121,7 @@ export function DealCardPhoto({
                 <HoverScaleRoot
                     className={cn(
                         PHOTO_INNER,
-                        isList
-                            ? "aspect-5/4 inline-full"
-                            : `aspect-4/3 inline-full`,
+                        isList ? "aspect-5/4 inline-full" : `aspect-4/3 inline-full`,
                     )}
                 >
                     {listing.imageSrc ? (
@@ -176,22 +178,27 @@ export function DealCardBody({ view, children }: { view: RequestsView; children:
     );
 }
 
-export function DealCardMeta({ listing }: { listing: DealCardListing }) {
-    const href = brokerOwnerListingDetailHref(listing.propertyId);
+export function DealCardMeta({
+    listing,
+    detailHref,
+}: {
+    listing: DealCardListing;
+    /** Defaults to the broker marketplace listing URL. */
+    detailHref?: string;
+}) {
+    const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
     const showBeds = listing.bhk > 0 && RESIDENTIAL.has(listing.propertyTypeLabel.toLowerCase());
 
     return (
-        <div className="flex flex-col gap-1.5 min-inline-0">
+        <div className="group/marquee flex flex-col gap-1.5 min-inline-0">
             <h3 className="max-inline-full min-inline-0">
                 <PropertyTitleLink href={href} className={TITLE_CLASS}>
-                    {listing.title}
+                    <MarqueeText text={listing.title} />
                 </PropertyTitleLink>
             </h3>
             <p className={LOCATION_CLASS}>
                 <MapPin aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
-                <span className="truncate capitalize">
-                    {listing.locality}, {listing.city}
-                </span>
+                <MarqueeText text={`${listing.locality}, ${listing.city}`} className="capitalize" />
             </p>
             <div className={SPECS_CLASS}>
                 <span className="inline-flex items-center gap-1">
@@ -324,6 +331,7 @@ export function DealOverlayCard({
     isBusy = false,
     actions,
     children,
+    detailHref,
 }: {
     listing: DealCardListing;
     configLabel: string;
@@ -333,8 +341,10 @@ export function DealOverlayCard({
     isBusy?: boolean;
     actions?: ReactNode;
     children: ReactNode;
+    /** Defaults to the broker marketplace listing URL. */
+    detailHref?: string;
 }) {
-    const href = brokerOwnerListingDetailHref(listing.propertyId);
+    const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
     const specsLabel = [formatAreaSqft(listing.areaSqft), configLabel].filter(Boolean).join(" · ");
 
     return (

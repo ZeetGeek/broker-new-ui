@@ -29,3 +29,8 @@ export const PORTAL_OPTIONS: {
 export function parsePortal(value: string | undefined): Portal {
     return value === "broker" ? "broker" : "owner";
 }
+
+/** A portal only when the query actually names one. A missing value stays unset. */
+export function readPortal(value: string | undefined): Portal | undefined {
+    return value === "owner" || value === "broker" ? value : undefined;
+}

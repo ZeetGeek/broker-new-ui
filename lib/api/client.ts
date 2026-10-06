@@ -114,7 +114,8 @@ let refreshPromise: Promise<string> | null = null;
 
 /**
  * Rotate access token using the httpOnly refresh cookie (`withCredentials`).
- * Logs out only when the refresh cookie is missing/expired/revoked.
+ * Any 401/403 from refresh (missing, expired, or revoked cookie) clears the
+ * session so AuthGuard can send the user to login.
  */
 async function refreshAccessToken(): Promise<string> {
     if (!refreshPromise) {
@@ -131,17 +132,11 @@ async function refreshAccessToken(): Promise<string> {
             })
             .catch((error) => {
                 const apiError = toApiError(error);
-                const message = apiError.message.toLowerCase();
-                const refreshUnavailable =
-                    message.includes("refresh token") ||
-                    message.includes("missing") ||
-                    apiError.status === 0;
-                // Login JWT is still valid when the httpOnly refresh cookie is
-                // blocked (localhost → third-party API) or Path=/auth.
-                if (refreshUnavailable && getAccessToken()) {
-                    throw apiError;
+                // Network blips (status 0) keep the session so a reconnect can retry.
+                // Auth failures — e.g. "Refresh token is missing" — force login.
+                if (apiError.status === 401 || apiError.status === 403) {
+                    forceLogout();
                 }
-                forceLogout();
                 throw apiError;
             })
             .finally(() => {

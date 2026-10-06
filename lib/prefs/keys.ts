@@ -32,6 +32,12 @@ export const PREF_KEYS = {
         visits: {
             prefs: "yb.owner.visits.prefs",
         },
+        requests: {
+            view: "yb.owner.requests.view",
+        },
+        leads: {
+            layout: "yb.owner.leads.layout",
+        },
     },
 } as const;
 

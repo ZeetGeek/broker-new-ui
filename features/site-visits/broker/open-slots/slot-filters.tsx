@@ -71,7 +71,10 @@ function FilterSelect({ label, value, placeholder, options, onChange }: {
     return (
         <label className="space-y-1.5">
             <span className="body-xs font-semibold text-ink-muted">{label}</span>
-            <Select value={current} onValueChange={(next) => onChange(next === "any" ? "" : next)}>
+            <Select
+                value={current}
+                onValueChange={(next) => onChange(!next || next === "any" ? "" : next)}
+            >
                 <SelectTrigger size="md"><SelectValue placeholder={placeholder} /></SelectTrigger>
                 <SelectContent>
                     <SelectItem value="any">{placeholder}</SelectItem>

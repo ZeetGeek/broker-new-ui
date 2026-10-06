@@ -3,6 +3,20 @@ import { isMockMode } from "@/lib/api/mock-mode";
 
 import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
 
+export type OwnerProfileProperty = {
+    id: string;
+    title: string;
+    city?: string;
+    address?: string;
+    transactionType?: string;
+    propertyType?: string;
+    bhkConfig?: string | null;
+    areaSqft?: number | null;
+    salePrice?: string | null;
+    monthlyRent?: string | null;
+    photos: string[];
+};
+
 export type BrokerOwnerProfile = {
     ownerUserId: string;
     name: string;
@@ -16,6 +30,9 @@ export type BrokerOwnerProfile = {
     listingCount?: number;
     localities: string[];
     phoneDigits?: string;
+    email?: string;
+    contactUnlocked: boolean;
+    properties: OwnerProfileProperty[];
 };
 
 type OwnerProfileApi = {
@@ -37,7 +54,22 @@ type OwnerProfileApi = {
     preferredCities?: string[] | null;
     preferredLocalities?: string[] | null;
     phone?: string | null;
+    email?: string | null;
+    contactUnlocked?: boolean | null;
     hasActiveRepresentation?: boolean;
+    properties?: Array<{
+        id?: string;
+        title?: string | null;
+        city?: string | null;
+        address?: string | null;
+        transactionType?: string | null;
+        propertyType?: string | null;
+        bhkConfig?: string | null;
+        areaSqft?: number | null;
+        salePrice?: string | number | null;
+        monthlyRent?: string | number | null;
+        photos?: string[] | null;
+    }> | null;
 };
 
 function digitsOnly(value: string | null | undefined): string {
@@ -64,7 +96,23 @@ function mapOwnerProfile(raw: OwnerProfileApi, fallbackId: string): BrokerOwnerP
     const localities = (raw.localities ?? raw.preferredLocalities ?? []).filter(
         (value): value is string => Boolean(value?.trim()),
     );
-    const phoneDigits = raw.hasActiveRepresentation ? digitsOnly(raw.phone) : "";
+    const contactUnlocked = Boolean(raw.contactUnlocked ?? raw.hasActiveRepresentation);
+    const phoneDigits = contactUnlocked ? digitsOnly(raw.phone) : "";
+    const properties = (raw.properties ?? [])
+        .filter((row): row is NonNullable<typeof row> & { id: string } => Boolean(row?.id))
+        .map((row) => ({
+            id: row.id,
+            title: row.title?.trim() || "Property",
+            city: row.city?.trim() || undefined,
+            address: row.address?.trim() || undefined,
+            transactionType: row.transactionType ?? undefined,
+            propertyType: row.propertyType ?? undefined,
+            bhkConfig: row.bhkConfig ?? undefined,
+            areaSqft: row.areaSqft ?? undefined,
+            salePrice: row.salePrice != null ? String(row.salePrice) : undefined,
+            monthlyRent: row.monthlyRent != null ? String(row.monthlyRent) : undefined,
+            photos: (row.photos ?? []).filter((src): src is string => Boolean(src)),
+        }));
 
     return {
         ownerUserId,
@@ -76,13 +124,16 @@ function mapOwnerProfile(raw: OwnerProfileApi, fallbackId: string): BrokerOwnerP
         bio: raw.bio?.trim() || undefined,
         companyName: raw.companyName?.trim() || undefined,
         verified: Boolean(raw.verified),
-        listingCount: listingCount != null && listingCount > 0 ? listingCount : undefined,
+        listingCount: listingCount ?? (properties.length || undefined),
         localities,
         phoneDigits: phoneDigits
             ? phoneDigits.length > 10
                 ? phoneDigits.slice(-10)
                 : phoneDigits
             : undefined,
+        email: contactUnlocked ? raw.email?.trim() || undefined : undefined,
+        contactUnlocked,
+        properties,
     };
 }
 
@@ -105,6 +156,8 @@ export const ownersApi = {
                 listingCount: MOCK_OWNER_LISTINGS.filter((item) => item.ownerUserId === ownerUserId)
                     .length,
                 localities: listing ? [listing.locality] : [],
+                contactUnlocked: false,
+                properties: [],
             };
         }
         try {

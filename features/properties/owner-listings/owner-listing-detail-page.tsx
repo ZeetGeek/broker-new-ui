@@ -17,7 +17,11 @@ import {
 } from "@/lib/api/representative";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr } from "@/lib/format/price";
-import { BROKER_MY_DEALS_HREF, BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
+import {
+    BROKER_MY_DEALS_HREF,
+    BROKER_OWNER_LISTINGS_HREF,
+    brokerOwnerProfileHref,
+} from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
@@ -44,6 +48,7 @@ type RepresentationStanding = {
 
 type OwnerListingDetail = {
     listing: MyListingItem;
+    ownerUserId?: string;
     ownerName: string;
     ownerAvatarUrl?: string;
     ownerPhoneDigits?: string;
@@ -81,7 +86,16 @@ function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
             <div className="flex items-center gap-3">
                 <UserAvatar name={detail.ownerName} imageUrl={detail.ownerAvatarUrl} size="lg" />
                 <div className="flex flex-col gap-0.5 min-inline-0">
-                    <p className="body truncate font-semibold text-ink">{detail.ownerName}</p>
+                    {detail.ownerUserId ? (
+                        <Link
+                            href={brokerOwnerProfileHref(detail.ownerUserId)}
+                            className="body truncate font-semibold text-ink underline-offset-4 hover:underline"
+                        >
+                            {detail.ownerName}
+                        </Link>
+                    ) : (
+                        <p className="body truncate font-semibold text-ink">{detail.ownerName}</p>
+                    )}
                     {accepted ? (
                         <p className="body-sm text-brand">Contact unlocked</p>
                     ) : (
@@ -677,6 +691,7 @@ export function OwnerListingDetailPage() {
                 const commissionAmountRaw = Number(raw.commissionAmount);
                 setDetail({
                     listing,
+                    ownerUserId: raw.ownerUserId ?? raw.owner?.userId ?? undefined,
                     ownerName: raw.ownerName?.trim() || raw.organizationName?.trim() || "Owner",
                     ownerAvatarUrl: raw.ownerAvatarUrl ?? undefined,
                     ownerPhoneDigits: normalizePhoneDigits(raw.ownerPhone),

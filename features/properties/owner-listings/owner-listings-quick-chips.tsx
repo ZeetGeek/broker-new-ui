@@ -68,6 +68,12 @@ const QUICK_CHIPS: QuickChipConfig[] = [
         mobileLabel: "Move-in",
         description: "Available for immediate possession",
     },
+    {
+        key: "bookmarked",
+        label: "Bookmarked",
+        mobileLabel: "Saved",
+        description: "Properties you have bookmarked",
+    },
 ];
 
 export type OwnerListingsQuickChipsProps = {

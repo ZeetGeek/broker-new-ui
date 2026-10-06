@@ -25,7 +25,6 @@ import { ConditionalField } from "@/components/property/fields/conditional-field
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { Button } from "@/components/ui/button";
 
-import { CITY_OPTIONS, INDIAN_STATE_OPTIONS } from "@/constants/property";
 import {
     FORM_GRID_CLASS,
     FORM_GRID_3_CLASS,
@@ -38,6 +37,8 @@ import {
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 import { NearbyPlacesField } from "@/features/properties/property-form/nearby-places-field";
+
+import { useLocationOptions } from "@/hooks/use-locations";
 
 function normalizeAddress(value: string): string {
     return value
@@ -81,6 +82,20 @@ export function StepLocation() {
         formState: { errors },
     } = useFormContext<PropertyDraftValues>();
     const location = watch("location");
+    const {
+        countryOptions,
+        stateOptions,
+        cityOptions,
+        countriesLoading,
+        statesLoading,
+        citiesLoading,
+        selectedCountry,
+        selectedState,
+    } = useLocationOptions({
+        countryName: location.country,
+        stateName: location.state,
+    });
+    const country = location.country;
     const pincode = location.pincode;
     const lat = location.lat;
     const lng = location.lng;
@@ -106,12 +121,15 @@ export function StepLocation() {
         ],
     );
 
+    // Surat PIN shortcut for the launch city. Only valid while the country is
+    // India — other countries reuse the same 6 digit range for other places.
     useEffect(() => {
+        if (country !== "India") return;
         if (/^395\d{3}$/.test(pincode)) {
             setValue("location.city", "Surat", { shouldDirty: true });
             setValue("location.state", "Gujarat", { shouldDirty: true });
         }
-    }, [pincode, setValue]);
+    }, [country, pincode, setValue]);
 
     useEffect(() => {
         if (editingAddress) return;
@@ -219,23 +237,47 @@ export function StepLocation() {
             >
                 <div className={FORM_STACK_CLASS}>
                     <div className={FORM_GRID_3_CLASS}>
-                        <TextField
+                        <SelectField
                             name="location.country"
                             label="Country"
-                            disabled
+                            options={countryOptions}
+                            placeholder="Choose a country"
                             startIcon={Globe2}
+                            loading={countriesLoading}
+                            emptyText="No countries match"
+                            limit={50}
+                            onValueChange={() => {
+                                // State and city belong to the old country.
+                                setValue("location.state", "", { shouldDirty: true });
+                                setValue("location.city", "", { shouldDirty: true });
+                            }}
                         />
                         <SelectField
                             name="location.state"
                             label="State"
-                            options={INDIAN_STATE_OPTIONS}
+                            options={stateOptions}
+                            placeholder={
+                                selectedCountry ? "Choose a state" : "Choose a country first"
+                            }
                             startIcon={Map}
+                            loading={statesLoading}
+                            disabled={!selectedCountry}
+                            emptyText={statesLoading ? "Loading states…" : "No states match"}
+                            limit={100}
+                            onValueChange={() => {
+                                setValue("location.city", "", { shouldDirty: true });
+                            }}
                         />
                         <SelectField
                             name="location.city"
                             label="City"
-                            options={CITY_OPTIONS}
+                            options={cityOptions}
+                            placeholder={selectedState ? "Choose a city" : "Choose a state first"}
                             startIcon={Building2}
+                            loading={citiesLoading}
+                            disabled={!selectedState}
+                            emptyText={citiesLoading ? "Loading cities…" : "No cities match"}
+                            limit={100}
                         />
                     </div>
                     <div className={FORM_GRID_CLASS}>

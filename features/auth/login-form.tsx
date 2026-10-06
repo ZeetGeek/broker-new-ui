@@ -11,7 +11,7 @@ import { Lock, Mail } from "lucide-react";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import { portalHomeForRole } from "@/lib/auth/session";
+import { destinationForRole } from "@/lib/auth/session";
 import { loginSchema, type LoginValues } from "@/lib/validation/auth";
 
 import { Button } from "@/components/ui/button";
@@ -85,9 +85,7 @@ export function LoginForm() {
             ).unwrap();
             setIsRedirecting(true);
             toast.success("Signed in successfully");
-            const next = searchParams.get("next");
-            const destination =
-                next && next.startsWith("/") ? next : portalHomeForRole(result.user.role);
+            const destination = destinationForRole(result.user.role, searchParams.get("next"));
             router.replace(destination);
         } catch (err: unknown) {
             const payload = err as { message?: string; status?: number } | undefined;

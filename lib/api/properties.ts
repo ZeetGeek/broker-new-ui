@@ -69,6 +69,8 @@ export type PropertyBrowseListing = {
      * Never trust a nested owner phone on browse payloads.
      */
     ownerPhone?: string | null;
+    /** Present on browse payloads when the caller is authenticated. */
+    isBookmarked?: boolean | null;
 };
 
 /** Inventory listing returned by `GET /properties` (and get/create/update). */
@@ -87,6 +89,11 @@ export type PropertyListing = PropertyBrowseListing & {
     amenities?: string[] | null;
     description?: string | null;
     nearbyPlaces?: string[] | null;
+    suitableFor?: string[] | null;
+    cabins?: number | null;
+    meetingRooms?: number | null;
+    workstations?: number | null;
+    ceilingHeightFt?: number | null;
     videoUrl?: string | null;
     virtualTourUrl?: string | null;
     maintenanceCharges?: string | number | null;
@@ -180,6 +187,8 @@ export type PropertyBrowseQuery = {
     minCommissionPercent?: number;
     commissionSet?: boolean;
     readyToMove?: boolean;
+    /** Only listings the caller has bookmarked. */
+    bookmarked?: boolean;
     furnishingStatus?: "furnished" | "semi" | "unfurnished";
     sort?: PropertyBrowseSort;
     /** Opaque keyset cursor from a previous `nextCursor`. */
@@ -237,6 +246,11 @@ export type CreatePropertyInput = {
     description?: string;
     amenities?: string[];
     nearbyPlaces?: string[];
+    suitableFor?: string[];
+    cabins?: number;
+    meetingRooms?: number;
+    workstations?: number;
+    ceilingHeightFt?: number;
     videoUrl?: string;
     virtualTourUrl?: string;
     photos?: File[];
@@ -285,6 +299,7 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     }
     if (params.commissionSet) q.set("commissionSet", "1");
     if (params.readyToMove) q.set("readyToMove", "1");
+    if (params.bookmarked) q.set("bookmarked", "1");
     if (params.furnishingStatus) q.set("furnishingStatus", params.furnishingStatus);
     if (params.sort) q.set("sort", params.sort);
     if (params.cursor) q.set("cursor", params.cursor);
@@ -463,10 +478,11 @@ export const propertiesApi = {
 
     create(input: CreatePropertyInput) {
         const form = new FormData();
-        const { photos, amenities, nearbyPlaces, ...fields } = input;
+        const { photos, amenities, nearbyPlaces, suitableFor, ...fields } = input;
         appendFormFields(form, fields);
         appendStringArray(form, "amenities", amenities);
         appendStringArray(form, "nearbyPlaces", nearbyPlaces);
+        appendStringArray(form, "suitableFor", suitableFor);
         (photos ?? []).forEach((file) => form.append("photos", file));
         return apiFetch<PropertyListing>("/properties", { method: "POST", body: form });
     },
@@ -478,6 +494,7 @@ export const propertiesApi = {
             deletePhotoUrls,
             amenities,
             nearbyPlaces,
+            suitableFor,
             videoUrl,
             virtualTourUrl,
             ...fields
@@ -485,6 +502,7 @@ export const propertiesApi = {
         appendFormFields(form, fields);
         appendStringArray(form, "amenities", amenities);
         appendStringArray(form, "nearbyPlaces", nearbyPlaces);
+        appendStringArray(form, "suitableFor", suitableFor);
         // Empty string clears the stored URL; omit when undefined so other fields stay.
         if (videoUrl !== undefined) form.append("videoUrl", videoUrl);
         if (virtualTourUrl !== undefined) form.append("virtualTourUrl", virtualTourUrl);
@@ -505,6 +523,27 @@ export const propertiesApi = {
         return apiFetch<PropertyListing>(`/properties/${id}/exclusive-owner`, {
             method: "PATCH",
             body: JSON.stringify({ exclusiveOwnerId }),
+        });
+    },
+
+    /** Save a public owner listing for the caller. */
+    bookmark(id: string) {
+        return apiFetch<{ propertyId: string; isBookmarked: true }>(`/properties/${id}/bookmark`, {
+            method: "POST",
+        });
+    },
+
+    /** Remove the caller’s bookmark for a listing. */
+    unbookmark(id: string) {
+        return apiFetch<{ propertyId: string; isBookmarked: false }>(`/properties/${id}/bookmark`, {
+            method: "DELETE",
+        });
+    },
+
+    /** Caller’s bookmarked owner listings. */
+    listBookmarks(params?: PropertyListQuery, signal?: AbortSignal) {
+        return apiFetch<PropertyListPage>(`/properties/bookmarks${buildListQuery(params)}`, {
+            signal,
         });
     },
 

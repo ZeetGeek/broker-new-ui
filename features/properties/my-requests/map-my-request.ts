@@ -165,8 +165,8 @@ export function mapRepresentationToRequestItem(
     const config = configLabel(rep);
     const typeLabel = propertyTypeLabel(rep);
     const title =
-        [config, locality || city].filter(Boolean).join(" · ") ||
         rep.propertyTitle?.trim() ||
+        [config, locality || city].filter(Boolean).join(" · ") ||
         "Property";
     const requestedAt = rep.createdAt ?? new Date().toISOString();
     const resolvedAt = stage === "pending" ? null : (rep.decidedAt ?? rep.updatedAt ?? requestedAt);

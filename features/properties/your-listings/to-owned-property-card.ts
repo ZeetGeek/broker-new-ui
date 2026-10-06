@@ -17,7 +17,7 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
 
     return {
         id: item.id,
-        title: `${locality} ${PROPERTY_TYPE_LABELS[item.propertyType] ?? item.propertyTypeLabel}`,
+        title: `${item?.title ? item.title : PROPERTY_TYPE_LABELS[item.propertyType]} in ${locality}, ${city}`,
         configLabel: item.configLabel,
         /** Lowercase type key — matches browse cards / residential checks. */
         propertyTypeLabel: item.propertyType,

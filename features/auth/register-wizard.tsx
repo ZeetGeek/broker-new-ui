@@ -113,16 +113,19 @@ function PasswordRequirements({ password }: { password: string }) {
 }
 
 export function RegisterWizard({
-    initialPortal = "owner",
+    initialPortal,
+    initialStep = "role",
     initialReferralCode = "",
 }: {
+    /** Set when the address already names a role (`?portal=` or `?role=`). */
     initialPortal?: Portal;
+    initialStep?: Step;
     /** From `/register?ref=CODE` — same as the old frontend invite links. */
     initialReferralCode?: string;
 }) {
     const router = useRouter();
-    const [portal, setPortal] = React.useState<Portal>(initialPortal);
-    const [step, setStep] = React.useState<Step>("role");
+    const [portal, setPortal] = React.useState<Portal>(initialPortal ?? "owner");
+    const [step, setStep] = React.useState<Step>(initialStep);
     const [isRedirecting, setIsRedirecting] = React.useState(false);
     const [referralCode, setReferralCode] = React.useState(() =>
         normalizeReferralCode(initialReferralCode),
@@ -144,7 +147,7 @@ export function RegisterWizard({
         mode: "onTouched",
         reValidateMode: "onChange",
         defaultValues: {
-            portal: initialPortal,
+            portal: initialPortal ?? "owner",
             email: "",
             password: "",
             confirmPassword: "",
@@ -184,11 +187,27 @@ export function RegisterWizard({
         return () => observer.disconnect();
     }, [pageId, portal, password, errors, isSubmitting, submitError]);
 
+    function writeRegisterParams(next: { portal?: Portal; step?: Step }) {
+        const params = new URLSearchParams(window.location.search);
+        if (next.portal) params.set("portal", next.portal);
+        if (next.step === "account") params.set("step", "account");
+        else params.delete("step");
+        const qs = params.toString();
+        router.replace(qs ? `/register?${qs}` : "/register", { scroll: false });
+    }
+
+    function choosePortal(next: Portal) {
+        setPortal(next);
+        writeRegisterParams({ portal: next, step });
+    }
+
     function goToAccount() {
+        writeRegisterParams({ portal, step: "account" });
         setStep("account");
     }
 
     function goToRole() {
+        writeRegisterParams({ portal, step: "role" });
         setStep("role");
     }
 
@@ -265,7 +284,7 @@ export function RegisterWizard({
                             />
                         </div>
 
-                        <PortalPicker value={portal} onChange={setPortal} ariaLabel="Sign up as" />
+                        <PortalPicker value={portal} onChange={choosePortal} ariaLabel="Sign up as" />
 
                         <div className="mx-auto flex flex-col gap-6 inline-full max-inline-96">
                             <Button

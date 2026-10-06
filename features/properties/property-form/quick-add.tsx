@@ -1,27 +1,17 @@
 "use client";
 
-import { type MutableRefObject, type ReactNode, useEffect, useMemo, useState } from "react";
+import { type MutableRefObject, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import {
-    BedDouble,
-    Building2,
-    ImageIcon,
-    ImagePlus,
-    Images,
-    Phone,
-    RefreshCw,
-    Sparkles,
-    X,
-} from "lucide-react";
+import { Camera, Check, Sparkles } from "lucide-react";
 
 import { createClientId } from "@/lib/client-id";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
-import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
 import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
+import { useLocationOptions } from "@/hooks/use-locations";
 
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { AppImage } from "@/components/shared/app-image";
@@ -30,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import {
-    CITY_OPTIONS,
+    BEDROOM_OPTIONS,
     LISTING_FOR_OPTIONS,
     PROPERTY_CATEGORY_OPTIONS,
     propertyTypeOptions,
@@ -74,45 +64,53 @@ export function QuickAdd({
     const { watch, setValue, getValues } = useFormContext<PropertyDraftValues>();
     const { derived } = useFieldRules();
     const values = watch();
-    const photos = values.media.photos;
-    const coverPhoto = photos.find((photo) => photo.isCover) ?? null;
-    const galleryPhotos = photos.filter((photo) => !photo.isCover);
+    // Quick add has no country / state field — it keeps the draft defaults, so
+    // the city list is the cities of that default state. The full wizard step
+    // is where country and state can be changed.
+    const { cityOptions, citiesLoading, selectedState } = useLocationOptions({
+        countryName: values.location.country,
+        stateName: values.location.state,
+    });
+    const firstPhoto = values.media.photos[0];
     const showBhk = derived.isResidential && !derived.isPlot;
     const showSalePrice = derived.isSell;
     const showRent = derived.isRentLike && !derived.isPg;
     const [titleTouched, setTitleTouched] = useState(false);
 
+    const [titleTouched, setTitleTouched] = useState(() =>
+        Boolean(getValues("basics.title")?.trim()),
+    );
     const suggestedTitle = useMemo(
         () =>
             buildBasicsSuggestedTitle({
+                bedrooms: showBhk ? values.details.bedrooms : undefined,
                 propertyType: values.basics.propertyType,
-                bedrooms: values.details.bedrooms,
                 locality: values.location.locality,
                 city: values.location.city,
             }),
         [
+            showBhk,
             values.basics.propertyType,
             values.details.bedrooms,
-            values.location.locality,
             values.location.city,
+            values.location.locality,
         ],
     );
 
+    // Keep the title in sync with the suggestion until the user edits it.
     useEffect(() => {
-        if (titleTouched) return;
-        if (!suggestedTitle) return;
-        if (values.basics.title === suggestedTitle) return;
-        setValue("basics.title", suggestedTitle, { shouldDirty: true });
-    }, [suggestedTitle, titleTouched, values.basics.title, setValue]);
+        if (titleTouched || !suggestedTitle) return;
+        setValue("basics.title", suggestedTitle, { shouldDirty: true, shouldValidate: true });
+    }, [setValue, suggestedTitle, titleTouched]);
 
-    function commitPhotos(next: DraftPhoto[]) {
-        setValue("media.photos", normalizePhotoOrder(next), {
-            shouldDirty: true,
-            shouldValidate: true,
-        });
-    }
-
-    function updatePhoto(photoId: string, patch: Partial<DraftPhoto>) {
+    function addPhoto(file: File | undefined) {
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error("Choose a photo smaller than 10 MB.");
+            return;
+        }
+        const url = URL.createObjectURL(file);
+        photoFilesRef.current.set(url, file);
         setValue(
             "media.photos",
             getValues("media.photos").map((photo) =>
@@ -267,15 +265,140 @@ export function QuickAdd({
                   sm:px-6
                 "
             >
-                <div className={FORM_SECTIONS_CLASS}>
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight text-ink">
-                            Save the lead from the site
-                        </h2>
-                        <p className="mbs-2 text-sm/6 text-ink-muted max-inline-2xl">
-                            Fill the fields required to create the listing. It saves as a draft so
-                            you can complete the rest later.
-                        </p>
+                <div className="flex flex-col gap-4">
+                    <ChoiceField
+                        name="basics.listingFor"
+                        label="Listing for"
+                        options={LISTING_FOR_OPTIONS}
+                        columns={3}
+                    />
+                    <ChoiceField
+                        name="basics.category"
+                        label="Category"
+                        options={PROPERTY_CATEGORY_OPTIONS}
+                        columns={5}
+                        onValueChange={() => {
+                            setValue("basics.propertyType", "", { shouldDirty: true });
+                            setValue("basics.propertySubType", "", { shouldDirty: true });
+                            setValue(
+                                "details.commercial",
+                                structuredClone(DEFAULT_PROPERTY_DRAFT.details.commercial),
+                                { shouldDirty: true },
+                            );
+                            setValue(
+                                "details.land",
+                                structuredClone(DEFAULT_PROPERTY_DRAFT.details.land),
+                                { shouldDirty: true },
+                            );
+                        }}
+                    />
+                    <div className={FORM_GRID_CLASS}>
+                        <SelectField
+                            name="basics.propertyType"
+                            label="Property type"
+                            options={propertyTypeOptions(values.basics.category)}
+                        />
+                        <SelectField
+                            name="location.city"
+                            label="City"
+                            options={cityOptions}
+                            placeholder={selectedState ? "Choose a city" : "Loading cities…"}
+                            loading={citiesLoading}
+                            disabled={!selectedState}
+                            emptyText={citiesLoading ? "Loading cities…" : "No cities match"}
+                            limit={100}
+                        />
+                        <TextField
+                            name="location.locality"
+                            label="Locality"
+                            placeholder="e.g. Vesu"
+                        />
+                        <TextField
+                            name="location.pincode"
+                            label="PIN code"
+                            inputMode="numeric"
+                            maxLength={6}
+                            placeholder="395007"
+                        />
+                        <TextField
+                            name="location.landmark"
+                            label="Landmark"
+                            placeholder="e.g. Near VR Mall"
+                        />
+                        <TextField
+                            name="location.projectOrSociety"
+                            label="Project or society"
+                            placeholder="e.g. Happy Glorious"
+                        />
+                        {showBhk ? (
+                            <SelectField
+                                name="details.bedrooms"
+                                label="BHK"
+                                options={BEDROOM_OPTIONS}
+                            />
+                        ) : null}
+                        <NumberField
+                            name="area.plotArea"
+                            label="Area (sq ft)"
+                            min={0}
+                            placeholder="e.g. 1200"
+                            onValueChange={(next) => {
+                                const sqft = next != null && next > 0 ? next : 0;
+                                setValue("area.plotArea", next, { shouldDirty: true });
+                                setValue("area.carpetArea", next, { shouldDirty: true });
+                                setValue("area.areaSqft", sqft, { shouldDirty: true });
+                                setValue("area.unit", "sqft", { shouldDirty: true });
+                            }}
+                        />
+                        <TextField
+                            name="basics.title"
+                            label="Property title"
+                            placeholder={suggestedTitle || "e.g. 3 BHK Apartment in Vesu, Surat"}
+                            hint="Auto-filled from BHK, type, locality, and city. You can edit it anytime."
+                            className="md:col-span-2"
+                            onChange={() => setTitleTouched(true)}
+                            endAction={
+                                suggestedTitle ? (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            setValue("basics.title", suggestedTitle, {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                            });
+                                            setTitleTouched(false);
+                                        }}
+                                        className="
+                                          gap-1.5 rounded-control px-2.5 font-semibold
+                                          text-brand-text
+                                          hover:bg-brand-soft hover:text-brand-text
+                                        "
+                                    >
+                                        <Sparkles className="block-3.5 inline-3.5" aria-hidden />
+                                        <span className="hidden sm:inline">
+                                            Use suggested title
+                                        </span>
+                                        <span className="sm:hidden">Suggest</span>
+                                    </Button>
+                                ) : null
+                            }
+                        />
+                        {showSalePrice ? (
+                            <CurrencyField name="sale.expectedPrice" label="Expected price" />
+                        ) : null}
+                        {showRent ? (
+                            <CurrencyField name="rent.monthlyRent" label="Monthly rent" />
+                        ) : null}
+                        <TextField
+                            name="owner.phone"
+                            label="Owner phone"
+                            inputMode="tel"
+                            maxLength={10}
+                            placeholder="9876543210"
+                            visibility="private"
+                        />
                     </div>
 
                     <WizardSection

@@ -97,6 +97,8 @@ function resolveDraftStep(step: string | undefined): PropertyFormStep | null {
 
 export type PropertyFormProps = {
     mode: "create" | "edit";
+    /** Owner listings are the owner's own. Broker listings can attach a contact owner and buyers. */
+    portal?: "broker" | "owner";
     propertyId?: string;
     initialListing?: MyListingItem | null;
     onCancel?: () => void;
@@ -109,6 +111,7 @@ export type PropertyFormProps = {
 
 export function PropertyForm({
     mode,
+    portal = "broker",
     propertyId,
     initialListing,
     onCancel,
@@ -474,6 +477,10 @@ export function PropertyForm({
 
         // Intent wins over draftToLegacyInput: stripHidden removes publish.status, which
         // would otherwise always serialize as publish: false on edit updates.
+        if (portal === "owner") {
+            current.owner = { ...current.owner, contactId: "" };
+            current.attachedBuyers = [];
+        }
         const input = {
             ...draftToLegacyInput(stripHidden(current), photoFilesRef),
             publish: !forceDraft,
@@ -713,6 +720,7 @@ export function PropertyForm({
                                         <StepTransition step={step}>
                                             <StepContent
                                                 step={step}
+                                                portal={portal}
                                                 photoFilesRef={photoFilesRef}
                                             />
                                         </StepTransition>
@@ -1133,9 +1141,11 @@ function PropertyFormFooter({
 
 function StepContent({
     step,
+    portal,
     photoFilesRef,
 }: {
     step: PropertyFormStep;
+    portal: "broker" | "owner";
     photoFilesRef: MutableRefObject<Map<string, File>>;
 }) {
     if (step === "basics") {
@@ -1168,7 +1178,7 @@ function StepContent({
     return (
         <div className="flex flex-col gap-8">
             <StepMedia photoFilesRef={photoFilesRef} />
-            <StepPublish />
+            {portal === "broker" ? <StepPublish /> : null}
         </div>
     );
 }
@@ -1442,6 +1452,11 @@ function listingToDraft(listing: MyListingItem): PropertyDraftValues {
               : "unfurnished";
     draft.amenities.society = listing.amenities;
     draft.location.nearbyPlaces = listing.nearbyPlaces ?? [];
+    draft.details.commercial.suitableFor = listing.suitableFor ?? [];
+    draft.details.commercial.cabins = listing.cabins ?? null;
+    draft.details.commercial.meetingRooms = listing.meetingRooms ?? null;
+    draft.details.commercial.workstations = listing.workstations ?? null;
+    draft.details.commercial.ceilingHeightFt = listing.ceilingHeightFt ?? null;
     draft.media.videoUrl = listing.videoUrl ?? "";
     draft.media.virtualTourUrl = listing.virtualTourUrl ?? "";
     draft.media.photos = listing.imageSrcs.map((url, index) => ({
@@ -1594,6 +1609,11 @@ function draftToLegacyInput(
         description: values.basics.description,
         amenities,
         nearbyPlaces: values.location.nearbyPlaces ?? [],
+        suitableFor: values.details.commercial.suitableFor ?? [],
+        cabins: values.details.commercial.cabins ?? null,
+        meetingRooms: values.details.commercial.meetingRooms ?? null,
+        workstations: values.details.commercial.workstations ?? null,
+        ceilingHeightFt: values.details.commercial.ceilingHeightFt ?? null,
         videoUrl: values.media.videoUrl?.trim() || "",
         virtualTourUrl: values.media.virtualTourUrl?.trim() || "",
         publish: values.publish.status === "active",

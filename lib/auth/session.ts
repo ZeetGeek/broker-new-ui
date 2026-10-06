@@ -72,8 +72,33 @@ export function isAuthenticated() {
     return Boolean(getAccessToken());
 }
 
+export type Portal = "owner" | "broker";
+
+export function portalForRole(role: string | null | undefined): Portal {
+    return role === "owner" ? "owner" : "broker";
+}
+
 export function portalHomeForRole(role: string | null | undefined): string {
     if (role === "owner") return "/owner";
     if (role === "admin") return "/broker/dashboard";
     return "/broker/dashboard";
+}
+
+/** Which portal a path belongs to, or null for public routes. */
+export function portalForPath(path: string): Portal | null {
+    if (path === "/owner" || path.startsWith("/owner/")) return "owner";
+    if (path === "/broker" || path.startsWith("/broker/")) return "broker";
+    return null;
+}
+
+/**
+ * Post-login destination. Same-portal `next` is kept; the other portal
+ * falls back to this user's home so a broker cannot land on `/owner`.
+ */
+export function destinationForRole(role: string | null | undefined, next: string | null): string {
+    const home = portalHomeForRole(role);
+    if (!next || !next.startsWith("/") || next.startsWith("//")) return home;
+    const portal = portalForPath(next);
+    if (portal && portal !== portalForRole(role)) return home;
+    return next;
 }

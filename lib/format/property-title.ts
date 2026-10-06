@@ -27,6 +27,7 @@ export function buildPropertyTitle({
 function bedroomLabel(bedrooms: string | undefined): string {
     if (!bedrooms) return "";
     if (bedrooms === "1rk") return "1 RK";
+    if (bedrooms === "10_plus") return "10+ BHK";
     return `${bedrooms} BHK`;
 }
 

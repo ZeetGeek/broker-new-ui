@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
+import { propertiesApi } from "@/lib/api/properties";
 import {
     findPendingBrokerRepresentationId,
     findPendingOwnerInvitationId,
@@ -44,7 +45,7 @@ type RequestOverride = string | false | true;
 /** `false` declined; `"accepted"` accepted; a string is the pending invitation id. */
 type InviteOverride = string | false | "accepted";
 
-type BusyKind = "request" | "cancel" | "accept" | "invite-cancel";
+type BusyKind = "request" | "cancel" | "accept" | "invite-cancel" | "bookmark";
 
 function mutationErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof ApiError) return error.message;
@@ -82,7 +83,7 @@ export function OwnerListingsGrid({
     const [inviteOverrides, setInviteOverrides] = useState<Record<string, InviteOverride>>(() =>
         initialInviteOverrides(items),
     );
-    // TODO: persist through the API once a saved-properties endpoint exists.
+    // Optimistic overrides until the next browse refetch.
     const [savedOverrides, setSavedOverrides] = useState<Record<string, boolean>>({});
 
     const isSaved = useCallback(
@@ -91,12 +92,30 @@ export function OwnerListingsGrid({
     );
 
     const handleToggleSave = useCallback(
-        (item: OwnerListingItem) => {
+        async (item: OwnerListingItem) => {
+            if (busyId === item.id && busyKind === "bookmark") return;
+
             const nextSaved = !isSaved(item);
             setSavedOverrides((prev) => ({ ...prev, [item.id]: nextSaved }));
-            if (nextSaved) toast.success("Property saved");
+            setBusyId(item.id);
+            setBusyKind("bookmark");
+            try {
+                if (nextSaved) {
+                    await propertiesApi.bookmark(item.id);
+                    toast.success("Property saved");
+                } else {
+                    await propertiesApi.unbookmark(item.id);
+                    toast.success("Removed from saved");
+                }
+            } catch (error) {
+                setSavedOverrides((prev) => ({ ...prev, [item.id]: !nextSaved }));
+                toast.error(mutationErrorMessage(error, "Could not update bookmark"));
+            } finally {
+                setBusyId(null);
+                setBusyKind(null);
+            }
         },
-        [isSaved],
+        [busyId, busyKind, isSaved],
     );
 
     const representationIdFor = useCallback(

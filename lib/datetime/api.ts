@@ -6,18 +6,21 @@
  */
 
 import { tz, TZDate } from "@date-fns/tz";
-import { format, formatISO, parseISO, transpose } from "date-fns";
+import { format, parseISO, transpose } from "date-fns";
 
-import { fromUserZonedTime, getUserTimeZone } from "@/lib/datetime/timezone";
+import { getUserTimeZone } from "@/lib/datetime/timezone";
 
 /** Parse an API instant (`2026-08-27T07:30:00.000Z`) to a Date. */
 export function parseApiInstant(value: string): Date {
     return parseISO(value);
 }
 
-/** Serialize a Date instant for API request bodies (always UTC). */
+/**
+ * Serialize a Date instant for API request bodies: UTC with `Z`
+ * (`2026-10-06T04:30:00.000Z`). Not `formatISO` — that keeps the local offset.
+ */
 export function toApiInstant(value: Date): string {
-    return formatISO(value, { representation: "complete" });
+    return new Date(value.getTime()).toISOString();
 }
 
 /**
@@ -43,5 +46,21 @@ export function toApiInstantFromLocalParts(
     time24: string,
     timeZone = getUserTimeZone(),
 ): string {
-    return toApiInstant(fromUserZonedTime(new TZDate(`${dateOnly}T${time24}:00`, timeZone)));
+    // Numeric parts, not an ISO string: TZDate parses a string in the device's zone.
+    const [year, month, day] = dateOnly.split("-").map(Number);
+    const [hours, minutes] = time24.split(":").map(Number);
+    return toApiInstant(new TZDate(year, month - 1, day, hours, minutes, timeZone));
+}
+
+/**
+ * Local calendar date + wall-clock time → the same instant as a UTC calendar date
+ * (`YYYY-MM-DD`) and UTC time (`HH:mm`). For APIs that take dates and times separately.
+ */
+export function toApiUtcParts(
+    dateOnly: string,
+    time24: string,
+    timeZone = getUserTimeZone(),
+): { date: string; time: string } {
+    const instant = toApiInstantFromLocalParts(dateOnly, time24, timeZone);
+    return { date: instant.slice(0, 10), time: instant.slice(11, 16) };
 }

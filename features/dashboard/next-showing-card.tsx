@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
+import { OWNER_VISITS_HREF } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
@@ -27,7 +28,10 @@ import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { NextShowingStatus } from "./mock-data";
 
 const STARTING_SOON_MINUTES = 30;
-const NEXT_SHOWING_INFO = "Your next scheduled site visit — when, where, and who you're meeting.";
+const BROKER_NEXT_SHOWING_INFO =
+    "Your next scheduled site visit — when, where, and who you're meeting.";
+const OWNER_NEXT_SHOWING_INFO =
+    "The next showing booked on one of your properties — when, where, and which broker is bringing the client.";
 
 export type NextShowing = {
     id: string;
@@ -49,6 +53,8 @@ export type NextShowingCardProps = {
     showing: NextShowing | null;
     now: Date;
     className?: string;
+    /** Owner portal swaps copy, empty CTA, and person role. */
+    portal?: "broker" | "owner";
 };
 
 /**
@@ -59,11 +65,15 @@ function statusBadgeContent(
     status: NextShowingStatus,
     isStartingSoon: boolean,
     isPast: boolean,
+    portal: "broker" | "owner",
 ): { label: string; hint: string; className: string; variant?: "brand" | "urgent" | "outline" } {
     if (isPast) {
         return {
             label: "In progress",
-            hint: "This visit's start time has passed. Mark it done or reschedule once you're finished.",
+            hint:
+                portal === "owner"
+                    ? "This visit's start time has passed. Check in with the broker if you need an update."
+                    : "This visit's start time has passed. Mark it done or reschedule once you're finished.",
             variant: "brand",
             className: "font-semibold",
         };
@@ -71,21 +81,30 @@ function statusBadgeContent(
     if (isStartingSoon) {
         return {
             label: "Starting soon",
-            hint: `Starts in under ${STARTING_SOON_MINUTES} minutes. Leave now if you aren't already on your way.`,
+            hint:
+                portal === "owner"
+                    ? `Starts in under ${STARTING_SOON_MINUTES} minutes. The broker should be on the way with their client.`
+                    : `Starts in under ${STARTING_SOON_MINUTES} minutes. Leave now if you aren't already on your way.`,
             variant: "urgent",
             className: "font-semibold",
         };
     }
     if (status === "confirmed") {
         return {
-            label: "Owner confirmed",
-            hint: "The owner approved this time slot. The visit is on - no further action needed.",
+            label: portal === "owner" ? "Confirmed" : "Owner confirmed",
+            hint:
+                portal === "owner"
+                    ? "You've confirmed this time slot. The visit is on."
+                    : "The owner approved this time slot. The visit is on - no further action needed.",
             className: "border-transparent bg-highlight font-semibold text-highlight-ink",
         };
     }
     return {
-        label: "Owner not replied",
-        hint: "The owner hasn't confirmed this slot yet. Nudge them, or reschedule if you don't hear back before the visit.",
+        label: portal === "owner" ? "Scheduled" : "Owner not replied",
+        hint:
+            portal === "owner"
+                ? "A broker booked this slot. Confirm or cancel it from Visits if you need to change it."
+                : "The owner hasn't confirmed this slot yet. Nudge them, or reschedule if you don't hear back before the visit.",
         variant: "outline",
         className: "bg-surface font-semibold text-pending",
     };
@@ -95,12 +114,19 @@ function StatusBadge({
     status,
     isStartingSoon,
     isPast,
+    portal,
 }: {
     status: NextShowingStatus;
     isStartingSoon: boolean;
     isPast: boolean;
+    portal: "broker" | "owner";
 }) {
-    const { label, hint, className, variant } = statusBadgeContent(status, isStartingSoon, isPast);
+    const { label, hint, className, variant } = statusBadgeContent(
+        status,
+        isStartingSoon,
+        isPast,
+        portal,
+    );
 
     return (
         <Tooltip>
@@ -156,46 +182,63 @@ function MapPlaceholder({ distanceKm }: { distanceKm: number }) {
     );
 }
 
-function EmptyNextShowing({ className }: { className?: string }) {
+function EmptyNextShowing({
+    className,
+    portal,
+}: {
+    className?: string;
+    portal: "broker" | "owner";
+}) {
+    const isOwner = portal === "owner";
+
     return (
         <section
             className={cn(DASHBOARD_CARD_SHELL_EMPTY, className)}
             aria-labelledby="next-showing-empty-heading"
         >
-            <CardLabel info={NEXT_SHOWING_INFO}>Next showing</CardLabel>
+            <CardLabel info={isOwner ? OWNER_NEXT_SHOWING_INFO : BROKER_NEXT_SHOWING_INFO}>
+                Next showing
+            </CardLabel>
 
             <EmptyState
                 icon={CalendarPlus}
                 headingId="next-showing-empty-heading"
                 heading="No visits booked"
-                description="Schedule one when a client is ready to see a property."
+                description={
+                    isOwner
+                        ? "Open visit slots so brokers can book showings on your listings."
+                        : "Schedule one when a client is ready to see a property."
+                }
             >
-                <TextLinkButton href="/broker/visits/new">Schedule a visit</TextLinkButton>
-                {/* <Button
-                    variant="accent"
-                    size="md"
-                    nativeButton={false}
-                    render={<Link href="/broker/visits/new" />}
-                >
-                    <CalendarPlus aria-hidden strokeWidth={1.75} />
-                </Button> */}
+                <TextLinkButton href={isOwner ? OWNER_VISITS_HREF : "/broker/visits/new"}>
+                    {isOwner ? "Manage visits" : "Schedule a visit"}
+                </TextLinkButton>
             </EmptyState>
         </section>
     );
 }
 
-export function NextShowingCard({ showing, now, className }: NextShowingCardProps) {
+export function NextShowingCard({
+    showing,
+    now,
+    className,
+    portal = "broker",
+}: NextShowingCardProps) {
     if (!showing) {
-        return <EmptyNextShowing className={className} />;
+        return <EmptyNextShowing className={className} portal={portal} />;
     }
 
+    const isOwner = portal === "owner";
     const whenLabel = formatShowingWhen(showing.scheduledAt, now);
     const duration = formatDurationUntil(showing.scheduledAt, now);
     const isStartingSoon =
         !duration.isPast &&
         duration.minutesRemaining > 0 &&
         duration.minutesRemaining <= STARTING_SOON_MINUTES;
-    const phoneHref = `tel:+91${showing.clientPhoneDigits.replace(/\D/g, "").slice(-10)}`;
+    const hasPhone = showing.clientPhoneDigits.replace(/\D/g, "").length >= 10;
+    const phoneHref = hasPhone
+        ? `tel:+91${showing.clientPhoneDigits.replace(/\D/g, "").slice(-10)}`
+        : undefined;
     const hasPrice = showing.amountInr > 0;
     /** Locality is often folded into the title already - only join when it adds something. */
     const propertyLine = [showing.configLabel, showing.locality]
@@ -205,6 +248,11 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
     /** Prefer a real street address; fall back to the property line when the API omits one. */
     const locationLine = showing.address.trim() || propertyLine;
     const directionsHref = mapsSearchUrl(locationLine);
+    const personRole = isOwner ? "Broker" : "Client";
+    const secondaryHref = isOwner
+        ? OWNER_VISITS_HREF
+        : `/broker/visits/new?reschedule=${showing.id}`;
+    const secondaryLabel = isOwner ? "View visits" : "Reschedule";
 
     return (
         <section
@@ -212,11 +260,14 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
             aria-labelledby={`next-showing-${showing.id}`}
         >
             <div className="flex shrink-0 items-start justify-between gap-3">
-                <CardLabel info={NEXT_SHOWING_INFO}>Next showing</CardLabel>
+                <CardLabel info={isOwner ? OWNER_NEXT_SHOWING_INFO : BROKER_NEXT_SHOWING_INFO}>
+                    Next showing
+                </CardLabel>
                 <StatusBadge
                     status={showing.status}
                     isStartingSoon={isStartingSoon}
                     isPast={duration.isPast}
+                    portal={portal}
                 />
             </div>
 
@@ -288,7 +339,9 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                         </div>
                     </div>
 
-                    <MapPlaceholder distanceKm={showing.distanceKm} />
+                    {!isOwner && showing.distanceKm > 0 ? (
+                        <MapPlaceholder distanceKm={showing.distanceKm} />
+                    ) : null}
                 </div>
 
                 <div
@@ -297,29 +350,31 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                     "
                 >
                     <div className="flex flex-wrap gap-3">
-                        <Button
-                            variant="accent"
-                            size="md"
-                            nativeButton={false}
-                            render={
-                                <a
-                                    href={directionsHref}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                />
-                            }
-                        >
-                            <Navigation aria-hidden strokeWidth={1.75} />
-                            Directions
-                        </Button>
+                        {locationLine ? (
+                            <Button
+                                variant="accent"
+                                size="md"
+                                nativeButton={false}
+                                render={
+                                    <a
+                                        href={directionsHref}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    />
+                                }
+                            >
+                                <Navigation aria-hidden strokeWidth={1.75} />
+                                Directions
+                            </Button>
+                        ) : null}
                         <Button
                             variant="outline-dark"
                             size="md"
                             nativeButton={false}
-                            render={<Link href={`/broker/visits/new?reschedule=${showing.id}`} />}
+                            render={<Link href={secondaryHref} />}
                         >
                             <CalendarClock aria-hidden strokeWidth={1.75} />
-                            Reschedule
+                            {secondaryLabel}
                         </Button>
                     </div>
 
@@ -341,42 +396,46 @@ export function NextShowingCard({ showing, now, className }: NextShowingCardProp
                                         className="block-4 inline-4"
                                         strokeWidth={2}
                                     />
-                                    Client
+                                    {personRole}
                                 </span>
-                                <span aria-hidden>·</span>
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={
-                                            <Button
-                                                variant="link"
-                                                size="sm"
-                                                nativeButton={false}
-                                                render={<a href={phoneHref} />}
-                                                className="
-                                                  body-sm gap-1 p-0 font-medium text-ink-muted
-                                                  block-auto
-                                                  hover:text-ink hover:underline
-                                                "
+                                {hasPhone && phoneHref ? (
+                                    <>
+                                        <span aria-hidden>·</span>
+                                        <Tooltip>
+                                            <TooltipTrigger
+                                                render={
+                                                    <Button
+                                                        variant="link"
+                                                        size="sm"
+                                                        nativeButton={false}
+                                                        render={<a href={phoneHref} />}
+                                                        className="
+                                                          body-sm gap-1 p-0 font-medium text-ink-muted
+                                                          block-auto
+                                                          hover:text-ink hover:underline
+                                                        "
+                                                    >
+                                                        <Phone
+                                                            aria-hidden
+                                                            className="block-3.5 inline-3.5"
+                                                            strokeWidth={2}
+                                                        />
+                                                        <PhoneNumber
+                                                            phoneDigits={showing.clientPhoneDigits}
+                                                        />
+                                                    </Button>
+                                                }
+                                            />
+                                            <TooltipContent
+                                                side="top"
+                                                align="center"
+                                                className="text-pretty"
                                             >
-                                                <Phone
-                                                    aria-hidden
-                                                    className="block-3.5 inline-3.5"
-                                                    strokeWidth={2}
-                                                />
-                                                <PhoneNumber
-                                                    phoneDigits={showing.clientPhoneDigits}
-                                                />
-                                            </Button>
-                                        }
-                                    />
-                                    <TooltipContent
-                                        side="top"
-                                        align="center"
-                                        className="text-pretty"
-                                    >
-                                        {`Call ${showing.clientName} about this visit`}
-                                    </TooltipContent>
-                                </Tooltip>
+                                                {`Call ${showing.clientName} about this visit`}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </>
+                                ) : null}
                             </p>
                         </div>
                     </div>

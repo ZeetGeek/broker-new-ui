@@ -3,9 +3,10 @@ import { z } from "zod";
 import { MAX_BUYERS_PER_VISIT } from "@/lib/visits/constants";
 
 export const bookingSchema = z.object({
-    buyerIds: z.array(z.string()).min(1, "Choose at least one buyer.").max(MAX_BUYERS_PER_VISIT, `Choose up to ${MAX_BUYERS_PER_VISIT} buyers.`),
-    note: z.string().max(200, "Keep the note within 200 characters."),
-    remindBuyer: z.boolean(),
+    buyerIds: z
+        .array(z.string())
+        .min(1, "Choose at least one buyer.")
+        .max(MAX_BUYERS_PER_VISIT, `Choose up to ${MAX_BUYERS_PER_VISIT} buyers.`),
     acceptTight: z.boolean(),
 });
 
@@ -32,4 +33,3 @@ export const outcomeSchema = z.object({
 });
 
 export type OutcomeFormValues = z.infer<typeof outcomeSchema>;
-

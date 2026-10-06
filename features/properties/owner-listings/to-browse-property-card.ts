@@ -13,7 +13,7 @@ export function toBrowsePropertyCardListing(item: OwnerListingItem): BrowsePrope
 
     return {
         id: item.id,
-        title: `${locality} ${formatPropertyTypeLabel(item.propertyTypeLabel)}`,
+        title: `${item?.title ?? formatPropertyTypeLabel(item.propertyTypeLabel)} in ${locality}, ${city}`,
         configLabel: item.configLabel,
         propertyTypeLabel: item.propertyTypeLabel,
         areaSqft: item.areaSqft,

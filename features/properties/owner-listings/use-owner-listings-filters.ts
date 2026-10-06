@@ -34,6 +34,7 @@ const OWNER_LISTINGS_URL_KEYS = [
     "slotsOpen",
     "commissionSet",
     "readyToMove",
+    "bookmarked",
     "sort",
     "limit",
 ] as const;
@@ -147,7 +148,15 @@ export function useOwnerListingsFilters() {
     }, [filters.cities, filters.localities, filters.yourAreas, replace]);
 
     const toggleQuickChip = useCallback(
-        (key: "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove") => {
+        (
+            key:
+                | "yourAreas"
+                | "newToday"
+                | "slotsOpen"
+                | "commissionSet"
+                | "readyToMove"
+                | "bookmarked",
+        ) => {
             if (key === "yourAreas") {
                 const nextYourAreas = !filters.yourAreas;
                 replace({

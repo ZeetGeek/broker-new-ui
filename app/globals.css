@@ -341,6 +341,51 @@
     }
 }
 
+/*
+ * <MarqueeText>: one line with an ellipsis; when it overflows, it scrolls to
+ * its end while the nearest `group/marquee` is hovered or focused. The JS side
+ * sets --marquee-distance / --marquee-duration and data-overflow.
+ */
+@layer components {
+    .marquee-text {
+        display: block;
+        overflow: hidden;
+        min-inline-size: 0;
+    }
+
+    .marquee-text-inner {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .group\/marquee:is(:hover, :focus-within)
+            .marquee-text[data-overflow="true"]
+            .marquee-text-inner {
+            inline-size: max-content;
+            max-inline-size: none;
+            overflow: visible;
+            text-overflow: clip;
+            animation: marquee-scroll var(--marquee-duration, 8s) linear 0.3s infinite;
+            will-change: transform;
+        }
+    }
+}
+
+/* Hold at the start, scroll to the end, hold, then the next loop snaps back to the start. */
+@keyframes marquee-scroll {
+    0%,
+    15% {
+        transform: translateX(0);
+    }
+    75%,
+    100% {
+        transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
+    }
+}
+
 @keyframes fab-pulse {
     0% {
         transform: scale(1);

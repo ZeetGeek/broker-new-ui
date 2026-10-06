@@ -69,6 +69,8 @@ export function SocialAuthButtons({
         setIsOpeningGoogle(true);
         window.location.href = authApi.googleStartUrl({
             role,
+            // Register already collected the role. Login must still ask new users.
+            roleChosen: action === "Sign up",
             ...(action === "Sign up" && referralCode?.trim()
                 ? { referralCode: referralCode.trim().toUpperCase() }
                 : {}),

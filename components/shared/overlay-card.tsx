@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
+import { MarqueeText } from "@/components/shared/marquee-text";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 
 /*
@@ -19,9 +20,10 @@ import { PropertyTitleLink } from "@/components/shared/property-title-link";
  *
  * `transform-gpu` gives the card its own layer: without it Chrome lets the
  * backdrop-blur panel paint past `overflow-hidden` and the corners go square.
+ * `group/marquee` makes long title/location lines scroll while the card is hovered.
  */
 const CARD_CLASS = `
-  relative isolate flex flex-1 transform-gpu flex-col overflow-hidden rounded-card bg-brand-ink
+  group/marquee relative isolate flex flex-1 transform-gpu flex-col overflow-hidden rounded-card bg-brand-ink
   shadow-md transition-[box-shadow,translate] duration-160
   hover:-translate-y-0.5 hover:shadow-lg
 `;
@@ -46,7 +48,7 @@ const PANEL_SCRIM_CLASS = `
   absolute inset-0 -z-10 rounded-b-card
   bg-[linear-gradient(to_bottom,transparent,color-mix(in_oklab,var(--color-brand-ink)_40%,transparent)_3.5rem,color-mix(in_oklab,var(--color-brand-ink)_80%,transparent))]
 `;
-const TITLE_CLASS = "body truncate font-semibold tracking-wide text-surface capitalize hover:text-surface";
+const TITLE_CLASS = "body font-semibold tracking-wide text-surface capitalize hover:text-surface";
 const META_LINE_CLASS =
     "body-sm flex items-center gap-1.5 tracking-wide text-surface/75 min-inline-0";
 
@@ -154,10 +156,10 @@ export function OverlayCardSummary({
 }) {
     return (
         <div className="flex flex-col gap-1 min-inline-0">
-            <div className="flex items-baseline justify-between gap-3 min-inline-0">
+            <div className="flex items-baseline justify-between gap-3 p-1 min-inline-0">
                 <h3 className="max-inline-full min-inline-0">
                     <PropertyTitleLink href={href} className={TITLE_CLASS}>
-                        {title}
+                        <MarqueeText text={title} />
                     </PropertyTitleLink>
                 </h3>
                 <span className="h5 shrink-0 font-semibold tracking-wide tabular-nums">
@@ -166,11 +168,15 @@ export function OverlayCardSummary({
             </div>
             <p className={META_LINE_CLASS}>
                 <MapPin aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
-                <span className="truncate capitalize">{locationLabel}</span>
+                <MarqueeText text={locationLabel} className="capitalize" />
             </p>
             <p className={META_LINE_CLASS}>
-                <Maximize2 aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
-                <span className="truncate">{specsLabel}</span>
+                <Maximize2
+                    aria-hidden
+                    className="shrink-0 block-3.5 inline-3.5"
+                    strokeWidth={1.75}
+                />
+                <MarqueeText text={specsLabel} />
             </p>
         </div>
     );

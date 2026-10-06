@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Bookmark, Clock3, MapPin, Users } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
+import { propertiesApi } from "@/lib/api/properties";
 import { representativeApi } from "@/lib/api/representative";
 import { formatAreaSqft } from "@/lib/format/area";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
@@ -237,15 +238,29 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
     );
     const [requestingId, setRequestingId] = useState<string | null>(null);
 
-    function toggleBookmark(id: string) {
-        setRowState((prev) => {
-            const current = prev[id];
-            if (!current) return prev;
-            return {
+    async function toggleBookmark(id: string) {
+        const current = rowState[id];
+        if (!current) return;
+        const nextSaved = !current.isBookmarked;
+        setRowState((prev) => ({
+            ...prev,
+            [id]: { ...current, isBookmarked: nextSaved },
+        }));
+        try {
+            if (nextSaved) {
+                await propertiesApi.bookmark(id);
+                toast.success("Property saved");
+            } else {
+                await propertiesApi.unbookmark(id);
+                toast.success("Removed from saved");
+            }
+        } catch (err: unknown) {
+            setRowState((prev) => ({
                 ...prev,
-                [id]: { ...current, isBookmarked: !current.isBookmarked },
-            };
-        });
+                [id]: { ...current, isBookmarked: !nextSaved },
+            }));
+            toast.error(err instanceof ApiError ? err.message : "Could not update bookmark");
+        }
     }
 
     async function requestProperty(id: string) {
@@ -306,7 +321,7 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
                                     property={property}
                                     state={state}
                                     isRequesting={requestingId === property.id}
-                                    onToggleBookmark={() => toggleBookmark(property.id)}
+                                    onToggleBookmark={() => void toggleBookmark(property.id)}
                                     onRequest={() => void requestProperty(property.id)}
                                 />
                             );

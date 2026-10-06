@@ -266,6 +266,7 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
 
     return {
         id: listing.id,
+        title: listing?.title as string,
         configLabel: configLabel(bhk, propertyTypeLabel),
         propertyTypeLabel,
         bhk,
@@ -303,7 +304,7 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         isInvitePending: standing.isInvitePending,
         pendingRepresentationId,
         pendingInvitationId: standing.pendingInvitationId,
-        isBookmarked: false,
+        isBookmarked: Boolean(listing.isBookmarked),
         imageSrc,
         imageSrcs: photos.length > 0 ? photos : imageSrc ? [imageSrc] : [],
         status: listing.representation?.status === "pending" ? "pending" : "active",

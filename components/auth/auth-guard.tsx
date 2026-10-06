@@ -3,22 +3,36 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { portalForRole, portalHomeForRole, type Portal } from "@/lib/auth/session";
+
 import { useAppSelector } from "@/store/hooks";
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
+export function AuthGuard({
+    children,
+    portal,
+}: {
+    children: React.ReactNode;
+    portal: Portal;
+}) {
     const router = useRouter();
     const pathname = usePathname();
     const { user, accessToken, hydrated } = useAppSelector((state) => state.auth);
     const isAuthenticated = Boolean(accessToken && user);
+    const wrongPortal = isAuthenticated && portalForRole(user?.role) !== portal;
 
     useEffect(() => {
-        if (hydrated && !isAuthenticated) {
-            const next = pathname && pathname !== "/" ? pathname : "/broker/dashboard";
+        if (!hydrated) return;
+        if (!isAuthenticated) {
+            const next = pathname && pathname !== "/" ? pathname : portalHomeForRole(undefined);
             router.replace(`/login?next=${encodeURIComponent(next)}`);
+            return;
         }
-    }, [hydrated, isAuthenticated, router, pathname]);
+        if (wrongPortal) {
+            router.replace(portalHomeForRole(user?.role));
+        }
+    }, [hydrated, isAuthenticated, router, pathname, wrongPortal, user?.role]);
 
-    if (!hydrated || !isAuthenticated) {
+    if (!hydrated || !isAuthenticated || wrongPortal) {
         return (
             <div
                 className="bg-canvas p-4 min-block-screen md:p-8"

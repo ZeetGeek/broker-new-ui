@@ -210,6 +210,27 @@ export function OpenSlotsTab({
     const shown = useMemo(() => sortSlotsForBuyer(items, buyerId), [buyerId, items]);
     const count = activeCount(filters);
     const propertySelectValue = selectedPropertyId || "all";
+
+    // Base UI's Select.Value falls back to the raw value until the popup has
+    // mounted, which put a bare property id in the trigger. Handing the root
+    // the value -> label map lets it read correctly before it is ever opened.
+    const propertySelectItems = useMemo(() => {
+        const items = [
+            { value: "all", label: "All properties" },
+            ...propertyOptions.map((option) => ({
+                value: option.id,
+                label: propertyOptionLabel(option),
+            })),
+        ];
+
+        // A property id can arrive from the URL for a listing that is not in
+        // the current options; show something readable rather than the id.
+        if (selectedPropertyId && !items.some((item) => item.value === selectedPropertyId)) {
+            items.push({ value: selectedPropertyId, label: "Selected property" });
+        }
+
+        return items;
+    }, [propertyOptions, selectedPropertyId]);
     const chips = [
         ...(selectedPropertyId
             ? [
@@ -338,6 +359,7 @@ export function OpenSlotsTab({
                 <label className="space-y-1.5">
                     <span className="body-xs font-semibold text-ink-muted">Property</span>
                     <Select
+                        items={propertySelectItems}
                         value={propertySelectValue}
                         onValueChange={(next) =>
                             onPropertyChange?.(!next || next === "all" ? undefined : next)
@@ -350,8 +372,7 @@ export function OpenSlotsTab({
                             <SelectItem value="all">All properties</SelectItem>
                             {propertyOptions.map((option) => (
                                 <SelectItem key={option.id} value={option.id}>
-                                    {option.title}
-                                    {option.locality ? ` · ${option.locality}` : ""}
+                                    {propertyOptionLabel(option)}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -570,4 +591,8 @@ export function OpenSlotsTab({
             </Dialog>
         </section>
     );
+}
+
+function propertyOptionLabel(option: ApiPropertyOption) {
+    return option.locality ? `${option.title} · ${option.locality}` : option.title;
 }

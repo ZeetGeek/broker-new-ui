@@ -20,19 +20,6 @@ const required = (): FieldLevel => "required";
 const recommended = (): FieldLevel => "recommended";
 const optional = (): FieldLevel => "optional";
 const officeTypes = new Set(["office_space", "coworking_space", "business_center"]);
-const pantryTypes = new Set([
-    "office_space",
-    "retail_space",
-    "restaurant_space",
-    "business_center",
-]);
-const tallCommercialTypes = new Set([
-    "warehouse",
-    "godown",
-    "factory",
-    "industrial_shed",
-    "showroom",
-]);
 const frontageTypes = new Set(["shop", "showroom", "retail_space", "restaurant_space"]);
 const shopTypes = new Set(["shop", "showroom", "retail_space"]);
 
@@ -97,8 +84,7 @@ export const FIELD_RULES = {
     },
     "details.facing": { level: (d) => (d.isPlot ? "recommended" : "optional") },
     "details.roadWidthFt": {
-        visible: (d) => d.isPlot || d.isCommercial || d.isIndependent,
-        level: (d) => (d.isPlot ? "required" : "optional"),
+        visible: () => false,
     },
     "details.propertyAge": {
         visible: (d) => !d.isPlot && !d.isUnderConstruction,
@@ -111,8 +97,7 @@ export const FIELD_RULES = {
     },
     "details.openParking": { visible: () => false },
     "details.electricityLoadKva": {
-        visible: (d) => d.isCommercial || d.isIndustrial,
-        level: (d) => (d.isIndustrial ? "recommended" : "optional"),
+        visible: () => false,
     },
 
     "details.commercial.cabins": {
@@ -131,20 +116,14 @@ export const FIELD_RULES = {
         visible: (_d, v) => v.basics.propertyType === "coworking_space",
         level: required,
     },
-    "details.commercial.washroomType": { visible: (d) => d.isCommercial },
-    "details.commercial.pantryType": {
-        visible: (d, v) => d.isCommercial && pantryTypes.has(v.basics.propertyType),
-    },
-    "details.commercial.centralAc": { visible: (d) => d.isCommercial },
-    "details.commercial.fireNoc": {
-        visible: (d) => d.isCommercial || d.isIndustrial,
-        level: recommended,
-    },
-    "details.commercial.occupancyCertificate": { visible: (d) => d.isCommercial },
+    "details.commercial.washroomType": { visible: () => false },
+    "details.commercial.pantryType": { visible: () => false },
+    "details.commercial.centralAc": { visible: () => false },
+    "details.commercial.fireNoc": { visible: () => false },
+    "details.commercial.occupancyCertificate": { visible: () => false },
     "details.commercial.ceilingHeightFt": {
-        visible: (d, v) =>
-            (d.isCommercial || d.isIndustrial) && tallCommercialTypes.has(v.basics.propertyType),
-        level: required,
+        visible: (d) => d.isIndustrial,
+        level: recommended,
     },
     "details.commercial.shutterWidthFt": {
         visible: (d, v) => d.isCommercial && shopTypes.has(v.basics.propertyType),
@@ -154,15 +133,9 @@ export const FIELD_RULES = {
         level: required,
     },
     "details.commercial.suitableFor": { visible: (d) => d.isCommercial, level: recommended },
-    "details.commercial.currentlyLeased": { visible: (d) => d.isCommercial && d.isSell },
-    "details.commercial.existingTenantName": {
-        visible: (d, v) => d.isCommercial && v.details.commercial.currentlyLeased,
-        level: required,
-    },
-    "details.commercial.existingLeaseEndDate": {
-        visible: (d, v) => d.isCommercial && v.details.commercial.currentlyLeased,
-        level: required,
-    },
+    "details.commercial.currentlyLeased": { visible: () => false },
+    "details.commercial.existingTenantName": { visible: () => false },
+    "details.commercial.existingLeaseEndDate": { visible: () => false },
 
     "details.land.plotLengthFt": { visible: () => false },
     "details.land.plotWidthFt": { visible: () => false },
@@ -295,18 +268,15 @@ export const FIELD_RULES = {
         label: () => "Cover image",
         keepWhenHidden: true,
         isEmpty: (values) =>
-            !values.media.photos.some(
-                (photo) => photo.isCover && photo.status !== "error",
-            ),
+            !values.media.photos.some((photo) => photo.isCover && photo.status !== "error"),
     },
     "media.photos": {
         level: required,
         minItems: 3,
         label: () => "Property photos",
         isEmpty: (values) =>
-            values.media.photos.filter(
-                (photo) => !photo.isCover && photo.status !== "error",
-            ).length < 3,
+            values.media.photos.filter((photo) => !photo.isCover && photo.status !== "error")
+                .length < 3,
     },
     "media.videoUploadName": { visible: () => false },
     "media.videoUrl": {},
@@ -395,7 +365,6 @@ export const RULE_DRIVER_PATHS = [
     "basics.transactionType",
     "details.propertyCondition",
     "details.coveredParking",
-    "details.commercial.currentlyLeased",
     "details.land.gatedSociety",
     "area.areaSqft",
     "area.carpetArea",

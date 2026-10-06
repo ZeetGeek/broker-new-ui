@@ -52,6 +52,47 @@ export type RepresentationItem = {
     propertyOwnerName?: string | null;
     propertyOwnerPhone?: string | null;
     propertyOwnerAvatarUrl?: string | null;
+    brokerName?: string | null;
+    brokerDisplayName?: string | null;
+    brokerIsAgency?: boolean;
+    brokerPhone?: string | null;
+    brokerEmail?: string | null;
+    brokerAvatarUrl?: string | null;
+    brokerOrgName?: string | null;
+    brokerVerified?: boolean;
+    brokerRating?: string | null;
+    brokerRatingCount?: number;
+    brokerExperienceYears?: number | null;
+    brokerServiceAreas?: string[];
+};
+
+export type BrokerProfile = {
+    id: string;
+    userId?: string;
+    fullName?: string | null;
+    displayName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    city?: string | null;
+    avatarUrl?: string | null;
+    orgName?: string | null;
+    accountType?: string | null;
+    isAgency?: boolean;
+    agencyId?: string | null;
+    agencyStaffCount?: number;
+    accountHolderName?: string | null;
+    experienceYears?: number | null;
+    specializations?: string[];
+    serviceAreas?: string[];
+    licenseNumber?: string | null;
+    reraState?: string | null;
+    rating?: string | null;
+    ratingCount?: number | null;
+    verified?: boolean | null;
+    dealsClosed?: number | null;
+    avgDaysToClose?: number | null;
+    bio?: string | null;
+    publicSlug?: string | null;
 };
 
 export type RepresentationListPage = {
@@ -60,7 +101,12 @@ export type RepresentationListPage = {
     page: number;
     limit: number;
     totalPages: number;
+    /** Opaque keyset token for the next page; null on the last one. */
+    nextCursor?: string | null;
+    hasMore?: boolean;
 };
+
+export type OwnerRepQueueSort = "recent" | "oldest";
 
 export type BrokerInvitationListQuery = {
     /** `pending` (default server-side), `accepted`, `rejected`, `closed`, or `all`. */
@@ -69,6 +115,49 @@ export type BrokerInvitationListQuery = {
     page?: number;
     limit?: number;
 };
+
+export type OwnerRepQueueQuery = {
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+    /** Previous page's `nextCursor`; omit for the first page. */
+    cursor?: string;
+    sort?: OwnerRepQueueSort;
+};
+
+export type OwnerBrokersSort = "relevance" | "experience" | "deals" | "name";
+
+export type OwnerBrokersQuery = {
+    search?: string;
+    city?: string;
+    verifiedOnly?: boolean;
+    minExperience?: number;
+    /** One specialization, matched without regard to case. */
+    specialty?: string;
+    sort?: OwnerBrokersSort;
+    page?: number;
+    limit?: number;
+    /** Previous page's `nextCursor`; omit for the first page. */
+    cursor?: string;
+};
+
+export type OwnerBrokersPage = Omit<RepresentationListPage, "items"> & {
+    items: BrokerProfile[];
+    /** Whole-pool specializations, most common first — first page only. */
+    specialties?: { label: string; count: number }[];
+};
+
+function queueQuery(params?: OwnerRepQueueQuery): string {
+    const q = new URLSearchParams();
+    if (params?.status) q.set("status", params.status);
+    if (params?.search) q.set("search", params.search);
+    if (params?.page != null && params.page > 1) q.set("page", String(params.page));
+    if (params?.limit != null) q.set("limit", String(params.limit));
+    if (params?.cursor) q.set("cursor", params.cursor);
+    if (params?.sort) q.set("sort", params.sort);
+    return q.toString();
+}
 
 export const representativeApi = {
     requestRepresentation(propertyId: string, message?: string) {
@@ -185,6 +274,123 @@ export const representativeApi = {
         return apiFetch<RepresentationMessage>(`/representative/${representationId}/message`, {
             method: "POST",
             body: JSON.stringify({ message: input.message?.trim() ?? "" }),
+        });
+    },
+
+    /** Owner: full representation list (badge counts). */
+    ownerList(status?: string) {
+        if (isMockMode()) return Promise.resolve([]);
+        const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+        return apiFetch<RepresentationItem[]>(`/representative/owner/list${qs}`);
+    },
+
+    ownerRequestList(status?: string) {
+        if (isMockMode()) return Promise.resolve([]);
+        const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+        return apiFetch<RepresentationItem[]>(`/representative/owner/request/list${qs}`);
+    },
+
+    ownerRequestPage(params?: OwnerRepQueueQuery, signal?: AbortSignal) {
+        if (isMockMode()) {
+            return Promise.resolve<RepresentationListPage>({
+                items: [],
+                total: 0,
+                page: 1,
+                limit: 12,
+                totalPages: 0,
+                nextCursor: null,
+                hasMore: false,
+            });
+        }
+        return apiFetch<RepresentationListPage>(
+            `/representative/owner/request/list?${queueQuery(params)}`,
+            { signal },
+        );
+    },
+
+    ownerInvitationList(status?: string) {
+        if (isMockMode()) return Promise.resolve([]);
+        const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+        return apiFetch<RepresentationItem[]>(`/representative/owner/invitation/list${qs}`);
+    },
+
+    ownerInvitationPage(params?: OwnerRepQueueQuery, signal?: AbortSignal) {
+        if (isMockMode()) {
+            return Promise.resolve<RepresentationListPage>({
+                items: [],
+                total: 0,
+                page: 1,
+                limit: 12,
+                totalPages: 0,
+                nextCursor: null,
+                hasMore: false,
+            });
+        }
+        return apiFetch<RepresentationListPage>(
+            `/representative/owner/invitation/list?${queueQuery(params)}`,
+            { signal },
+        );
+    },
+
+    ownerActiveList() {
+        if (isMockMode()) return Promise.resolve([]);
+        return apiFetch<RepresentationItem[]>(`/representative/owner/active/list`);
+    },
+
+    ownerActivePage(params?: Omit<OwnerRepQueueQuery, "status">, signal?: AbortSignal) {
+        if (isMockMode()) {
+            return Promise.resolve<RepresentationListPage>({
+                items: [],
+                total: 0,
+                page: 1,
+                limit: 12,
+                totalPages: 0,
+                nextCursor: null,
+                hasMore: false,
+            });
+        }
+        return apiFetch<RepresentationListPage>(
+            `/representative/owner/active/list?${queueQuery(params)}`,
+            { signal },
+        );
+    },
+
+    ownerBrokers(params?: OwnerBrokersQuery, signal?: AbortSignal) {
+        if (isMockMode()) {
+            return Promise.resolve<OwnerBrokersPage>({
+                items: [],
+                total: 0,
+                page: 1,
+                limit: 12,
+                totalPages: 0,
+                nextCursor: null,
+                hasMore: false,
+            });
+        }
+        const q = new URLSearchParams();
+        if (params?.search) q.set("search", params.search);
+        if (params?.city) q.set("city", params.city);
+        if (params?.verifiedOnly) q.set("verifiedOnly", "true");
+        if (params?.minExperience) q.set("minExperience", String(params.minExperience));
+        if (params?.specialty) q.set("specialty", params.specialty);
+        if (params?.sort) q.set("sort", params.sort);
+        if (params?.page != null && params.page > 1) q.set("page", String(params.page));
+        if (params?.limit != null) q.set("limit", String(params.limit));
+        if (params?.cursor) q.set("cursor", params.cursor);
+        const qs = q.toString();
+        return apiFetch<OwnerBrokersPage>(`/representative/owner/brokers${qs ? `?${qs}` : ""}`, {
+            signal,
+        });
+    },
+
+    ownerBrokerProfile(brokerId: string) {
+        return apiFetch<BrokerProfile>(`/representative/owner/brokers/${brokerId}`);
+    },
+
+    ownerInvite(body: { propertyId: string; brokerId: string; message?: string }) {
+        return apiFetch("/representative/owner/invite", {
+            method: "POST",
+            body: JSON.stringify(body),
         });
     },
 };

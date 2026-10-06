@@ -98,6 +98,11 @@ export function listingFromCreateInput(
         description: input.description,
         amenities: input.amenities,
         nearbyPlaces: input.nearbyPlaces ?? [],
+        suitableFor: input.suitableFor ?? [],
+        cabins: input.cabins ?? null,
+        meetingRooms: input.meetingRooms ?? null,
+        workstations: input.workstations ?? null,
+        ceilingHeightFt: input.ceilingHeightFt ?? null,
         videoUrl: input.videoUrl ?? "",
         virtualTourUrl: input.virtualTourUrl ?? "",
         availableFrom: input.availableFrom,
@@ -163,6 +168,11 @@ export function applyListingUpdate(
     if (input.description != null) next.description = input.description;
     if (input.amenities != null) next.amenities = input.amenities;
     if (input.nearbyPlaces != null) next.nearbyPlaces = input.nearbyPlaces;
+    if (input.suitableFor != null) next.suitableFor = input.suitableFor;
+    if (input.cabins !== undefined) next.cabins = input.cabins;
+    if (input.meetingRooms !== undefined) next.meetingRooms = input.meetingRooms;
+    if (input.workstations !== undefined) next.workstations = input.workstations;
+    if (input.ceilingHeightFt !== undefined) next.ceilingHeightFt = input.ceilingHeightFt;
     if (input.videoUrl != null) next.videoUrl = input.videoUrl;
     if (input.virtualTourUrl != null) next.virtualTourUrl = input.virtualTourUrl;
     if (input.status != null) next.status = input.status;
@@ -208,10 +218,15 @@ type SeedDraft = Omit<
     | "securityDeposit"
     | "securityDepositMode"
     | "nearbyPlaces"
+    | "suitableFor"
     | "videoUrl"
     | "virtualTourUrl"
     | "landmark"
     | "society"
+    | "cabins"
+    | "meetingRooms"
+    | "workstations"
+    | "ceilingHeightFt"
 > & {
     category?: MyListingCategory;
     bathrooms?: number | null;
@@ -226,10 +241,15 @@ type SeedDraft = Omit<
     securityDeposit?: number | null;
     securityDepositMode?: MyListingItem["securityDepositMode"];
     nearbyPlaces?: string[];
+    suitableFor?: string[];
     videoUrl?: string;
     virtualTourUrl?: string;
     landmark?: string;
     society?: string;
+    cabins?: number | null;
+    meetingRooms?: number | null;
+    workstations?: number | null;
+    ceilingHeightFt?: number | null;
 };
 
 function hydrateSeed(item: SeedDraft): MyListingItem {
@@ -248,6 +268,11 @@ function hydrateSeed(item: SeedDraft): MyListingItem {
         securityDeposit: item.securityDeposit ?? null,
         securityDepositMode: item.securityDepositMode ?? null,
         nearbyPlaces: item.nearbyPlaces ?? [],
+        suitableFor: item.suitableFor ?? [],
+        cabins: item.cabins ?? null,
+        meetingRooms: item.meetingRooms ?? null,
+        workstations: item.workstations ?? null,
+        ceilingHeightFt: item.ceilingHeightFt ?? null,
         videoUrl: item.videoUrl ?? "",
         virtualTourUrl: item.virtualTourUrl ?? "",
         landmark: item.landmark ?? "",
