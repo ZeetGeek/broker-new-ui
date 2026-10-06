@@ -806,24 +806,23 @@ export function PropertyForm({
                     ) : (
                         <main
                             className="
-                              flex-1 overflow-y-auto bg-surface px-5 py-7 min-block-0 min-inline-0
-                              sm:px-6
+                              flex flex-1 flex-col overflow-hidden bg-surface min-block-0
+                              min-inline-0
                             "
                         >
-                            <div className="-m-1 p-1">
-                                {formBanner ? (
-                                    <div
-                                        role="alert"
-                                        className="
-                                          mbe-5 rounded-control border border-danger/30
-                                          bg-danger-soft px-4 py-3 text-sm font-medium text-danger
-                                        "
-                                    >
-                                        {formBanner}
-                                    </div>
-                                ) : null}
-                                <QuickAdd photoFilesRef={photoFilesRef} />
-                            </div>
+                            {formBanner ? (
+                                <div
+                                    role="alert"
+                                    className="
+                                      mx-5 mbs-5 rounded-control border border-danger/30
+                                      bg-danger-soft px-4 py-3 text-sm font-medium text-danger
+                                      sm:mx-6
+                                    "
+                                >
+                                    {formBanner}
+                                </div>
+                            ) : null}
+                            <QuickAdd photoFilesRef={photoFilesRef} />
                         </main>
                     )}
 
@@ -1571,8 +1570,7 @@ function draftToLegacyInput(
         totalFloors: values.details.totalFloors,
         facing: (values.details.facing || null) as CreateMyListingInput["facing"],
         parking: parking <= 0 ? "none" : parking === 1 ? "1" : parking === 2 ? "2" : "3plus",
-        maintenanceInr:
-            values.sale.maintenanceCharge ?? values.rent.maintenanceAmount ?? null,
+        maintenanceInr: values.sale.maintenanceCharge ?? values.rent.maintenanceAmount ?? null,
         availableFrom:
             transactionType === "rent" || transactionType === "both"
                 ? values.rent.availableFrom || null

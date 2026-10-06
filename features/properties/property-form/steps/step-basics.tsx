@@ -20,10 +20,6 @@ import {
     SelectField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
-import {
-    CATEGORY_ICONS,
-    LISTING_FOR_ICONS,
-} from "@/features/properties/property-form/option-icons";
 
 export function StepBasics() {
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
@@ -52,7 +48,6 @@ export function StepBasics() {
                         label="Listing for"
                         options={LISTING_FOR_OPTIONS}
                         columns={3}
-                        icons={LISTING_FOR_ICONS}
                         onValueChange={() => {
                             if (dealSwitchNotified.current) return;
                             dealSwitchNotified.current = true;
@@ -64,7 +59,6 @@ export function StepBasics() {
                         label="Category"
                         options={PROPERTY_CATEGORY_OPTIONS}
                         columns={5}
-                        icons={CATEGORY_ICONS}
                         onValueChange={() => {
                             setValue("basics.propertyType", "", { shouldDirty: true });
                             setValue("basics.propertySubType", "", { shouldDirty: true });
@@ -88,7 +82,6 @@ export function StepBasics() {
                         name="basics.propertyType"
                         label="Property type"
                         options={propertyTypeOptions(category)}
-                        startIcon={Building2}
                         onValueChange={() => {
                             setValue(
                                 "details.commercial",
