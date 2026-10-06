@@ -58,6 +58,8 @@ export type DealCardListing = {
     areaSqft: number;
     bhk: number;
     propertyTypeLabel: string;
+    /** e.g. "2 BHK" — used in share text / specs when present. */
+    configLabel?: string;
     amountInr: number;
     isRent: boolean;
     commissionPercent: number;

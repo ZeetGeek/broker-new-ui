@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ChatButton } from "@/features/chat/chat-button";
+import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { ownerRequestDetailHref } from "@/features/owner-requests/map-owner-request";
 import {
@@ -27,6 +28,7 @@ import {
     DealCardFooter,
     DealCardMeta,
     DealCardPhoto,
+    DealCardPhotoToolbar,
     DealCardPrice,
     DealCardShell,
     DealOverlayCard,
@@ -235,6 +237,18 @@ export function OwnerRequestCard({
     const detailHref = ownerRequestDetailHref(item.propertyId);
     const muted =
         item.status === "rejected" || item.status === "withdrawn" || item.status === "revoked";
+    const { openChat } = useChat();
+
+    const cardMenu = (
+        <DealCardPhotoToolbar
+            listing={item}
+            contact={{
+                name: item.brokerName,
+                phoneDigits: item.brokerPhoneDigits,
+                onMessage: () => openChat(chatPeerFor(item)),
+            }}
+        />
+    );
 
     const footer = (tone: CardTone) => (
         <CardFooter
@@ -258,7 +272,20 @@ export function OwnerRequestCard({
                     stageBadge={<StageBadge item={item} actions={actions} />}
                 />
                 <DealCardBody view={view}>
-                    <DealCardMeta listing={item} detailHref={detailHref} />
+                    <div className="flex items-start gap-2">
+                        <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
+                            <DealCardMeta listing={item} detailHref={detailHref} />
+                        </div>
+                        <DealCardPhotoToolbar
+                            listing={item}
+                            contact={{
+                                name: item.brokerName,
+                                phoneDigits: item.brokerPhoneDigits,
+                                onMessage: () => openChat(chatPeerFor(item)),
+                            }}
+                            tone="plain"
+                        />
+                    </div>
                     {item.message ? (
                         <p className="body-sm line-clamp-2 text-ink-muted">“{item.message}”</p>
                     ) : null}
@@ -278,18 +305,7 @@ export function OwnerRequestCard({
                 muted={muted}
                 isBusy={isBusy}
                 detailHref={detailHref}
-                actions={
-                    <>
-                        <ChatButton peer={chatPeerFor(item)} appearance="overlay" />
-                        {item.brokerPhoneDigits ? (
-                            <DealWhatsAppButton
-                                name={item.brokerName}
-                                phoneDigits={item.brokerPhoneDigits}
-                                appearance="overlay"
-                            />
-                        ) : null}
-                    </>
-                }
+                actions={cardMenu}
             >
                 {item.message ? (
                     <p className="body-sm line-clamp-2 tracking-wide text-ink-muted italic">
