@@ -28,6 +28,7 @@ export type UserProfile = {
     role?: string;
     fullName?: string | null;
     city?: string | null;
+    state?: string | null;
     country?: string | null;
     accountType?: string | null;
     orgName?: string | null;
@@ -97,6 +98,7 @@ export type UpdateProfileInput = {
     fullName?: string;
     phone?: string;
     city?: string;
+    state?: string;
     country?: string;
     orgName?: string;
     bio?: string;

@@ -26,10 +26,6 @@ export type CityItem = {
     name: string;
 };
 
-export type CitySearchItem = CityItem & {
-    stateName: string;
-};
-
 export type LocalityItem = {
     id: string;
     name: string;
@@ -40,7 +36,6 @@ export type LocalityItem = {
 type CountriesResponse = { items: CountryItem[] };
 type StatesResponse = { country: CountryItem; importStatus: string; items: StateItem[] };
 type CitiesResponse = { state: StateItem; items: CityItem[] };
-type CitySearchResponse = { items: CitySearchItem[] };
 type LocalitiesResponse = {
     city: { id: string; name: string };
     source: "db" | "google";
@@ -158,33 +153,6 @@ export const locationsApi = {
 
         const response = await apiFetch<CitiesResponse>(
             `/locations/states/${encodeURIComponent(stateId)}/cities`,
-        );
-        return response.items ?? [];
-    },
-
-    /**
-     * Cities across a whole country, for city fields with no state picker.
-     * Each row carries its state so two same-named cities can be told apart.
-     */
-    async searchCities(
-        countryIso2: string,
-        options: { search?: string; limit?: number } = {},
-    ): Promise<CitySearchItem[]> {
-        if (isMockMode()) {
-            return MOCK_STATES.flatMap((state) =>
-                (MOCK_CITIES[state.id] ?? []).map((city) => ({ ...city, stateName: state.name })),
-            )
-                .filter((city) => matchesSearch(city.name, options.search))
-                .slice(0, options.limit ?? 20);
-        }
-
-        const search = new URLSearchParams();
-        if (options.search?.trim()) search.set("search", options.search.trim());
-        if (options.limit) search.set("limit", String(options.limit));
-        const query = search.toString();
-
-        const response = await apiFetch<CitySearchResponse>(
-            `/locations/countries/${encodeURIComponent(countryIso2)}/cities${query ? `?${query}` : ""}`,
         );
         return response.items ?? [];
     },

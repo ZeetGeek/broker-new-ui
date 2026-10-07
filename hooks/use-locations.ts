@@ -78,24 +78,6 @@ export function useDebouncedValue<T>(value: T, delayMs: number = SEARCH_DEBOUNCE
     return debounced;
 }
 
-/** Cities of a whole country matching `search`. Disabled until a country is known. */
-export function useCitySearch(
-    countryIso2: string | null | undefined,
-    search: string,
-    options: { enabled?: boolean } = {},
-) {
-    const term = search.trim();
-    return useQuery({
-        queryKey: ["locations", "city-search", countryIso2, term.toLowerCase()],
-        queryFn: () => locationsApi.searchCities(countryIso2!, { search: term, limit: 20 }),
-        enabled: Boolean(countryIso2) && (options.enabled ?? true),
-        staleTime: LOCATION_STALE_TIME,
-        refetchOnWindowFocus: false,
-        placeholderData: (previous, previousQuery) =>
-            previousQuery?.queryKey[2] === countryIso2 ? keepPreviousData(previous) : undefined,
-    });
-}
-
 /**
  * Localities of a city matching `search`. Callers debounce `search` — every
  * miss on the backend is a billed Google Maps call.
@@ -146,7 +128,7 @@ export function useLocationOptions(selected: {
     const { countryName, stateName, cityName } = selected;
 
     const countriesQuery = useCountries();
-    const countries = countriesQuery.data ?? [];
+    const countries = useMemo(() => countriesQuery.data ?? [], [countriesQuery.data]);
 
     const selectedCountry = useMemo(
         () => countries.find((country) => sameName(country.name, countryName)) ?? null,
@@ -154,7 +136,7 @@ export function useLocationOptions(selected: {
     );
 
     const statesQuery = useStates(selectedCountry?.iso2);
-    const states = statesQuery.data ?? [];
+    const states = useMemo(() => statesQuery.data ?? [], [statesQuery.data]);
 
     const selectedState = useMemo(
         () => states.find((state) => sameName(state.name, stateName)) ?? null,
@@ -162,7 +144,7 @@ export function useLocationOptions(selected: {
     );
 
     const citiesQuery = useCities(selectedState?.id);
-    const cities = citiesQuery.data ?? [];
+    const cities = useMemo(() => citiesQuery.data ?? [], [citiesQuery.data]);
 
     const selectedCity = useMemo(
         () => cities.find((city) => sameName(city.name, cityName)) ?? null,
@@ -180,34 +162,4 @@ export function useLocationOptions(selected: {
         selectedState,
         selectedCity,
     };
-}
-
-/**
- * Resolves a country name and a city name, as a profile stores them, to the
- * country ISO2 and city id the location searches need. Either is null until it
- * matches a stored row exactly.
- */
-export function useResolvedCity(selected: {
-    countryName?: string | null;
-    cityName?: string | null;
-}): { countryIso2: string | null; cityId: string | null } {
-    const { countryName, cityName } = selected;
-
-    const countriesQuery = useCountries();
-    const countryIso2 = useMemo(
-        () =>
-            (countriesQuery.data ?? []).find((country) => sameName(country.name, countryName))
-                ?.iso2 ?? null,
-        [countriesQuery.data, countryName],
-    );
-
-    const cityQuery = useCitySearch(countryIso2, cityName ?? "", {
-        enabled: Boolean(cityName?.trim()),
-    });
-    const cityId = useMemo(
-        () => (cityQuery.data ?? []).find((city) => sameName(city.name, cityName))?.id ?? null,
-        [cityQuery.data, cityName],
-    );
-
-    return { countryIso2, cityId };
 }

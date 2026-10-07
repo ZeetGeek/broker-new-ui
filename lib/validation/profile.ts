@@ -45,6 +45,8 @@ export const profileFormSchema = z.object({
         "Enter a 10-digit mobile number",
     ),
     city: z.string().trim().min(2, "Enter the city you work in").max(60, "City is too long"),
+    /** Optional so profiles saved before the state field can still be saved. */
+    state: z.string().trim().max(60, "State name is too long"),
     country: z.string().trim().max(60, "Country is too long"),
     /** Blank for an independent broker — most of them are. */
     orgName: z.string().trim().max(120, "Name is too long"),

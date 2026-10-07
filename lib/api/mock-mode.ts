@@ -31,6 +31,7 @@ export const MOCK_PROFILE: UserProfile = {
     role: "broker",
     fullName: "Zeet Patel",
     city: "Surat",
+    state: "Gujarat",
     country: "India",
     accountType: "individual",
     orgName: null,
