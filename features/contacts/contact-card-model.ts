@@ -1,6 +1,5 @@
 import { formatIndianPrice } from "@/lib/format/price";
 
-import { PROPERTY_KIND_OPTIONS } from "@/features/contacts/buyer-options";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 
 export type ContactPropertyCardItem = {
@@ -15,22 +14,23 @@ export type ContactPropertyCardItem = {
 };
 
 export type BuyerContactCardModel = {
-    propertyTypes: string[];
-    configurations: string[];
     budgetLabel: string;
     localities: string[];
+    /** Card-only: area(s), else city — not country/state. */
+    importantLocation: string;
     priority: "hot" | "warm" | "cold";
     nextFollowUpAt: string | null;
     properties: ContactPropertyCardItem[];
 };
 
 export type OwnerContactCardModel = {
-    intent: string;
-    propertyType: string;
-    configuration: string;
-    askingPrice: string;
+    ownerTypeLabel: string;
+    /** Card-only: area, else city — not country/state. */
+    importantLocation: string;
     localities: string[];
-    status: string;
+    city: string;
+    askingPrice: string;
+    propertyType: string;
     nextFollowUpAt: string | null;
     properties: ContactPropertyCardItem[];
 };
@@ -42,27 +42,14 @@ function buyerBudgetLabel(buyer: BuyerRow): string {
     return buyer.budgetMaxInr != null ? `Up to ${amount}` : `From ${amount}`;
 }
 
-function buyerKindLabel(buyer: BuyerRow): string {
-    if (buyer.propertyKind === "any") return "Any property";
-    return (
-        PROPERTY_KIND_OPTIONS.find((option) => option.value === buyer.propertyKind)?.label ??
-        buyer.propertyKind
-    );
-}
-
 export function toBuyerContactCardModel(buyer: BuyerRow): BuyerContactCardModel {
     const details = buyer.details;
+    const localities = details?.localities.length ? details.localities : buyer.preferredLocalities;
+    const areas = localities.slice(0, 2).join(", ");
     return {
-        propertyTypes: details?.propertyTypes.length
-            ? details.propertyTypes
-            : [buyerKindLabel(buyer)],
-        configurations: details?.configurations.length
-            ? details.configurations
-            : buyer.bhk
-              ? [`${buyer.bhk} BHK`]
-              : [],
         budgetLabel: buyerBudgetLabel(buyer),
-        localities: details?.localities.length ? details.localities : buyer.preferredLocalities,
+        localities,
+        importantLocation: areas || buyer.city?.trim() || "",
         priority: details?.priority ?? "warm",
         nextFollowUpAt: details?.nextFollowUpAt || null,
         properties: buyer.attachedProperties.map((property) => {
@@ -71,15 +58,14 @@ export function toBuyerContactCardModel(buyer: BuyerRow): BuyerContactCardModel 
                 id: property.id,
                 leadId: property.leadId || lead?.leadId || "",
                 title: property.title,
-                locality: property.locality || lead?.city || "Surat",
+                locality: property.locality || lead?.city || buyer.city || "Surat",
                 priceLabel:
                     property.priceLabel ||
                     (lead?.listPriceInr
                         ? formatIndianPrice(lead.listPriceInr, lead.isRent ? "rent" : "buy")
                         : "Price on request"),
                 coverUrl: property.coverUrl,
-                propertyType:
-                    property.propertyType || details?.propertyTypes[0] || buyerKindLabel(buyer),
+                propertyType: property.propertyType || "Property",
             };
         }),
     };
@@ -87,6 +73,14 @@ export function toBuyerContactCardModel(buyer: BuyerRow): BuyerContactCardModel 
 
 function titleForOwnerProperty(owner: OwnerRow, index: number): string {
     return owner.propertyTitles[index] || owner.linkedListingTitle || "Property";
+}
+
+function ownerTypeLabel(value: string | null | undefined): string {
+    if (!value) return "";
+    if (value === "individual") return "Individual";
+    if (value === "builder") return "Builder";
+    if (value === "company") return "Company";
+    return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export function toOwnerContactCardModel(owner: OwnerRow): OwnerContactCardModel {
@@ -98,12 +92,18 @@ export function toOwnerContactCardModel(owner: OwnerRow): OwnerContactCardModel 
                   owner.propertyIntent ?? (owner.isAllRent ? "rent" : "sell"),
               )
             : "Price on request";
+    const city = details?.city?.trim() || "";
+    const locality =
+        details?.locality?.trim() ||
+        owner.localities.find((item) => item && item !== "—" && item !== city) ||
+        "";
+    const localities = owner.localities.filter((item) => item && item !== "—");
     const properties = owner.properties?.length
         ? owner.properties.map((property) => ({
               id: property.id,
               leadId: "",
               title: property.title,
-              locality: property.locality || owner.localities[0] || "Surat",
+              locality: property.locality || locality || city || "Surat",
               priceLabel: property.priceLabel || askingPrice,
               coverUrl: property.coverUrl,
               propertyType: property.propertyType || owner.propertyType || "Property",
@@ -116,27 +116,23 @@ export function toOwnerContactCardModel(owner: OwnerRow): OwnerContactCardModel 
                           : `${owner.id}_${index}`,
                   leadId: "",
                   title: titleForOwnerProperty(owner, index),
-                  locality: owner.localities[index] || owner.localities[0] || "Surat",
+                  locality: owner.localities[index] || locality || city || "Surat",
                   priceLabel: askingPrice,
                   propertyType: owner.propertyType || details?.propertyType || "Property",
               }),
           );
 
     return {
-        intent: owner.propertyIntent || details?.intent || (owner.isAllRent ? "rent" : "sell"),
+        ownerTypeLabel: ownerTypeLabel(details?.ownerType),
+        importantLocation: locality || city,
+        localities,
+        city,
+        askingPrice,
         propertyType:
             owner.propertyType ||
             details?.propertyType ||
             owner.properties?.[0]?.propertyType ||
             "Property",
-        configuration:
-            owner.configuration ||
-            details?.configuration ||
-            owner.properties?.[0]?.configuration ||
-            "",
-        askingPrice,
-        localities: owner.localities.filter((locality) => locality && locality !== "—"),
-        status: owner.status || details?.status || "active",
         nextFollowUpAt: details?.nextFollowUpAt || null,
         properties,
     };

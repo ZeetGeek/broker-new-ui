@@ -27,6 +27,8 @@ export type ExclusiveOwnerItem = {
     ownerType: "individual" | "builder" | "company";
     society: string;
     area: string | null;
+    country?: string | null;
+    state?: string | null;
     city: string | null;
     pincode: string | null;
     fullAddress: string | null;
@@ -71,8 +73,10 @@ function toPayload(input: NewExclusiveOwnerInput) {
         phone: `+91${phoneDigits}`,
         email: input.email.trim() || undefined,
         ownerType: input.ownerType,
-        society: input.society.trim(),
+        society: input.society?.trim() || undefined,
         area: input.area?.trim() || undefined,
+        country: input.country?.trim() || undefined,
+        state: input.state?.trim() || undefined,
         city: input.city?.trim() || undefined,
         pincode: input.pincode?.trim() || undefined,
         fullAddress: input.fullAddress?.trim() || undefined,
@@ -141,8 +145,10 @@ export const exclusiveOwnersApi = {
                 phone: `+91${phoneDigits}`,
                 email: input.email.trim() || null,
                 ownerType: input.ownerType,
-                society: input.society.trim(),
+                society: input.society?.trim() || "",
                 area: input.area?.trim() || null,
+                country: input.country?.trim() || null,
+                state: input.state?.trim() || null,
                 city: input.city?.trim() || null,
                 pincode: input.pincode?.trim() || null,
                 fullAddress: input.fullAddress?.trim() || null,

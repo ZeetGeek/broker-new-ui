@@ -3,7 +3,7 @@ import type { BuyerPropertyKind, BuyerSource } from "@/lib/validation/buyer";
 import type { BuyerDocument } from "@/features/contacts/document-rules";
 
 /** What the buyer is after — used to flag a poor match before attaching. */
-export type ClientLookingFor = "buy" | "rent";
+export type ClientLookingFor = "buy" | "rent" | "both";
 
 /**
  * A buyer or tenant on the broker's own book. Named "client" internally to
@@ -19,11 +19,14 @@ export type ClientItem = {
     propertyKind: BuyerPropertyKind;
     /** Localities the buyer is searching in. */
     preferredLocalities: string[];
+    country?: string | null;
+    state?: string | null;
+    city?: string | null;
     /** Lower bound of what they will pay, in INR. Null when not stated. */
     budgetMinInr: number | null;
     /** Upper bound of what they will pay, in INR. Null when not stated. */
     budgetMaxInr: number | null;
-    /** BHK they want. Null for plots, shops and offices. */
+    /** BHK they want. Null for plots, shops and offices. Kept for API; not collected on create. */
     bhk: number | null;
     source: BuyerSource | null;
     notes: string | null;

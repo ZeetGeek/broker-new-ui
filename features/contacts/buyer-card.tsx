@@ -50,10 +50,7 @@ export function BuyerCard({
     const open = () => onOpen(buyer);
     const attach = () => onAttachProperties(buyer);
     const propertyCount = model.properties.length;
-    const locality = model.localities.slice(0, 2).join(", ") || null;
-    const needLine = [model.configurations[0], model.propertyTypes[0], locality]
-        .filter(Boolean)
-        .join(" · ");
+    const needLine = model.importantLocation || null;
     const spokeLabel = buyer.lastContactedAt
         ? `Spoke ${formatRelativePast(new Date(buyer.lastContactedAt), new Date())}`
         : "Not contacted yet";
@@ -101,6 +98,10 @@ export function BuyerCard({
                             {buyer.lookingFor === "rent" ? (
                                 <span className="body-xs shrink-0 font-medium text-ink-muted">
                                     Renting
+                                </span>
+                            ) : buyer.lookingFor === "both" ? (
+                                <span className="body-xs shrink-0 font-medium text-ink-muted">
+                                    Buy or rent
                                 </span>
                             ) : null}
                         </div>

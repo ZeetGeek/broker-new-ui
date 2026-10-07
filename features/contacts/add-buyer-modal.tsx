@@ -5,10 +5,11 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Link2 } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
-import { contactsApi } from "@/lib/api/contacts";
 import type { NewBuyerInput } from "@/lib/api/clients";
+import { contactsApi } from "@/lib/api/contacts";
 import {
     type BuyerFormValues,
     buyerFormSchema,
@@ -17,16 +18,11 @@ import {
     parseBuyerLocalities,
 } from "@/lib/validation/buyer";
 
-import { Link2 } from "lucide-react";
+import { useAppSelector } from "@/store/hooks";
 
 import { Button } from "@/components/ui/button";
 
-import {
-    BHK_OPTIONS,
-    KINDS_WITHOUT_BHK,
-    PROPERTY_KIND_OPTIONS,
-    SOURCE_OPTIONS,
-} from "@/features/contacts/buyer-options";
+import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
 import {
     BudgetRangeField,
     ChoiceRadioField,
@@ -37,47 +33,45 @@ import {
     NotesField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
+import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
+import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
 import type { BuyerRow } from "@/features/contacts/types";
 
-const PROPERTY_KIND_GROUPS = [
-    {
-        label: "Residential",
-        options: PROPERTY_KIND_OPTIONS.filter((option) =>
-            ["any", "apartment", "villa", "plot"].includes(option.value),
-        ).map((option) => ({ value: option.value, label: option.label })),
-    },
-    {
-        label: "Commercial",
-        options: PROPERTY_KIND_OPTIONS.filter((option) =>
-            ["shop", "office"].includes(option.value),
-        ).map((option) => ({ value: option.value, label: option.label })),
-    },
-];
-
-function emptyValues(): BuyerFormValues {
+function emptyValues(location = contactLocationDefaults()): BuyerFormValues {
     return {
         name: "",
         phone: "",
         email: "",
         lookingFor: "buy",
-        propertyKind: "apartment",
+        propertyKind: "any",
+        country: location.country,
+        state: location.state,
+        city: location.city,
         localities: "",
         budgetMin: "",
         budgetMax: "",
-        bhk: "2",
+        bhk: "",
         source: "walk_in",
         note: "",
     };
 }
 
-function valuesFromBuyer(buyer: BuyerRow | null): BuyerFormValues {
-    if (!buyer) return emptyValues();
+function valuesFromBuyer(
+    buyer: BuyerRow | null,
+    location = contactLocationDefaults(),
+): BuyerFormValues {
+    if (!buyer) return emptyValues(location);
+    const lookingFor =
+        buyer.lookingFor === "rent" || buyer.lookingFor === "both" ? buyer.lookingFor : "buy";
     return {
         name: buyer.name,
         phone: buyer.phoneDigits,
         email: buyer.email ?? "",
-        lookingFor: buyer.lookingFor,
-        propertyKind: buyer.propertyKind,
+        lookingFor,
+        propertyKind: buyer.propertyKind || "any",
+        country: buyer.country?.trim() || location.country,
+        state: buyer.state?.trim() || location.state,
+        city: buyer.city?.trim() || location.city,
         localities: buyer.preferredLocalities.join(", "),
         budgetMin: buyer.budgetMinInr ? String(buyer.budgetMinInr) : "",
         budgetMax: buyer.budgetMaxInr ? String(buyer.budgetMaxInr) : "",
@@ -90,17 +84,19 @@ function valuesFromBuyer(buyer: BuyerRow | null): BuyerFormValues {
 function toNewBuyerInput(values: BuyerFormValues): NewBuyerInput {
     const minDigits = normalizeBuyerBudget(values.budgetMin);
     const maxDigits = normalizeBuyerBudget(values.budgetMax);
-    const hideBhk = KINDS_WITHOUT_BHK.includes(values.propertyKind);
     return {
         name: values.name.trim(),
         phoneDigits: normalizeBuyerPhone(values.phone),
         email: values.email.trim() || null,
         lookingFor: values.lookingFor,
-        propertyKind: values.propertyKind,
+        propertyKind: values.propertyKind || "any",
         preferredLocalities: parseBuyerLocalities(values.localities),
+        country: values.country.trim() || null,
+        state: values.state.trim() || null,
+        city: values.city.trim() || null,
         budgetMinInr: minDigits ? Number(minDigits) : null,
         budgetMaxInr: maxDigits ? Number(maxDigits) : null,
-        bhk: hideBhk || !values.bhk ? null : Number(values.bhk) || null,
+        bhk: values.bhk ? Number(values.bhk) || null : null,
         source: values.source,
         notes: values.note.trim() || null,
     };
@@ -155,9 +151,12 @@ export function AddBuyerModal({
     onAttach?: () => void;
 }) {
     const isEdit = Boolean(buyer);
+    const profile = useAppSelector((state) => state.dashboard.profile);
+    const locationDefaults = useMemo(() => contactLocationDefaults(profile), [profile]);
+
     const form = useForm<BuyerFormValues>({
         resolver: zodResolver(buyerFormSchema),
-        defaultValues: valuesFromBuyer(buyer),
+        defaultValues: valuesFromBuyer(buyer, locationDefaults),
     });
     const values = useWatch({ control: form.control });
     const [busy, setBusy] = useState(false);
@@ -170,19 +169,21 @@ export function AddBuyerModal({
     const [ignoreDuplicate, setIgnoreDuplicate] = useState(false);
     const [moreOpen, setMoreOpen] = useState(false);
 
-    const propertyKind = values.propertyKind ?? "apartment";
-    const showBhk = !KINDS_WITHOUT_BHK.includes(propertyKind);
     const isDirty = form.formState.isDirty;
+    const localityList = useMemo(
+        () => parseBuyerLocalities(values.localities ?? ""),
+        [values.localities],
+    );
 
     useEffect(() => {
         if (!open) return;
-        form.reset(valuesFromBuyer(buyer));
+        form.reset(valuesFromBuyer(buyer, locationDefaults));
         setBusy(false);
         setFormError(undefined);
         setDuplicate(null);
         setIgnoreDuplicate(false);
         setMoreOpen(Boolean(buyer?.email || buyer?.notes));
-    }, [buyer, form, open]);
+    }, [buyer, form, locationDefaults, open]);
 
     useEffect(() => {
         if (!open || isEdit || ignoreDuplicate) return;
@@ -202,11 +203,6 @@ export function AddBuyerModal({
         return () => window.clearTimeout(timer);
     }, [ignoreDuplicate, isEdit, open, values.phone]);
 
-    const localityList = useMemo(
-        () => parseBuyerLocalities(values.localities ?? ""),
-        [values.localities],
-    );
-
     const onInvalid = () => {
         setFormError("Check the highlighted fields and try again.");
     };
@@ -222,11 +218,18 @@ export function AddBuyerModal({
         setFormError(undefined);
         try {
             const input = toNewBuyerInput(parsed);
-            const savedId = await contactsApi.saveBuyer(input, buyer?.id);
-            if (isEdit) onUpdated?.(input.name);
-            else onCreated(input.name, savedId);
-            toast.success(isEdit ? "Buyer updated" : "Buyer added");
-            onOpenChange(false);
+            if (isEdit && buyer) {
+                await contactsApi.saveBuyer(input, buyer.id);
+                onUpdated?.(input.name);
+                toast.success("Buyer updated");
+                onOpenChange(false);
+            } else {
+                const savedId = await contactsApi.saveBuyer(input);
+                onCreated(input.name, savedId);
+                toast.success("Buyer added");
+                form.reset(emptyValues(locationDefaults));
+                onOpenChange(false);
+            }
         } catch (error) {
             const message =
                 error instanceof ApiError
@@ -254,7 +257,7 @@ export function AddBuyerModal({
             const savedId = await contactsApi.saveBuyer(input);
             onCreated(input.name, savedId);
             toast.success("Buyer added");
-            form.reset(emptyValues());
+            form.reset(emptyValues(locationDefaults));
             setDuplicate(null);
             setIgnoreDuplicate(false);
             setMoreOpen(false);
@@ -328,6 +331,7 @@ export function AddBuyerModal({
                         <ChoiceRadioField
                             name="looking-for"
                             label="Looking for"
+                            columns={3}
                             value={field.value}
                             onChange={field.onChange}
                             options={[
@@ -336,62 +340,41 @@ export function AddBuyerModal({
                                     label: "Buy",
                                     description: "Find a property to buy",
                                 },
-                                { value: "rent", label: "Rent", description: "Find a rental" },
+                                {
+                                    value: "rent",
+                                    label: "Rent",
+                                    description: "Find a rental",
+                                },
+                                {
+                                    value: "both",
+                                    label: "Both",
+                                    description: "Open to buy or rent",
+                                },
                             ]}
                         />
                     )}
                 />
 
-                <div className={showBhk ? "grid grid-cols-1 gap-4 sm:grid-cols-2" : undefined}>
-                    <ComboboxField
-                        label="Property type"
-                        required
-                        value={propertyKind}
-                        placeholder="Property type"
-                        emptyText="No type matches"
-                        groups={PROPERTY_KIND_GROUPS}
-                        error={form.formState.errors.propertyKind?.message}
-                        onChange={(propertyKindNext) => {
-                            form.setValue(
-                                "propertyKind",
-                                propertyKindNext as BuyerFormValues["propertyKind"],
-                                {
-                                    shouldDirty: true,
-                                    shouldValidate: true,
-                                },
-                            );
-                            if (
-                                KINDS_WITHOUT_BHK.includes(
-                                    propertyKindNext as BuyerFormValues["propertyKind"],
-                                )
-                            ) {
-                                form.setValue("bhk", "", { shouldDirty: true });
-                            } else if (!values.bhk) {
-                                form.setValue("bhk", "2", { shouldDirty: true });
-                            }
-                        }}
-                    />
-
-                    {showBhk ? (
-                        <ComboboxField
-                            label="BHK"
-                            value={values.bhk ?? ""}
-                            placeholder="Any"
-                            emptyText="No BHK matches"
-                            options={BHK_OPTIONS.map((value) => ({
-                                value,
-                                label: `${value} BHK`,
-                            }))}
-                            error={form.formState.errors.bhk?.message}
-                            onChange={(bhk) =>
-                                form.setValue("bhk", bhk, {
-                                    shouldDirty: true,
-                                    shouldValidate: true,
-                                })
-                            }
-                        />
-                    ) : null}
-                </div>
+                <ContactLocationFields
+                    country={values.country ?? ""}
+                    state={values.state ?? ""}
+                    city={values.city ?? ""}
+                    countryError={form.formState.errors.country?.message}
+                    stateError={form.formState.errors.state?.message}
+                    cityError={form.formState.errors.city?.message}
+                    onCountryChange={(country) =>
+                        form.setValue("country", country, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                        })
+                    }
+                    onStateChange={(state) =>
+                        form.setValue("state", state, { shouldDirty: true, shouldValidate: true })
+                    }
+                    onCityChange={(city) =>
+                        form.setValue("city", city, { shouldDirty: true, shouldValidate: true })
+                    }
+                />
 
                 <LocalityPicker
                     label="Areas"

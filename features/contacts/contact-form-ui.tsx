@@ -554,7 +554,7 @@ export function BudgetRangeField({
     minError,
     maxError,
 }: {
-    lookingFor: "buy" | "rent";
+    lookingFor: "buy" | "rent" | "both";
     minInr: string;
     maxInr: string;
     onMinChange: (digits: string) => void;
@@ -893,11 +893,24 @@ export function ContactFormDrawer({
     const onSaveAnotherRef = useRef(onSaveAnother);
     onPrimaryRef.current = onPrimary;
     onSaveAnotherRef.current = onSaveAnother;
+    const [discardOpen, setDiscardOpen] = useState(false);
 
     const requestClose = (next: boolean) => {
-        if (!next && isDirty && !busy && !window.confirm("Discard your unsaved changes?")) return;
+        if (!next && isDirty && !busy) {
+            setDiscardOpen(true);
+            return;
+        }
         onOpenChange(next);
     };
+
+    const confirmDiscard = () => {
+        setDiscardOpen(false);
+        onOpenChange(false);
+    };
+
+    useEffect(() => {
+        if (!open) setDiscardOpen(false);
+    }, [open]);
 
     useEffect(() => {
         if (!open || busy) return;
@@ -932,63 +945,87 @@ export function ContactFormDrawer({
     }, [footerError, open]);
 
     return (
-        <AppModal
-            open={open}
-            onOpenChange={requestClose}
-            title={title}
-            description={description}
-            size="lg"
-            padding="md"
-            className="
-              contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0! rounded-none!
-              block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
-              sm:inline-[min(46rem,100vw)]! sm:max-inline-184!
-            "
-            headerClassName="
-              !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b border-border-warm
-            "
-            footerClassName="
-              !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
-            "
-            header={header}
-            footer={
-                <div className="flex flex-col gap-3 inline-full">
-                    {footerError ? (
-                        <p
-                            role="alert"
-                            className="body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger"
-                        >
-                            {footerError}
-                        </p>
-                    ) : null}
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                        {onSaveAnother ? (
+        <>
+            <AppModal
+                open={open}
+                onOpenChange={requestClose}
+                title={title}
+                description={description}
+                size="lg"
+                padding="md"
+                className="
+                  contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0! rounded-none!
+                  block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
+                  sm:inline-[min(46rem,100vw)]! sm:max-inline-184!
+                "
+                headerClassName="
+                  !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b border-border-warm
+                "
+                footerClassName="
+                  !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
+                "
+                header={header}
+                footer={
+                    <div className="flex flex-col gap-3 inline-full">
+                        {footerError ? (
+                            <p
+                                role="alert"
+                                className="body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger"
+                            >
+                                {footerError}
+                            </p>
+                        ) : null}
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                            {onSaveAnother ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={onSaveAnother}
+                                    disabled={busy}
+                                >
+                                    {saveAnotherLabel}
+                                </Button>
+                            ) : null}
                             <Button
                                 type="button"
-                                variant="outline"
-                                onClick={onSaveAnother}
+                                variant="accent"
+                                onClick={onPrimary}
                                 disabled={busy}
+                                loading={busy}
                             >
-                                {saveAnotherLabel}
+                                {primaryLabel}
                             </Button>
-                        ) : null}
-                        <Button
-                            type="button"
-                            variant="accent"
-                            onClick={onPrimary}
-                            disabled={busy}
-                            loading={busy}
-                        >
-                            {primaryLabel}
+                        </div>
+                    </div>
+                }
+            >
+                <div ref={bodyRef} className="mx-auto inline-full max-inline-2xl">
+                    {children}
+                </div>
+            </AppModal>
+
+            <AppModal
+                open={discardOpen}
+                onOpenChange={setDiscardOpen}
+                size="sm"
+                title="Discard unsaved changes?"
+                description="What you typed will be lost if you leave now."
+                footer={
+                    <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
+                        <Button type="button" variant="ghost" onClick={() => setDiscardOpen(false)}>
+                            Keep editing
+                        </Button>
+                        <Button type="button" variant="destructive" onClick={confirmDiscard}>
+                            Discard changes
                         </Button>
                     </div>
-                </div>
-            }
-        >
-            <div ref={bodyRef} className="mx-auto inline-full max-inline-2xl">
-                {children}
-            </div>
-        </AppModal>
+                }
+            >
+                <p className="body text-ink-muted">
+                    You can stay on this form and keep editing, or discard and close it.
+                </p>
+            </AppModal>
+        </>
     );
 }
 

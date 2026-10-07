@@ -5,22 +5,20 @@ import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 import {
-    BedDouble,
     Building2,
-    CircleDot,
+    Globe2,
     Home,
     IndianRupee,
-    Layers,
     Link2,
     Lock,
     Mail,
     MapPin,
-    Maximize2,
     Phone,
     Plus,
     StickyNote,
     Tag,
     Trash2,
+    UserRound,
     X,
     type LucideIcon,
 } from "lucide-react";
@@ -42,6 +40,7 @@ import {
     type ContactPropertyCardItem,
 } from "@/features/contacts/contact-card-model";
 import type { BuyerContactForm, OwnerContactForm } from "@/features/contacts/contact-form-model";
+import { CONTACT_LOCATION_FALLBACK } from "@/features/contacts/contact-location-defaults";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 
@@ -408,7 +407,11 @@ function sourceLabel(value: string | null | undefined): string {
     return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function ownerStatusLabel(value: string): string {
+function ownerTypeLabel(value: string | null | undefined): string {
+    if (!value) return "";
+    if (value === "individual") return "Individual";
+    if (value === "builder") return "Builder";
+    if (value === "company") return "Company";
     return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
@@ -437,10 +440,11 @@ function BuyerPanel({
         .map((value) => formatIndianPrice(value, buyer.lookingFor))
         .join(" to ");
 
-    const propertyTypesLabel = model.propertyTypes.join(", ");
-    const configurationsLabel = model.configurations.join(", ");
     const areasLabel = model.localities.join(", ");
     const source = sourceLabel(buyer.details?.source || buyer.source);
+    const country = buyer.country?.trim() || CONTACT_LOCATION_FALLBACK.country;
+    const state = buyer.state?.trim() || CONTACT_LOCATION_FALLBACK.state;
+    const city = buyer.city?.trim() || CONTACT_LOCATION_FALLBACK.city;
 
     return (
         <>
@@ -452,25 +456,32 @@ function BuyerPanel({
                         {
                             label: "Looking for",
                             icon: Home,
-                            value: buyer.lookingFor === "rent" ? "Rent" : "Buy",
+                            value:
+                                buyer.lookingFor === "rent"
+                                    ? "Rent"
+                                    : buyer.lookingFor === "both"
+                                      ? "Both"
+                                      : "Buy",
                         },
                         {
-                            label: "Property type",
+                            label: "Country",
+                            icon: Globe2,
+                            value: country,
+                        },
+                        {
+                            label: "State",
+                            icon: MapPin,
+                            value: state,
+                        },
+                        {
+                            label: "City",
                             icon: Building2,
-                            value: propertyTypesLabel,
-                            empty: !propertyTypesLabel,
-                        },
-                        {
-                            label: "BHK",
-                            icon: BedDouble,
-                            value: configurationsLabel,
-                            empty: !configurationsLabel,
+                            value: city,
                         },
                         {
                             label: "Areas",
                             icon: MapPin,
-                            value: areasLabel,
-                            empty: !areasLabel,
+                            value: areasLabel || "—",
                         },
                         {
                             label: "Budget",
@@ -610,11 +621,17 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
         window.setTimeout(() => setSaved(false), 1400);
     };
 
-    const status = model.status;
-    const carpetArea = details?.carpetArea ? `${details.carpetArea} ${details.areaUnit}` : "";
     const locality =
-        details?.locality || owner.localities.filter((item) => item && item !== "—")[0] || "";
+        details?.locality?.trim() ||
+        owner.localities.filter((item) => item && item !== "—")[0] ||
+        "";
     const source = sourceLabel(details?.source);
+    const ownerType = ownerTypeLabel(details?.ownerType);
+    const country = details?.country?.trim() || CONTACT_LOCATION_FALLBACK.country;
+    const state = details?.state?.trim() || CONTACT_LOCATION_FALLBACK.state;
+    const city = details?.city?.trim() || CONTACT_LOCATION_FALLBACK.city;
+    const fullAddress = details?.fullAddress?.trim() || details?.address?.trim() || "";
+    const reraNumber = details?.reraNumber?.trim() || "";
 
     const linkedProperties: ContactPropertyCardItem[] = owner.linkedListingId
         ? [
@@ -623,7 +640,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                   leadId: "",
                   title:
                       owner.linkedListingTitle || model.properties[0]?.title || "Private listing",
-                  locality,
+                  locality: locality || city,
                   priceLabel: model.askingPrice,
                   coverUrl: model.properties[0]?.coverUrl,
                   propertyType: model.propertyType,
@@ -634,48 +651,47 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
     return (
         <>
             <section className="scroll-mt-5 pbe-6">
-                <h3 className="body mbe-4 font-bold text-ink">Property</h3>
+                <h3 className="body mbe-4 font-bold text-ink">Details</h3>
                 <IconFactGrid
                     onAdd={onEdit}
                     facts={[
                         {
-                            label: "Status",
-                            icon: CircleDot,
-                            value: ownerStatusLabel(status),
+                            label: "Owner type",
+                            icon: UserRound,
+                            value: ownerType || "—",
                         },
                         {
-                            label: "Asking price",
-                            icon: IndianRupee,
-                            value: model.askingPrice,
+                            label: "Country",
+                            icon: Globe2,
+                            value: country,
                         },
                         {
-                            label: "Property type",
-                            icon: Building2,
-                            value: model.propertyType,
-                        },
-                        {
-                            label: "Configuration",
-                            icon: BedDouble,
-                            value: model.configuration ? ownerStatusLabel(model.configuration) : "",
-                            empty: !model.configuration,
-                        },
-                        {
-                            label: "Carpet area",
-                            icon: Maximize2,
-                            value: carpetArea,
-                            empty: !carpetArea,
-                        },
-                        {
-                            label: "Floor",
-                            icon: Layers,
-                            value: details?.floorNumber,
-                            empty: !details?.floorNumber,
-                        },
-                        {
-                            label: "Locality",
+                            label: "State",
                             icon: MapPin,
-                            value: locality,
-                            empty: !locality,
+                            value: state,
+                        },
+                        {
+                            label: "City",
+                            icon: Building2,
+                            value: city,
+                        },
+                        {
+                            label: "Area",
+                            icon: MapPin,
+                            value: locality || "—",
+                        },
+                        {
+                            label: "Full address",
+                            icon: Home,
+                            value: fullAddress,
+                            wide: true,
+                            empty: !fullAddress,
+                        },
+                        {
+                            label: "RERA number",
+                            icon: Tag,
+                            value: reraNumber,
+                            empty: !reraNumber,
                         },
                     ]}
                 />

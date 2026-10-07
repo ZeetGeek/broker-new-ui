@@ -25,12 +25,17 @@ export const exclusiveOwnerFormSchema = z.object({
             message: "Enter a valid email address",
         }),
     ownerType: exclusiveOwnerTypeSchema,
-    society: z.string().trim().min(1, "Enter society / project / building name"),
+    /** Optional — society is no longer collected on Add owner. */
+    society: z.string().trim().optional().or(z.literal("")),
     area: z.string().trim().optional().or(z.literal("")),
-    city: z.string().trim().optional().or(z.literal("")),
+    country: z.string().trim().min(1, "Pick a country"),
+    state: z.string().trim().min(1, "Pick a state"),
+    city: z.string().trim().min(1, "Pick a city"),
     pincode: z
         .string()
         .trim()
+        .optional()
+        .or(z.literal(""))
         .refine((value) => !value || /^\d{6}$/.test(value), {
             message: "Enter a 6-digit pincode",
         }),

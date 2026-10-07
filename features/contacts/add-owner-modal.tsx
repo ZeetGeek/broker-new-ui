@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,8 @@ import {
     type ExclusiveOwnerFormValues,
 } from "@/lib/validation/exclusive-owner";
 
+import { useAppSelector } from "@/store/hooks";
+
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
 import {
     ChoiceRadioField,
@@ -22,6 +24,8 @@ import {
     NotesField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
+import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
+import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
 import type { OwnerRow } from "@/features/contacts/types";
 
 const OWNER_TYPE_OPTIONS = [
@@ -30,7 +34,7 @@ const OWNER_TYPE_OPTIONS = [
     { value: "company", label: "Company", description: "Business owner" },
 ] as const;
 
-function emptyValues(): ExclusiveOwnerFormValues {
+function emptyValues(location = contactLocationDefaults()): ExclusiveOwnerFormValues {
     return {
         fullName: "",
         phone: "",
@@ -38,7 +42,9 @@ function emptyValues(): ExclusiveOwnerFormValues {
         ownerType: "individual",
         society: "",
         area: "",
-        city: "",
+        country: location.country,
+        state: location.state,
+        city: location.city,
         pincode: "",
         fullAddress: "",
         reraNumber: "",
@@ -47,8 +53,11 @@ function emptyValues(): ExclusiveOwnerFormValues {
     };
 }
 
-function valuesFromOwner(owner: OwnerRow | null): ExclusiveOwnerFormValues {
-    if (!owner) return emptyValues();
+function valuesFromOwner(
+    owner: OwnerRow | null,
+    location = contactLocationDefaults(),
+): ExclusiveOwnerFormValues {
+    if (!owner) return emptyValues(location);
     const details = owner.details;
     return {
         fullName: owner.name,
@@ -58,9 +67,11 @@ function valuesFromOwner(owner: OwnerRow | null): ExclusiveOwnerFormValues {
             details?.ownerType === "builder" || details?.ownerType === "company"
                 ? details.ownerType
                 : "individual",
-        society: details?.societyName ?? owner.propertyTitles[0] ?? "",
+        society: details?.societyName ?? "",
         area: details?.locality ?? owner.localities[0] ?? "",
-        city: details?.city ?? "",
+        country: details?.country?.trim() || location.country,
+        state: details?.state?.trim() || location.state,
+        city: details?.city?.trim() || location.city,
         pincode: details?.pincode ?? "",
         fullAddress: details?.fullAddress ?? details?.address ?? "",
         reraNumber: details?.reraNumber ?? "",
@@ -89,13 +100,15 @@ export function AddOwnerModal({
     owner?: OwnerRow | null;
 }) {
     const isEdit = Boolean(owner);
+    const profile = useAppSelector((state) => state.dashboard.profile);
+    const locationDefaults = useMemo(() => contactLocationDefaults(profile), [profile]);
     const [busy, setBusy] = useState(false);
     const [submitError, setSubmitError] = useState("");
     const [moreOpen, setMoreOpen] = useState(false);
 
     const form = useForm<ExclusiveOwnerFormValues>({
         resolver: zodResolver(exclusiveOwnerFormSchema),
-        defaultValues: emptyValues(),
+        defaultValues: emptyValues(locationDefaults),
         mode: "onSubmit",
     });
 
@@ -112,16 +125,12 @@ export function AddOwnerModal({
 
     useEffect(() => {
         if (!open) return;
-        const next = valuesFromOwner(owner);
+        const next = valuesFromOwner(owner, locationDefaults);
         reset(next);
         setSubmitError("");
         setBusy(false);
-        setMoreOpen(
-            Boolean(
-                next.email || next.fullAddress || next.pincode || next.reraNumber || next.notes,
-            ),
-        );
-    }, [open, owner, reset]);
+        setMoreOpen(Boolean(next.email || next.fullAddress || next.reraNumber || next.notes));
+    }, [locationDefaults, open, owner, reset]);
 
     const onInvalid = () => {
         setSubmitError("Check the highlighted fields and try again.");
@@ -145,7 +154,7 @@ export function AddOwnerModal({
         setSubmitError("");
         try {
             await createOwner(parsed);
-            reset(emptyValues());
+            reset(emptyValues(locationDefaults));
             onOpenChange(false);
         } catch (error) {
             const message =
@@ -166,7 +175,7 @@ export function AddOwnerModal({
         setSubmitError("");
         try {
             await createOwner(parsed);
-            reset(emptyValues());
+            reset(emptyValues(locationDefaults));
             setMoreOpen(false);
         } catch (error) {
             const message =
@@ -243,40 +252,33 @@ export function AddOwnerModal({
                     )}
                 />
 
-                <TextField
-                    label="Society / Project"
-                    required
-                    value={values.society ?? ""}
-                    onValueChange={(society) =>
-                        setValue("society", society, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                        })
+                <ContactLocationFields
+                    country={values.country ?? ""}
+                    state={values.state ?? ""}
+                    city={values.city ?? ""}
+                    countryError={errors.country?.message}
+                    stateError={errors.state?.message}
+                    cityError={errors.city?.message}
+                    onCountryChange={(country) =>
+                        setValue("country", country, { shouldDirty: true, shouldValidate: true })
                     }
-                    error={errors.society?.message}
-                    placeholder="Green Valley Heights"
+                    onStateChange={(state) =>
+                        setValue("state", state, { shouldDirty: true, shouldValidate: true })
+                    }
+                    onCityChange={(city) =>
+                        setValue("city", city, { shouldDirty: true, shouldValidate: true })
+                    }
                 />
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <TextField
-                        label="Area"
-                        value={values.area ?? ""}
-                        onValueChange={(area) =>
-                            setValue("area", area, { shouldDirty: true, shouldValidate: true })
-                        }
-                        error={errors.area?.message}
-                        placeholder="Vesu"
-                    />
-                    <TextField
-                        label="City"
-                        value={values.city ?? ""}
-                        onValueChange={(city) =>
-                            setValue("city", city, { shouldDirty: true, shouldValidate: true })
-                        }
-                        error={errors.city?.message}
-                        placeholder="Surat"
-                    />
-                </div>
+                <TextField
+                    label="Area"
+                    value={values.area ?? ""}
+                    onValueChange={(area) =>
+                        setValue("area", area, { shouldDirty: true, shouldValidate: true })
+                    }
+                    error={errors.area?.message}
+                    placeholder="Vesu"
+                />
 
                 <MoreDetails open={moreOpen} onOpenChange={setMoreOpen}>
                     <TextField
@@ -288,21 +290,6 @@ export function AddOwnerModal({
                         }
                         error={errors.email?.message}
                         placeholder="Optional"
-                    />
-
-                    <TextField
-                        label="Pincode"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={values.pincode ?? ""}
-                        onValueChange={(pincode) =>
-                            setValue("pincode", pincode.replace(/\D/g, "").slice(0, 6), {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        error={errors.pincode?.message}
-                        placeholder="395007"
                     />
 
                     <TextField

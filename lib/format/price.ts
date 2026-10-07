@@ -39,7 +39,7 @@ export function formatRentInr(amountInr: number): string {
 /** Shared contact/listing formatter. Values are always plain integer currency units. */
 export function formatIndianPrice(
     amountInr: number | null | undefined,
-    intent: "buy" | "sell" | "rent" | "lease" | "sale" = "buy",
+    intent: "buy" | "sell" | "rent" | "lease" | "sale" | "both" = "buy",
 ): string {
     if (amountInr == null || !Number.isFinite(amountInr)) return "—";
     return intent === "rent" || intent === "lease"

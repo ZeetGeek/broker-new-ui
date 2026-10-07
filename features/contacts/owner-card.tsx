@@ -19,10 +19,6 @@ import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
 
-function statusLabel(status: string) {
-    return status.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
 /** Same pill language as pipeline deal cards (soft fill + leading status dot). */
 function OriginPill({ origin }: { origin: "platform" | "custom" }) {
     if (origin === "platform") {
@@ -73,16 +69,11 @@ export function OwnerCard({
     const open = () => onOpen(owner);
     const attach = !isPlatform && onAttachProperty ? () => onAttachProperty(owner) : undefined;
     const propertyCount = model.properties.length;
-    const locality = model.localities.slice(0, 2).join(", ") || null;
-    const intentLabel =
-        model.intent === "rent" || model.intent === "lease"
-            ? "Renting out"
-            : model.intent === "sell" || model.intent === "sale"
-              ? "Selling"
-              : model.intent;
-    const needLine = [intentLabel, model.configuration, model.propertyType, locality]
-        .filter(Boolean)
-        .join(" · ");
+    const locationHeadline = model.city || model.importantLocation || "Location not set";
+    const needLine =
+        model.importantLocation && model.importantLocation !== locationHeadline
+            ? model.importantLocation
+            : model.ownerTypeLabel || null;
     const spokeLabel = owner.lastSpokeAt
         ? `Spoke ${formatRelativePast(new Date(owner.lastSpokeAt), new Date())}`
         : "Not contacted yet";
@@ -107,9 +98,6 @@ export function OwnerCard({
             <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-1.5 min-inline-0">
                     <OriginPill origin={owner.origin} />
-                    <span className="body-xs capitalize text-ink-muted">
-                        {statusLabel(model.status)}
-                    </span>
                 </div>
                 <div onClick={(event) => event.stopPropagation()}>
                     <ContactCardActions
@@ -145,7 +133,7 @@ export function OwnerCard({
             </div>
 
             <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                <p className="h5 truncate font-semibold tabular text-brand">{model.askingPrice}</p>
+                <p className="h5 truncate font-semibold text-brand">{locationHeadline}</p>
                 {needLine ? (
                     <p className="body-sm truncate text-ink-muted">{needLine}</p>
                 ) : (

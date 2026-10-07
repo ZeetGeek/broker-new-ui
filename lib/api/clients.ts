@@ -28,6 +28,9 @@ export type NewBuyerInput = {
     lookingFor: ClientLookingFor;
     propertyKind: BuyerPropertyKind;
     preferredLocalities: string[];
+    country?: string | null;
+    state?: string | null;
+    city?: string | null;
     budgetMinInr: number | null;
     budgetMaxInr: number | null;
     bhk: number | null;
@@ -67,6 +70,9 @@ type ApiClientContact = {
     clientType?: string | null;
     propertyKind?: string | null;
     preferredLocalities?: string[] | null;
+    country?: string | null;
+    state?: string | null;
+    city?: string | null;
     budgetMin?: string | null;
     budgetMax?: string | null;
     bhk?: number | null;
@@ -263,11 +269,14 @@ function digitsOnly(value: string): string {
 
 function lookingForFromType(clientType: string | null | undefined): ClientLookingFor {
     if (clientType === "renter") return "rent";
+    if (clientType === "both") return "both";
     return "buy";
 }
 
-function clientTypeFromLookingFor(lookingFor: ClientLookingFor): "buyer" | "renter" {
-    return lookingFor === "rent" ? "renter" : "buyer";
+function clientTypeFromLookingFor(lookingFor: ClientLookingFor): "buyer" | "renter" | "both" {
+    if (lookingFor === "rent") return "renter";
+    if (lookingFor === "both") return "both";
+    return "buyer";
 }
 
 function asPropertyKind(value: string | null | undefined): BuyerPropertyKind {
@@ -380,6 +389,9 @@ function mapContact(contact: ApiClientContact): ClientItem {
         lookingFor: lookingForFromType(contact.clientType),
         propertyKind: asPropertyKind(contact.propertyKind),
         preferredLocalities: contact.preferredLocalities ?? [],
+        country: contact.country?.trim() || null,
+        state: contact.state?.trim() || null,
+        city: contact.city?.trim() || null,
         budgetMinInr: contact.budgetMin != null ? Number(contact.budgetMin) : null,
         budgetMaxInr: contact.budgetMax != null ? Number(contact.budgetMax) : null,
         bhk: contact.bhk ?? null,
@@ -676,6 +688,9 @@ export const clientsApi = {
                 lookingFor: input.lookingFor,
                 propertyKind: input.propertyKind,
                 preferredLocalities: input.preferredLocalities,
+                country: input.country ?? null,
+                state: input.state ?? null,
+                city: input.city ?? null,
                 budgetMinInr: input.budgetMinInr,
                 budgetMaxInr: input.budgetMaxInr,
                 bhk: input.bhk,
@@ -708,6 +723,9 @@ export const clientsApi = {
                     lookingFor: input.lookingFor,
                     propertyKind: input.propertyKind,
                     preferredLocalities: input.preferredLocalities,
+                    country: input.country ?? null,
+                    state: input.state ?? null,
+                    city: input.city ?? null,
                     budgetMinInr: input.budgetMinInr,
                     budgetMaxInr: input.budgetMaxInr,
                     bhk: input.bhk,
@@ -726,6 +744,9 @@ export const clientsApi = {
                 lookingFor: input.lookingFor,
                 propertyKind: input.propertyKind,
                 preferredLocalities: input.preferredLocalities,
+                country: input.country ?? null,
+                state: input.state ?? null,
+                city: input.city ?? null,
                 budgetMinInr: input.budgetMinInr,
                 budgetMaxInr: input.budgetMaxInr,
                 bhk: input.bhk,
@@ -850,6 +871,9 @@ function toClientPayload(input: NewBuyerInput) {
         clientType: clientTypeFromLookingFor(input.lookingFor),
         propertyKind: input.propertyKind,
         preferredLocalities: input.preferredLocalities,
+        country: input.country?.trim() || undefined,
+        state: input.state?.trim() || undefined,
+        city: input.city?.trim() || undefined,
         budgetMin: input.budgetMinInr ?? undefined,
         budgetMax: input.budgetMaxInr ?? undefined,
         bhk: input.bhk ?? undefined,
