@@ -3,7 +3,6 @@
 import { addCollection, Icon } from "@iconify/react/offline";
 import { MapPin, Phone, UserPlus } from "lucide-react";
 
-import { formatRelativePast } from "@/lib/format/date";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
@@ -51,9 +50,6 @@ export function BuyerCard({
     const attach = () => onAttachProperties(buyer);
     const propertyCount = model.properties.length;
     const needLine = model.importantLocation || null;
-    const spokeLabel = buyer.lastContactedAt
-        ? `Spoke ${formatRelativePast(new Date(buyer.lastContactedAt), new Date())}`
-        : "Not contacted yet";
 
     return (
         <article
@@ -148,9 +144,7 @@ export function BuyerCard({
                 ) : null}
             </div>
 
-            <footer className="mt-auto flex flex-col gap-2.5 border-bs border-border-warm pbs-3">
-                <p className="body-xs text-ink-muted">{spokeLabel}</p>
-
+            <footer className="mt-auto flex flex-col gap-2.5">
                 <div onClick={(event) => event.stopPropagation()}>
                     {propertyCount > 0 ? (
                         <AttachedPropertiesRow

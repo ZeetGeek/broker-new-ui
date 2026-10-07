@@ -3,7 +3,6 @@
 import { addCollection, Icon } from "@iconify/react/offline";
 import { BadgeCheck, MapPin, Phone, UserPlus } from "lucide-react";
 
-import { formatRelativePast } from "@/lib/format/date";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
@@ -74,9 +73,6 @@ export function OwnerCard({
         model.importantLocation && model.importantLocation !== locationHeadline
             ? model.importantLocation
             : model.ownerTypeLabel || null;
-    const spokeLabel = owner.lastSpokeAt
-        ? `Spoke ${formatRelativePast(new Date(owner.lastSpokeAt), new Date())}`
-        : "Not contacted yet";
 
     return (
         <article
@@ -148,9 +144,7 @@ export function OwnerCard({
                 )}
             </div>
 
-            <footer className="mt-auto flex flex-col gap-2.5 border-bs border-border-warm pbs-3">
-                <p className="body-xs text-ink-muted">{spokeLabel}</p>
-
+            <footer className="mt-auto flex flex-col gap-2.5">
                 <div onClick={(event) => event.stopPropagation()}>
                     {propertyCount > 0 ? (
                         <AttachedPropertiesRow
