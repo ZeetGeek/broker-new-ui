@@ -13,7 +13,7 @@ function DealCardSkeleton() {
                     <div className="rounded-full bg-surface-muted block-control-sm inline-control-sm" />
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="shrink-0 rounded-inner bg-surface-muted aspect-square inline-24" />
+                    <div className="shrink-0 rounded-[8px] bg-surface-muted aspect-square inline-24" />
                     <div className="flex flex-1 flex-col gap-2 min-inline-0">
                         <div className="rounded-sm bg-surface-muted block-5 inline-24" />
                         <div className="rounded-sm bg-surface-muted block-3 inline-32" />

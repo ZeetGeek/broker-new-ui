@@ -5,7 +5,6 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 
 import {
-    Building2,
     CalendarClock,
     ChevronLeft,
     ChevronRight,
@@ -31,6 +30,7 @@ import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { AppModal } from "@/components/shared/app-modal";
+import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -165,25 +165,6 @@ function DetailSection({
     );
 }
 
-function PropertyFallback({
-    property,
-    className,
-}: {
-    property: ContactPropertyCardItem;
-    className?: string;
-}) {
-    let hash = 0;
-    for (const character of property.id) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-    return (
-        <span
-            className={cn("flex items-center justify-center text-brand-ink", className)}
-            style={{ backgroundColor: `hsl(${30 + (hash % 120)} 45% 78%)` }}
-        >
-            <Building2 aria-hidden className="block-6 inline-6" strokeWidth={1.4} />
-        </span>
-    );
-}
-
 function AttachedPropertyRows({
     properties,
     onAttach,
@@ -202,18 +183,14 @@ function AttachedPropertyRows({
                         href={brokerPropertyDetailHref(property.id)}
                         className="flex flex-1 items-center gap-3 min-inline-0"
                     >
-                        <span className="relative shrink-0 overflow-hidden rounded-[10px] block-18 inline-18">
-                            <PropertyFallback property={property} className="absolute inset-0" />
-                            {property.coverUrl ? (
-                                <AppImage
-                                    src={property.coverUrl}
-                                    alt=""
-                                    fill
-                                    quality={70}
-                                    sizes="72px"
-                                />
-                            ) : null}
-                        </span>
+                        <PropertyThumb
+                            src={property.coverUrl}
+                            alt=""
+                            hoverScale={false}
+                            sizes="72px"
+                            iconClassName="block-6 inline-6"
+                            sizeClassName="block-18 inline-18"
+                        />
                         <span className="flex-1 min-inline-0">
                             <span className="body-xs block truncate font-semibold text-ink">
                                 {property.title}
@@ -388,12 +365,12 @@ function PanelHeader({
             <UserAvatar
                 name={name}
                 size="lg"
-                fallback="character"
+                fallback="shape"
                 className="shrink-0 rounded-[16px]"
             />
             <div className="flex-1 min-inline-0">
                 <span className="flex flex-wrap items-center gap-2">
-                    <span className="h5 truncate font-bold text-ink">{name}</span>
+                    <span className="h5 truncate font-bold capitalize text-ink">{name}</span>
                     {badge}
                 </span>
                 {phone ? (
@@ -1119,9 +1096,24 @@ export function ContactDetailPanel({
         isBuyer ? onEditBuyer(contact.row as BuyerRow) : onEditOwner(contact.row as OwnerRow);
     const badge = owner ? (
         owner.origin === "platform" ? (
-            <Badge variant="brand">Platform</Badge>
+            <span
+                className="
+                  body-xs inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1
+                  font-semibold tracking-wide text-brand-text
+                "
+            >
+                Platform
+            </span>
         ) : (
-            <Badge variant="outline">Added by you</Badge>
+            <span
+                className="
+                  body-xs inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1
+                  font-semibold tracking-wide text-brand-text
+                "
+            >
+                <span aria-hidden className="rounded-full bg-success-mid block-1.5 inline-1.5" />
+                Added by you
+            </span>
         )
     ) : null;
     const phone = row.phoneDigits;

@@ -55,6 +55,7 @@ export type ApiClientLead = {
         address?: string | null;
         salePrice?: string | null;
         monthlyRent?: string | null;
+        photos?: unknown;
     } | null;
 };
 
@@ -92,10 +93,71 @@ export type ClientLeadSummary = {
     liveDealCount: number;
     closedDealCount: number;
     activePropertyTitles: string[];
-    attachedProperties: Array<{ id: string; leadId: string; title: string }>;
+    attachedProperties: Array<{
+        id: string;
+        leadId: string;
+        title: string;
+        locality?: string;
+        coverUrl?: string;
+    }>;
     /** Every lead on this buyer, including closed/lost — for the view modal. */
     leads: ClientLeadDetail[];
 };
+
+/** Accept string urls or common `{ url | src }` photo objects from nested payloads. */
+function coverFromPhotos(photos: unknown): string | undefined {
+    if (!Array.isArray(photos)) return undefined;
+    for (const item of photos) {
+        if (typeof item === "string" && item.trim()) return item.trim();
+        if (item && typeof item === "object") {
+            const record = item as Record<string, unknown>;
+            for (const key of ["url", "src", "path", "href"] as const) {
+                const value = record[key];
+                if (typeof value === "string" && value.trim()) return value.trim();
+            }
+        }
+    }
+    return undefined;
+}
+
+const propertyCoverCache = new Map<string, string | null>();
+
+async function fetchPropertyCoverUrl(
+    propertyId: string,
+    signal?: AbortSignal,
+): Promise<string | undefined> {
+    if (propertyCoverCache.has(propertyId)) {
+        return propertyCoverCache.get(propertyId) || undefined;
+    }
+
+    const endpoints = [`/properties/${propertyId}`, `/properties/browse/${propertyId}`] as const;
+    for (const path of endpoints) {
+        try {
+            const listing = await apiFetch<{
+                photos?: unknown;
+                imageSrc?: string | null;
+                coverUrl?: string | null;
+            }>(path, { signal });
+            const cover =
+                coverFromPhotos(listing.photos) ||
+                (typeof listing.imageSrc === "string" && listing.imageSrc.trim()
+                    ? listing.imageSrc.trim()
+                    : undefined) ||
+                (typeof listing.coverUrl === "string" && listing.coverUrl.trim()
+                    ? listing.coverUrl.trim()
+                    : undefined);
+            if (cover) {
+                propertyCoverCache.set(propertyId, cover);
+                return cover;
+            }
+        } catch {
+            // Try the next endpoint (inventory vs public browse).
+        }
+    }
+
+    propertyCoverCache.set(propertyId, null);
+    return undefined;
+}
 
 function mockLeadSummary(clientId: string): ClientLeadSummary {
     const deals = MOCK_DEALS.filter((deal) => deal.buyer.id === clientId);
@@ -122,6 +184,8 @@ function mockLeadSummary(clientId: string): ClientLeadSummary {
             id: deal.property.id,
             leadId: deal.id,
             title: deal.property.title,
+            locality: deal.property.locality,
+            coverUrl: deal.property.imageSrc || undefined,
         })),
         leads: details,
     };
@@ -286,6 +350,8 @@ export function summarizeClientLeads(leads: ApiClientLead[] | undefined): Client
                 id,
                 leadId: lead.id,
                 title: lead.property?.title?.trim() || "Property",
+                locality: lead.property?.city?.trim() || undefined,
+                coverUrl: coverFromPhotos(lead.property?.photos),
             };
         })
         .filter((item): item is NonNullable<typeof item> => item != null)
@@ -326,6 +392,77 @@ function mapContact(contact: ApiClientContact): ClientItem {
 }
 
 /**
+ * When `/clients` nests property titles but omits `photos`, fill covers from
+ * `GET /properties/:id` for the unique missing ids on this page only.
+ */
+async function enrichAttachedPropertyCovers<T extends ClientLeadSummary>(
+    items: T[],
+    signal?: AbortSignal,
+): Promise<T[]> {
+    const missingIds = [
+        ...new Set(
+            items.flatMap((item) =>
+                item.attachedProperties
+                    .filter((property) => !property.coverUrl)
+                    .map((property) => property.id),
+            ),
+        ),
+    ];
+    if (missingIds.length === 0) return items;
+
+    const coverById = new Map<string, string>();
+    await Promise.all(
+        missingIds.map(async (id) => {
+            const cover = await fetchPropertyCoverUrl(id, signal);
+            if (cover) coverById.set(id, cover);
+        }),
+    );
+
+    // Pipeline leads nest photos more reliably than `/clients` — fill any leftovers.
+    const stillMissing = missingIds.filter((id) => !coverById.has(id));
+    if (stillMissing.length > 0) {
+        const needed = new Set(stillMissing);
+        try {
+            let page = 1;
+            let totalPages = 1;
+            while (page <= totalPages && needed.size > 0 && page <= 5) {
+                const qs = new URLSearchParams({ page: String(page), limit: "100" });
+                const response = await apiFetch<{
+                    items?: Array<{
+                        propertyId?: string;
+                        property?: { id?: string; photos?: unknown } | null;
+                    }>;
+                    totalPages?: number;
+                }>(`/clients/leads?${qs}`, { signal });
+                for (const lead of response.items ?? []) {
+                    const id = lead.property?.id ?? lead.propertyId;
+                    if (!id || !needed.has(id)) continue;
+                    const cover = coverFromPhotos(lead.property?.photos);
+                    if (cover) {
+                        coverById.set(id, cover);
+                        propertyCoverCache.set(id, cover);
+                        needed.delete(id);
+                    }
+                }
+                totalPages = Math.max(1, response.totalPages ?? 1);
+                page += 1;
+            }
+        } catch {
+            // Leave missing covers empty; tiles keep the designed placeholder.
+        }
+    }
+
+    if (coverById.size === 0) return items;
+
+    return items.map((item) => ({
+        ...item,
+        attachedProperties: item.attachedProperties.map((property) =>
+            property.coverUrl ? property : { ...property, coverUrl: coverById.get(property.id) },
+        ),
+    }));
+}
+
+/**
  * Clients plus the lead summary from nested `/clients` leads. Contacts list
  * uses this so buyer cards show real active properties without joining pipeline.
  */
@@ -336,6 +473,8 @@ export async function listClientsWithLeadSummary(options?: {
         return mockClientsWithLeads(options?.search);
     }
     const contacts = await fetchAllContacts(options);
+    // Full-book fetches skip cover enrichment (too many property lookups).
+    // Paginated contacts use listClientsPageWithLeadSummary instead.
     return contacts.map((contact) => ({
         ...mapContact(contact),
         ...summarizeClientLeads(contact.leads),
@@ -370,11 +509,16 @@ export async function listClientsPageWithLeadSummary(options: {
         signal: options.signal,
     });
 
-    return {
-        items: (response.items ?? []).map((contact) => ({
+    const items = await enrichAttachedPropertyCovers(
+        (response.items ?? []).map((contact) => ({
             ...mapContact(contact),
             ...summarizeClientLeads(contact.leads),
         })),
+        options.signal,
+    );
+
+    return {
+        items,
         total: response.total ?? 0,
         page: response.page ?? options.page,
         totalPages: Math.max(1, response.totalPages ?? 1),

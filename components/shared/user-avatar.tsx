@@ -79,16 +79,17 @@ function initialsFromName(name: string): string {
     return `${first}${last}`.toUpperCase();
 }
 
-export type UserAvatarFallback = "shape" | "character";
+export type UserAvatarFallback = "shape" | "character" | "brand";
 
 export type UserAvatarProps = VariantProps<typeof avatarFrameVariants> & {
     name: string;
     imageUrl?: string;
     className?: string;
     /**
-     * No-photo placeholder from `avvvatars-react`.
-     * `shape` — unique abstract shape (product default).
-     * `character` — initials; use in dense multi-person rows.
+     * No-photo placeholder.
+     * `shape` — unique abstract shape from avvvatars (product default).
+     * `character` — avvvatars initials (multi-hue; avoid on brand-critical surfaces).
+     * `brand` — brand-soft disc + brand-text initials (one-hue system).
      */
     fallback?: UserAvatarFallback;
 };
@@ -125,6 +126,27 @@ export function UserAvatar({
                         className={avatarMediaClass}
                         onError={() => setFailedImageUrl(resolvedImageUrl)}
                     />
+                ) : fallback === "brand" ? (
+                    <span
+                        aria-hidden
+                        className="
+                          flex items-center justify-center bg-brand-soft font-sans font-semibold
+                          text-brand-text block-full inline-full
+                        "
+                    >
+                        <span
+                            className={cn(
+                                "leading-none",
+                                resolvedSize === "xxs" || resolvedSize === "2xs"
+                                    ? "text-[10px]"
+                                    : resolvedSize === "xs" || resolvedSize === "sm"
+                                      ? "text-xs"
+                                      : "text-sm",
+                            )}
+                        >
+                            {displayValue}
+                        </span>
+                    </span>
                 ) : (
                     <span aria-hidden className={cn("block-full inline-full", avvatarFillClass)}>
                         <Avvvatars

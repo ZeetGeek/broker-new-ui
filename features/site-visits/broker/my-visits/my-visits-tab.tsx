@@ -83,7 +83,7 @@ function NextVisitSpotlight({
                 </Badge>
             </div>
             <div className="mbs-4 grid gap-4 md:grid-cols-[80px_minmax(0,1fr)_auto] md:items-center">
-                <div className="relative overflow-hidden rounded-inner bg-surface/10 block-16 inline-20">
+                <div className="relative overflow-hidden rounded-[8px] bg-surface/10 block-16 inline-20">
                     <AppImage
                         src={visit.property.coverUrl ?? "/properties/1.jpg"}
                         alt=""

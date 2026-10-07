@@ -2,37 +2,17 @@
 
 import type { KeyboardEvent } from "react";
 
-import { Building2, Home, Landmark, Plus, Store } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { AppImage } from "@/components/shared/app-image";
+import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { ContactPropertyCardItem } from "@/features/contacts/contact-card-model";
 
 const MAX_VISIBLE = 4;
-
-function hashHue(id: string): number {
-    let hash = 0;
-    for (let index = 0; index < id.length; index += 1) {
-        hash = (hash * 31 + id.charCodeAt(index)) >>> 0;
-    }
-    return 28 + (hash % 128);
-}
-
-function PropertyTypeIcon({ type }: { type: string }) {
-    const value = type.toLowerCase();
-    const Icon = value.includes("plot")
-        ? Landmark
-        : value.includes("shop") || value.includes("showroom")
-          ? Store
-          : value.includes("villa") || value.includes("house") || value.includes("bungalow")
-            ? Home
-            : Building2;
-    return <Icon aria-hidden className="relative z-10 block-4.5 inline-4.5" strokeWidth={1.75} />;
-}
 
 function handleArrowNavigation(event: KeyboardEvent<HTMLButtonElement>) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -92,7 +72,6 @@ export function PropertyCoverStack({
             onClick={(event) => event.stopPropagation()}
         >
             {visible.map((property, index) => {
-                const hue = hashHue(property.id);
                 return (
                     <Tooltip key={property.id}>
                         <TooltipTrigger
@@ -114,32 +93,22 @@ export function PropertyCoverStack({
                                     }}
                                     className={cn(
                                         `
-                                          property-cover-tile relative flex shrink-0 items-center
-                                          justify-center overflow-hidden rounded-[12px] text-brand-ink
-                                          ring-2 ring-surface block-12 inline-12
+                                          property-cover-tile relative flex shrink-0 overflow-hidden
+                                          rounded-[8px] ring-2 ring-surface block-12 inline-12
                                         `,
                                         index > 0 && "-ms-2.5",
                                     )}
-                                    style={{
-                                        zIndex: index + 1,
-                                        backgroundColor: `hsl(${hue} 48% 78%)`,
-                                    }}
+                                    style={{ zIndex: index + 1 }}
                                 >
-                                    {!property.coverUrl ? (
-                                        <PropertyTypeIcon type={property.propertyType} />
-                                    ) : null}
-                                    {property.coverUrl ? (
-                                        <AppImage
-                                            src={property.coverUrl}
-                                            alt=""
-                                            width={48}
-                                            height={48}
-                                            quality={70}
-                                            sizes="48px"
-                                            fallbackSrc="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                                            className="absolute inset-0 block-full inline-full"
-                                        />
-                                    ) : null}
+                                    <PropertyThumb
+                                        src={property.coverUrl}
+                                        alt=""
+                                        hoverScale={false}
+                                        sizes="48px"
+                                        iconClassName="block-4.5 inline-4.5"
+                                        sizeClassName="block-full inline-full"
+                                        className="rounded-[8px]"
+                                    />
                                 </button>
                             }
                         />
@@ -165,7 +134,7 @@ export function PropertyCoverStack({
                                 }}
                                 className="
                                   property-cover-tile body-xs relative -ms-2.5 flex shrink-0
-                                  items-center justify-center rounded-[12px] bg-surface-muted
+                                  items-center justify-center rounded-[8px] bg-surface-muted
                                   font-semibold text-ink-muted ring-2 ring-surface block-12 inline-12
                                 "
                                 style={{ zIndex: visible.length + 1 }}
@@ -205,7 +174,7 @@ export function PropertyCoverStack({
                                 className={cn(
                                     `
                                       property-cover-tile relative flex shrink-0 items-center
-                                      justify-center rounded-[12px] border border-dashed
+                                      justify-center rounded-[8px] border border-dashed
                                       border-brand/45 bg-brand-soft/45 text-brand-text block-10
                                       inline-10
                                     `,

@@ -172,7 +172,7 @@ function MapPlaceholder({ distanceKm }: { distanceKm: number }) {
         >
             <div
                 className="
-                  overflow-hidden rounded-inner border border-border-warm bg-surface-muted block-32
+                  overflow-hidden rounded-[8px] border border-border-warm bg-surface-muted block-32
                   inline-32
                 "
                 aria-hidden

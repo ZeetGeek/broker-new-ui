@@ -5,6 +5,19 @@ import {
     type ExclusiveOwnerFormValues,
 } from "@/lib/validation/exclusive-owner";
 
+export type ExclusiveOwnerProperty = {
+    id: string;
+    title?: string | null;
+    city?: string | null;
+    address?: string | null;
+    society?: string | null;
+    photos?: unknown;
+    salePrice?: string | number | null;
+    monthlyRent?: string | number | null;
+    propertyType?: string | null;
+    bhkConfig?: string | null;
+};
+
 export type ExclusiveOwnerItem = {
     id: string;
     fullName: string;
@@ -21,6 +34,8 @@ export type ExclusiveOwnerItem = {
     source: string | null;
     notes: string | null;
     propertyCount: number;
+    /** Present when the API nests inventory rows on the owner. */
+    properties?: ExclusiveOwnerProperty[] | null;
     origin: "custom";
     createdAt: string | null;
     updatedAt: string | null;

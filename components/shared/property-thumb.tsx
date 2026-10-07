@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { AppImage } from "./app-image";
 import { HoverScaleMedia } from "./hover-scale-media";
 
-const THUMB_FRAME = `relative shrink-0 overflow-hidden rounded-inner bg-surface-muted`;
+const THUMB_FRAME = `relative shrink-0 overflow-hidden rounded-[8px] bg-surface-muted`;
 
 /** Default frame size. Replaced wholesale by `sizeClassName`, never merged. */
 const THUMB_SIZE = `block-14 inline-18 sm:block-18 sm:inline-22`;
