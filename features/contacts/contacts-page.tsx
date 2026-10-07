@@ -33,6 +33,7 @@ import { BuyerCard } from "@/features/contacts/buyer-card";
 import type { ContactPropertyCardItem } from "@/features/contacts/contact-card-model";
 import { ContactDetailPanel } from "@/features/contacts/contact-detail-panel";
 import { DeleteBuyerDialog } from "@/features/contacts/delete-buyer-dialog";
+import { DeleteOwnerDialog } from "@/features/contacts/delete-owner-dialog";
 import {
     emptyOwnerForm,
     type BuyerContactForm,
@@ -94,6 +95,7 @@ export function ContactsPage() {
     const [attachingBuyer, setAttachingBuyer] = useState<AttachBuyerTarget | null>(null);
     const [attachingOwner, setAttachingOwner] = useState<OwnerRow | null>(null);
     const [deletingBuyer, setDeletingBuyer] = useState<BuyerRow | null>(null);
+    const [deletingOwner, setDeletingOwner] = useState<OwnerRow | null>(null);
     const [deleteBusy, setDeleteBusy] = useState(false);
     const [selectedContact, setSelectedContact] = useState<
         { type: "buyer"; row: BuyerRow } | { type: "owner"; row: OwnerRow } | null
@@ -200,6 +202,30 @@ export function ContactsPage() {
             setDeleteBusy(false);
         }
     }, [deletingBuyer]);
+
+    const handleDeleteOwner = useCallback(async () => {
+        if (!deletingOwner) return;
+        setDeleteBusy(true);
+        try {
+            await contactsApi.removeOwner(deletingOwner.id);
+            toast.success(`${deletingOwner.name} removed from your owners`);
+            setDeletingOwner(null);
+            setSelectedContact((current) =>
+                current?.type === "owner" && current.row.id === deletingOwner.id ? null : current,
+            );
+            setRevision((prev) => prev + 1);
+        } catch (error) {
+            toast.error(
+                error instanceof ApiError
+                    ? error.message
+                    : error instanceof Error
+                      ? error.message
+                      : "Could not delete this owner. Try again.",
+            );
+        } finally {
+            setDeleteBusy(false);
+        }
+    }, [deletingOwner]);
 
     const handleOwnerSaved = useCallback((name: string, mode: "created" | "updated") => {
         setRevision((prev) => prev + 1);
@@ -476,6 +502,7 @@ export function ContactsPage() {
                                         }
                                         onEdit={setEditingOwner}
                                         onAttachProperty={setAttachingOwner}
+                                        onDelete={setDeletingOwner}
                                     />
                                 )}
                             />
@@ -559,6 +586,16 @@ export function ContactsPage() {
                     name={deletingBuyer?.name ?? ""}
                     busy={deleteBusy}
                     onConfirm={() => void handleDeleteBuyer()}
+                />
+
+                <DeleteOwnerDialog
+                    open={deletingOwner != null}
+                    onOpenChange={(next) => {
+                        if (!next && !deleteBusy) setDeletingOwner(null);
+                    }}
+                    name={deletingOwner?.name ?? ""}
+                    busy={deleteBusy}
+                    onConfirm={() => void handleDeleteOwner()}
                 />
 
                 {attachingOwner ? (

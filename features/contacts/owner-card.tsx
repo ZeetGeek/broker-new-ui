@@ -58,12 +58,14 @@ export function OwnerCard({
     onEdit,
     onAttachProperty,
     onOpenProperties,
+    onDelete,
 }: {
     owner: OwnerRow;
     onOpen: (owner: OwnerRow) => void;
     onEdit?: (owner: OwnerRow) => void;
     onAttachProperty?: (owner: OwnerRow) => void;
     onOpenProperties?: (owner: OwnerRow) => void;
+    onDelete?: (owner: OwnerRow) => void;
 }) {
     const model = toOwnerContactCardModel(owner);
     const isPlatform = owner.origin === "platform";
@@ -117,6 +119,7 @@ export function OwnerCard({
                         onEdit={onEdit ? () => onEdit(owner) : undefined}
                         onAttach={attach}
                         onNotes={open}
+                        onDelete={!isPlatform && onDelete ? () => onDelete(owner) : undefined}
                         editLocked={isPlatform}
                         density="menu"
                     />

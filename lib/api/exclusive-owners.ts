@@ -163,6 +163,15 @@ export const exclusiveOwnersApi = {
             body: JSON.stringify(toPayload(input)),
         });
     },
+
+    async remove(ownerId: string): Promise<void> {
+        if (isMockMode()) {
+            const index = mockExclusiveOwners.findIndex((item) => item.id === ownerId);
+            if (index >= 0) mockExclusiveOwners.splice(index, 1);
+            return;
+        }
+        await apiFetch<void>(`/exclusive-owners/${ownerId}`, { method: "DELETE" });
+    },
 };
 
 export function exclusiveOwnerPhoneDigits(phone: string): string {

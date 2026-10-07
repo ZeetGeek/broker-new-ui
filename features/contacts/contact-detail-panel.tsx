@@ -1,25 +1,21 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import toast from "react-hot-toast";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 import {
     BedDouble,
     Building2,
-    CalendarClock,
-    ChevronLeft,
-    ChevronRight,
-    Download,
-    ExternalLink,
-    FileText,
+    CircleDot,
     Home,
     IndianRupee,
+    Layers,
     Link2,
     Lock,
     Mail,
     MapPin,
+    Maximize2,
     Phone,
     Plus,
     StickyNote,
@@ -29,17 +25,14 @@ import {
     type LucideIcon,
 } from "lucide-react";
 
-import { formatDateShort, formatRelativePast } from "@/lib/format/date";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatIndianPrice } from "@/lib/format/price";
-import { brokerPropertyDetailHref, BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
+import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { AppImage } from "@/components/shared/app-image";
 import { AppModal } from "@/components/shared/app-modal";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
@@ -123,19 +116,6 @@ function hasValue(value: ReactNode, explicitEmpty?: boolean): boolean {
     if (value == null || value === "") return false;
     if (Array.isArray(value)) return value.length > 0;
     return true;
-}
-
-function ValueChips({ values }: { values?: string[] }) {
-    if (!values?.length) return null;
-    return (
-        <span className="flex flex-wrap gap-1.5">
-            {values.map((value) => (
-                <Badge key={value} variant="outline" className="font-medium text-ink">
-                    {value}
-                </Badge>
-            ))}
-        </span>
-    );
 }
 
 function DetailSection({
@@ -308,126 +288,6 @@ function AttachedPropertyRows({
     );
 }
 
-function useFileUrls(files: File[] | undefined) {
-    const urls = useMemo(() => files?.map((file) => URL.createObjectURL(file)) ?? [], [files]);
-    useEffect(() => {
-        return () => urls.forEach((url) => URL.revokeObjectURL(url));
-    }, [urls]);
-    return urls;
-}
-
-function ContactPhotoGallery({ title, photos }: { title: string; photos: string[] }) {
-    const [active, setActive] = useState(0);
-    const [lightbox, setLightbox] = useState(false);
-    const step = useCallback(
-        (delta: number) => setActive((index) => (index + delta + photos.length) % photos.length),
-        [photos.length],
-    );
-
-    useEffect(() => {
-        if (!lightbox) return;
-        const listener = (event: KeyboardEvent) => {
-            if (event.key === "Escape") setLightbox(false);
-            if (event.key === "ArrowLeft") step(-1);
-            if (event.key === "ArrowRight") step(1);
-        };
-        document.addEventListener("keydown", listener);
-        return () => document.removeEventListener("keydown", listener);
-    }, [lightbox, step]);
-
-    if (!photos.length) return null;
-    return (
-        <section className="border-be border-border-warm pbe-5">
-            <button
-                type="button"
-                onClick={() => setLightbox(true)}
-                className="relative aspect-video overflow-hidden rounded-inner bg-surface-muted outline-none inline-full focus-visible:ring-3 focus-visible:ring-brand/30"
-            >
-                <AppImage
-                    src={photos[active]!}
-                    alt={`${title} property photo ${active + 1}`}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 640px"
-                />
-            </button>
-            {photos.length > 1 ? (
-                <div className="mbs-2 flex gap-2 overflow-x-auto p-0.5">
-                    {photos.map((photo, index) => (
-                        <button
-                            key={photo}
-                            type="button"
-                            onClick={() => setActive(index)}
-                            aria-label={`Show photo ${index + 1}`}
-                            className={cn(
-                                "relative shrink-0 overflow-hidden rounded-md border-2 block-12 inline-16",
-                                active === index ? "border-brand" : "border-transparent",
-                            )}
-                        >
-                            <AppImage src={photo} alt="" fill sizes="64px" quality={70} />
-                        </button>
-                    ))}
-                </div>
-            ) : null}
-            {lightbox ? (
-                <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={`${title} photos`}
-                    onClick={() => setLightbox(false)}
-                    className="fixed inset-0 z-60 flex items-center justify-center bg-brand-ink/95 p-4"
-                >
-                    <button
-                        type="button"
-                        aria-label="Close photos"
-                        onClick={() => setLightbox(false)}
-                        className="absolute inset-e-4 inset-bs-4 rounded-control p-2 text-surface hover:bg-surface/15"
-                    >
-                        <X aria-hidden />
-                    </button>
-                    {photos.length > 1 ? (
-                        <button
-                            type="button"
-                            aria-label="Previous photo"
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                step(-1);
-                            }}
-                            className="absolute inset-s-4 rounded-control p-2 text-surface hover:bg-surface/15"
-                        >
-                            <ChevronLeft aria-hidden />
-                        </button>
-                    ) : null}
-                    <div
-                        className="relative block-[85vh] inline-[min(92vw,72rem)]"
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <AppImage
-                            src={photos[active]!}
-                            alt={`${title} property photo ${active + 1}`}
-                            fill
-                            sizes="92vw"
-                            className="object-contain"
-                        />
-                    </div>
-                    {photos.length > 1 ? (
-                        <button
-                            type="button"
-                            aria-label="Next photo"
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                step(1);
-                            }}
-                            className="absolute inset-e-4 rounded-control p-2 text-surface hover:bg-surface/15"
-                        >
-                            <ChevronRight aria-hidden />
-                        </button>
-                    ) : null}
-                </div>
-            ) : null}
-        </section>
-    );
-}
-
 function PanelHeader({
     name,
     phone,
@@ -488,35 +348,7 @@ function PanelHeader({
     );
 }
 
-function Activity({ lastSpokeAt }: { lastSpokeAt?: string | null }) {
-    const events = [
-        { title: "Contact created", when: "Saved to contacts" },
-        ...(lastSpokeAt
-            ? [
-                  {
-                      title: "Call logged",
-                      when: formatRelativePast(new Date(lastSpokeAt), new Date()),
-                  },
-              ]
-            : []),
-    ].reverse();
-    return (
-        <ol className="relative ms-1.5 border-is border-border-warm ps-5">
-            {events.map((event) => (
-                <li key={event.title} className="relative pbe-4 last:pbe-0">
-                    <span
-                        className="absolute -inset-s-[23px] inset-bs-1 rounded-full border-2 border-surface bg-brand block-2.5 inline-2.5"
-                        aria-hidden
-                    />
-                    <p className="body-xs font-semibold text-ink">{event.title}</p>
-                    <p className="text-[11px] text-ink-muted">{event.when}</p>
-                </li>
-            ))}
-        </ol>
-    );
-}
-
-function BuyerPanelFooter({ phone, name }: { phone?: string; name: string }) {
+function ContactCallFooter({ phone, name }: { phone?: string; name: string }) {
     if (!phone) return null;
 
     return (
@@ -560,34 +392,6 @@ function BuyerPanelFooter({ phone, name }: { phone?: string; name: string }) {
     );
 }
 
-function OwnerPanelFooter({
-    value,
-    onChange,
-    onLogCall,
-}: {
-    value: string;
-    onChange: (value: string) => void;
-    onLogCall: () => void;
-}) {
-    return (
-        <>
-            <label className="body-xs flex items-center gap-2 font-medium text-ink-muted">
-                <CalendarClock aria-hidden className="block-4 inline-4" />
-                <span className="hidden sm:inline">Next follow-up</span>
-                <input
-                    type="date"
-                    value={value}
-                    onChange={(event) => onChange(event.target.value)}
-                    className="rounded-control border border-border-warm bg-surface px-2 py-1.5 text-ink outline-none focus:border-brand"
-                />
-            </label>
-            <Button type="button" variant="accent" size="sm" onClick={onLogCall}>
-                <Phone aria-hidden /> Log a call
-            </Button>
-        </>
-    );
-}
-
 type BuyerPanelProps = {
     buyer: BuyerRow;
     onEdit: () => void;
@@ -601,6 +405,10 @@ function sourceLabel(value: string | null | undefined): string {
     if (!value) return "";
     const fromOptions = SOURCE_OPTIONS.find((option) => option.value === value)?.label;
     if (fromOptions) return fromOptions;
+    return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function ownerStatusLabel(value: string): string {
     return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
@@ -794,21 +602,6 @@ type OwnerPanelProps = {
 function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: OwnerPanelProps) {
     const details = owner.details;
     const model = toOwnerContactCardModel(owner);
-    const locked = owner.origin === "platform";
-    const photoUrls = useFileUrls(details?.photos);
-    const galleryPhotos = useMemo(
-        () => [
-            ...new Set([
-                ...photoUrls,
-                ...model.properties
-                    .map((property) => property.coverUrl)
-                    .filter((url): url is string => Boolean(url)),
-            ]),
-        ],
-        [model.properties, photoUrls],
-    );
-    const documentUrls = useFileUrls(details?.documents);
-    const [status, setStatus] = useState(model.status);
     const [notes, setNotes] = useState(owner.notes || details?.notes || "");
     const [saved, setSaved] = useState(false);
     const save = async (patch: Partial<OwnerContactForm>) => {
@@ -817,277 +610,111 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
         window.setTimeout(() => setSaved(false), 1400);
     };
 
-    const address = [details?.fullAddress, details?.locality, details?.city, details?.pincode]
-        .filter(Boolean)
-        .join(", ");
-    const mapHref =
-        details?.lat && details.lng
-            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${details.lat},${details.lng}`)}`
-            : "";
+    const status = model.status;
+    const carpetArea = details?.carpetArea ? `${details.carpetArea} ${details.areaUnit}` : "";
+    const locality =
+        details?.locality || owner.localities.filter((item) => item && item !== "—")[0] || "";
+    const source = sourceLabel(details?.source);
+
+    const linkedProperties: ContactPropertyCardItem[] = owner.linkedListingId
+        ? [
+              {
+                  id: owner.linkedListingId,
+                  leadId: "",
+                  title:
+                      owner.linkedListingTitle || model.properties[0]?.title || "Private listing",
+                  locality,
+                  priceLabel: model.askingPrice,
+                  coverUrl: model.properties[0]?.coverUrl,
+                  propertyType: model.propertyType,
+              },
+          ]
+        : model.properties;
 
     return (
         <>
-            <label className="body-xs flex items-center gap-2 text-ink-muted">
-                Status
-                <select
-                    value={status}
-                    onChange={(event) => {
-                        setStatus(event.target.value);
-                        void save({ status: event.target.value });
-                    }}
-                    className="rounded-md border border-border-warm bg-surface-muted px-2 py-1 font-semibold text-ink"
-                >
-                    {[
-                        "active",
-                        "on_hold",
-                        "under_negotiation",
-                        "sold",
-                        "rented_out",
-                        "withdrawn",
-                    ].map((value) => (
-                        <option key={value} value={value}>
-                            {value
-                                .replaceAll("_", " ")
-                                .replace(/\b\w/g, (letter) => letter.toUpperCase())}
-                        </option>
-                    ))}
-                </select>
-                {saved ? <span className="text-success">Saved</span> : null}
-            </label>
-
-            <ContactPhotoGallery title={owner.name} photos={galleryPhotos} />
-
-            <section ref={propertiesRef} className="scroll-mt-5 border-be border-border-warm pbe-5">
-                <p className="text-[11px] font-medium text-ink-subtle">Asking price</p>
-                <p className="tabular h3 mbs-1 font-bold text-ink">{model.askingPrice}</p>
-                <dl className="mbs-3 grid grid-cols-2 gap-3">
-                    <div>
-                        <dt className="text-[11px] text-ink-subtle">Property type</dt>
-                        <dd className="body-xs font-semibold">{model.propertyType}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-[11px] text-ink-subtle">Configuration</dt>
-                        <dd className="body-xs font-semibold">
-                            {model.configuration || "Not provided"}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt className="text-[11px] text-ink-subtle">Carpet area</dt>
-                        <dd className="body-xs font-semibold">
-                            {details?.carpetArea
-                                ? `${details.carpetArea} ${details.areaUnit}`
-                                : "Not provided"}
-                        </dd>
-                    </div>
-                    <div>
-                        <dt className="text-[11px] text-ink-subtle">Floor</dt>
-                        <dd className="body-xs font-semibold">
-                            {details?.floorNumber || "Not provided"}
-                        </dd>
-                    </div>
-                </dl>
+            <section className="scroll-mt-5 pbe-6">
+                <h3 className="body mbe-4 font-bold text-ink">Property</h3>
+                <IconFactGrid
+                    onAdd={onEdit}
+                    facts={[
+                        {
+                            label: "Status",
+                            icon: CircleDot,
+                            value: ownerStatusLabel(status),
+                        },
+                        {
+                            label: "Asking price",
+                            icon: IndianRupee,
+                            value: model.askingPrice,
+                        },
+                        {
+                            label: "Property type",
+                            icon: Building2,
+                            value: model.propertyType,
+                        },
+                        {
+                            label: "Configuration",
+                            icon: BedDouble,
+                            value: model.configuration ? ownerStatusLabel(model.configuration) : "",
+                            empty: !model.configuration,
+                        },
+                        {
+                            label: "Carpet area",
+                            icon: Maximize2,
+                            value: carpetArea,
+                            empty: !carpetArea,
+                        },
+                        {
+                            label: "Floor",
+                            icon: Layers,
+                            value: details?.floorNumber,
+                            empty: !details?.floorNumber,
+                        },
+                        {
+                            label: "Locality",
+                            icon: MapPin,
+                            value: locality,
+                            empty: !locality,
+                        },
+                    ]}
+                />
             </section>
 
-            <DetailSection
-                title="Property details"
-                locked={locked}
-                onAdd={onEdit}
-                entries={[
-                    { label: "Society", value: details?.societyName || owner.linkedListingTitle },
-                    { label: "Full address", value: address, wide: true },
-                    { label: "City", value: details?.city },
-                    { label: "Pincode", value: details?.pincode },
-                    {
-                        label: "Built-up area",
-                        value: details?.builtUpArea
-                            ? `${details.builtUpArea} ${details.areaUnit}`
-                            : "",
-                    },
-                    {
-                        label: "Super built-up",
-                        value: details?.superBuiltUpArea
-                            ? `${details.superBuiltUpArea} ${details.areaUnit}`
-                            : "",
-                    },
-                    {
-                        label: "Plot area",
-                        value: details?.plotArea ? `${details.plotArea} ${details.areaUnit}` : "",
-                    },
-                    { label: "Bathrooms", value: details?.bathrooms },
-                    { label: "Balconies", value: details?.balconies },
-                    {
-                        label: "Parking",
-                        value: details?.parkingType
-                            ? `${details.parkingType} ${details.parkingCount || ""}`
-                            : "",
-                    },
-                    { label: "Facing", value: details?.facing },
-                    { label: "Property age", value: details?.propertyAge },
-                    { label: "Available from", value: details?.availableFrom },
-                    { label: "Furnishing", value: details?.furnishing },
-                    { label: "RERA number", value: details?.reraNumber },
-                    {
-                        label: "Amenities",
-                        value: <ValueChips values={details?.amenities} />,
-                        empty: !details?.amenities.length,
-                        wide: true,
-                    },
-                ]}
-            />
-
-            {mapHref ? (
-                <section className="border-be border-border-warm pbe-5">
-                    <h3 className="body-sm mbe-3 font-bold text-ink">Location</h3>
-                    <a
-                        href={mapHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between rounded-inner border border-border-warm bg-surface-muted p-3 hover:border-brand/35"
-                    >
-                        <span className="flex items-center gap-2">
-                            <MapPin aria-hidden className="text-brand block-5 inline-5" />
-                            <span>
-                                <span className="body-xs block font-semibold text-ink">
-                                    Open property location
-                                </span>
-                                <span className="tabular text-[11px] text-ink-muted">
-                                    {details?.lat}, {details?.lng}
-                                </span>
-                            </span>
-                        </span>
-                        <ExternalLink aria-hidden className="text-ink-muted block-4 inline-4" />
-                    </a>
-                </section>
-            ) : null}
-
-            <DetailSection
-                title="Price and charges"
-                locked={locked}
-                onAdd={onEdit}
-                entries={[
-                    {
-                        label: "Expected price",
-                        value: details?.expectedPrice
-                            ? `${details.expectedPrice} ${details.priceUnit}`
-                            : "",
-                    },
-                    { label: "Expected rent", value: details?.expectedRent },
-                    { label: "Deposit", value: details?.deposit },
-                    { label: "Maintenance", value: details?.maintenance },
-                    {
-                        label: "Negotiable",
-                        value: details ? (details.negotiable ? "Yes" : "No") : "",
-                    },
-                ]}
-            />
-
-            <DetailSection
-                title="Deal terms"
-                locked={locked}
-                onAdd={onEdit}
-                entries={[
-                    {
-                        label: "Exclusive",
-                        value: details ? (details.exclusive ? "Yes" : "No") : "",
-                    },
-                    { label: "Agreement valid till", value: details?.agreementValidTill },
-                    {
-                        label: "Brokerage",
-                        value: details?.brokerageValue
-                            ? `${details.brokerageValue}${details.brokerageType === "percentage" ? "%" : " flat"}`
-                            : "",
-                    },
-                    { label: "Paid by", value: details?.brokeragePaidBy },
-                    { label: "Visit days", value: details?.visitDays.join(", ") },
-                    {
-                        label: "Visit time",
-                        value:
-                            details?.visitFrom || details?.visitTo
-                                ? `${details.visitFrom || "Any"} to ${details.visitTo || "Any"}`
-                                : "",
-                    },
-                ]}
-            />
-
-            {owner.linkedListingId ? (
-                <section className="border-be border-border-warm pbe-5">
-                    <h3 className="body-sm mbe-3 flex items-center gap-2 font-bold text-ink">
-                        Linked listing{" "}
-                        {locked ? (
-                            <Lock aria-hidden className="text-ink-subtle block-3 inline-3" />
-                        ) : null}
-                    </h3>
-                    <Link
-                        href={`${BROKER_YOUR_LISTINGS_HREF}?property=${owner.linkedListingId}`}
-                        className="flex items-center justify-between rounded-inner border border-border-warm p-3 hover:border-brand/35"
-                    >
-                        <span>
-                            <span className="body-xs block font-semibold text-ink">
-                                {owner.linkedListingTitle || "Private listing"}
-                            </span>
-                            <span className="text-[11px] text-ink-muted">
-                                Open in Your Listings
-                            </span>
-                        </span>
-                        <ExternalLink aria-hidden className="block-4 inline-4" />
-                    </Link>
-                </section>
-            ) : onAttach ? (
+            {onAttach || linkedProperties.length > 0 ? (
                 <DetailSection title="Linked listing" onAdd={onAttach} sectionRef={propertiesRef}>
-                    <AttachedPropertyRows properties={[]} onAttach={onAttach} />
+                    <AttachedPropertyRows properties={linkedProperties} onAttach={onAttach} />
                 </DetailSection>
             ) : null}
 
-            <DetailSection title="Interested buyers" locked={locked} entries={[]}>
-                <p className="body-xs text-ink-subtle">
-                    Buyer interest appears after a buyer is attached to this listing.
-                </p>
-            </DetailSection>
+            <section className="scroll-mt-5 pbe-6">
+                <h3 className="body mbe-4 font-bold text-ink">Contact details</h3>
+                <IconFactGrid
+                    onAdd={onEdit}
+                    facts={[
+                        {
+                            label: "Mobile",
+                            icon: Phone,
+                            value: owner.phoneDigits ? formatPhoneIn(owner.phoneDigits) : "",
+                            empty: !owner.phoneDigits,
+                        },
+                        {
+                            label: "Email",
+                            icon: Mail,
+                            value: details?.email,
+                            empty: !details?.email,
+                        },
+                        {
+                            label: "Source",
+                            icon: Tag,
+                            value: source,
+                            empty: !source,
+                        },
+                    ]}
+                />
+            </section>
 
-            {details?.documents.length ? (
-                <DetailSection title="Documents" locked={locked}>
-                    <div className="flex flex-wrap gap-2">
-                        {details.documents.map((file, index) => (
-                            <a
-                                key={`${file.name}-${index}`}
-                                href={documentUrls[index]}
-                                download={file.name}
-                                className="body-xs flex items-center gap-2 rounded-md border border-border-warm px-2.5 py-2 font-medium text-ink hover:border-brand/35"
-                            >
-                                <FileText aria-hidden className="block-4 inline-4" />
-                                <span>{file.name}</span>
-                                <span className="tabular text-ink-muted">
-                                    {Math.max(1, Math.round(file.size / 1024))} KB
-                                </span>
-                                <Download aria-hidden className="block-3.5 inline-3.5" />
-                            </a>
-                        ))}
-                    </div>
-                </DetailSection>
-            ) : null}
-
-            <DetailSection
-                title="Tracking"
-                onAdd={onEdit}
-                entries={[
-                    { label: "Source", value: details?.source },
-                    { label: "Status", value: status.replaceAll("_", " ") },
-                    {
-                        label: "Last spoke",
-                        value: owner.lastSpokeAt
-                            ? formatDateShort(new Date(owner.lastSpokeAt))
-                            : "",
-                    },
-                    { label: "Next follow-up", value: details?.nextFollowUpAt },
-                    {
-                        label: "Tags",
-                        value: <ValueChips values={owner.tags || details?.tags} />,
-                        empty: !(owner.tags || details?.tags)?.length,
-                    },
-                ]}
-            />
-
-            <section className="scroll-mt-5 border-be border-border-warm pbe-6">
+            <section className="scroll-mt-5">
                 <div className="mbe-4 flex items-center justify-between gap-2">
                     <h3 className="body flex items-center gap-2 font-bold text-ink">
                         <StickyNote
@@ -1103,7 +730,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
                     onBlur={() => void save({ notes })}
-                    placeholder="Add context for the next conversation"
+                    placeholder="Add useful context for the next conversation."
                     className="
                       body resize-none rounded-control border-2 border-border-warm bg-surface p-3.5
                       leading-relaxed text-ink outline-none min-block-28 inline-full
@@ -1111,9 +738,6 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                     "
                 />
             </section>
-            <DetailSection title="Activity">
-                <Activity lastSpokeAt={owner.lastSpokeAt} />
-            </DetailSection>
         </>
     );
 }
@@ -1175,10 +799,6 @@ export function ContactDetailPanel({
     const propertiesRef = useRef<HTMLElement>(null);
     const buyer = contact?.type === "buyer" ? contact.row : null;
     const owner = contact?.type === "owner" ? contact.row : null;
-    const nextFollowUp = buyer?.details?.nextFollowUpAt || owner?.details?.nextFollowUpAt || "";
-    const contactId = contact?.row.id ?? "";
-    const [followUpState, setFollowUpState] = useState({ contactId, value: nextFollowUp });
-    const followUp = followUpState.contactId === contactId ? followUpState.value : nextFollowUp;
 
     useEffect(() => {
         if (open && initialSection === "properties")
@@ -1232,18 +852,6 @@ export function ContactDetailPanel({
     ) : null;
     const phone = row.phoneDigits;
 
-    const saveFollowUp = async (value: string) => {
-        setFollowUpState({ contactId, value });
-        if (buyer) await onQuickUpdateBuyer(buyer, { nextFollowUpAt: value });
-        if (owner) await onQuickUpdateOwner(owner, { nextFollowUpAt: value });
-    };
-    const logCall = async () => {
-        const value = new Date().toISOString().slice(0, 10);
-        if (buyer) await onQuickUpdateBuyer(buyer, { lastSpokeAt: value });
-        if (owner) await onQuickUpdateOwner(owner, { lastSpokeAt: value });
-        toast.success("Call logged");
-    };
-
     return (
         <AppModal
             open={open}
@@ -1270,17 +878,7 @@ export function ContactDetailPanel({
                     editLocked={owner?.origin === "platform"}
                 />
             }
-            footer={
-                buyer ? (
-                    <BuyerPanelFooter phone={phone} name={buyer.name} />
-                ) : (
-                    <OwnerPanelFooter
-                        value={followUp}
-                        onChange={(value) => void saveFollowUp(value)}
-                        onLogCall={() => void logCall()}
-                    />
-                )
-            }
+            footer={buyer || owner ? <ContactCallFooter phone={phone} name={row.name} /> : null}
             bodyClassName="flex flex-col gap-0"
         >
             {buyer ? (

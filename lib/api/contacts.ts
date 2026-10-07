@@ -767,6 +767,18 @@ export const contactsApi = {
         owner.linkedListingId = listingId;
         owner.linkedListingTitle = title;
     },
+
+    /** Remove a broker-added exclusive owner from contacts. */
+    async removeOwner(ownerId: string): Promise<void> {
+        if (isMockMode()) {
+            const index = mockCustomOwners.findIndex((item) => item.id === ownerId);
+            if (index >= 0) mockCustomOwners.splice(index, 1);
+            mockPlatformOwnerTracking.delete(ownerId);
+            await exclusiveOwnersApi.remove(ownerId);
+            return;
+        }
+        await exclusiveOwnersApi.remove(ownerId);
+    },
 };
 
 function ownerPayload(values: OwnerContactForm) {
