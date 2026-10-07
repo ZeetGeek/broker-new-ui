@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -124,39 +123,63 @@ export function AddOwnerModal({
         );
     }, [open, owner, reset]);
 
-    const save = handleSubmit(
-        async (parsed) => {
-            if (isEdit) {
-                setSubmitError("Editing owners is not available yet.");
-                return;
-            }
-            setBusy(true);
-            setSubmitError("");
-            try {
-                const saved = await exclusiveOwnersApi.create({
-                    ...parsed,
-                    phone: normalizeExclusiveOwnerPhone(parsed.phone),
-                });
-                onSaved(saved.fullName, "created");
-                toast.success(`Added ${saved.fullName}`);
-                reset(emptyValues());
-                onOpenChange(false);
-            } catch (error) {
-                const message =
-                    error instanceof ApiError
-                        ? error.message
-                        : error instanceof Error
-                          ? error.message
-                          : "Could not save this owner. Try again.";
-                setSubmitError(message);
-            } finally {
-                setBusy(false);
-            }
-        },
-        () => {
-            setSubmitError("Check the highlighted fields and try again.");
-        },
-    );
+    const onInvalid = () => {
+        setSubmitError("Check the highlighted fields and try again.");
+    };
+
+    const createOwner = async (parsed: ExclusiveOwnerFormValues) => {
+        const saved = await exclusiveOwnersApi.create({
+            ...parsed,
+            phone: normalizeExclusiveOwnerPhone(parsed.phone),
+        });
+        onSaved(saved.fullName, "created");
+        return saved;
+    };
+
+    const save = handleSubmit(async (parsed) => {
+        if (isEdit) {
+            setSubmitError("Editing owners is not available yet.");
+            return;
+        }
+        setBusy(true);
+        setSubmitError("");
+        try {
+            await createOwner(parsed);
+            reset(emptyValues());
+            onOpenChange(false);
+        } catch (error) {
+            const message =
+                error instanceof ApiError
+                    ? error.message
+                    : error instanceof Error
+                      ? error.message
+                      : "Could not save this owner. Try again.";
+            setSubmitError(message);
+        } finally {
+            setBusy(false);
+        }
+    }, onInvalid);
+
+    const saveAnother = handleSubmit(async (parsed) => {
+        if (isEdit) return;
+        setBusy(true);
+        setSubmitError("");
+        try {
+            await createOwner(parsed);
+            reset(emptyValues());
+            setMoreOpen(false);
+        } catch (error) {
+            const message =
+                error instanceof ApiError
+                    ? error.message
+                    : error instanceof Error
+                      ? error.message
+                      : "Could not save this owner. Try again.";
+            setSubmitError(message);
+        } finally {
+            setBusy(false);
+        }
+    }, onInvalid);
 
     return (
         <ContactFormDrawer
@@ -168,6 +191,7 @@ export function AddOwnerModal({
             busy={busy}
             primaryLabel={isEdit ? "Save changes" : "Save owner"}
             onPrimary={() => void save()}
+            onSaveAnother={isEdit ? undefined : () => void saveAnother()}
             footerError={submitError || undefined}
         >
             <div className="space-y-5">
