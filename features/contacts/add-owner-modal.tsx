@@ -14,19 +14,16 @@ import {
     type ExclusiveOwnerFormValues,
 } from "@/lib/validation/exclusive-owner";
 
-import { Button } from "@/components/ui/button";
-
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
 import {
     ContactFormDrawer,
+    MoreDetails,
     NotesField,
     Segmented,
     SelectField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
 import type { OwnerRow } from "@/features/contacts/types";
-
-const STEPS = ["Owner details"];
 
 const OWNER_TYPE_OPTIONS = [
     { value: "individual", label: "Individual" },
@@ -95,6 +92,7 @@ export function AddOwnerModal({
     const isEdit = Boolean(owner);
     const [busy, setBusy] = useState(false);
     const [submitError, setSubmitError] = useState("");
+    const [moreOpen, setMoreOpen] = useState(false);
 
     const form = useForm<ExclusiveOwnerFormValues>({
         resolver: zodResolver(exclusiveOwnerFormSchema),
@@ -115,14 +113,20 @@ export function AddOwnerModal({
 
     useEffect(() => {
         if (!open) return;
-        reset(valuesFromOwner(owner));
+        const next = valuesFromOwner(owner);
+        reset(next);
         setSubmitError("");
         setBusy(false);
+        setMoreOpen(
+            Boolean(
+                next.email || next.fullAddress || next.pincode || next.reraNumber || next.notes,
+            ),
+        );
     }, [open, owner, reset]);
 
     const save = handleSubmit(async (parsed) => {
         if (isEdit) {
-            setSubmitError("Editing exclusive owners is not available yet.");
+            setSubmitError("Editing owners is not available yet.");
             return;
         }
         setBusy(true);
@@ -144,7 +148,6 @@ export function AddOwnerModal({
                       ? error.message
                       : "Could not save this owner. Try again.";
             setSubmitError(message);
-            toast.error(message);
         } finally {
             setBusy(false);
         }
@@ -154,16 +157,14 @@ export function AddOwnerModal({
         <ContactFormDrawer
             open={open}
             onOpenChange={onOpenChange}
-            title={isEdit ? "Edit exclusive owner" : "Add exclusive owner"}
-            description="Private owner contact for your inventory — only visible to your broker account."
-            step={0}
-            steps={STEPS}
+            title={isEdit ? "Edit owner" : "Add owner"}
+            description="Private owner contact for your inventory — only visible on your account."
             isDirty={isDirty}
             busy={busy}
-            onBack={() => onOpenChange(false)}
-            onNext={() => void save()}
+            primaryLabel={isEdit ? "Save changes" : "Save owner"}
+            onPrimary={() => void save()}
         >
-            <div className="space-y-4">
+            <div className="space-y-5">
                 {submitError ? (
                     <p
                         role="alert"
@@ -188,7 +189,7 @@ export function AddOwnerModal({
                         placeholder="Ramesh Patel"
                     />
                     <TextField
-                        label="Phone number"
+                        label="Mobile"
                         required
                         inputMode="numeric"
                         maxLength={10}
@@ -205,23 +206,13 @@ export function AddOwnerModal({
                     />
                 </div>
 
-                <TextField
-                    label="Email"
-                    type="email"
-                    value={values.email ?? ""}
-                    onValueChange={(email) =>
-                        setValue("email", email, { shouldDirty: true, shouldValidate: true })
-                    }
-                    error={errors.email?.message}
-                    placeholder="Optional"
-                />
-
                 <Controller
                     control={control}
                     name="ownerType"
                     render={({ field }) => (
                         <Segmented
                             label="Owner type"
+                            tone="brand"
                             value={field.value}
                             onChange={field.onChange}
                             options={[...OWNER_TYPE_OPTIONS]}
@@ -230,43 +221,52 @@ export function AddOwnerModal({
                     )}
                 />
 
-                <div className="space-y-4">
-                    <p className="body-sm font-medium text-ink">Owner&apos;s address</p>
+                <TextField
+                    label="Society / Project"
+                    required
+                    value={values.society ?? ""}
+                    onValueChange={(society) =>
+                        setValue("society", society, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                        })
+                    }
+                    error={errors.society?.message}
+                    placeholder="Green Valley Heights"
+                />
 
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <TextField
-                        label="Society / Project / Building name"
-                        required
-                        value={values.society ?? ""}
-                        onValueChange={(society) =>
-                            setValue("society", society, {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
+                        label="Area"
+                        value={values.area ?? ""}
+                        onValueChange={(area) =>
+                            setValue("area", area, { shouldDirty: true, shouldValidate: true })
                         }
-                        error={errors.society?.message}
-                        placeholder="Green Valley Heights"
+                        error={errors.area?.message}
+                        placeholder="Vesu"
                     />
+                    <TextField
+                        label="City"
+                        value={values.city ?? ""}
+                        onValueChange={(city) =>
+                            setValue("city", city, { shouldDirty: true, shouldValidate: true })
+                        }
+                        error={errors.city?.message}
+                        placeholder="Surat"
+                    />
+                </div>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <TextField
-                            label="Area"
-                            value={values.area ?? ""}
-                            onValueChange={(area) =>
-                                setValue("area", area, { shouldDirty: true, shouldValidate: true })
-                            }
-                            error={errors.area?.message}
-                            placeholder="Vesu"
-                        />
-                        <TextField
-                            label="City"
-                            value={values.city ?? ""}
-                            onValueChange={(city) =>
-                                setValue("city", city, { shouldDirty: true, shouldValidate: true })
-                            }
-                            error={errors.city?.message}
-                            placeholder="Surat"
-                        />
-                    </div>
+                <MoreDetails open={moreOpen} onOpenChange={setMoreOpen}>
+                    <TextField
+                        label="Email"
+                        type="email"
+                        value={values.email ?? ""}
+                        onValueChange={(email) =>
+                            setValue("email", email, { shouldDirty: true, shouldValidate: true })
+                        }
+                        error={errors.email?.message}
+                        placeholder="Optional"
+                    />
 
                     <TextField
                         label="Pincode"
@@ -295,45 +295,41 @@ export function AddOwnerModal({
                         error={errors.fullAddress?.message}
                         placeholder="Flat, tower, landmark"
                     />
-                </div>
 
-                <TextField
-                    label="RERA number"
-                    value={values.reraNumber ?? ""}
-                    onValueChange={(reraNumber) =>
-                        setValue("reraNumber", reraNumber, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                        })
-                    }
-                    error={errors.reraNumber?.message}
-                    placeholder="Optional"
-                />
+                    <TextField
+                        label="RERA number"
+                        value={values.reraNumber ?? ""}
+                        onValueChange={(reraNumber) =>
+                            setValue("reraNumber", reraNumber, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                            })
+                        }
+                        error={errors.reraNumber?.message}
+                        placeholder="Optional"
+                    />
 
-                <SelectField
-                    label="Source"
-                    value={values.source ?? ""}
-                    onChange={(source) =>
-                        setValue("source", source as ExclusiveOwnerFormValues["source"], {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                        })
-                    }
-                    options={SOURCE_OPTIONS}
-                    error={errors.source?.message}
-                />
+                    <SelectField
+                        label="Source"
+                        value={values.source ?? ""}
+                        onChange={(source) =>
+                            setValue("source", source as ExclusiveOwnerFormValues["source"], {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                            })
+                        }
+                        options={SOURCE_OPTIONS}
+                        error={errors.source?.message}
+                    />
 
-                <NotesField
-                    value={values.notes ?? ""}
-                    onChange={(notes) =>
-                        setValue("notes", notes, { shouldDirty: true, shouldValidate: true })
-                    }
-                    error={errors.notes?.message}
-                />
-
-                <Button type="button" className="sr-only" tabIndex={-1} onClick={() => void save()}>
-                    Save
-                </Button>
+                    <NotesField
+                        value={values.notes ?? ""}
+                        onChange={(notes) =>
+                            setValue("notes", notes, { shouldDirty: true, shouldValidate: true })
+                        }
+                        error={errors.notes?.message}
+                    />
+                </MoreDetails>
             </div>
         </ContactFormDrawer>
     );

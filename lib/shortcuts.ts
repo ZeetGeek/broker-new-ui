@@ -12,7 +12,8 @@ export type ShortcutId =
     | "settings"
     | "shortcuts_cheatsheet"
     | "logout"
-    | "add_property";
+    | "add_property"
+    | "add_contact";
 
 export type ShortcutScope = "global" | "list" | "form" | "dialog";
 
@@ -150,6 +151,14 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
         group: "Listings",
         scope: "list",
     },
+    {
+        id: "add_contact",
+        keys: "KeyN",
+        displayKeys: ["N"],
+        label: "Add buyer / owner",
+        group: "Contacts",
+        scope: "list",
+    },
 ] as const;
 
 export function getShortcut(id: ShortcutId): ShortcutDef | undefined {
@@ -159,6 +168,18 @@ export function getShortcut(id: ShortcutId): ShortcutDef | undefined {
 if (process.env.NODE_ENV !== "production") {
     const seen = new Map<string, string>();
     for (const s of SHORTCUTS) {
+        // List bindings only mount on their page, so the same key can mean
+        // "add property" on listings and "add contact" on contacts. They still
+        // collide with a global that claims the same key.
+        if (s.scope === "list") {
+            const globalKey = `*:${s.keys.toLowerCase()}`;
+            const existing = seen.get(globalKey);
+            if (existing) {
+                throw new Error(`Shortcut conflict: "${s.keys}" used by ${existing} and ${s.id}`);
+            }
+            continue;
+        }
+
         const keysInScope = s.scope === "global" ? ["*"] : [s.scope, "*"];
         for (const scope of keysInScope) {
             const key = `${scope}:${s.keys.toLowerCase()}`;

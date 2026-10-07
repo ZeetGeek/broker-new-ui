@@ -226,6 +226,7 @@ These map to the existing nav.
 | `k` / `ArrowUp`   | Previous item                |
 | `Enter`           | Open selected                |
 | `N`               | Add property (Your listings) |
+| `N`               | Add buyer / owner (Contacts) |
 
 ### Forms
 

@@ -26,16 +26,32 @@ import {
     SOURCE_OPTIONS,
 } from "@/features/contacts/buyer-options";
 import {
+    BudgetRangeField,
+    ChoiceRadioField,
+    ComboboxField,
     ContactFormDrawer,
     LocalityPicker,
+    MoreDetails,
     NotesField,
-    Segmented,
     SelectField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
 import type { BuyerRow } from "@/features/contacts/types";
 
-const STEPS = ["Buyer details"];
+const PROPERTY_KIND_GROUPS = [
+    {
+        label: "Residential",
+        options: PROPERTY_KIND_OPTIONS.filter((option) =>
+            ["any", "apartment", "villa", "plot"].includes(option.value),
+        ).map((option) => ({ value: option.value, label: option.label })),
+    },
+    {
+        label: "Commercial",
+        options: PROPERTY_KIND_OPTIONS.filter((option) =>
+            ["shop", "office"].includes(option.value),
+        ).map((option) => ({ value: option.value, label: option.label })),
+    },
+];
 
 function emptyValues(): BuyerFormValues {
     return {
@@ -148,6 +164,7 @@ export function AddBuyerModal({
         type: "buyer" | "owner";
     } | null>(null);
     const [ignoreDuplicate, setIgnoreDuplicate] = useState(false);
+    const [moreOpen, setMoreOpen] = useState(false);
 
     const propertyKind = values.propertyKind ?? "apartment";
     const showBhk = !KINDS_WITHOUT_BHK.includes(propertyKind);
@@ -160,6 +177,7 @@ export function AddBuyerModal({
         setFormError(undefined);
         setDuplicate(null);
         setIgnoreDuplicate(false);
+        setMoreOpen(Boolean(buyer?.email || buyer?.notes));
     }, [buyer, form, open]);
 
     useEffect(() => {
@@ -204,7 +222,6 @@ export function AddBuyerModal({
                       ? error.message
                       : "Could not save this buyer. Try again.";
             setFormError(message);
-            toast.error(message);
         } finally {
             setBusy(false);
         }
@@ -222,6 +239,7 @@ export function AddBuyerModal({
             form.reset(emptyValues());
             setDuplicate(null);
             setIgnoreDuplicate(false);
+            setMoreOpen(false);
         } catch (error) {
             const message =
                 error instanceof ApiError
@@ -230,7 +248,6 @@ export function AddBuyerModal({
                       ? error.message
                       : "Could not save this buyer. Try again.";
             setFormError(message);
-            toast.error(message);
         } finally {
             setBusy(false);
         }
@@ -242,15 +259,13 @@ export function AddBuyerModal({
             onOpenChange={onOpenChange}
             title={isEdit ? "Edit buyer" : "Add buyer"}
             description="Capture their requirement once, then match them to your private listings."
-            step={0}
-            steps={STEPS}
             isDirty={isDirty}
             busy={busy}
-            onBack={() => onOpenChange(false)}
-            onNext={() => void save()}
+            primaryLabel={isEdit ? "Save changes" : "Save buyer"}
+            onPrimary={() => void save()}
             onSaveAnother={isEdit ? undefined : () => void saveAnother()}
         >
-            <div className="space-y-4">
+            <div className="space-y-5">
                 {formError ? (
                     <p
                         role="alert"
@@ -295,81 +310,83 @@ export function AddBuyerModal({
                     />
                 </div>
 
-                <TextField
-                    label="Email"
-                    type="email"
-                    value={values.email ?? ""}
-                    onValueChange={(email) =>
-                        form.setValue("email", email, { shouldDirty: true, shouldValidate: true })
-                    }
-                    error={form.formState.errors.email?.message}
-                    placeholder="Optional"
-                />
-
                 <Controller
                     control={form.control}
                     name="lookingFor"
                     render={({ field }) => (
-                        <Segmented
+                        <ChoiceRadioField
+                            name="looking-for"
                             label="Looking for"
                             value={field.value}
                             onChange={field.onChange}
                             options={[
-                                { value: "buy", label: "Buy" },
-                                { value: "rent", label: "Rent" },
+                                {
+                                    value: "buy",
+                                    label: "Buy",
+                                    description: "Find a property to buy",
+                                },
+                                { value: "rent", label: "Rent", description: "Find a rental" },
                             ]}
                         />
                     )}
                 />
 
-                <SelectField
-                    label="Property type"
-                    required
-                    value={propertyKind}
-                    onChange={(propertyKindNext) => {
-                        form.setValue(
-                            "propertyKind",
-                            propertyKindNext as BuyerFormValues["propertyKind"],
-                            {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            },
-                        );
-                        if (
-                            KINDS_WITHOUT_BHK.includes(
+                <div className={showBhk ? "grid grid-cols-1 gap-4 sm:grid-cols-2" : undefined}>
+                    <ComboboxField
+                        label="Property type"
+                        required
+                        value={propertyKind}
+                        placeholder="Property type"
+                        emptyText="No type matches"
+                        groups={PROPERTY_KIND_GROUPS}
+                        error={form.formState.errors.propertyKind?.message}
+                        onChange={(propertyKindNext) => {
+                            form.setValue(
+                                "propertyKind",
                                 propertyKindNext as BuyerFormValues["propertyKind"],
-                            )
-                        ) {
-                            form.setValue("bhk", "", { shouldDirty: true });
-                        } else if (!values.bhk) {
-                            form.setValue("bhk", "2", { shouldDirty: true });
-                        }
-                    }}
-                    options={PROPERTY_KIND_OPTIONS.map((option) => ({
-                        value: option.value,
-                        label: option.label,
-                    }))}
-                    error={form.formState.errors.propertyKind?.message}
-                />
-
-                {showBhk ? (
-                    <SelectField
-                        label="BHK"
-                        value={values.bhk ?? ""}
-                        onChange={(bhk) =>
-                            form.setValue("bhk", bhk, { shouldDirty: true, shouldValidate: true })
-                        }
-                        options={BHK_OPTIONS.map((value) => ({ value, label: `${value} BHK` }))}
-                        placeholder="Any"
-                        error={form.formState.errors.bhk?.message}
+                                {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                },
+                            );
+                            if (
+                                KINDS_WITHOUT_BHK.includes(
+                                    propertyKindNext as BuyerFormValues["propertyKind"],
+                                )
+                            ) {
+                                form.setValue("bhk", "", { shouldDirty: true });
+                            } else if (!values.bhk) {
+                                form.setValue("bhk", "2", { shouldDirty: true });
+                            }
+                        }}
                     />
-                ) : null}
+
+                    {showBhk ? (
+                        <ComboboxField
+                            label="BHK"
+                            value={values.bhk ?? ""}
+                            placeholder="Any"
+                            emptyText="No BHK matches"
+                            options={BHK_OPTIONS.map((value) => ({
+                                value,
+                                label: `${value} BHK`,
+                            }))}
+                            error={form.formState.errors.bhk?.message}
+                            onChange={(bhk) =>
+                                form.setValue("bhk", bhk, {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                })
+                            }
+                        />
+                    ) : null}
+                </div>
 
                 <LocalityPicker
-                    label="Preferred localities"
+                    label="Areas"
                     required
                     values={localityList}
-                    placeholder="Vesu, Adajan…"
+                    placeholder="Type another area…"
                     error={form.formState.errors.localities?.message}
                     onChange={(next) =>
                         form.setValue("localities", next.join(", "), {
@@ -379,59 +396,68 @@ export function AddBuyerModal({
                     }
                 />
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <TextField
-                        label="Budget min (₹)"
-                        inputMode="numeric"
-                        value={values.budgetMin ?? ""}
-                        onValueChange={(budgetMin) =>
-                            form.setValue("budgetMin", normalizeBuyerBudget(budgetMin), {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        error={form.formState.errors.budgetMin?.message}
-                        placeholder="Optional"
-                    />
-                    <TextField
-                        label="Budget max (₹)"
-                        inputMode="numeric"
-                        value={values.budgetMax ?? ""}
-                        onValueChange={(budgetMax) =>
-                            form.setValue("budgetMax", normalizeBuyerBudget(budgetMax), {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        error={form.formState.errors.budgetMax?.message}
-                        placeholder="Optional"
-                    />
-                </div>
-
-                <SelectField
-                    label="Source"
-                    required
-                    value={values.source ?? "walk_in"}
-                    onChange={(source) =>
-                        form.setValue("source", source as BuyerFormValues["source"], {
+                <BudgetRangeField
+                    lookingFor={values.lookingFor ?? "buy"}
+                    minInr={values.budgetMin ?? ""}
+                    maxInr={values.budgetMax ?? ""}
+                    onMinChange={(budgetMin) =>
+                        form.setValue("budgetMin", budgetMin, {
                             shouldDirty: true,
                             shouldValidate: true,
                         })
                     }
-                    options={SOURCE_OPTIONS.map((option) => ({
-                        value: option.value,
-                        label: option.label,
-                    }))}
-                    error={form.formState.errors.source?.message}
+                    onMaxChange={(budgetMax) =>
+                        form.setValue("budgetMax", budgetMax, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                        })
+                    }
+                    minError={form.formState.errors.budgetMin?.message}
+                    maxError={form.formState.errors.budgetMax?.message}
                 />
 
-                <NotesField
-                    value={values.note ?? ""}
-                    onChange={(note) =>
-                        form.setValue("note", note, { shouldDirty: true, shouldValidate: true })
-                    }
-                    error={form.formState.errors.note?.message}
-                />
+                <MoreDetails open={moreOpen} onOpenChange={setMoreOpen}>
+                    <TextField
+                        label="Email"
+                        type="email"
+                        value={values.email ?? ""}
+                        onValueChange={(email) =>
+                            form.setValue("email", email, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                            })
+                        }
+                        error={form.formState.errors.email?.message}
+                        placeholder="Optional"
+                    />
+
+                    <SelectField
+                        label="Source"
+                        value={values.source ?? "walk_in"}
+                        onChange={(source) =>
+                            form.setValue("source", source as BuyerFormValues["source"], {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                            })
+                        }
+                        options={SOURCE_OPTIONS.map((option) => ({
+                            value: option.value,
+                            label: option.label,
+                        }))}
+                        error={form.formState.errors.source?.message}
+                    />
+
+                    <NotesField
+                        value={values.note ?? ""}
+                        onChange={(note) =>
+                            form.setValue("note", note, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                            })
+                        }
+                        error={form.formState.errors.note?.message}
+                    />
+                </MoreDetails>
             </div>
         </ContactFormDrawer>
     );
