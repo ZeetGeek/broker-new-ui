@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
-import { attachedClientsByProperty } from "@/lib/api/clients";
+import { type AttachedClientRef, attachedClientsByProperty } from "@/lib/api/clients";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { PropertyListing } from "@/lib/api/properties";
 import {
@@ -20,8 +20,8 @@ import {
     urlsToPhotoFiles,
 } from "@/features/properties/your-listings/map-my-listing";
 import {
-    MOCK_MY_LISTINGS_SEED,
     applyListingUpdate,
+    MOCK_MY_LISTINGS_SEED,
 } from "@/features/properties/your-listings/mock-my-listings";
 import type {
     CreateMyListingInput,
@@ -141,7 +141,10 @@ export const myListingsApi = {
     async list(
         filters: Partial<MyListingsFilters> = {},
         signal?: AbortSignal,
+        /** Owners have no buyer book, so skip the leads scan for them. */
+        options: { withAttachedClients?: boolean } = {},
     ): Promise<MyListingsResult> {
+        const { withAttachedClients = true } = options;
         const merged: MyListingsFilters = { ...DEFAULT_MY_LISTINGS_FILTERS, ...filters };
         if (isMockMode()) {
             const matched = filterMockMyListings(merged);
@@ -160,7 +163,9 @@ export const myListingsApi = {
 
         const [page, attachedByProperty] = await Promise.all([
             propertiesApi.list(query, signal),
-            attachedClientsByProperty(),
+            withAttachedClients
+                ? attachedClientsByProperty()
+                : Promise.resolve(new Map<string, AttachedClientRef[]>()),
         ]);
         return {
             items: page.items.map((listing) => {

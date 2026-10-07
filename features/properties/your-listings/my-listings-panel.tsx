@@ -103,6 +103,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             const result = await myListingsApi.list(
                 { ...infiniteFilters, page: cursor ? Number(cursor) : 1 },
                 signal,
+                { withAttachedClients: !isOwnerPortal },
             );
             return {
                 ...result,
