@@ -7,7 +7,8 @@ import { tinykeys } from "tinykeys";
 import { useQuery } from "@tanstack/react-query";
 import { Search, UserPlus, UserRound, UserRoundPlus, Users } from "lucide-react";
 
-import type { NewBuyerInput } from "@/lib/api/clients";
+import { ApiError } from "@/lib/api/client";
+import { clientsApi, type NewBuyerInput } from "@/lib/api/clients";
 import { contactsApi, sortBuyerRows } from "@/lib/api/contacts";
 import { PREF_KEYS } from "@/lib/prefs/keys";
 import { getShortcut } from "@/lib/shortcuts";
@@ -23,10 +24,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
 import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
-import { AttachBuyerPropertiesModal } from "@/features/contacts/attach-buyer-properties-modal";
+import {
+    AttachBuyerPropertiesModal,
+    type AttachBuyerTarget,
+} from "@/features/contacts/attach-buyer-properties-modal";
 import { AttachOwnerToListingModal } from "@/features/contacts/attach-owner-to-listing-modal";
 import { BuyerCard } from "@/features/contacts/buyer-card";
+import type { ContactPropertyCardItem } from "@/features/contacts/contact-card-model";
 import { ContactDetailPanel } from "@/features/contacts/contact-detail-panel";
+import { DeleteBuyerDialog } from "@/features/contacts/delete-buyer-dialog";
 import {
     emptyOwnerForm,
     type BuyerContactForm,
@@ -85,8 +91,10 @@ export function ContactsPage() {
     const [isOwnerAddOpen, setIsOwnerAddOpen] = useState(false);
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
     const [editingOwner, setEditingOwner] = useState<OwnerRow | null>(null);
-    const [attachingBuyer, setAttachingBuyer] = useState<BuyerRow | null>(null);
+    const [attachingBuyer, setAttachingBuyer] = useState<AttachBuyerTarget | null>(null);
     const [attachingOwner, setAttachingOwner] = useState<OwnerRow | null>(null);
+    const [deletingBuyer, setDeletingBuyer] = useState<BuyerRow | null>(null);
+    const [deleteBusy, setDeleteBusy] = useState(false);
     const [selectedContact, setSelectedContact] = useState<
         { type: "buyer"; row: BuyerRow } | { type: "owner"; row: OwnerRow } | null
     >(null);
@@ -127,6 +135,71 @@ export function ContactsPage() {
         setAttachingBuyer(null);
         setAttachingOwner(null);
     }, []);
+
+    const detachBuyerProperty = useCallback(
+        async (buyer: BuyerRow, property: ContactPropertyCardItem) => {
+            if (!property.leadId) {
+                throw new Error("This property cannot be removed.");
+            }
+            try {
+                await clientsApi.removeLead(property.leadId);
+                setSelectedContact((current) => {
+                    if (current?.type !== "buyer" || current.row.id !== buyer.id) return current;
+                    const attachedProperties = current.row.attachedProperties.filter(
+                        (item) => item.leadId !== property.leadId,
+                    );
+                    return {
+                        type: "buyer",
+                        row: {
+                            ...current.row,
+                            attachedProperties,
+                            liveDealCount: attachedProperties.length,
+                            activePropertyTitles: attachedProperties.map((item) => item.title),
+                            leads: current.row.leads.filter(
+                                (lead) => lead.leadId !== property.leadId,
+                            ),
+                        },
+                    };
+                });
+                setRevision((prev) => prev + 1);
+                toast.success("Property removed from this buyer");
+            } catch (error) {
+                const message =
+                    error instanceof ApiError
+                        ? error.message
+                        : error instanceof Error
+                          ? error.message
+                          : "Could not remove property";
+                toast.error(message);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const handleDeleteBuyer = useCallback(async () => {
+        if (!deletingBuyer) return;
+        setDeleteBusy(true);
+        try {
+            await clientsApi.remove(deletingBuyer.id);
+            toast.success(`${deletingBuyer.name} removed from your buyers`);
+            setDeletingBuyer(null);
+            setSelectedContact((current) =>
+                current?.type === "buyer" && current.row.id === deletingBuyer.id ? null : current,
+            );
+            setRevision((prev) => prev + 1);
+        } catch (error) {
+            toast.error(
+                error instanceof ApiError
+                    ? error.message
+                    : error instanceof Error
+                      ? error.message
+                      : "Could not delete this buyer. Try again.",
+            );
+        } finally {
+            setDeleteBusy(false);
+        }
+    }, [deletingBuyer]);
 
     const handleOwnerSaved = useCallback((name: string, mode: "created" | "updated") => {
         setRevision((prev) => prev + 1);
@@ -382,6 +455,7 @@ export function ContactsPage() {
                                         }
                                         onEdit={setEditingBuyer}
                                         onAttachProperties={setAttachingBuyer}
+                                        onDelete={setDeletingBuyer}
                                     />
                                 )}
                             />
@@ -455,6 +529,15 @@ export function ContactsPage() {
                     buyer={editingBuyer}
                     onCreated={handleCreated}
                     onUpdated={handleUpdated}
+                    onAttach={
+                        editingBuyer
+                            ? () => {
+                                  const target = editingBuyer;
+                                  setEditingBuyer(null);
+                                  setAttachingBuyer(target);
+                              }
+                            : undefined
+                    }
                 />
 
                 {attachingBuyer ? (
@@ -467,6 +550,16 @@ export function ContactsPage() {
                         onSaved={handleAttached}
                     />
                 ) : null}
+
+                <DeleteBuyerDialog
+                    open={deletingBuyer != null}
+                    onOpenChange={(next) => {
+                        if (!next && !deleteBusy) setDeletingBuyer(null);
+                    }}
+                    name={deletingBuyer?.name ?? ""}
+                    busy={deleteBusy}
+                    onConfirm={() => void handleDeleteBuyer()}
+                />
 
                 {attachingOwner ? (
                     <AttachOwnerToListingModal
@@ -502,6 +595,7 @@ export function ContactsPage() {
                         closeContact();
                         setAttachingOwner(owner);
                     }}
+                    onDetachBuyerProperty={detachBuyerProperty}
                     onQuickUpdateBuyer={quickUpdateBuyer}
                     onQuickUpdateOwner={quickUpdateOwner}
                 />

@@ -32,12 +32,14 @@ export function BuyerCard({
     onEdit,
     onAttachProperties,
     onOpenProperties,
+    onDelete,
 }: {
     buyer: BuyerRow;
     onOpen: (buyer: BuyerRow) => void;
     onEdit: (buyer: BuyerRow) => void;
     onAttachProperties: (buyer: BuyerRow) => void;
     onOpenProperties?: (buyer: BuyerRow) => void;
+    onDelete?: (buyer: BuyerRow) => void;
     onViewLeads?: (buyer: BuyerRow) => void;
 }) {
     const model = toBuyerContactCardModel(buyer);
@@ -120,6 +122,7 @@ export function BuyerCard({
                         onEdit={() => onEdit(buyer)}
                         onAttach={attach}
                         onNotes={open}
+                        onDelete={onDelete ? () => onDelete(buyer) : undefined}
                         density="menu"
                     />
                 </div>

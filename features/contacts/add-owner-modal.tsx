@@ -16,19 +16,19 @@ import {
 
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
 import {
+    ChoiceRadioField,
+    ComboboxField,
     ContactFormDrawer,
     MoreDetails,
     NotesField,
-    Segmented,
-    SelectField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
 import type { OwnerRow } from "@/features/contacts/types";
 
 const OWNER_TYPE_OPTIONS = [
-    { value: "individual", label: "Individual" },
-    { value: "builder", label: "Builder" },
-    { value: "company", label: "Company" },
+    { value: "individual", label: "Individual", description: "Private person" },
+    { value: "builder", label: "Builder", description: "Project developer" },
+    { value: "company", label: "Company", description: "Business owner" },
 ] as const;
 
 function emptyValues(): ExclusiveOwnerFormValues {
@@ -124,34 +124,39 @@ export function AddOwnerModal({
         );
     }, [open, owner, reset]);
 
-    const save = handleSubmit(async (parsed) => {
-        if (isEdit) {
-            setSubmitError("Editing owners is not available yet.");
-            return;
-        }
-        setBusy(true);
-        setSubmitError("");
-        try {
-            const saved = await exclusiveOwnersApi.create({
-                ...parsed,
-                phone: normalizeExclusiveOwnerPhone(parsed.phone),
-            });
-            onSaved(saved.fullName, "created");
-            toast.success(`Added ${saved.fullName}`);
-            reset(emptyValues());
-            onOpenChange(false);
-        } catch (error) {
-            const message =
-                error instanceof ApiError
-                    ? error.message
-                    : error instanceof Error
-                      ? error.message
-                      : "Could not save this owner. Try again.";
-            setSubmitError(message);
-        } finally {
-            setBusy(false);
-        }
-    });
+    const save = handleSubmit(
+        async (parsed) => {
+            if (isEdit) {
+                setSubmitError("Editing owners is not available yet.");
+                return;
+            }
+            setBusy(true);
+            setSubmitError("");
+            try {
+                const saved = await exclusiveOwnersApi.create({
+                    ...parsed,
+                    phone: normalizeExclusiveOwnerPhone(parsed.phone),
+                });
+                onSaved(saved.fullName, "created");
+                toast.success(`Added ${saved.fullName}`);
+                reset(emptyValues());
+                onOpenChange(false);
+            } catch (error) {
+                const message =
+                    error instanceof ApiError
+                        ? error.message
+                        : error instanceof Error
+                          ? error.message
+                          : "Could not save this owner. Try again.";
+                setSubmitError(message);
+            } finally {
+                setBusy(false);
+            }
+        },
+        () => {
+            setSubmitError("Check the highlighted fields and try again.");
+        },
+    );
 
     return (
         <ContactFormDrawer
@@ -163,17 +168,9 @@ export function AddOwnerModal({
             busy={busy}
             primaryLabel={isEdit ? "Save changes" : "Save owner"}
             onPrimary={() => void save()}
+            footerError={submitError || undefined}
         >
             <div className="space-y-5">
-                {submitError ? (
-                    <p
-                        role="alert"
-                        className="body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger"
-                    >
-                        {submitError}
-                    </p>
-                ) : null}
-
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <TextField
                         label="Full name"
@@ -210,9 +207,10 @@ export function AddOwnerModal({
                     control={control}
                     name="ownerType"
                     render={({ field }) => (
-                        <Segmented
+                        <ChoiceRadioField
+                            name="owner-type"
                             label="Owner type"
-                            tone="brand"
+                            columns={3}
                             value={field.value}
                             onChange={field.onChange}
                             options={[...OWNER_TYPE_OPTIONS]}
@@ -309,17 +307,22 @@ export function AddOwnerModal({
                         placeholder="Optional"
                     />
 
-                    <SelectField
+                    <ComboboxField
                         label="Source"
                         value={values.source ?? ""}
+                        placeholder="Source"
+                        emptyText="No source matches"
+                        options={SOURCE_OPTIONS.map((option) => ({
+                            value: option.value,
+                            label: option.label,
+                        }))}
+                        error={errors.source?.message}
                         onChange={(source) =>
                             setValue("source", source as ExclusiveOwnerFormValues["source"], {
                                 shouldDirty: true,
                                 shouldValidate: true,
                             })
                         }
-                        options={SOURCE_OPTIONS}
-                        error={errors.source?.message}
                     />
 
                     <NotesField

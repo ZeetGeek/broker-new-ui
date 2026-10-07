@@ -5,6 +5,8 @@ import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 
 export type ContactPropertyCardItem = {
     id: string;
+    /** Lead id for detach — empty when the row is not a live attachment. */
+    leadId: string;
     title: string;
     locality: string;
     priceLabel: string;
@@ -67,6 +69,7 @@ export function toBuyerContactCardModel(buyer: BuyerRow): BuyerContactCardModel 
             const lead = buyer.leads.find((item) => item.propertyId === property.id);
             return {
                 id: property.id,
+                leadId: property.leadId || lead?.leadId || "",
                 title: property.title,
                 locality: property.locality || lead?.city || "Surat",
                 priceLabel:
@@ -98,6 +101,7 @@ export function toOwnerContactCardModel(owner: OwnerRow): OwnerContactCardModel 
     const properties = owner.properties?.length
         ? owner.properties.map((property) => ({
               id: property.id,
+              leadId: "",
               title: property.title,
               locality: property.locality || owner.localities[0] || "Surat",
               priceLabel: property.priceLabel || askingPrice,
@@ -110,6 +114,7 @@ export function toOwnerContactCardModel(owner: OwnerRow): OwnerContactCardModel 
                       index === 0 && owner.linkedListingId
                           ? owner.linkedListingId
                           : `${owner.id}_${index}`,
+                  leadId: "",
                   title: titleForOwnerProperty(owner, index),
                   locality: owner.localities[index] || owner.localities[0] || "Surat",
                   priceLabel: askingPrice,

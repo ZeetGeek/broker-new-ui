@@ -5,13 +5,12 @@ import { type ComponentProps, type ReactNode, useEffect, useMemo, useRef, useSta
 import { Check, ChevronDown, MapPin, X } from "lucide-react";
 import { tinykeys } from "tinykeys";
 
-import { formatInrInput, inrWordHint, parseInr } from "@/lib/format/inr";
+import { formatInrInput, parseInr } from "@/lib/format/inr";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { Button } from "@/components/ui/button";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     Combobox,
@@ -44,44 +43,6 @@ function IndianRupeeIcon(props: ComponentProps<"svg">) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
             <path d="M6 4h12M6 8h12M7 4c5 0 7 2 7 5s-2 5-7 5h-1l8 7" />
         </svg>
-    );
-}
-
-function useModKeyLabel() {
-    const [label, setLabel] = useState("Ctrl");
-    useEffect(() => {
-        setLabel(/Mac|iPhone|iPod|iPad/.test(navigator.platform) ? "⌘" : "Ctrl");
-    }, []);
-    return label;
-}
-
-function ShortcutKbd({
-    keys,
-    onAccent,
-}: {
-    keys: string[];
-    /** Light keys on brand primary buttons */
-    onAccent?: boolean;
-}) {
-    const keyClass = cn(
-        "px-1.5 text-[10px] min-inline-4 [box-shadow:none]",
-        onAccent
-            ? "border-surface/25 bg-surface/15 text-surface"
-            : "border-border-warm/60 bg-surface-muted text-ink-muted",
-    );
-    return (
-        <KbdGroup className="hidden gap-0.5 sm:inline-flex">
-            {keys.map((key, index) => (
-                <span key={`${key}-${index}`} className="inline-flex items-center gap-0.5">
-                    {index > 0 ? (
-                        <span className="text-[10px] text-ink-subtle" aria-hidden>
-                            +
-                        </span>
-                    ) : null}
-                    <Kbd className={keyClass}>{key}</Kbd>
-                </span>
-            ))}
-        </KbdGroup>
     );
 }
 
@@ -539,15 +500,13 @@ function ContactCurrencyInput({
     valueDigits,
     onChangeDigits,
     error,
-    placeholder = "e.g. 800000 or 800k",
-    helperFallback = "Type 800000, 800k, or 60L",
+    placeholder = "Optional",
 }: {
     id: string;
     valueDigits: string;
     onChangeDigits: (digits: string) => void;
     error?: string;
     placeholder?: string;
-    helperFallback?: string;
 }) {
     const numericValue =
         valueDigits && Number.isFinite(Number(valueDigits)) && Number(valueDigits) > 0
@@ -569,7 +528,6 @@ function ContactCurrencyInput({
             placeholder={placeholder}
             startIcon={IndianRupeeIcon}
             errorText={error}
-            helperText={numericValue ? inrWordHint(numericValue) : helperFallback}
             onFocus={() => {
                 setDisplay(formatInrInput(numericValue));
                 setFocused(true);
@@ -615,11 +573,6 @@ export function BudgetRangeField({
 
     return (
         <div className="space-y-3">
-            <div className="flex flex-wrap items-end justify-between gap-2">
-                <p className="text-sm font-semibold text-ink">Budget</p>
-                {isRent ? <p className="text-xs/5 text-ink-muted">Monthly rent</p> : null}
-            </div>
-
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField label="Budget min">
                     <ContactCurrencyInput
@@ -627,8 +580,6 @@ export function BudgetRangeField({
                         valueDigits={minInr}
                         onChangeDigits={onMinChange}
                         error={minError}
-                        placeholder="Optional"
-                        helperFallback="Optional"
                     />
                 </FormField>
                 <FormField label="Budget max">
@@ -637,8 +588,6 @@ export function BudgetRangeField({
                         valueDigits={maxInr}
                         onChangeDigits={onMaxChange}
                         error={maxError}
-                        placeholder="Optional"
-                        helperFallback="Optional"
                     />
                 </FormField>
             </div>
@@ -920,6 +869,7 @@ export function ContactFormDrawer({
     onPrimary,
     onSaveAnother,
     saveAnotherLabel = "Save & add another",
+    footerError,
     children,
     header,
 }: {
@@ -933,10 +883,12 @@ export function ContactFormDrawer({
     onPrimary: () => void;
     onSaveAnother?: () => void;
     saveAnotherLabel?: string;
+    /** Sticky above the action buttons so save failures stay visible. */
+    footerError?: string;
     children: ReactNode;
     header?: ReactNode;
 }) {
-    const modKey = useModKeyLabel();
+    const bodyRef = useRef<HTMLDivElement>(null);
     const onPrimaryRef = useRef(onPrimary);
     const onSaveAnotherRef = useRef(onSaveAnother);
     onPrimaryRef.current = onPrimary;
@@ -966,6 +918,19 @@ export function ContactFormDrawer({
         return () => unsubscribe();
     }, [busy, open]);
 
+    useEffect(() => {
+        if (!footerError || !open) return;
+        const scrollRoot =
+            bodyRef.current?.closest(".simplebar-content-wrapper") ??
+            bodyRef.current?.closest("[data-simplebar]") ??
+            bodyRef.current?.parentElement;
+        if (scrollRoot instanceof HTMLElement) {
+            scrollRoot.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+            bodyRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+        }
+    }, [footerError, open]);
+
     return (
         <AppModal
             open={open}
@@ -982,31 +947,29 @@ export function ContactFormDrawer({
             headerClassName="
               !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b border-border-warm
             "
-            footerClassName="!pbs-(--dialog-pad) !pbe-(--dialog-pad)"
+            footerClassName="
+              !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
+            "
             header={header}
             footer={
-                <div className="flex flex-wrap items-center justify-between gap-2 inline-full">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => requestClose(false)}
-                        disabled={busy}
-                        className="gap-2"
-                    >
-                        Cancel
-                        <ShortcutKbd keys={["Esc"]} />
-                    </Button>
-                    <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-col gap-3 inline-full">
+                    {footerError ? (
+                        <p
+                            role="alert"
+                            className="body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger"
+                        >
+                            {footerError}
+                        </p>
+                    ) : null}
+                    <div className="flex flex-wrap items-center justify-end gap-2">
                         {onSaveAnother ? (
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={onSaveAnother}
                                 disabled={busy}
-                                className="gap-2"
                             >
                                 {saveAnotherLabel}
-                                <ShortcutKbd keys={[modKey, "⇧", "Enter"]} />
                             </Button>
                         ) : null}
                         <Button
@@ -1015,16 +978,16 @@ export function ContactFormDrawer({
                             onClick={onPrimary}
                             disabled={busy}
                             loading={busy}
-                            className="gap-2"
                         >
                             {primaryLabel}
-                            <ShortcutKbd keys={[modKey, "Enter"]} onAccent />
                         </Button>
                     </div>
                 </div>
             }
         >
-            <div className="mx-auto inline-full max-inline-2xl">{children}</div>
+            <div ref={bodyRef} className="mx-auto inline-full max-inline-2xl">
+                {children}
+            </div>
         </AppModal>
     );
 }

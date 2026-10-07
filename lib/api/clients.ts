@@ -744,6 +744,16 @@ export const clientsApi = {
         return mapContact(contact);
     },
 
+    /** Remove a buyer from the broker's book. */
+    async remove(clientId: string): Promise<void> {
+        if (isMockMode()) {
+            const index = MOCK_CLIENTS.findIndex((client) => client.id === clientId);
+            if (index >= 0) MOCK_CLIENTS.splice(index, 1);
+            return;
+        }
+        await apiFetch<void>(`/clients/${clientId}`, { method: "DELETE" });
+    },
+
     /** Buyers plus who is already on this property, for the attach picker. */
     async listForProperty(propertyId: string): Promise<PropertyClientsResult> {
         if (isMockMode()) {
@@ -804,6 +814,31 @@ export const clientsApi = {
                 }),
             ),
         );
+    },
+
+    /** Unlink a buyer from one property (deletes the lead). */
+    async removeLead(leadId: string): Promise<void> {
+        if (isMockMode()) {
+            const deal = MOCK_DEALS.find((item) => item.id === leadId);
+            if (deal) {
+                deal.status = "lost";
+                const propertyId = deal.property.id;
+                const clientId = deal.buyer.id;
+                const attached = MOCK_PROPERTY_CLIENTS[propertyId];
+                if (attached) {
+                    MOCK_PROPERTY_CLIENTS[propertyId] = attached.filter((id) => id !== clientId);
+                    if (MOCK_PROPERTY_CLIENTS[propertyId]?.length === 0) {
+                        delete MOCK_PROPERTY_CLIENTS[propertyId];
+                    }
+                }
+                const client = MOCK_CLIENTS.find((item) => item.id === clientId);
+                if (client && client.attachedPropertyCount > 0) {
+                    client.attachedPropertyCount -= 1;
+                }
+            }
+            return;
+        }
+        await apiFetch<void>(`/clients/leads/${leadId}`, { method: "DELETE" });
     },
 };
 

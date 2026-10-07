@@ -17,6 +17,8 @@ import {
     parseBuyerLocalities,
 } from "@/lib/validation/buyer";
 
+import { Link2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 
 import {
@@ -33,7 +35,6 @@ import {
     LocalityPicker,
     MoreDetails,
     NotesField,
-    SelectField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
 import type { BuyerRow } from "@/features/contacts/types";
@@ -143,12 +144,15 @@ export function AddBuyerModal({
     onCreated,
     buyer = null,
     onUpdated,
+    onAttach,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onCreated: (name: string, id?: string) => void;
     buyer?: BuyerRow | null;
     onUpdated?: (name: string) => void;
+    /** Edit mode — open the attach-properties sheet for this buyer. */
+    onAttach?: () => void;
 }) {
     const isEdit = Boolean(buyer);
     const form = useForm<BuyerFormValues>({
@@ -203,8 +207,17 @@ export function AddBuyerModal({
         [values.localities],
     );
 
+    const onInvalid = () => {
+        setFormError("Check the highlighted fields and try again.");
+    };
+
     const save = form.handleSubmit(async (parsed) => {
-        if (duplicate && !ignoreDuplicate && !isEdit) return;
+        if (duplicate && !ignoreDuplicate && !isEdit) {
+            setFormError(
+                "This mobile number is already saved. Open the existing contact, or continue anyway.",
+            );
+            return;
+        }
         setBusy(true);
         setFormError(undefined);
         try {
@@ -225,10 +238,15 @@ export function AddBuyerModal({
         } finally {
             setBusy(false);
         }
-    });
+    }, onInvalid);
 
     const saveAnother = form.handleSubmit(async (parsed) => {
-        if (duplicate && !ignoreDuplicate) return;
+        if (duplicate && !ignoreDuplicate) {
+            setFormError(
+                "This mobile number is already saved. Open the existing contact, or continue anyway.",
+            );
+            return;
+        }
         setBusy(true);
         setFormError(undefined);
         try {
@@ -251,7 +269,7 @@ export function AddBuyerModal({
         } finally {
             setBusy(false);
         }
-    });
+    }, onInvalid);
 
     return (
         <ContactFormDrawer
@@ -264,16 +282,9 @@ export function AddBuyerModal({
             primaryLabel={isEdit ? "Save changes" : "Save buyer"}
             onPrimary={() => void save()}
             onSaveAnother={isEdit ? undefined : () => void saveAnother()}
+            footerError={formError}
         >
             <div className="space-y-5">
-                {formError ? (
-                    <p
-                        role="alert"
-                        className="body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger"
-                    >
-                        {formError}
-                    </p>
-                ) : null}
                 {duplicate && !ignoreDuplicate && !isEdit ? (
                     <DuplicateWarning
                         match={duplicate}
@@ -416,6 +427,24 @@ export function AddBuyerModal({
                     maxError={form.formState.errors.budgetMax?.message}
                 />
 
+                {isEdit && onAttach ? (
+                    <div className="space-y-2">
+                        <p className="text-sm font-semibold text-ink">Matched properties</p>
+                        <button
+                            type="button"
+                            onClick={onAttach}
+                            className="
+                              body-sm flex items-center gap-2 rounded-control border border-dashed
+                              border-brand/35 px-4 py-3.5 font-semibold text-brand-text inline-full
+                              hover:bg-brand-soft/40
+                            "
+                        >
+                            <Link2 aria-hidden className="block-4 inline-4" />
+                            Attach property
+                        </button>
+                    </div>
+                ) : null}
+
                 <MoreDetails open={moreOpen} onOpenChange={setMoreOpen}>
                     <TextField
                         label="Email"
@@ -431,20 +460,22 @@ export function AddBuyerModal({
                         placeholder="Optional"
                     />
 
-                    <SelectField
+                    <ComboboxField
                         label="Source"
                         value={values.source ?? "walk_in"}
+                        placeholder="Source"
+                        emptyText="No source matches"
+                        options={SOURCE_OPTIONS.map((option) => ({
+                            value: option.value,
+                            label: option.label,
+                        }))}
+                        error={form.formState.errors.source?.message}
                         onChange={(source) =>
                             form.setValue("source", source as BuyerFormValues["source"], {
                                 shouldDirty: true,
                                 shouldValidate: true,
                             })
                         }
-                        options={SOURCE_OPTIONS.map((option) => ({
-                            value: option.value,
-                            label: option.label,
-                        }))}
-                        error={form.formState.errors.source?.message}
                     />
 
                     <NotesField
