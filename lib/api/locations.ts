@@ -26,9 +26,26 @@ export type CityItem = {
     name: string;
 };
 
+export type CitySearchItem = CityItem & {
+    stateName: string;
+};
+
+export type LocalityItem = {
+    id: string;
+    name: string;
+    /** Google's secondary line, e.g. "Surat, Gujarat, India". */
+    description: string | null;
+};
+
 type CountriesResponse = { items: CountryItem[] };
 type StatesResponse = { country: CountryItem; importStatus: string; items: StateItem[] };
 type CitiesResponse = { state: StateItem; items: CityItem[] };
+type CitySearchResponse = { items: CitySearchItem[] };
+type LocalitiesResponse = {
+    city: { id: string; name: string };
+    source: "db" | "google";
+    items: LocalityItem[];
+};
 
 /**
  * Design-mode fixtures. Kept to the launch country only — the real list comes
@@ -78,6 +95,36 @@ const MOCK_CITIES: Record<string, CityItem[]> = {
     "state-dl": [{ id: "city-new-delhi", name: "New Delhi" }],
 };
 
+const MOCK_LOCALITIES: Record<string, string[]> = {
+    "city-surat": [
+        "Adajan",
+        "Althan",
+        "Athwa",
+        "Bhatar",
+        "Citylight",
+        "Katargam",
+        "Pal",
+        "Piplod",
+        "Varachha",
+        "Vesu",
+    ],
+    "city-ahmedabad": [
+        "Bodakdev",
+        "Bopal",
+        "Maninagar",
+        "Navrangpura",
+        "Prahlad Nagar",
+        "Satellite",
+    ],
+    "city-mumbai": ["Andheri West", "Bandra West", "Borivali", "Malad", "Powai", "Thane West"],
+    "city-pune": ["Baner", "Hinjewadi", "Kothrud", "Viman Nagar", "Wakad"],
+};
+
+function matchesSearch(name: string, search: string | undefined): boolean {
+    const needle = search?.trim().toLowerCase();
+    return !needle || name.toLowerCase().includes(needle);
+}
+
 export const locationsApi = {
     async countries(options: { supportedOnly?: boolean } = {}): Promise<CountryItem[]> {
         if (isMockMode()) return MOCK_COUNTRIES;
@@ -111,6 +158,59 @@ export const locationsApi = {
 
         const response = await apiFetch<CitiesResponse>(
             `/locations/states/${encodeURIComponent(stateId)}/cities`,
+        );
+        return response.items ?? [];
+    },
+
+    /**
+     * Cities across a whole country, for city fields with no state picker.
+     * Each row carries its state so two same-named cities can be told apart.
+     */
+    async searchCities(
+        countryIso2: string,
+        options: { search?: string; limit?: number } = {},
+    ): Promise<CitySearchItem[]> {
+        if (isMockMode()) {
+            return MOCK_STATES.flatMap((state) =>
+                (MOCK_CITIES[state.id] ?? []).map((city) => ({ ...city, stateName: state.name })),
+            )
+                .filter((city) => matchesSearch(city.name, options.search))
+                .slice(0, options.limit ?? 20);
+        }
+
+        const search = new URLSearchParams();
+        if (options.search?.trim()) search.set("search", options.search.trim());
+        if (options.limit) search.set("limit", String(options.limit));
+        const query = search.toString();
+
+        const response = await apiFetch<CitySearchResponse>(
+            `/locations/countries/${encodeURIComponent(countryIso2)}/cities${query ? `?${query}` : ""}`,
+        );
+        return response.items ?? [];
+    },
+
+    /**
+     * Locality autocomplete for a city. The backend answers from its own table
+     * and only asks Google Maps when nothing stored matches the search.
+     */
+    async localities(
+        cityId: string,
+        options: { search?: string; limit?: number } = {},
+    ): Promise<LocalityItem[]> {
+        if (isMockMode()) {
+            return (MOCK_LOCALITIES[cityId] ?? [])
+                .filter((name) => matchesSearch(name, options.search))
+                .slice(0, options.limit ?? 20)
+                .map((name) => ({ id: `${cityId}-${name}`, name, description: null }));
+        }
+
+        const search = new URLSearchParams();
+        if (options.search?.trim()) search.set("search", options.search.trim());
+        if (options.limit) search.set("limit", String(options.limit));
+        const query = search.toString();
+
+        const response = await apiFetch<LocalitiesResponse>(
+            `/locations/cities/${encodeURIComponent(cityId)}/localities${query ? `?${query}` : ""}`,
         );
         return response.items ?? [];
     },

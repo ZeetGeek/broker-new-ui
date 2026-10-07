@@ -13,7 +13,6 @@ import {
     Landmark,
     Map,
     MapPin,
-    MapPinned,
     Pencil,
     RotateCcw,
     Route,
@@ -30,6 +29,7 @@ import {
     FORM_GRID_3_CLASS,
     FORM_SECTIONS_CLASS,
     FORM_STACK_CLASS,
+    LocalityField,
     NumberField,
     SelectField,
     TextAreaField,
@@ -91,9 +91,11 @@ export function StepLocation() {
         citiesLoading,
         selectedCountry,
         selectedState,
+        selectedCity,
     } = useLocationOptions({
         countryName: location.country,
         stateName: location.state,
+        cityName: location.city,
     });
     const country = location.country;
     const pincode = location.pincode;
@@ -247,9 +249,10 @@ export function StepLocation() {
                             emptyText="No countries match"
                             limit={50}
                             onValueChange={() => {
-                                // State and city belong to the old country.
+                                // State, city and locality belong to the old country.
                                 setValue("location.state", "", { shouldDirty: true });
                                 setValue("location.city", "", { shouldDirty: true });
+                                setValue("location.locality", "", { shouldDirty: true });
                             }}
                         />
                         <SelectField
@@ -266,6 +269,7 @@ export function StepLocation() {
                             limit={100}
                             onValueChange={() => {
                                 setValue("location.city", "", { shouldDirty: true });
+                                setValue("location.locality", "", { shouldDirty: true });
                             }}
                         />
                         <SelectField
@@ -278,14 +282,18 @@ export function StepLocation() {
                             disabled={!selectedState}
                             emptyText={citiesLoading ? "Loading cities…" : "No cities match"}
                             limit={100}
+                            onValueChange={() => {
+                                // Localities are per city.
+                                setValue("location.locality", "", { shouldDirty: true });
+                            }}
                         />
                     </div>
                     <div className={FORM_GRID_CLASS}>
-                        <TextField
+                        <LocalityField
                             name="location.locality"
                             label="Locality"
-                            placeholder="e.g. Vesu"
-                            startIcon={MapPinned}
+                            cityId={selectedCity?.id}
+                            placeholder="Search a locality, e.g. Vesu"
                         />
                         <TextField
                             name="location.pincode"

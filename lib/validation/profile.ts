@@ -22,7 +22,7 @@ export function parseCommaList(value: string): string[] {
 }
 
 export const BIO_MAX = 400;
-const MAX_SERVICE_AREAS = 12;
+export const MAX_SERVICE_AREAS = 12;
 const MAX_PREFERRED = 20;
 
 /**
@@ -82,9 +82,9 @@ export const profileFormSchema = z.object({
         )
         .refine((value) => value.length <= 60, "That is too long for a web address"),
     serviceAreas: z
-        .string()
-        .refine(
-            (value) => parseCommaList(value).length <= MAX_SERVICE_AREAS,
+        .array(z.string())
+        .max(
+            MAX_SERVICE_AREAS,
             `Pick your best ${MAX_SERVICE_AREAS} areas — a broker who covers everywhere covers nothing`,
         ),
     specializations: z.string(),

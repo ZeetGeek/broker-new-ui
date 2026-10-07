@@ -14,6 +14,7 @@ import { useFieldRules } from "@/lib/visibility/use-field-rules";
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { Button } from "@/components/ui/button";
 import {
     Combobox,
@@ -335,6 +336,62 @@ export function SelectField({
                             </ComboboxList>
                         </ComboboxContent>
                     </Combobox>
+                )}
+            />
+        </FieldShell>
+    );
+}
+
+/**
+ * Single locality, searched within `cityId`. The form keeps the locality name,
+ * like the country / state / city fields.
+ */
+export function LocalityField({
+    name,
+    label,
+    cityId,
+    placeholder,
+    hint,
+    visibility,
+    className,
+}: {
+    name: Path;
+    label: string;
+    cityId: string | null | undefined;
+    placeholder?: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    className?: string;
+}) {
+    const {
+        control,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
+    const error = errorAt(errors, name);
+
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+        >
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => (
+                    <LocalityCombobox
+                        id={name.replace(/\./g, "-")}
+                        inputRef={field.ref}
+                        cityId={cityId}
+                        size="lg"
+                        value={String(field.value ?? "")}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        placeholder={placeholder}
+                        errorText={error}
+                    />
                 )}
             />
         </FieldShell>

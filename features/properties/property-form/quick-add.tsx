@@ -46,6 +46,7 @@ import {
     ChoiceField,
     CurrencyField,
     FORM_GRID_CLASS,
+    LocalityField,
     NumberField,
     SelectField,
     TextField,
@@ -70,9 +71,10 @@ export function QuickAdd({
     const { derived } = useFieldRules();
     const values = watch();
     const coverInputRef = useRef<HTMLInputElement>(null);
-    const { cityOptions, citiesLoading, selectedState } = useLocationOptions({
+    const { cityOptions, citiesLoading, selectedState, selectedCity } = useLocationOptions({
         countryName: values.location.country,
         stateName: values.location.state,
+        cityName: values.location.city,
     });
     const photos = values.media.photos;
     const cover = photos.find((photo) => photo.isCover) ?? null;
@@ -337,8 +339,17 @@ export function QuickAdd({
                         disabled={!selectedState}
                         emptyText={citiesLoading ? "Loading cities…" : "No cities match"}
                         limit={100}
+                        onValueChange={() => {
+                            // Localities are per city.
+                            setValue("location.locality", "", { shouldDirty: true });
+                        }}
                     />
-                    <TextField name="location.locality" label="Locality" placeholder="e.g. Vesu" />
+                    <LocalityField
+                        name="location.locality"
+                        label="Locality"
+                        cityId={selectedCity?.id}
+                        placeholder="Search a locality, e.g. Vesu"
+                    />
                     <TextField
                         name="location.pincode"
                         label="PIN code"

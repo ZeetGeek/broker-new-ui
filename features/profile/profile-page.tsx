@@ -5,17 +5,21 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Mail, MapPin, Phone, UserRound } from "lucide-react";
+import { Building2, Mail, Phone, UserRound } from "lucide-react";
 
 import { profileApi, type UpdateProfileInput, type UserProfile } from "@/lib/api/profile";
 import {
     BIO_MAX,
+    MAX_SERVICE_AREAS,
     normalizeProfilePhone,
     parseCommaList,
     profileFormSchema,
     type ProfileFormValues,
 } from "@/lib/validation/profile";
+import { useResolvedCity } from "@/hooks/use-locations";
 
+import { CityCombobox } from "@/components/shared/city-combobox";
+import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -99,7 +103,7 @@ function toFormValues(profile: UserProfile): ProfileFormValues {
         publicSlug: owner
             ? (profile.owner?.publicSlug ?? profile.qr?.publicSlug ?? "")
             : (profile.broker?.publicSlug ?? profile.qr?.publicSlug ?? ""),
-        serviceAreas: (profile.broker?.serviceAreas ?? []).join(", "),
+        serviceAreas: [...(profile.broker?.serviceAreas ?? [])],
         specializations: (profile.broker?.specializations ?? []).join(", "),
     };
 }
@@ -119,7 +123,7 @@ const EMPTY_FORM: ProfileFormValues = {
     licenseNumber: "",
     reraState: "",
     publicSlug: "",
-    serviceAreas: "",
+    serviceAreas: [],
     specializations: "",
 };
 
@@ -136,6 +140,7 @@ export function ProfilePage() {
         control,
         handleSubmit,
         reset,
+        setValue,
         formState: { isSubmitting, isDirty },
     } = useForm<ProfileFormValues>({
         resolver: zodResolver(profileFormSchema),
@@ -183,6 +188,9 @@ export function ProfilePage() {
     }, [dispatch, reset]);
 
     const bio = useWatch({ control, name: "bio" });
+    const [cityName, countryName] = useWatch({ control, name: ["city", "country"] });
+    // Areas you work are searched within the profile city.
+    const { countryIso2, cityId } = useResolvedCity({ countryName, cityName });
 
     const handleProfileReplaced = useCallback(
         (next: UserProfile) => {
@@ -223,7 +231,9 @@ export function ProfilePage() {
                     payload.licenseNumber = values.licenseNumber.trim();
                     payload.reraState = values.reraState.trim();
                     payload.publicSlug = values.publicSlug.trim();
-                    payload.serviceAreas = parseCommaList(values.serviceAreas);
+                    payload.serviceAreas = values.serviceAreas
+                        .map((area) => area.trim())
+                        .filter(Boolean);
                     payload.specializations = parseCommaList(values.specializations);
                 }
 
@@ -375,11 +385,21 @@ export function ProfilePage() {
                         render={({ field, fieldState }) => (
                             <div className="flex flex-col gap-2">
                                 <FieldLabel htmlFor="profile-city">City</FieldLabel>
-                                <Input
-                                    {...field}
+                                <CityCombobox
                                     id="profile-city"
-                                    autoComplete="address-level2"
-                                    startIcon={MapPin}
+                                    countryIso2={countryIso2}
+                                    value={field.value}
+                                    onValueChange={(next) => {
+                                        if (
+                                            next.trim().toLowerCase() !==
+                                            field.value.trim().toLowerCase()
+                                        ) {
+                                            // Areas belong to the old city.
+                                            setValue("serviceAreas", [], { shouldDirty: true });
+                                        }
+                                        field.onChange(next);
+                                    }}
+                                    onBlur={field.onBlur}
                                     errorText={fieldState.error?.message}
                                 />
                             </div>
@@ -641,12 +661,21 @@ export function ProfilePage() {
                         render={({ field, fieldState }) => (
                             <div className="flex flex-col gap-2">
                                 <FieldLabel htmlFor="profile-areas">Areas you work</FieldLabel>
-                                <Input
-                                    {...field}
+                                <LocalityCombobox
+                                    multiple
                                     id="profile-areas"
-                                    placeholder="Vesu, Adajan, Piplod"
+                                    inputRef={field.ref}
+                                    cityId={cityId}
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                    onBlur={field.onBlur}
+                                    placeholder="Search areas, e.g. Vesu"
                                     errorText={fieldState.error?.message}
-                                    helperText="Separate them with commas."
+                                    helperText={
+                                        cityId
+                                            ? `Pick up to ${MAX_SERVICE_AREAS} areas in ${cityName}.`
+                                            : "Choose your city above to pick areas."
+                                    }
                                 />
                             </div>
                         )}

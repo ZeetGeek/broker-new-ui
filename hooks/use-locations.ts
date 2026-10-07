@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { locationsApi, type CountryItem, type StateItem } from "@/lib/api/locations";
+import { type CityItem, type CountryItem, locationsApi, type StateItem } from "@/lib/api/locations";
 
 import type { PropertyOption } from "@/constants/property";
 
@@ -13,6 +13,15 @@ import type { PropertyOption } from "@/constants/property";
  * imported country permanently — so cache hard and never refetch on focus.
  */
 const LOCATION_STALE_TIME = 24 * 60 * 60 * 1000;
+
+/**
+ * Localities grow as people search (a miss is filled from Google Maps), so
+ * they are cached for minutes, not a day.
+ */
+const LOCALITY_STALE_TIME = 5 * 60 * 1000;
+
+/** Wait this long after the last keystroke before searching. */
+const SEARCH_DEBOUNCE_MS = 300;
 
 function sameName(a: string | null | undefined, b: string | null | undefined): boolean {
     if (!a || !b) return false;
@@ -59,6 +68,57 @@ export function useCities(stateId: string | null | undefined) {
     });
 }
 
+/** `value`, but only after it has stopped changing for `delayMs`. */
+export function useDebouncedValue<T>(value: T, delayMs: number = SEARCH_DEBOUNCE_MS): T {
+    const [debounced, setDebounced] = useState(value);
+    useEffect(() => {
+        const timer = setTimeout(() => setDebounced(value), delayMs);
+        return () => clearTimeout(timer);
+    }, [value, delayMs]);
+    return debounced;
+}
+
+/** Cities of a whole country matching `search`. Disabled until a country is known. */
+export function useCitySearch(
+    countryIso2: string | null | undefined,
+    search: string,
+    options: { enabled?: boolean } = {},
+) {
+    const term = search.trim();
+    return useQuery({
+        queryKey: ["locations", "city-search", countryIso2, term.toLowerCase()],
+        queryFn: () => locationsApi.searchCities(countryIso2!, { search: term, limit: 20 }),
+        enabled: Boolean(countryIso2) && (options.enabled ?? true),
+        staleTime: LOCATION_STALE_TIME,
+        refetchOnWindowFocus: false,
+        placeholderData: (previous, previousQuery) =>
+            previousQuery?.queryKey[2] === countryIso2 ? keepPreviousData(previous) : undefined,
+    });
+}
+
+/**
+ * Localities of a city matching `search`. Callers debounce `search` — every
+ * miss on the backend is a billed Google Maps call.
+ */
+export function useLocalitySearch(
+    cityId: string | null | undefined,
+    search: string,
+    options: { enabled?: boolean } = {},
+) {
+    const term = search.trim();
+    return useQuery({
+        queryKey: ["locations", "localities", cityId, term.toLowerCase()],
+        queryFn: () => locationsApi.localities(cityId!, { search: term, limit: 20 }),
+        enabled: Boolean(cityId) && (options.enabled ?? true),
+        staleTime: LOCALITY_STALE_TIME,
+        refetchOnWindowFocus: false,
+        // Keep the last list on screen while the next keystroke's results
+        // load, but never show another city's localities.
+        placeholderData: (previous, previousQuery) =>
+            previousQuery?.queryKey[2] === cityId ? keepPreviousData(previous) : undefined,
+    });
+}
+
 export type LocationOptions = {
     countryOptions: PropertyOption[];
     stateOptions: PropertyOption[];
@@ -68,6 +128,8 @@ export type LocationOptions = {
     citiesLoading: boolean;
     selectedCountry: CountryItem | null;
     selectedState: StateItem | null;
+    /** Resolved from `cityName`; its id drives the locality search. */
+    selectedCity: CityItem | null;
 };
 
 /**
@@ -79,8 +141,9 @@ export type LocationOptions = {
 export function useLocationOptions(selected: {
     countryName?: string | null;
     stateName?: string | null;
+    cityName?: string | null;
 }): LocationOptions {
-    const { countryName, stateName } = selected;
+    const { countryName, stateName, cityName } = selected;
 
     const countriesQuery = useCountries();
     const countries = countriesQuery.data ?? [];
@@ -101,6 +164,11 @@ export function useLocationOptions(selected: {
     const citiesQuery = useCities(selectedState?.id);
     const cities = citiesQuery.data ?? [];
 
+    const selectedCity = useMemo(
+        () => cities.find((city) => sameName(city.name, cityName)) ?? null,
+        [cities, cityName],
+    );
+
     return {
         countryOptions: useMemo(() => toOptions(countries), [countries]),
         stateOptions: useMemo(() => toOptions(states), [states]),
@@ -110,5 +178,36 @@ export function useLocationOptions(selected: {
         citiesLoading: citiesQuery.isFetching,
         selectedCountry,
         selectedState,
+        selectedCity,
     };
+}
+
+/**
+ * Resolves a country name and a city name, as a profile stores them, to the
+ * country ISO2 and city id the location searches need. Either is null until it
+ * matches a stored row exactly.
+ */
+export function useResolvedCity(selected: {
+    countryName?: string | null;
+    cityName?: string | null;
+}): { countryIso2: string | null; cityId: string | null } {
+    const { countryName, cityName } = selected;
+
+    const countriesQuery = useCountries();
+    const countryIso2 = useMemo(
+        () =>
+            (countriesQuery.data ?? []).find((country) => sameName(country.name, countryName))
+                ?.iso2 ?? null,
+        [countriesQuery.data, countryName],
+    );
+
+    const cityQuery = useCitySearch(countryIso2, cityName ?? "", {
+        enabled: Boolean(cityName?.trim()),
+    });
+    const cityId = useMemo(
+        () => (cityQuery.data ?? []).find((city) => sameName(city.name, cityName))?.id ?? null,
+        [cityQuery.data, cityName],
+    );
+
+    return { countryIso2, cityId };
 }
