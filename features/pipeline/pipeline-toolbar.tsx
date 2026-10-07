@@ -128,15 +128,13 @@ export function PipelineToolbar({
     owners: string[];
     onPatch: (patch: Partial<DealsFilters>) => void;
     /**
-     * Pushed to the end of the same row. The summary chips live here so the
-     * board opens with one control line instead of two.
+     * Sits with search on the right of the same row. Summary chips live here
+     * so the board opens with one control line instead of two.
      */
     trailing?: ReactNode;
 }) {
     return (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <PipelineQueryInput value={filters.q} onChange={(q) => onPatch({ q })} />
-
             <FilterMenu
                 label="Deal type"
                 valueLabel={
@@ -245,7 +243,10 @@ export function PipelineToolbar({
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            {trailing ? <div className="ms-auto flex items-center gap-2">{trailing}</div> : null}
+            <div className="ms-auto flex flex-wrap items-center gap-2">
+                <PipelineQueryInput value={filters.q} onChange={(q) => onPatch({ q })} />
+                {trailing}
+            </div>
         </div>
     );
 }
