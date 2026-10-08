@@ -1594,7 +1594,8 @@ function draftToLegacyInput(
         address: values.location.streetOrRoad || values.location.fullAddress,
         pinCode: values.location.pincode,
         landmark: values.location.landmark,
-        society: values.location.projectOrSociety,
+        // stripHidden drops projectOrSociety for non-gated plots.
+        society: values.location.projectOrSociety ?? "",
         saleAmountInr:
             transactionType === "sale" || transactionType === "both"
                 ? values.sale.expectedPrice
