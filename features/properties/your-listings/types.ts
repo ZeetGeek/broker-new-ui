@@ -1,3 +1,5 @@
+import type { PropertyType } from "@/lib/validation/property";
+
 export type MyListingStatus = "draft" | "published" | "unpublished";
 
 export type MyListingFurnishing = "furnished" | "semi" | "unfurnished";
@@ -8,7 +10,8 @@ export type MyListingSort = "newest" | "price_asc" | "price_desc";
 
 export type MyListingTransactionType = "sale" | "rent" | "both";
 
-export type MyListingCategory = "residential" | "commercial" | "industrial" | "land";
+export type MyListingCategory =
+    "residential" | "commercial" | "industrial" | "land" | "agricultural";
 
 export type MyListingPropertyType =
     | "apartment"
@@ -40,6 +43,8 @@ export type MyListingItem = {
     configLabel: string;
     category: MyListingCategory;
     propertyType: MyListingPropertyType;
+    /** API subtype as stored (e.g. `cold_storage`); null on older listings. */
+    subtype?: string | null;
     propertyTypeLabel: string;
     bhk: number;
     locality: string;
@@ -101,7 +106,8 @@ export type MyListingItem = {
 export type MyListingsFilters = {
     q: string;
     type: "" | "sale" | "rent";
-    propertyType: MyListingPropertyType | "";
+    /** Broad UI type (`office`) or exact subtype (`cold_storage`). */
+    propertyType: PropertyType | "";
     bhk: string[];
     status: MyListingStatus | "";
     sort: MyListingSort;
@@ -160,6 +166,8 @@ export type CreateMyListingInput = {
     transactionType: MyListingTransactionType;
     category: MyListingCategory;
     propertyType: MyListingPropertyType;
+    /** Exact API subtype; wins over the one derived from `propertyType`. */
+    subtype?: string;
     bhk: number;
     title: string;
     locality: string;

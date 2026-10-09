@@ -58,7 +58,13 @@ function filterMockMyListings(filters: MyListingsFilters): MyListingItem[] {
         }
         if (filters.type === "sale" && item.transactionType === "rent") return false;
         if (filters.type === "rent" && item.transactionType === "sale") return false;
-        if (filters.propertyType && item.propertyType !== filters.propertyType) return false;
+        if (
+            filters.propertyType &&
+            item.propertyType !== filters.propertyType &&
+            item.subtype !== filters.propertyType
+        ) {
+            return false;
+        }
         if (filters.bhk.length && !filters.bhk.includes(String(item.bhk))) return false;
         if (filters.status && item.status !== filters.status) return false;
         return true;

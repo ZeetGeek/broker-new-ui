@@ -81,7 +81,7 @@ export const LISTING_FOR_ICONS: Record<ListingFor, ReactNode> = {
     both: <Repeat />,
 };
 
-export const CATEGORY_ICONS: Record<PropertyCategory | "agricultural", ReactNode> = {
+export const CATEGORY_ICONS: Record<PropertyCategory, ReactNode> = {
     residential: <Home />,
     commercial: <Store />,
     industrial: <Factory />,
@@ -104,6 +104,29 @@ export const PROPERTY_TYPE_ICONS: Record<PropertyType, ReactNode> = {
     factory: <Factory />,
     plot: <Map />,
     agricultural: <Landmark />,
+    row_house: <Home />,
+    duplex: <Home />,
+    studio: <Building />,
+    serviced_apartment: <Hotel />,
+    one_rk: <Building />,
+    office_space: <Building2 />,
+    coworking_space: <Users />,
+    retail_space: <ShoppingBag />,
+    restaurant_space: <UtensilsCrossed />,
+    hotel_resort: <Hotel />,
+    commercial_building: <Building2 />,
+    business_center: <Building2 />,
+    godown: <Warehouse />,
+    industrial_shed: <Factory />,
+    cold_storage: <Package />,
+    residential_plot: <Map />,
+    commercial_plot: <Map />,
+    industrial_plot: <Map />,
+    na_plot: <Map />,
+    farm_land: <Trees />,
+    agricultural_land: <Leaf />,
+    orchard: <Trees />,
+    poultry_farm: <Leaf />,
 };
 
 export const FURNISHING_ICONS: Record<string, ReactNode> = {

@@ -93,7 +93,7 @@ function mapPropertyType(listing: PropertyBrowseListing): OwnerListingPropertyTy
 
     const category = listing.propertyType?.trim().toLowerCase();
     if (category === "commercial") return "office";
-    if (category === "land") return "plot";
+    if (category === "land" || category === "agricultural") return "plot";
     return "apartment";
 }
 

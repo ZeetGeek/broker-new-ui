@@ -44,6 +44,33 @@ const SUBTYPE_TO_UI: Record<string, MyListingPropertyType> = {
     independent_house: "independent_house",
     builder_floor: "builder_floor",
     farm_house: "farmhouse",
+    row_house: "independent_house",
+    duplex: "independent_house",
+    studio: "apartment",
+    serviced_apartment: "apartment",
+    one_rk: "apartment",
+    shop: "shop",
+    retail_space: "shop",
+    restaurant_space: "shop",
+    showroom: "showroom",
+    office_space: "office",
+    coworking_space: "office",
+    business_center: "office",
+    commercial_building: "office",
+    hotel_resort: "office",
+    warehouse: "warehouse",
+    godown: "warehouse",
+    industrial_shed: "warehouse",
+    cold_storage: "warehouse",
+    factory: "factory",
+    residential_plot: "plot",
+    commercial_plot: "plot",
+    industrial_plot: "plot",
+    na_plot: "plot",
+    farm_land: "plot",
+    agricultural_land: "agricultural",
+    orchard: "agricultural",
+    poultry_farm: "agricultural",
 };
 
 const UI_TO_SUBTYPE: Partial<Record<MyListingPropertyType, string>> = {
@@ -103,6 +130,7 @@ function mapPropertyType(listing: PropertyListing): MyListingPropertyType {
     if (category === "commercial") return "office";
     if (category === "industrial") return "warehouse";
     if (category === "land") return "plot";
+    if (category === "agricultural") return "agricultural";
     return "apartment";
 }
 
@@ -183,12 +211,12 @@ export function bhkValuesToApiConfig(bhk: string[]): string[] {
         .filter((value): value is string => Boolean(value));
 }
 
-export function propertyTypeToApiFilters(propertyType: MyListingPropertyType | ""): {
+export function propertyTypeToApiFilters(propertyType: PropertyType | ""): {
     propertyType?: string;
     subtype?: string;
 } {
     if (!propertyType) return {};
-    const subtype = UI_TO_SUBTYPE[propertyType];
+    const subtype = UI_TO_SUBTYPE[propertyType as MyListingPropertyType];
     if (subtype) return { subtype };
 
     if (propertyType === "shop" || propertyType === "office" || propertyType === "showroom") {
@@ -197,10 +225,10 @@ export function propertyTypeToApiFilters(propertyType: MyListingPropertyType | "
     if (propertyType === "warehouse" || propertyType === "factory") {
         return { propertyType: "industrial" };
     }
-    if (propertyType === "plot" || propertyType === "agricultural") {
-        return { propertyType: "land" };
-    }
-    return {};
+    if (propertyType === "plot") return { propertyType: "land" };
+    if (propertyType === "agricultural") return { propertyType: "agricultural" };
+    // Fine-grained types are API subtypes already (e.g. `cold_storage`).
+    return { subtype: propertyType };
 }
 
 export function listingPhotoUrls(photos: unknown): string[] {
@@ -242,7 +270,11 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         configLabel: configLabel(bhk, propertyType),
         category,
         propertyType,
-        propertyTypeLabel: PROPERTY_TYPE_LABELS[propertyType as PropertyType] ?? propertyType,
+        subtype: listing.subtype?.trim() || null,
+        propertyTypeLabel:
+            PROPERTY_TYPE_LABELS[listing.subtype?.trim() as PropertyType] ??
+            PROPERTY_TYPE_LABELS[propertyType as PropertyType] ??
+            propertyType,
         bhk,
         locality,
         city,
@@ -310,7 +342,7 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
 }
 
 export function myListingInputToCreatePayload(input: CreateMyListingInput) {
-    const subtype = UI_TO_SUBTYPE[input.propertyType];
+    const subtype = input.subtype || UI_TO_SUBTYPE[input.propertyType];
     const bhkConfig =
         needsBhk(input.propertyType as PropertyType) && input.bhk > 0
             ? (NUMBER_TO_BHK_CONFIG[input.bhk] ?? (input.bhk >= 5 ? "five_plus_bhk" : undefined))
@@ -383,7 +415,9 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
 
     if (input.transactionType != null) payload.transactionType = input.transactionType;
     if (input.category != null) payload.propertyType = input.category;
-    if (input.propertyType != null) {
+    if (input.subtype) {
+        payload.subtype = input.subtype;
+    } else if (input.propertyType != null) {
         const subtype = UI_TO_SUBTYPE[input.propertyType];
         if (subtype) payload.subtype = subtype;
     }

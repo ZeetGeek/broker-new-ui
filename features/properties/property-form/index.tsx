@@ -48,7 +48,7 @@ import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Progress, ProgressLabel } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { FORM_STEPS, type PropertyFormStep, toLabel } from "@/constants/property";
+import { FORM_STEPS, PROPERTY_TYPES, type PropertyFormStep, toLabel } from "@/constants/property";
 import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import { ListingScoreRing } from "@/features/properties/property-form/listing-score-ring";
 import { LiveSummaryPanel } from "@/features/properties/property-form/live-summary-panel";
@@ -699,10 +699,9 @@ export function PropertyForm({
                                 </aside>
                                 <main
                                     className="
-                                      overflow-y-auto bg-surface-muted px-4 py-4 min-block-0
-                                      min-inline-0
-                                      sm:px-5 sm:py-5
-                                      xl:px-6 xl:py-6
+                                      overflow-y-auto bg-surface-muted p-4 min-block-0 min-inline-0
+                                      sm:p-5
+                                      xl:p-6
                                     "
                                 >
                                     <div
@@ -741,7 +740,7 @@ export function PropertyForm({
                                 </main>
                                 <aside
                                     className="
-                                      hidden overflow-y-auto bg-surface-muted pt-6 pe-4 pbe-4 ps-0
+                                      hidden overflow-y-auto bg-surface-muted ps-0 pe-4 pbs-6 pbe-4
                                       min-block-0 min-inline-0
                                       xl:block
                                     "
@@ -762,7 +761,7 @@ export function PropertyForm({
                                               bg-surface
                                             "
                                         >
-                                            <div className="flex items-center gap-3.5 px-3.5 py-3.5">
+                                            <div className="flex items-center gap-3.5 p-3.5">
                                                 <ListingScoreRing score={listingScore.score} />
                                                 <div className="min-inline-0">
                                                     <p className="text-sm font-semibold text-ink">
@@ -774,7 +773,11 @@ export function PropertyForm({
                                                 </div>
                                             </div>
                                             {listingScore.tips.length ? (
-                                                <div className="flex flex-col gap-1.5 px-3.5 pbe-3.5">
+                                                <div
+                                                    className="
+                                                  flex flex-col gap-1.5 px-3.5 pbe-3.5
+                                                "
+                                                >
                                                     {listingScore.tips.map((tip) => (
                                                         <Button
                                                             key={tip.label}
@@ -832,9 +835,9 @@ export function PropertyForm({
                     ) : (
                         <main
                             className="
-                              flex flex-1 flex-col overflow-y-auto bg-surface-muted px-4 py-4
-                              min-block-0 min-inline-0
-                              sm:px-5 sm:py-5
+                              flex flex-1 flex-col overflow-y-auto bg-surface-muted p-4 min-block-0
+                              min-inline-0
+                              sm:p-5
                             "
                         >
                             <div
@@ -1094,8 +1097,7 @@ function PropertyFormFooter({
         <footer
             className="
               flex shrink-0 items-center gap-3 border-bs border-border-warm bg-surface px-4 py-2.5
-              shadow-xs
-              pbe-[calc(0.625rem+env(safe-area-inset-bottom))]
+              pbe-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-xs
               sm:px-6
             "
         >
@@ -1122,7 +1124,11 @@ function PropertyFormFooter({
                               **:data-[slot=progress-track]:block-1.5
                             "
                         >
-                            <ProgressLabel className="body-xs tabular shrink-0 font-medium text-ink-subtle">
+                            <ProgressLabel
+                                className="
+                              body-xs tabular shrink-0 font-medium text-ink-subtle
+                            "
+                            >
                                 {stepIndex + 1} of {stepCount}
                             </ProgressLabel>
                         </Progress>
@@ -1154,13 +1160,21 @@ function PropertyFormFooter({
                     >
                         {primaryLabel}
                         <KbdGroup className="hidden gap-0.5 md:inline-flex">
-                            <Kbd className="bg-surface/20 px-1.5 text-[10px] text-surface min-inline-4">
+                            <Kbd
+                                className="
+                              bg-surface/20 px-1.5 text-[10px] text-surface min-inline-4
+                            "
+                            >
                                 Ctrl
                             </Kbd>
                             <span className="text-[10px] text-surface/70" aria-hidden>
                                 +
                             </span>
-                            <Kbd className="bg-surface/20 px-1.5 text-[10px] text-surface min-inline-4">
+                            <Kbd
+                                className="
+                              bg-surface/20 px-1.5 text-[10px] text-surface min-inline-4
+                            "
+                            >
                                 Enter
                             </Kbd>
                         </KbdGroup>
@@ -1307,8 +1321,7 @@ function MobileListingScore({
                                     className="
                                       flex items-center justify-between gap-3 rounded-control border
                                       border-border-warm bg-surface-muted px-3 text-start text-sm
-                                      text-ink
-                                      inline-full min-block-11
+                                      text-ink inline-full min-block-11
                                       hover:border-brand/40 hover:bg-brand-soft
                                       focus-visible:ring-3 focus-visible:ring-ring/30
                                     "
@@ -1445,6 +1458,16 @@ function listingToDraft(listing: MyListingItem): PropertyDraftValues {
               : "rent";
     draft.basics.category = listing.category;
     draft.basics.propertyType = legacyPropertyTypeToDraft(listing.propertyType);
+    const savedType = listing.subtype ? apiSubtypeToDraft(listing.subtype) : "";
+    if (savedType) {
+        // Older agricultural listings were saved as `land`; recover it from the subtype.
+        const inCategory = (category: keyof typeof PROPERTY_TYPES) =>
+            (PROPERTY_TYPES[category] as readonly string[]).includes(savedType);
+        if (!inCategory(draft.basics.category) && inCategory("agricultural")) {
+            draft.basics.category = "agricultural";
+        }
+        if (inCategory(draft.basics.category)) draft.basics.propertyType = savedType;
+    }
     draft.basics.title = listing.title;
     draft.basics.description = listing.description;
     draft.location.city = listing.city;
@@ -1512,6 +1535,18 @@ function legacyPropertyTypeToDraft(value: MyListingPropertyType): string {
     if (value === "office") return "office_space";
     if (value === "plot") return "residential_plot";
     if (value === "agricultural") return "agricultural_land";
+    return value;
+}
+
+/** Form type ↔ API `subtype`. Only `1rk` (invalid enum name) and legacy `flat` differ. */
+function draftTypeToApiSubtype(value: string): string | undefined {
+    if (!value) return undefined;
+    return value === "1rk" ? "one_rk" : value;
+}
+
+function apiSubtypeToDraft(value: string): string {
+    if (value === "one_rk") return "1rk";
+    if (value === "flat") return "apartment";
     return value;
 }
 
@@ -1585,8 +1620,9 @@ function draftToLegacyInput(
     const parking = values.details.coveredParking ?? 0;
     return {
         transactionType,
-        category: values.basics.category === "agricultural" ? "land" : values.basics.category,
+        category: values.basics.category,
         propertyType,
+        subtype: draftTypeToApiSubtype(values.basics.propertyType),
         bhk,
         title: values.basics.title.trim() || generatedTitle,
         locality: values.location.locality,

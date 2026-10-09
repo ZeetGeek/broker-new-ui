@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-export const propertyCategorySchema = z.enum(["residential", "commercial", "industrial", "land"]);
+export const propertyCategorySchema = z.enum([
+    "residential",
+    "commercial",
+    "industrial",
+    "land",
+    "agricultural",
+]);
 
 export const propertyTypeSchema = z.enum([
     "apartment",
@@ -17,6 +23,29 @@ export const propertyTypeSchema = z.enum([
     "factory",
     "plot",
     "agricultural",
+    "row_house",
+    "duplex",
+    "studio",
+    "serviced_apartment",
+    "one_rk",
+    "office_space",
+    "coworking_space",
+    "retail_space",
+    "restaurant_space",
+    "hotel_resort",
+    "commercial_building",
+    "business_center",
+    "godown",
+    "industrial_shed",
+    "cold_storage",
+    "residential_plot",
+    "commercial_plot",
+    "industrial_plot",
+    "na_plot",
+    "farm_land",
+    "agricultural_land",
+    "orchard",
+    "poultry_farm",
 ]);
 
 export const furnishingSchema = z.enum(["furnished", "semi", "unfurnished"]);
@@ -48,10 +77,34 @@ export const PROPERTY_TYPES_BY_CATEGORY: Record<PropertyCategory, PropertyType[]
         "penthouse",
         "farmhouse",
         "flat",
+        "row_house",
+        "duplex",
+        "studio",
+        "serviced_apartment",
+        "one_rk",
     ],
-    commercial: ["shop", "office", "showroom"],
-    industrial: ["warehouse", "factory"],
-    land: ["plot", "agricultural"],
+    commercial: [
+        "shop",
+        "office",
+        "showroom",
+        "office_space",
+        "coworking_space",
+        "retail_space",
+        "restaurant_space",
+        "hotel_resort",
+        "commercial_building",
+        "business_center",
+    ],
+    industrial: ["warehouse", "factory", "godown", "industrial_shed", "cold_storage"],
+    land: [
+        "plot",
+        "residential_plot",
+        "commercial_plot",
+        "industrial_plot",
+        "na_plot",
+        "farm_land",
+    ],
+    agricultural: ["agricultural", "agricultural_land", "orchard", "poultry_farm"],
 };
 
 export const RESIDENTIAL_PROPERTY_TYPES = new Set<PropertyType>(
@@ -320,6 +373,7 @@ export const PROPERTY_CATEGORY_OPTIONS: {
     { value: "commercial", label: "Commercial" },
     { value: "industrial", label: "Industrial" },
     { value: "land", label: "Land" },
+    { value: "agricultural", label: "Agricultural" },
 ];
 
 export const PROPERTY_TYPE_OPTIONS: {
@@ -340,7 +394,30 @@ export const PROPERTY_TYPE_OPTIONS: {
     { value: "warehouse", label: "Warehouse", category: "industrial" },
     { value: "factory", label: "Factory", category: "industrial" },
     { value: "plot", label: "Plot", category: "land" },
-    { value: "agricultural", label: "Agricultural", category: "land" },
+    { value: "agricultural", label: "Agricultural", category: "agricultural" },
+    { value: "row_house", label: "Row house", category: "residential" },
+    { value: "duplex", label: "Duplex", category: "residential" },
+    { value: "studio", label: "Studio", category: "residential" },
+    { value: "serviced_apartment", label: "Serviced apartment", category: "residential" },
+    { value: "one_rk", label: "1 RK", category: "residential" },
+    { value: "office_space", label: "Office space", category: "commercial" },
+    { value: "coworking_space", label: "Co-working space", category: "commercial" },
+    { value: "retail_space", label: "Retail space", category: "commercial" },
+    { value: "restaurant_space", label: "Restaurant space", category: "commercial" },
+    { value: "hotel_resort", label: "Hotel / resort", category: "commercial" },
+    { value: "commercial_building", label: "Commercial building", category: "commercial" },
+    { value: "business_center", label: "Business center", category: "commercial" },
+    { value: "godown", label: "Godown", category: "industrial" },
+    { value: "industrial_shed", label: "Industrial shed", category: "industrial" },
+    { value: "cold_storage", label: "Cold storage", category: "industrial" },
+    { value: "residential_plot", label: "Residential plot", category: "land" },
+    { value: "commercial_plot", label: "Commercial plot", category: "land" },
+    { value: "industrial_plot", label: "Industrial plot", category: "land" },
+    { value: "na_plot", label: "NA plot", category: "land" },
+    { value: "farm_land", label: "Farm land", category: "land" },
+    { value: "agricultural_land", label: "Agricultural land", category: "agricultural" },
+    { value: "orchard", label: "Orchard", category: "agricultural" },
+    { value: "poultry_farm", label: "Poultry farm", category: "agricultural" },
 ];
 
 export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = Object.fromEntries(
