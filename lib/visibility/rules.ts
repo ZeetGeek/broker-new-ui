@@ -20,8 +20,6 @@ const required = (): FieldLevel => "required";
 const recommended = (): FieldLevel => "recommended";
 const optional = (): FieldLevel => "optional";
 const officeTypes = new Set(["office_space", "coworking_space", "business_center"]);
-const frontageTypes = new Set(["shop", "showroom", "retail_space", "restaurant_space"]);
-const shopTypes = new Set(["shop", "showroom", "retail_space"]);
 
 export const FIELD_RULES = {
     "basics.listingFor": { level: required },
@@ -124,13 +122,6 @@ export const FIELD_RULES = {
     "details.commercial.ceilingHeightFt": {
         visible: (d) => d.isIndustrial,
         level: recommended,
-    },
-    "details.commercial.shutterWidthFt": {
-        visible: (d, v) => d.isCommercial && shopTypes.has(v.basics.propertyType),
-    },
-    "details.commercial.frontageFt": {
-        visible: (d, v) => d.isCommercial && frontageTypes.has(v.basics.propertyType),
-        level: required,
     },
     "details.commercial.suitableFor": { visible: (d) => d.isCommercial, level: recommended },
     "details.commercial.currentlyLeased": { visible: () => false },

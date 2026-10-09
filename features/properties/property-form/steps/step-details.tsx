@@ -15,7 +15,6 @@ import {
     LayoutGrid,
     Monitor,
     MoveVertical,
-    Ruler,
     ShieldCheck,
     Sparkles,
     SquareParking,
@@ -57,8 +56,7 @@ export function StepDetails() {
         isVisible("details.commercial.suitableFor") ||
         isVisible("details.commercial.cabins") ||
         isVisible("details.commercial.meetingRooms") ||
-        isVisible("details.commercial.ceilingHeightFt") ||
-        isVisible("details.commercial.frontageFt");
+        isVisible("details.commercial.ceilingHeightFt");
     const [titleTouched, setTitleTouched] = useState(() =>
         Boolean(getValues("basics.title")?.trim()),
     );
@@ -297,20 +295,6 @@ export function StepDetails() {
                             step={0.1}
                             placeholder="e.g. 10"
                             startIcon={MoveVertical}
-                        />
-                        <NumberField
-                            name="details.commercial.shutterWidthFt"
-                            label="Shutter width (ft)"
-                            step={0.1}
-                            placeholder="e.g. 12"
-                            startIcon={Ruler}
-                        />
-                        <NumberField
-                            name="details.commercial.frontageFt"
-                            label="Frontage (ft)"
-                            step={0.1}
-                            placeholder="e.g. 25"
-                            startIcon={Ruler}
                         />
                     </div>
                     <div className={`mbs-4 ${FORM_STACK_CLASS}`}>
