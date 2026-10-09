@@ -201,7 +201,7 @@ function DealCoverImage({ property, muted = false }: { property: DealProperty; m
     return (
         <div
             className="
-              relative shrink-0 overflow-hidden rounded-inner bg-surface-muted aspect-square
+              relative shrink-0 overflow-hidden rounded-[8px] bg-surface-muted aspect-square
               inline-24
             "
             aria-hidden={!src}

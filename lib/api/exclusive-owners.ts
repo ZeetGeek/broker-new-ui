@@ -5,6 +5,19 @@ import {
     type ExclusiveOwnerFormValues,
 } from "@/lib/validation/exclusive-owner";
 
+export type ExclusiveOwnerProperty = {
+    id: string;
+    title?: string | null;
+    city?: string | null;
+    address?: string | null;
+    society?: string | null;
+    photos?: unknown;
+    salePrice?: string | number | null;
+    monthlyRent?: string | number | null;
+    propertyType?: string | null;
+    bhkConfig?: string | null;
+};
+
 export type ExclusiveOwnerItem = {
     id: string;
     fullName: string;
@@ -14,6 +27,8 @@ export type ExclusiveOwnerItem = {
     ownerType: "individual" | "builder" | "company";
     society: string;
     area: string | null;
+    country?: string | null;
+    state?: string | null;
     city: string | null;
     pincode: string | null;
     fullAddress: string | null;
@@ -21,6 +36,8 @@ export type ExclusiveOwnerItem = {
     source: string | null;
     notes: string | null;
     propertyCount: number;
+    /** Present when the API nests inventory rows on the owner. */
+    properties?: ExclusiveOwnerProperty[] | null;
     origin: "custom";
     createdAt: string | null;
     updatedAt: string | null;
@@ -56,8 +73,10 @@ function toPayload(input: NewExclusiveOwnerInput) {
         phone: `+91${phoneDigits}`,
         email: input.email.trim() || undefined,
         ownerType: input.ownerType,
-        society: input.society.trim(),
+        society: input.society?.trim() || undefined,
         area: input.area?.trim() || undefined,
+        country: input.country?.trim() || undefined,
+        state: input.state?.trim() || undefined,
         city: input.city?.trim() || undefined,
         pincode: input.pincode?.trim() || undefined,
         fullAddress: input.fullAddress?.trim() || undefined,
@@ -126,8 +145,10 @@ export const exclusiveOwnersApi = {
                 phone: `+91${phoneDigits}`,
                 email: input.email.trim() || null,
                 ownerType: input.ownerType,
-                society: input.society.trim(),
+                society: input.society?.trim() || "",
                 area: input.area?.trim() || null,
+                country: input.country?.trim() || null,
+                state: input.state?.trim() || null,
                 city: input.city?.trim() || null,
                 pincode: input.pincode?.trim() || null,
                 fullAddress: input.fullAddress?.trim() || null,
@@ -147,6 +168,15 @@ export const exclusiveOwnersApi = {
             method: "POST",
             body: JSON.stringify(toPayload(input)),
         });
+    },
+
+    async remove(ownerId: string): Promise<void> {
+        if (isMockMode()) {
+            const index = mockExclusiveOwners.findIndex((item) => item.id === ownerId);
+            if (index >= 0) mockExclusiveOwners.splice(index, 1);
+            return;
+        }
+        await apiFetch<void>(`/exclusive-owners/${ownerId}`, { method: "DELETE" });
     },
 };
 

@@ -110,6 +110,10 @@ export function AppModal({
 }: AppModalProps) {
     const pad = PAD_VALUE[padding];
     const showDescription = hasVisibleDescription(description);
+    const titleClass = cn("font-display text-lg font-medium text-ink", titleClassName);
+    const titleIsSrOnly = typeof titleClassName === "string" && /\bsr-only\b/.test(titleClassName);
+    /** Custom `header` owns the chrome — keep DialogTitle for a11y only. */
+    const customHeaderOnly = Boolean(header) && titleIsSrOnly && !showDescription;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -131,59 +135,56 @@ export function AppModal({
                         headerClassName,
                     )}
                 >
-                    <div className="flex items-start justify-between gap-3">
-                        <DialogHeader className="flex-1 gap-1.5 pe-0 text-start min-inline-0">
-                            <DialogTitle
-                                className={cn(
-                                    "font-display text-lg font-medium text-ink",
-                                    titleClassName,
-                                )}
-                            >
-                                {title}
-                            </DialogTitle>
-                            {showDescription ? (
-                                <DialogDescription
-                                    className={cn(
-                                        "body-sm text-ink-muted",
-                                        descriptionClassName,
-                                    )}
-                                >
-                                    {description}
-                                </DialogDescription>
-                            ) : null}
-                        </DialogHeader>
+                    {customHeaderOnly ? (
+                        <DialogTitle className={titleClass}>{title}</DialogTitle>
+                    ) : (
+                        <div className="flex items-start justify-between gap-3">
+                            <DialogHeader className="flex-1 gap-1.5 pe-0 text-start min-inline-0">
+                                <DialogTitle className={titleClass}>{title}</DialogTitle>
+                                {showDescription ? (
+                                    <DialogDescription
+                                        className={cn(
+                                            "body-sm text-ink-muted",
+                                            descriptionClassName,
+                                        )}
+                                    >
+                                        {description}
+                                    </DialogDescription>
+                                ) : null}
+                            </DialogHeader>
 
-                        {showCloseButton ? (
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <DialogClose
-                                            render={
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="icon-sm"
-                                                    aria-label="Close"
-                                                    className="shrink-0"
-                                                />
-                                            }
+                            {showCloseButton ? (
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <DialogClose
+                                                render={
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="icon-sm"
+                                                        aria-label="Close"
+                                                        className="shrink-0"
+                                                    />
+                                                }
+                                            />
+                                        }
+                                    >
+                                        <XIcon
+                                            className="block-4 inline-4"
+                                            strokeWidth={2}
+                                            aria-hidden
                                         />
-                                    }
-                                >
-                                    <XIcon
-                                        className="block-4 inline-4"
-                                        strokeWidth={2}
-                                        aria-hidden
-                                    />
-                                    <span className="sr-only">Close</span>
-                                </TooltipTrigger>
-                                <TooltipContent side="inline-start">
-                                    Close
-                                    <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
-                                </TooltipContent>
-                            </Tooltip>
-                        ) : null}
-                    </div>
+                                        <span className="sr-only">Close</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="inline-start">
+                                        Close
+                                        <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ) : null}
+                        </div>
+                    )}
                     {header}
                 </div>
 
@@ -193,9 +194,7 @@ export function AppModal({
                         style={{ maxHeight: "100%" }}
                         autoHide
                     >
-                        <div className={cn("px-(--dialog-pad) py-2", bodyClassName)}>
-                            {children}
-                        </div>
+                        <div className={cn("p-(--dialog-pad)", bodyClassName)}>{children}</div>
                     </SimpleBar>
                 </div>
 

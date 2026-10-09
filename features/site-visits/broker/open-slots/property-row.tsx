@@ -77,7 +77,7 @@ export const PropertyRow = memo(function PropertyRow({
             )}
         >
             <div className="grid gap-4 md:grid-cols-[96px_minmax(0,1fr)_auto] md:items-start">
-                <div className="relative overflow-hidden rounded-inner bg-surface-muted block-[72px] inline-24">
+                <div className="relative overflow-hidden rounded-[8px] bg-surface-muted block-[72px] inline-24">
                     <AppImage
                         src={item.property.coverUrl ?? "/properties/1.jpg"}
                         alt=""

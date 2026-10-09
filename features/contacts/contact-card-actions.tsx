@@ -2,19 +2,11 @@
 
 import type { SyntheticEvent } from "react";
 
-import {
-    Eye,
-    Link2,
-    Lock,
-    MessageCircle,
-    MoreHorizontal,
-    Pencil,
-    StickyNote,
-    Trash2,
-    Phone,
-} from "lucide-react";
+import { addCollection, Icon } from "@iconify/react/offline";
+import { Eye, Link2, Lock, MoreHorizontal, Pencil, StickyNote, Trash2, Phone } from "lucide-react";
 
 import { formatWhatsAppUrl } from "@/lib/format/phone";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +18,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
+
+addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
+
 export type ContactCardActionsProps = {
     name: string;
     phoneDigits?: string;
@@ -35,6 +31,11 @@ export type ContactCardActionsProps = {
     onNotes?: () => void;
     onDelete?: () => void;
     editLocked?: boolean;
+    /**
+     * `default` — Call + WhatsApp + menu (wide rows).
+     * `menu` — overflow only; Call/WhatsApp live elsewhere on the card.
+     */
+    density?: "default" | "menu";
 };
 
 function stop(event: SyntheticEvent) {
@@ -50,12 +51,14 @@ export function ContactCardActions({
     onNotes,
     onDelete,
     editLocked = false,
+    density = "default",
 }: ContactCardActionsProps) {
     const callHref = phoneDigits ? `tel:+91${phoneDigits}` : undefined;
+    const showQuickActions = density === "default";
 
     return (
-        <div className="contact-card-actions flex shrink-0 items-center gap-1" onClick={stop}>
-            {callHref ? (
+        <div className={cn("contact-card-actions flex shrink-0 items-center gap-1")} onClick={stop}>
+            {showQuickActions && callHref ? (
                 <Tooltip>
                     <TooltipTrigger
                         render={
@@ -75,7 +78,7 @@ export function ContactCardActions({
                 </Tooltip>
             ) : null}
 
-            {phoneDigits ? (
+            {showQuickActions && phoneDigits ? (
                 <Tooltip>
                     <TooltipTrigger
                         render={
@@ -96,9 +99,9 @@ export function ContactCardActions({
                             />
                         }
                     >
-                        <MessageCircle aria-hidden strokeWidth={1.75} />
+                        <Icon icon="bi:whatsapp" width={16} height={16} aria-hidden />
                     </TooltipTrigger>
-                    <TooltipContent>Message {name} on WhatsApp</TooltipContent>
+                    <TooltipContent>WhatsApp {name}</TooltipContent>
                 </Tooltip>
             ) : null}
 
@@ -110,14 +113,19 @@ export function ContactCardActions({
                                 render={
                                     <Button
                                         type="button"
-                                        variant="ghost"
-                                        size="icon-xs"
+                                        variant="outline"
+                                        size="icon-sm"
                                         aria-label={`More actions for ${name}`}
                                         onClick={stop}
+                                        className="rounded-full border-border-warm bg-surface shadow-xs"
                                     />
                                 }
                             >
-                                <MoreHorizontal aria-hidden strokeWidth={1.75} />
+                                <MoreHorizontal
+                                    aria-hidden
+                                    className="block-4.5 inline-4.5"
+                                    strokeWidth={1.75}
+                                />
                             </DropdownMenuTrigger>
                         }
                     />

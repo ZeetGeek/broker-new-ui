@@ -47,6 +47,7 @@ const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<LucideProps>> = {
     settings: Settings,
     logout: LogOut,
     add_property: Plus,
+    add_contact: Contact,
 };
 
 function groupShortcuts(): Map<string, ShortcutDef[]> {

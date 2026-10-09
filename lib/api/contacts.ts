@@ -159,6 +159,21 @@ function digitsOnly(value: string | null | undefined): string {
     return (value ?? "").replace(/\D/g, "");
 }
 
+function coverFromPhotos(photos: unknown): string | undefined {
+    if (!Array.isArray(photos)) return undefined;
+    for (const item of photos) {
+        if (typeof item === "string" && item.trim()) return item.trim();
+        if (item && typeof item === "object") {
+            const record = item as Record<string, unknown>;
+            for (const key of ["url", "src", "path", "href"] as const) {
+                const value = record[key];
+                if (typeof value === "string" && value.trim()) return value.trim();
+            }
+        }
+    }
+    return undefined;
+}
+
 function toOwnerRow(item: ApiOwnerItem): OwnerRow {
     const phoneDigits = digitsOnly(item.phone);
     const normalized = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
@@ -178,6 +193,14 @@ function toOwnerRow(item: ApiOwnerItem): OwnerRow {
               } as OwnerContactForm)
             : undefined;
 
+    const properties = item.properties?.map((property) => {
+        const photos = (property as { photos?: unknown }).photos;
+        return {
+            ...property,
+            coverUrl: property.coverUrl || coverFromPhotos(photos),
+        };
+    });
+
     return {
         id: item.id,
         name: item.name?.trim() || "Owner",
@@ -186,7 +209,7 @@ function toOwnerRow(item: ApiOwnerItem): OwnerRow {
         hasActiveRepresentation: Boolean(item.hasActiveRepresentation),
         propertyCount: item.propertyCount ?? 0,
         propertyTitles: item.propertyTitles ?? [],
-        properties: item.properties,
+        properties,
         localities: item.localities?.length ? item.localities : ["—"],
         totalValueInr: Number(item.totalValueInr) || 0,
         isAllRent: Boolean(item.isAllRent),
@@ -211,13 +234,14 @@ function toBuyerRow(
     return {
         ...client,
         attachedProperties: client.attachedProperties.map((property) => {
-            const deal = MOCK_DEALS.find(
-                (item) => item.buyer.id === client.id && item.property.id === property.id,
-            );
+            const deal =
+                MOCK_DEALS.find(
+                    (item) => item.buyer.id === client.id && item.property.id === property.id,
+                ) ?? MOCK_DEALS.find((item) => item.property.id === property.id);
             return {
                 ...property,
-                locality: deal?.property.locality,
-                coverUrl: deal?.property.imageSrc,
+                locality: property.locality ?? deal?.property.locality,
+                coverUrl: property.coverUrl || deal?.property.imageSrc,
                 propertyType: deal?.property.propertyTypeLabel,
             };
         }),
@@ -272,6 +296,25 @@ function apiBuyerToRow(item: ApiBuyerItem): BuyerRow {
     };
 }
 
+function exclusiveOwnerPropertyToCard(
+    property: NonNullable<ExclusiveOwnerItem["properties"]>[number],
+    fallbackLocality: string,
+): NonNullable<OwnerRow["properties"]>[number] {
+    return {
+        id: property.id,
+        title: property.title?.trim() || property.society?.trim() || "Property",
+        locality:
+            property.society?.trim() ||
+            property.address?.trim() ||
+            property.city?.trim() ||
+            fallbackLocality ||
+            "Surat",
+        coverUrl: coverFromPhotos(property.photos),
+        propertyType: property.propertyType ?? undefined,
+        configuration: property.bhkConfig ?? undefined,
+    };
+}
+
 function exclusiveOwnerToRow(item: ExclusiveOwnerItem): OwnerRow {
     const phoneDigits = exclusiveOwnerPhoneDigits(item.phone);
     const details: OwnerContactForm = {
@@ -282,6 +325,8 @@ function exclusiveOwnerToRow(item: ExclusiveOwnerItem): OwnerRow {
         ownerType: item.ownerType,
         societyName: item.society,
         locality: item.area ?? "",
+        country: item.country ?? "",
+        state: item.state ?? "",
         city: item.city ?? "",
         pincode: item.pincode ?? "",
         fullAddress: item.fullAddress ?? "",
@@ -292,13 +337,23 @@ function exclusiveOwnerToRow(item: ExclusiveOwnerItem): OwnerRow {
         createPrivateListing: false,
     };
 
+    const fallbackLocality = item.area?.trim() || item.city?.trim() || "Surat";
+    const properties = (item.properties ?? [])
+        .filter((property): property is NonNullable<typeof property> => Boolean(property?.id))
+        .map((property) => exclusiveOwnerPropertyToCard(property, fallbackLocality));
+
     return {
         id: item.id,
         name: item.fullName,
         phoneDigits,
         hasActiveRepresentation: true,
-        propertyCount: item.propertyCount,
-        propertyTitles: item.society ? [item.society] : [],
+        propertyCount: Math.max(item.propertyCount, properties.length),
+        propertyTitles: properties.length
+            ? properties.map((property) => property.title)
+            : item.society
+              ? [item.society]
+              : [],
+        properties: properties.length ? properties : undefined,
         localities: [item.area, item.city].filter((value): value is string => Boolean(value)),
         totalValueInr: 0,
         isAllRent: false,
@@ -307,6 +362,112 @@ function exclusiveOwnerToRow(item: ExclusiveOwnerItem): OwnerRow {
         notes: item.notes ?? undefined,
         details,
     };
+}
+
+/**
+ * Exclusive-owner list often ships only `propertyCount`. Pull the broker’s
+ * inventory rows so owner cards can show the same cover stack as buyers.
+ */
+async function attachExclusiveOwnerListings(
+    owners: OwnerRow[],
+    signal?: AbortSignal,
+): Promise<OwnerRow[]> {
+    const customIds = new Set(
+        owners
+            .filter(
+                (owner) =>
+                    owner.origin === "custom" &&
+                    owner.propertyCount > 0 &&
+                    (!owner.properties?.length ||
+                        owner.properties.some((property) => !property.coverUrl)),
+            )
+            .map((owner) => owner.id),
+    );
+    if (customIds.size === 0) return owners;
+
+    const byOwner = new Map<string, NonNullable<OwnerRow["properties"]>>();
+    try {
+        let page = 1;
+        let totalPages = 1;
+        while (page <= totalPages && page <= 5) {
+            const response = await apiFetch<{
+                items?: Array<{
+                    id: string;
+                    title?: string | null;
+                    city?: string | null;
+                    address?: string | null;
+                    society?: string | null;
+                    photos?: unknown;
+                    propertyType?: string | null;
+                    bhkConfig?: string | null;
+                    exclusiveOwnerId?: string | null;
+                    exclusiveOwner?: { id?: string | null } | null;
+                }>;
+                totalPages?: number;
+            }>(`/properties?page=${page}&limit=100`, { signal });
+
+            for (const listing of response.items ?? []) {
+                const ownerId = listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null;
+                if (!ownerId || !customIds.has(ownerId)) continue;
+                const next = exclusiveOwnerPropertyToCard(
+                    {
+                        id: listing.id,
+                        title: listing.title,
+                        city: listing.city,
+                        address: listing.address,
+                        society: listing.society,
+                        photos: listing.photos,
+                        propertyType: listing.propertyType,
+                        bhkConfig: listing.bhkConfig,
+                    },
+                    listing.city?.trim() || "Surat",
+                );
+                const list = byOwner.get(ownerId) ?? [];
+                if (!list.some((property) => property.id === next.id)) list.push(next);
+                byOwner.set(ownerId, list);
+            }
+
+            totalPages = Math.max(1, response.totalPages ?? 1);
+            page += 1;
+        }
+    } catch {
+        return owners;
+    }
+
+    if (byOwner.size === 0) return owners;
+
+    return owners.map((owner) => {
+        const listings = byOwner.get(owner.id);
+        if (!listings?.length) return owner;
+
+        // Prefer fetched covers; keep any existing rows that already had photos.
+        const existingById = new Map(
+            (owner.properties ?? []).map((property) => [property.id, property]),
+        );
+        const merged = listings.map((listing) => {
+            const existing = existingById.get(listing.id);
+            return {
+                ...listing,
+                coverUrl: listing.coverUrl || existing?.coverUrl,
+                title: listing.title || existing?.title || "Property",
+            };
+        });
+
+        return {
+            ...owner,
+            propertyCount: Math.max(owner.propertyCount, merged.length),
+            propertyTitles: merged.map((property) => property.title),
+            properties: merged,
+            localities: [
+                ...new Set(
+                    [
+                        ...merged.map((property) => property.locality).filter(Boolean),
+                        ...owner.localities,
+                    ].filter((value): value is string => Boolean(value)),
+                ),
+            ],
+        };
+    });
 }
 
 async function listOwners(
@@ -388,8 +549,10 @@ async function listOwners(
         signal,
     );
 
+    const owners = await attachExclusiveOwnerListings(data.items.map(exclusiveOwnerToRow), signal);
+
     return {
-        owners: data.items.map(exclusiveOwnerToRow),
+        owners,
         total: data.total,
         page: data.page,
         totalPages: data.totalPages,
@@ -588,6 +751,8 @@ export const contactsApi = {
                     : "individual",
             society: values.societyName.trim(),
             area: values.locality.trim(),
+            country: values.country.trim(),
+            state: values.state.trim(),
             city: values.city.trim(),
             pincode: values.pincode.trim(),
             fullAddress: values.fullAddress.trim() || values.address.trim(),
@@ -605,6 +770,18 @@ export const contactsApi = {
         if (!owner) return;
         owner.linkedListingId = listingId;
         owner.linkedListingTitle = title;
+    },
+
+    /** Remove a broker-added exclusive owner from contacts. */
+    async removeOwner(ownerId: string): Promise<void> {
+        if (isMockMode()) {
+            const index = mockCustomOwners.findIndex((item) => item.id === ownerId);
+            if (index >= 0) mockCustomOwners.splice(index, 1);
+            mockPlatformOwnerTracking.delete(ownerId);
+            await exclusiveOwnersApi.remove(ownerId);
+            return;
+        }
+        await exclusiveOwnersApi.remove(ownerId);
     },
 };
 

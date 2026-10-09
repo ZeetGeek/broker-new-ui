@@ -1640,27 +1640,7 @@
 /* Contacts cards share one purposeful hover response; touch devices keep the
    actions visible because they have no hover discovery state. */
 .contact-card {
-    transition:
-        transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
-        border-color 160ms ease-out;
-}
-
-@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
-    .contact-card:hover {
-        transform: translateY(-2px);
-        border-color: color-mix(in oklch, var(--color-ink) 18%, var(--color-border-warm));
-    }
-
-    .contact-card-actions {
-        opacity: 0;
-        transition: opacity 140ms ease-out;
-    }
-
-    .contact-card:hover .contact-card-actions,
-    .contact-card:focus-within .contact-card-actions,
-    .contact-card:focus-visible .contact-card-actions {
-        opacity: 1;
-    }
+    transition: box-shadow 160ms ease-out;
 }
 
 .property-cover-tile {

@@ -55,6 +55,13 @@ function mapRepresentation(rep: RepresentationItem): AttachableProperty | null {
     };
 }
 
+/** Minimal buyer shape — works after create before the list row is refetched. */
+export type AttachBuyerTarget = {
+    id: string;
+    name: string;
+    attachedProperties?: BuyerRow["attachedProperties"];
+};
+
 export function AttachBuyerPropertiesModal({
     open,
     onOpenChange,
@@ -63,7 +70,7 @@ export function AttachBuyerPropertiesModal({
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    buyer: BuyerRow;
+    buyer: AttachBuyerTarget;
     onSaved: () => void;
 }) {
     const [properties, setProperties] = useState<AttachableProperty[]>([]);
@@ -91,7 +98,7 @@ export function AttachBuyerPropertiesModal({
                         .filter((item): item is AttachableProperty => item != null);
                     // Dedupe by property id.
                     const unique = [...new Map(mapped.map((item) => [item.id, item])).values()];
-                    const already = buyer.attachedProperties.map((item) => item.id);
+                    const already = (buyer.attachedProperties ?? []).map((item) => item.id);
                     setProperties(unique);
                     setAttachedIds(already);
                     setSelectedIds(already);

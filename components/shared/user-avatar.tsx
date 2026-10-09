@@ -14,28 +14,34 @@ import { AppImage } from "@/components/shared/app-image";
  * Outer frame carries ring + shadow (must not use overflow-hidden or the
  * shadow clips). Inner clip keeps the photo / avvatar circular.
  */
-const avatarFrameVariants = cva(
-    "relative inline-flex shrink-0 rounded-full bg-surface shadow-xs ring-1 ring-border-warm",
-    {
-        variants: {
-            size: {
-                /** 20px — tiny credit faces on dense cards. */
-                xxs: "block-5 inline-5",
-                /** 24px — buyer/owner rows on pipeline board cards. */
-                "2xs": "block-6 inline-6",
-                /** 32px — buyer/owner rows on pipeline cards. */
-                xs: "block-8 inline-8",
-                sm: "block-9 inline-9",
-                md: "block-10 inline-10",
-                lg: "block-14 inline-14",
-                fill: "block-full inline-full",
-            },
+const avatarFrameVariants = cva("relative inline-flex shrink-0 rounded-full bg-surface", {
+    variants: {
+        size: {
+            /** 20px — tiny credit faces on dense cards. */
+            xxs: "block-5 inline-5",
+            /** 24px — buyer/owner rows on pipeline board cards. */
+            "2xs": "block-6 inline-6",
+            /** 32px — buyer/owner rows on pipeline cards. */
+            xs: "block-8 inline-8",
+            sm: "block-9 inline-9",
+            md: "block-10 inline-10",
+            lg: "block-14 inline-14",
+            fill: "block-full inline-full",
         },
-        defaultVariants: {
-            size: "md",
+        /**
+         * `true` — product default ring + soft shadow.
+         * `false` — bare circle (detail headers that sit on a white surface).
+         */
+        framed: {
+            true: "shadow-xs ring-1 ring-border-warm",
+            false: "shadow-none ring-0",
         },
     },
-);
+    defaultVariants: {
+        size: "md",
+        framed: true,
+    },
+});
 
 const avatarMediaClass = "block-full inline-full object-cover object-center";
 
@@ -79,16 +85,17 @@ function initialsFromName(name: string): string {
     return `${first}${last}`.toUpperCase();
 }
 
-export type UserAvatarFallback = "shape" | "character";
+export type UserAvatarFallback = "shape" | "character" | "brand";
 
 export type UserAvatarProps = VariantProps<typeof avatarFrameVariants> & {
     name: string;
     imageUrl?: string;
     className?: string;
     /**
-     * No-photo placeholder from `avvvatars-react`.
-     * `shape` — unique abstract shape (product default).
-     * `character` — initials; use in dense multi-person rows.
+     * No-photo placeholder.
+     * `shape` — unique abstract shape from avvvatars (product default).
+     * `character` — avvvatars initials (multi-hue; avoid on brand-critical surfaces).
+     * `brand` — brand-soft disc + brand-text initials (one-hue system).
      */
     fallback?: UserAvatarFallback;
 };
@@ -97,6 +104,7 @@ export function UserAvatar({
     name,
     imageUrl,
     size,
+    framed = true,
     className,
     fallback = "shape",
 }: UserAvatarProps) {
@@ -111,7 +119,7 @@ export function UserAvatar({
         resolvedSize === "xxs" || resolvedSize === "2xs" ? initials.slice(0, 1) : initials;
 
     return (
-        <span className={cn(avatarFrameVariants({ size }), className)}>
+        <span className={cn(avatarFrameVariants({ size, framed }), className)}>
             <span className="relative block overflow-hidden rounded-full block-full inline-full">
                 {showPhoto && resolvedImageUrl ? (
                     <AppImage
@@ -125,6 +133,27 @@ export function UserAvatar({
                         className={avatarMediaClass}
                         onError={() => setFailedImageUrl(resolvedImageUrl)}
                     />
+                ) : fallback === "brand" ? (
+                    <span
+                        aria-hidden
+                        className="
+                          flex items-center justify-center bg-brand-soft font-sans font-semibold
+                          text-brand-text block-full inline-full
+                        "
+                    >
+                        <span
+                            className={cn(
+                                "leading-none",
+                                resolvedSize === "xxs" || resolvedSize === "2xs"
+                                    ? "text-[10px]"
+                                    : resolvedSize === "xs" || resolvedSize === "sm"
+                                      ? "text-xs"
+                                      : "text-sm",
+                            )}
+                        >
+                            {displayValue}
+                        </span>
+                    </span>
                 ) : (
                     <span aria-hidden className={cn("block-full inline-full", avvatarFillClass)}>
                         <Avvvatars

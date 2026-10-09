@@ -102,6 +102,8 @@ export type OwnerContactForm = {
     societyName: string;
     locality: string;
     fullAddress: string;
+    country: string;
+    state: string;
     city: string;
     pincode: string;
     lat: string;
@@ -211,6 +213,8 @@ export function emptyOwnerForm(): OwnerContactForm {
         societyName: "",
         locality: "",
         fullAddress: "",
+        country: "India",
+        state: "Gujarat",
         city: "Surat",
         pincode: "",
         lat: "",

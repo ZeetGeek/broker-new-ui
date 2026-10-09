@@ -238,7 +238,7 @@ export function BookingDrawer({
                         </DialogDescription>
                     </DialogHeader>
                     <div className="mbs-4 flex gap-3 rounded-inner bg-surface-muted p-3">
-                        <div className="relative shrink-0 overflow-hidden rounded-[9px] block-14 inline-16">
+                        <div className="relative shrink-0 overflow-hidden rounded-[8px] block-14 inline-16">
                             <AppImage
                                 src={item.property.coverUrl ?? "/properties/1.jpg"}
                                 alt=""
