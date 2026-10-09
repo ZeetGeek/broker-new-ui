@@ -11,7 +11,7 @@ export type OwnerListingPropertyType =
 
 export type OwnerListingItem = {
     id: string;
-    title: string;
+    title?: string;
     configLabel: string;
     propertyTypeLabel: OwnerListingPropertyType;
     bhk: number;

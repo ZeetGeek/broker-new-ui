@@ -54,7 +54,7 @@ export type DealProperty = {
     isRent: boolean;
     imageSrc: string;
     /** Up to a few listing photos for the board card strip. Falls back to `[imageSrc]`. */
-    imageSrcs?: string[];
+    imageSrcs?: readonly string[];
     /**
      * Total photos on the listing. Optional — absent means the payload did not
      * say, which is not the same as zero, so the gallery count stays hidden.

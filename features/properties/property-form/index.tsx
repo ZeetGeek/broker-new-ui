@@ -1708,6 +1708,12 @@ function focusFieldByPath(path: string): boolean {
     return true;
 }
 
+/**
+ * Not a real form field — the draft schema raises the missing-cover error at
+ * `media.cover` (photos live in `media.photos`), so the path needs a cast.
+ */
+const MEDIA_COVER_ERROR_PATH = "media.cover" as FieldPath<PropertyDraftValues>;
+
 const QUICK_ADD_ERROR_FIELDS = [
     "basics.listingFor",
     "basics.category",
@@ -1717,7 +1723,7 @@ const QUICK_ADD_ERROR_FIELDS = [
     "area.plotArea",
     "sale.expectedPrice",
     "rent.monthlyRent",
-    "media.cover",
+    MEDIA_COVER_ERROR_PATH,
 ] as const satisfies readonly FieldPath<PropertyDraftValues>[];
 
 /** Field-level validation for Quick add — same inline errors as Full details. */
@@ -1770,7 +1776,7 @@ function validateQuickAdd(
         (photo) => photo.status !== "error" && Boolean(photo.url),
     );
     if (!hasCover && !hasAnyPhoto) {
-        issues.push({ path: "media.cover", message: "Add a cover photo" });
+        issues.push({ path: MEDIA_COVER_ERROR_PATH, message: "Add a cover photo" });
     }
 
     if (!issues.length) return true;
@@ -1781,7 +1787,7 @@ function validateQuickAdd(
     const firstPath = issues[0]!.path;
     requestAnimationFrame(() => {
         focusFieldByPath(firstPath);
-        if (firstPath === "media.cover") {
+        if (firstPath === MEDIA_COVER_ERROR_PATH) {
             document.getElementById("quick-cover-upload")?.scrollIntoView({
                 behavior: "smooth",
                 block: "center",
