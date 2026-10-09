@@ -1,5 +1,12 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
+import type { InfinitePage } from "@/lib/pagination/infinite-page";
 
+import {
+    MOCK_CREDIT_LEDGER,
+    MOCK_REFERRAL_CODE,
+    MOCK_REFERRALS,
+} from "@/features/referrals/mock-referrals";
 import { isStaleReferral } from "@/features/referrals/referral-meta";
 import {
     type CreditEntry,
@@ -319,17 +326,123 @@ function sortReferrals(items: ReferralItem[], now: Date): ReferralItem[] {
     });
 }
 
+export function filterAndSortReferrals(
+    items: ReferralItem[],
+    filters: ReferralsFilters,
+    now: Date,
+): ReferralItem[] {
+    return sortReferrals(
+        items.filter(
+            (referral) =>
+                matchesQuery(referral, filters.q) && matchesStatus(referral, filters.status),
+        ),
+        now,
+    );
+}
+
+export type ReferralItemsPage = InfinitePage<ReferralItem> & {
+    summary: ReferralInvitesResponse["summary"];
+};
+
+export function buildReferralPresentation(
+    overview: ReferralOverviewResponse,
+    invitesSummary: ReferralInvitesResponse["summary"],
+    items: ReferralItem[],
+    ledger: CreditEntry[],
+    now: Date,
+) {
+    return {
+        referralCode: {
+            code: overview.referralCode,
+            shareUrl: overview.inviteUrl,
+        } satisfies ReferralCode,
+        earnings: buildEarnings(ledger, items),
+        summary: summarizeFromApi(invitesSummary, items, ledger, overview.balance, now),
+    };
+}
+
 export const referralsApi = {
-    overview() {
-        return apiFetch<ReferralOverviewResponse>("/referrals");
+    overview(_signal?: AbortSignal) {
+        if (isMockMode()) {
+            const balance = MOCK_CREDIT_LEDGER.reduce((sum, entry) => sum + entry.amount, 0);
+            return Promise.resolve({
+                balance,
+                listingCost: 20,
+                referralCode: MOCK_REFERRAL_CODE.code,
+                inviteUrl: MOCK_REFERRAL_CODE.shareUrl,
+            } satisfies ReferralOverviewResponse);
+        }
+        return apiFetch<ReferralOverviewResponse>("/referrals", { signal: _signal });
     },
 
-    invites(page = 1, limit = 50) {
-        return apiFetch<ReferralInvitesResponse>(`/referrals/invites?page=${page}&limit=${limit}`);
+    invites(page = 1, limit = 50, signal?: AbortSignal) {
+        return apiFetch<ReferralInvitesResponse>(`/referrals/invites?page=${page}&limit=${limit}`, {
+            signal,
+        });
     },
 
-    history(page = 1, limit = 50) {
-        return apiFetch<ReferralHistoryResponse>(`/referrals/history?page=${page}&limit=${limit}`);
+    history(page = 1, limit = 50, signal?: AbortSignal) {
+        return apiFetch<ReferralHistoryResponse>(`/referrals/history?page=${page}&limit=${limit}`, {
+            signal,
+        });
+    },
+
+    async listInvitesPage(cursor: string | null, signal?: AbortSignal): Promise<ReferralItemsPage> {
+        if (isMockMode()) {
+            const page = cursor ? Number(cursor) || 1 : 1;
+            const qualified = MOCK_REFERRALS.filter((item) => item.status === "qualified").length;
+            const pendingVerification = MOCK_REFERRALS.filter(
+                (item) => item.status === "joined",
+            ).length;
+            const awaitingAction = MOCK_REFERRALS.filter(
+                (item) => item.status === "verified" || item.status === "awaiting_approval",
+            ).length;
+            return {
+                items: MOCK_REFERRALS,
+                total: MOCK_REFERRALS.length,
+                nextCursor: page > 1 ? null : null,
+                summary: {
+                    totalInvites: MOCK_REFERRALS.length,
+                    credited: qualified,
+                    pendingVerification,
+                    awaitingAction,
+                },
+            };
+        }
+        const page = cursor ? Number(cursor) || 1 : 1;
+        const limit = 50;
+        const response = await this.invites(page, limit, signal);
+
+        return {
+            items: response.items.map(mapInviteToReferralItem),
+            total: response.total,
+            nextCursor: page * response.limit < response.total ? String(page + 1) : null,
+            summary: response.summary,
+        };
+    },
+
+    async listHistoryPage(
+        cursor: string | null,
+        signal?: AbortSignal,
+    ): Promise<InfinitePage<CreditEntry>> {
+        if (isMockMode()) {
+            return {
+                items: MOCK_CREDIT_LEDGER,
+                total: MOCK_CREDIT_LEDGER.length,
+                nextCursor: null,
+            };
+        }
+        const page = cursor ? Number(cursor) || 1 : 1;
+        const limit = 50;
+        const response = await this.history(page, limit, signal);
+
+        return {
+            items: response.items
+                .map(mapTxn)
+                .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()),
+            total: response.total,
+            nextCursor: page * response.limit < response.total ? String(page + 1) : null,
+        };
     },
 
     /**
@@ -350,10 +463,7 @@ export const referralsApi = {
             .map(mapTxn)
             .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
-        const filtered = allItems.filter(
-            (referral) =>
-                matchesQuery(referral, filters.q) && matchesStatus(referral, filters.status),
-        );
+        const filtered = filterAndSortReferrals(allItems, filters, now);
 
         const referralCode: ReferralCode = {
             code: overview.referralCode,
@@ -361,7 +471,7 @@ export const referralsApi = {
         };
 
         return {
-            items: sortReferrals(filtered, now),
+            items: filtered,
             ledger,
             earnings: buildEarnings(ledger, allItems),
             summary: summarizeFromApi(invites.summary, allItems, ledger, overview.balance, now),

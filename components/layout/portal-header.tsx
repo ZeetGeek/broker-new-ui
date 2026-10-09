@@ -1,16 +1,12 @@
 import type { ReactElement, ReactNode } from "react";
 
-import { Search } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 
+import { PortalHeaderSearch } from "@/components/layout/portal-header-search";
 import { PortalNav } from "@/components/layout/portal-nav";
 import { PortalNotificationsMenu } from "@/components/layout/portal-notifications-menu";
 import { PortalProfileMenu } from "@/components/layout/portal-profile-menu";
-import { SearchPlaceholderLoop } from "@/components/layout/search-placeholder-loop";
 import { Logo } from "@/components/shared/logo";
-import { Button } from "@/components/ui/button";
-import { Kbd } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { NavItem } from "@/config/nav";
@@ -93,35 +89,17 @@ export function PortalHeader({
                         <TooltipProvider>
                             <div className="flex shrink-0 items-center gap-4">
                                 <HeaderTooltip label="Find properties, clients, and visits">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="icon-md"
-                                        aria-label="Search"
+                                    <PortalHeaderSearch
                                         className={cn(
                                             headerControlClass,
                                             `
-                                              group border! text-ink-muted
-                                              group-hover:text-ink
+                                              border! text-ink-muted
+                                              hover:bg-transparent hover:text-ink-muted
                                               md:justify-start md:gap-2 md:px-4 md:inline-auto
                                               md:min-inline-64
                                             `,
                                         )}
-                                    >
-                                        <Search aria-hidden="true" />
-                                        <span
-                                            aria-hidden="true"
-                                            className="hidden overflow-hidden md:inline-flex"
-                                        >
-                                            <SearchPlaceholderLoop />
-                                        </span>
-                                        <Kbd
-                                            variant="surface"
-                                            className="hidden md:ms-auto md:me-0 md:inline-flex"
-                                        >
-                                            Ctrl + K
-                                        </Kbd>
-                                    </Button>
+                                    />
                                 </HeaderTooltip>
 
                                 <PortalNotificationsMenu
@@ -129,7 +107,10 @@ export function PortalHeader({
                                     tooltipLabel="Notifications"
                                     triggerClassName={cn(
                                         headerControlClass,
-                                        "relative border! text-ink-muted hover:text-ink",
+                                        `
+                                          relative border! text-ink-muted
+                                          hover:bg-transparent hover:text-ink-muted
+                                        `,
                                     )}
                                 />
 

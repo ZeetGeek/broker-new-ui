@@ -2,6 +2,8 @@ import type {
     DashboardActivity,
     DashboardBrokerRequest,
     DashboardFollowUps,
+    DashboardOwnerBrokerRequest,
+    DashboardOwnerSummary,
     DashboardResponse,
     DashboardVisit,
     PipelineFunnelStage,
@@ -19,6 +21,7 @@ import type {
     ActivityData,
     ActivityEventType,
     AreaPropertyItem,
+    DashboardMock,
     FollowUp,
     FollowUpsData,
     NextShowingMock,
@@ -108,7 +111,69 @@ function mapReraStatus(profile: UserProfile | null): ReraStatus {
     return "profile_incomplete";
 }
 
-function mapNextShowing(visit: DashboardVisit | undefined) {
+function visitStateLabel(visit: DashboardVisit, portal: "broker" | "owner" = "broker"): string {
+    if (portal === "owner") {
+        if (visit.status === "confirmed") return "Confirmed";
+        if (visit.status === "cancelled") return "Cancelled";
+        if (visit.status === "completed") return "Done";
+        return visit.statusLabel || "Scheduled";
+    }
+    if (visit.status === "confirmed") return "Owner confirmed the slot";
+    if (visit.status === "cancelled") return "Visit cancelled";
+    if (visit.status === "completed") return "Visit done";
+    return visit.statusLabel ? "Owner hasn't confirmed yet" : "Awaiting owner";
+}
+
+function mapTodayAgenda(
+    visits: DashboardVisit[],
+    now: Date,
+    portal: "broker" | "owner" = "broker",
+): TodayAgenda {
+    const todays = visits
+        .map((visit) => {
+            const scheduledAt = new Date(visit.scheduledAt);
+            if (Number.isNaN(scheduledAt.getTime()) || !isSameCalendarDay(scheduledAt, now)) {
+                return null;
+            }
+            const time = formatTime24(scheduledAt);
+            const timeLabel = formatTimeIn(scheduledAt);
+            const person =
+                portal === "owner"
+                    ? visit.brokerName || "Broker"
+                    : visit.clientName || "Client";
+            const item: TodayItem = {
+                id: visit.id,
+                kind: "site_visit",
+                time,
+                timeLabel,
+                title: `Site visit · ${visit.propertyTitle}`,
+                clientName: person,
+                subtitle: visitStateLabel(visit, portal),
+                state: scheduledAt.getTime() < now.getTime() ? "done" : "upcoming",
+                href: portal === "owner" ? `/owner/visits` : `/broker/visits/${visit.id}`,
+            };
+            return item;
+        })
+        .filter((item): item is TodayItem => item != null)
+        .sort((a, b) => a.time.localeCompare(b.time));
+
+    const nextUpcoming = todays.find((item) => item.state === "upcoming");
+    if (nextUpcoming) {
+        nextUpcoming.isNext = true;
+    }
+
+    return {
+        date: formatDateIso(now),
+        doneCount: todays.filter((item) => item.state === "done").length,
+        remainingCount: todays.filter((item) => item.state !== "done").length,
+        items: todays,
+    };
+}
+
+function mapNextShowing(
+    visit: DashboardVisit | undefined,
+    portal: "broker" | "owner" = "broker",
+) {
     if (!visit) return null;
     const scheduledAt = new Date(visit.scheduledAt);
     if (Number.isNaN(scheduledAt.getTime())) return null;
@@ -128,57 +193,11 @@ function mapNextShowing(visit: DashboardVisit | undefined) {
         distanceKm: 0,
         brokerNote: "",
         status: visit.status === "confirmed" ? ("confirmed" as const) : ("awaiting_owner" as const),
-        clientName: visit.clientName || "Client",
+        clientName:
+            portal === "owner"
+                ? visit.brokerName || "Broker"
+                : visit.clientName || "Client",
         clientPhoneDigits: phoneDigits(visit.clientPhone),
-    };
-}
-
-/**
- * Visit status in the broker's words. The raw `statusLabel` is internal shorthand
- * ("pending"), which does not tell the broker who they are waiting on.
- */
-function visitStateLabel(visit: DashboardVisit): string {
-    if (visit.status === "confirmed") return "Owner confirmed the slot";
-    if (visit.status === "cancelled") return "Visit cancelled";
-    if (visit.status === "completed") return "Visit done";
-    return visit.statusLabel ? "Owner hasn't confirmed yet" : "Awaiting owner";
-}
-
-function mapTodayAgenda(visits: DashboardVisit[], now: Date): TodayAgenda {
-    const todays = visits
-        .map((visit) => {
-            const scheduledAt = new Date(visit.scheduledAt);
-            if (Number.isNaN(scheduledAt.getTime()) || !isSameCalendarDay(scheduledAt, now)) {
-                return null;
-            }
-            const time = formatTime24(scheduledAt);
-            const timeLabel = formatTimeIn(scheduledAt);
-            const item: TodayItem = {
-                id: visit.id,
-                kind: "site_visit",
-                time,
-                timeLabel,
-                title: `Site visit · ${visit.propertyTitle}`,
-                clientName: visit.clientName || "Client",
-                subtitle: visitStateLabel(visit),
-                state: scheduledAt.getTime() < now.getTime() ? "done" : "upcoming",
-                href: `/broker/visits/${visit.id}`,
-            };
-            return item;
-        })
-        .filter((item): item is TodayItem => item != null)
-        .sort((a, b) => a.time.localeCompare(b.time));
-
-    const nextUpcoming = todays.find((item) => item.state === "upcoming");
-    if (nextUpcoming) {
-        nextUpcoming.isNext = true;
-    }
-
-    return {
-        date: formatDateIso(now),
-        doneCount: todays.filter((item) => item.state === "done").length,
-        remainingCount: todays.filter((item) => item.state !== "done").length,
-        items: todays,
     };
 }
 
@@ -463,7 +482,14 @@ export function mapBrokerDashboardView(
         email: profile?.email ?? "",
         nextShowing: mapNextShowing(visits[0]),
         today: mapTodayAgenda(visits, now),
-        requests: mapRequests(data?.summary ?? {}, data?.brokerRequests ?? [], now),
+        requests: mapRequests(
+            data?.summary ?? {},
+            (data?.brokerRequests ?? []).filter(
+                (row): row is DashboardBrokerRequest =>
+                    "configLabel" in row && "amountInr" in row && "action" in row,
+            ),
+            now,
+        ),
         pipelineCard: mapPipeline(data?.charts?.pipelineFunnel),
         followUps: mapFollowUps(data?.followUps),
         activity: mapActivity(data?.activity),
@@ -472,5 +498,112 @@ export function mapBrokerDashboardView(
         userName: fullName,
         avatarUrl: profile?.avatarUrl ?? undefined,
         unreadCount: profile?.notifications?.unreadCount ?? 0,
+    };
+}
+
+export function mapBrokerDashboardViewFromMock(
+    mock: DashboardMock,
+    profile: UserProfile | null,
+    now = new Date(),
+): BrokerDashboardView {
+    const showing = mock.nextShowing;
+    const fullName = profile?.fullName?.trim() || mock.email.split("@")[0] || "Broker";
+
+    return {
+        siteVisitCount: mock.siteVisitCount,
+        requestsWaitingCount: mock.requestsWaitingCount,
+        reraStatus: mock.reraStatus,
+        serviceAreas: profile?.broker?.serviceAreas ?? mock.serviceAreas,
+        phoneDigits: phoneDigits(profile?.phone) || mock.phoneDigits,
+        email: profile?.email ?? mock.email,
+        nextShowing: showing
+            ? {
+                  id: showing.id,
+                  scheduledAt: new Date(now.getTime() + showing.minutesUntil * 60_000),
+                  configLabel: showing.configLabel,
+                  locality: showing.locality,
+                  address: showing.address,
+                  amountInr: showing.amountInr,
+                  isRent: showing.isRent,
+                  meetNote: showing.meetNote,
+                  distanceKm: showing.distanceKm,
+                  brokerNote: showing.brokerNote,
+                  status: showing.status,
+                  clientName: showing.clientName,
+                  clientPhoneDigits: showing.clientPhoneDigits,
+              }
+            : null,
+        today: mock.today,
+        requests: mock.requests,
+        pipelineCard: mock.pipelineCard,
+        followUps: mock.followUps,
+        activity: mock.activity,
+        youRepresent: mock.youRepresent,
+        newInAreas: mock.newInAreas,
+        userName: fullName,
+        avatarUrl: profile?.avatarUrl ?? undefined,
+        unreadCount: profile?.notifications?.unreadCount ?? 0,
+    };
+}
+
+export type OwnerDashboardView = {
+    siteVisitCount: number;
+    pendingRequestsCount: number;
+    summary: DashboardOwnerSummary;
+    nextShowing: BrokerDashboardView["nextShowing"];
+    today: TodayAgenda;
+    pendingRequests: DashboardOwnerBrokerRequest[];
+    activity: ActivityData;
+    phoneDigits: string;
+    email: string;
+    city: string | null;
+    userName: string;
+};
+
+function isOwnerBrokerRequest(
+    item: DashboardBrokerRequest | DashboardOwnerBrokerRequest,
+): item is DashboardOwnerBrokerRequest {
+    return "brokerDisplayName" in item || "brokerName" in item;
+}
+
+function readOwnerSummary(summary: DashboardResponse["summary"]): DashboardOwnerSummary {
+    return {
+        propertiesListed: Number(summary.propertiesListed ?? 0),
+        activeBrokers: Number(summary.activeBrokers ?? 0),
+        pendingRequests: Number(summary.pendingRequests ?? 0),
+        visitsScheduled: Number(summary.visitsScheduled ?? 0),
+        dealsClosed: Number(summary.dealsClosed ?? 0),
+    };
+}
+
+export function mapOwnerDashboardView(
+    data: DashboardResponse | null,
+    profile: UserProfile | null,
+    now = new Date(),
+): OwnerDashboardView {
+    const visits = data?.upcomingVisits ?? [];
+    const todayVisits = visits.filter((visit) => {
+        const scheduledAt = new Date(visit.scheduledAt);
+        return !Number.isNaN(scheduledAt.getTime()) && isSameCalendarDay(scheduledAt, now);
+    });
+    const summary = readOwnerSummary(data?.summary ?? {});
+    const pendingRequests = (data?.brokerRequests ?? []).filter(isOwnerBrokerRequest);
+    const fullName =
+        profile?.fullName?.trim() || data?.greeting?.fullName?.trim() || profile?.email || "Owner";
+    const city =
+        profile?.city?.trim() || profile?.owner?.preferredCities?.[0]?.trim() || null;
+
+    return {
+        siteVisitCount: todayVisits.length,
+        pendingRequestsCount: summary.pendingRequests,
+        summary,
+        nextShowing: mapNextShowing(visits[0], "owner"),
+        today: mapTodayAgenda(visits, now, "owner"),
+        pendingRequests,
+        activity: mapActivity(data?.activity),
+        phoneDigits: phoneDigits(profile?.phone),
+        email: profile?.email ?? "",
+        city,
+        userName: fullName,
     };
 }

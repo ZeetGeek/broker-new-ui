@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-import { Download, FileText, Pause, Play } from "lucide-react";
+import { Download, ExternalLink, FileText, Pause, Play } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -18,35 +18,47 @@ const MEDIA_TILE_LIMIT = 4;
  * Actions sitting inside a brand-green bubble. Translucent white keeps them
  * legible without introducing a second green into the palette.
  */
-const ATTACHMENT_BUTTON_CLASS = `
+const ATTACHMENT_BUTTON_OWN = `
   border-surface/25 bg-surface/15 text-surface
   hover:bg-surface/25 hover:text-surface
+`;
+
+const ATTACHMENT_BUTTON_PEER = `
+  border-border-warm bg-surface-muted text-ink
+  hover:bg-surface hover:text-ink
 `;
 
 function FileAttachment({
     name,
     sizeLabel,
     url,
+    isOwn,
 }: {
     name: string;
     sizeLabel: string;
     url: string;
+    isOwn: boolean;
 }) {
+    const buttonClass = isOwn ? ATTACHMENT_BUTTON_OWN : ATTACHMENT_BUTTON_PEER;
+    const iconWrap = isOwn ? "bg-surface/15 text-surface" : "bg-brand-soft text-brand";
+    const titleClass = isOwn ? "text-surface" : "text-ink";
+    const metaClass = isOwn ? "text-surface/70" : "text-ink-muted";
+
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 min-inline-52">
             <div className="flex items-center gap-3">
                 <span
-                    className="
-                      flex shrink-0 items-center justify-center rounded-inner bg-surface/15
-                      text-surface block-10 inline-10
-                    "
+                    className={cn(
+                        `flex shrink-0 items-center justify-center rounded-inner block-10 inline-10`,
+                        iconWrap,
+                    )}
                 >
                     <FileText aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
                 </span>
 
                 <div className="min-inline-0">
-                    <p className="body-sm truncate font-semibold text-surface">{name}</p>
-                    <p className="body-xs text-surface/70">{sizeLabel}</p>
+                    <p className={cn("body-sm truncate font-semibold", titleClass)}>{name}</p>
+                    {sizeLabel ? <p className={cn("body-xs", metaClass)}>{sizeLabel}</p> : null}
                 </div>
             </div>
 
@@ -54,7 +66,7 @@ function FileAttachment({
                 <Button
                     size="xs"
                     variant="secondary"
-                    className={ATTACHMENT_BUTTON_CLASS}
+                    className={buttonClass}
                     render={<a href={url} download aria-label={`Download ${name}`} />}
                 >
                     <Download aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
@@ -63,17 +75,18 @@ function FileAttachment({
                 <Button
                     size="xs"
                     variant="secondary"
-                    className={ATTACHMENT_BUTTON_CLASS}
+                    className={buttonClass}
                     render={
                         <a
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            aria-label={`Preview ${name}`}
+                            aria-label={`Open ${name}`}
                         />
                     }
                 >
-                    Preview
+                    <ExternalLink aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                    Open
                 </Button>
             </div>
         </div>
@@ -105,10 +118,7 @@ function AudioAttachment({ url, durationLabel }: { url: string; durationLabel?: 
     };
 
     return (
-        <div className="flex items-center gap-3 pe-1">
-            {/* The native <audio> element still does the playing — it is only
-                hidden, so its controls do not drop an OS-grey widget into a
-                brand-green bubble. */}
+        <div className="flex items-center gap-3 pe-1 min-inline-52">
             <audio
                 ref={audioRef}
                 src={url || undefined}
@@ -123,7 +133,7 @@ function AudioAttachment({ url, durationLabel }: { url: string; durationLabel?: 
                 onClick={toggle}
                 aria-label={isPlaying ? "Pause voice note" : "Play voice note"}
                 className="
-                  flex shrink-0 items-center justify-center rounded-full bg-surface/20 text-surface
+                  flex shrink-0 items-center justify-center rounded-control bg-surface/20 text-surface
                   transition-colors duration-160 block-9 inline-9
                   hover:bg-surface/30
                   focus-visible:ring-2 focus-visible:ring-surface/60 focus-visible:outline-none
@@ -159,16 +169,17 @@ function MediaTile({
     className,
 }: {
     item: ChatMedia;
-    /** When set, the tile shows "+N" instead of its own content. */
     overlayCount?: number;
     className?: string;
 }) {
     return (
-        <button
-            type="button"
+        <a
+            href={item.src}
+            target="_blank"
+            rel="noopener noreferrer"
             className={cn(
                 `
-                  group/tile relative overflow-hidden rounded-inner bg-ink/40
+                  group/tile relative block overflow-hidden rounded-inner bg-ink/30
                   focus-visible:ring-2 focus-visible:ring-surface/60 focus-visible:outline-none
                 `,
                 className,
@@ -177,7 +188,7 @@ function MediaTile({
                 overlayCount
                     ? `Show ${overlayCount} more`
                     : item.kind === "video"
-                      ? "Play video"
+                      ? "Open video"
                       : "Open photo"
             }
         >
@@ -185,10 +196,12 @@ function MediaTile({
                 src={item.src}
                 alt=""
                 fill
-                sizes="(max-width: 640px) 40vw, 10rem"
+                sizes="(max-width: 640px) 256px, 256px"
+                quality={75}
+                unoptimized
                 className="
                   object-cover transition-transform duration-160
-                  group-hover/tile:scale-[1.04]
+                  group-hover/tile:scale-[1.03]
                 "
             />
 
@@ -216,7 +229,7 @@ function MediaTile({
                     {item.durationLabel ? (
                         <span
                             className="
-                              tabular absolute inset-e-2 inset-be-2 rounded-full bg-ink/70 px-1.5
+                              tabular absolute inset-e-2 inset-be-2 rounded-md bg-ink/70 px-1.5
                               py-0.5 text-[11px] font-semibold text-surface
                             "
                         >
@@ -225,18 +238,48 @@ function MediaTile({
                     ) : null}
                 </>
             ) : null}
-        </button>
+        </a>
     );
 }
 
-function MediaAttachment({ items }: { items: ChatMedia[] }) {
-    // A lone photo or clip gets the full bubble width; a set becomes a grid.
+function MediaAttachment({ items, isOwn }: { items: ChatMedia[]; isOwn: boolean }) {
     if (items.length === 1) {
+        const item = items[0];
         return (
-            <MediaTile
-                item={items[0]}
-                className="aspect-3/4 block-auto inline-full max-inline-56"
-            />
+            <div className="flex flex-col gap-2 max-inline-64 min-inline-52">
+                <MediaTile item={item} className="aspect-4/3 block-48 inline-full max-block-72" />
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        size="xs"
+                        variant="secondary"
+                        className={isOwn ? ATTACHMENT_BUTTON_OWN : ATTACHMENT_BUTTON_PEER}
+                        render={
+                            <a
+                                href={item.src}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Open attachment"
+                            />
+                        }
+                    >
+                        <ExternalLink
+                            aria-hidden
+                            className="block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
+                        Open
+                    </Button>
+                    <Button
+                        size="xs"
+                        variant="secondary"
+                        className={isOwn ? ATTACHMENT_BUTTON_OWN : ATTACHMENT_BUTTON_PEER}
+                        render={<a href={item.src} download aria-label="Download attachment" />}
+                    >
+                        <Download aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                        Download
+                    </Button>
+                </div>
+            </div>
         );
     }
 
@@ -244,26 +287,33 @@ function MediaAttachment({ items }: { items: ChatMedia[] }) {
     const hidden = items.length - visible.length;
 
     return (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 min-inline-52">
             {visible.map((item, index) => (
                 <MediaTile
                     key={item.id}
                     item={item}
                     overlayCount={hidden > 0 && index === MEDIA_TILE_LIMIT - 1 ? hidden : undefined}
-                    className="aspect-square inline-full"
+                    className="aspect-square inline-full min-block-24"
                 />
             ))}
         </div>
     );
 }
 
-export function ChatAttachmentBlock({ attachment }: { attachment: ChatAttachment }) {
+export function ChatAttachmentBlock({
+    attachment,
+    isOwn = true,
+}: {
+    attachment: ChatAttachment;
+    isOwn?: boolean;
+}) {
     if (attachment.kind === "file") {
         return (
             <FileAttachment
                 name={attachment.name}
                 sizeLabel={attachment.sizeLabel}
                 url={attachment.url}
+                isOwn={isOwn}
             />
         );
     }
@@ -272,5 +322,5 @@ export function ChatAttachmentBlock({ attachment }: { attachment: ChatAttachment
         return <AudioAttachment url={attachment.url} durationLabel={attachment.durationLabel} />;
     }
 
-    return <MediaAttachment items={attachment.items} />;
+    return <MediaAttachment items={attachment.items} isOwn={isOwn} />;
 }

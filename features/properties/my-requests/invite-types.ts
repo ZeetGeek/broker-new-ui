@@ -1,3 +1,5 @@
+import type { DealListingType } from "@/features/properties/my-requests/types";
+
 /**
  * An owner inviting a specific broker to represent their property — the other
  * direction of the same consent gate. The broker answers rather than asks, so
@@ -51,6 +53,8 @@ export type InvitesFilters = {
     q: string;
     stage: InviteStageFilter;
     sort: InviteSort;
+    /** Sale or rent — same field the listing already carries. */
+    type: DealListingType;
     page: number;
     limit: number;
 };
@@ -74,6 +78,7 @@ export const DEFAULT_INVITES_FILTERS: InvitesFilters = {
     q: "",
     stage: "all",
     sort: "recent",
+    type: "",
     page: 1,
     limit: 10,
 };

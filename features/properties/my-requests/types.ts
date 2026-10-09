@@ -97,10 +97,14 @@ export type RequestsViewFilter =
     /** Pending rows the owner has not opened yet. */
     | "not_opened";
 
+export type DealListingType = "" | "sale" | "rent";
+
 export type RequestsFilters = {
     q: string;
     view: RequestsViewFilter;
     sort: RequestSort;
+    /** Sale or rent — same field the listing already carries. */
+    type: DealListingType;
     page: number;
     limit: number;
 };
@@ -131,6 +135,7 @@ export const DEFAULT_REQUESTS_FILTERS: RequestsFilters = {
     q: "",
     view: "all",
     sort: "recent",
+    type: "",
     page: 1,
     limit: 10,
 };

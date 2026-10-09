@@ -20,8 +20,8 @@ export type AvatarStackProps = {
     className?: string;
 };
 
-const RING_CLASS = `
-  rounded-full ring-2 ring-surface transition-transform duration-160
+const STACK_FACE_CLASS = `
+  shadow-xs ring-2 ring-surface transition-transform duration-160
   group-hover/avatar:-translate-y-0.5
 `;
 
@@ -49,14 +49,14 @@ export function AvatarStack({ people, max = 3, overflowLabel, className }: Avata
                                           group/avatar relative inline-flex cursor-default
                                           hover:z-10
                                         `,
-                                        index > 0 && "-ms-2",
+                                        index > 0 && "-ms-2.5",
                                     )}
                                 >
                                     <UserAvatar
                                         name={person.name}
                                         imageUrl={person.avatarUrl}
                                         size="sm"
-                                        className={RING_CLASS}
+                                        className={STACK_FACE_CLASS}
                                     />
                                 </span>
                             }
@@ -72,11 +72,11 @@ export function AvatarStack({ people, max = 3, overflowLabel, className }: Avata
                                 <span
                                     className={cn(
                                         `
-                                          group/avatar body-xs relative -ms-2 inline-flex
+                                          group/avatar body-xs relative -ms-2.5 inline-flex
                                           cursor-default items-center justify-center rounded-full
-                                          bg-ink font-semibold text-surface ring-2 ring-surface
-                                          transition-transform duration-160 block-control-sm
-                                          inline-control-sm
+                                          bg-ink font-sans font-semibold text-surface shadow-xs
+                                          ring-2 ring-surface transition-transform duration-160
+                                          block-9 inline-9
                                           hover:z-10 hover:-translate-y-0.5
                                         `,
                                     )}

@@ -1,7 +1,10 @@
 /**
  * Who the current user is talking to. Denormalized on purpose — a chat opens
- * from a request card, an invite card or a client row, and none of those
- * should have to fetch a peer profile just to show a name in the header.
+ * from a request card or invite card, and those should not have to fetch a
+ * peer profile just to show a name in the header.
+ *
+ * Representation request chat is the only live thread: `representationId`
+ * keys the API. Without it the modal stays closed.
  */
 export type ChatPeer = {
     id: string;
@@ -9,8 +12,16 @@ export type ChatPeer = {
     avatarUrl?: string;
     /** Shown under the name. Falsy means the presence line is hidden. */
     isOnline?: boolean;
-    /** Optional context line — "Owner", "Buyer", the property title. */
+    /** Optional context line — "Owner", the property title. */
     roleLabel?: string;
+    /** Representation id — required to load/send on the live API. */
+    representationId: string;
+    /** Caller's side of the deal. Defaults to broker in the broker portal. */
+    mySide?: "owner" | "broker";
+    /** When false, composer is read-only. */
+    canSend?: boolean;
+    /** Closed statuses — messaging refused by the API. */
+    closed?: boolean;
 };
 
 /** One image or video in a gallery message. */

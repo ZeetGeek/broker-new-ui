@@ -73,8 +73,8 @@ propagates everywhere, with no find-and-replace.
     --color-status-rented: var(--color-info);
 
     /* Shape */
-    --radius-card: 0.75rem;
-    --radius-field: 0.5rem;
+    --radius-card: 1.25rem;
+    --radius-field: 0.75rem;
 
     --shadow-card: 0 1px 3px oklch(0 0 0 / 0.08);
     --shadow-card-hover: 0 4px 12px oklch(0 0 0 / 0.12);
@@ -173,10 +173,18 @@ This is where reuse actually pays on this platform. Each of these exists
 | `<DateDisplay>`         | dd/mm/yyyy everywhere, with relative form ("2 days ago") in one place.                                                                                                            |
 | `<AreaDisplay>`         | sq ft with thousands separators, carpet vs built-up labelling.                                                                                                                    |
 | `<PropertyCard>`        | One card used by browse, my-properties, and the owner list. Three cards means three photo-loading strategies and three inconsistent layouts.                                      |
+| `<AppImage>`            | The only raster image primitive. Wraps `next/image` with lazy loading, responsive output, shared quality/placeholder policy, and fallback handling.                               |
 | `<EmptyState>`          | Every empty screen must teach the next action. One component, one shape: icon, headline, action.                                                                                  |
-| `<UserAvatar>`          | Photo, initials fallback, verified badge.                                                                                                                                         |
+| `<UserAvatar>`          | Photo or avvvatars-react shape/character fallback.                                                                                                                                |
 | `<VerifiedBadge>`       | The trust signal on the approve screen. Its meaning must never drift.                                                                                                             |
 | `<LoadingSkeleton>`     | Per-shape skeletons. No blank white flashes.                                                                                                                                      |
+
+Use `<AppImage>` for every rendered raster photo, including property photos,
+avatars, upload previews, and remote media. A `fill` image must sit in a
+positioned, dimensioned frame and pass a `sizes` value that matches its real
+breakpoints. Use `preload` only for the single likely LCP image; everything
+else stays lazy. SVG logos and browser/video metadata attributes are the only
+normal exceptions.
 
 The `<Price>` pattern generalizes to all of them — a thin component wrapping a
 pure function:
@@ -204,7 +212,7 @@ When one component needs several looks, use `class-variance-authority` — the
 same tool shadcn already uses. Not boolean props.
 
 ```tsx
-const badge = cva("inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-medium", {
+const badge = cva("inline-flex items-center rounded-md px-2.5 py-0.5 text-caption font-medium", {
     variants: {
         status: {
             available: "bg-status-available/10 text-status-available",

@@ -3,8 +3,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { referralsApi } from "@/lib/api/referrals";
+import { useQuery } from "@tanstack/react-query";
+
+import {
+    buildReferralPresentation,
+    filterAndSortReferrals,
+    referralsApi,
+} from "@/lib/api/referrals";
+import { PREF_KEYS } from "@/lib/prefs/keys";
 import { buildWhatsAppInviteUrl } from "@/lib/share/referral";
+import { useInfiniteItems } from "@/hooks/use-infinite-items";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
+
+import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
 import { CreditsLedger } from "@/features/referrals/credits-ledger";
 import { EarningsCard } from "@/features/referrals/earnings-card";
@@ -21,19 +32,18 @@ import {
 import { ReferralsHeader } from "@/features/referrals/referrals-header";
 import { ReferralsIntro } from "@/features/referrals/referrals-intro";
 import { ReferralsList } from "@/features/referrals/referrals-list";
-import {
-    type CreditEntry,
-    DEFAULT_REFERRALS_FILTERS,
-    type ReferralCode,
-    type ReferralEarningsPoint,
-    type ReferralItem,
-    type ReferralsFilters,
-    type ReferralsSummary,
-} from "@/features/referrals/types";
+import { ReferralsListSkeleton } from "@/features/referrals/referrals-skeleton";
+import { DEFAULT_REFERRALS_FILTERS, type ReferralsFilters } from "@/features/referrals/types";
 import { useAppSelector } from "@/store/hooks";
 
 /** Which modal is open. One at a time — both are about a single decision. */
 type ModalState = { kind: "none" } | { kind: "invite" } | { kind: "detail"; referralId: string };
+
+function isReferralsFilters(value: unknown): value is ReferralsFilters {
+    if (typeof value !== "object" || value === null) return false;
+    const v = value as Partial<ReferralsFilters>;
+    return typeof v.q === "string" && typeof v.status === "string";
+}
 
 export function ReferralsPage() {
     const user = useAppSelector((state) => state.auth.user);
@@ -47,15 +57,25 @@ export function ReferralsPage() {
     const inviterName =
         profile?.fullName?.trim() || user?.fullName?.trim() || "a broker on the platform";
 
-    const [filters, setFilters] = useState<ReferralsFilters>(DEFAULT_REFERRALS_FILTERS);
-    const [referrals, setReferrals] = useState<ReferralItem[] | null>(null);
-    const [ledger, setLedger] = useState<CreditEntry[] | null>(null);
-    const [earnings, setEarnings] = useState<ReferralEarningsPoint[] | null>(null);
-    const [summary, setSummary] = useState<ReferralsSummary | null>(null);
-    const [referralCode, setReferralCode] = useState<ReferralCode | null>(null);
-    const [isFetching, setIsFetching] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [filters, setFilters] = usePersistedJson<ReferralsFilters>(
+        PREF_KEYS.broker.referrals.prefs,
+        DEFAULT_REFERRALS_FILTERS,
+        { isValid: isReferralsFilters },
+    );
     const [modal, setModal] = useState<ModalState>({ kind: "none" });
+
+    const invitesQuery = useInfiniteItems({
+        queryKey: ["referrals", "invites"],
+        queryFn: ({ cursor, signal }) => referralsApi.listInvitesPage(cursor, signal),
+    });
+    const ledgerQuery = useInfiniteItems({
+        queryKey: ["referrals", "credit-history"],
+        queryFn: ({ cursor, signal }) => referralsApi.listHistoryPage(cursor, signal),
+    });
+    const overviewQuery = useQuery({
+        queryKey: ["referrals", "overview"],
+        queryFn: ({ signal }) => referralsApi.overview(signal),
+    });
 
     /**
      * One clock for the whole screen, ticking each minute. Every "gone quiet"
@@ -68,53 +88,40 @@ export function ReferralsPage() {
         return () => window.clearInterval(timer);
     }, []);
 
-    useEffect(() => {
-        let cancelled = false;
+    const referrals = useMemo(
+        () => filterAndSortReferrals(invitesQuery.items, filters, now),
+        [filters, invitesQuery.items, now],
+    );
+    const presentation = useMemo(() => {
+        const overview = overviewQuery.data;
+        const invitesSummary = invitesQuery.data?.pages[0]?.summary;
+        if (!overview || !invitesSummary) return null;
 
-        // Deferred so the loading flag does not set state inside the effect
-        // body, which would cascade an extra render on every filter change.
-        const timer = window.setTimeout(() => {
-            if (cancelled) return;
-
-            setIsFetching(true);
-            setError(null);
-
-            void referralsApi
-                .list(filters)
-                .then((next) => {
-                    if (cancelled) return;
-                    setReferrals(next.items);
-                    setLedger(next.ledger);
-                    setEarnings(next.earnings);
-                    setSummary(next.summary);
-                    setReferralCode(next.referralCode);
-                })
-                .catch(() => {
-                    if (!cancelled) {
-                        setError(
-                            "Could not load your invites. Check your connection and try again.",
-                        );
-                    }
-                })
-                .finally(() => {
-                    if (!cancelled) setIsFetching(false);
-                });
-        }, 0);
-
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timer);
-        };
-    }, [filters]);
+        return buildReferralPresentation(
+            overview,
+            invitesSummary,
+            invitesQuery.items,
+            ledgerQuery.items,
+            now,
+        );
+    }, [invitesQuery.data?.pages, invitesQuery.items, ledgerQuery.items, now, overviewQuery.data]);
+    const referralCode = presentation?.referralCode ?? null;
+    const earnings = presentation?.earnings ?? null;
+    const summary = presentation?.summary ?? null;
+    const isFetching =
+        overviewQuery.isFetching ||
+        (invitesQuery.isFetching && !invitesQuery.isFetchingNextPage) ||
+        (ledgerQuery.isFetching && !ledgerQuery.isFetchingNextPage);
+    const error = overviewQuery.error ?? invitesQuery.error ?? ledgerQuery.error;
 
     const activeReferral = useMemo(() => {
         if (modal.kind !== "detail") return null;
-        return referrals?.find((referral) => referral.id === modal.referralId) ?? null;
-    }, [modal, referrals]);
+        return invitesQuery.items.find((referral) => referral.id === modal.referralId) ?? null;
+    }, [invitesQuery.items, modal]);
 
     const handleNudge = useCallback(
         (referralId: string) => {
-            const referral = referrals?.find((item) => item.id === referralId);
+            const referral = invitesQuery.items.find((item) => item.id === referralId);
             if (!referral || !referralCode) return;
 
             const message = buildInviteMessage({
@@ -129,7 +136,7 @@ export function ReferralsPage() {
             );
             toast.success(`Opened WhatsApp for ${referral.person.name.split(" ")[0]}`);
         },
-        [inviterName, referralCode, referrals],
+        [inviterName, invitesQuery.items, referralCode],
     );
 
     const handlers = useMemo<ReferralRowHandlers>(
@@ -152,7 +159,7 @@ export function ReferralsPage() {
         toast.success(`Message ready for ${firstName}`);
     }, []);
 
-    const isFirstLoad = referrals === null;
+    const isFirstLoad = invitesQuery.isPending;
     const hasFilters =
         filters.q.trim().length > 0 || filters.status !== DEFAULT_REFERRALS_FILTERS.status;
     /** True first-run: nobody invited, and no filter hid them. */
@@ -160,11 +167,11 @@ export function ReferralsPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <ReferralsIntro summary={summary} />
+            <ReferralsIntro summary={summary} isLoading={isFetching} />
 
             {error ? (
                 <p role="alert" className="body-sm text-urgent">
-                    {error}
+                    Could not load all referral activity. Check your connection and try again.
                 </p>
             ) : null}
 
@@ -187,7 +194,10 @@ export function ReferralsPage() {
                     <ReferralsHeader filters={filters} summary={summary} onPatch={handlePatch} />
                 ) : null}
 
-                {isFirstLoad && isFetching ? null : isFirstRun ? (
+                {invitesQuery.isError && invitesQuery.items.length === 0 ? null : isFirstLoad &&
+                  isFetching ? (
+                    <ReferralsListSkeleton />
+                ) : isFirstRun ? (
                     <ReferralsList
                         referrals={[]}
                         handlers={handlers}
@@ -208,13 +218,19 @@ export function ReferralsPage() {
                         }
                     >
                         <ReferralsList
-                            referrals={referrals ?? []}
+                            referrals={referrals}
                             handlers={handlers}
                             inviterName={inviterName}
                             shareUrl={referralCode?.shareUrl ?? ""}
                             busyId={null}
                             now={now}
                             emptyState={<ReferralsFilteredEmpty onClear={handleClearFilters} />}
+                        />
+                        <InfiniteListStatus
+                            hasNextPage={Boolean(invitesQuery.hasNextPage)}
+                            isFetchingNextPage={invitesQuery.isFetchingNextPage}
+                            error={invitesQuery.isFetchNextPageError ? invitesQuery.error : null}
+                            onLoadMore={() => void invitesQuery.fetchNextPage()}
                         />
                     </div>
                 )}
@@ -224,7 +240,20 @@ export function ReferralsPage() {
                 moves, the other shows it moving. */}
             <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
                 <HowToEarnCard />
-                <CreditsLedger ledger={ledger} />
+                {ledgerQuery.isError && ledgerQuery.items.length === 0 ? null : (
+                    <CreditsLedger
+                        ledger={ledgerQuery.isPending ? null : ledgerQuery.items}
+                        total={ledgerQuery.total}
+                        footer={
+                            <InfiniteListStatus
+                                hasNextPage={Boolean(ledgerQuery.hasNextPage)}
+                                isFetchingNextPage={ledgerQuery.isFetchingNextPage}
+                                error={ledgerQuery.isFetchNextPageError ? ledgerQuery.error : null}
+                                onLoadMore={() => void ledgerQuery.fetchNextPage()}
+                            />
+                        }
+                    />
+                )}
             </div>
 
             <InviteBrokerModal

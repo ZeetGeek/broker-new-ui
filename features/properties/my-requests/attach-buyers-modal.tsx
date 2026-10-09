@@ -14,6 +14,7 @@ import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -77,7 +78,7 @@ function BuyerRow({
     const budget = budgetLabel(client);
 
     return (
-        <li>
+        <div>
             <label
                 className={cn(
                     `
@@ -129,7 +130,7 @@ function BuyerRow({
                     </p>
                 </div>
             </label>
-        </li>
+        </div>
     );
 }
 
@@ -278,8 +279,12 @@ export function AttachBuyersModal({
                     }
                 />
             ) : (
-                <ul className="flex flex-col gap-2">
-                    {visibleClients.map((client) => {
+                <VirtualListBox
+                    items={visibleClients}
+                    getKey={(client) => client.id}
+                    estimateItemHeight={96}
+                    ariaLabel="Buyers available to attach"
+                    renderItem={(client) => {
                         const isSelected = selectedIds.includes(client.id);
                         return (
                             <BuyerRow
@@ -290,8 +295,8 @@ export function AttachBuyersModal({
                                 onToggle={() => handleToggle(client.id)}
                             />
                         );
-                    })}
-                </ul>
+                    }}
+                />
             )}
         </AppModal>
     );

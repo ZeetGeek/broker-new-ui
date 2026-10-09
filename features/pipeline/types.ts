@@ -1,8 +1,8 @@
 /**
  * The four funnel stages a deal moves through. These are the stages the
  * `--color-stage-1` … `--color-stage-4` tokens are named for in
- * `app/globals.css`; adding a fifth means adding a colour, which §1.1 of
- * docs/DESIGN.md forbids.
+ * `app/globals.css`; adding a fifth means adding a colour, which
+ * §1.3 of docs/DESIGN.md limits to these four.
  */
 export type DealStage = "new" | "contacted" | "visit" | "negotiation";
 
@@ -30,10 +30,13 @@ export type DealOwner = {
      * Consent-gated, exactly as on `RequestItem`. The API only sends a number
      * once the owner has approved the broker for this property. A deal whose
      * representation lapsed shows the owner's name and no way to call them.
+     * Exclusive CRM owners always include phone (broker-owned contact).
      */
     phoneDigits?: string;
     /** False once representation ends — the card stops offering contact. */
     isRepresentationActive: boolean;
+    /** Platform represented owner vs broker exclusive CRM contact. */
+    origin?: "platform" | "exclusive";
 };
 
 /** The property side, also denormalized from the owner's listing. */
@@ -50,6 +53,18 @@ export type DealProperty = {
     amountInr: number;
     isRent: boolean;
     imageSrc: string;
+    /** Up to a few listing photos for the board card strip. Falls back to `[imageSrc]`. */
+    imageSrcs?: readonly string[];
+    /**
+     * Total photos on the listing. Optional — absent means the payload did not
+     * say, which is not the same as zero, so the gallery count stays hidden.
+     */
+    photoCount?: number;
+    /**
+     * Broker inventory with an exclusive owner CRM contact attached.
+     * Drives the "Exclusive property" chip on pipeline cards.
+     */
+    isExclusiveProperty?: boolean;
 };
 
 /** The buyer side. Mirrors `ClientItem`, trimmed to what a card renders. */
@@ -93,6 +108,27 @@ export type DealItem = {
     offerAmountInr: number | null;
     /** Owner response on the latest offer. Null when no offer yet. */
     offerStatus: "pending" | "accepted" | "rejected" | null;
+    /** When the lead was created. Optional — hide "Added N days ago" if missing. */
+    createdAt?: string | null;
+    /** How the buyer arrived. Optional — hide the source chip if missing. */
+    source?: DealSource;
+    /** How the last contact happened. Optional — hide the method if missing. */
+    lastContactMethod?: DealContactMethod;
+    /** ISO instant of the next follow-up. Optional — hide if missing. */
+    nextFollowUpAt?: string | null;
+    /**
+     * Teammate currently working this deal, when the account is an
+     * organization with a team. Optional — hide the "Handled by" line when
+     * absent, and also when it matches the signed-in broker.
+     */
+    assignedAgent?: DealAssignedAgent | null;
+};
+
+/** A teammate a deal is assigned to. See `DealItem.assignedAgent`. */
+export type DealAssignedAgent = {
+    id: string;
+    name: string;
+    avatarUrl?: string;
 };
 
 /** One stage-change entry from the API `stageHistory` array. */
@@ -119,11 +155,22 @@ export type DealsFilters = {
     /** "" means every live stage. Terminal states use the `done` view. */
     stage: DealStage | "";
     sort: DealSort;
+    dealType: DealTypeFilter;
+    locality: string;
+    ownerName: string;
 };
 
 export type DealSort = "recent" | "stalled" | "price_desc" | "price_asc" | "visit_soon";
 
 export type DealsView = "board" | "done";
+
+export type PipelineSummaryChip = "running" | "in_play" | "quiet" | "finished";
+
+export type DealTypeFilter = "" | "rent" | "sale";
+
+export type DealSource = "website" | "walk_in" | "reference";
+
+export type DealContactMethod = "call" | "whatsapp" | "visit";
 
 export type StageCounts = Record<DealStage, number>;
 
@@ -152,6 +199,9 @@ export const DEFAULT_DEALS_FILTERS: DealsFilters = {
     q: "",
     stage: "",
     sort: "recent",
+    dealType: "",
+    locality: "",
+    ownerName: "",
 };
 
 /**
@@ -160,6 +210,8 @@ export const DEFAULT_DEALS_FILTERS: DealsFilters = {
  * places disagreeing about what "gone quiet" means would be worse than the
  * number being slightly wrong.
  */
+export const SLOW_AFTER_DAYS = 7;
+
 export const STALLED_AFTER_DAYS = 14;
 
 /** Board order. Also the order a deal advances through. */

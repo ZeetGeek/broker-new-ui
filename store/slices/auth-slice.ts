@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/tool
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { isMockMode, MOCK_ACCESS_TOKEN, MOCK_AUTH_USER } from "@/lib/api/mock-mode";
 import {
     type AuthUser,
     clearSession,
@@ -32,6 +33,11 @@ const initialState: AuthState = {
 };
 
 export const hydrateAuth = createAsyncThunk("auth/hydrate", async () => {
+    if (isMockMode()) {
+        const session = { accessToken: MOCK_ACCESS_TOKEN, user: MOCK_AUTH_USER };
+        setSession(session);
+        return session;
+    }
     return {
         accessToken: getAccessToken(),
         user: getStoredUser(),

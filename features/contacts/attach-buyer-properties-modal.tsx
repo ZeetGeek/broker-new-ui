@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { EmptyState } from "@/components/shared/empty-state";
+import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,13 @@ function mapRepresentation(rep: RepresentationItem): AttachableProperty | null {
     };
 }
 
+/** Minimal buyer shape — works after create before the list row is refetched. */
+export type AttachBuyerTarget = {
+    id: string;
+    name: string;
+    attachedProperties?: BuyerRow["attachedProperties"];
+};
+
 export function AttachBuyerPropertiesModal({
     open,
     onOpenChange,
@@ -62,7 +70,7 @@ export function AttachBuyerPropertiesModal({
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    buyer: BuyerRow;
+    buyer: AttachBuyerTarget;
     onSaved: () => void;
 }) {
     const [properties, setProperties] = useState<AttachableProperty[]>([]);
@@ -90,7 +98,7 @@ export function AttachBuyerPropertiesModal({
                         .filter((item): item is AttachableProperty => item != null);
                     // Dedupe by property id.
                     const unique = [...new Map(mapped.map((item) => [item.id, item])).values()];
-                    const already = buyer.attachedProperties.map((item) => item.id);
+                    const already = (buyer.attachedProperties ?? []).map((item) => item.id);
                     setProperties(unique);
                     setAttachedIds(already);
                     setSelectedIds(already);
@@ -205,8 +213,12 @@ export function AttachBuyerPropertiesModal({
                     }
                 />
             ) : (
-                <ul className="flex flex-col gap-2">
-                    {visible.map((property) => {
+                <VirtualListBox
+                    items={visible}
+                    getKey={(property) => property.id}
+                    estimateItemHeight={92}
+                    ariaLabel="Properties available to attach"
+                    renderItem={(property) => {
                         const isSelected = selectedIds.includes(property.id);
                         const alreadyLinked = attachedIds.includes(property.id);
                         const amount = property.isRent
@@ -214,7 +226,7 @@ export function AttachBuyerPropertiesModal({
                             : formatPriceInr(property.amountInr);
 
                         return (
-                            <li key={property.id}>
+                            <div>
                                 <label
                                     className={cn(
                                         `
@@ -254,10 +266,10 @@ export function AttachBuyerPropertiesModal({
                                         </p>
                                     </div>
                                 </label>
-                            </li>
+                            </div>
                         );
-                    })}
-                </ul>
+                    }}
+                />
             )}
         </AppModal>
     );

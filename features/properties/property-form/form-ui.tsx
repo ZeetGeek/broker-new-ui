@@ -57,7 +57,7 @@ export function FormSection({
             value={openItems}
             onValueChange={(next) => setOpenItems(next as string[])}
             className={cn(
-                "overflow-hidden rounded-card border border-border-warm/70 bg-canvas/50",
+                "overflow-hidden rounded-control border border-border-warm/80 bg-surface-muted/50",
                 hasError && "border-danger/40",
                 className,
             )}

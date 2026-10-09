@@ -10,6 +10,16 @@ const IMAGES = [
     "/properties/6.jpg",
 ] as const;
 
+/** Where each mock owner lives — pairs with OWNER_NAMES by index. */
+const OWNER_LOCATIONS = [
+    "Adajan, Surat",
+    "Piplod, Surat",
+    "Vesu, Surat",
+    "Athwa, Surat",
+    "Pal, Surat",
+    "Katargam, Surat",
+] as const;
+
 const OWNER_NAMES = [
     "Rakesh Patel",
     "Nisha Desai",
@@ -28,8 +38,10 @@ type MockOwnerListingSeed = Omit<
     | "brokerSlotsTotal"
     | "brokerSlotsOpen"
     | "commissionPercent"
+    | "commissionAmount"
     | "ownerName"
     | "ownerAvatarUrl"
+    | "ownerLocationLabel"
     | "photoCount"
     | "isNew"
     | "readyToMove"
@@ -86,6 +98,7 @@ const ENTRIES: MockOwnerListingSeed[] = [
         listedHoursAgo: 52,
         brokerRequestCount: 3,
         hasRequested: true,
+        pendingRepresentationId: "rep_mock_pending",
         isBookmarked: false,
         status: "active",
     },
@@ -449,7 +462,10 @@ export const MOCK_OWNER_LISTINGS: OwnerListingItem[] = ENTRIES.map((entry, index
         brokerSlotsTotal: 3,
         brokerSlotsOpen: Math.max(0, 3 - entry.brokerRequestCount),
         commissionPercent: index % 4 === 0 ? 0 : index % 3 === 0 ? 2.5 : 2,
+        commissionAmount: index % 5 === 0 ? 25_000 : index % 4 === 0 ? 0 : 15_000,
         ownerName: OWNER_NAMES[index % OWNER_NAMES.length]!,
+        ownerUserId: `owner-user-${(index % OWNER_NAMES.length) + 1}`,
+        ownerLocationLabel: OWNER_LOCATIONS[index % OWNER_LOCATIONS.length]!,
         photoCount,
         isNew: entry.listedHoursAgo <= 7 * 24,
         readyToMove: index % 5 < 2,

@@ -8,10 +8,20 @@ import { useParams } from "next/navigation";
 import { ChevronLeft, Lock, MapPin, MessageCircle, Phone } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
+import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { propertiesApi } from "@/lib/api/properties";
-import { representativeApi } from "@/lib/api/representative";
+import {
+    findPendingBrokerRepresentationId,
+    findPendingOwnerInvitationId,
+    representativeApi,
+} from "@/lib/api/representative";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
-import { BROKER_OWNER_LISTINGS_HREF, BROKER_REQUESTS_HREF } from "@/lib/routes/broker";
+import { formatPriceInr } from "@/lib/format/price";
+import {
+    BROKER_MY_DEALS_HREF,
+    BROKER_OWNER_LISTINGS_HREF,
+    brokerOwnerProfileHref,
+} from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
@@ -37,11 +47,13 @@ type RepresentationStanding = {
 
 type OwnerListingDetail = {
     listing: MyListingItem;
+    ownerUserId?: string;
     ownerName: string;
     ownerAvatarUrl?: string;
     ownerPhoneDigits?: string;
     representation: RepresentationStanding | null;
     commissionPercent: number | null;
+    commissionAmount: number | null;
 };
 
 function digitsOnly(value: string | null | undefined): string {
@@ -68,16 +80,21 @@ function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
     const phone = accepted ? detail.ownerPhoneDigits : undefined;
 
     return (
-        <section
-            className="
-          flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-5
-        "
-        >
+        <section className="flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-5">
             <h2 className="eyebrow">Owner contact</h2>
             <div className="flex items-center gap-3">
                 <UserAvatar name={detail.ownerName} imageUrl={detail.ownerAvatarUrl} size="lg" />
                 <div className="flex flex-col gap-0.5 min-inline-0">
-                    <p className="body truncate font-semibold text-ink">{detail.ownerName}</p>
+                    {detail.ownerUserId ? (
+                        <Link
+                            href={brokerOwnerProfileHref(detail.ownerUserId)}
+                            className="body truncate font-semibold text-ink underline-offset-4 hover:underline"
+                        >
+                            {detail.ownerName}
+                        </Link>
+                    ) : (
+                        <p className="body truncate font-semibold text-ink">{detail.ownerName}</p>
+                    )}
                     {accepted ? (
                         <p className="body-sm text-brand">Contact unlocked</p>
                     ) : (
@@ -147,16 +164,26 @@ function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
 function OwnerListingActionRail({
     detail,
     busy,
+    inviteActionPending,
     onRequest,
+    onCancelRequest,
+    onAcceptInvite,
+    onCancelInvite,
 }: {
     detail: OwnerListingDetail;
     busy: boolean;
+    inviteActionPending?: "accept" | "cancel";
     onRequest: () => void;
+    onCancelRequest?: () => void;
+    onAcceptInvite?: () => void;
+    onCancelInvite?: () => void;
 }) {
     const standing = detail.representation;
     const status = standing?.status;
     const accepted = status === "accepted";
     const pending = status === "pending";
+    const ownerInvite = pending && standing?.initiatedBy === "owner";
+    const inviteBusy = Boolean(inviteActionPending);
 
     return (
         <aside className="flex flex-col gap-4 self-start lg:sticky lg:inset-bs-24">
@@ -173,11 +200,11 @@ function OwnerListingActionRail({
                     <p className="body-sm text-ink-muted">
                         {accepted
                             ? "You represent this listing. Owner contact is unlocked."
-                            : pending
-                              ? standing?.initiatedBy === "owner"
-                                  ? "The owner invited your agency — answer it from Requests."
-                                  : "Your request is with the owner. We’ll notify you when they respond."
-                              : "Ask the owner for representation to unlock contact details."}
+                            : ownerInvite
+                              ? "The owner invited you to represent this listing. Accept to unlock contact."
+                              : pending
+                                ? "Your request is with the owner. We’ll notify you when they respond."
+                                : "Ask the owner for representation to unlock contact details."}
                     </p>
                 </div>
 
@@ -185,21 +212,50 @@ function OwnerListingActionRail({
                     <Button
                         size="lg"
                         className="rounded-control bg-brand text-surface hover:bg-brand-text"
-                        render={<Link href={BROKER_REQUESTS_HREF} />}
+                        render={<Link href={BROKER_MY_DEALS_HREF} />}
                     >
-                        Open in Requests
+                        Open in My Deals
                     </Button>
-                ) : pending && standing?.initiatedBy === "owner" ? (
+                ) : ownerInvite ? (
+                    <div className="flex flex-col gap-2">
+                        <Button
+                            size="lg"
+                            disabled={inviteBusy}
+                            loading={inviteActionPending === "accept"}
+                            onClick={onAcceptInvite}
+                            className="rounded-control bg-brand text-surface hover:bg-brand-text"
+                        >
+                            {inviteActionPending === "accept" ? "Accepting…" : "Accept"}
+                        </Button>
+                        <Button
+                            size="lg"
+                            variant="outline"
+                            disabled={inviteBusy}
+                            loading={inviteActionPending === "cancel"}
+                            onClick={onCancelInvite}
+                            className="
+                              rounded-control border-2 border-brand bg-brand-soft font-semibold
+                              text-brand-text
+                              hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
+                            "
+                        >
+                            {inviteActionPending === "cancel" ? "Cancelling…" : "Cancel invitation"}
+                        </Button>
+                    </div>
+                ) : pending ? (
                     <Button
                         size="lg"
-                        className="rounded-control bg-brand text-surface hover:bg-brand-text"
-                        render={<Link href={BROKER_REQUESTS_HREF} />}
+                        variant="outline"
+                        disabled={busy}
+                        loading={busy}
+                        onClick={onCancelRequest}
+                        className="
+                          rounded-control border-2 border-brand bg-brand-soft font-semibold
+                          text-brand-text
+                          hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
+                        "
                     >
-                        Review invite
-                    </Button>
-                ) : pending ? (
-                    <Button size="lg" disabled variant="outline" className="rounded-control">
-                        Requested — pending
+                        {busy ? "Cancelling…" : "Cancel request"}
                     </Button>
                 ) : (
                     <Button
@@ -217,10 +273,21 @@ function OwnerListingActionRail({
 
             {detail.commissionPercent != null && detail.commissionPercent > 0 ? (
                 <div className="rounded-card border border-border-warm bg-surface p-5">
-                    <p className="eyebrow">Commission</p>
+                    <p className="eyebrow">Sale commission</p>
                     <p className="h5 tabular mbs-1 text-ink">{detail.commissionPercent}%</p>
                     <p className="body-sm mbs-1 text-ink-muted">
                         Shared by the owner for this listing.
+                    </p>
+                </div>
+            ) : null}
+            {detail.commissionAmount != null && detail.commissionAmount > 0 ? (
+                <div className="rounded-card border border-border-warm bg-surface p-5">
+                    <p className="eyebrow">Rent commission</p>
+                    <p className="h5 tabular mbs-1 text-ink">
+                        {formatPriceInr(detail.commissionAmount)}
+                    </p>
+                    <p className="body-sm mbs-1 text-ink-muted">
+                        Fixed brokerage shared by the owner.
                     </p>
                 </div>
             ) : null}
@@ -231,6 +298,9 @@ function OwnerListingActionRail({
 function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
     const [detail, setDetail] = useState(initial);
     const [busy, setBusy] = useState(false);
+    const [inviteActionPending, setInviteActionPending] = useState<"accept" | "cancel" | null>(
+        null,
+    );
     const [descriptionOpen, setDescriptionOpen] = useState(false);
 
     const item = detail.listing;
@@ -250,7 +320,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                     initiatedBy: rep.initiatedBy,
                 },
             }));
-            toast.success("Representation request sent");
+            toast.success("Request sent. The owner will be notified.");
         } catch (error) {
             const message =
                 error instanceof ApiError
@@ -263,6 +333,97 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
             setBusy(false);
         }
     }, [busy, item.id]);
+
+    const handleCancelRequest = useCallback(async () => {
+        if (busy) return;
+        setBusy(true);
+        try {
+            let representationId = detail.representation?.id;
+            if (!representationId) {
+                representationId = await findPendingBrokerRepresentationId(item.id);
+            }
+            if (!representationId) {
+                toast.error("Could not cancel request");
+                return;
+            }
+            await representativeApi.withdraw(representationId);
+            setDetail((prev) => ({ ...prev, representation: null }));
+            toast.success("Request cancelled");
+        } catch (error) {
+            const message =
+                error instanceof ApiError
+                    ? error.message
+                    : error instanceof Error
+                      ? error.message
+                      : "Could not cancel request";
+            toast.error(message);
+        } finally {
+            setBusy(false);
+        }
+    }, [busy, detail.representation?.id, item.id]);
+
+    const handleAcceptInvite = useCallback(async () => {
+        if (busy || inviteActionPending) return;
+        setInviteActionPending("accept");
+        try {
+            let invitationId = detail.representation?.id;
+            if (!invitationId) {
+                invitationId = await findPendingOwnerInvitationId(item.id);
+            }
+            if (!invitationId) {
+                toast.error("Could not accept invite");
+                return;
+            }
+            await ownerInvitesApi.accept(invitationId);
+            setDetail((prev) => ({
+                ...prev,
+                representation: {
+                    id: invitationId,
+                    status: "accepted",
+                    initiatedBy: "owner",
+                },
+            }));
+            toast.success("Invite accepted — you can sell this property");
+        } catch (error) {
+            const message =
+                error instanceof ApiError
+                    ? error.message
+                    : error instanceof Error
+                      ? error.message
+                      : "Could not accept invite";
+            toast.error(message);
+        } finally {
+            setInviteActionPending(null);
+        }
+    }, [busy, detail.representation?.id, inviteActionPending, item.id]);
+
+    const handleCancelInvite = useCallback(async () => {
+        if (busy || inviteActionPending) return;
+        setInviteActionPending("cancel");
+        try {
+            let invitationId = detail.representation?.id;
+            if (!invitationId) {
+                invitationId = await findPendingOwnerInvitationId(item.id);
+            }
+            if (!invitationId) {
+                toast.error("Could not cancel invitation");
+                return;
+            }
+            await ownerInvitesApi.decline(invitationId);
+            setDetail((prev) => ({ ...prev, representation: null }));
+            toast.success("Invitation cancelled");
+        } catch (error) {
+            const message =
+                error instanceof ApiError
+                    ? error.message
+                    : error instanceof Error
+                      ? error.message
+                      : "Could not cancel invitation";
+            toast.error(message);
+        } finally {
+            setInviteActionPending(null);
+        }
+    }, [busy, detail.representation?.id, inviteActionPending, item.id]);
 
     const canRequest =
         !detail.representation || !["pending", "accepted"].includes(detail.representation.status);
@@ -313,12 +474,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                         </p>
                     </header>
 
-                    <section
-                        className="
-                      rounded-card border border-border-warm bg-surface p-5
-                      sm:p-6
-                    "
-                    >
+                    <section className="rounded-card border border-border-warm bg-surface p-5 sm:p-6">
                         <PropertyPriceBlock item={item} />
                     </section>
 
@@ -398,7 +554,26 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                 <OwnerListingActionRail
                     detail={detail}
                     busy={busy}
+                    inviteActionPending={inviteActionPending ?? undefined}
                     onRequest={() => void handleRequest()}
+                    onCancelRequest={
+                        detail.representation?.status === "pending" &&
+                        detail.representation.initiatedBy !== "owner"
+                            ? () => void handleCancelRequest()
+                            : undefined
+                    }
+                    onAcceptInvite={
+                        detail.representation?.status === "pending" &&
+                        detail.representation.initiatedBy === "owner"
+                            ? () => void handleAcceptInvite()
+                            : undefined
+                    }
+                    onCancelInvite={
+                        detail.representation?.status === "pending" &&
+                        detail.representation.initiatedBy === "owner"
+                            ? () => void handleCancelInvite()
+                            : undefined
+                    }
                 />
             </div>
 
@@ -419,14 +594,60 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                     >
                         {busy ? "Sending…" : "Request to represent"}
                     </Button>
+                ) : detail.representation?.status === "pending" &&
+                  detail.representation.initiatedBy === "owner" ? (
+                    <>
+                        <Button
+                            type="button"
+                            size="lg"
+                            disabled={Boolean(inviteActionPending)}
+                            loading={inviteActionPending === "accept"}
+                            onClick={() => void handleAcceptInvite()}
+                            className="flex-1 rounded-control bg-brand text-surface hover:bg-brand-text"
+                        >
+                            {inviteActionPending === "accept" ? "Accepting…" : "Accept"}
+                        </Button>
+                        <Button
+                            type="button"
+                            size="lg"
+                            variant="outline"
+                            disabled={Boolean(inviteActionPending)}
+                            loading={inviteActionPending === "cancel"}
+                            onClick={() => void handleCancelInvite()}
+                            className="
+                              flex-1 rounded-control border-2 border-brand bg-brand-soft
+                              font-semibold text-brand-text
+                              hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
+                            "
+                        >
+                            {inviteActionPending === "cancel" ? "Cancelling…" : "Cancel invitation"}
+                        </Button>
+                    </>
+                ) : detail.representation?.status === "pending" &&
+                  detail.representation.initiatedBy !== "owner" ? (
+                    <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        disabled={busy}
+                        loading={busy}
+                        onClick={() => void handleCancelRequest()}
+                        className="
+                          flex-1 rounded-control border-2 border-brand bg-brand-soft font-semibold
+                          text-brand-text
+                          hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
+                        "
+                    >
+                        {busy ? "Cancelling…" : "Cancel request"}
+                    </Button>
                 ) : (
                     <Button
                         size="lg"
                         className="flex-1 rounded-control bg-brand text-surface hover:bg-brand-text"
-                        render={<Link href={BROKER_REQUESTS_HREF} />}
+                        render={<Link href={BROKER_MY_DEALS_HREF} />}
                     >
                         {detail.representation?.status === "accepted"
-                            ? "Open in Requests"
+                            ? "Open in My Deals"
                             : "View request"}
                     </Button>
                 )}
@@ -466,8 +687,10 @@ export function OwnerListingDetailPage() {
                 if (cancelled) return;
                 const listing = mapPropertyListingToMyItem(raw);
                 const commissionRaw = Number(raw.commissionPercent);
+                const commissionAmountRaw = Number(raw.commissionAmount);
                 setDetail({
                     listing,
+                    ownerUserId: raw.ownerUserId ?? raw.owner?.userId ?? undefined,
                     ownerName: raw.ownerName?.trim() || raw.organizationName?.trim() || "Owner",
                     ownerAvatarUrl: raw.ownerAvatarUrl ?? undefined,
                     ownerPhoneDigits: normalizePhoneDigits(raw.ownerPhone),
@@ -480,6 +703,10 @@ export function OwnerListingDetailPage() {
                         : null,
                     commissionPercent:
                         Number.isFinite(commissionRaw) && commissionRaw > 0 ? commissionRaw : null,
+                    commissionAmount:
+                        Number.isFinite(commissionAmountRaw) && commissionAmountRaw > 0
+                            ? commissionAmountRaw
+                            : null,
                 });
             })
             .catch(() => {

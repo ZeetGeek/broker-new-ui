@@ -12,6 +12,11 @@ export const BUTTON_VARIANTS = [
         note: "Dark surfaces only. One per screen, max.",
     },
     { name: "outline", label: "Outline", note: "Secondary action." },
+    {
+        name: "surface",
+        label: "Surface",
+        note: "White fill, warm border. Filter chips and quiet actions on canvas.",
+    },
     { name: "secondary", label: "Secondary", note: "Alternate fill." },
     { name: "ghost", label: "Ghost", note: "Tertiary, inside cards." },
     { name: "destructive", label: "Destructive", note: "Reject, delete." },

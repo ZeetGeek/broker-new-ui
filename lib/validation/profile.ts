@@ -22,7 +22,7 @@ export function parseCommaList(value: string): string[] {
 }
 
 export const BIO_MAX = 400;
-const MAX_SERVICE_AREAS = 12;
+export const MAX_SERVICE_AREAS = 12;
 const MAX_PREFERRED = 20;
 
 /**
@@ -45,6 +45,8 @@ export const profileFormSchema = z.object({
         "Enter a 10-digit mobile number",
     ),
     city: z.string().trim().min(2, "Enter the city you work in").max(60, "City is too long"),
+    /** Optional so profiles saved before the state field can still be saved. */
+    state: z.string().trim().max(60, "State name is too long"),
     country: z.string().trim().max(60, "Country is too long"),
     /** Blank for an independent broker — most of them are. */
     orgName: z.string().trim().max(120, "Name is too long"),
@@ -82,9 +84,9 @@ export const profileFormSchema = z.object({
         )
         .refine((value) => value.length <= 60, "That is too long for a web address"),
     serviceAreas: z
-        .string()
-        .refine(
-            (value) => parseCommaList(value).length <= MAX_SERVICE_AREAS,
+        .array(z.string())
+        .max(
+            MAX_SERVICE_AREAS,
             `Pick your best ${MAX_SERVICE_AREAS} areas — a broker who covers everywhere covers nothing`,
         ),
     specializations: z.string(),

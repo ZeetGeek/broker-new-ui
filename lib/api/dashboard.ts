@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
 
 export type DashboardVisit = {
     id: string;
@@ -150,6 +151,30 @@ export type DashboardAreaProperty = {
     imageSrc: string;
 };
 
+/** Owner dashboard summary counters from GET /dashboard when portal is owner. */
+export type DashboardOwnerSummary = {
+    propertiesListed: number;
+    activeBrokers: number;
+    pendingRequests: number;
+    visitsScheduled: number;
+    dealsClosed: number;
+};
+
+/** Pending broker→owner representation rows on the owner dashboard. */
+export type DashboardOwnerBrokerRequest = {
+    id: string;
+    propertyId: string;
+    propertyTitle: string;
+    brokerId?: string;
+    brokerName?: string;
+    brokerDisplayName?: string;
+    brokerIsAgency?: boolean;
+    brokerVerified?: boolean;
+    rating?: string | null;
+    message?: string | null;
+    createdAt?: string;
+};
+
 export type PipelineFunnelStage = {
     stage: string;
     label: string;
@@ -170,7 +195,8 @@ export type DashboardResponse = {
     };
     upcomingVisits?: DashboardVisit[];
     ownerInvites?: DashboardOwnerInvite[];
-    brokerRequests?: DashboardBrokerRequest[];
+    /** Broker portal: outbound request cards. Owner portal: inbound broker requests. */
+    brokerRequests?: Array<DashboardBrokerRequest | DashboardOwnerBrokerRequest>;
     followUps?: DashboardFollowUps;
     activity?: DashboardActivity;
     youRepresent?: DashboardYouRepresent;
@@ -179,6 +205,31 @@ export type DashboardResponse = {
 
 export const dashboardApi = {
     get() {
+        if (isMockMode()) {
+            return Promise.resolve({
+                portal: "broker",
+                greeting: { firstName: "Zeet", fullName: "Zeet Patel" },
+                dayStreak: 2,
+                summary: {
+                    pendingBrokerRequests: 4,
+                    requestQuota: {
+                        limit: 10,
+                        used: 8,
+                        remaining: 2,
+                        resetsOn: new Date(Date.now() + 9 * 86_400_000).toISOString(),
+                    },
+                },
+                quickActions: [],
+                charts: {
+                    pipelineFunnel: [
+                        { stage: "new", label: "New", count: 5 },
+                        { stage: "contacted", label: "Contacted", count: 3 },
+                        { stage: "site_visit", label: "Site visit", count: 3 },
+                        { stage: "negotiation", label: "Negotiation", count: 1 },
+                    ],
+                },
+            } satisfies DashboardResponse);
+        }
         return apiFetch<DashboardResponse>("/dashboard");
     },
 };

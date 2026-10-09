@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { tinykeys } from "tinykeys";
 
 import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
+import { getShortcut } from "@/lib/shortcuts";
+import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
-import { AppPagination } from "@/components/shared/app-pagination";
+import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
+import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
+import type { RequestItem } from "@/features/properties/my-requests/types";
+import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
+import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
 import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import { MyListingsGrid } from "@/features/properties/your-listings/my-listings-grid";
 import { MyListingsHeader } from "@/features/properties/your-listings/my-listings-header";
@@ -15,21 +23,94 @@ import {
     MyListingsAddFab,
     MyListingsIntro,
 } from "@/features/properties/your-listings/my-listings-intro";
-import type { MyListingItem, MyListingsResult } from "@/features/properties/your-listings/types";
+import { MyListingsResultsSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
+import type { MyListingItem } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
-import { useMyListingsView } from "@/features/properties/your-listings/use-my-listings-view";
 
-export function MyListingsPanel() {
+function isEditable(el: EventTarget | null): boolean {
+    if (!(el instanceof HTMLElement)) return false;
+    const tag = el.tagName;
+    return (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        el.isContentEditable ||
+        el.getAttribute("role") === "textbox" ||
+        el.closest("[contenteditable='true']") !== null
+    );
+}
+
+/**
+ * The buyers modal is written against a request. A listing the broker owns
+ * carries the same fields it reads, so adapt rather than duplicate the picker.
+ */
+function asRequestShape(item: MyListingItem): RequestItem {
+    const isRent = item.transactionType === "rent";
+
+    return {
+        id: item.id,
+        propertyId: item.id,
+        stage: "approved",
+        title: item.title,
+        configLabel: item.configLabel,
+        propertyTypeLabel: item.propertyTypeLabel,
+        locality: item.locality,
+        city: item.city,
+        areaSqft: item.areaSqft,
+        bhk: item.bhk,
+        amountInr: (isRent ? item.rentAmountInr : item.saleAmountInr) ?? 0,
+        isRent,
+        commissionPercent: 0,
+        ownerName: "You",
+        ownerSeen: true,
+        requestedAt: item.createdAt,
+        resolvedAt: null,
+        daysWaiting: 0,
+        clientsAttached: item.attachedClients?.length ?? 0,
+        attachedClients: item.attachedClients ?? [],
+        brokerSlotsOpen: 0,
+        brokerSlotsTotal: 0,
+        attemptNumber: 1,
+        reminderCount: 0,
+        reminderUsed: false,
+        nudgedAt: null,
+        imageSrc: item.imageSrc,
+        timeline: [],
+    };
+}
+
+export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const { filters, setFilters, clearFilters, hasActiveFilters } = useMyListingsFilters();
-    const { view, setView } = useMyListingsView();
-    const [result, setResult] = useState<MyListingsResult | null>(null);
     const [summary, setSummary] = useState<MyListingsSummary | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [addOpen, setAddOpen] = useState(false);
     const [editingListing, setEditingListing] = useState<MyListingItem | null>(null);
+    const [deletingListing, setDeletingListing] = useState<MyListingItem | null>(null);
+    const [deleteBusy, setDeleteBusy] = useState(false);
+    /** Kept after close so the modal can animate out with its listing intact. */
+    const [buyersListing, setBuyersListing] = useState<MyListingItem | null>(null);
+    const [isBuyersOpen, setIsBuyersOpen] = useState(false);
+    const [ownerListing, setOwnerListing] = useState<MyListingItem | null>(null);
+    const [isOwnerAttachOpen, setIsOwnerAttachOpen] = useState(false);
     /** Bumped after a save so the list refetches without changing filters. */
     const [refreshToken, setRefreshToken] = useState(0);
+
+    const isOwnerPortal = portal === "owner";
+
+    const infiniteFilters = useMemo(() => ({ ...filters, page: 1 }), [filters]);
+    const query = useInfiniteItems({
+        queryKey: ["my-listings", infiniteFilters, refreshToken],
+        queryFn: async ({ cursor, signal }) => {
+            const result = await myListingsApi.list(
+                { ...infiniteFilters, page: cursor ? Number(cursor) : 1 },
+                signal,
+                { withAttachedClients: !isOwnerPortal },
+            );
+            return {
+                ...result,
+                nextCursor: result.page < result.totalPages ? String(result.page + 1) : null,
+            };
+        },
+    });
 
     useEffect(() => {
         let cancelled = false;
@@ -41,46 +122,48 @@ export function MyListingsPanel() {
         };
         // refreshToken: an edit can flip a listing's status without changing the
         // total, and the summary counts published/draft separately.
-    }, [result?.total, refreshToken]);
+    }, [query.total, refreshToken]);
 
     useEffect(() => {
-        let cancelled = false;
+        const shortcut = getShortcut("add_property");
+        if (!shortcut) return undefined;
 
-        // Defer loading flags so the effect body stays free of synchronous setState
-        // (react-hooks/set-state-in-effect). Same pattern as owner-listings fetch.
-        const timer = window.setTimeout(() => {
-            if (cancelled) return;
-            setLoading(true);
-            setError(null);
+        const unsubscribe = tinykeys(window, {
+            [shortcut.keys]: (event) => {
+                if (isEditable(event.target)) return;
+                if (event.repeat) return;
+                if (addOpen || editingListing != null || deletingListing != null) return;
+                if (isBuyersOpen || isOwnerAttachOpen) return;
+                setAddOpen(true);
+            },
+        });
 
-            void myListingsApi
-                .list(filters)
-                .then((next) => {
-                    if (cancelled) return;
-                    setResult(next);
-                })
-                .catch(() => {
-                    if (cancelled) return;
-                    setError("Couldn't load your listings. Try again.");
-                    setResult(null);
-                })
-                .finally(() => {
-                    if (!cancelled) setLoading(false);
-                });
-        }, 0);
+        return () => unsubscribe();
+    }, [addOpen, editingListing, deletingListing, isBuyersOpen, isOwnerAttachOpen]);
 
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timer);
-        };
-    }, [filters, refreshToken]);
+    const confirmDelete = useCallback(async () => {
+        if (!deletingListing) return;
+        setDeleteBusy(true);
+        try {
+            await myListingsApi.remove(deletingListing.id);
+            setDeletingListing(null);
+            toast.success("Property removed");
+            setRefreshToken((token) => token + 1);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Couldn't remove property");
+        } finally {
+            setDeleteBusy(false);
+        }
+    }, [deletingListing]);
+
+    const loading = query.isFetching && !query.isFetchingNextPage;
 
     return (
         <div className="flex flex-col gap-6">
             <PortalSectionNav>
                 <MyListingsIntro
                     summary={summary}
-                    resultTotal={result?.total ?? 0}
+                    resultTotal={query.total}
                     hasActiveFilters={hasActiveFilters}
                     isLoading={loading}
                 />
@@ -89,47 +172,62 @@ export function MyListingsPanel() {
             <MyListingsHeader
                 filters={filters}
                 onFiltersChange={setFilters}
-                view={view}
-                onViewChange={setView}
                 summary={summary}
                 isLoading={loading}
+                onAddProperty={() => setAddOpen(true)}
             />
 
-            {error ? (
+            {query.isError && query.items.length === 0 ? (
                 <p className="body-sm text-danger" role="alert">
-                    {error}
+                    Couldn&apos;t load your listings. Try again.
                 </p>
             ) : null}
 
-            {loading && !result ? null : result && result.items.length === 0 ? (
+            {query.isError && query.items.length === 0 ? null : query.isPending ? (
+                <MyListingsResultsSkeleton />
+            ) : query.items.length === 0 ? (
                 <MyListingsEmpty
                     variant={hasActiveFilters ? "filtered" : "first_run"}
                     searchQuery={filters.q}
                     onClearFilters={hasActiveFilters ? clearFilters : undefined}
                     onAddProperty={() => setAddOpen(true)}
                 />
-            ) : result ? (
+            ) : (
                 <div className={loading ? "opacity-60 transition-opacity duration-160" : undefined}>
                     <MyListingsGrid
-                        items={result.items}
-                        view={view}
+                        items={query.items}
+                        portal={portal}
                         onEditListing={setEditingListing}
+                        onDeleteListing={setDeletingListing}
+                        onAddBuyer={
+                            isOwnerPortal
+                                ? undefined
+                                : (listing) => {
+                                      setBuyersListing(listing);
+                                      setIsBuyersOpen(true);
+                                  }
+                        }
+                        onAttachOwner={
+                            isOwnerPortal
+                                ? undefined
+                                : (listing) => {
+                                      setOwnerListing(listing);
+                                      setIsOwnerAttachOpen(true);
+                                  }
+                        }
                     />
-                    {result.totalPages > 1 ? (
-                        <div className="pbs-6">
-                            <AppPagination
-                                page={result.page}
-                                totalPages={result.totalPages}
-                                onPageChange={(page) => setFilters({ ...filters, page })}
-                                aria-label="Your listings pages"
-                            />
-                        </div>
-                    ) : null}
+                    <InfiniteListStatus
+                        hasNextPage={Boolean(query.hasNextPage)}
+                        isFetchingNextPage={query.isFetchingNextPage}
+                        error={query.isFetchNextPageError ? query.error : null}
+                        onLoadMore={() => void query.fetchNextPage()}
+                    />
                 </div>
-            ) : null}
+            )}
             <MyListingsAddFab onClick={() => setAddOpen(true)} />
             <PropertyFormDialog
                 open={addOpen}
+                portal={portal}
                 onOpenChange={setAddOpen}
                 onSaved={() => {
                     setAddOpen(false);
@@ -138,6 +236,7 @@ export function MyListingsPanel() {
             />
             <PropertyFormDialog
                 open={editingListing != null}
+                portal={portal}
                 listing={editingListing}
                 onOpenChange={(next) => {
                     if (!next) setEditingListing(null);
@@ -146,6 +245,29 @@ export function MyListingsPanel() {
                     setEditingListing(null);
                     setRefreshToken((token) => token + 1);
                 }}
+            />
+            <PropertyDeleteDialog
+                open={deletingListing != null}
+                onOpenChange={(next) => {
+                    if (!next && !deleteBusy) setDeletingListing(null);
+                }}
+                title={deletingListing?.title ?? "Property"}
+                busy={deleteBusy}
+                onConfirm={() => void confirmDelete()}
+            />
+            {buyersListing ? (
+                <AttachBuyersModal
+                    open={isBuyersOpen}
+                    onOpenChange={setIsBuyersOpen}
+                    request={asRequestShape(buyersListing)}
+                    onSaved={() => setRefreshToken((token) => token + 1)}
+                />
+            ) : null}
+            <AttachExclusiveOwnerModal
+                open={isOwnerAttachOpen}
+                onOpenChange={setIsOwnerAttachOpen}
+                listing={ownerListing}
+                onAttached={() => setRefreshToken((token) => token + 1)}
             />
         </div>
     );

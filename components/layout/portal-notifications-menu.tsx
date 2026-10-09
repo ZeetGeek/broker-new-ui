@@ -4,6 +4,8 @@ import {
     type CSSProperties,
     Fragment,
     type ReactNode,
+    type RefObject,
+    useEffect,
     useLayoutEffect,
     useMemo,
     useRef,
@@ -12,7 +14,10 @@ import {
 import toast from "react-hot-toast";
 import Link from "next/link";
 
+import { BellIcon, type BellIconHandle } from "@animateicons/react/lucide/bell-icon";
+import { BellRingIcon, type BellRingIconHandle } from "@animateicons/react/lucide/bell-ring-icon";
 import { Bell, Building2, CalendarClock, CheckCheck, Clock3 } from "lucide-react";
+import { useReducedMotion } from "motion/react";
 
 import { ApiError } from "@/lib/api/client";
 import type { NotificationItem } from "@/lib/api/notifications";
@@ -184,6 +189,37 @@ function NotificationsFooter({ viewAllHref }: { viewAllHref: string }) {
     );
 }
 
+const HEADER_ICON_SIZE = 16;
+
+function HeaderNotificationIcon({
+    hasUnread,
+    reduceMotion,
+    bellRef,
+    ringRef,
+}: {
+    hasUnread: boolean;
+    reduceMotion: boolean | null;
+    bellRef: RefObject<BellIconHandle | null>;
+    ringRef: RefObject<BellRingIconHandle | null>;
+}) {
+    const animated = !reduceMotion;
+
+    if (hasUnread) {
+        return (
+            <BellRingIcon
+                ref={ringRef}
+                size={HEADER_ICON_SIZE}
+                isAnimated={animated}
+                aria-hidden="true"
+            />
+        );
+    }
+
+    return (
+        <BellIcon ref={bellRef} size={HEADER_ICON_SIZE} isAnimated={animated} aria-hidden="true" />
+    );
+}
+
 function UnreadBadge({ count }: { count: number }) {
     if (count <= 0) {
         return null;
@@ -194,7 +230,7 @@ function UnreadBadge({ count }: { count: number }) {
             aria-hidden
             className="
               tabular body-xs absolute -inset-e-1 -inset-bs-1 flex items-center justify-center
-              rounded-full bg-brand px-1 font-semibold text-canvas ring-2 ring-surface-muted block-5
+              rounded-md bg-brand px-1 font-semibold text-canvas ring-2 ring-surface-muted block-5
               min-inline-5
             "
         >
@@ -211,7 +247,7 @@ function NotificationTypeIcon({ item }: { item: NotificationItem }) {
             data-notification-icon
             className={cn(
                 `
-                  inline-flex items-center justify-center rounded-full bg-surface-muted block-8
+                  inline-flex items-center justify-center rounded-control bg-surface-muted block-8
                   inline-8
                 `,
                 colorClass,
@@ -614,7 +650,7 @@ function NotificationRowContent({
                     <span
                         data-notification-body
                         className="
-                          body-xs inline-flex items-center gap-1 rounded-full border
+                          body-xs inline-flex items-center gap-1 rounded-md border
                           border-border-warm bg-surface-muted/80 px-2 py-0.5 font-medium
                           text-ink-muted inline-fit
                         "
@@ -633,7 +669,7 @@ function NotificationRowContent({
                     <span
                         data-notification-status
                         className="
-                          body-xs rounded-full border border-border-warm bg-surface-muted/80 px-2
+                          body-xs rounded-md border border-border-warm bg-surface-muted/80 px-2
                           py-0.5 font-medium text-ink-muted inline-fit
                         "
                     >
@@ -771,7 +807,21 @@ export function PortalNotificationsMenu({
     const userRole = useAppSelector((state) => state.auth.user?.role);
     const [activeTab, setActiveTab] = useState<NotificationTab>("all");
     const now = new Date();
-    const label = unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications";
+    const hasUnread = unreadCount > 0;
+    const label = hasUnread ? `Notifications, ${unreadCount} unread` : "Notifications";
+    const reduceMotion = useReducedMotion();
+    const bellRef = useRef<BellIconHandle>(null);
+    const ringRef = useRef<BellRingIconHandle>(null);
+
+    useEffect(() => {
+        if (reduceMotion) return;
+        if (hasUnread) {
+            ringRef.current?.startAnimation();
+            return;
+        }
+        bellRef.current?.stopAnimation();
+        ringRef.current?.stopAnimation();
+    }, [hasUnread, unreadCount, reduceMotion]);
 
     const tabCounts = useMemo(() => countByTab(items), [items]);
     const filteredItems = useMemo(
@@ -792,10 +842,29 @@ export function PortalNotificationsMenu({
                     size="icon-md"
                     aria-label={label}
                     className={triggerClassName}
+                    onMouseEnter={() => {
+                        if (hasUnread) {
+                            ringRef.current?.startAnimation();
+                            return;
+                        }
+                        bellRef.current?.startAnimation();
+                    }}
+                    onMouseLeave={() => {
+                        if (hasUnread) {
+                            ringRef.current?.stopAnimation();
+                            return;
+                        }
+                        bellRef.current?.stopAnimation();
+                    }}
                 />
             }
         >
-            <Bell aria-hidden="true" strokeWidth={1.75} />
+            <HeaderNotificationIcon
+                hasUnread={hasUnread}
+                reduceMotion={reduceMotion}
+                bellRef={bellRef}
+                ringRef={ringRef}
+            />
             <UnreadBadge count={unreadCount} />
         </DropdownMenuTrigger>
     );

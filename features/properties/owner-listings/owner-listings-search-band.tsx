@@ -24,6 +24,7 @@ import type {
 export type OwnerListingsSearchBandProps = {
     appliedFilters: OwnerListingsFilters;
     listings: OwnerListingItem[];
+    serviceAreas?: string[];
     onApplyBand: (band: OwnerListingsBandFilters) => void;
 };
 
@@ -44,6 +45,7 @@ function bandSignature(band: OwnerListingsBandFilters): string {
 export function OwnerListingsSearchBand({
     appliedFilters,
     listings,
+    serviceAreas = [],
     onApplyBand,
 }: OwnerListingsSearchBandProps) {
     const [draft, setDraft] = useState(() => extractBandFilters(appliedFilters));
@@ -130,6 +132,7 @@ export function OwnerListingsSearchBand({
                         selectedCities={draft.cities}
                         selectedLocalities={draft.localities}
                         yourAreas={draft.yourAreas}
+                        serviceAreas={serviceAreas}
                         onWhereChange={setWhereFilters}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
@@ -205,7 +208,7 @@ export function OwnerListingsSearchBand({
                     type="button"
                     size="icon-md"
                     variant="accent"
-                    className="rounded-full"
+                    className="rounded-control"
                     aria-label="Search properties"
                     onClick={handleSearch}
                 >

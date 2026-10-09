@@ -11,6 +11,7 @@ export type OwnerListingPropertyType =
 
 export type OwnerListingItem = {
     id: string;
+    title?: string;
     configLabel: string;
     propertyTypeLabel: OwnerListingPropertyType;
     bhk: number;
@@ -33,12 +34,33 @@ export type OwnerListingItem = {
     brokerSlotsTotal: number;
     brokerSlotsOpen: number;
     commissionPercent: number;
+    /** Fixed rent brokerage in INR. 0 when unset. */
+    commissionAmount: number;
     ownerName: string;
     ownerAvatarUrl?: string;
+    /** `users.id` for the listing owner — used to open their profile. */
+    ownerUserId?: string;
+    /** Where the owner is based, e.g. "Adajan, Surat". Absent until the API sends it. */
+    ownerLocationLabel?: string;
     photoCount: number;
     isNew: boolean;
     readyToMove: boolean;
+    /** Pending broker-initiated request — card shows Cancel request. */
     hasRequested: boolean;
+    /** Owner already approved this broker. */
+    isRepresenting?: boolean;
+    /** Owner invited this broker. Card shows Accept / Cancel invitation. */
+    isInvitePending?: boolean;
+    /**
+     * Pending owner-initiated invitation. Present while the broker can still
+     * accept or cancel. May be missing even when `isInvitePending` is true.
+     */
+    pendingInvitationId?: string;
+    /**
+     * Pending broker-initiated representation. Present only while the request
+     * can still be withdrawn. May be missing even when `hasRequested` is true.
+     */
+    pendingRepresentationId?: string;
     isBookmarked: boolean;
     imageSrc: string;
     /** Gallery URLs for card carousel. First entry should match `imageSrc`. */
@@ -77,6 +99,8 @@ export type OwnerListingsFilters = {
     slotsOpen: boolean;
     commissionSet: boolean;
     readyToMove: boolean;
+    /** Quick chip — listings the broker has bookmarked */
+    bookmarked: boolean;
     sort: OwnerListingSort;
     /** 1-based page as string (URL `cursor`). Empty = page 1. */
     cursor: string;
@@ -108,6 +132,7 @@ export type OwnerListingsSheetFilters = Pick<
     | "slotsOpen"
     | "commissionSet"
     | "readyToMove"
+    | "bookmarked"
 >;
 
 export type OwnerListingsFilterContext = {
@@ -119,10 +144,9 @@ export type OwnerListingsResult = {
     totalCount: number;
     /** Sum of sale listing prices in the filtered set (excludes rent). */
     marketValueInr: number;
+    /** Opaque keyset cursor for the next page; null when exhausted. */
     nextCursor: string | null;
-    /** 1-based page from the browse API. */
-    page: number;
-    totalPages: number;
+    hasMore: boolean;
 };
 
 export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
@@ -145,6 +169,7 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     slotsOpen: false,
     commissionSet: false,
     readyToMove: false,
+    bookmarked: false,
     sort: "newest",
     cursor: "",
     limit: 10,

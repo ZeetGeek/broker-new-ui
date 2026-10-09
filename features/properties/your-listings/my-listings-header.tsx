@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowDownUp, ChevronDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
 import type { MyListingsSummary } from "@/lib/api/my-listings";
 import { formatSortLabel } from "@/lib/format/owner-listings-labels";
+import { getShortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogClose,
@@ -23,6 +25,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import {
@@ -34,13 +37,11 @@ import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
-import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
 import type {
     MyListingsFilters,
     MyListingSort,
     MyListingStatus,
 } from "@/features/properties/your-listings/types";
-import type { MyListingsView } from "@/features/properties/your-listings/use-my-listings-view";
 
 type ChipKey = "sale" | "rent" | "published" | "draft" | "unpublished";
 
@@ -146,7 +147,7 @@ function MyListingsQueryInput({
               lg:min-inline-64 lg:inline-64
             "
             className="
-              rounded-full border! border-border-warm bg-surface text-sm font-medium shadow-sm
+              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
               block-[38px]!
               hover:border-ink/25!
               focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
@@ -338,22 +339,54 @@ function MyListingsFilterDialog({
     );
 }
 
+function AddPropertyToolbarButton({ onClick }: { onClick: () => void }) {
+    const shortcut = getShortcut("add_property");
+
+    return (
+        <Button
+            type="button"
+            variant="accent"
+            size="sm"
+            onClick={onClick}
+            aria-label="Add property"
+            className="hidden gap-2 px-3.5 block-[38px]! md:inline-flex"
+        >
+            <Plus aria-hidden strokeWidth={1.75} />
+            Add property
+            {shortcut ? (
+                <KbdGroup className="gap-0.5">
+                    {shortcut.displayKeys.map((key) => (
+                        <Kbd
+                            key={key}
+                            className="
+                              border-surface/25 bg-surface/15 px-1.5 text-[10px] text-surface
+                              min-inline-4
+                              [box-shadow:none]
+                            "
+                        >
+                            {key}
+                        </Kbd>
+                    ))}
+                </KbdGroup>
+            ) : null}
+        </Button>
+    );
+}
+
 export type MyListingsHeaderProps = {
     filters: MyListingsFilters;
     onFiltersChange: (next: MyListingsFilters) => void;
-    view: MyListingsView;
-    onViewChange: (view: MyListingsView) => void;
     summary: MyListingsSummary | null;
     isLoading?: boolean;
+    onAddProperty?: () => void;
 };
 
 export function MyListingsHeader({
     filters,
     onFiltersChange,
-    view,
-    onViewChange,
     summary,
     isLoading = false,
+    onAddProperty,
 }: MyListingsHeaderProps) {
     const [sheetOpen, setSheetOpen] = useState(false);
     const sheetFilterCount = useMemo(() => countSheetFilters(filters), [filters]);
@@ -475,13 +508,15 @@ export function MyListingsHeader({
                                 value={filters.q}
                                 onChange={(q) => onFiltersChange({ ...filters, q, page: 1 })}
                             />
-                            <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
                             <MyListingsSortMenu
                                 sort={filters.sort}
                                 onSortChange={(sort) =>
                                     onFiltersChange({ ...filters, sort, page: 1 })
                                 }
                             />
+                            {onAddProperty ? (
+                                <AddPropertyToolbarButton onClick={onAddProperty} />
+                            ) : null}
                         </div>
                     </div>
                 </TooltipProvider>

@@ -4,6 +4,7 @@ import axios, {
     type InternalAxiosRequestConfig,
 } from "axios";
 
+import { isMockMode } from "@/lib/api/mock-mode";
 import { type AuthUser, clearSession, getAccessToken, setSession } from "@/lib/auth/session";
 
 import { API_URL } from "@/config";
@@ -113,7 +114,8 @@ let refreshPromise: Promise<string> | null = null;
 
 /**
  * Rotate access token using the httpOnly refresh cookie (`withCredentials`).
- * Logs out only when the refresh cookie is missing/expired/revoked.
+ * Any 401/403 from refresh (missing, expired, or revoked cookie) clears the
+ * session so AuthGuard can send the user to login.
  */
 async function refreshAccessToken(): Promise<string> {
     if (!refreshPromise) {
@@ -129,8 +131,13 @@ async function refreshAccessToken(): Promise<string> {
                 return accessToken;
             })
             .catch((error) => {
-                forceLogout();
-                throw toApiError(error);
+                const apiError = toApiError(error);
+                // Network blips (status 0) keep the session so a reconnect can retry.
+                // Auth failures — e.g. "Refresh token is missing" — force login.
+                if (apiError.status === 401 || apiError.status === 403) {
+                    forceLogout();
+                }
+                throw apiError;
             })
             .finally(() => {
                 refreshPromise = null;
@@ -147,8 +154,16 @@ export const api = axios.create({
 
 api.interceptors.request.use((config: RetryConfig) => {
     const headers = AxiosHeaders.from(config.headers);
+    const method = (config.method ?? "get").toLowerCase();
+    const hasBody = config.data != null && config.data !== "";
 
-    if (!(config.data instanceof FormData) && !headers.has("Content-Type")) {
+    if (
+        hasBody &&
+        !(config.data instanceof FormData) &&
+        !headers.has("Content-Type") &&
+        method !== "get" &&
+        method !== "head"
+    ) {
         headers.set("Content-Type", "application/json");
     }
 
@@ -182,6 +197,19 @@ api.interceptors.response.use(
 
         original!._retry = true;
 
+        const currentToken = getAccessToken();
+        const sentAuth = AxiosHeaders.from(original!.headers).get("Authorization");
+        if (currentToken && !sentAuth) {
+            const headers = AxiosHeaders.from(original!.headers);
+            headers.set("Authorization", `Bearer ${currentToken}`);
+            original!.headers = headers;
+            try {
+                return await api.request(original!);
+            } catch {
+                // Fall through to refresh.
+            }
+        }
+
         try {
             const accessToken = await refreshAccessToken();
             const headers = AxiosHeaders.from(original!.headers);
@@ -199,6 +227,10 @@ api.interceptors.response.use(
  * Backed by axios so expired access tokens are refreshed via interceptor.
  */
 export async function apiFetch<T = unknown>(path: string, options: ApiOptions = {}): Promise<T> {
+    if (isMockMode()) {
+        return Promise.resolve({} as T);
+    }
+
     const { token, skipAuth, headers, body, method, signal } = options;
     const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 

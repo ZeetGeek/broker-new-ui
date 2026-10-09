@@ -44,6 +44,33 @@ const SUBTYPE_TO_UI: Record<string, MyListingPropertyType> = {
     independent_house: "independent_house",
     builder_floor: "builder_floor",
     farm_house: "farmhouse",
+    row_house: "independent_house",
+    duplex: "independent_house",
+    studio: "apartment",
+    serviced_apartment: "apartment",
+    one_rk: "apartment",
+    shop: "shop",
+    retail_space: "shop",
+    restaurant_space: "shop",
+    showroom: "showroom",
+    office_space: "office",
+    coworking_space: "office",
+    business_center: "office",
+    commercial_building: "office",
+    hotel_resort: "office",
+    warehouse: "warehouse",
+    godown: "warehouse",
+    industrial_shed: "warehouse",
+    cold_storage: "warehouse",
+    factory: "factory",
+    residential_plot: "plot",
+    commercial_plot: "plot",
+    industrial_plot: "plot",
+    na_plot: "plot",
+    farm_land: "plot",
+    agricultural_land: "agricultural",
+    orchard: "agricultural",
+    poultry_farm: "agricultural",
 };
 
 const UI_TO_SUBTYPE: Partial<Record<MyListingPropertyType, string>> = {
@@ -103,6 +130,7 @@ function mapPropertyType(listing: PropertyListing): MyListingPropertyType {
     if (category === "commercial") return "office";
     if (category === "industrial") return "warehouse";
     if (category === "land") return "plot";
+    if (category === "agricultural") return "agricultural";
     return "apartment";
 }
 
@@ -183,12 +211,12 @@ export function bhkValuesToApiConfig(bhk: string[]): string[] {
         .filter((value): value is string => Boolean(value));
 }
 
-export function propertyTypeToApiFilters(propertyType: MyListingPropertyType | ""): {
+export function propertyTypeToApiFilters(propertyType: PropertyType | ""): {
     propertyType?: string;
     subtype?: string;
 } {
     if (!propertyType) return {};
-    const subtype = UI_TO_SUBTYPE[propertyType];
+    const subtype = UI_TO_SUBTYPE[propertyType as MyListingPropertyType];
     if (subtype) return { subtype };
 
     if (propertyType === "shop" || propertyType === "office" || propertyType === "showroom") {
@@ -197,10 +225,24 @@ export function propertyTypeToApiFilters(propertyType: MyListingPropertyType | "
     if (propertyType === "warehouse" || propertyType === "factory") {
         return { propertyType: "industrial" };
     }
-    if (propertyType === "plot" || propertyType === "agricultural") {
-        return { propertyType: "land" };
-    }
-    return {};
+    if (propertyType === "plot") return { propertyType: "land" };
+    if (propertyType === "agricultural") return { propertyType: "agricultural" };
+    // Fine-grained types are API subtypes already (e.g. `cold_storage`).
+    return { subtype: propertyType };
+}
+
+export function listingPhotoUrls(photos: unknown): string[] {
+    if (!Array.isArray(photos)) return [];
+    return photos
+        .map((item) => {
+            if (typeof item === "string") return item.trim();
+            if (item && typeof item === "object" && "url" in item) {
+                const url = (item as { url?: unknown }).url;
+                return typeof url === "string" ? url.trim() : "";
+            }
+            return "";
+        })
+        .filter(Boolean);
 }
 
 export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingItem {
@@ -209,7 +251,7 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
     const bhk = mapBhk(listing);
     const { saleAmountInr, rentAmountInr } = mapPricing(listing);
     const furnishing = mapFurnishing(listing.furnishingStatus);
-    const photos = (listing.photos ?? []).filter((src): src is string => Boolean(src?.trim()));
+    const photos = listingPhotoUrls(listing.photos);
     const locality = listing.address?.trim() || listing.city?.trim() || "Locality";
     const city = listing.city?.trim() || "City";
     const listedAt = listing.publishedAt ?? listing.createdAt;
@@ -228,12 +270,18 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         configLabel: configLabel(bhk, propertyType),
         category,
         propertyType,
-        propertyTypeLabel: PROPERTY_TYPE_LABELS[propertyType as PropertyType] ?? propertyType,
+        subtype: listing.subtype?.trim() || null,
+        propertyTypeLabel:
+            PROPERTY_TYPE_LABELS[listing.subtype?.trim() as PropertyType] ??
+            PROPERTY_TYPE_LABELS[propertyType as PropertyType] ??
+            propertyType,
         bhk,
         locality,
         city,
         address: listing.address?.trim() || locality,
         pinCode: listing.postalCode?.trim() || "",
+        landmark: listing.landmark?.trim() || "",
+        society: listing.society?.trim() || "",
         transactionType: mapTransactionType(listing.transactionType),
         saleAmountInr,
         rentAmountInr,
@@ -250,8 +298,33 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
             const raw = toNumber(listing.maintenanceCharges);
             return raw > 0 ? raw : null;
         })(),
+        commissionPercent: (() => {
+            const raw = toNumber(listing.commissionPercent);
+            return raw > 0 ? raw : null;
+        })(),
+        commissionAmount: (() => {
+            const raw = toNumber(listing.commissionAmount);
+            return raw > 0 ? raw : null;
+        })(),
+        securityDeposit: (() => {
+            const raw = toNumber(listing.securityDeposit);
+            return raw > 0 ? raw : null;
+        })(),
+        securityDepositMode:
+            listing.securityDepositMode === "amount" ||
+            listing.securityDepositMode === "months_of_rent"
+                ? listing.securityDepositMode
+                : null,
         description: listing.description?.trim() || "",
         amenities: listing.amenities ?? [],
+        nearbyPlaces: (listing.nearbyPlaces ?? []).filter((place) => Boolean(place?.trim())),
+        suitableFor: (listing.suitableFor ?? []).filter((use) => Boolean(use?.trim())),
+        cabins: listing.cabins ?? null,
+        meetingRooms: listing.meetingRooms ?? null,
+        workstations: listing.workstations ?? null,
+        ceilingHeightFt: listing.ceilingHeightFt ?? null,
+        videoUrl: listing.videoUrl?.trim() || "",
+        virtualTourUrl: listing.virtualTourUrl?.trim() || "",
         availableFrom: listing.availableFrom ?? null,
         status: mapStatus(listing),
         inboundRequestCount: 0,
@@ -261,11 +334,15 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         imageSrcs: photos,
         createdAt: listing.createdAt ?? new Date().toISOString(),
         updatedAt: listing.updatedAt ?? listing.createdAt ?? new Date().toISOString(),
+        exclusiveOwnerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
+        ownerName: listing.exclusiveOwner?.fullName ?? listing.ownerName ?? null,
+        ownerOrigin: listing.exclusiveOwnerId || listing.exclusiveOwner?.id ? "custom" : null,
+        ownerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
     };
 }
 
 export function myListingInputToCreatePayload(input: CreateMyListingInput) {
-    const subtype = UI_TO_SUBTYPE[input.propertyType];
+    const subtype = input.subtype || UI_TO_SUBTYPE[input.propertyType];
     const bhkConfig =
         needsBhk(input.propertyType as PropertyType) && input.bhk > 0
             ? (NUMBER_TO_BHK_CONFIG[input.bhk] ?? (input.bhk >= 5 ? "five_plus_bhk" : undefined))
@@ -297,10 +374,22 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
         areaSqft: input.areaSqft,
         address: input.locality.trim(),
         postalCode: input.pinCode.trim() || undefined,
+        society: input.society?.trim() || undefined,
+        landmark: input.landmark?.trim() || undefined,
         country: "India",
         salePrice: input.saleAmountInr ?? undefined,
         monthlyRent: input.rentAmountInr ?? undefined,
+        securityDeposit: input.securityDeposit ?? undefined,
+        securityDepositMode: input.securityDepositMode ?? undefined,
         maintenanceCharges: input.maintenanceInr ?? undefined,
+        commissionPercent:
+            input.transactionType === "sale" || input.transactionType === "both"
+                ? (input.commissionPercent ?? undefined)
+                : undefined,
+        commissionAmount:
+            input.transactionType === "rent" || input.transactionType === "both"
+                ? (input.commissionAmount ?? undefined)
+                : undefined,
         furnishingStatus: input.furnishing,
         facingDirection: input.facing ?? undefined,
         parkingSpaces: parkingToSpaces(input.parking),
@@ -309,6 +398,15 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
             [input.address.trim(), input.description.trim()].filter(Boolean).join("\n\n") ||
             undefined,
         amenities: input.amenities,
+        nearbyPlaces: input.nearbyPlaces?.length ? input.nearbyPlaces : undefined,
+        suitableFor: input.suitableFor?.length ? input.suitableFor : undefined,
+        cabins: input.cabins ?? undefined,
+        meetingRooms: input.meetingRooms ?? undefined,
+        workstations: input.workstations ?? undefined,
+        ceilingHeightFt: input.ceilingHeightFt ?? undefined,
+        videoUrl: input.videoUrl.trim() || undefined,
+        virtualTourUrl: input.virtualTourUrl.trim() || undefined,
+        ...(input.exclusiveOwnerId ? { exclusiveOwnerId: input.exclusiveOwnerId } : {}),
     };
 }
 
@@ -317,7 +415,9 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
 
     if (input.transactionType != null) payload.transactionType = input.transactionType;
     if (input.category != null) payload.propertyType = input.category;
-    if (input.propertyType != null) {
+    if (input.subtype) {
+        payload.subtype = input.subtype;
+    } else if (input.propertyType != null) {
         const subtype = UI_TO_SUBTYPE[input.propertyType];
         if (subtype) payload.subtype = subtype;
     }
@@ -332,11 +432,25 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.locality != null) payload.address = input.locality.trim();
     if (input.city != null) payload.city = input.city.trim();
     if (input.pinCode != null) payload.postalCode = input.pinCode.trim();
+    if (input.society != null) payload.society = input.society.trim() || undefined;
+    if (input.landmark != null) payload.landmark = input.landmark.trim() || undefined;
     if (input.areaSqft != null) payload.areaSqft = input.areaSqft;
     if (input.saleAmountInr !== undefined) payload.salePrice = input.saleAmountInr ?? undefined;
     if (input.rentAmountInr !== undefined) payload.monthlyRent = input.rentAmountInr ?? undefined;
+    if (input.securityDeposit !== undefined) {
+        payload.securityDeposit = input.securityDeposit ?? undefined;
+    }
+    if (input.securityDepositMode !== undefined) {
+        payload.securityDepositMode = input.securityDepositMode ?? undefined;
+    }
     if (input.maintenanceInr !== undefined) {
         payload.maintenanceCharges = input.maintenanceInr ?? undefined;
+    }
+    if (input.commissionPercent !== undefined) {
+        payload.commissionPercent = input.commissionPercent ?? undefined;
+    }
+    if (input.commissionAmount !== undefined) {
+        payload.commissionAmount = input.commissionAmount ?? undefined;
     }
     if (input.furnishing != null) payload.furnishingStatus = input.furnishing;
     if (input.bathrooms !== undefined) payload.bathrooms = input.bathrooms ?? undefined;
@@ -347,6 +461,23 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.parking != null) payload.parkingSpaces = parkingToSpaces(input.parking);
     if (input.availableFrom !== undefined) payload.availableFrom = input.availableFrom || undefined;
     if (input.amenities != null) payload.amenities = input.amenities;
+    if (input.nearbyPlaces != null) payload.nearbyPlaces = input.nearbyPlaces;
+    if (input.suitableFor != null) payload.suitableFor = input.suitableFor;
+    if (input.cabins !== undefined) payload.cabins = input.cabins ?? undefined;
+    if (input.meetingRooms !== undefined) {
+        payload.meetingRooms = input.meetingRooms ?? undefined;
+    }
+    if (input.workstations !== undefined) {
+        payload.workstations = input.workstations ?? undefined;
+    }
+    if (input.ceilingHeightFt !== undefined) {
+        payload.ceilingHeightFt = input.ceilingHeightFt ?? undefined;
+    }
+    if (input.videoUrl != null) payload.videoUrl = input.videoUrl.trim();
+    if (input.virtualTourUrl != null) payload.virtualTourUrl = input.virtualTourUrl.trim();
+    if (input.exclusiveOwnerId !== undefined) {
+        payload.exclusiveOwnerId = input.exclusiveOwnerId || undefined;
+    }
     if (input.publish != null) {
         payload.publishStatus = input.publish ? "published" : "draft";
     } else if (input.status === "published" || input.status === "draft") {

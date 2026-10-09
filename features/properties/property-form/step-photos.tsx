@@ -138,7 +138,7 @@ export function StepPhotos({ photoFilesRef }: StepPhotosProps) {
                                                             className="
                                                               absolute inset-e-2 inset-be-2 flex
                                                               items-center justify-center
-                                                              rounded-full bg-ink/80 text-surface
+                                                              rounded-control bg-ink/80 text-surface
                                                               opacity-0 transition-opacity
                                                               duration-160 block-7 inline-7
                                                               group-hover/photo:opacity-100

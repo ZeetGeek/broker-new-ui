@@ -1,5 +1,7 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
 
+import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 import {
     DEAL_STAGE_ORDER,
     type DealDetail,
@@ -49,13 +51,29 @@ type ApiLead = {
         bedrooms?: number | null;
         areaSqft?: number | null;
         photos?: string[] | null;
+        exclusiveOwnerId?: string | null;
+        isBrokerInventory?: boolean;
+        isExclusiveProperty?: boolean;
     } | null;
     owner?: {
         id: string;
         fullName?: string | null;
         phone?: string | null;
+        email?: string | null;
         avatarUrl?: string | null;
         isRepresentationActive?: boolean;
+        origin?: "platform" | "exclusive";
+    } | null;
+    exclusiveOwner?: {
+        id: string;
+        fullName?: string | null;
+        phone?: string | null;
+        email?: string | null;
+        ownerType?: string | null;
+        society?: string | null;
+        area?: string | null;
+        city?: string | null;
+        origin?: "exclusive";
     } | null;
     client?: {
         id: string;
@@ -84,6 +102,13 @@ const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
 };
 
 const DAY_MS = 86_400_000;
+
+let mockDeals: DealItem[] = MOCK_DEALS.map((deal) => ({
+    ...deal,
+    buyer: { ...deal.buyer },
+    property: { ...deal.property },
+    owner: { ...deal.owner },
+}));
 
 export function daysSince(iso: string | null): number | null {
     if (!iso) return null;
@@ -199,7 +224,14 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
         "Property";
     const phoneDigits = digitsOnly(client.phone);
     const normalizedPhone = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
-    const ownerPhone = digitsOnly(lead.owner?.phone);
+    const ownerPhone = digitsOnly(lead.owner?.phone ?? lead.exclusiveOwner?.phone);
+    const isExclusiveProperty = Boolean(lead.property?.isExclusiveProperty);
+    const ownerOrigin: "platform" | "exclusive" =
+        lead.owner?.origin === "exclusive" || (!lead.owner && Boolean(lead.exclusiveOwner))
+            ? "exclusive"
+            : "platform";
+    const ownerName =
+        lead.owner?.fullName?.trim() || lead.exclusiveOwner?.fullName?.trim() || "Owner";
     const status = fromApiStage(lead.stage);
     const resolved =
         status === "closed" || status === "lost"
@@ -226,18 +258,26 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             bhk,
             amountInr,
             isRent,
-            imageSrc: property.photos?.find(Boolean) || "/properties/1.jpg",
+            // Empty, never a stock photo. A listing with no photos is a real
+            // state the card renders deliberately (docs/DESIGN.md §4.5);
+            // substituting someone else's building here would be a lie.
+            imageSrc: property.photos?.find(Boolean) ?? "",
+            imageSrcs: property.photos?.filter(Boolean) ?? [],
+            photoCount: property.photos?.filter(Boolean).length ?? 0,
+            isExclusiveProperty,
         },
         owner: {
-            name: lead.owner?.fullName?.trim() || "Owner",
+            name: ownerName,
             avatarUrl: lead.owner?.avatarUrl ?? undefined,
             phoneDigits:
-                lead.owner?.isRepresentationActive && ownerPhone
+                (lead.owner?.isRepresentationActive || ownerOrigin === "exclusive") && ownerPhone
                     ? ownerPhone.length > 10
                         ? ownerPhone.slice(-10)
                         : ownerPhone
                     : undefined,
-            isRepresentationActive: Boolean(lead.owner?.isRepresentationActive),
+            isRepresentationActive:
+                ownerOrigin === "exclusive" ? true : Boolean(lead.owner?.isRepresentationActive),
+            origin: ownerOrigin,
         },
         stageEnteredAt: stageEnteredAt(lead),
         lastContactedAt: lead.updatedAt ?? null,
@@ -256,6 +296,7 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             lead.offerStatus === "rejected"
                 ? lead.offerStatus
                 : null,
+        createdAt: lead.createdAt ?? null,
     };
 }
 
@@ -373,6 +414,16 @@ export type SetStageOptions = {
 
 export const pipelineApi = {
     async list(filters: DealsFilters): Promise<DealsResult> {
+        if (isMockMode()) {
+            const all = mockDeals;
+            let items = filters.q.trim()
+                ? all.filter((deal) => matchesQuery(deal, filters.q))
+                : all;
+            if (filters.stage) {
+                items = items.filter((deal) => deal.status === filters.stage);
+            }
+            return { items: sortDeals(items, filters.sort), summary: buildSummary(all) };
+        }
         const leads = await fetchAllLeads(filters.q || undefined);
         const all = leads.map(mapLeadToDeal).filter((deal): deal is DealItem => deal != null);
 
@@ -385,6 +436,28 @@ export const pipelineApi = {
     },
 
     async get(dealId: string): Promise<DealDetail> {
+        if (isMockMode()) {
+            const deal = mockDeals.find((item) => item.id === dealId);
+            if (!deal) {
+                throw new Error("Lead is missing property or buyer details.");
+            }
+            return {
+                ...deal,
+                apiStage: deal.status,
+                listPriceInr: deal.property.amountInr,
+                createdAt: deal.stageEnteredAt,
+                updatedAt: deal.lastContactedAt,
+                buyerEmail: null,
+                history: [
+                    {
+                        status: deal.status,
+                        at: deal.stageEnteredAt,
+                        note: deal.note || null,
+                        by: null,
+                    },
+                ],
+            };
+        }
         const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
         const detail = mapLeadToDetail(lead);
         if (!detail) {
@@ -398,6 +471,25 @@ export const pipelineApi = {
         status: DealItem["status"],
         options: SetStageOptions = {},
     ): Promise<void> {
+        if (isMockMode()) {
+            mockDeals = mockDeals.map((deal) =>
+                deal.id === dealId
+                    ? {
+                          ...deal,
+                          status,
+                          stageEnteredAt: new Date().toISOString(),
+                          note: options.note?.trim() || deal.note,
+                          lostReason: options.lostReason ?? deal.lostReason,
+                          closedAmountInr: options.closedAmountInr ?? deal.closedAmountInr,
+                          resolvedAt:
+                              status === "closed" || status === "lost"
+                                  ? new Date().toISOString()
+                                  : deal.resolvedAt,
+                      }
+                    : deal,
+            );
+            return;
+        }
         await apiFetch(`/clients/leads/${dealId}/status`, {
             method: "PATCH",
             body: JSON.stringify({
@@ -409,6 +501,21 @@ export const pipelineApi = {
 
     /** Submit or revise an offer — moves the lead to offer_made (negotiation column). */
     async makeOffer(dealId: string, offerAmount: number, notes?: string): Promise<void> {
+        if (isMockMode()) {
+            mockDeals = mockDeals.map((deal) =>
+                deal.id === dealId
+                    ? {
+                          ...deal,
+                          status: "negotiation",
+                          offerAmountInr: offerAmount,
+                          offerStatus: "pending",
+                          note: notes?.trim() || deal.note,
+                          stageEnteredAt: new Date().toISOString(),
+                      }
+                    : deal,
+            );
+            return;
+        }
         await apiFetch(`/clients/leads/${dealId}/offer`, {
             method: "POST",
             body: JSON.stringify({
@@ -420,6 +527,18 @@ export const pipelineApi = {
 
     /** Same-stage update used to log a call without moving the card. */
     async logContact(dealId: string, currentStatus: DealStatus, note?: string): Promise<void> {
+        if (isMockMode()) {
+            mockDeals = mockDeals.map((deal) =>
+                deal.id === dealId
+                    ? {
+                          ...deal,
+                          lastContactedAt: new Date().toISOString(),
+                          note: note?.trim() || deal.note,
+                      }
+                    : deal,
+            );
+            return;
+        }
         const status = isLiveStage(currentStatus) ? currentStatus : "contacted";
         await apiFetch(`/clients/leads/${dealId}/status`, {
             method: "PATCH",
@@ -435,6 +554,12 @@ export const pipelineApi = {
     },
 
     async setNote(dealId: string, currentStatus: DealStatus, note: string): Promise<void> {
+        if (isMockMode()) {
+            mockDeals = mockDeals.map((deal) =>
+                deal.id === dealId ? { ...deal, note: note.trim() } : deal,
+            );
+            return;
+        }
         const status = isLiveStage(currentStatus) ? currentStatus : "contacted";
         await apiFetch(`/clients/leads/${dealId}/status`, {
             method: "PATCH",

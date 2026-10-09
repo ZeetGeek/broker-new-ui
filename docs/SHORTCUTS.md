@@ -40,8 +40,8 @@ Facts that determine how you write bindings:
 
 ```tsx
 useEffect(() => {
-  const unsubscribe = tinykeys(window, { "$mod+KeyK": openPalette });
-  return () => unsubscribe();
+    const unsubscribe = tinykeys(window, { "$mod+KeyK": openPalette });
+    return () => unsubscribe();
 }, []);
 ```
 
@@ -71,18 +71,18 @@ one screen — and can be checked automatically.
 export type Scope = "global" | "list" | "form" | "dialog";
 
 export interface Shortcut {
-  id: string;
-  keys: string;        // tinykeys binding — prefer the `code` form
-  label: string;       // shown in the help sheet
-  group: string;       // help sheet section
-  scope: Scope;
+    id: string;
+    keys: string; // tinykeys binding — prefer the `code` form
+    label: string; // shown in the help sheet
+    group: string; // help sheet section
+    scope: Scope;
 }
 
 export const SHORTCUTS = [
-  { id: "palette", keys: "$mod+KeyK", label: "Search",          group: "General", scope: "global" },
-  { id: "help",    keys: "Shift+Slash", label: "Shortcuts",     group: "General", scope: "global" },
-  { id: "goDash",  keys: "g d",       label: "Dashboard",       group: "Go to",   scope: "global" },
-  // …
+    { id: "palette", keys: "$mod+KeyK", label: "Search", group: "General", scope: "global" },
+    { id: "help", keys: "Shift+Slash", label: "Shortcuts", group: "General", scope: "global" },
+    { id: "goDash", keys: "g d", label: "Dashboard", group: "Go to", scope: "global" },
+    // …
 ] as const satisfies readonly Shortcut[];
 ```
 
@@ -93,28 +93,28 @@ it's made, not weeks later when a user reports that one key does two things.
 
 ```ts
 if (process.env.NODE_ENV !== "production") {
-  const seen = new Map<string, string>();
-  for (const s of SHORTCUTS) {
-    // "global" collides with every scope; others only collide within themselves
-    const keysInScope = s.scope === "global" ? ["*"] : [s.scope, "*"];
-    for (const scope of keysInScope) {
-      const k = `${scope}:${s.keys.toLowerCase()}`;
-      if (seen.has(k)) {
-        throw new Error(`Shortcut conflict: "${s.keys}" used by ${seen.get(k)} and ${s.id}`);
-      }
-      seen.set(k, s.id);
+    const seen = new Map<string, string>();
+    for (const s of SHORTCUTS) {
+        // "global" collides with every scope; others only collide within themselves
+        const keysInScope = s.scope === "global" ? ["*"] : [s.scope, "*"];
+        for (const scope of keysInScope) {
+            const k = `${scope}:${s.keys.toLowerCase()}`;
+            if (seen.has(k)) {
+                throw new Error(`Shortcut conflict: "${s.keys}" used by ${seen.get(k)} and ${s.id}`);
+            }
+            seen.set(k, s.id);
+        }
     }
-  }
 
-  // A single letter is unreachable if a sequence starts with it
-  const firstKeys = new Set(
-    SHORTCUTS.filter(s => s.keys.includes(" ")).map(s => s.keys.split(" ")[0].toLowerCase())
-  );
-  for (const s of SHORTCUTS) {
-    if (!s.keys.includes(" ") && firstKeys.has(s.keys.toLowerCase())) {
-      throw new Error(`Shortcut "${s.keys}" (${s.id}) is shadowed by a sequence starting with it`);
+    // A single letter is unreachable if a sequence starts with it
+    const firstKeys = new Set(
+        SHORTCUTS.filter((s) => s.keys.includes(" ")).map((s) => s.keys.split(" ")[0].toLowerCase()),
+    );
+    for (const s of SHORTCUTS) {
+        if (!s.keys.includes(" ") && firstKeys.has(s.keys.toLowerCase())) {
+            throw new Error(`Shortcut "${s.keys}" (${s.id}) is shadowed by a sequence starting with it`);
+        }
     }
-  }
 }
 ```
 
@@ -125,12 +125,12 @@ from behaviour.
 
 ## Scopes — when a binding is live
 
-| Scope | Active when | Unregisters when |
-|---|---|---|
-| `global` | Anywhere in the app | Never |
-| `list` | A list/table has roving focus | Focus leaves the list |
-| `form` | Focus is inside a form | Form unmounts |
-| `dialog` | A dialog is open | Dialog closes |
+| Scope    | Active when                   | Unregisters when      |
+| -------- | ----------------------------- | --------------------- |
+| `global` | Anywhere in the app           | Never                 |
+| `list`   | A list/table has roving focus | Focus leaves the list |
+| `form`   | Focus is inside a form        | Form unmounts         |
+| `dialog` | A dialog is open              | Dialog closes         |
 
 **A dialog suspends non-dialog shortcuts.** While a modal is open, only its own
 bindings and `Escape` fire. Navigating away underneath an open dialog is
@@ -148,16 +148,16 @@ client's name triggers every single-letter shortcut in the app.
 
 ```ts
 function isEditable(el: EventTarget | null): boolean {
-  if (!(el instanceof HTMLElement)) return false;
-  const tag = el.tagName;
-  return (
-    tag === "INPUT" ||
-    tag === "TEXTAREA" ||
-    tag === "SELECT" ||
-    el.isContentEditable ||
-    el.getAttribute("role") === "textbox" ||
-    el.closest("[contenteditable='true']") !== null
-  );
+    if (!(el instanceof HTMLElement)) return false;
+    const tag = el.tagName;
+    return (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        el.isContentEditable ||
+        el.getAttribute("role") === "textbox" ||
+        el.closest("[contenteditable='true']") !== null
+    );
 }
 ```
 
@@ -174,19 +174,19 @@ Rules:
 
 Overriding a browser or OS shortcut is hostile, and users blame your app.
 
-| Never | Why |
-|---|---|
-| `$mod+T` `$mod+W` `$mod+N` `$mod+Q` | Tab/window/app management |
-| `$mod+R` `F5` | Reload |
-| `$mod+L` | Address bar |
-| `$mod+F` | Browser find — users rely on it |
-| `$mod+P` `$mod+S` `$mod+D` | Print, save, bookmark |
-| `$mod+Shift+T` `$mod+Shift+N` | Reopen tab, incognito |
-| `$mod+1`…`$mod+9` | Tab switching |
-| `F1`–`F12` | Browser and OS functions |
-| `Tab`, `Shift+Tab` | Focus traversal — never intercept |
-| `Space`, arrows alone | Scrolling |
-| `$mod+C/V/X/A/Z` | Clipboard and undo |
+| Never                               | Why                               |
+| ----------------------------------- | --------------------------------- |
+| `$mod+T` `$mod+W` `$mod+N` `$mod+Q` | Tab/window/app management         |
+| `$mod+R` `F5`                       | Reload                            |
+| `$mod+L`                            | Address bar                       |
+| `$mod+F`                            | Browser find — users rely on it   |
+| `$mod+P` `$mod+S` `$mod+D`          | Print, save, bookmark             |
+| `$mod+Shift+T` `$mod+Shift+N`       | Reopen tab, incognito             |
+| `$mod+1`…`$mod+9`                   | Tab switching                     |
+| `F1`–`F12`                          | Browser and OS functions          |
+| `Tab`, `Shift+Tab`                  | Focus traversal — never intercept |
+| `Space`, arrows alone               | Scrolling                         |
+| `$mod+C/V/X/A/Z`                    | Clipboard and undo                |
 
 `$mod+K` is safe and is the near-universal convention for a command palette.
 
@@ -198,52 +198,54 @@ Deliberately short. Add to it only when a real user asks.
 
 ### Global
 
-| Keys | Action |
-|---|---|
-| `$mod+K` | Open search / command palette |
-| `?` (`Shift+Slash`) | Show shortcuts |
-| `Escape` | Close the topmost layer |
+| Keys                | Action                        |
+| ------------------- | ----------------------------- |
+| `$mod+K`            | Open search / command palette |
+| `?` (`Shift+Slash`) | Show shortcuts                |
+| `Escape`            | Close the topmost layer       |
 
 ### Go to — sequences
 
 Sequences avoid the reserved-key problem entirely and are self-documenting.
 These map to the existing nav.
 
-| Keys | Action |
-|---|---|
-| `g d` | Dashboard |
+| Keys  | Action         |
+| ----- | -------------- |
+| `g d` | Dashboard      |
 | `g o` | Owner listings |
-| `g p` | Your listings |
-| `g c` | Clients |
-| `g v` | Visits |
-| `g r` | Referrals |
+| `g p` | Your listings  |
+| `g c` | Clients        |
+| `g v` | Visits         |
+| `g r` | Referrals      |
 
 ### Lists — only with roving focus
 
-| Keys | Action |
-|---|---|
-| `j` / `ArrowDown` | Next item |
-| `k` / `ArrowUp` | Previous item |
-| `Enter` | Open selected |
+| Keys              | Action                       |
+| ----------------- | ---------------------------- |
+| `j` / `ArrowDown` | Next item                    |
+| `k` / `ArrowUp`   | Previous item                |
+| `Enter`           | Open selected                |
+| `N`               | Add property (Your listings) |
+| `N`               | Add buyer / owner (Contacts) |
 
 ### Forms
 
-| Keys | Action |
-|---|---|
-| `$mod+Enter` | Submit |
-| `Escape` | Cancel / close |
+| Keys         | Action         |
+| ------------ | -------------- |
+| `$mod+Enter` | Submit         |
+| `Escape`     | Cancel / close |
 
 ---
 
 ## Where shortcuts do NOT belong
 
-| Action | Why not |
-|---|---|
-| **Approve / reject a broker request** | The owner's single most consequential decision. Their own screen is "one screen, one decision" by design. A keystroke away from approving a stranger is wrong. |
-| **Delete anything** | Destructive. Requires a named confirmation, which a shortcut bypasses. |
-| **Publish a listing** | Consequential and public. |
-| Any action not visible on the current screen | A shortcut for something the user cannot see is a hidden feature, not a fast path. |
-| Any action a user does once a week | Not worth the key or the memory. |
+| Action                                       | Why not                                                                                                                                                        |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Approve / reject a broker request**        | The owner's single most consequential decision. Their own screen is "one screen, one decision" by design. A keystroke away from approving a stranger is wrong. |
+| **Delete anything**                          | Destructive. Requires a named confirmation, which a shortcut bypasses.                                                                                         |
+| **Publish a listing**                        | Consequential and public.                                                                                                                                      |
+| Any action not visible on the current screen | A shortcut for something the user cannot see is a hidden feature, not a fast path.                                                                             |
+| Any action a user does once a week           | Not worth the key or the memory.                                                                                                                               |
 
 An action earns a shortcut when it is **frequent, visible, and cheap to
 reverse.** All three.
@@ -285,10 +287,10 @@ A shortcut nobody knows about does not exist.
 
 `$mod` renders differently per platform, and getting it wrong looks careless.
 
-| Binding | Mac | Windows / Linux |
-|---|---|---|
-| `$mod+KeyK` | ⌘K | Ctrl K |
-| `Shift+Slash` | ? | ? |
+| Binding       | Mac | Windows / Linux |
+| ------------- | --- | --------------- |
+| `$mod+KeyK`   | ⌘K  | Ctrl K          |
+| `Shift+Slash` | ?   | ?               |
 
 Detect once, format everywhere, from one helper.
 

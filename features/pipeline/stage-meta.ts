@@ -1,5 +1,12 @@
 import type { LucideIcon } from "lucide-react";
-import { CalendarCheck, CircleCheck, CircleSlash, Handshake, PhoneCall, Sparkles } from "lucide-react";
+import {
+    CalendarCheck,
+    CircleCheck,
+    CircleSlash,
+    Handshake,
+    PhoneCall,
+    Sparkles,
+} from "lucide-react";
 
 import type { DealLostReason, DealOutcome, DealStage, DealStatus } from "@/features/pipeline/types";
 
@@ -10,13 +17,35 @@ export type StageMeta = {
     hint: string;
     icon: LucideIcon;
     /**
-     * The stage token that fills the column dot and progress bar. These
-     * deepen through the brand green family and are pipeline-only — see
-     * docs/DESIGN.md §1.3.
+     * The stage token that fills the column dot and progress bar. One
+     * Tailwind hue per stage, pipeline-only — see docs/DESIGN.md §1.3.
      */
     dotClass: string;
     /** Verb for the button that advances a deal into this stage. */
     advanceLabel: string;
+    /**
+     * Column-header pill: the stage's soft fill carrying its solid tone as
+     * text. One hue per stage so the four columns are told apart at a
+     * glance — see docs/DESIGN.md §1.3.
+     */
+    pillClass: string;
+    /**
+     * The whole board column: a wash of the stage's soft token plus a solid
+     * border in that same token. The border carries the separation, which
+     * lets the fill stay light enough that the white cards on top of it are
+     * still the thing the eye lands on.
+     */
+    columnClass: string;
+    /**
+     * The stage name above a column's total, as an eyebrow in the stage's own
+     * solid tone. `pillClass` still backs the compact pill used in menus and
+     * on the mobile stage tabs.
+     */
+    labelClass: string;
+    /** Ink class for the pinned dashed SVG border (`text-stage-N`). */
+    pinnedBorderClass: string;
+    /** Pin badge fill/ink when the deal is pinned in this stage. */
+    pinnedBadgeClass: string;
 };
 
 export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
@@ -26,6 +55,11 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: Sparkles,
         dotClass: "bg-stage-1",
         advanceLabel: "Move to new",
+        pillClass: "bg-stage-1-soft text-stage-1",
+        columnClass: "border-stage-1-soft bg-stage-1-soft/25",
+        labelClass: "text-stage-1",
+        pinnedBorderClass: "text-stage-1",
+        pinnedBadgeClass: "border-stage-1/35 bg-surface text-stage-1",
     },
     contacted: {
         label: "Contacted",
@@ -33,6 +67,11 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: PhoneCall,
         dotClass: "bg-stage-2",
         advanceLabel: "Mark contacted",
+        pillClass: "bg-stage-2-soft text-stage-2",
+        columnClass: "border-stage-2-soft bg-stage-2-soft/25",
+        labelClass: "text-stage-2",
+        pinnedBorderClass: "text-stage-2",
+        pinnedBadgeClass: "border-stage-2/35 bg-surface text-stage-2",
     },
     visit: {
         label: "Site visit",
@@ -40,6 +79,11 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: CalendarCheck,
         dotClass: "bg-stage-3",
         advanceLabel: "Book a visit",
+        pillClass: "bg-stage-3-soft text-stage-3",
+        columnClass: "border-stage-3-soft bg-stage-3-soft/25",
+        labelClass: "text-stage-3",
+        pinnedBorderClass: "text-stage-3",
+        pinnedBadgeClass: "border-stage-3/35 bg-surface text-stage-3",
     },
     negotiation: {
         label: "Negotiation",
@@ -47,6 +91,11 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         icon: Handshake,
         dotClass: "bg-stage-4",
         advanceLabel: "Start negotiating",
+        pillClass: "bg-stage-4-soft text-stage-4",
+        columnClass: "border-stage-4-soft bg-stage-4-soft/25",
+        labelClass: "text-stage-4",
+        pinnedBorderClass: "text-stage-4",
+        pinnedBadgeClass: "border-stage-4/35 bg-surface text-stage-4",
     },
 };
 

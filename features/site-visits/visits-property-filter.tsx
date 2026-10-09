@@ -6,6 +6,7 @@ import { Building2, Check, ChevronDown, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -81,7 +82,7 @@ export function VisitsPropertyFilter({ properties, value, onChange }: VisitsProp
                         }
                         className={cn(
                             `
-                              body-sm flex shrink-0 items-center gap-2 rounded-full border px-3
+                              body-sm flex shrink-0 items-center gap-2 rounded-control border px-3
                               py-1.5 transition-colors duration-160
                             `,
                             selected
@@ -113,7 +114,7 @@ export function VisitsPropertyFilter({ properties, value, onChange }: VisitsProp
                     </div>
                 ) : null}
 
-                <div className="overflow-y-auto p-1 max-block-72">
+                <div className="p-1">
                     <OptionRow
                         isSelected={value === ""}
                         onClick={() => handleSelect("")}
@@ -123,16 +124,24 @@ export function VisitsPropertyFilter({ properties, value, onChange }: VisitsProp
                         count={properties.reduce((sum, property) => sum + property.count, 0)}
                     />
 
-                    {matches.map((property) => (
-                        <OptionRow
-                            key={property.id}
-                            isSelected={property.id === value}
-                            onClick={() => handleSelect(property.id)}
-                            title={property.label}
-                            subtitle={`${property.locality}, ${property.city}`}
-                            count={property.count}
-                        />
-                    ))}
+                    <VirtualListBox
+                        items={matches}
+                        getKey={(property) => property.id}
+                        estimateItemHeight={48}
+                        gap={0}
+                        virtualizeAfter={20}
+                        ariaLabel="Properties with visits"
+                        className="max-block-64"
+                        renderItem={(property) => (
+                            <OptionRow
+                                isSelected={property.id === value}
+                                onClick={() => handleSelect(property.id)}
+                                title={property.label}
+                                subtitle={`${property.locality}, ${property.city}`}
+                                count={property.count}
+                            />
+                        )}
+                    />
 
                     {matches.length === 0 ? (
                         <p className="body-sm px-2 py-6 text-center text-ink-subtle">
@@ -173,7 +182,10 @@ function OptionRow({
                 rows do not shift sideways as the selection moves. */}
             <Check
                 aria-hidden
-                className={cn("shrink-0 block-4 inline-4", isSelected ? "opacity-100" : "opacity-0")}
+                className={cn(
+                    "shrink-0 block-4 inline-4",
+                    isSelected ? "opacity-100" : "opacity-0",
+                )}
                 strokeWidth={2}
             />
 

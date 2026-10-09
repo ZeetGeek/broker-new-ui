@@ -16,7 +16,9 @@ import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertyThumb } from "@/components/shared/property-thumb";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
 
 import { DEAL_OUTCOME_META, DEAL_STAGE_META, isOutcome } from "@/features/pipeline/stage-meta";
@@ -60,11 +62,17 @@ function HistoryList({ history, now }: { history: DealHistoryEntry[]; now: Date 
     const ordered = [...history].reverse();
 
     return (
-        <ol className="flex flex-col gap-3">
-            {ordered.map((entry, index) => {
+        <VirtualListBox
+            items={ordered}
+            getKey={(entry, index) => `${entry.at ?? "x"}-${entry.status}-${index}`}
+            estimateItemHeight={88}
+            gap={0}
+            ariaLabel="Deal stage history"
+            className="max-block-96"
+            renderItem={(entry, index) => {
                 const isFirst = index === 0;
                 return (
-                    <li key={`${entry.at ?? "x"}-${entry.status}-${index}`} className="flex gap-3">
+                    <div className="flex gap-3">
                         <span aria-hidden className="flex flex-col items-center gap-1 pbs-1">
                             <span
                                 className={cn(
@@ -95,10 +103,10 @@ function HistoryList({ history, now }: { history: DealHistoryEntry[]; now: Date 
                                 {formatWhen(entry.at, now)}
                             </span>
                         </span>
-                    </li>
+                    </div>
                 );
-            })}
-        </ol>
+            }}
+        />
     );
 }
 
@@ -200,12 +208,12 @@ export function DealDetailModal({
                             <PropertyThumb src={deal.property.imageSrc} alt={deal.property.title} />
                         </Link>
                         <div className="flex flex-col gap-1 min-inline-0">
-                            <Link
+                            <PropertyTitleLink
                                 href={brokerPropertyDetailHref(deal.property.id)}
-                                className="body font-semibold text-ink hover:text-brand-text"
+                                className="body font-semibold"
                             >
                                 {deal.property.title}
-                            </Link>
+                            </PropertyTitleLink>
                             <Price
                                 amountInr={deal.property.amountInr}
                                 isRent={deal.property.isRent}
@@ -220,9 +228,9 @@ export function DealDetailModal({
 
                     <div
                         className="
-                      grid grid-cols-1 gap-4 rounded-inner bg-surface-muted/60 p-3
-                      sm:grid-cols-2
-                    "
+                          grid grid-cols-1 gap-4 rounded-inner bg-surface-muted/60 p-3
+                          sm:grid-cols-2
+                        "
                     >
                         <div className="flex items-center gap-2.5 min-inline-0">
                             <UserAvatar name={deal.buyer.name} imageUrl={deal.buyer.avatarUrl} />

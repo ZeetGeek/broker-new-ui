@@ -46,9 +46,20 @@ export type OwnerListingLocationSearchHit = OwnerListingLocationLeaf & {
     pathLabel: string;
 };
 
+function resolveStateForCity(city: string, state?: string): string {
+    const trimmedState = state?.trim();
+    if (trimmedState) return trimmedState;
+
+    const normalizedCity = city.trim().toLowerCase();
+    const mapped = Object.entries(CITY_STATE_MAP).find(
+        ([key]) => key.toLowerCase() === normalizedCity,
+    );
+    return mapped?.[1] ?? city;
+}
+
 function resolveListingRegion(item: OwnerListingItem) {
     const country = item.country?.trim() || DEFAULT_COUNTRY;
-    const state = item.state?.trim() || CITY_STATE_MAP[item.city] || item.city;
+    const state = resolveStateForCity(item.city, item.state);
     return {
         country,
         state,

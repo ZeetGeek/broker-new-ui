@@ -88,6 +88,22 @@ function CodeField({ code, shareUrl }: { code: string; shareUrl: string }) {
     );
 }
 
+function ShareCardSkeleton({ className }: { className?: string }) {
+    return (
+        <div
+            className={cn("rounded-card bg-brand-deep p-4 sm:p-5", className)}
+            aria-busy
+            aria-label="Loading your invite link"
+        >
+            <div className="flex flex-col gap-4">
+                <span className="animate-pulse rounded-sm bg-white/10 block-4 inline-32" />
+                <span className="animate-pulse rounded-inner bg-white/10 block-12 inline-full" />
+                <span className="animate-pulse rounded-control bg-white/10 block-10 inline-full" />
+            </div>
+        </div>
+    );
+}
+
 /**
  * The dark attention card (docs/DESIGN.md §1.1) — the one thing on the page
  * the broker is meant to act on, so it gets the one dark panel and the one
@@ -115,7 +131,7 @@ export function ReferralShareCard({
         () => false,
     );
 
-    if (!referralCode) return null;
+    if (!referralCode) return <ShareCardSkeleton className={className} />;
 
     const message = buildInviteMessage({ inviterName, shareUrl: referralCode.shareUrl });
 

@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode, MOCK_ACCESS_TOKEN, MOCK_AUTH_USER } from "@/lib/api/mock-mode";
 import type { AuthUser } from "@/lib/auth/session";
 
 import { API_URL } from "@/config";
@@ -28,6 +29,12 @@ export type RegisterResponse = {
 
 export const authApi = {
     login(email: string, password: string) {
+        if (isMockMode()) {
+            return Promise.resolve({
+                user: MOCK_AUTH_USER,
+                accessToken: MOCK_ACCESS_TOKEN,
+            });
+        }
         return apiFetch<LoginResponse>("/auth/login", {
             method: "POST",
             body: JSON.stringify({ email, password }),
@@ -76,12 +83,21 @@ export const authApi = {
     },
 
     profile(token?: string | null) {
+        if (isMockMode()) {
+            return Promise.resolve(MOCK_AUTH_USER);
+        }
         return apiFetch<AuthUser>("/auth/profile", {
             ...(token != null ? { token } : {}),
         });
     },
 
     refresh() {
+        if (isMockMode()) {
+            return Promise.resolve({
+                user: MOCK_AUTH_USER,
+                accessToken: MOCK_ACCESS_TOKEN,
+            });
+        }
         return apiFetch<LoginResponse>("/auth/refresh", {
             method: "POST",
             body: JSON.stringify({}),
@@ -116,6 +132,8 @@ export const authApi = {
         accountType?: "individual" | "organization";
         orgName?: string;
         referralCode?: string;
+        /** True when the register page already collected owner/broker. */
+        roleChosen?: boolean;
     }) {
         const params = new URLSearchParams();
         params.set("role", options?.role ?? "broker");
@@ -128,6 +146,10 @@ export const authApi = {
         if (options?.referralCode?.trim()) {
             params.set("referralCode", options.referralCode.trim());
         }
+        if (options?.roleChosen) {
+            params.set("roleChosen", "1");
+        }
+        // console.log("options =>",options)
         return `${API_URL}/auth/google?${params.toString()}`;
     },
 };

@@ -76,13 +76,16 @@ export function parseOwnerListingsFilters(
     const cities = parseListParam(params, "city");
     const localities = parseListParam(params, "locality");
     const yourAreasRaw = parseParam(params, "yourAreas");
-    // Default to serviceable areas when Where has no explicit cities/localities.
-    const yourAreas =
-        yourAreasRaw === "1"
+    const hasLocationFilter = cities.length > 0 || localities.length > 0;
+    // Explicit city/locality picks turn off your-areas priority.
+    // Missing param defaults to Your areas on (URL restore layer may override).
+    const yourAreas = hasLocationFilter
+        ? false
+        : yourAreasRaw === "0"
+          ? false
+          : yourAreasRaw === "1"
             ? true
-            : yourAreasRaw === "0"
-              ? false
-              : cities.length === 0 && localities.length === 0;
+            : true;
 
     return {
         q: parseParam(params, "q"),
@@ -108,6 +111,7 @@ export function parseOwnerListingsFilters(
         slotsOpen: parseBoolParam(params, "slotsOpen"),
         commissionSet: parseBoolParam(params, "commissionSet"),
         readyToMove: parseBoolParam(params, "readyToMove"),
+        bookmarked: parseBoolParam(params, "bookmarked"),
         sort: sort === "price_asc" || sort === "price_desc" ? sort : "newest",
         cursor: parseParam(params, "cursor"),
         limit: parseLimitParam(params),
@@ -138,7 +142,7 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     if (filters.maxAreaSqft) params.set("maxArea", filters.maxAreaSqft);
     if (filters.listedWithinDays) params.set("listedWithin", filters.listedWithinDays);
     if (filters.minCommissionPercent) params.set("minCommission", filters.minCommissionPercent);
-    // Persist Anywhere (`0`) so a refresh does not fall back to serviceable areas.
+    // Persist Your areas chip when Where is not pinned to a city/locality.
     if (filters.cities.length === 0 && filters.localities.length === 0) {
         params.set("yourAreas", filters.yourAreas ? "1" : "0");
     }
@@ -146,6 +150,7 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     if (filters.slotsOpen) params.set("slotsOpen", "1");
     if (filters.commissionSet) params.set("commissionSet", "1");
     if (filters.readyToMove) params.set("readyToMove", "1");
+    if (filters.bookmarked) params.set("bookmarked", "1");
     if (filters.sort !== "newest") params.set("sort", filters.sort);
     if (filters.cursor) params.set("cursor", filters.cursor);
     if (filters.limit !== DEFAULT_OWNER_LISTINGS_FILTERS.limit) {
@@ -163,18 +168,15 @@ export function countSheetFilters(filters: OwnerListingsFilters): number {
     if (filters.slotsOpen) count++;
     if (filters.commissionSet) count++;
     if (filters.readyToMove) count++;
+    if (filters.bookmarked) count++;
     return count;
 }
 
 export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): boolean {
-    const isAnywhere =
-        !filters.yourAreas && filters.cities.length === 0 && filters.localities.length === 0;
-
     return (
         Boolean(filters.q.trim()) ||
         filters.cities.length > 0 ||
         filters.localities.length > 0 ||
-        isAnywhere ||
         filters.bhk.length > 0 ||
         Boolean(filters.type) ||
         Boolean(filters.min) ||
@@ -189,6 +191,7 @@ export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): bo
         filters.slotsOpen ||
         filters.commissionSet ||
         filters.readyToMove ||
+        filters.bookmarked ||
         filters.sort !== DEFAULT_OWNER_LISTINGS_FILTERS.sort
     );
 }
@@ -213,6 +216,7 @@ export function ownerListingsFilterSignature(filters: OwnerListingsFilters): str
         filters.slotsOpen ? "1" : "0",
         filters.commissionSet ? "1" : "0",
         filters.readyToMove ? "1" : "0",
+        filters.bookmarked ? "1" : "0",
         filters.sort,
         filters.cursor,
         String(filters.limit),
@@ -251,11 +255,7 @@ export function filterOwnerListings(
     let filtered = items.filter((item) => {
         if (!matchesQuery(item, filters.q)) return false;
 
-        if (filters.yourAreas && serviceAreas.length > 0) {
-            if (!serviceAreas.includes(item.locality) && !serviceAreas.includes(item.city)) {
-                return false;
-            }
-        } else {
+        if (filters.cities.length > 0 || filters.localities.length > 0) {
             if (
                 filters.cities.length > 0 &&
                 !filters.cities.some((city) => city.toLowerCase() === item.city.toLowerCase())
@@ -278,8 +278,10 @@ export function filterOwnerListings(
         if (filters.propertyType && item.propertyTypeLabel !== filters.propertyType) return false;
         if (filters.newToday && !item.isNew) return false;
         if (filters.slotsOpen && item.brokerSlotsOpen <= 0) return false;
-        if (filters.commissionSet && item.commissionPercent <= 0) return false;
+        if (filters.commissionSet && item.commissionPercent <= 0 && item.commissionAmount <= 0)
+            return false;
         if (filters.readyToMove && !item.readyToMove) return false;
+        if (filters.bookmarked && !item.isBookmarked) return false;
 
         const minArea = filters.minAreaSqft ? Number(filters.minAreaSqft) : null;
         const maxArea = filters.maxAreaSqft ? Number(filters.maxAreaSqft) : null;
@@ -304,6 +306,20 @@ export function filterOwnerListings(
             item.commissionPercent < minCommission
         ) {
             return false;
+        }
+
+        if (filters.yourAreas && serviceAreas.length > 0) {
+            const areaSet = new Set(serviceAreas.map((area) => area.toLowerCase()));
+            const locality = item.locality.toLowerCase();
+            const city = item.city.toLowerCase();
+            const inArea = [...areaSet].some(
+                (area) =>
+                    locality === area ||
+                    city === area ||
+                    locality.includes(area) ||
+                    city.includes(area),
+            );
+            if (!inArea) return false;
         }
 
         const compareAmount = listingCompareAmountInr(item, filters.type);
@@ -333,7 +349,6 @@ export function filterOwnerListings(
         totalCount: filtered.length,
         marketValueInr,
         nextCursor: null,
-        page: 1,
-        totalPages: 1,
+        hasMore: false,
     };
 }

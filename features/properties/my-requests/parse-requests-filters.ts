@@ -1,4 +1,5 @@
 import {
+    type DealListingType,
     DEFAULT_REQUESTS_FILTERS,
     type RequestsFilters,
     type RequestSort,
@@ -17,6 +18,7 @@ const VIEWS: RequestsViewFilter[] = [
 ];
 
 const SORTS: RequestSort[] = ["recent", "oldest", "waiting_longest", "price_desc", "price_asc"];
+const TYPES: DealListingType[] = ["", "sale", "rent"];
 
 const PAGE_SIZES = [10, 20, 50];
 
@@ -28,6 +30,7 @@ function first(value: string | string[] | undefined): string {
 export function parseRequestsFilters(record: Record<string, string | string[]>): RequestsFilters {
     const view = first(record.view) as RequestsViewFilter;
     const sort = first(record.sort) as RequestSort;
+    const type = first(record.type) as DealListingType;
     const page = Number.parseInt(first(record.page), 10);
     const limit = Number.parseInt(first(record.limit), 10);
 
@@ -35,6 +38,7 @@ export function parseRequestsFilters(record: Record<string, string | string[]>):
         q: first(record.q),
         view: VIEWS.includes(view) ? view : DEFAULT_REQUESTS_FILTERS.view,
         sort: SORTS.includes(sort) ? sort : DEFAULT_REQUESTS_FILTERS.sort,
+        type: TYPES.includes(type) ? type : DEFAULT_REQUESTS_FILTERS.type,
         page: Number.isFinite(page) && page > 0 ? page : DEFAULT_REQUESTS_FILTERS.page,
         limit: PAGE_SIZES.includes(limit) ? limit : DEFAULT_REQUESTS_FILTERS.limit,
     };
@@ -47,6 +51,7 @@ export function serializeRequestsFilters(filters: RequestsFilters): URLSearchPar
     if (filters.q.trim()) params.set("q", filters.q.trim());
     if (filters.view !== "all") params.set("view", filters.view);
     if (filters.sort !== "recent") params.set("sort", filters.sort);
+    if (filters.type) params.set("type", filters.type);
     if (filters.page > 1) params.set("page", String(filters.page));
     if (filters.limit !== DEFAULT_REQUESTS_FILTERS.limit)
         params.set("limit", String(filters.limit));
@@ -55,5 +60,5 @@ export function serializeRequestsFilters(filters: RequestsFilters): URLSearchPar
 }
 
 export function hasActiveRequestsFilters(filters: RequestsFilters): boolean {
-    return filters.q.trim().length > 0 || filters.view !== "all";
+    return filters.q.trim().length > 0 || filters.view !== "all" || Boolean(filters.type);
 }

@@ -1,4 +1,8 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
+
+import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
+import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-my-listings";
 
 export type PropertyBrowseSort = "newest" | "price_asc" | "price_desc";
 export type PropertyPublishStatus = "draft" | "published";
@@ -29,8 +33,13 @@ export type PropertyBrowseListing = {
     status?: string | null;
     salePrice?: string | number | null;
     monthlyRent?: string | number | null;
-    /** Owner-shared broker commission percent (optional). */
+    /** Deposit value: INR when mode is `amount`, months when `months_of_rent`. */
+    securityDeposit?: string | number | null;
+    securityDepositMode?: "amount" | "months_of_rent" | string | null;
+    /** Owner-shared broker commission percent (sale / both). */
     commissionPercent?: string | number | null;
+    /** Fixed broker commission in INR (rent / both). */
+    commissionAmount?: string | number | null;
     photos?: string[] | null;
     furnishingStatus?: "furnished" | "semi" | "unfurnished" | string | null;
     availableFrom?: string | null;
@@ -40,6 +49,19 @@ export type PropertyBrowseListing = {
     isNew?: boolean;
     ownerName?: string | null;
     ownerAvatarUrl?: string | null;
+    /** `users.id` for the listing owner. */
+    ownerUserId?: string | null;
+    /** `owners.id` when the API sends the profile row separately. */
+    ownerProfileId?: string | null;
+    owner?: {
+        id?: string | null;
+        userId?: string | null;
+        profileId?: string | null;
+    } | null;
+    /** Where the owner is based. Not yet sent by the browse API. */
+    ownerCity?: string | null;
+    /** Owner locality within `ownerCity`. Not yet sent by the browse API. */
+    ownerLocality?: string | null;
     organizationName?: string | null;
     representation?: PropertyRepresentationStanding | null;
     /**
@@ -47,6 +69,8 @@ export type PropertyBrowseListing = {
      * Never trust a nested owner phone on browse payloads.
      */
     ownerPhone?: string | null;
+    /** Present on browse payloads when the caller is authenticated. */
+    isBookmarked?: boolean | null;
 };
 
 /** Inventory listing returned by `GET /properties` (and get/create/update). */
@@ -55,6 +79,8 @@ export type PropertyListing = PropertyBrowseListing & {
     publishStatus?: PropertyPublishStatus | string | null;
     isDraft?: boolean;
     postalCode?: string | null;
+    society?: string | null;
+    landmark?: string | null;
     balconyCount?: number | null;
     floorNumber?: number | null;
     totalFloors?: number | null;
@@ -62,8 +88,27 @@ export type PropertyListing = PropertyBrowseListing & {
     parkingSpaces?: number | null;
     amenities?: string[] | null;
     description?: string | null;
+    nearbyPlaces?: string[] | null;
+    suitableFor?: string[] | null;
+    cabins?: number | null;
+    meetingRooms?: number | null;
+    workstations?: number | null;
+    ceilingHeightFt?: number | null;
+    videoUrl?: string | null;
+    virtualTourUrl?: string | null;
     maintenanceCharges?: string | number | null;
     updatedAt?: string | null;
+    exclusiveOwnerId?: string | null;
+    exclusiveOwner?: {
+        id: string;
+        fullName?: string | null;
+        phone?: string | null;
+        email?: string | null;
+        ownerType?: string | null;
+        society?: string | null;
+        area?: string | null;
+        city?: string | null;
+    } | null;
     permissions?: {
         canEdit?: boolean;
         canAssign?: boolean;
@@ -75,9 +120,12 @@ export type PropertyListing = PropertyBrowseListing & {
 export type PropertyBrowsePage = {
     items: PropertyBrowseListing[];
     total: number;
-    page: number;
     limit: number;
-    totalPages: number;
+    nextCursor: string | null;
+    hasMore: boolean;
+    /** @deprecated Offset fields — browse is cursor-based now. */
+    page?: number;
+    totalPages?: number;
 };
 
 export type PropertyListPage = {
@@ -139,10 +187,15 @@ export type PropertyBrowseQuery = {
     minCommissionPercent?: number;
     commissionSet?: boolean;
     readyToMove?: boolean;
+    /** Only listings the caller has bookmarked. */
+    bookmarked?: boolean;
     furnishingStatus?: "furnished" | "semi" | "unfurnished";
     sort?: PropertyBrowseSort;
-    page?: number;
+    /** Opaque keyset cursor from a previous `nextCursor`. */
+    cursor?: string;
     limit?: number;
+    /** @deprecated Prefer `cursor` for browse infinite scroll. */
+    page?: number;
 };
 
 export type PropertyListQuery = {
@@ -175,19 +228,33 @@ export type CreatePropertyInput = {
     areaSqft?: number;
     address?: string;
     postalCode?: string;
+    society?: string;
+    landmark?: string;
     country?: string;
     status?: string;
     salePrice?: number;
     monthlyRent?: number;
+    securityDeposit?: number;
+    securityDepositMode?: "amount" | "months_of_rent";
     maintenanceCharges?: number;
     commissionPercent?: number;
+    commissionAmount?: number;
     furnishingStatus?: string;
     facingDirection?: string;
     parkingSpaces?: number;
     availableFrom?: string;
     description?: string;
     amenities?: string[];
+    nearbyPlaces?: string[];
+    suitableFor?: string[];
+    cabins?: number;
+    meetingRooms?: number;
+    workstations?: number;
+    ceilingHeightFt?: number;
+    videoUrl?: string;
+    virtualTourUrl?: string;
     photos?: File[];
+    exclusiveOwnerId?: string;
 };
 
 export type UpdatePropertyInput = Partial<Omit<CreatePropertyInput, "photos">> & {
@@ -232,9 +299,10 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     }
     if (params.commissionSet) q.set("commissionSet", "1");
     if (params.readyToMove) q.set("readyToMove", "1");
+    if (params.bookmarked) q.set("bookmarked", "1");
     if (params.furnishingStatus) q.set("furnishingStatus", params.furnishingStatus);
     if (params.sort) q.set("sort", params.sort);
-    if (params.page != null && params.page > 1) q.set("page", String(params.page));
+    if (params.cursor) q.set("cursor", params.cursor);
     if (params.limit != null) q.set("limit", String(params.limit));
 
     const qs = q.toString();
@@ -270,9 +338,101 @@ function appendFormFields(
     });
 }
 
+/** Repeated form keys; empty array sends one blank value so the API can clear the field. */
+function appendStringArray(form: FormData, key: string, values: string[] | undefined) {
+    if (values === undefined) return;
+    if (values.length === 0) {
+        form.append(key, "");
+        return;
+    }
+    values.forEach((value) => form.append(key, value));
+}
+
+function mockListingById(id: string): PropertyListing | null {
+    const owner = MOCK_OWNER_LISTINGS.find((item) => item.id === id);
+    if (owner) {
+        const isRent = owner.rentAmountInr != null && owner.saleAmountInr == null;
+        const isBoth = owner.rentAmountInr != null && owner.saleAmountInr != null;
+        return {
+            id: owner.id,
+            title: `${owner.configLabel} in ${owner.locality}`,
+            transactionType: isBoth ? "both" : isRent ? "rent" : "sale",
+            propertyType: owner.propertyTypeLabel,
+            subtype: owner.propertyTypeLabel,
+            bedrooms: owner.bhk,
+            areaSqft: owner.areaSqft,
+            city: owner.city,
+            address: owner.locality,
+            salePrice: owner.saleAmountInr,
+            monthlyRent: owner.rentAmountInr,
+            commissionPercent: owner.commissionPercent,
+            photos: owner.imageSrcs,
+            furnishingStatus: owner.furnishing,
+            isNew: owner.isNew,
+            ownerName: owner.ownerName,
+            ownerAvatarUrl: owner.ownerAvatarUrl,
+            ownerUserId: owner.ownerUserId,
+            ownerPhone: undefined,
+            representation: owner.hasRequested
+                ? {
+                      id: owner.pendingRepresentationId ?? `rep_${owner.id}`,
+                      status: "pending",
+                      initiatedBy: "broker",
+                  }
+                : owner.isRepresenting
+                  ? {
+                        id: `rep_${owner.id}`,
+                        status: "accepted",
+                        initiatedBy: "broker",
+                    }
+                  : owner.isInvitePending
+                    ? {
+                          id: owner.pendingInvitationId ?? `inv_${owner.id}`,
+                          status: "pending",
+                          initiatedBy: "owner",
+                      }
+                    : null,
+        };
+    }
+
+    const mine = MOCK_MY_LISTINGS_SEED.find((item) => item.id === id);
+    if (!mine) return null;
+    return {
+        id: mine.id,
+        title: mine.title,
+        transactionType: mine.transactionType,
+        propertyType: mine.category,
+        subtype: mine.propertyType,
+        bedrooms: mine.bhk,
+        bathrooms: mine.bathrooms,
+        balconyCount: mine.balconies,
+        floorNumber: mine.floorNumber,
+        totalFloors: mine.totalFloors,
+        areaSqft: mine.areaSqft,
+        city: mine.city,
+        address: mine.address || mine.locality,
+        postalCode: mine.pinCode,
+        salePrice: mine.saleAmountInr,
+        monthlyRent: mine.rentAmountInr,
+        photos: mine.imageSrcs,
+        furnishingStatus: mine.furnishing,
+        facingDirection: mine.facing,
+        description: mine.description,
+        amenities: mine.amenities,
+        availableFrom: mine.availableFrom,
+        publishStatus: mine.status === "published" ? "published" : "draft",
+        isDraft: mine.status !== "published",
+        createdAt: mine.createdAt,
+        updatedAt: mine.updatedAt,
+        maintenanceCharges: mine.maintenanceInr,
+    };
+}
+
 export const propertiesApi = {
-    browse(params?: PropertyBrowseQuery) {
-        return apiFetch<PropertyBrowsePage>(`/properties/browse${buildBrowseQuery(params)}`);
+    browse(params?: PropertyBrowseQuery, signal?: AbortSignal) {
+        return apiFetch<PropertyBrowsePage>(`/properties/browse${buildBrowseQuery(params)}`, {
+            signal,
+        });
     },
 
     browseCities() {
@@ -281,6 +441,13 @@ export const propertiesApi = {
 
     /** One public owner listing for the Owner-listings detail page. */
     browseById(id: string) {
+        if (isMockMode()) {
+            const listing = mockListingById(id);
+            if (!listing) {
+                return Promise.reject(new Error("Listing not found"));
+            }
+            return Promise.resolve(listing);
+        }
         return apiFetch<
             PropertyListing & {
                 representation?: PropertyRepresentationStanding | null;
@@ -290,8 +457,8 @@ export const propertiesApi = {
     },
 
     /** Caller's inventory listings (My listings). */
-    list(params?: PropertyListQuery) {
-        return apiFetch<PropertyListPage>(`/properties${buildListQuery(params)}`);
+    list(params?: PropertyListQuery, signal?: AbortSignal) {
+        return apiFetch<PropertyListPage>(`/properties${buildListQuery(params)}`, { signal });
     },
 
     options() {
@@ -299,23 +466,46 @@ export const propertiesApi = {
     },
 
     get(id: string) {
+        if (isMockMode()) {
+            const listing = mockListingById(id);
+            if (!listing) {
+                return Promise.reject(new Error("Listing not found"));
+            }
+            return Promise.resolve(listing);
+        }
         return apiFetch<PropertyListing>(`/properties/${id}`);
     },
 
     create(input: CreatePropertyInput) {
         const form = new FormData();
-        const { photos, amenities, ...fields } = input;
+        const { photos, amenities, nearbyPlaces, suitableFor, ...fields } = input;
         appendFormFields(form, fields);
-        (amenities ?? []).forEach((amenity) => form.append("amenities", amenity));
+        appendStringArray(form, "amenities", amenities);
+        appendStringArray(form, "nearbyPlaces", nearbyPlaces);
+        appendStringArray(form, "suitableFor", suitableFor);
         (photos ?? []).forEach((file) => form.append("photos", file));
         return apiFetch<PropertyListing>("/properties", { method: "POST", body: form });
     },
 
     update(id: string, input: UpdatePropertyInput) {
         const form = new FormData();
-        const { photos, deletePhotoUrls, amenities, ...fields } = input;
+        const {
+            photos,
+            deletePhotoUrls,
+            amenities,
+            nearbyPlaces,
+            suitableFor,
+            videoUrl,
+            virtualTourUrl,
+            ...fields
+        } = input;
         appendFormFields(form, fields);
-        (amenities ?? []).forEach((amenity) => form.append("amenities", amenity));
+        appendStringArray(form, "amenities", amenities);
+        appendStringArray(form, "nearbyPlaces", nearbyPlaces);
+        appendStringArray(form, "suitableFor", suitableFor);
+        // Empty string clears the stored URL; omit when undefined so other fields stay.
+        if (videoUrl !== undefined) form.append("videoUrl", videoUrl);
+        if (virtualTourUrl !== undefined) form.append("virtualTourUrl", virtualTourUrl);
         (deletePhotoUrls ?? []).forEach((url) => form.append("deletePhotoUrls", url));
         (photos ?? []).forEach((file) => form.append("photos", file));
         return apiFetch<PropertyListing>(`/properties/${id}`, { method: "POST", body: form });
@@ -325,6 +515,41 @@ export const propertiesApi = {
         return apiFetch<PropertyListing>(`/properties/${id}/publication`, {
             method: "PATCH",
             body: JSON.stringify({ publishStatus }),
+        });
+    },
+
+    /** Attach or replace the exclusive owner on a broker listing. */
+    attachExclusiveOwner(id: string, exclusiveOwnerId: string) {
+        return apiFetch<PropertyListing>(`/properties/${id}/exclusive-owner`, {
+            method: "PATCH",
+            body: JSON.stringify({ exclusiveOwnerId }),
+        });
+    },
+
+    /** Save a public owner listing for the caller. */
+    bookmark(id: string) {
+        return apiFetch<{ propertyId: string; isBookmarked: true }>(`/properties/${id}/bookmark`, {
+            method: "POST",
+        });
+    },
+
+    /** Remove the caller’s bookmark for a listing. */
+    unbookmark(id: string) {
+        return apiFetch<{ propertyId: string; isBookmarked: false }>(`/properties/${id}/bookmark`, {
+            method: "DELETE",
+        });
+    },
+
+    /** Caller’s bookmarked owner listings. */
+    listBookmarks(params?: PropertyListQuery, signal?: AbortSignal) {
+        return apiFetch<PropertyListPage>(`/properties/bookmarks${buildListQuery(params)}`, {
+            signal,
+        });
+    },
+
+    remove(id: string) {
+        return apiFetch<{ id: string; deleted: boolean }>(`/properties/${id}`, {
+            method: "DELETE",
         });
     },
 };

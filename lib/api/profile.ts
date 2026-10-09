@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode, MOCK_PROFILE } from "@/lib/api/mock-mode";
 
 export type NotificationPreferences = {
     unreadCount?: number;
@@ -27,6 +28,7 @@ export type UserProfile = {
     role?: string;
     fullName?: string | null;
     city?: string | null;
+    state?: string | null;
     country?: string | null;
     accountType?: string | null;
     orgName?: string | null;
@@ -96,9 +98,12 @@ export type UpdateProfileInput = {
     fullName?: string;
     phone?: string;
     city?: string;
+    state?: string;
     country?: string;
     orgName?: string;
     bio?: string;
+    /** Shared. Owners and brokers both have a public profile address. */
+    publicSlug?: string;
     accountType?: "individual" | "organization";
     // Owner-only
     ownerKind?: "individual" | "builder" | "company";
@@ -110,7 +115,6 @@ export type UpdateProfileInput = {
     experienceYears?: number | null;
     licenseNumber?: string;
     reraState?: string;
-    publicSlug?: string;
     serviceAreas?: string[];
     specializations?: string[];
 };
@@ -123,6 +127,9 @@ export type UpdateNotificationsInput = {
 
 export const profileApi = {
     get() {
+        if (isMockMode()) {
+            return Promise.resolve(MOCK_PROFILE);
+        }
         return apiFetch<UserProfile>("/profile");
     },
 
@@ -134,6 +141,9 @@ export const profileApi = {
      * de-duplicate, say — instead of what the client hoped it stored.
      */
     update(input: UpdateProfileInput) {
+        if (isMockMode()) {
+            return Promise.resolve({ ...MOCK_PROFILE, ...input });
+        }
         return apiFetch<UserProfile>("/profile", {
             method: "PATCH",
             body: JSON.stringify(input),

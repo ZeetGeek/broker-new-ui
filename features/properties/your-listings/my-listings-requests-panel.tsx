@@ -7,9 +7,14 @@ import Link from "next/link";
 import { Check, Clock, Send, X } from "lucide-react";
 
 import { brokerRequestsApi } from "@/lib/api/broker-requests";
+import { PREF_KEYS } from "@/lib/prefs/keys";
+import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { Price } from "@/components/shared/price";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 
 import { MyListingsRequestsEmpty } from "@/features/properties/your-listings/my-listings-empty";
@@ -25,6 +30,10 @@ const STATUS_CHIPS: { value: BrokerRequestStatusFilter; label: string }[] = [
     { value: "approved", label: "Approved" },
     { value: "declined", label: "Declined" },
 ];
+
+function isRequestStatus(value: unknown): value is BrokerRequestStatusFilter {
+    return value === "all" || value === "pending" || value === "approved" || value === "declined";
+}
 
 function RequestIcon({ type }: { type: BrokerRequestItem["type"] }) {
     if (type === "approved" || type === "approved_untouched") {
@@ -75,7 +84,9 @@ function RequestRow({
     const isRemind = item.action.kind === "remind";
 
     return (
-        <li className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4">
+        <article
+            className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4"
+        >
             <RequestIcon type={item.type} />
             <div
                 className="
@@ -85,7 +96,12 @@ function RequestRow({
             >
                 <div className="flex flex-col gap-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <p className="body font-semibold text-ink">{item.title}</p>
+                        <PropertyTitleLink
+                            href={brokerOwnerListingDetailHref(item.propertyId)}
+                            className="body font-semibold"
+                        >
+                            {item.title}
+                        </PropertyTitleLink>
                         <Price
                             amountInr={item.amountInr}
                             isRent={item.isRent}
@@ -115,12 +131,16 @@ function RequestRow({
                     </Button>
                 )}
             </div>
-        </li>
+        </article>
     );
 }
 
 export function MyListingsRequestsPanel() {
-    const [status, setStatus] = useState<BrokerRequestStatusFilter>("all");
+    const [status, setStatus] = usePersistedJson<BrokerRequestStatusFilter>(
+        PREF_KEYS.broker.myListings.requestsStatus,
+        "all",
+        { isValid: isRequestStatus },
+    );
     const [result, setResult] = useState<BrokerRequestsResult | null>(null);
     const [loading, setLoading] = useState(true);
     const [busyId, setBusyId] = useState<string | null>(null);
@@ -213,7 +233,7 @@ export function MyListingsRequestsPanel() {
                         type="button"
                         onClick={() => setStatus(chip.value)}
                         className={cn(
-                            "body-sm rounded-full px-4 py-2 transition-colors duration-160",
+                            "body-sm rounded-control px-4 py-2 transition-colors duration-160",
                             status === chip.value
                                 ? "bg-ink font-semibold text-surface"
                                 : "bg-surface font-normal text-ink-muted hover:text-ink",
@@ -232,16 +252,16 @@ export function MyListingsRequestsPanel() {
                     <p className="body-sm mbs-2 text-ink-muted">Try another filter.</p>
                 </div>
             ) : result ? (
-                <ul className="flex flex-col gap-3">
-                    {result.items.map((item) => (
-                        <RequestRow
-                            key={item.id}
-                            item={item}
-                            busy={busyId === item.id}
-                            onRemind={handleRemind}
-                        />
-                    ))}
-                </ul>
+                <WindowVirtualGrid
+                    items={result.items}
+                    getKey={(item) => item.id}
+                    estimateRowHeight={128}
+                    gap={12}
+                    ariaLabel="Requests for your properties"
+                    renderItem={(item) => (
+                        <RequestRow item={item} busy={busyId === item.id} onRemind={handleRemind} />
+                    )}
+                />
             ) : null}
         </div>
     );

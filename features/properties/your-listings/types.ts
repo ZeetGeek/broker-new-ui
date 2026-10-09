@@ -1,12 +1,17 @@
+import type { PropertyType } from "@/lib/validation/property";
+
 export type MyListingStatus = "draft" | "published" | "unpublished";
 
 export type MyListingFurnishing = "furnished" | "semi" | "unfurnished";
+
+export type MyListingSecurityDepositMode = "amount" | "months_of_rent";
 
 export type MyListingSort = "newest" | "price_asc" | "price_desc";
 
 export type MyListingTransactionType = "sale" | "rent" | "both";
 
-export type MyListingCategory = "residential" | "commercial" | "industrial" | "land";
+export type MyListingCategory =
+    "residential" | "commercial" | "industrial" | "land" | "agricultural";
 
 export type MyListingPropertyType =
     | "apartment"
@@ -38,12 +43,16 @@ export type MyListingItem = {
     configLabel: string;
     category: MyListingCategory;
     propertyType: MyListingPropertyType;
+    /** API subtype as stored (e.g. `cold_storage`); null on older listings. */
+    subtype?: string | null;
     propertyTypeLabel: string;
     bhk: number;
     locality: string;
     city: string;
     address: string;
     pinCode: string;
+    landmark: string;
+    society: string;
     transactionType: MyListingTransactionType;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
@@ -57,8 +66,23 @@ export type MyListingItem = {
     facing: MyListingFacing | null;
     parking: MyListingParking;
     maintenanceInr: number | null;
+    /** Sale commission percent (null when unset / rent-only). */
+    commissionPercent: number | null;
+    /** Rent commission fixed INR amount (null when unset / sale-only). */
+    commissionAmount: number | null;
+    /** Deposit value: INR when mode is amount, months when months_of_rent. */
+    securityDeposit: number | null;
+    securityDepositMode: MyListingSecurityDepositMode | null;
     description: string;
     amenities: MyListingAmenity[];
+    nearbyPlaces: string[];
+    suitableFor: string[];
+    cabins: number | null;
+    meetingRooms: number | null;
+    workstations: number | null;
+    ceilingHeightFt: number | null;
+    videoUrl: string;
+    virtualTourUrl: string;
     availableFrom: string | null;
     status: MyListingStatus;
     inboundRequestCount: number;
@@ -68,12 +92,22 @@ export type MyListingItem = {
     imageSrcs: string[];
     createdAt: string;
     updatedAt: string;
+    /** Contact linkage for broker-owned inventory. Legacy listings may not have it yet. */
+    ownerId?: string | null;
+    ownerOrigin?: "platform" | "custom" | null;
+    ownerName?: string | null;
+    exclusiveOwnerId?: string | null;
+    visibility?: "private" | "marketplace";
+    interestedBuyerIds?: string[];
+    /** Buyers linked to this listing (for the avatar stack on the card). */
+    attachedClients?: Array<{ id: string; name: string; avatarUrl?: string }>;
 };
 
 export type MyListingsFilters = {
     q: string;
     type: "" | "sale" | "rent";
-    propertyType: MyListingPropertyType | "";
+    /** Broad UI type (`office`) or exact subtype (`cold_storage`). */
+    propertyType: PropertyType | "";
     bhk: string[];
     status: MyListingStatus | "";
     sort: MyListingSort;
@@ -132,12 +166,16 @@ export type CreateMyListingInput = {
     transactionType: MyListingTransactionType;
     category: MyListingCategory;
     propertyType: MyListingPropertyType;
+    /** Exact API subtype; wins over the one derived from `propertyType`. */
+    subtype?: string;
     bhk: number;
     title: string;
     locality: string;
     city: string;
     address: string;
     pinCode: string;
+    landmark: string;
+    society: string;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
     areaSqft: number;
@@ -152,10 +190,24 @@ export type CreateMyListingInput = {
     facing: MyListingFacing | null;
     parking: MyListingParking;
     maintenanceInr: number | null;
+    commissionPercent: number | null;
+    commissionAmount: number | null;
+    securityDeposit: number | null;
+    securityDepositMode: MyListingSecurityDepositMode | null;
     availableFrom: string | null;
     description: string;
     amenities: MyListingAmenity[];
+    nearbyPlaces: string[];
+    suitableFor: string[];
+    cabins: number | null;
+    meetingRooms: number | null;
+    workstations: number | null;
+    ceilingHeightFt: number | null;
+    videoUrl: string;
+    virtualTourUrl: string;
     publish: boolean;
+    /** Broker exclusive owner CRM contact attached to this listing. */
+    exclusiveOwnerId?: string | null;
 };
 
 export type UpdateMyListingInput = Partial<CreateMyListingInput> & {

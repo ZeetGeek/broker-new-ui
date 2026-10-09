@@ -16,6 +16,7 @@ import { spring } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { VisitItem, VisitViewer } from "@/features/site-visits/types";
@@ -136,8 +137,7 @@ function groupByDay(visits: VisitItem[]): DayGroup[] {
                     label: hourRangeLabel(day, hour),
                     visits: hourVisits.sort(
                         (a, b) =>
-                            new Date(a.scheduledAt).getTime() -
-                            new Date(b.scheduledAt).getTime(),
+                            new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
                     ),
                 }));
 
@@ -260,62 +260,77 @@ export function VisitsList({
                 emptyState
             )}
 
-            {groups.map((group) => (
-                <section key={group.key} id={`visits-day-${group.key}`} className="flex flex-col">
-                    <h2
-                        className="
-                          body-sm sticky inset-bs-0 z-10 border-be border-border-warm bg-canvas
-                          pbe-2 font-semibold text-ink
-                        "
-                    >
-                        {dayHeading(group.day, now)}
-                        {/* "2 visits" rather than a bare "2" — a lone number
+            {groups.length > 0 ? (
+                <WindowVirtualGrid
+                    items={groups}
+                    getKey={(group) => group.key}
+                    estimateRowHeight={520}
+                    gap={24}
+                    overscan={2}
+                    ariaLabel="Site visits by day"
+                    renderItem={(group) => (
+                        <section id={`visits-day-${group.key}`} className="flex flex-col">
+                            <h2
+                                className="
+                                  body-sm sticky inset-bs-0 z-10 border-be border-border-warm
+                                  bg-canvas pbe-2 font-semibold text-ink
+                                "
+                            >
+                                {dayHeading(group.day, now)}
+                                {/* "2 visits" rather than a bare "2" — a lone number
                             beside a date reads as part of the date. */}
-                        <span className="ms-2 font-normal text-ink-subtle">
-                            <span className="tabular">{group.total}</span>{" "}
-                            {group.total === 1 ? "visit" : "visits"}
-                        </span>
-                    </h2>
+                                <span className="ms-2 font-normal text-ink-subtle">
+                                    <span className="tabular">{group.total}</span>{" "}
+                                    {group.total === 1 ? "visit" : "visits"}
+                                </span>
+                            </h2>
 
-                    {/* One card per hour band rather than one card per day:
+                            {/* One card per hour band rather than one card per day:
                         the gap between bands is what makes a free afternoon
                         visible at a glance. */}
-                    <div className="flex flex-col gap-3 pbs-3">
-                        {group.hours.map((band) => (
-                            <section key={band.key} className="flex flex-col gap-1.5">
-                                <h3 className="body-xs flex items-center gap-2 text-ink-subtle">
-                                    <span className="tabular font-semibold text-ink">
-                                        {band.label}
-                                    </span>
-                                    <span aria-hidden className="flex-1 bg-border-warm block-px" />
-                                    <span className="tabular">
-                                        {band.visits.length}{" "}
-                                        {band.visits.length === 1 ? "visit" : "visits"}
-                                    </span>
-                                </h3>
+                            <div className="flex flex-col gap-3 pbs-3">
+                                {group.hours.map((band) => (
+                                    <section key={band.key} className="flex flex-col gap-1.5">
+                                        <h3 className="
+                                          body-xs flex items-center gap-2 text-ink-subtle
+                                        ">
+                                            <span className="tabular font-semibold text-ink">
+                                                {band.label}
+                                            </span>
+                                            <span
+                                                aria-hidden
+                                                className="flex-1 bg-border-warm block-px"
+                                            />
+                                            <span className="tabular">
+                                                {band.visits.length}{" "}
+                                                {band.visits.length === 1 ? "visit" : "visits"}
+                                            </span>
+                                        </h3>
 
-                                <div
-                                    className="
-                                      overflow-hidden rounded-card border border-border-warm
-                                    "
-                                >
-                                    {band.visits.map((visit) => (
-                                        <VisitRow
-                                            key={visit.id}
-                                            visit={visit}
-                                            viewer={viewer}
-                                            handlers={handlers}
-                                            isBusy={busyId === visit.id}
-                                            now={now}
-                                            className="last:border-be-0"
-                                        />
-                                    ))}
-                                </div>
-                            </section>
-                        ))}
-                    </div>
-                </section>
-            ))}
+                                        <div
+                                            className="
+                                              overflow-hidden rounded-card border border-border-warm
+                                            "
+                                        >
+                                            {band.visits.map((visit) => (
+                                                <VisitRow
+                                                    key={visit.id}
+                                                    visit={visit}
+                                                    viewer={viewer}
+                                                    handlers={handlers}
+                                                    isBusy={busyId === visit.id}
+                                                    now={now}
+                                                    className="last:border-be-0"
+                                                />
+                                            ))}
+                                        </div>
+                                    </section>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+                />
+            ) : null}
         </div>
     );
 }
@@ -508,7 +523,7 @@ function WeekStrip({
                                 onSelectDay(dayKey(now));
                             }}
                             className="
-                              body-sm rounded-full border border-border-warm bg-surface px-3 py-1
+                              body-sm rounded-md border border-border-warm bg-surface px-3 py-1
                               font-medium text-ink transition-colors duration-160
                               hover:bg-surface-muted
                             "
@@ -663,7 +678,7 @@ function StripArrow({ direction, onClick }: { direction: "prev" | "next"; onClic
             aria-label={direction === "prev" ? "Previous week" : "Next week"}
             onClick={onClick}
             className="
-              flex shrink-0 items-center justify-center rounded-full border border-border-warm
+              flex shrink-0 items-center justify-center rounded-control border border-border-warm
               bg-surface text-ink transition-colors duration-160 block-8 inline-8
               hover:bg-surface-muted
             "

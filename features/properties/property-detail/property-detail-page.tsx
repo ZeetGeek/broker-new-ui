@@ -15,6 +15,11 @@ import {
     BROKER_YOUR_LISTINGS_HREF,
     brokerPropertyEditHref,
 } from "@/lib/routes/broker";
+import {
+    OWNER_PROPERTIES_HREF,
+    OWNER_REQUESTS_HREF,
+    ownerPropertyEditHref,
+} from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
@@ -28,6 +33,7 @@ import {
     factColumnsClass,
     listedAgoLabel,
 } from "@/features/properties/property-detail/property-detail-facts";
+import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
 import { PropertyGallery } from "@/features/properties/property-detail/property-gallery";
 import { PropertyPriceBlock } from "@/features/properties/property-detail/property-price-block";
 import type { MyListingItem, MyListingStatus } from "@/features/properties/your-listings/types";
@@ -44,12 +50,25 @@ const STATUS_VARIANT: Record<MyListingStatus, "brand" | "neutral" | "urgent"> = 
     unpublished: "urgent",
 };
 
-function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
+function OwnedPropertyDetail({
+    listing,
+    portal,
+}: {
+    listing: MyListingItem;
+    portal: "broker" | "owner";
+}) {
     const router = useRouter();
     const [item, setItem] = useState(listing);
     const [busy, setBusy] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [descriptionOpen, setDescriptionOpen] = useState(false);
+
+    const listHref = portal === "owner" ? OWNER_PROPERTIES_HREF : BROKER_YOUR_LISTINGS_HREF;
+    const editHref =
+        portal === "owner" ? ownerPropertyEditHref(item.id) : brokerPropertyEditHref(item.id);
+    const requestsHref =
+        portal === "owner" ? OWNER_REQUESTS_HREF : `${BROKER_YOUR_LISTINGS_HREF}?tab=requests`;
+    const backLabel = portal === "owner" ? "Properties" : "Your listings";
 
     const facts = useMemo(() => buildPropertyFacts(item), [item]);
 
@@ -92,25 +111,24 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
 
     const handleDelete = useCallback(async () => {
         setBusy(true);
-        const ok = await myListingsApi.remove(item.id);
-        setBusy(false);
-
-        if (!ok) {
-            toast.error("Couldn't remove property");
-            return;
+        try {
+            await myListingsApi.remove(item.id);
+            setDeleteOpen(false);
+            toast.success("Property removed");
+            router.push(listHref);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Couldn't remove property");
+        } finally {
+            setBusy(false);
         }
-
-        setDeleteOpen(false);
-        toast.success("Property removed");
-        router.push(BROKER_YOUR_LISTINGS_HREF);
-    }, [item.id, router]);
+    }, [item.id, listHref, router]);
 
     const isLongDescription = item.description.length > 320;
 
     return (
         <div className="flex flex-col gap-6 pbe-24 lg:pbe-8">
             <Link
-                href={BROKER_YOUR_LISTINGS_HREF}
+                href={listHref}
                 className="
                   body-sm inline-flex items-center gap-1 font-medium text-ink-muted
                   transition-colors duration-160 inline-fit
@@ -118,13 +136,13 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
                 "
             >
                 <ChevronLeft aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                Your listings
+                {backLabel}
             </Link>
 
             <PropertyGallery
                 title={item.title}
                 imageSrcs={item.imageSrcs}
-                editHref={brokerPropertyEditHref(item.id)}
+                editHref={editHref}
                 overlay={
                     <>
                         <Badge
@@ -156,9 +174,7 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
                         </p>
                     </header>
 
-                    <section
-                        className="rounded-card border border-border-warm bg-surface p-5 sm:p-6"
-                    >
+                    <section className="rounded-card border border-border-warm bg-surface p-5 sm:p-6">
                         <PropertyPriceBlock item={item} />
                     </section>
 
@@ -245,6 +261,8 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
                     onTogglePublish={() => void togglePublish()}
                     onRequestDelete={() => setDeleteOpen(true)}
                     shareListing={shareListing}
+                    editHref={editHref}
+                    requestsHref={requestsHref}
                 />
             </div>
 
@@ -278,11 +296,11 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
                     variant="outline"
                     size="lg"
                     className="rounded-control border-border-warm"
-                    render={<Link href={`${BROKER_YOUR_LISTINGS_HREF}?tab=requests`} />}
+                    render={<Link href={requestsHref} />}
                 >
                     Requests
                     {item.inboundRequestCount > 0 ? (
-                        <span className="tabular ms-1 rounded-full bg-brand px-1.5 text-surface">
+                        <span className="tabular ms-1 rounded-md bg-brand px-1.5 text-surface">
                             {item.inboundRequestCount}
                         </span>
                     ) : null}
@@ -300,7 +318,30 @@ function OwnedPropertyDetail({ listing }: { listing: MyListingItem }) {
     );
 }
 
-function BrowsePropertyFallback({ propertyId }: { propertyId: string }) {
+function BrowsePropertyFallback({
+    propertyId,
+    portal,
+}: {
+    propertyId: string;
+    portal: "broker" | "owner";
+}) {
+    if (portal === "owner") {
+        return (
+            <div className="flex flex-col items-center gap-4 py-16 text-center">
+                <h1 className="h3">Property not found</h1>
+                <p className="body max-w-prose text-ink-muted">
+                    This listing isn&apos;t in your inventory (or was removed).
+                </p>
+                <Button
+                    className="bg-brand-ink text-surface hover:bg-brand-ink/90"
+                    render={<Link href={OWNER_PROPERTIES_HREF} />}
+                >
+                    Back to properties
+                </Button>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
             <h1 className="h3">Property {propertyId}</h1>
@@ -327,7 +368,7 @@ function BrowsePropertyFallback({ propertyId }: { propertyId: string }) {
     );
 }
 
-export function PropertyDetailPage() {
+export function PropertyDetailPage({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const params = useParams<{ id: string }>();
     const propertyId = params.id;
     const [listing, setListing] = useState<MyListingItem | null | undefined>(undefined);
@@ -342,8 +383,8 @@ export function PropertyDetailPage() {
         };
     }, [propertyId]);
 
-    if (listing === undefined) return null;
-    if (!listing) return <BrowsePropertyFallback propertyId={propertyId} />;
+    if (listing === undefined) return <PropertyDetailSkeleton />;
+    if (!listing) return <BrowsePropertyFallback propertyId={propertyId} portal={portal} />;
 
-    return <OwnedPropertyDetail listing={listing} />;
+    return <OwnedPropertyDetail listing={listing} portal={portal} />;
 }

@@ -43,6 +43,10 @@
     --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
     --tabs-dur: var(--duration-fast);
     --tabs-ease: var(--ease-smooth-out);
+    --acc-expand: 250ms;
+    --acc-collapse: 250ms;
+    --acc-chevron: 250ms;
+    --acc-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --tabs-text-muted: var(--color-ink-muted);
     --tabs-text-active: var(--color-surface);
     --tabs-bar-bg: var(--color-surface);
@@ -73,6 +77,12 @@
     --page-exit-enabled: 1;
     --page-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --page-fade-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Panel reveal */
+    --panel-open-dur: 400ms;
+    --panel-close-dur: 350ms;
+    --panel-translate-y: 100px;
+    --panel-blur: 2px;
+    --panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
     /* Success check */
     --check-opacity-dur: 500ms;
     --check-rotate-dur: 500ms;
@@ -88,6 +98,13 @@
     --check-ease-rotate: cubic-bezier(0.22, 1, 0.36, 1);
     --check-ease-bob: cubic-bezier(0.34, 1.35, 0.64, 1);
     --check-ease-path: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Checkbox check — transitions.dev 25 */
+    --check-box: 150ms;
+    --check-draw: 350ms;
+    --check-delay: 0ms;
+    --check-uncheck: 150ms;
+    --check-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --check-len: 15;
     /* Texts reveal */
     --stagger-dur: 500ms;
     --stagger-distance: 12px;
@@ -415,16 +432,15 @@
 
 /* --- 16 tabs sliding --- */
 
-/* The bar is just a flex container with padding for the pill
-   to sit inside. Tabs sit on z-index: 1, the pill on z-index: 0,
-   so labels read above the pill background. */
+/* The bar is a flex container with padding for the active indicator.
+   Tabs sit on z-index: 1 and the indicator on z-index: 0. */
 .t-tabs {
     position: relative;
     display: inline-flex;
     align-items: center;
     gap: 3px;
     padding: 3px;
-    border-radius: 48px;
+    border-radius: var(--radius-control);
     background: var(--tabs-bar-bg);
 }
 .t-tab {
@@ -436,7 +452,7 @@
     padding: 4px 12px;
     color: var(--tabs-text-muted);
     cursor: pointer;
-    border-radius: 48px;
+    border-radius: var(--radius-control);
     z-index: 1;
     transition: color var(--tabs-dur) var(--tabs-ease);
 }
@@ -445,7 +461,7 @@
     color: var(--tabs-text-active);
 }
 
-/* The pill: width + transform are written inline by JS so
+/* The active indicator: width + transform are written inline by JS so
    the transition tweens between the previous and next
    measured positions. */
 .t-tabs-pill {
@@ -455,7 +471,7 @@
     height: 30px;
     width: 0;
     background: var(--tabs-pill-bg);
-    border-radius: 48px;
+    border-radius: var(--radius-control);
     transform: translateX(0);
     transition:
         transform var(--tabs-dur) var(--tabs-ease),
@@ -472,6 +488,117 @@
     }
 }
 
+/* Surface tabs — same 16-tabs-sliding motion, muted track + white pill. */
+.t-tabs-surface {
+    --tabs-bar-bg: var(--color-surface-muted);
+    --tabs-pill-bg: var(--color-surface);
+    --tabs-text-muted: var(--color-ink-muted);
+    --tabs-text-active: var(--color-ink);
+    gap: 4px;
+    padding: 4px;
+}
+
+.t-tabs-surface .t-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    padding: 6px 14px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    outline: none;
+}
+
+.t-tabs-surface .t-tab:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-brand) 25%, transparent);
+}
+
+.t-tabs-surface .t-tabs-pill {
+    top: 4px;
+    height: 36px;
+    border: 1px solid var(--color-border-warm);
+    box-shadow: var(--shadow-sm);
+    box-sizing: border-box;
+}
+
+/* Toolbar density — 36px track, matches button `default` / `icon`. */
+.t-tabs-surface.t-tabs-compact {
+    gap: 3px;
+    padding: 3px;
+}
+
+.t-tabs-surface.t-tabs-compact .t-tab {
+    height: 30px;
+    padding: 4px 12px;
+}
+
+.t-tabs-surface.t-tabs-compact .t-tabs-pill {
+    top: 3px;
+    height: 30px;
+}
+
+.t-tabs-surface.t-tabs-stretch {
+    display: flex;
+    width: 100%;
+}
+
+.t-tabs-surface.t-tabs-stretch .t-tab {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.t-tabs-surface.t-tabs-vertical {
+    flex-direction: column;
+    align-items: stretch;
+    width: 10rem;
+}
+
+.t-tabs-surface.t-tabs-vertical .t-tab {
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.t-tabs-surface.t-tabs-vertical .t-tabs-pill {
+    top: 0;
+    left: 4px;
+    width: calc(100% - 8px);
+    height: 0;
+    transform: translateY(0);
+    transition:
+        transform var(--tabs-dur) var(--tabs-ease),
+        height var(--tabs-dur) var(--tabs-ease);
+}
+
+.t-tabs-panel {
+    animation: t-tabs-panel-in var(--duration-fast) var(--ease-smooth-out) both;
+}
+
+@keyframes t-tabs-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(var(--page-slide-distance));
+        filter: blur(var(--icon-swap-blur));
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-tabs-surface .t-tabs-pill,
+    .t-tabs-surface .t-tab {
+        transition: none !important;
+    }
+
+    .t-tabs-panel {
+        animation: none !important;
+    }
+}
+
 /* Nav uses aria-current="page" instead of aria-selected. */
 .t-tab[aria-current="page"] {
     color: var(--tabs-text-active);
@@ -480,7 +607,7 @@
     color: var(--color-ink);
 }
 
-/* Notification filter — transitions.dev 16-tabs-sliding, light track + white pill. */
+/* Notification filter: transitions.dev 16-tabs-sliding, light track + white indicator. */
 .t-notif-filter-tabs {
     position: relative;
     display: flex;
@@ -597,7 +724,9 @@
 
 .t-notif-body-marquee[data-overflow="true"]:hover .t-notif-body-marquee-text,
 .group\/notification:hover .t-notif-body-marquee[data-overflow="true"] .t-notif-body-marquee-text,
-.group\/notification[data-highlighted] .t-notif-body-marquee[data-overflow="true"] .t-notif-body-marquee-text {
+.group\/notification[data-highlighted]
+    .t-notif-body-marquee[data-overflow="true"]
+    .t-notif-body-marquee-text {
     display: inline-block;
     inline-size: max-content;
     max-inline-size: none;
@@ -641,7 +770,9 @@
 
 @media (prefers-reduced-motion: reduce) {
     .t-notif-body-marquee[data-overflow="true"]:hover .t-notif-body-marquee-text,
-    .group\/notification:hover .t-notif-body-marquee[data-overflow="true"] .t-notif-body-marquee-text,
+    .group\/notification:hover
+        .t-notif-body-marquee[data-overflow="true"]
+        .t-notif-body-marquee-text,
     .group\/notification[data-highlighted]
         .t-notif-body-marquee[data-overflow="true"]
         .t-notif-body-marquee-text {
@@ -704,13 +835,46 @@
 }
 .t-auth-enter.is-shown {
     opacity: 1;
-    transform: translateY(0);
+    /* `translateY(0)` still creates a containing layer that clips focus rings /
+       box-shadows of inputs inside overflow parents — drop the transform once shown. */
+    transform: none;
+    will-change: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
     .t-auth-enter {
         opacity: 1;
         transform: none;
+        transition: none !important;
+    }
+}
+
+/* --- 07 panel reveal --- */
+
+.t-panel-slide {
+    transform: translateY(var(--panel-translate-y));
+    opacity: 0;
+    filter: blur(var(--panel-blur));
+    pointer-events: none;
+    transition:
+        transform var(--panel-close-dur) var(--panel-ease),
+        opacity var(--panel-close-dur) var(--panel-ease),
+        filter var(--panel-close-dur) var(--panel-ease);
+    will-change: transform, opacity, filter;
+}
+.t-panel-slide[data-open="true"] {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0);
+    pointer-events: auto;
+    transition:
+        transform var(--panel-open-dur) var(--panel-ease),
+        opacity var(--panel-open-dur) var(--panel-ease),
+        filter var(--panel-open-dur) var(--panel-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-panel-slide {
         transition: none !important;
     }
 }
@@ -789,6 +953,40 @@
     }
     .t-success-check svg path {
         animation: none !important;
+        stroke-dashoffset: 0 !important;
+    }
+}
+
+/* --- 25 checkbox check --- */
+
+.t-check {
+    transition:
+        background-color var(--check-box) var(--check-ease),
+        border-color var(--check-box) var(--check-ease),
+        box-shadow var(--check-box) var(--check-ease);
+}
+.t-check .t-check-path {
+    stroke-dasharray: var(--check-len, 15);
+    stroke-dashoffset: var(--check-len, 15);
+    transition: stroke-dashoffset var(--check-uncheck) var(--check-ease);
+}
+.t-check[data-checked]:not([data-indeterminate]) .t-check-path,
+.t-check[aria-checked="true"] .t-check-path {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset var(--check-draw) var(--check-ease) var(--check-delay);
+}
+.t-check[data-indeterminate] .t-check-path {
+    stroke-dashoffset: var(--check-len, 15);
+    transition: stroke-dashoffset var(--check-uncheck) var(--check-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-check,
+    .t-check .t-check-path {
+        transition: none !important;
+    }
+    .t-check[data-checked]:not([data-indeterminate]) .t-check-path,
+    .t-check[aria-checked="true"] .t-check-path {
         stroke-dashoffset: 0 !important;
     }
 }
@@ -993,19 +1191,54 @@
     }
 }
 
-/* --- Menu item hover (profile dropdown) ---
-   Light warm tint on white surface; quick ease-smooth-out transition. */
+/* --- Menu item hover (profile dropdown + select + card ⋯ menus) ---
+   Warm surface-muted fill only — never flip icon/text to accent-foreground
+   (shadcn Item uses focus:**:text-accent-foreground, which turns Lucide
+   icons white on a light menu). */
 
-.t-profile-menu [data-slot="dropdown-menu-item"] {
-    transition:
-        background-color var(--menu-item-hover-dur) var(--menu-item-hover-ease),
-        color var(--menu-item-hover-dur) var(--menu-item-hover-ease);
+.t-profile-menu [data-slot="dropdown-menu-item"],
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"],
+.t-dropdown [data-slot="select-item"] {
+    transition: background-color var(--menu-item-hover-dur) var(--menu-item-hover-ease);
 }
 
 .t-profile-menu [data-slot="dropdown-menu-item"][data-highlighted],
-.t-profile-menu [data-slot="dropdown-menu-item"]:focus {
+.t-profile-menu [data-slot="dropdown-menu-item"]:focus,
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"][data-highlighted],
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"]:focus,
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"][data-popup-open],
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"][data-open],
+.t-dropdown [data-slot="select-item"][data-highlighted],
+.t-dropdown [data-slot="select-item"]:focus-visible {
     background-color: var(--color-surface-muted);
     color: var(--color-ink);
+}
+
+/* Stroke icons stay ink at rest and on hover (beats focus:**:text-accent-foreground). */
+.t-profile-menu .menu-stroke-icon,
+.t-profile-menu .menu-stroke-icon *,
+.t-profile-menu
+    [data-slot="dropdown-menu-item"][data-highlighted]
+    > svg:not(.is-brand):not(.is-danger),
+.t-profile-menu
+    [data-slot="dropdown-menu-item"][data-highlighted]
+    > svg:not(.is-brand):not(.is-danger)
+    *,
+.t-profile-menu [data-slot="dropdown-menu-item"]:focus > svg:not(.is-brand):not(.is-danger),
+.t-profile-menu [data-slot="dropdown-menu-item"]:focus > svg:not(.is-brand):not(.is-danger) *,
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"] svg,
+.t-profile-menu [data-slot="dropdown-menu-sub-trigger"] svg * {
+    color: var(--color-ink) !important;
+}
+
+.t-profile-menu .menu-stroke-icon.is-brand,
+.t-profile-menu .menu-stroke-icon.is-brand * {
+    color: var(--color-brand) !important;
+}
+
+.t-profile-menu .menu-stroke-icon.is-danger,
+.t-profile-menu .menu-stroke-icon.is-danger * {
+    color: var(--color-danger) !important;
 }
 
 .t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"][data-highlighted],
@@ -1014,8 +1247,24 @@
     color: var(--color-danger);
 }
 
+.t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"] .menu-stroke-icon,
+.t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"] .menu-stroke-icon *,
+.t-profile-menu
+    [data-slot="dropdown-menu-item"][data-variant="destructive"][data-highlighted]
+    > svg,
+.t-profile-menu
+    [data-slot="dropdown-menu-item"][data-variant="destructive"][data-highlighted]
+    > svg
+    *,
+.t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"]:focus > svg,
+.t-profile-menu [data-slot="dropdown-menu-item"][data-variant="destructive"]:focus > svg * {
+    color: var(--color-danger) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .t-profile-menu [data-slot="dropdown-menu-item"] {
+    .t-profile-menu [data-slot="dropdown-menu-item"],
+    .t-profile-menu [data-slot="dropdown-menu-sub-trigger"],
+    .t-dropdown [data-slot="select-item"] {
         transition: none !important;
     }
 }
@@ -1224,5 +1473,260 @@
     .t-unread-dot::before {
         animation: none;
         opacity: 0;
+    }
+}
+
+/* grid-template-rows 0fr → 1fr gives a clean height animation
+   with no JS measurement; the inner element clips overflow. */
+.t-acc-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--acc-collapse) var(--acc-ease);
+}
+.t-acc[data-open="true"] .t-acc-panel {
+    grid-template-rows: 1fr;
+    transition: grid-template-rows var(--acc-expand) var(--acc-ease);
+}
+.t-acc-panel-inner {
+    opacity: 0;
+    filter: blur(2px);
+    transition:
+        opacity var(--acc-collapse) var(--acc-ease),
+        filter var(--acc-collapse) var(--acc-ease);
+}
+.t-acc[data-open="true"] .t-acc-panel-inner {
+    opacity: 1;
+    filter: blur(0);
+    transition:
+        opacity var(--acc-expand) var(--acc-ease),
+        filter var(--acc-expand) var(--acc-ease);
+}
+/* Flip the chevron vertically to turn the "v" into a "^".
+   scaleY(-1) about the centre passes through a flat line at
+   the midpoint (same look as a `d:` path morph) but animates
+   in every browser, unlike CSS `d:` morphing (Chromium only).
+   The chevron path is symmetric about the 16x16 viewBox
+   centre, so the flip lands exactly on the "^"; non-scaling
+   -stroke keeps the stroke width constant through the flip. */
+.t-acc-chevron {
+    display: inline-flex;
+    transform: scaleY(1);
+    transform-origin: center;
+    transition: transform var(--acc-chevron) var(--acc-ease);
+}
+.t-acc-chevron path {
+    vector-effect: non-scaling-stroke;
+}
+.t-acc[data-open="true"] .t-acc-chevron {
+    transform: scaleY(-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-acc-panel,
+    .t-acc-panel-inner,
+    .t-acc-chevron {
+        transition: none !important;
+    }
+}
+/* Closed: a small circular button. Open: a rounded panel.
+   The menu content carries the motion so the container does not
+   animate layout-affecting dimensions. */
+.t-morph {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--morph-r-closed);
+    overflow: hidden;
+    transition: border-radius var(--morph-close-dur) var(--morph-close-ease);
+}
+.t-morph[data-open="true"] {
+    width: 183px;
+    height: 172px;
+    border-radius: var(--morph-r-open);
+    transition: border-radius var(--morph-open-dur) var(--morph-ease);
+}
+/* Plus fades + slides out and the icon rotates into an ×. */
+.t-morph-plus {
+    position: absolute;
+    inset: auto 0 0 auto;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    transition:
+        opacity var(--morph-fade-dur) var(--morph-close-ease),
+        transform var(--morph-open-dur) var(--morph-close-ease),
+        filter var(--morph-fade-dur) var(--morph-close-ease);
+}
+.t-morph-plus svg {
+    transition: transform var(--morph-open-dur) var(--morph-close-ease);
+}
+.t-morph[data-open="true"] .t-morph-plus {
+    opacity: 0;
+    transform: translateX(calc(-1 * var(--morph-slide)));
+    filter: blur(var(--morph-blur));
+    pointer-events: none;
+}
+.t-morph[data-open="true"] .t-morph-plus svg {
+    transform: scale(var(--morph-scale)) rotate(var(--morph-rotate));
+}
+/* Menu starts slid in + scaled + blurred; reveals on open. */
+.t-morph-menu {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateX(var(--morph-slide)) scale(var(--morph-scale));
+    filter: blur(var(--morph-blur));
+    pointer-events: none;
+    transition:
+        opacity var(--morph-fade-dur) var(--morph-close-ease),
+        transform var(--morph-open-dur) var(--morph-close-ease),
+        filter var(--morph-fade-dur) var(--morph-close-ease);
+}
+.t-morph[data-open="true"] .t-morph-menu {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+    pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-morph,
+    .t-morph-plus,
+    .t-morph-menu {
+        transition: none !important;
+    }
+}
+
+.contacts-speed-dial {
+    --morph-open-dur: 350ms;
+    --morph-close-dur: 250ms;
+    --morph-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --morph-close-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --morph-r-closed: 16px;
+    --morph-r-open: 16px;
+    --morph-fade-dur: 200ms;
+    --morph-slide: 40px;
+    --morph-rotate: 45deg;
+    --morph-scale: 0.97;
+    --morph-blur: 2px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 56px;
+    height: 56px;
+}
+
+.contacts-speed-dial[data-open="true"] {
+    width: 224px;
+    height: 160px;
+}
+
+.contacts-speed-dial .t-morph-plus {
+    width: 56px;
+    height: 56px;
+}
+
+/* Base UI can hold data-starting-style while focus moves into a tall sheet.
+   The sheet itself stays solid; its backdrop still owns the entrance cue. */
+.t-modal.contacts-form-drawer {
+    opacity: 1 !important;
+    scale: 1 !important;
+}
+
+/* Contacts cards share one purposeful hover response; touch devices keep the
+   actions visible because they have no hover discovery state. */
+.contact-card {
+    transition: box-shadow 160ms ease-out;
+}
+
+.property-cover-tile {
+    transform: translateY(0) scale(1);
+    transition:
+        transform 140ms ease-out,
+        box-shadow 140ms ease-out;
+}
+
+.property-cover-tile:hover,
+.property-cover-tile:focus-visible {
+    z-index: 20 !important;
+    transform: translateY(-2px) scale(1.025);
+    box-shadow: var(--shadow-sm);
+    outline: none;
+}
+
+.property-cover-tile:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-brand) 28%, transparent);
+}
+
+/* The contact record is a working surface, so it docks to the right rather
+   than competing with the page as a centered modal. */
+.t-modal.contacts-detail-drawer {
+    inset: 0 0 0 auto !important;
+    translate: none !important;
+    transform: translateX(0);
+    transform-origin: right center;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border-block: 0;
+    border-inline-end: 0;
+    opacity: 1;
+    scale: 1;
+    transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+}
+
+.t-modal.contacts-detail-drawer[data-starting-style],
+.t-modal.contacts-detail-drawer[data-ending-style],
+.t-modal.contacts-detail-drawer[data-closed] {
+    transform: translateX(100%);
+    opacity: 1;
+    scale: 1;
+}
+
+@starting-style {
+    .t-modal.contacts-detail-drawer[data-open] {
+        transform: translateX(100%);
+        opacity: 1;
+        scale: 1;
+    }
+}
+
+@media (min-width: 640px) {
+    .t-modal.contacts-detail-drawer {
+        width: 32.5rem !important;
+        max-width: 32.5rem !important;
+        border-inline-start: 1px solid var(--color-border-warm);
+    }
+}
+
+@media (min-width: 1280px) {
+    .t-modal.contacts-detail-drawer {
+        width: 40rem !important;
+        max-width: 40rem !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .contact-card,
+    .property-cover-tile,
+    .contact-card-actions,
+    .t-modal.contacts-detail-drawer {
+        transition: none !important;
+    }
+
+    .contact-card:hover,
+    .property-cover-tile:hover,
+    .property-cover-tile:focus-visible,
+    .t-modal.contacts-detail-drawer[data-starting-style],
+    .t-modal.contacts-detail-drawer[data-ending-style],
+    .t-modal.contacts-detail-drawer[data-closed] {
+        transform: none !important;
     }
 }

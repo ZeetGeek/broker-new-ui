@@ -42,7 +42,7 @@ function DropdownMenuContent({
                     className={cn(
                         `
                           relative z-50 origin-(--transform-origin) animate-none! overflow-x-hidden
-                          overflow-y-auto rounded-3xl bg-popover p-1.5 text-popover-foreground
+                          overflow-y-auto rounded-card bg-popover p-1.5 text-popover-foreground
                           shadow-lg ring-1 ring-foreground/10 duration-100 outline-none
                           inline-(--anchor-width) max-block-(--available-height) min-inline-48
                           data-[side=bottom]:slide-in-from-top-2
@@ -110,7 +110,7 @@ function DropdownMenuItem({
             className={cn(
                 `
                   group/dropdown-menu-item relative flex cursor-default items-center gap-2.5
-                  rounded-2xl px-3 py-2 text-sm font-medium outline-hidden select-none
+                  rounded-inner px-3 py-2 text-sm font-medium outline-hidden select-none
                   focus:bg-accent focus:text-accent-foreground
                   not-data-[variant=destructive]:focus:**:text-accent-foreground
                   data-inset:ps-9.5
@@ -148,7 +148,7 @@ function DropdownMenuSubTrigger({
             data-inset={inset}
             className={cn(
                 `
-                  flex cursor-default items-center gap-2 rounded-2xl px-3 py-2 text-sm font-medium
+                  flex cursor-default items-center gap-2 rounded-inner px-3 py-2 text-sm font-medium
                   outline-hidden select-none
                   focus:bg-accent focus:text-accent-foreground
                   not-data-[variant=destructive]:focus:**:text-accent-foreground
@@ -181,7 +181,7 @@ function DropdownMenuSubContent({
             data-slot="dropdown-menu-sub-content"
             className={cn(
                 `
-                  dark relative animate-none! rounded-3xl bg-popover/70 p-1.5
+                  dark relative animate-none! rounded-card bg-popover/70 p-1.5
                   text-popover-foreground shadow-lg ring-1 ring-foreground/5 duration-100
                   inline-auto min-inline-36
                   before:pointer-events-none before:absolute before:inset-0 before:-z-1
@@ -228,7 +228,7 @@ function DropdownMenuCheckboxItem({
             data-inset={inset}
             className={cn(
                 `
-                  relative flex cursor-default items-center gap-2.5 rounded-2xl py-2 ps-3 pe-8
+                  relative flex cursor-default items-center gap-2.5 rounded-inner py-2 ps-3 pe-8
                   text-sm font-medium outline-hidden select-none
                   focus:bg-accent focus:text-accent-foreground
                   focus:**:text-accent-foreground
@@ -273,7 +273,7 @@ function DropdownMenuRadioItem({
             data-inset={inset}
             className={cn(
                 `
-                  relative flex cursor-default items-center gap-2.5 rounded-2xl py-2 ps-3 pe-8
+                  relative flex cursor-default items-center gap-2.5 rounded-inner py-2 ps-3 pe-8
                   text-sm font-medium outline-hidden select-none
                   focus:bg-accent focus:text-accent-foreground
                   focus:**:text-accent-foreground

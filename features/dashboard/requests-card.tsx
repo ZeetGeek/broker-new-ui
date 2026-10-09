@@ -3,11 +3,12 @@ import Link from "next/link";
 import { Check, Clock, Send, X } from "lucide-react";
 
 import { formatDateShort } from "@/lib/format/date";
-import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
+import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Price } from "@/components/shared/price";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -18,7 +19,6 @@ import type { RequestRowItem, RequestsData } from "./mock-data";
 
 const REQUESTS_INFO =
     "Requests you've sent to owners to represent their properties, and where each one stands.";
-
 
 export type RequestsCardProps = {
     data: RequestsData;
@@ -152,8 +152,13 @@ function RequestRow({ item }: { item: RequestRowItem }) {
                         />
                     }
                 >
-                    <p className="body truncate font-semibold text-ink">
-                        {item.title}
+                    <p className="body flex items-baseline gap-x-1 truncate font-semibold text-ink">
+                        <PropertyTitleLink
+                            href={brokerOwnerListingDetailHref(item.propertyId)}
+                            className="body truncate font-semibold"
+                        >
+                            {item.title}
+                        </PropertyTitleLink>
                         <span aria-hidden> · </span>
                         <Price
                             amountInr={item.amountInr}
@@ -206,7 +211,7 @@ function EmptyRequests({ className }: { className?: string }) {
             aria-labelledby="requests-card-heading"
         >
             <CardLabel info={REQUESTS_INFO}>
-                <span id="requests-card-heading">Your requests</span>
+                <span id="requests-card-heading">My deals</span>
             </CardLabel>
 
             <EmptyState
@@ -240,7 +245,7 @@ export function RequestsCard({ data, className }: RequestsCardProps) {
         >
             <div className="flex shrink-0 items-start justify-between gap-3">
                 <CardLabel info={REQUESTS_INFO}>
-                    <span id="requests-card-heading">Your requests</span>
+                    <span id="requests-card-heading">My deals</span>
                 </CardLabel>
                 <Tooltip>
                     <TooltipTrigger
@@ -249,7 +254,7 @@ export function RequestsCard({ data, className }: RequestsCardProps) {
                                 type="button"
                                 aria-label={`${remainingLabel}. ${quotaHint}`}
                                 className="
-                                  eyebrow shrink-0 rounded-full text-ink-muted outline-none
+                                  eyebrow shrink-0 rounded-sm text-ink-muted outline-none
                                   focus-visible:ring-2 focus-visible:ring-ring
                                 "
                             >

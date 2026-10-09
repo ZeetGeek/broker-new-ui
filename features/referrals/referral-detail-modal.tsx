@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { AppModal } from "@/components/shared/app-modal";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -129,9 +130,15 @@ export function ReferralDetailModal({
                 <section className="flex flex-col gap-3">
                     <h3 className="eyebrow">What has happened</h3>
 
-                    <ol className="flex flex-col">
-                        {history.map((event, index) => (
-                            <li key={event.id} className="flex gap-3">
+                    <VirtualListBox
+                        items={history}
+                        getKey={(event) => event.id}
+                        estimateItemHeight={64}
+                        gap={0}
+                        ariaLabel={`Activity for ${referral.person.name}`}
+                        className="max-block-96"
+                        renderItem={(event, index) => (
+                            <div className="flex gap-3">
                                 {/* Rail: a dot per event, joined by a line that
                                     stops at the last one so the timeline has an
                                     end rather than trailing off. */}
@@ -157,9 +164,9 @@ export function ReferralDetailModal({
                                         {formatRelativePast(new Date(event.at), now)}
                                     </span>
                                 </div>
-                            </li>
-                        ))}
-                    </ol>
+                            </div>
+                        )}
+                    />
                 </section>
 
                 <div className="flex flex-wrap gap-2 border-bs border-border-warm pbs-4">

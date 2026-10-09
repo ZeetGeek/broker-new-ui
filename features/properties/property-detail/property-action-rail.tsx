@@ -4,7 +4,6 @@ import Link from "next/link";
 
 import { Eye, EyeOff, Inbox, Pencil, Trash2 } from "lucide-react";
 
-import { brokerPropertyEditHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { PropertySharePopover } from "@/components/shared/property-share-popover";
@@ -19,6 +18,8 @@ export type PropertyActionRailProps = {
     onTogglePublish: () => void;
     onRequestDelete: () => void;
     shareListing: React.ComponentProps<typeof PropertySharePopover>["listing"];
+    editHref: string;
+    requestsHref?: string;
 };
 
 /**
@@ -31,6 +32,8 @@ export function PropertyActionRail({
     onTogglePublish,
     onRequestDelete,
     shareListing,
+    editHref,
+    requestsHref,
 }: PropertyActionRailProps) {
     const isPublished = item.status === "published";
 
@@ -50,7 +53,7 @@ export function PropertyActionRail({
                     <span
                         className={cn(
                             `
-                              flex shrink-0 items-center justify-center rounded-full block-9
+                              flex shrink-0 items-center justify-center rounded-control block-9
                               inline-9
                             `,
                             isPublished ? "bg-brand text-surface" : "bg-surface text-ink-muted",
@@ -100,9 +103,18 @@ export function PropertyActionRail({
                         <Inbox aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                         Broker requests
                     </span>
-                    <span className="h5 tabular font-semibold text-ink">
-                        {item.inboundRequestCount}
-                    </span>
+                    {requestsHref ? (
+                        <Link
+                            href={requestsHref}
+                            className="h5 tabular font-semibold text-ink underline-offset-2 hover:underline"
+                        >
+                            {item.inboundRequestCount}
+                        </Link>
+                    ) : (
+                        <span className="h5 tabular font-semibold text-ink">
+                            {item.inboundRequestCount}
+                        </span>
+                    )}
                 </div>
 
                 <div
@@ -131,7 +143,7 @@ export function PropertyActionRail({
                         type="button"
                         variant="outline"
                         className="flex-1 border-border-warm"
-                        render={<Link href={brokerPropertyEditHref(item.id)} />}
+                        render={<Link href={editHref} />}
                     >
                         <Pencil aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                         Edit

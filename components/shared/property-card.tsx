@@ -10,6 +10,7 @@ import {
     Building2,
     Calendar,
     Camera,
+    Check,
     ChevronLeft,
     ChevronRight,
     CircleCheck,
@@ -17,9 +18,12 @@ import {
     MapPin,
     Maximize2,
     MessageCircle,
+    Send,
+    UserPlus,
+    UserRound,
     Users,
+    Trash2,
 } from "lucide-react";
-import { useReducedMotion } from "motion/react";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import {
@@ -32,43 +36,46 @@ import {
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
-import { spring } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
-import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { AppImage } from "@/components/shared/app-image";
+import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
+import {
+    OVERLAY_GLASS_BUTTON_CLASS,
+    OverlayCard,
+    OverlayCardActions,
+    OverlayCardSummary,
+    OverlayChip,
+    OverlayPersonLine,
+} from "@/components/shared/overlay-card";
+import { AttachedBuyersRow, AttachedOwnerRow } from "@/components/shared/attached-people-row";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
-import { PropertySharePopover } from "@/components/shared/property-share-popover";
+import { PropertyCardMenu } from "@/components/shared/property-card-menu";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
+import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted";
-const PROPERTY_CARD_PHOTO_GRID_CLASS = "h-40 w-full";
-const PROPERTY_CARD_PHOTO_LIST_CLASS = "w-36 min-h-36 self-stretch sm:w-44 md:w-52";
+const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted h-40 w-full";
 
 const BROWSE_CARD_PHOTO_FRAME_CLASS =
-    "shrink-0 rounded-card p-1 shadow-md transition-[box-shadow,background] duration-160 group-hover:shadow-lg";
+    "shrink-0 rounded-card p-1 shadow-md transition-[box-shadow,background] duration-160 group-hover:shadow-lg w-full";
 const BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS = "bg-surface";
 const BROWSE_CARD_PHOTO_FRAME_NEW_CLASS = `
   bg-gradient-to-br from-highlight via-brand-soft to-brand/55
   shadow-[0_0_0_1px_color-mix(in_oklch,var(--color-highlight)_35%,transparent),var(--shadow-md)]
   group-hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--color-highlight)_50%,transparent),var(--shadow-lg)]
 `;
-const BROWSE_CARD_PHOTO_FRAME_GRID_CLASS = "w-full";
-const BROWSE_CARD_PHOTO_FRAME_LIST_CLASS =
-    "w-[min(62%,28rem)] min-w-64 shrink-0 self-start sm:min-w-72";
 
 const BROWSE_CARD_PHOTO_INNER_CLASS =
-    "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted";
-const BROWSE_CARD_PHOTO_INNER_GRID_CLASS = "aspect-[4/3] w-full";
-const BROWSE_CARD_PHOTO_INNER_LIST_CLASS = "aspect-[5/4] w-full";
+    "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted aspect-[4/3] w-full";
 
 const BROWSE_CARD_PHOTO_NAV_BTN_CLASS = `
-  absolute inset-bs-1/2 z-10 flex -translate-y-1/2 items-center justify-center
-  rounded-full bg-surface/95 text-ink transition-[opacity,transform] duration-160
+  absolute z-10 flex -translate-y-1/2 items-center justify-center
+  rounded-control bg-surface/95 text-ink transition-[opacity,transform] duration-160
   block-7 inline-7
   shadow-[inset_0_-2px_0_0_rgba(111,123,144,0.1)]
   hover:bg-surface
@@ -79,60 +86,207 @@ const BROWSE_CARD_PHOTO_NAV_BTN_CLASS = `
 
 const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
-const BROWSE_REQUEST_LABEL = "Send request";
-const BROWSE_REQUEST_PENDING_LABEL = "Sending…";
-const BROWSE_REQUEST_SENT_LABEL = "Request sent";
+const BROWSE_ASK_LABEL = "Ask to sell";
+const BROWSE_ASK_PENDING_LABEL = "Sending…";
+const BROWSE_WITHDRAW_LABEL = "Withdraw";
+const BROWSE_WITHDRAWING_LABEL = "Withdrawing…";
+const BROWSE_REPRESENTING_LABEL = "You're representing";
+const BROWSE_INVITE_ACCEPT_LABEL = "Accept";
+const BROWSE_INVITE_ACCEPTING_LABEL = "Accepting…";
+const BROWSE_INVITE_DECLINE_LABEL = "Decline";
+const BROWSE_INVITE_DECLINING_LABEL = "Declining…";
+
+const PROPERTY_CARD_TITLE_CLASS = "body truncate font-semibold tracking-wide text-ink capitalize";
+const PROPERTY_CARD_LOCATION_CLASS = `
+  body-sm flex items-center gap-1.5 tracking-wide text-ink-muted min-inline-0
+`;
+const PROPERTY_CARD_SPECS_CLASS = `
+  body-sm flex flex-nowrap items-center gap-x-1.5 overflow-hidden tracking-wide text-ink-muted
+`;
+
+const BROWSE_STATUS = {
+    waiting: "Waiting for the owner",
+    invited: "Owner invited you",
+    representing: "You can work this listing",
+} as const;
 
 const BROWSE_REQUEST_TOOLTIP = {
-    idle: "Ask the owner for permission to represent this property",
-    pending: "Sending your request to the owner…",
-    sent: "Waiting for the owner to approve. You'll hear back once they respond.",
+    idle: "Ask the owner for permission to sell this property",
+    pending: "Sending your request…",
+    withdraw: "Take back your request. You can ask again later.",
+    withdrawing: "Withdrawing your request…",
+    representing: "The owner already approved you for this listing",
+    inviteAccept: "Accept the invite and get the owner's number",
+    inviteDecline: "Turn this down. The owner can ask someone else",
 } as const;
+
+function BrowseActionHint({ children }: { children: string }) {
+    return (
+        <p className="body-xs text-center font-medium tracking-wide text-ink-muted">{children}</p>
+    );
+}
 
 function BrowseRequestAction({
     hasRequested,
+    isRepresenting,
+    isInvitePending,
     isRequestPending,
+    inviteActionPending,
     onRequest,
+    onCancelRequest,
+    onAcceptInvite,
+    onCancelInvite,
+    tone = "light",
 }: {
     hasRequested: boolean;
+    isRepresenting?: boolean;
+    isInvitePending?: boolean;
     isRequestPending: boolean;
+    inviteActionPending?: "accept" | "cancel";
     onRequest?: () => void;
+    onCancelRequest?: () => void;
+    onAcceptInvite?: () => void;
+    onCancelInvite?: () => void;
+    /** `overlay` = white listing-card panel; `light` = list-row chrome. */
+    tone?: "light" | "overlay";
 }) {
-    const tooltip = hasRequested
-        ? BROWSE_REQUEST_TOOLTIP.sent
-        : isRequestPending
-          ? BROWSE_REQUEST_TOOLTIP.pending
-          : BROWSE_REQUEST_TOOLTIP.idle;
-
-    const sentStatus = (
-        <div
-            role="status"
-            className="
-              body-sm flex items-center justify-center gap-2 rounded-control border-2 border-brand
-              bg-brand-soft px-4 font-semibold text-brand-text block-control-lg inline-full
-            "
-        >
-            <CircleCheck
-                aria-hidden
-                className="shrink-0 text-brand-text block-4 inline-4"
-                strokeWidth={2}
-            />
-            {BROWSE_REQUEST_SENT_LABEL}
-        </div>
+    const canWithdraw = Boolean(hasRequested && onCancelRequest);
+    const canRespondToInvite = Boolean(isInvitePending && onAcceptInvite && onCancelInvite);
+    const inviteBusy = Boolean(inviteActionPending);
+    const outlineClass =
+        tone === "overlay"
+            ? OVERLAY_GLASS_BUTTON_CLASS
+            : "border-2 border-border-warm bg-surface text-ink hover:border-ink/25 hover:bg-surface-muted";
+    const representingClass = cn(
+        `
+          body-sm flex items-center justify-center gap-2 rounded-control px-4 font-semibold
+          block-control-lg inline-full
+        `,
+        tone === "overlay"
+            ? "border-2 border-brand/25 bg-brand-soft text-brand-text"
+            : "border-2 border-brand bg-brand-soft text-brand-text",
     );
 
-    const requestButton = (
-        <Button
-            type="button"
-            size="md"
-            variant="accent"
-            className="inline-full"
-            disabled={isRequestPending}
-            onClick={onRequest}
-        >
-            {isRequestPending ? BROWSE_REQUEST_PENDING_LABEL : BROWSE_REQUEST_LABEL}
-        </Button>
-    );
+    if (isRepresenting) {
+        return (
+            <div className="flex flex-col gap-1.5 inline-full">
+                <BrowseActionHint>{BROWSE_STATUS.representing}</BrowseActionHint>
+                <div role="status" className={representingClass}>
+                    <CircleCheck
+                        aria-hidden
+                        className="shrink-0 block-4 inline-4"
+                        strokeWidth={2}
+                    />
+                    {BROWSE_REPRESENTING_LABEL}
+                </div>
+            </div>
+        );
+    }
+
+    if (canRespondToInvite) {
+        return (
+            <TooltipProvider>
+                <div className="flex flex-col gap-1.5 inline-full">
+                    <BrowseActionHint>{BROWSE_STATUS.invited}</BrowseActionHint>
+                    <div className="flex gap-2">
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <span className="inline-flex flex-1">
+                                        <Button
+                                            type="button"
+                                            size="md"
+                                            variant="outline"
+                                            className={cn("inline-full", outlineClass)}
+                                            disabled={inviteBusy}
+                                            loading={inviteActionPending === "cancel"}
+                                            onClick={onCancelInvite}
+                                        >
+                                            {inviteActionPending === "cancel"
+                                                ? BROWSE_INVITE_DECLINING_LABEL
+                                                : BROWSE_INVITE_DECLINE_LABEL}
+                                        </Button>
+                                    </span>
+                                }
+                            />
+                            <TooltipContent side="top" className="text-center max-inline-xs">
+                                {BROWSE_REQUEST_TOOLTIP.inviteDecline}
+                            </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <span className="inline-flex flex-[1.5]">
+                                        <Button
+                                            type="button"
+                                            size="md"
+                                            variant="accent"
+                                            className="inline-full"
+                                            disabled={inviteBusy}
+                                            loading={inviteActionPending === "accept"}
+                                            onClick={onAcceptInvite}
+                                        >
+                                            {inviteActionPending === "accept" ? (
+                                                BROWSE_INVITE_ACCEPTING_LABEL
+                                            ) : (
+                                                <>
+                                                    <Check
+                                                        aria-hidden
+                                                        className="block-4 inline-4"
+                                                        strokeWidth={2}
+                                                    />
+                                                    {BROWSE_INVITE_ACCEPT_LABEL}
+                                                </>
+                                            )}
+                                        </Button>
+                                    </span>
+                                }
+                            />
+                            <TooltipContent side="top" className="text-center max-inline-xs">
+                                {BROWSE_REQUEST_TOOLTIP.inviteAccept}
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                </div>
+            </TooltipProvider>
+        );
+    }
+
+    if (canWithdraw) {
+        return (
+            <TooltipProvider>
+                <div className="flex flex-col gap-1.5 inline-full">
+                    <BrowseActionHint>{BROWSE_STATUS.waiting}</BrowseActionHint>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <span className="inline-flex inline-full">
+                                    <Button
+                                        type="button"
+                                        size="md"
+                                        variant="outline"
+                                        className={cn("inline-full", outlineClass)}
+                                        disabled={isRequestPending}
+                                        loading={isRequestPending}
+                                        onClick={onCancelRequest}
+                                    >
+                                        {isRequestPending
+                                            ? BROWSE_WITHDRAWING_LABEL
+                                            : BROWSE_WITHDRAW_LABEL}
+                                    </Button>
+                                </span>
+                            }
+                        />
+                        <TooltipContent side="top" className="text-center max-inline-xs">
+                            {isRequestPending
+                                ? BROWSE_REQUEST_TOOLTIP.withdrawing
+                                : BROWSE_REQUEST_TOOLTIP.withdraw}
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+            </TooltipProvider>
+        );
+    }
 
     return (
         <TooltipProvider>
@@ -140,12 +294,35 @@ function BrowseRequestAction({
                 <TooltipTrigger
                     render={
                         <span className="inline-flex inline-full">
-                            {hasRequested ? sentStatus : requestButton}
+                            <Button
+                                type="button"
+                                size="md"
+                                variant="accent"
+                                className="inline-full"
+                                disabled={isRequestPending}
+                                loading={isRequestPending}
+                                onClick={onRequest}
+                            >
+                                {isRequestPending ? (
+                                    BROWSE_ASK_PENDING_LABEL
+                                ) : (
+                                    <>
+                                        <Send
+                                            aria-hidden
+                                            className="block-4 inline-4"
+                                            strokeWidth={1.75}
+                                        />
+                                        {BROWSE_ASK_LABEL}
+                                    </>
+                                )}
+                            </Button>
                         </span>
                     }
                 />
                 <TooltipContent side="top" className="text-center max-inline-xs">
-                    {tooltip}
+                    {isRequestPending
+                        ? BROWSE_REQUEST_TOOLTIP.pending
+                        : BROWSE_REQUEST_TOOLTIP.idle}
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
@@ -156,6 +333,10 @@ export type PropertyCardOwner = {
     name: string;
     avatarUrl?: string;
     phoneDigits?: string;
+    /** Where the owner is based, e.g. "Adajan, Surat". Hidden when absent. */
+    locationLabel?: string;
+    /** Broker-facing owner profile. Name becomes a link when set. */
+    profileHref?: string;
 };
 
 type PropertyCardBase = {
@@ -181,7 +362,13 @@ export type BrowsePropertyCardListing = PropertyCardBase & {
     brokerSlotsOpen: number;
     brokerSlotsTotal: number;
     commissionPercent: number;
+    /** Fixed rent brokerage in INR. 0 when unset. */
+    commissionAmount: number;
     hasRequested: boolean;
+    isRepresenting?: boolean;
+    isInvitePending?: boolean;
+    pendingRepresentationId?: string;
+    pendingInvitationId?: string;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
 };
@@ -207,22 +394,41 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     listedDaysAgo: number;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
+    ownerName?: string | null;
+    visibility?: "private" | "marketplace";
+    /** Buyers linked to this listing — shown as the My deals avatar stack. */
+    attachedClients?: Array<{ id: string; name: string; avatarUrl?: string }>;
 };
 
 export type PropertyCardProps = {
     className?: string;
-    layout?: "grid" | "list";
     detailsHref: string;
     priority?: boolean;
     imageSizes?: string;
     onRequest?: () => void;
+    /** Withdraw a pending broker request. Shown whenever the request is still pending. */
+    onCancelRequest?: () => void;
     isRequestPending?: boolean;
+    onAcceptInvite?: () => void;
+    onCancelInvite?: () => void;
+    inviteActionPending?: "accept" | "cancel";
     onShare?: () => void;
     onOpenCrm?: () => void;
     crmHref?: string;
     editHref?: string;
     /** Owned cards: open the edit form in a modal instead of following editHref. */
     onEdit?: () => void;
+    /** Owned cards: open the buyer picker for this listing. */
+    onAddBuyer?: () => void;
+    /** Owned cards: attach an exclusive owner CRM contact. */
+    onAttachOwner?: () => void;
+    /** Owned cards: ask to delete this listing (caller shows confirm). */
+    onDelete?: () => void;
+    /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
+    isSaved?: boolean;
+    onToggleSave?: () => void;
+    /** Browse grid cards: listed this week in the broker's service areas — highlighted card. */
+    isNewInYourArea?: boolean;
 } & (
     | { variant: "browse"; listing: BrowsePropertyCardListing }
     | { variant: "represented"; listing: RepresentedPropertyCardListing }
@@ -230,29 +436,29 @@ export type PropertyCardProps = {
 );
 
 function formatBrowseCardArea(areaSqft: number): string {
-    return `${Math.round(areaSqft).toLocaleString("en-IN")} sq.ft.`;
+    return `${Math.round(areaSqft).toLocaleString("en-IN")} sqft`;
 }
 
 function formatBedLabel(bhk: number): string {
-    return bhk === 1 ? "1 bed" : `${bhk} bed`;
+    return bhk === 1 ? "1 Bed" : `${bhk} Bed`;
 }
 
 function formatBathLabel(bhk: number): string {
-    return bhk === 1 ? "1 bath" : `${bhk} bath`;
+    return bhk === 1 ? "1 Bath" : `${bhk} Bath`;
 }
 
 function BrowseSpecDivider() {
     return (
         <span aria-hidden className="text-ink-subtle/70">
-            |
+            ·
         </span>
     );
 }
 
 function BrowseSpecItem({ icon: Icon, label }: { icon: typeof Maximize2; label: string }) {
     return (
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-            <Icon aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
+        <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <Icon aria-hidden className="shrink-0 block-3 inline-3" strokeWidth={1.75} />
             {label}
         </span>
     );
@@ -262,12 +468,10 @@ function BrowsePropertyCardPhoto({
     listing,
     priority,
     imageSizes,
-    layout = "grid",
 }: {
     listing: BrowsePropertyCardListing;
     priority: boolean;
     imageSizes: string;
-    layout?: "grid" | "list";
 }) {
     const alt = listing.title;
     const images =
@@ -278,6 +482,7 @@ function BrowsePropertyCardPhoto({
               : [];
     const canCarousel = images.length > 1;
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [preparedThrough, setPreparedThrough] = useState(0);
     const [canScrollPrev, setCanScrollPrev] = useState(false);
     const [canScrollNext, setCanScrollNext] = useState(false);
 
@@ -292,7 +497,9 @@ function BrowsePropertyCardPhoto({
     useEffect(() => {
         if (!emblaApi) return;
         const onSelect = () => {
-            setSelectedIndex(emblaApi.selectedScrollSnap());
+            const nextIndex = emblaApi.selectedScrollSnap();
+            setSelectedIndex(nextIndex);
+            setPreparedThrough((current) => Math.max(current, nextIndex));
             setCanScrollPrev(emblaApi.canScrollPrev());
             setCanScrollNext(emblaApi.canScrollNext());
         };
@@ -319,7 +526,13 @@ function BrowsePropertyCardPhoto({
 
     const scrollNext = (event: MouseEvent) => {
         stopLinkNav(event);
+        setPreparedThrough((current) => Math.max(current, selectedIndex + 1));
         emblaApi?.scrollNext();
+    };
+
+    const prepareNextImage = () => {
+        if (!canScrollNext) return;
+        setPreparedThrough((current) => Math.max(current, selectedIndex + 1));
     };
 
     const dotCount = Math.min(images.length || 1, 5);
@@ -338,48 +551,47 @@ function BrowsePropertyCardPhoto({
                 listing.isNew
                     ? BROWSE_CARD_PHOTO_FRAME_NEW_CLASS
                     : BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS,
-                layout === "list"
-                    ? BROWSE_CARD_PHOTO_FRAME_LIST_CLASS
-                    : BROWSE_CARD_PHOTO_FRAME_GRID_CLASS,
             )}
         >
-            <div
-                className={cn(
-                    BROWSE_CARD_PHOTO_INNER_CLASS,
-                    "group/photo",
-                    layout === "list"
-                        ? BROWSE_CARD_PHOTO_INNER_LIST_CLASS
-                        : BROWSE_CARD_PHOTO_INNER_GRID_CLASS,
-                )}
-            >
+            <HoverScaleRoot className={cn(BROWSE_CARD_PHOTO_INNER_CLASS, "group/photo")}>
                 {images.length > 0 ? (
-                    <div
-                        ref={emblaRef}
-                        className="overflow-hidden block-full inline-full"
-                        aria-roledescription="carousel"
-                        aria-label={`${alt} photos`}
-                    >
-                        <div className="flex touch-pan-y block-full">
-                            {images.map((src, index) => (
-                                <div
-                                    key={`${src}-${index}`}
-                                    className="relative shrink-0 grow-0 basis-full min-inline-0"
-                                    role="group"
-                                    aria-roledescription="slide"
-                                    aria-label={`Photo ${index + 1} of ${images.length}`}
-                                >
-                                    <AppImage
-                                        src={src}
-                                        alt={index === 0 ? alt : `${alt} — photo ${index + 1}`}
-                                        fill
-                                        sizes={imageSizes}
-                                        priority={priority && index === 0}
-                                        className="object-cover"
-                                    />
-                                </div>
-                            ))}
+                    <HoverScaleLayer className="absolute inset-0">
+                        <div
+                            ref={emblaRef}
+                            className="overflow-hidden block-full inline-full"
+                            onPointerEnter={prepareNextImage}
+                            onPointerDown={prepareNextImage}
+                            aria-roledescription="carousel"
+                            aria-label={`${alt} photos`}
+                        >
+                            <div className="flex touch-pan-y block-full">
+                                {images.map((src, index) => (
+                                    <div
+                                        key={`${src}-${index}`}
+                                        className="relative shrink-0 grow-0 basis-full min-inline-0"
+                                        role="group"
+                                        aria-roledescription="slide"
+                                        aria-label={`Photo ${index + 1} of ${images.length}`}
+                                    >
+                                        {index <= preparedThrough ? (
+                                            <AppImage
+                                                src={src}
+                                                alt={
+                                                    index === 0
+                                                        ? alt
+                                                        : `${alt} — photo ${index + 1}`
+                                                }
+                                                fill
+                                                sizes={imageSizes}
+                                                priority={priority && index === 0}
+                                                className="object-cover"
+                                            />
+                                        ) : null}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    </HoverScaleLayer>
                 ) : (
                     <div
                         className="
@@ -401,34 +613,12 @@ function BrowsePropertyCardPhoto({
                       absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
                     "
                 >
-                    {offersSale(listing) ? (
-                        <Badge
-                            className="
-                              body-xs border-0 bg-brand font-semibold text-surface shadow-xs
-                            "
-                        >
-                            For sale
-                        </Badge>
-                    ) : null}
-                    {offersRent(listing) ? (
-                        <Badge
-                            className="
-                              body-xs border border-urgent/30 bg-urgent-soft font-semibold
-                              text-urgent shadow-xs
-                            "
-                        >
-                            For rent
-                        </Badge>
-                    ) : null}
+                    {offersSale(listing) ? <Badge variant="brand">For sale</Badge> : null}
+                    {offersRent(listing) ? <Badge variant="urgent">For rent</Badge> : null}
                 </div>
 
                 {listing.isNew ? (
-                    <Badge
-                        className="
-                          body-xs absolute inset-e-3 inset-bs-3 z-10 border-0 bg-highlight
-                          font-semibold text-highlight-ink shadow-xs
-                        "
-                    >
+                    <Badge variant="brand" className="absolute inset-e-3 inset-bs-3 z-10">
                         New
                     </Badge>
                 ) : null}
@@ -443,7 +633,7 @@ function BrowsePropertyCardPhoto({
                             onPointerDown={stopLinkNav}
                             className={cn(
                                 BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
-                                "inset-s-3.5",
+                                "inset-s-3.5 inset-bs-1/2",
                                 `
                                   opacity-0
                                   group-focus-within/photo:opacity-100
@@ -462,10 +652,13 @@ function BrowsePropertyCardPhoto({
                             aria-label="Next photo"
                             disabled={!canScrollNext}
                             onClick={scrollNext}
-                            onPointerDown={stopLinkNav}
+                            onPointerDown={(event) => {
+                                stopLinkNav(event);
+                                prepareNextImage();
+                            }}
                             className={cn(
                                 BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
-                                "inset-e-3.5",
+                                "inset-e-3.5 inset-bs-1/2",
                                 `
                                   opacity-0
                                   group-focus-within/photo:opacity-100
@@ -505,6 +698,51 @@ function BrowsePropertyCardPhoto({
                         </div>
                     </>
                 ) : null}
+            </HoverScaleRoot>
+        </div>
+    );
+}
+
+function BrowsePropertyCardOwner({ owner }: { owner: PropertyCardOwner }) {
+    return (
+        <div className="mbs-auto flex items-center gap-2 py-1.5 min-inline-0">
+            <UserAvatar
+                name={owner.name}
+                imageUrl={owner.avatarUrl}
+                size="sm"
+                className="shrink-0"
+            />
+            <div className="flex flex-col min-inline-0">
+                <Button
+                    variant="link"
+                    size="sm"
+                    nativeButton={owner.profileHref ? false : undefined}
+                    render={
+                        owner.profileHref ? (
+                            <Link href={owner.profileHref} prefetch={false} />
+                        ) : undefined
+                    }
+                    className="
+                      body-sm justify-start gap-1.5 truncate p-0 font-medium tracking-wide text-ink
+                      capitalize block-auto max-inline-full min-inline-0
+                    "
+                >
+                    {owner.name}
+                </Button>
+                {owner.locationLabel ? (
+                    <p
+                        className="
+                          body-xs flex items-center gap-1 tracking-wide text-ink-muted min-inline-0
+                        "
+                    >
+                        <MapPin
+                            aria-hidden
+                            className="shrink-0 block-3 inline-3"
+                            strokeWidth={1.75}
+                        />
+                        <span className="truncate capitalize">{owner.locationLabel}</span>
+                    </p>
+                ) : null}
             </div>
         </div>
     );
@@ -515,7 +753,7 @@ function BrowsePropertyCardSpecs({ listing }: { listing: BrowsePropertyCardListi
         listing.bhk > 0 && RESIDENTIAL_PROPERTY_TYPES.has(listing.propertyTypeLabel);
 
     return (
-        <div className="body-sm flex flex-wrap items-center gap-x-2.5 gap-y-1 text-ink-muted">
+        <div className={PROPERTY_CARD_SPECS_CLASS}>
             <BrowseSpecItem icon={Maximize2} label={formatBrowseCardArea(listing.areaSqft)} />
             {showBedBath ? (
                 <>
@@ -531,7 +769,6 @@ function BrowsePropertyCardSpecs({ listing }: { listing: BrowsePropertyCardListi
 
 function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListing }) {
     const both = offersBoth(listing);
-    const reduceMotion = useReducedMotion();
     const [mode, setMode] = useState<ListingPriceMode>(() => defaultPriceMode(listing));
 
     const activeMode: ListingPriceMode = both ? mode : offersSale(listing) ? "sale" : "rent";
@@ -543,26 +780,33 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
 
     const baseAmountInr =
         activeMode === "rent" ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0);
-    const commissionInr = Math.round((baseAmountInr * listing.commissionPercent) / 100);
+    const rentCommissionInr = listing.commissionAmount > 0 ? listing.commissionAmount : 0;
+    const saleCommissionInr =
+        listing.commissionPercent > 0
+            ? Math.round((baseAmountInr * listing.commissionPercent) / 100)
+            : 0;
+    const commissionInr = activeMode === "rent" ? rentCommissionInr : saleCommissionInr;
     const commissionLabel =
         activeMode === "rent" ? formatRentInr(commissionInr) : formatPriceInr(commissionInr);
-    const hasCommission = listing.commissionPercent > 0 && baseAmountInr > 0;
+    const hasCommission = commissionInr > 0 && (activeMode === "rent" || baseAmountInr > 0);
 
     const commissionBadge = (
         <span
             className={cn(
-                "body-sm shrink-0 font-medium text-brand",
+                "body-sm shrink-0 font-medium tracking-wide text-brand",
                 hasCommission && "cursor-help underline decoration-brand/30 underline-offset-2",
             )}
         >
-            ({listing.commissionPercent}%)
+            {activeMode === "rent"
+                ? formatPriceInr(rentCommissionInr)
+                : `(${listing.commissionPercent}%)`}
         </span>
     );
 
     return (
         <div className="flex items-center gap-2 min-inline-0">
             <div className="flex flex-1 items-baseline gap-1.5 min-inline-0">
-                <span className="h5 truncate font-semibold text-ink tabular-nums">
+                <span className="h5 truncate font-semibold tracking-wide text-ink tabular-nums">
                     {priceLabel}
                 </span>
                 {hasCommission ? (
@@ -573,7 +817,11 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                                 <button
                                     type="button"
                                     className="inline-flex border-0 bg-transparent p-0"
-                                    aria-label={`${listing.commissionPercent}% commission`}
+                                    aria-label={
+                                        activeMode === "rent"
+                                            ? `Commission ${formatPriceInr(rentCommissionInr)}`
+                                            : `${listing.commissionPercent}% commission`
+                                    }
                                 >
                                     {commissionBadge}
                                 </button>
@@ -582,7 +830,9 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                         <TooltipContent side="top" className="text-center max-inline-xs">
                             <p className="font-semibold tabular-nums">You get {commissionLabel}</p>
                             <p className="body-xs mbs-0.5 opacity-90">
-                                {listing.commissionPercent}% of {priceLabel}
+                                {activeMode === "rent"
+                                    ? "Fixed rent brokerage"
+                                    : `${listing.commissionPercent}% of ${priceLabel}`}
                             </p>
                         </TooltipContent>
                     </Tooltip>
@@ -592,160 +842,231 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
             </div>
 
             {both ? (
-                <div
-                    role="group"
-                    aria-label="Price type"
-                    className="
-                      inline-flex shrink-0 items-center gap-0.5 rounded-full border
-                      border-border-warm bg-surface p-0.5 shadow-sm
-                    "
-                >
-                    <AnimatedBackground
-                        defaultValue={activeMode}
-                        onValueChange={(id) => {
-                            if (id === "sale" || id === "rent") setMode(id);
-                        }}
-                        className="rounded-full border border-brand bg-brand-soft shadow-none"
-                        transition={reduceMotion ? { duration: 0 } : spring.snappy}
-                    >
-                        {(
-                            [
-                                { id: "sale", label: "Sale" },
-                                { id: "rent", label: "Rent" },
-                            ] as const
-                        ).map((option) => {
-                            const isActive = activeMode === option.id;
-
-                            return (
-                                <button
-                                    key={option.id}
-                                    data-id={option.id}
-                                    type="button"
-                                    aria-pressed={isActive}
-                                    className={cn(
-                                        `
-                                          body-xs rounded-full px-2.5 py-0.5 font-semibold
-                                          transition-[color] duration-160
-                                        `,
-                                        isActive
-                                            ? "text-brand-text"
-                                            : "text-ink-muted hover:text-ink",
-                                    )}
-                                >
-                                    {option.label}
-                                </button>
-                            );
-                        })}
-                    </AnimatedBackground>
-                </div>
+                <TextSegmentedToggle
+                    size="sm"
+                    value={activeMode}
+                    onValueChange={setMode}
+                    ariaLabel="Price type"
+                    options={[
+                        { value: "sale", label: "Sale" },
+                        { value: "rent", label: "Rent" },
+                    ]}
+                />
             ) : null}
         </div>
     );
 }
 
-function BrowsePropertyCard({
+/** Hover target for a listing price — shows the broker's cut. */
+function BrowsePriceWithCommission({
+    priceLabel,
+    mode,
+    commissionInr,
+    commissionPercent,
+    className,
+}: {
+    priceLabel: string;
+    mode: "sale" | "rent";
+    commissionInr: number;
+    commissionPercent: number;
+    className?: string;
+}) {
+    const hasCommission =
+        commissionInr > 0 && (mode === "rent" || (mode === "sale" && commissionPercent > 0));
+    const commissionLabel =
+        mode === "rent" ? formatRentInr(commissionInr) : formatPriceInr(commissionInr);
+
+    const priceEl = (
+        <span
+            className={cn(
+                className,
+                hasCommission &&
+                    "cursor-help underline decoration-brand/30 underline-offset-2 decoration-from-font",
+            )}
+        >
+            {priceLabel}
+        </span>
+    );
+
+    if (!hasCommission) return priceEl;
+
+    return (
+        <Tooltip>
+            <TooltipTrigger
+                delay={200}
+                render={
+                    <button
+                        type="button"
+                        className="inline border-0 bg-transparent p-0 text-start text-inherit"
+                        aria-label={
+                            mode === "rent"
+                                ? `Commission ${formatPriceInr(commissionInr)}`
+                                : `${commissionPercent}% commission`
+                        }
+                    >
+                        {priceEl}
+                    </button>
+                }
+            />
+            <TooltipContent side="top" className="text-center max-inline-xs">
+                <p className="font-semibold tabular-nums">You get {commissionLabel}</p>
+                <p className="body-xs mbs-0.5 opacity-90">
+                    {mode === "rent"
+                        ? "Fixed rent brokerage"
+                        : `${commissionPercent}% of ${priceLabel}`}
+                </p>
+            </TooltipContent>
+        </Tooltip>
+    );
+}
+
+function BrowseOverlayPrices({ listing }: { listing: BrowsePropertyCardListing }) {
+    const isRentOnly = offersRent(listing) && !offersSale(listing);
+    const both = offersBoth(listing);
+    const saleLabel = formatPriceInr(listing.saleAmountInr ?? 0);
+    const rentLabel = formatRentInr(listing.rentAmountInr ?? 0);
+    const saleCommissionInr =
+        listing.commissionPercent > 0 && (listing.saleAmountInr ?? 0) > 0
+            ? Math.round(((listing.saleAmountInr ?? 0) * listing.commissionPercent) / 100)
+            : 0;
+    const rentCommissionInr = listing.commissionAmount > 0 ? listing.commissionAmount : 0;
+
+    const body = isRentOnly ? (
+        <BrowsePriceWithCommission
+            priceLabel={rentLabel}
+            mode="rent"
+            commissionInr={rentCommissionInr}
+            commissionPercent={0}
+            className="h5 font-semibold tracking-wide tabular-nums text-brand"
+        />
+    ) : (
+        <div className="flex flex-col gap-0.5 min-inline-0">
+            <BrowsePriceWithCommission
+                priceLabel={saleLabel}
+                mode="sale"
+                commissionInr={saleCommissionInr}
+                commissionPercent={listing.commissionPercent}
+                className="h5 font-semibold tracking-wide tabular-nums text-brand"
+            />
+            {both ? (
+                <p className="body-sm tracking-wide text-ink-muted">
+                    Also{" "}
+                    <BrowsePriceWithCommission
+                        priceLabel={rentLabel}
+                        mode="rent"
+                        commissionInr={rentCommissionInr}
+                        commissionPercent={0}
+                        className="font-semibold tabular-nums text-ink"
+                    />{" "}
+                    rent
+                </p>
+            ) : null}
+        </div>
+    );
+
+    return <TooltipProvider>{body}</TooltipProvider>;
+}
+
+/** Grid browse card: clear photo on top, essentials in a solid panel below. */
+function BrowseOverlayPropertyCard({
     listing,
-    layout = "grid",
     detailsHref,
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     onRequest,
+    onCancelRequest,
     isRequestPending = false,
+    onAcceptInvite,
+    onCancelInvite,
+    inviteActionPending,
+    isSaved = false,
+    onToggleSave,
+    isNewInYourArea = false,
     className,
 }: Extract<PropertyCardProps, { variant: "browse" }>) {
-    const sharePriceLabel =
-        offersRent(listing) && !offersSale(listing)
-            ? formatRentInr(listing.rentAmountInr ?? 0)
-            : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
-    const isListView = layout === "list";
+    const isRentOnly = offersRent(listing) && !offersSale(listing);
+    const priceLabel = isRentOnly
+        ? formatRentInr(listing.rentAmountInr ?? 0)
+        : formatPriceInr(listing.saleAmountInr ?? 0);
+    const headline = [listing.configLabel, formatBrowseCardArea(listing.areaSqft)]
+        .filter(Boolean)
+        .join(" · ");
 
     return (
-        <article
-            className={cn(
-                "flex min-inline-0",
-                isListView ? "flex-row items-stretch gap-4" : "flex-col gap-3 block-full",
-                className,
-            )}
-        >
-            <Link
-                href={detailsHref}
-                prefetch={false}
-                className={cn("group block shrink-0 min-inline-0", isListView && "self-start")}
-            >
-                <BrowsePropertyCardPhoto
-                    listing={listing}
-                    priority={priority}
-                    imageSizes={imageSizes}
-                    layout={layout}
+        <OverlayCard
+            href={detailsHref}
+            imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
+            imageAlt={listing.title}
+            imageSizes={imageSizes}
+            priority={priority}
+            sweep={listing.isNew}
+            className={className}
+            chips={
+                <>
+                    {offersSale(listing) ? (
+                        <OverlayChip dotClassName="bg-success-mid">For sale</OverlayChip>
+                    ) : null}
+                    {offersRent(listing) ? (
+                        <OverlayChip dotClassName="bg-urgent-mid">For rent</OverlayChip>
+                    ) : null}
+                    {listing.isNew ? (
+                        <OverlayChip dotClassName="bg-highlight" pulse={isNewInYourArea}>
+                            New
+                        </OverlayChip>
+                    ) : null}
+                </>
+            }
+            actions={
+                <PropertyCardMenu
+                    listing={{
+                        id: listing.id,
+                        title: listing.title,
+                        locality: listing.locality,
+                        city: listing.city,
+                        priceLabel,
+                        imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                        configLabel: listing.configLabel,
+                        propertyTypeLabel: listing.propertyTypeLabel,
+                        areaSqft: listing.areaSqft,
+                        bhk: listing.bhk,
+                        listingKind: isRentOnly ? "rent" : "sale",
+                    }}
+                    isSaved={isSaved}
+                    onToggleSave={onToggleSave}
                 />
-            </Link>
+            }
+        >
+            <div className="flex flex-col gap-1.5 min-inline-0">
+                <OverlayCardSummary
+                    href={detailsHref}
+                    price={<BrowseOverlayPrices listing={listing} />}
+                    headline={headline || listing.title}
+                    locationLabel={`${listing.locality}, ${listing.city}`}
+                />
 
-            <div
-                className={cn(
-                    "flex flex-1 flex-col gap-2.5 px-2 min-inline-0",
-                    isListView ? "self-stretch" : "min-block-0",
-                )}
-            >
-                <div className="flex items-start gap-2">
-                    <Link
-                        href={detailsHref}
-                        prefetch={false}
-                        className="flex flex-1 flex-col gap-2.5 min-inline-0"
-                    >
-                        <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h3 className="body truncate font-semibold text-ink">
-                                {listing.title}
-                            </h3>
-                            <p
-                                className="
-                                  body-sm flex items-center gap-1.5 text-ink-muted min-inline-0
-                                "
-                            >
-                                <MapPin
-                                    aria-hidden
-                                    className="shrink-0 block-3.5 inline-3.5"
-                                    strokeWidth={1.75}
-                                />
-                                <span className="truncate">
-                                    {listing.locality}, {listing.city}
-                                </span>
-                            </p>
-                        </div>
-
-                        <BrowsePropertyCardSpecs listing={listing} />
-                    </Link>
-
-                    <PropertySharePopover
-                        listing={{
-                            id: listing.id,
-                            title: listing.title,
-                            locality: listing.locality,
-                            city: listing.city,
-                            priceLabel: sharePriceLabel,
-                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
-                            configLabel: listing.configLabel,
-                            propertyTypeLabel: listing.propertyTypeLabel,
-                            areaSqft: listing.areaSqft,
-                            bhk: listing.bhk,
-                            listingKind:
-                                offersRent(listing) && !offersSale(listing) ? "rent" : "sale",
-                        }}
-                        className="mbs-0.5"
-                    />
-                </div>
-
-                <div className="mbs-auto flex flex-col gap-2.5">
-                    <BrowsePropertyCardPrice listing={listing} />
-
-                    <BrowseRequestAction
-                        hasRequested={listing.hasRequested}
-                        isRequestPending={isRequestPending}
-                        onRequest={onRequest}
-                    />
-                </div>
+                <OverlayPersonLine label="Owner" name={listing.owner.name} />
             </div>
-        </article>
+
+            <OverlayCardActions>
+                <BrowseRequestAction
+                    tone="overlay"
+                    hasRequested={listing.hasRequested}
+                    isRepresenting={listing.isRepresenting}
+                    isInvitePending={listing.isInvitePending}
+                    isRequestPending={isRequestPending}
+                    inviteActionPending={inviteActionPending}
+                    onRequest={onRequest}
+                    onCancelRequest={onCancelRequest}
+                    onAcceptInvite={onAcceptInvite}
+                    onCancelInvite={onCancelInvite}
+                />
+            </OverlayCardActions>
+        </OverlayCard>
     );
+}
+
+function BrowsePropertyCard(props: Extract<PropertyCardProps, { variant: "browse" }>) {
+    return <BrowseOverlayPropertyCard {...props} />;
 }
 
 function TransactionBadge({ isRent }: { isRent: boolean }) {
@@ -760,34 +1081,26 @@ function PropertyCardPhoto({
     listing,
     priority,
     imageSizes,
-    layout = "grid",
 }: {
     listing: PropertyCardBase;
     priority: boolean;
     imageSizes: string;
-    layout?: "grid" | "list";
 }) {
     const alt = `${listing.configLabel} ${listing.propertyTypeLabel}`;
 
     return (
-        <div
-            className={cn(
-                PROPERTY_CARD_PHOTO_CLASS,
-                layout === "list" ? PROPERTY_CARD_PHOTO_LIST_CLASS : PROPERTY_CARD_PHOTO_GRID_CLASS,
-            )}
-        >
+        <HoverScaleRoot className={PROPERTY_CARD_PHOTO_CLASS}>
             {listing.imageSrc ? (
-                <AppImage
-                    src={listing.imageSrc}
-                    alt={alt}
-                    fill
-                    sizes={imageSizes}
-                    priority={priority}
-                    className="
-                      object-cover transition-transform duration-160
-                      group-hover:scale-[1.02]
-                    "
-                />
+                <HoverScaleLayer className="absolute inset-0">
+                    <AppImage
+                        src={listing.imageSrc}
+                        alt={alt}
+                        fill
+                        sizes={imageSizes}
+                        priority={priority}
+                        className="object-cover"
+                    />
+                </HoverScaleLayer>
             ) : (
                 <div
                     className="
@@ -805,20 +1118,16 @@ function PropertyCardPhoto({
             )}
 
             <div className="absolute inset-0 flex items-start justify-between gap-2 p-3">
-                {listing.isNew ? (
-                    <Badge className="border-brand-ink/20 bg-brand-ink text-surface">New</Badge>
-                ) : (
-                    <span aria-hidden />
-                )}
+                {listing.isNew ? <Badge variant="brand">New</Badge> : <span aria-hidden />}
 
                 {listing.photoCount > 0 ? (
-                    <Badge variant="neutral" className="ms-auto gap-1 bg-surface/90">
+                    <Badge variant="neutral" className="ms-auto gap-1">
                         <Camera aria-hidden strokeWidth={1.75} />
                         {listing.photoCount}
                     </Badge>
                 ) : null}
             </div>
-        </div>
+        </HoverScaleRoot>
     );
 }
 
@@ -918,8 +1227,7 @@ function RepresentedMeta({ listing }: { listing: RepresentedPropertyCardListing 
 
 function RepresentedPropertyCard({
     listing,
-    layout = "grid",
-    detailsHref: _detailsHref,
+    detailsHref,
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     onShare,
@@ -932,8 +1240,8 @@ function RepresentedPropertyCard({
     return (
         <article
             className={cn(
-                "group overflow-hidden rounded-card border border-border-warm bg-surface",
-                layout === "list" ? "flex flex-row" : "flex flex-col",
+                "overflow-hidden rounded-card border border-border-warm bg-surface",
+                "flex flex-col",
                 className,
             )}
         >
@@ -944,12 +1252,9 @@ function RepresentedPropertyCard({
                 </p>
             </div>
 
-            <PropertyCardPhoto
-                listing={listing}
-                priority={priority}
-                imageSizes={imageSizes}
-                layout={layout}
-            />
+            <Link href={detailsHref} prefetch={false} className="block min-inline-0">
+                <PropertyCardPhoto listing={listing} priority={priority} imageSizes={imageSizes} />
+            </Link>
 
             <div className="flex flex-1 flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -962,7 +1267,11 @@ function RepresentedPropertyCard({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                    <p className="body-sm font-medium text-ink">{titleLine}</p>
+                    <h3 className="max-inline-full min-inline-0">
+                        <PropertyTitleLink href={detailsHref} className="body-sm font-medium">
+                            {titleLine}
+                        </PropertyTitleLink>
+                    </h3>
                     <p className="body-xs flex items-start gap-1.5 text-ink-muted">
                         <MapPin
                             aria-hidden
@@ -1019,46 +1328,159 @@ const OWNED_EDIT_LABEL = "Edit property";
 const OWNED_OPEN_LABEL = "Open";
 const OWNED_EDIT_TOOLTIP = "Update price, photos, and other listing details";
 const OWNED_OPEN_TOOLTIP = "View this listing's full details";
+const OWNED_ADD_BUYER_LABEL = "Add buyer";
+const OWNED_ADD_BUYER_TOOLTIP = "Pick which buyers you will show this property to";
+const OWNED_ATTACH_OWNER_LABEL = "Attach owner";
+const OWNED_CHANGE_OWNER_LABEL = "Change owner";
+const OWNED_ATTACH_OWNER_TOOLTIP = "Link one exclusive owner contact to this listing";
+const OWNED_CHANGE_OWNER_TOOLTIP = "Replace the exclusive owner on this listing";
+const OWNED_DELETE_LABEL = "Delete";
+const OWNED_DELETE_TOOLTIP = "Remove this listing permanently";
 
 function OwnedListingAction({
     href,
     isEdit,
     onEdit,
+    onAddBuyer,
+    onAttachOwner,
+    hasAttachedOwner = false,
+    onDelete,
 }: {
     href: string;
     isEdit: boolean;
     /** When set, editing opens in place instead of navigating to the edit page. */
     onEdit?: () => void;
+    /** When set, a second button opens the buyer picker for this listing. */
+    onAddBuyer?: () => void;
+    /** When set, opens the exclusive-owner picker for this listing. */
+    onAttachOwner?: () => void;
+    /** True when an exclusive owner is already linked — button becomes Change owner. */
+    hasAttachedOwner?: boolean;
+    /** When set, shows a delete control; caller owns the confirm dialog. */
+    onDelete?: () => void;
 }) {
     const opensInModal = isEdit && onEdit != null;
+    const attachLabel = hasAttachedOwner ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL;
+    const attachTooltip = hasAttachedOwner
+        ? OWNED_CHANGE_OWNER_TOOLTIP
+        : OWNED_ATTACH_OWNER_TOOLTIP;
 
     return (
         <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger
-                    render={
-                        <span className="inline-flex inline-full">
-                            <Button
-                                size="md"
-                                variant="accent"
-                                className="inline-full"
-                                type={opensInModal ? "button" : undefined}
-                                onClick={opensInModal ? onEdit : undefined}
+            <div className="flex flex-col gap-2">
+                {onAttachOwner || onAddBuyer ? (
+                    <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 -mis-2">
+                        {onAttachOwner ? (
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            type="button"
+                                            className="text-ink-muted hover:text-ink"
+                                            onClick={onAttachOwner}
+                                        >
+                                            <UserRound
+                                                aria-hidden
+                                                className="block-3.5 inline-3.5"
+                                                strokeWidth={1.75}
+                                            />
+                                            {attachLabel}
+                                        </Button>
+                                    }
+                                />
+                                <TooltipContent side="top" className="text-center max-inline-xs">
+                                    {attachTooltip}
+                                </TooltipContent>
+                            </Tooltip>
+                        ) : null}
+
+                        {onAddBuyer ? (
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            type="button"
+                                            className="text-ink-muted hover:text-ink"
+                                            onClick={onAddBuyer}
+                                        >
+                                            <UserPlus
+                                                aria-hidden
+                                                className="block-3.5 inline-3.5"
+                                                strokeWidth={1.75}
+                                            />
+                                            {OWNED_ADD_BUYER_LABEL}
+                                        </Button>
+                                    }
+                                />
+                                <TooltipContent side="top" className="text-center max-inline-xs">
+                                    {OWNED_ADD_BUYER_TOOLTIP}
+                                </TooltipContent>
+                            </Tooltip>
+                        ) : null}
+                    </div>
+                ) : null}
+
+                <div className="flex gap-2">
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <span className="inline-flex flex-1 min-inline-0">
+                                    <Button
+                                        size="md"
+                                        variant="accent"
+                                        className="inline-full"
+                                        type={opensInModal ? "button" : undefined}
+                                        onClick={opensInModal ? onEdit : undefined}
+                                        render={
+                                            opensInModal ? undefined : (
+                                                <Link href={href} prefetch={false} />
+                                            )
+                                        }
+                                    >
+                                        {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
+                                    </Button>
+                                </span>
+                            }
+                        />
+                        <TooltipContent side="top" className="text-center max-inline-xs">
+                            {isEdit ? OWNED_EDIT_TOOLTIP : OWNED_OPEN_TOOLTIP}
+                        </TooltipContent>
+                    </Tooltip>
+
+                    {onDelete ? (
+                        <Tooltip>
+                            <TooltipTrigger
                                 render={
-                                    opensInModal ? undefined : (
-                                        <Link href={href} prefetch={false} />
-                                    )
+                                    <Button
+                                        size="md"
+                                        variant="outline"
+                                        type="button"
+                                        aria-label={OWNED_DELETE_LABEL}
+                                        className="
+                                          shrink-0 border-border-warm text-danger
+                                          hover:bg-danger/10 hover:text-danger
+                                        "
+                                        onClick={onDelete}
+                                    >
+                                        <Trash2
+                                            aria-hidden
+                                            className="block-4 inline-4"
+                                            strokeWidth={1.75}
+                                        />
+                                    </Button>
                                 }
-                            >
-                                {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
-                            </Button>
-                        </span>
-                    }
-                />
-                <TooltipContent side="top" className="text-center max-inline-xs">
-                    {isEdit ? OWNED_EDIT_TOOLTIP : OWNED_OPEN_TOOLTIP}
-                </TooltipContent>
-            </Tooltip>
+                            />
+                            <TooltipContent side="top" className="text-center max-inline-xs">
+                                {OWNED_DELETE_TOOLTIP}
+                            </TooltipContent>
+                        </Tooltip>
+                    ) : null}
+                </div>
+            </div>
         </TooltipProvider>
     );
 }
@@ -1089,6 +1511,7 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
         brokerSlotsOpen: 0,
         brokerSlotsTotal: 0,
         commissionPercent: 0,
+        commissionAmount: 0,
         hasRequested: false,
         saleAmountInr: listing.saleAmountInr,
         rentAmountInr: listing.rentAmountInr,
@@ -1096,33 +1519,191 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
 }
 
 function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
-    if (status === "published") {
-        return (
-            <Badge className="
-              body-xs border-0 bg-brand-soft font-semibold text-brand-text shadow-xs
-            ">
-                {OWNED_STATUS_LABEL[status]}
-            </Badge>
-        );
-    }
-    if (status === "draft") {
-        return (
-            <Badge className="body-xs border-0 bg-surface/95 font-semibold text-ink-muted shadow-xs">
-                {OWNED_STATUS_LABEL[status]}
-            </Badge>
-        );
-    }
+    const variant = status === "published" ? "brand" : status === "draft" ? "outline" : "urgent";
+    return <Badge variant={variant}>{OWNED_STATUS_LABEL[status]}</Badge>;
+}
+
+/** Dot colour per listing status, for the overlay card's status chip. */
+const OWNED_STATUS_DOT_CLASS: Record<OwnedPropertyCardStatus, string> = {
+    published: "bg-success-mid",
+    draft: "bg-highlight",
+    unpublished: "bg-ink-subtle",
+};
+
+function formatListedLabel(listedDaysAgo: number): string {
+    if (listedDaysAgo <= 0) return "Today";
+    if (listedDaysAgo === 1) return "1 day";
+    if (listedDaysAgo < 30) return `${listedDaysAgo} days`;
+    const months = Math.round(listedDaysAgo / 30);
+    return months === 1 ? "1 month" : `${months} months`;
+}
+
+function formatRequestsValue(inboundRequestCount: number): string {
+    if (inboundRequestCount === 0) return "None yet";
+    return inboundRequestCount === 1 ? "1 broker" : `${inboundRequestCount} brokers`;
+}
+
+/** Grid owned card: clear photo on top, essentials in a solid panel below. */
+function OwnedOverlayPropertyCard({
+    listing,
+    detailsHref,
+    priority = false,
+    imageSizes = "(max-width: 768px) 100vw, 50vw",
+    onEdit,
+    onAddBuyer,
+    onAttachOwner,
+    onDelete,
+    className,
+}: Extract<PropertyCardProps, { variant: "owned" }>) {
+    const browse = ownedToBrowseListing(listing);
+    const both = offersBoth(browse);
+    const isRentOnly = offersRent(browse) && !offersSale(browse);
+    const priceLabel = isRentOnly
+        ? formatRentInr(listing.rentAmountInr ?? 0)
+        : formatPriceInr(listing.saleAmountInr ?? 0);
+    const sharePriceLabel =
+        offersRent(browse) && !offersSale(browse)
+            ? formatRentInr(listing.rentAmountInr ?? 0)
+            : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
+    const headline = [listing.configLabel, formatBrowseCardArea(listing.areaSqft)]
+        .filter(Boolean)
+        .join(" · ");
+    const metaParts = [
+        listing.inboundRequestCount === 0
+            ? "No requests"
+            : formatRequestsValue(listing.inboundRequestCount),
+        `Listed ${formatListedLabel(listing.listedDaysAgo)}`,
+    ];
+    const buyers = listing.attachedClients ?? [];
+    const hasOwner = Boolean(listing.ownerName?.trim());
+    const hasBuyers = buyers.length > 0;
+    const showAttachOwnerButton = Boolean(onAttachOwner && !hasOwner);
+    const showAddBuyerButton = Boolean(onAddBuyer && !hasBuyers);
+
     return (
-        <Badge className="body-xs border-0 bg-urgent-soft font-semibold text-urgent shadow-xs">
-            {OWNED_STATUS_LABEL[status]}
-        </Badge>
+        <OverlayCard
+            href={detailsHref}
+            imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
+            imageAlt={listing.title}
+            imageSizes={imageSizes}
+            priority={priority}
+            // A listing nobody can see yet reads as inactive while scanning.
+            muted={listing.status !== "published"}
+            className={className}
+            chips={
+                <>
+                    <OverlayChip dotClassName={OWNED_STATUS_DOT_CLASS[listing.status]}>
+                        {OWNED_STATUS_LABEL[listing.status]}
+                    </OverlayChip>
+                    {offersSale(browse) ? (
+                        <OverlayChip dotClassName="bg-success-mid">For sale</OverlayChip>
+                    ) : null}
+                    {offersRent(browse) ? (
+                        <OverlayChip dotClassName="bg-urgent-mid">For rent</OverlayChip>
+                    ) : null}
+                    {listing.visibility === "private" ? (
+                        <OverlayChip dotClassName="bg-surface/70">Private</OverlayChip>
+                    ) : null}
+                </>
+            }
+            actions={
+                <PropertyCardMenu
+                    listing={{
+                        id: listing.id,
+                        title: listing.title,
+                        locality: listing.locality,
+                        city: listing.city,
+                        priceLabel: sharePriceLabel,
+                        imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                        configLabel: listing.configLabel,
+                        propertyTypeLabel: listing.propertyTypeLabel,
+                        areaSqft: listing.areaSqft,
+                        bhk: listing.bhk,
+                        listingKind: offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
+                    }}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                />
+            }
+        >
+            <div className="flex flex-col gap-1.5 min-inline-0">
+                <OverlayCardSummary
+                    href={detailsHref}
+                    price={
+                        <div className="flex flex-col gap-0.5 min-inline-0">
+                            <p className="h5 font-semibold tracking-wide tabular-nums text-brand">
+                                {priceLabel}
+                            </p>
+                            {both ? (
+                                <p className="body-sm tracking-wide text-ink-muted tabular-nums">
+                                    Also {formatRentInr(listing.rentAmountInr ?? 0)} rent
+                                </p>
+                            ) : null}
+                        </div>
+                    }
+                    headline={headline || listing.title}
+                    locationLabel={`${listing.locality}, ${listing.city}`}
+                />
+
+                <p className="body-sm tracking-wide text-ink-muted">{metaParts.join(" · ")}</p>
+            </div>
+
+            <OverlayCardActions className="flex-col gap-2">
+                {hasOwner && onAttachOwner ? (
+                    <AttachedOwnerRow name={listing.ownerName!} onManage={onAttachOwner} />
+                ) : null}
+
+                {hasBuyers && onAddBuyer ? (
+                    <AttachedBuyersRow buyers={buyers} onManage={onAddBuyer} />
+                ) : null}
+
+                {showAttachOwnerButton || showAddBuyerButton ? (
+                    <div className="flex gap-2">
+                        {showAttachOwnerButton ? (
+                            <Button
+                                size="md"
+                                variant="outline"
+                                type="button"
+                                className={cn(
+                                    showAddBuyerButton ? "flex-1" : "inline-full",
+                                    OVERLAY_GLASS_BUTTON_CLASS,
+                                )}
+                                onClick={onAttachOwner}
+                            >
+                                <UserRound
+                                    aria-hidden
+                                    className="block-4 inline-4"
+                                    strokeWidth={1.75}
+                                />
+                                {OWNED_ATTACH_OWNER_LABEL}
+                            </Button>
+                        ) : null}
+                        {showAddBuyerButton ? (
+                            <Button
+                                size="md"
+                                variant="accent"
+                                type="button"
+                                className={showAttachOwnerButton ? "flex-1" : "inline-full"}
+                                onClick={onAddBuyer}
+                            >
+                                <UserPlus
+                                    aria-hidden
+                                    className="block-4 inline-4"
+                                    strokeWidth={1.75}
+                                />
+                                {OWNED_ADD_BUYER_LABEL}
+                            </Button>
+                        ) : null}
+                    </div>
+                ) : null}
+            </OverlayCardActions>
+        </OverlayCard>
     );
 }
 
 function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing }) {
     const browse = ownedToBrowseListing(listing);
     const both = offersBoth(browse);
-    const reduceMotion = useReducedMotion();
     const [mode, setMode] = useState<ListingPriceMode>(() => defaultPriceMode(browse));
     const activeMode: ListingPriceMode = both ? mode : offersSale(browse) ? "sale" : "rent";
     const priceLabel =
@@ -1140,167 +1721,31 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
     return (
         <div className="flex items-center gap-2 min-inline-0">
             <div className="flex flex-1 items-baseline gap-1.5 min-inline-0">
-                <span className="h5 truncate font-semibold text-ink tabular-nums">{priceLabel}</span>
-                <span className="body-sm shrink-0 font-medium text-brand">{requestLabel}</span>
+                <span className="h5 truncate font-semibold tracking-wide text-ink tabular-nums">
+                    {priceLabel}
+                </span>
+                <span className="body-sm shrink-0 font-medium tracking-wide text-brand">
+                    {requestLabel}
+                </span>
             </div>
             {both ? (
-                <div
-                    role="group"
-                    aria-label="Price type"
-                    className="
-                      inline-flex shrink-0 items-center gap-0.5 rounded-full border
-                      border-border-warm bg-surface p-0.5 shadow-sm
-                    "
-                >
-                    <AnimatedBackground
-                        defaultValue={activeMode}
-                        onValueChange={(id) => {
-                            if (id === "sale" || id === "rent") setMode(id);
-                        }}
-                        className="rounded-full border border-brand bg-brand-soft shadow-none"
-                        transition={reduceMotion ? { duration: 0 } : spring.snappy}
-                    >
-                        {(
-                            [
-                                { id: "sale", label: "Sale" },
-                                { id: "rent", label: "Rent" },
-                            ] as const
-                        ).map((option) => {
-                            const isActive = activeMode === option.id;
-
-                            return (
-                                <button
-                                    key={option.id}
-                                    data-id={option.id}
-                                    type="button"
-                                    aria-pressed={isActive}
-                                    className={cn(
-                                        `
-                                          body-xs rounded-full px-2.5 py-0.5 font-semibold
-                                          transition-[color] duration-160
-                                        `,
-                                        isActive
-                                            ? "text-brand-text"
-                                            : "text-ink-muted hover:text-ink",
-                                    )}
-                                >
-                                    {option.label}
-                                </button>
-                            );
-                        })}
-                    </AnimatedBackground>
-                </div>
+                <TextSegmentedToggle
+                    size="sm"
+                    value={activeMode}
+                    onValueChange={setMode}
+                    ariaLabel="Price type"
+                    options={[
+                        { value: "sale", label: "Sale" },
+                        { value: "rent", label: "Rent" },
+                    ]}
+                />
             ) : null}
         </div>
     );
 }
 
-function OwnedPropertyCard({
-    listing,
-    layout = "grid",
-    detailsHref,
-    priority = false,
-    imageSizes = "(max-width: 768px) 100vw, 50vw",
-    editHref,
-    onEdit,
-    className,
-}: Extract<PropertyCardProps, { variant: "owned" }>) {
-    const browse = ownedToBrowseListing(listing);
-    const isListView = layout === "list";
-    const sharePriceLabel =
-        offersRent(browse) && !offersSale(browse)
-            ? formatRentInr(listing.rentAmountInr ?? 0)
-            : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
-
-    return (
-        <article
-            className={cn(
-                "flex min-inline-0",
-                isListView ? "flex-row items-stretch gap-4" : "flex-col gap-3 block-full",
-                className,
-            )}
-        >
-            <Link
-                href={detailsHref}
-                prefetch={false}
-                className={cn("group relative block shrink-0 min-inline-0", isListView && `
-                  self-start
-                `)}
-            >
-                <BrowsePropertyCardPhoto
-                    listing={browse}
-                    priority={priority}
-                    imageSizes={imageSizes}
-                    layout={layout}
-                />
-                <div className="
-                  pointer-events-none absolute inset-e-3 inset-bs-3 z-20 flex flex-col items-end
-                  gap-1.5
-                ">
-                    <OwnedStatusBadge status={listing.status} />
-                </div>
-            </Link>
-
-            <div
-                className={cn(
-                    "flex flex-1 flex-col gap-2.5 px-2 min-inline-0",
-                    isListView ? "self-stretch" : "min-block-0",
-                )}
-            >
-                <div className="flex items-start gap-2">
-                    <Link
-                        href={detailsHref}
-                        prefetch={false}
-                        className="flex flex-1 flex-col gap-2.5 min-inline-0"
-                    >
-                        <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h3 className="body truncate font-semibold text-ink">{listing.title}</h3>
-                            <p className="
-                              body-sm flex items-center gap-1.5 text-ink-muted min-inline-0
-                            ">
-                                <MapPin
-                                    aria-hidden
-                                    className="shrink-0 block-3.5 inline-3.5"
-                                    strokeWidth={1.75}
-                                />
-                                <span className="truncate">
-                                    {listing.locality}, {listing.city}
-                                </span>
-                            </p>
-                        </div>
-                        <BrowsePropertyCardSpecs listing={browse} />
-                    </Link>
-
-                    <PropertySharePopover
-                        listing={{
-                            id: listing.id,
-                            title: listing.title,
-                            locality: listing.locality,
-                            city: listing.city,
-                            priceLabel: sharePriceLabel,
-                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
-                            configLabel: listing.configLabel,
-                            propertyTypeLabel: listing.propertyTypeLabel,
-                            areaSqft: listing.areaSqft,
-                            bhk: listing.bhk,
-                            listingKind:
-                                offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
-                        }}
-                        className="mbs-0.5"
-                    />
-                </div>
-
-                <div className="mbs-auto flex flex-col gap-2.5">
-                    <OwnedPropertyCardPrice listing={listing} />
-                    <OwnedListingAction
-                        href={editHref ?? detailsHref}
-                        isEdit={Boolean(editHref)}
-                        onEdit={onEdit}
-                    />
-                </div>
-            </div>
-        </article>
-    );
+function OwnedPropertyCard(props: Extract<PropertyCardProps, { variant: "owned" }>) {
+    return <OwnedOverlayPropertyCard {...props} />;
 }
 
 export function PropertyCard(props: PropertyCardProps) {

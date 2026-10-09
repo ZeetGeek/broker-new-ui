@@ -3,6 +3,7 @@ import type { VisitsSummary, VisitViewer } from "@/features/site-visits/types";
 type VisitsIntroProps = {
     summary: VisitsSummary | null;
     viewer: VisitViewer;
+    isLoading: boolean;
 };
 
 /** `1 visit` / `3 visits`. */
@@ -60,9 +61,14 @@ function headlineClauses(
     };
 }
 
-export function VisitsIntro({ summary, viewer }: VisitsIntroProps) {
+export function VisitsIntro({ summary, viewer, isLoading }: VisitsIntroProps) {
     if (!summary) {
-        return null;
+        return (
+            <div className="flex flex-col gap-2" aria-hidden={isLoading}>
+                <span className="animate-pulse rounded-sm bg-surface-muted block-8 inline-72" />
+                <span className="animate-pulse rounded-sm bg-surface-muted block-5 inline-56" />
+            </div>
+        );
     }
 
     const { fact, meaning } = headlineClauses(summary, viewer);

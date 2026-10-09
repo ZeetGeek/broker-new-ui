@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 
 import { visitsApi } from "@/lib/api/visits";
 import { formatDateIso } from "@/lib/format/date";
+import { PREF_KEYS } from "@/lib/prefs/keys";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import {
     DEFAULT_VISITS_FILTERS,
@@ -42,6 +44,27 @@ type VisitsPageProps = {
     viewer: VisitViewer;
 };
 
+/** Persisted listing prefs — dates always remount to today. */
+type VisitsListPrefs = {
+    q: string;
+    status: VisitsFilters["status"];
+    propertyId: string;
+};
+
+const DEFAULT_VISITS_LIST_PREFS: VisitsListPrefs = {
+    q: "",
+    status: "all",
+    propertyId: "",
+};
+
+function isVisitsListPrefs(value: unknown): value is VisitsListPrefs {
+    if (typeof value !== "object" || value === null) return false;
+    const v = value as Partial<VisitsListPrefs>;
+    return (
+        typeof v.q === "string" && typeof v.status === "string" && typeof v.propertyId === "string"
+    );
+}
+
 export function VisitsPage({ viewer }: VisitsPageProps) {
     /**
      * The book opens on today, not on the whole week.
@@ -54,10 +77,42 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
      * Computed on mount rather than in `DEFAULT_VISITS_FILTERS`, which is a
      * module constant and would freeze on the day the bundle was imported.
      */
-    const [filters, setFilters] = useState<VisitsFilters>(() => {
+    const prefsKey =
+        viewer === "owner" ? PREF_KEYS.owner.visits.prefs : PREF_KEYS.broker.visits.prefs;
+    const [listPrefs, setListPrefs] = usePersistedJson<VisitsListPrefs>(
+        prefsKey,
+        DEFAULT_VISITS_LIST_PREFS,
+        { isValid: isVisitsListPrefs },
+    );
+
+    const [dateWindow, setDateWindow] = useState(() => {
         const today = formatDateIso(new Date());
-        return { ...DEFAULT_VISITS_FILTERS, dateFrom: today, dateTo: today };
+        return { dateFrom: today, dateTo: today };
     });
+
+    const filters = useMemo<VisitsFilters>(
+        () => ({
+            q: listPrefs.q,
+            status: listPrefs.status,
+            propertyId: listPrefs.propertyId,
+            dateFrom: dateWindow.dateFrom,
+            dateTo: dateWindow.dateTo,
+        }),
+        [dateWindow.dateFrom, dateWindow.dateTo, listPrefs],
+    );
+
+    const setFilters = useCallback(
+        (next: VisitsFilters | ((prev: VisitsFilters) => VisitsFilters)) => {
+            const resolved = typeof next === "function" ? next(filters) : next;
+            setListPrefs({
+                q: resolved.q,
+                status: resolved.status,
+                propertyId: resolved.propertyId,
+            });
+            setDateWindow({ dateFrom: resolved.dateFrom, dateTo: resolved.dateTo });
+        },
+        [filters, setListPrefs],
+    );
 
     const [visits, setVisits] = useState<VisitItem[] | null>(null);
     const [summary, setSummary] = useState<VisitsSummary | null>(null);
@@ -286,7 +341,9 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
      * match" because the strip itself is the way out, so the list must stay.
      */
     const isEmptyDay =
-        isForwardOrder && (visits ?? []).length === 0 && (filters.dateFrom !== "" || filters.dateTo !== "");
+        isForwardOrder &&
+        (visits ?? []).length === 0 &&
+        (filters.dateFrom !== "" || filters.dateTo !== "");
 
     /** Object → Map once, so the strip is not rebuilt on every clock tick. */
     const dayCounts = useMemo(

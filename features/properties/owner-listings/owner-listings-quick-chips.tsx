@@ -23,12 +23,10 @@ import {
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
 import { OwnerListingsSortMenu } from "@/features/properties/owner-listings/owner-listings-sort-menu";
-import { OwnerListingsViewToggle } from "@/features/properties/owner-listings/owner-listings-view-toggle";
 import type {
     OwnerListingsFilters,
     OwnerListingSort,
 } from "@/features/properties/owner-listings/types";
-import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
 
 type QuickChipConfig = {
     key: QuickChipKey;
@@ -42,7 +40,7 @@ const QUICK_CHIPS: QuickChipConfig[] = [
         key: "yourAreas",
         label: "Your areas",
         mobileLabel: "Areas",
-        description: "Only listings in your service areas",
+        description: "Your service areas first, then elsewhere",
     },
     {
         key: "newToday",
@@ -68,6 +66,12 @@ const QUICK_CHIPS: QuickChipConfig[] = [
         mobileLabel: "Move-in",
         description: "Available for immediate possession",
     },
+    {
+        key: "bookmarked",
+        label: "Bookmarked",
+        mobileLabel: "Saved",
+        description: "Properties you have bookmarked",
+    },
 ];
 
 export type OwnerListingsQuickChipsProps = {
@@ -79,8 +83,6 @@ export type OwnerListingsQuickChipsProps = {
     onOpenFilters: () => void;
     onQueryChange: (q: string) => void;
     onSortChange: (sort: OwnerListingSort) => void;
-    view: OwnerListingsView;
-    onViewChange: (view: OwnerListingsView) => void;
 };
 
 function OwnerListingsQueryInput({
@@ -119,7 +121,7 @@ function OwnerListingsQueryInput({
               lg:min-inline-64 lg:inline-64
             "
             className="
-              rounded-full border! border-border-warm bg-surface text-sm font-medium shadow-sm
+              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
               block-[38px]!
               hover:border-ink/25!
               focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
@@ -218,8 +220,6 @@ export function OwnerListingsQuickChips({
     onOpenFilters,
     onQueryChange,
     onSortChange,
-    view,
-    onViewChange,
 }: OwnerListingsQuickChipsProps) {
     return (
         <TooltipProvider>
@@ -250,7 +250,6 @@ export function OwnerListingsQuickChips({
 
                 <div className="flex shrink-0 items-center gap-2.5">
                     <OwnerListingsQueryInput value={filters.q} onChange={onQueryChange} />
-                    <OwnerListingsViewToggle view={view} onViewChange={onViewChange} />
                     <OwnerListingsSortMenu filters={filters} onSortChange={onSortChange} />
                 </div>
             </div>

@@ -2,6 +2,7 @@ import type { ReferralsSummary } from "@/features/referrals/types";
 
 type ReferralsIntroProps = {
     summary: ReferralsSummary | null;
+    isLoading: boolean;
 };
 
 /** `1 invite` / `3 invites`. */
@@ -64,9 +65,14 @@ function headlineClauses(summary: ReferralsSummary): { fact: string; meaning: st
     };
 }
 
-export function ReferralsIntro({ summary }: ReferralsIntroProps) {
+export function ReferralsIntro({ summary, isLoading }: ReferralsIntroProps) {
     if (!summary) {
-        return null;
+        return (
+            <div className="flex flex-col gap-2" aria-hidden={isLoading}>
+                <span className="animate-pulse rounded-sm bg-surface-muted block-8 inline-72" />
+                <span className="animate-pulse rounded-sm bg-surface-muted block-5 inline-56" />
+            </div>
+        );
     }
 
     const { fact, meaning } = headlineClauses(summary);

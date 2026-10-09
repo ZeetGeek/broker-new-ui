@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 import SimpleBar from "simplebar-react";
 
+import { ApiError } from "@/lib/api/client";
+import { representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
@@ -12,7 +15,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ChatComposer } from "@/features/chat/chat-composer";
 import { ChatMessageRow } from "@/features/chat/chat-message";
-import { appendMockMessage, getMockThread } from "@/features/chat/mock-thread";
+import { mapRepresentationMessage } from "@/features/chat/map-representation-message";
 import type { ChatMessage, ChatPeer } from "@/features/chat/types";
 
 /** Name, presence and role — no call buttons, by product decision. */
@@ -51,40 +54,81 @@ export function ChatModal({
     onOpenChange: (open: boolean) => void;
 }) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
-    /** Which peer the loaded transcript belongs to. */
-    const [loadedPeerId, setLoadedPeerId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [loadedKey, setLoadedKey] = useState<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
-    // Loading during render rather than in an effect: an effect would paint the
-    // previous peer's transcript for one frame before swapping it. Not cleared
-    // on close, so the thread does not blank out mid exit-animation.
-    if (peer && open && peer.id !== loadedPeerId) {
-        setLoadedPeerId(peer.id);
-        setMessages(getMockThread(peer));
-    }
+    const representationId = peer?.representationId;
+    const mySide = peer?.mySide ?? "broker";
+    const canSend = peer?.canSend !== false && !peer?.closed;
+
+    useEffect(() => {
+        if (!open || !representationId) return;
+
+        let cancelled = false;
+
+        // Defer loading flags so the effect body stays free of synchronous setState
+        // (react-hooks/set-state-in-effect). Same pattern as my-listings fetch.
+        const timer = window.setTimeout(() => {
+            if (cancelled) return;
+
+            setLoading(true);
+            setLoadedKey(representationId);
+
+            void representativeApi
+                .messages(representationId)
+                .then((rows) => {
+                    if (cancelled) return;
+                    setMessages(rows.map((row) => mapRepresentationMessage(row, mySide)));
+                })
+                .catch((error) => {
+                    if (cancelled) return;
+                    setMessages([]);
+                    toast.error(
+                        error instanceof ApiError ? error.message : "Failed to load messages",
+                    );
+                })
+                .finally(() => {
+                    if (!cancelled) setLoading(false);
+                });
+        }, 0);
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timer);
+        };
+    }, [open, representationId, mySide]);
 
     useEffect(() => {
         if (!open) return;
         bottomRef.current?.scrollIntoView({ block: "end" });
-    }, [open, messages]);
+    }, [open, messages, loading]);
 
     const handleSend = useCallback(
-        (text: string) => {
-            if (!peer) return;
+        async (text: string, file?: File) => {
+            if (!peer?.representationId || !canSend || sending) return;
+            if (!text.trim() && !file) return;
 
-            const message: ChatMessage = {
-                id: `local-${Date.now()}`,
-                isOwn: true,
-                text,
-                sentAt: new Date().toISOString(),
-                status: "sent",
-            };
-
-            appendMockMessage(peer.id, message);
-            setMessages((prev) => [...prev, message]);
+            setSending(true);
+            try {
+                const created = await representativeApi.addMessage(peer.representationId, {
+                    message: text,
+                    file,
+                });
+                setMessages((prev) => [...prev, mapRepresentationMessage(created, mySide)]);
+            } catch (error) {
+                toast.error(error instanceof ApiError ? error.message : "Failed to send message");
+            } finally {
+                setSending(false);
+            }
         },
-        [peer],
+        [peer, canSend, sending, mySide],
     );
+
+    const isStale = Boolean(representationId) && loadedKey !== representationId;
+    const showLoading = loading || isStale;
+    const showEmpty = !showLoading && messages.length === 0 && loadedKey === representationId;
 
     return (
         <AppModal
@@ -96,7 +140,14 @@ export function ChatModal({
             titleClassName="p-0 font-normal"
             bodyClassName="p-0"
             className="block-[min(85dvh,44rem)]"
-            footer={<ChatComposer onSend={handleSend} />}
+            footer={
+                <ChatComposer
+                    onSend={handleSend}
+                    disabled={!canSend || sending}
+                    sending={sending}
+                    closed={Boolean(peer?.closed)}
+                />
+            }
             footerClassName="block bg-surface"
         >
             <TooltipProvider>
@@ -105,7 +156,11 @@ export function ChatModal({
                     style={{ maxHeight: "100%", height: "100%" }}
                     autoHide={false}
                 >
-                    {messages.length === 0 ? (
+                    {showLoading ? (
+                        <p className="body-sm bg-canvas/40 px-5 py-10 text-center text-ink-muted">
+                            Loading conversation…
+                        </p>
+                    ) : showEmpty ? (
                         <p className="body-sm bg-canvas/40 px-5 py-10 text-center text-ink-muted">
                             No messages yet. Say hello.
                         </p>

@@ -13,13 +13,14 @@ import {
     LayoutDashboard,
     LogOut,
     type LucideProps,
+    Plus,
     Send,
     Settings,
     UserRound,
     Users,
 } from "lucide-react";
 
-import { type ShortcutDef, type ShortcutId,SHORTCUTS } from "@/lib/shortcuts";
+import { type ShortcutDef, type ShortcutId, SHORTCUTS } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { Dialog, DialogHeader, DialogPopup, DialogTitle } from "@/components/ui/dialog";
@@ -35,7 +36,7 @@ const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<LucideProps>> = {
     shortcuts_cheatsheet: Keyboard,
     dashboard: LayoutDashboard,
     owner_listings: Building2,
-    my_requests: Send,
+    my_deals: Send,
     your_listings: KeyRound,
     pipeline: Users,
     contacts: Contact,
@@ -45,6 +46,8 @@ const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<LucideProps>> = {
     profile: UserRound,
     settings: Settings,
     logout: LogOut,
+    add_property: Plus,
+    add_contact: Contact,
 };
 
 function groupShortcuts(): Map<string, ShortcutDef[]> {
@@ -72,7 +75,7 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutDef }) {
             <span
                 className={cn(
                     `
-                      flex shrink-0 items-center justify-center rounded-full bg-surface-muted
+                      flex shrink-0 items-center justify-center rounded-control bg-surface-muted
                       text-ink-muted transition-colors duration-160 block-8 inline-8
                       group-hover:bg-surface
                     `,
@@ -82,7 +85,9 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutDef }) {
                 <Icon aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
             </span>
 
-            <span className={cn("body-sm flex-1 font-medium text-ink", destructive && "text-danger")}>
+            <span
+                className={cn("body-sm flex-1 font-medium text-ink", destructive && "text-danger")}
+            >
                 {shortcut.label}
             </span>
 
@@ -117,7 +122,7 @@ export function ShortcutsCheatsheet({ open, onOpenChange }: ShortcutsCheatsheetP
                 >
                     <span
                         className="
-                          flex shrink-0 items-center justify-center rounded-full bg-brand-soft
+                          flex shrink-0 items-center justify-center rounded-control bg-brand-soft
                           text-brand block-10 inline-10
                         "
                     >

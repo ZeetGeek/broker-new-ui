@@ -16,21 +16,23 @@ import {
 
 function Swatch({
     label,
-    dark = false,
+    tone = "surface",
     children,
 }: {
     label: string;
-    dark?: boolean;
+    tone?: "surface" | "dark" | "canvas";
     children: React.ReactNode;
 }) {
     return (
         <div
             className={cn(
                 "flex flex-col items-start gap-3 rounded-card border p-5",
-                dark ? "border-transparent bg-brand-deep" : "border-border-warm bg-surface",
+                tone === "dark" && "border-transparent bg-brand-deep",
+                tone === "surface" && "border-border-warm bg-surface",
+                tone === "canvas" && "border-border-warm bg-canvas",
             )}
         >
-            <p className={cn("eyebrow", dark && "text-highlight")}>{label}</p>
+            <p className={cn("eyebrow", tone === "dark" && "text-highlight")}>{label}</p>
             {children}
         </div>
     );
@@ -67,7 +69,7 @@ export function ButtonThemePage() {
         <DesignSystemShell
             eyebrow="Components"
             title="Button."
-            description="One shadcn primitive, wrapped once in components/ui/button.tsx. Nine variants, five sizes, five icon sizes, loading state built in via the loading prop. See docs/DESIGN.md §4.3."
+            description="One shadcn primitive, wrapped once in components/ui/button.tsx. Ten variants, five sizes, five icon sizes, loading state built in via the loading prop. See docs/DESIGN.md §4.3."
         >
             <div className="space-y-10">
                 <section>
@@ -78,14 +80,19 @@ export function ButtonThemePage() {
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {BUTTON_VARIANTS.map((v) => {
-                            const dark = v.name === "highlight" || v.name === "highlight-outline";
+                            const tone =
+                                v.name === "highlight" || v.name === "highlight-outline"
+                                    ? "dark"
+                                    : v.name === "surface"
+                                      ? "canvas"
+                                      : "surface";
                             return (
-                                <Swatch key={v.name} label={v.label} dark={dark}>
+                                <Swatch key={v.name} label={v.label} tone={tone}>
                                     <Button variant={v.name}>{v.label}</Button>
                                     <p
                                         className={cn(
                                             "body-xs",
-                                            dark ? "text-[#B8CFC4]" : "text-ink-subtle",
+                                            tone === "dark" ? "text-[#B8CFC4]" : "text-ink-subtle",
                                         )}
                                     >
                                         {v.note}
@@ -205,7 +212,8 @@ export function ButtonThemePage() {
                             punctuation.
                         </li>
                         <li>
-                            Pill-shaped via `rounded-control`. Never `rounded-md` or `rounded-lg`.
+                            Standard 12px corners via `rounded-control`. Use the same token for every
+                            button size.
                         </li>
                         <li>
                             `lg` is 48px (`control-xl`), matching input `lg`. Use it on primary

@@ -14,11 +14,17 @@ function matchesQuery(item: InviteItem, q: string): boolean {
     );
 }
 
+function matchesType(isRent: boolean, type: InvitesFilters["type"]): boolean {
+    if (!type) return true;
+    return type === "rent" ? isRent : !isRent;
+}
+
 export function filterInvites(items: InviteItem[], filters: InvitesFilters): InviteItem[] {
     return items.filter(
         (item) =>
             (filters.stage === "all" || item.stage === filters.stage) &&
-            matchesQuery(item, filters.q),
+            matchesQuery(item, filters.q) &&
+            matchesType(item.isRent, filters.type),
     );
 }
 

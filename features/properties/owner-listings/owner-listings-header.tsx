@@ -14,7 +14,6 @@ import type {
     OwnerListingsFilters,
     OwnerListingSort,
 } from "@/features/properties/owner-listings/types";
-import type { OwnerListingsView } from "@/features/properties/owner-listings/use-owner-listings-view";
 
 export type OwnerListingsHeaderProps = {
     filters: OwnerListingsFilters;
@@ -26,11 +25,10 @@ export type OwnerListingsHeaderProps = {
     onApplyBand: (band: OwnerListingsBandFilters) => void;
     onApplySheet: (patch: Partial<OwnerListingsFilters>) => void;
     onToggleQuickChip: (
-        key: "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove",
+        key:
+            "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove" | "bookmarked",
     ) => void;
     onSortChange: (sort: OwnerListingSort) => void;
-    view: OwnerListingsView;
-    onViewChange: (view: OwnerListingsView) => void;
 };
 
 export function OwnerListingsHeader({
@@ -44,8 +42,6 @@ export function OwnerListingsHeader({
     onApplySheet,
     onToggleQuickChip,
     onSortChange,
-    view,
-    onViewChange,
 }: OwnerListingsHeaderProps) {
     const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -61,6 +57,7 @@ export function OwnerListingsHeader({
                 <OwnerListingsSearchBand
                     appliedFilters={filters}
                     listings={listings}
+                    serviceAreas={filterContext.serviceAreas}
                     onApplyBand={onApplyBand}
                 />
 
@@ -73,8 +70,6 @@ export function OwnerListingsHeader({
                     onOpenFilters={handleOpenFilters}
                     onQueryChange={(q) => onApplySheet({ q, cursor: "" })}
                     onSortChange={onSortChange}
-                    view={view}
-                    onViewChange={onViewChange}
                 />
             </div>
             <OwnerListingsFilterSheet

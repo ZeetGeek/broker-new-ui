@@ -25,12 +25,21 @@ const USER_KEY = "broker_auth_user";
 /** Legacy key — cleared on logout so old XSS-exposed values are removed. */
 const LEGACY_REFRESH_TOKEN_KEY = "broker_refresh_token";
 
+/**
+ * In-memory copy so a failed refresh-cookie call cannot wipe a just-completed
+ * login. Third-party cookies from the remote API are often blocked on localhost.
+ */
+let memoryAccessToken: string | null = null;
+let memoryUser: AuthUser | null = null;
+
 export function getAccessToken(): string | null {
+    if (memoryAccessToken) return memoryAccessToken;
     if (typeof window === "undefined") return null;
     return localStorage.getItem(TOKEN_KEY);
 }
 
 export function getStoredUser(): AuthUser | null {
+    if (memoryUser) return memoryUser;
     if (typeof window === "undefined") return null;
     const raw = localStorage.getItem(USER_KEY);
     if (!raw) return null;
@@ -42,12 +51,18 @@ export function getStoredUser(): AuthUser | null {
 }
 
 export function setSession(session: AuthSession) {
+    memoryAccessToken = session.accessToken;
+    memoryUser = session.user;
+    if (typeof window === "undefined") return;
     localStorage.setItem(TOKEN_KEY, session.accessToken);
     localStorage.setItem(USER_KEY, JSON.stringify(session.user));
     localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
 }
 
 export function clearSession() {
+    memoryAccessToken = null;
+    memoryUser = null;
+    if (typeof window === "undefined") return;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
@@ -57,8 +72,33 @@ export function isAuthenticated() {
     return Boolean(getAccessToken());
 }
 
+export type Portal = "owner" | "broker";
+
+export function portalForRole(role: string | null | undefined): Portal {
+    return role === "owner" ? "owner" : "broker";
+}
+
 export function portalHomeForRole(role: string | null | undefined): string {
     if (role === "owner") return "/owner";
     if (role === "admin") return "/broker/dashboard";
     return "/broker/dashboard";
+}
+
+/** Which portal a path belongs to, or null for public routes. */
+export function portalForPath(path: string): Portal | null {
+    if (path === "/owner" || path.startsWith("/owner/")) return "owner";
+    if (path === "/broker" || path.startsWith("/broker/")) return "broker";
+    return null;
+}
+
+/**
+ * Post-login destination. Same-portal `next` is kept; the other portal
+ * falls back to this user's home so a broker cannot land on `/owner`.
+ */
+export function destinationForRole(role: string | null | undefined, next: string | null): string {
+    const home = portalHomeForRole(role);
+    if (!next || !next.startsWith("/") || next.startsWith("//")) return home;
+    const portal = portalForPath(next);
+    if (portal && portal !== portalForRole(role)) return home;
+    return next;
 }

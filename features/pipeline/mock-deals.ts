@@ -29,6 +29,8 @@ const PROPERTIES = {
         amountInr: 1_15_00_000,
         isRent: false,
         imageSrc: "/properties/1.jpg",
+        imageSrcs: ["/properties/1.jpg", "/properties/2.jpg", "/properties/3.jpg"],
+        photoCount: 5,
     },
     palFlat: {
         id: "pr_099",
@@ -42,6 +44,8 @@ const PROPERTIES = {
         amountInr: 42_00_000,
         isRent: false,
         imageSrc: "/properties/2.jpg",
+        imageSrcs: ["/properties/2.jpg", "/properties/4.jpg", "/properties/5.jpg"],
+        photoCount: 3,
     },
     piplodRent: {
         id: "pr_088",
@@ -55,6 +59,8 @@ const PROPERTIES = {
         amountInr: 28_000,
         isRent: true,
         imageSrc: "/properties/3.jpg",
+        imageSrcs: ["/properties/3.jpg", "/properties/1.jpg", "/properties/5.jpg"],
+        photoCount: 4,
     },
     adajanRent: {
         id: "pr_121",
@@ -68,6 +74,8 @@ const PROPERTIES = {
         amountInr: 22_000,
         isRent: true,
         imageSrc: "/properties/4.jpg",
+        imageSrcs: ["/properties/4.jpg", "/properties/2.jpg", "/properties/1.jpg"],
+        photoCount: 3,
     },
     vesuVilla: {
         id: "pr_130",
@@ -81,6 +89,8 @@ const PROPERTIES = {
         amountInr: 1_85_00_000,
         isRent: false,
         imageSrc: "/properties/5.jpg",
+        imageSrcs: ["/properties/5.jpg", "/properties/3.jpg", "/properties/4.jpg"],
+        photoCount: 6,
     },
 } as const;
 
@@ -158,6 +168,8 @@ export const MOCK_DEALS: DealItem[] = [
         closedAmountInr: null,
         offerAmountInr: 1_72_00_000,
         offerStatus: "pending",
+        createdAt: daysAgo(18),
+        lastContactMethod: "call",
     },
     {
         id: "dl_002",
@@ -173,6 +185,8 @@ export const MOCK_DEALS: DealItem[] = [
         closedAmountInr: null,
         offerAmountInr: null,
         offerStatus: null,
+        createdAt: daysAgo(2),
+        source: "website",
     },
     {
         id: "dl_003",
@@ -195,14 +209,19 @@ export const MOCK_DEALS: DealItem[] = [
         buyer: BUYERS.mohit,
         property: PROPERTIES.palFlat,
         owner: OWNERS.sunita,
-        stageEnteredAt: daysAgo(6),
-        lastContactedAt: daysAgo(6),
+        stageEnteredAt: daysAgo(8),
+        lastContactedAt: daysAgo(8),
         nextVisitAt: null,
         note: "Wants to see it on a weekend.",
         resolvedAt: null,
         closedAmountInr: null,
         offerAmountInr: null,
         offerStatus: null,
+        createdAt: daysAgo(12),
+        lastContactMethod: "call",
+        nextFollowUpAt: daysAhead(1, 4),
+        // A teammate is working this one — exercises the "Handled by" line.
+        assignedAgent: { id: "user_milan", name: "Milan Patel" },
     },
     // Stalled: no contact in 19 days, well past the 14-day mark.
     {
@@ -215,6 +234,8 @@ export const MOCK_DEALS: DealItem[] = [
         lastContactedAt: daysAgo(19),
         nextVisitAt: null,
         note: "Said she would call back after Diwali.",
+        createdAt: daysAgo(28),
+        lastContactMethod: "whatsapp",
         resolvedAt: null,
         closedAmountInr: null,
         offerAmountInr: null,
@@ -249,6 +270,8 @@ export const MOCK_DEALS: DealItem[] = [
         closedAmountInr: null,
         offerAmountInr: null,
         offerStatus: null,
+        createdAt: daysAgo(1),
+        source: "walk_in",
     },
     // Over budget on purpose — the card flags it rather than hiding it.
     {
@@ -265,6 +288,8 @@ export const MOCK_DEALS: DealItem[] = [
         closedAmountInr: null,
         offerAmountInr: null,
         offerStatus: null,
+        createdAt: daysAgo(5),
+        source: "reference",
     },
     {
         id: "dl_009",

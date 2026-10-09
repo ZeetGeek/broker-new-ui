@@ -1,0 +1,74 @@
+{
+    "title": "Add property visual direction",
+    "question": "The form is white-on-white today. Which look should we build, staying inside the cream + green system?",
+    "options": [
+        {
+            "id": "warm-workspace",
+            "label": "Warm workspace",
+            "kicker": "RECOMMENDED",
+            "thesis": "Cream shell, white only on the active step, stronger green on select and primary actions.",
+            "palette": ["#EFEAE0", "#FFFFFF", "#0B1F17", "#1B7A5A", "#E3F2EA"],
+            "materials": ["warm canvas", "soft shadow-sm", "brand-soft selection"],
+            "viewport": "Cream page ground; left step rail on muted cream; center form on white; right preview as a quieter inset panel.",
+            "risk": "If contrast stays timid it still reads flat.",
+            "wireframe": {
+                "cols": 12,
+                "rows": 10,
+                "regions": [
+                    { "label": "header", "x": 0, "y": 0, "w": 12, "h": 1 },
+                    { "label": "cream rail", "x": 0, "y": 1, "w": 2, "h": 8, "accent": true },
+                    { "label": "white form", "x": 2, "y": 1, "w": 6, "h": 8 },
+                    { "label": "preview panel", "x": 8, "y": 1, "w": 4, "h": 8 },
+                    { "label": "footer", "x": 0, "y": 9, "w": 12, "h": 1 }
+                ]
+            }
+        },
+        {
+            "id": "ink-rail",
+            "label": "Ink step rail",
+            "kicker": "BOLDER",
+            "thesis": "Dark green left rail for progress; cream center; white only for the fields you touch.",
+            "palette": ["#0B1F17", "#EFEAE0", "#FFFFFF", "#C9F24D", "#1B7A5A"],
+            "materials": ["brand-ink rail", "cream canvas", "lime highlight sparingly"],
+            "viewport": "Near-black green step column with light step labels; main stage stays cream with white field clusters.",
+            "risk": "Can feel heavy on a sunny outdoor phone if the rail is too wide.",
+            "wireframe": {
+                "cols": 12,
+                "rows": 10,
+                "regions": [
+                    { "label": "header", "x": 0, "y": 0, "w": 12, "h": 1 },
+                    { "label": "ink rail", "x": 0, "y": 1, "w": 2, "h": 8, "accent": true },
+                    { "label": "cream form", "x": 2, "y": 1, "w": 6, "h": 8 },
+                    { "label": "preview", "x": 8, "y": 1, "w": 4, "h": 8 },
+                    { "label": "footer", "x": 0, "y": 9, "w": 12, "h": 1 }
+                ]
+            }
+        },
+        {
+            "id": "quiet-polish",
+            "label": "Quiet polish",
+            "kicker": "SAFER",
+            "thesis": "Keep the white shell; only deepen section cards, selected chips, and the preview stack.",
+            "palette": ["#FFFFFF", "#F7F4EE", "#E3F2EA", "#1B7A5A", "#191C1A"],
+            "materials": ["surface-muted sections", "existing shadows", "same layout"],
+            "viewport": "Same three columns as today; sections sit on muted cream; selected options use fuller brand-soft.",
+            "risk": "May still feel plain if the shell stays pure white.",
+            "wireframe": {
+                "cols": 12,
+                "rows": 10,
+                "regions": [
+                    { "label": "white shell", "x": 0, "y": 0, "w": 12, "h": 10 },
+                    { "label": "step rail", "x": 0, "y": 1, "w": 2, "h": 8 },
+                    { "label": "form", "x": 2, "y": 1, "w": 6, "h": 8, "accent": true },
+                    { "label": "preview", "x": 8, "y": 1, "w": 4, "h": 8 }
+                ]
+            }
+        }
+    ],
+    "buildPath": {
+        "value": "code",
+        "toggle": false
+    },
+    "canon": false,
+    "steer": false
+}

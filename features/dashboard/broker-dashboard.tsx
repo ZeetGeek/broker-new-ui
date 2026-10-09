@@ -2,7 +2,12 @@
 
 import { useEffect } from "react";
 
-import { mapBrokerDashboardView } from "@/features/dashboard/map-dashboard";
+import { isMockMode } from "@/lib/api/mock-mode";
+
+import { LoadingSpinner } from "@/components/shared/loading-spinner";
+
+import { mapBrokerDashboardView, mapBrokerDashboardViewFromMock } from "@/features/dashboard/map-dashboard";
+import { dashboardMock } from "@/features/dashboard/mock-data";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
@@ -15,6 +20,14 @@ import { PipelineCard } from "./pipeline-card";
 import { RequestsCard } from "./requests-card";
 import { TodayCard } from "./today-card";
 import { YouRepresentCard } from "./you-represent-card";
+
+function DashboardLoading() {
+    return (
+        <div className="flex items-center justify-center min-block-[calc(100dvh-5rem)]">
+            <LoadingSpinner label="Loading dashboard" />
+        </div>
+    );
+}
 
 function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
     return (
@@ -39,14 +52,16 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
 
 export function BrokerDashboard() {
     const dispatch = useAppDispatch();
+    const authHydrated = useAppSelector((state) => state.auth.hydrated);
     const { data, profile, status, error } = useAppSelector((state) => state.dashboard);
 
     useEffect(() => {
+        if (!authHydrated) return;
         void dispatch(fetchBrokerDashboard());
-    }, [dispatch]);
+    }, [authHydrated, dispatch]);
 
     if (status === "idle" || status === "loading") {
-        return null;
+        return <DashboardLoading />;
     }
 
     if (status === "failed") {
@@ -61,7 +76,9 @@ export function BrokerDashboard() {
     }
 
     const now = new Date();
-    const view = mapBrokerDashboardView(data, profile, now);
+    const view = isMockMode()
+        ? mapBrokerDashboardViewFromMock(dashboardMock, profile, now)
+        : mapBrokerDashboardView(data, profile, now);
 
     return (
         <div className="flex flex-col gap-6 min-block-[calc(100dvh-5rem)] md:gap-6">
@@ -76,6 +93,8 @@ export function BrokerDashboard() {
                     activityCount={view.activity.items.length + (view.activity.remainingCount ?? 0)}
                     reraStatus={view.reraStatus}
                     serviceAreas={view.serviceAreas}
+                    phoneDigits={view.phoneDigits}
+                    email={view.email}
                 />
             </header>
 

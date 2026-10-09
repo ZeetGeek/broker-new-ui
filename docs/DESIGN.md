@@ -67,18 +67,23 @@ ink-subtle      #A9A79D   captions, metadata, placeholder
 ```
 
 ```
-brand-ink       #0B1F17   primary button fill (reads black, is green)
-brand-deep      #0F3D2E   dark attention cards
-brand           #1B7A5A   prices, match %, active state, links
-brand-soft      #E3F2EA   badge and pill backgrounds
-brand-text      #0B5A41   text sitting on brand-soft
+brand-ink        #0B1F17   primary button fill (reads black, is green)
+brand-deep       #0F3D2E   dark attention cards
+brand            #1B7A5A   prices, match %, active state, links
+brand-soft       #E3F2EA   badge and chip backgrounds
+brand-soft-hover #D0E8DC   hover fill on brand-soft controls (same hue, one step deeper)
+brand-text       #0B5A41   text sitting on brand-soft
 ```
 
 ```
-stage-1         #7FD9B9   pipeline bar — New
-stage-2         #2FAE85   pipeline bar — Contacted
-stage-3         #0F6E56   pipeline bar — Site visit
-stage-4         #04342C   pipeline bar — Negotiation
+stage-1         #0284C7   pipeline — New (sky-600)
+stage-1-soft    #BAE6FD   pipeline — New, pill + column fill (sky-200)
+stage-2         #7C3AED   pipeline — Contacted (violet-600)
+stage-2-soft    #DDD6FE   pipeline — Contacted, pill + column fill (violet-200)
+stage-3         #D97706   pipeline — Site visit (amber-600)
+stage-3-soft    #FDE68A   pipeline — Site visit, pill + column fill (amber-200)
+stage-4         #059669   pipeline — Negotiation (emerald-600)
+stage-4-soft    #A7F3D0   pipeline — Negotiation, pill + column fill (emerald-200)
 ```
 
 ```
@@ -123,9 +128,17 @@ adding a colour to the palette.
 number submitted, waiting on verification. It is dark yellow so it does not steal
 `urgent` orange. Never use it for a deadline.
 
-`stage-1` … `stage-4` are **pipeline funnel fills only** — New → Contacted → Site
-visit → Negotiation. They deepen within the brand green family. Do not use them
-for buttons, badges, or any surface outside the pipeline bar / its legend.
+`stage-1` … `stage-4` and their `-soft` fills are **pipeline surfaces only** —
+New → Contacted → Site visit → Negotiation. Each stage owns one Tailwind hue,
+ordered cool to warm to resolved (sky → violet → amber → emerald) so the board
+reads left-to-right as forward motion and the four columns are told apart at a
+glance. The solid tone carries dots and pill text; the `-soft` fill backs the
+pill, and at 40% it tints the column.
+
+These four hues are **the documented exception to the one-hue rule in §1.1**,
+and the exception stops at the board. Do not use `stage-*` for buttons, badges,
+or any surface outside the pipeline — outside it, green remains the only brand
+hue.
 
 ### 1.4 Contrast
 
@@ -279,15 +292,19 @@ instead of inventing their own heights.
 
 ### 3.2 Radius
 
-The design is generously rounded. Sharp corners look wrong in it.
+The design uses compact, conventional rounded rectangles. Radius supports grouping and
+touch affordance without making every surface look soft or capsule-shaped.
 
 ```
---radius-card    20px   cards, photo containers, dark panels
---radius-inner   14px   inset strips, images inside cards
---radius-control  9999px  buttons, badges, inputs, pills, filter chips, tabs
+--radius-card    20px   cards, photo containers, dialogs, floating panels
+--radius-inner   12px   inset strips, menu items, images inside cards
+--radius-control 12px   buttons, inputs, selects, tabs, segmented controls
 ```
 
-Buttons, badges, and inputs are fully pill-shaped. Not `rounded-md`. Not `rounded-lg`. Not `rounded-inner` on a field.
+Badges use `rounded-lg` (12px). Checkboxes use `rounded-sm` (6px). Controls use
+`rounded-control` (12px); cards and overlays use `rounded-card` (20px). `rounded-full`
+is reserved for genuinely circular geometry such as avatars, radio indicators, status
+dots, and switch thumbs. It is not the default for buttons, badges, filters, or tabs.
 
 Never apply a radius to a single-sided border. If a row uses `border-l` as an accent,
 its radius is 0.
@@ -338,7 +355,7 @@ badge at top-right, then content.
 │ Today, 9:30 AM               │  h2, ink
 │ Vesu · meet at the gate      │  small, ink-muted
 │                              │
-│ [Directions]  [Reschedule]   │  primary pill · secondary pill
+│ [Directions]  [Reschedule]   │  primary action · secondary action
 └──────────────────────────────┘
 ```
 
@@ -356,17 +373,20 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 
 ### 4.3 Buttons
 
-| Variant           | Fill                         | Text            | Use                                                                                                                                                         |
-| ----------------- | ---------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Primary           | `brand-ink`                  | white           | One per screen. Request to represent, Approve, Add property                                                                                                 |
-| Accent            | `brand`                      | `canvas`        | One per screen, marketing/hero CTAs only. Not for in-app screens — `Primary` owns those                                                                     |
-| Highlight         | `highlight`                  | `highlight-ink` | Dark surfaces only (`brand-deep`/`brand-ink` cards). One per screen, max — the one action that leads on a dark attention card. Never on `canvas`/`surface`. |
-| Highlight outline | transparent, 1px `highlight` | `highlight-ink` | Same dark-surface restriction as Highlight, lower emphasis.                                                                                                 |
-| Secondary         | transparent, 1px `border`    | `ink`           | Reschedule, Cancel, Map view                                                                                                                                |
-| Destructive       | transparent, 1px `danger`    | `danger`        | Reject, Delete                                                                                                                                              |
-| Ghost             | none                         | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
+| Variant           | Fill                                      | Text            | Use                                                                                                                                                         |
+| ----------------- | ----------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary           | `brand-ink`                               | white           | One per screen. Request to represent, Approve, Add property                                                                                                 |
+| Accent            | `brand`                                   | `canvas`        | One per screen, marketing/hero CTAs only. Not for in-app screens — `Primary` owns those                                                                     |
+| Highlight         | `highlight`                               | `highlight-ink` | Dark surfaces only (`brand-deep`/`brand-ink` cards). One per screen, max — the one action that leads on a dark attention card. Never on `canvas`/`surface`. |
+| Highlight outline | transparent, 1px `highlight`              | `highlight-ink` | Same dark-surface restriction as Highlight, lower emphasis.                                                                                                 |
+| Secondary         | transparent, 1px `border`                 | `ink`           | Reschedule, Cancel, Map view                                                                                                                                |
+| Surface           | `surface`, 1px `border-warm`, `shadow-sm` | `ink`           | White fill on canvas. Filter chips and quiet contained actions. Hover keeps the white fill and darkens the border so it does not blend into `canvas`.       |
+| Destructive       | transparent, 1px `danger`                 | `danger`        | Reject, Delete                                                                                                                                              |
+| Ghost             | none                                      | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
 
-All are pill-shaped. Height comes from the control-height scale (§3.1a):
+`brand-soft` fills hover to `brand-soft-hover` — one step deeper in the same green, never a different hue.
+
+All use the standard 12px control radius. Height comes from the control-height scale (§3.1a):
 `xs`/`sm`/`default`/`md`/`lg` map to `control-xs`/`control-sm`/`control-md`/
 `control-lg`/`control-xl`. Icon sizes follow the same steps (`icon-xs` through
 `icon-lg`). Button `lg` and input `lg` are the same height — never mix steps in
@@ -383,24 +403,23 @@ one spinner, one place, `components/ui/button.tsx`. `loading` disables the contr
 `aria-busy`, and keeps the label on screen next to the spinner — it never replaces the
 label with the spinner alone.
 
-### 4.4 Badges and pills
+### 4.4 Badges and chips
 
-Soft background plus the matching dark text from the same family. Never white text
+Soft top→bottom fill gradient (`surface` → tint) plus a vertical gradient border
+(light top → darker bottom), and a soft colour-tinted drop shadow. Never white text
 on a soft fill, never `ink` on a coloured fill.
 
-| Meaning                    | Background      | Text         |
+| Meaning                    | Fill to         | Text         |
 | -------------------------- | --------------- | ------------ |
 | Verified, approved, active | `brand-soft`    | `brand-text` |
 | Expiring, overdue, due now | `urgent-soft`   | `urgent`     |
 | Rejected, inactive         | `danger-soft`   | `danger`     |
-| Neutral status, filters    | `surface-muted` | `ink-muted`  |
+| Neutral status             | `surface-muted` | `ink`        |
+| Filters, tags (outline)    | `surface`       | `ink-muted`  |
 
-The `focused` variant uses the same size and spacing as every other badge, with
-a `brand-soft` surface, subtle `brand` outline, green checkmark, and
-`brand-text` label. The checkmark is supplied by the component and must not be
-repeated by callers. Use `<Badge variant="focused">Focused</Badge>`.
-
-12px, weight 500, `4px 10px` padding, pill radius.
+12px, weight 600, `4px 12px` padding, `rounded-lg` (12px) — soft corners, not
+`rounded-full`. Border is a gradient via dual `background` (padding-box +
+border-box), not a flat `border-color`.
 
 ### 4.5 Property card
 
@@ -409,7 +428,7 @@ top corners, 4:3 aspect ratio, `object-cover`.
 
 ```
 ┌──────────────────────────────┐
-│ [Active]                 [♡] │  overlay pills on photo
+│ [Active]                 [♡] │  compact overlay controls on photo
 │                              │
 │         photo 4:3            │
 │                              │
@@ -430,13 +449,13 @@ get 5× more interest`. Never a gray box, never a broken image icon.
 
 ### 4.6 Metric strip
 
-Inset `surface-muted` row inside a card, 14px radius, two to three columns divided by
+Inset `surface-muted` row inside a card, 12px radius, two to three columns divided by
 1px `border`. Label above at 11px `ink-subtle`, value below at 16px `ink`, tabular.
 Used for loan breakdowns, property stats, deal summaries.
 
 ### 4.7 Stage / progress strip
 
-Full-width `brand-deep` bar, pill radius, showing pipeline position. Completed stages
+Full-width `brand-deep` bar, 12px radius, showing pipeline position. Completed stages
 carry a `brand` dot and white label; the current stage carries a `highlight` dot and
 white label; future stages are `#7E9A8D` with no dot.
 
@@ -497,12 +516,13 @@ placeholder and lives in `config/site.ts` only.
 
 ### 4.10 Input
 
-One base-ui primitive, wrapped once in `components/ui/input.tsx`. Three
-sizes (`sm` / `default` / `lg`) off the control-height scale (§3.1a) —
-`control-sm` / `control-md` / `control-xl` (48px). Input `lg` and button `lg`
-share that height — `lg` is the primary-mobile-form size — an optional icon in either
-end slot, and error/success/loading states that share one wiring instead of
-three.
+One base-ui primitive, wrapped once in `components/ui/input.tsx`. Five
+sizes (`xs` / `sm` / `default` / `md` / `lg`) off the same control-height
+scale as buttons (§3.1a) — `control-xs` / `control-sm` / `control-md` /
+`control-lg` / `control-xl`. Input `md`/`lg` and button `md`/`lg` share
+those heights — `md` is the desktop tap-target, `lg` is the
+primary-mobile-form size — an optional icon in either end slot, and
+error/success/loading states that share one wiring instead of three.
 
 ```
 ┌──────────────────────────────┐
@@ -517,7 +537,7 @@ three.
 └──────────────────────────────┘
 ```
 
-Pill radius (`rounded-control`), 2px `border-warm`, `surface` fill. Rest state
+Standard control radius (`rounded-control`), 2px `border-warm`, `surface` fill. Rest state
 carries no shadow — `shadow-xs` is reserved for the rare case an input sits
 directly on `canvas` rather than inside a card that already separates it.
 
@@ -557,6 +577,302 @@ field's own value.
 
 Placeholder text is `ink-subtle`, sentence case, describes what to enter
 (`Search locality`) rather than repeating a visible label (`Locality`).
+
+### 4.11 Select
+
+One base-ui primitive, wrapped once in `components/ui/select.tsx`. Compound
+API: `Select` / `SelectTrigger` / `SelectValue` / `SelectContent` /
+`SelectItem` (plus optional `SelectGroup`, `SelectLabel`, `SelectSeparator`).
+The trigger uses the same five control-height steps, `rounded-control`, 2px
+`border-warm`, and `surface` fill as Input (§4.10). Default trigger is 36px
+(`control-md`); `lg` is 48px for primary mobile forms sitting next to an
+Input of the same size.
+
+```
+┌──────────────────────────────┐
+│ 📍  Vesu                  ▾  │  start icon · value · chevron
+├──────────────────────────────┤
+│ 🏢  Choose type           ▾  │  placeholder is ink-subtle
+├──────────────────────────────┤
+│ 📍  Adajan                ◌  │  loading — Tailspin replaces chevron
+├──────────────────────────────┤
+│    Choose a locality      ▾  │  error — danger border + ring
+│ Choose a locality to continue│  message region, danger text
+└──────────────────────────────┘
+```
+
+**Chevron owns the end slot.** `startIcon` is optional. `loading` disables
+the trigger, sets `aria-busy`, and swaps the chevron for the same Tailspin
+as Input and Button. Never add a second end icon.
+
+**Error and success** on `SelectTrigger`: pass `errorText` and the border,
+focus ring, shake, and message region switch together. `success` sets
+`data-success` and a `success-mid` border; it is suppressed when the field
+is also invalid.
+
+**Popup** is `bg-surface`, `rounded-card`, `shadow-lg`, origin-aware via
+`t-dropdown`. Highlighted items use `brand-soft` / `brand-text`. Never a
+dark glass overlay. Keep the list as this compound select — do not flatten
+to a native `<select>`.
+
+### 4.11b Combobox
+
+Filterable cousin of Select. One base-ui primitive, wrapped once in
+`components/ui/combobox.tsx`. Compound API: `Combobox` / `ComboboxInput` /
+`ComboboxContent` / `ComboboxList` / `ComboboxItem` (plus optional group,
+label, separator, empty, chips). Visual tokens match Select exactly —
+`rounded-control` input shell, five control-height steps, `startIcon`,
+loading Tailspin, error/success message region, and a `bg-surface` +
+`shadow-lg` + `t-dropdown` popup. Items use the same option styling as
+`SelectItem`. Prefer Combobox when the list is long enough to type-filter;
+short exclusive sets stay on Select or Radio.
+
+### 4.12 Switch
+
+One base-ui primitive, wrapped once in `components/ui/switch.tsx`. Binary
+on/off preference — never a third state, never a substitute for radio when
+there are three or more exclusive options.
+
+```
+┌──────────────────────────────────────┐
+│ SMS alerts                      (●─) │  label + hint · switch on the end
+│ Site-visit reminders                 │
+└──────────────────────────────────────┘
+```
+
+Two sizes: `sm` (dense filter rows) and `default` (preference rows). Track is
+`rounded-full`. Checked fill is `brand` (pass brand utility classes at the
+call site so it matches Checkbox/Radio). Unchecked track uses a warm neutral
+border/fill, not a second brand colour.
+
+Always pair with a visible label (`htmlFor`/`id` or a wrapping `<label>`).
+Label sits on the start side; the control sits on the end. Disabled keeps the
+current checked value visible — do not clear it. Thumb motion uses the
+instant duration token; never a bouncy spring.
+
+**Icon segmented toggle** (grid/list in screenshot) is not this control. Use
+`components/shared/icon-segmented-toggle.tsx`: white pill, `border-warm`,
+`p-1`, icon-only segments, active segment gets sliding `brand-soft` fill +
+`border-brand`. `aria-pressed` per button; `role="group"` + `aria-label` on
+the shell. Owner listings view toggle is the reference call site.
+
+**Text segmented toggle** — same sliding highlight, text labels (Sale / Rent).
+`components/shared/text-segmented-toggle.tsx`. Default: outer + active
+segment `rounded-full`, equal-width segments. `size="sm"`: compact
+`rounded-control` variant on property cards. Not for long option lists — use
+radio option cards or a select.
+
+### 4.13 Radio
+
+base-ui Radio + RadioGroup, wrapped once in `components/ui/radio-group.tsx`.
+Compound API only: `RadioGroup` owns the value, `RadioGroupItem` is the
+16px circle. One exclusive choice from a short set.
+
+```
+┌─────────────────┐  ┌─────────────────┐
+│ ◉  For sale     │  │ ○  For rent     │  option cards — whole tile tappable
+│ Owner wants…    │  │ Owner wants…    │  selected: brand border + brand-soft fill
+└─────────────────┘  └─────────────────┘
+```
+
+Three layouts, same primitive:
+
+| Layout       | When                                                        |
+| ------------ | ----------------------------------------------------------- |
+| Stack        | Short account-type / role lists                             |
+| Grid         | 2–4 columns — furnishing, looking-for, deal extras          |
+| Option cards | Default on property forms — label wraps the item, 48px tall |
+
+Checked indicator fill is `brand`. Selected cards use `border-brand` +
+`bg-brand-soft` + `text-brand-text`. Hover only shifts the border — no soft
+fill until selected. Put `aria-invalid` on the group when a
+required choice is empty — not on every item. Circle geometry stays
+`rounded-full`; never restyle a radio into a checkbox look. Multi-select is
+Checkbox; binary on/off is Switch.
+
+### 4.14 Tooltip
+
+base-ui Tooltip, wrapped once in `components/ui/tooltip.tsx`. Short
+hover/focus hint for icon-only controls and truncated labels — never the only
+label for a primary action.
+
+```
+┌────┐
+│ 🔔 │ ← hover/focus
+└────┘
+   ▼
+┌──────────────────────────┐
+│ Send the owner a reminder│  body-xs · border-warm · shadow-sm
+└──────────────────────────┘
+```
+
+Compound API: optional `TooltipProvider` on a tree, then `Tooltip` +
+`TooltipTrigger` + `TooltipContent`. Default side is `top` with an 8px gap;
+open delay 80ms (intent), close immediate. Motion is `.t-tooltip` in
+`app/transitions-dev.css` — fade + scale, faster on leave.
+
+Copy stays short and plain (no full stop on a fragment). Keyboard shortcut
+hints use `ShortcutTooltip` from `components/shared/shortcut-tooltip.tsx` (or
+`Kbd` / `KbdGroup` inside content) so keys match the registry in
+`docs/SHORTCUTS.md`. Prefer a visible label on mobile — tooltips assist
+desktop, they do not replace affordance.
+
+### 4.15 Tabs
+
+base-ui Tabs, wrapped once in `components/ui/tabs.tsx`. Peer views and section
+chrome — not binary form choices (those are `TextSegmentedToggle` /
+`IconSegmentedToggle`).
+
+```
+┌─────────────────────────────┐
+│ [ Full details ] Quick add  │  surface-muted track · sliding surface pill
+└─────────────────────────────┘
+```
+
+Compound API for product screens can still use base-ui `Tabs` + `TabsList` +
+`TabsTrigger` (+ `TabsContent`). The design-system reference motion is
+**transitions.dev 16-tabs-sliding**: `.t-tabs` / `.t-tabs-surface` /
+`.t-tabs-pill` in `app/transitions-dev.css`. JS measures the active tab;
+CSS tweens `transform` + `width` (or `height` when vertical) with
+`--tabs-dur` / `--ease-smooth-out`.
+
+**One visual style:** `surface-muted` track; active pill is `surface` +
+`border-border-warm` + `shadow-sm` + `ink` text. No brand / brand-soft fill on
+the pill. Panel swaps use `.t-tabs-panel` (soft rise + fade). Prefer two or
+three tabs. Stage rows on mobile scroll horizontally with count badges.
+Minimum tap target 44px. `prefers-reduced-motion` snaps with no tween.
+
+### 4.16 Dialog
+
+base-ui Dialog, wrapped once in `components/ui/dialog.tsx`. Focused task or
+confirmation on top of the page — not a second page, not a toast.
+
+```
+┌─────────────────────────────────┐
+│ Title                      [×]  │
+│ Short description               │
+│ Body                            │
+│              Cancel  Save note  │  right-aligned · auto width
+└─────────────────────────────────┘
+```
+
+Compound API: `Dialog` + `DialogTrigger` + `DialogPopup` (+ `DialogHeader` /
+`DialogTitle` / `DialogDescription` / `DialogClose`). Product screens use
+`AppModal` from `components/shared/app-modal.tsx` — same visual system: one
+`bg-surface` shell, content-height (`max-block` not forced full viewport), no
+header/footer dividers, quiet close. `AppModalFooter`: ghost cancel + default
+primary, `Button` `size="default"`, auto width, right-aligned.
+
+**Surface:** `rounded-card`, `border-border-warm`, `bg-surface`, `shadow-xl`.
+Backdrop is `bg-ink/50` + light blur. Motion is transitions.dev **06-modal**:
+`.t-modal` / `.t-modal-backdrop`. Prefer `sm` or `md` on phones; override
+height via `className` only for working surfaces (chat, long forms).
+
+Copy follows `docs/MESSAGES.md`. Destructive confirms use
+`Button variant="destructive"`. Never open a dialog for information the user
+did not ask for.
+
+### 4.17 Avatar
+
+base-ui Avatar, wrapped once in `components/ui/avatar.tsx`. Circular face for
+a person — photo, initials, or a status badge. Not a logo mark, not a property
+thumbnail.
+
+```
+┌────┐
+│ PS │  rounded-full · size-10 default · ring-border-warm · shadow-xs
+└────┘
+```
+
+Compound API: `Avatar` + `AvatarImage` + `AvatarFallback` (+ `AvatarBadge` /
+`AvatarGroup` / `AvatarGroupCount`). Sizes: `sm` 32px, `default` 40px, `lg`
+48px. Frame: `bg-surface`, `ring-1 ring-border-warm`, `shadow-xs` (depth without
+a heavy drop shadow).
+
+Product screens use `UserAvatar` from `components/shared/user-avatar.tsx` —
+photo when present, then `avvvatars-react` placeholders: `shape` (default) or
+`character` (initials). Extra sizes: `xxs` 20px and `xs` 32px for dense
+pipeline rows; product `md` 40px, `lg` 56px for headers. Overlapping faces use
+`AvatarStack` (tooltips + `+N` overflow) or compound `AvatarGroup` for short
+static lists — stack faces keep a `ring-surface` so they separate on overlap.
+
+Always pass a real name for alt text and fallbacks. Face stays a circle —
+never a rounded square. Do not edit `components/ui/avatar.tsx` for one-offs;
+pass `className` or wrap in `components/shared/`. Only avatar library:
+`avvvatars-react` (no boring-avatars or other generators).
+
+### 4.18 Checkbox
+
+One base-ui primitive, wrapped once in `components/ui/checkbox.tsx`.
+Multi-select and consent — never a substitute for Radio (one exclusive choice)
+or Switch (binary preference).
+
+```
+┌─────────────────────────────┐
+│ ☑  Morning · 9–12           │  option card — whole tile tappable
+└─────────────────────────────┘
+  ☐  I agree to share…           stack — label beside the box
+```
+
+Fixed 20px square, `rounded-sm` (6px). Unchecked: `bg-surface` +
+`border-border-warm`. Checked and indeterminate: `brand` fill + white mark
+(check or dash). Focus ring snaps in — no fade. Invalid uses `danger-mid`
+border.
+
+Three layouts, same primitive:
+
+| Layout        | When                                                      |
+| ------------- | --------------------------------------------------------- |
+| Stack         | Consent lines, reminders, short multi-select lists        |
+| Option cards  | Filter sheets (time of day, amenities) — 48px tap height  |
+| Indeterminate | Parent of a partial group only — never a third preference |
+
+Always pair with a visible label (`htmlFor`/`id` or a wrapping `<label>`).
+Selected cards use `border-brand` + `bg-brand-soft` + `text-brand-text`.
+Hover only shifts the card border. Motion is `.t-check` from transitions.dev
+25 (`app/transitions-dev.css`) — box fills (`--check-box` 150ms), then the
+check stroke-draws (`--check-draw` 350ms); uncheck reverses in
+`--check-uncheck` (150ms). Path stays mounted so a mid-draw uncheck reverses
+cleanly. No bouncy spring.
+
+### 4.19 Date picker
+
+Popover + outline Button + Calendar, wrapped once as `AppDatePicker` in
+`components/shared/app-date-picker.tsx`. Do not recompose those three at call
+sites. Value in state / forms is `yyyy-MM-dd`; the trigger always shows
+`dd/mm/yyyy` via `formatDateIn` — never month-first `en-US` formatting.
+Empty placeholder is `Pick a date`.
+
+```
+┌──────────────────────────────┐
+│ 18/08/2026              📅   │  filled — calendar icon on the end
+├──────────────────────────────┤
+│ Pick a date             📅   │  empty — placeholder is ink-subtle
+└──────────────────────────────┘
+         ┌ <  Sept ▴▾  2026 ▴▾  > ┐
+         │ Su Mo Tu …               │  Button nav · Select month/year
+         │  ·  · 15  …              │  selected = brand fill circle
+         └──────────────────────────┘
+```
+
+Same five control-height steps as Input and Select (`xs`–`lg`). Default is
+`lg` (48px / `control-xl`) for primary mobile forms — the listing
+"Available from" field is the reference call site. Trigger uses
+`rounded-control`, 1px `border-warm`, `surface` fill; open state sets
+`border-ring` via `aria-expanded`. Calendar icon (not a chevron) owns the
+end slot; the date string sits on the start.
+
+Popup is light only — `bg-surface`, `rounded-card`, `border-warm`,
+`shadow-lg`. Caption is custom: `Button` (ghost, circular hover) for
+prev/next and compact `Select` triggers for month + year (`surface-muted`,
+`ChevronsUpDown`). Day cells are compact and circular; selected day uses a `brand` fill with
+`surface` text — never a under-dot. Unselected today uses a quiet
+`surface-muted` chip. Year range is roughly −10 / +20 years. Month select
+shows short names (`Jan`–`Dec`), not zero-based indices.
+
+Pass `invalid` when validation fails — error copy lives under the field
+(with the form's `FieldError`), not inside the popover. Always pair with a
+visible label (`htmlFor` / `id`).
 
 ---
 
@@ -669,7 +985,7 @@ Things that will be rejected in review:
 - Gradients anywhere except the documented broker dashboard status rail, including on photo overlays
 - Orange used decoratively rather than for a deadline
 - Lime appearing more than once per card, or as text on a light surface
-- `rounded-md` or `rounded-lg` on a button, badge, or input
+- `rounded-full` on a button, badge, filter chip, input, or tab without a documented circular purpose
 - Title Case or ALL CAPS outside the eyebrow label
 - Arbitrary spacing values (`p-[13px]`, `gap-[7px]`)
 - Emoji in production UI

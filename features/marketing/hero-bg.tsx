@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { AppImage } from "@/components/shared/app-image";
+
 export function HeroBg() {
     const [desktop] = useState(() => {
         if (typeof window === "undefined") {
@@ -14,9 +16,12 @@ export function HeroBg() {
 
     return (
         <>
-            <img
+            <AppImage
                 src="/video/hero-poster.webp"
                 alt=""
+                fill
+                sizes="100vw"
+                preload
                 className="absolute inset-0 object-cover block-full inline-full"
             />
             {desktop && (

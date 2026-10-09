@@ -63,7 +63,23 @@ function Stat({
  */
 export function EarningsCard({ summary, earnings, className }: EarningsCardProps) {
     if (!summary) {
-        return null;
+        return (
+            <section
+                className={cn(
+                    `
+                      flex flex-col gap-4 rounded-card border border-border-warm bg-surface p-4
+                      sm:p-5
+                    `,
+                    className,
+                )}
+                aria-busy
+                aria-label="Loading your credits"
+            >
+                <span className="animate-pulse rounded-sm bg-surface-muted block-9 inline-32" />
+                <span className="animate-pulse rounded-inner bg-surface-muted block-40" />
+                <span className="animate-pulse rounded-sm bg-surface-muted block-8 inline-52" />
+            </section>
+        );
     }
 
     /** Whole listings the balance covers. The only thing credits buy today. */

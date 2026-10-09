@@ -1,22 +1,10 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { MyRequestsPage } from "@/features/properties/my-requests/my-requests-page";
-import type { RequestsTab } from "@/features/properties/my-requests/requests-tabs";
-
-export const metadata: Metadata = {
-    robots: { index: false, follow: false },
-};
-
-const VALID_TABS: RequestsTab[] = ["sent", "invites"];
+import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
     const { tab } = await searchParams;
-    const activeTab = VALID_TABS.includes(tab as RequestsTab) ? (tab as RequestsTab) : "sent";
+    const href = tab ? `${BROKER_MY_DEALS_HREF}?tab=${tab}` : BROKER_MY_DEALS_HREF;
 
-    return (
-        <Suspense fallback={null}>
-            <MyRequestsPage activeTab={activeTab} />
-        </Suspense>
-    );
+    redirect(href);
 }

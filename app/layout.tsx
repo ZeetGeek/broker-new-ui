@@ -3,8 +3,7 @@ import { cn } from "@/lib/utils";
 
 import { ThemeProvider } from "@/components/theme-provider";
 
-import { PageTransitionProvider } from "@/providers/page-transition-provider";
-import { ProgressProvider } from "@/providers/progress-provider";
+import { QueryProvider } from "@/providers/query-provider";
 import { StoreProvider } from "@/providers/store-provider";
 
 import "./globals.css";
@@ -23,11 +22,9 @@ export default function RootLayout({
         >
             <body>
                 <StoreProvider>
-                    <ThemeProvider>
-                        <ProgressProvider>
-                            <PageTransitionProvider>{children}</PageTransitionProvider>
-                        </ProgressProvider>
-                    </ThemeProvider>
+                    <QueryProvider>
+                        <ThemeProvider>{children}</ThemeProvider>
+                    </QueryProvider>
                 </StoreProvider>
             </body>
         </html>

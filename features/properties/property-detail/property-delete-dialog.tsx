@@ -12,8 +12,7 @@ export type PropertyDeleteDialogProps = {
 };
 
 /**
- * Destructive confirm. Uses its own footer rather than `AppModalFooter`,
- * whose primary button is brand green — the wrong colour for a delete.
+ * Destructive confirm. Own footer — primary is danger, not brand.
  */
 export function PropertyDeleteDialog({
     open,
@@ -30,30 +29,24 @@ export function PropertyDeleteDialog({
             title="Delete this property?"
             description={`“${title}” will be removed permanently.`}
             footer={
-                <div className="
-                  flex flex-col-reverse gap-3 inline-full
-                  sm:flex-row sm:items-center sm:justify-between
-                ">
+                <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
                     <Button
                         type="button"
-                        variant="link"
-                        size="lg"
+                        variant="ghost"
+                        size="default"
                         disabled={busy}
                         onClick={() => onOpenChange(false)}
-                        className="px-0 text-ink-muted hover:text-ink"
+                        className="inline-auto"
                     >
                         Keep it
                     </Button>
                     <Button
                         type="button"
-                        size="lg"
+                        variant="destructive"
+                        size="default"
                         disabled={busy}
                         onClick={onConfirm}
-                        className="
-                          rounded-full bg-danger px-8 text-surface
-                          hover:bg-danger/90
-                          sm:min-inline-56
-                        "
+                        className="inline-auto"
                     >
                         {busy ? "Removing…" : "Delete property"}
                     </Button>

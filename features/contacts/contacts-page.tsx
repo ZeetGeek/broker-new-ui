@@ -1,171 +1,125 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { tinykeys } from "tinykeys";
 
-import { ArrowDownUp, ChevronDown, Search, UserPlus, UserRound, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, UserPlus, UserRound, UserRoundPlus, Users } from "lucide-react";
 
-import { contactsApi, type ContactsResult } from "@/lib/api/contacts";
-import { cn } from "@/lib/utils";
+import { ApiError } from "@/lib/api/client";
+import { clientsApi, type NewBuyerInput } from "@/lib/api/clients";
+import { contactsApi, sortBuyerRows } from "@/lib/api/contacts";
+import { PREF_KEYS } from "@/lib/prefs/keys";
+import { getShortcut } from "@/lib/shortcuts";
+import { useInfiniteItems } from "@/hooks/use-infinite-items";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { AddFab } from "@/components/shared/add-fab";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
-import { AttachBuyerPropertiesModal } from "@/features/contacts/attach-buyer-properties-modal";
+import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
+import {
+    AttachBuyerPropertiesModal,
+    type AttachBuyerTarget,
+} from "@/features/contacts/attach-buyer-properties-modal";
+import { AttachOwnerToListingModal } from "@/features/contacts/attach-owner-to-listing-modal";
 import { BuyerCard } from "@/features/contacts/buyer-card";
+import type { ContactPropertyCardItem } from "@/features/contacts/contact-card-model";
+import { ContactDetailPanel } from "@/features/contacts/contact-detail-panel";
+import { DeleteBuyerDialog } from "@/features/contacts/delete-buyer-dialog";
+import { DeleteOwnerDialog } from "@/features/contacts/delete-owner-dialog";
+import {
+    emptyOwnerForm,
+    type BuyerContactForm,
+    type OwnerContactForm,
+} from "@/features/contacts/contact-form-model";
+import { ContactsHeader } from "@/features/contacts/contacts-header";
+import { ContactsIntro } from "@/features/contacts/contacts-intro";
+import { ContactsSkeleton } from "@/features/contacts/contacts-skeleton";
 import { OwnerCard } from "@/features/contacts/owner-card";
 import {
     type BuyerRow,
     type ContactsFilters,
-    type ContactsSort,
-    type ContactsSummary,
-    type ContactsTab,
     DEFAULT_CONTACTS_FILTERS,
+    type OwnerRow,
 } from "@/features/contacts/types";
-import { ViewBuyerLeadsModal } from "@/features/contacts/view-buyer-leads-modal";
 
-const SORT_OPTIONS: { value: ContactsSort; label: string }[] = [
-    { value: "recent", label: "Recent first" },
-    { value: "name", label: "By name" },
-    { value: "most_active", label: "Most active" },
+/** Match Your listings grid: 1 → 2 → 3 → 4 → 5 columns. */
+const CONTACT_GRID_BREAKPOINTS = [
+    { minWidth: 640, columns: 2 },
+    { minWidth: 768, columns: 3 },
+    { minWidth: 1024, columns: 4 },
+    { minWidth: 1280, columns: 5 },
 ];
 
-const GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3";
-
-/** Debounced so typing does not refetch on every keystroke. */
-function ContactsQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
-    const [draft, setDraft] = useState(value);
-    const [prevValue, setPrevValue] = useState(value);
-
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setDraft(value);
-    }
-
-    useEffect(() => {
-        if (draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), 300);
-        return () => window.clearTimeout(timer);
-    }, [draft, onChange, value]);
-
+function isContactsFilters(value: unknown): value is ContactsFilters {
+    if (typeof value !== "object" || value === null) return false;
+    const v = value as Partial<ContactsFilters>;
     return (
-        <Input
-            size="sm"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Search name, number or area"
-            aria-label="Search your contacts"
-            startIcon={Search}
-            clearable
-            wrapperClassName="
-              min-inline-44 inline-44 shadow-sm
-              sm:min-inline-52 sm:inline-52
-              lg:min-inline-64 lg:inline-64
-            "
-            className="
-              rounded-full border! border-border-warm bg-surface text-sm font-medium shadow-sm
-              block-[38px]!
-              hover:border-ink/25!
-              focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
-            "
-        />
+        typeof v.q === "string" &&
+        (v.tab === "buyers" || v.tab === "owners") &&
+        (v.sort === "recent" || v.sort === "name" || v.sort === "most_active") &&
+        (v.ownerOrigin === "all" || v.ownerOrigin === "platform" || v.ownerOrigin === "custom")
     );
 }
 
-/**
- * Two-tone headline per docs/DESIGN.md §2.3, describing the tab actually on
- * screen. Counting buyers above a list of owners would be a lie the broker
- * can see.
- */
-function buildHeadline(
-    summary: ContactsSummary | null,
-    tab: ContactsTab,
-): { fact: string; meaning: string } {
-    if (!summary) {
-        return { fact: "Contacts.", meaning: "Everyone on both sides of your deals." };
-    }
-
-    if (tab === "owners") {
-        if (summary.ownerCount === 0) {
-            return { fact: "No owners yet.", meaning: "They appear once one accepts you." };
-        }
-        return {
-            fact: `${summary.ownerCount} ${summary.ownerCount === 1 ? "owner" : "owners"}.`,
-            meaning:
-                summary.lapsedOwnerCount > 0
-                    ? `${summary.lapsedOwnerCount} no longer represented.`
-                    : "All still represented by you.",
-        };
-    }
-
-    if (summary.buyerCount === 0) {
-        return { fact: "No buyers yet.", meaning: "Add the people looking to buy or rent." };
-    }
-
-    return {
-        fact: `${summary.buyerCount} ${summary.buyerCount === 1 ? "buyer" : "buyers"}.`,
-        meaning:
-            summary.unmatchedBuyerCount > 0
-                ? `${summary.unmatchedBuyerCount} on no property yet.`
-                : "All matched to a property.",
-    };
+function isEditable(el: EventTarget | null): boolean {
+    if (!(el instanceof HTMLElement)) return false;
+    const tag = el.tagName;
+    return (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        el.isContentEditable ||
+        el.getAttribute("role") === "textbox" ||
+        el.closest("[contenteditable='true']") !== null
+    );
 }
 
 export function ContactsPage() {
-    const [filters, setFilters] = useState<ContactsFilters>(DEFAULT_CONTACTS_FILTERS);
-    const [data, setData] = useState<ContactsResult | null>(null);
-    const [isFetching, setIsFetching] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [filters, setFilters] = usePersistedJson<ContactsFilters>(
+        PREF_KEYS.broker.contacts.prefs,
+        DEFAULT_CONTACTS_FILTERS,
+        { isValid: isContactsFilters },
+    );
     const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isOwnerAddOpen, setIsOwnerAddOpen] = useState(false);
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
-    const [attachingBuyer, setAttachingBuyer] = useState<BuyerRow | null>(null);
-    const [viewingBuyer, setViewingBuyer] = useState<BuyerRow | null>(null);
+    const [editingOwner, setEditingOwner] = useState<OwnerRow | null>(null);
+    const [attachingBuyer, setAttachingBuyer] = useState<AttachBuyerTarget | null>(null);
+    const [attachingOwner, setAttachingOwner] = useState<OwnerRow | null>(null);
+    const [deletingBuyer, setDeletingBuyer] = useState<BuyerRow | null>(null);
+    const [deletingOwner, setDeletingOwner] = useState<OwnerRow | null>(null);
+    const [deleteBusy, setDeleteBusy] = useState(false);
+    const [selectedContact, setSelectedContact] = useState<
+        { type: "buyer"; row: BuyerRow } | { type: "owner"; row: OwnerRow } | null
+    >(null);
+    const [detailSection, setDetailSection] = useState<"properties" | undefined>();
+    const [hasContactQuery, setHasContactQuery] = useState(false);
+    const openerIdRef = useRef<string | null>(null);
     /** Bumped after a create/update/attach so the list and counts both refetch. */
     const [revision, setRevision] = useState(0);
 
-    useEffect(() => {
-        let cancelled = false;
-
-        // Deferred so the loading flag does not set state during the effect
-        // body, which would cascade an extra render on every filter change.
-        const timer = window.setTimeout(() => {
-            if (cancelled) return;
-
-            setIsFetching(true);
-            setError(null);
-
-            void contactsApi
-                .list(filters)
-                .then((next) => {
-                    if (!cancelled) setData(next);
-                })
-                .catch(() => {
-                    if (!cancelled) {
-                        setError(
-                            "Could not load your contacts. Check your connection and try again.",
-                        );
-                    }
-                })
-                .finally(() => {
-                    if (!cancelled) setIsFetching(false);
-                });
-        }, 0);
-
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timer);
-        };
-    }, [filters, revision]);
+    const buyersQuery = useInfiniteItems({
+        queryKey: ["contacts", "buyers", filters.q, filters.sort, revision],
+        queryFn: ({ cursor, signal }) => contactsApi.listBuyersPage(filters, cursor, signal),
+        enabled: filters.tab === "buyers",
+    });
+    const ownersQuery = useInfiniteItems({
+        queryKey: ["contacts", "owners", filters.q, filters.sort, filters.ownerOrigin, revision],
+        queryFn: ({ cursor, signal }) => contactsApi.listOwnersPage(filters, cursor, signal),
+        enabled: filters.tab === "owners",
+    });
+    const summaryQuery = useQuery({
+        queryKey: ["contacts", "summary", revision],
+        queryFn: ({ signal }) => contactsApi.summary(signal),
+    });
 
     const handleCreated = useCallback((name: string) => {
         setRevision((prev) => prev + 1);
@@ -181,161 +135,296 @@ export function ContactsPage() {
     const handleAttached = useCallback(() => {
         setRevision((prev) => prev + 1);
         setAttachingBuyer(null);
+        setAttachingOwner(null);
     }, []);
 
-    const setTab = useCallback((tab: ContactsTab) => {
-        setFilters((prev) => ({ ...prev, tab }));
+    const detachBuyerProperty = useCallback(
+        async (buyer: BuyerRow, property: ContactPropertyCardItem) => {
+            if (!property.leadId) {
+                throw new Error("This property cannot be removed.");
+            }
+            try {
+                await clientsApi.removeLead(property.leadId);
+                setSelectedContact((current) => {
+                    if (current?.type !== "buyer" || current.row.id !== buyer.id) return current;
+                    const attachedProperties = current.row.attachedProperties.filter(
+                        (item) => item.leadId !== property.leadId,
+                    );
+                    return {
+                        type: "buyer",
+                        row: {
+                            ...current.row,
+                            attachedProperties,
+                            liveDealCount: attachedProperties.length,
+                            activePropertyTitles: attachedProperties.map((item) => item.title),
+                            leads: current.row.leads.filter(
+                                (lead) => lead.leadId !== property.leadId,
+                            ),
+                        },
+                    };
+                });
+                setRevision((prev) => prev + 1);
+                toast.success("Property removed from this buyer");
+            } catch (error) {
+                const message =
+                    error instanceof ApiError
+                        ? error.message
+                        : error instanceof Error
+                          ? error.message
+                          : "Could not remove property";
+                toast.error(message);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const handleDeleteBuyer = useCallback(async () => {
+        if (!deletingBuyer) return;
+        setDeleteBusy(true);
+        try {
+            await clientsApi.remove(deletingBuyer.id);
+            toast.success(`${deletingBuyer.name} removed from your buyers`);
+            setDeletingBuyer(null);
+            setSelectedContact((current) =>
+                current?.type === "buyer" && current.row.id === deletingBuyer.id ? null : current,
+            );
+            setRevision((prev) => prev + 1);
+        } catch (error) {
+            toast.error(
+                error instanceof ApiError
+                    ? error.message
+                    : error instanceof Error
+                      ? error.message
+                      : "Could not delete this buyer. Try again.",
+            );
+        } finally {
+            setDeleteBusy(false);
+        }
+    }, [deletingBuyer]);
+
+    const handleDeleteOwner = useCallback(async () => {
+        if (!deletingOwner) return;
+        setDeleteBusy(true);
+        try {
+            await contactsApi.removeOwner(deletingOwner.id);
+            toast.success(`${deletingOwner.name} removed from your owners`);
+            setDeletingOwner(null);
+            setSelectedContact((current) =>
+                current?.type === "owner" && current.row.id === deletingOwner.id ? null : current,
+            );
+            setRevision((prev) => prev + 1);
+        } catch (error) {
+            toast.error(
+                error instanceof ApiError
+                    ? error.message
+                    : error instanceof Error
+                      ? error.message
+                      : "Could not delete this owner. Try again.",
+            );
+        } finally {
+            setDeleteBusy(false);
+        }
+    }, [deletingOwner]);
+
+    const handleOwnerSaved = useCallback((name: string, mode: "created" | "updated") => {
+        setRevision((prev) => prev + 1);
+        setEditingOwner(null);
+        toast.success(mode === "created" ? `${name} added to your owners` : `${name} updated`);
     }, []);
 
-    const isFirstLoad = data === null;
     const hasSearch = filters.q.trim().length > 0;
-    const summary = data?.summary ?? null;
+    const summary = summaryQuery.data ?? null;
     const isBuyers = filters.tab === "buyers";
-    const rows = isBuyers ? (data?.buyers ?? []) : (data?.owners ?? []);
-    const headline = buildHeadline(summary, filters.tab);
+    const buyers = useMemo(
+        () => sortBuyerRows(buyersQuery.items, filters.sort),
+        [buyersQuery.items, filters.sort],
+    );
+    const rows = isBuyers ? buyers : ownersQuery.items;
+    const activeQuery = isBuyers ? buyersQuery : ownersQuery;
+    const openAdd = useCallback(() => {
+        if (isBuyers) setIsAddOpen(true);
+        else setIsOwnerAddOpen(true);
+    }, [isBuyers]);
+
+    useEffect(() => {
+        const shortcut = getShortcut("add_contact");
+        if (!shortcut) return undefined;
+
+        const unsubscribe = tinykeys(window, {
+            [shortcut.keys]: (event) => {
+                if (isEditable(event.target)) return;
+                if (event.repeat) return;
+                if (isAddOpen || isOwnerAddOpen) return;
+                if (editingBuyer != null || editingOwner != null) return;
+                if (attachingBuyer != null || attachingOwner != null) return;
+                if (selectedContact != null) return;
+                openAdd();
+            },
+        });
+
+        return () => unsubscribe();
+    }, [
+        isAddOpen,
+        isOwnerAddOpen,
+        editingBuyer,
+        editingOwner,
+        attachingBuyer,
+        attachingOwner,
+        selectedContact,
+        openAdd,
+    ]);
+
+    const restoreCardFocus = useCallback(() => {
+        const id = openerIdRef.current;
+        if (!id) return;
+        window.requestAnimationFrame(() => {
+            document.querySelector<HTMLElement>(`[data-contact-id="${CSS.escape(id)}"]`)?.focus();
+        });
+    }, []);
+
+    const openContact = useCallback(
+        (type: "buyer" | "owner", row: BuyerRow | OwnerRow, section?: "properties") => {
+            openerIdRef.current = row.id;
+            setHasContactQuery(true);
+            setDetailSection(section);
+            setSelectedContact(
+                type === "buyer" ? { type, row: row as BuyerRow } : { type, row: row as OwnerRow },
+            );
+            const url = new URL(window.location.href);
+            url.searchParams.set("contact", row.id);
+            window.history.pushState({ ...window.history.state, contactPanel: true }, "", url);
+        },
+        [],
+    );
+
+    const closeContact = useCallback(() => {
+        const url = new URL(window.location.href);
+        setSelectedContact(null);
+        setHasContactQuery(false);
+        setDetailSection(undefined);
+        if (url.searchParams.has("contact")) {
+            if (window.history.state?.contactPanel) window.history.back();
+            else {
+                url.searchParams.delete("contact");
+                window.history.replaceState(window.history.state, "", url);
+            }
+        }
+        restoreCardFocus();
+    }, [restoreCardFocus]);
+
+    useEffect(() => {
+        const syncFromUrl = () => {
+            const id = new URL(window.location.href).searchParams.get("contact");
+            setHasContactQuery(Boolean(id));
+            if (!id) {
+                setSelectedContact(null);
+                restoreCardFocus();
+                return;
+            }
+            const buyer = buyers.find((item) => item.id === id);
+            const owner = ownersQuery.items.find((item) => item.id === id);
+            if (buyer) setSelectedContact({ type: "buyer", row: buyer });
+            else if (owner) setSelectedContact({ type: "owner", row: owner });
+            else if (
+                (id.startsWith("owner_") || id.startsWith("custom_owner_")) &&
+                filters.tab !== "owners"
+            ) {
+                setFilters((previous) => ({ ...previous, tab: "owners" }));
+            } else if (filters.tab !== "buyers") {
+                setFilters((previous) => ({ ...previous, tab: "buyers" }));
+            }
+        };
+        syncFromUrl();
+        window.addEventListener("popstate", syncFromUrl);
+        return () => window.removeEventListener("popstate", syncFromUrl);
+    }, [buyers, filters.tab, ownersQuery.items, restoreCardFocus, setFilters]);
+
+    const quickUpdateBuyer = useCallback(
+        async (buyer: BuyerRow, patch: Partial<BuyerContactForm>) => {
+            const notes = patch.notes ?? buyer.notes ?? null;
+            const input: NewBuyerInput = {
+                name: buyer.name,
+                phoneDigits: buyer.phoneDigits,
+                email: buyer.email,
+                lookingFor: buyer.lookingFor,
+                propertyKind: buyer.propertyKind,
+                preferredLocalities: buyer.preferredLocalities,
+                country: buyer.country,
+                state: buyer.state,
+                city: buyer.city,
+                budgetMinInr: buyer.budgetMinInr,
+                budgetMaxInr: buyer.budgetMaxInr,
+                bhk: buyer.bhk,
+                source: buyer.source ?? "walk_in",
+                notes,
+            };
+            await contactsApi.saveBuyer(input, buyer.id);
+            setSelectedContact({
+                type: "buyer",
+                row: {
+                    ...buyer,
+                    notes,
+                    lastContactedAt: patch.lastSpokeAt || buyer.lastContactedAt,
+                    details: buyer.details ? { ...buyer.details, ...patch } : buyer.details,
+                },
+            });
+            setRevision((value) => value + 1);
+        },
+        [],
+    );
+
+    const quickUpdateOwner = useCallback(
+        async (owner: OwnerRow, patch: Partial<OwnerContactForm>) => {
+            const values: OwnerContactForm = {
+                ...emptyOwnerForm(),
+                name: owner.name,
+                phone: owner.phoneDigits ?? "",
+                status: owner.status ?? "active",
+                lastSpokeAt: owner.lastSpokeAt?.slice(0, 10) ?? "",
+                tags: owner.tags ?? [],
+                notes: owner.notes ?? "",
+                ...owner.details,
+                ...patch,
+            };
+            const saved = await contactsApi.saveOwner(values, owner.id, owner.origin);
+            setSelectedContact({ type: "owner", row: saved });
+            setRevision((value) => value + 1);
+        },
+        [],
+    );
 
     return (
         <TooltipProvider>
             <div className="flex flex-col gap-6">
-                <h1 className="h4">
-                    <span className="text-ink">{headline.fact}</span>{" "}
-                    <span className="text-ink-muted">{headline.meaning}</span>
-                </h1>
+                <ContactsIntro summary={summary} tab={filters.tab} />
 
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-                    <div
-                        role="group"
-                        aria-label="Which contacts to show"
-                        className="flex items-center gap-1 rounded-control bg-surface-muted p-1"
-                    >
-                        {(
-                            [
-                                {
-                                    value: "buyers",
-                                    label: "Buyers",
-                                    icon: Users,
-                                    count: summary?.buyerCount,
-                                },
-                                {
-                                    value: "owners",
-                                    label: "Owners",
-                                    icon: UserRound,
-                                    count: summary?.ownerCount,
-                                },
-                            ] as const
-                        ).map((option) => {
-                            const Icon = option.icon;
-                            const isActive = filters.tab === option.value;
+                <ContactsHeader
+                    filters={filters}
+                    onFiltersChange={setFilters}
+                    summary={summary}
+                    isLoading={summaryQuery.isPending}
+                    onAdd={openAdd}
+                />
 
-                            return (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    aria-pressed={isActive}
-                                    onClick={() => setTab(option.value)}
-                                    className={cn(
-                                        `
-                                          body-sm flex items-center gap-2 rounded-control px-3.5
-                                          transition-colors duration-160 block-control-sm
-                                        `,
-                                        isActive
-                                            ? "bg-surface font-semibold text-ink shadow-xs"
-                                            : "font-normal text-ink-muted hover:text-ink",
-                                    )}
-                                >
-                                    <Icon
-                                        aria-hidden
-                                        className="block-4 inline-4"
-                                        strokeWidth={1.75}
-                                    />
-                                    {option.label}
-                                    {option.count != null ? (
-                                        <span className="tabular">{option.count}</span>
-                                    ) : null}
-                                </button>
-                            );
-                        })}
+                {activeQuery.isError && rows.length === 0 ? (
+                    <div role="alert" className="flex flex-col items-start gap-3 py-12">
+                        <p className="body-sm font-medium text-ink">
+                            Contacts could not load. Check your connection and try again.
+                        </p>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => void activeQuery.refetch()}
+                        >
+                            Try again
+                        </Button>
                     </div>
-
-                    <div className="flex shrink-0 items-center gap-2.5">
-                        <ContactsQueryInput
-                            value={filters.q}
-                            onChange={(q) => setFilters((prev) => ({ ...prev, q }))}
-                        />
-
-                        <DropdownMenu>
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <DropdownMenuTrigger
-                                            render={
-                                                <button
-                                                    type="button"
-                                                    className={cn(
-                                                        `
-                                                          body-sm flex shrink-0 items-center gap-2
-                                                          rounded-control border border-border-warm
-                                                          bg-surface px-4 font-medium text-ink
-                                                          transition-colors duration-160
-                                                          block-control-lg
-                                                          hover:border-ink/25
-                                                        `,
-                                                        filters.sort === "recent" &&
-                                                            "text-ink-muted",
-                                                    )}
-                                                />
-                                            }
-                                        >
-                                            <ArrowDownUp
-                                                aria-hidden
-                                                className="text-brand block-4 inline-4"
-                                                strokeWidth={1.75}
-                                            />
-                                            <span className="hidden sm:inline">
-                                                {SORT_OPTIONS.find(
-                                                    (option) => option.value === filters.sort,
-                                                )?.label ?? "Recent first"}
-                                            </span>
-                                            <span className="sm:hidden">Sort</span>
-                                            <ChevronDown
-                                                aria-hidden
-                                                className="block-4 inline-4"
-                                                strokeWidth={1.75}
-                                            />
-                                        </DropdownMenuTrigger>
-                                    }
-                                />
-                                <TooltipContent side="bottom">
-                                    Change the order of the list.
-                                </TooltipContent>
-                            </Tooltip>
-
-                            <DropdownMenuContent align="end">
-                                {SORT_OPTIONS.map((option) => (
-                                    <DropdownMenuItem
-                                        key={option.value}
-                                        onClick={() =>
-                                            setFilters((prev) => ({ ...prev, sort: option.value }))
-                                        }
-                                        className={cn(
-                                            filters.sort === option.value && "font-semibold",
-                                        )}
-                                    >
-                                        {option.label}
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
-
-                {error ? (
-                    <p role="alert" className="body-sm text-urgent">
-                        {error}
-                    </p>
                 ) : null}
 
-                {isFirstLoad && isFetching ? null : rows.length === 0 ? (
+                {activeQuery.isError && rows.length === 0 ? null : activeQuery.isPending ? (
+                    <ContactsSkeleton variant={isBuyers ? "buyer" : "owner"} />
+                ) : rows.length === 0 ? (
                     hasSearch ? (
                         <EmptyState
                             icon={Search}
@@ -367,47 +456,99 @@ export function ContactsPage() {
                         <EmptyState
                             icon={UserRound}
                             heading="No owners yet"
-                            description="Owners appear here once one accepts your request to sell their property."
+                            description="Platform owners appear after accepting your request. You can also add an owner for a private listing."
                             className="py-16"
-                        />
+                        >
+                            <Button size="lg" onClick={() => setIsOwnerAddOpen(true)}>
+                                <UserRoundPlus aria-hidden strokeWidth={1.75} />
+                                Add your first owner
+                            </Button>
+                        </EmptyState>
                     )
                 ) : (
-                    <div
-                        className={cn(
-                            GRID_CLASS,
-                            isFetching && "opacity-60 transition-opacity duration-160",
+                    <div className="flex flex-col gap-2">
+                        {isBuyers ? (
+                            <WindowVirtualGrid
+                                items={buyers}
+                                getKey={(buyer) => buyer.id}
+                                estimateRowHeight={320}
+                                gap={24}
+                                breakpoints={CONTACT_GRID_BREAKPOINTS}
+                                ariaLabel="Buyers"
+                                renderItem={(buyer) => (
+                                    <BuyerCard
+                                        buyer={buyer}
+                                        onOpen={(row) => openContact("buyer", row)}
+                                        onOpenProperties={(row) =>
+                                            openContact("buyer", row, "properties")
+                                        }
+                                        onEdit={setEditingBuyer}
+                                        onAttachProperties={setAttachingBuyer}
+                                        onDelete={setDeletingBuyer}
+                                    />
+                                )}
+                            />
+                        ) : (
+                            <WindowVirtualGrid
+                                items={ownersQuery.items}
+                                getKey={(owner) => owner.id}
+                                estimateRowHeight={320}
+                                gap={24}
+                                breakpoints={CONTACT_GRID_BREAKPOINTS}
+                                ariaLabel="Owners"
+                                renderItem={(owner) => (
+                                    <OwnerCard
+                                        owner={owner}
+                                        onOpen={(row) => openContact("owner", row)}
+                                        onOpenProperties={(row) =>
+                                            openContact("owner", row, "properties")
+                                        }
+                                        onEdit={setEditingOwner}
+                                        onAttachProperty={setAttachingOwner}
+                                        onDelete={setDeletingOwner}
+                                    />
+                                )}
+                            />
                         )}
-                    >
-                        {isBuyers
-                            ? (data?.buyers ?? []).map((buyer) => (
-                                  <BuyerCard
-                                      key={buyer.id}
-                                      buyer={buyer}
-                                      onEdit={setEditingBuyer}
-                                      onAttachProperties={setAttachingBuyer}
-                                      onViewLeads={setViewingBuyer}
-                                  />
-                              ))
-                            : (data?.owners ?? []).map((owner) => (
-                                  <OwnerCard key={owner.id} owner={owner} />
-                              ))}
+                        <InfiniteListStatus
+                            hasNextPage={Boolean(activeQuery.hasNextPage)}
+                            isFetchingNextPage={activeQuery.isFetchingNextPage}
+                            error={activeQuery.isFetchNextPageError ? activeQuery.error : null}
+                            onLoadMore={() => void activeQuery.fetchNextPage()}
+                        />
                     </div>
                 )}
 
-                {/* Owners are never created here — they sign up themselves and
-                    arrive with a property — so the action belongs to buyers. */}
-                {isBuyers ? (
-                    <AddFab
-                        onClick={() => setIsAddOpen(true)}
-                        label="Add buyer"
-                        hint="Add someone looking to buy or rent"
-                    />
-                ) : null}
+                <AddFab
+                    onClick={openAdd}
+                    label={isBuyers ? "Add buyer" : "Add owner"}
+                    hint={
+                        isBuyers
+                            ? "Add someone you’re helping find a property"
+                            : "Add an owner for a private listing"
+                    }
+                    className="md:hidden"
+                />
 
                 <AddBuyerModal
                     open={isAddOpen}
                     onOpenChange={setIsAddOpen}
                     onCreated={handleCreated}
+                />
+
+                <AddOwnerModal
+                    open={isOwnerAddOpen}
+                    onOpenChange={setIsOwnerAddOpen}
+                    onSaved={handleOwnerSaved}
+                />
+
+                <AddOwnerModal
+                    open={editingOwner != null}
+                    onOpenChange={(next) => {
+                        if (!next) setEditingOwner(null);
+                    }}
+                    owner={editingOwner}
+                    onSaved={handleOwnerSaved}
                 />
 
                 <AddBuyerModal
@@ -418,6 +559,15 @@ export function ContactsPage() {
                     buyer={editingBuyer}
                     onCreated={handleCreated}
                     onUpdated={handleUpdated}
+                    onAttach={
+                        editingBuyer
+                            ? () => {
+                                  const target = editingBuyer;
+                                  setEditingBuyer(null);
+                                  setAttachingBuyer(target);
+                              }
+                            : undefined
+                    }
                 />
 
                 {attachingBuyer ? (
@@ -431,15 +581,64 @@ export function ContactsPage() {
                     />
                 ) : null}
 
-                {viewingBuyer ? (
-                    <ViewBuyerLeadsModal
+                <DeleteBuyerDialog
+                    open={deletingBuyer != null}
+                    onOpenChange={(next) => {
+                        if (!next && !deleteBusy) setDeletingBuyer(null);
+                    }}
+                    name={deletingBuyer?.name ?? ""}
+                    busy={deleteBusy}
+                    onConfirm={() => void handleDeleteBuyer()}
+                />
+
+                <DeleteOwnerDialog
+                    open={deletingOwner != null}
+                    onOpenChange={(next) => {
+                        if (!next && !deleteBusy) setDeletingOwner(null);
+                    }}
+                    name={deletingOwner?.name ?? ""}
+                    busy={deleteBusy}
+                    onConfirm={() => void handleDeleteOwner()}
+                />
+
+                {attachingOwner ? (
+                    <AttachOwnerToListingModal
                         open
                         onOpenChange={(next) => {
-                            if (!next) setViewingBuyer(null);
+                            if (!next) setAttachingOwner(null);
                         }}
-                        buyer={viewingBuyer}
+                        owner={attachingOwner}
+                        onSaved={handleAttached}
                     />
                 ) : null}
+
+                <ContactDetailPanel
+                    contact={selectedContact}
+                    open={selectedContact != null || (hasContactQuery && activeQuery.isPending)}
+                    initialSection={detailSection}
+                    onOpenChange={(next) => {
+                        if (!next) closeContact();
+                    }}
+                    onEditBuyer={(buyer) => {
+                        closeContact();
+                        setEditingBuyer(buyer);
+                    }}
+                    onEditOwner={(owner) => {
+                        closeContact();
+                        setEditingOwner(owner);
+                    }}
+                    onAttachBuyer={(buyer) => {
+                        closeContact();
+                        setAttachingBuyer(buyer);
+                    }}
+                    onAttachOwner={(owner) => {
+                        closeContact();
+                        setAttachingOwner(owner);
+                    }}
+                    onDetachBuyerProperty={detachBuyerProperty}
+                    onQuickUpdateBuyer={quickUpdateBuyer}
+                    onQuickUpdateOwner={quickUpdateOwner}
+                />
             </div>
         </TooltipProvider>
     );

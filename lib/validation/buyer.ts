@@ -72,8 +72,12 @@ export const buyerFormSchema = z
                 (value) => value.trim() === "" || z.email().safeParse(value.trim()).success,
                 "Enter a valid email, or leave it blank",
             ),
-        lookingFor: z.enum(["buy", "rent"]),
+        lookingFor: z.enum(["buy", "rent", "both"]),
+        /** Kept for API payload — not shown on the create form (defaults to any). */
         propertyKind: buyerPropertyKindSchema,
+        country: z.string().trim().min(1, "Pick a country"),
+        state: z.string().trim().min(1, "Pick a state"),
+        city: z.string().trim().min(1, "Pick a city"),
         localities: z
             .string()
             .refine((value) => parseBuyerLocalities(value).length > 0, "Add at least one area"),
@@ -86,7 +90,7 @@ export const buyerFormSchema = z
             const digits = normalizeBuyerBudget(value);
             return digits === "" || Number(digits) > 0;
         }, "Enter an amount above zero"),
-        /** Empty string means "any" — plots and shops have no BHK. */
+        /** Empty string means "any" — kept for API; not shown on the create form. */
         bhk: z.string(),
         source: buyerSourceSchema,
         note: z.string().max(300, "Note is too long"),

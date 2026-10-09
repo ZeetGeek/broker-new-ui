@@ -76,6 +76,8 @@ export function listingFromCreateInput(
         city: input.city,
         address: input.address,
         pinCode: input.pinCode,
+        landmark: input.landmark ?? "",
+        society: input.society ?? "",
         transactionType: input.transactionType,
         saleAmountInr: input.saleAmountInr,
         rentAmountInr: input.rentAmountInr,
@@ -89,8 +91,20 @@ export function listingFromCreateInput(
         facing: input.facing,
         parking: input.parking,
         maintenanceInr: input.maintenanceInr,
+        commissionPercent: input.commissionPercent ?? null,
+        commissionAmount: input.commissionAmount ?? null,
+        securityDeposit: input.securityDeposit ?? null,
+        securityDepositMode: input.securityDepositMode ?? null,
         description: input.description,
         amenities: input.amenities,
+        nearbyPlaces: input.nearbyPlaces ?? [],
+        suitableFor: input.suitableFor ?? [],
+        cabins: input.cabins ?? null,
+        meetingRooms: input.meetingRooms ?? null,
+        workstations: input.workstations ?? null,
+        ceilingHeightFt: input.ceilingHeightFt ?? null,
+        videoUrl: input.videoUrl ?? "",
+        virtualTourUrl: input.virtualTourUrl ?? "",
         availableFrom: input.availableFrom,
         status,
         inboundRequestCount: 0,
@@ -123,6 +137,8 @@ export function applyListingUpdate(
     if (input.city != null) next.city = input.city;
     if (input.address != null) next.address = input.address;
     if (input.pinCode != null) next.pinCode = input.pinCode;
+    if (input.landmark != null) next.landmark = input.landmark;
+    if (input.society != null) next.society = input.society;
     if (input.saleAmountInr !== undefined) next.saleAmountInr = input.saleAmountInr;
     if (input.rentAmountInr !== undefined) next.rentAmountInr = input.rentAmountInr;
     if (input.areaSqft != null) next.areaSqft = input.areaSqft;
@@ -142,9 +158,23 @@ export function applyListingUpdate(
     if (input.facing !== undefined) next.facing = input.facing;
     if (input.parking != null) next.parking = input.parking;
     if (input.maintenanceInr !== undefined) next.maintenanceInr = input.maintenanceInr;
+    if (input.commissionPercent !== undefined) next.commissionPercent = input.commissionPercent;
+    if (input.commissionAmount !== undefined) next.commissionAmount = input.commissionAmount;
+    if (input.securityDeposit !== undefined) next.securityDeposit = input.securityDeposit;
+    if (input.securityDepositMode !== undefined) {
+        next.securityDepositMode = input.securityDepositMode;
+    }
     if (input.availableFrom !== undefined) next.availableFrom = input.availableFrom;
     if (input.description != null) next.description = input.description;
     if (input.amenities != null) next.amenities = input.amenities;
+    if (input.nearbyPlaces != null) next.nearbyPlaces = input.nearbyPlaces;
+    if (input.suitableFor != null) next.suitableFor = input.suitableFor;
+    if (input.cabins !== undefined) next.cabins = input.cabins;
+    if (input.meetingRooms !== undefined) next.meetingRooms = input.meetingRooms;
+    if (input.workstations !== undefined) next.workstations = input.workstations;
+    if (input.ceilingHeightFt !== undefined) next.ceilingHeightFt = input.ceilingHeightFt;
+    if (input.videoUrl != null) next.videoUrl = input.videoUrl;
+    if (input.virtualTourUrl != null) next.virtualTourUrl = input.virtualTourUrl;
     if (input.status != null) next.status = input.status;
     else if (input.publish === true) next.status = "published";
     else if (input.publish === false && next.status === "published") next.status = "draft";
@@ -183,6 +213,20 @@ type SeedDraft = Omit<
     | "facing"
     | "parking"
     | "maintenanceInr"
+    | "commissionPercent"
+    | "commissionAmount"
+    | "securityDeposit"
+    | "securityDepositMode"
+    | "nearbyPlaces"
+    | "suitableFor"
+    | "videoUrl"
+    | "virtualTourUrl"
+    | "landmark"
+    | "society"
+    | "cabins"
+    | "meetingRooms"
+    | "workstations"
+    | "ceilingHeightFt"
 > & {
     category?: MyListingCategory;
     bathrooms?: number | null;
@@ -192,6 +236,20 @@ type SeedDraft = Omit<
     facing?: MyListingItem["facing"];
     parking?: MyListingParking;
     maintenanceInr?: number | null;
+    commissionPercent?: number | null;
+    commissionAmount?: number | null;
+    securityDeposit?: number | null;
+    securityDepositMode?: MyListingItem["securityDepositMode"];
+    nearbyPlaces?: string[];
+    suitableFor?: string[];
+    videoUrl?: string;
+    virtualTourUrl?: string;
+    landmark?: string;
+    society?: string;
+    cabins?: number | null;
+    meetingRooms?: number | null;
+    workstations?: number | null;
+    ceilingHeightFt?: number | null;
 };
 
 function hydrateSeed(item: SeedDraft): MyListingItem {
@@ -205,6 +263,21 @@ function hydrateSeed(item: SeedDraft): MyListingItem {
         totalFloors: item.totalFloors ?? null,
         facing: item.facing ?? null,
         maintenanceInr: item.maintenanceInr ?? null,
+        commissionPercent: item.commissionPercent ?? null,
+        commissionAmount: item.commissionAmount ?? null,
+        securityDeposit: item.securityDeposit ?? null,
+        securityDepositMode: item.securityDepositMode ?? null,
+        nearbyPlaces: item.nearbyPlaces ?? [],
+        suitableFor: item.suitableFor ?? [],
+        cabins: item.cabins ?? null,
+        meetingRooms: item.meetingRooms ?? null,
+        workstations: item.workstations ?? null,
+        ceilingHeightFt: item.ceilingHeightFt ?? null,
+        videoUrl: item.videoUrl ?? "",
+        virtualTourUrl: item.virtualTourUrl ?? "",
+        landmark: item.landmark ?? "",
+        society: item.society ?? "",
+        attachedClients: item.attachedClients ?? [],
     };
 }
 
@@ -251,6 +324,13 @@ const SEED_DRAFTS: SeedDraft[] = [
         totalFloors: 12,
         facing: "north_east",
         parking: "2",
+        ownerName: "Ramesh Patel",
+        exclusiveOwnerId: "eo_ramesh",
+        attachedClients: [
+            { id: "buy_01", name: "Ayush" },
+            { id: "buy_02", name: "Shiv" },
+            { id: "buy_03", name: "Client Test" },
+        ],
     },
     {
         id: "own_002",

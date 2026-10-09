@@ -5,17 +5,21 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Mail, MapPin, Phone, UserRound } from "lucide-react";
+import { Building2, Globe2, Mail, Map as MapIcon, MapPin, Phone, UserRound } from "lucide-react";
 
 import { profileApi, type UpdateProfileInput, type UserProfile } from "@/lib/api/profile";
 import {
     BIO_MAX,
+    MAX_SERVICE_AREAS,
     normalizeProfilePhone,
     parseCommaList,
     profileFormSchema,
     type ProfileFormValues,
 } from "@/lib/validation/profile";
+import { useLocationOptions } from "@/hooks/use-locations";
 
+import { LocalityCombobox } from "@/components/shared/locality-combobox";
+import { OptionCombobox } from "@/components/shared/option-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,12 +56,28 @@ function Section({
     );
 }
 
+function publicSlugHelper(
+    value: string,
+    savedSlug: string | null | undefined,
+    publicProfileUrl: string | null | undefined,
+): string {
+    if (value && publicProfileUrl && value === (savedSlug ?? "")) return publicProfileUrl;
+    if (!value)
+        return "The public address brokers can share. Lowercase letters, numbers and hyphens.";
+    return "Lowercase letters, numbers and hyphens.";
+}
+
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
     return (
         <label htmlFor={htmlFor} className="body-sm font-medium text-ink">
             {children}
         </label>
     );
+}
+
+/** Case-insensitive, so re-picking the same place does not count as a change. */
+function isDifferentPlace(next: string, previous: string): boolean {
+    return next.trim().toLowerCase() !== previous.trim().toLowerCase();
 }
 
 function isOwnerProfile(profile: UserProfile | null): boolean {
@@ -73,6 +93,7 @@ function toFormValues(profile: UserProfile): ProfileFormValues {
         // Stored E.164, shown as the ten digits an Indian broker recognises.
         phone: normalizeProfilePhone(profile.phone ?? ""),
         city: profile.city ?? "",
+        state: profile.state ?? "",
         country: profile.country ?? "India",
         orgName: profile.orgName ?? "",
         bio: owner ? (profile.owner?.bio ?? "") : (profile.broker?.bio ?? ""),
@@ -84,8 +105,10 @@ function toFormValues(profile: UserProfile): ProfileFormValues {
             profile.broker?.experienceYears == null ? "" : String(profile.broker.experienceYears),
         licenseNumber: profile.broker?.licenseNumber ?? profile.licenseNumber ?? "",
         reraState: profile.broker?.reraState ?? profile.reraState ?? "",
-        publicSlug: profile.broker?.publicSlug ?? profile.qr?.publicSlug ?? "",
-        serviceAreas: (profile.broker?.serviceAreas ?? []).join(", "),
+        publicSlug: owner
+            ? (profile.owner?.publicSlug ?? profile.qr?.publicSlug ?? "")
+            : (profile.broker?.publicSlug ?? profile.qr?.publicSlug ?? ""),
+        serviceAreas: [...(profile.broker?.serviceAreas ?? [])],
         specializations: (profile.broker?.specializations ?? []).join(", "),
     };
 }
@@ -94,6 +117,7 @@ const EMPTY_FORM: ProfileFormValues = {
     fullName: "",
     phone: "",
     city: "",
+    state: "",
     country: "India",
     orgName: "",
     bio: "",
@@ -105,7 +129,7 @@ const EMPTY_FORM: ProfileFormValues = {
     licenseNumber: "",
     reraState: "",
     publicSlug: "",
-    serviceAreas: "",
+    serviceAreas: [],
     specializations: "",
 };
 
@@ -122,6 +146,7 @@ export function ProfilePage() {
         control,
         handleSubmit,
         reset,
+        setValue,
         formState: { isSubmitting, isDirty },
     } = useForm<ProfileFormValues>({
         resolver: zodResolver(profileFormSchema),
@@ -169,6 +194,23 @@ export function ProfilePage() {
     }, [dispatch, reset]);
 
     const bio = useWatch({ control, name: "bio" });
+    const [countryName, stateName, cityName] = useWatch({
+        control,
+        name: ["country", "state", "city"],
+    });
+    const {
+        countryOptions,
+        stateOptions,
+        cityOptions,
+        countriesLoading,
+        statesLoading,
+        citiesLoading,
+        selectedCountry,
+        selectedState,
+        selectedCity,
+    } = useLocationOptions({ countryName, stateName, cityName });
+    // Areas you work are searched within the profile city.
+    const cityId = selectedCity?.id ?? null;
 
     const handleProfileReplaced = useCallback(
         (next: UserProfile) => {
@@ -190,6 +232,7 @@ export function ProfilePage() {
                     // display one. lib/api is the boundary that converts.
                     phone: `+91${normalizeProfilePhone(values.phone)}`,
                     city: values.city.trim(),
+                    state: values.state.trim(),
                     country: values.country.trim(),
                     orgName: values.orgName.trim(),
                     bio: values.bio.trim(),
@@ -200,6 +243,7 @@ export function ProfilePage() {
                     payload.gstin = values.gstin.trim();
                     payload.preferredCities = parseCommaList(values.preferredCities);
                     payload.preferredLocalities = parseCommaList(values.preferredLocalities);
+                    payload.publicSlug = values.publicSlug.trim();
                 } else {
                     payload.experienceYears =
                         values.experienceYears.trim() === ""
@@ -208,7 +252,9 @@ export function ProfilePage() {
                     payload.licenseNumber = values.licenseNumber.trim();
                     payload.reraState = values.reraState.trim();
                     payload.publicSlug = values.publicSlug.trim();
-                    payload.serviceAreas = parseCommaList(values.serviceAreas);
+                    payload.serviceAreas = values.serviceAreas
+                        .map((area) => area.trim())
+                        .filter(Boolean);
                     payload.specializations = parseCommaList(values.specializations);
                 }
 
@@ -355,39 +401,6 @@ export function ProfilePage() {
                     />
 
                     <Controller
-                        name="city"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-city">City</FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="profile-city"
-                                    autoComplete="address-level2"
-                                    startIcon={MapPin}
-                                    errorText={fieldState.error?.message}
-                                />
-                            </div>
-                        )}
-                    />
-
-                    <Controller
-                        name="country"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-country">Country</FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="profile-country"
-                                    autoComplete="country-name"
-                                    errorText={fieldState.error?.message}
-                                />
-                            </div>
-                        )}
-                    />
-
-                    <Controller
                         name="orgName"
                         control={control}
                         render={({ field, fieldState }) => (
@@ -409,6 +422,137 @@ export function ProfilePage() {
                             </div>
                         )}
                     />
+
+                    <Controller
+                        name="country"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <div className="flex flex-col gap-2">
+                                <FieldLabel htmlFor="profile-country">Country</FieldLabel>
+                                <OptionCombobox
+                                    id="profile-country"
+                                    value={field.value}
+                                    onValueChange={(next) => {
+                                        if (isDifferentPlace(next, field.value)) {
+                                            // State, city and areas belong to the old country.
+                                            setValue("state", "", { shouldDirty: true });
+                                            setValue("city", "", { shouldDirty: true });
+                                            setValue("serviceAreas", [], { shouldDirty: true });
+                                        }
+                                        field.onChange(next);
+                                    }}
+                                    onBlur={field.onBlur}
+                                    options={countryOptions}
+                                    placeholder="Choose a country"
+                                    startIcon={Globe2}
+                                    loading={countriesLoading}
+                                    emptyText="No countries match"
+                                    limit={50}
+                                    errorText={fieldState.error?.message}
+                                />
+                            </div>
+                        )}
+                    />
+
+                    <Controller
+                        name="state"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <div className="flex flex-col gap-2">
+                                <FieldLabel htmlFor="profile-state">State</FieldLabel>
+                                <OptionCombobox
+                                    id="profile-state"
+                                    value={field.value}
+                                    onValueChange={(next) => {
+                                        // A profile saved before the state field has a city
+                                        // but no state: filling the state in keeps that city.
+                                        if (field.value && isDifferentPlace(next, field.value)) {
+                                            setValue("city", "", { shouldDirty: true });
+                                            setValue("serviceAreas", [], { shouldDirty: true });
+                                        }
+                                        field.onChange(next);
+                                    }}
+                                    onBlur={field.onBlur}
+                                    options={stateOptions}
+                                    placeholder={
+                                        selectedCountry
+                                            ? "Choose a state"
+                                            : "Choose a country first"
+                                    }
+                                    startIcon={MapIcon}
+                                    loading={statesLoading}
+                                    disabled={!selectedCountry}
+                                    emptyText={
+                                        statesLoading ? "Loading states…" : "No states match"
+                                    }
+                                    limit={100}
+                                    errorText={fieldState.error?.message}
+                                />
+                            </div>
+                        )}
+                    />
+
+                    <Controller
+                        name="city"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <div className="flex flex-col gap-2">
+                                <FieldLabel htmlFor="profile-city">City</FieldLabel>
+                                <OptionCombobox
+                                    id="profile-city"
+                                    value={field.value}
+                                    onValueChange={(next) => {
+                                        if (isDifferentPlace(next, field.value)) {
+                                            // Areas belong to the old city.
+                                            setValue("serviceAreas", [], { shouldDirty: true });
+                                        }
+                                        field.onChange(next);
+                                    }}
+                                    onBlur={field.onBlur}
+                                    options={cityOptions}
+                                    placeholder={
+                                        selectedState ? "Choose a city" : "Choose a state first"
+                                    }
+                                    startIcon={MapPin}
+                                    loading={citiesLoading}
+                                    disabled={!selectedState}
+                                    emptyText={
+                                        citiesLoading ? "Loading cities…" : "No cities match"
+                                    }
+                                    limit={100}
+                                    errorText={fieldState.error?.message}
+                                />
+                            </div>
+                        )}
+                    />
+
+                    {ownerAccount ? null : (
+                        <Controller
+                            name="serviceAreas"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <div className="flex flex-col gap-2">
+                                    <FieldLabel htmlFor="profile-areas">Areas you work</FieldLabel>
+                                    <LocalityCombobox
+                                        multiple
+                                        id="profile-areas"
+                                        inputRef={field.ref}
+                                        cityId={cityId}
+                                        value={field.value}
+                                        onValueChange={field.onChange}
+                                        onBlur={field.onBlur}
+                                        placeholder="Search areas, e.g. Vesu"
+                                        errorText={fieldState.error?.message}
+                                        helperText={
+                                            cityId
+                                                ? `Pick up to ${MAX_SERVICE_AREAS} areas in ${cityName}.`
+                                                : "Choose your city to pick areas."
+                                        }
+                                    />
+                                </div>
+                            )}
+                        />
+                    )}
                 </div>
             </Section>
 
@@ -451,6 +595,27 @@ export function ProfilePage() {
                             )}
                         />
                     </div>
+
+                    <Controller
+                        name="publicSlug"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <div className="flex flex-col gap-2">
+                                <FieldLabel htmlFor="profile-slug">Your public page</FieldLabel>
+                                <Input
+                                    {...field}
+                                    id="profile-slug"
+                                    placeholder="desai-estates"
+                                    errorText={fieldState.error?.message}
+                                    helperText={publicSlugHelper(
+                                        field.value,
+                                        profile?.owner?.publicSlug,
+                                        profile?.qr?.publicProfileUrl,
+                                    )}
+                                />
+                            </div>
+                        )}
+                    />
 
                     <Controller
                         name="preferredCities"
@@ -598,23 +763,6 @@ export function ProfilePage() {
                             )}
                         />
                     </div>
-
-                    <Controller
-                        name="serviceAreas"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-areas">Areas you work</FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="profile-areas"
-                                    placeholder="Vesu, Adajan, Piplod"
-                                    errorText={fieldState.error?.message}
-                                    helperText="Separate them with commas."
-                                />
-                            </div>
-                        )}
-                    />
 
                     <Controller
                         name="specializations"

@@ -24,3 +24,8 @@ export const ease = {
     /** Surface moves — matches transitions-dev `--tabs-ease` / smooth-out */
     smoothOut: [0.22, 1, 0.36, 1],
 } as const;
+
+export const scale = {
+    /** Photo zoom inside a clipped card frame — small enough not to read as a layout shift. */
+    imageHover: 1.04,
+} as const;

@@ -1,100 +1,120 @@
 "use client";
 
-import { type FormEvent, useMemo, useRef, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import {
+    type FormEvent,
+    type MutableRefObject,
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronDown, RotateCcw, X } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
-import { buildPropertyTitle } from "@/lib/format/property-title";
-import { duration, ease } from "@/lib/motion/tokens";
+import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
+import { useListingScore } from "@/lib/hooks/use-listing-score";
 import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
+import {
+    DEFAULT_PROPERTY_DRAFT,
+    fieldRuleSchemas,
+    type PropertyDraftValues,
+    STEP_ROOT_FIELDS,
+    stepSchemas,
+} from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import {
-    categoryForPropertyType,
-    DEFAULT_PROPERTY_FORM_VALUES,
-    PROPERTY_FORM_STEP_FIELDS,
-    PROPERTY_FORM_STEP_LABELS,
-    PROPERTY_FORM_STEPS,
-    propertyFormSchema,
-    type PropertyFormStep,
-    type PropertyFormValues,
-    type PropertyType,
-} from "@/lib/validation/property";
+    isStepVisible as ruleStepIsVisible,
+    isVisible as ruleFieldIsVisible,
+    stripHidden,
+} from "@/lib/visibility/rules";
+import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
-import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
-import { AppModal } from "@/components/shared/app-modal";
-import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogDescription,
+    DialogHeader,
+    DialogPopup,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { Progress, ProgressLabel } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { StepDetails } from "@/features/properties/property-form/step-details";
-import { StepPhotos } from "@/features/properties/property-form/step-photos";
-import type { MyListingItem } from "@/features/properties/your-listings/types";
+import { FORM_STEPS, PROPERTY_TYPES, type PropertyFormStep, toLabel } from "@/constants/property";
+import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
+import { ListingScoreRing } from "@/features/properties/property-form/listing-score-ring";
+import { LiveSummaryPanel } from "@/features/properties/property-form/live-summary-panel";
+import { QuickAdd } from "@/features/properties/property-form/quick-add";
+import { StepNav } from "@/features/properties/property-form/step-nav";
+import { StepArea } from "@/features/properties/property-form/steps/step-area";
+import { StepBasics } from "@/features/properties/property-form/steps/step-basics";
+import { StepCommission } from "@/features/properties/property-form/steps/step-commission";
+import { StepDetails } from "@/features/properties/property-form/steps/step-details";
+import { StepFurnishing } from "@/features/properties/property-form/steps/step-furnishing";
+import { StepLocation } from "@/features/properties/property-form/steps/step-location";
+import { StepMedia } from "@/features/properties/property-form/steps/step-media";
+import { StepPricing } from "@/features/properties/property-form/steps/step-pricing";
+import { StepPublish } from "@/features/properties/property-form/steps/step-publish";
+import type {
+    CreateMyListingInput,
+    MyListingItem,
+    MyListingPropertyType,
+} from "@/features/properties/your-listings/types";
 
-export function listingToFormValues(listing: MyListingItem): PropertyFormValues {
-    return {
-        transactionType: listing.transactionType,
-        category: listing.category ?? categoryForPropertyType(listing.propertyType as PropertyType),
-        propertyType: listing.propertyType as PropertyFormValues["propertyType"],
-        bhk: listing.bhk,
-        title:
-            listing.title ||
-            buildPropertyTitle({
-                bhk: listing.bhk,
-                propertyType: listing.propertyType as PropertyType,
-                locality: listing.locality,
-                city: listing.city,
-            }),
-        locality: listing.locality,
-        city: listing.city,
-        address: listing.address,
-        pinCode: listing.pinCode,
-        saleAmountInr: listing.saleAmountInr,
-        rentAmountInr: listing.rentAmountInr,
-        areaSqft: listing.areaSqft,
-        furnishing: listing.furnishing,
-        imageSrcs: listing.imageSrcs,
-        bathrooms: listing.bathrooms,
-        balconies: listing.balconies,
-        floorNumber: listing.floorNumber,
-        totalFloors: listing.totalFloors,
-        facing: listing.facing,
-        parking: listing.parking,
-        maintenanceInr: listing.maintenanceInr,
-        availableFrom: listing.availableFrom,
-        description: listing.description,
-        amenities: listing.amenities,
-        publish: listing.status === "published",
-    };
-}
+// v2: nearbyPlaces changed from {id,type,name,distanceKm}[] to a plain string[] of place types.
+// v3: area units went international; bigha/guntha/kanal/marla/cent/ground no longer exist.
+// v4: commission is owner-paid only; paidBy/mode are now fixed literals.
+// v5: construction stage/progress/slabs and the RERA + handover dates were removed.
+// v6: the availability block (visit days, times, key holder, caretaker) was removed.
+const LOCAL_DRAFT_VERSION = 9;
 
-function stepHasErrors(
-    step: PropertyFormStep,
-    errors: Partial<Record<keyof PropertyFormValues, unknown>>,
-): boolean {
-    return PROPERTY_FORM_STEP_FIELDS[step].some((field) => errors[field] != null);
+/** Map old 10-step draft UI ids onto the merged 5-step wizard. */
+const LEGACY_STEP_MAP: Record<string, PropertyFormStep> = {
+    basics: "basics",
+    location: "basics",
+    details: "details",
+    area: "details",
+    pricing: "pricing",
+    commission: "pricing",
+    furnishing: "furnishing",
+    highlights: "furnishing",
+    media: "media",
+    publish: "media",
+};
+
+function resolveDraftStep(step: string | undefined): PropertyFormStep | null {
+    if (!step) return null;
+    return (
+        LEGACY_STEP_MAP[step] ??
+        (FORM_STEPS.some((item) => item.id === step) ? (step as PropertyFormStep) : null)
+    );
 }
 
 export type PropertyFormProps = {
     mode: "create" | "edit";
+    /** Owner listings are the owner's own. Broker listings can attach a contact owner and buyers. */
+    portal?: "broker" | "owner";
     propertyId?: string;
     initialListing?: MyListingItem | null;
     onCancel?: () => void;
     variant?: "dialog" | "page";
     className?: string;
-    /** Required when variant is "dialog" */
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
-    /**
-     * Called with the saved listing instead of navigating to its detail page.
-     * Set this when the form runs in a modal over a list the caller refreshes.
-     */
     onSaved?: (listing: MyListingItem) => void;
 };
 
 export function PropertyForm({
     mode,
+    portal = "broker",
     propertyId,
     initialListing,
     onCancel,
@@ -106,270 +126,1673 @@ export function PropertyForm({
 }: PropertyFormProps) {
     const router = useRouter();
     const isDialog = variant === "dialog";
-    const [step, setStep] = useState<PropertyFormStep>("details");
-    const [formBanner, setFormBanner] = useState<string | null>(null);
-    const [titleTouched, setTitleTouched] = useState(mode === "edit");
+    const formIsActive = !isDialog || open;
+    const [step, setStep] = useState<PropertyFormStep>("basics");
+    const [highestUnlocked, setHighestUnlocked] = useState(
+        mode === "edit" ? FORM_STEPS.length - 1 : 0,
+    );
+    const [completedSteps, setCompletedSteps] = useState<Set<PropertyFormStep>>(new Set());
+    const [entryMode, setEntryMode] = useState<"full" | "quick">("full");
+    const [savedAt, setSavedAt] = useState<Date | null>(null);
+    const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
+    const [formBanner, setFormBanner] = useState<ReactNode>(null);
+    const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
+    const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [savingIntent, setSavingIntent] = useState<"draft" | "publish" | null>(null);
     const photoFilesRef = useRef<Map<string, File>>(new Map());
+    const autosaveReadyRef = useRef(false);
+    const recoveryCheckedRef = useRef(false);
+    const persistInFlightRef = useRef(false);
+    const pendingFocusPathRef = useRef<string | null>(null);
+    const localStorageKey = `property-draft:v${LOCAL_DRAFT_VERSION}:${propertyId ?? "new"}`;
 
     const defaultValues = useMemo(
-        () => (initialListing ? listingToFormValues(initialListing) : DEFAULT_PROPERTY_FORM_VALUES),
+        () => (initialListing ? listingToDraft(initialListing) : cloneDefaultDraft()),
         [initialListing],
     );
-
-    const methods = useForm<PropertyFormValues>({
-        resolver: zodResolver(propertyFormSchema),
-        mode: "onTouched",
-        reValidateMode: "onChange",
+    const methods = useForm<PropertyDraftValues>({
         defaultValues,
+        mode: "onTouched",
+        shouldUnregister: false,
     });
+    const values = useWatch({ control: methods.control }) as PropertyDraftValues;
 
-    const {
-        handleSubmit,
-        trigger,
-        formState: { isSubmitting, errors },
-    } = methods;
+    const draftUiState = useMemo(
+        () => ({
+            step,
+            highestUnlocked,
+            entryMode,
+            completedSteps: Array.from(completedSteps),
+        }),
+        [completedSteps, entryMode, highestUnlocked, step],
+    );
 
-    const stepIndex = PROPERTY_FORM_STEPS.indexOf(step);
-    const heading = mode === "edit" ? "Edit property" : "Add property";
-
-    async function goNext() {
-        setFormBanner(null);
-        const fields = PROPERTY_FORM_STEP_FIELDS[step];
-        const ok = await trigger(fields);
-        if (!ok) {
-            const count = fields.filter((field) => methods.formState.errors[field]).length;
-            setFormBanner(
-                count > 0
-                    ? `${count} field${count === 1 ? "" : "s"} need attention`
-                    : "Please check the highlighted fields.",
+    const writeLocalDraft = useCallback(
+        (nextValues: PropertyDraftValues, ui = draftUiState) => {
+            window.localStorage.setItem(
+                localStorageKey,
+                JSON.stringify({
+                    version: LOCAL_DRAFT_VERSION,
+                    savedAt: new Date().toISOString(),
+                    values: draftForStorage(nextValues),
+                    ui,
+                }),
             );
+        },
+        [draftUiState, localStorageKey],
+    );
+    const activeSteps = useMemo(
+        () => FORM_STEPS.filter((item) => ruleStepIsVisible(item.id, values)),
+        [values],
+    );
+    const stepIndex = activeSteps.findIndex((item) => item.id === step);
+    const isLastStep = stepIndex === activeSteps.length - 1;
+
+    const listingScore = useListingScore(values);
+    useEffect(() => {
+        if (values.publish.listingScore !== listingScore.score) {
+            methods.setValue("publish.listingScore", listingScore.score, { shouldDirty: false });
+        }
+    }, [listingScore.score, methods, values.publish.listingScore]);
+
+    useEffect(() => {
+        if (mode !== "edit" || !initialListing || !propertyId) return;
+        try {
+            const stored = window.localStorage.getItem(
+                `property-extra:v${LOCAL_DRAFT_VERSION}:${propertyId}`,
+            );
+            if (!stored) return;
+            const parsed = JSON.parse(stored) as { values?: Partial<PropertyDraftValues> };
+            if (parsed.values)
+                methods.reset(mergeDraft(listingToDraft(initialListing), parsed.values));
+        } catch {
+            window.localStorage.removeItem(`property-extra:v${LOCAL_DRAFT_VERSION}:${propertyId}`);
+        }
+    }, [initialListing, methods, mode, propertyId]);
+
+    useEffect(() => {
+        if (!formIsActive || recoveryCheckedRef.current) return;
+        recoveryCheckedRef.current = true;
+        if (mode !== "create") {
+            autosaveReadyRef.current = true;
             return;
         }
-        const next = PROPERTY_FORM_STEPS[stepIndex + 1];
-        if (next) setStep(next);
+        try {
+            const legacyKey = `property-draft:v6:${propertyId ?? "new"}`;
+            const stored =
+                window.localStorage.getItem(localStorageKey) ??
+                window.localStorage.getItem(legacyKey);
+            if (!stored) {
+                autosaveReadyRef.current = true;
+                return;
+            }
+            const parsed = JSON.parse(stored) as {
+                values?: Partial<PropertyDraftValues>;
+                ui?: {
+                    step?: string;
+                    highestUnlocked?: number;
+                    entryMode?: "full" | "quick";
+                    completedSteps?: string[];
+                };
+                savedAt?: string;
+            };
+            if (!parsed.values) {
+                autosaveReadyRef.current = true;
+                return;
+            }
+            const recovered = mergeDraft(cloneDefaultDraft(), parsed.values);
+            methods.reset(recovered);
+            const restoredStep = resolveDraftStep(parsed.ui?.step);
+            if (restoredStep) setStep(restoredStep);
+            if (typeof parsed.ui?.highestUnlocked === "number") {
+                // Old drafts unlocked up to 9; clamp to the new 5-step range.
+                setHighestUnlocked(
+                    Math.min(Math.max(parsed.ui.highestUnlocked, 0), FORM_STEPS.length - 1),
+                );
+            }
+            if (parsed.ui?.entryMode === "full" || parsed.ui?.entryMode === "quick") {
+                setEntryMode(parsed.ui.entryMode);
+            }
+            if (Array.isArray(parsed.ui?.completedSteps)) {
+                const mapped = parsed.ui.completedSteps
+                    .map((item) => resolveDraftStep(item))
+                    .filter((item): item is PropertyFormStep => Boolean(item));
+                setCompletedSteps(new Set(mapped));
+            }
+            setHasRestoredDraft(true);
+            setSavedAt(parsed.savedAt ? new Date(parsed.savedAt) : new Date());
+            toast.success("Picked up where you left off.");
+            window.localStorage.removeItem(legacyKey);
+            autosaveReadyRef.current = true;
+        } catch {
+            window.localStorage.removeItem(localStorageKey);
+            autosaveReadyRef.current = true;
+        }
+    }, [formIsActive, localStorageKey, methods, mode]);
+
+    useEffect(() => {
+        if (!formIsActive || !autosaveReadyRef.current || mode !== "create") return;
+        const timer = window.setTimeout(() => {
+            try {
+                writeLocalDraft(values);
+                setSavedAt(new Date());
+            } catch {
+                // A private browser mode may reject storage; the form itself remains usable.
+            }
+        }, 500);
+        return () => window.clearTimeout(timer);
+    }, [draftUiState, formIsActive, mode, values, writeLocalDraft]);
+
+    useEffect(() => {
+        if (!formIsActive || mode !== "create") return;
+        function flushDraft() {
+            if (!autosaveReadyRef.current) return;
+            try {
+                writeLocalDraft(methods.getValues());
+            } catch {
+                // Ignore storage failures while the tab is closing.
+            }
+        }
+        function onVisibilityChange() {
+            if (document.visibilityState === "hidden") flushDraft();
+        }
+        window.addEventListener("beforeunload", flushDraft);
+        document.addEventListener("visibilitychange", onVisibilityChange);
+        return () => {
+            flushDraft();
+            window.removeEventListener("beforeunload", flushDraft);
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+        };
+    }, [formIsActive, methods, mode, writeLocalDraft]);
+
+    useEffect(() => {
+        function onKeyDown(event: KeyboardEvent) {
+            if (isDialog && !open) return;
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+                event.preventDefault();
+                saveDraftLocally();
+                return;
+            }
+            const target = event.target as HTMLElement | null;
+            const isEditing =
+                target?.matches("input, textarea, select, [contenteditable='true']") ?? false;
+            if (isEditing) return;
+            if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[1-9]$/.test(event.key)) {
+                const index = Number(event.key) - 1;
+                const targetStep = activeSteps[index];
+                if (targetStep) changeStep(targetStep.id);
+            }
+            if (!event.ctrlKey && !event.metaKey && event.key === "0") {
+                const targetStep = activeSteps[activeSteps.length - 1];
+                if (targetStep) changeStep(targetStep.id);
+            }
+        }
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    });
+
+    // After a step jump (e.g. Publish), focus the first invalid field once it mounts.
+    useEffect(() => {
+        const path = pendingFocusPathRef.current;
+        if (!path) return;
+        const frame = requestAnimationFrame(() => {
+            if (focusFieldByPath(path)) pendingFocusPathRef.current = null;
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [step]);
+
+    function saveDraftLocally() {
+        try {
+            writeLocalDraft(methods.getValues());
+            setSavedAt(new Date());
+            toast.success("Draft saved on this device.");
+        } catch {
+            toast.error("Couldn't save the local draft.");
+        }
+    }
+
+    function startFreshListing() {
+        window.localStorage.removeItem(localStorageKey);
+        methods.reset(defaultValues);
+        setStep("basics");
+        setHighestUnlocked(mode === "edit" ? FORM_STEPS.length - 1 : 0);
+        setCompletedSteps(new Set());
+        setEntryMode("full");
+        setHasRestoredDraft(false);
+        setSavedAt(null);
+        setFormBanner(null);
+        toast.success("Started a fresh listing.");
+    }
+
+    function validateStep(target: PropertyFormStep): boolean {
+        methods.clearErrors(STEP_ROOT_FIELDS[target] as FieldPath<PropertyDraftValues>[]);
+        const current = methods.getValues();
+        const result = stepSchemas[target].safeParse(current);
+        const ruleResult = fieldRuleSchemas[target].safeParse(current);
+        if (result.success && ruleResult.success) return true;
+        const issues = [
+            ...(result.success ? [] : result.error.issues),
+            ...(ruleResult.success ? [] : ruleResult.error.issues),
+        ];
+        // Only surface errors for fields the user can see on this listing type.
+        const visibleIssues = issues.filter((issue) => {
+            const path = issue.path.join(".");
+            return path.length > 0 && ruleFieldIsVisible(path, current);
+        });
+        if (visibleIssues.length === 0) return true;
+
+        for (const issue of visibleIssues) {
+            const path = issue.path.join(".") as FieldPath<PropertyDraftValues>;
+            methods.setError(path, { type: "zod", message: issue.message });
+        }
+
+        const firstPath = visibleIssues[0]!.path.join(".");
+        pendingFocusPathRef.current = firstPath;
+        requestAnimationFrame(() => {
+            if (focusFieldByPath(firstPath)) pendingFocusPathRef.current = null;
+        });
+        return false;
+    }
+
+    function changeStep(next: PropertyFormStep) {
+        const nextOriginalIndex = FORM_STEPS.findIndex((item) => item.id === next);
+        if (nextOriginalIndex < 0) return;
+        if (next === step) return;
+
+        const currentActiveIndex = activeSteps.findIndex((item) => item.id === step);
+        const nextActiveIndex = activeSteps.findIndex((item) => item.id === next);
+        if (nextActiveIndex < 0) return;
+
+        const goingForward = currentActiveIndex >= 0 && nextActiveIndex > currentActiveIndex;
+
+        // Already-unlocked steps, or the single next step after the current unlock wall.
+        if (nextOriginalIndex > highestUnlocked + 1) return;
+        if (nextOriginalIndex === highestUnlocked + 1 && !goingForward) return;
+
+        if (goingForward) {
+            setFormBanner(null);
+            if (!validateStep(step)) return;
+            setCompletedSteps((current) => new Set(current).add(step));
+            setHighestUnlocked((current) => Math.max(current, nextOriginalIndex));
+        }
+
+        setFormBanner(null);
+        setMobileSummaryOpen(false);
+        setMobileScoreOpen(false);
+        setStep(next);
+        saveSilent();
     }
 
     function goBack() {
+        if (stepIndex <= 0) return;
+        changeStep(activeSteps[stepIndex - 1]!.id);
+    }
+
+    function goNext() {
+        const next = activeSteps[stepIndex + 1];
+        if (!next) return;
+        changeStep(next.id);
+    }
+
+    function saveSilent() {
+        try {
+            writeLocalDraft(methods.getValues());
+            setSavedAt(new Date());
+        } catch {
+            // Keep navigating even if storage is unavailable.
+        }
+    }
+
+    async function persistProperty(intent: "draft" | "publish") {
+        if (persistInFlightRef.current) return;
+        persistInFlightRef.current = true;
         setFormBanner(null);
-        const prev = PROPERTY_FORM_STEPS[stepIndex - 1];
-        if (prev) setStep(prev);
+        const forceDraft = intent === "draft";
+        const publishStatus = forceDraft ? "draft" : "active";
+        methods.setValue("publish.status", publishStatus, { shouldDirty: true });
+        const current: PropertyDraftValues = {
+            ...methods.getValues(),
+            publish: { ...methods.getValues().publish, status: publishStatus },
+        };
+        // Quick add only validates its own fields (draft and publish). Full details
+        // still runs the full step schemas on publish — leave that path alone.
+        if (entryMode === "quick") {
+            if (!validateQuickAdd(methods, current)) {
+                persistInFlightRef.current = false;
+                return;
+            }
+        } else if (!forceDraft) {
+            const required = activeSteps.map((item) => item.id);
+            for (const requiredStep of required) {
+                if (!validateStep(requiredStep)) {
+                    const problemIndex = FORM_STEPS.findIndex((item) => item.id === requiredStep);
+                    setHighestUnlocked((value) => Math.max(value, problemIndex));
+                    setStep(requiredStep);
+                    persistInFlightRef.current = false;
+                    return;
+                }
+            }
+        }
+
+        // Intent wins over draftToLegacyInput: stripHidden removes publish.status, which
+        // would otherwise always serialize as publish: false on edit updates.
+        if (portal === "owner") {
+            current.owner = { ...current.owner, contactId: "" };
+            current.attachedBuyers = [];
+        }
+        const input = {
+            ...draftToLegacyInput(stripHidden(current), photoFilesRef),
+            publish: !forceDraft,
+        };
+        setSaving(true);
+        setSavingIntent(intent);
+        try {
+            if (mode === "edit" && propertyId) {
+                const updated = await myListingsApi.update(propertyId, {
+                    ...input,
+                    status: forceDraft ? "draft" : "published",
+                });
+                if (!updated) {
+                    setFormBanner("Couldn't find that property.");
+                    return;
+                }
+                finishSave(updated, forceDraft);
+                return;
+            }
+            const created = await myListingsApi.create(input);
+            finishSave(created, forceDraft);
+        } catch (error) {
+            setFormBanner(
+                error instanceof Error
+                    ? error.message
+                    : "Couldn't save to the current API. Your complete draft is still saved on this device.",
+            );
+        } finally {
+            persistInFlightRef.current = false;
+            setSaving(false);
+            setSavingIntent(null);
+        }
     }
 
-    async function onInvalid() {
-        const problemSteps = PROPERTY_FORM_STEPS.filter((item) =>
-            stepHasErrors(item, methods.formState.errors),
-        );
-        const total = Object.keys(methods.formState.errors).length;
-        setFormBanner(
-            total > 0
-                ? `${total} field${total === 1 ? "" : "s"} need attention`
-                : "Please check the highlighted fields.",
-        );
-        if (problemSteps[0]) setStep(problemSteps[0]);
-    }
-
-    /** Ref reads stay inside this event handler — not passed through render. */
-    function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
-        void handleSubmit(async (values) => {
+    function finishSave(listing: MyListingItem, draft: boolean) {
+        // Stop autosave so it cannot rewrite the local draft after we clear it.
+        autosaveReadyRef.current = false;
+        try {
+            const stored = draftForStorage(methods.getValues());
+            if (listing.imageSrcs.length > 0) {
+                stored.media.photos = listing.imageSrcs.map((url, index) => ({
+                    id: `existing-${index}`,
+                    url,
+                    name: `Property photo ${index + 1}`,
+                    tag: "other",
+                    isCover: index === 0,
+                    order: index,
+                    alt: listing.title,
+                    status: "ready" as const,
+                }));
+            }
+            window.localStorage.setItem(
+                `property-extra:v${LOCAL_DRAFT_VERSION}:${listing.id}`,
+                JSON.stringify({
+                    savedAt: new Date().toISOString(),
+                    values: stored,
+                }),
+            );
+        } catch {
+            // The existing API save still succeeded; unsupported fields remain best-effort local data.
+        }
+        window.localStorage.removeItem(localStorageKey);
+        if (mode === "create") {
+            methods.reset(cloneDefaultDraft());
+            setStep("basics");
+            setHighestUnlocked(0);
+            setCompletedSteps(new Set());
+            setEntryMode("full");
+            setHasRestoredDraft(false);
+            setSavedAt(null);
             setFormBanner(null);
-            const photoFiles = values.imageSrcs
-                .map((src) => photoFilesRef.current.get(src))
-                .filter((file): file is File => file instanceof File);
+            photoFilesRef.current.clear();
+        }
+        toast.success(draft ? "Property saved as a draft." : "Property published.");
+        onCancel?.();
+        onOpenChange?.(false);
+        if (onSaved) {
+            onSaved(listing);
+            return;
+        }
+        router.push(brokerPropertyDetailHref(listing.id));
+    }
+
+    function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        if (entryMode === "quick") {
+            void persistProperty("draft");
+            return;
+        }
+        if (isLastStep) void persistProperty("publish");
+        else goNext();
+    }
+
+    function handleFormKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
+        if (event.key !== "Enter" || event.shiftKey) return;
+        const target = event.target as HTMLElement;
+        if (
+            target.tagName === "TEXTAREA" ||
+            target.tagName === "BUTTON" ||
+            target.tagName === "SELECT" ||
+            target.getAttribute("type") === "file"
+        )
+            return;
+        // Bare Enter must not advance (inputs use it for tags / search / custom add).
+        // Ctrl/Cmd+Enter continues or publishes — same as the footer primary action.
+        event.preventDefault();
+        if (!event.ctrlKey && !event.metaKey) return;
+        if (entryMode === "quick") {
+            void persistProperty("draft");
+            return;
+        }
+        if (isLastStep) {
+            void persistProperty("publish");
+            return;
+        }
+        goNext();
+    }
+
+    function requestClose() {
+        if (mode === "create" && autosaveReadyRef.current) {
             try {
-                if (mode === "edit" && propertyId) {
-                    const updated = await myListingsApi.update(propertyId, {
-                        ...values,
-                        photoFiles,
-                        status: values.publish
-                            ? "published"
-                            : initialListing?.status === "unpublished"
-                              ? "unpublished"
-                              : "draft",
-                    });
-                    if (!updated) {
-                        setFormBanner("Couldn't find that property.");
-                        return;
-                    }
-                    toast.success(
-                        values.publish
-                            ? "Property published. Brokers can now see it."
-                            : "Property saved",
-                    );
-                    onCancel?.();
-                    // When the caller handles the result itself (an edit modal opened
-                    // over a list), navigating away would throw the user out of the
-                    // page they were working in.
-                    if (onSaved) {
-                        onSaved(updated);
-                        return;
-                    }
-                    router.push(brokerPropertyDetailHref(updated.id));
-                    return;
-                }
-
-                const created = await myListingsApi.create({ ...values, photoFiles });
-                toast.success(
-                    values.publish
-                        ? "Property published. Brokers can now see it."
-                        : "Property added",
-                );
-                onCancel?.();
-                if (onSaved) {
-                    onSaved(created);
-                    return;
-                }
-                router.push(brokerPropertyDetailHref(created.id));
+                writeLocalDraft(methods.getValues());
+                setSavedAt(new Date());
             } catch {
-                setFormBanner("Something went wrong on our side. Try again in a moment.");
+                // Still allow closing if storage is unavailable.
             }
-        }, onInvalid)(event);
+        }
+        if (
+            methods.formState.isDirty &&
+            !window.confirm("Close this form? Your latest changes are saved as a local draft.")
+        )
+            return;
+        onOpenChange?.(false);
+        onCancel?.();
+        if (!isDialog && !onCancel) router.push(BROKER_YOUR_LISTINGS_HREF);
     }
 
-    function handleTabChange(next: string | number | null) {
-        if (next !== "details" && next !== "photos") return;
-        if (next === step) return;
-        setFormBanner(null);
-        setStep(next);
-    }
-
-    const isLastStep = stepIndex === PROPERTY_FORM_STEPS.length - 1;
-
-    const submitLabel = isSubmitting
-        ? "Saving…"
-        : mode === "edit"
-          ? "Save property"
-          : "Publish listing";
-
-    const modalFooter = (
-        <AppModalFooter
-            secondaryLabel={stepIndex === 0 ? "Cancel" : "Back"}
-            onSecondary={
-                stepIndex === 0
-                    ? (onCancel ?? (() => router.push(BROKER_YOUR_LISTINGS_HREF)))
-                    : goBack
-            }
-            primaryLabel={isLastStep ? submitLabel : "Continue"}
-            primaryType={isLastStep ? "submit" : "button"}
-            primaryFormId={isLastStep && isDialog ? "property-form-dialog" : undefined}
-            primaryDisabled={isSubmitting}
-            onPrimary={isLastStep ? undefined : () => void goNext()}
-        />
-    );
-
-    const stepBody = (
-        <>
-            {formBanner ? (
-                <div
-                    role="alert"
-                    className="mbe-5 rounded-card border border-danger/30 bg-danger-soft px-4 py-3"
-                >
-                    <p className="body-sm font-medium text-danger">{formBanner}</p>
-                </div>
-            ) : null}
-            {step === "details" ? (
-                <StepDetails
-                    titleTouched={titleTouched}
-                    onTitleTouched={() => setTitleTouched(true)}
-                />
-            ) : null}
-            {step === "photos" ? <StepPhotos photoFilesRef={photoFilesRef} /> : null}
-        </>
-    );
-
-    const stepTabs = (
-        <div
-            role="tablist"
-            aria-label="Property form steps"
-            className="flex gap-1 rounded-full bg-surface-muted p-1 inline-full"
-        >
-            <AnimatedBackground
-                defaultValue={step}
-                onValueChange={(value) => handleTabChange(value)}
-                className="rounded-full bg-surface shadow-xs"
-                transition={{ duration: duration.tabs, ease: ease.smoothOut }}
-            >
-                {PROPERTY_FORM_STEPS.map((item) => {
-                    const hasError = stepHasErrors(item, errors);
-                    const isActive = item === step;
-                    return (
-                        <button
-                            key={item}
-                            type="button"
-                            data-id={item}
-                            role="tab"
-                            aria-selected={isActive}
-                            className={cn(
-                                `
-                                  body-sm flex-1 items-center justify-center rounded-full px-4
-                                  font-medium transition-colors duration-160 block-10
-                                  [&>div]:text-center [&>div]:inline-full
-                                `,
-                                isActive
-                                    ? "text-foreground"
-                                    : "text-foreground/60 hover:text-foreground",
-                                hasError && !isActive ? "text-danger hover:text-danger" : undefined,
-                            )}
-                        >
-                            {PROPERTY_FORM_STEP_LABELS[item]}
-                        </button>
-                    );
-                })}
-            </AnimatedBackground>
-        </div>
-    );
-
-    const stepDescription =
-        step === "details"
-            ? "Tell us what you’re listing and where it is."
-            : "Add photos of the property, then publish the listing.";
-
-    if (isDialog) {
-        return (
-            <FormProvider {...methods}>
-                <AppModal
-                    open={open}
-                    onOpenChange={onOpenChange ?? (() => undefined)}
-                    title={heading}
-                    description={stepDescription}
-                    size="lg"
-                    padding="lg"
-                    showCloseButton
-                    footer={modalFooter}
-                    className={className}
-                >
-                    <form
-                        id="property-form-dialog"
-                        onSubmit={handleFormSubmit}
-                        noValidate
-                        className="flex flex-col gap-5"
-                    >
-                        {stepTabs}
-                        {stepBody}
-                    </form>
-                </AppModal>
-            </FormProvider>
-        );
-    }
-
-    return (
+    const surface = (
         <FormProvider {...methods}>
-            <form
-                className={cn("mx-auto flex flex-col gap-6 inline-full max-inline-6xl", className)}
-                onSubmit={handleFormSubmit}
-                noValidate
-            >
-                <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-1">
-                        <h1 className="display-md">{heading}</h1>
-                        <p className="body text-ink-muted">{stepDescription}</p>
-                    </div>
-                    {stepTabs}
-                </div>
+            <FieldRulesProvider>
+                <form
+                    onSubmit={handleFormSubmit}
+                    onKeyDown={handleFormKeyDown}
+                    noValidate
+                    className={cn(
+                        `relative flex flex-1 flex-col overflow-hidden bg-surface min-block-0`,
+                        className,
+                    )}
+                >
+                    <PropertyFormHeader
+                        mode={mode}
+                        entryMode={entryMode}
+                        onEntryModeChange={setEntryMode}
+                        isSaved={Boolean(savedAt)}
+                        savingIntent={savingIntent}
+                        onSaveDraft={() => {
+                            void persistProperty("draft");
+                        }}
+                        onPublish={() => {
+                            void persistProperty("publish");
+                        }}
+                        onClose={requestClose}
+                        showClose={isDialog}
+                    />
 
-                {stepBody}
+                    {entryMode === "full" ? (
+                        <>
+                            <div
+                                className="
+                                  shrink-0 border-be border-border-warm bg-surface
+                                  xl:hidden
+                                "
+                            >
+                                <StepNav
+                                    steps={activeSteps}
+                                    activeStep={step}
+                                    highestUnlocked={highestUnlocked}
+                                    completedSteps={completedSteps}
+                                    onStepChange={changeStep}
+                                />
+                                <MobileListingScore
+                                    score={listingScore.score}
+                                    tips={listingScore.tips}
+                                    open={mobileScoreOpen}
+                                    onOpenChange={(next) => {
+                                        setMobileScoreOpen(next);
+                                        if (next) setMobileSummaryOpen(false);
+                                    }}
+                                    onTip={(tipStep) => {
+                                        setHighestUnlocked(FORM_STEPS.length - 1);
+                                        setStep(tipStep);
+                                        setMobileScoreOpen(false);
+                                    }}
+                                />
+                            </div>
+                            <div
+                                className="
+                                  grid flex-1 min-block-0
+                                  xl:grid-cols-[272px_minmax(0,1fr)_336px]
+                                "
+                            >
+                                <aside
+                                    className="
+                                      hidden flex-col border-e border-border-warm bg-surface px-4
+                                      py-5 min-block-0
+                                      xl:flex xl:block-full
+                                    "
+                                >
+                                    <StepNav
+                                        steps={activeSteps}
+                                        activeStep={step}
+                                        highestUnlocked={highestUnlocked}
+                                        completedSteps={completedSteps}
+                                        onStepChange={changeStep}
+                                    />
+                                </aside>
+                                <main
+                                    className="
+                                      overflow-y-auto bg-surface-muted p-4 min-block-0 min-inline-0
+                                      sm:p-5
+                                      xl:p-6
+                                    "
+                                >
+                                    <div
+                                        className="
+                                          rounded-card border border-border-warm bg-surface p-5
+                                          shadow-sm min-block-full
+                                          sm:p-6
+                                          xl:p-7
+                                        "
+                                    >
+                                        <div className="-m-1 p-1 pbe-2">
+                                            <h1 className="sr-only">
+                                                {activeSteps[stepIndex]?.label}
+                                            </h1>
+                                            {formBanner ? (
+                                                <div
+                                                    role="alert"
+                                                    className="
+                                                      mbe-5 rounded-control border border-danger/30
+                                                      bg-danger-soft px-4 py-3 text-sm font-medium
+                                                      text-danger
+                                                    "
+                                                >
+                                                    {formBanner}
+                                                </div>
+                                            ) : null}
+                                            <StepTransition step={step}>
+                                                <StepContent
+                                                    step={step}
+                                                    portal={portal}
+                                                    photoFilesRef={photoFilesRef}
+                                                />
+                                            </StepTransition>
+                                        </div>
+                                    </div>
+                                </main>
+                                <aside
+                                    className="
+                                      hidden overflow-y-auto bg-surface-muted ps-0 pe-4 pbs-6 pbe-4
+                                      min-block-0 min-inline-0
+                                      xl:block
+                                    "
+                                >
+                                    <div className="flex flex-col gap-4">
+                                        <LiveSummaryPanel
+                                            values={values}
+                                            stepIndex={stepIndex}
+                                            photoFilesRef={photoFilesRef}
+                                            onGoToMedia={() => {
+                                                setHighestUnlocked(FORM_STEPS.length - 1);
+                                                setStep("media");
+                                            }}
+                                        />
+                                        <article
+                                            className="
+                                              overflow-hidden rounded-card border border-border-warm
+                                              bg-surface
+                                            "
+                                        >
+                                            <div className="flex items-center gap-3.5 p-3.5">
+                                                <ListingScoreRing score={listingScore.score} />
+                                                <div className="min-inline-0">
+                                                    <p className="text-sm font-semibold text-ink">
+                                                        Listing score
+                                                    </p>
+                                                    <p className="mbs-0.5 text-xs/5 text-ink-muted">
+                                                        Finish these to raise broker confidence.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {listingScore.tips.length ? (
+                                                <div
+                                                    className="
+                                                  flex flex-col gap-1.5 px-3.5 pbe-3.5
+                                                "
+                                                >
+                                                    {listingScore.tips.map((tip) => (
+                                                        <Button
+                                                            key={tip.label}
+                                                            type="button"
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                setHighestUnlocked(
+                                                                    FORM_STEPS.length - 1,
+                                                                );
+                                                                setStep(tip.step);
+                                                            }}
+                                                            className="
+                                                              flex items-center justify-between
+                                                              gap-3 rounded-control border
+                                                              border-border-warm bg-surface-muted
+                                                              px-3 text-start text-xs text-ink
+                                                              inline-full min-block-10
+                                                              hover:border-brand/35
+                                                              hover:bg-brand-soft/50
+                                                              focus-visible:ring-3
+                                                              focus-visible:ring-ring/30
+                                                            "
+                                                        >
+                                                            <span className="min-inline-0">
+                                                                {tip.label}
+                                                            </span>
+                                                            <span
+                                                                className="
+                                                                  tabular shrink-0 rounded-control
+                                                                  bg-brand-soft px-2 py-0.5
+                                                                  font-semibold text-brand-text
+                                                                "
+                                                            >
+                                                                +{tip.points}
+                                                            </span>
+                                                        </Button>
+                                                    ))}
+                                                </div>
+                                            ) : null}
+                                        </article>
+                                    </div>
+                                </aside>
+                            </div>
+                            <MobileDealSummary
+                                values={values}
+                                stepIndex={stepIndex}
+                                photoFilesRef={photoFilesRef}
+                                open={mobileSummaryOpen}
+                                onOpenChange={(next) => {
+                                    setMobileSummaryOpen(next);
+                                    if (next) setMobileScoreOpen(false);
+                                }}
+                            />
+                        </>
+                    ) : (
+                        <main
+                            className="
+                              flex flex-1 flex-col overflow-y-auto bg-surface-muted p-4 min-block-0
+                              min-inline-0
+                              sm:p-5
+                            "
+                        >
+                            <div
+                                className="
+                                  flex flex-1 flex-col rounded-card border border-border-warm
+                                  bg-surface p-5 shadow-sm
+                                  sm:p-6 sm:py-7
+                                  xl:p-8
+                                "
+                            >
+                                {formBanner ? (
+                                    <div
+                                        role="alert"
+                                        className="
+                                          mbe-5 rounded-control border border-danger/30
+                                          bg-danger-soft px-4 py-3 text-sm font-medium text-danger
+                                        "
+                                    >
+                                        {formBanner}
+                                    </div>
+                                ) : null}
+                                <QuickAdd photoFilesRef={photoFilesRef} />
+                            </div>
+                        </main>
+                    )}
 
-                {modalFooter}
-            </form>
+                    <PropertyFormFooter
+                        entryMode={entryMode}
+                        stepIndex={stepIndex}
+                        stepCount={activeSteps.length}
+                        isLastStep={isLastStep}
+                        isSubmitting={saving}
+                        showStartFresh={mode === "create"}
+                        onStartFresh={startFreshListing}
+                        onBack={goBack}
+                        onNext={() => {
+                            if (entryMode === "quick") {
+                                void persistProperty("draft");
+                                return;
+                            }
+                            goNext();
+                        }}
+                    />
+                </form>
+            </FieldRulesProvider>
         </FormProvider>
     );
+
+    if (!isDialog)
+        return (
+            <div
+                className="
+                  flex overflow-hidden rounded-card border border-border-warm bg-surface shadow-sm
+                  min-block-[calc(100dvh-7rem)]
+                "
+            >
+                {surface}
+            </div>
+        );
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={(next) => {
+                if (!next) requestClose();
+            }}
+        >
+            <DialogPopup
+                showCloseButton={false}
+                className="
+                  inset-0 flex translate-none flex-col gap-0 overflow-hidden rounded-none border-0
+                  p-0 shadow-none block-dvh inline-dvw max-inline-none
+                "
+            >
+                {surface}
+            </DialogPopup>
+        </Dialog>
+    );
+}
+
+const ENTRY_MODE_TABS = [
+    {
+        value: "full" as const,
+        label: (
+            <>
+                <span className="sm:hidden">Full</span>
+                <span className="hidden sm:inline">Full details</span>
+            </>
+        ),
+    },
+    {
+        value: "quick" as const,
+        label: (
+            <>
+                <span className="sm:hidden">Quick</span>
+                <span className="hidden sm:inline">Quick add</span>
+            </>
+        ),
+    },
+];
+
+function PropertyFormHeader({
+    mode,
+    entryMode,
+    onEntryModeChange,
+    isSaved,
+    savingIntent,
+    onSaveDraft,
+    onPublish,
+    onClose,
+    showClose,
+}: {
+    mode: "create" | "edit";
+    entryMode: "full" | "quick";
+    onEntryModeChange: (mode: "full" | "quick") => void;
+    isSaved: boolean;
+    savingIntent: "draft" | "publish" | null;
+    onSaveDraft: () => void;
+    onPublish: () => void;
+    onClose: () => void;
+    showClose: boolean;
+}) {
+    const title = mode === "edit" ? "Edit property" : "Add property";
+    const isBusy = savingIntent != null;
+    const savedHint = isSaved ? (
+        <span className="body-xs hidden text-ink-subtle sm:inline" aria-live="polite">
+            Saved on this device
+        </span>
+    ) : null;
+
+    return (
+        <header
+            className="
+              flex shrink-0 items-center justify-between gap-3 border-be border-border-warm
+              bg-surface px-4 py-2.5 shadow-xs
+              sm:px-6
+            "
+        >
+            {showClose ? (
+                <DialogHeader
+                    className="
+                      flex flex-1 flex-row items-baseline gap-2.5 pe-0 text-start min-inline-0
+                    "
+                >
+                    <DialogTitle className="truncate">{title}</DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Property and commission details. Full details walks through every step;
+                        Quick add saves the essentials as a draft.
+                    </DialogDescription>
+                    {savedHint}
+                </DialogHeader>
+            ) : (
+                <div className="flex flex-1 items-baseline gap-2.5 min-inline-0">
+                    <h1 className="truncate font-display text-lg font-medium text-ink">{title}</h1>
+                    {savedHint}
+                </div>
+            )}
+            <TooltipProvider>
+                <div className="flex shrink-0 items-center gap-2">
+                    <SlidingTabs
+                        value={entryMode}
+                        onValueChange={onEntryModeChange}
+                        ariaLabel="Entry mode"
+                        options={ENTRY_MODE_TABS}
+                        className="t-tabs-compact"
+                    />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        loading={savingIntent === "draft"}
+                        disabled={isBusy}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onSaveDraft();
+                        }}
+                        className="hidden sm:inline-flex"
+                    >
+                        Save as draft
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="accent"
+                        loading={savingIntent === "publish"}
+                        disabled={isBusy}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onPublish();
+                        }}
+                    >
+                        Publish
+                    </Button>
+                    {showClose ? (
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <DialogClose
+                                        onClick={(event) => {
+                                            event.preventDefault();
+                                            onClose();
+                                        }}
+                                        render={
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                aria-label="Close"
+                                                className="shrink-0"
+                                            />
+                                        }
+                                    />
+                                }
+                            >
+                                <X className="block-4 inline-4" strokeWidth={2} aria-hidden />
+                                <span className="sr-only">Close</span>
+                            </TooltipTrigger>
+                            <TooltipContent side="inline-start">
+                                Close
+                                <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
+                            </TooltipContent>
+                        </Tooltip>
+                    ) : null}
+                </div>
+            </TooltipProvider>
+        </header>
+    );
+}
+
+function PropertyFormFooter({
+    entryMode,
+    stepIndex,
+    stepCount,
+    isLastStep,
+    isSubmitting,
+    showStartFresh,
+    onStartFresh,
+    onBack,
+    onNext,
+}: {
+    entryMode: "full" | "quick";
+    stepIndex: number;
+    stepCount: number;
+    isLastStep: boolean;
+    isSubmitting: boolean;
+    showStartFresh: boolean;
+    onStartFresh: () => void;
+    onBack: () => void;
+    onNext: () => void;
+}) {
+    const showBack = entryMode === "full" && stepIndex > 0;
+    const showPrimary = entryMode === "quick" || !isLastStep;
+    const progressPct = stepCount ? Math.round(((stepIndex + 1) / stepCount) * 100) : 0;
+    const primaryLabel = entryMode === "quick" ? "Save as draft" : "Continue";
+
+    return (
+        <footer
+            className="
+              flex shrink-0 items-center gap-3 border-bs border-border-warm bg-surface px-4 py-2.5
+              pbe-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-xs
+              sm:px-6
+            "
+        >
+            <div className="flex flex-1 items-center gap-3 min-inline-0 md:gap-4">
+                {showStartFresh ? (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onStartFresh}
+                        className="shrink-0"
+                    >
+                        <RotateCcw aria-hidden /> Start fresh
+                    </Button>
+                ) : null}
+                {entryMode === "full" ? (
+                    <div className="hidden items-center gap-4 min-inline-0 md:flex">
+                        <Progress
+                            value={progressPct}
+                            className="
+                              flex-row flex-nowrap items-center gap-2 max-inline-56 min-inline-40
+                              **:data-[slot=progress-indicator]:bg-brand
+                              **:data-[slot=progress-track]:flex-1
+                              **:data-[slot=progress-track]:bg-surface-muted
+                              **:data-[slot=progress-track]:block-1.5
+                            "
+                        >
+                            <ProgressLabel
+                                className="
+                              body-xs tabular shrink-0 font-medium text-ink-subtle
+                            "
+                            >
+                                {stepIndex + 1} of {stepCount}
+                            </ProgressLabel>
+                        </Progress>
+                        <p className="body-xs flex flex-wrap items-center gap-1.5 text-ink-subtle">
+                            Press
+                            <KbdGroup className="gap-1">
+                                <Kbd className="px-1.5 text-[10px] min-inline-4">1</Kbd>
+                                <span aria-hidden>–</span>
+                                <Kbd className="px-1.5 text-[10px] min-inline-4">5</Kbd>
+                            </KbdGroup>
+                            to jump steps
+                        </p>
+                    </div>
+                ) : null}
+            </div>
+            <div className="ms-auto flex shrink-0 items-center gap-2">
+                {showBack ? (
+                    <Button type="button" variant="ghost" onClick={onBack}>
+                        Back
+                    </Button>
+                ) : null}
+                {showPrimary ? (
+                    <Button
+                        type="button"
+                        variant="accent"
+                        loading={isSubmitting}
+                        disabled={isSubmitting}
+                        onClick={onNext}
+                    >
+                        {primaryLabel}
+                        <KbdGroup className="hidden gap-0.5 md:inline-flex">
+                            <Kbd
+                                className="
+                              bg-surface/20 px-1.5 text-[10px] text-surface min-inline-4
+                            "
+                            >
+                                Ctrl
+                            </Kbd>
+                            <span className="text-[10px] text-surface/70" aria-hidden>
+                                +
+                            </span>
+                            <Kbd
+                                className="
+                              bg-surface/20 px-1.5 text-[10px] text-surface min-inline-4
+                            "
+                            >
+                                Enter
+                            </Kbd>
+                        </KbdGroup>
+                    </Button>
+                ) : null}
+            </div>
+        </footer>
+    );
+}
+
+function StepContent({
+    step,
+    portal,
+    photoFilesRef,
+}: {
+    step: PropertyFormStep;
+    portal: "broker" | "owner";
+    photoFilesRef: MutableRefObject<Map<string, File>>;
+}) {
+    if (step === "basics") {
+        return (
+            <div className="flex flex-col gap-8">
+                <StepBasics />
+                <StepLocation />
+            </div>
+        );
+    }
+    if (step === "details") {
+        return (
+            <div className="flex flex-col gap-8">
+                <StepDetails />
+                <StepArea />
+            </div>
+        );
+    }
+    if (step === "pricing") {
+        return (
+            <div className="flex flex-col gap-8">
+                <StepPricing />
+                <StepCommission />
+            </div>
+        );
+    }
+    if (step === "furnishing") {
+        return <StepFurnishing />;
+    }
+    return (
+        <div className="flex flex-col gap-8">
+            <StepMedia photoFilesRef={photoFilesRef} />
+            {portal === "broker" ? <StepPublish /> : null}
+        </div>
+    );
+}
+
+function StepTransition({ step, children }: { step: PropertyFormStep; children: ReactNode }) {
+    const [shown, setShown] = useState(false);
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => setShown(true));
+        return () => cancelAnimationFrame(frame);
+    }, [step]);
+    return <div className={cn("t-auth-enter -m-1 p-1", shown && "is-shown")}>{children}</div>;
+}
+
+function MobileListingScore({
+    score,
+    tips,
+    open,
+    onOpenChange,
+    onTip,
+}: {
+    score: number;
+    tips: { label: string; step: PropertyFormStep; points: number }[];
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onTip: (step: PropertyFormStep) => void;
+}) {
+    return (
+        <div className="border-bs border-border-warm bg-surface xl:hidden">
+            <Button
+                type="button"
+                variant="ghost"
+                aria-expanded={open}
+                aria-controls="mobile-listing-score-panel"
+                onClick={() => onOpenChange(!open)}
+                className="
+                  flex items-center justify-between gap-3 px-4 text-start text-ink inline-full
+                  min-block-11
+                  hover:bg-brand-soft/50
+                  focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:ring-inset
+                "
+            >
+                <span className="flex items-center gap-2 text-xs font-semibold text-ink">
+                    <span
+                        className="
+                          tabular flex items-center justify-center rounded-full bg-brand
+                          text-surface block-7 inline-7
+                        "
+                    >
+                        {score}%
+                    </span>
+                    Listing score
+                </span>
+                <span className="flex items-center gap-2 text-xs text-ink-muted min-inline-0">
+                    <span className="hidden truncate sm:block">
+                        {tips[0]?.label ?? "Ready to publish"}
+                    </span>
+                    <ChevronDown
+                        className={cn(
+                            "shrink-0 transition-transform duration-160 block-4 inline-4",
+                            open && `rotate-180`,
+                        )}
+                        aria-hidden
+                    />
+                </span>
+            </Button>
+            {open ? (
+                <div
+                    id="mobile-listing-score-panel"
+                    data-open={open}
+                    className="
+                      t-panel-slide absolute inset-x-0
+                      inset-be-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 overflow-y-auto
+                      border-bs border-border-warm bg-surface p-4 shadow-xl max-block-[60dvh]
+                    "
+                >
+                    <div className="mx-auto max-inline-md">
+                        <div className="flex items-center gap-4">
+                            <ListingScoreRing score={score} />
+                            <div>
+                                <p className="font-bold text-ink">Listing score</p>
+                                <p className="mbs-1 text-sm/5 text-ink-muted">
+                                    Add useful details to improve broker confidence.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="mbs-4 space-y-2">
+                            {tips.map((tip) => (
+                                <Button
+                                    key={tip.label}
+                                    type="button"
+                                    variant="outline"
+                                    size="md"
+                                    onClick={() => onTip(tip.step)}
+                                    className="
+                                      flex items-center justify-between gap-3 rounded-control border
+                                      border-border-warm bg-surface-muted px-3 text-start text-sm
+                                      text-ink inline-full min-block-11
+                                      hover:border-brand/40 hover:bg-brand-soft
+                                      focus-visible:ring-3 focus-visible:ring-ring/30
+                                    "
+                                >
+                                    <span>{tip.label}</span>
+                                    <span className="tabular font-semibold text-brand-text">
+                                        +{tip.points}
+                                    </span>
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
+function MobileDealSummary({
+    values,
+    stepIndex,
+    photoFilesRef,
+    open,
+    onOpenChange,
+}: {
+    values: PropertyDraftValues;
+    stepIndex: number;
+    photoFilesRef: MutableRefObject<Map<string, File>>;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
+    if (stepIndex < 4) return null;
+    return (
+        <div className="shrink-0 xl:hidden">
+            <Button
+                type="button"
+                variant="ghost"
+                aria-expanded={open}
+                aria-controls="mobile-deal-summary-panel"
+                onClick={() => onOpenChange(!open)}
+                className="
+                  flex items-center justify-between gap-4 bg-brand px-4 text-start inline-full
+                  min-block-14
+                  focus-visible:ring-2 focus-visible:ring-brand-soft focus-visible:ring-inset
+                "
+            >
+                <div className="flex-1 min-inline-0">
+                    <LiveSummaryPanel values={values} stepIndex={stepIndex} compact />
+                </div>
+                <ChevronDown
+                    className={cn(
+                        `text-surface transition-transform duration-160 block-5 inline-5`,
+                        open && `rotate-180`,
+                    )}
+                    aria-hidden
+                />
+            </Button>
+            {open ? (
+                <div
+                    id="mobile-deal-summary-panel"
+                    className="
+                      t-panel-slide absolute inset-x-0
+                      inset-be-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 overflow-y-auto
+                      bg-surface-muted shadow-xl max-block-[72dvh]
+                    "
+                    data-open={open}
+                >
+                    <div className="mx-auto p-4 max-inline-md">
+                        <LiveSummaryPanel
+                            values={values}
+                            stepIndex={stepIndex}
+                            photoFilesRef={photoFilesRef}
+                        />
+                    </div>
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
+function cloneDefaultDraft(): PropertyDraftValues {
+    return JSON.parse(JSON.stringify(DEFAULT_PROPERTY_DRAFT)) as PropertyDraftValues;
+}
+
+function mergeDraft(
+    base: PropertyDraftValues,
+    saved: Partial<PropertyDraftValues>,
+): PropertyDraftValues {
+    const merged = { ...base, ...saved } as PropertyDraftValues;
+    for (const key of Object.keys(base) as (keyof PropertyDraftValues)[]) {
+        if (base[key] && typeof base[key] === "object" && !Array.isArray(base[key])) {
+            (merged as Record<string, unknown>)[key] = {
+                ...(base[key] as object),
+                ...((saved[key] as object | undefined) ?? {}),
+            };
+        }
+    }
+    merged.media.photos = (merged.media.photos ?? []).filter(
+        (photo) => Boolean(photo.url) && !photo.url.startsWith("blob:"),
+    );
+    // Local extras often strip blob previews after upload, leaving photos: [].
+    // Never let that wipe server photos already on the listing.
+    const basePhotos = (base.media?.photos ?? []).filter(
+        (photo) => Boolean(photo.url) && !photo.url.startsWith("blob:"),
+    );
+    if (merged.media.photos.length === 0 && basePhotos.length > 0) {
+        merged.media.photos = basePhotos;
+    }
+    merged.attachedBuyers = Array.isArray(merged.attachedBuyers) ? merged.attachedBuyers : [];
+    if (!merged.owner.contactId) merged.owner.contactId = "";
+    // Legacy drafts may still store removed commission pickers ("months", etc.).
+    merged.commission.sale.mode = "percent";
+    merged.commission.sale.paidBy = "owner";
+    merged.commission.rent.mode = "flat";
+    merged.commission.rent.paidBy = "owner";
+    return merged;
+}
+
+function draftForStorage(values: PropertyDraftValues): PropertyDraftValues {
+    const safe = JSON.parse(JSON.stringify(values)) as PropertyDraftValues;
+    safe.media.photos = safe.media.photos.filter(
+        (photo) => Boolean(photo.url) && !photo.url.startsWith("blob:"),
+    );
+    return safe;
+}
+
+function listingToDraft(listing: MyListingItem): PropertyDraftValues {
+    const draft = cloneDefaultDraft();
+    draft.basics.listingFor =
+        listing.transactionType === "sale"
+            ? "sell"
+            : listing.transactionType === "both"
+              ? "both"
+              : "rent";
+    draft.basics.category = listing.category;
+    draft.basics.propertyType = legacyPropertyTypeToDraft(listing.propertyType);
+    const savedType = listing.subtype ? apiSubtypeToDraft(listing.subtype) : "";
+    if (savedType) {
+        // Older agricultural listings were saved as `land`; recover it from the subtype.
+        const inCategory = (category: keyof typeof PROPERTY_TYPES) =>
+            (PROPERTY_TYPES[category] as readonly string[]).includes(savedType);
+        if (!inCategory(draft.basics.category) && inCategory("agricultural")) {
+            draft.basics.category = "agricultural";
+        }
+        if (inCategory(draft.basics.category)) draft.basics.propertyType = savedType;
+    }
+    draft.basics.title = listing.title;
+    draft.basics.description = listing.description;
+    draft.location.city = listing.city;
+    draft.location.locality = listing.locality;
+    draft.location.streetOrRoad = listing.address;
+    draft.location.landmark = listing.landmark || listing.address || listing.locality;
+    draft.location.pincode = listing.pinCode;
+    draft.location.projectOrSociety = listing.society || "";
+    draft.details.bedrooms = String(listing.bhk || 2);
+    draft.details.bathrooms = listing.bathrooms;
+    draft.details.balconies = listing.balconies;
+    draft.details.floorNumber = listing.floorNumber ?? null;
+    draft.details.totalFloors = listing.totalFloors;
+    draft.details.facing = listing.facing ?? "";
+    draft.details.coveredParking =
+        listing.parking === "none" ? 0 : listing.parking === "3plus" ? 3 : Number(listing.parking);
+    draft.area.carpetArea = listing.areaSqft;
+    draft.area.areaSqft = listing.areaSqft;
+    draft.sale.expectedPrice = listing.saleAmountInr;
+    draft.sale.pricePerSqft =
+        listing.saleAmountInr && listing.areaSqft
+            ? Math.round(listing.saleAmountInr / listing.areaSqft)
+            : null;
+    draft.rent.monthlyRent = listing.rentAmountInr;
+    draft.sale.maintenanceCharge = listing.maintenanceInr;
+    draft.rent.maintenanceAmount = listing.maintenanceInr;
+    draft.rent.securityDeposit = listing.securityDeposit;
+    draft.rent.securityDepositMode = listing.securityDepositMode ?? "months_of_rent";
+    draft.commission.sale.value = listing.commissionPercent ?? draft.commission.sale.value;
+    draft.commission.rent.mode = "flat";
+    draft.commission.rent.value = listing.commissionAmount ?? 0;
+    draft.rent.availableFrom = listing.availableFrom ?? "";
+    draft.furnishing.status =
+        listing.furnishing === "furnished"
+            ? "fully_furnished"
+            : listing.furnishing === "semi"
+              ? "semi_furnished"
+              : "unfurnished";
+    draft.amenities.society = listing.amenities;
+    draft.location.nearbyPlaces = listing.nearbyPlaces ?? [];
+    draft.details.commercial.suitableFor = listing.suitableFor ?? [];
+    draft.details.commercial.cabins = listing.cabins ?? null;
+    draft.details.commercial.meetingRooms = listing.meetingRooms ?? null;
+    draft.details.commercial.workstations = listing.workstations ?? null;
+    draft.details.commercial.ceilingHeightFt = listing.ceilingHeightFt ?? null;
+    draft.media.videoUrl = listing.videoUrl ?? "";
+    draft.media.virtualTourUrl = listing.virtualTourUrl ?? "";
+    draft.media.photos = listing.imageSrcs.map((url, index) => ({
+        id: `existing-${index}`,
+        url,
+        name: `Property photo ${index + 1}`,
+        tag: "other",
+        isCover: index === 0,
+        order: index,
+        alt: listing.title,
+        status: "ready",
+    }));
+    draft.publish.status = listing.status === "published" ? "active" : "draft";
+    return draft;
+}
+
+function legacyPropertyTypeToDraft(value: MyListingPropertyType): string {
+    if (value === "farmhouse") return "farm_house";
+    if (value === "flat") return "apartment";
+    if (value === "office") return "office_space";
+    if (value === "plot") return "residential_plot";
+    if (value === "agricultural") return "agricultural_land";
+    return value;
+}
+
+/** Form type ↔ API `subtype`. Only `1rk` (invalid enum name) and legacy `flat` differ. */
+function draftTypeToApiSubtype(value: string): string | undefined {
+    if (!value) return undefined;
+    return value === "1rk" ? "one_rk" : value;
+}
+
+function apiSubtypeToDraft(value: string): string {
+    if (value === "one_rk") return "1rk";
+    if (value === "flat") return "apartment";
+    return value;
+}
+
+function draftPropertyTypeToLegacy(values: PropertyDraftValues): MyListingPropertyType {
+    const value = values.basics.propertyType;
+    const direct = [
+        "apartment",
+        "villa",
+        "independent_house",
+        "builder_floor",
+        "penthouse",
+        "shop",
+        "showroom",
+        "warehouse",
+        "factory",
+    ];
+    if (direct.includes(value)) return value as MyListingPropertyType;
+    if (value === "farm_house") return "farmhouse";
+    if (
+        ["office_space", "coworking_space", "business_center", "commercial_building"].includes(
+            value,
+        )
+    )
+        return "office";
+    if (["retail_space", "restaurant_space"].includes(value)) return "shop";
+    if (["godown", "industrial_shed", "cold_storage"].includes(value)) return "warehouse";
+    if (
+        ["residential_plot", "commercial_plot", "industrial_plot", "na_plot", "farm_land"].includes(
+            value,
+        )
+    )
+        return "plot";
+    if (["agricultural_land", "orchard", "poultry_farm"].includes(value)) return "agricultural";
+    return "apartment";
+}
+
+function draftToLegacyInput(
+    values: PropertyDraftValues,
+    photoFilesRef: MutableRefObject<Map<string, File>>,
+): CreateMyListingInput {
+    const propertyType = draftPropertyTypeToLegacy(values);
+    const bhk = values.details.bedrooms === "1rk" ? 1 : Number(values.details.bedrooms) || 0;
+    const usablePhotos = values.media.photos.filter(
+        (photo) => photo.status !== "error" && Boolean(photo.url),
+    );
+    const imageSrcs = usablePhotos.map((photo) => photo.url);
+    const photoFiles = usablePhotos
+        .map((photo) => photoFilesRef.current.get(photo.url) ?? photoFilesRef.current.get(photo.id))
+        .filter((file): file is File => Boolean(file))
+        .slice(0, 10);
+    const listingFor = values.basics.listingFor;
+    const transactionType =
+        listingFor === "sell" ? "sale" : listingFor === "both" ? "both" : "rent";
+    const generatedTitle =
+        buildBasicsSuggestedTitle({
+            bedrooms: values.details.bedrooms,
+            propertyType: values.basics.propertyType,
+            locality: values.location.locality,
+            city: values.location.city,
+        }) ||
+        [
+            bhk ? `${bhk} BHK` : null,
+            toLabel(values.basics.propertyType),
+            values.location.locality
+                ? `in ${values.location.locality}, ${values.location.city}`
+                : null,
+        ]
+            .filter(Boolean)
+            .join(" ");
+    const amenities = Object.values(values.amenities).flat();
+    const parking = values.details.coveredParking ?? 0;
+    return {
+        transactionType,
+        category: values.basics.category,
+        propertyType,
+        subtype: draftTypeToApiSubtype(values.basics.propertyType),
+        bhk,
+        title: values.basics.title.trim() || generatedTitle,
+        locality: values.location.locality,
+        city: values.location.city,
+        address: values.location.streetOrRoad || values.location.fullAddress,
+        pinCode: values.location.pincode,
+        landmark: values.location.landmark,
+        // stripHidden drops projectOrSociety for non-gated plots.
+        society: values.location.projectOrSociety ?? "",
+        saleAmountInr:
+            transactionType === "sale" || transactionType === "both"
+                ? values.sale.expectedPrice
+                : null,
+        rentAmountInr:
+            transactionType === "rent" || transactionType === "both"
+                ? values.rent.monthlyRent
+                : null,
+        areaSqft: values.area.areaSqft,
+        furnishing:
+            values.furnishing.status === "fully_furnished"
+                ? "furnished"
+                : values.furnishing.status === "semi_furnished"
+                  ? "semi"
+                  : "unfurnished",
+        imageSrcs,
+        photoFiles,
+        bathrooms: values.details.bathrooms,
+        balconies: values.details.balconies,
+        floorNumber: values.details.floorNumber,
+        totalFloors: values.details.totalFloors,
+        facing: (values.details.facing || null) as CreateMyListingInput["facing"],
+        parking: parking <= 0 ? "none" : parking === 1 ? "1" : parking === 2 ? "2" : "3plus",
+        maintenanceInr: values.sale.maintenanceCharge ?? values.rent.maintenanceAmount ?? null,
+        availableFrom:
+            transactionType === "rent" || transactionType === "both"
+                ? values.rent.availableFrom || null
+                : null,
+        securityDeposit:
+            transactionType === "rent" || transactionType === "both"
+                ? values.rent.securityDeposit
+                : null,
+        securityDepositMode:
+            transactionType === "rent" || transactionType === "both"
+                ? values.rent.securityDepositMode
+                : null,
+        commissionPercent:
+            transactionType === "sale" || transactionType === "both"
+                ? values.commission.sale.value
+                : null,
+        commissionAmount:
+            transactionType === "rent" || transactionType === "both"
+                ? values.commission.rent.value
+                : null,
+        description: values.basics.description,
+        amenities,
+        nearbyPlaces: values.location.nearbyPlaces ?? [],
+        suitableFor: values.details.commercial.suitableFor ?? [],
+        cabins: values.details.commercial.cabins ?? null,
+        meetingRooms: values.details.commercial.meetingRooms ?? null,
+        workstations: values.details.commercial.workstations ?? null,
+        ceilingHeightFt: values.details.commercial.ceilingHeightFt ?? null,
+        videoUrl: values.media.videoUrl?.trim() || "",
+        virtualTourUrl: values.media.virtualTourUrl?.trim() || "",
+        publish: values.publish.status === "active",
+        exclusiveOwnerId: values.owner.contactId.trim() || null,
+    };
+}
+
+/** Scroll to and focus a form control by its draft path (e.g. `rent.availableFrom`). */
+function focusFieldByPath(path: string): boolean {
+    const id = path.replace(/\./g, "-");
+    const byId = document.getElementById(id);
+    const byName = document.querySelector<HTMLElement>(`[name="${CSS.escape(path)}"]`);
+    const byLabel = document.querySelector<HTMLElement>(`[aria-labelledby="${id}-label"]`);
+    const root = byId ?? byName ?? byLabel;
+    if (!root) return false;
+
+    root.scrollIntoView({ behavior: "smooth", block: "center" });
+    const focusable = root.matches("input, select, textarea, button, [tabindex]")
+        ? root
+        : root.querySelector<HTMLElement>("input, select, textarea, button, [tabindex]");
+    focusable?.focus({ preventScroll: true });
+    return true;
+}
+
+/**
+ * Not a real form field — the draft schema raises the missing-cover error at
+ * `media.cover` (photos live in `media.photos`), so the path needs a cast.
+ */
+const MEDIA_COVER_ERROR_PATH = "media.cover" as FieldPath<PropertyDraftValues>;
+
+const QUICK_ADD_ERROR_FIELDS = [
+    "basics.listingFor",
+    "basics.category",
+    "basics.propertyType",
+    "location.city",
+    "location.locality",
+    "area.plotArea",
+    "sale.expectedPrice",
+    "rent.monthlyRent",
+    MEDIA_COVER_ERROR_PATH,
+] as const satisfies readonly FieldPath<PropertyDraftValues>[];
+
+/** Field-level validation for Quick add — same inline errors as Full details. */
+function validateQuickAdd(
+    methods: ReturnType<typeof useForm<PropertyDraftValues>>,
+    values: PropertyDraftValues,
+): boolean {
+    methods.clearErrors([...QUICK_ADD_ERROR_FIELDS]);
+    const issues: { path: FieldPath<PropertyDraftValues>; message: string }[] = [];
+
+    if (!values.basics.listingFor) {
+        issues.push({
+            path: "basics.listingFor",
+            message: "Choose listing for (sale, rent, or both)",
+        });
+    }
+    if (!values.basics.category) {
+        issues.push({ path: "basics.category", message: "Choose a category" });
+    }
+    if (!values.basics.propertyType) {
+        issues.push({ path: "basics.propertyType", message: "Choose a property type" });
+    }
+    if (!values.location.city.trim()) {
+        issues.push({ path: "location.city", message: "Choose a city" });
+    }
+    if (!values.location.locality.trim()) {
+        issues.push({ path: "location.locality", message: "Enter the locality" });
+    }
+    const area = values.area.areaSqft || values.area.plotArea || values.area.carpetArea;
+    if (!area) {
+        issues.push({ path: "area.plotArea", message: "Enter the area" });
+    }
+    const listingFor = values.basics.listingFor;
+    if ((listingFor === "sell" || listingFor === "both") && !values.sale.expectedPrice) {
+        issues.push({ path: "sale.expectedPrice", message: "Enter the sale price" });
+    }
+    if (
+        (listingFor === "rent" ||
+            listingFor === "lease" ||
+            listingFor === "pg" ||
+            listingFor === "both") &&
+        !values.rent.monthlyRent
+    ) {
+        issues.push({ path: "rent.monthlyRent", message: "Enter the monthly rent" });
+    }
+    const hasCover = values.media.photos.some(
+        (photo) => photo.isCover && photo.status !== "error" && Boolean(photo.url),
+    );
+    const hasAnyPhoto = values.media.photos.some(
+        (photo) => photo.status !== "error" && Boolean(photo.url),
+    );
+    if (!hasCover && !hasAnyPhoto) {
+        issues.push({ path: MEDIA_COVER_ERROR_PATH, message: "Add a cover photo" });
+    }
+
+    if (!issues.length) return true;
+
+    for (const issue of issues) {
+        methods.setError(issue.path, { type: "quick", message: issue.message });
+    }
+    const firstPath = issues[0]!.path;
+    requestAnimationFrame(() => {
+        focusFieldByPath(firstPath);
+        if (firstPath === MEDIA_COVER_ERROR_PATH) {
+            document.getElementById("quick-cover-upload")?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+        }
+    });
+    return false;
 }

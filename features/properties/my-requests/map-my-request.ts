@@ -38,6 +38,12 @@ function titleCase(value: string): string {
     return value.replace(/\b[a-z]/g, (char) => char.toUpperCase());
 }
 
+function digitsOnly(phone: string | null | undefined): string | undefined {
+    if (!phone) return undefined;
+    const digits = phone.replace(/\D/g, "");
+    return digits.length >= 10 ? digits.slice(-10) : digits || undefined;
+}
+
 function configLabel(rep: RepresentationItem): string {
     const bhk = rep.propertyBhkConfig
         ? BHK_CONFIG_TO_NUMBER[rep.propertyBhkConfig]
@@ -159,8 +165,8 @@ export function mapRepresentationToRequestItem(
     const config = configLabel(rep);
     const typeLabel = propertyTypeLabel(rep);
     const title =
-        [config, locality || city].filter(Boolean).join(" · ") ||
         rep.propertyTitle?.trim() ||
+        [config, locality || city].filter(Boolean).join(" · ") ||
         "Property";
     const requestedAt = rep.createdAt ?? new Date().toISOString();
     const resolvedAt = stage === "pending" ? null : (rep.decidedAt ?? rep.updatedAt ?? requestedAt);
@@ -184,6 +190,9 @@ export function mapRepresentationToRequestItem(
         isRent,
         commissionPercent: toNumber(rep.propertyCommissionPercent),
         ownerName: rep.propertyOwnerName?.trim() || "Owner",
+        ownerAvatarUrl: rep.propertyOwnerAvatarUrl ?? undefined,
+        // Consent-gated — only after the owner accepts (API may still omit it).
+        ownerPhoneDigits: stage === "approved" ? digitsOnly(rep.propertyOwnerPhone) : undefined,
         ownerSeen: false,
         requestedAt,
         resolvedAt,

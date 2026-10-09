@@ -1,0 +1,1319 @@
+"use client";
+
+import { type ComponentProps, type ReactNode, useId, useState } from "react";
+import { Controller, type FieldPath, useFormContext } from "react-hook-form";
+
+import { Check, type LucideIcon, Minus, Plus, X } from "lucide-react";
+
+import { formatInrInput, inrWordHint, parseInr } from "@/lib/format/inr";
+import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { cn } from "@/lib/utils";
+import { type FieldVisibility, visibilityForField } from "@/lib/visibility/property";
+import { useFieldRules } from "@/lib/visibility/use-field-rules";
+
+import { ConditionalField } from "@/components/property/fields/conditional-field";
+import { FieldLabel } from "@/components/property/fields/field-label";
+import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { LocalityCombobox } from "@/components/shared/locality-combobox";
+import { Button } from "@/components/ui/button";
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+
+import type { PropertyOption } from "@/constants/property";
+
+type Path = FieldPath<PropertyDraftValues>;
+
+function errorAt(errors: unknown, path: string): string | undefined {
+    const value = path.split(".").reduce<unknown>((current, segment) => {
+        if (!current || typeof current !== "object") return undefined;
+        return (current as Record<string, unknown>)[segment];
+    }, errors);
+    if (!value || typeof value !== "object") return undefined;
+    const message = (value as { message?: unknown }).message;
+    return typeof message === "string" ? message : undefined;
+}
+
+export function VisibilityMark({ visibility: _visibility }: { visibility: FieldVisibility }) {
+    // Visibility badges hidden across the property form for a cleaner field row.
+    return null;
+}
+
+function FieldShell({
+    name,
+    label,
+    hint,
+    visibility,
+    children,
+    className,
+    composite = false,
+}: {
+    name: string;
+    label: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    children: ReactNode;
+    className?: string;
+    composite?: boolean;
+}) {
+    const resolvedVisibility = visibility ?? visibilityForField(name);
+    const fieldId = name.replace(/\./g, "-");
+    const { labelOf } = useFieldRules();
+    const resolvedLabel = labelOf(name, label);
+    return (
+        <ConditionalField path={name} className={className}>
+            <div className="-m-1 flex flex-col gap-2 p-1 min-inline-0">
+                <div className="flex items-center justify-between gap-3 min-block-5">
+                    <Label
+                        id={`${fieldId}-label`}
+                        htmlFor={composite ? undefined : fieldId}
+                        className="text-sm font-semibold text-ink"
+                    >
+                        <FieldLabel path={name}>{resolvedLabel}</FieldLabel>
+                    </Label>
+                    <VisibilityMark visibility={resolvedVisibility} />
+                </div>
+                {children}
+                {hint ? <div className="text-xs/5 text-ink-muted">{hint}</div> : null}
+            </div>
+        </ConditionalField>
+    );
+}
+
+export function TextField({
+    name,
+    label,
+    hint,
+    visibility,
+    className,
+    onBlur: onInputBlur,
+    onChange: onInputChange,
+    endAction,
+    ...props
+}: {
+    name: Path;
+    label: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    className?: string;
+    endAction?: ReactNode;
+} & Omit<ComponentProps<typeof Input>, "name" | "errorText" | "size">) {
+    const {
+        register,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
+    const error = errorAt(errors, name);
+    const registration = register(name);
+    const input = (
+        <Input
+            id={name.replace(/\./g, "-")}
+            size="lg"
+            errorText={error}
+            className={endAction ? "pe-40 sm:pe-44" : undefined}
+            {...registration}
+            {...props}
+            onChange={(event) => {
+                void registration.onChange(event);
+                onInputChange?.(event);
+            }}
+            onBlur={(event) => {
+                void registration.onBlur(event);
+                onInputBlur?.(event);
+            }}
+        />
+    );
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+        >
+            {endAction ? (
+                <div className="relative">
+                    {input}
+                    <div
+                        className="
+                          absolute inset-e-1.5 inset-bs-0 z-10 flex items-center block-control-xl
+                        "
+                    >
+                        {endAction}
+                    </div>
+                </div>
+            ) : (
+                input
+            )}
+        </FieldShell>
+    );
+}
+
+export function TextAreaField({
+    name,
+    label,
+    hint,
+    visibility,
+    rows = 4,
+    placeholder,
+    className,
+    onBlur: onInputBlur,
+    endAction,
+    readOnly,
+}: {
+    name: Path;
+    label: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    rows?: number;
+    placeholder?: string;
+    className?: string;
+    onBlur?: () => void;
+    endAction?: ReactNode;
+    readOnly?: boolean;
+}) {
+    const {
+        register,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
+    const error = errorAt(errors, name);
+    const messageId = `${name.replace(/\./g, "-")}-message`;
+    const registration = register(name);
+    const textarea = (
+        <Textarea
+            id={name.replace(/\./g, "-")}
+            rows={rows}
+            placeholder={placeholder}
+            readOnly={readOnly}
+            aria-invalid={Boolean(error) || undefined}
+            aria-describedby={error ? messageId : undefined}
+            className={cn(
+                `
+                  field-sizing-fixed resize-y rounded-control border-2 border-border-warm bg-surface
+                  px-4 py-3 text-[15px]/6 text-ink outline-none min-block-28
+                  placeholder:text-ink-subtle
+                  read-only:bg-surface-muted
+                  hover:border-ink-subtle
+                  read-only:hover:border-border-warm
+                  focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
+                  aria-invalid:border-danger-mid
+                `,
+                endAction && "pe-4 pbe-12",
+            )}
+            {...registration}
+            onBlur={(event) => {
+                void registration.onBlur(event);
+                onInputBlur?.();
+            }}
+        />
+    );
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+        >
+            {endAction ? (
+                <div className="relative">
+                    {textarea}
+                    <div className="absolute inset-e-2 inset-be-2 z-10 flex items-center">
+                        {endAction}
+                    </div>
+                </div>
+            ) : (
+                textarea
+            )}
+            {error ? (
+                <p id={messageId} role="alert" className="text-sm text-danger">
+                    {error}
+                </p>
+            ) : null}
+        </FieldShell>
+    );
+}
+
+export function SelectField({
+    name,
+    label,
+    options,
+    placeholder = "Choose an option",
+    hint,
+    visibility,
+    className,
+    startIcon,
+    onBlur: onInputBlur,
+    onValueChange,
+    loading = false,
+    disabled = false,
+    emptyText = "No matches",
+    limit,
+}: {
+    name: Path;
+    label: string;
+    options: readonly PropertyOption[];
+    placeholder?: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    className?: string;
+    startIcon?: LucideIcon;
+    onBlur?: () => void;
+    onValueChange?: (value: string) => void;
+    /** Shows a spinner and blocks input while the options are being fetched. */
+    loading?: boolean;
+    disabled?: boolean;
+    /** Message when nothing matches — e.g. "Pick a state first". */
+    emptyText?: string;
+    /** Caps rendered matches. Needed for long lists such as a state's cities. */
+    limit?: number;
+}) {
+    const {
+        control,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
+    const error = errorAt(errors, name);
+    const optionValues = options.map((option) => option.value);
+    const labelFor = (value: string) =>
+        options.find((option) => option.value === value)?.label ?? value;
+
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+        >
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => (
+                    <Combobox
+                        value={String(field.value ?? "") || null}
+                        onValueChange={(value) => {
+                            const next = value ?? "";
+                            field.onChange(next);
+                            onValueChange?.(next);
+                        }}
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                field.onBlur();
+                                onInputBlur?.();
+                            }
+                        }}
+                        items={optionValues}
+                        itemToStringLabel={labelFor}
+                        {...(limit == null ? {} : { limit })}
+                    >
+                        <ComboboxInput
+                            id={name.replace(/\./g, "-")}
+                            ref={field.ref}
+                            size="lg"
+                            startIcon={startIcon}
+                            placeholder={placeholder}
+                            errorText={error}
+                            loading={loading}
+                            disabled={disabled}
+                        />
+                        <ComboboxContent>
+                            <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                            <ComboboxList>
+                                {(item: string) => (
+                                    <ComboboxItem key={item} value={item}>
+                                        {labelFor(item)}
+                                    </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                        </ComboboxContent>
+                    </Combobox>
+                )}
+            />
+        </FieldShell>
+    );
+}
+
+/**
+ * Single locality, searched within `cityId`. The form keeps the locality name,
+ * like the country / state / city fields.
+ */
+export function LocalityField({
+    name,
+    label,
+    cityId,
+    placeholder,
+    hint,
+    visibility,
+    className,
+}: {
+    name: Path;
+    label: string;
+    cityId: string | null | undefined;
+    placeholder?: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    className?: string;
+}) {
+    const {
+        control,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
+    const error = errorAt(errors, name);
+
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+        >
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => (
+                    <LocalityCombobox
+                        id={name.replace(/\./g, "-")}
+                        inputRef={field.ref}
+                        cityId={cityId}
+                        size="lg"
+                        value={String(field.value ?? "")}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        placeholder={placeholder}
+                        errorText={error}
+                    />
+                )}
+            />
+        </FieldShell>
+    );
+}
+
+export function NumberField({
+    name,
+    label,
+    hint,
+    visibility,
+    min = 0,
+    max,
+    step,
+    placeholder,
+    className,
+    startIcon,
+    onValueChange,
+}: {
+    name: Path;
+    label: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    min?: number;
+    max?: number;
+    step?: number;
+    placeholder?: string;
+    className?: string;
+    startIcon?: LucideIcon;
+    onValueChange?: (value: number | null) => void;
+}) {
+    const {
+        control,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
+    const error = errorAt(errors, name);
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+        >
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => (
+                    <Input
+                        id={name.replace(/\./g, "-")}
+                        type="number"
+                        inputMode="decimal"
+                        min={min}
+                        max={max}
+                        step={step}
+                        size="lg"
+                        placeholder={placeholder}
+                        startIcon={startIcon}
+                        value={field.value == null ? "" : String(field.value)}
+                        onValueChange={(value) => {
+                            const next = value === "" ? null : Number(value);
+                            field.onChange(next);
+                            onValueChange?.(next);
+                        }}
+                        onBlur={field.onBlur}
+                        errorText={error}
+                    />
+                )}
+            />
+        </FieldShell>
+    );
+}
+
+function CurrencyControl({
+    value,
+    onChange,
+    onBlur,
+    error,
+    placeholder,
+    helperText,
+    id,
+}: {
+    value: unknown;
+    onChange: (value: number | null) => void;
+    onBlur: () => void;
+    error?: string;
+    placeholder?: string;
+    helperText?: string;
+    id: string;
+}) {
+    const numericValue = typeof value === "number" ? value : null;
+    const [display, setDisplay] = useState(() => formatInrInput(numericValue));
+    const [focused, setFocused] = useState(false);
+
+    return (
+        <Input
+            id={id}
+            inputMode="text"
+            size="lg"
+            value={focused ? display : formatInrInput(numericValue)}
+            placeholder={placeholder ?? "e.g. 800000 or 800k"}
+            onFocus={() => {
+                setDisplay(formatInrInput(numericValue));
+                setFocused(true);
+            }}
+            onValueChange={(next) => {
+                setDisplay(next);
+                onChange(parseInr(next));
+            }}
+            onBlur={() => {
+                setFocused(false);
+                setDisplay(formatInrInput(numericValue));
+                onBlur();
+            }}
+            startIcon={IndianRupeeIcon}
+            errorText={error}
+            helperText={
+                numericValue
+                    ? inrWordHint(numericValue)
+                    : (helperText ?? "Type 800000, 800k, or 1.2m")
+            }
+        />
+    );
+}
+
+function IndianRupeeIcon(props: ComponentProps<"svg">) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
+            <path d="M6 4h12M6 8h12M7 4c5 0 7 2 7 5s-2 5-7 5h-1l8 7" />
+        </svg>
+    );
+}
+
+export function CurrencyField({
+    name,
+    label,
+    hint,
+    visibility,
+    className,
+    placeholder,
+    helperText,
+    onValueChange,
+}: {
+    name: Path;
+    label: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    className?: string;
+    placeholder?: string;
+    helperText?: string;
+    onValueChange?: (value: number | null) => void;
+}) {
+    const {
+        control,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
+    const error = errorAt(errors, name);
+    const id = name.replace(/\./g, "-");
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+        >
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => (
+                    <CurrencyControl
+                        id={id}
+                        value={field.value}
+                        onChange={(value) => {
+                            field.onChange(value);
+                            onValueChange?.(value);
+                        }}
+                        onBlur={field.onBlur}
+                        error={error}
+                        placeholder={placeholder}
+                        helperText={helperText}
+                    />
+                )}
+            />
+        </FieldShell>
+    );
+}
+
+export function DateField({
+    name,
+    label,
+    hint,
+    visibility,
+    className,
+    placeholder = "Pick a date",
+}: {
+    name: Path;
+    label: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    className?: string;
+    placeholder?: string;
+}) {
+    const {
+        control,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
+    const error = errorAt(errors, name);
+    const id = name.replace(/\./g, "-");
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+        >
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => (
+                    <AppDatePicker
+                        id={id}
+                        value={typeof field.value === "string" ? field.value || null : null}
+                        onChange={(next) => field.onChange(next ?? "")}
+                        onBlur={field.onBlur}
+                        placeholder={placeholder}
+                        invalid={Boolean(error)}
+                        className="inline-full"
+                    />
+                )}
+            />
+            {error ? (
+                <p id={`${id}-error`} role="alert" className="text-sm text-danger">
+                    {error}
+                </p>
+            ) : null}
+        </FieldShell>
+    );
+}
+
+export function ChoiceField({
+    name,
+    label,
+    options,
+    hint,
+    visibility,
+    columns = 3,
+    className,
+    icons,
+    onValueChange,
+}: {
+    name: Path;
+    label: string;
+    options: readonly PropertyOption[];
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    columns?: 2 | 3 | 4 | 5;
+    className?: string;
+    icons?: Partial<Record<string, ReactNode>>;
+    onValueChange?: (value: string) => void;
+}) {
+    const {
+        control,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
+    const error = errorAt(errors, name);
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+            composite
+        >
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => (
+                    <RadioGroup
+                        value={String(field.value ?? "")}
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            onValueChange?.(value);
+                        }}
+                        aria-labelledby={`${name.replace(/\./g, "-")}-label`}
+                        aria-describedby={error ? `${name.replace(/\./g, "-")}-error` : undefined}
+                        aria-invalid={Boolean(error) || undefined}
+                        className={cn(
+                            "grid gap-4",
+                            columns === 2
+                                ? "grid-cols-1 sm:grid-cols-2"
+                                : columns === 4
+                                  ? "grid-cols-2 sm:grid-cols-4"
+                                  : columns === 5
+                                    ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5"
+                                    : "grid-cols-2 sm:grid-cols-3",
+                        )}
+                    >
+                        {options.map((option) => {
+                            const active = field.value === option.value;
+                            const hasDescription = Boolean(option.description);
+                            const icon = icons?.[option.value];
+                            return (
+                                <Label
+                                    key={option.value}
+                                    htmlFor={`${name.replace(/\./g, "-")}-${option.value}`}
+                                    className={cn(
+                                        `
+                                          flex cursor-pointer gap-3 rounded-control border-2 px-4
+                                          py-3.5 text-start leading-normal font-normal
+                                          transition-[background-color,border-color,color,box-shadow]
+                                          duration-160 min-block-12
+                                          has-focus-visible:ring-3 has-focus-visible:ring-ring/30
+                                        `,
+                                        icon || !hasDescription ? "items-center" : "items-start",
+                                        active
+                                            ? `
+                                              border-brand bg-brand-soft text-brand-text shadow-xs
+                                            `
+                                            : `
+                                              border-border-warm bg-surface-muted text-ink
+                                              hover:border-brand/40 hover:bg-surface
+                                            `,
+                                    )}
+                                >
+                                    {icon ? (
+                                        <span
+                                            aria-hidden
+                                            className={cn(
+                                                "flex shrink-0 items-center",
+                                                hasDescription
+                                                    ? "[&_svg]:block-5 [&_svg]:inline-5"
+                                                    : "[&_svg]:block-4 [&_svg]:inline-4",
+                                                active ? "text-brand-text" : "text-ink-muted",
+                                            )}
+                                        >
+                                            {icon}
+                                        </span>
+                                    ) : (
+                                        <RadioGroupItem
+                                            id={`${name.replace(/\./g, "-")}-${option.value}`}
+                                            value={option.value}
+                                            className={cn(
+                                                `
+                                                  shrink-0 border-ink-subtle bg-surface
+                                                  data-checked:border-brand data-checked:bg-brand
+                                                `,
+                                                hasDescription && "mts-0.5",
+                                            )}
+                                        />
+                                    )}
+                                    <span className="flex-1 min-inline-0">
+                                        <span className="block text-sm/5 font-semibold">
+                                            {option.label}
+                                        </span>
+                                        {option.description ? (
+                                            <span
+                                                className={cn(
+                                                    "mbs-0.5 block text-xs/4",
+                                                    active
+                                                        ? "text-brand-text/70"
+                                                        : "text-ink-muted",
+                                                )}
+                                            >
+                                                {option.description}
+                                            </span>
+                                        ) : null}
+                                    </span>
+                                    {icon ? (
+                                        <RadioGroupItem
+                                            id={`${name.replace(/\./g, "-")}-${option.value}`}
+                                            value={option.value}
+                                            className="
+                                              ms-auto shrink-0 border-ink-subtle bg-surface
+                                              data-checked:border-brand data-checked:bg-brand
+                                            "
+                                        />
+                                    ) : null}
+                                </Label>
+                            );
+                        })}
+                    </RadioGroup>
+                )}
+            />
+            {error ? (
+                <p
+                    id={`${name.replace(/\./g, "-")}-error`}
+                    role="alert"
+                    className="text-sm text-danger"
+                >
+                    {error}
+                </p>
+            ) : null}
+        </FieldShell>
+    );
+}
+
+export function MultiChipField({
+    name,
+    label,
+    options,
+    hint,
+    visibility,
+    className,
+    allowCustom = false,
+    customPlaceholder = "Add custom…",
+    max = 20,
+}: {
+    name: Path;
+    label: string;
+    options: readonly PropertyOption[];
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    className?: string;
+    /** When true, brokers can type values beyond the fixed option list (amenities-style). */
+    allowCustom?: boolean;
+    customPlaceholder?: string;
+    max?: number;
+}) {
+    const { control } = useFormContext<PropertyDraftValues>();
+    const [draft, setDraft] = useState("");
+    return (
+        <FieldShell
+            name={name}
+            label={label}
+            hint={hint}
+            visibility={visibility}
+            className={className}
+            composite
+        >
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => {
+                    const selected = Array.isArray(field.value) ? field.value.map(String) : [];
+                    const optionValues = new Set(options.map((option) => option.value));
+                    const customSelected = selected.filter((value) => !optionValues.has(value));
+                    const labelFor = (value: string) =>
+                        options.find((option) => option.value === value)?.label ?? value;
+
+                    const toggle = (value: string) => {
+                        field.onChange(
+                            selected.includes(value)
+                                ? selected.filter((item) => item !== value)
+                                : selected.length >= max
+                                  ? selected
+                                  : [...selected, value],
+                        );
+                    };
+
+                    const addCustom = () => {
+                        const next = draft.trim().replace(/\s+/g, " ");
+                        if (!next || selected.length >= max) return;
+                        const match = options.find(
+                            (option) =>
+                                option.value === next.toLowerCase().replace(/\s+/g, "_") ||
+                                option.label.toLowerCase() === next.toLowerCase(),
+                        );
+                        const value = match?.value ?? next;
+                        if (!selected.includes(value)) {
+                            field.onChange([...selected, value]);
+                        }
+                        setDraft("");
+                    };
+
+                    return (
+                        <div
+                            role="group"
+                            aria-labelledby={`${name.replace(/\./g, "-")}-label`}
+                            className="space-y-3"
+                        >
+                            <div className="flex flex-wrap gap-2">
+                                {options.map((option) => {
+                                    const active = selected.includes(option.value);
+                                    return (
+                                        <Button
+                                            key={option.value}
+                                            type="button"
+                                            variant="outline"
+                                            size="md"
+                                            aria-pressed={active}
+                                            onClick={() => toggle(option.value)}
+                                            className={cn(
+                                                `
+                                                  rounded-control border px-3 py-2 text-sm font-medium
+                                                  transition-[background-color,border-color,color]
+                                                  duration-160 min-block-11
+                                                  focus-visible:ring-3 focus-visible:ring-ring/30
+                                                  sm:min-block-10
+                                                `,
+                                                active
+                                                    ? `
+                                                      border-brand bg-brand-soft text-brand-text
+                                                      shadow-xs
+                                                    `
+                                                    : `
+                                                      border-border-warm bg-surface-muted
+                                                      text-ink-muted
+                                                      hover:border-brand/40 hover:bg-surface
+                                                      hover:text-ink
+                                                    `,
+                                            )}
+                                        >
+                                            {active ? (
+                                                <Check
+                                                    className="me-1.5 inline block-3.5 inline-3.5"
+                                                    aria-hidden
+                                                />
+                                            ) : null}
+                                            {option.label}
+                                        </Button>
+                                    );
+                                })}
+                                {customSelected.map((value) => (
+                                    <Button
+                                        key={value}
+                                        type="button"
+                                        variant="outline"
+                                        size="md"
+                                        aria-pressed
+                                        onClick={() => toggle(value)}
+                                        className="
+                                          rounded-control border border-brand bg-brand-soft px-3 py-2
+                                          text-sm font-medium text-brand-text min-block-11
+                                          focus-visible:ring-3 focus-visible:ring-ring/30
+                                          sm:min-block-10
+                                        "
+                                        aria-label={`Remove ${labelFor(value)}`}
+                                    >
+                                        <Check
+                                            className="me-1.5 inline block-3.5 inline-3.5"
+                                            aria-hidden
+                                        />
+                                        {labelFor(value)}
+                                        <X
+                                            className="ms-1.5 inline block-3.5 inline-3.5"
+                                            aria-hidden
+                                        />
+                                    </Button>
+                                ))}
+                            </div>
+                            {allowCustom ? (
+                                <div className="flex gap-2">
+                                    <Input
+                                        size="lg"
+                                        value={draft}
+                                        onValueChange={setDraft}
+                                        placeholder={customPlaceholder}
+                                        aria-label={`Add custom ${label.toLowerCase()}`}
+                                        className="min-inline-0 flex-1"
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter") {
+                                                event.preventDefault();
+                                                addCustom();
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="lg"
+                                        onClick={addCustom}
+                                        disabled={!draft.trim() || selected.length >= max}
+                                    >
+                                        Add
+                                    </Button>
+                                </div>
+                            ) : null}
+                        </div>
+                    );
+                }}
+            />
+        </FieldShell>
+    );
+}
+
+export function ToggleField({
+    name,
+    label,
+    description,
+    visibility,
+    className,
+}: {
+    name: Path;
+    label: string;
+    description?: string;
+    visibility?: FieldVisibility;
+    className?: string;
+}) {
+    const { control } = useFormContext<PropertyDraftValues>();
+    const id = useId();
+    const resolvedVisibility = visibility ?? visibilityForField(name);
+    const { labelOf } = useFieldRules();
+    const resolvedLabel = labelOf(name, label);
+    return (
+        <ConditionalField path={name}>
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => {
+                    const checked = Boolean(field.value);
+                    return (
+                        <div
+                            className={cn(
+                                `
+                                  flex items-center justify-between gap-4 rounded-control border
+                                  border-border-warm bg-surface px-4 py-3 min-block-14
+                                `,
+                                className,
+                            )}
+                        >
+                            <div className="min-inline-0">
+                                <Label
+                                    htmlFor={id}
+                                    className="block text-sm font-semibold text-ink"
+                                >
+                                    <FieldLabel path={name}>{resolvedLabel}</FieldLabel>
+                                </Label>
+                                {description ? (
+                                    <p className="mbs-0.5 text-xs/5 text-ink-muted">
+                                        {description}
+                                    </p>
+                                ) : null}
+                                <VisibilityMark visibility={resolvedVisibility} />
+                            </div>
+                            <Switch
+                                id={id}
+                                checked={checked}
+                                onCheckedChange={(next) => field.onChange(next)}
+                                onBlur={field.onBlur}
+                                aria-label={resolvedLabel}
+                                className="
+                                  block-7 inline-12
+                                  data-checked:border-brand data-checked:bg-brand
+                                  data-unchecked:border-border-warm data-unchecked:bg-border-warm
+                                "
+                            />
+                        </div>
+                    );
+                }}
+            />
+        </ConditionalField>
+    );
+}
+
+export function TagInputField({
+    name,
+    label,
+    placeholder,
+    hint,
+    visibility,
+    max = 20,
+}: {
+    name: Path;
+    label: string;
+    placeholder?: string;
+    hint?: ReactNode;
+    visibility?: FieldVisibility;
+    max?: number;
+}) {
+    const { control } = useFormContext<PropertyDraftValues>();
+    const [draft, setDraft] = useState("");
+    return (
+        <FieldShell name={name} label={label} hint={hint} visibility={visibility} composite>
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => {
+                    const values = Array.isArray(field.value) ? field.value.map(String) : [];
+                    const add = () => {
+                        const next = draft.trim();
+                        if (!next || values.length >= max || values.includes(next)) return;
+                        field.onChange([...values, next]);
+                        setDraft("");
+                    };
+                    return (
+                        <div
+                            role="group"
+                            aria-labelledby={`${name.replace(/\./g, "-")}-label`}
+                            className="space-y-3"
+                        >
+                            {values.length ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {values.map((value) => (
+                                        <Button
+                                            key={value}
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                field.onChange(
+                                                    values.filter((item) => item !== value),
+                                                )
+                                            }
+                                            className="
+                                              rounded-control border border-brand/25 bg-brand-soft
+                                              px-3 py-1.5 text-sm font-medium text-brand-text
+                                              min-block-10
+                                              focus-visible:ring-3 focus-visible:ring-ring/30
+                                            "
+                                            aria-label={`Remove ${value}`}
+                                        >
+                                            {value}{" "}
+                                            <X
+                                                className="ms-1 inline block-3.5 inline-3.5"
+                                                aria-hidden
+                                            />
+                                        </Button>
+                                    ))}
+                                </div>
+                            ) : null}
+                            <div className="flex gap-2">
+                                <Input
+                                    id={name.replace(/\./g, "-")}
+                                    size="lg"
+                                    value={draft}
+                                    placeholder={placeholder}
+                                    aria-labelledby={`${name.replace(/\./g, "-")}-label`}
+                                    onValueChange={setDraft}
+                                    onKeyDown={(event) => {
+                                        if (event.key === "Enter" || event.key === ",") {
+                                            event.preventDefault();
+                                            add();
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="lg"
+                                    onClick={add}
+                                    disabled={!draft.trim() || values.length >= max}
+                                    className="
+                                      rounded-control border border-border-warm bg-surface px-4
+                                      text-sm font-semibold text-ink
+                                      hover:bg-surface-muted
+                                      focus-visible:ring-3 focus-visible:ring-ring/30
+                                      disabled:opacity-40
+                                    "
+                                >
+                                    Add
+                                </Button>
+                            </div>
+                        </div>
+                    );
+                }}
+            />
+        </FieldShell>
+    );
+}
+
+function counterNumericValue(raw: unknown): number {
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+    if (typeof raw === "string") {
+        const trimmed = raw.trim().toLowerCase();
+        if (!trimmed || trimmed === "0") return 0;
+        if (trimmed === "1rk") return 1;
+        if (trimmed === "10_plus" || trimmed === "5+" || trimmed.endsWith("+")) {
+            const parsed = Number.parseInt(trimmed, 10);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+        const parsed = Number(trimmed);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+}
+
+export function CounterField({
+    name,
+    label,
+    min = 0,
+    max = 10,
+    visibility,
+    startIcon: StartIcon,
+    /** Persist as string (e.g. BHK `"3"`). Default keeps number / null fields. */
+    storeAsString = false,
+    className,
+}: {
+    name: Path;
+    label: string;
+    min?: number;
+    max?: number;
+    visibility?: FieldVisibility;
+    startIcon?: LucideIcon;
+    storeAsString?: boolean;
+    className?: string;
+}) {
+    const { control } = useFormContext<PropertyDraftValues>();
+    const { labelOf } = useFieldRules();
+    const resolvedLabel = labelOf(name, label);
+    return (
+        <ConditionalField path={name} className={className}>
+            <Controller
+                name={name}
+                control={control}
+                render={({ field }) => {
+                    const value = counterNumericValue(field.value);
+                    function commit(next: number) {
+                        field.onChange(storeAsString ? String(next) : next);
+                    }
+                    return (
+                        <div
+                            className="
+                              flex items-center justify-between gap-3 rounded-control border-2
+                              border-border-warm bg-surface px-3 py-2 block-full min-block-14
+                            "
+                        >
+                            <div className="flex items-center gap-2.5 min-inline-0">
+                                {StartIcon ? (
+                                    <StartIcon
+                                        className="shrink-0 text-ink-muted block-4.5 inline-4.5"
+                                        strokeWidth={1.75}
+                                        aria-hidden
+                                    />
+                                ) : null}
+                                <div className="min-inline-0">
+                                    <p className="text-sm font-semibold text-ink">
+                                        <FieldLabel path={name}>{resolvedLabel}</FieldLabel>
+                                    </p>
+                                    <VisibilityMark
+                                        visibility={visibility ?? visibilityForField(name)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    aria-label={`Decrease ${resolvedLabel}`}
+                                    disabled={value <= min}
+                                    onClick={() => commit(Math.max(min, value - 1))}
+                                    className="
+                                      flex items-center justify-center rounded-control
+                                      text-ink-muted block-8 inline-8
+                                      hover:bg-surface-muted
+                                      focus-visible:ring-3 focus-visible:ring-ring/30
+                                      disabled:opacity-30
+                                    "
+                                >
+                                    <Minus className="block-3.5 inline-3.5" strokeWidth={2} />
+                                </Button>
+                                <span
+                                    className="
+                                      tabular text-center text-sm font-bold text-ink min-inline-6
+                                    "
+                                >
+                                    {value}
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    aria-label={`Increase ${resolvedLabel}`}
+                                    disabled={value >= max}
+                                    onClick={() => commit(Math.min(max, value + 1))}
+                                    className="
+                                      flex items-center justify-center rounded-control
+                                      text-ink-muted block-8 inline-8
+                                      hover:bg-surface-muted
+                                      focus-visible:ring-3 focus-visible:ring-ring/30
+                                      disabled:opacity-30
+                                    "
+                                >
+                                    <Plus className="block-3.5 inline-3.5" strokeWidth={2} />
+                                </Button>
+                            </div>
+                        </div>
+                    );
+                }}
+            />
+        </ConditionalField>
+    );
+}
+
+export function WizardSection({
+    title,
+    description,
+    children,
+    tone = "default",
+}: {
+    title: ReactNode;
+    description?: string;
+    children: ReactNode;
+    tone?: "default" | "private";
+}) {
+    return (
+        <section
+            className={cn(
+                tone === "private"
+                    ? "rounded-card border border-brand/20 bg-brand-soft/40 p-5 sm:p-6"
+                    : "border-be border-border-warm/80 pbe-8 last:border-be-0 last:pbe-0",
+            )}
+        >
+            <div className="mbe-5 flex items-start justify-between gap-4">
+                <div>
+                    <h2
+                        className="
+                          flex items-center gap-2.5 font-display text-xl font-semibold
+                          tracking-[-0.02em] text-ink
+                        "
+                    >
+                        {title}
+                    </h2>
+                    {description ? (
+                        <p className="mbs-1.5 text-sm/6 text-ink-muted max-inline-2xl">
+                            {description}
+                        </p>
+                    ) : null}
+                </div>
+                {tone === "private" ? <VisibilityMark visibility="private" /> : null}
+            </div>
+            {children}
+        </section>
+    );
+}
+
+/** Field groups inside a section. */
+export const FORM_STACK_CLASS = "flex flex-col gap-4";
+/** Space between wizard sections — no divider lines. */
+export const FORM_SECTIONS_CLASS = "flex flex-col gap-8";
+export const FORM_GRID_CLASS = "grid gap-4 md:grid-cols-2";
+export const FORM_GRID_3_CLASS = "grid gap-4 sm:grid-cols-3";

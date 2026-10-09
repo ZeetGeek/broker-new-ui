@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { fetchOwnerListingCities, fetchOwnerListings } from "@/lib/api/owner-listings";
-import { cn } from "@/lib/utils";
+import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
-import { AppPagination } from "@/components/shared/app-pagination";
+import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
 import {
     type BrokerVerificationState,
@@ -18,8 +18,10 @@ import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/ow
 import { citiesToLocationListings } from "@/features/properties/owner-listings/map-browse-listing";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
+import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { OwnerListingsHeader } from "@/features/properties/owner-listings/owner-listings-header";
 import { OwnerListingsIntro } from "@/features/properties/owner-listings/owner-listings-intro";
+import { OwnerListingsPageSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
 import type {
     OwnerListingItem,
     OwnerListingsBandFilters,
@@ -29,10 +31,6 @@ import type {
     OwnerListingsResult,
 } from "@/features/properties/owner-listings/types";
 import { useOwnerListingsFilters } from "@/features/properties/owner-listings/use-owner-listings-filters";
-import {
-    type OwnerListingsView,
-    useOwnerListingsView,
-} from "@/features/properties/owner-listings/use-owner-listings-view";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
@@ -59,7 +57,9 @@ function summarizePool(items: OwnerListingsResult["items"]): OwnerListingsPoolSu
     return {
         slotsOpenCount: items.filter((item) => item.brokerSlotsOpen > 0).length,
         newTodayCount: items.filter((item) => item.isNew).length,
-        commissionSetCount: items.filter((item) => item.commissionPercent > 0).length,
+        commissionSetCount: items.filter(
+            (item) => item.commissionPercent > 0 || item.commissionAmount > 0,
+        ).length,
         readyToMoveCount: items.filter((item) => item.readyToMove).length,
     };
 }
@@ -71,11 +71,9 @@ function OwnerListingsResults({
     filterContext,
     hasActiveFilters,
     onClearFilters,
-    onPageChange,
-    onPageSizeChange,
     onLoaded,
     onLoadingChange,
-    view,
+    enabled,
 }: {
     filterSignature: string;
     serviceAreasKey: string;
@@ -83,61 +81,73 @@ function OwnerListingsResults({
     filterContext: OwnerListingsFilterContext;
     hasActiveFilters: boolean;
     onClearFilters: () => void;
-    onPageChange: (page: number) => void;
-    onPageSizeChange: (pageSize: number) => void;
     onLoaded: (result: OwnerListingsResult) => void;
     onLoadingChange: (isLoading: boolean) => void;
-    view: OwnerListingsView;
+    enabled: boolean;
 }) {
-    const [result, setResult] = useState<OwnerListingsResult | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [isFetching, setIsFetching] = useState(true);
-
-    const currentPage = filters.cursor ? Number(filters.cursor) || 1 : 1;
+    const query = useInfiniteItems({
+        queryKey: ["owner-listings", filterSignature, serviceAreasKey],
+        enabled,
+        queryFn: async ({ cursor, signal }) => {
+            const page = await fetchOwnerListings(
+                {
+                    ...filters,
+                    cursor: cursor ?? "",
+                    limit: 20,
+                },
+                filterContext,
+                signal,
+            );
+            return {
+                items: page.items,
+                total: page.totalCount,
+                nextCursor: page.nextCursor,
+            };
+        },
+    });
 
     useEffect(() => {
-        let cancelled = false;
+        onLoadingChange(query.isFetching || !enabled);
+    }, [enabled, onLoadingChange, query.isFetching]);
 
-        const timer = window.setTimeout(() => {
-            if (cancelled) return;
+    useEffect(() => {
+        const pages = query.data?.pages;
+        if (!pages?.length) return;
+        const lastPage = pages.at(-1)!;
+        // Prefer the latest page total so priority mode can surface the full pool size
+        // once the anywhere phase begins.
+        const totalCount = Math.max(...pages.map((page) => page.total), query.total);
+        onLoaded({
+            items: query.items,
+            totalCount,
+            marketValueInr: query.items.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0),
+            nextCursor: lastPage.nextCursor,
+            hasMore: Boolean(lastPage.nextCursor),
+        });
+    }, [onLoaded, query.data?.pages, query.items, query.total]);
 
-            setError(null);
-            setIsFetching(true);
-            onLoadingChange(true);
+    if (!enabled || query.isPending) {
+        return (
+            <div className={OWNER_LISTINGS_GRID_CLASS}>
+                {Array.from({ length: 10 }).map((_, index) => (
+                    <div
+                        key={index}
+                        className="animate-pulse rounded-card bg-surface-muted block-80"
+                        aria-hidden
+                    />
+                ))}
+            </div>
+        );
+    }
 
-            void fetchOwnerListings(filters, filterContext)
-                .then((data) => {
-                    if (cancelled) return;
-                    setResult(data);
-                    onLoaded(data);
-                })
-                .catch(() => {
-                    if (!cancelled) {
-                        setError("Could not load owner listings. Try again.");
-                    }
-                })
-                .finally(() => {
-                    if (!cancelled) {
-                        setIsFetching(false);
-                        onLoadingChange(false);
-                    }
-                });
-        }, 0);
-
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timer);
-        };
-    }, [filterSignature, serviceAreasKey, filters, filterContext, onLoaded, onLoadingChange]);
-
-    if (error) {
+    if (query.isError && query.items.length === 0) {
         return (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
                 <p className="h6 text-ink">Could not load owner listings</p>
-                <p className="body-sm text-ink-muted">{error}</p>
+                <p className="body-sm text-ink-muted">Could not load owner listings. Try again.</p>
                 <button
                     type="button"
-                    onClick={() => window.location.reload()}
+                    onClick={() => void query.refetch()}
                     className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                     Try again
@@ -146,11 +156,7 @@ function OwnerListingsResults({
         );
     }
 
-    if (!result) {
-        return null;
-    }
-
-    if (result.items.length === 0) {
+    if (query.items.length === 0) {
         return (
             <OwnerListingsEmpty
                 variant={hasActiveFilters ? "filtered" : "first_run"}
@@ -162,22 +168,19 @@ function OwnerListingsResults({
 
     return (
         <div
-            className={cn(
-                "flex flex-col gap-8",
-                isFetching && "opacity-60 transition-opacity duration-160",
-            )}
+            className={
+                query.isFetching && !query.isFetchingNextPage
+                    ? "flex flex-col gap-2 opacity-60 transition-opacity duration-160"
+                    : "flex flex-col gap-2"
+            }
         >
-            <OwnerListingsGrid items={result.items} view={view} />
-            {result.totalPages > 0 ? (
-                <AppPagination
-                    page={Math.min(currentPage, result.totalPages)}
-                    totalPages={result.totalPages}
-                    onPageChange={onPageChange}
-                    pageSize={filters.limit}
-                    onPageSizeChange={onPageSizeChange}
-                    aria-label="Owner listings pages"
-                />
-            ) : null}
+            <OwnerListingsGrid items={query.items} serviceAreas={filterContext.serviceAreas} />
+            <InfiniteListStatus
+                hasNextPage={Boolean(query.hasNextPage)}
+                isFetchingNextPage={query.isFetchingNextPage}
+                error={query.isFetchNextPageError ? query.error : null}
+                onLoadMore={() => void query.fetchNextPage()}
+            />
         </div>
     );
 }
@@ -196,8 +199,8 @@ export function OwnerListingsPage() {
         clearFilters,
         hasActiveFilters,
         filterSignature,
+        scopeReady,
     } = useOwnerListingsFilters();
-    const { view, setView } = useOwnerListingsView();
 
     const serviceAreas = profile?.broker?.serviceAreas ?? EMPTY_SERVICE_AREAS;
     const serviceAreasKey = serviceAreas.join("|");
@@ -249,34 +252,6 @@ export function OwnerListingsPage() {
     const handleSortChange = useCallback(
         (sort: OwnerListingSort) => {
             applyFilters({ ...filters, sort, cursor: "" });
-        },
-        [applyFilters, filters],
-    );
-
-    const handlePageChange = useCallback(
-        (page: number) => {
-            const nextPage = Math.max(1, page);
-            applyFilters({
-                ...filters,
-                cursor: nextPage <= 1 ? "" : String(nextPage),
-            });
-            if (typeof window !== "undefined") {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            }
-        },
-        [applyFilters, filters],
-    );
-
-    const handlePageSizeChange = useCallback(
-        (pageSize: number) => {
-            applyFilters({
-                ...filters,
-                limit: pageSize,
-                cursor: "",
-            });
-            if (typeof window !== "undefined") {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            }
         },
         [applyFilters, filters],
     );
@@ -340,7 +315,7 @@ export function OwnerListingsPage() {
     const blockedReason = resolveBlockedReason(verificationState, serviceAreaCount);
 
     if (dashboardStatus === "loading" || dashboardStatus === "idle") {
-        return null;
+        return <OwnerListingsPageSkeleton />;
     }
 
     if (blockedReason) {
@@ -366,8 +341,6 @@ export function OwnerListingsPage() {
                 onApplySheet={handleApplySheet}
                 onToggleQuickChip={toggleQuickChip}
                 onSortChange={handleSortChange}
-                view={view}
-                onViewChange={setView}
             />
 
             <OwnerListingsResults
@@ -377,11 +350,9 @@ export function OwnerListingsPage() {
                 filterContext={filterContext}
                 hasActiveFilters={hasActiveFilters}
                 onClearFilters={clearFilters}
-                onPageChange={handlePageChange}
-                onPageSizeChange={handlePageSizeChange}
                 onLoaded={handleLoaded}
                 onLoadingChange={setIsResultsLoading}
-                view={view}
+                enabled={scopeReady}
             />
         </div>
     );

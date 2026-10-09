@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "./transitions-dev.css";
+/* Contact surfaces inherit their interaction recipes from the import above. */
 @plugin "tailwind-bootstrap-grid" {
     /* Bootstrap gutter steps so gx-3 / gy-4 etc. exist. */
     grid_gutters: 0, 0, 1, 0.25rem, 2, 0.5rem, 3, 1rem, 4, 1.5rem, 5, 3rem;
@@ -28,7 +29,7 @@
     --border: oklch(0.93 0.007 106.5);
     --input: oklch(0.93 0.007 106.5);
     --ring: oklch(0.737 0.021 106.9);
-    --radius: 0.625rem;
+    --radius: 0.75rem;
     --sidebar: oklch(0.988 0.003 106.5);
     --sidebar-foreground: oklch(0.153 0.006 107.1);
     --sidebar-primary: oklch(0.228 0.013 107.4);
@@ -44,7 +45,7 @@
     --color-surface-muted: #efece4;
     --color-border-warm: #e4ded2;
 
-    --color-ink: #191c1a;
+    --color-ink: #111111;
     --color-ink-muted: #86867e;
     --color-ink-subtle: #a9a79d;
 
@@ -52,6 +53,7 @@
     --color-brand-deep: #0f3d2e;
     --color-brand: #1b7a5a;
     --color-brand-soft: #e3f2ea;
+    --color-brand-soft-hover: #d0e8dc;
     --color-brand-text: #0b5a41;
 
     --color-highlight: #c9f24d;
@@ -68,11 +70,18 @@
     --color-success-mid: #7bb89e;
     --color-success-soft: #e3f2ea;
 
-    /* Pipeline funnel — four depths within the brand green family */
-    --color-stage-1: #7fd9b9;
-    --color-stage-2: #2fae85;
-    --color-stage-3: #0f6e56;
-    --color-stage-4: #04342c;
+    /* Pipeline stages — four Tailwind hues, each with a soft fill and a solid
+       tone. Cool to warm to resolved, so the board reads left-to-right as
+       forward motion: waiting (sky) → working (violet) → scheduled (amber) →
+       closing (emerald). Pipeline surfaces only — see docs/DESIGN.md §1.3. */
+    --color-stage-1: #0284c7; /* sky-600 */
+    --color-stage-1-soft: #bae6fd; /* sky-200 */
+    --color-stage-2: #7c3aed; /* violet-600 */
+    --color-stage-2-soft: #ddd6fe; /* violet-200 */
+    --color-stage-3: #d97706; /* amber-600 */
+    --color-stage-3-soft: #fde68a; /* amber-200 */
+    --color-stage-4: #059669; /* emerald-600 */
+    --color-stage-4-soft: #a7f3d0; /* emerald-200 */
 
     /* shadcn chart tokens mapped onto the pipeline greens */
     --chart-1: var(--color-stage-1);
@@ -81,9 +90,11 @@
     --chart-4: var(--color-stage-4);
     --chart-5: var(--color-brand-ink);
 
+    /* Compact rounded rectangles. Full circles are explicit with `rounded-full`
+       and are reserved for avatars, indicators, and circular controls. */
     --radius-card: 20px;
-    --radius-inner: 14px;
-    --radius-control: 9999px;
+    --radius-inner: 12px;
+    --radius-control: 12px;
 
     /* Control height — the single source for button/input/select-trigger height.
        lg (44px) and xl (48px) are the desktop/mobile tap-target minimums from
@@ -188,6 +199,7 @@
     --color-brand-deep: var(--color-brand-deep);
     --color-brand: var(--color-brand);
     --color-brand-soft: var(--color-brand-soft);
+    --color-brand-soft-hover: var(--color-brand-soft-hover);
     --color-brand-text: var(--color-brand-text);
     --color-highlight: var(--color-highlight);
     --color-highlight-ink: var(--color-highlight-ink);
@@ -202,19 +214,21 @@
     --color-success-mid: var(--color-success-mid);
     --color-success-soft: var(--color-success-soft);
     --color-stage-1: var(--color-stage-1);
+    --color-stage-1-soft: var(--color-stage-1-soft);
     --color-stage-2: var(--color-stage-2);
+    --color-stage-2-soft: var(--color-stage-2-soft);
     --color-stage-3: var(--color-stage-3);
+    --color-stage-3-soft: var(--color-stage-3-soft);
     --color-stage-4: var(--color-stage-4);
+    --color-stage-4-soft: var(--color-stage-4-soft);
 
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
+    --radius-sm: calc(var(--radius) * 0.5);
+    --radius-md: calc(var(--radius) * 0.75);
     --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
-    --radius-pill: 50%;
-
+    --radius-xl: calc(var(--radius) * 1.25);
+    --radius-2xl: calc(var(--radius) * 1.5);
+    --radius-3xl: calc(var(--radius) * 1.75);
+    --radius-4xl: calc(var(--radius) * 2);
     --radius-card: var(--radius-card);
     --radius-inner: var(--radius-inner);
     --radius-control: var(--radius-control);
@@ -230,6 +244,10 @@
     --shadow-md: var(--shadow-md);
     --shadow-lg: var(--shadow-lg);
     --shadow-xl: var(--shadow-xl);
+}
+
+::-webkit-scrollbar {
+    display: none;
 }
 
 /* Control height utilities — Tailwind's block/inline logical-size utilities
@@ -298,6 +316,11 @@
     animation: fab-pulse 2.4s ease-in-out infinite;
 }
 
+/* One light pass across a card that just arrived (new listing in your areas). Plays once. */
+@utility animate-card-sweep {
+    animation: card-sweep 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.35s 1 both;
+}
+
 @utility animate-accordion-down {
     animation: accordion-down 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -334,6 +357,60 @@
     50% {
         opacity: 0.75;
         filter: drop-shadow(0 0 3px color-mix(in oklab, var(--color-brand) 60%, transparent));
+    }
+}
+
+@keyframes card-sweep {
+    from {
+        transform: translateX(-100%) skewX(-20deg);
+    }
+    to {
+        transform: translateX(450%) skewX(-20deg);
+    }
+}
+
+/*
+ * <MarqueeText>: one line with an ellipsis; when it overflows, it scrolls to
+ * its end while the nearest `group/marquee` is hovered or focused. The JS side
+ * sets --marquee-distance / --marquee-duration and data-overflow.
+ */
+@layer components {
+    .marquee-text {
+        display: block;
+        overflow: hidden;
+        min-inline-size: 0;
+    }
+
+    .marquee-text-inner {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .group\/marquee:is(:hover, :focus-within)
+            .marquee-text[data-overflow="true"]
+            .marquee-text-inner {
+            inline-size: max-content;
+            max-inline-size: none;
+            overflow: visible;
+            text-overflow: clip;
+            animation: marquee-scroll var(--marquee-duration, 8s) linear 0.3s infinite;
+            will-change: transform;
+        }
+    }
+}
+
+/* Hold at the start, scroll to the end, hold, then the next loop snaps back to the start. */
+@keyframes marquee-scroll {
+    0%,
+    15% {
+        transform: translateX(0);
+    }
+    75%,
+    100% {
+        transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
     }
 }
 
@@ -395,4 +472,24 @@
 }
 .app-modal-simplebar .simplebar-track.simplebar-horizontal {
     block-size: 0.5rem;
+}
+
+/* Select options — 05-menu-dropdown hover, --menu-item-hover-* tokens */
+[data-slot="select-item"] {
+    transition:
+        background-color var(--menu-item-hover-dur) var(--menu-item-hover-ease),
+        color var(--menu-item-hover-dur) var(--menu-item-hover-ease);
+}
+
+[data-slot="select-item"]:hover,
+[data-slot="select-item"][data-highlighted],
+[data-slot="select-item"]:focus-visible {
+    background-color: var(--color-surface-muted);
+    color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-slot="select-item"] {
+        transition: none !important;
+    }
 }

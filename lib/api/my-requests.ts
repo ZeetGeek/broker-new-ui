@@ -1,5 +1,6 @@
 import { attachedClientsByProperty } from "@/lib/api/clients";
 import { dashboardApi, type DashboardRequestQuota } from "@/lib/api/dashboard";
+import { isMockMode } from "@/lib/api/mock-mode";
 import { representativeApi } from "@/lib/api/representative";
 import { formatDateIso } from "@/lib/format/date";
 
@@ -9,6 +10,7 @@ import {
     summarizeRequests,
 } from "@/features/properties/my-requests/filter-requests";
 import { mapRepresentationToRequestItem } from "@/features/properties/my-requests/map-my-request";
+import { MOCK_REQUESTS, MOCK_REQUESTS_QUOTA } from "@/features/properties/my-requests/mock-requests";
 import type {
     RequestItem,
     RequestsFilters,
@@ -60,26 +62,34 @@ function withClientCount(
 
 export const myRequestsApi = {
     async list(filters: RequestsFilters): Promise<RequestsResult> {
+        if (isMockMode()) {
+            const matched = sortRequests(filterRequests(MOCK_REQUESTS, filters), filters.sort);
+            return {
+                items: matched,
+                total: matched.length,
+                page: 1,
+                totalPages: 1,
+            };
+        }
         const [items, attachedByProperty] = await Promise.all([
             loadOutboundRequests(),
             attachedClientsByProperty(),
         ]);
         const live = items.map((item) => withClientCount(item, attachedByProperty));
         const matched = sortRequests(filterRequests(live, filters), filters.sort);
-        const totalPages = Math.max(1, Math.ceil(matched.length / filters.limit));
-        const page = Math.min(Math.max(1, filters.page), totalPages);
-        const start = (page - 1) * filters.limit;
-
         return {
-            items: matched.slice(start, start + filters.limit),
+            items: matched,
             total: matched.length,
-            page,
-            totalPages,
+            page: 1,
+            totalPages: 1,
         };
     },
 
     /** Summary is over the whole set, not the filtered page. */
     async summary(): Promise<RequestsSummary> {
+        if (isMockMode()) {
+            return summarizeRequests(MOCK_REQUESTS, MOCK_REQUESTS_QUOTA);
+        }
         const [items, quota, attachedByProperty] = await Promise.all([
             loadOutboundRequests(),
             loadQuota(),
@@ -92,17 +102,20 @@ export const myRequestsApi = {
     },
 
     /** Send a reminder to the owner (max REMINDER_LIMIT per pending attempt). */
-    async nudge(requestId: string): Promise<void> {
-        await representativeApi.remind(requestId);
+    async nudge(_requestId: string): Promise<void> {
+        if (isMockMode()) return;
+        await representativeApi.remind(_requestId);
     },
 
     /** Withdraw the current pending attempt. */
-    async withdraw(requestId: string): Promise<void> {
-        await representativeApi.withdraw(requestId);
+    async withdraw(_requestId: string): Promise<void> {
+        if (isMockMode()) return;
+        await representativeApi.withdraw(_requestId);
     },
 
     /** Open the next request attempt on the same property. */
     async retry(requestId: string): Promise<void> {
+        if (isMockMode()) return;
         const rows = await representativeApi.brokerList();
         const target = rows.find((row) => row.id === requestId);
         if (!target?.propertyId) {

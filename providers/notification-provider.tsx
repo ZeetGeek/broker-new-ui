@@ -10,6 +10,7 @@ import {
     useState,
 } from "react";
 
+import { isMockMode } from "@/lib/api/mock-mode";
 import { type NotificationItem, notificationsApi } from "@/lib/api/notifications";
 import { type RepresentationRespondStatus, representativeApi } from "@/lib/api/representative";
 import {
@@ -59,13 +60,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const markRead = useCallback(
         async (id: string) => {
             if (!accessToken) return;
-            const socket = getNotificationSocket(accessToken);
-            if (socket.connected) {
-                setItems((prev) =>
-                    prev.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
-                );
-                socket.emit("notification.mark_read", { id });
-                return;
+            if (!isMockMode()) {
+                const socket = getNotificationSocket(accessToken);
+                if (socket.connected) {
+                    setItems((prev) =>
+                        prev.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
+                    );
+                    socket.emit("notification.mark_read", { id });
+                    return;
+                }
             }
             const res = await notificationsApi.markRead(id);
             setItems((prev) =>
@@ -78,12 +81,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     const markAllRead = useCallback(async () => {
         if (!accessToken) return;
-        const socket = getNotificationSocket(accessToken);
-        if (socket.connected) {
-            setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
-            setUnreadCount(0);
-            socket.emit("notification.mark_all_read");
-            return;
+        if (!isMockMode()) {
+            const socket = getNotificationSocket(accessToken);
+            if (socket.connected) {
+                setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
+                setUnreadCount(0);
+                socket.emit("notification.mark_all_read");
+                return;
+            }
         }
         await notificationsApi.markAllRead();
         setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
@@ -147,7 +152,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }, [isAuthenticated, accessToken, refresh]);
 
     useEffect(() => {
-        if (!accessToken || !isAuthenticated) return;
+        if (!accessToken || !isAuthenticated || isMockMode()) return;
 
         const socket = getNotificationSocket(accessToken);
 

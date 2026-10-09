@@ -1,10 +1,18 @@
 import {
     BROKER_CONTACTS_HREF,
+    BROKER_MY_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_PIPELINE_HREF,
-    BROKER_REQUESTS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
+import {
+    OWNER_BROKERS_HREF,
+    OWNER_LEADS_HREF,
+    OWNER_OVERVIEW_HREF,
+    OWNER_PROPERTIES_HREF,
+    OWNER_REQUESTS_HREF,
+    OWNER_VISITS_HREF,
+} from "@/lib/routes/owner";
 import type { ShortcutId } from "@/lib/shortcuts";
 
 export type NavItem = {
@@ -19,10 +27,26 @@ export type NavItem = {
 };
 
 export const OWNER_NAV_ITEMS: NavItem[] = [
-    { label: "Overview", href: "/owner" },
-    { label: "Properties", href: "/owner/properties" },
-    { label: "Requests", href: "/owner/requests" },
-    { label: "Visits", href: "/owner/visits" },
+    { label: "Overview", href: OWNER_OVERVIEW_HREF, mobileLabel: "Home" },
+    {
+        label: "My Properties",
+        href: OWNER_PROPERTIES_HREF,
+        mobileLabel: "Properties",
+        activePrefixes: ["/owner/properties"],
+    },
+    {
+        label: "Browse Brokers",
+        href: OWNER_BROKERS_HREF,
+        mobileLabel: "Brokers",
+        activePrefixes: ["/owner/brokers"],
+    },
+    {
+        label: "Requests",
+        href: OWNER_REQUESTS_HREF,
+        activePrefixes: ["/owner/requests"],
+    },
+    { label: "Visits", href: OWNER_VISITS_HREF },
+    { label: "Leads", href: OWNER_LEADS_HREF, mobileLabel: "Offers" },
 ];
 
 export const BROKER_NAV_ITEMS: NavItem[] = [
@@ -32,14 +56,16 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
         mobileLabel: "Owners",
         href: BROKER_OWNER_LISTINGS_HREF,
         shortcutId: "owner_listings",
-        activePrefixes: ["/broker/browse-properties", "/broker/owner-listings"],
+        activePrefixes: ["/broker/browse-properties", "/broker/owner-listings", "/broker/owners"],
     },
     {
         // Covers both directions — requests the broker sent and invites owners
         // sent them. "Requests" only named half the page.
-        label: "Requests",
-        href: BROKER_REQUESTS_HREF,
-        shortcutId: "my_requests",
+        label: "My Deals",
+        mobileLabel: "Deals",
+        href: BROKER_MY_DEALS_HREF,
+        shortcutId: "my_deals",
+        activePrefixes: ["/broker/requests"],
     },
     {
         label: "Your listings",

@@ -1,4 +1,5 @@
 import type { ClientItem } from "@/features/clients/types";
+import type { BuyerContactForm, OwnerContactForm } from "@/features/contacts/contact-form-model";
 
 export type ContactsTab = "buyers" | "owners";
 
@@ -28,9 +29,21 @@ export type BuyerRow = ClientItem & {
     /** Localities of the properties they are actually being shown. */
     activePropertyTitles: string[];
     /** Live attachments — used for deep-links and the attach modal. */
-    attachedProperties: Array<{ id: string; leadId: string; title: string }>;
+    attachedProperties: Array<{
+        id: string;
+        leadId: string;
+        title: string;
+        /** Optional presentation data. Older API responses can omit every field. */
+        locality?: string;
+        priceLabel?: string;
+        coverUrl?: string;
+        propertyType?: string;
+        configuration?: string;
+    }>;
     /** All leads with latest stage — drives the View modal. */
     leads: BuyerLead[];
+    /** Full lead-capture fields returned by the contacts API when available. */
+    details?: BuyerContactForm;
 };
 
 /**
@@ -56,6 +69,16 @@ export type OwnerRow = {
     propertyCount: number;
     /** Titles of those properties, for the secondary line. */
     propertyTitles: string[];
+    /** Optional card-ready property summaries; deterministic fallbacks cover older responses. */
+    properties?: Array<{
+        id: string;
+        title: string;
+        locality?: string;
+        priceLabel?: string;
+        coverUrl?: string;
+        propertyType?: string;
+        configuration?: string;
+    }>;
     /** Localities they own in, deduped. */
     localities: string[];
     /** Sum of the ask across their properties, in INR. */
@@ -64,6 +87,19 @@ export type OwnerRow = {
     isAllRent: boolean;
     /** Live deals running on their properties. */
     liveDealCount: number;
+    /** Platform owners come from an accepted representation; custom owners are broker-created. */
+    origin: "platform" | "custom";
+    propertyIntent?: "sell" | "rent" | "lease";
+    propertyType?: string;
+    configuration?: string;
+    linkedListingId?: string | null;
+    linkedListingTitle?: string | null;
+    lastSpokeAt?: string | null;
+    status?: string;
+    tags?: string[];
+    notes?: string;
+    /** Complete custom-owner fields. Platform records may omit protected fields. */
+    details?: OwnerContactForm;
 };
 
 export type ContactsSort = "recent" | "name" | "most_active";
@@ -72,6 +108,7 @@ export type ContactsFilters = {
     q: string;
     tab: ContactsTab;
     sort: ContactsSort;
+    ownerOrigin: "all" | "platform" | "custom";
 };
 
 export type ContactsSummary = {
@@ -81,10 +118,13 @@ export type ContactsSummary = {
     unmatchedBuyerCount: number;
     /** Owners whose representation has lapsed everywhere. */
     lapsedOwnerCount: number;
+    platformOwnerCount: number;
+    customOwnerCount: number;
 };
 
 export const DEFAULT_CONTACTS_FILTERS: ContactsFilters = {
     q: "",
     tab: "buyers",
     sort: "recent",
+    ownerOrigin: "all",
 };

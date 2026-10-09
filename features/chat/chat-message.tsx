@@ -24,14 +24,15 @@ function StatusTick({ status }: { status: NonNullable<ChatMessage["status"]> }) 
 export function ChatMessageRow({ message }: { message: ChatMessage }) {
     const { isOwn, text, attachment, status } = message;
     const time = formatTimeIn(new Date(message.sentAt));
+    const attachmentOnly = Boolean(attachment) && !text;
 
     return (
         <li className={cn("flex flex-col gap-1", isOwn ? "items-end" : "items-start")}>
             <div
                 className={cn(
                     `
-                      flex flex-col gap-2 rounded-card px-3.5 py-2.5 text-start shadow-xs
-                      max-inline-[min(26rem,76%)]
+                      flex flex-col gap-2 rounded-card text-start shadow-xs
+                      max-inline-[min(26rem,85%)]
                     `,
                     // Brand green rather than ink: the product runs one hue, and
                     // a black bubble on warm cream reads as a foreign component.
@@ -40,11 +41,10 @@ export function ChatMessageRow({ message }: { message: ChatMessage }) {
                     isOwn
                         ? "rounded-ee-sm bg-brand text-surface"
                         : "rounded-es-sm border border-border-warm bg-surface text-ink",
-                    // Attachment bubbles carry their own padding rhythm.
-                    attachment && !text && "p-2",
+                    attachmentOnly ? "p-2" : "px-3.5 py-2.5",
                 )}
             >
-                {attachment ? <ChatAttachmentBlock attachment={attachment} /> : null}
+                {attachment ? <ChatAttachmentBlock attachment={attachment} isOwn={isOwn} /> : null}
 
                 {text ? (
                     <p className="body-sm leading-relaxed whitespace-pre-wrap">{text}</p>

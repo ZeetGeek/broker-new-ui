@@ -25,8 +25,18 @@ export function formatMaskedPhoneIn(phoneDigits: string): string {
 }
 
 /** WhatsApp deep link for an Indian mobile number. */
-export function formatWhatsAppUrl(phoneDigits: string): string {
+export function formatWhatsAppUrl(phoneDigits: string, text?: string): string {
     const digits = phoneDigits.replace(/\D/g, "");
     const e164 = digits.length === 10 ? `91${digits}` : digits;
-    return `https://wa.me/${e164}`;
+    const base = `https://wa.me/${e164}`;
+    if (!text?.trim()) return base;
+    return `${base}?text=${encodeURIComponent(text.trim())}`;
+}
+
+/** `tel:` link for an Indian mobile number. */
+export function formatTelUrl(phoneDigits: string): string {
+    const digits = phoneDigits.replace(/\D/g, "");
+    const ten =
+        digits.length === 12 && digits.startsWith("91") ? digits.slice(2) : digits.slice(-10);
+    return ten.length === 10 ? `tel:+91${ten}` : `tel:${digits}`;
 }

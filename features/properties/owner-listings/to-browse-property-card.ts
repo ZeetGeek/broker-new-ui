@@ -1,5 +1,6 @@
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
-import { formatPropertyTypeLabel } from "@/lib/format/owner-listings-labels";
+import { formatPlaceName, formatPropertyTypeLabel } from "@/lib/format/owner-listings-labels";
+import { brokerOwnerProfileHref } from "@/lib/routes/broker";
 
 import type { BrowsePropertyCardListing } from "@/components/shared/property-card";
 
@@ -7,10 +8,12 @@ import type { OwnerListingItem } from "@/features/properties/owner-listings/type
 
 export function toBrowsePropertyCardListing(item: OwnerListingItem): BrowsePropertyCardListing {
     const legacy = toLegacyAmountFields(item);
+    const locality = formatPlaceName(item.locality);
+    const city = formatPlaceName(item.city);
 
     return {
         id: item.id,
-        title: `${item.locality} ${formatPropertyTypeLabel(item.propertyTypeLabel)}`, //from here setting title
+        title: `${item?.title ?? formatPropertyTypeLabel(item.propertyTypeLabel)} in ${locality}, ${city}`,
         configLabel: item.configLabel,
         propertyTypeLabel: item.propertyTypeLabel,
         areaSqft: item.areaSqft,
@@ -23,15 +26,24 @@ export function toBrowsePropertyCardListing(item: OwnerListingItem): BrowsePrope
         photoCount: item.photoCount,
         isNew: item.isNew,
         bhk: item.bhk,
-        locality: item.locality,
-        city: item.city,
+        locality,
+        city,
         brokerSlotsOpen: item.brokerSlotsOpen,
         brokerSlotsTotal: item.brokerSlotsTotal,
         commissionPercent: item.commissionPercent,
+        commissionAmount: item.commissionAmount,
         hasRequested: item.hasRequested,
+        isRepresenting: item.isRepresenting,
+        isInvitePending: item.isInvitePending,
+        pendingRepresentationId: item.pendingRepresentationId,
+        pendingInvitationId: item.pendingInvitationId,
         owner: {
-            name: item.ownerName,
+            name: formatPlaceName(item.ownerName),
             avatarUrl: item.ownerAvatarUrl,
+            locationLabel: item.ownerLocationLabel
+                ? formatPlaceName(item.ownerLocationLabel)
+                : undefined,
+            profileHref: item.ownerUserId ? brokerOwnerProfileHref(item.ownerUserId) : undefined,
         },
     };
 }
