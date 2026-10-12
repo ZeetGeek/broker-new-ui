@@ -96,12 +96,16 @@ function toFormValues(profile: UserProfile): ProfileFormValues {
         city: profile.city ?? "",
         state: profile.state ?? "",
         country: profile.country ?? "India",
+        locality: owner
+            ? (profile.locality?.trim() ||
+              profile.owner?.locality?.trim() ||
+              profile.owner?.preferredLocalities?.find((area) => area.trim())?.trim() ||
+              "")
+            : "",
         orgName: profile.orgName ?? "",
         bio: owner ? (profile.owner?.bio ?? "") : (profile.broker?.bio ?? ""),
         companyName: profile.owner?.companyName ?? profile.companyName ?? "",
         gstin: profile.owner?.gstin ?? "",
-        preferredCities: (profile.owner?.preferredCities ?? []).join(", "),
-        preferredLocalities: (profile.owner?.preferredLocalities ?? []).join(", "),
         experienceYears:
             profile.broker?.experienceYears == null ? "" : String(profile.broker.experienceYears),
         licenseNumber: profile.broker?.licenseNumber ?? profile.licenseNumber ?? "",
@@ -120,12 +124,11 @@ const EMPTY_FORM: ProfileFormValues = {
     city: "",
     state: "",
     country: "India",
+    locality: "",
     orgName: "",
     bio: "",
     companyName: "",
     gstin: "",
-    preferredCities: "",
-    preferredLocalities: "",
     experienceYears: "",
     licenseNumber: "",
     reraState: "",
@@ -146,6 +149,7 @@ export function ProfilePage() {
     const {
         control,
         handleSubmit,
+        getValues,
         reset,
         setValue,
         formState: { isSubmitting, isDirty },
@@ -240,10 +244,12 @@ export function ProfilePage() {
                 };
 
                 if (owner) {
+                    const locality = values.locality.trim();
                     payload.companyName = values.companyName.trim();
                     payload.gstin = values.gstin.trim();
-                    payload.preferredCities = parseCommaList(values.preferredCities);
-                    payload.preferredLocalities = parseCommaList(values.preferredLocalities);
+                    payload.locality = locality;
+                    // Keep the older list in step with the single locality field.
+                    payload.preferredLocalities = locality ? [locality] : [];
                     payload.publicSlug = values.publicSlug.trim();
                 } else {
                     payload.experienceYears =
@@ -438,6 +444,9 @@ export function ProfilePage() {
                                             // State, city and areas belong to the old country.
                                             setValue("state", "", { shouldDirty: true });
                                             setValue("city", "", { shouldDirty: true });
+                                            if (getValues("locality")) {
+                                                setValue("locality", "", { shouldDirty: true });
+                                            }
                                             setValue("serviceAreas", [], { shouldDirty: true });
                                         }
                                         field.onChange(next);
@@ -469,6 +478,9 @@ export function ProfilePage() {
                                         // but no state: filling the state in keeps that city.
                                         if (field.value && isDifferentPlace(next, field.value)) {
                                             setValue("city", "", { shouldDirty: true });
+                                            if (getValues("locality")) {
+                                                setValue("locality", "", { shouldDirty: true });
+                                            }
                                             setValue("serviceAreas", [], { shouldDirty: true });
                                         }
                                         field.onChange(next);
@@ -505,6 +517,9 @@ export function ProfilePage() {
                                     onValueChange={(next) => {
                                         if (isDifferentPlace(next, field.value)) {
                                             // Areas belong to the old city.
+                                            if (getValues("locality")) {
+                                                setValue("locality", "", { shouldDirty: true });
+                                            }
                                             setValue("serviceAreas", [], { shouldDirty: true });
                                         }
                                         field.onChange(next);
@@ -527,7 +542,32 @@ export function ProfilePage() {
                         )}
                     />
 
-                    {ownerAccount ? null : (
+                    {ownerAccount ? (
+                        <Controller
+                            name="locality"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <div className="flex flex-col gap-2">
+                                    <FieldLabel htmlFor="profile-locality">Locality</FieldLabel>
+                                    <LocalityCombobox
+                                        id="profile-locality"
+                                        inputRef={field.ref}
+                                        cityId={cityId}
+                                        value={field.value}
+                                        onValueChange={field.onChange}
+                                        onBlur={field.onBlur}
+                                        placeholder="Search a locality, e.g. Vesu"
+                                        errorText={fieldState.error?.message}
+                                        helperText={
+                                            cityId
+                                                ? `Search areas in ${cityName}.`
+                                                : "Choose your city to pick a locality."
+                                        }
+                                    />
+                                </div>
+                            )}
+                        />
+                    ) : (
                         <Controller
                             name="serviceAreas"
                             control={control}
@@ -560,7 +600,7 @@ export function ProfilePage() {
             {ownerAccount ? (
                 <Section
                     title="Your property preferences"
-                    description="Brokers use this to decide which listings to bring you."
+                    description="Company details and a short note brokers can read."
                 >
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Controller
@@ -613,44 +653,6 @@ export function ProfilePage() {
                                         profile?.owner?.publicSlug,
                                         profile?.qr?.publicProfileUrl,
                                     )}
-                                />
-                            </div>
-                        )}
-                    />
-
-                    <Controller
-                        name="preferredCities"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-preferred-cities">
-                                    Preferred cities
-                                </FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="profile-preferred-cities"
-                                    placeholder="Surat, Ahmedabad"
-                                    errorText={fieldState.error?.message}
-                                    helperText="Separate them with commas."
-                                />
-                            </div>
-                        )}
-                    />
-
-                    <Controller
-                        name="preferredLocalities"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-preferred-localities">
-                                    Preferred localities
-                                </FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="profile-preferred-localities"
-                                    placeholder="Adajan, Vesu"
-                                    errorText={fieldState.error?.message}
-                                    helperText="Separate them with commas."
                                 />
                             </div>
                         )}

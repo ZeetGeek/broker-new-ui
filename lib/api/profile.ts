@@ -30,6 +30,7 @@ export type UserProfile = {
     city?: string | null;
     state?: string | null;
     country?: string | null;
+    locality?: string | null;
     accountType?: string | null;
     orgName?: string | null;
     avatarUrl?: string | null;
@@ -78,6 +79,7 @@ export type UserProfile = {
         ownerKind?: string | null;
         companyName?: string | null;
         gstin?: string | null;
+        locality?: string | null;
         preferredCities?: string[];
         preferredLocalities?: string[];
         bio?: string | null;
@@ -100,6 +102,8 @@ export type UpdateProfileInput = {
     city?: string;
     state?: string;
     country?: string;
+    /** Owner-only. One area inside `city`, chosen from the locality search. */
+    locality?: string;
     orgName?: string;
     bio?: string;
     /** Shared. Owners and brokers both have a public profile address. */
