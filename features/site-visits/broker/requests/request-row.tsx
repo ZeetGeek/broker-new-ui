@@ -1,15 +1,28 @@
 "use client";
 
-import { Clock3, MessageCircle, RotateCcw } from "lucide-react";
+import { memo } from "react";
 
+import { addCollection, Icon } from "@iconify/react/offline";
+import { CalendarClock, Clock3, MapPin, PanelRight, RotateCcw, Trash2 } from "lucide-react";
+
+import { formatAreaSqft } from "@/lib/format/area";
+import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
+import { cn } from "@/lib/utils";
 import { REQUEST_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitTime, visitAge } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { Price } from "@/components/shared/price";
+import { PropertyTitleLink } from "@/components/shared/property-title-link";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 import type { TimeRequest } from "@/features/site-visits/broker/model";
+
+addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
+
+const DOT = "\u00B7";
 
 function canNudge(request: TimeRequest) {
     return (
@@ -18,7 +31,7 @@ function canNudge(request: TimeRequest) {
     );
 }
 
-export function RequestRow({
+export const RequestRow = memo(function RequestRow({
     request,
     busy,
     error,
@@ -42,88 +55,184 @@ export function RequestRow({
     const status = REQUEST_STATUS[request.status];
     const action = status.action;
     const buyer = request.buyers[0];
+    const buyerLabel =
+        request.buyers.length > 1 ? `Buyers ${DOT} +${request.buyers.length - 1}` : "Buyer";
+    const metaName = `${request.property.configLabel} ${DOT} ${formatAreaSqft(request.property.areaSqft)}`;
+    const propertyHref = brokerOwnerListingDetailHref(request.property.id);
+    const askedLabel = (() => {
+        const age = visitAge(request.createdAt);
+        return age.charAt(0).toUpperCase() + age.slice(1);
+    })();
+    const showFooter =
+        action === "pending" ||
+        action === "retry" ||
+        (action === "accepted" && !request.createdVisitId);
+
     return (
-        <article className="rounded-card border border-border-warm bg-surface p-4">
-            <div className="grid gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-start">
+        <article
+            aria-label={`${request.property.title} ${DOT} ${formatVisitTime(request.preferredStartsAt)}`}
+            className="overflow-hidden rounded-card border border-border-warm bg-surface shadow-sm"
+        >
+            <div
+                className="
+                  grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 p-4
+                  sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:p-5
+                "
+            >
                 <div
                     className="
-                  relative overflow-hidden rounded-[8px] bg-surface-muted block-14 inline-[72px]
-                "
+                      relative shrink-0 overflow-hidden rounded-inner bg-surface-muted block-20
+                      inline-20
+                      sm:block-24 sm:inline-24
+                    "
                 >
                     <AppImage
                         src={request.property.coverUrl ?? "/properties/1.jpg"}
                         alt=""
                         fill
-                        sizes="72px"
+                        sizes="96px"
                     />
                 </div>
-                <div className="min-inline-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h3
-                            className="
-                      h6 truncate text-ink
-                    "
-                        >
-                            {request.property.title}
-                        </h3>
-                        <span
-                            className={`
-                      body-xs rounded-md px-2 py-1 font-semibold
-                      ${status.tone}
-                    `}
-                        >
+
+                <div className="flex flex-col pbs-1! min-inline-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge variant="outline" className={cn(status.tone)}>
                             {status.label}
-                        </span>
+                        </Badge>
+                        <Badge variant="neutral">
+                            <Clock3 aria-hidden />
+                            {formatVisitTime(request.preferredStartsAt)}
+                            <span className="text-ink-subtle">{DOT}</span>
+                            {formatVisitDate(request.preferredStartsAt)}
+                        </Badge>
                     </div>
-                    <div className="mbs-2 flex items-center gap-2">
-                        <UserAvatar
-                            name={buyer.name}
-                            imageUrl={buyer.avatarUrl}
-                            size="xs"
-                            fallback="character"
-                        />
-                        <p
-                            className="
-                      body-xs text-ink
-                    "
+
+                    <Price
+                        amountInr={request.property.amountInr}
+                        isRent={request.property.purpose === "rent"}
+                        className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
+                    />
+
+                    <p
+                        className="
+                          body-sm flex flex-wrap items-center gap-1.5 leading-none tracking-wide
+                          min-inline-0
+                        "
+                    >
+                        <PropertyTitleLink
+                            href={propertyHref}
+                            className="body-sm font-semibold tracking-wide capitalize"
                         >
-                            <span className="font-semibold">{buyer.name}</span>
-                            <span
-                                className="
-                      text-ink-muted
-                    "
-                            >
-                                {" "}
-                                · {request.property.locality}
+                            {metaName}
+                        </PropertyTitleLink>
+                        <span className="text-ink-subtle" aria-hidden>
+                            {DOT}
+                        </span>
+                        <span className="flex items-center gap-1 text-ink-muted min-inline-0">
+                            <MapPin
+                                aria-hidden
+                                className="shrink-0 block-3.5 inline-3.5"
+                                strokeWidth={1.75}
+                            />
+                            <span className="truncate capitalize">
+                                {request.property.locality}, {request.property.city}
                             </span>
-                        </p>
-                    </div>
-                    <p className="body-xs mbs-2 flex items-center gap-1.5 text-ink-muted">
-                        <Clock3
-                            aria-hidden
-                            className="
-                      block-3.5 inline-3.5
-                    "
-                        />
-                        {visitAge(request.createdAt)} · expires at the requested time
+                        </span>
+                        <span className="text-ink-subtle" aria-hidden>
+                            {DOT}
+                        </span>
+                        <span className="truncate min-inline-0">
+                            <span className="text-ink-subtle">{buyerLabel}</span>
+                            <span className="text-ink-subtle/60"> </span>
+                            <span className="font-semibold text-ink capitalize">{buyer.name}</span>
+                        </span>
+                        <span className="text-ink-subtle" aria-hidden>
+                            {DOT}
+                        </span>
+                        <span className="truncate min-inline-0">
+                            <span className="text-ink-subtle">Owner</span>
+                            <span className="text-ink-subtle/60"> </span>
+                            <span className="font-semibold text-ink capitalize">
+                                {request.owner.name}
+                            </span>
+                        </span>
                     </p>
                 </div>
-                <div className="sm:text-end">
-                    <p className="body-xs text-ink-muted">You asked for</p>
-                    <p
+
+                <div
+                    className="
+                      col-span-2 flex items-center justify-end gap-3
+                      sm:col-span-1 sm:justify-self-end sm:gap-4
+                    "
+                >
+                    <div
                         className="
-                  tabular text-lg font-bold text-ink
-                "
+                          body-xs shrink-0 text-start text-ink-muted inline-44
+                          sm:inline-48
+                        "
                     >
-                        {formatVisitTime(request.preferredStartsAt)}
-                    </p>
-                    <p
-                        className="
-                  body-xs text-ink-muted
-                "
-                    >
-                        {formatVisitDate(request.preferredStartsAt)}
-                    </p>
+                        <p className="flex items-center gap-1.5">
+                            <CalendarClock
+                                aria-hidden
+                                className="shrink-0 block-3.5 inline-3.5"
+                                strokeWidth={1.75}
+                            />
+                            <span className="truncate font-medium text-ink-muted">
+                                {askedLabel}
+                            </span>
+                        </p>
+                        <p className="mbs-0.5 truncate leading-snug">
+                            Expires at the requested time
+                        </p>
+                    </div>
+                    {action === "accepted" && request.createdVisitId ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="md"
+                            onClick={onViewVisit}
+                            className="shrink-0"
+                        >
+                            <PanelRight aria-hidden />
+                            View visit
+                        </Button>
+                    ) : null}
+                    {action === "pending" ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="md"
+                            onClick={onNudge}
+                            disabled={!canNudge(request) || busy}
+                            title={
+                                canNudge(request)
+                                    ? "Send WhatsApp nudge"
+                                    : "You can nudge this owner once every 6 hours"
+                            }
+                            className="hidden shrink-0 sm:inline-flex"
+                        >
+                            <Icon
+                                icon="bi:whatsapp"
+                                width={16}
+                                height={16}
+                                className="block-4 inline-4"
+                                aria-hidden
+                            />
+                            Nudge owner
+                        </Button>
+                    ) : null}
+                    {action === "retry" ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="md"
+                            onClick={onRetry}
+                            className="hidden shrink-0 sm:inline-flex"
+                        >
+                            <RotateCcw aria-hidden />
+                            Try another time
+                        </Button>
+                    ) : null}
                 </div>
             </div>
 
@@ -131,8 +240,9 @@ export function RequestRow({
                 <p
                     role="alert"
                     className="
-              body-sm mbs-4 rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
-            "
+                      body-sm mx-4 rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
+                      sm:mx-5
+                    "
                 >
                     {error}
                 </p>
@@ -141,35 +251,27 @@ export function RequestRow({
             {action === "counter" && request.counterOffer ? (
                 <div
                     className="
-              mbs-4 grid gap-3 rounded-inner bg-urgent-soft p-3
-              md:grid-cols-[1fr_auto] md:items-center
-            "
+                      mx-4 grid gap-3 rounded-inner border border-pending/20 bg-urgent-soft p-3
+                      sm:mx-5
+                      md:grid-cols-[1fr_auto] md:items-center
+                    "
                 >
                     <div>
                         <p className="body-xs font-semibold text-pending">Owner suggested</p>
-                        <p
-                            className="
-              tabular text-2xl font-bold text-ink
-            "
-                        >
+                        <p className="h5 mbs-1 leading-none text-ink tabular-nums">
                             {formatVisitTime(request.counterOffer.startsAt)}
+                            <span className="body-sm ms-2 font-medium text-ink-muted">
+                                {formatVisitDate(request.counterOffer.startsAt)}
+                            </span>
                         </p>
                         {request.counterOffer.ownerMessage ? (
-                            <p
-                                className="
-              body-xs mbs-1 text-ink-muted
-            "
-                            >
+                            <p className="body-xs mbs-1.5 text-ink-muted">
                                 “{request.counterOffer.ownerMessage}”
                             </p>
                         ) : null}
                     </div>
-                    <div
-                        className="
-              flex flex-wrap gap-2
-            "
-                    >
-                        <Button variant="surface" size="md" onClick={onDecline} disabled={busy}>
+                    <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="md" onClick={onDecline} disabled={busy}>
                             Decline
                         </Button>
                         <Button size="md" onClick={onAccept} loading={busy}>
@@ -182,49 +284,68 @@ export function RequestRow({
             {action === "retry" && request.declineReason ? (
                 <p
                     className="
-              body-xs mbs-4 rounded-inner bg-surface-muted px-3 py-2 text-ink-muted
-            "
+                      body-xs mx-4 rounded-inner bg-surface-muted px-3 py-2 text-ink-muted
+                      sm:mx-5
+                    "
                 >
                     Owner’s reason: {request.declineReason}
                 </p>
             ) : null}
 
-            <footer
-                className="
-              mbs-4 flex flex-wrap justify-end gap-2 border-bs border-border-warm pbs-3
-            "
-            >
-                {action === "pending" ? (
-                    <>
-                        <Button variant="ghost" size="md" onClick={onWithdraw} disabled={busy}>
-                            Withdraw
+            {showFooter ? (
+                <footer
+                    className={cn(
+                        "flex flex-wrap items-center gap-2 px-4 py-3 sm:px-5",
+                        action === "retry" && "sm:hidden",
+                    )}
+                >
+                    {action === "pending" ? (
+                        <>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={onWithdraw}
+                                disabled={busy}
+                            >
+                                <Trash2 aria-hidden /> Withdraw
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={onNudge}
+                                disabled={!canNudge(request) || busy}
+                                title={
+                                    canNudge(request)
+                                        ? "Send WhatsApp nudge"
+                                        : "You can nudge this owner once every 6 hours"
+                                }
+                                className="sm:hidden"
+                            >
+                                <Icon
+                                    icon="bi:whatsapp"
+                                    width={16}
+                                    height={16}
+                                    className="block-4 inline-4"
+                                    aria-hidden
+                                />
+                                Nudge owner
+                            </Button>
+                        </>
+                    ) : null}
+                    {action === "accepted" && !request.createdVisitId ? (
+                        <p className="body-xs text-ink-muted">
+                            Visit will appear in My visits shortly.
+                        </p>
+                    ) : null}
+                    {action === "retry" ? (
+                        <Button type="button" variant="ghost" size="sm" onClick={onRetry}>
+                            <RotateCcw aria-hidden /> Try another time
                         </Button>
-                        <Button
-                            variant="surface"
-                            size="md"
-                            onClick={onNudge}
-                            disabled={!canNudge(request) || busy}
-                            title={
-                                canNudge(request)
-                                    ? "Send WhatsApp nudge"
-                                    : "You can nudge this owner once every 6 hours"
-                            }
-                        >
-                            <MessageCircle aria-hidden /> Nudge owner
-                        </Button>
-                    </>
-                ) : null}
-                {action === "accepted" && request.createdVisitId ? (
-                    <Button variant="surface" size="md" onClick={onViewVisit}>
-                        View visit
-                    </Button>
-                ) : null}
-                {action === "retry" ? (
-                    <Button variant="surface" size="md" onClick={onRetry}>
-                        <RotateCcw aria-hidden /> Try another time
-                    </Button>
-                ) : null}
-            </footer>
+                    ) : null}
+                </footer>
+            ) : null}
         </article>
     );
-}
+});

@@ -332,6 +332,14 @@ export function BrokerSiteVisitsPage() {
     );
     const filtersCount = tab === "slots" ? openSlotFilterCount : focus ? 1 : 0;
     const slotQuery = searchParams.get("q") ?? "";
+    const visitDateRange =
+        searchParams.get("range") === "today" ||
+        searchParams.get("range") === "tomorrow" ||
+        searchParams.get("range") === "week" ||
+        searchParams.get("range") === "month" ||
+        searchParams.get("range") === "custom"
+            ? openSlotFilters.range
+            : "all";
 
     return (
         <main className="flex flex-col gap-6 pbe-24 md:pbe-10">
@@ -352,34 +360,47 @@ export function BrokerSiteVisitsPage() {
                     if (tab === "slots") setSlotFiltersOpen(true);
                     else setVisitFiltersOpen(true);
                 }}
-                slotToolbar={
-                    tab === "slots"
+                rangeToolbar={{
+                    query: slotQuery,
+                    onQueryChange: (next) =>
+                        updateUrl({
+                            tab,
+                            q: next.trim() || undefined,
+                        }),
+                    range: openSlotFilters.range,
+                    customFrom: openSlotFilters.customFrom,
+                    customTo: openSlotFilters.customTo,
+                    onRangeChange: (next) =>
+                        updateUrl({
+                            tab,
+                            range:
+                                tab === "slots"
+                                    ? next.range === "week"
+                                        ? undefined
+                                        : next.range
+                                    : next.range,
+                            from:
+                                next.range === "custom" ? next.customFrom || undefined : undefined,
+                            to: next.range === "custom" ? next.customTo || undefined : undefined,
+                        }),
+                    ...(tab === "visits"
                         ? {
-                              query: slotQuery,
-                              onQueryChange: (next) =>
-                                  updateUrl({
-                                      tab: "slots",
-                                      q: next.trim() || undefined,
-                                  }),
-                              range: openSlotFilters.range,
-                              customFrom: openSlotFilters.customFrom,
-                              customTo: openSlotFilters.customTo,
-                              onRangeChange: (next) =>
-                                  updateUrl({
-                                      tab: "slots",
-                                      range: next.range === "week" ? undefined : next.range,
-                                      from:
-                                          next.range === "custom"
-                                              ? next.customFrom || undefined
-                                              : undefined,
-                                      to:
-                                          next.range === "custom"
-                                              ? next.customTo || undefined
-                                              : undefined,
-                                  }),
+                              searchId: "visit-search",
+                              searchPlaceholder: "Search visits",
+                              searchAriaLabel: "Search my visits",
+                              customDescription:
+                                  "Choose a start date and an end date for your visits.",
                           }
-                        : undefined
-                }
+                        : tab === "requests"
+                          ? {
+                                searchId: "request-search",
+                                searchPlaceholder: "Search requests",
+                                searchAriaLabel: "Search visit requests",
+                                customDescription:
+                                    "Choose a start date and an end date for your requests.",
+                            }
+                          : {}),
+                }}
             />
             {actionError ? (
                 <p
@@ -403,9 +424,33 @@ export function BrokerSiteVisitsPage() {
                         visits={visitsQuery.data ?? []}
                         isLoading={visitsQuery.isLoading}
                         focus={focus}
+                        query={slotQuery}
+                        range={visitDateRange}
+                        customFrom={openSlotFilters.customFrom}
+                        customTo={openSlotFilters.customTo}
                         onOpen={(id) => updateUrl({ visit: id })}
                         onAction={handleVisitAction}
                         onBrowseSlots={() => updateUrl({ tab: "slots" })}
+                        onClearQuery={() => updateUrl({ tab: "visits", q: undefined })}
+                        onClearRange={() =>
+                            updateUrl({
+                                tab: "visits",
+                                range: undefined,
+                                from: undefined,
+                                to: undefined,
+                            })
+                        }
+                        onClearFocus={() => updateUrl({ tab: "visits", focus: undefined })}
+                        onClearFilters={() =>
+                            updateUrl({
+                                tab: "visits",
+                                q: undefined,
+                                range: undefined,
+                                from: undefined,
+                                to: undefined,
+                                focus: undefined,
+                            })
+                        }
                     />
                 ) : tab === "slots" ? (
                     <OpenSlotsTab
@@ -435,11 +480,33 @@ export function BrokerSiteVisitsPage() {
                     <RequestsTab
                         requests={requestsQuery.data ?? []}
                         isLoading={requestsQuery.isLoading}
+                        query={slotQuery}
+                        range={visitDateRange}
+                        customFrom={openSlotFilters.customFrom}
+                        customTo={openSlotFilters.customTo}
                         onNew={() => updateUrl({ tab: "slots", book: "ready" })}
                         onRetry={(propertyId, retryBuyerId) =>
                             updateUrl({ tab: "slots", book: "ready", buyer: retryBuyerId })
                         }
                         onViewVisit={(id) => updateUrl({ tab: "visits", visit: id })}
+                        onClearQuery={() => updateUrl({ tab: "requests", q: undefined })}
+                        onClearRange={() =>
+                            updateUrl({
+                                tab: "requests",
+                                range: undefined,
+                                from: undefined,
+                                to: undefined,
+                            })
+                        }
+                        onClearFilters={() =>
+                            updateUrl({
+                                tab: "requests",
+                                q: undefined,
+                                range: undefined,
+                                from: undefined,
+                                to: undefined,
+                            })
+                        }
                     />
                 )}
             </div>

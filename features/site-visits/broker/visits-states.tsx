@@ -34,15 +34,16 @@ export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slot
                                 <div className="rounded-sm bg-brand-soft block-5 inline-20" />
                                 <div
                                     className="
-                                  rounded-sm bg-surface-muted block-3.5 inline-full max-inline-96
-                                "
+                                      rounded-sm bg-surface-muted block-3.5 inline-full
+                                      max-inline-96
+                                    "
                                 />
                             </div>
                             <div
                                 className="
-                              hidden rounded-control bg-surface-muted block-11 inline-40
-                              sm:block
-                            "
+                                  hidden rounded-control bg-surface-muted block-11 inline-40
+                                  sm:block
+                                "
                             />
                         </div>
                         <div aria-hidden className="mx-4 border-bs border-border-warm sm:mx-5" />
@@ -53,18 +54,12 @@ export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slot
                                     <div className="rounded-sm bg-surface-muted block-3 inline-28" />
                                     <div
                                         className="
-                                      rounded-control bg-surface-muted block-8 inline-8
-                                    "
+                                          rounded-control bg-surface-muted block-8 inline-8
+                                        "
                                     />
                                 </div>
                             </div>
-                            <div
-                                className="
-                                  grid grid-cols-1 gap-4
-                                  sm:grid-cols-2
-                                  xl:grid-cols-4
-                                "
-                            >
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                                 {Array.from({ length: 4 }, (_, dayIndex) => (
                                     <div key={dayIndex} className="space-y-2">
                                         <div className="rounded-sm bg-border-warm block-3 inline-28" />
@@ -84,22 +79,145 @@ export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slot
         );
     }
 
+    if (kind === "requests") {
+        return (
+            <div aria-label="Loading requests" aria-busy="true" className="animate-pulse space-y-6">
+                {Array.from({ length: 2 }, (_, groupIndex) => (
+                    <div key={groupIndex} className="space-y-3">
+                        <div className="flex items-center justify-between gap-2 px-0.5">
+                            <div className="rounded-sm bg-surface-muted block-3.5 inline-28" />
+                            <div className="rounded-sm bg-surface-muted block-3 inline-20" />
+                        </div>
+                        {Array.from({ length: groupIndex === 0 ? 2 : 1 }, (_, index) => (
+                            <div
+                                key={index}
+                                className="
+                                  overflow-hidden rounded-card border border-border-warm bg-surface
+                                  shadow-sm
+                                "
+                            >
+                                <div
+                                    className="
+                                      grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 p-4
+                                      sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:p-5
+                                    "
+                                >
+                                    <div
+                                        className="
+                                          shrink-0 rounded-inner bg-surface-muted block-20 inline-20
+                                          sm:block-24 sm:inline-24
+                                        "
+                                    />
+                                    <div className="flex-1 space-y-1.5">
+                                        <div className="flex gap-1.5">
+                                            <div
+                                                className="
+                                              rounded-lg bg-brand-soft block-6 inline-20
+                                            "
+                                            />
+                                            <div
+                                                className="
+                                              rounded-lg bg-surface-muted block-6 inline-28
+                                            "
+                                            />
+                                        </div>
+                                        <div className="rounded-sm bg-brand-soft block-5 inline-20" />
+                                        <div
+                                            className="
+                                              rounded-sm bg-surface-muted block-3.5 inline-full
+                                              max-inline-md
+                                            "
+                                        />
+                                    </div>
+                                    <div
+                                        className="
+                                          hidden rounded-control bg-surface-muted block-11 inline-28
+                                          sm:block
+                                        "
+                                    />
+                                </div>
+                                <div
+                                    aria-hidden
+                                    className="mx-4 border-bs border-border-warm sm:mx-5"
+                                />
+                                <div className="flex gap-2 px-4 py-3 sm:px-5">
+                                    <div
+                                        className="
+                                      rounded-control bg-surface-muted block-8 inline-24
+                                    "
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
     return (
-        <div aria-label={`Loading ${kind}`} aria-busy="true" className="animate-pulse space-y-3">
-            {Array.from({ length: 3 }, (_, index) => (
-                <div key={index} className="rounded-card border border-border-warm bg-surface p-4">
-                    <div className="flex gap-4">
-                        <div className="rounded-inner bg-surface-muted block-16 inline-20" />
-                        <div className="flex-1 space-y-3">
-                            <div className="rounded-sm bg-surface-muted block-4 inline-1/2" />
-                            <div className="rounded-sm bg-surface-muted block-3 inline-2/3" />
-                            <div className="flex gap-2 pbs-2">
-                                <div className="rounded-control bg-surface-muted block-10 inline-24" />
-                                <div className="rounded-control bg-surface-muted block-10 inline-24" />
-                                <div className="rounded-control bg-surface-muted block-10 inline-24" />
+        <div aria-label="Loading visits" aria-busy="true" className="animate-pulse space-y-6">
+            {Array.from({ length: 2 }, (_, groupIndex) => (
+                <div key={groupIndex} className="space-y-3">
+                    <div className="flex items-center justify-between gap-2 px-0.5">
+                        <div className="rounded-sm bg-surface-muted block-3.5 inline-36" />
+                        <div className="rounded-sm bg-surface-muted block-3 inline-28" />
+                    </div>
+                    {Array.from({ length: groupIndex === 0 ? 2 : 1 }, (_, index) => (
+                        <div
+                            key={index}
+                            className="
+                              overflow-hidden rounded-card border border-border-warm bg-surface
+                              shadow-sm
+                            "
+                        >
+                            <div
+                                className="
+                                  grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 p-4
+                                  sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:p-5
+                                "
+                            >
+                                <div
+                                    className="
+                                      shrink-0 rounded-inner bg-surface-muted block-20 inline-20
+                                      sm:block-24 sm:inline-24
+                                    "
+                                />
+                                <div className="flex-1 space-y-1.5">
+                                    <div className="flex gap-1.5">
+                                        <div className="rounded-lg bg-danger-soft block-6 inline-28" />
+                                        <div
+                                            className="
+                                          rounded-lg bg-surface-muted block-6 inline-24
+                                        "
+                                        />
+                                    </div>
+                                    <div className="rounded-sm bg-brand-soft block-5 inline-20" />
+                                    <div
+                                        className="
+                                          rounded-sm bg-surface-muted block-3.5 inline-full
+                                          max-inline-md
+                                        "
+                                    />
+                                </div>
+                                <div
+                                    className="
+                                      hidden rounded-control bg-surface-muted block-11 inline-28
+                                      sm:block
+                                    "
+                                />
+                            </div>
+                            <div
+                                aria-hidden
+                                className="mx-4 border-bs border-border-warm sm:mx-5"
+                            />
+                            <div className="flex gap-2 px-4 py-3 sm:px-5">
+                                <div className="rounded-control bg-surface-muted block-8 inline-24" />
+                                <div className="rounded-control bg-surface-muted block-8 inline-24" />
+                                <div className="rounded-control bg-surface-muted block-8 inline-24" />
                             </div>
                         </div>
-                    </div>
+                    ))}
                 </div>
             ))}
         </div>

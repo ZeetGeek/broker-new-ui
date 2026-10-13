@@ -6,9 +6,6 @@ import { cn } from "@/lib/utils";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import type { BrokerVisitsTab } from "@/features/site-visits/broker/model";
-import type { SlotDateRange } from "@/features/site-visits/broker/open-slots/slot-filters";
-import { VisitsRangeMenu } from "@/features/site-visits/broker/visits-range-menu";
 import {
     formatChipCount,
     ownerListingsChipClassName,
@@ -18,6 +15,9 @@ import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
+import type { BrokerVisitsTab } from "@/features/site-visits/broker/model";
+import type { SlotDateRange } from "@/features/site-visits/broker/open-slots/slot-filters";
+import { VisitsRangeMenu } from "@/features/site-visits/broker/visits-range-menu";
 
 const TABS = [
     { value: "slots", label: "Open slots", mobileLabel: "Slots" },
@@ -31,14 +31,14 @@ export function VisitsTabs({
     filtersCount = 0,
     onChange,
     onFilters,
-    slotToolbar,
+    rangeToolbar,
 }: {
     value: BrokerVisitsTab;
     counts: Record<BrokerVisitsTab, number>;
     filtersCount?: number;
     onChange: (tab: BrokerVisitsTab) => void;
     onFilters: () => void;
-    slotToolbar?: {
+    rangeToolbar?: {
         query: string;
         onQueryChange: (next: string) => void;
         range: SlotDateRange;
@@ -49,6 +49,10 @@ export function VisitsTabs({
             customFrom?: string;
             customTo?: string;
         }) => void;
+        searchId?: string;
+        searchPlaceholder?: string;
+        searchAriaLabel?: string;
+        customDescription?: string;
     };
 }) {
     const filtersActive = filtersCount > 0;
@@ -122,7 +126,7 @@ export function VisitsTabs({
                         })}
                     </OwnerListingsChipsCarousel>
 
-                    {slotToolbar ? <VisitsRangeMenu {...slotToolbar} /> : null}
+                    {rangeToolbar ? <VisitsRangeMenu {...rangeToolbar} /> : null}
                 </div>
             </TooltipProvider>
         </div>

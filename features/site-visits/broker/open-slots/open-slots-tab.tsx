@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { formatDistanceToNowStrict } from "date-fns";
-import { X } from "lucide-react";
 
+import type { ApiPropertyOption } from "@/lib/api/broker-visits-map";
 import { TIME_BUCKETS } from "@/lib/visits/constants";
 import { sortSlotsForBuyer } from "@/lib/visits/grouping";
 
@@ -26,13 +26,16 @@ import type {
     PropertyWithSlots,
     VisitSlot,
 } from "@/features/site-visits/broker/model";
-import type { ApiPropertyOption } from "@/lib/api/broker-visits-map";
 import { PropertyRow } from "@/features/site-visits/broker/open-slots/property-row";
 import {
     DEFAULT_SLOT_FILTERS,
     SlotFilters,
     type SlotFilterState,
 } from "@/features/site-visits/broker/open-slots/slot-filters";
+import {
+    VisitsFilterChips,
+    visitsRangeChipLabel,
+} from "@/features/site-visits/broker/visits-filter-chips";
 import { EmptyState, VisitsTabSkeleton } from "@/features/site-visits/broker/visits-states";
 
 const FILTER_KEYS = [
@@ -196,14 +199,20 @@ export function OpenSlotsTab({
     // Server already applies Open slots filters; only re-rank for buyer match.
     const shown = useMemo(() => sortSlotsForBuyer(items, buyerId), [buyerId, items]);
 
-    useEffect(() => {
-        if (!filtersOpen) return;
-        setDraftFilters(filters);
-        setDraftBuyerId(buyerId);
-        setDraftPropertyId(selectedPropertyId);
-    }, [buyerId, filters, filtersOpen, selectedPropertyId]);
-
+    const searchQuery = searchParams.get("q")?.trim() ?? "";
     const chips = [
+        ...(searchQuery
+            ? [
+                  {
+                      key: "query",
+                      label: `“${searchQuery}”`,
+                      clear: () =>
+                          replaceParams((params) => {
+                              params.delete("q");
+                          }),
+                  },
+              ]
+            : []),
         ...(selectedPropertyId
             ? [
                   {
@@ -219,12 +228,11 @@ export function OpenSlotsTab({
             ? [
                   {
                       key: "range",
-                      label:
-                          filters.range === "custom"
-                              ? `${filters.customFrom || "Start"} to ${filters.customTo || "End"}`
-                              : filters.range === "month"
-                                ? "Next month"
-                                : filters.range[0].toUpperCase() + filters.range.slice(1),
+                      label: visitsRangeChipLabel(
+                          filters.range,
+                          filters.customFrom,
+                          filters.customTo,
+                      ),
                       clear: () =>
                           setFilters({ ...filters, range: "week", customFrom: "", customTo: "" }),
                   },
@@ -323,7 +331,17 @@ export function OpenSlotsTab({
     ];
 
     const filtersDialog = (
-        <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <Dialog
+            open={filtersOpen}
+            onOpenChange={(open) => {
+                if (open) {
+                    setDraftFilters(filters);
+                    setDraftBuyerId(buyerId);
+                    setDraftPropertyId(selectedPropertyId);
+                }
+                setFiltersOpen(open);
+            }}
+        >
             <DialogPopup className="gap-0 overflow-hidden p-0 max-inline-3xl sm:max-inline-3xl">
                 <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
                     <DialogTitle>Filter open slots</DialogTitle>
@@ -384,38 +402,20 @@ export function OpenSlotsTab({
 
     return (
         <section className="space-y-4">
-            {chips.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
-                    {chips.map((chip) => (
-                        <button
-                            key={chip.key}
-                            type="button"
-                            onClick={chip.clear}
-                            className="body-xs flex items-center gap-1 rounded-md border border-brand/15 bg-brand-soft px-2.5 font-semibold text-brand-text block-control-md hover:bg-brand-soft-hover"
-                        >
-                            {chip.label}
-                            <X aria-hidden className="block-3 inline-3" />
-                        </button>
-                    ))}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            // Clear everything in one URL write. Do not call
-                            // onBuyerChange / onPropertyChange afterward — those
-                            // patch from stale searchParams and put filters back.
-                            replaceParams((params) => {
-                                writeFilters(params, DEFAULT_SLOT_FILTERS);
-                                params.delete("q");
-                                params.delete("buyer");
-                                params.delete("propertyId");
-                            });
-                        }}
-                        className="body-xs px-2 font-semibold text-brand-text block-control-md hover:underline"
-                    >
-                        Clear all
-                    </button>
-                </div>
-            ) : null}
+            <VisitsFilterChips
+                chips={chips}
+                onClearAll={() => {
+                    // Clear everything in one URL write. Do not call
+                    // onBuyerChange / onPropertyChange afterward — those
+                    // patch from stale searchParams and put filters back.
+                    replaceParams((params) => {
+                        writeFilters(params, DEFAULT_SLOT_FILTERS);
+                        params.delete("q");
+                        params.delete("buyer");
+                        params.delete("propertyId");
+                    });
+                }}
+            />
 
             <div className="flex flex-wrap items-center justify-between gap-2 px-1">
                 <p className="body-sm text-ink-muted">
@@ -484,8 +484,4 @@ export function OpenSlotsTab({
             {filtersDialog}
         </section>
     );
-}
-
-function propertyOptionLabel(option: ApiPropertyOption) {
-    return option.locality ? `${option.title} · ${option.locality}` : option.title;
 }

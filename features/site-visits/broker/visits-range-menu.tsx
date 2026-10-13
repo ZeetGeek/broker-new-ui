@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 
-import type { SlotDateRange } from "@/features/site-visits/broker/open-slots/slot-filters";
 import { ownerListingsChipClassName } from "@/features/properties/owner-listings/owner-listings-chip-styles";
+import type { SlotDateRange } from "@/features/site-visits/broker/open-slots/slot-filters";
 
 const RANGE_OPTIONS: { value: SlotDateRange; label: string }[] = [
     { value: "today", label: "Today" },
@@ -59,7 +59,19 @@ function rangeLabel(range: SlotDateRange, customFrom: string, customTo: string) 
     return "Custom";
 }
 
-function SlotSearchInput({ value, onChange }: { value: string; onChange: (next: string) => void }) {
+function VisitsSearchInput({
+    id,
+    value,
+    onChange,
+    placeholder,
+    ariaLabel,
+}: {
+    id: string;
+    value: string;
+    onChange: (next: string) => void;
+    placeholder: string;
+    ariaLabel: string;
+}) {
     const [draft, setDraft] = useState(value);
     const [prevValue, setPrevValue] = useState(value);
 
@@ -76,12 +88,12 @@ function SlotSearchInput({ value, onChange }: { value: string; onChange: (next: 
 
     return (
         <Input
-            id="slot-search"
+            id={id}
             size="sm"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder="Search slots"
-            aria-label="Search open slots"
+            placeholder={placeholder}
+            aria-label={ariaLabel}
             startIcon={Search}
             clearable
             wrapperClassName="
@@ -106,6 +118,10 @@ export function VisitsRangeMenu({
     customFrom,
     customTo,
     onRangeChange,
+    searchId = "slot-search",
+    searchPlaceholder = "Search slots",
+    searchAriaLabel = "Search open slots",
+    customDescription = "Choose a start date and an end date for open slots.",
 }: {
     query: string;
     onQueryChange: (next: string) => void;
@@ -113,6 +129,10 @@ export function VisitsRangeMenu({
     customFrom: string;
     customTo: string;
     onRangeChange: (next: { range: SlotDateRange; customFrom?: string; customTo?: string }) => void;
+    searchId?: string;
+    searchPlaceholder?: string;
+    searchAriaLabel?: string;
+    customDescription?: string;
 }) {
     const [pickerOpen, setPickerOpen] = useState(false);
     const isDefault = range === "week";
@@ -122,16 +142,22 @@ export function VisitsRangeMenu({
         from || to ? { from, to: to ?? from } : undefined,
     );
 
-    useEffect(() => {
-        if (!pickerOpen) return;
+    const openCustomPicker = () => {
         const nextFrom = parseKey(customFrom);
         const nextTo = parseKey(customTo);
         setDraft(nextFrom || nextTo ? { from: nextFrom, to: nextTo ?? nextFrom } : undefined);
-    }, [customFrom, customTo, pickerOpen]);
+        setPickerOpen(true);
+    };
 
     return (
         <div className="flex shrink-0 items-center gap-2.5">
-            <SlotSearchInput value={query} onChange={onQueryChange} />
+            <VisitsSearchInput
+                id={searchId}
+                value={query}
+                onChange={onQueryChange}
+                placeholder={searchPlaceholder}
+                ariaLabel={searchAriaLabel}
+            />
 
             <DropdownMenu>
                 <DropdownMenuTrigger
@@ -168,7 +194,7 @@ export function VisitsRangeMenu({
                             className={cn(range === option.value && "font-semibold text-brand")}
                             onClick={() => {
                                 if (option.value === "custom") {
-                                    setPickerOpen(true);
+                                    openCustomPicker();
                                     return;
                                 }
                                 onRangeChange({
@@ -188,9 +214,7 @@ export function VisitsRangeMenu({
                 <DialogPopup className="gap-0 overflow-hidden p-0 max-inline-md sm:max-inline-md">
                     <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
                         <DialogTitle>Custom date range</DialogTitle>
-                        <DialogDescription>
-                            Choose a start date and an end date for open slots.
-                        </DialogDescription>
+                        <DialogDescription>{customDescription}</DialogDescription>
                         <DialogClose />
                     </DialogHeader>
                     <div className="flex justify-center p-3">

@@ -2,16 +2,73 @@
 
 import { useMemo, useState } from "react";
 
-import { addDays } from "date-fns";
+import { addDays, addMonths } from "date-fns";
 
+import { formatPriceInr } from "@/lib/format/price";
 import { groupVisitsByDay } from "@/lib/visits/grouping";
+import { isVisitCancelled } from "@/lib/visits/status";
 import { formatVisitDayHeading, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { VirtualStack } from "@/components/shared/virtual-stack";
 
 import type { BrokerSiteVisit, SummaryFilter } from "@/features/site-visits/broker/model";
 import { VisitCard } from "@/features/site-visits/broker/my-visits/visit-card";
+import type { SlotDateRange } from "@/features/site-visits/broker/open-slots/slot-filters";
+import {
+    type VisitsFilterChip,
+    VisitsFilterChips,
+    visitsRangeChipLabel,
+} from "@/features/site-visits/broker/visits-filter-chips";
 import { EmptyState, VisitsTabSkeleton } from "@/features/site-visits/broker/visits-states";
+
+const FOCUS_CHIP_LABEL: Record<SummaryFilter, string> = {
+    today: "Today",
+    tomorrow: "Tomorrow",
+    awaiting: "Waiting for owner",
+    feedback: "Needs outcome",
+    week: "This week",
+    cancelled: "Cancelled",
+};
+
+function rangeBounds(
+    range: SlotDateRange | "all",
+    customFrom: string,
+    customTo: string,
+    now: Date,
+): { from: string; to: string } | null {
+    if (range === "all") return null;
+    const today = istDateKey(now);
+    if (range === "today") return { from: today, to: today };
+    if (range === "tomorrow") {
+        const key = istDateKey(addDays(now, 1));
+        return { from: key, to: key };
+    }
+    if (range === "month") {
+        return { from: today, to: istDateKey(addMonths(now, 1)) };
+    }
+    if (range === "custom") {
+        if (!customFrom) return null;
+        return { from: customFrom, to: customTo || customFrom };
+    }
+    return { from: today, to: istDateKey(addDays(now, 7)) };
+}
+
+function matchesQuery(visit: BrokerSiteVisit, query: string) {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return true;
+    const haystack = [
+        visit.property.title,
+        visit.property.configLabel,
+        visit.property.locality,
+        visit.property.city,
+        visit.property.address,
+        visit.owner.name,
+        ...visit.buyers.map((buyer) => buyer.name),
+    ]
+        .join(" ")
+        .toLowerCase();
+    return haystack.includes(needle);
+}
 
 function applyFocus(visits: BrokerSiteVisit[], focus?: SummaryFilter) {
     const now = new Date();
@@ -40,6 +97,19 @@ function applyFocus(visits: BrokerSiteVisit[], focus?: SummaryFilter) {
     });
 }
 
+function daySummary(items: BrokerSiteVisit[]) {
+    const active = items.filter((visit) => !isVisitCancelled(visit.status));
+    const saleTotal = active.reduce(
+        (total, visit) =>
+            total + (visit.property.purpose === "sale" ? visit.property.amountInr : 0),
+        0,
+    );
+    const visitLabel = `${items.length} ${items.length === 1 ? "visit" : "visits"}`;
+    if (active.length === 0) return `${visitLabel} · all cancelled`;
+    if (saleTotal <= 0) return visitLabel;
+    return `${visitLabel} · ${formatPriceInr(saleTotal)} in play`;
+}
+
 function VisitGroup({
     group,
     onOpen,
@@ -50,15 +120,16 @@ function VisitGroup({
     onAction: (action: "outcome" | "reschedule" | "withdraw", id: string) => void;
 }) {
     return (
-        <section id={`broker-visits-${group.key}`} className="space-y-2">
-            <header className="flex flex-wrap items-baseline justify-between gap-2 px-1">
-                <h3 className="h6 text-ink">{formatVisitDayHeading(group.items[0].startsAt)}</h3>
-                <span className="body-xs text-ink-muted">
-                    {group.items.length} {group.items.length === 1 ? "visit" : "visits"} ·{" "}
-                    {group.totalLabel} in play
+        <section id={`broker-visits-${group.key}`} className="space-y-3">
+            <header className="flex flex-wrap items-baseline justify-between gap-2 px-0.5">
+                <h3 className="body-sm font-semibold text-ink-muted">
+                    {formatVisitDayHeading(group.items[0].startsAt)}
+                </h3>
+                <span className="body-xs text-ink-muted tabular-nums">
+                    {daySummary(group.items)}
                 </span>
             </header>
-            <div className="overflow-hidden rounded-card border border-border-warm bg-surface shadow-sm">
+            <div className="space-y-3">
                 {group.items.map((visit) => (
                     <VisitCard key={visit.id} visit={visit} onOpen={onOpen} onAction={onAction} />
                 ))}
@@ -71,20 +142,62 @@ export function MyVisitsTab({
     visits,
     isLoading,
     focus,
+    query = "",
+    range = "all",
+    customFrom = "",
+    customTo = "",
     onOpen,
     onAction,
     onBrowseSlots,
+    onClearQuery,
+    onClearRange,
+    onClearFocus,
+    onClearFilters,
 }: {
     visits: BrokerSiteVisit[];
     isLoading: boolean;
     focus?: SummaryFilter;
+    query?: string;
+    range?: SlotDateRange | "all";
+    customFrom?: string;
+    customTo?: string;
     onOpen: (id: string) => void;
     onAction: (action: "outcome" | "reschedule" | "withdraw", id: string) => void;
     onBrowseSlots: () => void;
+    onClearQuery?: () => void;
+    onClearRange?: () => void;
+    onClearFocus?: () => void;
+    onClearFilters?: () => void;
 }) {
     const [now] = useState(() => new Date());
-    const filtered = useMemo(() => applyFocus(visits, focus), [focus, visits]);
+    const filtered = useMemo(() => {
+        const bounds = rangeBounds(range, customFrom, customTo, now);
+        return applyFocus(visits, focus).filter((visit) => {
+            if (!matchesQuery(visit, query)) return false;
+            if (!bounds) return true;
+            const day = istDateKey(visit.startsAt);
+            return day >= bounds.from && day <= bounds.to;
+        });
+    }, [customFrom, customTo, focus, now, query, range, visits]);
     const groups = useMemo(() => groupVisitsByDay(filtered), [filtered]);
+    const chips = useMemo(() => {
+        const next: VisitsFilterChip[] = [];
+        const trimmed = query.trim();
+        if (trimmed && onClearQuery) {
+            next.push({ key: "query", label: `“${trimmed}”`, clear: onClearQuery });
+        }
+        if (range !== "all" && onClearRange) {
+            next.push({
+                key: "range",
+                label: visitsRangeChipLabel(range, customFrom, customTo),
+                clear: onClearRange,
+            });
+        }
+        if (focus && onClearFocus) {
+            next.push({ key: "focus", label: FOCUS_CHIP_LABEL[focus], clear: onClearFocus });
+        }
+        return next;
+    }, [customFrom, customTo, focus, onClearFocus, onClearQuery, onClearRange, query, range]);
     const nextVisit = useMemo(
         () =>
             visits
@@ -107,13 +220,9 @@ export function MyVisitsTab({
 
     return (
         <section className="space-y-4">
-            <div>
-                <h2 className="h5 text-ink">Your schedule</h2>
-                <p className="body-sm text-ink-muted">
-                    Time, travel, buyer and owner details in one place.
-                </p>
-            </div>
-
+            {onClearFilters ? (
+                <VisitsFilterChips chips={chips} onClearAll={onClearFilters} />
+            ) : null}
             {groups.length === 0 ? (
                 <EmptyState
                     kind="no-today"
@@ -123,7 +232,7 @@ export function MyVisitsTab({
             ) : filtered.length > 40 ? (
                 <VirtualStack
                     items={groups}
-                    estimateSize={340}
+                    estimateSize={280}
                     getKey={(group) => group.key}
                     renderItem={(group) => (
                         <VisitGroup group={group} onOpen={onOpen} onAction={onAction} />
