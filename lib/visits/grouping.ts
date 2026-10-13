@@ -1,4 +1,5 @@
-import { formatInrCompact } from "@/lib/format/inr";
+import { formatPriceInr } from "@/lib/format/price";
+import { isVisitCancelled } from "@/lib/visits/status";
 import { istDateKey } from "@/lib/visits/time";
 
 import type { BrokerSiteVisit, PropertyWithSlots } from "@/features/site-visits/broker/model";
@@ -11,16 +12,23 @@ export function groupVisitsByDay(visits: BrokerSiteVisit[]) {
         list.push(visit);
         map.set(key, list);
     }
-    return [...map.entries()].map(([key, items]) => ({
-        key,
-        items,
-        totalValue: items.reduce((total, visit) => total + (visit.property.purpose === "sale" ? visit.property.amountInr : 0), 0),
-        totalLabel: formatInrCompact(items.reduce((total, visit) => total + (visit.property.purpose === "sale" ? visit.property.amountInr : 0), 0)),
-    }));
+    return [...map.entries()].map(([key, items]) => {
+        const active = items.filter((visit) => !isVisitCancelled(visit.status));
+        const totalValue = active.reduce(
+            (total, visit) =>
+                total + (visit.property.purpose === "sale" ? visit.property.amountInr : 0),
+            0,
+        );
+        return {
+            key,
+            items,
+            totalValue,
+            totalLabel: formatPriceInr(totalValue),
+        };
+    });
 }
 
 export function sortSlotsForBuyer(properties: PropertyWithSlots[], buyerId?: string) {
     if (!buyerId) return properties;
     return [...properties].sort((a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0));
 }
-

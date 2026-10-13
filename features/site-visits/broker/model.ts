@@ -88,6 +88,7 @@ export type VisitSlot = {
     note?: string;
     bookedVisitId?: string;
     bookedBuyerName?: string;
+    bookedBuyerAvatarUrl?: string;
     requestedByMe?: boolean;
 };
 

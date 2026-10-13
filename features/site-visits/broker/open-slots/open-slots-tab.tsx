@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { formatDistanceToNowStrict } from "date-fns";
-import { RefreshCw, Search, SlidersHorizontal, X } from "lucide-react";
 
+import type { ApiPropertyOption } from "@/lib/api/broker-visits-map";
 import { TIME_BUCKETS } from "@/lib/visits/constants";
 import { sortSlotsForBuyer } from "@/lib/visits/grouping";
 
@@ -20,39 +20,23 @@ import {
     DialogPopup,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type {
     PersonSummary,
     PropertyWithSlots,
     VisitSlot,
 } from "@/features/site-visits/broker/model";
-import type { ApiPropertyOption } from "@/lib/api/broker-visits-map";
-import { BuyerMatchBar } from "@/features/site-visits/broker/open-slots/buyer-match-bar";
 import { PropertyRow } from "@/features/site-visits/broker/open-slots/property-row";
 import {
     DEFAULT_SLOT_FILTERS,
     SlotFilters,
     type SlotFilterState,
 } from "@/features/site-visits/broker/open-slots/slot-filters";
+import {
+    VisitsFilterChips,
+    visitsRangeChipLabel,
+} from "@/features/site-visits/broker/visits-filter-chips";
 import { EmptyState, VisitsTabSkeleton } from "@/features/site-visits/broker/visits-states";
-import {
-    formatChipCount,
-    ownerListingsChipClassName,
-    ownerListingsChipCountClassName,
-} from "@/features/properties/owner-listings/owner-listings-chip-styles";
-import {
-    OwnerListingsChipsCarousel,
-    OwnerListingsChipsCarouselSlide,
-} from "@/features/properties/owner-listings/owner-listings-chips-carousel";
 
 const FILTER_KEYS = [
     "range",
@@ -73,7 +57,10 @@ const FILTER_KEYS = [
 function readFilters(params: URLSearchParams): SlotFilterState {
     const rangeValue = params.get("range");
     const range =
-        rangeValue === "today" || rangeValue === "tomorrow" || rangeValue === "custom"
+        rangeValue === "today" ||
+        rangeValue === "tomorrow" ||
+        rangeValue === "month" ||
+        rangeValue === "custom"
             ? rangeValue
             : "week";
     const purpose = params.get("purpose");
@@ -111,9 +98,13 @@ function writeFilters(params: URLSearchParams, filters: SlotFilterState) {
     if (!filters.hideFull) params.set("full", "0");
 }
 
-function activeCount(filters: SlotFilterState) {
+/** Sheet badge count — date range lives on the toolbar, so exclude it. */
+export function countOpenSlotFilters(
+    filters: SlotFilterState,
+    buyerId?: string,
+    propertyId?: string,
+) {
     return (
-        Number(filters.range !== "week") +
         filters.timeBuckets.length +
         filters.localities.length +
         Number(Boolean(filters.purpose)) +
@@ -123,8 +114,14 @@ function activeCount(filters: SlotFilterState) {
         Number(Boolean(filters.maxBudget)) +
         Number(Boolean(filters.owner)) +
         Number(!filters.onlyAccepted) +
-        Number(!filters.hideFull)
+        Number(!filters.hideFull) +
+        Number(Boolean(buyerId)) +
+        Number(Boolean(propertyId))
     );
+}
+
+export function readOpenSlotFilters(params: URLSearchParams): SlotFilterState {
+    return readFilters(params);
 }
 
 export function OpenSlotsTab({
@@ -138,6 +135,8 @@ export function OpenSlotsTab({
     isFetchingMore = false,
     hasMore = false,
     updatedAt,
+    filtersOpen = false,
+    onFiltersOpenChange,
     onBuyerChange,
     onPropertyChange,
     onBook,
@@ -157,6 +156,8 @@ export function OpenSlotsTab({
     isFetchingMore?: boolean;
     hasMore?: boolean;
     updatedAt: number;
+    filtersOpen?: boolean;
+    onFiltersOpenChange?: (open: boolean) => void;
     onBuyerChange: (id?: string) => void;
     onPropertyChange?: (id?: string) => void;
     onBook: (slot: VisitSlot) => void;
@@ -173,10 +174,10 @@ export function OpenSlotsTab({
         () => readFilters(new URLSearchParams(searchParams.toString())),
         [searchParams],
     );
-    const [filtersOpen, setFiltersOpen] = useState(false);
     const [draftFilters, setDraftFilters] = useState(filters);
-    const [query, setQuery] = useState(searchParams.get("q") ?? "");
-    const urlQuery = searchParams.get("q") ?? "";
+    const [draftBuyerId, setDraftBuyerId] = useState(buyerId);
+    const [draftPropertyId, setDraftPropertyId] = useState(selectedPropertyId);
+    const setFiltersOpen = onFiltersOpenChange ?? (() => undefined);
 
     const replaceParams = useCallback(
         (mutate: (params: URLSearchParams) => void) => {
@@ -195,43 +196,23 @@ export function OpenSlotsTab({
         [replaceParams],
     );
 
-    useEffect(() => {
-        const timer = window.setTimeout(() => {
-            const nextQuery = query.trim();
-            if (nextQuery === urlQuery) return;
-            replaceParams((params) =>
-                nextQuery ? params.set("q", nextQuery) : params.delete("q"),
-            );
-        }, 250);
-        return () => window.clearTimeout(timer);
-    }, [query, replaceParams, urlQuery]);
-
     // Server already applies Open slots filters; only re-rank for buyer match.
     const shown = useMemo(() => sortSlotsForBuyer(items, buyerId), [buyerId, items]);
-    const count = activeCount(filters);
-    const propertySelectValue = selectedPropertyId || "all";
 
-    // Base UI's Select.Value falls back to the raw value until the popup has
-    // mounted, which put a bare property id in the trigger. Handing the root
-    // the value -> label map lets it read correctly before it is ever opened.
-    const propertySelectItems = useMemo(() => {
-        const items = [
-            { value: "all", label: "All properties" },
-            ...propertyOptions.map((option) => ({
-                value: option.id,
-                label: propertyOptionLabel(option),
-            })),
-        ];
-
-        // A property id can arrive from the URL for a listing that is not in
-        // the current options; show something readable rather than the id.
-        if (selectedPropertyId && !items.some((item) => item.value === selectedPropertyId)) {
-            items.push({ value: selectedPropertyId, label: "Selected property" });
-        }
-
-        return items;
-    }, [propertyOptions, selectedPropertyId]);
+    const searchQuery = searchParams.get("q")?.trim() ?? "";
     const chips = [
+        ...(searchQuery
+            ? [
+                  {
+                      key: "query",
+                      label: `“${searchQuery}”`,
+                      clear: () =>
+                          replaceParams((params) => {
+                              params.delete("q");
+                          }),
+                  },
+              ]
+            : []),
         ...(selectedPropertyId
             ? [
                   {
@@ -247,10 +228,11 @@ export function OpenSlotsTab({
             ? [
                   {
                       key: "range",
-                      label:
-                          filters.range === "custom"
-                              ? `${filters.customFrom || "Start"} to ${filters.customTo || "End"}`
-                              : filters.range[0].toUpperCase() + filters.range.slice(1),
+                      label: visitsRangeChipLabel(
+                          filters.range,
+                          filters.customFrom,
+                          filters.customTo,
+                      ),
                       clear: () =>
                           setFilters({ ...filters, range: "week", customFrom: "", customTo: "" }),
                   },
@@ -348,163 +330,98 @@ export function OpenSlotsTab({
             : []),
     ];
 
-    if (isLoading && items.length === 0) return <VisitsTabSkeleton kind="slots" />;
-    if (isError) return <EmptyState kind="slots-error" onPrimary={onRefresh} />;
+    const filtersDialog = (
+        <Dialog
+            open={filtersOpen}
+            onOpenChange={(open) => {
+                if (open) {
+                    setDraftFilters(filters);
+                    setDraftBuyerId(buyerId);
+                    setDraftPropertyId(selectedPropertyId);
+                }
+                setFiltersOpen(open);
+            }}
+        >
+            <DialogPopup className="gap-0 overflow-hidden p-0 max-inline-3xl sm:max-inline-3xl">
+                <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
+                    <DialogTitle>Filter open slots</DialogTitle>
+                    <DialogDescription>
+                        Set the time, property and owner criteria for this booking.
+                    </DialogDescription>
+                    <DialogClose />
+                </DialogHeader>
+                <div className="overflow-y-auto p-5 max-block-[68dvh]">
+                    <SlotFilters
+                        value={draftFilters}
+                        onChange={setDraftFilters}
+                        buyers={buyers}
+                        buyerId={draftBuyerId}
+                        onBuyerChange={setDraftBuyerId}
+                        propertyOptions={propertyOptions}
+                        propertyId={draftPropertyId}
+                        onPropertyChange={setDraftPropertyId}
+                    />
+                </div>
+                <footer className="border-bs border-border-warm bg-surface px-5 py-4">
+                    <AppModalFooter
+                        secondaryLabel="Clear all"
+                        onSecondary={() => {
+                            setDraftFilters(DEFAULT_SLOT_FILTERS);
+                            setDraftBuyerId(undefined);
+                            setDraftPropertyId(undefined);
+                        }}
+                        primaryLabel="Apply filters"
+                        onPrimary={() => {
+                            setFilters(draftFilters);
+                            onBuyerChange(draftBuyerId);
+                            onPropertyChange?.(draftPropertyId);
+                            setFiltersOpen(false);
+                        }}
+                    />
+                </footer>
+            </DialogPopup>
+        </Dialog>
+    );
+
+    if (isLoading && items.length === 0) {
+        return (
+            <>
+                <VisitsTabSkeleton kind="slots" />
+                {filtersDialog}
+            </>
+        );
+    }
+    if (isError) {
+        return (
+            <>
+                <EmptyState kind="slots-error" onPrimary={onRefresh} />
+                {filtersDialog}
+            </>
+        );
+    }
 
     return (
         <section className="space-y-4">
-            <BuyerMatchBar buyers={buyers} value={buyerId} onChange={onBuyerChange} />
+            <VisitsFilterChips
+                chips={chips}
+                onClearAll={() => {
+                    // Clear everything in one URL write. Do not call
+                    // onBuyerChange / onPropertyChange afterward — those
+                    // patch from stale searchParams and put filters back.
+                    replaceParams((params) => {
+                        writeFilters(params, DEFAULT_SLOT_FILTERS);
+                        params.delete("q");
+                        params.delete("buyer");
+                        params.delete("propertyId");
+                    });
+                }}
+            />
 
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-end">
-                <label className="space-y-1.5">
-                    <span className="body-xs font-semibold text-ink-muted">Property</span>
-                    <Select
-                        items={propertySelectItems}
-                        value={propertySelectValue}
-                        onValueChange={(next) =>
-                            onPropertyChange?.(!next || next === "all" ? undefined : next)
-                        }
-                    >
-                        <SelectTrigger size="md">
-                            <SelectValue placeholder="All properties" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All properties</SelectItem>
-                            {propertyOptions.map((option) => (
-                                <SelectItem key={option.id} value={option.id}>
-                                    {propertyOptionLabel(option)}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </label>
-            </div>
-
-            <TooltipProvider>
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <OwnerListingsChipsCarousel>
-                        <OwnerListingsChipsCarouselSlide>
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <button
-                                            type="button"
-                                            className={ownerListingsChipClassName(count > 0)}
-                                            onClick={() => {
-                                                setDraftFilters(filters);
-                                                setFiltersOpen(true);
-                                            }}
-                                            aria-pressed={count > 0}
-                                        >
-                                            <SlidersHorizontal
-                                                aria-hidden
-                                                className="text-brand block-4 inline-4"
-                                            />
-                                            Filters
-                                            {count > 0 ? (
-                                                <span
-                                                    className={ownerListingsChipCountClassName(
-                                                        true,
-                                                    )}
-                                                >
-                                                    {formatChipCount(count)}
-                                                </span>
-                                            ) : null}
-                                        </button>
-                                    }
-                                />
-                                <TooltipContent side="bottom">
-                                    Date, locality, property and access filters
-                                </TooltipContent>
-                            </Tooltip>
-                        </OwnerListingsChipsCarouselSlide>
-                        {(["today", "tomorrow", "week"] as const).map((range) => (
-                            <OwnerListingsChipsCarouselSlide key={range}>
-                                <button
-                                    type="button"
-                                    className={ownerListingsChipClassName(filters.range === range)}
-                                    aria-pressed={filters.range === range}
-                                    onClick={() =>
-                                        setFilters({
-                                            ...filters,
-                                            range,
-                                            customFrom: "",
-                                            customTo: "",
-                                        })
-                                    }
-                                >
-                                    {range === "week"
-                                        ? "This week"
-                                        : range[0].toUpperCase() + range.slice(1)}
-                                </button>
-                            </OwnerListingsChipsCarouselSlide>
-                        ))}
-                    </OwnerListingsChipsCarousel>
-
-                    <div className="flex items-center gap-2 min-inline-0 md:min-inline-[360px]">
-                        <Input
-                            id="slot-search"
-                            size="md"
-                            value={query}
-                            onValueChange={setQuery}
-                            placeholder="Search property, locality or owner"
-                            aria-label="Search open slots"
-                            startIcon={Search}
-                            clearable
-                            wrapperClassName="flex-1 min-inline-0"
-                        />
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <Button
-                                        variant="surface"
-                                        size="icon-md"
-                                        onClick={onRefresh}
-                                        aria-label="Refresh slots"
-                                    >
-                                        <RefreshCw aria-hidden />
-                                    </Button>
-                                }
-                            />
-                            <TooltipContent side="bottom">Refresh available times</TooltipContent>
-                        </Tooltip>
-                    </div>
-                </div>
-            </TooltipProvider>
-
-            {chips.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
-                    {chips.map((chip) => (
-                        <button
-                            key={chip.key}
-                            type="button"
-                            onClick={chip.clear}
-                            className="body-xs flex items-center gap-1 rounded-md border border-brand/15 bg-brand-soft px-2.5 font-semibold text-brand-text block-control-md hover:bg-brand-soft-hover"
-                        >
-                            {chip.label}
-                            <X aria-hidden className="block-3 inline-3" />
-                        </button>
-                    ))}
-                    <button
-                        type="button"
-                        onClick={() => setFilters(DEFAULT_SLOT_FILTERS)}
-                        className="body-xs px-2 font-semibold text-brand-text block-control-md hover:underline"
-                    >
-                        Clear all
-                    </button>
-                </div>
-            ) : null}
-
-            <div className="flex flex-wrap items-end justify-between gap-2 px-1">
-                <div>
-                    <h2 className="h5 text-ink">
-                        {shown.length} {shown.length === 1 ? "property has" : "properties have"}{" "}
-                        visit times
-                    </h2>
-                    <p className="body-sm text-ink-muted">
-                        Choose a time or ask the owner for another one.
-                    </p>
-                </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                <p className="body-sm text-ink-muted">
+                    <span className="font-semibold text-ink tabular-nums">{shown.length}</span>{" "}
+                    {shown.length === 1 ? "property has" : "properties have"} visit times
+                </p>
                 <p className="body-xs text-ink-muted">
                     Updated {formatDistanceToNowStrict(updatedAt, { addSuffix: true })}
                 </p>
@@ -564,35 +481,7 @@ export function OpenSlotsTab({
                 </div>
             ) : null}
 
-            <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
-                <DialogPopup className="gap-0 overflow-hidden p-0 max-inline-3xl sm:max-inline-3xl">
-                    <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
-                        <DialogTitle>Filter open slots</DialogTitle>
-                        <DialogDescription>
-                            Set the time, property and owner criteria for this booking.
-                        </DialogDescription>
-                        <DialogClose />
-                    </DialogHeader>
-                    <div className="overflow-y-auto p-5 max-block-[68dvh]">
-                        <SlotFilters value={draftFilters} onChange={setDraftFilters} />
-                    </div>
-                    <footer className="border-bs border-border-warm bg-surface px-5 py-4">
-                        <AppModalFooter
-                            secondaryLabel="Clear all"
-                            onSecondary={() => setDraftFilters(DEFAULT_SLOT_FILTERS)}
-                            primaryLabel="Apply filters"
-                            onPrimary={() => {
-                                setFilters(draftFilters);
-                                setFiltersOpen(false);
-                            }}
-                        />
-                    </footer>
-                </DialogPopup>
-            </Dialog>
+            {filtersDialog}
         </section>
     );
-}
-
-function propertyOptionLabel(option: ApiPropertyOption) {
-    return option.locality ? `${option.title} · ${option.locality}` : option.title;
 }

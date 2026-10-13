@@ -259,7 +259,22 @@ export const MOCK_PROPERTIES_WITH_SLOTS: PropertyWithSlots[] = MOCK_PROPERTIES.m
                     index === 1 ? { status: "full", bookedCount: 1 } : {},
                 ),
                 makeSlot(property, owner, `slot_${index}_5`, 2, 11),
-                makeSlot(property, owner, `slot_${index}_6`, 2, 15),
+                makeSlot(
+                    property,
+                    owner,
+                    `slot_${index}_6`,
+                    2,
+                    15,
+                    0,
+                    index === 0
+                        ? {
+                              bookedCount: 1,
+                              bookedVisitId: "v_booked_demo",
+                              bookedBuyerName: "Jeet",
+                              bookedBuyerAvatarUrl: undefined,
+                          }
+                        : {},
+                ),
                 makeSlot(
                     property,
                     owner,
@@ -270,6 +285,10 @@ export const MOCK_PROPERTIES_WITH_SLOTS: PropertyWithSlots[] = MOCK_PROPERTIES.m
                     index === 2 ? { requestedByMe: true } : {},
                 ),
                 makeSlot(property, owner, `slot_${index}_8`, 3, 10, 30),
+                makeSlot(property, owner, `slot_${index}_9`, 4, 10),
+                makeSlot(property, owner, `slot_${index}_10`, 4, 14, 30),
+                makeSlot(property, owner, `slot_${index}_11`, 5, 11),
+                makeSlot(property, owner, `slot_${index}_12`, 5, 16),
             ],
         };
     },
