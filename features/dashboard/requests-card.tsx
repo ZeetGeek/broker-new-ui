@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { RequestRowItem, RequestsData } from "./mock-data";
+import { MetricCell, MetricDivider, MetricStrip } from "./metric-strip";
 
 const REQUESTS_INFO =
     "Requests you've sent to owners to represent their properties, and where each one stands.";
@@ -28,46 +29,6 @@ export type RequestsCardProps = {
 
 function totalRequests(counts: RequestsData["counts"]): number {
     return counts.approved + counts.pending + counts.declined;
-}
-
-function MetricCell({
-    label,
-    value,
-    hint,
-    valueClassName,
-}: {
-    label: string;
-    value: number;
-    hint: string;
-    valueClassName?: string;
-}) {
-    return (
-        <Tooltip>
-            <TooltipTrigger
-                render={
-                    <button
-                        type="button"
-                        aria-label={`${label}: ${value}. ${hint}`}
-                        className="
-                          flex flex-1 flex-col items-start gap-0.5 rounded-inner px-3 text-start
-                          outline-none min-inline-0
-                          focus-visible:ring-2 focus-visible:ring-ring
-                        "
-                    >
-                        <span className="body-xs font-medium text-ink-muted">{label}</span>
-                        <span
-                            className={cn("tabular h5 font-semibold", valueClassName ?? "text-ink")}
-                        >
-                            {value}
-                        </span>
-                    </button>
-                }
-            />
-            <TooltipContent side="bottom" align="center" className="text-pretty max-inline-64">
-                {hint}
-            </TooltipContent>
-        </Tooltip>
-    );
 }
 
 function RequestIcon({ type }: { type: RequestRowItem["type"] }) {
@@ -272,34 +233,28 @@ export function RequestsCard({ data, className }: RequestsCardProps) {
                 </Tooltip>
             </div>
 
-            <div
-                className="
-                  mbs-4 flex shrink-0 items-stretch rounded-inner bg-surface-muted px-2 py-3
-                "
-                role="group"
-                aria-label="Request status counts"
-            >
+            <MetricStrip label="Request status counts">
                 <MetricCell
                     label="Approved"
                     value={data.counts.approved}
                     hint="Owners who said yes. These properties are yours to work - they're in your pipeline now."
                     valueClassName="text-success"
                 />
-                <div className="shrink-0 self-stretch bg-border inline-px" aria-hidden />
+                <MetricDivider />
                 <MetricCell
                     label="Waiting"
                     value={data.counts.pending}
                     hint="Sent, but the owner hasn't answered yet. Nudge the ones that have been sitting a while."
                     valueClassName="text-pending"
                 />
-                <div className="shrink-0 self-stretch bg-border inline-px" aria-hidden />
+                <MetricDivider />
                 <MetricCell
                     label="Declined"
                     value={data.counts.declined}
                     hint="Owners who said no to representing their property. Try another listing in the same area."
                     valueClassName="text-danger"
                 />
-            </div>
+            </MetricStrip>
 
             <div className="mbs-2 flex-1 overflow-hidden min-block-0">
                 {rows.length > 0 ? (
