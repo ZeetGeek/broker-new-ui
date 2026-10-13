@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+
+import { Bell } from "lucide-react";
 
 import { profileApi, type UserProfile } from "@/lib/api/profile";
+import { cn } from "@/lib/utils";
 
 import { Switch } from "@/components/ui/switch";
 
@@ -35,6 +37,11 @@ const CHANNELS: {
     },
 ];
 
+const SWITCH_CLASS = `
+  data-checked:border-brand data-checked:bg-brand
+  data-unchecked:border-border-warm data-unchecked:bg-border-warm
+`;
+
 type NotificationPreferencesProps = {
     profile: UserProfile | null;
     onSaved: (profile: UserProfile) => void;
@@ -43,16 +50,16 @@ type NotificationPreferencesProps = {
 /**
  * Notification channels, saved on toggle.
  *
- * No save button, unlike the reference mock. A switch that has visibly moved
- * but has not saved is the most reliable way to lose a preference — the user
- * has every reason to believe the flip *was* the action. Saving on change and
- * reverting on failure keeps the switch honest.
+ * Same option-card chrome as property-form "Listing for" — one row of
+ * border-2 tiles — but each channel is an independent Switch, not a radio.
+ *
+ * Failures stay inline under the grid (docs/MESSAGES.md).
  */
 export function NotificationPreferences({ profile, onSaved }: NotificationPreferencesProps) {
     const [pendingChannel, setPendingChannel] = useState<Channel | null>(null);
+    const [errorChannel, setErrorChannel] = useState<Channel | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Memoised so the toggle handler below keeps a stable identity — rebuilding
-    // this object every render would make its useCallback pointless.
     const prefs = useMemo(
         () => ({
             whatsapp: profile?.notifications?.whatsapp ?? true,
@@ -70,9 +77,9 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
             if (!apiKey) return;
 
             setPendingChannel(channel);
+            setErrorChannel(null);
+            setErrorMessage(null);
             try {
-                // Backend returns `{ message }` only — merge the flip into the
-                // profile we already hold so the switch stays honest.
                 await profileApi.updateNotifications({
                     notifyWhatsapp: prefs.whatsapp,
                     notifySms: prefs.sms,
@@ -90,9 +97,8 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
                     },
                 });
             } catch {
-                toast.error("Could not save that. Try again.");
-                // The parent still holds the old profile, so not calling
-                // `onSaved` is what puts the switch back.
+                setErrorChannel(channel);
+                setErrorMessage("Could not save that. Check your connection and try again.");
             } finally {
                 setPendingChannel(null);
             }
@@ -101,49 +107,89 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
     );
 
     return (
-        <section
-            className="
-              flex flex-col gap-4 rounded-card border border-border-warm bg-surface p-4
-              sm:p-5
-            "
-            aria-labelledby="notification-preferences-heading"
-        >
-            <div className="flex flex-col gap-0.5">
-                <h2 id="notification-preferences-heading" className="body font-semibold text-ink">
+        <section aria-labelledby="notification-preferences-heading">
+            <div className="mbe-4">
+                <h2
+                    id="notification-preferences-heading"
+                    className="
+                      flex items-center gap-2.5 font-display text-xl font-semibold
+                      tracking-[-0.02em] text-ink
+                    "
+                >
+                    <Bell
+                        className="shrink-0 text-brand block-5 inline-5"
+                        strokeWidth={1.75}
+                        aria-hidden
+                    />
                     How we reach you
                 </h2>
-                <p className="body-sm text-ink-muted">Saved as you change them.</p>
+                <p className="mbs-1 text-sm/6 text-ink-muted max-inline-2xl">
+                    Saved as you change them.
+                </p>
             </div>
 
-            <ul className="flex flex-col">
-                {CHANNELS.map((channel, index) => (
-                    <li
-                        key={channel.id}
-                        className={
-                            index < CHANNELS.length - 1
-                                ? `
-                                  flex items-start justify-between gap-4 border-be
-                                  border-border-warm py-3
-                                `
-                                : "flex items-start justify-between gap-4 pbs-3"
-                        }
-                    >
-                        <label
-                            htmlFor={`notify-${channel.id}`}
-                            className="flex flex-1 flex-col gap-0.5 min-inline-0"
-                        >
-                            <span className="body-sm font-medium text-ink">{channel.label}</span>
-                            <span className="body-xs text-ink-subtle">{channel.hint}</span>
-                        </label>
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {CHANNELS.map((channel) => {
+                    const on = prefs[channel.id];
+                    const isPending = pendingChannel === channel.id;
+                    const hasError = errorChannel === channel.id && Boolean(errorMessage);
 
-                        <Switch
-                            id={`notify-${channel.id}`}
-                            checked={prefs[channel.id]}
-                            disabled={!profile || pendingChannel === channel.id}
-                            onCheckedChange={(checked) => void handleToggle(channel.id, checked)}
-                        />
-                    </li>
-                ))}
+                    return (
+                        <li key={channel.id} className="flex flex-col gap-1.5 min-inline-0">
+                            <label
+                                htmlFor={`notify-${channel.id}`}
+                                className={cn(
+                                    `
+                                      flex cursor-pointer items-start gap-3 rounded-control border-2
+                                      px-4 py-3.5 text-start leading-normal transition-[background-color,border-color,color,box-shadow]
+                                      duration-160 min-block-12
+                                      has-focus-visible:ring-3 has-focus-visible:ring-ring/30
+                                    `,
+                                    on
+                                        ? "border-brand bg-brand-soft text-brand-text shadow-xs"
+                                        : `
+                                          border-border-warm bg-surface-muted text-ink
+                                          hover:border-brand/40 hover:bg-surface
+                                        `,
+                                    isPending && "pointer-events-none opacity-70",
+                                    hasError && "border-danger",
+                                    !profile && "pointer-events-none opacity-50",
+                                )}
+                            >
+                                <span className="flex-1 min-inline-0">
+                                    <span className="block text-sm/5 font-semibold">
+                                        {channel.label}
+                                    </span>
+                                    <span
+                                        className={cn(
+                                            "mbs-0.5 block text-xs/4",
+                                            on ? "text-brand-text/70" : "text-ink-muted",
+                                        )}
+                                    >
+                                        {channel.hint}
+                                    </span>
+                                </span>
+
+                                <Switch
+                                    id={`notify-${channel.id}`}
+                                    checked={on}
+                                    disabled={!profile || isPending}
+                                    aria-invalid={hasError || undefined}
+                                    onCheckedChange={(checked) =>
+                                        void handleToggle(channel.id, checked)
+                                    }
+                                    className={cn(SWITCH_CLASS, "mts-0.5 shrink-0")}
+                                />
+                            </label>
+
+                            {hasError ? (
+                                <p role="alert" className="body-sm text-danger">
+                                    {errorMessage}
+                                </p>
+                            ) : null}
+                        </li>
+                    );
+                })}
             </ul>
         </section>
     );
