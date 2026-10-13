@@ -24,17 +24,33 @@ These are expensive to get wrong even in planning. Full detail lives in
    Phones `+91 …`. Never `en-US` / `USA` locale strings.
 7. **360px Android-first.** Design the phone layout first; desktop is enhancement.
 8. **Portals never mix.** Owner and broker routes do not import each other.
-   Shared code → `features/`. Users see one portal, never both.
+   Shared code → `components/layout/`, `components/shared/`, or `features/`.
+   Users see one portal, never both.
 9. **Default `noindex`** for auth and portal routes. Private client data.
+
+## Owner ↔ broker UI parity (building owner now)
+
+10. **Broker is the visual reference.** When building or changing an owner
+    screen, open the closest broker equivalent first and match shell, spacing,
+    typography, cards, filters, empty/loading/error patterns, and motion.
+    Owner and broker must feel like one product, not two apps.
+11. **Reuse shared chrome — do not fork.** Header, mobile nav, section nav,
+    and other portal chrome live in `components/layout/` (already used by both
+    shells). Page patterns that appear in both portals go in
+    `components/shared/` or a shared `features/` module — never copy-paste a
+    second design into `app/(role)/owner/`.
+12. **Same tokens, same components.** Owner screens use the same
+    `docs/DESIGN.md` tokens, type classes, and shared primitives as broker.
+    Role-specific copy, nav items, and data only — not a separate look.
 
 ## Design & code shape
 
-10. **Canvas is warm cream `#EFEAE0`, not white.** One green hue family only.
+13. **Canvas is warm cream `#EFEAE0`, not white.** One green hue family only.
     `urgent` = deadline, `danger` = destructive — never decorative.
-11. **Never edit `components/ui/`** (vendored shadcn). Wrap in `components/shared/`.
-12. **Never bare `brokerId` / `ownerId`.** Use `brokerUserId` /
+14. **Never edit `components/ui/`** (vendored shadcn). Wrap in `components/shared/`.
+15. **Never bare `brokerId` / `ownerId`.** Use `brokerUserId` /
     `brokerProfileId` (and owner equivalents) — wrong id = wrong person's data.
-13. **Format via `lib/format/`** (and shared display components). No inline
+16. **Format via `lib/format/`** (and shared display components). No inline
     price/phone/date formatting. `snake_case` only inside `lib/api/`.
 
 If a request fights these, stop and ask or flag deferred scope.
