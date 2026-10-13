@@ -23,6 +23,7 @@ export function parseCommaList(value: string): string[] {
 
 export const BIO_MAX = 400;
 export const MAX_SERVICE_AREAS = 12;
+const MAX_PREFERRED = 20;
 
 /**
  * A public slug is part of a URL, so it is the one field where the rules are
@@ -55,6 +56,18 @@ export const profileFormSchema = z.object({
     // Owner fields
     companyName: z.string().trim().max(120, "Name is too long"),
     gstin: z.string().trim().max(30, "That GSTIN is too long"),
+    preferredCities: z
+        .string()
+        .refine(
+            (value) => parseCommaList(value).length <= MAX_PREFERRED,
+            `Keep it to ${MAX_PREFERRED} cities`,
+        ),
+    preferredLocalities: z
+        .string()
+        .refine(
+            (value) => parseCommaList(value).length <= MAX_PREFERRED,
+            `Keep it to ${MAX_PREFERRED} localities`,
+        ),
     // Broker fields
     /** Empty means "not saying". A broker starting out should not have to type 0. */
     experienceYears: z.string().refine((value) => {
@@ -72,12 +85,10 @@ export const profileFormSchema = z.object({
             "Use lowercase letters, numbers and hyphens only",
         )
         .refine((value) => value.length <= 60, "That is too long for a web address"),
-    serviceAreas: z
-        .array(z.string())
-        .max(
-            MAX_SERVICE_AREAS,
-            `Pick your best ${MAX_SERVICE_AREAS} areas — a broker who covers everywhere covers nothing`,
-        ),
+    serviceAreas: z.string().refine(
+        (value) => parseCommaList(value).length <= MAX_SERVICE_AREAS,
+        `Pick your best ${MAX_SERVICE_AREAS} areas — a broker who covers everywhere covers nothing`,
+    ),
     specializations: z.string(),
 });
 
