@@ -141,15 +141,15 @@ export function ProfilePhotoField({ profile, isOwner, onUploaded }: ProfilePhoto
 
     return (
         <section
-            className="border-be border-border-warm/80 pbe-8"
+            className="border-be border-border-warm/80 pbe-8 last:border-be-0"
             aria-labelledby="profile-photo-heading"
         >
             <div
                 className={cn(
                     `
-                      flex flex-col gap-4 rounded-card border-2 border-dashed border-brand/35
+                      flex flex-col gap-3 rounded-card border-2 border-dashed border-brand/35
                       bg-brand-soft/40 p-4
-                      sm:flex-row sm:items-center sm:gap-5 sm:p-5 sm:px-6
+                      sm:flex-row sm:items-center sm:gap-4
                     `,
                     busy && "opacity-80",
                 )}

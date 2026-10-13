@@ -1,9 +1,9 @@
 /** Shared card shell for every block below; only the height differs. */
-const CARD_SKELETON = "animate-pulse rounded-card border border-border-warm bg-surface shadow-sm";
+const CARD_SKELETON = "animate-pulse rounded-card border border-border-warm bg-surface";
 
 /**
- * Mirrors the real layout — headline, form panel + stats rail — so nothing
- * reflows when the profile lands. See docs/LOADING.md.
+ * Mirrors the real layout — headline, form panel + listing-style stats rail —
+ * so nothing reflows when the profile lands. See docs/LOADING.md.
  */
 export function ProfileSkeleton() {
     return (
@@ -20,9 +20,17 @@ export function ProfileSkeleton() {
                   xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-8
                 "
             >
-                <div className={`${CARD_SKELETON} order-2 block-160 lg:order-1`} />
+                <div className={`${CARD_SKELETON} shadow-sm order-2 block-160 lg:order-1`} />
 
-                <div className={`${CARD_SKELETON} order-1 block-72 lg:order-2`} />
+                <div className="flex flex-col gap-3 order-1 lg:order-2">
+                    <div className={`${CARD_SKELETON} block-56`} />
+                    <div
+                        className="
+                          animate-pulse rounded-card border border-dashed border-brand/20
+                          bg-brand-soft/20 block-24
+                        "
+                    />
+                </div>
             </div>
         </div>
     );

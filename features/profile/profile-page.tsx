@@ -71,7 +71,7 @@ function Section({
 }) {
     return (
         <section className="border-be border-border-warm/80 pbe-8 last:border-be-0 last:pbe-0">
-            <div className="mbe-5 flex items-start justify-between gap-4">
+            <div className="mbe-4 flex items-start justify-between gap-4">
                 <div>
                     <h2
                         className="
@@ -87,7 +87,7 @@ function Section({
                         {title}
                     </h2>
                     {description ? (
-                        <p className="mbs-1.5 text-sm/6 text-ink-muted max-inline-2xl">
+                        <p className="mbs-1 text-sm/6 text-ink-muted max-inline-2xl">
                             {description}
                         </p>
                     ) : null}
@@ -424,10 +424,10 @@ export function ProfilePage() {
             >
                 <div
                     className="
-                      flex flex-col gap-8 rounded-card border border-border-warm bg-surface p-5
+                      flex flex-col gap-0 rounded-card border border-border-warm bg-surface p-5
                       shadow-sm
-                      sm:p-6 sm:py-7
-                      xl:p-8
+                      sm:p-6
+                      xl:p-7
                       order-2 lg:order-1
                     "
                 >
