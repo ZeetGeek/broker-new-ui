@@ -50,7 +50,7 @@ export function SlotRail({
     return (
         <div className="relative min-inline-0">
             <div
-                className="flex scrollbar-none items-center gap-2 overflow-x-auto pe-4"
+                className="grid grid-cols-2 gap-2"
                 onKeyDown={onKeyDown}
                 onFocusCapture={(event) => {
                     const chips = [

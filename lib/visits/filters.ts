@@ -1,4 +1,4 @@
-import { addDays } from "date-fns";
+import { addDays, addMonths } from "date-fns";
 
 import { istDateKey } from "@/lib/visits/time";
 
@@ -22,7 +22,9 @@ export function slotListFiltersFromParams(
               ? from
               : range === "custom"
                 ? (params.get("to") ?? undefined)
-                : istDateKey(addDays(new Date(), 7));
+                : range === "month"
+                  ? istDateKey(addMonths(new Date(), 1))
+                  : istDateKey(addDays(new Date(), 7));
     const minBudget = Number(params.get("minBudget"));
     const maxBudget = Number(params.get("maxBudget"));
     return {
