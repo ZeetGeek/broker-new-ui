@@ -1,25 +1,48 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import {
+    type ChangeEvent,
+    type FocusEvent,
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useState,
+} from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Globe2, Mail, Map as MapIcon, MapPin, Phone, UserRound } from "lucide-react";
+import {
+    Award,
+    BadgeCheck,
+    Briefcase,
+    Building2,
+    FileText,
+    Globe2,
+    Home,
+    Landmark,
+    Link2,
+    type LucideIcon,
+    Mail,
+    MapPinned,
+    MapPin,
+    Phone,
+    Receipt,
+    Tags,
+    UserRound,
+} from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 import { profileApi, type UpdateProfileInput, type UserProfile } from "@/lib/api/profile";
 import {
     BIO_MAX,
-    MAX_SERVICE_AREAS,
     normalizeProfilePhone,
     parseCommaList,
     profileFormSchema,
     type ProfileFormValues,
 } from "@/lib/validation/profile";
-import { useLocationOptions } from "@/hooks/use-locations";
 
-import { LocalityCombobox } from "@/components/shared/locality-combobox";
-import { OptionCombobox } from "@/components/shared/option-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,29 +53,109 @@ import { ProfileStats } from "@/features/profile/profile-stats";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setProfile } from "@/store/slices/dashboard-slice";
 
-/** A titled band of related fields, so a long form reads as three short ones. */
+/**
+ * Same section chrome as property-form `WizardSection`: brand icon + title,
+ * hairline bottom separator, no coloured panel behind the block.
+ */
 function Section({
     title,
     description,
+    icon: Icon,
     children,
 }: {
     title: string;
     description?: string;
+    icon: LucideIcon;
     children: ReactNode;
 }) {
     return (
-        <section
-            className="
-              flex flex-col gap-4 rounded-card border border-border-warm bg-surface p-4
-              sm:p-5
-            "
-        >
-            <div className="flex flex-col gap-0.5">
-                <h2 className="body font-semibold text-ink">{title}</h2>
-                {description ? <p className="body-sm text-ink-muted">{description}</p> : null}
+        <section className="border-be border-border-warm/80 pbe-8 last:border-be-0 last:pbe-0">
+            <div className="mbe-4 flex items-start justify-between gap-4">
+                <div>
+                    <h2
+                        className="
+                          flex items-center gap-2.5 font-display text-xl font-semibold
+                          tracking-[-0.02em] text-ink
+                        "
+                    >
+                        <Icon
+                            className="shrink-0 text-brand block-5 inline-5"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        {title}
+                    </h2>
+                    {description ? (
+                        <p className="mbs-1 text-sm/6 text-ink-muted max-inline-2xl">
+                            {description}
+                        </p>
+                    ) : null}
+                </div>
             </div>
-            {children}
+            <div className="flex flex-col gap-4">{children}</div>
         </section>
+    );
+}
+
+/** Matches property-form TextAreaField — same height language as Input size="lg". */
+const PROFILE_TEXTAREA_CLASS = `
+  field-sizing-fixed resize-y rounded-control border-2 border-border-warm bg-surface
+  px-4 py-3 text-[15px]/6 text-ink shadow-xs outline-none min-block-28
+  placeholder:text-ink-subtle
+  hover:border-ink-subtle
+  focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
+  aria-invalid:border-danger-mid
+`;
+
+function BioField({
+    value,
+    onChange,
+    onBlur,
+    name,
+    placeholder,
+    errorMessage,
+    charCount,
+}: {
+    value: string;
+    onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+    onBlur: (event: FocusEvent<HTMLTextAreaElement>) => void;
+    name: string;
+    placeholder: string;
+    errorMessage?: string;
+    charCount: string;
+}) {
+    return (
+        <div className="flex flex-col gap-2 min-inline-0">
+            <FieldLabel htmlFor="profile-bio">About you</FieldLabel>
+            <div className="relative">
+                <FileText
+                    aria-hidden
+                    strokeWidth={1.75}
+                    className="
+                      pointer-events-none absolute inset-s-3.5 inset-bs-3.5 z-10 text-ink-muted
+                      block-4 inline-4
+                    "
+                />
+                <Textarea
+                    id="profile-bio"
+                    name={name}
+                    value={value}
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    rows={4}
+                    placeholder={placeholder}
+                    aria-invalid={Boolean(errorMessage) || undefined}
+                    aria-describedby="profile-bio-help"
+                    className={cn(PROFILE_TEXTAREA_CLASS, "ps-11")}
+                />
+            </div>
+            <p
+                id="profile-bio-help"
+                className={errorMessage ? "body-xs text-danger" : "body-xs tabular text-ink-subtle"}
+            >
+                {errorMessage ?? charCount}
+            </p>
+        </div>
     );
 }
 
@@ -69,15 +172,10 @@ function publicSlugHelper(
 
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
     return (
-        <label htmlFor={htmlFor} className="body-sm font-medium text-ink">
+        <label htmlFor={htmlFor} className="text-sm font-semibold text-ink">
             {children}
         </label>
     );
-}
-
-/** Case-insensitive, so re-picking the same place does not count as a change. */
-function isDifferentPlace(next: string, previous: string): boolean {
-    return next.trim().toLowerCase() !== previous.trim().toLowerCase();
 }
 
 function isOwnerProfile(profile: UserProfile | null): boolean {
@@ -93,18 +191,13 @@ function toFormValues(profile: UserProfile): ProfileFormValues {
         // Stored E.164, shown as the ten digits an Indian broker recognises.
         phone: normalizeProfilePhone(profile.phone ?? ""),
         city: profile.city ?? "",
-        state: profile.state ?? "",
         country: profile.country ?? "India",
-        locality: owner
-            ? (profile.locality?.trim() ||
-              profile.owner?.locality?.trim() ||
-              profile.owner?.preferredLocalities?.find((area) => area.trim())?.trim() ||
-              "")
-            : "",
         orgName: profile.orgName ?? "",
         bio: owner ? (profile.owner?.bio ?? "") : (profile.broker?.bio ?? ""),
         companyName: profile.owner?.companyName ?? profile.companyName ?? "",
         gstin: profile.owner?.gstin ?? "",
+        preferredCities: (profile.owner?.preferredCities ?? []).join(", "),
+        preferredLocalities: (profile.owner?.preferredLocalities ?? []).join(", "),
         experienceYears:
             profile.broker?.experienceYears == null ? "" : String(profile.broker.experienceYears),
         licenseNumber: profile.broker?.licenseNumber ?? profile.licenseNumber ?? "",
@@ -112,7 +205,7 @@ function toFormValues(profile: UserProfile): ProfileFormValues {
         publicSlug: owner
             ? (profile.owner?.publicSlug ?? profile.qr?.publicSlug ?? "")
             : (profile.broker?.publicSlug ?? profile.qr?.publicSlug ?? ""),
-        serviceAreas: [...(profile.broker?.serviceAreas ?? [])],
+        serviceAreas: (profile.broker?.serviceAreas ?? []).join(", "),
         specializations: (profile.broker?.specializations ?? []).join(", "),
     };
 }
@@ -121,18 +214,18 @@ const EMPTY_FORM: ProfileFormValues = {
     fullName: "",
     phone: "",
     city: "",
-    state: "",
     country: "India",
-    locality: "",
     orgName: "",
     bio: "",
     companyName: "",
     gstin: "",
+    preferredCities: "",
+    preferredLocalities: "",
     experienceYears: "",
     licenseNumber: "",
     reraState: "",
     publicSlug: "",
-    serviceAreas: [],
+    serviceAreas: "",
     specializations: "",
 };
 
@@ -148,9 +241,7 @@ export function ProfilePage() {
     const {
         control,
         handleSubmit,
-        getValues,
         reset,
-        setValue,
         formState: { isSubmitting, isDirty },
     } = useForm<ProfileFormValues>({
         resolver: zodResolver(profileFormSchema),
@@ -197,24 +288,20 @@ export function ProfilePage() {
         };
     }, [dispatch, reset]);
 
+    // Cheap phones switch apps mid-edit. Warn before the tab closes on a dirty form.
+    useEffect(() => {
+        if (!isDirty) return;
+
+        const onBeforeUnload = (event: BeforeUnloadEvent) => {
+            event.preventDefault();
+            event.returnValue = "";
+        };
+
+        window.addEventListener("beforeunload", onBeforeUnload);
+        return () => window.removeEventListener("beforeunload", onBeforeUnload);
+    }, [isDirty]);
+
     const bio = useWatch({ control, name: "bio" });
-    const [countryName, stateName, cityName] = useWatch({
-        control,
-        name: ["country", "state", "city"],
-    });
-    const {
-        countryOptions,
-        stateOptions,
-        cityOptions,
-        countriesLoading,
-        statesLoading,
-        citiesLoading,
-        selectedCountry,
-        selectedState,
-        selectedCity,
-    } = useLocationOptions({ countryName, stateName, cityName });
-    // Areas you work are searched within the profile city.
-    const cityId = selectedCity?.id ?? null;
 
     const handleProfileReplaced = useCallback(
         (next: UserProfile) => {
@@ -236,19 +323,16 @@ export function ProfilePage() {
                     // display one. lib/api is the boundary that converts.
                     phone: `+91${normalizeProfilePhone(values.phone)}`,
                     city: values.city.trim(),
-                    state: values.state.trim(),
                     country: values.country.trim(),
                     orgName: values.orgName.trim(),
                     bio: values.bio.trim(),
                 };
 
                 if (owner) {
-                    const locality = values.locality.trim();
                     payload.companyName = values.companyName.trim();
                     payload.gstin = values.gstin.trim();
-                    payload.locality = locality;
-                    // Keep the older list in step with the single locality field.
-                    payload.preferredLocalities = locality ? [locality] : [];
+                    payload.preferredCities = parseCommaList(values.preferredCities);
+                    payload.preferredLocalities = parseCommaList(values.preferredLocalities);
                     payload.publicSlug = values.publicSlug.trim();
                 } else {
                     payload.experienceYears =
@@ -258,9 +342,7 @@ export function ProfilePage() {
                     payload.licenseNumber = values.licenseNumber.trim();
                     payload.reraState = values.reraState.trim();
                     payload.publicSlug = values.publicSlug.trim();
-                    payload.serviceAreas = values.serviceAreas
-                        .map((area) => area.trim())
-                        .filter(Boolean);
+                    payload.serviceAreas = parseCommaList(values.serviceAreas);
                     payload.specializations = parseCommaList(values.specializations);
                 }
 
@@ -309,514 +391,506 @@ export function ProfilePage() {
     const ownerAccount = isOwnerProfile(profile);
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex flex-col gap-1">
-                    <h1 className="h1">
-                        <span className="text-ink">
-                            {profile?.fullName?.trim() || "Your profile"}.
-                        </span>{" "}
-                        <span className="text-ink-muted">
-                            {ownerAccount
-                                ? "This is what brokers see."
-                                : "This is what owners see."}
-                        </span>
-                    </h1>
-                    <p className="body-sm text-ink-subtle">{profile?.email}</p>
-                </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 lg:gap-5">
+            <header className="flex flex-wrap items-center justify-between gap-3 text-start">
+                <h1 className="h3 min-inline-0">
+                    <span className="text-ink">{profile?.fullName?.trim() || "Your profile"}.</span>{" "}
+                    <span className="text-ink-muted">
+                        {ownerAccount ? "This is what brokers see." : "This is what owners see."}
+                    </span>
+                </h1>
 
-                {/* Disabled until something actually changed — a live Save on an
-                    untouched form invites a pointless round trip. */}
-                <Button type="submit" size="md" loading={isSubmitting} disabled={!isDirty}>
+                {/* Header Save on desktop. Mobile uses the sticky bar when dirty. */}
+                <Button
+                    type="submit"
+                    variant="accent"
+                    size="md"
+                    loading={isSubmitting}
+                    disabled={!isDirty}
+                    className="max-md:hidden"
+                >
                     {isSubmitting ? "Saving…" : "Save changes"}
                 </Button>
-            </div>
+            </header>
 
-            <ProfileStats profile={profile} />
-
-            {submitError ? (
-                <p
-                    role="alert"
+            {/* Property-form layout: elevated form panel + sticky glance rail. */}
+            <div
+                className="
+                  grid items-start gap-5
+                  lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-6
+                  xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-8
+                "
+            >
+                <div
                     className="
-                      body-sm rounded-inner border border-danger/25 bg-danger-soft px-3 py-2.5
-                      text-danger
+                      flex flex-col gap-0 rounded-card border border-border-warm bg-surface p-5
+                      shadow-sm
+                      sm:p-6
+                      xl:p-7
+                      order-2 lg:order-1
                     "
                 >
-                    {submitError}
-                </p>
-            ) : null}
+                    {submitError ? (
+                        <p
+                            role="alert"
+                            className="
+                              body-sm rounded-inner border border-danger/25 bg-danger-soft px-3
+                              py-2.5 text-danger
+                            "
+                        >
+                            {submitError}
+                        </p>
+                    ) : null}
 
-            <ProfilePhotoField profile={profile} onUploaded={handleProfileReplaced} />
+                    <ProfilePhotoField
+                        profile={profile}
+                        isOwner={ownerAccount}
+                        onUploaded={handleProfileReplaced}
+                    />
 
-            <Section
-                title="Your details"
-                description={
-                    ownerAccount
-                        ? "How brokers reach you about your properties."
-                        : "How owners and buyers reach you."
-                }
-            >
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <Controller
-                        name="fullName"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-name">Full name</FieldLabel>
+                    <Section
+                        title="Your details"
+                        icon={UserRound}
+                        description={
+                            ownerAccount
+                                ? "How brokers reach you about your properties."
+                                : "How owners and buyers reach you."
+                        }
+                    >
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Controller
+                                name="fullName"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2 min-inline-0">
+                                        <FieldLabel htmlFor="profile-name">Full name</FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="profile-name"
+                                            size="lg"
+                                            autoComplete="name"
+                                            startIcon={UserRound}
+                                            errorText={fieldState.error?.message}
+                                        />
+                                    </div>
+                                )}
+                            />
+
+                            <div className="flex flex-col gap-2 min-inline-0">
+                                <FieldLabel htmlFor="profile-email">Email</FieldLabel>
                                 <Input
-                                    {...field}
-                                    id="profile-name"
-                                    autoComplete="name"
-                                    startIcon={UserRound}
-                                    errorText={fieldState.error?.message}
+                                    id="profile-email"
+                                    size="lg"
+                                    value={profile?.email ?? ""}
+                                    readOnly
+                                    disabled
+                                    startIcon={Mail}
+                                    helperText="Contact support to change this."
                                 />
                             </div>
-                        )}
-                    />
 
-                    <div className="flex flex-col gap-2">
-                        <FieldLabel htmlFor="profile-email">Email</FieldLabel>
-                        <Input
-                            id="profile-email"
-                            value={profile?.email ?? ""}
-                            readOnly
-                            disabled
-                            startIcon={Mail}
-                            helperText="Contact support to change this."
-                        />
-                    </div>
+                            <Controller
+                                name="phone"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2 min-inline-0">
+                                        <FieldLabel htmlFor="profile-phone">
+                                            Mobile number
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="profile-phone"
+                                            size="lg"
+                                            type="tel"
+                                            inputMode="numeric"
+                                            autoComplete="tel"
+                                            placeholder="98200 22001"
+                                            startIcon={Phone}
+                                            errorText={fieldState.error?.message}
+                                        />
+                                    </div>
+                                )}
+                            />
 
-                    <Controller
-                        name="phone"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-phone">Mobile number</FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="profile-phone"
-                                    type="tel"
-                                    inputMode="numeric"
-                                    autoComplete="tel"
-                                    placeholder="98200 22001"
-                                    startIcon={Phone}
-                                    errorText={fieldState.error?.message}
-                                />
-                            </div>
-                        )}
-                    />
+                            <Controller
+                                name="city"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2 min-inline-0">
+                                        <FieldLabel htmlFor="profile-city">City</FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="profile-city"
+                                            size="lg"
+                                            autoComplete="address-level2"
+                                            startIcon={MapPin}
+                                            errorText={fieldState.error?.message}
+                                        />
+                                    </div>
+                                )}
+                            />
 
-                    <Controller
-                        name="orgName"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-org">
-                                    {ownerAccount ? "Organization" : "Agency"}
-                                </FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="profile-org"
-                                    startIcon={Building2}
-                                    placeholder={
-                                        ownerAccount
-                                            ? "Leave blank if you list as an individual"
-                                            : "Leave blank if you work independently"
-                                    }
-                                    errorText={fieldState.error?.message}
-                                />
-                            </div>
-                        )}
-                    />
+                            <Controller
+                                name="country"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2 min-inline-0">
+                                        <FieldLabel htmlFor="profile-country">Country</FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="profile-country"
+                                            size="lg"
+                                            autoComplete="country-name"
+                                            startIcon={Globe2}
+                                            errorText={fieldState.error?.message}
+                                        />
+                                    </div>
+                                )}
+                            />
 
-                    <Controller
-                        name="country"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-country">Country</FieldLabel>
-                                <OptionCombobox
-                                    id="profile-country"
-                                    value={field.value}
-                                    onValueChange={(next) => {
-                                        if (isDifferentPlace(next, field.value)) {
-                                            // State, city and areas belong to the old country.
-                                            setValue("state", "", { shouldDirty: true });
-                                            setValue("city", "", { shouldDirty: true });
-                                            if (getValues("locality")) {
-                                                setValue("locality", "", { shouldDirty: true });
+                            <Controller
+                                name="orgName"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2 min-inline-0">
+                                        <FieldLabel htmlFor="profile-org">
+                                            {ownerAccount ? "Organization" : "Agency"}
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="profile-org"
+                                            size="lg"
+                                            startIcon={Building2}
+                                            placeholder={
+                                                ownerAccount
+                                                    ? "Leave blank if you list as an individual"
+                                                    : "Leave blank if you work independently"
                                             }
-                                            setValue("serviceAreas", [], { shouldDirty: true });
-                                        }
-                                        field.onChange(next);
-                                    }}
-                                    onBlur={field.onBlur}
-                                    options={countryOptions}
-                                    placeholder="Choose a country"
-                                    startIcon={Globe2}
-                                    loading={countriesLoading}
-                                    emptyText="No countries match"
-                                    limit={50}
-                                    errorText={fieldState.error?.message}
-                                />
-                            </div>
-                        )}
-                    />
-
-                    <Controller
-                        name="state"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-state">State</FieldLabel>
-                                <OptionCombobox
-                                    id="profile-state"
-                                    value={field.value}
-                                    onValueChange={(next) => {
-                                        // A profile saved before the state field has a city
-                                        // but no state: filling the state in keeps that city.
-                                        if (field.value && isDifferentPlace(next, field.value)) {
-                                            setValue("city", "", { shouldDirty: true });
-                                            if (getValues("locality")) {
-                                                setValue("locality", "", { shouldDirty: true });
-                                            }
-                                            setValue("serviceAreas", [], { shouldDirty: true });
-                                        }
-                                        field.onChange(next);
-                                    }}
-                                    onBlur={field.onBlur}
-                                    options={stateOptions}
-                                    placeholder={
-                                        selectedCountry
-                                            ? "Choose a state"
-                                            : "Choose a country first"
-                                    }
-                                    startIcon={MapIcon}
-                                    loading={statesLoading}
-                                    disabled={!selectedCountry}
-                                    emptyText={
-                                        statesLoading ? "Loading states…" : "No states match"
-                                    }
-                                    limit={100}
-                                    errorText={fieldState.error?.message}
-                                />
-                            </div>
-                        )}
-                    />
-
-                    <Controller
-                        name="city"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-city">City</FieldLabel>
-                                <OptionCombobox
-                                    id="profile-city"
-                                    value={field.value}
-                                    onValueChange={(next) => {
-                                        if (isDifferentPlace(next, field.value)) {
-                                            // Areas belong to the old city.
-                                            if (getValues("locality")) {
-                                                setValue("locality", "", { shouldDirty: true });
-                                            }
-                                            setValue("serviceAreas", [], { shouldDirty: true });
-                                        }
-                                        field.onChange(next);
-                                    }}
-                                    onBlur={field.onBlur}
-                                    options={cityOptions}
-                                    placeholder={
-                                        selectedState ? "Choose a city" : "Choose a state first"
-                                    }
-                                    startIcon={MapPin}
-                                    loading={citiesLoading}
-                                    disabled={!selectedState}
-                                    emptyText={
-                                        citiesLoading ? "Loading cities…" : "No cities match"
-                                    }
-                                    limit={100}
-                                    errorText={fieldState.error?.message}
-                                />
-                            </div>
-                        )}
-                    />
+                                            errorText={fieldState.error?.message}
+                                        />
+                                    </div>
+                                )}
+                            />
+                        </div>
+                    </Section>
 
                     {ownerAccount ? (
-                        <Controller
-                            name="locality"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <div className="flex flex-col gap-2">
-                                    <FieldLabel htmlFor="profile-locality">Locality</FieldLabel>
-                                    <LocalityCombobox
-                                        id="profile-locality"
-                                        inputRef={field.ref}
-                                        cityId={cityId}
-                                        value={field.value}
-                                        onValueChange={field.onChange}
-                                        onBlur={field.onBlur}
-                                        placeholder="Search a locality, e.g. Vesu"
-                                        errorText={fieldState.error?.message}
-                                        helperText={
-                                            cityId
-                                                ? `Search areas in ${cityName}.`
-                                                : "Choose your city to pick a locality."
-                                        }
-                                    />
-                                </div>
-                            )}
-                        />
-                    ) : (
-                        <Controller
-                            name="serviceAreas"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <div className="flex flex-col gap-2">
-                                    <FieldLabel htmlFor="profile-areas">Areas you work</FieldLabel>
-                                    <LocalityCombobox
-                                        multiple
-                                        id="profile-areas"
-                                        inputRef={field.ref}
-                                        cityId={cityId}
-                                        value={field.value}
-                                        onValueChange={field.onChange}
-                                        onBlur={field.onBlur}
-                                        placeholder="Search areas, e.g. Vesu"
-                                        errorText={fieldState.error?.message}
-                                        helperText={
-                                            cityId
-                                                ? `Pick up to ${MAX_SERVICE_AREAS} areas in ${cityName}.`
-                                                : "Choose your city to pick areas."
-                                        }
-                                    />
-                                </div>
-                            )}
-                        />
-                    )}
-                </div>
-            </Section>
+                        <Section
+                            title="Your property preferences"
+                            icon={Home}
+                            description="Brokers use this to decide which listings to bring you."
+                        >
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <Controller
+                                    name="companyName"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <div className="flex flex-col gap-2 min-inline-0">
+                                            <FieldLabel htmlFor="profile-company">
+                                                Company name
+                                            </FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="profile-company"
+                                                size="lg"
+                                                startIcon={Building2}
+                                                placeholder="Desai Estates"
+                                                errorText={fieldState.error?.message}
+                                            />
+                                        </div>
+                                    )}
+                                />
 
-            {ownerAccount ? (
-                <Section
-                    title="Your property preferences"
-                    description="Company details and a short note brokers can read."
-                >
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <Controller
-                            name="companyName"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <div className="flex flex-col gap-2">
-                                    <FieldLabel htmlFor="profile-company">Company name</FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="profile-company"
-                                        startIcon={Building2}
-                                        placeholder="Desai Estates"
-                                        errorText={fieldState.error?.message}
-                                    />
-                                </div>
-                            )}
-                        />
-
-                        <Controller
-                            name="gstin"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <div className="flex flex-col gap-2">
-                                    <FieldLabel htmlFor="profile-gstin">GSTIN</FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="profile-gstin"
-                                        placeholder="22AAAAA0000A1Z5"
-                                        errorText={fieldState.error?.message}
-                                    />
-                                </div>
-                            )}
-                        />
-                    </div>
-
-                    <Controller
-                        name="publicSlug"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-slug">Your public page</FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="profile-slug"
-                                    placeholder="desai-estates"
-                                    errorText={fieldState.error?.message}
-                                    helperText={publicSlugHelper(
-                                        field.value,
-                                        profile?.owner?.publicSlug,
-                                        profile?.qr?.publicProfileUrl,
+                                <Controller
+                                    name="gstin"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <div className="flex flex-col gap-2 min-inline-0">
+                                            <FieldLabel htmlFor="profile-gstin">GSTIN</FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="profile-gstin"
+                                                size="lg"
+                                                startIcon={Receipt}
+                                                placeholder="22AAAAA0000A1Z5"
+                                                errorText={fieldState.error?.message}
+                                            />
+                                        </div>
                                     )}
                                 />
                             </div>
-                        )}
-                    />
 
-                    <Controller
-                        name="bio"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-bio">About you</FieldLabel>
-                                <Textarea
-                                    {...field}
-                                    id="profile-bio"
-                                    rows={4}
-                                    placeholder="What kind of properties you look for, and why."
-                                    aria-invalid={Boolean(fieldState.error) || undefined}
-                                    aria-describedby="profile-bio-help"
+                            <Controller
+                                name="publicSlug"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2 min-inline-0">
+                                        <FieldLabel htmlFor="profile-slug">
+                                            Your public page
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="profile-slug"
+                                            size="lg"
+                                            startIcon={Link2}
+                                            placeholder="desai-estates"
+                                            errorText={fieldState.error?.message}
+                                            helperText={publicSlugHelper(
+                                                field.value,
+                                                profile?.owner?.publicSlug,
+                                                profile?.qr?.publicProfileUrl,
+                                            )}
+                                        />
+                                    </div>
+                                )}
+                            />
+
+                            <Controller
+                                name="preferredCities"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2 min-inline-0">
+                                        <FieldLabel htmlFor="profile-preferred-cities">
+                                            Preferred cities
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="profile-preferred-cities"
+                                            size="lg"
+                                            startIcon={MapPin}
+                                            placeholder="Surat, Ahmedabad"
+                                            errorText={fieldState.error?.message}
+                                            helperText="Separate them with commas."
+                                        />
+                                    </div>
+                                )}
+                            />
+
+                            <Controller
+                                name="preferredLocalities"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2 min-inline-0">
+                                        <FieldLabel htmlFor="profile-preferred-localities">
+                                            Preferred localities
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="profile-preferred-localities"
+                                            size="lg"
+                                            startIcon={MapPinned}
+                                            placeholder="Adajan, Vesu"
+                                            errorText={fieldState.error?.message}
+                                            helperText="Separate them with commas."
+                                        />
+                                    </div>
+                                )}
+                            />
+
+                            <Controller
+                                name="bio"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <BioField
+                                        name={field.name}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        onBlur={field.onBlur}
+                                        placeholder="What kind of properties you look for, and why."
+                                        errorMessage={fieldState.error?.message}
+                                        charCount={`${(bio ?? "").length} of ${BIO_MAX} characters`}
+                                    />
+                                )}
+                            />
+                        </Section>
+                    ) : (
+                        <Section
+                            title="Your work"
+                            icon={Briefcase}
+                            description="Owners read this before they accept a request. It is the strongest part of your profile."
+                        >
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <Controller
+                                    name="experienceYears"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <div className="flex flex-col gap-2 min-inline-0">
+                                            <FieldLabel htmlFor="profile-experience">
+                                                Years of experience
+                                            </FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="profile-experience"
+                                                size="lg"
+                                                startIcon={Award}
+                                                inputMode="numeric"
+                                                placeholder="8"
+                                                errorText={fieldState.error?.message}
+                                            />
+                                        </div>
+                                    )}
                                 />
-                                <p
-                                    id="profile-bio-help"
-                                    className={
-                                        fieldState.error
-                                            ? "body-xs text-danger"
-                                            : "body-xs tabular text-ink-subtle"
-                                    }
-                                >
-                                    {fieldState.error?.message ??
-                                        `${(bio ?? "").length} of ${BIO_MAX} characters`}
-                                </p>
+
+                                <Controller
+                                    name="licenseNumber"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <div className="flex flex-col gap-2 min-inline-0">
+                                            <FieldLabel htmlFor="profile-rera">
+                                                RERA number
+                                            </FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="profile-rera"
+                                                size="lg"
+                                                startIcon={BadgeCheck}
+                                                placeholder="A52100012345"
+                                                errorText={fieldState.error?.message}
+                                                helperText="Verified brokers get a badge owners can see."
+                                            />
+                                        </div>
+                                    )}
+                                />
+
+                                <Controller
+                                    name="reraState"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <div className="flex flex-col gap-2 min-inline-0">
+                                            <FieldLabel htmlFor="profile-rera-state">
+                                                RERA state
+                                            </FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="profile-rera-state"
+                                                size="lg"
+                                                startIcon={Landmark}
+                                                placeholder="Gujarat"
+                                                errorText={fieldState.error?.message}
+                                            />
+                                        </div>
+                                    )}
+                                />
+
+                                <Controller
+                                    name="publicSlug"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <div className="flex flex-col gap-2 min-inline-0">
+                                            <FieldLabel htmlFor="profile-slug">
+                                                Your public page
+                                            </FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="profile-slug"
+                                                size="lg"
+                                                startIcon={Link2}
+                                                placeholder="rajesh-patel-surat"
+                                                errorText={fieldState.error?.message}
+                                                helperText={
+                                                    field.value
+                                                        ? `yesbroker.in/brokers/${field.value}`
+                                                        : "The web address buyers can share."
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                                />
                             </div>
-                        )}
-                    />
-                </Section>
-            ) : (
-                <Section
-                    title="Your work"
-                    description="Owners read this before they accept a request. It is the strongest part of your profile."
+
+                            <Controller
+                                name="serviceAreas"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2 min-inline-0">
+                                        <FieldLabel htmlFor="profile-areas">
+                                            Areas you work
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="profile-areas"
+                                            size="lg"
+                                            startIcon={MapPinned}
+                                            placeholder="Vesu, Adajan, Piplod"
+                                            errorText={fieldState.error?.message}
+                                            helperText="Separate them with commas."
+                                        />
+                                    </div>
+                                )}
+                            />
+
+                            <Controller
+                                name="specializations"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <div className="flex flex-col gap-2 min-inline-0">
+                                        <FieldLabel htmlFor="profile-specializations">
+                                            What you deal in
+                                        </FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="profile-specializations"
+                                            size="lg"
+                                            startIcon={Tags}
+                                            placeholder="Residential, commercial"
+                                            errorText={fieldState.error?.message}
+                                            helperText="Separate them with commas."
+                                        />
+                                    </div>
+                                )}
+                            />
+
+                            <Controller
+                                name="bio"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <BioField
+                                        name={field.name}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        onBlur={field.onBlur}
+                                        placeholder="Two lines on what you know that other brokers do not."
+                                        errorMessage={fieldState.error?.message}
+                                        charCount={`${(bio ?? "").length} of ${BIO_MAX} characters`}
+                                    />
+                                )}
+                            />
+                        </Section>
+                    )}
+
+                    <NotificationPreferences profile={profile} onSaved={handleProfileReplaced} />
+                </div>
+
+                <aside className="order-1 lg:sticky lg:inset-bs-24 lg:order-2">
+                    <ProfileStats profile={profile} layout="stack" />
+                </aside>
+            </div>
+
+            {/* Sits above the portal bottom nav. lg uses the header Save. */}
+            {isDirty ? (
+                <div
+                    className="
+                      fixed inset-x-0 z-30 border-bs border-border-warm bg-surface/95 p-3
+                      shadow-md backdrop-blur-sm
+                      inset-be-[calc(4.75rem+env(safe-area-inset-bottom))]
+                      md:hidden
+                    "
                 >
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <Controller
-                            name="experienceYears"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <div className="flex flex-col gap-2">
-                                    <FieldLabel htmlFor="profile-experience">
-                                        Years of experience
-                                    </FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="profile-experience"
-                                        inputMode="numeric"
-                                        placeholder="8"
-                                        errorText={fieldState.error?.message}
-                                    />
-                                </div>
-                            )}
-                        />
+                    <Button
+                        type="submit"
+                        variant="accent"
+                        size="lg"
+                        loading={isSubmitting}
+                        disabled={!isDirty}
+                        className="w-full"
+                    >
+                        {isSubmitting ? "Saving…" : "Save changes"}
+                    </Button>
+                </div>
+            ) : null}
 
-                        <Controller
-                            name="licenseNumber"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <div className="flex flex-col gap-2">
-                                    <FieldLabel htmlFor="profile-rera">RERA number</FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="profile-rera"
-                                        placeholder="A52100012345"
-                                        errorText={fieldState.error?.message}
-                                        helperText="Verified brokers get a badge owners can see."
-                                    />
-                                </div>
-                            )}
-                        />
-
-                        <Controller
-                            name="reraState"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <div className="flex flex-col gap-2">
-                                    <FieldLabel htmlFor="profile-rera-state">RERA state</FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="profile-rera-state"
-                                        placeholder="Gujarat"
-                                        errorText={fieldState.error?.message}
-                                    />
-                                </div>
-                            )}
-                        />
-
-                        <Controller
-                            name="publicSlug"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <div className="flex flex-col gap-2">
-                                    <FieldLabel htmlFor="profile-slug">Your public page</FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="profile-slug"
-                                        placeholder="rajesh-patel-surat"
-                                        errorText={fieldState.error?.message}
-                                        helperText={
-                                            field.value
-                                                ? `yesbroker.in/brokers/${field.value}`
-                                                : "The web address buyers can share."
-                                        }
-                                    />
-                                </div>
-                            )}
-                        />
-                    </div>
-
-                    <Controller
-                        name="specializations"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-specializations">
-                                    What you deal in
-                                </FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="profile-specializations"
-                                    placeholder="Residential, commercial"
-                                    errorText={fieldState.error?.message}
-                                    helperText="Separate them with commas."
-                                />
-                            </div>
-                        )}
-                    />
-
-                    <Controller
-                        name="bio"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <div className="flex flex-col gap-2">
-                                <FieldLabel htmlFor="profile-bio">About you</FieldLabel>
-                                <Textarea
-                                    {...field}
-                                    id="profile-bio"
-                                    rows={4}
-                                    placeholder="Two lines on what you know that other brokers do not."
-                                    aria-invalid={Boolean(fieldState.error) || undefined}
-                                    aria-describedby="profile-bio-help"
-                                />
-                                <p
-                                    id="profile-bio-help"
-                                    className={
-                                        fieldState.error
-                                            ? "body-xs text-danger"
-                                            : "body-xs tabular text-ink-subtle"
-                                    }
-                                >
-                                    {fieldState.error?.message ??
-                                        `${(bio ?? "").length} of ${BIO_MAX} characters`}
-                                </p>
-                            </div>
-                        )}
-                    />
-                </Section>
-            )}
-
-            <NotificationPreferences profile={profile} onSaved={handleProfileReplaced} />
+            {/* Clearance so the last fields are not buried under the sticky Save. */}
+            {isDirty ? <div className="block-16 md:hidden" aria-hidden /> : null}
         </form>
     );
 }

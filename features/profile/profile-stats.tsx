@@ -1,46 +1,26 @@
-import { BadgeCheck, ShieldCheck, ShieldQuestion } from "lucide-react";
+import { BadgeCheck, Eye, ShieldCheck, ShieldQuestion } from "lucide-react";
 
 import type { UserProfile } from "@/lib/api/profile";
+import { formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
-/**
- * One fact about the account, as a tile.
- *
- * Stats only — nothing here is editable. Everything on this row is decided by
- * what the broker has actually done or by what the platform has verified, so
- * showing it beside the form would invite the reader to try to change it.
- */
-function StatTile({
-    label,
-    value,
-    hint,
-    tone = "default",
-}: {
+import { Badge } from "@/components/ui/badge";
+
+type Metric = {
     label: string;
     value: string;
-    hint?: string;
-    tone?: "default" | "brand" | "pending";
-}) {
-    return (
-        <div className="flex flex-col gap-1 rounded-card border border-border-warm bg-surface p-4">
-            <span className="eyebrow">{label}</span>
-            <span
-                className={cn(
-                    "h4 tabular",
-                    tone === "brand" && "text-brand",
-                    tone === "pending" && "text-pending",
-                    tone === "default" && "text-ink",
-                )}
-            >
-                {value}
-            </span>
-            {hint ? <span className="body-xs text-ink-subtle">{hint}</span> : null}
-        </div>
-    );
-}
+    hint: string;
+    emphasize: boolean;
+};
 
-/** Verified is a badge with a word in it, never a bare colour. docs/DESIGN.md §1.4. */
-function VerificationTile({ profile, isOwner }: { profile: UserProfile; isOwner: boolean }) {
+type VerificationState = {
+    label: string;
+    hint: string;
+    tone: "verified" | "pending" | "action";
+    Icon: typeof BadgeCheck;
+};
+
+function resolveVerification(profile: UserProfile, isOwner: boolean): VerificationState {
     const isVerified = Boolean(
         isOwner
             ? (profile.owner?.verified ?? profile.verified)
@@ -48,39 +28,34 @@ function VerificationTile({ profile, isOwner }: { profile: UserProfile; isOwner:
     );
     const isEmailVerified = Boolean(profile.isEmailVerified);
 
-    const state = isVerified
-        ? {
-              label: isOwner ? "Verified owner" : "Verified broker",
-              hint: isOwner
-                  ? "Brokers see a verified badge on your listings."
-                  : "Owners see a verified badge on your requests.",
-          }
-        : isEmailVerified
-          ? {
-                label: "Awaiting review",
-                hint: isOwner
-                    ? "We are checking your account details."
-                    : "We are checking your RERA number.",
-            }
-          : { label: "Confirm your email", hint: "Check your inbox to finish signing up." };
+    if (isVerified) {
+        return {
+            label: isOwner ? "Verified owner" : "Verified broker",
+            hint: isOwner
+                ? "Brokers see a verified badge on your listings."
+                : "Owners see a verified badge on your requests.",
+            tone: "verified",
+            Icon: BadgeCheck,
+        };
+    }
 
-    const Icon = isVerified ? BadgeCheck : isEmailVerified ? ShieldQuestion : ShieldCheck;
+    if (isEmailVerified) {
+        return {
+            label: "Awaiting review",
+            hint: isOwner
+                ? "We are checking your account details."
+                : "We are checking your RERA number.",
+            tone: "pending",
+            Icon: ShieldQuestion,
+        };
+    }
 
-    return (
-        <div className="flex flex-col gap-1 rounded-card border border-border-warm bg-surface p-4">
-            <span className="eyebrow">Verification</span>
-            <span
-                className={cn(
-                    "body-lg flex items-center gap-1.5 font-semibold",
-                    isVerified ? "text-brand" : "text-pending",
-                )}
-            >
-                <Icon aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                {state.label}
-            </span>
-            <span className="body-xs text-ink-subtle">{state.hint}</span>
-        </div>
-    );
+    return {
+        label: "Confirm your email",
+        hint: "Check your inbox to finish signing up.",
+        tone: "action",
+        Icon: ShieldCheck,
+    };
 }
 
 function countOrNone(value: number | undefined): { display: string; hasValue: boolean } {
@@ -88,91 +63,198 @@ function countOrNone(value: number | undefined): { display: string; hasValue: bo
     return { display: n > 0 ? String(n) : "None yet", hasValue: n > 0 };
 }
 
-/**
- * The account at a glance.
- *
- * Broker tiles: deals, clients, avg close time.
- * Owner tiles: properties listed, active brokers, site visits — from `stats`.
- */
-export function ProfileStats({ profile }: { profile: UserProfile | null }) {
-    if (!profile) return null;
-
-    const isOwner = profile.profileType === "owner" || profile.role === "owner";
-
+function buildMetrics(
+    profile: UserProfile,
+    isOwner: boolean,
+): {
+    primary: Metric;
+    secondary: [Metric, Metric];
+} {
     if (isOwner) {
         const properties = countOrNone(profile.stats?.propertiesListed);
         const brokers = countOrNone(profile.stats?.activeBrokers);
         const visits = countOrNone(profile.stats?.siteVisits);
 
-        return (
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <VerificationTile profile={profile} isOwner />
-
-                <StatTile
-                    label="Properties listed"
-                    value={properties.display}
-                    hint={
-                        properties.hasValue
-                            ? "Listings on your account"
-                            : "Add your first property to get started"
-                    }
-                    tone={properties.hasValue ? "brand" : "default"}
-                />
-
-                <StatTile
-                    label="Active brokers"
-                    value={brokers.display}
-                    hint={
-                        brokers.hasValue
-                            ? "Accepted representation requests"
-                            : "Invite a broker from a listing"
-                    }
-                />
-
-                <StatTile
-                    label="Site visits"
-                    value={visits.display}
-                    hint={
-                        visits.hasValue
-                            ? "Across your properties"
-                            : "Visits will show here once booked"
-                    }
-                />
-            </div>
-        );
+        return {
+            primary: {
+                label: "Properties listed",
+                value: properties.display,
+                hint: properties.hasValue
+                    ? "Listings on your account"
+                    : "Add your first property to get started",
+                emphasize: properties.hasValue,
+            },
+            secondary: [
+                {
+                    label: "Active brokers",
+                    value: brokers.display,
+                    hint: brokers.hasValue ? "Accepted representation" : "Invite from a listing",
+                    emphasize: brokers.hasValue,
+                },
+                {
+                    label: "Site visits",
+                    value: visits.display,
+                    hint: visits.hasValue ? "Across your properties" : "Once visits are booked",
+                    emphasize: visits.hasValue,
+                },
+            ],
+        };
     }
 
     const dealsClosed = profile.broker?.dealsClosed ?? profile.stats?.dealsClosed ?? 0;
     const clientsServed = profile.clientsServed ?? 0;
     const avgDays = profile.broker?.avgDaysToClose ?? null;
 
+    return {
+        primary: {
+            label: "Deals closed",
+            value: dealsClosed > 0 ? String(dealsClosed) : "None yet",
+            hint: dealsClosed > 0 ? "Since you joined" : "Your first one will show here",
+            emphasize: dealsClosed > 0,
+        },
+        secondary: [
+            {
+                label: "Clients",
+                value: clientsServed > 0 ? String(clientsServed) : "None yet",
+                hint: clientsServed > 0 ? "Buyers and tenants" : "Add one from Contacts",
+                emphasize: clientsServed > 0,
+            },
+            {
+                label: "Avg. close",
+                value: avgDays === null ? "—" : `${avgDays}d`,
+                hint: avgDays === null ? "Needs a closed deal" : "Across closed deals",
+                emphasize: avgDays !== null,
+            },
+        ],
+    };
+}
+
+function memberSinceLabel(profile: UserProfile): string | null {
+    if (!profile.memberSince) return null;
+    const date = new Date(profile.memberSince);
+    if (Number.isNaN(date.getTime())) return null;
+    return `Joined ${formatDateShort(date)}`;
+}
+
+function StatsSkeleton() {
     return (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <VerificationTile profile={profile} isOwner={false} />
-
-            <StatTile
-                label="Deals closed"
-                // Never a bare standalone zero — docs/EMPTY_STATES.md.
-                value={dealsClosed > 0 ? String(dealsClosed) : "None yet"}
-                hint={dealsClosed > 0 ? "Since you joined" : "Your first one will show here"}
-                tone={dealsClosed > 0 ? "brand" : "default"}
+        <div className="flex flex-col gap-3" aria-busy aria-hidden>
+            <div
+                className="
+                  animate-pulse overflow-hidden rounded-card border border-border-warm bg-surface
+                  block-56
+                "
             />
-
-            <StatTile
-                label="Clients"
-                value={clientsServed > 0 ? String(clientsServed) : "None yet"}
-                hint={
-                    clientsServed > 0
-                        ? "Buyers and tenants you have worked"
-                        : "Add one from Contacts"
-                }
-            />
-
-            <StatTile
-                label="Average time to close"
-                value={avgDays === null ? "—" : `${avgDays} days`}
-                hint={avgDays === null ? "Needs a closed deal first" : "Across your closed deals"}
+            <div
+                className="
+                  animate-pulse rounded-card border border-dashed border-brand/20 bg-brand-soft/20
+                  block-24
+                "
             />
         </div>
+    );
+}
+
+/**
+ * Account at a glance — listing-form preview rail language.
+ *
+ * One preview card (primary metric + muted strip) and a dashed verification
+ * note underneath. Same padding and borders as LiveSummaryPanel.
+ */
+export function ProfileStats({
+    profile,
+}: {
+    profile: UserProfile | null;
+    /** @deprecated Always renders as the listing-style rail. */
+    layout?: "row" | "stack";
+}) {
+    if (!profile) return <StatsSkeleton />;
+
+    const isOwner = profile.profileType === "owner" || profile.role === "owner";
+    const verification = resolveVerification(profile, isOwner);
+    const { primary, secondary } = buildMetrics(profile, isOwner);
+    const joined = memberSinceLabel(profile);
+    const VerificationIcon = verification.Icon;
+
+    return (
+        <aside className="flex flex-col gap-3" aria-label="Account at a glance">
+            <article className="overflow-hidden rounded-card border border-border-warm bg-surface">
+                <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                        <Eye className="text-brand block-4 inline-4" aria-hidden />
+                        At a glance
+                    </p>
+                    {joined ? (
+                        <Badge
+                            variant="neutral"
+                            className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                        >
+                            {joined}
+                        </Badge>
+                    ) : null}
+                </div>
+
+                <div className="flex flex-col gap-2 px-3.5 py-3.5">
+                    <p
+                        className={cn(
+                            "tabular text-xl font-bold tracking-[-0.02em]",
+                            primary.emphasize ? "text-brand" : "text-ink-muted",
+                        )}
+                    >
+                        {primary.value}
+                    </p>
+                    <p className="text-sm/5 font-semibold text-ink">{primary.label}</p>
+                    <p className="text-xs text-ink-muted">{primary.hint}</p>
+
+                    <div
+                        className="
+                          mts-1 grid grid-cols-2 gap-2 rounded-control bg-surface-muted px-2.5
+                          py-2.5
+                        "
+                    >
+                        {secondary.map((metric) => (
+                            <div key={metric.label} className="min-inline-0 text-center">
+                                <p
+                                    className={cn(
+                                        "truncate tabular text-sm font-semibold",
+                                        metric.emphasize ? "text-ink" : "text-ink-muted",
+                                    )}
+                                >
+                                    {metric.value}
+                                </p>
+                                <p className="mts-0.5 truncate text-[11px] font-medium text-ink-muted">
+                                    {metric.label}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </article>
+
+            {/* Same dashed note pattern as Live deal summary on the listing form. */}
+            <div
+                className={cn(
+                    "rounded-card border border-dashed px-3.5 py-4",
+                    verification.tone === "verified"
+                        ? "border-brand/30 bg-brand-soft/30"
+                        : "border-pending/35 bg-urgent-soft/45",
+                )}
+            >
+                <div className="flex items-start gap-2.5">
+                    <VerificationIcon
+                        className={cn(
+                            "mts-0.5 shrink-0 block-4 inline-4",
+                            verification.tone === "verified" ? "text-brand" : "text-pending",
+                        )}
+                        strokeWidth={2}
+                        aria-hidden
+                    />
+                    <div className="min-inline-0">
+                        <p className="text-sm font-semibold text-ink">{verification.label}</p>
+                        <p className="mbs-1 text-sm/5 text-ink-muted">{verification.hint}</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
     );
 }
