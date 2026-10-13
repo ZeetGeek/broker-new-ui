@@ -1,0 +1,40 @@
+---
+description: Cross-cutting hard constraints — product, market, portals, design, naming
+alwaysApply: true
+---
+
+# Hard constraints (every task)
+
+These are expensive to get wrong even in planning. Full detail lives in
+`AGENTS.md` and `docs/*` — this is the checklist, not a second source of truth.
+
+## Product (`AGENTS.md`)
+
+1. **Two roles only:** Owner and Broker. No admin / agency / team-member role.
+2. **Core loop:** list → browse → request to represent → approve → auto pipeline.
+   No manual re-entry of property data for brokers.
+3. **Frontend-only repo.** Backend is `yesbroker-api` (separate). Data via HTTP.
+4. **Deferred:** WhatsApp automation, payments, in-app chat, ratings, team UI,
+   AI features, buyer accounts — flag, do not build.
+5. **"YesBroker" is a placeholder name.** One config constant; do not scatter it.
+
+## Market & UX
+
+6. **India / Surat first.** INR as `₹85 L` / `₹1.25 Cr`. Dates `dd/mm/yyyy`.
+   Phones `+91 …`. Never `en-US` / `USA` locale strings.
+7. **360px Android-first.** Design the phone layout first; desktop is enhancement.
+8. **Portals never mix.** Owner and broker routes do not import each other.
+   Shared code → `features/`. Users see one portal, never both.
+9. **Default `noindex`** for auth and portal routes. Private client data.
+
+## Design & code shape
+
+10. **Canvas is warm cream `#EFEAE0`, not white.** One green hue family only.
+    `urgent` = deadline, `danger` = destructive — never decorative.
+11. **Never edit `components/ui/`** (vendored shadcn). Wrap in `components/shared/`.
+12. **Never bare `brokerId` / `ownerId`.** Use `brokerUserId` /
+    `brokerProfileId` (and owner equivalents) — wrong id = wrong person's data.
+13. **Format via `lib/format/`** (and shared display components). No inline
+    price/phone/date formatting. `snake_case` only inside `lib/api/`.
+
+If a request fights these, stop and ask or flag deferred scope.

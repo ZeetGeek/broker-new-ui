@@ -17,9 +17,9 @@ Five rules restated because they are the ones that decay a codebase quietly:
    An upward import is always a design mistake.
 2. **`app/` is routing only.** A `page.tsx` fetches, composes, returns. Form
    logic, filter state, and large JSX trees belong in `features/`.
-3. **`app/owner/` and `app/broker/` never import from each other.** Shared code
-   goes in `features/`. Crossing that line is how one portal ships the other's
-   data.
+3. **Owner and broker portals never import from each other** (`app/(role)/owner/`,
+   `app/(role)/broker/`). Shared code goes in `features/`. Crossing that line
+   is how one portal ships the other's data.
 4. **Never edit `components/ui/`.** It is vendored shadcn. Wrap it in
    `components/shared/` instead so `npx shadcn add` stays safe.
 5. **`lib/utils.ts` holds `cn()` and nothing else.** New helpers get named
