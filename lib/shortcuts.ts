@@ -107,6 +107,7 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
         label: "Referrals",
         group: "Go to",
         scope: "global",
+        showInProfileMenu: true,
     },
     {
         id: "notifications",
@@ -115,6 +116,7 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
         label: "Notifications",
         group: "Go to",
         scope: "global",
+        showInProfileMenu: true,
     },
     {
         id: "profile",

@@ -1,59 +1,100 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Bell, ChevronDown, Gift, LogOut, UserRound } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
+import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
+import { HoldToLogout } from "@/components/layout/hold-to-logout";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
-    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { useAppDispatch } from "@/store/hooks";
 import { logout } from "@/store/slices/auth-slice";
 import { resetDashboard } from "@/store/slices/dashboard-slice";
 
-export type PortalProfileMenuProps = {
-    userName: string;
-    userEmail?: string;
-    userAvatarUrl?: string;
-    profileHref: string;
-    referralsHref?: string;
-    notificationsHref?: string;
-    roleLabel?: string;
-    orgName?: string | null;
-    tooltipLabel?: string;
-};
-
-const itemClass = `
-  body-sm cursor-pointer gap-2 rounded-inner px-3 py-2 font-medium text-ink
-  focus:bg-surface-muted focus:text-ink
+export const portalProfileMenuItemClass = `
+  h-9 cursor-pointer gap-2.5 rounded-inner px-3 body-sm font-medium text-ink
 `;
 
-export function PortalProfileMenu({
-    userName,
-    userEmail,
-    userAvatarUrl,
-    profileHref,
-    referralsHref,
-    notificationsHref,
-    roleLabel,
-    orgName,
-    tooltipLabel,
-}: PortalProfileMenuProps) {
+export const portalProfileMenuSurfaceClass = `
+  t-dropdown t-profile-menu animate-none! min-inline-[16.25rem] rounded-inner border
+  border-border-warm bg-surface p-0 text-ink ring-0
+  before:backdrop-blur-none
+  data-closed:animate-none!
+  data-open:animate-none!
+  p-3
+  **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
+  **:data-[slot$=-item]:data-highlighted:text-ink!
+  **:data-[slot$=-item]:focus:bg-surface-muted!
+  **:data-[slot$=-item]:focus:text-ink!
+  **:data-[variant=destructive]:data-highlighted:bg-danger-soft!
+  **:data-[variant=destructive]:data-highlighted:text-danger!
+  **:data-[variant=destructive]:focus:bg-danger-soft!
+  **:data-[variant=destructive]:focus:text-danger!
+`;
+
+export function PortalProfileMenuSeparator() {
+    return <DropdownMenuSeparator className="mx-0! my-2.5 bg-border-warm inline-full!" />;
+}
+
+export function PortalProfileShortcutHint({
+    shortcutId,
+    destructive = false,
+}: {
+    shortcutId: ShortcutId;
+    destructive?: boolean;
+}) {
+    const shortcut = getShortcut(shortcutId);
+    if (!shortcut?.showInProfileMenu) return null;
+
+    return (
+        <KbdGroup className="ms-auto hidden gap-0.5 sm:inline-flex">
+            {shortcut.displayKeys.map((key) => (
+                <Kbd
+                    variant="surface"
+                    key={key}
+                    className={cn(
+                        "px-1.5 text-[10px] tracking-normal",
+                        destructive && "border-danger/30 text-danger",
+                    )}
+                >
+                    {key}
+                </Kbd>
+            ))}
+        </KbdGroup>
+    );
+}
+
+export type PortalProfileMenuProps = {
+    userName: string;
+    userAvatarUrl?: string;
+    profileHref: string;
+    /** Status row under the name — role, verification, account type, etc. */
+    headerStatus: ReactNode;
+    /** Menu body between header and logout (groups + separators). */
+    children: ReactNode;
+    tooltipLabel?: string;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+};
+
+function useLogoutHandler() {
     const router = useRouter();
     const dispatch = useAppDispatch();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -75,119 +116,149 @@ export function PortalProfileMenu({
         }
     }
 
-    const trigger = (
-        <DropdownMenuTrigger
-            render={
-                <Button
-                    variant="ghost"
-                    size="md"
-                    aria-label={`${userName} menu`}
-                    className="
-                      scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
-                      hover:bg-transparent hover:text-ink
-                      data-popup-open:text-ink
-                    "
-                />
-            }
+    return { handleLogout, isLoggingOut };
+}
+
+function MobileProfileLink({
+    userName,
+    userAvatarUrl,
+    profileHref,
+}: {
+    userName: string;
+    userAvatarUrl?: string;
+    profileHref: string;
+}) {
+    return (
+        <Link
+            href={profileHref}
+            aria-label="Profile"
+            className="flex scale-[0.96] items-center gap-1 ps-0 pe-1 text-ink-muted sm:hidden"
         >
             <span className="overflow-hidden rounded-full block-control-lg inline-control-lg">
                 <UserAvatar name={userName} imageUrl={userAvatarUrl} size="fill" />
             </span>
-            <ChevronDown aria-hidden="true" />
-        </DropdownMenuTrigger>
+        </Link>
+    );
+}
+
+function DesktopProfileDropdown({
+    userName,
+    userAvatarUrl,
+    headerStatus,
+    children,
+    tooltipLabel,
+    open,
+    onOpenChange,
+}: Omit<PortalProfileMenuProps, "profileHref">) {
+    const { handleLogout, isLoggingOut } = useLogoutHandler();
+
+    const trigger = (
+        <div className="flex items-center justify-center">
+            <DropdownMenuTrigger
+                render={
+                    <Button
+                        variant="ghost"
+                        size="md"
+                        aria-label="Account menu"
+                        className="
+                          scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
+                          hover:bg-transparent hover:text-ink
+                          data-popup-open:text-ink
+                        "
+                    />
+                }
+            >
+                <span className="overflow-hidden rounded-full block-control-lg inline-control-lg">
+                    <UserAvatar name={userName} imageUrl={userAvatarUrl} size="fill" />
+                </span>
+                <ChevronDown aria-hidden="true" className="block-4 inline-4" strokeWidth={1.75} />
+            </DropdownMenuTrigger>
+        </div>
     );
 
     return (
-        <DropdownMenu>
-            {tooltipLabel ? (
-                <Tooltip>
-                    <TooltipTrigger render={trigger} />
-                    <TooltipContent side="bottom">{tooltipLabel}</TooltipContent>
-                </Tooltip>
-            ) : (
-                trigger
-            )}
-
-            <DropdownMenuContent
-                align="end"
-                sideOffset={8}
-                className={cn(
-                    `
-                      t-dropdown animate-none! rounded-inner border border-border-warm bg-surface
-                      p-0 text-ink shadow-md ring-0 min-inline-56
-                      before:backdrop-blur-none
-                      dark:bg-surface dark:text-ink
-                      data-open:animate-none!
-                      data-closed:animate-none!
-                    `,
+        <div className="hidden sm:block">
+            <DropdownMenu open={open} onOpenChange={onOpenChange}>
+                {tooltipLabel ? (
+                    <Tooltip>
+                        <TooltipTrigger render={trigger} />
+                        <TooltipContent side="bottom">{tooltipLabel}</TooltipContent>
+                    </Tooltip>
+                ) : (
+                    trigger
                 )}
+
+                <DropdownMenuContent
+                    align="end"
+                    sideOffset={14}
+                    className={cn(portalProfileMenuSurfaceClass)}
+                >
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel className="flex flex-col gap-3 p-0! ps-[5px]! font-normal text-ink">
+                            <div className="flex items-center gap-2.5">
+                                <span className="shrink-0 overflow-hidden rounded-full block-8 inline-8">
+                                    <UserAvatar
+                                        name={userName}
+                                        imageUrl={userAvatarUrl}
+                                        size="fill"
+                                    />
+                                </span>
+                                <div className="flex flex-col gap-1 min-inline-0">
+                                    <p className="truncate font-display text-sm font-medium text-ink capitalize">
+                                        {userName}
+                                    </p>
+                                    {headerStatus}
+                                </div>
+                            </div>
+                        </DropdownMenuLabel>
+                    </DropdownMenuGroup>
+
+                    <PortalProfileMenuSeparator />
+
+                    {children}
+
+                    <PortalProfileMenuSeparator />
+
+                    <DropdownMenuGroup>
+                        <HoldToLogout disabled={isLoggingOut} onComplete={handleLogout} />
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    );
+}
+
+/**
+ * Shared account dropdown chrome for owner and broker portals.
+ * Portal-specific links and status rows are passed as children / headerStatus.
+ */
+export function PortalProfileMenu({
+    userName,
+    userAvatarUrl,
+    profileHref,
+    headerStatus,
+    children,
+    tooltipLabel,
+    open,
+    onOpenChange,
+}: PortalProfileMenuProps) {
+    return (
+        <>
+            <MobileProfileLink
+                userName={userName}
+                userAvatarUrl={userAvatarUrl}
+                profileHref={profileHref}
+            />
+            <DesktopProfileDropdown
+                userName={userName}
+                userAvatarUrl={userAvatarUrl}
+                headerStatus={headerStatus}
+                tooltipLabel={tooltipLabel}
+                open={open}
+                onOpenChange={onOpenChange}
             >
-                <DropdownMenuGroup>
-                    <DropdownMenuLabel className="flex items-center gap-2 p-3 text-ink">
-                        <span className="overflow-hidden rounded-full block-9 inline-9">
-                            <UserAvatar name={userName} imageUrl={userAvatarUrl} size="fill" />
-                        </span>
-                        <div className="min-inline-0">
-                            <p className="body truncate font-medium text-ink capitalize">
-                                {userName}
-                            </p>
-                            {userEmail ? (
-                                <p className="body-xs truncate text-ink-muted">{userEmail}</p>
-                            ) : null}
-                            {orgName ? (
-                                <p className="body-xs mbs-0.5 truncate font-medium text-ink">
-                                    {orgName}
-                                </p>
-                            ) : null}
-                            {roleLabel ? (
-                                <p className="eyebrow mbs-0.5 text-brand">{roleLabel}</p>
-                            ) : null}
-                        </div>
-                    </DropdownMenuLabel>
-                </DropdownMenuGroup>
-
-                <DropdownMenuSeparator className="bg-border-warm" />
-
-                <DropdownMenuGroup className="p-1.5">
-                    <DropdownMenuItem className={itemClass} render={<Link href={profileHref} />}>
-                        <UserRound aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        Profile
-                    </DropdownMenuItem>
-
-                    {referralsHref ? (
-                        <DropdownMenuItem
-                            className={itemClass}
-                            render={<Link href={referralsHref} />}
-                        >
-                            <Gift aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                            Referrals & Credits
-                        </DropdownMenuItem>
-                    ) : null}
-
-                    {notificationsHref ? (
-                        <DropdownMenuItem
-                            className={itemClass}
-                            render={<Link href={notificationsHref} />}
-                        >
-                            <Bell aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                            Notifications
-                        </DropdownMenuItem>
-                    ) : null}
-                </DropdownMenuGroup>
-
-                <DropdownMenuSeparator className="bg-border-warm" />
-
-                <DropdownMenuGroup className="p-1.5">
-                    <DropdownMenuItem
-                        className={itemClass}
-                        disabled={isLoggingOut}
-                        onClick={() => void handleLogout()}
-                    >
-                        <LogOut aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        {isLoggingOut ? "Signing out…" : "Log out"}
-                    </DropdownMenuItem>
-                </DropdownMenuGroup>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                {children}
+            </DesktopProfileDropdown>
+        </>
     );
 }

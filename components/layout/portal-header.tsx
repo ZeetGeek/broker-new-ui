@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { PortalHeaderSearch } from "@/components/layout/portal-header-search";
 import { PortalNav } from "@/components/layout/portal-nav";
 import { PortalNotificationsMenu } from "@/components/layout/portal-notifications-menu";
-import { PortalProfileMenu } from "@/components/layout/portal-profile-menu";
 import { Logo } from "@/components/shared/logo";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -14,19 +13,14 @@ import type { NavItem } from "@/config/nav";
 export type PortalHeaderProps = {
     navItems: NavItem[];
     notificationsHref: string;
+    /** Portal account dropdown — owner and broker each pass their menu. */
+    profileMenu: ReactNode;
+    /** Rotating search hints; defaults to broker-oriented copy when omitted. */
+    searchHints?: readonly string[];
     /** Optional row below the main header bar — e.g. Browse / Mine on properties pages. */
     sectionNav?: ReactNode;
     /** Fixed bottom nav on mobile. Adds scroll padding when set. */
     mobileNav?: ReactNode;
-    /** When set, replaces the default portal profile menu (e.g. broker profile dropdown). */
-    profileMenu?: ReactNode;
-    userName?: string;
-    userEmail?: string;
-    userAvatarUrl?: string;
-    profileHref?: string;
-    referralsHref?: string;
-    roleLabel?: string;
-    orgName?: string | null;
     children?: ReactNode;
 };
 
@@ -58,16 +52,10 @@ function HeaderTooltip({
 export function PortalHeader({
     navItems,
     notificationsHref,
+    profileMenu,
+    searchHints,
     sectionNav,
     mobileNav,
-    profileMenu,
-    userName = "User",
-    userEmail,
-    userAvatarUrl,
-    profileHref = "#",
-    referralsHref,
-    roleLabel,
-    orgName,
     children,
 }: PortalHeaderProps) {
     const homeHref = navItems[0]?.href ?? "/";
@@ -90,6 +78,7 @@ export function PortalHeader({
                             <div className="flex shrink-0 items-center gap-4">
                                 <HeaderTooltip label="Find properties, clients, and visits">
                                     <PortalHeaderSearch
+                                        hints={searchHints}
                                         className={cn(
                                             headerControlClass,
                                             `
@@ -114,19 +103,7 @@ export function PortalHeader({
                                     )}
                                 />
 
-                                {profileMenu ?? (
-                                    <PortalProfileMenu
-                                        userName={userName}
-                                        userEmail={userEmail}
-                                        userAvatarUrl={userAvatarUrl}
-                                        profileHref={profileHref}
-                                        referralsHref={referralsHref}
-                                        notificationsHref={notificationsHref}
-                                        roleLabel={roleLabel}
-                                        orgName={orgName}
-                                        tooltipLabel="Account"
-                                    />
-                                )}
+                                {profileMenu}
                             </div>
                         </TooltipProvider>
                     </div>
