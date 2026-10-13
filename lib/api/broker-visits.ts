@@ -2,6 +2,7 @@ import { ApiError, apiFetch } from "@/lib/api/client";
 import { clientsApi } from "@/lib/api/clients";
 import {
     type ApiBrokerOpenSlotItem,
+    type ApiOwnerOption,
     type ApiPropertyOption,
     type ApiShowing,
     type ApiVisitSlot,
@@ -38,6 +39,7 @@ export type BrokerOpenSlotsPage = {
     limit: number;
     totalPages: number;
     propertyOptions: ApiPropertyOption[];
+    ownerOptions: ApiOwnerOption[];
 };
 
 async function requestData<T>(
@@ -116,22 +118,13 @@ function filterVisits(visits: BrokerSiteVisit[], filters: VisitListFilters): Bro
 
 function buildOpenSlotsQuery(filters: SlotListFilters): string {
     const params = new URLSearchParams();
-    params.set("page", String(filters.page ?? 1));
-    params.set("limit", String(filters.limit ?? 20));
     if (filters.propertyId) params.set("propertyId", filters.propertyId);
     else if (filters.propertyIds?.length === 1) params.set("propertyId", filters.propertyIds[0]!);
     if (filters.from) params.set("from", filters.from.slice(0, 10));
     if (filters.to) params.set("to", filters.to.slice(0, 10));
-    if (filters.localities?.length) params.set("localities", filters.localities.join(","));
-    if (filters.timeBuckets?.length) params.set("timeBuckets", filters.timeBuckets.join(","));
-    if (filters.purpose) params.set("purpose", filters.purpose);
-    if (filters.propertyType) params.set("propertyType", filters.propertyType);
-    if (filters.bhk) params.set("bhk", filters.bhk);
-    if (filters.minBudget != null) params.set("minBudget", String(filters.minBudget));
-    if (filters.maxBudget != null) params.set("maxBudget", String(filters.maxBudget));
     if (filters.ownerId) params.set("ownerId", filters.ownerId);
+    if (filters.buyerId) params.set("clientId", filters.buyerId);
     if (filters.q) params.set("search", filters.q);
-    if (filters.onlyAccepted === false) params.set("onlyAccepted", "false");
     return params.toString();
 }
 
@@ -170,7 +163,7 @@ export const brokerVisitsApi = {
         }
         const [visits, slotsPage, requests] = await Promise.all([
             this.list(),
-            this.slots({ page: 1, limit: 100 }),
+            this.slots(),
             this.requests(),
         ]);
         return buildVisitSummary(visits, slotsPage.items, requests);
@@ -207,27 +200,34 @@ export const brokerVisitsApi = {
                         .includes(q),
                 );
             }
-            const page = filters.page ?? 1;
-            const limit = filters.limit ?? 20;
-            const start = (page - 1) * limit;
-            const paged = items.slice(start, start + limit);
             return {
-                items: paged,
+                items,
                 total: items.length,
-                page,
-                limit,
-                totalPages: Math.max(1, Math.ceil(items.length / limit) || 1),
+                page: 1,
+                limit: items.length,
+                totalPages: 1,
                 propertyOptions: MOCK_PROPERTIES_WITH_SLOTS.map((item) => ({
                     id: item.property.id,
                     title: item.property.title,
                     locality: item.property.locality,
                     city: item.property.city,
                 })),
+                ownerOptions: [
+                    ...new Map(
+                        MOCK_PROPERTIES_WITH_SLOTS.map((item) => [
+                            item.owner.id,
+                            { id: item.owner.id, name: item.owner.name },
+                        ]),
+                    ).values(),
+                ],
             };
         }
 
         const response = await requestData<
-            Paged<ApiBrokerOpenSlotItem> & { propertyOptions?: ApiPropertyOption[] }
+            Paged<ApiBrokerOpenSlotItem> & {
+                propertyOptions?: ApiPropertyOption[];
+                ownerOptions?: ApiOwnerOption[];
+            }
         >(`/slots/broker/open?${buildOpenSlotsQuery(filters)}`);
 
         return {
@@ -237,6 +237,7 @@ export const brokerVisitsApi = {
             limit: response.limit ?? filters.limit ?? 20,
             totalPages: Math.max(1, response.totalPages ?? 1),
             propertyOptions: response.propertyOptions ?? [],
+            ownerOptions: response.ownerOptions ?? [],
         };
     },
 
