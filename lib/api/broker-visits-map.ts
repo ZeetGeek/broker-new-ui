@@ -1,3 +1,7 @@
+import type { PropertyListing } from "@/lib/api/properties";
+import type { RepresentationItem } from "@/lib/api/representative";
+
+import type { MyListingItem } from "@/features/properties/your-listings/types";
 import type {
     BrokerSiteVisit,
     BrokerVisitStatus,
@@ -8,9 +12,6 @@ import type {
     VisitPropertySummary,
     VisitSlot,
 } from "@/features/site-visits/broker/model";
-import type { RepresentationItem } from "@/lib/api/representative";
-import type { MyListingItem } from "@/features/properties/your-listings/types";
-import type { PropertyListing } from "@/lib/api/properties";
 
 export type ApiShowing = {
     id: string;
@@ -130,14 +131,24 @@ function purposeFromTransaction(type?: string | null): "sale" | "rent" {
     return type === "rent" ? "rent" : "sale";
 }
 
+const BHK_CONFIG_LABEL: Record<string, string> = {
+    one_rk: "1 RK",
+    one_bhk: "1 BHK",
+    two_bhk: "2 BHK",
+    three_bhk: "3 BHK",
+    four_bhk: "4 BHK",
+    five_plus_bhk: "5+ BHK",
+};
+
 function configLabel(
     bhkConfig?: string | null,
     bedrooms?: number | null,
     subtype?: string | null,
 ): string {
-    if (bhkConfig?.trim()) return bhkConfig.trim();
+    const raw = bhkConfig?.trim();
+    if (raw) return BHK_CONFIG_LABEL[raw] ?? raw.replaceAll("_", " ");
     if (bedrooms != null && bedrooms > 0) return `${bedrooms} BHK`;
-    if (subtype?.trim()) return subtype.trim();
+    if (subtype?.trim()) return subtype.trim().replaceAll("_", " ");
     return "Property";
 }
 
@@ -260,6 +271,8 @@ export function mapShowingToTimeRequest(showing: ApiShowing): TimeRequest {
 
 export function mapApiSlot(slot: ApiVisitSlot, ownerId?: string): VisitSlot {
     const isOpen = slot.status === "open";
+    const bookedVisitId = slot.showingId ?? slot.booking?.id ?? undefined;
+    const isBooked = Boolean(bookedVisitId) || slot.status === "booked";
     return {
         id: slot.id,
         propertyId: slot.propertyId,
@@ -267,11 +280,11 @@ export function mapApiSlot(slot: ApiVisitSlot, ownerId?: string): VisitSlot {
         startsAt: iso(slot.startAt),
         endsAt: iso(slot.endAt),
         capacity: 1,
-        bookedCount: isOpen ? 0 : 1,
-        status: isOpen ? "open" : slot.status === "closed" ? "cancelled" : "full",
+        bookedCount: isOpen && !isBooked ? 0 : 1,
+        status: isOpen && !isBooked ? "open" : slot.status === "closed" ? "cancelled" : "full",
         visibility: "accepted_brokers",
         autoConfirm: false,
-        bookedVisitId: slot.showingId ?? slot.booking?.id ?? undefined,
+        bookedVisitId,
     };
 }
 

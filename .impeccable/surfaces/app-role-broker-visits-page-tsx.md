@@ -27,7 +27,7 @@ Keep the global broker shell untouched. Preserve the existing warm green design 
 
 **STORY:** The broker first sees what needs attention today, then chooses between managing visits, finding bookable owner time, or resolving requests. Every booking connects a buyer, owner, property, time, and travel reality in one place.
 
-**FIRST VIEWPORT:** A compact heading and live IST chip share the top row with Request a time and Book a visit. Beneath, six real filters form one continuous summary strip, then a full-width three-tab control. The selected tab immediately shows its operational control rail and first real rows; no decorative hero or stat-card grid delays the task.
+**FIRST VIEWPORT:** A compact heading and live IST chip lead. Beneath, a Your-listings-style chip bar: Filters + Open slots / My visits / Requests on the left; on Open slots, Search + date dropdown (Today / Tomorrow / Next week / Next month / Custom range picker) on the right. Filters opens the section sheet. First real rows follow immediately.
 
 **FORM:** Precisely specified operating surface within the established project world; no concept seed is needed. The memorable interaction is the horizontally running slot rail: roving keyboard focus, strong physical slot buttons, and one booked-state flip. Seed key: brief-pinned-site-visits.
 

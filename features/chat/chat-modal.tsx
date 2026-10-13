@@ -6,8 +6,11 @@ import toast from "react-hot-toast";
 import SimpleBar from "simplebar-react";
 
 import { ApiError } from "@/lib/api/client";
-import { representativeApi } from "@/lib/api/representative";
+import { isMockMode } from "@/lib/api/mock-mode";
+import { type RepresentationMessage, representativeApi } from "@/lib/api/representative";
+import { getNotificationSocket } from "@/lib/socket/notifications";
 import { cn } from "@/lib/utils";
+import { useAppSelector } from "@/store/hooks";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -53,11 +56,14 @@ export function ChatModal({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
+    const accessToken = useAppSelector((state) => state.auth.accessToken);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
     const [loadedKey, setLoadedKey] = useState<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+    /** Messages that arrived over the socket while the thread fetch was in flight. */
+    const pendingLiveRef = useRef<ChatMessage[]>([]);
 
     const representationId = peer?.representationId;
     const mySide = peer?.mySide ?? "broker";
@@ -70,6 +76,8 @@ export function ChatModal({
 
         // Defer loading flags so the effect body stays free of synchronous setState
         // (react-hooks/set-state-in-effect). Same pattern as my-listings fetch.
+        pendingLiveRef.current = [];
+
         const timer = window.setTimeout(() => {
             if (cancelled) return;
 
@@ -80,7 +88,11 @@ export function ChatModal({
                 .messages(representationId)
                 .then((rows) => {
                     if (cancelled) return;
-                    setMessages(rows.map((row) => mapRepresentationMessage(row, mySide)));
+                    const mapped = rows.map((row) => mapRepresentationMessage(row, mySide));
+                    const ids = new Set(mapped.map((message) => message.id));
+                    const extras = pendingLiveRef.current.filter((message) => !ids.has(message.id));
+                    pendingLiveRef.current = [];
+                    setMessages([...mapped, ...extras]);
                 })
                 .catch((error) => {
                     if (cancelled) return;
@@ -101,6 +113,29 @@ export function ChatModal({
     }, [open, representationId, mySide]);
 
     useEffect(() => {
+        if (!open || !representationId || !accessToken || isMockMode()) return;
+
+        const socket = getNotificationSocket(accessToken);
+        const onMessage = (message: RepresentationMessage) => {
+            if (message.representationId !== representationId) return;
+            const mapped = mapRepresentationMessage(message, mySide);
+            pendingLiveRef.current = [
+                ...pendingLiveRef.current.filter((item) => item.id !== mapped.id),
+                mapped,
+            ];
+            setMessages((prev) => {
+                if (prev.some((item) => item.id === mapped.id)) return prev;
+                return [...prev, mapped];
+            });
+        };
+
+        socket.on("representation.message", onMessage);
+        return () => {
+            socket.off("representation.message", onMessage);
+        };
+    }, [open, representationId, accessToken, mySide]);
+
+    useEffect(() => {
         if (!open) return;
         bottomRef.current?.scrollIntoView({ block: "end" });
     }, [open, messages, loading]);
@@ -116,7 +151,10 @@ export function ChatModal({
                     message: text,
                     file,
                 });
-                setMessages((prev) => [...prev, mapRepresentationMessage(created, mySide)]);
+                const mapped = mapRepresentationMessage(created, mySide);
+                setMessages((prev) =>
+                    prev.some((item) => item.id === mapped.id) ? prev : [...prev, mapped],
+                );
             } catch (error) {
                 toast.error(error instanceof ApiError ? error.message : "Failed to send message");
             } finally {
