@@ -103,12 +103,30 @@ export function InvitedBrokersRow({
     onManage?: () => void;
 }) {
     if (brokers.length === 0) return null;
-    const title = (
-        <span className="text-pending">
-            {brokers.length} {brokers.length === 1 ? "invitation pending" : "invitations pending"}
-        </span>
+    const content = (
+        <>
+            <AvatarStack people={brokers} size="2xs" max={3} className="shrink-0" />
+            <span className="body-xs font-medium text-pending min-inline-0">
+                {brokers.length}{" "}
+                {brokers.length === 1 ? "invitation pending" : "invitations pending"}
+            </span>
+        </>
     );
-    return <AttachedPeopleShell people={brokers} title={title} onManage={onManage} />;
+    const rowClassName = "flex items-center gap-2 text-start inline-full min-inline-0";
+    return onManage ? (
+        <button
+            type="button"
+            onClick={onManage}
+            className={cn(
+                rowClassName,
+                "rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
+            )}
+        >
+            {content}
+        </button>
+    ) : (
+        <div className={rowClassName}>{content}</div>
+    );
 }
 
 /** Exclusive owner attached to a listing — tap opens the owner picker. */
