@@ -1,26 +1,29 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 
-import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
+import { Button } from "@/components/ui/button";
 
+import { ActiveBrokerCard } from "@/features/owner-brokers/active-broker-card";
+import {
+    BrowseBrokersSkeleton,
+    OWNER_BROKERS_GRID_BREAKPOINTS,
+} from "@/features/owner-brokers/browse-brokers-skeleton";
 import { OwnerBrokersBrowse } from "@/features/owner-brokers/owner-brokers-browse";
 import { OwnerBrokersEmpty } from "@/features/owner-brokers/owner-brokers-empty";
 import { OwnerBrokersHeader } from "@/features/owner-brokers/owner-brokers-header";
+import { OwnerBrokersIntro } from "@/features/owner-brokers/owner-brokers-intro";
 import type { OwnerBrokersTab } from "@/features/owner-brokers/types";
-import { OwnerRequestCard } from "@/features/owner-requests/owner-request-card";
 import { OwnerRequestsFilteredEmpty } from "@/features/owner-requests/owner-requests-empty";
 import type { OwnerRequestsSort } from "@/features/owner-requests/owner-requests-header";
 import { useOwnerRepQueue } from "@/features/owner-requests/use-owner-rep-queue";
-import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
-import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 
 function isBrokersTab(value: string | null): value is OwnerBrokersTab {
     return value === "browse" || value === "active";
@@ -39,8 +42,12 @@ export function OwnerBrokersPage() {
     const [sort, setSort] = useState<OwnerRequestsSort>("recent");
 
     const [activeCount, setActiveCount] = useState<number | null>(null);
-
+    const [browseCount, setBrowseCount] = useState<number | null>(null);
     const [brokerSearch, setBrokerSearch] = useState("");
+
+    const onBrowseTotalChange = useCallback((total: number | null) => {
+        setBrowseCount(total);
+    }, []);
 
     const queue = useOwnerRepQueue({
         kind: "active",
@@ -49,7 +56,6 @@ export function OwnerBrokersPage() {
         enabled: tab === "active",
     });
 
-    // Kept apart from the scrolled queue so the tab chip has a count on Browse too.
     useEffect(() => {
         let cancelled = false;
         void representativeApi
@@ -65,29 +71,33 @@ export function OwnerBrokersPage() {
         };
     }, [revision]);
 
+    const introCount = tab === "browse" ? browseCount : activeCount;
+
     let body: ReactNode;
 
     if (tab === "browse") {
-        body = <OwnerBrokersBrowse search={brokerSearch} />;
+        body = <OwnerBrokersBrowse search={brokerSearch} onTotalChange={onBrowseTotalChange} />;
     } else if (queue.isPending) {
-        body = <RequestsListSkeleton />;
+        body = <BrowseBrokersSkeleton />;
     } else if (queue.isError && queue.items.length === 0) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load active brokers</p>
+            <div role="alert" className="flex flex-col items-start gap-3 py-12">
+                <p className="body-sm font-medium text-ink">
+                    Active brokers could not load. Check your connection and try again.
+                </p>
                 <p className="body-sm text-ink-muted">
                     {apiMessage(queue.error, "Could not load active brokers")}
                 </p>
-                <button
-                    type="button"
+                <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => {
                         setRevision((prev) => prev + 1);
                         void queue.refetch();
                     }}
-                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                     Try again
-                </button>
+                </Button>
             </div>
         );
     } else if (queue.items.length === 0 && search.trim()) {
@@ -109,11 +119,11 @@ export function OwnerBrokersPage() {
                 <WindowVirtualGrid
                     items={queue.items}
                     getKey={(item) => item.id}
-                    estimateRowHeight={480}
+                    estimateRowHeight={320}
                     gap={24}
-                    breakpoints={REQUESTS_GRID_BREAKPOINTS}
+                    breakpoints={OWNER_BROKERS_GRID_BREAKPOINTS}
                     ariaLabel="Active brokers"
-                    renderItem={(item) => <OwnerRequestCard item={item} actions="none" />}
+                    renderItem={(item) => <ActiveBrokerCard item={item} />}
                 />
                 <InfiniteListStatus
                     hasNextPage={Boolean(queue.hasNextPage)}
@@ -127,25 +137,17 @@ export function OwnerBrokersPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <PortalSectionNav>
-                <h1 className="h3 text-start text-ink">
-                    Browse brokers.{" "}
-                    <span className="text-ink-muted">
-                        {tab === "browse"
-                            ? "Find brokers and invite them to represent your listings"
-                            : "Brokers currently representing your properties"}
-                    </span>
-                </h1>
-            </PortalSectionNav>
+            <OwnerBrokersIntro tab={tab} count={introCount} />
 
             <OwnerBrokersHeader
                 activeTab={tab}
+                browseCount={browseCount}
                 activeCount={activeCount}
                 search={tab === "browse" ? brokerSearch : search}
                 onSearchChange={tab === "browse" ? setBrokerSearch : setSearch}
                 sort={sort}
                 onSortChange={setSort}
-                isLoading={activeCount == null}
+                isLoading={tab === "browse" ? browseCount == null : activeCount == null}
             />
 
             {body}
