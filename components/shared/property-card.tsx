@@ -1673,16 +1673,17 @@ function OwnedOverlayPropertyCard({
                             <p className="body-sm text-danger" role="status">
                                 Couldn&apos;t load brokers
                             </p>
-                        ) : brokerSummary?.brokers.length ? (
-                            <AttachedBrokersRow
-                                brokers={brokerSummary.brokers}
-                                onManage={onInviteBroker}
-                            />
                         ) : null}
                         {brokerSummaryState === "ready" &&
                         (brokerSummary?.pendingInvitations.length ?? 0) > 0 ? (
                             <InvitedBrokersRow
                                 brokers={brokerSummary!.pendingInvitations}
+                                onManage={onInviteBroker}
+                            />
+                        ) : null}
+                        {brokerSummaryState === "ready" && brokerSummary?.brokers.length ? (
+                            <AttachedBrokersRow
+                                brokers={brokerSummary.brokers}
                                 onManage={onInviteBroker}
                             />
                         ) : null}
