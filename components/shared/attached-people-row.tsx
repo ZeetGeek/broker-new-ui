@@ -19,79 +19,64 @@ type PartyMeetSide = {
 };
 
 /**
- * Owner/broker + buyer on one glass strip — used on pipeline and owner-lead
- * cards so the two people on a deal read in one line instead of two full-width
- * rows with empty space on the right.
- *
- * Left anchors start, right anchors end, connector sits in the middle so the
- * strip reads balanced even when one name is much shorter.
+ * Owner/broker + buyer in one glass strip — two equal halves split by a
+ * center divider. Name on top, role under it. Used on pipeline and owner-lead
+ * cards so both portals read a deal the same way.
  */
-export function PartyMeetRow({
-    left,
-    right,
-    connector = "with",
-}: {
-    left: PartyMeetSide;
-    right: PartyMeetSide;
-    /** Plain link word between the two people. */
-    connector?: string;
-}) {
-    const ariaLabel = `${left.role} ${left.name} ${connector} ${right.role} ${right.name}`;
+export function PartyMeetRow({ left, right }: { left: PartyMeetSide; right: PartyMeetSide }) {
+    const ariaLabel = `${left.role} ${left.name}, ${right.role} ${right.name}`;
 
     return (
         <div
             role="group"
             aria-label={ariaLabel}
             className={cn(
-                "flex items-center gap-2 px-2.5 py-2 rounded-control inline-full",
+                "flex items-stretch rounded-control inline-full",
                 OVERLAY_GLASS_BUTTON_CLASS,
             )}
         >
-            <PartyMeetPerson side={left} align="start" />
-            <span
+            <PartyMeetPerson side={left} />
+            <div
                 aria-hidden
-                className="body-xs shrink-0 font-medium tracking-wide text-ink-subtle"
-            >
-                {connector}
-            </span>
-            <PartyMeetPerson side={right} align="end" />
+                className="mbs-2.5 mbe-2.5 shrink-0 self-stretch bg-border-warm inline-px"
+            />
+            <PartyMeetPerson side={right} />
         </div>
     );
 }
 
-function PartyMeetPerson({ side, align }: { side: PartyMeetSide; align: "start" | "end" }) {
+function PartyMeetPerson({ side }: { side: PartyMeetSide }) {
     const content = (
         <>
             <UserAvatar
                 name={side.name}
                 imageUrl={side.avatarUrl}
-                size="2xs"
+                size="xs"
                 fallback="character"
                 className="shrink-0"
             />
-            <span className="body-sm truncate font-semibold tracking-wide text-ink capitalize">
-                {side.name}
+            <span className="flex min-inline-0 flex-col gap-0.5 text-start">
+                <span className="body-sm truncate font-semibold tracking-wide text-ink capitalize">
+                    {side.name}
+                </span>
+                <span className="body-xs truncate text-ink-muted">{side.role}</span>
             </span>
         </>
     );
 
-    const className = cn(
-        "flex min-inline-0 flex-1 items-center gap-2",
-        align === "start" ? "justify-start text-start" : "justify-end text-end",
-    );
+    const className = "flex min-inline-0 flex-1 items-center gap-2.5 px-3 py-2.5";
 
     if (side.onOpen) {
         return (
             <button
                 type="button"
                 onClick={side.onOpen}
-                title={`${side.role}: ${side.name}`}
                 className={cn(
                     className,
                     `
-                      rounded-sm transition-colors duration-160
-                      hover:text-brand
-                      focus-visible:outline-2 focus-visible:outline-offset-2
+                      transition-colors duration-160
+                      hover:bg-surface-muted
+                      focus-visible:outline-2 focus-visible:outline-offset-[-2px]
                       focus-visible:outline-ring
                     `,
                 )}
@@ -101,11 +86,7 @@ function PartyMeetPerson({ side, align }: { side: PartyMeetSide; align: "start" 
         );
     }
 
-    return (
-        <div className={className} title={`${side.role}: ${side.name}`}>
-            {content}
-        </div>
-    );
+    return <div className={className}>{content}</div>;
 }
 
 function AttachedPeopleShell({
