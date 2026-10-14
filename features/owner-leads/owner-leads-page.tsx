@@ -3,134 +3,89 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { ChevronDown, Filter, HandCoins, LayoutGrid, List, Search } from "lucide-react";
+import { HandCoins } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
-import { type OfferStatus, ownerLeadsApi, type PropertyLead } from "@/lib/api/owner-leads";
+import { ownerLeadsApi, type PropertyLead } from "@/lib/api/owner-leads";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { AcceptOfferModal } from "@/features/owner-leads/accept-offer-modal";
-import { OwnerLeadCard } from "@/features/owner-leads/owner-lead-card";
+import { OwnerLeadBoardCard } from "@/features/owner-leads/owner-lead-board-card";
+import {
+    isFinishedLead,
+    leadBrokerLabel,
+    leadClientLabel,
+    leadPropertyFacts,
+} from "@/features/owner-leads/owner-lead-meta";
 import { OwnerLeadsBoard } from "@/features/owner-leads/owner-leads-board";
 import { LeadsSkeleton } from "@/features/owner-leads/owner-leads-skeleton";
-import { useOwnerLeadsLayout } from "@/features/owner-leads/use-owner-leads-layout";
+import {
+    type OwnerLeadsSummary,
+    type OwnerLeadsSummaryChip,
+    OwnerLeadsSummaryStrip,
+} from "@/features/owner-leads/owner-leads-summary-strip";
+import {
+    type OwnerLeadsFilters,
+    OwnerLeadsToolbar,
+} from "@/features/owner-leads/owner-leads-toolbar";
 
-type OfferFilter = "all" | "pending" | "accepted" | "rejected";
+const DEFAULT_FILTERS: OwnerLeadsFilters = {
+    q: "",
+    dealType: "",
+    locality: "",
+    brokerName: "",
+    sort: "recent",
+};
 
-const STAGE_OPTIONS: { value: string; label: string }[] = [
-    { value: "", label: "All stages" },
-    { value: "new", label: "New" },
-    { value: "contacted", label: "Contacted" },
-    { value: "site_visit", label: "Site visit" },
-    { value: "negotiation", label: "Negotiation" },
-    { value: "offer_made", label: "Offer made" },
-    { value: "closed_won", label: "Closed won" },
-    { value: "closed_lost", label: "Closed lost" },
-];
-
-const OFFER_TABS: { value: OfferFilter; label: string }[] = [
-    { value: "all", label: "All" },
-    { value: "pending", label: "Pending" },
-    { value: "accepted", label: "Accepted" },
-    { value: "rejected", label: "Rejected" },
+const DONE_GRID_BREAKPOINTS = [
+    { minWidth: 640, columns: 2 },
+    { minWidth: 1024, columns: 3 },
 ];
 
 function apiMessage(error: unknown, fallback: string): string {
     return error instanceof ApiError ? error.message : fallback;
 }
 
-function buildHeadline(
-    total: number,
-    pending: number,
-    filter: OfferFilter,
-): { fact: string; meaning: string } {
-    if (total === 0) {
-        return {
-            fact: "No leads yet.",
-            meaning: "Offers and buyer interest from your brokers will show here.",
-        };
-    }
-
-    if (filter === "pending") {
-        if (pending === 0) {
-            return {
-                fact: "No pending offers.",
-                meaning: "You're caught up — nothing waiting on a reply.",
-            };
-        }
-        return {
-            fact: `${pending} ${pending === 1 ? "offer" : "offers"} waiting.`,
-            meaning: "Accept or reject so your broker can move ahead.",
-        };
-    }
-
-    return {
-        fact: `${total} ${total === 1 ? "lead" : "leads"}.`,
-        meaning:
-            pending > 0
-                ? `${pending} ${pending === 1 ? "offer needs" : "offers need"} your reply.`
-                : "Buyer interest across your properties.",
-    };
+function leadTimestamp(lead: PropertyLead): number {
+    const raw = lead.updatedAt || lead.createdAt;
+    if (!raw) return 0;
+    const ms = Date.parse(raw);
+    return Number.isFinite(ms) ? ms : 0;
 }
 
-/** Debounced so typing does not refetch on every keystroke. */
-function LeadsQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
-    const [draft, setDraft] = useState(value);
-    const [prevValue, setPrevValue] = useState(value);
+function matchesClientFilters(lead: PropertyLead, filters: OwnerLeadsFilters): boolean {
+    const facts = leadPropertyFacts(lead);
+    if (filters.dealType === "rent" && !facts.isRent) return false;
+    if (filters.dealType === "sale" && facts.isRent) return false;
+    if (filters.locality && facts.locality !== filters.locality) return false;
+    if (filters.brokerName && leadBrokerLabel(lead) !== filters.brokerName) return false;
 
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setDraft(value);
-    }
+    const q = filters.q.trim().toLowerCase();
+    if (!q) return true;
 
-    useEffect(() => {
-        if (draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), 300);
-        return () => window.clearTimeout(timer);
-    }, [draft, onChange, value]);
+    const haystack = [
+        facts.locality,
+        facts.city,
+        lead.property?.title,
+        leadBrokerLabel(lead),
+        leadClientLabel(lead),
+    ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-    return (
-        <Input
-            size="sm"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Search broker, property or client"
-            aria-label="Search your leads"
-            startIcon={Search}
-            clearable
-            wrapperClassName="
-              min-inline-44 inline-44 shadow-sm
-              sm:min-inline-52 sm:inline-52
-              lg:min-inline-64 lg:inline-64
-            "
-            className="
-              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
-              block-[38px]!
-              hover:border-ink/25!
-              focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
-            "
-        />
-    );
+    return haystack.includes(q);
 }
 
 export function OwnerLeadsPage() {
-    const { layout, setLayout } = useOwnerLeadsLayout();
-    const [search, setSearch] = useState("");
-    const [offerFilter, setOfferFilter] = useState<OfferFilter>("all");
-    const [stageFilter, setStageFilter] = useState("");
+    const [filters, setFilters] = useState<OwnerLeadsFilters>(DEFAULT_FILTERS);
+    const [summaryChip, setSummaryChip] = useState<OwnerLeadsSummaryChip>("running");
     const [items, setItems] = useState<PropertyLead[]>([]);
-    const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [revision, setRevision] = useState(0);
@@ -143,26 +98,19 @@ export function OwnerLeadsPage() {
         setLoading(true);
         setError(null);
 
-        const offerStatus: OfferStatus | undefined =
-            offerFilter === "all" ? undefined : offerFilter;
-
         void ownerLeadsApi
             .list({
-                search: search.trim() || undefined,
-                stage: stageFilter || undefined,
-                offerStatus,
+                search: filters.q.trim() || undefined,
                 limit: 50,
             })
             .then((page) => {
                 if (cancelled) return;
                 setItems(page.items);
-                setTotal(page.total);
             })
             .catch((err) => {
                 if (cancelled) return;
                 setError(apiMessage(err, "Could not load leads"));
                 setItems([]);
-                setTotal(0);
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -171,23 +119,78 @@ export function OwnerLeadsPage() {
         return () => {
             cancelled = true;
         };
-    }, [search, offerFilter, stageFilter, revision]);
+    }, [filters.q, revision]);
 
-    const pendingCount = useMemo(
-        () => items.filter((lead) => lead.offerStatus === "pending").length,
-        [items],
+    const localities = useMemo(() => {
+        return [
+            ...new Set(
+                items
+                    .map((lead) => leadPropertyFacts(lead).locality)
+                    .filter((value): value is string => Boolean(value)),
+            ),
+        ].sort();
+    }, [items]);
+
+    const brokers = useMemo(() => {
+        return [...new Set(items.map((lead) => leadBrokerLabel(lead)).filter(Boolean))].sort();
+    }, [items]);
+
+    const filteredItems = useMemo(() => {
+        const matched = items.filter((lead) => matchesClientFilters(lead, filters));
+        const sorted = [...matched].sort((a, b) => {
+            const delta = leadTimestamp(b) - leadTimestamp(a);
+            return filters.sort === "oldest" ? -delta : delta;
+        });
+        return sorted;
+    }, [filters, items]);
+
+    const liveItems = useMemo(
+        () => filteredItems.filter((lead) => !isFinishedLead(lead)),
+        [filteredItems],
+    );
+    const finishedItems = useMemo(
+        () => filteredItems.filter((lead) => isFinishedLead(lead)),
+        [filteredItems],
+    );
+    const pendingOfferItems = useMemo(
+        () => liveItems.filter((lead) => lead.offerStatus === "pending"),
+        [liveItems],
     );
 
-    const headline = buildHeadline(
-        offerFilter === "all" ? total : items.length,
-        offerFilter === "pending" ? items.length : pendingCount,
-        offerFilter,
+    const summary = useMemo<OwnerLeadsSummary>(
+        () => ({
+            liveTotal: liveItems.length,
+            pendingOfferCount: pendingOfferItems.length,
+            finishedCount: finishedItems.length,
+        }),
+        [finishedItems.length, liveItems.length, pendingOfferItems.length],
     );
 
-    const stageLabelActive =
-        STAGE_OPTIONS.find((option) => option.value === stageFilter)?.label ?? "All stages";
+    const boardItems =
+        summaryChip === "pending"
+            ? pendingOfferItems
+            : summaryChip === "finished"
+              ? finishedItems
+              : liveItems;
 
-    const hasActiveFilters = Boolean(search.trim() || stageFilter || offerFilter !== "all");
+    const hasSearch =
+        filters.q.trim().length > 0 ||
+        filters.dealType !== "" ||
+        filters.locality !== "" ||
+        filters.brokerName !== "" ||
+        summaryChip === "pending";
+
+    const isFirstRun =
+        !hasSearch && summaryChip === "running" && !loading && items.length === 0 && !error;
+
+    const handlePatch = useCallback((patch: Partial<OwnerLeadsFilters>) => {
+        setFilters((prev) => ({ ...prev, ...patch }));
+    }, []);
+
+    const handleClearSearch = useCallback(() => {
+        setFilters(DEFAULT_FILTERS);
+        setSummaryChip("running");
+    }, []);
 
     const rejectOffer = useCallback(async (leadId: string) => {
         setBusyId(leadId);
@@ -202,8 +205,6 @@ export function OwnerLeadsPage() {
         }
     }, []);
 
-    // Accepting closes the deal as sold, so the card only opens the
-    // confirmation; the API call happens from the modal.
     const openAccept = useCallback((lead: PropertyLead) => {
         setAcceptError(null);
         setAcceptingLead(lead);
@@ -230,174 +231,38 @@ export function OwnerLeadsPage() {
         }
     }, [acceptingLead]);
 
-    const clearFilters = useCallback(() => {
-        setSearch("");
-        setOfferFilter("all");
-        setStageFilter("");
-    }, []);
+    function renderLeadCard(lead: PropertyLead) {
+        return (
+            <OwnerLeadBoardCard
+                lead={lead}
+                busy={busyId === lead.id}
+                onAccept={() => openAccept(lead)}
+                onReject={() => void rejectOffer(lead.id)}
+            />
+        );
+    }
 
     return (
         <TooltipProvider>
-            <div className="flex flex-col gap-6">
-                <h1 className="h4">
-                    <span className="text-ink">{headline.fact}</span>{" "}
-                    <span className="text-ink-muted">{headline.meaning}</span>
-                </h1>
-
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <div
-                            role="group"
-                            aria-label="Which offers to show"
-                            className="flex items-center gap-1 rounded-control bg-surface-muted p-1"
-                        >
-                            {OFFER_TABS.map((tab) => {
-                                const isActive = offerFilter === tab.value;
-                                return (
-                                    <button
-                                        key={tab.value}
-                                        type="button"
-                                        aria-pressed={isActive}
-                                        onClick={() => setOfferFilter(tab.value)}
-                                        className={cn(
-                                            `
-                                              body-sm flex items-center gap-2 rounded-control px-3.5
-                                              transition-colors duration-160 block-control-sm
-                                            `,
-                                            isActive
-                                                ? "bg-surface font-semibold text-ink shadow-xs"
-                                                : "font-normal text-ink-muted hover:text-ink",
-                                        )}
-                                    >
-                                        {tab.label}
-                                        {tab.value === "pending" && pendingCount > 0 ? (
-                                            <span className="tabular">{pendingCount}</span>
-                                        ) : null}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-2.5">
-                        <LeadsQueryInput value={search} onChange={setSearch} />
-
-                        <DropdownMenu>
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <DropdownMenuTrigger
-                                            render={
-                                                <button
-                                                    type="button"
-                                                    className={cn(
-                                                        `
-                                                          body-sm flex shrink-0 items-center gap-2
-                                                          rounded-control border border-border-warm
-                                                          bg-surface px-4 font-medium text-ink
-                                                          transition-colors duration-160
-                                                          block-control-lg
-                                                          hover:border-ink/25
-                                                        `,
-                                                        !stageFilter && "text-ink-muted",
-                                                    )}
-                                                />
-                                            }
-                                        >
-                                            <Filter
-                                                aria-hidden
-                                                className="text-brand block-4 inline-4"
-                                                strokeWidth={1.75}
-                                            />
-                                            <span className="hidden sm:inline">
-                                                {stageLabelActive}
-                                            </span>
-                                            <span className="sm:hidden">Stage</span>
-                                            <ChevronDown
-                                                aria-hidden
-                                                className="block-4 inline-4"
-                                                strokeWidth={1.75}
-                                            />
-                                        </DropdownMenuTrigger>
-                                    }
-                                />
-                                <TooltipContent side="bottom">
-                                    Filter by pipeline stage.
-                                </TooltipContent>
-                            </Tooltip>
-                            <DropdownMenuContent align="end">
-                                {STAGE_OPTIONS.map((option) => (
-                                    <DropdownMenuItem
-                                        key={option.value || "all"}
-                                        onClick={() => setStageFilter(option.value)}
-                                        className={cn(
-                                            stageFilter === option.value && "font-semibold",
-                                        )}
-                                    >
-                                        {option.label}
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <div
-                            role="group"
-                            aria-label="Board or list"
-                            className="flex items-center gap-1 rounded-control bg-surface-muted p-1"
-                        >
-                            {(
-                                [
-                                    { value: "board", label: "Board", icon: LayoutGrid },
-                                    { value: "list", label: "List", icon: List },
-                                ] as const
-                            ).map((option) => {
-                                const Icon = option.icon;
-                                const isActive = layout === option.value;
-
-                                return (
-                                    <button
-                                        key={option.value}
-                                        type="button"
-                                        aria-pressed={isActive}
-                                        aria-label={option.label}
-                                        onClick={() => setLayout(option.value)}
-                                        className={cn(
-                                            `
-                                              body-sm flex items-center gap-1.5 rounded-control px-3
-                                              transition-colors duration-160 block-control-sm
-                                            `,
-                                            isActive
-                                                ? "bg-surface font-semibold text-ink shadow-xs"
-                                                : "font-normal text-ink-muted hover:text-ink",
-                                        )}
-                                    >
-                                        <Icon
-                                            aria-hidden
-                                            className="block-4 inline-4"
-                                            strokeWidth={1.75}
-                                        />
-                                        <span className="hidden sm:inline">{option.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {hasActiveFilters ? (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="text-ink-muted"
-                                onClick={clearFilters}
-                            >
-                                Clear
-                            </Button>
-                        ) : null}
-                    </div>
-                </div>
+            <div className="flex flex-col gap-5">
+                {!isFirstRun ? (
+                    <OwnerLeadsToolbar
+                        filters={filters}
+                        localities={localities}
+                        brokers={brokers}
+                        onPatch={handlePatch}
+                        trailing={
+                            <OwnerLeadsSummaryStrip
+                                summary={summary}
+                                active={summaryChip}
+                                onChange={setSummaryChip}
+                            />
+                        }
+                    />
+                ) : null}
 
                 {loading && items.length === 0 ? (
-                    <LeadsSkeleton layout={layout} />
+                    <LeadsSkeleton layout="board" />
                 ) : error ? (
                     <div className="flex flex-col items-center gap-3 py-16 text-center">
                         <p className="h5 text-ink">Could not load leads</p>
@@ -410,26 +275,67 @@ export function OwnerLeadsPage() {
                             Try again
                         </Button>
                     </div>
-                ) : items.length === 0 ? (
+                ) : isFirstRun ? (
                     <EmptyState
                         icon={HandCoins}
-                        heading={hasActiveFilters ? "No matching leads" : "No leads yet"}
+                        heading="No leads yet"
+                        description="When a broker brings a buyer or sends an offer on your listing, it shows up here."
+                    />
+                ) : summaryChip === "finished" ? (
+                    finishedItems.length === 0 ? (
+                        <EmptyState
+                            icon={HandCoins}
+                            heading={hasSearch ? "No matching leads" : "No finished leads"}
+                            description={
+                                hasSearch
+                                    ? "Try another search, type, area, or broker."
+                                    : "Sold and lost deals will land here."
+                            }
+                        >
+                            {hasSearch ? (
+                                <Button variant="outline" size="sm" onClick={handleClearSearch}>
+                                    Clear filters
+                                </Button>
+                            ) : null}
+                        </EmptyState>
+                    ) : (
+                        <div
+                            className={cn(
+                                "transition-opacity duration-160",
+                                loading && "opacity-60",
+                            )}
+                        >
+                            <WindowVirtualGrid
+                                items={finishedItems}
+                                getKey={(lead) => lead.id}
+                                estimateRowHeight={470}
+                                gap={12}
+                                breakpoints={DONE_GRID_BREAKPOINTS}
+                                ariaLabel="Finished leads"
+                                renderItem={renderLeadCard}
+                            />
+                        </div>
+                    )
+                ) : boardItems.length === 0 ? (
+                    <EmptyState
+                        icon={HandCoins}
+                        heading={hasSearch ? "No matching leads" : "No leads here yet"}
                         description={
-                            hasActiveFilters
-                                ? "Try another search, stage, or offer status."
+                            hasSearch
+                                ? "Try another search, type, area, or broker."
                                 : "When a broker brings a buyer or sends an offer on your listing, it shows up here."
                         }
                     >
-                        {hasActiveFilters ? (
-                            <Button variant="outline" size="sm" onClick={clearFilters}>
+                        {hasSearch ? (
+                            <Button variant="outline" size="sm" onClick={handleClearSearch}>
                                 Clear filters
                             </Button>
                         ) : null}
                     </EmptyState>
-                ) : layout === "board" ? (
+                ) : (
                     <div className={cn("transition-opacity duration-160", loading && "opacity-60")}>
                         <OwnerLeadsBoard
-                            leads={items}
+                            leads={boardItems}
                             busyId={busyId}
                             onAccept={(leadId) => {
                                 const lead = items.find((item) => item.id === leadId);
@@ -437,26 +343,6 @@ export function OwnerLeadsPage() {
                             }}
                             onReject={(leadId) => void rejectOffer(leadId)}
                         />
-                    </div>
-                ) : (
-                    <div
-                        className={cn(
-                            `
-                              flex flex-col gap-4 transition-opacity duration-160
-                              lg:grid lg:grid-cols-2
-                            `,
-                            loading && "opacity-60",
-                        )}
-                    >
-                        {items.map((lead) => (
-                            <OwnerLeadCard
-                                key={lead.id}
-                                lead={lead}
-                                busy={busyId === lead.id}
-                                onAccept={() => openAccept(lead)}
-                                onReject={() => void rejectOffer(lead.id)}
-                            />
-                        ))}
                     </div>
                 )}
             </div>

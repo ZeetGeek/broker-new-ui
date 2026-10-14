@@ -6,8 +6,107 @@ import { cn } from "@/lib/utils";
 
 import { AvatarStack } from "@/components/shared/avatar-stack";
 import { OVERLAY_GLASS_BUTTON_CLASS } from "@/components/shared/overlay-card";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 type AttachedPerson = { id: string; name: string; avatarUrl?: string };
+
+type PartyMeetSide = {
+    name: string;
+    avatarUrl?: string;
+    /** Screen-reader role, e.g. "Owner" / "Buyer" / "Broker". */
+    role: string;
+    onOpen?: () => void;
+};
+
+/**
+ * Owner/broker + buyer on one glass strip — used on pipeline and owner-lead
+ * cards so the two people on a deal read in one line instead of two full-width
+ * rows with empty space on the right.
+ *
+ * Left anchors start, right anchors end, connector sits in the middle so the
+ * strip reads balanced even when one name is much shorter.
+ */
+export function PartyMeetRow({
+    left,
+    right,
+    connector = "with",
+}: {
+    left: PartyMeetSide;
+    right: PartyMeetSide;
+    /** Plain link word between the two people. */
+    connector?: string;
+}) {
+    const ariaLabel = `${left.role} ${left.name} ${connector} ${right.role} ${right.name}`;
+
+    return (
+        <div
+            role="group"
+            aria-label={ariaLabel}
+            className={cn(
+                "flex items-center gap-2 px-2.5 py-2 rounded-control inline-full",
+                OVERLAY_GLASS_BUTTON_CLASS,
+            )}
+        >
+            <PartyMeetPerson side={left} align="start" />
+            <span
+                aria-hidden
+                className="body-xs shrink-0 font-medium tracking-wide text-ink-subtle"
+            >
+                {connector}
+            </span>
+            <PartyMeetPerson side={right} align="end" />
+        </div>
+    );
+}
+
+function PartyMeetPerson({ side, align }: { side: PartyMeetSide; align: "start" | "end" }) {
+    const content = (
+        <>
+            <UserAvatar
+                name={side.name}
+                imageUrl={side.avatarUrl}
+                size="2xs"
+                fallback="character"
+                className="shrink-0"
+            />
+            <span className="body-sm truncate font-semibold tracking-wide text-ink capitalize">
+                {side.name}
+            </span>
+        </>
+    );
+
+    const className = cn(
+        "flex min-inline-0 flex-1 items-center gap-2",
+        align === "start" ? "justify-start text-start" : "justify-end text-end",
+    );
+
+    if (side.onOpen) {
+        return (
+            <button
+                type="button"
+                onClick={side.onOpen}
+                title={`${side.role}: ${side.name}`}
+                className={cn(
+                    className,
+                    `
+                      rounded-sm transition-colors duration-160
+                      hover:text-brand
+                      focus-visible:outline-2 focus-visible:outline-offset-2
+                      focus-visible:outline-ring
+                    `,
+                )}
+            >
+                {content}
+            </button>
+        );
+    }
+
+    return (
+        <div className={className} title={`${side.role}: ${side.name}`}>
+            {content}
+        </div>
+    );
+}
 
 function AttachedPeopleShell({
     people,

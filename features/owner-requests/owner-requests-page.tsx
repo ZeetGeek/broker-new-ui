@@ -27,7 +27,10 @@ import { OwnerRequestsIntro } from "@/features/owner-requests/owner-requests-int
 import type { OwnerRequestsSummary, OwnerRequestsTab } from "@/features/owner-requests/types";
 import { useOwnerRepQueue } from "@/features/owner-requests/use-owner-rep-queue";
 import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
-import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
+import {
+    RequestsListSkeleton,
+    RequestsPageSkeleton,
+} from "@/features/properties/my-requests/requests-skeleton";
 
 function isRequestsTab(value: string | null): value is OwnerRequestsTab {
     return value === "requests" || value === "invitations";
@@ -122,11 +125,15 @@ export function OwnerRequestsPage() {
         );
     }
 
+    if (!summariesReady) {
+        return <RequestsPageSkeleton />;
+    }
+
     const cardActions = tab === "requests" ? "respond" : "withdraw";
 
     let body: ReactNode;
 
-    if (!summariesReady || queue.isPending) {
+    if (queue.isPending) {
         body = <RequestsListSkeleton />;
     } else if (queue.isError && queue.items.length === 0) {
         body = (
