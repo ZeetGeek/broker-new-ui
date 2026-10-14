@@ -119,6 +119,7 @@ export function OwnerDashboard() {
     const phoneDigits = view.phoneDigits || authUser?.phone || "";
     const email = view.email || authUser?.email || "";
     const city = view.city || authUser?.city?.trim() || null;
+    const visitsEmpty = view.nextShowing == null && view.today.items.length === 0;
 
     return (
         <DashboardPage
@@ -136,13 +137,7 @@ export function OwnerDashboard() {
                 />
             }
         >
-            <NextShowingCard
-                showing={view.nextShowing}
-                now={now}
-                portal="owner"
-                className="md:col-span-4"
-            />
-            <TodayCard agenda={view.today} now={now} portal="owner" className="md:col-span-4" />
+            {/* Pending first on mobile (decision card above the fold); desktop order restored via md:order-* */}
             <PendingRequestsCard
                 requests={view.pendingRequests}
                 pendingCount={view.pendingRequestsCount}
@@ -150,10 +145,45 @@ export function OwnerDashboard() {
                 onRespond={(id, respondStatus) => {
                     void handleRespond(id, respondStatus);
                 }}
-                className="md:col-span-4"
+                className={
+                    visitsEmpty
+                        ? "order-1 md:order-2 md:col-span-4"
+                        : "order-1 md:order-3 md:col-span-4"
+                }
             />
-            <GlanceCard summary={view.summary} className="md:col-span-6" />
-            <ActivityCard data={view.activity} portal="owner" className="md:col-span-6" />
+
+            {visitsEmpty ? (
+                <NextShowingCard
+                    showing={null}
+                    now={now}
+                    portal="owner"
+                    className="order-2 md:order-1 md:col-span-8"
+                />
+            ) : (
+                <>
+                    <NextShowingCard
+                        showing={view.nextShowing}
+                        now={now}
+                        portal="owner"
+                        className="order-2 md:order-1 md:col-span-4"
+                    />
+                    <TodayCard
+                        agenda={view.today}
+                        now={now}
+                        portal="owner"
+                        className="order-3 md:order-2 md:col-span-4"
+                    />
+                </>
+            )}
+
+            <GlanceCard
+                summary={view.summary}
+                visits={view.glanceVisits}
+                invites={view.glanceInvites}
+                now={now}
+                className="order-4 md:col-span-6"
+            />
+            <ActivityCard data={view.activity} portal="owner" className="order-5 md:col-span-6" />
         </DashboardPage>
     );
 }

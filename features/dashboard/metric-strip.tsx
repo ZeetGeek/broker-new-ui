@@ -27,8 +27,8 @@ export function MetricCell({
                         type="button"
                         aria-label={`${label}: ${value}. ${hint}`}
                         className="
-                          flex flex-1 flex-col items-start gap-0.5 rounded-inner px-3 text-start
-                          outline-none min-inline-0
+                          flex flex-1 flex-col items-start gap-0.5 rounded-inner px-2 text-start
+                          outline-none min-inline-0 sm:px-3
                           focus-visible:ring-2 focus-visible:ring-ring
                         "
                     >

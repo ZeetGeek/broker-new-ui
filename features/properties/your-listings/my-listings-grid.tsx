@@ -1,5 +1,6 @@
 "use client";
 
+import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
 import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
 import { ownerPropertyDetailHref, ownerPropertyEditHref } from "@/lib/routes/owner";
 
@@ -21,6 +22,9 @@ export type MyListingsGridProps = {
     onAttachOwner?: (listing: MyListingItem) => void;
     /** When set, each card offers delete (caller shows confirm). */
     onDeleteListing?: (listing: MyListingItem) => void;
+    onInviteBroker?: (listing: MyListingItem) => void;
+    brokersByProperty?: Map<string, PropertyBrokersSummary>;
+    brokerSummaryState?: "loading" | "error" | "ready";
 };
 
 const GRID_BREAKPOINTS = [
@@ -37,6 +41,9 @@ export function MyListingsGrid({
     onAddBuyer,
     onAttachOwner,
     onDeleteListing,
+    onInviteBroker,
+    brokersByProperty,
+    brokerSummaryState,
 }: MyListingsGridProps) {
     const detailHref = portal === "owner" ? ownerPropertyDetailHref : brokerPropertyDetailHref;
     const editHref = portal === "owner" ? ownerPropertyEditHref : brokerPropertyEditHref;
@@ -62,6 +69,13 @@ export function MyListingsGrid({
                         onAddBuyer={onAddBuyer ? () => onAddBuyer(item) : undefined}
                         onAttachOwner={onAttachOwner ? () => onAttachOwner(item) : undefined}
                         onDelete={onDeleteListing ? () => onDeleteListing(item) : undefined}
+                        onInviteBroker={
+                            portal === "owner" && onInviteBroker
+                                ? () => onInviteBroker(item)
+                                : undefined
+                        }
+                        brokerSummary={brokersByProperty?.get(item.id)}
+                        brokerSummaryState={brokerSummaryState}
                         priority={index === 0}
                         imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                     />

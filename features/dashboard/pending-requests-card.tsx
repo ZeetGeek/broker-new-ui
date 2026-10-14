@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 
-import { Check, Handshake, Inbox, X } from "lucide-react";
+import { Check, Inbox, X } from "lucide-react";
 
 import type { DashboardOwnerBrokerRequest } from "@/lib/api/dashboard";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
-import { OWNER_REQUESTS_HREF, ownerBrokersHref, ownerPropertyDetailHref } from "@/lib/routes/owner";
+import { ownerBrokersHref, ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { TextLinkButton } from "@/components/shared/text-link-button";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -40,60 +41,67 @@ function PendingRequestRow({
 }) {
     const createdAt = request.createdAt ? parseApiInstant(request.createdAt) : null;
     const brokerLabel = request.brokerDisplayName || request.brokerName || "Broker";
+    const relativeLabel = createdAt ? formatRelativePast(createdAt, new Date()) : null;
 
     return (
-        <li className="flex flex-col gap-2 py-2">
-            <div className="flex items-start gap-3 min-inline-0">
-                <Handshake
-                    aria-hidden
-                    className="mbs-0.5 shrink-0 text-brand block-4 inline-4"
-                    strokeWidth={1.75}
-                />
-                <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <p className="body font-semibold text-ink truncate">{brokerLabel}</p>
-                        {request.brokerVerified ? (
-                            <Badge variant="brand" className="shrink-0">
-                                Verified
-                            </Badge>
-                        ) : null}
-                        {request.brokerIsAgency ? (
-                            <Badge variant="outline" className="shrink-0 bg-surface">
-                                Agency
-                            </Badge>
-                        ) : null}
-                    </div>
-                    <Link
-                        href={ownerPropertyDetailHref(request.propertyId)}
-                        className="
-                          body-sm font-medium text-brand underline-offset-4 truncate
-                          hover:underline
-                        "
-                    >
-                        {request.propertyTitle}
-                    </Link>
-                    {request.message ? (
-                        <p className="body-sm text-pretty text-ink-muted line-clamp-2">
-                            {request.message}
-                        </p>
+        <li
+            className={cn(
+                "flex items-center gap-3 border-b border-border-warm py-3 last:border-b-0",
+                busy && "opacity-70",
+            )}
+        >
+            <UserAvatar name={brokerLabel} size="sm" fallback="brand" />
+
+            <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-inline-0">
+                    <p className="body truncate font-semibold text-ink">{brokerLabel}</p>
+                    {request.brokerVerified ? (
+                        <Badge variant="brand" className="shrink-0">
+                            Verified
+                        </Badge>
                     ) : null}
-                    {createdAt ? (
-                        <p className="body-xs text-ink-subtle">
-                            {formatRelativePast(createdAt, new Date())}
-                        </p>
+                    {request.brokerIsAgency ? (
+                        <Badge variant="outline" className="shrink-0 bg-surface">
+                            Agency
+                        </Badge>
                     ) : null}
                 </div>
+
+                <Link
+                    href={ownerPropertyDetailHref(request.propertyId)}
+                    className="
+                      body-sm font-medium text-brand underline-offset-4 truncate
+                      hover:underline
+                    "
+                >
+                    {request.propertyTitle}
+                </Link>
+
+                {request.message ? (
+                    <p className="body-sm text-pretty text-ink-muted line-clamp-1">
+                        {request.message}
+                    </p>
+                ) : null}
+
+                {relativeLabel ? (
+                    <time className="body-xs text-ink-subtle" dateTime={createdAt?.toISOString()}>
+                        {relativeLabel}
+                    </time>
+                ) : null}
             </div>
 
-            <div className="flex flex-wrap gap-2 ps-7">
+            <div className="flex shrink-0 items-center gap-1.5">
                 <Button
                     type="button"
                     size="sm"
-                    disabled={busy}
+                    variant="accent"
+                    loading={busy}
                     onClick={() => onRespond("accepted")}
-                    className="rounded-control bg-brand text-surface hover:bg-brand-text"
+                    className="px-2.5"
                 >
-                    <Check aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
+                    {!busy ? (
+                        <Check aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
+                    ) : null}
                     Accept
                 </Button>
                 <Button
@@ -102,7 +110,7 @@ function PendingRequestRow({
                     variant="outline"
                     disabled={busy}
                     onClick={() => onRespond("rejected")}
-                    className="rounded-control border-border-warm"
+                    className="border-border-warm bg-surface px-2.5 text-ink"
                 >
                     <X aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
                     Decline
@@ -177,7 +185,7 @@ export function PendingRequestsCard({
                 </Tooltip>
             </div>
 
-            <div className="mbs-2 flex-1 overflow-hidden min-block-0">
+            <div className="mbs-1 flex-1 overflow-hidden min-block-0">
                 <div
                     className="
                       scrollbar-none overflow-y-auto overscroll-contain
@@ -185,7 +193,7 @@ export function PendingRequestsCard({
                       [&::-webkit-scrollbar]:hidden
                     "
                 >
-                    <ul className="flex flex-col gap-1">
+                    <ul className="flex flex-col">
                         {requests.map((request) => (
                             <PendingRequestRow
                                 key={request.id}
@@ -196,10 +204,6 @@ export function PendingRequestsCard({
                         ))}
                     </ul>
                 </div>
-            </div>
-
-            <div className="mbs-auto flex shrink-0 justify-end pt-2">
-                <TextLinkButton href={OWNER_REQUESTS_HREF}>View all</TextLinkButton>
             </div>
         </section>
     );

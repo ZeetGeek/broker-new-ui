@@ -3,6 +3,7 @@ import type {
     DashboardBrokerRequest,
     DashboardFollowUps,
     DashboardOwnerBrokerRequest,
+    DashboardOwnerInvite,
     DashboardOwnerSummary,
     DashboardResponse,
     DashboardVisit,
@@ -138,9 +139,7 @@ function mapTodayAgenda(
             const time = formatTime24(scheduledAt);
             const timeLabel = formatTimeIn(scheduledAt);
             const person =
-                portal === "owner"
-                    ? visit.brokerName || "Broker"
-                    : visit.clientName || "Client";
+                portal === "owner" ? visit.brokerName || "Broker" : visit.clientName || "Client";
             const item: TodayItem = {
                 id: visit.id,
                 kind: "site_visit",
@@ -170,10 +169,7 @@ function mapTodayAgenda(
     };
 }
 
-function mapNextShowing(
-    visit: DashboardVisit | undefined,
-    portal: "broker" | "owner" = "broker",
-) {
+function mapNextShowing(visit: DashboardVisit | undefined, portal: "broker" | "owner" = "broker") {
     if (!visit) return null;
     const scheduledAt = new Date(visit.scheduledAt);
     if (Number.isNaN(scheduledAt.getTime())) return null;
@@ -194,9 +190,7 @@ function mapNextShowing(
         brokerNote: "",
         status: visit.status === "confirmed" ? ("confirmed" as const) : ("awaiting_owner" as const),
         clientName:
-            portal === "owner"
-                ? visit.brokerName || "Broker"
-                : visit.clientName || "Client",
+            portal === "owner" ? visit.brokerName || "Broker" : visit.clientName || "Client",
         clientPhoneDigits: phoneDigits(visit.clientPhone),
     };
 }
@@ -546,6 +540,24 @@ export function mapBrokerDashboardViewFromMock(
     };
 }
 
+/** Compact visit row for the owner At a glance card. */
+export type OwnerGlanceVisit = {
+    id: string;
+    scheduledAt: Date;
+    propertyTitle: string;
+    brokerName: string;
+    statusLabel: string;
+};
+
+/** Outbound / pending invite row for the owner At a glance card. */
+export type OwnerGlanceInvite = {
+    id: string;
+    propertyId: string;
+    propertyTitle: string;
+    createdAt: Date | null;
+    message: string | null;
+};
+
 export type OwnerDashboardView = {
     siteVisitCount: number;
     pendingRequestsCount: number;
@@ -553,6 +565,8 @@ export type OwnerDashboardView = {
     nextShowing: BrokerDashboardView["nextShowing"];
     today: TodayAgenda;
     pendingRequests: DashboardOwnerBrokerRequest[];
+    glanceVisits: OwnerGlanceVisit[];
+    glanceInvites: OwnerGlanceInvite[];
     activity: ActivityData;
     phoneDigits: string;
     email: string;
@@ -576,6 +590,37 @@ function readOwnerSummary(summary: DashboardResponse["summary"]): DashboardOwner
     };
 }
 
+function mapOwnerGlanceVisits(visits: DashboardVisit[]): OwnerGlanceVisit[] {
+    return visits
+        .map((visit) => {
+            const scheduledAt = new Date(visit.scheduledAt);
+            if (Number.isNaN(scheduledAt.getTime())) return null;
+            return {
+                id: visit.id,
+                scheduledAt,
+                propertyTitle: visit.propertyTitle?.trim() || "Property",
+                brokerName: visit.brokerName?.trim() || "Broker",
+                statusLabel: visit.statusLabel?.trim() || visitStateLabel(visit, "owner"),
+            };
+        })
+        .filter((row): row is OwnerGlanceVisit => row != null)
+        .sort((left, right) => left.scheduledAt.getTime() - right.scheduledAt.getTime());
+}
+
+function mapOwnerGlanceInvites(invites: DashboardOwnerInvite[] | undefined): OwnerGlanceInvite[] {
+    if (!invites?.length) return [];
+    return invites.map((invite) => {
+        const createdAt = invite.createdAt ? new Date(invite.createdAt) : null;
+        return {
+            id: invite.id,
+            propertyId: invite.propertyId,
+            propertyTitle: invite.propertyTitle.trim() || "Property",
+            createdAt: createdAt && !Number.isNaN(createdAt.getTime()) ? createdAt : null,
+            message: invite.message?.trim() || null,
+        };
+    });
+}
+
 export function mapOwnerDashboardView(
     data: DashboardResponse | null,
     profile: UserProfile | null,
@@ -590,8 +635,7 @@ export function mapOwnerDashboardView(
     const pendingRequests = (data?.brokerRequests ?? []).filter(isOwnerBrokerRequest);
     const fullName =
         profile?.fullName?.trim() || data?.greeting?.fullName?.trim() || profile?.email || "Owner";
-    const city =
-        profile?.city?.trim() || profile?.owner?.preferredCities?.[0]?.trim() || null;
+    const city = profile?.city?.trim() || profile?.owner?.preferredCities?.[0]?.trim() || null;
 
     return {
         siteVisitCount: todayVisits.length,
@@ -600,6 +644,8 @@ export function mapOwnerDashboardView(
         nextShowing: mapNextShowing(visits[0], "owner"),
         today: mapTodayAgenda(visits, now, "owner"),
         pendingRequests,
+        glanceVisits: mapOwnerGlanceVisits(visits),
+        glanceInvites: mapOwnerGlanceInvites(data?.ownerInvites),
         activity: mapActivity(data?.activity),
         phoneDigits: phoneDigits(profile?.phone),
         email: profile?.email ?? "",

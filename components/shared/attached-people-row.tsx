@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { cn } from "@/lib/utils";
 
 import { AvatarStack } from "@/components/shared/avatar-stack";
@@ -13,7 +15,7 @@ function AttachedPeopleShell({
     onManage,
 }: {
     people: AttachedPerson[];
-    title: string;
+    title: ReactNode;
     onManage?: () => void;
 }) {
     const names = people.map((person) => person.name).join(", ");
@@ -72,6 +74,41 @@ export function AttachedBuyersRow({
 
     const title = buyers.length === 1 ? "1 buyer" : `${buyers.length} buyers`;
     return <AttachedPeopleShell people={buyers} title={title} onManage={onManage} />;
+}
+
+/** Brokers with accepted consent for this property. */
+export function AttachedBrokersRow({
+    brokers,
+    onManage,
+}: {
+    brokers: AttachedPerson[];
+    onManage?: () => void;
+}) {
+    if (brokers.length === 0) return null;
+    const title = (
+        <>
+            {brokers.length} {brokers.length === 1 ? "broker" : "brokers"}
+            <span className="sr-only"> working on this property</span>
+        </>
+    );
+    return <AttachedPeopleShell people={brokers} title={title} onManage={onManage} />;
+}
+
+/** Owner-sent invitations stay separate from brokers with accepted consent. */
+export function InvitedBrokersRow({
+    brokers,
+    onManage,
+}: {
+    brokers: AttachedPerson[];
+    onManage?: () => void;
+}) {
+    if (brokers.length === 0) return null;
+    const title = (
+        <span className="text-pending">
+            {brokers.length} {brokers.length === 1 ? "invitation pending" : "invitations pending"}
+        </span>
+    );
+    return <AttachedPeopleShell people={brokers} title={title} onManage={onManage} />;
 }
 
 /** Exclusive owner attached to a listing — tap opens the owner picker. */
