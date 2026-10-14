@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import { ArrowRight, IndianRupee, Lock, Rocket, ShieldCheck } from "lucide-react";
