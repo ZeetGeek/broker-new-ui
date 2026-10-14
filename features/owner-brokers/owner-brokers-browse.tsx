@@ -37,9 +37,11 @@ const NO_SPECIALTIES: Specialty[] = [];
 
 export function OwnerBrokersBrowse({
     search,
+    onSearchChange,
     onTotalChange,
 }: {
     search: string;
+    onSearchChange?: (q: string) => void;
     onTotalChange?: (total: number | null) => void;
 }) {
     const [filters, setFilters] = useState<BrowseBrokersFilters>(DEFAULT_BROWSE_BROKERS_FILTERS);
@@ -152,7 +154,13 @@ export function OwnerBrokersBrowse({
             </EmptyState>
         );
     } else if (brokers.length === 0) {
-        results = <OwnerBrokersEmpty tab="browse" hasSearch={Boolean(term)} />;
+        results = (
+            <OwnerBrokersEmpty
+                tab="browse"
+                hasSearch={Boolean(term)}
+                onClearSearch={onSearchChange ? () => onSearchChange("") : undefined}
+            />
+        );
     } else {
         results = (
             <div

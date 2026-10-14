@@ -1,4 +1,4 @@
-import { Handshake, UserRoundSearch } from "lucide-react";
+import { Handshake, Search, UserRoundSearch } from "lucide-react";
 import Link from "next/link";
 
 import { ownerBrokersHref } from "@/lib/routes/owner";
@@ -11,19 +11,27 @@ import type { OwnerBrokersTab } from "@/features/owner-brokers/types";
 export function OwnerBrokersEmpty({
     tab,
     hasSearch = false,
+    onClearSearch,
 }: {
     tab: OwnerBrokersTab;
     hasSearch?: boolean;
+    onClearSearch?: () => void;
 }) {
     if (tab === "browse") {
         if (hasSearch) {
             return (
                 <EmptyState
-                    icon={UserRoundSearch}
+                    icon={Search}
                     heading="Nothing matches"
                     description="Try a different name, agency, or area."
                     className="py-16"
-                />
+                >
+                    {onClearSearch ? (
+                        <Button variant="secondary" size="sm" onClick={onClearSearch}>
+                            Clear the search
+                        </Button>
+                    ) : null}
+                </EmptyState>
             );
         }
 
@@ -37,6 +45,23 @@ export function OwnerBrokersEmpty({
         );
     }
 
+    if (hasSearch) {
+        return (
+            <EmptyState
+                icon={Search}
+                heading="Nothing matches"
+                description="Try a different name or property."
+                className="py-16"
+            >
+                {onClearSearch ? (
+                    <Button variant="secondary" size="sm" onClick={onClearSearch}>
+                        Clear the search
+                    </Button>
+                ) : null}
+            </EmptyState>
+        );
+    }
+
     return (
         <EmptyState
             icon={Handshake}
@@ -46,6 +71,7 @@ export function OwnerBrokersEmpty({
         >
             <Button
                 size="lg"
+                variant="accent"
                 nativeButton={false}
                 render={<Link href={ownerBrokersHref("browse")} />}
             >

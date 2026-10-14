@@ -6,9 +6,7 @@ function buildFact(tab: OwnerBrokersTab, count: number | null): string {
     if (count == null) {
         return tab === "browse" ? "Brokers" : "My brokers";
     }
-    if (count === 0) {
-        return tab === "browse" ? "No brokers yet" : "No brokers yet";
-    }
+    if (count === 0) return "No brokers yet";
     return `${count} ${count === 1 ? "broker" : "brokers"}`;
 }
 

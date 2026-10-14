@@ -21,7 +21,6 @@ import { OwnerBrokersEmpty } from "@/features/owner-brokers/owner-brokers-empty"
 import { OwnerBrokersHeader } from "@/features/owner-brokers/owner-brokers-header";
 import { OwnerBrokersIntro } from "@/features/owner-brokers/owner-brokers-intro";
 import type { OwnerBrokersTab } from "@/features/owner-brokers/types";
-import { OwnerRequestsFilteredEmpty } from "@/features/owner-requests/owner-requests-empty";
 import type { OwnerRequestsSort } from "@/features/owner-requests/owner-requests-header";
 import { useOwnerRepQueue } from "@/features/owner-requests/use-owner-rep-queue";
 
@@ -71,12 +70,23 @@ export function OwnerBrokersPage() {
         };
     }, [revision]);
 
+    useEffect(() => {
+        if (tab !== "active" || queue.isPending) return;
+        if (typeof queue.total === "number") setActiveCount(queue.total);
+    }, [tab, queue.isPending, queue.total]);
+
     const introCount = tab === "browse" ? browseCount : activeCount;
 
     let body: ReactNode;
 
     if (tab === "browse") {
-        body = <OwnerBrokersBrowse search={brokerSearch} onTotalChange={onBrowseTotalChange} />;
+        body = (
+            <OwnerBrokersBrowse
+                search={brokerSearch}
+                onSearchChange={setBrokerSearch}
+                onTotalChange={onBrowseTotalChange}
+            />
+        );
     } else if (queue.isPending) {
         body = <BrowseBrokersSkeleton />;
     } else if (queue.isError && queue.items.length === 0) {
@@ -101,9 +111,7 @@ export function OwnerBrokersPage() {
             </div>
         );
     } else if (queue.items.length === 0 && search.trim()) {
-        body = (
-            <OwnerRequestsFilteredEmpty searchQuery={search} onClearFilters={() => setSearch("")} />
-        );
+        body = <OwnerBrokersEmpty tab="active" hasSearch onClearSearch={() => setSearch("")} />;
     } else if (queue.items.length === 0) {
         body = <OwnerBrokersEmpty tab="active" />;
     } else {
