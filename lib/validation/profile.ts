@@ -56,18 +56,8 @@ export const profileFormSchema = z.object({
     // Owner fields
     companyName: z.string().trim().max(120, "Name is too long"),
     gstin: z.string().trim().max(30, "That GSTIN is too long"),
-    preferredCities: z
-        .string()
-        .refine(
-            (value) => parseCommaList(value).length <= MAX_PREFERRED,
-            `Keep it to ${MAX_PREFERRED} cities`,
-        ),
-    preferredLocalities: z
-        .string()
-        .refine(
-            (value) => parseCommaList(value).length <= MAX_PREFERRED,
-            `Keep it to ${MAX_PREFERRED} localities`,
-        ),
+    preferredCities: z.string(),
+    preferredLocalities: z.string(),
     // Broker fields
     /** Empty means "not saying". A broker starting out should not have to type 0. */
     experienceYears: z.string().refine((value) => {

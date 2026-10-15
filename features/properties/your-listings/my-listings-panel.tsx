@@ -2,9 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tinykeys } from "tinykeys";
 
 import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
+import { representativeApi } from "@/lib/api/representative";
+import { summarizePropertyBrokers } from "@/lib/format/property-brokers";
 import { getShortcut } from "@/lib/shortcuts";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
@@ -16,6 +20,7 @@ import type { RequestItem } from "@/features/properties/my-requests/types";
 import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
 import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
+import { InvitePropertyBrokerModal } from "@/features/properties/your-listings/invite-property-broker-modal";
 import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import { MyListingsGrid } from "@/features/properties/your-listings/my-listings-grid";
 import { MyListingsHeader } from "@/features/properties/your-listings/my-listings-header";
@@ -80,6 +85,7 @@ function asRequestShape(item: MyListingItem): RequestItem {
 }
 
 export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "owner" }) {
+    const queryClient = useQueryClient();
     const { filters, setFilters, clearFilters, hasActiveFilters } = useMyListingsFilters();
     const [summary, setSummary] = useState<MyListingsSummary | null>(null);
     const [addOpen, setAddOpen] = useState(false);
@@ -91,10 +97,29 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
     const [ownerListing, setOwnerListing] = useState<MyListingItem | null>(null);
     const [isOwnerAttachOpen, setIsOwnerAttachOpen] = useState(false);
+    const [brokerListing, setBrokerListing] = useState<MyListingItem | null>(null);
+    const [isBrokerInviteOpen, setIsBrokerInviteOpen] = useState(false);
+    const [brokerInviteSession, setBrokerInviteSession] = useState(0);
     /** Bumped after a save so the list refetches without changing filters. */
     const [refreshToken, setRefreshToken] = useState(0);
 
     const isOwnerPortal = portal === "owner";
+    const representations = useQuery({
+        queryKey: ["owner-property-representations"],
+        queryFn: () => representativeApi.ownerList(),
+        enabled: isOwnerPortal,
+        staleTime: 30_000,
+        refetchInterval: isOwnerPortal ? 60_000 : false,
+    });
+    const brokersByProperty = useMemo(
+        () => summarizePropertyBrokers(representations.data ?? [], representations.dataUpdatedAt),
+        [representations.data, representations.dataUpdatedAt],
+    );
+    const brokerSummaryState = representations.isError
+        ? "error"
+        : representations.isPending
+          ? "loading"
+          : "ready";
 
     const infiniteFilters = useMemo(() => ({ ...filters, page: 1 }), [filters]);
     const query = useInfiniteItems({
@@ -133,13 +158,20 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 if (isEditable(event.target)) return;
                 if (event.repeat) return;
                 if (addOpen || editingListing != null || deletingListing != null) return;
-                if (isBuyersOpen || isOwnerAttachOpen) return;
+                if (isBuyersOpen || isOwnerAttachOpen || isBrokerInviteOpen) return;
                 setAddOpen(true);
             },
         });
 
         return () => unsubscribe();
-    }, [addOpen, editingListing, deletingListing, isBuyersOpen, isOwnerAttachOpen]);
+    }, [
+        addOpen,
+        editingListing,
+        deletingListing,
+        isBuyersOpen,
+        isOwnerAttachOpen,
+        isBrokerInviteOpen,
+    ]);
 
     const confirmDelete = useCallback(async () => {
         if (!deletingListing) return;
@@ -197,6 +229,18 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     <MyListingsGrid
                         items={query.items}
                         portal={portal}
+                        brokersByProperty={isOwnerPortal ? brokersByProperty : undefined}
+                        brokerSummaryState={isOwnerPortal ? brokerSummaryState : undefined}
+                        onInviteBroker={
+                            isOwnerPortal
+                                ? (listing) => {
+                                      setBrokerListing(listing);
+                                      setBrokerInviteSession((session) => session + 1);
+                                      setIsBrokerInviteOpen(true);
+                                      void representations.refetch();
+                                  }
+                                : undefined
+                        }
                         onEditListing={setEditingListing}
                         onDeleteListing={setDeletingListing}
                         onAddBuyer={
@@ -225,6 +269,23 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 </div>
             )}
             <MyListingsAddFab onClick={() => setAddOpen(true)} />
+            {isOwnerPortal && brokerListing ? (
+                <InvitePropertyBrokerModal
+                    key={brokerInviteSession}
+                    listing={brokerListing}
+                    open={isBrokerInviteOpen}
+                    onOpenChange={setIsBrokerInviteOpen}
+                    summary={brokersByProperty.get(brokerListing.id)}
+                    summaryState={brokerSummaryState}
+                    onRetrySummary={() => void representations.refetch()}
+                    onInvited={() => {
+                        void queryClient.invalidateQueries({
+                            queryKey: ["owner-property-representations"],
+                        });
+                        void queryClient.invalidateQueries({ queryKey: ["owner-rep-queue"] });
+                    }}
+                />
+            ) : null}
             <PropertyFormDialog
                 open={addOpen}
                 portal={portal}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { ArrowDownUp, ChevronDown, Search } from "lucide-react";
+import { ArrowDownUp, ChevronDown, Search, UserRound, UserRoundSearch } from "lucide-react";
 
 import { ownerBrokersHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ import {
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
 
 const SORT_OPTIONS: { value: OwnerRequestsSort; label: string }[] = [
-    { value: "recent", label: "Newest first" },
+    { value: "recent", label: "Recent first" },
     { value: "oldest", label: "Oldest first" },
 ];
 
@@ -39,18 +39,21 @@ const TAB_CHIPS: {
     label: string;
     mobileLabel: string;
     description: string;
+    icon: typeof UserRoundSearch;
 }[] = [
     {
         key: "browse",
-        label: "Browse Brokers",
-        mobileLabel: "Browse Brokers",
+        label: "Browse",
+        mobileLabel: "Browse",
         description: "Find brokers and invite them to your listings",
+        icon: UserRoundSearch,
     },
     {
         key: "active",
-        label: "My Brokers / Active",
+        label: "My Brokers",
         mobileLabel: "My Brokers",
         description: "Brokers currently representing your properties",
+        icon: UserRound,
     },
 ];
 
@@ -109,35 +112,42 @@ function SortMenu({
     onSortChange: (sort: OwnerRequestsSort) => void;
 }) {
     const isDefaultSort = sort === "recent";
-    const label = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Newest first";
+    const label = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Recent first";
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <button
-                        type="button"
-                        className={cn(
-                            ownerListingsChipClassName(!isDefaultSort),
-                            "gap-2",
-                            isDefaultSort && "text-ink-muted",
-                        )}
-                    >
-                        <ArrowDownUp
-                            aria-hidden
-                            className="text-brand block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                        <span className="hidden sm:inline">{label}</span>
-                        <span className="sm:hidden">Sort</span>
-                        <ChevronDown
-                            aria-hidden
-                            className="opacity-60 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                    </button>
-                }
-            />
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <DropdownMenuTrigger
+                            render={
+                                <button
+                                    type="button"
+                                    className={cn(
+                                        ownerListingsChipClassName(!isDefaultSort),
+                                        "gap-2",
+                                        isDefaultSort && "text-ink-muted",
+                                    )}
+                                />
+                            }
+                        >
+                            <ArrowDownUp
+                                aria-hidden
+                                className="text-brand block-4 inline-4"
+                                strokeWidth={1.75}
+                            />
+                            <span className="hidden sm:inline">{label}</span>
+                            <span className="sm:hidden">Sort</span>
+                            <ChevronDown
+                                aria-hidden
+                                className="opacity-60 block-3.5 inline-3.5"
+                                strokeWidth={1.75}
+                            />
+                        </DropdownMenuTrigger>
+                    }
+                />
+                <TooltipContent side="bottom">Change the order of the list.</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end" className="min-inline-44">
                 {SORT_OPTIONS.map((option) => (
                     <DropdownMenuItem
@@ -155,6 +165,7 @@ function SortMenu({
 
 export function OwnerBrokersHeader({
     activeTab,
+    browseCount,
     activeCount,
     search,
     onSearchChange,
@@ -163,6 +174,7 @@ export function OwnerBrokersHeader({
     isLoading = false,
 }: {
     activeTab: OwnerBrokersTab;
+    browseCount: number | null;
     activeCount: number | null;
     search: string;
     onSearchChange: (q: string) => void;
@@ -170,7 +182,8 @@ export function OwnerBrokersHeader({
     onSortChange: (sort: OwnerRequestsSort) => void;
     isLoading?: boolean;
 }) {
-    const searchPlaceholder = activeTab === "browse" ? "Search brokers" : "Search active brokers";
+    const searchPlaceholder =
+        activeTab === "browse" ? "Search name, agency or area" : "Search name or property";
 
     return (
         <div className="sticky inset-bs-0 z-10">
@@ -179,6 +192,8 @@ export function OwnerBrokersHeader({
                     <OwnerListingsChipsCarousel>
                         {TAB_CHIPS.map((chip) => {
                             const active = activeTab === chip.key;
+                            const Icon = chip.icon;
+                            const count = chip.key === "browse" ? browseCount : activeCount;
 
                             return (
                                 <OwnerListingsChipsCarouselSlide key={chip.key}>
@@ -193,24 +208,32 @@ export function OwnerBrokersHeader({
                                                         "gap-2",
                                                     )}
                                                 >
+                                                    <Icon
+                                                        aria-hidden
+                                                        className={cn(
+                                                            "block-4 inline-4",
+                                                            active
+                                                                ? "text-brand-text"
+                                                                : "text-brand",
+                                                        )}
+                                                        strokeWidth={1.75}
+                                                    />
                                                     <span className="md:hidden">
                                                         {chip.mobileLabel}
                                                     </span>
                                                     <span className="hidden md:inline">
                                                         {chip.label}
                                                     </span>
-                                                    {chip.key === "active" ? (
-                                                        <span
-                                                            className={ownerListingsChipCountClassName(
-                                                                active,
-                                                            )}
-                                                        >
-                                                            {formatChipCount(
-                                                                activeCount ?? 0,
-                                                                isLoading && activeCount == null,
-                                                            )}
-                                                        </span>
-                                                    ) : null}
+                                                    <span
+                                                        className={ownerListingsChipCountClassName(
+                                                            active,
+                                                        )}
+                                                    >
+                                                        {formatChipCount(
+                                                            count ?? 0,
+                                                            isLoading && count == null,
+                                                        )}
+                                                    </span>
                                                 </Link>
                                             }
                                         />
@@ -230,9 +253,7 @@ export function OwnerBrokersHeader({
                             placeholder={searchPlaceholder}
                         />
                         {activeTab === "active" ? (
-                            <>
-                                <SortMenu sort={sort} onSortChange={onSortChange} />
-                            </>
+                            <SortMenu sort={sort} onSortChange={onSortChange} />
                         ) : null}
                     </div>
                 </div>

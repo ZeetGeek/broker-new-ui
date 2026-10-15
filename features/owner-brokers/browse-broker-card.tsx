@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { BadgeCheck, Building2, MapPin, Send } from "lucide-react";
+import { BadgeCheck, MapPin, Send } from "lucide-react";
 
 import type { BrokerProfile } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 
 import { brokerDisplayName } from "@/features/owner-brokers/browse-brokers-filters";
 
-const MAX_TAGS = 3;
+const MAX_TAGS = 2;
 
 export function brokerLocationLine(broker: BrokerProfile): string {
     const areas = broker.serviceAreas?.filter(Boolean) ?? [];
@@ -27,7 +27,18 @@ export function formatExperience(years: number | null | undefined): string {
     return `${years} ${years === 1 ? "yr" : "yrs"}`;
 }
 
-/** Inset metric strip (DESIGN §4.6) — label above, tabular value below. */
+function brokerHeroMetric(broker: BrokerProfile): string {
+    if (broker.experienceYears && broker.experienceYears > 0) {
+        return `${broker.experienceYears}+ yrs experience`;
+    }
+    if (broker.dealsClosed != null && broker.dealsClosed > 0) {
+        return `${broker.dealsClosed} deals closed`;
+    }
+    if (broker.orgName?.trim()) return broker.orgName.trim();
+    return "Experience not listed";
+}
+
+/** Inset metric strip — kept for profile dialog reuse. */
 export function BrokerMetricStrip({
     broker,
     className,
@@ -97,89 +108,6 @@ export function BrokerSpecialtyTags({
     );
 }
 
-function BrokerIdentity({ broker }: { broker: BrokerProfile }) {
-    const name = brokerDisplayName(broker);
-    const location = brokerLocationLine(broker);
-
-    return (
-        <div className="flex items-start gap-3 min-inline-0">
-            <UserAvatar
-                name={name}
-                imageUrl={broker.avatarUrl ?? undefined}
-                size="lg"
-                className="shrink-0"
-            />
-            <div className="flex flex-1 flex-col gap-1 min-inline-0">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-inline-0">
-                    <h3 className="body truncate font-semibold tracking-wide text-ink capitalize">
-                        {name}
-                    </h3>
-                    {broker.verified ? (
-                        <Badge variant="brand" className="shrink-0">
-                            <BadgeCheck aria-hidden />
-                            Verified
-                        </Badge>
-                    ) : null}
-                </div>
-                {broker.orgName && broker.orgName.trim() !== name ? (
-                    <p className="body-sm flex items-center gap-1.5 text-ink-muted min-inline-0">
-                        <Building2
-                            aria-hidden
-                            className="shrink-0 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                        <span className="truncate">{broker.orgName}</span>
-                        {broker.isAgency && broker.agencyStaffCount ? (
-                            <span className="shrink-0 text-ink-subtle tabular-nums">
-                                · {broker.agencyStaffCount} brokers
-                            </span>
-                        ) : null}
-                    </p>
-                ) : null}
-                {location ? (
-                    <p className="body-sm flex items-center gap-1.5 text-ink-muted min-inline-0">
-                        <MapPin
-                            aria-hidden
-                            className="shrink-0 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                        <span className="truncate">{location}</span>
-                    </p>
-                ) : null}
-            </div>
-        </div>
-    );
-}
-
-function BrokerActions({
-    broker,
-    onViewProfile,
-    onInvite,
-    className,
-}: {
-    broker: BrokerProfile;
-    onViewProfile: (broker: BrokerProfile) => void;
-    onInvite: (broker: BrokerProfile) => void;
-    className?: string;
-}) {
-    return (
-        <div className={cn("flex items-center gap-2", className)}>
-            <Button
-                size="md"
-                variant="surface"
-                className="flex-1"
-                onClick={() => onViewProfile(broker)}
-            >
-                View profile
-            </Button>
-            <Button size="md" className="flex-1" onClick={() => onInvite(broker)}>
-                <Send aria-hidden strokeWidth={1.75} />
-                Invite
-            </Button>
-        </div>
-    );
-}
-
 export function BrowseBrokerCard({
     broker,
     onViewProfile,
@@ -189,21 +117,108 @@ export function BrowseBrokerCard({
     onViewProfile: (broker: BrokerProfile) => void;
     onInvite: (broker: BrokerProfile) => void;
 }) {
-    const shell = `
-      rounded-card border border-border-warm bg-surface p-4 shadow-sm
-      transition-[box-shadow,border-color] duration-160
-      hover:border-ink/15 hover:shadow-md
-      md:p-5
-    `;
+    const name = brokerDisplayName(broker);
+    const location = brokerLocationLine(broker);
+    const open = () => onViewProfile(broker);
 
     return (
-        <article className={cn(shell, "flex flex-col gap-4 block-full")}>
-            <BrokerIdentity broker={broker} />
-            <BrokerMetricStrip broker={broker} />
-            <div className="flex-1">
+        <article
+            role="button"
+            tabIndex={0}
+            aria-label={`Open ${name}`}
+            onClick={open}
+            onKeyDown={(event) => {
+                if (event.key === "Enter") open();
+            }}
+            className={cn(
+                `
+                  contact-card group/card relative flex h-full cursor-pointer flex-col gap-3
+                  rounded-card border border-border-warm bg-surface p-4 outline-none shadow-md
+                  transition-[box-shadow] duration-160 hover:shadow-lg
+                  focus-visible:ring-3 focus-visible:ring-brand/20
+                `,
+            )}
+        >
+            <div className="flex items-start gap-3 min-inline-0">
+                <UserAvatar
+                    name={name}
+                    imageUrl={broker.avatarUrl ?? undefined}
+                    size="md"
+                    fallback="shape"
+                    className="shrink-0"
+                />
+                <div className="min-inline-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <h2 className="body truncate font-bold capitalize text-ink">{name}</h2>
+                        {broker.verified ? (
+                            <span className="body-xs inline-flex shrink-0 items-center gap-0.5 rounded-md bg-brand-soft px-1.5 py-0.5 font-semibold text-brand-text">
+                                <BadgeCheck
+                                    aria-hidden
+                                    className="block-3 inline-3"
+                                    strokeWidth={2}
+                                />
+                                Verified
+                            </span>
+                        ) : null}
+                    </div>
+                    {broker.orgName && broker.orgName.trim() !== name ? (
+                        <p className="body-sm mbs-0.5 truncate text-ink-muted">{broker.orgName}</p>
+                    ) : broker.city ? (
+                        <p className="body-sm mbs-0.5 truncate text-ink-muted">{broker.city}</p>
+                    ) : null}
+                </div>
+            </div>
+
+            <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
+                <p className="h5 truncate font-semibold tabular text-brand">
+                    {brokerHeroMetric(broker)}
+                </p>
+                {location ? (
+                    <p className="body-sm flex items-center gap-1.5 truncate text-ink-muted">
+                        <MapPin
+                            aria-hidden
+                            className="shrink-0 block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
+                        <span className="truncate">{location}</span>
+                    </p>
+                ) : (
+                    <p className="body-sm flex items-center gap-1.5 text-ink-subtle">
+                        <MapPin
+                            aria-hidden
+                            className="shrink-0 block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
+                        Areas not listed
+                    </p>
+                )}
                 <BrokerSpecialtyTags specializations={broker.specializations} />
             </div>
-            <BrokerActions broker={broker} onViewProfile={onViewProfile} onInvite={onInvite} />
+
+            <footer
+                className="mt-auto grid grid-cols-2 gap-2"
+                onClick={(event) => event.stopPropagation()}
+            >
+                <Button
+                    size="md"
+                    variant="outline"
+                    type="button"
+                    className="inline-full"
+                    onClick={() => onViewProfile(broker)}
+                >
+                    View profile
+                </Button>
+                <Button
+                    size="md"
+                    variant="accent"
+                    type="button"
+                    className="inline-full"
+                    onClick={() => onInvite(broker)}
+                >
+                    <Send aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                    Invite
+                </Button>
+            </footer>
         </article>
     );
 }

@@ -188,11 +188,6 @@ export function OwnerRequestCard({
                 detailHref={detailHref}
                 actions={cardMenu}
             >
-                {item.message ? (
-                    <p className="body-sm line-clamp-2 tracking-wide text-ink-muted italic">
-                        “{item.message}”
-                    </p>
-                ) : null}
                 <BrokerOverlayStats item={item} />
                 <CardFooter
                     item={item}

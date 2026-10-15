@@ -1,23 +1,42 @@
 ---
-description: Project sources of truth — always read AGENTS.md
+description: Project sources of truth — what to read, when, and what never to invent
 alwaysApply: true
 ---
 
 # Sources of truth
 
-Project context is NOT in this file. It lives in `AGENTS.md`.
+Do **not** invent product, structure, design, naming, or scope answers.
+Authorities live in files. Rules only restates expensive mistakes.
 
-| File | Covers | When to read |
-|---|---|---|
-| `AGENTS.md` (root) | What the product is, the core loop, roles, domain terms, scope | Read at the start of any task |
-| `app/AGENTS.md` | SEO, indexing policy, metadata, semantic HTML | Read before creating or editing anything under `app/` |
+## Always on (injected every chat)
 
-Rules of engagement:
+| File | Covers |
+|---|---|
+| `AGENTS.md` | Product, core loop, roles, vocabulary, market, repo boundary, deferred scope, open questions |
+| `.cursor/rules/structure.mdc` | Where code lives (full detail: `docs/STRUCTURE.md`) |
+| `.cursor/rules/001-hard-constraints.mdc` | Cross-cutting constraints that affect planning before any file is open |
 
-- These files are the authority. If something here or in chat contradicts them,
-  the AGENTS files win.
-- Do not duplicate their content into other files. One source, many readers.
-- If you learn something durable about this project, propose adding it to
-  `AGENTS.md` rather than keeping it in the conversation.
-- Anything marked "open question" in `AGENTS.md` is genuinely undecided — ask,
-  do not pick an answer.
+## Docs — read the matching one before that kind of work
+
+| Doc | When |
+|---|---|
+| `docs/STRUCTURE.md` | Creating any file or folder |
+| `docs/DESIGN.md` | Colour, type, spacing, layout, components |
+| `docs/DESIGN-SYSTEM-SYNC.md` | Adding/changing tokens, fonts, shadows |
+| `docs/NAMING.md` | Naming files, folders, ids, types, API fields |
+| `docs/REUSE.md` | Tokens vs utilities vs shared components |
+| `docs/PERFORMANCE.md` | Fetching, caching, lists, images, `"use client"` |
+| `docs/MOTION.md` | Animation, hover/tap/focus, Motion primitives |
+| `docs/MESSAGES.md` | Errors, validation, success, jargon in UI copy |
+| `docs/EMPTY_STATES.md` | First-run / filtered / cleared empty views |
+| `docs/LOADING.md` | Skeletons, spinners, button pending, `loading.tsx` |
+| `docs/SHORTCUTS.md` | Keyboard shortcuts (`config/shortcuts.ts`) |
+
+Matching `.cursor/rules/*.mdc` files also apply via globs when those files are open.
+If a rule and its doc disagree, the **doc** wins (except `AGENTS.md`, which wins on product/scope).
+
+## Engagement
+
+- Open questions in `AGENTS.md` → ask; do not pick an answer.
+- Durable new facts → propose adding to `AGENTS.md` or the relevant `docs/*.md`, not only chat.
+- Skills under `.cursor/skills/` are for design/polish workflows — load the skill when that work starts; do not assume they are already loaded.

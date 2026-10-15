@@ -118,7 +118,7 @@ export function StagePill({ stage }: { stage?: string | null }) {
         return (
             <span
                 className={cn(
-                    "body-xs flex items-center gap-1.5 rounded-control px-2.5 py-1 font-semibold",
+                    "body-xs flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold",
                     meta.pillClass,
                 )}
             >
@@ -135,7 +135,7 @@ export function StagePill({ stage }: { stage?: string | null }) {
     return (
         <span
             className="
-              body-xs flex items-center gap-1.5 rounded-control bg-surface-muted px-2.5 py-1
+              body-xs flex items-center gap-1.5 rounded-full bg-surface-muted px-2.5 py-1
               font-semibold text-ink
             "
         >
@@ -150,7 +150,7 @@ export function OfferStatusPill({ status }: { status?: string | null }) {
         return (
             <span
                 className="
-                  body-xs flex items-center gap-1.5 rounded-control bg-urgent-soft px-2.5 py-1
+                  body-xs inline-flex items-center gap-1.5 rounded-full bg-urgent-soft px-2.5 py-1
                   font-semibold text-urgent
                 "
             >
@@ -163,7 +163,7 @@ export function OfferStatusPill({ status }: { status?: string | null }) {
         return (
             <span
                 className="
-                  body-xs flex items-center gap-1.5 rounded-control bg-success-soft px-2.5 py-1
+                  body-xs inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1
                   font-semibold text-success
                 "
             >
@@ -176,7 +176,7 @@ export function OfferStatusPill({ status }: { status?: string | null }) {
         return (
             <span
                 className="
-                  body-xs flex items-center gap-1.5 rounded-control bg-surface-muted px-2.5 py-1
+                  body-xs inline-flex items-center gap-1.5 rounded-full bg-surface-muted px-2.5 py-1
                   font-semibold text-ink-muted
                 "
             >

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { ShieldCheck, UserRoundSearch } from "lucide-react";
+import { UserRoundSearch } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
@@ -11,6 +11,7 @@ import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
+import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 
 import { BrokerProfileDialog } from "@/features/owner-brokers/broker-profile-dialog";
@@ -21,8 +22,8 @@ import {
     hasActiveBrowseFilters,
 } from "@/features/owner-brokers/browse-brokers-filters";
 import {
-    browseBrokersGridClass,
     BrowseBrokersSkeleton,
+    OWNER_BROKERS_GRID_BREAKPOINTS,
 } from "@/features/owner-brokers/browse-brokers-skeleton";
 import { BrowseBrokersToolbar } from "@/features/owner-brokers/browse-brokers-toolbar";
 import { InviteBrokerDialog } from "@/features/owner-brokers/invite-broker-dialog";
@@ -34,34 +35,15 @@ type Specialty = { key: string; label: string };
 
 const NO_SPECIALTIES: Specialty[] = [];
 
-function TrustNote() {
-    return (
-        <aside
-            className="
-              flex items-center gap-3 rounded-card border border-border-warm bg-surface p-3
-              shadow-sm
-              md:px-4
-            "
-        >
-            <span
-                className="
-                  flex shrink-0 items-center justify-center rounded-inner bg-brand-soft text-brand
-                  block-10 inline-10
-                "
-            >
-                <ShieldCheck aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
-            </span>
-            <div className="flex flex-col gap-0.5 min-inline-0">
-                <p className="body-sm font-semibold text-ink">You stay in control.</p>
-                <p className="body-xs text-ink-muted">
-                    A broker can only work on your property after you invite or approve them.
-                </p>
-            </div>
-        </aside>
-    );
-}
-
-export function OwnerBrokersBrowse({ search }: { search: string }) {
+export function OwnerBrokersBrowse({
+    search,
+    onSearchChange,
+    onTotalChange,
+}: {
+    search: string;
+    onSearchChange?: (q: string) => void;
+    onTotalChange?: (total: number | null) => void;
+}) {
     const [filters, setFilters] = useState<BrowseBrokersFilters>(DEFAULT_BROWSE_BROKERS_FILTERS);
 
     const [profileBroker, setProfileBroker] = useState<BrokerProfile | null>(null);
@@ -101,8 +83,15 @@ export function OwnerBrokersBrowse({ search }: { search: string }) {
         },
     });
 
-    // The API sends the whole pool's specialties with each first page; the last
-    // ones seen are kept so the menu does not vanish while a new first page loads.
+    useEffect(() => {
+        if (!onTotalChange) return;
+        if (query.isPending && query.total === 0) {
+            onTotalChange(null);
+            return;
+        }
+        onTotalChange(query.total);
+    }, [onTotalChange, query.isPending, query.total]);
+
     const firstPageSpecialties = query.data?.pages[0]?.specialties;
     const [specialtyFacet, setSpecialtyFacet] = useState(firstPageSpecialties);
     if (firstPageSpecialties && firstPageSpecialties !== specialtyFacet) {
@@ -142,14 +131,11 @@ export function OwnerBrokersBrowse({ search }: { search: string }) {
         results = <BrowseBrokersSkeleton />;
     } else if (error) {
         results = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load brokers</p>
-                <p className="body-sm text-ink-muted">
-                    {error instanceof ApiError
-                        ? error.message
-                        : "Check your connection and try again."}
+            <div role="alert" className="flex flex-col items-start gap-3 py-12">
+                <p className="body-sm font-medium text-ink">
+                    Brokers could not load. Check your connection and try again.
                 </p>
-                <Button variant="surface" onClick={() => void query.refetch()}>
+                <Button variant="secondary" size="sm" onClick={() => void query.refetch()}>
                     Try again
                 </Button>
             </div>
@@ -158,39 +144,48 @@ export function OwnerBrokersBrowse({ search }: { search: string }) {
         results = (
             <EmptyState
                 icon={UserRoundSearch}
-                heading="No brokers match these filters"
+                heading="Nothing matches"
                 description="Loosen a filter to see more brokers."
+                className="py-16"
             >
-                <Button variant="surface" onClick={clearFilters}>
+                <Button variant="secondary" size="sm" onClick={clearFilters}>
                     Clear filters
                 </Button>
             </EmptyState>
         );
     } else if (brokers.length === 0) {
-        results = <OwnerBrokersEmpty tab="browse" />;
+        results = (
+            <OwnerBrokersEmpty
+                tab="browse"
+                hasSearch={Boolean(term)}
+                onClearSearch={onSearchChange ? () => onSearchChange("") : undefined}
+            />
+        );
     } else {
         results = (
-            <div className="flex flex-col gap-2">
-                <ul
-                    className={cn(
-                        browseBrokersGridClass(),
-                        query.isFetching &&
-                            !query.isFetchingNextPage &&
-                            "opacity-60 transition-opacity duration-160",
+            <div
+                className={cn(
+                    "flex flex-col gap-2",
+                    query.isFetching &&
+                        !query.isFetchingNextPage &&
+                        "opacity-60 transition-opacity duration-160",
+                )}
+            >
+                <WindowVirtualGrid
+                    items={brokers}
+                    getKey={(broker) => broker.id}
+                    estimateRowHeight={320}
+                    gap={24}
+                    breakpoints={OWNER_BROKERS_GRID_BREAKPOINTS}
+                    ariaLabel="Brokers"
+                    renderItem={(broker) => (
+                        <BrowseBrokerCard
+                            broker={broker}
+                            onViewProfile={openProfile}
+                            onInvite={openInvite}
+                        />
                     )}
-                >
-                    {brokers.map((broker) => (
-                        <li key={broker.id} className="flex">
-                            <div className="flex-1 min-inline-0">
-                                <BrowseBrokerCard
-                                    broker={broker}
-                                    onViewProfile={openProfile}
-                                    onInvite={openInvite}
-                                />
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                />
                 <InfiniteListStatus
                     hasNextPage={Boolean(query.hasNextPage)}
                     isFetchingNextPage={query.isFetchingNextPage}
@@ -203,18 +198,12 @@ export function OwnerBrokersBrowse({ search }: { search: string }) {
 
     return (
         <div className="flex flex-col gap-5 md:gap-6">
-            <TrustNote />
-
-            {/* Stays up while filters narrow to nothing, so they can be loosened again. */}
             {!error && (brokers.length > 0 || filtered || query.isPending) ? (
                 <BrowseBrokersToolbar
                     filters={filters}
                     onFiltersChange={patchFilters}
                     onClear={clearFilters}
                     specialties={specialties}
-                    resultCount={query.total}
-                    totalCount={query.total}
-                    isLoading={query.isPending}
                 />
             ) : null}
 

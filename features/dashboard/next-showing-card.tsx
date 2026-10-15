@@ -206,7 +206,7 @@ function EmptyNextShowing({
                 heading="No visits booked"
                 description={
                     isOwner
-                        ? "Open visit slots so brokers can book showings on your listings."
+                        ? "Open visit slots so brokers can book. Today and upcoming showings will appear here."
                         : "Schedule one when a client is ready to see a property."
                 }
             >

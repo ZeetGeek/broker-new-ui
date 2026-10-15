@@ -4,9 +4,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react
 import toast from "react-hot-toast";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { tz, TZDate } from "@date-fns/tz";
-import { addDays, format, startOfWeek } from "date-fns";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
 import {
@@ -17,8 +15,7 @@ import {
     type VisitShowing,
     type VisitSlot,
 } from "@/lib/api/owner-slots";
-import { propertiesApi } from "@/lib/api/properties";
-import { getUserTimeZone } from "@/lib/datetime/timezone";
+import { propertiesApi, type PropertyListing } from "@/lib/api/properties";
 import {
     formatDateIso,
     formatTime24,
@@ -32,18 +29,22 @@ import { AppPagination } from "@/components/shared/app-pagination";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
+import { AddTimeDialog } from "@/features/owner-visits/add-time-dialog";
+import {
+    addMinutes,
+    isExpiredSlot,
+    slotStartKey,
+} from "@/features/owner-visits/availability-helpers";
+import { OwnerPropertyAvailabilityRow } from "@/features/owner-visits/owner-property-availability-row";
 import { OwnerScheduledFilters } from "@/features/owner-visits/scheduled-filters";
 import { ShowingRow } from "@/features/owner-visits/showing-row";
+
+/*
+ * Bulk / multi-date / preset availability UI is parked for now.
+ * See availability-add-form.tsx, availability-presets.tsx, availability-dates-picker.tsx
+ * and the commented QUICK_PRESETS block in availability-helpers.ts.
+ */
 
 type VisitsTab = "availability" | "scheduled";
 
@@ -81,25 +82,6 @@ function parseShowingLimit(value: string | null) {
     return SHOWING_PAGE_SIZES.includes(limit as (typeof SHOWING_PAGE_SIZES)[number]) ? limit : 10;
 }
 
-const SLOT_TIMES = buildSlotTimes(9 * 60, 19 * 60 + 30, 30);
-
-const QUICK_PRESETS = [
-    {
-        id: "weekends",
-        label: "Weekends 10am–1pm",
-        from: "10:00",
-        to: "13:00",
-        weekdays: new Set([0, 6]),
-    },
-    {
-        id: "evenings",
-        label: "Weekday evenings 5–7pm",
-        from: "17:00",
-        to: "19:00",
-        weekdays: new Set([1, 2, 3, 4, 5]),
-    },
-] as const;
-
 function isVisitsTab(value: string | null): value is VisitsTab {
     return value === "availability" || value === "scheduled";
 }
@@ -108,79 +90,6 @@ function apiMessage(error: unknown, fallback: string): string {
     return error instanceof ApiError || error instanceof SlotRangeCrossesUtcDayError
         ? error.message
         : fallback;
-}
-
-function parseDateList(raw: string): string[] {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const part of raw.split(/[\n,]+/)) {
-        const trimmed = part.trim();
-        if (!trimmed || seen.has(trimmed)) continue;
-        seen.add(trimmed);
-        out.push(trimmed);
-    }
-    return out;
-}
-
-function buildSlotTimes(fromMinutes: number, toMinutes: number, step: number): string[] {
-    const times: string[] = [];
-    for (let minutes = fromMinutes; minutes <= toMinutes; minutes += step) {
-        const hour = Math.floor(minutes / 60);
-        const minute = minutes % 60;
-        times.push(`${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`);
-    }
-    return times;
-}
-
-function label12(hhmm: string): string {
-    const [hourPart, minute] = hhmm.split(":");
-    const hour = Number(hourPart);
-    const period = hour >= 12 ? "PM" : "AM";
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minute} ${period}`;
-}
-
-function addMinutes(hhmm: string, minutes: number): string {
-    const [hourPart, minutePart] = hhmm.split(":");
-    const total = Number(hourPart) * 60 + Number(minutePart) + minutes;
-    const hour = Math.floor(total / 60) % 24;
-    const minute = total % 60;
-    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-}
-
-function isExpiredSlot(dateIso: string, time: string, todayIso: string, nowTime: string): boolean {
-    if (dateIso < todayIso) return true;
-    if (dateIso > todayIso) return false;
-    return time < nowTime;
-}
-
-function weekdayOfIso(iso: string): number {
-    const [year, month, day] = iso.split("-").map(Number);
-    return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
-}
-
-/** Monday–Sunday, so a week's Saturday and Sunday are the same weekend (the Weekends preset). */
-function weekIsoDates(anchor: Date): string[] {
-    const zone = tz(getUserTimeZone());
-    const start = startOfWeek(anchor, { weekStartsOn: 1, in: zone });
-    return Array.from({ length: 7 }, (_, index) =>
-        formatDateIso(addDays(start, index, { in: zone })),
-    );
-}
-
-function dayParts(iso: string): { weekday: string; date: string; month: string } {
-    const zone = tz(getUserTimeZone());
-    const noon = new TZDate(`${iso}T12:00:00`, getUserTimeZone());
-    return {
-        weekday: format(noon, "EEE", { in: zone }),
-        date: format(noon, "d", { in: zone }),
-        month: format(noon, "MMM", { in: zone }),
-    };
-}
-
-function slotStartKey(slot: VisitSlot): string | null {
-    const start = parseApiInstant(slot.startAt);
-    return `${formatDateIso(start)}|${formatTime24(start)}`;
 }
 
 export function OwnerVisitsPage() {
@@ -196,14 +105,10 @@ export function OwnerVisitsPage() {
 
     const [revision, setRevision] = useState(0);
     const [busyId, setBusyId] = useState<string | null>(null);
+    const [removingId, setRemovingId] = useState<string | null>(null);
     const [togglingKey, setTogglingKey] = useState<string | null>(null);
-    const [presetBusy, setPresetBusy] = useState<string | null>(null);
-    const [closeAllOpen, setCloseAllOpen] = useState(false);
-    const [closingAll, setClosingAll] = useState(false);
-    const [closeAllError, setCloseAllError] = useState<string | null>(null);
 
-    const [properties, setProperties] = useState<{ id: string; label: string }[]>([]);
-    const [propertyId, setPropertyId] = useState("");
+    const [properties, setProperties] = useState<PropertyListing[]>([]);
     const [propertiesLoading, setPropertiesLoading] = useState(true);
 
     const [slots, setSlots] = useState<VisitSlot[]>([]);
@@ -216,17 +121,9 @@ export function OwnerVisitsPage() {
         useState<OwnerShowingsSummary>(EMPTY_SHOWINGS_SUMMARY);
     const [showingsLoading, setShowingsLoading] = useState(false);
 
-    const [weekAnchor, setWeekAnchor] = useState(() => new Date());
-    const [selectedDate, setSelectedDate] = useState(() => formatDateIso(new Date()));
+    const [addTimePropertyId, setAddTimePropertyId] = useState<string | null>(null);
+    const [addTimeDate, setAddTimeDate] = useState(() => formatDateIso(new Date()));
 
-    const [bulkOpen, setBulkOpen] = useState(false);
-    const [bulkDates, setBulkDates] = useState("");
-    const [bulkFrom, setBulkFrom] = useState("10:00");
-    const [bulkTo, setBulkTo] = useState("13:00");
-    const [bulkLength, setBulkLength] = useState<30 | 60>(30);
-    const [bulkSubmitting, setBulkSubmitting] = useState(false);
-
-    const weekDates = useMemo(() => weekIsoDates(weekAnchor), [weekAnchor]);
     const todayIso = formatDateIso(new Date());
     const nowTime = formatTime24(new Date());
 
@@ -267,13 +164,7 @@ export function OwnerVisitsPage() {
         void propertiesApi
             .list({ limit: 100 })
             .then((page) => {
-                if (cancelled) return;
-                const options = page.items.map((item) => ({
-                    id: item.id,
-                    label: item.title?.trim() || item.city || "Untitled listing",
-                }));
-                setProperties(options);
-                if (options[0]?.id) setPropertyId((current) => current || options[0].id);
+                if (!cancelled) setProperties(page.items);
             })
             .catch((err) => {
                 if (!cancelled) toast.error(apiMessage(err, "Could not load properties"));
@@ -287,14 +178,10 @@ export function OwnerVisitsPage() {
     }, []);
 
     useEffect(() => {
-        if (!propertyId) {
-            setSlots([]);
-            return;
-        }
         let cancelled = false;
         setSlotsLoading(true);
         void ownerSlotsApi
-            .list({ propertyId, limit: 200 })
+            .list({ limit: 200 })
             .then((page) => {
                 if (!cancelled) setSlots(page.items);
             })
@@ -310,7 +197,7 @@ export function OwnerVisitsPage() {
         return () => {
             cancelled = true;
         };
-    }, [propertyId, revision]);
+    }, [revision]);
 
     useEffect(() => {
         let cancelled = false;
@@ -349,179 +236,97 @@ export function OwnerVisitsPage() {
         };
     }, [replaceVisitParams, revision, showingFocus, showingLimit, showingPage]);
 
-    const slotsByStart = useMemo(() => {
-        const map = new Map<string, VisitSlot>();
+    const slotsByPropertyId = useMemo(() => {
+        const map = new Map<string, VisitSlot[]>();
         for (const slot of slots) {
-            const key = slotStartKey(slot);
-            if (key) map.set(key, slot);
+            const list = map.get(slot.propertyId) ?? [];
+            list.push(slot);
+            map.set(slot.propertyId, list);
         }
         return map;
     }, [slots]);
 
-    const openFutureSlots = useMemo(
-        () =>
-            slots.filter((slot) => {
-                if (slot.status !== "open") return false;
-                const [dateIso, time] = (slotStartKey(slot) ?? "").split("|");
-                return !isExpiredSlot(dateIso, time, todayIso, nowTime);
-            }),
-        [nowTime, slots, todayIso],
+    const addTimeProperty = useMemo(
+        () => properties.find((item) => item.id === addTimePropertyId) ?? null,
+        [addTimePropertyId, properties],
     );
 
-    // Only dates with a bookable slot get the dot — past and booked times don't count.
-    const datesWithSlots = useMemo(() => {
-        const dates = new Set<string>();
-        for (const slot of openFutureSlots) {
-            dates.add(formatDateIso(parseApiInstant(slot.startAt)));
-        }
-        return dates;
-    }, [openFutureSlots]);
+    const addTimePropertySlots = useMemo(
+        () => (addTimePropertyId ? (slotsByPropertyId.get(addTimePropertyId) ?? []) : []),
+        [addTimePropertyId, slotsByPropertyId],
+    );
 
-    const shiftWeek = useCallback((delta: number) => {
-        const zone = tz(getUserTimeZone());
-        setWeekAnchor((current) => addDays(current, delta * 7, { in: zone }));
+    const { openTimes, bookedTimes } = useMemo(() => {
+        const open = new Set<string>();
+        const booked = new Set<string>();
+        for (const slot of addTimePropertySlots) {
+            const key = slotStartKey(slot);
+            if (!key) continue;
+            const [dateIso, time] = key.split("|");
+            if (dateIso !== addTimeDate) continue;
+            if (slot.status === "booked") booked.add(time);
+            else if (slot.status === "open") open.add(time);
+        }
+        return { openTimes: open, bookedTimes: booked };
+    }, [addTimeDate, addTimePropertySlots]);
+
+    const removeSlot = useCallback(async (slot: VisitSlot) => {
+        if (slot.status === "booked") {
+            toast.error("This time is already booked.");
+            return;
+        }
+        setRemovingId(slot.id);
+        try {
+            await ownerSlotsApi.remove(slot.id);
+            toast.success("Slot closed");
+            setRevision((value) => value + 1);
+        } catch (err) {
+            toast.error(apiMessage(err, "Could not close slot"));
+        } finally {
+            setRemovingId(null);
+        }
     }, []);
 
-    useEffect(() => {
-        if (!weekDates.includes(selectedDate)) {
-            setSelectedDate(weekDates[0]);
-        }
-    }, [selectedDate, weekDates]);
-
-    const toggleSlot = useCallback(
-        async (dateIso: string, time: string) => {
-            if (!propertyId) return;
-            const key = `${dateIso}|${time}`;
-            const existing = slotsByStart.get(key);
-            if (existing?.status === "booked") {
+    const toggleDialogTime = useCallback(
+        async (time: string) => {
+            if (!addTimePropertyId) return;
+            const key = `${addTimeDate}|${time}`;
+            if (bookedTimes.has(time)) {
                 toast.error("This time is already booked.");
                 return;
             }
-            if (!existing && isExpiredSlot(dateIso, time, todayIso, nowTime)) {
-                return;
-            }
+            if (isExpiredSlot(addTimeDate, time, todayIso, nowTime)) return;
 
-            setTogglingKey(key);
+            const existing = addTimePropertySlots.find((slot) => slotStartKey(slot) === key);
+            setTogglingKey(time);
             try {
-                if (existing) {
+                if (existing && existing.status === "open") {
                     await ownerSlotsApi.remove(existing.id);
-                    toast.success("Slot removed");
-                } else {
+                    toast.success("Slot closed");
+                } else if (!existing) {
                     await ownerSlotsApi.create({
-                        propertyId,
-                        startAt: toApiInstantFromLocalParts(dateIso, time),
-                        endAt: toApiInstantFromLocalParts(dateIso, addMinutes(time, 30)),
+                        propertyId: addTimePropertyId,
+                        startAt: toApiInstantFromLocalParts(addTimeDate, time),
+                        endAt: toApiInstantFromLocalParts(addTimeDate, addMinutes(time, 30)),
                     });
                     toast.success("Slot opened");
                 }
                 setRevision((value) => value + 1);
             } catch (err) {
                 toast.error(
-                    apiMessage(err, existing ? "Could not remove slot" : "Could not open slot"),
+                    apiMessage(err, existing ? "Could not close slot" : "Could not open slot"),
                 );
             } finally {
                 setTogglingKey(null);
             }
         },
-        [nowTime, propertyId, slotsByStart, todayIso],
+        [addTimeDate, addTimePropertyId, addTimePropertySlots, bookedTimes, nowTime, todayIso],
     );
 
-    const selectedPropertyLabel = properties.find((item) => item.id === propertyId)?.label;
-
-    const closeAllSlots = useCallback(async () => {
-        if (!propertyId) return;
-        setClosingAll(true);
-        setCloseAllError(null);
-        try {
-            // Re-fetch every page so slots beyond the loaded list are closed too.
-            const toClose: VisitSlot[] = [];
-            for (let page = 1; ; page++) {
-                const result = await ownerSlotsApi.list({
-                    propertyId,
-                    status: "open",
-                    page,
-                    limit: 200,
-                });
-                toClose.push(...result.items);
-                if (page >= result.totalPages || result.items.length === 0) break;
-            }
-            const now = Date.now();
-            const future = toClose.filter((slot) => parseApiInstant(slot.startAt).getTime() > now);
-            const results = await Promise.allSettled(
-                future.map((slot) => ownerSlotsApi.remove(slot.id)),
-            );
-            const failed = results.filter((result) => result.status === "rejected").length;
-            const removed = results.length - failed;
-            setRevision((value) => value + 1);
-            if (failed > 0) {
-                setCloseAllError(
-                    `${failed} slot${failed === 1 ? "" : "s"} could not be closed. Try again.`,
-                );
-                return;
-            }
-            toast.success(`Closed ${removed} slot${removed === 1 ? "" : "s"}`);
-            setCloseAllOpen(false);
-        } catch (err) {
-            setCloseAllError(apiMessage(err, "Something went wrong. Try again."));
-        } finally {
-            setClosingAll(false);
-        }
-    }, [propertyId]);
-
-    const applyPreset = useCallback(
-        async (preset: (typeof QUICK_PRESETS)[number]) => {
-            if (!propertyId) return;
-            const dates = weekDates.filter(
-                (date) => preset.weekdays.has(weekdayOfIso(date)) && date >= todayIso,
-            );
-            if (dates.length === 0) {
-                toast.error("Those days have passed. Move to a later week.");
-                return;
-            }
-            setPresetBusy(preset.id);
-            try {
-                const result = await ownerSlotsApi.bulkCreate({
-                    propertyId,
-                    dates,
-                    from: preset.from,
-                    to: preset.to,
-                    slotLength: 30,
-                });
-                toast.success(`Opened ${result.created} slot${result.created === 1 ? "" : "s"}`);
-                setRevision((value) => value + 1);
-            } catch (err) {
-                toast.error(apiMessage(err, "Could not add those slots"));
-            } finally {
-                setPresetBusy(null);
-            }
-        },
-        [propertyId, todayIso, weekDates],
-    );
-
-    const createBulkSlots = useCallback(async () => {
-        const dates = parseDateList(bulkDates);
-        if (!propertyId || dates.length === 0) {
-            toast.error("Add at least one date (YYYY-MM-DD).");
-            return;
-        }
-        setBulkSubmitting(true);
-        try {
-            const result = await ownerSlotsApi.bulkCreate({
-                propertyId,
-                dates,
-                from: bulkFrom,
-                to: bulkTo,
-                slotLength: bulkLength,
-            });
-            toast.success(`Opened ${result.created} slot${result.created === 1 ? "" : "s"}`);
-            setBulkOpen(false);
-            setRevision((value) => value + 1);
-        } catch (err) {
-            toast.error(apiMessage(err, "Could not bulk-create slots"));
-        } finally {
-            setBulkSubmitting(false);
-        }
-    }, [bulkDates, bulkFrom, bulkLength, bulkTo, propertyId]);
+    const openAddTime = useCallback((propertyId: string) => {
+        setAddTimePropertyId(propertyId);
+        setAddTimeDate(formatDateIso(new Date()));
+    }, []);
 
     const runShowingAction = useCallback(
         async (showingId: string, status: "confirmed" | "cancelled") => {
@@ -558,242 +363,21 @@ export function OwnerVisitsPage() {
             );
         } else {
             panel = (
-                <div className="flex flex-col gap-4">
-                    <label className="flex flex-col gap-1.5">
-                        <span className="body-sm font-semibold text-ink">Property</span>
-                        <select
-                            className="
-                              rounded-control border border-border-warm bg-surface px-3.5
-                              text-[15px] text-ink shadow-sm block-[42px] inline-full
-                            "
-                            value={propertyId}
-                            onChange={(event) => setPropertyId(event.target.value)}
-                        >
-                            {properties.map((property) => (
-                                <option key={property.id} value={property.id}>
-                                    {property.label}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-
-                    <section
-                        className="
-                          flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-4
-                          shadow-sm
-                        "
-                    >
-                        <h2 className="body-sm font-semibold text-ink">Quick add (recurring)</h2>
-                        <div className="flex flex-wrap gap-2">
-                            {QUICK_PRESETS.map((preset) => (
-                                <button
-                                    key={preset.id}
-                                    type="button"
-                                    disabled={presetBusy != null}
-                                    onClick={() => void applyPreset(preset)}
-                                    className="
-                                      body-sm inline-flex items-center gap-1 rounded-full border
-                                      border-brand/30 bg-brand-soft px-3 py-1.5 font-semibold
-                                      text-brand-text
-                                      hover:border-brand
-                                      disabled:opacity-60
-                                    "
-                                >
-                                    <Plus
-                                        aria-hidden
-                                        className="block-3.5 inline-3.5"
-                                        strokeWidth={2}
-                                    />
-                                    {presetBusy === preset.id ? "Adding…" : preset.label}
-                                </button>
-                            ))}
-                            <button
-                                type="button"
-                                onClick={() => setBulkOpen(true)}
-                                className="
-                                  body-sm inline-flex items-center gap-1 rounded-full border
-                                  border-brand/30 bg-brand-soft px-3 py-1.5 font-semibold
-                                  text-brand-text
-                                  hover:border-brand
-                                "
-                            >
-                                <Plus
-                                    aria-hidden
-                                    className="block-3.5 inline-3.5"
-                                    strokeWidth={2}
-                                />
-                                Bulk add…
-                            </button>
-                        </div>
-                    </section>
-
-                    <section
-                        className={cn(
-                            `
-                              flex flex-col gap-4 rounded-card border border-border-warm bg-surface
-                              p-4 shadow-sm
-                            `,
-                            slotsLoading && "opacity-70",
-                        )}
-                    >
-                        <div className="flex items-center justify-between gap-3">
-                            <h2 className="body font-semibold text-ink">Open specific slots</h2>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    type="button"
-                                    aria-label="Previous week"
-                                    onClick={() => shiftWeek(-1)}
-                                    className="
-                                      flex items-center justify-center rounded-control
-                                      text-ink-muted block-8 inline-8
-                                      hover:bg-surface-muted hover:text-ink
-                                    "
-                                >
-                                    <ChevronLeft aria-hidden className="block-4 inline-4" />
-                                </button>
-                                <button
-                                    type="button"
-                                    aria-label="Next week"
-                                    onClick={() => shiftWeek(1)}
-                                    className="
-                                      flex items-center justify-center rounded-control
-                                      text-ink-muted block-8 inline-8
-                                      hover:bg-surface-muted hover:text-ink
-                                    "
-                                >
-                                    <ChevronRight aria-hidden className="block-4 inline-4" />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-2 overflow-x-auto pbe-1">
-                            {weekDates.map((date) => {
-                                const parts = dayParts(date);
-                                const selected = date === selectedDate;
-                                const hasSlots = datesWithSlots.has(date);
-                                return (
-                                    <button
-                                        key={date}
-                                        type="button"
-                                        onClick={() => setSelectedDate(date)}
-                                        aria-pressed={selected}
-                                        className={cn(
-                                            `
-                                              relative flex flex-1 flex-col items-center gap-0.5
-                                              rounded-control border px-2 py-3
-                                              transition-[background-color,border-color,color]
-                                              duration-160 min-inline-18
-                                            `,
-                                            selected
-                                                ? "border-brand-ink bg-brand-ink text-surface"
-                                                : `
-                                                  border-border-warm bg-surface text-ink
-                                                  hover:border-ink/25 hover:bg-surface-muted
-                                                `,
-                                        )}
-                                    >
-                                        <span
-                                            className={cn(
-                                                "body-xs font-medium",
-                                                selected ? "text-surface/70" : "text-ink-muted",
-                                            )}
-                                        >
-                                            {parts.weekday}
-                                        </span>
-                                        <span className="h5 tabular-nums">{parts.date}</span>
-                                        <span
-                                            className={cn(
-                                                "body-xs font-medium tracking-wide uppercase",
-                                                selected ? "text-surface/70" : "text-ink-subtle",
-                                            )}
-                                        >
-                                            {parts.month}
-                                        </span>
-                                        {hasSlots ? (
-                                            <span
-                                                aria-hidden
-                                                className={cn(
-                                                    `
-                                                      absolute inset-e-2 inset-bs-2 rounded-full
-                                                      block-1.5 inline-1.5
-                                                    `,
-                                                    selected ? "bg-surface" : "bg-success",
-                                                )}
-                                            />
-                                        ) : null}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="body-sm text-ink-muted">
-                                Tap a time to open it on{" "}
-                                {selectedDate.split("-").reverse().join("/")}. Tap again to remove.
-                            </p>
-                            {openFutureSlots.length > 0 ? (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        setCloseAllError(null);
-                                        setCloseAllOpen(true);
-                                    }}
-                                >
-                                    Close all open slots
-                                </Button>
-                            ) : null}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
-                            {SLOT_TIMES.map((time) => {
-                                const key = `${selectedDate}|${time}`;
-                                const slot = slotsByStart.get(key);
-                                const open = slot?.status === "open" || slot?.status === "booked";
-                                const booked = slot?.status === "booked";
-                                const expired = isExpiredSlot(
-                                    selectedDate,
-                                    time,
-                                    todayIso,
-                                    nowTime,
-                                );
-                                return (
-                                    <button
-                                        key={time}
-                                        type="button"
-                                        disabled={expired || togglingKey === key}
-                                        aria-disabled={expired || undefined}
-                                        onClick={() => void toggleSlot(selectedDate, time)}
-                                        className={cn(
-                                            `
-                                              body-sm rounded-control border px-2 py-2.5 text-center
-                                              font-medium tabular-nums transition-colors
-                                              duration-160
-                                            `,
-                                            expired
-                                                ? `
-                                                  cursor-not-allowed border-border-warm
-                                                  bg-surface-muted text-ink-subtle
-                                                `
-                                                : open
-                                                  ? "border-brand/40 bg-brand-soft text-brand-text"
-                                                  : `
-                                                    border-border-warm bg-surface text-ink
-                                                    hover:border-ink/25
-                                                  `,
-                                            !expired &&
-                                                booked &&
-                                                "border-ink/20 bg-surface-muted text-ink-muted",
-                                            togglingKey === key && "opacity-60",
-                                        )}
-                                    >
-                                        {label12(time)}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </section>
+                <div className={cn("flex flex-col gap-3", slotsLoading && "opacity-70")}>
+                    <p className="body-sm text-ink-muted">
+                        {properties.length} {properties.length === 1 ? "property" : "properties"} —
+                        open visiting times brokers can book.
+                    </p>
+                    {properties.map((property) => (
+                        <OwnerPropertyAvailabilityRow
+                            key={property.id}
+                            property={property}
+                            slots={slotsByPropertyId.get(property.id) ?? []}
+                            removingId={removingId}
+                            onAddTime={() => openAddTime(property.id)}
+                            onRemoveSlot={(slot) => void removeSlot(slot)}
+                        />
+                    ))}
                 </div>
             );
         }
@@ -914,113 +498,25 @@ export function OwnerVisitsPage() {
 
             {panel}
 
-            <Dialog
-                open={closeAllOpen}
-                onOpenChange={(open) => {
-                    if (!closingAll) setCloseAllOpen(open);
-                }}
-            >
-                <DialogPopup className="max-inline-md">
-                    <DialogHeader>
-                        <DialogTitle>Close all open slots?</DialogTitle>
-                        <DialogDescription>
-                            {openFutureSlots.length} open slot
-                            {openFutureSlots.length === 1 ? "" : "s"} for{" "}
-                            {selectedPropertyLabel ? `"${selectedPropertyLabel}"` : "this property"}{" "}
-                            will be closed, and brokers will no longer be able to book them. Booked
-                            visits stay as they are. You can open slots again any time.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {closeAllError ? (
-                        <p
-                            role="alert"
-                            className="
-                              body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold
-                              text-danger
-                            "
-                        >
-                            {closeAllError}
-                        </p>
-                    ) : null}
-                    <div className="flex justify-end gap-2">
-                        <Button
-                            variant="outline"
-                            disabled={closingAll}
-                            onClick={() => setCloseAllOpen(false)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            loading={closingAll}
-                            onClick={() => void closeAllSlots()}
-                        >
-                            {closingAll ? "Closing slots…" : "Close all slots"}
-                        </Button>
-                    </div>
-                </DialogPopup>
-            </Dialog>
-
-            <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
-                <DialogPopup className="max-inline-lg">
-                    <DialogHeader>
-                        <DialogTitle>Bulk add slots</DialogTitle>
-                        <DialogDescription>
-                            Enter dates as YYYY-MM-DD, separated by commas or new lines.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-4">
-                        <Textarea
-                            value={bulkDates}
-                            onChange={(event) => setBulkDates(event.target.value)}
-                            placeholder="2026-09-25, 2026-09-26"
-                            rows={3}
-                        />
-                        <div className="grid gap-3 sm:grid-cols-3">
-                            <label className="flex flex-col gap-1.5">
-                                <span className="body-sm font-semibold text-ink">From</span>
-                                <Input
-                                    type="time"
-                                    value={bulkFrom}
-                                    onChange={(event) => setBulkFrom(event.target.value)}
-                                />
-                            </label>
-                            <label className="flex flex-col gap-1.5">
-                                <span className="body-sm font-semibold text-ink">To</span>
-                                <Input
-                                    type="time"
-                                    value={bulkTo}
-                                    onChange={(event) => setBulkTo(event.target.value)}
-                                />
-                            </label>
-                            <label className="flex flex-col gap-1.5">
-                                <span className="body-sm font-semibold text-ink">Slot length</span>
-                                <select
-                                    className="
-                                      rounded-control border-2 border-border-warm bg-surface px-3.5
-                                      text-[15px] text-ink block-control-md inline-full
-                                    "
-                                    value={bulkLength}
-                                    onChange={(event) =>
-                                        setBulkLength(Number(event.target.value) as 30 | 60)
-                                    }
-                                >
-                                    <option value={30}>30 minutes</option>
-                                    <option value={60}>60 minutes</option>
-                                </select>
-                            </label>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setBulkOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button loading={bulkSubmitting} onClick={() => void createBulkSlots()}>
-                                Create slots
-                            </Button>
-                        </div>
-                    </div>
-                </DialogPopup>
-            </Dialog>
+            {addTimeProperty ? (
+                <AddTimeDialog
+                    open={addTimePropertyId != null}
+                    onOpenChange={(open) => {
+                        if (!open) setAddTimePropertyId(null);
+                    }}
+                    propertyLabel={
+                        addTimeProperty.title?.trim() ||
+                        addTimeProperty.city?.trim() ||
+                        "this property"
+                    }
+                    selectedDate={addTimeDate}
+                    onDateChange={setAddTimeDate}
+                    openTimes={openTimes}
+                    bookedTimes={bookedTimes}
+                    togglingTime={togglingKey}
+                    onToggleTime={(time) => void toggleDialogTime(time)}
+                />
+            ) : null}
         </div>
     );
 }

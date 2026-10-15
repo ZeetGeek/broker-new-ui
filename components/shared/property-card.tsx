@@ -19,10 +19,10 @@ import {
     Maximize2,
     MessageCircle,
     Send,
+    Trash2,
     UserPlus,
     UserRound,
     Users,
-    Trash2,
 } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
@@ -35,10 +35,17 @@ import {
 } from "@/lib/format/listing-availability";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
 import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
+import {
+    AttachedBrokersRow,
+    AttachedBuyersRow,
+    AttachedOwnerRow,
+    InvitedBrokersRow,
+} from "@/components/shared/attached-people-row";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
@@ -48,7 +55,6 @@ import {
     OverlayChip,
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
-import { AttachedBuyersRow, AttachedOwnerRow } from "@/components/shared/attached-people-row";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
@@ -422,6 +428,10 @@ export type PropertyCardProps = {
     onAddBuyer?: () => void;
     /** Owned cards: attach an exclusive owner CRM contact. */
     onAttachOwner?: () => void;
+    /** Owner cards: invite a broker to this specific property. */
+    onInviteBroker?: () => void;
+    brokerSummary?: PropertyBrokersSummary;
+    brokerSummaryState?: "loading" | "error" | "ready";
     /** Owned cards: ask to delete this listing (caller shows confirm). */
     onDelete?: () => void;
     /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
@@ -1552,6 +1562,9 @@ function OwnedOverlayPropertyCard({
     onEdit,
     onAddBuyer,
     onAttachOwner,
+    onInviteBroker,
+    brokerSummary,
+    brokerSummaryState,
     onDelete,
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
@@ -1579,6 +1592,7 @@ function OwnedOverlayPropertyCard({
     const hasBuyers = buyers.length > 0;
     const showAttachOwnerButton = Boolean(onAttachOwner && !hasOwner);
     const showAddBuyerButton = Boolean(onAddBuyer && !hasBuyers);
+    const hasWorkingBrokers = (brokerSummary?.brokers.length ?? 0) > 0;
 
     return (
         <OverlayCard
@@ -1649,6 +1663,50 @@ function OwnedOverlayPropertyCard({
             </div>
 
             <OverlayCardActions className="flex-col gap-2">
+                {onInviteBroker ? (
+                    <>
+                        {brokerSummaryState === "loading" ? (
+                            <p className="body-sm text-ink-muted" role="status">
+                                Loading brokers…
+                            </p>
+                        ) : brokerSummaryState === "error" ? (
+                            <p className="body-sm text-danger" role="status">
+                                Couldn&apos;t load brokers
+                            </p>
+                        ) : null}
+                        {brokerSummaryState === "ready" &&
+                        (brokerSummary?.pendingInvitations.length ?? 0) > 0 ? (
+                            <InvitedBrokersRow
+                                brokers={brokerSummary!.pendingInvitations}
+                                onManage={onInviteBroker}
+                            />
+                        ) : null}
+                        {brokerSummaryState === "ready" && brokerSummary?.brokers.length ? (
+                            <AttachedBrokersRow
+                                brokers={brokerSummary.brokers}
+                                onManage={onInviteBroker}
+                            />
+                        ) : null}
+                        {!hasWorkingBrokers && listing.status !== "published" ? (
+                            <p className="body-xs rounded-control bg-amber-50 px-3 py-2 font-medium text-pending">
+                                Publish this property to invite brokers
+                            </p>
+                        ) : null}
+                        {!hasWorkingBrokers ? (
+                            <Button
+                                size="md"
+                                variant="accent"
+                                type="button"
+                                className="inline-full min-block-12"
+                                disabled={listing.status !== "published"}
+                                onClick={onInviteBroker}
+                            >
+                                <UserPlus aria-hidden strokeWidth={1.75} />
+                                Invite broker
+                            </Button>
+                        ) : null}
+                    </>
+                ) : null}
                 {hasOwner && onAttachOwner ? (
                     <AttachedOwnerRow name={listing.ownerName!} onManage={onAttachOwner} />
                 ) : null}

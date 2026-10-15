@@ -1,27 +1,26 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 
-import { Mail, MapPin, Pencil, Phone, Search, UserRoundPlus } from "lucide-react";
-import { motion } from "motion/react";
+import { MapPin, Pencil, Search, UserRoundPlus } from "lucide-react";
 
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { TextLoop } from "@/components/motion-primitives/text-loop";
-import { DateDisplay } from "@/components/shared/date-display";
-import { PhoneNumber } from "@/components/shared/phone-number";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { DigitPopIn } from "./digit-pop-in";
+import { DashboardContactLine, hasPhoneNumber } from "./dashboard-contact-line";
+import {
+    countPhrase,
+    DashboardMetaDivider,
+    DashboardMetaItem,
+    DashboardPageHeader,
+} from "./dashboard-page-header";
 import type { ReraStatus } from "./mock-data";
-import { dashboardMetaContainer, dashboardMetaItem } from "./motion";
 import { ReraStatusChip } from "./rera-status";
-import { StaggerLine, StaggerReveal } from "./stagger-reveal";
 
 export type DashboardSummaryStats = {
     siteVisitCount: number;
@@ -50,24 +49,6 @@ const SETUP_CHIP_TOOLTIP_CLASS = "block w-max max-w-66! text-pretty";
 const ADD_SERVICE_AREA_CHIP = "border-border-warm bg-surface text-ink shadow-none";
 const ACTIONABLE_CHIP_HOVER =
     "transition-colors duration-160 hover:border-ink/20 hover:bg-neutral-50 hover:text-ink";
-
-function hasPhoneNumber(phoneDigits: string) {
-    return phoneDigits.replace(/\D/g, "").slice(-10).length === 10;
-}
-
-const SUMMARY_LOOP_INTERVAL_S = 6.5;
-
-function countPhrase(count: number, singular: string, plural: string) {
-    if (count === 0) {
-        return null;
-    }
-
-    return (
-        <>
-            <DigitPopIn value={count} /> {count === 1 ? singular : plural}
-        </>
-    );
-}
 
 function buildSummaryLines({
     siteVisitCount,
@@ -137,27 +118,6 @@ function buildSummaryLines({
     ];
 }
 
-function DashboardGreetingSummary(stats: DashboardSummaryStats) {
-    const [isPaused, setIsPaused] = useState(false);
-    const lines = buildSummaryLines(stats);
-
-    return (
-        <span
-            aria-live="polite"
-            aria-atomic="true"
-            className="text-ink-muted"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-        >
-            <TextLoop interval={SUMMARY_LOOP_INTERVAL_S} trigger={!isPaused}>
-                {lines.map((line, index) => (
-                    <span key={index}>{line}</span>
-                ))}
-            </TextLoop>
-        </span>
-    );
-}
-
 function ServiceAreaChips({ areas }: { areas: string[] }) {
     const hasAreas = areas.length > 0;
 
@@ -215,52 +175,6 @@ function ServiceAreaChips({ areas }: { areas: string[] }) {
     );
 }
 
-function ContactLine({ phoneDigits, email }: { phoneDigits: string; email: string }) {
-    const showPhone = hasPhoneNumber(phoneDigits);
-
-    if (!showPhone && !email) {
-        return null;
-    }
-
-    return (
-        <div className={`inline-flex items-center gap-2 ${META_TEXT}`}>
-            {showPhone ? (
-                <>
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <span className="inline-flex items-center gap-1">
-                                    <Phone aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                                    <PhoneNumber phoneDigits={phoneDigits} />
-                                </span>
-                            }
-                        />
-                        <TooltipContent side="bottom">Your phone number</TooltipContent>
-                    </Tooltip>
-                    {email ? (
-                        <span aria-hidden className="text-ink-subtle">
-                            ·
-                        </span>
-                    ) : null}
-                </>
-            ) : null}
-            {email ? (
-                <Tooltip>
-                    <TooltipTrigger
-                        render={
-                            <span className="inline-flex items-center gap-1">
-                                <Mail aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                                <span className="truncate max-inline-[28ch]">{email}</span>
-                            </span>
-                        }
-                    />
-                    <TooltipContent side="bottom">Your email</TooltipContent>
-                </Tooltip>
-            ) : null}
-        </div>
-    );
-}
-
 export function DashboardHeader({
     now,
     siteVisitCount,
@@ -277,99 +191,71 @@ export function DashboardHeader({
     const showContact = hasPhoneNumber(phoneDigits) || Boolean(email);
 
     return (
-        <div className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-4">
-                <StaggerReveal className="h1 min-inline-0">
-                    <StaggerLine>
-                        <DateDisplay date={now} variant="weekday" className="text-ink" />
-                        <span className="text-ink">.</span>{" "}
-                        <DashboardGreetingSummary
-                            siteVisitCount={siteVisitCount}
-                            requestsWaitingCount={requestsWaitingCount}
-                            pipelineActiveTotal={pipelineActiveTotal}
-                            followUpsOverdueCount={followUpsOverdueCount}
-                            followUpsRemainingCount={followUpsRemainingCount}
-                            activityCount={activityCount}
-                        />
-                    </StaggerLine>
-                </StaggerReveal>
-            </div>
-
-            <motion.div
-                variants={dashboardMetaContainer}
-                initial="hidden"
-                animate="visible"
-                className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2"
-            >
-                <div className="-mbe-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <motion.div
-                        className="flex flex-wrap items-center gap-2"
-                        variants={dashboardMetaItem}
-                    >
-                        <ReraStatusChip status={reraStatus} />
-                    </motion.div>
+        <DashboardPageHeader
+            now={now}
+            greetingLines={buildSummaryLines({
+                siteVisitCount,
+                requestsWaitingCount,
+                pipelineActiveTotal,
+                followUpsOverdueCount,
+                followUpsRemainingCount,
+                activityCount,
+            })}
+            meta={
+                <>
+                    <DashboardMetaItem>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <ReraStatusChip status={reraStatus} />
+                        </div>
+                    </DashboardMetaItem>
 
                     {showContact ? (
-                        <motion.div variants={dashboardMetaItem}>
-                            <ContactLine phoneDigits={phoneDigits} email={email} />
-                        </motion.div>
+                        <DashboardMetaItem>
+                            <DashboardContactLine phoneDigits={phoneDigits} email={email} />
+                        </DashboardMetaItem>
                     ) : null}
 
-                    {showContact ? (
-                        <motion.span
-                            aria-hidden
-                            variants={dashboardMetaItem}
-                            className="
-                              hidden self-center bg-border-warm block-3.5 inline-px
-                              sm:block
-                            "
-                        />
-                    ) : null}
+                    {showContact ? <DashboardMetaDivider /> : null}
 
-                    <motion.div
-                        className="flex flex-wrap items-center gap-2"
-                        variants={dashboardMetaItem}
-                    >
-                        <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
-                            <MapPin aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                            Working in
-                        </span>
-                        <ServiceAreaChips areas={serviceAreas} />
-                    </motion.div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <motion.div
-                        className="ms-auto flex shrink-0 items-center gap-3"
-                        variants={dashboardMetaItem}
-                    >
-                        <ShortcutTooltip shortcutId="owner_listings">
-                            <Button
-                                variant="outline-dark"
-                                size="md"
-                                nativeButton={false}
-                                render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
-                                aria-label="Owner listings"
-                            >
-                                <Search aria-hidden strokeWidth={1.75} />
-                                <span className="hidden md:inline">Owner listings</span>
-                            </Button>
-                        </ShortcutTooltip>
-                        <ShortcutTooltip shortcutId="pipeline" label="Pipeline">
-                            <Button
-                                variant="accent"
-                                size="md"
-                                nativeButton={false}
-                                render={<Link href="/broker/pipeline" />}
-                                aria-label="Add buyer"
-                            >
-                                <UserRoundPlus aria-hidden strokeWidth={1.75} />
-                                <span className="hidden md:inline">Add buyers</span>
-                            </Button>
-                        </ShortcutTooltip>
-                    </motion.div>
-                </div>
-            </motion.div>
-        </div>
+                    <DashboardMetaItem>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
+                                <MapPin aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                                Working in
+                            </span>
+                            <ServiceAreaChips areas={serviceAreas} />
+                        </div>
+                    </DashboardMetaItem>
+                </>
+            }
+            actions={
+                <>
+                    <ShortcutTooltip shortcutId="owner_listings">
+                        <Button
+                            variant="outline-dark"
+                            size="md"
+                            nativeButton={false}
+                            render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
+                            aria-label="Owner listings"
+                        >
+                            <Search aria-hidden strokeWidth={1.75} />
+                            <span className="hidden md:inline">Owner listings</span>
+                        </Button>
+                    </ShortcutTooltip>
+                    <ShortcutTooltip shortcutId="pipeline" label="Pipeline">
+                        <Button
+                            variant="accent"
+                            size="md"
+                            nativeButton={false}
+                            render={<Link href="/broker/pipeline" />}
+                            aria-label="Add buyer"
+                        >
+                            <UserRoundPlus aria-hidden strokeWidth={1.75} />
+                            <span className="hidden md:inline">Add buyers</span>
+                        </Button>
+                    </ShortcutTooltip>
+                </>
+            }
+        />
     );
 }

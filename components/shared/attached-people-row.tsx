@@ -1,11 +1,93 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { cn } from "@/lib/utils";
 
 import { AvatarStack } from "@/components/shared/avatar-stack";
 import { OVERLAY_GLASS_BUTTON_CLASS } from "@/components/shared/overlay-card";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 type AttachedPerson = { id: string; name: string; avatarUrl?: string };
+
+type PartyMeetSide = {
+    name: string;
+    avatarUrl?: string;
+    /** Screen-reader role, e.g. "Owner" / "Buyer" / "Broker". */
+    role: string;
+    onOpen?: () => void;
+};
+
+/**
+ * Owner/broker + buyer in one glass strip — two equal halves split by a
+ * center divider. Name on top, role under it. Used on pipeline and owner-lead
+ * cards so both portals read a deal the same way.
+ */
+export function PartyMeetRow({ left, right }: { left: PartyMeetSide; right: PartyMeetSide }) {
+    const ariaLabel = `${left.role} ${left.name}, ${right.role} ${right.name}`;
+
+    return (
+        <div
+            role="group"
+            aria-label={ariaLabel}
+            className={cn(
+                "flex items-stretch rounded-control inline-full",
+                OVERLAY_GLASS_BUTTON_CLASS,
+            )}
+        >
+            <PartyMeetPerson side={left} />
+            <div
+                aria-hidden
+                className="mbs-2.5 mbe-2.5 shrink-0 self-stretch bg-border-warm inline-px"
+            />
+            <PartyMeetPerson side={right} />
+        </div>
+    );
+}
+
+function PartyMeetPerson({ side }: { side: PartyMeetSide }) {
+    const content = (
+        <>
+            <UserAvatar
+                name={side.name}
+                imageUrl={side.avatarUrl}
+                size="xs"
+                fallback="character"
+                className="shrink-0"
+            />
+            <span className="flex min-inline-0 flex-col gap-0.5 text-start">
+                <span className="body-sm truncate font-semibold tracking-wide text-ink capitalize">
+                    {side.name}
+                </span>
+                <span className="body-xs truncate text-ink-muted">{side.role}</span>
+            </span>
+        </>
+    );
+
+    const className = "flex min-inline-0 flex-1 items-center gap-2.5 px-3 py-2.5";
+
+    if (side.onOpen) {
+        return (
+            <button
+                type="button"
+                onClick={side.onOpen}
+                className={cn(
+                    className,
+                    `
+                      transition-colors duration-160
+                      hover:bg-surface-muted
+                      focus-visible:outline-2 focus-visible:outline-offset-[-2px]
+                      focus-visible:outline-ring
+                    `,
+                )}
+            >
+                {content}
+            </button>
+        );
+    }
+
+    return <div className={className}>{content}</div>;
+}
 
 function AttachedPeopleShell({
     people,
@@ -13,7 +95,7 @@ function AttachedPeopleShell({
     onManage,
 }: {
     people: AttachedPerson[];
-    title: string;
+    title: ReactNode;
     onManage?: () => void;
 }) {
     const names = people.map((person) => person.name).join(", ");
@@ -72,6 +154,59 @@ export function AttachedBuyersRow({
 
     const title = buyers.length === 1 ? "1 buyer" : `${buyers.length} buyers`;
     return <AttachedPeopleShell people={buyers} title={title} onManage={onManage} />;
+}
+
+/** Brokers with accepted consent for this property. */
+export function AttachedBrokersRow({
+    brokers,
+    onManage,
+}: {
+    brokers: AttachedPerson[];
+    onManage?: () => void;
+}) {
+    if (brokers.length === 0) return null;
+    const title = (
+        <>
+            {brokers.length} {brokers.length === 1 ? "broker" : "brokers"}
+            <span className="sr-only"> working on this property</span>
+        </>
+    );
+    return <AttachedPeopleShell people={brokers} title={title} onManage={onManage} />;
+}
+
+/** Owner-sent invitations stay separate from brokers with accepted consent. */
+export function InvitedBrokersRow({
+    brokers,
+    onManage,
+}: {
+    brokers: AttachedPerson[];
+    onManage?: () => void;
+}) {
+    if (brokers.length === 0) return null;
+    const content = (
+        <>
+            <AvatarStack people={brokers} size="2xs" max={3} className="shrink-0" />
+            <span className="body-xs font-medium text-pending min-inline-0">
+                {brokers.length}{" "}
+                {brokers.length === 1 ? "invitation pending" : "invitations pending"}
+            </span>
+        </>
+    );
+    const rowClassName = "flex items-center gap-2 text-start inline-full min-inline-0";
+    return onManage ? (
+        <button
+            type="button"
+            onClick={onManage}
+            className={cn(
+                rowClassName,
+                "rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
+            )}
+        >
+            {content}
+        </button>
+    ) : (
+        <div className={rowClassName}>{content}</div>
+    );
 }
 
 /** Exclusive owner attached to a listing — tap opens the owner picker. */

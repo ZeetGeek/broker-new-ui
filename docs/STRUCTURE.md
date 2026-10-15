@@ -157,12 +157,25 @@ Add a feature when a new domain appears — not for every screen.
 
 ## Portal isolation — enforce this
 
-`app/owner/` and `app/broker/` must **never** import from each other. A user
-sees one portal and never the other; crossing the line is how owner-side code
-ends up shipping broker data.
+`app/(role)/owner/` and `app/(role)/broker/` must **never** import from each
+other. A user sees one portal and never the other; crossing the line is how
+owner-side code ends up shipping broker data.
 
-Shared logic goes in `features/` and is imported by both. If something feels
-like it needs to cross directly, it belongs in a feature.
+Shared logic and UI go in `components/layout/`, `components/shared/`, or
+`features/` and are imported by both. If something feels like it needs to
+cross directly, it belongs in one of those shared places.
+
+### Owner builds mirror broker (visual parity)
+
+While owner screens are being built, **broker is the design reference**. Match
+the broker equivalent for layout chrome, spacing, typography, cards, filters,
+and empty/loading/error patterns so both portals look like one product.
+
+- Shared shell pieces → `components/layout/` (header, mobile nav, section nav)
+- Shared page patterns used by both portals → `components/shared/` or a shared
+  feature (rule of three still applies)
+- Do **not** invent a separate owner visual language or duplicate broker UI
+  under `app/(role)/owner/`
 
 This is the one boundary worth mechanically enforcing. `dependency-cruiser`
 can fail the build on violation:

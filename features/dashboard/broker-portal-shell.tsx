@@ -15,6 +15,7 @@ import {
     PortalSectionNavProvider,
     usePortalSectionNav,
 } from "@/components/layout/portal-section-nav";
+import { BROKER_SEARCH_HINTS } from "@/components/layout/search-placeholder-loop";
 
 import { BROKER_NAV_ITEMS } from "@/config/nav";
 import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
@@ -89,6 +90,7 @@ function BrokerPortalShellInner({ children }: { children: ReactNode }) {
                     notificationsHref={BROKER_NOTIFICATIONS_HREF}
                     sectionNav={sectionNav}
                     mobileNav={<PortalMobileNav items={BROKER_NAV_ITEMS} />}
+                    searchHints={BROKER_SEARCH_HINTS}
                     profileMenu={
                         <BrokerProfileMenu
                             broker={broker}

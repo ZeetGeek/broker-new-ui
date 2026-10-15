@@ -79,13 +79,14 @@ export function BrokerProfileDialog({
                         Close
                     </Button>
                     <Button
+                        variant="accent"
                         onClick={() => {
                             onOpenChange(false);
                             onInvite(profile);
                         }}
                     >
                         <Send aria-hidden strokeWidth={1.75} />
-                        Invite to a property
+                        Invite
                     </Button>
                 </div>
             }

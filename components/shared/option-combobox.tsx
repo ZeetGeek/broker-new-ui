@@ -7,6 +7,7 @@ import {
     ComboboxContent,
     ComboboxEmpty,
     ComboboxInput,
+    type ComboboxInputProps,
     ComboboxItem,
     ComboboxList,
 } from "@/components/ui/combobox";
@@ -31,6 +32,7 @@ export function OptionCombobox({
     errorText,
     helperText,
     limit,
+    size,
 }: {
     id?: string;
     value: string;
@@ -47,6 +49,7 @@ export function OptionCombobox({
     helperText?: string;
     /** Caps rendered matches. Needed for long lists such as a state's cities. */
     limit?: number;
+    size?: ComboboxInputProps["size"];
 }) {
     const labelFor = (item: string) =>
         options.find((option) => option.value === item)?.label ?? item;
@@ -64,6 +67,7 @@ export function OptionCombobox({
         >
             <ComboboxInput
                 id={id}
+                size={size}
                 startIcon={startIcon}
                 placeholder={placeholder}
                 loading={loading}

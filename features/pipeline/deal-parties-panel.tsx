@@ -1,6 +1,6 @@
 "use client";
 
-import { AttachedBuyersRow, AttachedOwnerRow } from "@/components/shared/attached-people-row";
+import { PartyMeetRow } from "@/components/shared/attached-people-row";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
 import type { DealAssignedAgent } from "@/features/pipeline/types";
@@ -12,9 +12,8 @@ type Party = {
 };
 
 /**
- * Buyer + owner on every pipeline card — same glass rows as owned property
- * cards so the two surfaces read as one product. Both sides of a deal must
- * stay visible (AGENTS.md core loop).
+ * Buyer + owner on every pipeline card — one strip so both sides of a deal
+ * stay visible without two full-width rows (AGENTS.md core loop).
  *
  * Stall state stays on the chip row, not here — colour-only markers would
  * duplicate the day-count chip (docs/DESIGN.md §1.4).
@@ -39,20 +38,19 @@ export function DealPartiesPanel({
 
     return (
         <div className="flex flex-col gap-2">
-            <AttachedOwnerRow
-                name={owner.name}
-                avatarUrl={owner.avatarUrl}
-                onManage={onOpenOwner}
-            />
-            <AttachedBuyersRow
-                buyers={[
-                    {
-                        id: buyer.id ?? "buyer",
-                        name: buyer.name,
-                        avatarUrl: buyer.avatarUrl,
-                    },
-                ]}
-                onManage={onOpenBuyer}
+            <PartyMeetRow
+                left={{
+                    name: owner.name,
+                    avatarUrl: owner.avatarUrl,
+                    role: "Owner",
+                    onOpen: onOpenOwner,
+                }}
+                right={{
+                    name: buyer.name,
+                    avatarUrl: buyer.avatarUrl,
+                    role: "Buyer",
+                    onOpen: onOpenBuyer,
+                }}
             />
 
             {showHandledBy && assignedAgent ? (

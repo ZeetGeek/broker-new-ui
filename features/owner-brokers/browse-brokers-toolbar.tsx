@@ -46,7 +46,6 @@ function ChipMenu<T extends string | number>({
 }: {
     icon: LucideIcon;
     label: string;
-    /** Shown on the chip when a non-default option is picked. */
     activeLabel?: string;
     value: T;
     defaultValue: T;
@@ -104,17 +103,11 @@ export function BrowseBrokersToolbar({
     onFiltersChange,
     onClear,
     specialties,
-    resultCount,
-    totalCount,
-    isLoading,
 }: {
     filters: BrowseBrokersFilters;
     onFiltersChange: (patch: Partial<BrowseBrokersFilters>) => void;
     onClear: () => void;
     specialties: { key: string; label: string }[];
-    resultCount: number;
-    totalCount: number;
-    isLoading: boolean;
 }) {
     const experienceLabel = EXPERIENCE_OPTIONS.find(
         (o) => o.value === filters.minExperience,
@@ -124,94 +117,70 @@ export function BrowseBrokersToolbar({
     const filtered = hasActiveBrowseFilters(filters);
 
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+            <button
+                type="button"
+                aria-pressed={filters.verifiedOnly}
+                onClick={() => onFiltersChange({ verifiedOnly: !filters.verifiedOnly })}
+                className={cn(
+                    ownerListingsChipClassName(filters.verifiedOnly),
+                    "gap-2",
+                    !filters.verifiedOnly && "text-ink-muted",
+                )}
+            >
+                <BadgeCheck
+                    aria-hidden
+                    className="text-brand block-4 inline-4"
+                    strokeWidth={1.75}
+                />
+                Verified only
+            </button>
+
+            <ChipMenu
+                icon={Briefcase}
+                label="Experience"
+                activeLabel={experienceLabel}
+                value={filters.minExperience}
+                defaultValue={0}
+                options={EXPERIENCE_OPTIONS}
+                onChange={(minExperience) => onFiltersChange({ minExperience })}
+            />
+
+            {specialties.length > 0 ? (
+                <ChipMenu
+                    icon={Tags}
+                    label="Specialty"
+                    activeLabel={specialtyLabel}
+                    value={filters.specialty}
+                    defaultValue=""
+                    options={[
+                        { value: "", label: "Any specialty" },
+                        ...specialties.map((s) => ({ value: s.key, label: s.label })),
+                    ]}
+                    onChange={(specialty) => onFiltersChange({ specialty })}
+                />
+            ) : null}
+
+            <ChipMenu
+                icon={ArrowDownUp}
+                label={sortLabel}
+                activeLabel={sortLabel}
+                value={filters.sort}
+                defaultValue="relevance"
+                options={SORT_OPTIONS}
+                onChange={(sort) => onFiltersChange({ sort })}
+                align="end"
+            />
+
+            {filtered ? (
                 <button
                     type="button"
-                    aria-pressed={filters.verifiedOnly}
-                    onClick={() => onFiltersChange({ verifiedOnly: !filters.verifiedOnly })}
-                    className={cn(
-                        ownerListingsChipClassName(filters.verifiedOnly),
-                        "gap-2",
-                        !filters.verifiedOnly && "text-ink-muted",
-                    )}
+                    onClick={onClear}
+                    className="body-sm px-2 font-semibold text-brand underline-offset-4 hover:underline"
                 >
-                    <BadgeCheck
-                        aria-hidden
-                        className="text-brand block-4 inline-4"
-                        strokeWidth={1.75}
-                    />
-                    Verified only
+                    Clear all
                 </button>
-
-                <ChipMenu
-                    icon={Briefcase}
-                    label="Experience"
-                    activeLabel={experienceLabel}
-                    value={filters.minExperience}
-                    defaultValue={0}
-                    options={EXPERIENCE_OPTIONS}
-                    onChange={(minExperience) => onFiltersChange({ minExperience })}
-                />
-
-                {specialties.length > 0 ? (
-                    <ChipMenu
-                        icon={Tags}
-                        label="Specialty"
-                        activeLabel={specialtyLabel}
-                        value={filters.specialty}
-                        defaultValue=""
-                        options={[
-                            { value: "", label: "Any specialty" },
-                            ...specialties.map((s) => ({ value: s.key, label: s.label })),
-                        ]}
-                        onChange={(specialty) => onFiltersChange({ specialty })}
-                    />
-                ) : null}
-
-                {filtered ? (
-                    <button
-                        type="button"
-                        onClick={onClear}
-                        className="
-                          body-sm px-2 font-semibold text-brand underline-offset-4
-                          hover:underline
-                        "
-                    >
-                        Clear all
-                    </button>
-                ) : null}
-            </div>
-
-            <div className="flex items-center justify-between gap-3">
-                <p className="h6 text-ink tabular-nums" aria-live="polite">
-                    {isLoading && totalCount === 0 ? (
-                        <span className="text-ink-muted">Finding brokers…</span>
-                    ) : (
-                        <>
-                            {resultCount === 0
-                                ? "No matches"
-                                : `${resultCount} ${resultCount === 1 ? "broker" : "brokers"}`}
-                            {filtered && resultCount !== totalCount ? (
-                                <span className="text-ink-muted"> of {totalCount}</span>
-                            ) : null}
-                        </>
-                    )}
-                </p>
-
-                <div className="flex shrink-0 items-center gap-2.5">
-                    <ChipMenu
-                        icon={ArrowDownUp}
-                        label={sortLabel}
-                        activeLabel={sortLabel}
-                        value={filters.sort}
-                        defaultValue="relevance"
-                        options={SORT_OPTIONS}
-                        onChange={(sort) => onFiltersChange({ sort })}
-                        align="end"
-                    />
-                </div>
-            </div>
+            ) : null}
         </div>
     );
 }

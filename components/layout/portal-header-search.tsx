@@ -13,10 +13,13 @@ const HEADER_ICON_SIZE = 16;
 
 export function PortalHeaderSearch({
     className,
+    hints,
     onMouseEnter,
     onMouseLeave,
     ...props
-}: ComponentProps<typeof Button>) {
+}: ComponentProps<typeof Button> & {
+    hints?: readonly string[];
+}) {
     const iconRef = useRef<SearchIconHandle>(null);
     const reduceMotion = useReducedMotion();
 
@@ -44,7 +47,7 @@ export function PortalHeaderSearch({
                 aria-hidden="true"
             />
             <span aria-hidden="true" className="hidden overflow-hidden md:inline-flex">
-                <SearchPlaceholderLoop />
+                <SearchPlaceholderLoop hints={hints} />
             </span>
             <Kbd variant="surface" className="hidden md:ms-auto md:me-0 md:inline-flex">
                 Ctrl + K

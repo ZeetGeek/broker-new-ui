@@ -4,15 +4,17 @@ import { useEffect } from "react";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
-
-import { mapBrokerDashboardView, mapBrokerDashboardViewFromMock } from "@/features/dashboard/map-dashboard";
+import {
+    mapBrokerDashboardView,
+    mapBrokerDashboardViewFromMock,
+} from "@/features/dashboard/map-dashboard";
 import { dashboardMock } from "@/features/dashboard/mock-data";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
 import { ActivityCard } from "./activity-card";
 import { DashboardHeader } from "./dashboard-header";
+import { DashboardError, DashboardLoading, DashboardPage } from "./dashboard-page-shell";
 import { FollowUpsCard } from "./follow-ups-card";
 import { NewInAreas } from "./new-in-areas";
 import { NextShowingCard } from "./next-showing-card";
@@ -20,35 +22,6 @@ import { PipelineCard } from "./pipeline-card";
 import { RequestsCard } from "./requests-card";
 import { TodayCard } from "./today-card";
 import { YouRepresentCard } from "./you-represent-card";
-
-function DashboardLoading() {
-    return (
-        <div className="flex items-center justify-center min-block-[calc(100dvh-5rem)]">
-            <LoadingSpinner label="Loading dashboard" />
-        </div>
-    );
-}
-
-function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
-    return (
-        <div
-            className="
-              flex flex-col items-center justify-center gap-4 text-center
-              min-block-[calc(100dvh-5rem)]
-            "
-        >
-            <p className="h5 text-ink">Could not load your dashboard</p>
-            <p className="body text-ink-muted max-inline-96">{message}</p>
-            <button
-                type="button"
-                onClick={onRetry}
-                className="body font-medium text-brand underline underline-offset-4"
-            >
-                Try again
-            </button>
-        </div>
-    );
-}
 
 export function BrokerDashboard() {
     const dispatch = useAppDispatch();
@@ -81,8 +54,8 @@ export function BrokerDashboard() {
         : mapBrokerDashboardView(data, profile, now);
 
     return (
-        <div className="flex flex-col gap-6 min-block-[calc(100dvh-5rem)] md:gap-6">
-            <header className="flex shrink-0 flex-col gap-4">
+        <DashboardPage
+            header={
                 <DashboardHeader
                     now={now}
                     siteVisitCount={view.siteVisitCount}
@@ -96,22 +69,20 @@ export function BrokerDashboard() {
                     phoneDigits={view.phoneDigits}
                     email={view.email}
                 />
-            </header>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:gap-5">
-                <NextShowingCard showing={view.nextShowing} now={now} className="md:col-span-4" />
-                <TodayCard agenda={view.today} now={now} className="md:col-span-4" />
-                <RequestsCard data={view.requests} className="md:col-span-4" />
-                <PipelineCard data={view.pipelineCard} className="md:col-span-4" />
-                <FollowUpsCard data={view.followUps} className="md:col-span-4" />
-                <ActivityCard data={view.activity} className="md:col-span-4" />
-                <YouRepresentCard data={view.youRepresent} className="md:col-span-6" />
-                <NewInAreas
-                    properties={view.newInAreas}
-                    serviceAreas={view.serviceAreas}
-                    className="md:col-span-6"
-                />
-            </div>
-        </div>
+            }
+        >
+            <NextShowingCard showing={view.nextShowing} now={now} className="md:col-span-4" />
+            <TodayCard agenda={view.today} now={now} className="md:col-span-4" />
+            <RequestsCard data={view.requests} className="md:col-span-4" />
+            <PipelineCard data={view.pipelineCard} className="md:col-span-4" />
+            <FollowUpsCard data={view.followUps} className="md:col-span-4" />
+            <ActivityCard data={view.activity} className="md:col-span-4" />
+            <YouRepresentCard data={view.youRepresent} className="md:col-span-6" />
+            <NewInAreas
+                properties={view.newInAreas}
+                serviceAreas={view.serviceAreas}
+                className="md:col-span-6"
+            />
+        </DashboardPage>
     );
 }
