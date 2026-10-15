@@ -1,3 +1,5 @@
+"use client";
+
 import { CalendarDays, Clock3, RotateCw, SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
