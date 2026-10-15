@@ -290,6 +290,7 @@ function AttachedPropertyRows({
 function PanelHeader({
     name,
     phone,
+    avatarUrl,
     badge,
     onEdit,
     onClose,
@@ -297,6 +298,7 @@ function PanelHeader({
 }: {
     name: string;
     phone?: string;
+    avatarUrl?: string;
     badge?: ReactNode;
     onEdit: () => void;
     onClose: () => void;
@@ -304,7 +306,13 @@ function PanelHeader({
 }) {
     return (
         <div className="flex items-center gap-3 min-inline-0">
-            <UserAvatar name={name} size="lg" framed={false} className="shrink-0" />
+            <UserAvatar
+                name={name}
+                imageUrl={avatarUrl}
+                size="lg"
+                framed={false}
+                className="shrink-0"
+            />
             <div className="flex-1 min-inline-0">
                 <span className="flex flex-wrap items-center gap-2">
                     <span className="truncate font-display text-lg font-medium capitalize text-ink">
@@ -324,15 +332,11 @@ function PanelHeader({
                 )}
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={onEdit}
-                    title={editLocked ? "Owner details come from the platform" : undefined}
-                >
-                    {editLocked ? <Lock aria-hidden /> : null} Edit
-                </Button>
+                {editLocked ? null : (
+                    <Button type="button" variant="outline" size="sm" onClick={onEdit}>
+                        Edit
+                    </Button>
+                )}
                 <Button
                     type="button"
                     variant="outline"
@@ -627,9 +631,11 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
         "";
     const source = sourceLabel(details?.source);
     const ownerType = ownerTypeLabel(details?.ownerType);
-    const country = details?.country?.trim() || CONTACT_LOCATION_FALLBACK.country;
-    const state = details?.state?.trim() || CONTACT_LOCATION_FALLBACK.state;
-    const city = details?.city?.trim() || CONTACT_LOCATION_FALLBACK.city;
+    const isPlatform = owner.origin === "platform";
+    const country =
+        details?.country?.trim() || (isPlatform ? "" : CONTACT_LOCATION_FALLBACK.country);
+    const state = details?.state?.trim() || (isPlatform ? "" : CONTACT_LOCATION_FALLBACK.state);
+    const city = details?.city?.trim() || (isPlatform ? "" : CONTACT_LOCATION_FALLBACK.city);
     const fullAddress = details?.fullAddress?.trim() || details?.address?.trim() || "";
     const reraNumber = details?.reraNumber?.trim() || "";
 
@@ -653,7 +659,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
             <section className="scroll-mt-5 pbe-6">
                 <h3 className="body mbe-4 font-bold text-ink">Details</h3>
                 <IconFactGrid
-                    onAdd={onEdit}
+                    onAdd={isPlatform ? undefined : onEdit}
                     facts={[
                         {
                             label: "Owner type",
@@ -706,7 +712,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
             <section className="scroll-mt-5 pbe-6">
                 <h3 className="body mbe-4 font-bold text-ink">Contact details</h3>
                 <IconFactGrid
-                    onAdd={onEdit}
+                    onAdd={isPlatform ? undefined : onEdit}
                     facts={[
                         {
                             label: "Mobile",
@@ -744,13 +750,23 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                 </div>
                 <textarea
                     value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
-                    onBlur={() => void save({ notes })}
-                    placeholder="Add useful context for the next conversation."
+                    readOnly={isPlatform}
+                    onChange={(event) => {
+                        if (!isPlatform) setNotes(event.target.value);
+                    }}
+                    onBlur={() => {
+                        if (!isPlatform) void save({ notes });
+                    }}
+                    placeholder={
+                        isPlatform
+                            ? "Platform owner details are managed by the owner."
+                            : "Add useful context for the next conversation."
+                    }
                     className="
                       body resize-none rounded-control border-2 border-border-warm bg-surface p-3.5
                       leading-relaxed text-ink outline-none min-block-28 inline-full
                       hover:border-ink-subtle focus:border-ring focus:ring-3 focus:ring-ring/30
+                      read-only:bg-surface-muted read-only:text-ink-muted
                     "
                 />
             </section>
@@ -888,6 +904,7 @@ export function ContactDetailPanel({
                 <PanelHeader
                     name={row.name}
                     phone={phone}
+                    avatarUrl={owner?.avatarUrl}
                     badge={badge}
                     onEdit={edit}
                     onClose={() => onOpenChange(false)}
