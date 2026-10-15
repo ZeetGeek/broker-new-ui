@@ -13,13 +13,18 @@ import {
     type ExclusiveOwnerFormValues,
 } from "@/lib/validation/exclusive-owner";
 
+import { useLocationOptions } from "@/hooks/use-locations";
+
 import { useAppSelector } from "@/store/hooks";
+
+import { LocalityCombobox } from "@/components/shared/locality-combobox";
 
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
 import {
     ChoiceRadioField,
     ComboboxField,
     ContactFormDrawer,
+    FormField,
     MoreDetails,
     NotesField,
     TextField,
@@ -122,6 +127,11 @@ export function AddOwnerModal({
     } = form;
 
     const values = watch();
+    const { selectedCity } = useLocationOptions({
+        countryName: values.country,
+        stateName: values.state,
+        cityName: values.city,
+    });
 
     useEffect(() => {
         if (!open) return;
@@ -265,20 +275,27 @@ export function AddOwnerModal({
                     onStateChange={(state) =>
                         setValue("state", state, { shouldDirty: true, shouldValidate: true })
                     }
-                    onCityChange={(city) =>
-                        setValue("city", city, { shouldDirty: true, shouldValidate: true })
-                    }
+                    onCityChange={(city) => {
+                        const current = form.getValues("city");
+                        setValue("city", city, { shouldDirty: true, shouldValidate: true });
+                        if (city.trim().toLowerCase() === current.trim().toLowerCase()) return;
+                        setValue("area", "", { shouldDirty: true });
+                    }}
                 />
 
-                <TextField
-                    label="Area"
-                    value={values.area ?? ""}
-                    onValueChange={(area) =>
-                        setValue("area", area, { shouldDirty: true, shouldValidate: true })
-                    }
-                    error={errors.area?.message}
-                    placeholder="Vesu"
-                />
+                <FormField label="Area" htmlFor="owner-area">
+                    <LocalityCombobox
+                        id="owner-area"
+                        size="lg"
+                        cityId={selectedCity?.id}
+                        value={values.area ?? ""}
+                        placeholder="Search an area, e.g. Vesu"
+                        errorText={errors.area?.message}
+                        onValueChange={(area: string) =>
+                            setValue("area", area, { shouldDirty: true, shouldValidate: true })
+                        }
+                    />
+                </FormField>
 
                 <MoreDetails open={moreOpen} onOpenChange={setMoreOpen}>
                     <TextField

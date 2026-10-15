@@ -479,7 +479,7 @@ function BuyerPanel({
                             value: city,
                         },
                         {
-                            label: "Areas",
+                            label: "Preferred area",
                             icon: MapPin,
                             value: areasLabel || "—",
                         },
