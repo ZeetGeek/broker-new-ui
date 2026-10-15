@@ -75,10 +75,12 @@ export const profileFormSchema = z.object({
             "Use lowercase letters, numbers and hyphens only",
         )
         .refine((value) => value.length <= 60, "That is too long for a web address"),
-    serviceAreas: z.string().refine(
-        (value) => parseCommaList(value).length <= MAX_SERVICE_AREAS,
-        `Pick your best ${MAX_SERVICE_AREAS} areas — a broker who covers everywhere covers nothing`,
-    ),
+    serviceAreas: z
+        .array(z.string())
+        .max(
+            MAX_SERVICE_AREAS,
+            `Pick your best ${MAX_SERVICE_AREAS} areas — a broker who covers everywhere covers nothing`,
+        ),
     specializations: z.string(),
 });
 
