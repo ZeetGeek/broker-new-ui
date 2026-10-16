@@ -108,7 +108,7 @@ export function AttachOwnerToListingModal({
                 <Input
                     size="sm"
                     value={query}
-                    onChange={(event) => setQuery(event.target.value)}
+                    onValueChange={setQuery}
                     placeholder="Search your listings"
                     aria-label="Search your listings"
                     startIcon={Search}

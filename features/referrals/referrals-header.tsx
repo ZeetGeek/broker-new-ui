@@ -75,7 +75,7 @@ function ReferralsQueryInput({
         <Input
             size="sm"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onValueChange={setDraft}
             placeholder="Search name or number"
             aria-label="Search the brokers you invited"
             startIcon={Search}

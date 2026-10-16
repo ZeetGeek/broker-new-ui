@@ -65,7 +65,7 @@ function VisitsQueryInput({ value, onChange }: { value: string; onChange: (q: st
         <Input
             size="sm"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onValueChange={setDraft}
             placeholder="Search property, area or name"
             aria-label="Search your visits"
             startIcon={Search}

@@ -88,7 +88,7 @@ function QueryInput({
         <Input
             size="sm"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onValueChange={setDraft}
             placeholder={placeholder}
             aria-label={placeholder}
             startIcon={Search}

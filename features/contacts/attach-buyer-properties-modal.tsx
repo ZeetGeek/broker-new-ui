@@ -178,7 +178,7 @@ export function AttachBuyerPropertiesModal({
                     <Input
                         size="sm"
                         value={query}
-                        onChange={(event) => setQuery(event.target.value)}
+                        onValueChange={setQuery}
                         placeholder="Search properties"
                         aria-label="Search properties"
                         startIcon={Search}

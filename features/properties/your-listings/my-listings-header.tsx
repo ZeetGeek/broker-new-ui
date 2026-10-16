@@ -136,7 +136,7 @@ function MyListingsQueryInput({
         <Input
             size="sm"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onValueChange={setDraft}
             placeholder="Search listings"
             aria-label="Search your listings"
             startIcon={Search}

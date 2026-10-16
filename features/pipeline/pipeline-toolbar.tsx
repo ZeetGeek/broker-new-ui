@@ -60,7 +60,7 @@ function PipelineQueryInput({ value, onChange }: { value: string; onChange: (q: 
         <Input
             size="default"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onValueChange={setDraft}
             placeholder="Search buyer, owner or area"
             aria-label="Search your deals"
             startIcon={Search}

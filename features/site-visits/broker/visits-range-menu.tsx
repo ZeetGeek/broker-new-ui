@@ -91,7 +91,7 @@ function VisitsSearchInput({
             id={id}
             size="sm"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onValueChange={setDraft}
             placeholder={placeholder}
             aria-label={ariaLabel}
             startIcon={Search}
