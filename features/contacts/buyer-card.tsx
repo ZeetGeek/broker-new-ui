@@ -73,7 +73,7 @@ export function BuyerCard({
         >
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-3 min-inline-0">
-                    <UserAvatar name={buyer.name} size="md" fallback="shape" className="shrink-0" />
+                    <UserAvatar name={buyer.name} size="md" className="shrink-0" />
                     <div className="min-inline-0">
                         <div className="flex flex-wrap items-center gap-1.5">
                             <h2 className="body truncate font-bold capitalize text-ink">

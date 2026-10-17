@@ -50,7 +50,7 @@ function PendingRequestRow({
                 busy && "opacity-70",
             )}
         >
-            <UserAvatar name={brokerLabel} size="sm" fallback="brand" />
+            <UserAvatar name={brokerLabel} size="sm" />
 
             <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-inline-0">

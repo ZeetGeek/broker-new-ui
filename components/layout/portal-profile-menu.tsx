@@ -132,11 +132,9 @@ function MobileProfileLink({
         <Link
             href={profileHref}
             aria-label="Profile"
-            className="flex scale-[0.96] items-center gap-1 ps-0 pe-1 text-ink-muted sm:hidden"
+            className="flex items-center gap-1 ps-0 pe-1 text-ink-muted sm:hidden"
         >
-            <span className="overflow-hidden rounded-full block-control-lg inline-control-lg">
-                <UserAvatar name={userName} imageUrl={userAvatarUrl} size="fill" />
-            </span>
+            <UserAvatar name={userName} imageUrl={userAvatarUrl} size="md" />
         </Link>
     );
 }
@@ -161,16 +159,14 @@ function DesktopProfileDropdown({
                         size="md"
                         aria-label="Account menu"
                         className="
-                          scale-[0.96] gap-1 ps-0 pe-1 text-ink-muted
+                          gap-1 ps-0 pe-1 text-ink-muted
                           hover:bg-transparent hover:text-ink
                           data-popup-open:text-ink
                         "
                     />
                 }
             >
-                <span className="overflow-hidden rounded-full block-control-lg inline-control-lg">
-                    <UserAvatar name={userName} imageUrl={userAvatarUrl} size="fill" />
-                </span>
+                <UserAvatar name={userName} imageUrl={userAvatarUrl} size="md" />
                 <ChevronDown aria-hidden="true" className="block-4 inline-4" strokeWidth={1.75} />
             </DropdownMenuTrigger>
         </div>
@@ -196,13 +192,12 @@ function DesktopProfileDropdown({
                     <DropdownMenuGroup>
                         <DropdownMenuLabel className="flex flex-col gap-3 p-0! ps-[5px]! font-normal text-ink">
                             <div className="flex items-center gap-2.5">
-                                <span className="shrink-0 overflow-hidden rounded-full block-8 inline-8">
-                                    <UserAvatar
-                                        name={userName}
-                                        imageUrl={userAvatarUrl}
-                                        size="fill"
-                                    />
-                                </span>
+                                <UserAvatar
+                                    name={userName}
+                                    imageUrl={userAvatarUrl}
+                                    size="md"
+                                    className="shrink-0"
+                                />
                                 <div className="flex flex-col gap-1 min-inline-0">
                                     <p className="truncate font-display text-sm font-medium text-ink capitalize">
                                         {userName}

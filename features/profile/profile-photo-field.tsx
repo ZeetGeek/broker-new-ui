@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import { Camera, CropIcon, ImagePlus } from "lucide-react";
+import { Camera, CropIcon } from "lucide-react";
 
 import type { UserProfile } from "@/lib/api/profile";
 import { profileApi } from "@/lib/api/profile";
@@ -154,28 +154,15 @@ export function ProfilePhotoField({ profile, isOwner, onUploaded }: ProfilePhoto
                     busy && "opacity-80",
                 )}
             >
-                {hasPhoto ? (
-                    <UserAvatar
-                        name={name}
-                        imageUrl={savedUrl}
-                        size="lg"
-                        className="
-                          shrink-0 shadow-xs ring-2 ring-brand/25 ring-offset-2
-                          ring-offset-brand-soft/40 block-20 inline-20
-                        "
-                    />
-                ) : (
-                    <span
-                        className="
-                          flex shrink-0 items-center justify-center rounded-full border-2
-                          border-dashed border-brand/35 bg-brand-soft/40 text-brand block-20
-                          inline-20
-                        "
-                        aria-hidden
-                    >
-                        <ImagePlus className="block-7 inline-7" strokeWidth={1.75} />
-                    </span>
-                )}
+                <UserAvatar
+                    name={name}
+                    imageUrl={savedUrl}
+                    size="lg"
+                    className="
+                      shrink-0 shadow-xs ring-2 ring-brand/25 ring-offset-2
+                      ring-offset-brand-soft/40 block-20 inline-20
+                    "
+                />
 
                 <div className="flex flex-1 flex-col gap-2 min-inline-0">
                     <div>

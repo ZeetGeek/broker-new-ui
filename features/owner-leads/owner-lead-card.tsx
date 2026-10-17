@@ -43,7 +43,7 @@ import {
 function PartyCell({ name, role }: { name: string; role: string }) {
     return (
         <div className="flex items-center gap-2.5 min-inline-0">
-            <UserAvatar name={name} size="xs" fallback="character" className="shrink-0" />
+            <UserAvatar name={name} size="xs" className="shrink-0" />
             <div className="flex flex-col min-inline-0">
                 <span className="body-xs text-ink-subtle">{role}</span>
                 <span className="body-sm truncate font-semibold text-ink">{name}</span>

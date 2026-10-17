@@ -70,9 +70,9 @@ function UserAvatarDemo() {
     return (
         <div className="flex items-center gap-3">
             <UserAvatar name="Priya Shah" imageUrl={DEMO_PEOPLE[0].avatarUrl} size="md" />
-            <UserAvatar name="Neha Desai" size="md" fallback="shape" />
-            <UserAvatar name="Kavya Iyer" size="md" fallback="character" />
-            <UserAvatar name="Amit Patel" size="md" fallback="character" />
+            <UserAvatar name="Neha Desai" size="md" />
+            <UserAvatar name="Kavya Iyer" size="md" />
+            <UserAvatar name="Amit Patel" size="md" />
         </div>
     );
 }

@@ -50,7 +50,7 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 function Person({ name }: { name: string }) {
     return (
         <span className="flex items-center justify-end gap-2 min-inline-0">
-            <UserAvatar name={name} size="2xs" fallback="character" className="shrink-0" />
+            <UserAvatar name={name} size="2xs" className="shrink-0" />
             <span className="truncate">{name}</span>
         </span>
     );

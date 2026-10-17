@@ -83,12 +83,7 @@ export function BuyerPicker({
                                 !checked && selected.length >= MAX_BUYERS_PER_VISIT && `opacity-55`,
                             )}
                         >
-                            <UserAvatar
-                                name={buyer.name}
-                                imageUrl={buyer.avatarUrl}
-                                size="sm"
-                                fallback="character"
-                            />
+                            <UserAvatar name={buyer.name} imageUrl={buyer.avatarUrl} size="sm" />
                             <span
                                 className="
                       flex-1 min-inline-0

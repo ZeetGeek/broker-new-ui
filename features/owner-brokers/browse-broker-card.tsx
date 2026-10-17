@@ -143,7 +143,6 @@ export function BrowseBrokerCard({
                     name={name}
                     imageUrl={broker.avatarUrl ?? undefined}
                     size="md"
-                    fallback="shape"
                     className="shrink-0"
                 />
                 <div className="flex-1 min-inline-0">
