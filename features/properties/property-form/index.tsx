@@ -12,13 +12,13 @@ import {
 } from "react";
 import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 
 import { ChevronDown, RotateCcw, X } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import { useListingScore } from "@/lib/hooks/use-listing-score";
+import { useRouter } from "@/lib/navigation";
 import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import {
     DEFAULT_PROPERTY_DRAFT,

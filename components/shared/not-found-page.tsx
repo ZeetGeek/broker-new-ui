@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { ArrowLeft, Home } from "lucide-react";
+
+import { useRouter } from "@/lib/navigation";
 
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -28,13 +29,13 @@ export function NotFoundPage() {
             <main className="flex flex-1 items-center justify-center px-2 py-16">
                 <div className="text-center inline-full max-inline-lg">
                     <p
-                        className="mbe-8 font-display text-8xl font-bold text-brand"
+                        className="mbe-6 font-display text-8xl font-bold text-ink"
                         aria-hidden="true"
                     >
                         404
                     </p>
-                    <h1 className="h1 text-balance text-brand-ink">Page not found</h1>
-                    <p className="body mbs-4 text-pretty text-ink">
+                    <h1 className="h1 text-balance text-ink-muted">Page not found</h1>
+                    <p className="body mbs-4 text-pretty text-ink-muted">
                         This page may have moved, or the link may be incorrect. Check the address or
                         head back home.
                     </p>

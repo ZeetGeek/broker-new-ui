@@ -1,19 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
 
-import { portalForRole, portalHomeForRole, type Portal } from "@/lib/auth/session";
+import { type Portal, portalForRole, portalHomeForRole } from "@/lib/auth/session";
+import { usePathname, useRouter } from "@/lib/navigation";
 
 import { useAppSelector } from "@/store/hooks";
 
-export function AuthGuard({
-    children,
-    portal,
-}: {
-    children: React.ReactNode;
-    portal: Portal;
-}) {
+export function AuthGuard({ children, portal }: { children: React.ReactNode; portal: Portal }) {
     const router = useRouter();
     const pathname = usePathname();
     const { user, accessToken, hydrated } = useAppSelector((state) => state.auth);
@@ -42,15 +36,26 @@ export function AuthGuard({
             >
                 <span className="sr-only">Loading your account</span>
                 <div className="mx-auto space-y-6 max-inline-[1280px]">
-                    <div className="
+                    <div
+                        className="
                       animate-pulse rounded-card bg-surface-muted block-16 inline-full
-                    " />
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-6">{Array.from({ length: 6 }, (_, index) => <div key={index} className="
+                    "
+                    />
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+                        {Array.from({ length: 6 }, (_, index) => (
+                            <div
+                                key={index}
+                                className="
                       animate-pulse rounded-inner bg-surface-muted block-16
-                    " />)}</div>
-                    <div className="
+                    "
+                            />
+                        ))}
+                    </div>
+                    <div
+                        className="
                       animate-pulse rounded-card bg-surface-muted block-72 inline-full
-                    " />
+                    "
+                    />
                 </div>
             </div>
         );

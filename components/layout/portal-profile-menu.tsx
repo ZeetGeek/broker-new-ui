@@ -3,10 +3,10 @@
 import { type ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { ChevronDown } from "lucide-react";
 
+import { useRouter } from "@/lib/navigation";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 

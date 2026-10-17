@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { useRouter, useSearchParams } from "@/lib/navigation";
 
 import { Button } from "@/components/ui/button";
 

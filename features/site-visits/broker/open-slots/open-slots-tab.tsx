@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { formatDistanceToNowStrict } from "date-fns";
 
 import type { ApiPropertyOption } from "@/lib/api/broker-visits-map";
+import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { TIME_BUCKETS } from "@/lib/visits/constants";
 import { sortSlotsForBuyer } from "@/lib/visits/grouping";
 

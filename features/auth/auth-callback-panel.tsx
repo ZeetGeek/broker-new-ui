@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 
 import { authApi } from "@/lib/api/auth";
 import { clearSession, GOOGLE_ONBOARDING_KEY, portalHomeForRole } from "@/lib/auth/session";
+import { useRouter, useSearchParams } from "@/lib/navigation";
 
 import { AuthFormFrame } from "@/features/auth/auth-back-link";
 import { AuthBusyState } from "@/features/auth/auth-busy-state";

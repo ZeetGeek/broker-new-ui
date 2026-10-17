@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useQuery } from "@tanstack/react-query";
 
 import { brokerVisitsApi } from "@/lib/api/broker-visits";
+import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { slotListFiltersFromParams } from "@/lib/visits/filters";
 import { buildVisitSummary } from "@/lib/visits/summary";
 import { istDateKey } from "@/lib/visits/time";

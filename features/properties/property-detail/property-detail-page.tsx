@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
 
 import { ChevronLeft, MapPin } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { useParams, useRouter } from "@/lib/navigation";
 import {
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_YOUR_LISTINGS_HREF,

@@ -10,6 +10,28 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* App-wide route progress: the transparent tail grows into a focused green beam. */
+.bprogress.bprogress .bar {
+    background: linear-gradient(90deg, rgba(27, 122, 90, 0) 0%, rgba(27, 122, 90, 1) 100%);
+    box-shadow:
+        0 0 8px rgba(27, 122, 90, 0.5),
+        0 0 18px rgba(27, 122, 90, 0.24);
+}
+
+.bprogress.bprogress .peg {
+    inline-size: 7rem;
+    box-shadow:
+        0 0 8px rgba(27, 122, 90, 0.95),
+        0 0 20px rgba(27, 122, 90, 0.72),
+        0 0 32px rgba(27, 122, 90, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bprogress.bprogress .bar {
+        transition: none !important;
+    }
+}
+
 :root {
     --background: oklch(1 0 0);
     --foreground: oklch(0.153 0.006 107.1);

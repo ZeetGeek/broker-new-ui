@@ -2,10 +2,10 @@
 
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useRouter, useSearchParams } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
+import { useRouter, useSearchParams } from "@/lib/navigation";
 import { ownerBrokersHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 

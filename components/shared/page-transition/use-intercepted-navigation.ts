@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+
+import { useRouter } from "@/lib/navigation";
 
 import { COVER_DURATION } from "./anim";
 
