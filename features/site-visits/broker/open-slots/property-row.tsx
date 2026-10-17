@@ -113,18 +113,18 @@ export const PropertyRow = memo(function PropertyRow({
                 <div className="flex flex-col pbs-1! min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
                         <Badge
-                            variant={
+                            color={
                                 hasAccess
-                                    ? "brand"
+                                    ? "emerald"
                                     : item.access === "requested"
-                                      ? "neutral"
-                                      : "outline"
+                                      ? "amber"
+                                      : "stone"
                             }
                         >
                             {hasAccess ? <BadgeCheck aria-hidden /> : null}
                             {accessLabel}
                         </Badge>
-                        <Badge variant="neutral">
+                        <Badge color={item.property.purpose === "rent" ? "orange" : "emerald"}>
                             <Building2 aria-hidden />
                             {purposeLabel}
                         </Badge>

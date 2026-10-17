@@ -10,4 +10,3 @@ export const TIME_BUCKETS = [
     { id: "afternoon", label: "Afternoon", detail: "12–4 PM", start: 12, end: 16 },
     { id: "evening", label: "Evening", detail: "4–9 PM", start: 16, end: 21 },
 ] as const;
-

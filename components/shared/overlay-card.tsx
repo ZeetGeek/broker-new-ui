@@ -54,47 +54,13 @@ export const OVERLAY_GLASS_BUTTON_CLASS = `
   hover:border-ink/30 hover:bg-surface-muted hover:text-ink
 `;
 
-/** Glass chip for the photo — status, sale/rent, new. */
-export function OverlayChip({
-    dotClassName,
-    pulse = false,
-    children,
-}: {
-    dotClassName: string;
-    /** Ping the dot. Use only for something that is genuinely fresh or waiting on the user. */
-    pulse?: boolean;
-    children: ReactNode;
-}) {
-    return (
-        <span
-            className="
-              body-xs inline-flex items-center gap-1.5 rounded-full bg-ink/30 px-2.5 py-1
-              font-semibold tracking-wide whitespace-nowrap text-surface backdrop-blur-md
-            "
-        >
-            <span aria-hidden className="relative flex shrink-0 block-1.5 inline-1.5">
-                {pulse ? (
-                    <span
-                        className={cn(
-                            "absolute inset-0 rounded-full motion-safe:animate-ping",
-                            dotClassName,
-                        )}
-                    />
-                ) : null}
-                <span className={cn("relative rounded-full block-1.5 inline-1.5", dotClassName)} />
-            </span>
-            {children}
-        </span>
-    );
-}
-
 /** Divided row of small label/value pairs — keep for deal/owned extras only. */
 export function OverlayStatsRow({ children }: { children: ReactNode }) {
     return (
         <div
             className="
-              grid auto-cols-fr grid-flow-col divide-x divide-border-warm border-bs border-border-warm
-              pbs-3
+              grid auto-cols-fr grid-flow-col divide-x divide-border-warm border-bs
+              border-border-warm pbs-3
             "
         >
             {children}
@@ -115,7 +81,7 @@ export function OverlayStat({
     return (
         <div className="flex flex-col gap-0.5 px-3 min-inline-0 first:ps-0 last:pe-0">
             <span className="body-xs truncate tracking-wide text-ink-muted">{label}</span>
-            <span className="body-sm truncate font-semibold tracking-wide tabular-nums text-ink">
+            <span className="body-sm truncate font-semibold tracking-wide text-ink tabular-nums">
                 {children}
             </span>
             {hint ? (
@@ -189,11 +155,11 @@ export function OverlayPersonLine({
         <p className={PERSON_CLASS}>
             <span className="text-ink-subtle">{label}</span>
             <span className="text-ink-subtle/60"> · </span>
-            <span className="font-semibold capitalize text-ink">{name}</span>
+            <span className="font-semibold text-ink capitalize">{name}</span>
             {hint ? (
                 <>
                     <span className="text-ink-subtle/60"> · </span>
-                    <span className="tabular-nums text-ink-muted">{hint}</span>
+                    <span className="text-ink-muted tabular-nums">{hint}</span>
                 </>
             ) : null}
         </p>

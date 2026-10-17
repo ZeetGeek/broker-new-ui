@@ -272,9 +272,7 @@ export function VisitRow({
 
                 {visit.meetingNote ? (
                     <Hint label={visit.meetingNote}>
-                        <span
-                            className="body-sm flex items-center gap-1.5 text-ink-muted"
-                        >
+                        <span className="body-sm flex items-center gap-1.5 text-ink-muted">
                             <StickyNote aria-hidden className="shrink-0 block-3.5 inline-3.5" />
                             <span className="truncate">{visit.meetingNote}</span>
                         </span>

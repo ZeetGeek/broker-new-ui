@@ -291,9 +291,11 @@ export function VisitsList({
                             <div className="flex flex-col gap-3 pbs-3">
                                 {group.hours.map((band) => (
                                     <section key={band.key} className="flex flex-col gap-1.5">
-                                        <h3 className="
+                                        <h3
+                                            className="
                                           body-xs flex items-center gap-2 text-ink-subtle
-                                        ">
+                                        "
+                                        >
                                             <span className="tabular font-semibold text-ink">
                                                 {band.label}
                                             </span>

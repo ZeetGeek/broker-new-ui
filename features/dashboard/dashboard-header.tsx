@@ -39,16 +39,13 @@ export type DashboardHeaderProps = DashboardSummaryStats & {
     email: string;
 };
 
-const CHIP_SURFACE = "bg-surface";
 const ICON_CLASS = "block-3 inline-3";
 const META_TEXT = "body-sm font-medium text-ink-muted";
 const PROFILE_EDIT_HREF = "/broker/profile";
 const ADD_SERVICE_AREA_TOOLTIP =
     "Tell us where you work. We'll show you new properties in those areas.";
 const SETUP_CHIP_TOOLTIP_CLASS = "block w-max max-w-66! text-pretty";
-const ADD_SERVICE_AREA_CHIP = "border-border-warm bg-surface text-ink shadow-none";
-const ACTIONABLE_CHIP_HOVER =
-    "transition-colors duration-160 hover:border-ink/20 hover:bg-neutral-50 hover:text-ink";
+const ACTIONABLE_CHIP_HOVER = "transition-colors duration-160 hover:brightness-95";
 
 function buildSummaryLines({
     siteVisitCount,
@@ -130,8 +127,7 @@ function ServiceAreaChips({ areas }: { areas: string[] }) {
                             href={PROFILE_EDIT_HREF}
                             aria-label="Add service area"
                             className={cn(
-                                badgeVariants({ variant: "outline" }),
-                                ADD_SERVICE_AREA_CHIP,
+                                badgeVariants({ color: "sky" }),
                                 ACTIONABLE_CHIP_HOVER,
                                 "outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
                             )}
@@ -151,7 +147,7 @@ function ServiceAreaChips({ areas }: { areas: string[] }) {
     return (
         <>
             {areas.map((area) => (
-                <Badge key={area} variant="outline" className={CHIP_SURFACE}>
+                <Badge key={area} color="sky">
                     {area}
                 </Badge>
             ))}

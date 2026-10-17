@@ -301,10 +301,11 @@ touch affordance without making every surface look soft or capsule-shaped.
 --radius-control 12px   buttons, inputs, selects, tabs, segmented controls
 ```
 
-Badges use `rounded-lg` (12px). Checkboxes use `rounded-sm` (6px). Controls use
-`rounded-control` (12px); cards and overlays use `rounded-card` (20px). `rounded-full`
-is reserved for genuinely circular geometry such as avatars, radio indicators, status
-dots, and switch thumbs. It is not the default for buttons, badges, filters, or tabs.
+Badges are pills (`rounded-full`) — see §4.4. Checkboxes use `rounded-sm` (6px).
+Controls use `rounded-control` (12px); cards and overlays use `rounded-card` (20px).
+`rounded-full` is reserved for genuinely circular geometry such as avatars, radio
+indicators, status dots, switch thumbs, and badges. It is not the default for
+buttons, filters, or tabs.
 
 Never apply a radius to a single-sided border. If a row uses `border-l` as an accent,
 its radius is 0.
@@ -405,21 +406,26 @@ label with the spinner alone.
 
 ### 4.4 Badges and chips
 
-Soft top→bottom fill gradient (`surface` → tint) plus a vertical gradient border
-(light top → darker bottom), and a soft colour-tinted drop shadow. Never white text
-on a soft fill, never `ink` on a coloured fill.
+One pill. Flat fill, no gradient, no border, no shadow. A 6px leading dot.
 
-| Meaning                    | Fill to         | Text         |
-| -------------------------- | --------------- | ------------ |
-| Verified, approved, active | `brand-soft`    | `brand-text` |
-| Expiring, overdue, due now | `urgent-soft`   | `urgent`     |
-| Rejected, inactive         | `danger-soft`   | `danger`     |
-| Neutral status             | `surface-muted` | `ink`        |
-| Filters, tags (outline)    | `surface`       | `ink-muted`  |
+`body-xs` + weight 600 + `tracking-wide`, padding `4px 10px` (`py-1 px-2.5`),
+`rounded-full`, `gap-1.5`.
 
-12px, weight 600, `4px 12px` padding, `rounded-lg` (12px) — soft corners, not
-`rounded-full`. Border is a gradient via dual `background` (padding-box +
-border-box), not a flat `border-color`.
+Colour is a `color` prop on `components/ui/badge.tsx`. This is the exception to
+the one-hue rule in §1.1 — a badge may use the Tailwind palette so states stay
+distinguishable. Fill is `{color}-200`, text is `{color}-700`, the dot is
+`{color}-600`.
+
+Presets: red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue,
+indigo, violet, purple, and stone (the quiet default).
+
+`customColor={{ bg, text, dot }}` is for a one-off that is not in that list. Any
+CSS colour. Do not hand-roll a second pill.
+
+`blur` tints the fill (hue at 80% plus `backdrop-blur-md`). `blur="dark"` is the
+photo-card glass: `bg-ink/30`, `text-surface`, `backdrop-blur-md` — the same
+fill as the photo menu button. On that glass the dot steps up to `{color}-300`
+so it stays visible. Solid pills keep the `{color}-600` dot.
 
 ### 4.5 Property card
 
@@ -978,14 +984,14 @@ produces a confirmation that says **Approved**, and a history entry that says
 Things that will be rejected in review:
 
 - Pure white page background, or a cool gray canvas
-- A second brand hue — blue links, purple charts, a teal badge
+- A second brand hue on links, charts, or buttons. Badge colour is the exception in §4.4
 - A shadow that isn't one of the five ink-tinted `--shadow-*` tokens (no default browser
   shadow, no pure-black shadow, no shadow on a dark attention card)
 - Stacking more than one shadow step on the same element
 - Gradients anywhere except the documented broker dashboard status rail, including on photo overlays
 - Orange used decoratively rather than for a deadline
 - Lime appearing more than once per card, or as text on a light surface
-- `rounded-full` on a button, badge, filter chip, input, or tab without a documented circular purpose
+- `rounded-full` on a button, filter chip, input, or tab without a documented circular purpose. Badges are pills — see §4.4
 - Title Case or ALL CAPS outside the eyebrow label
 - Arbitrary spacing values (`p-[13px]`, `gap-[7px]`)
 - Emoji in production UI

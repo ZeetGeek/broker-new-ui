@@ -19,8 +19,7 @@ const SCROLL_HIDE = `
 `;
 
 export type TimelineEntry =
-    | { type: "now"; key: string; label: string }
-    | { type: "item"; key: string; item: TodayItem };
+    { type: "now"; key: string; label: string } | { type: "item"; key: string; item: TodayItem };
 
 /** How much of the completed stack peeks above the Now marker. */
 const COMPLETED_PEEK_PX = 52;
@@ -212,9 +211,7 @@ export function TodayTimeline({ timeline, doneCount }: TodayTimelineProps) {
                     if (entry.type === "now") {
                         return <NowMarker key={entry.key} label={entry.label} markerRef={nowRef} />;
                     }
-                    return (
-                        <TimelineRow key={entry.key} item={entry.item} />
-                    );
+                    return <TimelineRow key={entry.key} item={entry.item} />;
                 })}
             </ul>
         </div>

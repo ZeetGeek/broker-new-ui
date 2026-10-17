@@ -94,7 +94,9 @@ export function OwnerScheduledFilters({
                                         <button
                                             type="button"
                                             aria-pressed={selected}
-                                            onClick={() => onChange(selected ? undefined : item.key)}
+                                            onClick={() =>
+                                                onChange(selected ? undefined : item.key)
+                                            }
                                             className={cn(
                                                 ownerListingsChipClassName(selected),
                                                 warning &&

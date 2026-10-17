@@ -24,6 +24,18 @@ addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
 
 const DOT = "\u00B7";
 
+const REQUEST_BADGE_COLOR = {
+    pending: "amber",
+    counter_offered: "orange",
+    accepted: "emerald",
+    declined: "red",
+    withdrawn: "stone",
+    expired: "stone",
+} as const satisfies Record<
+    TimeRequest["status"],
+    "amber" | "orange" | "emerald" | "red" | "stone"
+>;
+
 function canNudge(request: TimeRequest) {
     return (
         !request.lastNudgedAt ||
@@ -96,10 +108,8 @@ export const RequestRow = memo(function RequestRow({
 
                 <div className="flex flex-col pbs-1! min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
-                        <Badge variant="outline" className={cn(status.tone)}>
-                            {status.label}
-                        </Badge>
-                        <Badge variant="neutral">
+                        <Badge color={REQUEST_BADGE_COLOR[request.status]}>{status.label}</Badge>
+                        <Badge color="sky">
                             <Clock3 aria-hidden />
                             {formatVisitTime(request.preferredStartsAt)}
                             <span className="text-ink-subtle">{DOT}</span>
@@ -162,7 +172,7 @@ export const RequestRow = memo(function RequestRow({
                 <div
                     className="
                       col-span-2 flex items-center justify-end gap-3
-                      sm:col-span-1 sm:justify-self-end sm:gap-4
+                      sm:col-span-1 sm:gap-4 sm:justify-self-end
                     "
                 >
                     <div

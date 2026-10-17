@@ -115,19 +115,11 @@ function PropertyRow({ property }: { property: RepresentedPropertyItem }) {
                             isRent={property.isRent}
                             className="body font-semibold"
                         />
-                        <Badge
-                            className={
-                                property.isRent
-                                    ? "border-0 bg-sky-100 text-sky-800"
-                                    : "border-0 bg-emerald-100 text-emerald-800"
-                            }
-                        >
+                        <Badge color={property.isRent ? "orange" : "emerald"}>
                             {property.isRent ? "Rent" : "Sale"}
                         </Badge>
                         {property.stageLabel ? (
-                            <Badge className="border-0 bg-amber-100 text-amber-900">
-                                {property.stageLabel}
-                            </Badge>
+                            <Badge color="amber">{property.stageLabel}</Badge>
                         ) : null}
                     </div>
 

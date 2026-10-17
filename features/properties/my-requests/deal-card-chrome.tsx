@@ -8,23 +8,23 @@ import { formatAreaSqft } from "@/lib/format/area";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
+import type { PropertyShareInput } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
 
+import { AttachedBuyersRow, AttachedOwnerRow } from "@/components/shared/attached-people-row";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
     OVERLAY_ICON_BUTTON_CLASS,
     OverlayCard,
     OverlayCardSummary,
-    OverlayChip,
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
-import { AttachedBuyersRow, AttachedOwnerRow } from "@/components/shared/attached-people-row";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import {
     PropertyCardMenu,
     type PropertyCardMenuContact,
 } from "@/components/shared/property-card-menu";
-import type { PropertyShareInput } from "@/lib/share/property";
+import { Badge, type BadgeColor } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
@@ -128,12 +128,12 @@ export function DealWhatsAppButton({
 
 export type DealStatusTone = "waiting" | "action" | "success" | "danger" | "closed";
 
-const STATUS_DOT_CLASS: Record<DealStatusTone, string> = {
-    waiting: "bg-surface/70",
-    action: "bg-urgent-mid",
-    success: "bg-success-mid",
-    danger: "bg-danger-mid",
-    closed: "bg-ink-subtle",
+const STATUS_BADGE_COLOR: Record<DealStatusTone, BadgeColor> = {
+    waiting: "amber",
+    action: "orange",
+    success: "emerald",
+    danger: "red",
+    closed: "stone",
 };
 
 const OVERLAY_IMAGE_SIZES = "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw";
@@ -229,15 +229,16 @@ export function DealOverlayCard({
             className={cn(isBusy && "pointer-events-none opacity-60")}
             chips={
                 <>
-                    <OverlayChip
-                        dotClassName={STATUS_DOT_CLASS[statusTone]}
+                    <Badge
+                        color={STATUS_BADGE_COLOR[statusTone]}
+                        blur="dark"
                         pulse={statusTone === "action"}
                     >
                         {statusLabel}
-                    </OverlayChip>
-                    <OverlayChip dotClassName={listing.isRent ? "bg-urgent-mid" : "bg-success-mid"}>
+                    </Badge>
+                    <Badge color={listing.isRent ? "orange" : "emerald"} blur="dark">
                         {listing.isRent ? "For rent" : "For sale"}
-                    </OverlayChip>
+                    </Badge>
                 </>
             }
             actions={actions}

@@ -276,9 +276,7 @@ function Input({
         }
         copyInputTypeMetrics(input, mirror, placeholderLayer);
         syncClearHasValue(field, hasValue);
-        mirror.textContent = hasValue
-            ? String(currentValue ?? "").replace(/ /g, "\u00a0")
-            : "";
+        mirror.textContent = hasValue ? String(currentValue ?? "").replace(/ /g, "\u00a0") : "";
     }, [clearable, currentValue, hasValue, size, startIcon, hasEndSlot]);
 
     function handleValueChange(

@@ -9,22 +9,28 @@ const height = Number(heightArg);
 const port = width < 600 ? 9223 : 9222;
 const chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const profile = await mkdtemp(path.join(os.tmpdir(), "codex-site-visits-chrome-"));
-const browser = spawn(chrome, [
-    "--headless=new",
-    "--disable-gpu",
-    "--hide-scrollbars",
-    "--no-first-run",
-    "--no-default-browser-check",
-    `--remote-debugging-port=${port}`,
-    `--user-data-dir=${profile}`,
-    "about:blank",
-], { stdio: "ignore" });
+const browser = spawn(
+    chrome,
+    [
+        "--headless=new",
+        "--disable-gpu",
+        "--hide-scrollbars",
+        "--no-first-run",
+        "--no-default-browser-check",
+        `--remote-debugging-port=${port}`,
+        `--user-data-dir=${profile}`,
+        "about:blank",
+    ],
+    { stdio: "ignore" },
+);
 
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 let page;
 for (let attempt = 0; attempt < 40; attempt += 1) {
     try {
-        const pages = await fetch(`http://127.0.0.1:${port}/json/list`).then((response) => response.json());
+        const pages = await fetch(`http://127.0.0.1:${port}/json/list`).then((response) =>
+            response.json(),
+        );
         page = pages.find((entry) => entry.type === "page");
         if (page) break;
     } catch {}
@@ -56,14 +62,26 @@ function send(method, params = {}) {
 
 await send("Page.enable");
 await send("Runtime.enable");
-await send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 600, screenWidth: width, screenHeight: height });
+await send("Emulation.setDeviceMetricsOverride", {
+    width,
+    height,
+    deviceScaleFactor: 1,
+    mobile: width < 600,
+    screenWidth: width,
+    screenHeight: height,
+});
 await send("Page.navigate", { url });
 await wait(3500);
 await send("Runtime.evaluate", { expression: "window.scrollTo(0, 0)" });
 await wait(300);
 const metrics = await send("Page.getLayoutMetrics");
 const contentHeight = Math.ceil(metrics.cssContentSize.height);
-const screenshot = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, fromSurface: true, clip: { x: 0, y: 0, width, height: contentHeight, scale: 1 } });
+const screenshot = await send("Page.captureScreenshot", {
+    format: "png",
+    captureBeyondViewport: true,
+    fromSurface: true,
+    clip: { x: 0, y: 0, width, height: contentHeight, scale: 1 },
+});
 await mkdir(path.dirname(output), { recursive: true });
 await writeFile(output, Buffer.from(screenshot.data, "base64"));
 socket.close();

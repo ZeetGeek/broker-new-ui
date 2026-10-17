@@ -1,8 +1,8 @@
 ---
 paths:
-  - "app/**/*.{ts,tsx}"
-  - "components/**/*.{ts,tsx}"
-  - "features/**/*.{ts,tsx}"
+    - "app/**/*.{ts,tsx}"
+    - "components/**/*.{ts,tsx}"
+    - "features/**/*.{ts,tsx}"
 ---
 
 # Empty states
@@ -29,7 +29,7 @@ Seven rules restated because they are the ones that make a product feel dead:
 5. **Exactly one primary button per screen.** Everything else is a text link.
    Six competing CTAs means the user picks none.
 6. **Never a CTA the user cannot complete yet.** If RERA or service areas are
-   missing, the empty state asks for *those*, not for the goal.
+   missing, the empty state asks for _those_, not for the goal.
 7. **No large illustrations.** A 40px line icon, or a faded ghost row of the
    real content. Bytes cost money on mobile data.
 

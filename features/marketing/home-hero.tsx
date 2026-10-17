@@ -87,15 +87,7 @@ export function HomeHero() {
                         "
                     />
 
-                    <Badge
-                        variant="brand"
-                        className="
-                          body-sm relative border border-canvas/25 bg-canvas/10 px-3.5 py-1.5
-                          text-canvas backdrop-blur-lg
-                          [&_svg:not([class*='size-'])]:block-3.5
-                          [&_svg:not([class*='size-'])]:inline-3.5
-                        "
-                    >
+                    <Badge color="lime" blur className="relative">
                         <Rocket aria-hidden="true" />
                         Now onboarding brokers and owners
                     </Badge>

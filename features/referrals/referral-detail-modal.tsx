@@ -89,9 +89,7 @@ export function ReferralDetailModal({
                                 {meta.label}
                             </Badge>
                             {referral.role ? (
-                                <Badge variant="outline">
-                                    {REFERRAL_ROLE_LABEL[referral.role]}
-                                </Badge>
+                                <Badge color="sky">{REFERRAL_ROLE_LABEL[referral.role]}</Badge>
                             ) : null}
                             {referral.creditsEarned > 0 ? (
                                 <Badge variant="brand">

@@ -193,7 +193,9 @@ export function StepFurnishing() {
         const changed = AMENITY_BUCKETS.some((bucket) => {
             const left = (current[bucket] ?? []).map(String);
             const right = cleaned[bucket];
-            return left.length !== right.length || left.some((item, index) => item !== right[index]);
+            return (
+                left.length !== right.length || left.some((item, index) => item !== right[index])
+            );
         });
         if (changed) {
             setValue("amenities", cleaned, { shouldDirty: false, shouldTouch: false });
@@ -246,7 +248,8 @@ export function StepFurnishing() {
 
     const exactInCatalog = catalog.some(
         (option) =>
-            option.value === queryValue || option.label.toLowerCase() === trimmedQuery.toLowerCase(),
+            option.value === queryValue ||
+            option.label.toLowerCase() === trimmedQuery.toLowerCase(),
     );
     const canAddCustom =
         Boolean(queryValue) && !selectedSet.has(queryValue) && selected.length < MAX_AMENITIES;
@@ -358,9 +361,7 @@ export function StepFurnishing() {
                     {icon}
                 </span>
                 {label}
-                {removable ? (
-                    <X className="block-3.5 inline-3.5 shrink-0" aria-hidden />
-                ) : null}
+                {removable ? <X className="block-3.5 inline-3.5 shrink-0" aria-hidden /> : null}
             </Button>
         );
     }

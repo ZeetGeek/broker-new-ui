@@ -75,12 +75,22 @@ function standingLabel(standing: RepresentationStanding | null): string {
     return "Available to request";
 }
 
+function standingColor(standing: RepresentationStanding | null) {
+    if (standing?.status === "accepted") return "emerald" as const;
+    if (standing?.status === "pending") return "amber" as const;
+    return "sky" as const;
+}
+
 function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
     const accepted = detail.representation?.status === "accepted";
     const phone = accepted ? detail.ownerPhoneDigits : undefined;
 
     return (
-        <section className="flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-5">
+        <section
+            className="
+          flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-5
+        "
+        >
             <h2 className="eyebrow">Owner contact</h2>
             <div className="flex items-center gap-3">
                 <UserAvatar name={detail.ownerName} imageUrl={detail.ownerAvatarUrl} size="lg" />
@@ -88,7 +98,10 @@ function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
                     {detail.ownerUserId ? (
                         <Link
                             href={brokerOwnerProfileHref(detail.ownerUserId)}
-                            className="body truncate font-semibold text-ink underline-offset-4 hover:underline"
+                            className="
+                              body truncate font-semibold text-ink underline-offset-4
+                              hover:underline
+                            "
                         >
                             {detail.ownerName}
                         </Link>
@@ -447,10 +460,10 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                 imageSrcs={item.imageSrcs}
                 overlay={
                     <>
-                        <Badge className="border-0 bg-surface/95 text-ink shadow-xs">
+                        <Badge color={standingColor(detail.representation)} blur="dark">
                             {standingLabel(detail.representation)}
                         </Badge>
-                        <Badge className="border-0 bg-surface/95 text-ink-muted shadow-xs">
+                        <Badge color="sky" blur="dark">
                             Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
                         </Badge>
                     </>
@@ -474,7 +487,12 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                         </p>
                     </header>
 
-                    <section className="rounded-card border border-border-warm bg-surface p-5 sm:p-6">
+                    <section
+                        className="
+                      rounded-card border border-border-warm bg-surface p-5
+                      sm:p-6
+                    "
+                    >
                         <PropertyPriceBlock item={item} />
                     </section>
 
@@ -603,7 +621,10 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                             disabled={Boolean(inviteActionPending)}
                             loading={inviteActionPending === "accept"}
                             onClick={() => void handleAcceptInvite()}
-                            className="flex-1 rounded-control bg-brand text-surface hover:bg-brand-text"
+                            className="
+                              flex-1 rounded-control bg-brand text-surface
+                              hover:bg-brand-text
+                            "
                         >
                             {inviteActionPending === "accept" ? "Accepting…" : "Accept"}
                         </Button>

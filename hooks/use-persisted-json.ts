@@ -16,11 +16,7 @@ type CacheEntry<T> = {
 
 const snapshotCache = new Map<string, CacheEntry<unknown>>();
 
-function readCachedPref<T>(
-    key: string,
-    fallback: T,
-    isValid?: (value: unknown) => value is T,
-): T {
+function readCachedPref<T>(key: string, fallback: T, isValid?: (value: unknown) => value is T): T {
     const raw = typeof window === "undefined" ? null : window.localStorage.getItem(key);
     const cached = snapshotCache.get(key) as CacheEntry<T> | undefined;
     if (cached && cached.raw === raw) {

@@ -30,12 +30,7 @@ export function DigitPopIn({ value, className }: DigitPopInProps) {
                 const stagger =
                     fromEnd === 1 ? "1" : fromEnd === 0 && chars.length > 1 ? "2" : undefined;
                 return (
-                    <span
-                        key={`${i}-${ch}`}
-                        className="t-digit"
-                        data-stagger={stagger}
-                        aria-hidden
-                    >
+                    <span key={`${i}-${ch}`} className="t-digit" data-stagger={stagger} aria-hidden>
                         {ch}
                     </span>
                 );

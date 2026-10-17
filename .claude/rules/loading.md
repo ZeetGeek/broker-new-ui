@@ -1,8 +1,8 @@
 ---
 paths:
-  - "app/**/*.{ts,tsx}"
-  - "components/**/*.{ts,tsx}"
-  - "features/**/*.{ts,tsx}"
+    - "app/**/*.{ts,tsx}"
+    - "components/**/*.{ts,tsx}"
+    - "features/**/*.{ts,tsx}"
 ---
 
 # Loading states

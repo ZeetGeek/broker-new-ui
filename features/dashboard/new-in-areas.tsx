@@ -120,18 +120,10 @@ function PropertyRow({
                             isRent={property.isRent}
                             className="body font-semibold"
                         />
-                        <Badge
-                            className={
-                                property.isRent
-                                    ? "border-0 bg-sky-100 text-sky-800"
-                                    : "border-0 bg-emerald-100 text-emerald-800"
-                            }
-                        >
+                        <Badge color={property.isRent ? "orange" : "emerald"}>
                             {property.isRent ? "Rent" : "Sale"}
                         </Badge>
-                        {isNew ? (
-                            <Badge className="border-0 bg-lime-100 text-lime-800">New</Badge>
-                        ) : null}
+                        {isNew ? <Badge color="lime">New</Badge> : null}
                     </div>
 
                     <p className="body-sm text-stone-500">

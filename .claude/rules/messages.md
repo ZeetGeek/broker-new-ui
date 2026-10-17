@@ -1,10 +1,10 @@
 ---
 paths:
-  - "app/**/*.{ts,tsx}"
-  - "components/**/*.{ts,tsx}"
-  - "features/**/*.{ts,tsx}"
-  - "lib/validation/**/*.ts"
-  - "config/messages.ts"
+    - "app/**/*.{ts,tsx}"
+    - "components/**/*.{ts,tsx}"
+    - "features/**/*.{ts,tsx}"
+    - "lib/validation/**/*.ts"
+    - "config/messages.ts"
 ---
 
 # Messages

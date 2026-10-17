@@ -10,7 +10,10 @@ import {
     summarizeRequests,
 } from "@/features/properties/my-requests/filter-requests";
 import { mapRepresentationToRequestItem } from "@/features/properties/my-requests/map-my-request";
-import { MOCK_REQUESTS, MOCK_REQUESTS_QUOTA } from "@/features/properties/my-requests/mock-requests";
+import {
+    MOCK_REQUESTS,
+    MOCK_REQUESTS_QUOTA,
+} from "@/features/properties/my-requests/mock-requests";
 import type {
     RequestItem,
     RequestsFilters,

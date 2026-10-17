@@ -258,7 +258,7 @@ export function AttachBuyerPropertiesModal({
                                                 {property.title}
                                             </span>
                                             {alreadyLinked ? (
-                                                <Badge variant="outline">Already linked</Badge>
+                                                <Badge color="emerald">Already linked</Badge>
                                             ) : null}
                                         </div>
                                         <p className="body-xs text-ink-muted">

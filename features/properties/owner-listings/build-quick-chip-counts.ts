@@ -1,12 +1,7 @@
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 
 export type QuickChipKey =
-    | "yourAreas"
-    | "newToday"
-    | "slotsOpen"
-    | "commissionSet"
-    | "readyToMove"
-    | "bookmarked";
+    "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove" | "bookmarked";
 
 export type QuickChipCounts = Record<QuickChipKey, number>;
 

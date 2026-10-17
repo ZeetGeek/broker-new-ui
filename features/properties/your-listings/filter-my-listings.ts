@@ -1,9 +1,10 @@
-import {
-    PROPERTY_TYPE_OPTIONS,
-    type PropertyType,
-} from "@/lib/validation/property";
+import { PROPERTY_TYPE_OPTIONS, type PropertyType } from "@/lib/validation/property";
 
-import type { MyListingsFilters, MyListingSort, MyListingStatus } from "@/features/properties/your-listings/types";
+import type {
+    MyListingsFilters,
+    MyListingSort,
+    MyListingStatus,
+} from "@/features/properties/your-listings/types";
 import { DEFAULT_MY_LISTINGS_FILTERS } from "@/features/properties/your-listings/types";
 
 function first(value: string | string[] | undefined): string {
@@ -16,9 +17,7 @@ function all(value: string | string[] | undefined): string[] {
     return Array.isArray(value) ? value.filter(Boolean) : [value].filter(Boolean);
 }
 
-const ALLOWED_PROPERTY_TYPES = new Set<string>(
-    PROPERTY_TYPE_OPTIONS.map((option) => option.value),
-);
+const ALLOWED_PROPERTY_TYPES = new Set<string>(PROPERTY_TYPE_OPTIONS.map((option) => option.value));
 
 export function parseMyListingsFilters(
     params: Record<string, string | string[] | undefined>,

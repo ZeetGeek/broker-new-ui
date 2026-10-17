@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, type MutableRefObject } from "react";
+import { type MutableRefObject, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -240,25 +240,20 @@ export function LiveSummaryPanel({
 
     return (
         <aside className="flex flex-col gap-3">
-            <article
-                className="
-                  overflow-hidden rounded-card border border-border-warm bg-surface
-                "
-            >
+            <article className="overflow-hidden rounded-card border border-border-warm bg-surface">
                 <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
                     <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
                         <Eye className="text-brand block-4 inline-4" aria-hidden />
                         Listing preview
                     </p>
-                    <Badge
-                        variant="neutral"
-                        className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
-                    >
-                        Draft
-                    </Badge>
+                    <Badge color="amber">Draft</Badge>
                 </div>
 
-                <div className="group relative mx-3.5 aspect-4/3 overflow-hidden rounded-inner bg-surface-muted">
+                <div
+                    className="
+                  group relative mx-3.5 aspect-4/3 overflow-hidden rounded-inner bg-surface-muted
+                "
+                >
                     {cover ? (
                         <>
                             <AppImage
@@ -287,18 +282,22 @@ export function LiveSummaryPanel({
                                     />
                                     <div
                                         className="
-                                          absolute inset-0 flex flex-col items-center
-                                          justify-center gap-2 bg-ink/55 p-3 opacity-100
-                                          transition-opacity duration-160
-                                          md:opacity-0 md:group-hover:opacity-100
+                                          absolute inset-0 flex flex-col items-center justify-center
+                                          gap-2 bg-ink/55 p-3 opacity-100 transition-opacity
+                                          duration-160
+                                          md:opacity-0
                                           md:group-focus-within:opacity-100
+                                          md:group-hover:opacity-100
                                         "
                                     >
                                         <Button
                                             type="button"
                                             variant="outline"
                                             size="sm"
-                                            className="gap-1.5 border-0 bg-surface text-ink hover:bg-surface"
+                                            className="
+                                              gap-1.5 border-0 bg-surface text-ink
+                                              hover:bg-surface
+                                            "
                                             onClick={() => coverInputRef.current?.click()}
                                         >
                                             <RefreshCw
@@ -312,7 +311,8 @@ export function LiveSummaryPanel({
                                             variant="ghost"
                                             size="sm"
                                             className="
-                                              text-surface hover:bg-surface/15 hover:text-surface
+                                              text-surface
+                                              hover:bg-surface/15 hover:text-surface
                                             "
                                             onClick={handleRemoveCover}
                                         >
@@ -382,7 +382,7 @@ export function LiveSummaryPanel({
                     )}
                 </div>
 
-                <div className="flex flex-col gap-2 px-3.5 py-3.5">
+                <div className="flex flex-col gap-2 p-3.5">
                     <p className="tabular text-xl font-bold tracking-[-0.02em] text-brand">
                         {price && price > 0 ? formatInrCompact(price) : "Price not set"}
                     </p>
@@ -393,8 +393,8 @@ export function LiveSummaryPanel({
                     </p>
                     <div
                         className="
-                          mts-1 grid grid-cols-3 gap-2 rounded-control bg-surface-muted px-2.5
-                          py-2 text-[11px] font-medium text-ink-muted
+                          mts-1 grid grid-cols-3 gap-2 rounded-control bg-surface-muted px-2.5 py-2
+                          text-[11px] font-medium text-ink-muted
                         "
                     >
                         <span className="inline-flex items-center justify-center gap-1 min-inline-0">
@@ -420,11 +420,7 @@ export function LiveSummaryPanel({
             </article>
 
             {stepIndex >= 2 ? (
-                <article
-                    className="
-                      overflow-hidden rounded-card border border-border-warm bg-surface
-                    "
-                >
+                <article className="overflow-hidden rounded-card border border-border-warm bg-surface">
                     <div className="flex items-start justify-between gap-3 px-3.5 py-3">
                         <div className="min-inline-0">
                             <p className="text-sm font-semibold text-ink">
@@ -517,8 +513,7 @@ export function LiveSummaryPanel({
             ) : (
                 <div
                     className="
-                      rounded-card border border-dashed border-brand/30 bg-brand-soft/30 px-3.5
-                      py-4
+                      rounded-card border border-dashed border-brand/30 bg-brand-soft/30 px-3.5 py-4
                     "
                 >
                     <p className="text-sm font-semibold text-ink">Live deal summary</p>
@@ -584,7 +579,10 @@ function MoneyRow({
                                 variant="ghost"
                                 size="icon-xs"
                                 aria-label={`Explain ${label}`}
-                                className="text-ink-subtle hover:bg-brand-soft hover:text-brand-text"
+                                className="
+                                  text-ink-subtle
+                                  hover:bg-brand-soft hover:text-brand-text
+                                "
                             />
                         }
                     >

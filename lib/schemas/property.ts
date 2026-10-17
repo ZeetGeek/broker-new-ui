@@ -16,19 +16,18 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 const isPastDate = (value: string) =>
     Boolean(value && (value.length === 7 ? value < todayIso().slice(0, 7) : value < todayIso()));
 
-const listingCopySchema = z
-    .object({
-        title: z
-            .string()
-            .trim()
-            .min(1, "Enter a title")
-            .max(120, "Keep the title under 120 characters"),
-        description: z
-            .string()
-            .trim()
-            .min(50, "Write at least 50 characters")
-            .max(3000, "Keep the description under 3,000 characters"),
-    });
+const listingCopySchema = z.object({
+    title: z
+        .string()
+        .trim()
+        .min(1, "Enter a title")
+        .max(120, "Keep the title under 120 characters"),
+    description: z
+        .string()
+        .trim()
+        .min(50, "Write at least 50 characters")
+        .max(3000, "Keep the description under 3,000 characters"),
+});
 
 /** Basics without title/description requirements — those belong on the Property step. */
 const basicsStepSchema = z

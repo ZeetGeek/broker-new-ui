@@ -27,7 +27,9 @@ export const brokerRequestsApi = {
             return {
                 counts: MOCK_BROKER_REQUESTS.counts,
                 quota: MOCK_BROKER_REQUESTS.quota,
-                items: MOCK_BROKER_REQUESTS.items.filter((item) => statusMatches(item.type, status)),
+                items: MOCK_BROKER_REQUESTS.items.filter((item) =>
+                    statusMatches(item.type, status),
+                ),
             };
         }
         const [reps, dashboard] = await Promise.all([

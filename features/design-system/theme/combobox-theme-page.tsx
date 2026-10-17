@@ -109,7 +109,9 @@ function ListingTypeDemo() {
                 placeholder="Listing type"
                 success={touched && isValid}
                 errorText={touched && !isValid ? "Choose a listing type" : undefined}
-                helperText={!touched ? "Sale or rent — this drives the rest of the form" : undefined}
+                helperText={
+                    !touched ? "Sale or rent — this drives the rest of the form" : undefined
+                }
             />
             <ComboboxContent>
                 <ComboboxList>
@@ -142,7 +144,9 @@ function LoadingDemo() {
                 startIcon={MapPin}
                 loading={loading}
                 placeholder="Service area"
-                helperText={loading ? "Checking availability" : "Checked against your service areas"}
+                helperText={
+                    loading ? "Checking availability" : "Checked against your service areas"
+                }
             />
             <ComboboxContent>
                 <ComboboxEmpty>No locality matches</ComboboxEmpty>
@@ -213,8 +217,8 @@ export function ComboboxThemePage() {
                     <h2 className="h4 text-ink">Groups</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Use <code className="body-xs">ComboboxGroup</code> and{" "}
-                        <code className="body-xs">ComboboxLabel</code> when options naturally cluster
-                        — same anatomy as Select groups. Type to filter across groups.
+                        <code className="body-xs">ComboboxLabel</code> when options naturally
+                        cluster — same anatomy as Select groups. Type to filter across groups.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Swatch label="Grouped options">
@@ -283,12 +287,12 @@ export function ComboboxThemePage() {
                     <p className="eyebrow text-highlight">Rules</p>
                     <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-[#B8CFC4]">
                         <li>
-                            Use Combobox when the list is long enough to benefit from typing.
-                            Short exclusive sets stay on Select or Radio.
+                            Use Combobox when the list is long enough to benefit from typing. Short
+                            exclusive sets stay on Select or Radio.
                         </li>
                         <li>
-                            Pass <code className="body-xs">errorText</code> on the input rather
-                            than setting <code className="body-xs">aria-invalid</code> by hand — it
+                            Pass <code className="body-xs">errorText</code> on the input rather than
+                            setting <code className="body-xs">aria-invalid</code> by hand — it
                             drives the border, the ring, the shake, and the message region together.
                         </li>
                         <li>
@@ -313,9 +317,10 @@ export function ComboboxThemePage() {
                             overlay on this product.
                         </li>
                         <li>
-                            Standard 12px corners via <code className="body-xs">rounded-control</code>{" "}
-                            on the input, <code className="body-xs">rounded-card</code> on the
-                            popup. Never override radius at the call site.
+                            Standard 12px corners via{" "}
+                            <code className="body-xs">rounded-control</code> on the input,{" "}
+                            <code className="body-xs">rounded-card</code> on the popup. Never
+                            override radius at the call site.
                         </li>
                     </ul>
                 </section>

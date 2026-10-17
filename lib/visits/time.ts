@@ -19,7 +19,12 @@ export function formatVisitDayHeading(value: string | Date, now = new Date()): s
     const key = istDateKey(value);
     const today = istDateKey(now);
     const tomorrow = istDateKey(addDays(istDayAsDate(now), 1));
-    const prefix = key === today ? "Today" : key === tomorrow ? "Tomorrow" : formatInTimeZone(value, VISITS_TIME_ZONE, "EEEE");
+    const prefix =
+        key === today
+            ? "Today"
+            : key === tomorrow
+              ? "Tomorrow"
+              : formatInTimeZone(value, VISITS_TIME_ZONE, "EEEE");
     return `${prefix}, ${formatInTimeZone(value, VISITS_TIME_ZONE, "EEE d MMM")}`;
 }
 
@@ -35,7 +40,10 @@ export function istDayAsDate(value: string | Date): Date {
 export function dateAtIstOffset(dayOffset: number, hour: number, minute = 0): string {
     const day = addDays(istDayAsDate(new Date()), dayOffset);
     const dateKey = formatInTimeZone(day, VISITS_TIME_ZONE, "yyyy-MM-dd");
-    return fromZonedTime(`${dateKey}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`, VISITS_TIME_ZONE).toISOString();
+    return fromZonedTime(
+        `${dateKey}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`,
+        VISITS_TIME_ZONE,
+    ).toISOString();
 }
 
 export function durationMinutes(startsAt: string, endsAt: string): number {

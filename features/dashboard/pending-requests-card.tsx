@@ -46,7 +46,7 @@ function PendingRequestRow({
     return (
         <li
             className={cn(
-                "flex items-center gap-3 border-b border-border-warm py-3 last:border-b-0",
+                "flex items-center gap-3 border-be border-border-warm py-3 last:border-be-0",
                 busy && "opacity-70",
             )}
         >
@@ -61,7 +61,7 @@ function PendingRequestRow({
                         </Badge>
                     ) : null}
                     {request.brokerIsAgency ? (
-                        <Badge variant="outline" className="shrink-0 bg-surface">
+                        <Badge color="indigo" className="shrink-0">
                             Agency
                         </Badge>
                     ) : null}
@@ -70,7 +70,7 @@ function PendingRequestRow({
                 <Link
                     href={ownerPropertyDetailHref(request.propertyId)}
                     className="
-                      body-sm font-medium text-brand underline-offset-4 truncate
+                      body-sm truncate font-medium text-brand underline-offset-4
                       hover:underline
                     "
                 >
@@ -78,7 +78,7 @@ function PendingRequestRow({
                 </Link>
 
                 {request.message ? (
-                    <p className="body-sm text-pretty text-ink-muted line-clamp-1">
+                    <p className="body-sm line-clamp-1 text-pretty text-ink-muted">
                         {request.message}
                     </p>
                 ) : null}
@@ -188,8 +188,8 @@ export function PendingRequestsCard({
             <div className="mbs-1 flex-1 overflow-hidden min-block-0">
                 <div
                     className="
-                      scrollbar-none overflow-y-auto overscroll-contain
-                      [-ms-overflow-style:none] block-full
+                      scrollbar-none overflow-y-auto overscroll-contain [-ms-overflow-style:none]
+                      block-full
                       [&::-webkit-scrollbar]:hidden
                     "
                 >

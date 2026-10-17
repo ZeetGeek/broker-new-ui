@@ -1,10 +1,10 @@
 ---
 paths:
-  - "app/**/*.{ts,tsx}"
-  - "components/**/*.{ts,tsx}"
-  - "features/**/*.{ts,tsx}"
-  - "hooks/**/*.ts"
-  - "config/shortcuts.ts"
+    - "app/**/*.{ts,tsx}"
+    - "components/**/*.{ts,tsx}"
+    - "features/**/*.{ts,tsx}"
+    - "hooks/**/*.ts"
+    - "config/shortcuts.ts"
 ---
 
 # Keyboard shortcuts

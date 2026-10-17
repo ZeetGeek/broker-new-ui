@@ -388,10 +388,12 @@ export function OwnerListingsFilterSheet({
                     "
                 >
                     <div className="flex flex-col gap-1">
-                        <DialogTitle className="
+                        <DialogTitle
+                            className="
                           font-display text-base font-medium text-ink
                           sm:text-lg
-                        ">
+                        "
+                        >
                             Advanced filters
                         </DialogTitle>
                         <p className="body-sm text-ink-muted">

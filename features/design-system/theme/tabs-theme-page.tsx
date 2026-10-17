@@ -3,10 +3,7 @@
 import { useState } from "react";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
-import {
-    SlidingTabs,
-    TabsPanel,
-} from "@/features/design-system/theme/sliding-tabs";
+import { SlidingTabs, TabsPanel } from "@/features/design-system/theme/sliding-tabs";
 import {
     TABS_ORIENTATIONS,
     TABS_USES,
@@ -176,9 +173,8 @@ export function TabsThemePage() {
                 <section>
                     <h2 className="h4 text-ink">Variant</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        One style. The pill slides with{" "}
-                        <code className="body-xs">--tabs-dur</code> /{" "}
-                        <code className="body-xs">--ease-smooth-out</code>. Reduced motion snaps
+                        One style. The pill slides with <code className="body-xs">--tabs-dur</code>{" "}
+                        / <code className="body-xs">--ease-smooth-out</code>. Reduced motion snaps
                         with no tween.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -244,8 +240,7 @@ export function TabsThemePage() {
                     <p className="eyebrow text-highlight">Rules</p>
                     <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-[#B8CFC4]">
                         <li>
-                            Motion is{" "}
-                            <code className="body-xs">.t-tabs</code> +{" "}
+                            Motion is <code className="body-xs">.t-tabs</code> +{" "}
                             <code className="body-xs">.t-tabs-surface</code> from{" "}
                             <code className="body-xs">app/transitions-dev.css</code>. Measure the
                             active tab on paint and resize with transitions suspended; tween on
@@ -268,14 +263,13 @@ export function TabsThemePage() {
                             rise + fade with <code className="body-xs">--duration-fast</code>.
                         </li>
                         <li>
-                            Minimum tap target 44px on mobile. Stage rows scroll horizontally —
-                            they do not compress into a crowded bar.
+                            Minimum tap target 44px on mobile. Stage rows scroll horizontally — they
+                            do not compress into a crowded bar.
                         </li>
                         <li>
-                            Do not edit{" "}
-                            <code className="body-xs">components/ui/tabs.tsx</code> for one-off
-                            styling — pass <code className="body-xs">className</code>, or wrap in{" "}
-                            <code className="body-xs">components/shared/</code>.
+                            Do not edit <code className="body-xs">components/ui/tabs.tsx</code> for
+                            one-off styling — pass <code className="body-xs">className</code>, or
+                            wrap in <code className="body-xs">components/shared/</code>.
                         </li>
                     </ul>
                 </section>

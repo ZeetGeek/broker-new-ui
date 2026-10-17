@@ -22,7 +22,12 @@ export type ShortcutTooltipProps = {
  * the same page. Only use this where the shortcut's route and the trigger's
  * destination genuinely match — see docs/SHORTCUTS.md discoverability.
  */
-export function ShortcutTooltip({ shortcutId, label, side = "bottom", children }: ShortcutTooltipProps) {
+export function ShortcutTooltip({
+    shortcutId,
+    label,
+    side = "bottom",
+    children,
+}: ShortcutTooltipProps) {
     const shortcut = getShortcut(shortcutId);
     if (!shortcut) return children;
 
@@ -61,9 +66,14 @@ export function ShortcutKbdMessage({ shortcutId, children, className }: Shortcut
     if (!shortcut) return null;
 
     return (
-        <p className={cn(`
+        <p
+            className={cn(
+                `
           body-sm inline-flex flex-wrap items-center justify-center gap-1.5 text-ink-subtle
-        `, className)}>
+        `,
+                className,
+            )}
+        >
             <span>Press</span>
             <KbdGroup className="gap-0.5">
                 {shortcut.displayKeys.map((key) => (

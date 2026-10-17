@@ -95,8 +95,7 @@ export function StepMedia({
         formState.errors.media &&
         "cover" in formState.errors.media
             ? String(
-                  (formState.errors.media as { cover?: { message?: string } }).cover?.message ??
-                      "",
+                  (formState.errors.media as { cover?: { message?: string } }).cover?.message ?? "",
               )
             : "";
     const photosError =

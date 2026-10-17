@@ -6,7 +6,7 @@ import { formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { TextLoop } from "@/components/motion-primitives/text-loop";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeColor } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { InvitesSummary } from "@/features/properties/my-requests/invite-types";
@@ -15,7 +15,6 @@ import type { RequestsSummary } from "@/features/properties/my-requests/types";
 
 const SUMMARY_LOOP_INTERVAL_S = 6.5;
 const META_TEXT = "body-sm font-medium text-ink-muted";
-const CHIP_SURFACE = "bg-surface";
 
 function countLabel(count: number, singular: string, plural: string) {
     return `${count} ${count === 1 ? singular : plural}`;
@@ -97,12 +96,12 @@ function StatusBadge({
     label,
     count,
     hint,
-    tone = "default",
+    color,
 }: {
     label: string;
     count: number;
     hint: string;
-    tone?: "default" | "urgent" | "success";
+    color: BadgeColor;
 }) {
     if (count <= 0) return null;
 
@@ -110,14 +109,7 @@ function StatusBadge({
         <Tooltip>
             <TooltipTrigger
                 render={
-                    <Badge
-                        variant={tone === "urgent" ? "urgent" : "outline"}
-                        className={cn(
-                            "cursor-help",
-                            tone !== "urgent" && CHIP_SURFACE,
-                            tone === "success" && "text-success",
-                        )}
-                    >
+                    <Badge color={color} className="cursor-help">
                         {label} · {count}
                     </Badge>
                 }
@@ -146,18 +138,19 @@ function DealsStatusMeta({
                     <StatusBadge
                         label="Waiting on you"
                         count={inviteSummary.waitingOnYouCount}
-                        tone="urgent"
+                        color="orange"
                         hint="Owners waiting for you to say yes or no."
                     />
                     <StatusBadge
                         label="Accepted"
                         count={inviteSummary.counts.accepted}
-                        tone="success"
+                        color="emerald"
                         hint="Invites you took. You can sell these properties."
                     />
                     <StatusBadge
                         label="Turned down"
                         count={inviteSummary.counts.declined}
+                        color="red"
                         hint="Invites you said no to."
                     />
                 </div>
@@ -174,6 +167,7 @@ function DealsStatusMeta({
                 <StatusBadge
                     label="Waiting"
                     count={sentSummary.counts.pending}
+                    color="amber"
                     hint={
                         sentSummary.avgResponseDays > 0
                             ? `Requests the owner has not replied to yet. Owners usually reply in ${sentSummary.avgResponseDays} days.`
@@ -183,13 +177,13 @@ function DealsStatusMeta({
                 <StatusBadge
                     label="Accepted"
                     count={sentSummary.counts.approved}
-                    tone="success"
+                    color="emerald"
                     hint={`Requests the owner accepted. You can sell these. Of the requests owners replied to, ${sentSummary.approvalRate}% were accepted.`}
                 />
                 <StatusBadge
                     label="Needs a buyer"
                     count={sentSummary.needsFollowUpCount}
-                    tone="urgent"
+                    color="orange"
                     hint="Accepted requests where you have not added a buyer yet."
                 />
             </div>

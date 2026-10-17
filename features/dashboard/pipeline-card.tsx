@@ -241,9 +241,7 @@ export function PipelineCard({ data, className }: PipelineCardProps) {
                 </ShortcutTooltip>
 
                 <div className="shrink-0 inline-full">
-                    <div
-                        className="flex flex-col"
-                    >
+                    <div className="flex flex-col">
                         {showStalled && data.stalled ? <StalledRow stalled={data.stalled} /> : null}
                         <MonthFooter won={data.thisMonth.won} lost={data.thisMonth.lost} />
                     </div>

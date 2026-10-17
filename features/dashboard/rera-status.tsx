@@ -46,11 +46,7 @@ export function ReraStatusChip({ status }: ReraStatusChipProps) {
             <Tooltip>
                 <TooltipTrigger
                     render={
-                        <Badge
-                            variant="outline"
-                            className="bg-surface font-semibold text-pending"
-                            aria-label={`RERA verifying. ${VERIFY_WAIT_COPY}.`}
-                        >
+                        <Badge color="amber" aria-label={`RERA verifying. ${VERIFY_WAIT_COPY}.`}>
                             <Clock aria-hidden className="block-3 inline-3" strokeWidth={1.75} />
                             RERA verifying...
                         </Badge>
@@ -63,8 +59,7 @@ export function ReraStatusChip({ status }: ReraStatusChipProps) {
 
     const chip = CHIP[status];
     const Icon = chip.icon;
-    const surfaceOutline = chip.variant === "outline" ? "bg-surface" : undefined;
-    const className = cn(badgeVariants({ variant: chip.variant }), surfaceOutline);
+    const className = badgeVariants({ variant: chip.variant });
 
     const content = (
         <>
@@ -98,11 +93,7 @@ export function ReraStatusChip({ status }: ReraStatusChipProps) {
         );
     }
 
-    return (
-        <Badge variant={chip.variant} className={surfaceOutline}>
-            {content}
-        </Badge>
-    );
+    return <Badge variant={chip.variant}>{content}</Badge>;
 }
 
 export type ReraBannerProps = {

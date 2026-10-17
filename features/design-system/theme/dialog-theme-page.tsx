@@ -19,10 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
-import {
-    DIALOG_SIZES,
-    DIALOG_USES,
-} from "@/features/design-system/theme/dialog-tokens";
+import { DIALOG_SIZES, DIALOG_USES } from "@/features/design-system/theme/dialog-tokens";
 
 function Swatch({ label, children }: { label: string; children: React.ReactNode }) {
     return (
@@ -37,19 +34,26 @@ function CompoundDemo() {
     return (
         <Dialog>
             <DialogTrigger
-                render={<Button size="default" variant="outline">Open dialog</Button>}
+                render={
+                    <Button size="default" variant="outline">
+                        Open dialog
+                    </Button>
+                }
             />
             <DialogPopup className="gap-4">
                 <DialogHeader>
                     <DialogTitle>Approve this broker?</DialogTitle>
                     <DialogDescription>
-                        They can show &ldquo;3 BHK in Vesu&rdquo; to buyers. You can revoke
-                        later.
+                        They can show &ldquo;3 BHK in Vesu&rdquo; to buyers. You can revoke later.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                     <DialogClose
-                        render={<Button size="default" variant="ghost">Cancel</Button>}
+                        render={
+                            <Button size="default" variant="ghost">
+                                Cancel
+                            </Button>
+                        }
                     />
                     <DialogClose render={<Button size="default">Approve broker</Button>} />
                 </div>
@@ -109,8 +113,8 @@ function DestructiveDemo() {
                 title="Delete this property?"
                 description={
                     <>
-                        &ldquo;3 BHK in Vesu&rdquo; will be removed permanently. Brokers
-                        currently representing it will be notified.
+                        &ldquo;3 BHK in Vesu&rdquo; will be removed permanently. Brokers currently
+                        representing it will be notified.
                     </>
                 }
                 footer={
@@ -137,8 +141,8 @@ function DestructiveDemo() {
                 }
             >
                 <p className="body-sm text-ink-muted">
-                    This cannot be undone. Prefer unpublish if you only need to hide it
-                    from the pool.
+                    This cannot be undone. Prefer unpublish if you only need to hide it from the
+                    pool.
                 </p>
             </AppModal>
         </>
@@ -157,8 +161,7 @@ export function DialogThemePage() {
                     <h2 className="h4 text-ink">Uses</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Prefer <code className="body-xs">AppModal</code> in product UI. Reach for
-                        the compound Dialog only when the surface is short and has no scroll
-                        body.
+                        the compound Dialog only when the surface is short and has no scroll body.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
                         {DIALOG_USES.map((use) => (
@@ -197,8 +200,7 @@ export function DialogThemePage() {
                     <p className="eyebrow text-highlight">Rules</p>
                     <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-[#B8CFC4]">
                         <li>
-                            Product screens use{" "}
-                            <code className="body-xs">AppModal</code> +{" "}
+                            Product screens use <code className="body-xs">AppModal</code> +{" "}
                             <code className="body-xs">AppModalFooter</code>. Same look as compound
                             Dialog — one surface, no header/footer dividers, content-height.
                         </li>
@@ -217,10 +219,9 @@ export function DialogThemePage() {
                             <code className="body-xs">docs/MESSAGES.md</code>.
                         </li>
                         <li>
-                            Do not edit{" "}
-                            <code className="body-xs">components/ui/dialog.tsx</code> for one-off
-                            styling — pass <code className="body-xs">className</code>, or wrap in{" "}
-                            <code className="body-xs">components/shared/</code>.
+                            Do not edit <code className="body-xs">components/ui/dialog.tsx</code>{" "}
+                            for one-off styling — pass <code className="body-xs">className</code>,
+                            or wrap in <code className="body-xs">components/shared/</code>.
                         </li>
                     </ul>
                 </section>

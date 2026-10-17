@@ -9,7 +9,10 @@ function Accordion({ className, ...props }: AccordionPrimitive.Root.Props) {
     return (
         <AccordionPrimitive.Root
             data-slot="accordion"
-            className={cn("flex flex-col overflow-hidden rounded-card border inline-full", className)}
+            className={cn(
+                "flex flex-col overflow-hidden rounded-card border inline-full",
+                className,
+            )}
             {...props}
         />
     );
@@ -96,4 +99,4 @@ function AccordionContent({ className, children, ...props }: AccordionPrimitive.
     );
 }
 
-export { Accordion, AccordionContent,AccordionItem, AccordionTrigger };
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger };

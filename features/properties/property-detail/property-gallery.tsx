@@ -20,7 +20,11 @@ const TILE_CLASS = `
  * dead space on a listing with one or two photos, which reads as broken —
  * so the hero widens to fill whatever the side column does not use.
  */
-export function mosaicLayout(photoCount: number): { grid: string; hero: string; sideTiles: number } {
+export function mosaicLayout(photoCount: number): {
+    grid: string;
+    hero: string;
+    sideTiles: number;
+} {
     if (photoCount === 1) {
         return { grid: "md:grid-cols-1 md:grid-rows-1", hero: "", sideTiles: 0 };
     }

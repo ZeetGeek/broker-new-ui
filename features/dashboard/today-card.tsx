@@ -31,8 +31,7 @@ function sortByTime(items: TodayItem[]): TodayItem[] {
 
 function buildTimeline(items: TodayItem[], nowLabel: string) {
     const entries: Array<
-        | { type: "now"; key: string; label: string }
-        | { type: "item"; key: string; item: TodayItem }
+        { type: "now"; key: string; label: string } | { type: "item"; key: string; item: TodayItem }
     > = [];
     let nowPlaced = false;
 

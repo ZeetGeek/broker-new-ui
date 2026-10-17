@@ -6,9 +6,9 @@ import toast from "react-hot-toast";
 import { Search, UserRound } from "lucide-react";
 
 import {
+    type ExclusiveOwnerItem,
     exclusiveOwnerPhoneDigits,
     exclusiveOwnersApi,
-    type ExclusiveOwnerItem,
 } from "@/lib/api/exclusive-owners";
 import { propertiesApi } from "@/lib/api/properties";
 import { cn } from "@/lib/utils";
@@ -143,7 +143,11 @@ export function AttachExclusiveOwnerModal({
             header={
                 <div className="flex flex-col gap-3">
                     {isReplace && listing?.ownerName ? (
-                        <p className="body-sm rounded-inner bg-surface-muted px-3 py-2 text-ink-muted">
+                        <p
+                            className="
+                          body-sm rounded-inner bg-surface-muted px-3 py-2 text-ink-muted
+                        "
+                        >
                             Current owner:{" "}
                             <span className="font-semibold text-ink">{listing.ownerName}</span>
                         </p>
@@ -215,8 +219,9 @@ export function AttachExclusiveOwnerModal({
                                 <label
                                     className={cn(
                                         `
-                                          flex cursor-pointer items-start gap-3 rounded-card border p-3
-                                          transition-[background-color,border-color] duration-160
+                                          flex cursor-pointer items-start gap-3 rounded-card border
+                                          p-3 transition-[background-color,border-color]
+                                          duration-160
                                         `,
                                         selected
                                             ? "border-brand bg-brand-soft/50"
@@ -237,14 +242,14 @@ export function AttachExclusiveOwnerModal({
                                             <span className="body-sm font-semibold text-ink">
                                                 {owner.fullName}
                                             </span>
-                                            <Badge variant="outline" className="capitalize">
+                                            <Badge color="sky" className="capitalize">
                                                 {owner.ownerType}
                                             </Badge>
                                             {isCurrent ? (
-                                                <Badge variant="brand">Current</Badge>
+                                                <Badge color="emerald">Current</Badge>
                                             ) : null}
                                             {owner.propertyCount > 0 ? (
-                                                <Badge variant="outline">
+                                                <Badge color="stone">
                                                     {owner.propertyCount}{" "}
                                                     {owner.propertyCount === 1
                                                         ? "listing"

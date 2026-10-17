@@ -164,8 +164,7 @@ export function SwitchThemePage() {
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Two steps only — denser than the five-step control-height scale used by
                         Button, Input, and Select. Default is the preference-row size;{" "}
-                        <code className="body-xs">sm</code> sits in filter sheets and compact
-                        lists.
+                        <code className="body-xs">sm</code> sits in filter sheets and compact lists.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {SWITCH_SIZES.map((s) => (
@@ -201,9 +200,8 @@ export function SwitchThemePage() {
                         Not the binary <code className="body-xs">Switch</code> — exclusive layout
                         choice between two (or more) icon buttons in one pill. Lives in{" "}
                         <code className="body-xs">components/shared/icon-segmented-toggle.tsx</code>
-                        . Sliding highlight uses{" "}
-                        <code className="body-xs">AnimatedBackground</code> +{" "}
-                        <code className="body-xs">spring.snappy</code>.
+                        . Sliding highlight uses <code className="body-xs">AnimatedBackground</code>{" "}
+                        + <code className="body-xs">spring.snappy</code>.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Swatch label="Grid / list — live">
@@ -284,11 +282,7 @@ export function SwitchThemePage() {
                             />
                         </Swatch>
                         <Swatch label="Disabled · off">
-                            <PreferenceRow
-                                id="switch-disabled-off"
-                                label="Unavailable"
-                                disabled
-                            />
+                            <PreferenceRow id="switch-disabled-off" label="Unavailable" disabled />
                         </Swatch>
                         <Swatch label="Invalid">
                             <PreferenceRow
@@ -317,18 +311,18 @@ export function SwitchThemePage() {
                             <code className="body-xs">&lt;label&gt;</code>. Never a bare switch.
                         </li>
                         <li>
-                            Checked fill is <code className="body-xs">brand</code>, not the
-                            generic shadcn <code className="body-xs">primary</code>. Pass the
-                            brand utility classes at the call site (or keep them colocated in the
-                            form field wrapper) so the toggle matches Checkbox and Radio.
+                            Checked fill is <code className="body-xs">brand</code>, not the generic
+                            shadcn <code className="body-xs">primary</code>. Pass the brand utility
+                            classes at the call site (or keep them colocated in the form field
+                            wrapper) so the toggle matches Checkbox and Radio.
                         </li>
                         <li>
-                            Do not animate the thumb with a bouncy spring — toggles use the
-                            instant duration token. Bounce is reserved for genuine success states.
+                            Do not animate the thumb with a bouncy spring — toggles use the instant
+                            duration token. Bounce is reserved for genuine success states.
                         </li>
                         <li>
-                            Disabled means the preference cannot change right now — keep the
-                            current checked value visible, do not clear it.
+                            Disabled means the preference cannot change right now — keep the current
+                            checked value visible, do not clear it.
                         </li>
                     </ul>
                 </section>

@@ -101,8 +101,8 @@ export function DatePickerThemePage() {
                 <section>
                     <h2 className="h4 text-ink">States — live demo</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        Open the calendar. Month and year are bordered selects in the caption —
-                        jump years without paging month by month.
+                        Open the calendar. Month and year are bordered selects in the caption — jump
+                        years without paging month by month.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Swatch label="Available from">
@@ -162,9 +162,9 @@ export function DatePickerThemePage() {
                             select shows short names (Jan–Dec), not numbers.
                         </li>
                         <li>
-                            Pair with a visible label. Pass{" "}
-                            <code className="body-xs">invalid</code> for validation — error copy
-                            lives under the field, not inside the popover.
+                            Pair with a visible label. Pass <code className="body-xs">invalid</code>{" "}
+                            for validation — error copy lives under the field, not inside the
+                            popover.
                         </li>
                     </ul>
                 </section>

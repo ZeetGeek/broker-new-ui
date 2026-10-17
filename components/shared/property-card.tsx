@@ -52,7 +52,6 @@ import {
     OverlayCard,
     OverlayCardActions,
     OverlayCardSummary,
-    OverlayChip,
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
@@ -623,12 +622,20 @@ function BrowsePropertyCardPhoto({
                       absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
                     "
                 >
-                    {offersSale(listing) ? <Badge variant="brand">For sale</Badge> : null}
-                    {offersRent(listing) ? <Badge variant="urgent">For rent</Badge> : null}
+                    {offersSale(listing) ? (
+                        <Badge color="emerald" blur="dark">
+                            For sale
+                        </Badge>
+                    ) : null}
+                    {offersRent(listing) ? (
+                        <Badge color="orange" blur="dark">
+                            For rent
+                        </Badge>
+                    ) : null}
                 </div>
 
                 {listing.isNew ? (
-                    <Badge variant="brand" className="absolute inset-e-3 inset-bs-3 z-10">
+                    <Badge color="lime" blur="dark" className="absolute inset-e-3 inset-bs-3 z-10">
                         New
                     </Badge>
                 ) : null}
@@ -891,7 +898,10 @@ function BrowsePriceWithCommission({
             className={cn(
                 className,
                 hasCommission &&
-                    "cursor-help underline decoration-brand/30 underline-offset-2 decoration-from-font",
+                    `
+                      cursor-help underline decoration-brand/30 decoration-from-font
+                      underline-offset-2
+                    `,
             )}
         >
             {priceLabel}
@@ -947,7 +957,7 @@ function BrowseOverlayPrices({ listing }: { listing: BrowsePropertyCardListing }
             mode="rent"
             commissionInr={rentCommissionInr}
             commissionPercent={0}
-            className="h5 font-semibold tracking-wide tabular-nums text-brand"
+            className="h5 font-semibold tracking-wide text-brand tabular-nums"
         />
     ) : (
         <div className="flex flex-col gap-0.5 min-inline-0">
@@ -956,7 +966,7 @@ function BrowseOverlayPrices({ listing }: { listing: BrowsePropertyCardListing }
                 mode="sale"
                 commissionInr={saleCommissionInr}
                 commissionPercent={listing.commissionPercent}
-                className="h5 font-semibold tracking-wide tabular-nums text-brand"
+                className="h5 font-semibold tracking-wide text-brand tabular-nums"
             />
             {both ? (
                 <p className="body-sm tracking-wide text-ink-muted">
@@ -966,7 +976,7 @@ function BrowseOverlayPrices({ listing }: { listing: BrowsePropertyCardListing }
                         mode="rent"
                         commissionInr={rentCommissionInr}
                         commissionPercent={0}
-                        className="font-semibold tabular-nums text-ink"
+                        className="font-semibold text-ink tabular-nums"
                     />{" "}
                     rent
                 </p>
@@ -1014,15 +1024,19 @@ function BrowseOverlayPropertyCard({
             chips={
                 <>
                     {offersSale(listing) ? (
-                        <OverlayChip dotClassName="bg-success-mid">For sale</OverlayChip>
+                        <Badge color="emerald" blur="dark">
+                            For sale
+                        </Badge>
                     ) : null}
                     {offersRent(listing) ? (
-                        <OverlayChip dotClassName="bg-urgent-mid">For rent</OverlayChip>
+                        <Badge color="orange" blur="dark">
+                            For rent
+                        </Badge>
                     ) : null}
                     {listing.isNew ? (
-                        <OverlayChip dotClassName="bg-highlight" pulse={isNewInYourArea}>
+                        <Badge color="lime" blur="dark" pulse={isNewInYourArea}>
                             New
-                        </OverlayChip>
+                        </Badge>
                     ) : null}
                 </>
             }
@@ -1080,11 +1094,7 @@ function BrowsePropertyCard(props: Extract<PropertyCardProps, { variant: "browse
 }
 
 function TransactionBadge({ isRent }: { isRent: boolean }) {
-    return (
-        <Badge variant="neutral" className="body-xs font-medium">
-            {isRent ? "For rent" : "For sale"}
-        </Badge>
-    );
+    return <Badge color={isRent ? "orange" : "emerald"}>{isRent ? "For rent" : "For sale"}</Badge>;
 }
 
 function PropertyCardPhoto({
@@ -1128,10 +1138,16 @@ function PropertyCardPhoto({
             )}
 
             <div className="absolute inset-0 flex items-start justify-between gap-2 p-3">
-                {listing.isNew ? <Badge variant="brand">New</Badge> : <span aria-hidden />}
+                {listing.isNew ? (
+                    <Badge color="lime" blur="dark">
+                        New
+                    </Badge>
+                ) : (
+                    <span aria-hidden />
+                )}
 
                 {listing.photoCount > 0 ? (
-                    <Badge variant="neutral" className="ms-auto gap-1">
+                    <Badge color="sky" blur="dark" className="ms-auto">
                         <Camera aria-hidden strokeWidth={1.75} />
                         {listing.photoCount}
                     </Badge>
@@ -1379,7 +1395,7 @@ function OwnedListingAction({
         <TooltipProvider>
             <div className="flex flex-col gap-2">
                 {onAttachOwner || onAddBuyer ? (
-                    <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 -mis-2">
+                    <div className="-mis-2 flex flex-wrap items-center gap-x-1 gap-y-0.5">
                         {onAttachOwner ? (
                             <Tooltip>
                                 <TooltipTrigger
@@ -1528,16 +1544,10 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
     };
 }
 
-function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
-    const variant = status === "published" ? "brand" : status === "draft" ? "outline" : "urgent";
-    return <Badge variant={variant}>{OWNED_STATUS_LABEL[status]}</Badge>;
-}
-
-/** Dot colour per listing status, for the overlay card's status chip. */
-const OWNED_STATUS_DOT_CLASS: Record<OwnedPropertyCardStatus, string> = {
-    published: "bg-success-mid",
-    draft: "bg-highlight",
-    unpublished: "bg-ink-subtle",
+const OWNED_STATUS_COLOR: Record<OwnedPropertyCardStatus, "emerald" | "amber" | "red"> = {
+    published: "emerald",
+    draft: "amber",
+    unpublished: "red",
 };
 
 function formatListedLabel(listedDaysAgo: number): string {
@@ -1606,17 +1616,23 @@ function OwnedOverlayPropertyCard({
             className={className}
             chips={
                 <>
-                    <OverlayChip dotClassName={OWNED_STATUS_DOT_CLASS[listing.status]}>
+                    <Badge color={OWNED_STATUS_COLOR[listing.status]} blur="dark">
                         {OWNED_STATUS_LABEL[listing.status]}
-                    </OverlayChip>
+                    </Badge>
                     {offersSale(browse) ? (
-                        <OverlayChip dotClassName="bg-success-mid">For sale</OverlayChip>
+                        <Badge color="emerald" blur="dark">
+                            For sale
+                        </Badge>
                     ) : null}
                     {offersRent(browse) ? (
-                        <OverlayChip dotClassName="bg-urgent-mid">For rent</OverlayChip>
+                        <Badge color="orange" blur="dark">
+                            For rent
+                        </Badge>
                     ) : null}
                     {listing.visibility === "private" ? (
-                        <OverlayChip dotClassName="bg-surface/70">Private</OverlayChip>
+                        <Badge color="violet" blur="dark">
+                            Private
+                        </Badge>
                     ) : null}
                 </>
             }
@@ -1645,7 +1661,7 @@ function OwnedOverlayPropertyCard({
                     href={detailsHref}
                     price={
                         <div className="flex flex-col gap-0.5 min-inline-0">
-                            <p className="h5 font-semibold tracking-wide tabular-nums text-brand">
+                            <p className="h5 font-semibold tracking-wide text-brand tabular-nums">
                                 {priceLabel}
                             </p>
                             {both ? (
@@ -1688,7 +1704,11 @@ function OwnedOverlayPropertyCard({
                             />
                         ) : null}
                         {!hasWorkingBrokers && listing.status !== "published" ? (
-                            <p className="body-xs rounded-control bg-amber-50 px-3 py-2 font-medium text-pending">
+                            <p
+                                className="
+                              body-xs rounded-control bg-amber-50 px-3 py-2 font-medium text-pending
+                            "
+                            >
                                 Publish this property to invite brokers
                             </p>
                         ) : null}

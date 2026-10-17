@@ -118,7 +118,11 @@ function CardsDemo({
                 const checked = selected.includes(bucket.id);
                 const id = `card-${disabled ? "disabled-" : ""}${invalid ? "invalid-" : ""}${bucket.id}`;
                 return (
-                    <Label key={bucket.id} htmlFor={id} className={optionCardClassName(checked, disabled)}>
+                    <Label
+                        key={bucket.id}
+                        htmlFor={id}
+                        className={optionCardClassName(checked, disabled)}
+                    >
                         <Checkbox
                             id={id}
                             checked={checked}
@@ -255,8 +259,8 @@ export function CheckboxThemePage() {
                     <h2 className="h4 text-ink">States — live demo</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Tick the consent line. The message region follows real selection — the same
-                        wiring a form uses with <code className="body-xs">aria-invalid</code> on
-                        the control.
+                        wiring a form uses with <code className="body-xs">aria-invalid</code> on the
+                        control.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Swatch label="Consent — validates on tick">
@@ -318,14 +322,14 @@ export function CheckboxThemePage() {
                         </li>
                         <li>
                             Geometry stays <code className="body-xs">rounded-sm</code> (6px). Never
-                            a circle — that is Radio. Never <code className="body-xs">rounded-full</code>.
+                            a circle — that is Radio. Never{" "}
+                            <code className="body-xs">rounded-full</code>.
                         </li>
                         <li>
-                            Motion is <code className="body-xs">.t-check</code>{" "}
-                            (transitions.dev 25) — box fill first, then stroke-draw the
-                            check. Uncheck reverses in{" "}
-                            <code className="body-xs">--check-uncheck</code>. Reduced-motion
-                            skips both.
+                            Motion is <code className="body-xs">.t-check</code> (transitions.dev 25)
+                            — box fill first, then stroke-draw the check. Uncheck reverses in{" "}
+                            <code className="body-xs">--check-uncheck</code>. Reduced-motion skips
+                            both.
                         </li>
                         <li>
                             Indeterminate is for a parent of a partial group only. Do not use it as

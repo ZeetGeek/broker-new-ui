@@ -4,7 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-import { BadgeCheck, Building2, ChevronLeft, Lock, Mail, MapPin, Phone, UserRound } from "lucide-react";
+import {
+    BadgeCheck,
+    Building2,
+    ChevronLeft,
+    Lock,
+    Mail,
+    MapPin,
+    Phone,
+    UserRound,
+} from "lucide-react";
 
 import { type BrokerOwnerProfile, type OwnerProfileProperty, ownersApi } from "@/lib/api/owners";
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
@@ -105,7 +114,9 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                     <UserAvatar name={name} imageUrl={profile.avatarUrl} size="lg" />
                     <div className="flex flex-col gap-1 min-inline-0">
                         <div className="flex items-center gap-2 min-inline-0">
-                            <h1 className="h3 truncate tracking-wide text-ink capitalize">{name}</h1>
+                            <h1 className="h3 truncate tracking-wide text-ink capitalize">
+                                {name}
+                            </h1>
                             {profile.verified ? (
                                 <BadgeCheck
                                     aria-label="Verified owner"
@@ -152,7 +163,11 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                                 href={`tel:+91${profile.phoneDigits}`}
                                 className="body-sm inline-flex items-center gap-1.5 font-medium text-ink"
                             >
-                                <Phone aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                                <Phone
+                                    aria-hidden
+                                    className="block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
                                 {formatPhoneIn(profile.phoneDigits)}
                             </a>
                         ) : null}
@@ -161,7 +176,11 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                                 href={`mailto:${profile.email}`}
                                 className="body-sm inline-flex items-center gap-1.5 font-medium text-ink"
                             >
-                                <Mail aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                                <Mail
+                                    aria-hidden
+                                    className="block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
                                 {profile.email}
                             </a>
                         ) : null}

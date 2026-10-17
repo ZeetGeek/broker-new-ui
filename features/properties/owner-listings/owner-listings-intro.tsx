@@ -21,7 +21,6 @@ const INTRO_DESCRIPTION =
 const SUMMARY_LOOP_INTERVAL_S = 6.5;
 const ICON_CLASS = "block-3 inline-3";
 const META_TEXT = "body-sm font-medium text-ink-muted";
-const CHIP_SURFACE = "bg-surface";
 
 const EMPTY_POOL_SUMMARY: OwnerListingsPoolSummary = {
     slotsOpenCount: 0,
@@ -114,7 +113,7 @@ function ServiceAreasMeta({ areas }: { areas: string[] }) {
                     Your areas
                 </span>
                 {areas.map((area) => (
-                    <Badge key={area} variant="outline" className={CHIP_SURFACE}>
+                    <Badge key={area} color="sky">
                         {area}
                     </Badge>
                 ))}

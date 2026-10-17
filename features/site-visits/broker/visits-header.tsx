@@ -20,11 +20,12 @@ export function BrokerVisitsHeader({ summary }: { summary: BrokerVisitSummary })
         return () => window.clearInterval(timer);
     }, []);
 
-    const summaryLine = summary.today > 0
-        ? `${summary.today} ${summary.today === 1 ? "visit" : "visits"} today${attentionCount > 0 ? `, ${attentionCount} need your attention` : ""}.`
-        : attentionCount > 0
-          ? `Nothing today, ${attentionCount} need your attention.`
-          : "Your schedule is clear today.";
+    const summaryLine =
+        summary.today > 0
+            ? `${summary.today} ${summary.today === 1 ? "visit" : "visits"} today${attentionCount > 0 ? `, ${attentionCount} need your attention` : ""}.`
+            : attentionCount > 0
+              ? `Nothing today, ${attentionCount} need your attention.`
+              : "Your schedule is clear today.";
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-3 text-start">
@@ -35,15 +36,12 @@ export function BrokerVisitsHeader({ summary }: { summary: BrokerVisitSummary })
 
             <div className="flex flex-wrap items-center gap-2">
                 {attentionCount > 0 ? (
-                    <Badge
-                        variant="outline"
-                        className="border-pending/25 bg-urgent-soft text-pending"
-                    >
+                    <Badge color="amber">
                         <CircleAlert aria-hidden />
                         {attentionCount} to handle
                     </Badge>
                 ) : null}
-                <Badge variant="outline" className="bg-surface tabular-nums">
+                <Badge color="sky" className="tabular-nums">
                     <Clock3 aria-hidden />
                     {formatInTimeZone(now, VISITS_TIME_ZONE, "EEE, d MMM · h:mm a")}
                     <span className="sr-only">India Standard Time</span>

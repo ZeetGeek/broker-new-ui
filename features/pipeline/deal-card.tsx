@@ -3,7 +3,6 @@
 import {
     Fragment,
     type KeyboardEvent,
-    type MouseEvent,
     type ReactNode,
     useLayoutEffect,
     useRef,
@@ -34,9 +33,9 @@ import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
-import { OverlayCardActions, OVERLAY_GLASS_BUTTON_CLASS } from "@/components/shared/overlay-card";
+import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
 import { Price } from "@/components/shared/price";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeColor } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -169,7 +168,7 @@ function PinnedDashBorder({ toneClass }: { toneClass: string }) {
         <svg
             ref={svgRef}
             aria-hidden
-            className={cn("pointer-events-none absolute inset-0 z-[1] overflow-visible", toneClass)}
+            className={cn("pointer-events-none absolute inset-0 z-1 overflow-visible", toneClass)}
             width={box.w || "100%"}
             height={box.h || "100%"}
         >
@@ -201,7 +200,7 @@ function DealCoverImage({ property, muted = false }: { property: DealProperty; m
     return (
         <div
             className="
-              relative shrink-0 overflow-hidden rounded-[8px] bg-surface-muted aspect-square
+              relative aspect-square shrink-0 overflow-hidden rounded-[8px] bg-surface-muted
               inline-24
             "
             aria-hidden={!src}
@@ -215,15 +214,19 @@ function DealCoverImage({ property, muted = false }: { property: DealProperty; m
                     className={cn("object-cover", muted && "grayscale-60")}
                 />
             ) : (
-                <div className="flex items-center justify-center text-ink-subtle block-full inline-full">
+                <div
+                    className="
+                  flex items-center justify-center text-ink-subtle block-full inline-full
+                "
+                >
                     <Building2 className="block-6 inline-6" strokeWidth={1.5} />
                 </div>
             )}
             {extraCount > 0 ? (
                 <span
                     className="
-                      absolute inset-e-1 inset-be-1 rounded-full bg-ink/65 px-1.5 py-0.5 body-xs
-                      font-semibold tabular-nums text-surface
+                      body-xs absolute inset-e-1 inset-be-1 rounded-full bg-ink/65 px-1.5 py-0.5
+                      font-semibold text-surface tabular-nums
                     "
                 >
                     +{extraCount}
@@ -244,10 +247,17 @@ type ChipCandidate = {
 /** Blocker facts outrank money facts, which outrank plain neutral facts. */
 const CHIP_TONE_RANK: Record<ChipTone, number> = { danger: 0, urgent: 1, neutral: 2 };
 
-function chipToneClass(tone: ChipTone): string {
-    if (tone === "danger") return "bg-danger-soft text-danger";
-    if (tone === "urgent") return "bg-urgent-soft text-urgent";
-    return "bg-surface-muted text-ink-muted";
+const STAGE_BADGE_COLOR: Record<DealStage, BadgeColor> = {
+    new: "sky",
+    contacted: "violet",
+    visit: "amber",
+    negotiation: "emerald",
+};
+
+function chipColor(tone: ChipTone): BadgeColor {
+    if (tone === "danger") return "red";
+    if (tone === "urgent") return "orange";
+    return "stone";
 }
 
 function buildChipCandidates(
@@ -336,15 +346,9 @@ function CardChips({
                 chip.render ? (
                     <Fragment key={chip.key}>{chip.render}</Fragment>
                 ) : (
-                    <span
-                        key={chip.key}
-                        className={cn(
-                            "body-xs rounded-full px-2.5 py-0.5 font-semibold tracking-wide",
-                            chipToneClass(chip.tone),
-                        )}
-                    >
+                    <Badge key={chip.key} color={chipColor(chip.tone)}>
                         {chip.label}
-                    </span>
+                    </Badge>
                 ),
             )}
             {overflow.length > 0 ? <ChipOverflowPopover items={overflow} /> : null}
@@ -378,7 +382,7 @@ function DragHandle({
                         onClick={stopCard}
                         className={cn(
                             CHROME_ICON_BUTTON_CLASS,
-                            "touch-none cursor-grab active:cursor-grabbing",
+                            "cursor-grab touch-none active:cursor-grabbing",
                         )}
                         {...props}
                     />
@@ -676,66 +680,30 @@ export function DealCard({
             ) : null}
             <div
                 className="
-                  pointer-events-none relative z-10 flex flex-1 flex-col gap-2.5 px-4 py-4 text-ink
-                  [&_a]:pointer-events-auto [&_button]:pointer-events-auto
+                  pointer-events-none relative z-10 flex flex-1 flex-col gap-2.5 p-4 text-ink
+                  [&_a]:pointer-events-auto
+                  [&_button]:pointer-events-auto
                 "
             >
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5 min-inline-0">
                         {stageMeta ? (
-                            <span
-                                className={cn(
-                                    `
-                                      body-xs inline-flex items-center gap-1.5 rounded-full px-2.5
-                                      py-1 font-semibold tracking-wide
-                                    `,
-                                    stageMeta.pillClass,
-                                )}
-                            >
-                                <span
-                                    aria-hidden
-                                    className={cn(
-                                        "rounded-full block-1.5 inline-1.5",
-                                        stageMeta.dotClass,
-                                    )}
-                                />
+                            <Badge color={STAGE_BADGE_COLOR[deal.status as DealStage]}>
                                 {stageMeta.label}
-                            </span>
+                            </Badge>
                         ) : outcome && OutcomeIcon ? (
-                            <span
-                                className="
-                                  body-xs inline-flex items-center gap-1.5 rounded-full
-                                  bg-surface-muted px-2.5 py-1 font-semibold tracking-wide text-ink
-                                "
-                            >
+                            <Badge color={deal.status === "closed" ? "emerald" : "stone"}>
                                 <OutcomeIcon
                                     aria-hidden
                                     className="block-3 inline-3"
                                     strokeWidth={2}
                                 />
                                 {outcome.label}
-                            </span>
+                            </Badge>
                         ) : null}
-                        <span
-                            className={cn(
-                                `
-                                  body-xs inline-flex items-center gap-1.5 rounded-full px-2.5 py-1
-                                  font-semibold tracking-wide
-                                `,
-                                deal.property.isRent
-                                    ? "bg-urgent-soft text-urgent"
-                                    : "bg-brand-soft text-brand-text",
-                            )}
-                        >
-                            <span
-                                aria-hidden
-                                className={cn(
-                                    "rounded-full block-1.5 inline-1.5",
-                                    deal.property.isRent ? "bg-urgent-mid" : "bg-success-mid",
-                                )}
-                            />
+                        <Badge color={deal.property.isRent ? "orange" : "emerald"}>
                             {deal.property.isRent ? "For rent" : "For sale"}
-                        </span>
+                        </Badge>
                     </div>
 
                     <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
@@ -781,7 +749,11 @@ export function DealCard({
                             isRent={deal.property.isRent}
                             className="h5 font-semibold tracking-wide"
                         />
-                        <h3 className="body truncate font-semibold tracking-wide text-ink capitalize">
+                        <h3
+                            className="
+                          body truncate font-semibold tracking-wide text-ink capitalize
+                        "
+                        >
                             {headline || deal.property.title}
                         </h3>
                         <p
@@ -890,7 +862,7 @@ export function DealCard({
                                 variant="accent"
                                 size="md"
                                 disabled={isBusy}
-                                className="inline-full font-semibold"
+                                className="font-semibold inline-full"
                                 onClick={(event) => {
                                     stopCard(event);
                                     primary.onClick();

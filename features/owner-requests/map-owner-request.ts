@@ -116,9 +116,7 @@ export function ownerRequestDetailHref(propertyId: string): string {
     return ownerPropertyDetailHref(propertyId);
 }
 
-export function mapRepresentationToOwnerCard(
-    rep: RepresentationItem,
-): OwnerRequestCardItem | null {
+export function mapRepresentationToOwnerCard(rep: RepresentationItem): OwnerRequestCardItem | null {
     if (!rep.id || !rep.propertyId) return null;
 
     const status = mapStatus(rep.status);

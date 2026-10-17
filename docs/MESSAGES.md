@@ -1,6 +1,6 @@
 # Messages & Copy
 
-Single source of truth for what the app *says* — errors, empty states,
+Single source of truth for what the app _says_ — errors, empty states,
 validation, success, and not-found. `.claude/rules/` and `.cursor/rules/` only
 point here.
 
@@ -18,7 +18,7 @@ English, plain and short.
 3. **Never blame the user.** "Enter a 10-digit mobile number," not "Invalid
    input."
 
-Every message answers: *what happened → what now.* If it only does the first,
+Every message answers: _what happened → what now._ If it only does the first,
 it isn't finished.
 
 ---
@@ -40,14 +40,14 @@ stack trace, endpoint, or table name.
 
 Picking the wrong surface is as damaging as bad wording.
 
-| Channel | Use for | Never use for |
-|---|---|---|
-| **Inline field error** | Form validation on a specific field | Anything not tied to one field |
-| **Form-level banner** | Submit failed as a whole | Field-specific problems |
-| **Toast** | Transient success the user doesn't need to act on | Errors, anything requiring action, anything important |
-| **Inline banner** | Persistent state — "Verification pending" | Momentary confirmations |
-| **Full-page state** | 404, empty list, error boundary | Anything recoverable in place |
-| **Modal** | Destructive confirmation | Information the user didn't ask for |
+| Channel                | Use for                                           | Never use for                                         |
+| ---------------------- | ------------------------------------------------- | ----------------------------------------------------- |
+| **Inline field error** | Form validation on a specific field               | Anything not tied to one field                        |
+| **Form-level banner**  | Submit failed as a whole                          | Field-specific problems                               |
+| **Toast**              | Transient success the user doesn't need to act on | Errors, anything requiring action, anything important |
+| **Inline banner**      | Persistent state — "Verification pending"         | Momentary confirmations                               |
+| **Full-page state**    | 404, empty list, error boundary                   | Anything recoverable in place                         |
+| **Modal**              | Destructive confirmation                          | Information the user didn't ask for                   |
 
 **Toasts are the most abused.** They vanish, they stack, and on a phone they're
 easy to miss entirely while scrolling. A toast that says "Failed to save" is a
@@ -59,18 +59,18 @@ lost error. If the user must act, it goes inline and it stays.
 
 The API speaks in status codes. The user must never see one.
 
-| Situation | Message | Action |
-|---|---|---|
-| No connection | You're offline. Check your internet and try again. | Retry |
-| Request timed out | This is taking too long. Try again. | Retry |
-| 401 session expired | Your session expired. Please log in again. | Log in |
-| 403 not allowed | You don't have access to this. | Back |
-| 404 gone | This property is no longer available. | Browse properties |
-| 409 conflict | You've already sent a request for this property. | View request |
-| 422 validation | Please check the highlighted fields. | — (inline errors) |
-| 429 rate limited | Too many attempts. Wait a minute and try again. | — |
-| 500 server | Something went wrong on our side. Try again in a moment. | Retry |
-| Unknown | Something went wrong. Try again. | Retry |
+| Situation           | Message                                                  | Action            |
+| ------------------- | -------------------------------------------------------- | ----------------- |
+| No connection       | You're offline. Check your internet and try again.       | Retry             |
+| Request timed out   | This is taking too long. Try again.                      | Retry             |
+| 401 session expired | Your session expired. Please log in again.               | Log in            |
+| 403 not allowed     | You don't have access to this.                           | Back              |
+| 404 gone            | This property is no longer available.                    | Browse properties |
+| 409 conflict        | You've already sent a request for this property.         | View request      |
+| 422 validation      | Please check the highlighted fields.                     | — (inline errors) |
+| 429 rate limited    | Too many attempts. Wait a minute and try again.          | —                 |
+| 500 server          | Something went wrong on our side. Try again in a moment. | Retry             |
+| Unknown             | Something went wrong. Try again.                         | Retry             |
 
 Two rules on top of the table:
 
@@ -103,25 +103,25 @@ accusatory and are the most common validation mistake.
 
 Say what's expected, not what's wrong.
 
-| ❌ Don't | ✅ Do |
-|---|---|
-| Invalid input | Enter a 10-digit mobile number |
-| This field is required | Enter the property's locality |
-| Value must match pattern | PIN code should be 6 digits |
-| Error in field | Price must be more than ₹0 |
-| Min length not met | Add at least 20 characters so buyers know what to expect |
+| ❌ Don't                 | ✅ Do                                                    |
+| ------------------------ | -------------------------------------------------------- |
+| Invalid input            | Enter a 10-digit mobile number                           |
+| This field is required   | Enter the property's locality                            |
+| Value must match pattern | PIN code should be 6 digits                              |
+| Error in field           | Price must be more than ₹0                               |
+| Min length not met       | Add at least 20 characters so buyers know what to expect |
 
 ### India-specific rules
 
-| Field | Rule | Message |
-|---|---|---|
-| Mobile | 10 digits, +91 | Enter a 10-digit mobile number |
-| PIN code | 6 digits | PIN code should be 6 digits |
-| Price | > 0, sensible range | Enter a price between ₹1 L and ₹100 Cr |
-| Carpet area | > 0, less than built-up | Carpet area can't be more than built-up area |
-| RERA number | State format | Enter your RERA registration number as it appears on your certificate |
-| Photos | At least 1 to publish | Add at least one photo — listings with photos get far more interest |
-| Available from | Not in the past | Choose today or a future date |
+| Field          | Rule                    | Message                                                               |
+| -------------- | ----------------------- | --------------------------------------------------------------------- |
+| Mobile         | 10 digits, +91          | Enter a 10-digit mobile number                                        |
+| PIN code       | 6 digits                | PIN code should be 6 digits                                           |
+| Price          | > 0, sensible range     | Enter a price between ₹1 L and ₹100 Cr                                |
+| Carpet area    | > 0, less than built-up | Carpet area can't be more than built-up area                          |
+| RERA number    | State format            | Enter your RERA registration number as it appears on your certificate |
+| Photos         | At least 1 to publish   | Add at least one photo — listings with photos get far more interest   |
+| Available from | Not in the past         | Choose today or a future date                                         |
 
 ### Long forms
 
@@ -142,14 +142,14 @@ Getting this wrong is a real bug, not a copy nitpick.
 
 Teach. This is the most valuable screen in onboarding.
 
-| Screen | Message |
-|---|---|
-| Owner, no properties | **No properties yet**<br>Add your first property — it takes about 2 minutes.<br>`[Add property]` |
-| Broker, no clients | **No clients yet**<br>Add a client to start tracking their property search.<br>`[Add client]` |
+| Screen                     | Message                                                                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Owner, no properties       | **No properties yet**<br>Add your first property — it takes about 2 minutes.<br>`[Add property]`                              |
+| Broker, no clients         | **No clients yet**<br>Add a client to start tracking their property search.<br>`[Add client]`                                 |
 | Broker, no representations | **You're not representing any properties yet**<br>Browse properties and send a request to the owner.<br>`[Browse properties]` |
-| Owner, no requests | **No broker requests yet**<br>Brokers will see your property and can request to sell it. We'll notify you.<br>— |
+| Owner, no requests         | **No broker requests yet**<br>Brokers will see your property and can request to sell it. We'll notify you.<br>—               |
 
-### 2. Filtered empty — user *has* data, the filter excludes it
+### 2. Filtered empty — user _has_ data, the filter excludes it
 
 Completely different message. Offering "Add your first property" to someone
 with twelve listings who filtered to ₹0–1 L is a bug.
@@ -214,15 +214,15 @@ never confirm a record exists to someone not allowed to see it.
 **Only confirm what isn't already visible.** If the UI updates to show the
 result, a toast is noise.
 
-| Action | Toast? | Message |
-|---|---|---|
-| Property published | ✅ | Property published. Brokers can now see it. |
-| Request sent to owner | ✅ | Request sent. The owner will be notified. |
-| Request approved | ✅ | Approved. The property is now in your pipeline. |
-| Photo uploaded | ❌ | The thumbnail appearing is the confirmation |
-| Client moved a stage | ❌ | The card moved — that's the confirmation |
-| Filter changed | ❌ | The list changed |
-| Profile saved | ✅ | Changes saved. |
+| Action                | Toast? | Message                                         |
+| --------------------- | ------ | ----------------------------------------------- |
+| Property published    | ✅     | Property published. Brokers can now see it.     |
+| Request sent to owner | ✅     | Request sent. The owner will be notified.       |
+| Request approved      | ✅     | Approved. The property is now in your pipeline. |
+| Photo uploaded        | ❌     | The thumbnail appearing is the confirmation     |
+| Client moved a stage  | ❌     | The card moved — that's the confirmation        |
+| Filter changed        | ❌     | The list changed                                |
+| Profile saved         | ✅     | Changes saved.                                  |
 
 Good success copy says **what happens next**, not just that something worked.
 "Request sent" is fine. "Request sent. The owner will be notified." is better,
@@ -243,7 +243,7 @@ Name the thing. Say the consequence. Put the verb on the button.
 - ❌ "OK" / "Yes" — the button must name the action
 - ✅ State whether it can be undone
 - ✅ Mention who else is affected — other people's work is attached to these
-     records
+  records
 
 ---
 
@@ -251,16 +251,16 @@ Name the thing. Say the consequence. Put the verb on the button.
 
 Internal vocabulary is not user vocabulary.
 
-| ❌ Internal | ✅ Shown to users |
-|---|---|
-| Request to represent | Broker wants to sell your property |
-| Representation | Working with this broker |
-| Pipeline / CRM | My clients |
-| Site visit slot | Visit time |
-| Validation failed | Please check the highlighted fields |
-| Unauthorized | You don't have access to this |
-| Submit | Save / Send / Publish (say which) |
-| Entity / record / row | Property / client / request |
+| ❌ Internal           | ✅ Shown to users                   |
+| --------------------- | ----------------------------------- |
+| Request to represent  | Broker wants to sell your property  |
+| Representation        | Working with this broker            |
+| Pipeline / CRM        | My clients                          |
+| Site visit slot       | Visit time                          |
+| Validation failed     | Please check the highlighted fields |
+| Unauthorized          | You don't have access to this       |
+| Submit                | Save / Send / Publish (say which)   |
+| Entity / record / row | Property / client / request         |
 
 Also avoid: "oops", "uh-oh", "whoops". Cute error copy reads as unserious when
 someone's listing just failed to save.

@@ -138,8 +138,8 @@ export function AttachmentThemePage() {
                 <section>
                     <h2 className="h4 text-ink">Uses</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        Composer previews, chat message files, and upload lists. Compose
-                        media + content + actions — do not hand-roll a second chip.
+                        Composer previews, chat message files, and upload lists. Compose media +
+                        content + actions — do not hand-roll a second chip.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         {ATTACHMENT_USES.map((use) => (
@@ -152,9 +152,7 @@ export function AttachmentThemePage() {
                                             <GroupDemo />
                                         </div>
                                     ) : null}
-                                    {use.name === "states" ? (
-                                        <FileDemo state="uploading" />
-                                    ) : null}
+                                    {use.name === "states" ? <FileDemo state="uploading" /> : null}
                                 </div>
                                 <p className="body-xs text-ink-subtle">{use.note}</p>
                             </Swatch>
@@ -165,9 +163,8 @@ export function AttachmentThemePage() {
                 <section>
                     <h2 className="h4 text-ink">States</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        Wire <code className="body-xs">state</code> to the real upload
-                        lifecycle. Error copy must live in the description — colour alone is
-                        not enough.
+                        Wire <code className="body-xs">state</code> to the real upload lifecycle.
+                        Error copy must live in the description — colour alone is not enough.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {ATTACHMENT_STATES.map((item) => (
@@ -184,8 +181,8 @@ export function AttachmentThemePage() {
                 <section>
                     <h2 className="h4 text-ink">Sizes</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        Three steps. Prefer default in chat; use xs only when space is
-                        genuinely tight.
+                        Three steps. Prefer default in chat; use xs only when space is genuinely
+                        tight.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         {ATTACHMENT_SIZES.map((item) => (
@@ -202,18 +199,14 @@ export function AttachmentThemePage() {
                 <section>
                     <h2 className="h4 text-ink">Orientation</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        Horizontal for documents. Vertical when the media is the point —
-                        usually with <code className="body-xs">variant=&quot;image&quot;</code>.
+                        Horizontal for documents. Vertical when the media is the point — usually
+                        with <code className="body-xs">variant=&quot;image&quot;</code>.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {ATTACHMENT_ORIENTATIONS.map((item) => (
                             <Swatch key={item.name} label={item.label}>
                                 <div className="flex min-block-24 items-center justify-center inline-full">
-                                    {item.name === "horizontal" ? (
-                                        <FileDemo />
-                                    ) : (
-                                        <ImageDemo />
-                                    )}
+                                    {item.name === "horizontal" ? <FileDemo /> : <ImageDemo />}
                                 </div>
                                 <p className="body-xs text-ink-subtle">{item.note}</p>
                             </Swatch>
@@ -226,8 +219,8 @@ export function AttachmentThemePage() {
                     <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-[#B8CFC4]">
                         <li>
                             Use <code className="body-xs">Attachment</code> from{" "}
-                            <code className="body-xs">components/ui/attachment.tsx</code>. Do
-                            not invent a second file chip for chat or uploads.
+                            <code className="body-xs">components/ui/attachment.tsx</code>. Do not
+                            invent a second file chip for chat or uploads.
                         </li>
                         <li>
                             Surface on canvas: white <code className="body-xs">surface</code>,{" "}
@@ -237,18 +230,18 @@ export function AttachmentThemePage() {
                         </li>
                         <li>
                             Uploading / processing shimmer the title via the built-in{" "}
-                            <code className="body-xs">shimmer</code> utility. Keep the
-                            progress or failure reason in the description.
+                            <code className="body-xs">shimmer</code> utility. Keep the progress or
+                            failure reason in the description.
                         </li>
                         <li>
-                            Icon-only actions need an{" "}
-                            <code className="body-xs">aria-label</code> that names the file.
+                            Icon-only actions need an <code className="body-xs">aria-label</code>{" "}
+                            that names the file.
                         </li>
                         <li>
                             Do not edit{" "}
                             <code className="body-xs">components/ui/attachment.tsx</code> for
-                            one-off styling — pass <code className="body-xs">className</code>
-                            , or wrap in <code className="body-xs">components/shared/</code>.
+                            one-off styling — pass <code className="body-xs">className</code>, or
+                            wrap in <code className="body-xs">components/shared/</code>.
                         </li>
                     </ul>
                 </section>

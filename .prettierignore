@@ -1,9 +1,33 @@
-dist/
+# dependencies
 node_modules/
-.next/
-.turbo/
-coverage/
-pnpm-lock.yaml
+.pnp
+.pnp.*
+.yarn/
 .pnpm-store/
 
+# generated output
+.next/
+out/
+build/
+dist/
+coverage/
+.turbo/
+.vercel/
+.eslintcache
+*.tsbuildinfo
+next-env.d.ts
 
+# locks and logs
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+*.log
+
+# env and machine-local tool state
+.env*
+.claude/settings.local.json
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/hook.pending.json
+.impeccable/live/
+.husky/_/

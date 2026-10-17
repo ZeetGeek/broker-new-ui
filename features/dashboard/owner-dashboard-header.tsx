@@ -5,8 +5,8 @@ import Link from "next/link";
 import { CalendarDays, MapPin, Pencil, Plus } from "lucide-react";
 
 import {
-    OWNER_PROPERTIES_NEW_HREF,
     OWNER_PROFILE_HREF,
+    OWNER_PROPERTIES_NEW_HREF,
     OWNER_VISITS_HREF,
 } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
@@ -41,10 +41,7 @@ export type OwnerDashboardHeaderProps = OwnerDashboardSummaryStats & {
 
 const ICON_CLASS = "block-3 inline-3";
 const META_TEXT = "body-sm font-medium text-ink-muted";
-const CHIP_SURFACE = "bg-surface";
-const ADD_CITY_CHIP = "border-border-warm bg-surface text-ink shadow-none";
-const ACTIONABLE_CHIP_HOVER =
-    "transition-colors duration-160 hover:border-ink/20 hover:bg-neutral-50 hover:text-ink";
+const ACTIONABLE_CHIP_HOVER = "transition-colors duration-160 hover:brightness-95";
 
 function buildSummaryLines({
     propertiesListed,
@@ -137,8 +134,7 @@ function CityChips({ city }: { city: string | null }) {
                             href={OWNER_PROFILE_HREF}
                             aria-label="Add your city"
                             className={cn(
-                                badgeVariants({ variant: "outline" }),
-                                ADD_CITY_CHIP,
+                                badgeVariants({ color: "sky" }),
                                 ACTIONABLE_CHIP_HOVER,
                                 "outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
                             )}
@@ -157,9 +153,7 @@ function CityChips({ city }: { city: string | null }) {
 
     return (
         <>
-            <Badge variant="outline" className={CHIP_SURFACE}>
-                {city}
-            </Badge>
+            <Badge color="sky">{city}</Badge>
             <EditProfileLink />
         </>
     );
