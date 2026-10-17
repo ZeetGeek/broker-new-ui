@@ -66,7 +66,7 @@ function LeadsQueryInput({ value, onChange }: { value: string; onChange: (q: str
         <Input
             size="default"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onValueChange={setDraft}
             placeholder="Search broker, buyer or area"
             aria-label="Search your leads"
             startIcon={Search}

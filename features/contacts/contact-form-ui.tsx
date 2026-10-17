@@ -28,8 +28,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 
-import { SURAT_LOCALITIES } from "@/features/contacts/contact-form-model";
-
 /** Same control height as Add property (`size="lg"` → 48px). */
 export const nativeControlClass = `
   rounded-control border-2 border-border-warm bg-surface px-4 text-base text-ink outline-none
@@ -743,12 +741,6 @@ function TokenInput({
             ) : null}
         </FormField>
     );
-}
-
-export function LocalityPicker(
-    props: Omit<React.ComponentProps<typeof TokenInput>, "suggestions" | "popularFirst">,
-) {
-    return <TokenInput {...props} suggestions={SURAT_LOCALITIES} />;
 }
 
 export function TagPicker(props: Omit<React.ComponentProps<typeof TokenInput>, "suggestions">) {

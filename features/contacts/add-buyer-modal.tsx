@@ -18,8 +18,11 @@ import {
     parseBuyerLocalities,
 } from "@/lib/validation/buyer";
 
+import { useLocationOptions } from "@/hooks/use-locations";
+
 import { useAppSelector } from "@/store/hooks";
 
+import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { Button } from "@/components/ui/button";
 
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
@@ -28,7 +31,7 @@ import {
     ChoiceRadioField,
     ComboboxField,
     ContactFormDrawer,
-    LocalityPicker,
+    FormField,
     MoreDetails,
     NotesField,
     TextField,
@@ -174,6 +177,11 @@ export function AddBuyerModal({
         () => parseBuyerLocalities(values.localities ?? ""),
         [values.localities],
     );
+    const { selectedCity } = useLocationOptions({
+        countryName: values.country,
+        stateName: values.state,
+        cityName: values.city,
+    });
 
     useEffect(() => {
         if (!open) return;
@@ -371,24 +379,31 @@ export function AddBuyerModal({
                     onStateChange={(state) =>
                         form.setValue("state", state, { shouldDirty: true, shouldValidate: true })
                     }
-                    onCityChange={(city) =>
-                        form.setValue("city", city, { shouldDirty: true, shouldValidate: true })
-                    }
+                    onCityChange={(city) => {
+                        const current = form.getValues("city");
+                        form.setValue("city", city, { shouldDirty: true, shouldValidate: true });
+                        if (city.trim().toLowerCase() === current.trim().toLowerCase()) return;
+                        form.setValue("localities", "", { shouldDirty: true });
+                    }}
                 />
 
-                <LocalityPicker
-                    label="Areas"
-                    required
-                    values={localityList}
-                    placeholder="Type another area…"
-                    error={form.formState.errors.localities?.message}
-                    onChange={(next) =>
-                        form.setValue("localities", next.join(", "), {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                        })
-                    }
-                />
+                <FormField label="Preferred area" htmlFor="buyer-preferred-area" required>
+                    <LocalityCombobox
+                        id="buyer-preferred-area"
+                        multiple
+                        size="lg"
+                        cityId={selectedCity?.id}
+                        value={localityList}
+                        placeholder="Search an area, e.g. Vesu"
+                        errorText={form.formState.errors.localities?.message}
+                        onValueChange={(next: string[]) =>
+                            form.setValue("localities", next.join(", "), {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                            })
+                        }
+                    />
+                </FormField>
 
                 <BudgetRangeField
                     lookingFor={values.lookingFor ?? "buy"}

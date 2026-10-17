@@ -59,7 +59,7 @@ function ContactsQueryInput({ value, onChange }: { value: string; onChange: (q: 
         <Input
             size="sm"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onValueChange={setDraft}
             placeholder="Search name, number or area"
             aria-label="Search your contacts"
             startIcon={Search}

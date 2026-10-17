@@ -151,7 +151,7 @@ export function AttachExclusiveOwnerModal({
                     <Input
                         size="sm"
                         value={query}
-                        onChange={(event) => setQuery(event.target.value)}
+                        onValueChange={setQuery}
                         placeholder="Search exclusive owners"
                         aria-label="Search exclusive owners"
                         startIcon={Search}

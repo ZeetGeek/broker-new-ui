@@ -194,7 +194,7 @@ export function InvitePropertyBrokerModal({
                 <div className="flex flex-col gap-3">
                     <Input
                         value={search}
-                        onChange={(event) => setSearch(event.target.value)}
+                        onValueChange={setSearch}
                         startIcon={Search}
                         placeholder="Search brokers by name"
                         aria-label="Search brokers"

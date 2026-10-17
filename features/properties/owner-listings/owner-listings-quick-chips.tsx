@@ -110,7 +110,7 @@ function OwnerListingsQueryInput({
         <Input
             size="sm"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onValueChange={setDraft}
             placeholder="Search listings"
             aria-label="Search owner listings"
             startIcon={Search}

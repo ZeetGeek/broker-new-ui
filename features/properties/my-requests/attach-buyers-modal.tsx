@@ -244,7 +244,7 @@ export function AttachBuyersModal({
                     <Input
                         size="sm"
                         value={query}
-                        onChange={(event) => setQuery(event.target.value)}
+                        onValueChange={setQuery}
                         placeholder="Search buyers"
                         aria-label="Search your buyers"
                         startIcon={Search}

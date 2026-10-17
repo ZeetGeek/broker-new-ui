@@ -41,6 +41,12 @@ type ApiOwnerItem = {
     propertyCount: number;
     propertyTitles: string[];
     localities: string[];
+    city?: string | null;
+    email?: string | null;
+    ownerKind?: string | null;
+    country?: string | null;
+    state?: string | null;
+    locality?: string | null;
     totalValueInr: number;
     isAllRent: boolean;
     liveDealCount: number;
@@ -179,6 +185,8 @@ function toOwnerRow(item: ApiOwnerItem): OwnerRow {
     const normalized = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
 
     const origin = item.origin ?? "platform";
+    const platformLocality =
+        item.localities?.find((value) => value && value !== "—" && value !== item.city) ?? "";
     const details =
         origin === "custom"
             ? ({
@@ -191,13 +199,23 @@ function toOwnerRow(item: ApiOwnerItem): OwnerRow {
                   photos: [],
                   documents: [],
               } as OwnerContactForm)
-            : undefined;
+            : ({
+                  ...emptyOwnerForm(),
+                  ownerType: item.ownerKind ?? "",
+                  email: item.email ?? "",
+                  country: item.country ?? "",
+                  state: item.state ?? "",
+                  city: item.city ?? "",
+                  locality: item.locality?.trim() || platformLocality,
+                  propertyType: "",
+              } as OwnerContactForm);
 
     const properties = item.properties?.map((property) => {
         const photos = (property as { photos?: unknown }).photos;
         return {
             ...property,
             coverUrl: property.coverUrl || coverFromPhotos(photos),
+            configuration: property.configuration || (property as { bhkConfig?: string }).bhkConfig,
         };
     });
 
@@ -517,7 +535,6 @@ async function listOwners(
     if (filters.ownerOrigin === "platform") {
         const params = new URLSearchParams();
         if (filters.q.trim()) params.set("search", filters.q.trim());
-        params.set("origin", "platform");
         params.set("sort", filters.sort);
         params.set("page", String(page));
         params.set("limit", String(limit));
@@ -625,16 +642,17 @@ export const contactsApi = {
 
     async summary(signal?: AbortSignal): Promise<ContactsSummary> {
         const base = { ...DEFAULT_CONTACTS_FILTERS, q: "" };
-        const [buyers, owners] = await Promise.all([
+        const [buyers, owners, platform] = await Promise.all([
             listClientsPageWithLeadSummary({ page: 1, limit: 1, signal }),
-            listOwners(base, 1, 1, signal),
+            listOwners({ ...base, ownerOrigin: "custom" }, 1, 1, signal),
+            listOwners({ ...base, ownerOrigin: "platform" }, 1, 1, signal),
         ]);
         return {
             buyerCount: buyers.total,
-            ownerCount: owners.summary.ownerCount,
+            ownerCount: owners.summary.customOwnerCount,
             unmatchedBuyerCount: 0,
-            lapsedOwnerCount: owners.summary.lapsedOwnerCount,
-            platformOwnerCount: owners.summary.platformOwnerCount,
+            lapsedOwnerCount: platform.summary.lapsedOwnerCount,
+            platformOwnerCount: platform.summary.platformOwnerCount,
             customOwnerCount: owners.summary.customOwnerCount,
         };
     },

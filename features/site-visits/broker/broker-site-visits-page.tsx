@@ -66,6 +66,7 @@ export function BrokerSiteVisitsPage() {
         [slotsQuery.data],
     );
     const propertyOptions = slotsQuery.data?.pages[0]?.propertyOptions ?? [];
+    const ownerOptions = slotsQuery.data?.pages[0]?.ownerOptions ?? [];
     const requestsQuery = useTimeRequests();
     useVisitSummary();
     const visitActions = useVisitActions();
@@ -457,6 +458,7 @@ export function BrokerSiteVisitsPage() {
                         key={searchParams.get("q") ?? ""}
                         items={displaySlotItems}
                         propertyOptions={propertyOptions}
+                        ownerOptions={ownerOptions}
                         selectedPropertyId={slotFilters.propertyId}
                         buyers={buyers}
                         buyerId={buyerId}

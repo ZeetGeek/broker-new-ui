@@ -324,6 +324,11 @@ export type ApiPropertyOption = {
     city: string;
 };
 
+export type ApiOwnerOption = {
+    id: string;
+    name: string;
+};
+
 export function mapBrokerOpenSlotItem(item: ApiBrokerOpenSlotItem): PropertyWithSlots {
     const p = item.property;
     const amount = moneyNumber(p.salePrice) || moneyNumber(p.monthlyRent);

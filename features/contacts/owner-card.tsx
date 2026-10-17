@@ -100,7 +100,7 @@ export function OwnerCard({
                         name={owner.name}
                         phoneDigits={canContact ? owner.phoneDigits : undefined}
                         onOpen={open}
-                        onEdit={onEdit ? () => onEdit(owner) : undefined}
+                        onEdit={!isPlatform && onEdit ? () => onEdit(owner) : undefined}
                         onAttach={attach}
                         onNotes={open}
                         onDelete={!isPlatform && onDelete ? () => onDelete(owner) : undefined}
@@ -111,7 +111,13 @@ export function OwnerCard({
             </div>
 
             <div className="flex items-center gap-3 min-inline-0">
-                <UserAvatar name={owner.name} size="md" fallback="shape" className="shrink-0" />
+                <UserAvatar
+                    name={owner.name}
+                    imageUrl={owner.avatarUrl}
+                    size="md"
+                    fallback="shape"
+                    className="shrink-0"
+                />
                 <div className="min-inline-0">
                     <h2 className="body truncate font-bold capitalize text-ink">{owner.name}</h2>
                     {canContact && owner.phoneDigits ? (

@@ -164,7 +164,7 @@ function DealsQueryInput({ value, onChange }: { value: string; onChange: (q: str
         <Input
             size="sm"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onValueChange={setDraft}
             placeholder="Search deals"
             aria-label="Search your deals"
             startIcon={Search}

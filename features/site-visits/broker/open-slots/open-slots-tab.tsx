@@ -4,9 +4,8 @@ import { useCallback, useMemo, useState } from "react";
 
 import { formatDistanceToNowStrict } from "date-fns";
 
-import type { ApiPropertyOption } from "@/lib/api/broker-visits-map";
+import type { ApiOwnerOption, ApiPropertyOption } from "@/lib/api/broker-visits-map";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
-import { TIME_BUCKETS } from "@/lib/visits/constants";
 import { sortSlotsForBuyer } from "@/lib/visits/grouping";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
@@ -42,6 +41,7 @@ const FILTER_KEYS = [
     "range",
     "from",
     "to",
+    "owner",
     "time",
     "locality",
     "purpose",
@@ -49,7 +49,6 @@ const FILTER_KEYS = [
     "bhk",
     "minBudget",
     "maxBudget",
-    "owner",
     "accepted",
     "full",
 ];
@@ -63,21 +62,11 @@ function readFilters(params: URLSearchParams): SlotFilterState {
         rangeValue === "custom"
             ? rangeValue
             : "week";
-    const purpose = params.get("purpose");
     return {
         range,
         customFrom: params.get("from") ?? "",
         customTo: params.get("to") ?? "",
-        timeBuckets: params.getAll("time"),
-        localities: params.getAll("locality"),
-        purpose: purpose === "sale" || purpose === "rent" ? purpose : "",
-        propertyType: params.get("type") ?? "",
-        bhk: params.get("bhk") ?? "",
-        minBudget: params.get("minBudget") ?? "",
-        maxBudget: params.get("maxBudget") ?? "",
         owner: params.get("owner") ?? "",
-        onlyAccepted: params.get("accepted") !== "0",
-        hideFull: params.get("full") !== "0",
     };
 }
 
@@ -86,16 +75,7 @@ function writeFilters(params: URLSearchParams, filters: SlotFilterState) {
     if (filters.range !== "week") params.set("range", filters.range);
     if (filters.range === "custom" && filters.customFrom) params.set("from", filters.customFrom);
     if (filters.range === "custom" && filters.customTo) params.set("to", filters.customTo);
-    filters.timeBuckets.forEach((value) => params.append("time", value));
-    filters.localities.forEach((value) => params.append("locality", value));
-    if (filters.purpose) params.set("purpose", filters.purpose);
-    if (filters.propertyType) params.set("type", filters.propertyType);
-    if (filters.bhk) params.set("bhk", filters.bhk);
-    if (filters.minBudget) params.set("minBudget", filters.minBudget);
-    if (filters.maxBudget) params.set("maxBudget", filters.maxBudget);
     if (filters.owner) params.set("owner", filters.owner);
-    if (!filters.onlyAccepted) params.set("accepted", "0");
-    if (!filters.hideFull) params.set("full", "0");
 }
 
 /** Sheet badge count — date range lives on the toolbar, so exclude it. */
@@ -104,20 +84,7 @@ export function countOpenSlotFilters(
     buyerId?: string,
     propertyId?: string,
 ) {
-    return (
-        filters.timeBuckets.length +
-        filters.localities.length +
-        Number(Boolean(filters.purpose)) +
-        Number(Boolean(filters.propertyType)) +
-        Number(Boolean(filters.bhk)) +
-        Number(Boolean(filters.minBudget)) +
-        Number(Boolean(filters.maxBudget)) +
-        Number(Boolean(filters.owner)) +
-        Number(!filters.onlyAccepted) +
-        Number(!filters.hideFull) +
-        Number(Boolean(buyerId)) +
-        Number(Boolean(propertyId))
-    );
+    return Number(Boolean(filters.owner)) + Number(Boolean(buyerId)) + Number(Boolean(propertyId));
 }
 
 export function readOpenSlotFilters(params: URLSearchParams): SlotFilterState {
@@ -127,6 +94,7 @@ export function readOpenSlotFilters(params: URLSearchParams): SlotFilterState {
 export function OpenSlotsTab({
     items,
     propertyOptions = [],
+    ownerOptions = [],
     selectedPropertyId,
     buyers,
     buyerId,
@@ -148,6 +116,7 @@ export function OpenSlotsTab({
 }: {
     items: PropertyWithSlots[];
     propertyOptions?: ApiPropertyOption[];
+    ownerOptions?: ApiOwnerOption[];
     selectedPropertyId?: string;
     buyers: PersonSummary[];
     buyerId?: string;
@@ -224,6 +193,26 @@ export function OpenSlotsTab({
                   },
               ]
             : []),
+        ...(buyerId
+            ? [
+                  {
+                      key: "lead",
+                      label: buyers.find((buyer) => buyer.id === buyerId)?.name ?? "Selected lead",
+                      clear: () => onBuyerChange(undefined),
+                  },
+              ]
+            : []),
+        ...(filters.owner
+            ? [
+                  {
+                      key: "owner",
+                      label:
+                          ownerOptions.find((owner) => owner.id === filters.owner)?.name ??
+                          "Selected owner",
+                      clear: () => setFilters({ ...filters, owner: "" }),
+                  },
+              ]
+            : []),
         ...(filters.range !== "week"
             ? [
                   {
@@ -235,96 +224,6 @@ export function OpenSlotsTab({
                       ),
                       clear: () =>
                           setFilters({ ...filters, range: "week", customFrom: "", customTo: "" }),
-                  },
-              ]
-            : []),
-        ...filters.timeBuckets.map((value) => ({
-            key: `time-${value}`,
-            label: TIME_BUCKETS.find((item) => item.id === value)?.label ?? value,
-            clear: () =>
-                setFilters({
-                    ...filters,
-                    timeBuckets: filters.timeBuckets.filter((item) => item !== value),
-                }),
-        })),
-        ...filters.localities.map((value) => ({
-            key: `locality-${value}`,
-            label: value,
-            clear: () =>
-                setFilters({
-                    ...filters,
-                    localities: filters.localities.filter((item) => item !== value),
-                }),
-        })),
-        ...(filters.purpose
-            ? [
-                  {
-                      key: "purpose",
-                      label: filters.purpose === "sale" ? "Sale" : "Rent",
-                      clear: () => setFilters({ ...filters, purpose: "" }),
-                  },
-              ]
-            : []),
-        ...(filters.propertyType
-            ? [
-                  {
-                      key: "type",
-                      label: filters.propertyType,
-                      clear: () => setFilters({ ...filters, propertyType: "" }),
-                  },
-              ]
-            : []),
-        ...(filters.bhk
-            ? [
-                  {
-                      key: "bhk",
-                      label: `${filters.bhk} BHK`,
-                      clear: () => setFilters({ ...filters, bhk: "" }),
-                  },
-              ]
-            : []),
-        ...(filters.minBudget
-            ? [
-                  {
-                      key: "minBudget",
-                      label: `From ₹${Number(filters.minBudget).toLocaleString("en-IN")}`,
-                      clear: () => setFilters({ ...filters, minBudget: "" }),
-                  },
-              ]
-            : []),
-        ...(filters.maxBudget
-            ? [
-                  {
-                      key: "maxBudget",
-                      label: `Up to ₹${Number(filters.maxBudget).toLocaleString("en-IN")}`,
-                      clear: () => setFilters({ ...filters, maxBudget: "" }),
-                  },
-              ]
-            : []),
-        ...(filters.owner
-            ? [
-                  {
-                      key: "owner",
-                      label: "Selected owner",
-                      clear: () => setFilters({ ...filters, owner: "" }),
-                  },
-              ]
-            : []),
-        ...(!filters.onlyAccepted
-            ? [
-                  {
-                      key: "access",
-                      label: "All properties",
-                      clear: () => setFilters({ ...filters, onlyAccepted: true }),
-                  },
-              ]
-            : []),
-        ...(!filters.hideFull
-            ? [
-                  {
-                      key: "full",
-                      label: "Showing full slots",
-                      clear: () => setFilters({ ...filters, hideFull: true }),
                   },
               ]
             : []),
@@ -346,7 +245,7 @@ export function OpenSlotsTab({
                 <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
                     <DialogTitle>Filter open slots</DialogTitle>
                     <DialogDescription>
-                        Set the time, property and owner criteria for this booking.
+                        Filter open slots by lead, owner, or property.
                     </DialogDescription>
                     <DialogClose />
                 </DialogHeader>
@@ -357,6 +256,7 @@ export function OpenSlotsTab({
                         buyers={buyers}
                         buyerId={draftBuyerId}
                         onBuyerChange={setDraftBuyerId}
+                        ownerOptions={ownerOptions}
                         propertyOptions={propertyOptions}
                         propertyId={draftPropertyId}
                         onPropertyChange={setDraftPropertyId}
@@ -442,7 +342,7 @@ export function OpenSlotsTab({
                         <PropertyRow
                             item={item}
                             buyerSelected={Boolean(buyerId)}
-                            hideFull={filters.hideFull}
+                            hideFull
                             onBook={onBook}
                             onOpenVisit={onOpenVisit}
                             onRequest={() => onRequest(item.property.id)}
@@ -457,7 +357,7 @@ export function OpenSlotsTab({
                             key={item.property.id}
                             item={item}
                             buyerSelected={Boolean(buyerId)}
-                            hideFull={filters.hideFull}
+                            hideFull
                             onBook={onBook}
                             onOpenVisit={onOpenVisit}
                             onRequest={() => onRequest(item.property.id)}
