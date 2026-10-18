@@ -3,6 +3,8 @@
 import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 import { ApiError } from "@/lib/api/client";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { propertiesApi } from "@/lib/api/properties";
@@ -19,6 +21,7 @@ import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { isNewInServiceAreas } from "@/features/properties/owner-listings/count-new-listings-this-week";
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
+import { SAVED_PROPERTIES_QUERY_KEY } from "@/features/properties/saved-properties/saved-properties-query";
 export type OwnerListingsGridProps = {
     items: OwnerListingItem[];
     /** Broker's service areas — listings new in these get the highlighted card. */
@@ -68,6 +71,7 @@ export function OwnerListingsGrid({
     items,
     serviceAreas = NO_SERVICE_AREAS,
 }: OwnerListingsGridProps) {
+    const queryClient = useQueryClient();
     const serviceAreaSet = useMemo(() => new Set(serviceAreas), [serviceAreas]);
     const [busyId, setBusyId] = useState<string | null>(null);
     const [busyKind, setBusyKind] = useState<BusyKind | null>(null);
@@ -101,6 +105,7 @@ export function OwnerListingsGrid({
                     await propertiesApi.unbookmark(item.id);
                     toast.success("Removed from saved");
                 }
+                void queryClient.invalidateQueries({ queryKey: SAVED_PROPERTIES_QUERY_KEY });
             } catch (error) {
                 setSavedOverrides((prev) => ({ ...prev, [item.id]: !nextSaved }));
                 toast.error(mutationErrorMessage(error, "Could not update bookmark"));
@@ -109,7 +114,7 @@ export function OwnerListingsGrid({
                 setBusyKind(null);
             }
         },
-        [busyId, busyKind, isSaved],
+        [busyId, busyKind, isSaved, queryClient],
     );
 
     const representationIdFor = useCallback(

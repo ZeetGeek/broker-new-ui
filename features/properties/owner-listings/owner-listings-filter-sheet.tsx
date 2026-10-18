@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 
 import {
     BadgePercent,
-    Bookmark,
     CalendarDays,
     DoorOpen,
     KeyRound,
@@ -68,7 +67,7 @@ const COMMISSION_PRESETS: ChoicePreset[] = [
 const DEAL_OPTIONS: {
     key: keyof Pick<
         OwnerListingsSheetFilters,
-        "yourAreas" | "readyToMove" | "slotsOpen" | "commissionSet" | "bookmarked"
+        "yourAreas" | "readyToMove" | "slotsOpen" | "commissionSet"
     >;
     label: string;
     description: string;
@@ -98,12 +97,6 @@ const DEAL_OPTIONS: {
         description: "Owner already shared a rate",
         icon: BadgePercent,
     },
-    {
-        key: "bookmarked",
-        label: "Bookmarked",
-        description: "Properties you have saved",
-        icon: Bookmark,
-    },
 ];
 
 const EMPTY_SHEET_FILTERS: OwnerListingsSheetFilters = {
@@ -116,7 +109,6 @@ const EMPTY_SHEET_FILTERS: OwnerListingsSheetFilters = {
     slotsOpen: false,
     commissionSet: false,
     readyToMove: false,
-    bookmarked: false,
 };
 
 const SELECT_TRANSITION =
@@ -210,7 +202,10 @@ function OptionCard({
             aria-pressed={active}
             onClick={onClick}
             className={cn(
-                `flex flex-col justify-center gap-2 rounded-inner border p-3.5 text-start block-full`,
+                `
+                  flex flex-col justify-center gap-2 rounded-inner border p-3.5 text-start
+                  block-full
+                `,
                 SELECT_TRANSITION,
                 active
                     ? "border-brand bg-brand-soft text-brand-text"
@@ -336,8 +331,7 @@ export function OwnerListingsFilterSheet({
             draft.newToday ||
             draft.slotsOpen ||
             draft.commissionSet ||
-            draft.readyToMove ||
-            draft.bookmarked
+            draft.readyToMove
         );
     }, [draft]);
 
@@ -388,12 +382,7 @@ export function OwnerListingsFilterSheet({
                     "
                 >
                     <div className="flex flex-col gap-1">
-                        <DialogTitle
-                            className="
-                          font-display text-base font-medium text-ink
-                          sm:text-lg
-                        "
-                        >
+                        <DialogTitle className="font-display text-base font-medium text-ink sm:text-lg">
                             Advanced filters
                         </DialogTitle>
                         <p className="body-sm text-ink-muted">
@@ -406,8 +395,8 @@ export function OwnerListingsFilterSheet({
                             render={
                                 <DialogClose
                                     className="
-                                      flex shrink-0 items-center justify-center rounded-control border
-                                      border-border-warm bg-surface text-ink-muted
+                                      flex shrink-0 items-center justify-center rounded-control
+                                      border border-border-warm bg-surface text-ink-muted
                                       transition-[background-color,border-color,color,transform]
                                       duration-160 block-10 inline-10
                                       hover:border-brand/40 hover:bg-brand-soft

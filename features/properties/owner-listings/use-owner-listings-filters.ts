@@ -2,9 +2,9 @@
 
 import { useCallback } from "react";
 
-import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
 import { LEGACY_PREF_KEYS, PREF_KEYS } from "@/lib/prefs/keys";
 import { readPrefJson, writePrefJson } from "@/lib/prefs/storage";
+import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
 
 import {
     filtersToSearchParams,
@@ -34,7 +34,6 @@ const OWNER_LISTINGS_URL_KEYS = [
     "slotsOpen",
     "commissionSet",
     "readyToMove",
-    "bookmarked",
     "sort",
     "limit",
 ] as const;
@@ -148,15 +147,7 @@ export function useOwnerListingsFilters() {
     }, [filters.cities, filters.localities, filters.yourAreas, replace]);
 
     const toggleQuickChip = useCallback(
-        (
-            key:
-                | "yourAreas"
-                | "newToday"
-                | "slotsOpen"
-                | "commissionSet"
-                | "readyToMove"
-                | "bookmarked",
-        ) => {
+        (key: "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove") => {
             if (key === "yourAreas") {
                 const nextYourAreas = !filters.yourAreas;
                 replace({

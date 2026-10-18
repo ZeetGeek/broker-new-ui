@@ -338,6 +338,7 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         ownerName: listing.exclusiveOwner?.fullName ?? listing.ownerName ?? null,
         ownerOrigin: listing.exclusiveOwnerId || listing.exclusiveOwner?.id ? "custom" : null,
         ownerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
+        isBookmarked: Boolean(listing.isBookmarked),
     };
 }
 

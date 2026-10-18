@@ -99,8 +99,6 @@ export type OwnerListingsFilters = {
     slotsOpen: boolean;
     commissionSet: boolean;
     readyToMove: boolean;
-    /** Quick chip — listings the broker has bookmarked */
-    bookmarked: boolean;
     sort: OwnerListingSort;
     /** 1-based page as string (URL `cursor`). Empty = page 1. */
     cursor: string;
@@ -132,7 +130,6 @@ export type OwnerListingsSheetFilters = Pick<
     | "slotsOpen"
     | "commissionSet"
     | "readyToMove"
-    | "bookmarked"
 >;
 
 export type OwnerListingsFilterContext = {
@@ -169,7 +166,6 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     slotsOpen: false,
     commissionSet: false,
     readyToMove: false,
-    bookmarked: false,
     sort: "newest",
     cursor: "",
     limit: 10,

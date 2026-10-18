@@ -422,52 +422,74 @@ function mockListingById(id: string): PropertyListing | null {
         availableFrom: mine.availableFrom,
         publishStatus: mine.status === "published" ? "published" : "draft",
         isDraft: mine.status !== "published",
+        visibility: mine.status === "published" ? "public" : "private",
+        permissions: { canEdit: true },
         createdAt: mine.createdAt,
         updatedAt: mine.updatedAt,
         maintenanceCharges: mine.maintenanceInr,
     };
 }
 
+const MOCK_BOOKMARKS_KEY = "broker_mock_bookmarks";
+
+function seedMockBookmarkIds(): string[] {
+    return MOCK_OWNER_LISTINGS.filter((item) => item.isBookmarked).map((item) => item.id);
+}
+
+function readMockBookmarkIds(): string[] {
+    if (typeof window === "undefined") return seedMockBookmarkIds();
+    try {
+        const raw = window.sessionStorage.getItem(MOCK_BOOKMARKS_KEY);
+        if (raw == null) {
+            const seed = seedMockBookmarkIds();
+            window.sessionStorage.setItem(MOCK_BOOKMARKS_KEY, JSON.stringify(seed));
+            return seed;
+        }
+        const parsed: unknown = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return seedMockBookmarkIds();
+        return parsed.filter((id): id is string => typeof id === "string");
+    } catch {
+        return seedMockBookmarkIds();
+    }
+}
+
+function writeMockBookmarkIds(ids: string[]) {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem(MOCK_BOOKMARKS_KEY, JSON.stringify(ids));
+}
+
+/** Ids the mock bookmark store currently holds. Seeded from owner listings. */
+export function mockBookmarkedIdSet(): Set<string> {
+    return new Set(readMockBookmarkIds());
+}
+
+function rememberMockBookmark(id: string) {
+    const ids = readMockBookmarkIds().filter((existing) => existing !== id);
+    writeMockBookmarkIds([id, ...ids]);
+}
+
+function forgetMockBookmark(id: string) {
+    writeMockBookmarkIds(readMockBookmarkIds().filter((existing) => existing !== id));
+}
+
 function mockBookmarkedPage(params?: PropertyListQuery): PropertyListPage {
-    const bookmarked = MOCK_OWNER_LISTINGS.filter((item) => item.isBookmarked).map(
-        (item): PropertyListing => ({
-            id: item.id,
-            title: item.title ?? item.configLabel,
-            transactionType:
-                item.saleAmountInr != null && item.rentAmountInr != null
-                    ? "both"
-                    : item.rentAmountInr != null
-                      ? "rent"
-                      : "sale",
-            subtype: item.propertyTypeLabel,
-            bedrooms: item.bhk,
-            areaSqft: item.areaSqft,
-            city: item.city,
-            address: item.locality,
-            country: item.country ?? "India",
-            salePrice: item.saleAmountInr,
-            monthlyRent: item.rentAmountInr,
-            commissionPercent: item.commissionPercent,
-            commissionAmount: item.commissionAmount,
-            photos: item.imageSrcs,
-            furnishingStatus: item.furnishing,
-            isNew: item.isNew,
-            ownerName: item.ownerName,
-            ownerAvatarUrl: item.ownerAvatarUrl,
-            ownerUserId: item.ownerUserId,
-            isBookmarked: true,
-        }),
-    );
+    const bookmarked: PropertyListing[] = [];
+    for (const id of readMockBookmarkIds()) {
+        const listing = mockListingById(id);
+        if (!listing) continue;
+        bookmarked.push({ ...listing, isBookmarked: true });
+    }
     const limit = params?.limit ?? 20;
     const page = params?.page ?? 1;
     const start = (page - 1) * limit;
+    const total = bookmarked.length;
 
     return {
         items: bookmarked.slice(start, start + limit),
-        total: bookmarked.length,
+        total,
         page,
         limit,
-        totalPages: Math.max(1, Math.ceil(bookmarked.length / limit)),
+        totalPages: Math.max(1, Math.ceil(total / limit)),
     };
 }
 
@@ -569,8 +591,12 @@ export const propertiesApi = {
         });
     },
 
-    /** Save a public owner listing for the caller. */
+    /** Save a listing for the caller (owner pool or the broker’s own inventory). */
     bookmark(id: string) {
+        if (isMockMode()) {
+            rememberMockBookmark(id);
+            return Promise.resolve({ propertyId: id, isBookmarked: true as const });
+        }
         return apiFetch<{ propertyId: string; isBookmarked: true }>(`/properties/${id}/bookmark`, {
             method: "POST",
         });
@@ -578,12 +604,16 @@ export const propertiesApi = {
 
     /** Remove the caller’s bookmark for a listing. */
     unbookmark(id: string) {
+        if (isMockMode()) {
+            forgetMockBookmark(id);
+            return Promise.resolve({ propertyId: id, isBookmarked: false as const });
+        }
         return apiFetch<{ propertyId: string; isBookmarked: false }>(`/properties/${id}/bookmark`, {
             method: "DELETE",
         });
     },
 
-    /** Caller’s bookmarked owner listings. */
+    /** Caller’s saved listings, newest first. */
     listBookmarks(params?: PropertyListQuery, signal?: AbortSignal) {
         if (isMockMode()) {
             return Promise.resolve(mockBookmarkedPage(params));

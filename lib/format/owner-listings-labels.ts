@@ -192,6 +192,5 @@ export function extractSheetFilters(filters: OwnerListingsFilters): OwnerListing
         slotsOpen: filters.slotsOpen,
         commissionSet: filters.commissionSet,
         readyToMove: filters.readyToMove,
-        bookmarked: filters.bookmarked,
     };
 }

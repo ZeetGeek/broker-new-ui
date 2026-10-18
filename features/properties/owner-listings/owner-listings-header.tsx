@@ -25,8 +25,7 @@ export type OwnerListingsHeaderProps = {
     onApplyBand: (band: OwnerListingsBandFilters) => void;
     onApplySheet: (patch: Partial<OwnerListingsFilters>) => void;
     onToggleQuickChip: (
-        key:
-            "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove" | "bookmarked",
+        key: "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove",
     ) => void;
     onSortChange: (sort: OwnerListingSort) => void;
 };

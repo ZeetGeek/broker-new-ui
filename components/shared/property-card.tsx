@@ -293,6 +293,8 @@ function BrowseRequestAction({
         );
     }
 
+    if (!onRequest) return null;
+
     return (
         <TooltipProvider>
             <Tooltip>
@@ -1577,6 +1579,8 @@ function OwnedOverlayPropertyCard({
     brokerSummary,
     brokerSummaryState,
     onDelete,
+    isSaved = false,
+    onToggleSave,
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
     const browse = ownedToBrowseListing(listing);
@@ -1655,6 +1659,8 @@ function OwnedOverlayPropertyCard({
                     }}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    isSaved={isSaved}
+                    onToggleSave={onToggleSave}
                 />
             }
         >
@@ -1708,8 +1714,9 @@ function OwnedOverlayPropertyCard({
                         {!hasWorkingBrokers && listing.status !== "published" ? (
                             <p
                                 className="
-                              body-xs rounded-control bg-amber-50 px-3 py-2 font-medium text-pending
-                            "
+                                  body-xs rounded-control bg-amber-50 px-3 py-2 font-medium
+                                  text-pending
+                                "
                             >
                                 Publish this property to invite brokers
                             </p>

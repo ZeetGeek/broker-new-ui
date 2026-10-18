@@ -1,5 +1,5 @@
 import { isMockMode } from "@/lib/api/mock-mode";
-import { propertiesApi } from "@/lib/api/properties";
+import { mockBookmarkedIdSet, propertiesApi } from "@/lib/api/properties";
 
 import {
     bhkValuesToApiConfig,
@@ -35,8 +35,12 @@ function filterMockOwnerListings(
         ? Number(filters.minCommissionPercent)
         : null;
     const serviceAreas = (context.serviceAreas ?? []).map((area) => area.toLowerCase());
+    const savedIds = mockBookmarkedIdSet();
 
-    let items = MOCK_OWNER_LISTINGS.filter((item) => {
+    let items = MOCK_OWNER_LISTINGS.map((item) => ({
+        ...item,
+        isBookmarked: savedIds.has(item.id),
+    })).filter((item) => {
         if (needle) {
             const hay = [item.configLabel, item.locality, item.city, item.ownerName]
                 .join(" ")
@@ -73,7 +77,6 @@ function filterMockOwnerListings(
         if (filters.slotsOpen && item.brokerSlotsOpen <= 0) return false;
         if (filters.commissionSet && item.commissionPercent <= 0) return false;
         if (filters.readyToMove && !item.readyToMove) return false;
-        if (filters.bookmarked && !item.isBookmarked) return false;
         if (filters.yourAreas && serviceAreas.length > 0) {
             const locality = item.locality.toLowerCase();
             const city = item.city.toLowerCase();
@@ -189,7 +192,6 @@ async function fetchBrowsePage({
                 minCommission != null && !Number.isNaN(minCommission) ? minCommission : undefined,
             commissionSet: filters.commissionSet || undefined,
             readyToMove: filters.readyToMove || undefined,
-            bookmarked: filters.bookmarked || undefined,
             furnishingStatus: filters.furnishing || undefined,
             sort: filters.sort,
             cursor: cursor || undefined,
