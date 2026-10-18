@@ -12,8 +12,7 @@ import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 
 /**
- * Same glass and 36px size as the photo menu button (`block-control-md`).
- * Hidden until the photo is hovered or a button inside it is focused.
+ * Same glass circle as the photo menu button. Hidden until the photo is hovered.
  */
 const PHOTO_NAV_BUTTON_CLASS = `
   pointer-events-none absolute inset-bs-1/2 z-20 flex -translate-y-1/2 items-center

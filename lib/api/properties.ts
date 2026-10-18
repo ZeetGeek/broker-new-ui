@@ -428,6 +428,49 @@ function mockListingById(id: string): PropertyListing | null {
     };
 }
 
+function mockBookmarkedPage(params?: PropertyListQuery): PropertyListPage {
+    const bookmarked = MOCK_OWNER_LISTINGS.filter((item) => item.isBookmarked).map(
+        (item): PropertyListing => ({
+            id: item.id,
+            title: item.title ?? item.configLabel,
+            transactionType:
+                item.saleAmountInr != null && item.rentAmountInr != null
+                    ? "both"
+                    : item.rentAmountInr != null
+                      ? "rent"
+                      : "sale",
+            subtype: item.propertyTypeLabel,
+            bedrooms: item.bhk,
+            areaSqft: item.areaSqft,
+            city: item.city,
+            address: item.locality,
+            country: item.country ?? "India",
+            salePrice: item.saleAmountInr,
+            monthlyRent: item.rentAmountInr,
+            commissionPercent: item.commissionPercent,
+            commissionAmount: item.commissionAmount,
+            photos: item.imageSrcs,
+            furnishingStatus: item.furnishing,
+            isNew: item.isNew,
+            ownerName: item.ownerName,
+            ownerAvatarUrl: item.ownerAvatarUrl,
+            ownerUserId: item.ownerUserId,
+            isBookmarked: true,
+        }),
+    );
+    const limit = params?.limit ?? 20;
+    const page = params?.page ?? 1;
+    const start = (page - 1) * limit;
+
+    return {
+        items: bookmarked.slice(start, start + limit),
+        total: bookmarked.length,
+        page,
+        limit,
+        totalPages: Math.max(1, Math.ceil(bookmarked.length / limit)),
+    };
+}
+
 export const propertiesApi = {
     browse(params?: PropertyBrowseQuery, signal?: AbortSignal) {
         return apiFetch<PropertyBrowsePage>(`/properties/browse${buildBrowseQuery(params)}`, {
@@ -542,6 +585,9 @@ export const propertiesApi = {
 
     /** Caller’s bookmarked owner listings. */
     listBookmarks(params?: PropertyListQuery, signal?: AbortSignal) {
+        if (isMockMode()) {
+            return Promise.resolve(mockBookmarkedPage(params));
+        }
         return apiFetch<PropertyListPage>(`/properties/bookmarks${buildListQuery(params)}`, {
             signal,
         });

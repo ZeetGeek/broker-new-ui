@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import {
     BadgeCheck,
+    Bookmark,
     Briefcase,
     Command,
     ExternalLink,
@@ -45,6 +46,7 @@ export type BrokerProfileMenuProps = {
 
 const PROFILE_HREF = "/broker/profile";
 const PROFILE_EDIT_HREF = "/broker/profile";
+const SAVED_PROPERTIES_HREF = "/broker/saved-properties";
 const REFERRALS_HREF = "/broker/referrals";
 const VERIFICATION_HREF = "/broker/verification";
 
@@ -163,6 +165,18 @@ export function BrokerProfileMenu({
                     <User aria-hidden className="shrink-0 block-4 inline-4" strokeWidth={1.75} />
                     <span className="flex-1 min-inline-0">My profile</span>
                     <PortalProfileShortcutHint shortcutId="profile" />
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                    className={portalProfileMenuItemClass}
+                    render={<Link href={SAVED_PROPERTIES_HREF} />}
+                >
+                    <Bookmark
+                        aria-hidden
+                        className="shrink-0 block-4 inline-4"
+                        strokeWidth={1.75}
+                    />
+                    <span className="flex-1 min-inline-0">Saved properties</span>
                 </DropdownMenuItem>
 
                 {publicProfileUrl ? (

@@ -1016,6 +1016,7 @@ function BrowseOverlayPropertyCard({
         <OverlayCard
             href={detailsHref}
             imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
+            images={listing.imageSrcs}
             imageAlt={listing.title}
             imageSizes={imageSizes}
             priority={priority}
@@ -1608,6 +1609,7 @@ function OwnedOverlayPropertyCard({
         <OverlayCard
             href={detailsHref}
             imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
+            images={listing.imageSrcs}
             imageAlt={listing.title}
             imageSizes={imageSizes}
             priority={priority}

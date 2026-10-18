@@ -1,15 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Link from "next/link";
 
-import { Building2, MapPin, Maximize2 } from "lucide-react";
+import { MapPin, Maximize2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { AppImage } from "@/components/shared/app-image";
-import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import { MarqueeText } from "@/components/shared/marquee-text";
+import { OverlayCardPhotos } from "@/components/shared/overlay-card-photos";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 
 /*
@@ -182,6 +180,8 @@ export function OverlayCardActions({
 export type OverlayCardProps = {
     href: string;
     imageSrc?: string | null;
+    /** Extra photos. More than one turns on the hover arrows. */
+    images?: readonly string[];
     imageAlt: string;
     imageSizes: string;
     priority?: boolean;
@@ -201,6 +201,7 @@ export type OverlayCardProps = {
 export function OverlayCard({
     href,
     imageSrc,
+    images,
     imageAlt,
     imageSizes,
     priority = false,
@@ -211,46 +212,19 @@ export function OverlayCard({
     className,
     children,
 }: OverlayCardProps) {
+    const photos = images && images.length > 0 ? images : imageSrc ? [imageSrc] : [];
+
     return (
         <article className={cn(CARD_CLASS, className)}>
             <div className={PHOTO_CLASS}>
-                {/* Duplicate of the title link for pointer users; hidden from keyboard and AT. */}
-                <Link
+                <OverlayCardPhotos
                     href={href}
-                    prefetch={false}
-                    tabIndex={-1}
-                    aria-hidden
-                    className="absolute inset-0"
-                >
-                    <HoverScaleRoot className="relative overflow-hidden block-full inline-full">
-                        {imageSrc ? (
-                            <HoverScaleLayer className="absolute inset-0">
-                                <AppImage
-                                    src={imageSrc}
-                                    alt={imageAlt}
-                                    fill
-                                    sizes={imageSizes}
-                                    priority={priority}
-                                    className={cn("object-cover", muted && "grayscale-60")}
-                                />
-                            </HoverScaleLayer>
-                        ) : (
-                            <div
-                                className="
-                                  flex flex-col items-center justify-center gap-2 bg-surface-muted
-                                  px-4 text-center block-full inline-full
-                                "
-                            >
-                                <Building2
-                                    aria-hidden
-                                    className="text-ink-subtle block-8 inline-8"
-                                    strokeWidth={1.5}
-                                />
-                                <p className="body-xs text-ink-muted">No photos yet</p>
-                            </div>
-                        )}
-                    </HoverScaleRoot>
-                </Link>
+                    images={photos}
+                    imageAlt={imageAlt}
+                    imageSizes={imageSizes}
+                    priority={priority}
+                    muted={muted}
+                />
 
                 {sweep ? <div aria-hidden className={SWEEP_CLASS} /> : null}
 
