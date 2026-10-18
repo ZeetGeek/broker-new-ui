@@ -68,6 +68,7 @@ export function MyListingsGrid({
                     <PropertyCard
                         variant="owned"
                         listing={listing}
+                        audience={portal}
                         detailsHref={detailHref(item.id)}
                         editHref={editHref(item.id)}
                         onEdit={onEditListing ? () => onEditListing(item) : undefined}

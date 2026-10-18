@@ -117,6 +117,7 @@ export function mapRepresentationToInviteItem(
         amountInr,
         isRent,
         commissionPercent: toNumber(rep.propertyCommissionPercent),
+        commissionAmount: toNumber(rep.propertyCommissionAmount),
         ownerName: rep.propertyOwnerName?.trim() || "Owner",
         ownerAvatarUrl: rep.propertyOwnerAvatarUrl ?? undefined,
         ownerPhoneDigits: stage === "accepted" ? digitsOnly(rep.propertyOwnerPhone) : undefined,

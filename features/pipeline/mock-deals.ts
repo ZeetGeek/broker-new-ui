@@ -28,6 +28,8 @@ const PROPERTIES = {
         bhk: 3,
         amountInr: 1_15_00_000,
         isRent: false,
+        /** Matches the approved request for pr_108. */
+        commissionPercent: 1.5,
         imageSrc: "/properties/1.jpg",
         imageSrcs: ["/properties/1.jpg", "/properties/2.jpg", "/properties/3.jpg"],
         photoCount: 5,
@@ -43,6 +45,8 @@ const PROPERTIES = {
         bhk: 1,
         amountInr: 42_00_000,
         isRent: false,
+        /** Matches the approved request for pr_099 — 2% of ₹42 L. */
+        commissionPercent: 2,
         imageSrc: "/properties/2.jpg",
         imageSrcs: ["/properties/2.jpg", "/properties/4.jpg", "/properties/5.jpg"],
         photoCount: 3,
@@ -88,6 +92,8 @@ const PROPERTIES = {
         bhk: 4,
         amountInr: 1_85_00_000,
         isRent: false,
+        /** Matches the request for pr_130. */
+        commissionPercent: 1.25,
         imageSrc: "/properties/5.jpg",
         imageSrcs: ["/properties/5.jpg", "/properties/3.jpg", "/properties/4.jpg"],
         photoCount: 6,

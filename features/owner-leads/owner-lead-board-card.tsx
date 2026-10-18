@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { AppImage } from "@/components/shared/app-image";
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
 import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -338,9 +338,12 @@ export function OwnerLeadBoardCard({
 
                     <div className="flex flex-1 flex-col gap-1 min-inline-0">
                         {facts.askingInr != null ? (
-                            <Price
+                            <PriceWithCommission
                                 amountInr={facts.askingInr}
                                 isRent={facts.isRent}
+                                commissionPercent={facts.commissionPercent}
+                                commissionAmountInr={facts.commissionAmountInr}
+                                audience="owner"
                                 className="h5 font-semibold tracking-wide"
                             />
                         ) : null}

@@ -20,6 +20,8 @@ export type OwnerDealListing = {
     amountInr: number;
     isRent: boolean;
     commissionPercent: number;
+    /** Fixed rent brokerage in INR. 0 when unset. */
+    commissionAmount?: number;
     imageSrc: string;
 };
 

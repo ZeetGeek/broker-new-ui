@@ -180,6 +180,7 @@ export function OwnerRequestCard({
         <TooltipProvider>
             <DealOverlayCard
                 listing={item}
+                audience="owner"
                 configLabel={item.configLabel}
                 statusLabel={meta.label}
                 statusTone={meta.tone}

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { PhoneNumber } from "@/components/shared/phone-number";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -142,9 +142,12 @@ export function VisitDetailModal({
                         ) : (
                             <p className="body font-semibold text-ink">{visit.property.title}</p>
                         )}
-                        <Price
+                        <PriceWithCommission
                             amountInr={visit.property.amountInr}
                             isRent={visit.property.isRent}
+                            commissionPercent={visit.property.commissionPercent}
+                            commissionAmountInr={visit.property.commissionAmountInr}
+                            audience={viewer}
                             className="body-sm font-semibold"
                         />
                         <p className="body-sm text-ink-muted">

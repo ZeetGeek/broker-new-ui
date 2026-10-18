@@ -69,6 +69,8 @@ export type LeadPropertyFacts = {
     /** The listing's own price — sale price, or monthly rent for a rental. */
     askingInr: number | null;
     isRent: boolean;
+    commissionPercent: number | null;
+    commissionAmountInr: number | null;
 };
 
 /**
@@ -100,6 +102,8 @@ export function leadPropertyFacts(lead: PropertyLead): LeadPropertyFacts {
         areaSqft: property?.areaSqft ?? null,
         askingInr: (isRent ? rent : sale) ?? parseInr(lead.listPrice),
         isRent,
+        commissionPercent: parseInr(property?.commissionPercent),
+        commissionAmountInr: parseInr(property?.commissionAmount),
     };
 }
 

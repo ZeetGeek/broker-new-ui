@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, istDateKey } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -130,9 +130,12 @@ export const PropertyRow = memo(function PropertyRow({
                         </Badge>
                     </div>
 
-                    <Price
+                    <PriceWithCommission
                         amountInr={item.property.amountInr}
                         isRent={item.property.purpose === "rent"}
+                        commissionPercent={item.property.commissionPercent}
+                        commissionAmountInr={item.property.commissionAmountInr}
+                        audience="broker"
                         className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
                     />
 

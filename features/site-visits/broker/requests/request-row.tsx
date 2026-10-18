@@ -12,7 +12,7 @@ import { REQUEST_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitTime, visitAge } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,9 +117,12 @@ export const RequestRow = memo(function RequestRow({
                         </Badge>
                     </div>
 
-                    <Price
+                    <PriceWithCommission
                         amountInr={request.property.amountInr}
                         isRent={request.property.purpose === "rent"}
+                        commissionPercent={request.property.commissionPercent}
+                        commissionAmountInr={request.property.commissionAmountInr}
+                        audience="broker"
                         className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
                     />
 

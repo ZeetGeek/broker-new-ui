@@ -41,6 +41,8 @@ export type PropertyLead = {
         bedrooms?: number | null;
         areaSqft?: number | null;
         photos?: string[] | null;
+        commissionPercent?: string | number | null;
+        commissionAmount?: string | number | null;
     } | null;
     broker?: {
         id: string;

@@ -189,6 +189,7 @@ export function mapRepresentationToRequestItem(
         amountInr,
         isRent,
         commissionPercent: toNumber(rep.propertyCommissionPercent),
+        commissionAmount: toNumber(rep.propertyCommissionAmount),
         ownerName: rep.propertyOwnerName?.trim() || "Owner",
         ownerAvatarUrl: rep.propertyOwnerAvatarUrl ?? undefined,
         // Consent-gated — only after the owner accepts (API may still omit it).

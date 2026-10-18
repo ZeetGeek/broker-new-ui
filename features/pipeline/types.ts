@@ -52,6 +52,10 @@ export type DealProperty = {
     /** Ask in INR — rent when `isRent`, else sale. */
     amountInr: number;
     isRent: boolean;
+    /** Sale commission percent. Absent or 0 when the owner did not set one. */
+    commissionPercent?: number | null;
+    /** Fixed rent brokerage in INR. Absent or 0 when unset. */
+    commissionAmountInr?: number | null;
     imageSrc: string;
     /** Up to a few listing photos for the board card strip. Falls back to `[imageSrc]`. */
     imageSrcs?: readonly string[];

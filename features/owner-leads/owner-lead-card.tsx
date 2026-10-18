@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
@@ -198,9 +199,12 @@ export function OwnerLeadCard({
 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     {facts.askingInr != null ? (
-                        <Price
+                        <PriceWithCommission
                             amountInr={facts.askingInr}
                             isRent={facts.isRent}
+                            commissionPercent={facts.commissionPercent}
+                            commissionAmountInr={facts.commissionAmountInr}
+                            audience="owner"
                             className="h5 text-brand"
                         />
                     ) : (

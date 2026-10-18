@@ -45,6 +45,8 @@ export type RequestItem = {
     amountInr: number;
     isRent: boolean;
     commissionPercent: number;
+    /** Fixed rent brokerage in INR. 0 when the owner did not set one. */
+    commissionAmount?: number;
     ownerName: string;
     ownerAvatarUrl?: string;
     /**

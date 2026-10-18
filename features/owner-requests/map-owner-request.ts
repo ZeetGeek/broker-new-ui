@@ -108,6 +108,7 @@ function toListing(rep: RepresentationItem): OwnerDealListing {
         amountInr,
         isRent,
         commissionPercent: toNumber(rep.propertyCommissionPercent),
+        commissionAmount: toNumber(rep.propertyCommissionAmount),
         imageSrc: photos[0] ?? "",
     };
 }

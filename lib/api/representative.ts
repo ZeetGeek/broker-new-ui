@@ -48,6 +48,8 @@ export type RepresentationItem = {
     propertySalePrice?: string | number | null;
     propertyMonthlyRent?: string | number | null;
     propertyCommissionPercent?: string | number | null;
+    /** Fixed rent brokerage in INR. */
+    propertyCommissionAmount?: string | number | null;
     propertyPhotos?: string[] | null;
     propertyOwnerName?: string | null;
     propertyOwnerPhone?: string | null;

@@ -56,6 +56,10 @@ import {
 } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
+import {
+    type CommissionAudience,
+    PriceWithCommission,
+} from "@/components/shared/price-with-commission";
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
@@ -401,6 +405,10 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     listedDaysAgo: number;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
+    /** Sale commission percent. Null or 0 when the owner left it blank. */
+    commissionPercent?: number | null;
+    /** Fixed rent brokerage in INR. Null or 0 when unset. */
+    commissionAmount?: number | null;
     ownerName?: string | null;
     visibility?: "private" | "marketplace";
     /** Buyers linked to this listing — shown as the My deals avatar stack. */
@@ -440,6 +448,11 @@ export type PropertyCardProps = {
     onToggleSave?: () => void;
     /** Browse grid cards: listed this week in the broker's service areas — highlighted card. */
     isNewInYourArea?: boolean;
+    /**
+     * Who is reading the price. Brokers see "You get". Owners see "Broker gets".
+     * Browse cards are always the broker marketplace.
+     */
+    audience?: CommissionAudience;
 } & (
     | { variant: "browse"; listing: BrowsePropertyCardListing }
     | { variant: "represented"; listing: RepresentedPropertyCardListing }
@@ -876,117 +889,52 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
     );
 }
 
-/** Hover target for a listing price — shows the broker's cut. */
-function BrowsePriceWithCommission({
-    priceLabel,
-    mode,
-    commissionInr,
-    commissionPercent,
-    className,
+function BrowseOverlayPrices({
+    listing,
+    audience = "broker",
 }: {
-    priceLabel: string;
-    mode: "sale" | "rent";
-    commissionInr: number;
-    commissionPercent: number;
-    className?: string;
+    listing: BrowsePropertyCardListing;
+    audience?: CommissionAudience;
 }) {
-    const hasCommission =
-        commissionInr > 0 && (mode === "rent" || (mode === "sale" && commissionPercent > 0));
-    const commissionLabel =
-        mode === "rent" ? formatRentInr(commissionInr) : formatPriceInr(commissionInr);
-
-    const priceEl = (
-        <span
-            className={cn(
-                className,
-                hasCommission &&
-                    `
-                      cursor-help underline decoration-brand/30 decoration-from-font
-                      underline-offset-2
-                    `,
-            )}
-        >
-            {priceLabel}
-        </span>
-    );
-
-    if (!hasCommission) return priceEl;
-
-    return (
-        <Tooltip>
-            <TooltipTrigger
-                delay={200}
-                render={
-                    <button
-                        type="button"
-                        className="inline border-0 bg-transparent p-0 text-start text-inherit"
-                        aria-label={
-                            mode === "rent"
-                                ? `Commission ${formatPriceInr(commissionInr)}`
-                                : `${commissionPercent}% commission`
-                        }
-                    >
-                        {priceEl}
-                    </button>
-                }
-            />
-            <TooltipContent side="top" className="text-center max-inline-xs">
-                <p className="font-semibold tabular-nums">You get {commissionLabel}</p>
-                <p className="body-xs mbs-0.5 opacity-90">
-                    {mode === "rent"
-                        ? "Fixed rent brokerage"
-                        : `${commissionPercent}% of ${priceLabel}`}
-                </p>
-            </TooltipContent>
-        </Tooltip>
-    );
-}
-
-function BrowseOverlayPrices({ listing }: { listing: BrowsePropertyCardListing }) {
     const isRentOnly = offersRent(listing) && !offersSale(listing);
     const both = offersBoth(listing);
-    const saleLabel = formatPriceInr(listing.saleAmountInr ?? 0);
-    const rentLabel = formatRentInr(listing.rentAmountInr ?? 0);
-    const saleCommissionInr =
-        listing.commissionPercent > 0 && (listing.saleAmountInr ?? 0) > 0
-            ? Math.round(((listing.saleAmountInr ?? 0) * listing.commissionPercent) / 100)
-            : 0;
-    const rentCommissionInr = listing.commissionAmount > 0 ? listing.commissionAmount : 0;
+    const priceClass = "h5 font-semibold tracking-wide";
 
-    const body = isRentOnly ? (
-        <BrowsePriceWithCommission
-            priceLabel={rentLabel}
-            mode="rent"
-            commissionInr={rentCommissionInr}
-            commissionPercent={0}
-            className="h5 font-semibold tracking-wide text-brand tabular-nums"
-        />
-    ) : (
+    if (isRentOnly) {
+        return (
+            <PriceWithCommission
+                amountInr={listing.rentAmountInr ?? 0}
+                isRent
+                commissionAmountInr={listing.commissionAmount}
+                audience={audience}
+                className={priceClass}
+            />
+        );
+    }
+
+    return (
         <div className="flex flex-col gap-0.5 min-inline-0">
-            <BrowsePriceWithCommission
-                priceLabel={saleLabel}
-                mode="sale"
-                commissionInr={saleCommissionInr}
+            <PriceWithCommission
+                amountInr={listing.saleAmountInr ?? 0}
                 commissionPercent={listing.commissionPercent}
-                className="h5 font-semibold tracking-wide text-brand tabular-nums"
+                audience={audience}
+                className={priceClass}
             />
             {both ? (
                 <p className="body-sm tracking-wide text-ink-muted">
                     Also{" "}
-                    <BrowsePriceWithCommission
-                        priceLabel={rentLabel}
-                        mode="rent"
-                        commissionInr={rentCommissionInr}
-                        commissionPercent={0}
-                        className="font-semibold text-ink tabular-nums"
+                    <PriceWithCommission
+                        amountInr={listing.rentAmountInr ?? 0}
+                        isRent
+                        commissionAmountInr={listing.commissionAmount}
+                        audience={audience}
+                        className="font-semibold text-ink"
                     />{" "}
                     rent
                 </p>
             ) : null}
         </div>
     );
-
-    return <TooltipProvider>{body}</TooltipProvider>;
 }
 
 /** Grid browse card: clear photo on top, essentials in a solid panel below. */
@@ -1539,8 +1487,8 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
         bhk: listing.bhk,
         brokerSlotsOpen: 0,
         brokerSlotsTotal: 0,
-        commissionPercent: 0,
-        commissionAmount: 0,
+        commissionPercent: listing.commissionPercent ?? 0,
+        commissionAmount: listing.commissionAmount ?? 0,
         hasRequested: false,
         saleAmountInr: listing.saleAmountInr,
         rentAmountInr: listing.rentAmountInr,
@@ -1581,18 +1529,14 @@ function OwnedOverlayPropertyCard({
     onDelete,
     isSaved = false,
     onToggleSave,
+    audience = "broker",
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
     const browse = ownedToBrowseListing(listing);
-    const both = offersBoth(browse);
     const isRentOnly = offersRent(browse) && !offersSale(browse);
-    const priceLabel = isRentOnly
+    const sharePriceLabel = isRentOnly
         ? formatRentInr(listing.rentAmountInr ?? 0)
-        : formatPriceInr(listing.saleAmountInr ?? 0);
-    const sharePriceLabel =
-        offersRent(browse) && !offersSale(browse)
-            ? formatRentInr(listing.rentAmountInr ?? 0)
-            : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
+        : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
     const headline = [listing.configLabel, formatBrowseCardArea(listing.areaSqft)]
         .filter(Boolean)
         .join(" · ");
@@ -1667,18 +1611,7 @@ function OwnedOverlayPropertyCard({
             <div className="flex flex-col gap-1.5 min-inline-0">
                 <OverlayCardSummary
                     href={detailsHref}
-                    price={
-                        <div className="flex flex-col gap-0.5 min-inline-0">
-                            <p className="h5 font-semibold tracking-wide text-brand tabular-nums">
-                                {priceLabel}
-                            </p>
-                            {both ? (
-                                <p className="body-sm tracking-wide text-ink-muted tabular-nums">
-                                    Also {formatRentInr(listing.rentAmountInr ?? 0)} rent
-                                </p>
-                            ) : null}
-                        </div>
-                    }
+                    price={<BrowseOverlayPrices listing={browse} audience={audience} />}
                     headline={headline || listing.title}
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />

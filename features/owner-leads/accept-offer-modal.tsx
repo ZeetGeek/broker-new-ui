@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
@@ -157,9 +158,12 @@ export function AcceptOfferModal({
                 <div className="flex flex-col divide-y divide-border-warm">
                     {facts.askingInr != null ? (
                         <DetailRow label="Your price">
-                            <Price
+                            <PriceWithCommission
                                 amountInr={facts.askingInr}
                                 isRent={facts.isRent}
+                                commissionPercent={facts.commissionPercent}
+                                commissionAmountInr={facts.commissionAmountInr}
+                                audience="owner"
                                 className="text-ink"
                             />
                         </DetailRow>

@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Badge, type BadgeColor } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -744,9 +744,12 @@ export function DealCard({
                     <DealCoverImage property={deal.property} muted={!live} />
 
                     <div className="flex flex-1 flex-col gap-1 min-inline-0">
-                        <Price
+                        <PriceWithCommission
                             amountInr={deal.property.amountInr}
                             isRent={deal.property.isRent}
+                            commissionPercent={deal.property.commissionPercent}
+                            commissionAmountInr={deal.property.commissionAmountInr}
+                            audience="broker"
                             className="h5 font-semibold tracking-wide"
                         />
                         <h3

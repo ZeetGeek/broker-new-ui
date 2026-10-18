@@ -177,7 +177,7 @@ function OwnedPropertyDetail({
                       sm:p-6
                     "
                     >
-                        <PropertyPriceBlock item={item} />
+                        <PropertyPriceBlock item={item} audience={portal} />
                     </section>
 
                     <section className="flex flex-col gap-4">

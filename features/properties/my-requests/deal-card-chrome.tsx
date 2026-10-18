@@ -21,6 +21,10 @@ import {
 } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import {
+    type CommissionAudience,
+    PriceWithCommission,
+} from "@/components/shared/price-with-commission";
+import {
     PropertyCardMenu,
     type PropertyCardMenuContact,
 } from "@/components/shared/property-card-menu";
@@ -44,6 +48,8 @@ export type DealCardListing = {
     amountInr: number;
     isRent: boolean;
     commissionPercent: number;
+    /** Fixed rent brokerage in INR. Absent or 0 when the owner left it blank. */
+    commissionAmount?: number | null;
     imageSrc: string;
 };
 
@@ -204,6 +210,7 @@ export function DealOverlayCard({
     actions,
     children,
     detailHref,
+    audience = "broker",
 }: {
     listing: DealCardListing;
     configLabel: string;
@@ -215,6 +222,8 @@ export function DealOverlayCard({
     children: ReactNode;
     /** Defaults to the broker marketplace listing URL. */
     detailHref?: string;
+    /** Owner-side cards say "Broker gets". Broker cards say "You get". */
+    audience?: CommissionAudience;
 }) {
     const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
     const specsLabel = [configLabel, formatAreaSqft(listing.areaSqft)].filter(Boolean).join(" · ");
@@ -245,7 +254,16 @@ export function DealOverlayCard({
         >
             <OverlayCardSummary
                 href={href}
-                priceLabel={dealPriceLabel(listing)}
+                price={
+                    <PriceWithCommission
+                        amountInr={listing.amountInr}
+                        isRent={listing.isRent}
+                        commissionPercent={listing.commissionPercent}
+                        commissionAmountInr={listing.commissionAmount}
+                        audience={audience}
+                        className="h5 font-semibold tracking-wide"
+                    />
+                }
                 headline={listing.title}
                 locationLabel={`${listing.locality}, ${listing.city}`}
                 specsLabel={specsLabel || undefined}

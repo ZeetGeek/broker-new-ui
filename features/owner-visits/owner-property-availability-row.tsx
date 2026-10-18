@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission, toCommissionNumber } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -121,9 +121,12 @@ export const OwnerPropertyAvailabilityRow = memo(function OwnerPropertyAvailabil
                     </div>
 
                     {amountInr > 0 ? (
-                        <Price
+                        <PriceWithCommission
                             amountInr={amountInr}
                             isRent={isRent}
+                            commissionPercent={toCommissionNumber(property.commissionPercent)}
+                            commissionAmountInr={toCommissionNumber(property.commissionAmount)}
+                            audience="owner"
                             className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
                         />
                     ) : (

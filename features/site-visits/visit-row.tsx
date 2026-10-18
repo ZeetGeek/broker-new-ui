@@ -7,7 +7,7 @@ import { Clock3, Lock, MapPin, MoreHorizontal, PhoneCall, StickyNote } from "luc
 import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -212,9 +212,12 @@ export function VisitRow({
                             <span className="text-ink-subtle">
                                 {visit.property.isRent ? "Rent" : "Asking"}
                             </span>
-                            <Price
+                            <PriceWithCommission
                                 amountInr={visit.property.amountInr}
                                 isRent={visit.property.isRent}
+                                commissionPercent={visit.property.commissionPercent}
+                                commissionAmountInr={visit.property.commissionAmountInr}
+                                audience={viewer}
                                 className="font-semibold"
                             />
                         </span>

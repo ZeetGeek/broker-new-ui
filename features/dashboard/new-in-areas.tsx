@@ -14,7 +14,7 @@ import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
@@ -115,9 +115,12 @@ function PropertyRow({
                         <PropertyTitleLink href={detailsHref} className="body font-semibold">
                             {property.configLabel} · {property.locality}
                         </PropertyTitleLink>
-                        <Price
+                        <PriceWithCommission
                             amountInr={property.amountInr}
                             isRent={property.isRent}
+                            commissionPercent={property.commissionPercent}
+                            commissionAmountInr={property.commissionAmountInr}
+                            audience="broker"
                             className="body font-semibold"
                         />
                         <Badge color={property.isRent ? "orange" : "emerald"}>

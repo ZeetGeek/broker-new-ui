@@ -140,6 +140,10 @@ export type AreaPropertyItem = {
     locality: string;
     amountInr: number;
     isRent: boolean;
+    /** Sale commission percent. Absent or 0 when the API omits it. */
+    commissionPercent?: number | null;
+    /** Fixed rent brokerage in INR. Absent or 0 when unset. */
+    commissionAmountInr?: number | null;
     areaSqft: number;
     furnishingLabel: string;
     /** Floor / society snippet, e.g. "5th floor". Hidden on small screens. */
@@ -160,6 +164,10 @@ export type RepresentedPropertyItem = {
     locality: string;
     amountInr: number;
     isRent: boolean;
+    /** Sale commission percent. Absent or 0 when the API omits it. */
+    commissionPercent?: number | null;
+    /** Fixed rent brokerage in INR. Absent or 0 when unset. */
+    commissionAmountInr?: number | null;
     areaSqft: number;
     furnishingLabel: string;
     ownerFirstName: string;
