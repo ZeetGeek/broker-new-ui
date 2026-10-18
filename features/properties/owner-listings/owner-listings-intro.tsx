@@ -148,23 +148,19 @@ function BrowseHeader({
     isLoading,
 }: BrowseHeaderProps) {
     return (
-        <div className="flex items-center justify-between gap-3 text-start">
-            <h1 className={`${titleClassName} min-inline-0`}>
-                <span className="text-ink">{title}</span>
-                <span className="text-ink">.</span>{" "}
-                <OwnerListingsBrowseSummary
-                    totalCount={totalCount}
-                    newThisWeekCount={newThisWeekCount}
-                    serviceAreas={serviceAreas}
-                    poolSummary={poolSummary}
-                    filters={filters}
-                    hasActiveFilters={hasActiveFilters}
-                    isLoading={isLoading}
-                />
-            </h1>
-
-            <ServiceAreasMeta areas={serviceAreas} />
-        </div>
+        <h1 className={`${titleClassName} min-inline-0 text-start`}>
+            <span className="text-ink">{title}</span>
+            <span className="text-ink">.</span>{" "}
+            <OwnerListingsBrowseSummary
+                totalCount={totalCount}
+                newThisWeekCount={newThisWeekCount}
+                serviceAreas={serviceAreas}
+                poolSummary={poolSummary}
+                filters={filters}
+                hasActiveFilters={hasActiveFilters}
+                isLoading={isLoading}
+            />
+        </h1>
     );
 }
 
@@ -202,9 +198,15 @@ export function OwnerListingsIntro({
                 <p className="body hidden text-ink-muted max-inline-[52ch] sm:block">
                     {INTRO_DESCRIPTION}
                 </p>
+                <ServiceAreasMeta areas={serviceAreas} />
             </div>
         );
     }
 
-    return <BrowseHeader title="Browse" titleClassName="h3" {...headerProps} />;
+    return (
+        <div className="flex flex-col gap-3 text-start">
+            <BrowseHeader title="Browse" titleClassName="h3" {...headerProps} />
+            <ServiceAreasMeta areas={serviceAreas} />
+        </div>
+    );
 }

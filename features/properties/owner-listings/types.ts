@@ -163,8 +163,8 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     maxAreaSqft: "",
     listedWithinDays: "",
     minCommissionPercent: "",
-    /** Default Where → Serviceable areas. */
-    yourAreas: true,
+    /** Default Where → Anywhere. Serviceable areas is an explicit choice. */
+    yourAreas: false,
     newToday: false,
     slotsOpen: false,
     commissionSet: false,

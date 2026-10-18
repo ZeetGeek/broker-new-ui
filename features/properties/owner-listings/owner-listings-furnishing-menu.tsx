@@ -138,6 +138,8 @@ const rowClass = (checked: boolean) =>
 export type OwnerListingsFurnishingMenuProps = {
     value: FurnishingValue;
     onValueChange: (value: FurnishingValue) => void;
+    /** Apply the reset to the results while the menu stays open. */
+    onCommit?: () => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
 };
@@ -145,6 +147,7 @@ export type OwnerListingsFurnishingMenuProps = {
 export function OwnerListingsFurnishingMenu({
     value,
     onValueChange,
+    onCommit,
     onOpenChange,
     className,
 }: OwnerListingsFurnishingMenuProps) {
@@ -183,7 +186,11 @@ export function OwnerListingsFurnishingMenu({
                     <div className="flex flex-col gap-3 px-3 pe-3 pbs-3 pbe-3">
                         <OwnerListingsBandMenuHeader
                             description="How ready is the home"
-                            onClear={() => onValueChange("")}
+                            showReset={value !== ""}
+                            onClear={() => {
+                                onValueChange("");
+                                onCommit?.();
+                            }}
                             className="px-2 pbs-1"
                         />
                         <DropdownMenuRadioGroup

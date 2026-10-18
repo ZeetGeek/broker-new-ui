@@ -2,11 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Search } from "lucide-react";
-
 import { extractBandFilters } from "@/lib/format/owner-listings-labels";
-
-import { Button } from "@/components/ui/button";
 
 import { OwnerListingsBandDivider } from "@/features/properties/owner-listings/owner-listings-band-segment";
 import { OwnerListingsBhkMenu } from "@/features/properties/owner-listings/owner-listings-bhk-menu";
@@ -105,10 +101,6 @@ export function OwnerListingsSearchBand({
         }
     }, [appliedFilters, onApplyBand]);
 
-    const handleSearch = useCallback(() => {
-        onApplyBand(draftRef.current);
-    }, [onApplyBand]);
-
     const handleMenuOpenChange = useCallback(
         (open: boolean) => {
             if (!open) {
@@ -134,6 +126,7 @@ export function OwnerListingsSearchBand({
                         yourAreas={draft.yourAreas}
                         serviceAreas={serviceAreas}
                         onWhereChange={setWhereFilters}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
@@ -150,6 +143,7 @@ export function OwnerListingsSearchBand({
                                 (Boolean(draft.min) || Boolean(draft.max));
                             updateDraft(budgetNeedsReset ? { type, min: "", max: "" } : { type });
                         }}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
@@ -163,6 +157,7 @@ export function OwnerListingsSearchBand({
                         max={draft.max}
                         lookingFor={draft.type}
                         onBudgetChange={({ min, max }) => updateDraft({ min, max })}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
@@ -175,6 +170,7 @@ export function OwnerListingsSearchBand({
                         value={draft.bhk}
                         onToggle={toggleBhk}
                         onClear={clearBhk}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
@@ -186,6 +182,7 @@ export function OwnerListingsSearchBand({
                     <OwnerListingsPropertyTypeMenu
                         value={draft.propertyType}
                         onValueChange={(propertyType) => updateDraft({ propertyType })}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
@@ -197,23 +194,11 @@ export function OwnerListingsSearchBand({
                     <OwnerListingsFurnishingMenu
                         value={draft.furnishing}
                         onValueChange={(furnishing) => updateDraft({ furnishing })}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
                 </div>
-            </div>
-
-            <div className="flex shrink-0 items-center ps-2 pe-4">
-                <Button
-                    type="button"
-                    size="icon-md"
-                    variant="accent"
-                    className="rounded-control"
-                    aria-label="Search properties"
-                    onClick={handleSearch}
-                >
-                    <Search aria-hidden strokeWidth={1.75} />
-                </Button>
             </div>
         </div>
     );

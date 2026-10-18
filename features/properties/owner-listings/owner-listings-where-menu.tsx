@@ -282,6 +282,8 @@ export type OwnerListingsWhereMenuProps = {
     yourAreas: boolean;
     serviceAreas?: string[];
     onWhereChange: (next: { cities: string[]; localities: string[]; yourAreas: boolean }) => void;
+    /** Apply the reset to the results while the menu stays open. */
+    onCommit?: () => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
 };
@@ -293,11 +295,13 @@ export function OwnerListingsWhereMenu({
     yourAreas,
     serviceAreas = [],
     onWhereChange,
+    onCommit,
     onOpenChange,
     className,
 }: OwnerListingsWhereMenuProps) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
+    const [whereTooltipOpen, setWhereTooltipOpen] = useState(false);
 
     const locationTree = useMemo(() => buildOwnerListingsLocationTree(listings), [listings]);
     const locationLeaves = useMemo(() => {
@@ -334,8 +338,9 @@ export function OwnerListingsWhereMenu({
     };
 
     const clearSelection = () => {
-        // Clear pinned places back to the default serviceable scope.
-        selectServiceable();
+        // Clear pinned places back to the default Anywhere scope.
+        selectAnywhere();
+        onCommit?.();
     };
 
     const handleOpenChange = (nextOpen: boolean) => {
@@ -353,7 +358,7 @@ export function OwnerListingsWhereMenu({
             : [...selectedLocalities, locality];
 
         if (nextLocalities.length === 0) {
-            onWhereChange({ cities: [], localities: [], yourAreas: true });
+            onWhereChange({ cities: [], localities: [], yourAreas: false });
             return;
         }
 
@@ -379,12 +384,18 @@ export function OwnerListingsWhereMenu({
         selectedCities,
         yourAreas,
     );
+    const showWhereTooltip = !open && Boolean(whereTooltipLabel);
 
     return (
         <div className={cn("inline-full min-inline-0", className)}>
             <DropdownMenu open={open} onOpenChange={handleOpenChange}>
                 <TooltipProvider>
-                    <Tooltip open={open || !whereTooltipLabel ? false : undefined}>
+                    <Tooltip
+                        open={showWhereTooltip && whereTooltipOpen}
+                        onOpenChange={(nextOpen) => {
+                            setWhereTooltipOpen(showWhereTooltip ? nextOpen : false);
+                        }}
+                    >
                         <TooltipTrigger
                             className="flex inline-full min-inline-0"
                             render={
@@ -431,6 +442,7 @@ export function OwnerListingsWhereMenu({
                     <div className="flex shrink-0 flex-col gap-3 px-4 pbs-4 pbe-1">
                         <OwnerListingsBandMenuHeader
                             description="Pick cities or areas"
+                            showReset={!isAnywhereSelected}
                             onClear={clearSelection}
                         />
                         <Input
@@ -469,6 +481,27 @@ export function OwnerListingsWhereMenu({
                                     {!isSearching ? (
                                         <>
                                             <DropdownMenuCheckboxItem
+                                                checked={isAnywhereSelected}
+                                                onCheckedChange={selectAnywhere}
+                                                className={rowClass(isAnywhereSelected)}
+                                            >
+                                                <LocationIcon icon={MapPinOff} />
+                                                <span
+                                                    className="
+                                                      flex flex-1 flex-col gap-1 text-start
+                                                      min-inline-0
+                                                    "
+                                                >
+                                                    <span
+                                                        data-slot="where-location-title"
+                                                        className={WHERE_TITLE_CLASS}
+                                                    >
+                                                        Anywhere
+                                                    </span>
+                                                    <WhereLocationMeta pathLabel="All listed properties" />
+                                                </span>
+                                            </DropdownMenuCheckboxItem>
+                                            <DropdownMenuCheckboxItem
                                                 checked={isServiceableSelected}
                                                 onCheckedChange={selectServiceable}
                                                 className={rowClass(isServiceableSelected)}
@@ -489,27 +522,6 @@ export function OwnerListingsWhereMenu({
                                                     <WhereLocationMeta
                                                         pathLabel={serviceableMeta}
                                                     />
-                                                </span>
-                                            </DropdownMenuCheckboxItem>
-                                            <DropdownMenuCheckboxItem
-                                                checked={isAnywhereSelected}
-                                                onCheckedChange={selectAnywhere}
-                                                className={rowClass(isAnywhereSelected)}
-                                            >
-                                                <LocationIcon icon={MapPinOff} />
-                                                <span
-                                                    className="
-                                                      flex flex-1 flex-col gap-1 text-start
-                                                      min-inline-0
-                                                    "
-                                                >
-                                                    <span
-                                                        data-slot="where-location-title"
-                                                        className={WHERE_TITLE_CLASS}
-                                                    >
-                                                        Anywhere
-                                                    </span>
-                                                    <WhereLocationMeta pathLabel="All listed properties" />
                                                 </span>
                                             </DropdownMenuCheckboxItem>
                                         </>

@@ -78,14 +78,8 @@ export function parseOwnerListingsFilters(
     const yourAreasRaw = parseParam(params, "yourAreas");
     const hasLocationFilter = cities.length > 0 || localities.length > 0;
     // Explicit city/locality picks turn off your-areas priority.
-    // Missing param defaults to Your areas on (URL restore layer may override).
-    const yourAreas = hasLocationFilter
-        ? false
-        : yourAreasRaw === "0"
-          ? false
-          : yourAreasRaw === "1"
-            ? true
-            : true;
+    // Missing param defaults to Anywhere. Saved prefs and yourAreas=1 still select serviceable areas.
+    const yourAreas = hasLocationFilter ? false : yourAreasRaw === "1";
 
     return {
         q: parseParam(params, "q"),
