@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { tinykeys } from "tinykeys";
 
 import { useQuery } from "@tanstack/react-query";
 import { Search, UserPlus, UserRound, UserRoundPlus, Users } from "lucide-react";
+import { tinykeys } from "tinykeys";
 
 import { ApiError } from "@/lib/api/client";
 import { clientsApi, type NewBuyerInput } from "@/lib/api/clients";
@@ -32,16 +32,16 @@ import { AttachOwnerToListingModal } from "@/features/contacts/attach-owner-to-l
 import { BuyerCard } from "@/features/contacts/buyer-card";
 import type { ContactPropertyCardItem } from "@/features/contacts/contact-card-model";
 import { ContactDetailPanel } from "@/features/contacts/contact-detail-panel";
-import { DeleteBuyerDialog } from "@/features/contacts/delete-buyer-dialog";
-import { DeleteOwnerDialog } from "@/features/contacts/delete-owner-dialog";
 import {
-    emptyOwnerForm,
     type BuyerContactForm,
+    emptyOwnerForm,
     type OwnerContactForm,
 } from "@/features/contacts/contact-form-model";
 import { ContactsHeader } from "@/features/contacts/contacts-header";
 import { ContactsIntro } from "@/features/contacts/contacts-intro";
 import { ContactsSkeleton } from "@/features/contacts/contacts-skeleton";
+import { DeleteBuyerDialog } from "@/features/contacts/delete-buyer-dialog";
+import { DeleteOwnerDialog } from "@/features/contacts/delete-owner-dialog";
 import { OwnerCard } from "@/features/contacts/owner-card";
 import {
     type BuyerRow,
@@ -466,7 +466,7 @@ export function ContactsPage() {
                         </EmptyState>
                     )
                 ) : (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col">
                         {isBuyers ? (
                             <WindowVirtualGrid
                                 items={buyers}

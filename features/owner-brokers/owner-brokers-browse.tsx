@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { UserRoundSearch } from "lucide-react";
 
-import { ApiError } from "@/lib/api/client";
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
@@ -165,7 +164,7 @@ export function OwnerBrokersBrowse({
         results = (
             <div
                 className={cn(
-                    "flex flex-col gap-2",
+                    "flex flex-col",
                     query.isFetching &&
                         !query.isFetchingNextPage &&
                         "opacity-60 transition-opacity duration-160",

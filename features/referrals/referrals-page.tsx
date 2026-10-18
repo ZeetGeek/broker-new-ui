@@ -246,6 +246,7 @@ export function ReferralsPage() {
                         total={ledgerQuery.total}
                         footer={
                             <InfiniteListStatus
+                                placement="embedded"
                                 hasNextPage={Boolean(ledgerQuery.hasNextPage)}
                                 isFetchingNextPage={ledgerQuery.isFetchingNextPage}
                                 error={ledgerQuery.isFetchNextPageError ? ledgerQuery.error : null}
