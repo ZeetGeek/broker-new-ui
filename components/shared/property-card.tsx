@@ -940,6 +940,7 @@ function BrowseOverlayPrices({
                     amountInr={listing.saleAmountInr ?? 0}
                     commissionPercent={listing.commissionPercent}
                     audience={audience}
+                    showNoRentCommission={showNoRentCommission}
                     className={priceClass}
                 />
                 <span className="font-medium text-ink-subtle" aria-hidden>
@@ -965,6 +966,7 @@ function BrowseOverlayPrices({
             amountInr={listing.saleAmountInr ?? 0}
             commissionPercent={listing.commissionPercent}
             audience={audience}
+            showNoRentCommission={showNoRentCommission}
             className={priceClass}
         />
     );

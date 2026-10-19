@@ -8,6 +8,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 /** Who is looking. Brokers earn the cut; owners see what they offered a broker. */
 export type CommissionAudience = "broker" | "owner";
 
+const NO_COMMISSION_TIP = "Owner hasn't added a commission";
+
 export type PriceWithCommissionProps = {
     amountInr: number;
     isRent?: boolean;
@@ -20,16 +22,21 @@ export type PriceWithCommissionProps = {
      * Defaults to broker — marketplace and pipeline cards.
      */
     audience?: CommissionAudience;
-    /** Rent with no brokerage still gets a hover tip reading "No commission". */
+    /**
+     * When commission is unset, still show a hover tip (no underline).
+     * Works for rent, sale, and both. Only a set fee underlines the price.
+     */
     showNoRentCommission?: boolean;
     className?: string;
 };
 
 type CommissionTip = {
-    /** "You get ₹15,000" (rent brokerage is a fixed fee, not monthly) */
+    /** "You get ₹15,000" — rent cut is a fixed fee, never `/mo` */
     headline: string;
-    /** "Fixed rent brokerage" or "2% of ₹85 L" */
+    /** "Fixed amount" or "2% of ₹85 L". Empty for the no-commission tip. */
     detail: string;
+    /** When true, tip is informational only — do not underline the price. */
+    plain?: boolean;
 };
 
 function positive(value: number | null | undefined): number {
@@ -50,10 +57,14 @@ function formatPercent(percent: number): string {
     return `${rounded}%`;
 }
 
+function noCommissionTip(): CommissionTip {
+    return { headline: NO_COMMISSION_TIP, detail: "", plain: true };
+}
+
 /**
  * Commission the owner actually set for this price.
- * Rent is a fixed brokerage. Sale is a percent of the ask.
- * Returns null when that side was left blank — the price then has no tip.
+ * Rent is a fixed fee (no `/mo`). Sale is a percent of the ask.
+ * Returns null when that side was left blank — unless `showNoRentCommission`.
  */
 export function listingCommissionTip({
     amountInr,
@@ -68,19 +79,20 @@ export function listingCommissionTip({
     if (isRent) {
         const brokerageInr = positive(commissionAmountInr);
         if (brokerageInr <= 0) {
-            return showNoRentCommission
-                ? { headline: "No commission", detail: "The owner hasn't set a rent brokerage" }
-                : null;
+            return showNoRentCommission ? noCommissionTip() : null;
         }
         return {
             headline: `${lead} ${formatPriceInr(brokerageInr)}`,
-            detail: "Fixed rent brokerage",
+            detail: "Fixed amount",
         };
     }
 
     const percent = positive(commissionPercent);
     const priceInr = positive(amountInr);
-    if (percent <= 0 || priceInr <= 0) return null;
+    if (percent <= 0) {
+        return showNoRentCommission ? noCommissionTip() : null;
+    }
+    if (priceInr <= 0) return null;
 
     const cutInr = Math.round((priceInr * percent) / 100);
     if (cutInr <= 0) return null;
@@ -92,7 +104,8 @@ export function listingCommissionTip({
 }
 
 /**
- * Listing price. Hover shows the brokerage only when a commission was set.
+ * Listing price. Hover shows the brokerage when a commission was set.
+ * Unset commission can still tip (no underline) when `showNoRentCommission`.
  */
 export function PriceWithCommission({
     amountInr,
@@ -113,15 +126,21 @@ export function PriceWithCommission({
         showNoRentCommission,
     });
 
+    const underline = Boolean(tip && !tip.plain);
     const priceClass = cn(
         "tabular text-brand",
         className,
-        tip && "cursor-help underline decoration-brand/30 decoration-from-font underline-offset-2",
+        underline &&
+            "cursor-help underline decoration-brand/30 decoration-from-font underline-offset-2",
     );
 
     if (!tip) {
         return <span className={priceClass}>{priceLabel}</span>;
     }
+
+    const ariaLabel = tip.plain
+        ? `${priceLabel}. ${tip.headline}`
+        : `${priceLabel}. ${tip.headline}. ${tip.detail}`;
 
     return (
         <TooltipProvider>
@@ -131,16 +150,31 @@ export function PriceWithCommission({
                     render={
                         <button
                             type="button"
-                            className="inline border-0 bg-transparent p-0 text-start text-inherit"
-                            aria-label={`${priceLabel}. ${tip.headline}. ${tip.detail}`}
+                            className={cn(
+                                "inline border-0 bg-transparent p-0 text-start text-inherit",
+                                tip.plain ? "cursor-default" : "cursor-help",
+                            )}
+                            aria-label={ariaLabel}
                         >
                             <span className={priceClass}>{priceLabel}</span>
                         </button>
                     }
                 />
-                <TooltipContent side="top" className="text-center max-inline-xs">
-                    <span className="font-semibold tabular-nums">{tip.headline}</span>
-                    <span className="opacity-80">{tip.detail}</span>
+                <TooltipContent
+                    side="top"
+                    className={cn(
+                        "text-center",
+                        tip.plain ? "whitespace-nowrap max-inline-none" : "max-inline-xs",
+                    )}
+                >
+                    {tip.plain ? (
+                        <span className="font-medium">{tip.headline}</span>
+                    ) : (
+                        <>
+                            <span className="font-semibold tabular-nums">{tip.headline}</span>
+                            <span className="opacity-80">{tip.detail}</span>
+                        </>
+                    )}
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
