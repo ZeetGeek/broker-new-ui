@@ -23,6 +23,7 @@ import {
     UserPlus,
     UserRound,
     Users,
+    X,
 } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
@@ -36,6 +37,7 @@ import {
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
+import { formatPropertyCardArea, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
 import { cn } from "@/lib/utils";
 
@@ -52,11 +54,14 @@ import {
     OverlayCard,
     OverlayCardActions,
     OverlayCardSummary,
-    OverlayChip,
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Price } from "@/components/shared/price";
+import {
+    type CommissionAudience,
+    PriceWithCommission,
+} from "@/components/shared/price-with-commission";
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
@@ -94,13 +99,13 @@ const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
 const BROWSE_ASK_LABEL = "Ask to sell";
 const BROWSE_ASK_PENDING_LABEL = "Sending…";
-const BROWSE_WITHDRAW_LABEL = "Withdraw";
-const BROWSE_WITHDRAWING_LABEL = "Withdrawing…";
+const BROWSE_WITHDRAW_LABEL = "Cancel request";
+const BROWSE_WITHDRAWING_LABEL = "Cancelling…";
 const BROWSE_REPRESENTING_LABEL = "You're representing";
 const BROWSE_INVITE_ACCEPT_LABEL = "Accept";
 const BROWSE_INVITE_ACCEPTING_LABEL = "Accepting…";
-const BROWSE_INVITE_DECLINE_LABEL = "Decline";
-const BROWSE_INVITE_DECLINING_LABEL = "Declining…";
+const BROWSE_INVITE_DECLINE_LABEL = "Cancel";
+const BROWSE_INVITE_DECLINING_LABEL = "Cancelling…";
 
 const PROPERTY_CARD_TITLE_CLASS = "body truncate font-semibold tracking-wide text-ink capitalize";
 const PROPERTY_CARD_LOCATION_CLASS = `
@@ -119,11 +124,11 @@ const BROWSE_STATUS = {
 const BROWSE_REQUEST_TOOLTIP = {
     idle: "Ask the owner for permission to sell this property",
     pending: "Sending your request…",
-    withdraw: "Take back your request. You can ask again later.",
-    withdrawing: "Withdrawing your request…",
+    withdraw: "Cancel this request. You can ask again later.",
+    withdrawing: "Cancelling your request…",
     representing: "The owner already approved you for this listing",
     inviteAccept: "Accept the invite and get the owner's number",
-    inviteDecline: "Turn this down. The owner can ask someone else",
+    inviteDecline: "Cancel this invite. The owner can ask someone else",
 } as const;
 
 function BrowseActionHint({ children }: { children: string }) {
@@ -198,7 +203,7 @@ function BrowseRequestAction({
                         <Tooltip>
                             <TooltipTrigger
                                 render={
-                                    <span className="inline-flex flex-1">
+                                    <span className="inline-flex flex-1 min-inline-0">
                                         <Button
                                             type="button"
                                             size="md"
@@ -208,9 +213,18 @@ function BrowseRequestAction({
                                             loading={inviteActionPending === "cancel"}
                                             onClick={onCancelInvite}
                                         >
-                                            {inviteActionPending === "cancel"
-                                                ? BROWSE_INVITE_DECLINING_LABEL
-                                                : BROWSE_INVITE_DECLINE_LABEL}
+                                            {inviteActionPending === "cancel" ? (
+                                                BROWSE_INVITE_DECLINING_LABEL
+                                            ) : (
+                                                <>
+                                                    <X
+                                                        aria-hidden
+                                                        className="block-4 inline-4"
+                                                        strokeWidth={2}
+                                                    />
+                                                    {BROWSE_INVITE_DECLINE_LABEL}
+                                                </>
+                                            )}
                                         </Button>
                                     </span>
                                 }
@@ -222,7 +236,7 @@ function BrowseRequestAction({
                         <Tooltip>
                             <TooltipTrigger
                                 render={
-                                    <span className="inline-flex flex-[1.5]">
+                                    <span className="inline-flex flex-1 min-inline-0">
                                         <Button
                                             type="button"
                                             size="md"
@@ -276,9 +290,18 @@ function BrowseRequestAction({
                                         loading={isRequestPending}
                                         onClick={onCancelRequest}
                                     >
-                                        {isRequestPending
-                                            ? BROWSE_WITHDRAWING_LABEL
-                                            : BROWSE_WITHDRAW_LABEL}
+                                        {isRequestPending ? (
+                                            BROWSE_WITHDRAWING_LABEL
+                                        ) : (
+                                            <>
+                                                <X
+                                                    aria-hidden
+                                                    className="block-4 inline-4"
+                                                    strokeWidth={2}
+                                                />
+                                                {BROWSE_WITHDRAW_LABEL}
+                                            </>
+                                        )}
                                     </Button>
                                 </span>
                             }
@@ -293,6 +316,8 @@ function BrowseRequestAction({
             </TooltipProvider>
         );
     }
+
+    if (!onRequest) return null;
 
     return (
         <TooltipProvider>
@@ -350,6 +375,10 @@ type PropertyCardBase = {
     configLabel: string;
     propertyTypeLabel: string;
     areaSqft: number;
+    /** Bedrooms / BHK. 0 when not applicable (e.g. shop, office). */
+    bhk?: number;
+    /** Bathrooms. Null/0 when unset or not applicable. */
+    bathrooms?: number | null;
     amountInr: number;
     isRent: boolean;
     imageSrc?: string | null;
@@ -395,11 +424,16 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     locality: string;
     city: string;
     bhk: number;
+    bathrooms?: number | null;
     status: OwnedPropertyCardStatus;
     inboundRequestCount: number;
     listedDaysAgo: number;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
+    /** Sale commission percent. Null or 0 when the owner left it blank. */
+    commissionPercent?: number | null;
+    /** Fixed rent brokerage in INR. Null or 0 when unset. */
+    commissionAmount?: number | null;
     ownerName?: string | null;
     visibility?: "private" | "marketplace";
     /** Buyers linked to this listing — shown as the My deals avatar stack. */
@@ -439,15 +473,16 @@ export type PropertyCardProps = {
     onToggleSave?: () => void;
     /** Browse grid cards: listed this week in the broker's service areas — highlighted card. */
     isNewInYourArea?: boolean;
+    /**
+     * Who is reading the price. Brokers see "You get". Owners see "Broker gets".
+     * Browse cards are always the broker marketplace.
+     */
+    audience?: CommissionAudience;
 } & (
     | { variant: "browse"; listing: BrowsePropertyCardListing }
     | { variant: "represented"; listing: RepresentedPropertyCardListing }
     | { variant: "owned"; listing: OwnedPropertyCardListing }
 );
-
-function formatBrowseCardArea(areaSqft: number): string {
-    return `${Math.round(areaSqft).toLocaleString("en-IN")} sqft`;
-}
 
 function formatBedLabel(bhk: number): string {
     return bhk === 1 ? "1 Bed" : `${bhk} Bed`;
@@ -623,12 +658,20 @@ function BrowsePropertyCardPhoto({
                       absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
                     "
                 >
-                    {offersSale(listing) ? <Badge variant="brand">For sale</Badge> : null}
-                    {offersRent(listing) ? <Badge variant="urgent">For rent</Badge> : null}
+                    {offersSale(listing) ? (
+                        <Badge color="emerald" blur="dark">
+                            For sale
+                        </Badge>
+                    ) : null}
+                    {offersRent(listing) ? (
+                        <Badge color="orange" blur="dark">
+                            For rent
+                        </Badge>
+                    ) : null}
                 </div>
 
                 {listing.isNew ? (
-                    <Badge variant="brand" className="absolute inset-e-3 inset-bs-3 z-10">
+                    <Badge color="lime" blur="dark" className="absolute inset-e-3 inset-bs-3 z-10">
                         New
                     </Badge>
                 ) : null}
@@ -715,14 +758,14 @@ function BrowsePropertyCardPhoto({
 
 function BrowsePropertyCardOwner({ owner }: { owner: PropertyCardOwner }) {
     return (
-        <div className="mbs-auto flex items-center gap-2 py-1.5 min-inline-0">
-            <UserAvatar
-                name={owner.name}
-                imageUrl={owner.avatarUrl}
-                size="sm"
-                className="shrink-0"
-            />
-            <div className="flex flex-col min-inline-0">
+        <div className="mbs-auto flex flex-col gap-1 py-1.5 min-inline-0">
+            <div className="flex items-center gap-1.5 min-inline-0">
+                <UserAvatar
+                    name={owner.name}
+                    imageUrl={owner.avatarUrl}
+                    size="2xs"
+                    className="shrink-0"
+                />
                 <Button
                     variant="link"
                     size="sm"
@@ -733,27 +776,19 @@ function BrowsePropertyCardOwner({ owner }: { owner: PropertyCardOwner }) {
                         ) : undefined
                     }
                     className="
-                      body-sm justify-start gap-1.5 truncate p-0 font-medium tracking-wide text-ink
+                      body-sm justify-start truncate p-0 font-medium tracking-wide text-ink
                       capitalize block-auto max-inline-full min-inline-0
                     "
                 >
                     {owner.name}
                 </Button>
-                {owner.locationLabel ? (
-                    <p
-                        className="
-                          body-xs flex items-center gap-1 tracking-wide text-ink-muted min-inline-0
-                        "
-                    >
-                        <MapPin
-                            aria-hidden
-                            className="shrink-0 block-3 inline-3"
-                            strokeWidth={1.75}
-                        />
-                        <span className="truncate capitalize">{owner.locationLabel}</span>
-                    </p>
-                ) : null}
             </div>
+            {owner.locationLabel ? (
+                <p className="body-xs flex items-center gap-1 tracking-wide text-ink-muted min-inline-0">
+                    <MapPin aria-hidden className="shrink-0 block-3 inline-3" strokeWidth={1.75} />
+                    <span className="truncate capitalize">{owner.locationLabel}</span>
+                </p>
+            ) : null}
         </div>
     );
 }
@@ -764,7 +799,7 @@ function BrowsePropertyCardSpecs({ listing }: { listing: BrowsePropertyCardListi
 
     return (
         <div className={PROPERTY_CARD_SPECS_CLASS}>
-            <BrowseSpecItem icon={Maximize2} label={formatBrowseCardArea(listing.areaSqft)} />
+            <BrowseSpecItem icon={Maximize2} label={formatPropertyCardArea(listing.areaSqft)} />
             {showBedBath ? (
                 <>
                     <BrowseSpecDivider />
@@ -796,8 +831,8 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
             ? Math.round((baseAmountInr * listing.commissionPercent) / 100)
             : 0;
     const commissionInr = activeMode === "rent" ? rentCommissionInr : saleCommissionInr;
-    const commissionLabel =
-        activeMode === "rent" ? formatRentInr(commissionInr) : formatPriceInr(commissionInr);
+    // Rent brokerage is a fixed fee — same formatter as sale cut, never `/mo`.
+    const commissionLabel = formatPriceInr(commissionInr);
     const hasCommission = commissionInr > 0 && (activeMode === "rent" || baseAmountInr > 0);
 
     const commissionBadge = (
@@ -867,114 +902,74 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
     );
 }
 
-/** Hover target for a listing price — shows the broker's cut. */
-function BrowsePriceWithCommission({
-    priceLabel,
-    mode,
-    commissionInr,
-    commissionPercent,
-    className,
+function BrowseOverlayPrices({
+    listing,
+    audience = "broker",
+    showNoRentCommission = false,
 }: {
-    priceLabel: string;
-    mode: "sale" | "rent";
-    commissionInr: number;
-    commissionPercent: number;
-    className?: string;
+    listing: BrowsePropertyCardListing;
+    audience?: CommissionAudience;
+    showNoRentCommission?: boolean;
 }) {
-    const hasCommission =
-        commissionInr > 0 && (mode === "rent" || (mode === "sale" && commissionPercent > 0));
-    const commissionLabel =
-        mode === "rent" ? formatRentInr(commissionInr) : formatPriceInr(commissionInr);
-
-    const priceEl = (
-        <span
-            className={cn(
-                className,
-                hasCommission &&
-                    "cursor-help underline decoration-brand/30 underline-offset-2 decoration-from-font",
-            )}
-        >
-            {priceLabel}
-        </span>
-    );
-
-    if (!hasCommission) return priceEl;
-
-    return (
-        <Tooltip>
-            <TooltipTrigger
-                delay={200}
-                render={
-                    <button
-                        type="button"
-                        className="inline border-0 bg-transparent p-0 text-start text-inherit"
-                        aria-label={
-                            mode === "rent"
-                                ? `Commission ${formatPriceInr(commissionInr)}`
-                                : `${commissionPercent}% commission`
-                        }
-                    >
-                        {priceEl}
-                    </button>
-                }
-            />
-            <TooltipContent side="top" className="text-center max-inline-xs">
-                <p className="font-semibold tabular-nums">You get {commissionLabel}</p>
-                <p className="body-xs mbs-0.5 opacity-90">
-                    {mode === "rent"
-                        ? "Fixed rent brokerage"
-                        : `${commissionPercent}% of ${priceLabel}`}
-                </p>
-            </TooltipContent>
-        </Tooltip>
-    );
-}
-
-function BrowseOverlayPrices({ listing }: { listing: BrowsePropertyCardListing }) {
     const isRentOnly = offersRent(listing) && !offersSale(listing);
     const both = offersBoth(listing);
-    const saleLabel = formatPriceInr(listing.saleAmountInr ?? 0);
-    const rentLabel = formatRentInr(listing.rentAmountInr ?? 0);
-    const saleCommissionInr =
-        listing.commissionPercent > 0 && (listing.saleAmountInr ?? 0) > 0
-            ? Math.round(((listing.saleAmountInr ?? 0) * listing.commissionPercent) / 100)
-            : 0;
-    const rentCommissionInr = listing.commissionAmount > 0 ? listing.commissionAmount : 0;
+    const priceClass = "h5 font-semibold tracking-wide";
 
-    const body = isRentOnly ? (
-        <BrowsePriceWithCommission
-            priceLabel={rentLabel}
-            mode="rent"
-            commissionInr={rentCommissionInr}
-            commissionPercent={0}
-            className="h5 font-semibold tracking-wide tabular-nums text-brand"
-        />
-    ) : (
-        <div className="flex flex-col gap-0.5 min-inline-0">
-            <BrowsePriceWithCommission
-                priceLabel={saleLabel}
-                mode="sale"
-                commissionInr={saleCommissionInr}
-                commissionPercent={listing.commissionPercent}
-                className="h5 font-semibold tracking-wide tabular-nums text-brand"
+    if (isRentOnly) {
+        return (
+            <PriceWithCommission
+                amountInr={listing.rentAmountInr ?? 0}
+                isRent
+                commissionAmountInr={listing.commissionAmount}
+                audience={audience}
+                showNoRentCommission={showNoRentCommission}
+                className={priceClass}
             />
-            {both ? (
-                <p className="body-sm tracking-wide text-ink-muted">
-                    Also{" "}
-                    <BrowsePriceWithCommission
-                        priceLabel={rentLabel}
-                        mode="rent"
-                        commissionInr={rentCommissionInr}
-                        commissionPercent={0}
-                        className="font-semibold tabular-nums text-ink"
-                    />{" "}
-                    rent
-                </p>
-            ) : null}
-        </div>
-    );
+        );
+    }
 
-    return <TooltipProvider>{body}</TooltipProvider>;
+    if (both) {
+        return (
+            <p
+                className={cn(
+                    priceClass,
+                    "flex flex-wrap items-baseline gap-x-1.5 text-brand tabular-nums min-inline-0",
+                )}
+            >
+                <PriceWithCommission
+                    amountInr={listing.saleAmountInr ?? 0}
+                    commissionPercent={listing.commissionPercent}
+                    audience={audience}
+                    showNoRentCommission={showNoRentCommission}
+                    className={priceClass}
+                />
+                <span className="font-medium text-ink-subtle" aria-hidden>
+                    /
+                </span>
+                <span className="body-sm font-medium tracking-wide text-ink-muted">
+                    Also{" "}
+                    <PriceWithCommission
+                        amountInr={listing.rentAmountInr ?? 0}
+                        isRent
+                        commissionAmountInr={listing.commissionAmount}
+                        audience={audience}
+                        showNoRentCommission={showNoRentCommission}
+                        className="font-semibold text-ink"
+                    />
+                </span>
+            </p>
+        );
+    }
+
+    return (
+        <PriceWithCommission
+            amountInr={listing.saleAmountInr ?? 0}
+            commissionPercent={listing.commissionPercent}
+            audience={audience}
+            showNoRentCommission={showNoRentCommission}
+            className={priceClass}
+        />
+    );
 }
 
 /** Grid browse card: clear photo on top, essentials in a solid panel below. */
@@ -998,14 +993,17 @@ function BrowseOverlayPropertyCard({
     const priceLabel = isRentOnly
         ? formatRentInr(listing.rentAmountInr ?? 0)
         : formatPriceInr(listing.saleAmountInr ?? 0);
-    const headline = [listing.configLabel, formatBrowseCardArea(listing.areaSqft)]
-        .filter(Boolean)
-        .join(" · ");
+    const headline =
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
+            bhk: listing.bhk,
+            bathrooms: listing.bathrooms,
+        }) || listing.title;
 
     return (
         <OverlayCard
             href={detailsHref}
             imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
+            images={listing.imageSrcs}
             imageAlt={listing.title}
             imageSizes={imageSizes}
             priority={priority}
@@ -1014,15 +1012,19 @@ function BrowseOverlayPropertyCard({
             chips={
                 <>
                     {offersSale(listing) ? (
-                        <OverlayChip dotClassName="bg-success-mid">For sale</OverlayChip>
+                        <Badge color="emerald" blur="dark">
+                            For sale
+                        </Badge>
                     ) : null}
                     {offersRent(listing) ? (
-                        <OverlayChip dotClassName="bg-urgent-mid">For rent</OverlayChip>
+                        <Badge color="orange" blur="dark">
+                            For rent
+                        </Badge>
                     ) : null}
                     {listing.isNew ? (
-                        <OverlayChip dotClassName="bg-highlight" pulse={isNewInYourArea}>
+                        <Badge color="lime" blur="dark" pulse={isNewInYourArea}>
                             New
-                        </OverlayChip>
+                        </Badge>
                     ) : null}
                 </>
             }
@@ -1046,15 +1048,19 @@ function BrowseOverlayPropertyCard({
                 />
             }
         >
-            <div className="flex flex-col gap-1.5 min-inline-0">
+            <div className="flex flex-1 flex-col gap-3.5 min-inline-0">
                 <OverlayCardSummary
                     href={detailsHref}
-                    price={<BrowseOverlayPrices listing={listing} />}
-                    headline={headline || listing.title}
+                    price={<BrowseOverlayPrices listing={listing} showNoRentCommission />}
+                    headline={headline}
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />
 
-                <OverlayPersonLine label="Owner" name={listing.owner.name} />
+                <OverlayPersonLine
+                    label="Owner"
+                    name={listing.owner.name}
+                    avatarUrl={listing.owner.avatarUrl}
+                />
             </div>
 
             <OverlayCardActions>
@@ -1080,11 +1086,7 @@ function BrowsePropertyCard(props: Extract<PropertyCardProps, { variant: "browse
 }
 
 function TransactionBadge({ isRent }: { isRent: boolean }) {
-    return (
-        <Badge variant="neutral" className="body-xs font-medium">
-            {isRent ? "For rent" : "For sale"}
-        </Badge>
-    );
+    return <Badge color={isRent ? "orange" : "emerald"}>{isRent ? "For rent" : "For sale"}</Badge>;
 }
 
 function PropertyCardPhoto({
@@ -1128,10 +1130,16 @@ function PropertyCardPhoto({
             )}
 
             <div className="absolute inset-0 flex items-start justify-between gap-2 p-3">
-                {listing.isNew ? <Badge variant="brand">New</Badge> : <span aria-hidden />}
+                {listing.isNew ? (
+                    <Badge color="lime" blur="dark">
+                        New
+                    </Badge>
+                ) : (
+                    <span aria-hidden />
+                )}
 
                 {listing.photoCount > 0 ? (
-                    <Badge variant="neutral" className="ms-auto gap-1">
+                    <Badge color="sky" blur="dark" className="ms-auto">
                         <Camera aria-hidden strokeWidth={1.75} />
                         {listing.photoCount}
                     </Badge>
@@ -1245,7 +1253,11 @@ function RepresentedPropertyCard({
     crmHref,
     className,
 }: Extract<PropertyCardProps, { variant: "represented" }>) {
-    const titleLine = `${listing.configLabel} ${listing.propertyTypeLabel} · ${formatAreaSqft(listing.areaSqft)}`;
+    const titleLine =
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
+            bhk: listing.bhk,
+            bathrooms: listing.bathrooms,
+        }) || `${listing.configLabel} · ${formatAreaSqft(listing.areaSqft)}`;
 
     return (
         <article
@@ -1301,7 +1313,7 @@ function RepresentedPropertyCard({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="flex-1 border-border-warm"
+                        className="flex-1 border-border-warm min-inline-0"
                         onClick={onShare}
                     >
                         Share
@@ -1313,7 +1325,7 @@ function RepresentedPropertyCard({
                             prefetch={false}
                             className={cn(
                                 buttonVariants({ size: "sm" }),
-                                "flex-[1.4] bg-brand-ink text-surface hover:bg-brand-ink/90",
+                                "flex-1 bg-brand-ink text-surface hover:bg-brand-ink/90 min-inline-0",
                             )}
                         >
                             Open in CRM
@@ -1322,7 +1334,7 @@ function RepresentedPropertyCard({
                         <Button
                             type="button"
                             size="sm"
-                            className="flex-[1.4] bg-brand-ink text-surface hover:bg-brand-ink/90"
+                            className="flex-1 bg-brand-ink text-surface hover:bg-brand-ink/90 min-inline-0"
                             onClick={onOpenCrm}
                         >
                             Open in CRM
@@ -1379,7 +1391,7 @@ function OwnedListingAction({
         <TooltipProvider>
             <div className="flex flex-col gap-2">
                 {onAttachOwner || onAddBuyer ? (
-                    <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 -mis-2">
+                    <div className="-mis-2 flex flex-wrap items-center gap-x-1 gap-y-0.5">
                         {onAttachOwner ? (
                             <Tooltip>
                                 <TooltipTrigger
@@ -1518,26 +1530,21 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
         locality: listing.locality,
         city: listing.city,
         bhk: listing.bhk,
+        bathrooms: listing.bathrooms,
         brokerSlotsOpen: 0,
         brokerSlotsTotal: 0,
-        commissionPercent: 0,
-        commissionAmount: 0,
+        commissionPercent: listing.commissionPercent ?? 0,
+        commissionAmount: listing.commissionAmount ?? 0,
         hasRequested: false,
         saleAmountInr: listing.saleAmountInr,
         rentAmountInr: listing.rentAmountInr,
     };
 }
 
-function OwnedStatusBadge({ status }: { status: OwnedPropertyCardStatus }) {
-    const variant = status === "published" ? "brand" : status === "draft" ? "outline" : "urgent";
-    return <Badge variant={variant}>{OWNED_STATUS_LABEL[status]}</Badge>;
-}
-
-/** Dot colour per listing status, for the overlay card's status chip. */
-const OWNED_STATUS_DOT_CLASS: Record<OwnedPropertyCardStatus, string> = {
-    published: "bg-success-mid",
-    draft: "bg-highlight",
-    unpublished: "bg-ink-subtle",
+const OWNED_STATUS_COLOR: Record<OwnedPropertyCardStatus, "emerald" | "amber" | "red"> = {
+    published: "emerald",
+    draft: "amber",
+    unpublished: "red",
 };
 
 function formatListedLabel(listedDaysAgo: number): string {
@@ -1566,21 +1573,21 @@ function OwnedOverlayPropertyCard({
     brokerSummary,
     brokerSummaryState,
     onDelete,
+    isSaved = false,
+    onToggleSave,
+    audience = "broker",
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
     const browse = ownedToBrowseListing(listing);
-    const both = offersBoth(browse);
     const isRentOnly = offersRent(browse) && !offersSale(browse);
-    const priceLabel = isRentOnly
+    const sharePriceLabel = isRentOnly
         ? formatRentInr(listing.rentAmountInr ?? 0)
-        : formatPriceInr(listing.saleAmountInr ?? 0);
-    const sharePriceLabel =
-        offersRent(browse) && !offersSale(browse)
-            ? formatRentInr(listing.rentAmountInr ?? 0)
-            : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
-    const headline = [listing.configLabel, formatBrowseCardArea(listing.areaSqft)]
-        .filter(Boolean)
-        .join(" · ");
+        : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
+    const headline =
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
+            bhk: listing.bhk,
+            bathrooms: listing.bathrooms,
+        }) || listing.title;
     const metaParts = [
         listing.inboundRequestCount === 0
             ? "No requests"
@@ -1598,6 +1605,7 @@ function OwnedOverlayPropertyCard({
         <OverlayCard
             href={detailsHref}
             imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
+            images={listing.imageSrcs}
             imageAlt={listing.title}
             imageSizes={imageSizes}
             priority={priority}
@@ -1606,17 +1614,23 @@ function OwnedOverlayPropertyCard({
             className={className}
             chips={
                 <>
-                    <OverlayChip dotClassName={OWNED_STATUS_DOT_CLASS[listing.status]}>
+                    <Badge color={OWNED_STATUS_COLOR[listing.status]} blur="dark">
                         {OWNED_STATUS_LABEL[listing.status]}
-                    </OverlayChip>
+                    </Badge>
                     {offersSale(browse) ? (
-                        <OverlayChip dotClassName="bg-success-mid">For sale</OverlayChip>
+                        <Badge color="emerald" blur="dark">
+                            For sale
+                        </Badge>
                     ) : null}
                     {offersRent(browse) ? (
-                        <OverlayChip dotClassName="bg-urgent-mid">For rent</OverlayChip>
+                        <Badge color="orange" blur="dark">
+                            For rent
+                        </Badge>
                     ) : null}
                     {listing.visibility === "private" ? (
-                        <OverlayChip dotClassName="bg-surface/70">Private</OverlayChip>
+                        <Badge color="violet" blur="dark">
+                            Private
+                        </Badge>
                     ) : null}
                 </>
             }
@@ -1637,25 +1651,16 @@ function OwnedOverlayPropertyCard({
                     }}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    isSaved={isSaved}
+                    onToggleSave={onToggleSave}
                 />
             }
         >
-            <div className="flex flex-col gap-1.5 min-inline-0">
+            <div className="flex flex-col gap-3.5 min-inline-0">
                 <OverlayCardSummary
                     href={detailsHref}
-                    price={
-                        <div className="flex flex-col gap-0.5 min-inline-0">
-                            <p className="h5 font-semibold tracking-wide tabular-nums text-brand">
-                                {priceLabel}
-                            </p>
-                            {both ? (
-                                <p className="body-sm tracking-wide text-ink-muted tabular-nums">
-                                    Also {formatRentInr(listing.rentAmountInr ?? 0)} rent
-                                </p>
-                            ) : null}
-                        </div>
-                    }
-                    headline={headline || listing.title}
+                    price={<BrowseOverlayPrices listing={browse} audience={audience} />}
+                    headline={headline}
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />
 
@@ -1688,7 +1693,12 @@ function OwnedOverlayPropertyCard({
                             />
                         ) : null}
                         {!hasWorkingBrokers && listing.status !== "published" ? (
-                            <p className="body-xs rounded-control bg-amber-50 px-3 py-2 font-medium text-pending">
+                            <p
+                                className="
+                                  body-xs rounded-control bg-amber-50 px-3 py-2 font-medium
+                                  text-pending
+                                "
+                            >
                                 Publish this property to invite brokers
                             </p>
                         ) : null}
@@ -1723,7 +1733,7 @@ function OwnedOverlayPropertyCard({
                                 variant="outline"
                                 type="button"
                                 className={cn(
-                                    showAddBuyerButton ? "flex-1" : "inline-full",
+                                    showAddBuyerButton ? "flex-1 min-inline-0" : "inline-full",
                                     OVERLAY_GLASS_BUTTON_CLASS,
                                 )}
                                 onClick={onAttachOwner}
@@ -1741,7 +1751,9 @@ function OwnedOverlayPropertyCard({
                                 size="md"
                                 variant="accent"
                                 type="button"
-                                className={showAttachOwnerButton ? "flex-1" : "inline-full"}
+                                className={
+                                    showAttachOwnerButton ? "flex-1 min-inline-0" : "inline-full"
+                                }
                                 onClick={onAddBuyer}
                             >
                                 <UserPlus

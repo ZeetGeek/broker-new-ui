@@ -2,19 +2,10 @@
 
 import { useMemo, useState } from "react";
 
-import {
-    BadgePercent,
-    Bookmark,
-    CalendarDays,
-    DoorOpen,
-    KeyRound,
-    type LucideIcon,
-    MapPinned,
-    Ruler,
-    XIcon,
-} from "lucide-react";
+import { BadgePercent, CalendarDays, type LucideIcon, Ruler, XIcon } from "lucide-react";
 import SimpleBar from "simplebar-react";
 
+import { formatInr } from "@/lib/format/inr";
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
@@ -27,15 +18,19 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
+import { RangeSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { filterOwnerListings } from "@/features/properties/owner-listings/filter-owner-listings";
-import type {
-    OwnerListingItem,
-    OwnerListingsFilterContext,
-    OwnerListingsFilters,
-    OwnerListingsSheetFilters,
+import {
+    type OwnerListingItem,
+    type OwnerListingsFilterContext,
+    type OwnerListingsFilters,
+    type OwnerListingsSheetFilters,
+    type OwnerListingTransactionType,
+    RENT_COMMISSION_RANGE,
+    SALE_COMMISSION_RANGE,
 } from "@/features/properties/owner-listings/types";
 
 import "simplebar-react/dist/simplebar.min.css";
@@ -58,65 +53,92 @@ const LISTED_PRESETS: ChoicePreset[] = [
     { value: "30", label: "Last 30 days", hint: "Still recent inventory" },
 ];
 
-const COMMISSION_PRESETS: ChoicePreset[] = [
-    { value: "", label: "Any", hint: "Commission optional" },
-    { value: "1", label: "1%+", hint: "At least 1% shared" },
-    { value: "2", label: "2%+", hint: "At least 2% shared" },
-    { value: "3", label: "3%+", hint: "At least 3% shared" },
+const COMMISSION_TYPES: { value: OwnerListingTransactionType; label: string }[] = [
+    { value: "sale", label: "Sale" },
+    { value: "rent", label: "Rent" },
 ];
 
-const DEAL_OPTIONS: {
-    key: keyof Pick<
-        OwnerListingsSheetFilters,
-        "yourAreas" | "readyToMove" | "slotsOpen" | "commissionSet" | "bookmarked"
-    >;
-    label: string;
-    description: string;
-    icon: LucideIcon;
-}[] = [
-    {
-        key: "yourAreas",
-        label: "Your areas first",
-        description: "Show your service localities before others",
-        icon: MapPinned,
-    },
-    {
-        key: "readyToMove",
-        label: "Ready to move",
-        description: "Immediate possession",
-        icon: KeyRound,
-    },
-    {
-        key: "slotsOpen",
-        label: "Slots open",
-        description: "Still taking broker requests",
-        icon: DoorOpen,
-    },
-    {
-        key: "commissionSet",
-        label: "Commission set",
-        description: "Owner already shared a rate",
-        icon: BadgePercent,
-    },
-    {
-        key: "bookmarked",
-        label: "Bookmarked",
-        description: "Properties you have saved",
-        icon: Bookmark,
-    },
-];
+const EMPTY_COMMISSION_RANGE = {
+    minCommissionPercent: "",
+    maxCommissionPercent: "",
+    minCommissionAmount: "",
+    maxCommissionAmount: "",
+} satisfies Partial<OwnerListingsSheetFilters>;
+
+/** A thumb resting on its slider end means that side is unbounded (""). */
+function rangeToDraft(
+    [low, high]: readonly number[],
+    bounds: { min: number; max: number },
+    decimals: number,
+): [string, string] {
+    const round = (value: number) => Number(value.toFixed(decimals));
+    const min = round(low ?? bounds.min);
+    const max = round(high ?? bounds.max);
+    return [min <= bounds.min ? "" : String(min), max >= bounds.max ? "" : String(max)];
+}
+
+function draftToRange(
+    min: string,
+    max: string,
+    bounds: { min: number; max: number },
+): [number, number] {
+    const low = min ? Number(min) : bounds.min;
+    const high = max ? Number(max) : bounds.max;
+    return [
+        Number.isFinite(low) ? Math.max(bounds.min, low) : bounds.min,
+        Number.isFinite(high) ? Math.min(bounds.max, high) : bounds.max,
+    ];
+}
+
+function formatPercent(value: number): string {
+    return `${Number(value.toFixed(1))}%`;
+}
+
+// const DEAL_OPTIONS: {
+//     key: keyof Pick<
+//         OwnerListingsSheetFilters,
+//         "yourAreas" | "readyToMove" | "slotsOpen" | "commissionSet"
+//     >;
+//     label: string;
+//     description: string;
+//     icon: LucideIcon;
+// }[] = [
+//     {
+//         key: "yourAreas",
+//         label: "Your areas first",
+//         description: "Show your service localities before others",
+//         icon: MapPinned,
+//     },
+//     {
+//         key: "readyToMove",
+//         label: "Ready to move",
+//         description: "Immediate possession",
+//         icon: KeyRound,
+//     },
+//     {
+//         key: "slotsOpen",
+//         label: "Slots open",
+//         description: "Still taking broker requests",
+//         icon: DoorOpen,
+//     },
+//     {
+//         key: "commissionSet",
+//         label: "Commission set",
+//         description: "Owner already shared a rate",
+//         icon: BadgePercent,
+//     },
+// ];
 
 const EMPTY_SHEET_FILTERS: OwnerListingsSheetFilters = {
     minAreaSqft: "",
     maxAreaSqft: "",
     listedWithinDays: "",
-    minCommissionPercent: "",
+    ...EMPTY_COMMISSION_RANGE,
     yourAreas: false,
     newToday: false,
     slotsOpen: false,
     commissionSet: false,
     readyToMove: false,
-    bookmarked: false,
 };
 
 const SELECT_TRANSITION =
@@ -210,7 +232,10 @@ function OptionCard({
             aria-pressed={active}
             onClick={onClick}
             className={cn(
-                `flex flex-col justify-center gap-2 rounded-inner border p-3.5 text-start block-full`,
+                `
+                  flex flex-col justify-center gap-2 rounded-inner border p-3.5 text-start
+                  block-full
+                `,
                 SELECT_TRANSITION,
                 active
                     ? "border-brand bg-brand-soft text-brand-text"
@@ -234,6 +259,38 @@ function OptionCard({
                 </span>
             ) : null}
         </button>
+    );
+}
+
+function CommissionRange({
+    label,
+    minLabel,
+    maxLabel,
+    boundsLabel,
+    isAny,
+    children,
+}: {
+    label: string;
+    minLabel: string;
+    maxLabel: string;
+    boundsLabel: string;
+    isAny: boolean;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="flex flex-col gap-3 rounded-inner border border-border-warm p-4">
+            <div className="flex items-baseline justify-between gap-3">
+                <span className="text-sm font-semibold text-ink">{label}</span>
+                <span className="tabular text-sm font-semibold text-brand-text">
+                    {isAny ? "Any" : `${minLabel} – ${maxLabel}`}
+                </span>
+            </div>
+            {children}
+            <div className="flex items-center justify-between gap-3">
+                <span className="body-sm text-ink-muted">{boundsLabel}</span>
+                <span className="body-sm text-ink-muted">Drag both ends to set min and max</span>
+            </div>
+        </div>
     );
 }
 
@@ -309,11 +366,15 @@ export function OwnerListingsFilterSheet({
     onApply,
 }: OwnerListingsFilterSheetProps) {
     const [draft, setDraft] = useState(() => extractSheetFilters(appliedFilters));
+    // "Looking for" drives which commission slider shows; picking it here also
+    // sets the band's Sale / Rent filter on apply.
+    const [draftType, setDraftType] = useState(appliedFilters.type);
     const [draftSource, setDraftSource] = useState({ open: false, appliedFilters });
 
     if (open && (!draftSource.open || draftSource.appliedFilters !== appliedFilters)) {
         setDraftSource({ open: true, appliedFilters });
         setDraft(extractSheetFilters(appliedFilters));
+        setDraftType(appliedFilters.type);
     } else if (!open && draftSource.open) {
         setDraftSource({ open: false, appliedFilters });
     }
@@ -322,22 +383,38 @@ export function OwnerListingsFilterSheet({
         const merged: OwnerListingsFilters = {
             ...appliedFilters,
             ...draft,
+            type: draftType,
         };
         return filterOwnerListings(listings, merged, filterContext).totalCount;
-    }, [appliedFilters, draft, filterContext, listings]);
+    }, [appliedFilters, draft, draftType, filterContext, listings]);
+
+    const saleRange = draftToRange(
+        draft.minCommissionPercent,
+        draft.maxCommissionPercent,
+        SALE_COMMISSION_RANGE,
+    );
+    const rentRange = draftToRange(
+        draft.minCommissionAmount,
+        draft.maxCommissionAmount,
+        RENT_COMMISSION_RANGE,
+    );
+
+    const setCommissionType = (type: OwnerListingTransactionType) => {
+        // A sale range means nothing on rent listings and vice versa.
+        setDraftType(type);
+        setDraft((prev) => ({ ...prev, ...EMPTY_COMMISSION_RANGE }));
+    };
 
     const hasDraftFilters = useMemo(() => {
+        // Quick chips (New this week / Ready to move) live outside this sheet.
         return (
             Boolean(draft.minAreaSqft) ||
             Boolean(draft.maxAreaSqft) ||
             Boolean(draft.listedWithinDays) ||
             Boolean(draft.minCommissionPercent) ||
-            draft.yourAreas ||
-            draft.newToday ||
-            draft.slotsOpen ||
-            draft.commissionSet ||
-            draft.readyToMove ||
-            draft.bookmarked
+            Boolean(draft.maxCommissionPercent) ||
+            Boolean(draft.minCommissionAmount) ||
+            Boolean(draft.maxCommissionAmount)
         );
     }, [draft]);
 
@@ -348,22 +425,45 @@ export function OwnerListingsFilterSheet({
     const setListedPreset = (value: string) => {
         updateDraft({
             listedWithinDays: value,
-            newToday: value === "7",
+            // Listed → New chip only when picking Last 7 days; leave the chip alone otherwise.
+            ...(value === "7" ? { newToday: true } : {}),
         });
     };
 
     const handleApply = () => {
+        const leavingListedSeven =
+            appliedFilters.listedWithinDays === "7" && draft.listedWithinDays !== "7";
+
         onApply({
-            ...draft,
-            // Keep the New chip in sync with the Listed preset.
-            newToday: draft.listedWithinDays === "7",
+            minAreaSqft: draft.minAreaSqft,
+            maxAreaSqft: draft.maxAreaSqft,
+            listedWithinDays: draft.listedWithinDays,
+            minCommissionPercent: draft.minCommissionPercent,
+            maxCommissionPercent: draft.maxCommissionPercent,
+            minCommissionAmount: draft.minCommissionAmount,
+            maxCommissionAmount: draft.maxCommissionAmount,
+            type: draftType,
+            // Sync New chip with Listed Last 7 days; do not wipe a quick-chip-only New.
+            ...(draft.listedWithinDays === "7"
+                ? { newToday: true }
+                : leavingListedSeven
+                  ? { newToday: false }
+                  : {}),
             cursor: "",
         });
         onOpenChange(false);
     };
 
     const handleClear = () => {
-        setDraft(EMPTY_SHEET_FILTERS);
+        setDraft((prev) => ({
+            ...EMPTY_SHEET_FILTERS,
+            // Preserve quick-chip flags so Reset does not clear New / Ready to move.
+            newToday: prev.listedWithinDays === "7" ? false : prev.newToday,
+            readyToMove: prev.readyToMove,
+            slotsOpen: prev.slotsOpen,
+            commissionSet: prev.commissionSet,
+            yourAreas: prev.yourAreas,
+        }));
     };
 
     return (
@@ -388,15 +488,11 @@ export function OwnerListingsFilterSheet({
                     "
                 >
                     <div className="flex flex-col gap-1">
-                        <DialogTitle className="
-                          font-display text-base font-medium text-ink
-                          sm:text-lg
-                        ">
+                        <DialogTitle className="font-display text-base font-medium text-ink sm:text-lg">
                             Advanced filters
                         </DialogTitle>
                         <p className="body-sm text-ink-muted">
-                            Extra controls beyond the search bar — area, timing, commission, and
-                            deal fit
+                            Extra controls beyond the search bar — area, timing, and commission
                         </p>
                     </div>
                     <Tooltip>
@@ -404,8 +500,8 @@ export function OwnerListingsFilterSheet({
                             render={
                                 <DialogClose
                                     className="
-                                      flex shrink-0 items-center justify-center rounded-control border
-                                      border-border-warm bg-surface text-ink-muted
+                                      flex shrink-0 items-center justify-center rounded-control
+                                      border border-border-warm bg-surface text-ink-muted
                                       transition-[background-color,border-color,color,transform]
                                       duration-160 block-10 inline-10
                                       hover:border-brand/40 hover:bg-brand-soft
@@ -494,59 +590,119 @@ export function OwnerListingsFilterSheet({
 
                                 <FilterPanel
                                     title="Commission"
-                                    subtitle="Minimum rate the owner has shared"
+                                    subtitle={
+                                        draftType === "rent"
+                                            ? "Fixed rent commission the owner has shared"
+                                            : draftType === "sale"
+                                              ? "Sale commission percent the owner has shared"
+                                              : "Choose what you are looking for to set a range"
+                                    }
                                     className="md:col-span-2"
                                 >
-                                    <div
-                                        className="
-                                          grid flex-1 auto-rows-fr grid-cols-2 gap-2.5 min-block-0
-                                          sm:grid-cols-4
-                                        "
-                                    >
-                                        {COMMISSION_PRESETS.map((preset) => (
-                                            <OptionCard
-                                                key={preset.value || "any"}
-                                                label={preset.label}
-                                                hint={preset.hint}
-                                                active={draft.minCommissionPercent === preset.value}
-                                                icon={BadgePercent}
-                                                onClick={() =>
-                                                    updateDraft({
-                                                        minCommissionPercent: preset.value,
-                                                    })
-                                                }
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="body-sm text-ink-muted">Looking for</span>
+                                        {COMMISSION_TYPES.map((option) => (
+                                            <ChoiceChip
+                                                key={option.value}
+                                                label={option.label}
+                                                active={draftType === option.value}
+                                                onClick={() => setCommissionType(option.value)}
                                             />
                                         ))}
                                     </div>
+
+                                    {draftType === "sale" ? (
+                                        <CommissionRange
+                                            label="Sale commission"
+                                            minLabel={formatPercent(saleRange[0])}
+                                            maxLabel={formatPercent(saleRange[1])}
+                                            isAny={
+                                                !draft.minCommissionPercent &&
+                                                !draft.maxCommissionPercent
+                                            }
+                                            boundsLabel={`${formatPercent(SALE_COMMISSION_RANGE.min)} – ${formatPercent(SALE_COMMISSION_RANGE.max)}`}
+                                        >
+                                            <RangeSlider
+                                                value={saleRange}
+                                                min={SALE_COMMISSION_RANGE.min}
+                                                max={SALE_COMMISSION_RANGE.max}
+                                                step={SALE_COMMISSION_RANGE.step}
+                                                thumbLabels={[
+                                                    "Minimum sale commission",
+                                                    "Maximum sale commission",
+                                                ]}
+                                                onValueChange={(next) => {
+                                                    const [min, max] = rangeToDraft(
+                                                        next,
+                                                        SALE_COMMISSION_RANGE,
+                                                        1,
+                                                    );
+                                                    updateDraft({
+                                                        minCommissionPercent: min,
+                                                        maxCommissionPercent: max,
+                                                    });
+                                                }}
+                                            />
+                                        </CommissionRange>
+                                    ) : draftType === "rent" ? (
+                                        <CommissionRange
+                                            label="Rent commission"
+                                            minLabel={formatInr(rentRange[0])}
+                                            maxLabel={
+                                                rentRange[1] >= RENT_COMMISSION_RANGE.max
+                                                    ? `${formatInr(RENT_COMMISSION_RANGE.max)}+`
+                                                    : formatInr(rentRange[1])
+                                            }
+                                            isAny={
+                                                !draft.minCommissionAmount &&
+                                                !draft.maxCommissionAmount
+                                            }
+                                            boundsLabel={`${formatInr(RENT_COMMISSION_RANGE.min)} – ${formatInr(RENT_COMMISSION_RANGE.max)}+`}
+                                        >
+                                            <RangeSlider
+                                                value={rentRange}
+                                                min={RENT_COMMISSION_RANGE.min}
+                                                max={RENT_COMMISSION_RANGE.max}
+                                                step={RENT_COMMISSION_RANGE.step}
+                                                thumbLabels={[
+                                                    "Minimum rent commission",
+                                                    "Maximum rent commission",
+                                                ]}
+                                                onValueChange={(next) => {
+                                                    const [min, max] = rangeToDraft(
+                                                        next,
+                                                        RENT_COMMISSION_RANGE,
+                                                        0,
+                                                    );
+                                                    updateDraft({
+                                                        minCommissionAmount: min,
+                                                        maxCommissionAmount: max,
+                                                    });
+                                                }}
+                                            />
+                                        </CommissionRange>
+                                    ) : (
+                                        <div className="flex items-center gap-2 text-ink-muted">
+                                            <BadgePercent
+                                                className="block-4 inline-4"
+                                                strokeWidth={1.75}
+                                                aria-hidden
+                                            />
+                                            <span className="body-sm">
+                                                Sale shows a percent range. Rent shows a fixed
+                                                amount range.
+                                            </span>
+                                        </div>
+                                    )}
                                 </FilterPanel>
                             </div>
-
-                            <FilterPanel
-                                title="Deal fit"
-                                subtitle="Broker-side signals that are not on the search bar"
-                            >
-                                <div className="grid gap-2.5 sm:grid-cols-2">
-                                    {DEAL_OPTIONS.map((option) => (
-                                        <DealToggle
-                                            key={option.key}
-                                            label={option.label}
-                                            description={option.description}
-                                            icon={option.icon}
-                                            active={draft[option.key]}
-                                            onCheckedChange={(checked) =>
-                                                updateDraft({ [option.key]: checked })
-                                            }
-                                        />
-                                    ))}
-                                </div>
-                            </FilterPanel>
                         </div>
                     </SimpleBar>
                 </div>
 
                 <div className="shrink-0 border-bs border-border-warm bg-surface px-5 py-4 sm:px-7">
                     <AppModalFooter
-                        secondaryLabel="Clear all"
+                        secondaryLabel="Reset filter"
                         secondaryDisabled={!hasDraftFilters}
                         onSecondary={handleClear}
                         primaryLabel={`Show ${previewCount} properties`}

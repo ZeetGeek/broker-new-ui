@@ -13,12 +13,14 @@ type InfiniteItemsOptions<TPage extends InfinitePage<Identifiable>> = {
     queryKey: QueryKey;
     queryFn: (input: { cursor: string | null; signal: AbortSignal }) => Promise<TPage>;
     enabled?: boolean;
+    staleTime?: number;
 };
 
 export function useInfiniteItems<TPage extends InfinitePage<Identifiable>>({
     queryKey,
     queryFn,
     enabled = true,
+    staleTime,
 }: InfiniteItemsOptions<TPage>) {
     const query = useInfiniteQuery({
         queryKey,
@@ -26,6 +28,7 @@ export function useInfiniteItems<TPage extends InfinitePage<Identifiable>>({
         initialPageParam: null as string | null,
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         enabled,
+        ...(staleTime !== undefined ? { staleTime } : {}),
     });
 
     const items = useMemo(

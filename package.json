@@ -20,10 +20,10 @@
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": [
-            "prettier --write"
+            "node ./node_modules/prettier/bin/prettier.cjs --write"
         ],
         "*.{json,css,scss,md}": [
-            "prettier --write"
+            "node ./node_modules/prettier/bin/prettier.cjs --write"
         ]
     },
     "dependencies": {

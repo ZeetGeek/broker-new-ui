@@ -5,14 +5,14 @@ import { memo } from "react";
 import { addCollection, Icon } from "@iconify/react/offline";
 import { CalendarClock, Clock3, MapPin, PanelRight, RotateCcw, Trash2 } from "lucide-react";
 
-import { formatAreaSqft } from "@/lib/format/area";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { REQUEST_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitTime, visitAge } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,18 @@ import type { TimeRequest } from "@/features/site-visits/broker/model";
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
 
 const DOT = "\u00B7";
+
+const REQUEST_BADGE_COLOR = {
+    pending: "amber",
+    counter_offered: "orange",
+    accepted: "emerald",
+    declined: "red",
+    withdrawn: "stone",
+    expired: "stone",
+} as const satisfies Record<
+    TimeRequest["status"],
+    "amber" | "orange" | "emerald" | "red" | "stone"
+>;
 
 function canNudge(request: TimeRequest) {
     return (
@@ -57,7 +69,10 @@ export const RequestRow = memo(function RequestRow({
     const buyer = request.buyers[0];
     const buyerLabel =
         request.buyers.length > 1 ? `Buyers ${DOT} +${request.buyers.length - 1}` : "Buyer";
-    const metaName = `${request.property.configLabel} ${DOT} ${formatAreaSqft(request.property.areaSqft)}`;
+    const metaName =
+        formatPropertyCardName(request.property.propertyType, request.property.areaSqft, {
+            bhk: bhkFromConfigLabel(request.property.configLabel),
+        }) || request.property.configLabel;
     const propertyHref = brokerOwnerListingDetailHref(request.property.id);
     const askedLabel = (() => {
         const age = visitAge(request.createdAt);
@@ -96,10 +111,8 @@ export const RequestRow = memo(function RequestRow({
 
                 <div className="flex flex-col pbs-1! min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
-                        <Badge variant="outline" className={cn(status.tone)}>
-                            {status.label}
-                        </Badge>
-                        <Badge variant="neutral">
+                        <Badge color={REQUEST_BADGE_COLOR[request.status]}>{status.label}</Badge>
+                        <Badge color="sky">
                             <Clock3 aria-hidden />
                             {formatVisitTime(request.preferredStartsAt)}
                             <span className="text-ink-subtle">{DOT}</span>
@@ -107,9 +120,12 @@ export const RequestRow = memo(function RequestRow({
                         </Badge>
                     </div>
 
-                    <Price
+                    <PriceWithCommission
                         amountInr={request.property.amountInr}
                         isRent={request.property.purpose === "rent"}
+                        commissionPercent={request.property.commissionPercent}
+                        commissionAmountInr={request.property.commissionAmountInr}
+                        audience="broker"
                         className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
                     />
 
@@ -162,7 +178,7 @@ export const RequestRow = memo(function RequestRow({
                 <div
                     className="
                       col-span-2 flex items-center justify-end gap-3
-                      sm:col-span-1 sm:justify-self-end sm:gap-4
+                      sm:col-span-1 sm:gap-4 sm:justify-self-end
                     "
                 >
                     <div
@@ -272,7 +288,7 @@ export const RequestRow = memo(function RequestRow({
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" size="md" onClick={onDecline} disabled={busy}>
-                            Decline
+                            Cancel
                         </Button>
                         <Button size="md" onClick={onAccept} loading={busy}>
                             Accept {formatVisitTime(request.counterOffer.startsAt)}
@@ -308,7 +324,7 @@ export const RequestRow = memo(function RequestRow({
                                 onClick={onWithdraw}
                                 disabled={busy}
                             >
-                                <Trash2 aria-hidden /> Withdraw
+                                <Trash2 aria-hidden /> Cancel request
                             </Button>
                             <Button
                                 type="button"

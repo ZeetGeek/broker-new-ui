@@ -115,7 +115,6 @@ export function OwnerCard({
                     name={owner.name}
                     imageUrl={owner.avatarUrl}
                     size="md"
-                    fallback="shape"
                     className="shrink-0"
                 />
                 <div className="min-inline-0">

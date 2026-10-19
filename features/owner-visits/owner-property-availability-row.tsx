@@ -6,14 +6,14 @@ import { Building2, CalendarPlus, Check, ChevronDown, MapPin, X } from "lucide-r
 
 import type { VisitSlot } from "@/lib/api/owner-slots";
 import type { PropertyListing } from "@/lib/api/properties";
-import { formatAreaSqft } from "@/lib/format/area";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { formatTime24, parseApiInstant } from "@/lib/format/date";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission, toCommissionNumber } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,7 +77,14 @@ export const OwnerPropertyAvailabilityRow = memo(function OwnerPropertyAvailabil
     const { amountInr, isRent } = propertyAmountInr(property);
     const configLabel = propertyConfigLabel(property);
     const purposeLabel = isRent ? "For rent" : "For sale";
-    const propertyName = `${configLabel}${property.areaSqft ? ` · ${formatAreaSqft(property.areaSqft)}` : ""}`;
+    const typeKey = property.propertyType?.trim() || property.subtype?.trim() || "";
+    const propertyName =
+        formatPropertyCardName(typeKey, property.areaSqft, {
+            bhk: bhkFromConfigLabel(configLabel),
+            bathrooms: property.bathrooms,
+        }) ||
+        configLabel ||
+        "Property";
     const title =
         property.title?.trim() || `${configLabel} in ${property.city?.trim() || "your city"}`;
 
@@ -121,9 +128,12 @@ export const OwnerPropertyAvailabilityRow = memo(function OwnerPropertyAvailabil
                     </div>
 
                     {amountInr > 0 ? (
-                        <Price
+                        <PriceWithCommission
                             amountInr={amountInr}
                             isRent={isRent}
+                            commissionPercent={toCommissionNumber(property.commissionPercent)}
+                            commissionAmountInr={toCommissionNumber(property.commissionAmount)}
+                            audience="owner"
                             className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
                         />
                     ) : (

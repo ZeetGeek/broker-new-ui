@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { readPrefJson, writePrefJson } from "@/lib/prefs/storage";
 
 type UseUrlSyncedPrefsOptions<T> = {

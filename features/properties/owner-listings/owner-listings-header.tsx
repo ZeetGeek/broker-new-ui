@@ -25,8 +25,7 @@ export type OwnerListingsHeaderProps = {
     onApplyBand: (band: OwnerListingsBandFilters) => void;
     onApplySheet: (patch: Partial<OwnerListingsFilters>) => void;
     onToggleQuickChip: (
-        key:
-            "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove" | "bookmarked",
+        key: "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove",
     ) => void;
     onSortChange: (sort: OwnerListingSort) => void;
 };
@@ -51,6 +50,19 @@ export function OwnerListingsHeader({
         setSheetOpen(true);
     }, []);
 
+    const handleClearSheetFilters = useCallback(() => {
+        onApplySheet({
+            minAreaSqft: "",
+            maxAreaSqft: "",
+            listedWithinDays: "",
+            minCommissionPercent: "",
+            maxCommissionPercent: "",
+            minCommissionAmount: "",
+            maxCommissionAmount: "",
+            cursor: "",
+        });
+    }, [onApplySheet]);
+
     return (
         <>
             <div className="sticky inset-bs-0 z-10 flex flex-col gap-6">
@@ -68,6 +80,7 @@ export function OwnerListingsHeader({
                     isLoading={isResultsLoading}
                     onToggleQuickChip={onToggleQuickChip}
                     onOpenFilters={handleOpenFilters}
+                    onClearSheetFilters={handleClearSheetFilters}
                     onQueryChange={(q) => onApplySheet({ q, cursor: "" })}
                     onSortChange={onSortChange}
                 />

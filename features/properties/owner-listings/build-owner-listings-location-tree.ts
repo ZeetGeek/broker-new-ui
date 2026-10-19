@@ -1,3 +1,5 @@
+import { formatLocationPathLabel, formatPlaceName } from "@/lib/format/owner-listings-labels";
+
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 
 const DEFAULT_COUNTRY = "India";
@@ -42,9 +44,37 @@ export type OwnerListingLocationCountryGroup = {
     states: OwnerListingLocationStateGroup[];
 };
 
-export type OwnerListingLocationSearchHit = OwnerListingLocationLeaf & {
-    pathLabel: string;
-};
+export type OwnerListingLocationSearchHit =
+    | {
+          kind: "country";
+          country: string;
+          listingCount: number;
+          pathLabel: string;
+      }
+    | {
+          kind: "state";
+          country: string;
+          state: string;
+          listingCount: number;
+          pathLabel: string;
+      }
+    | {
+          kind: "city";
+          country: string;
+          state: string;
+          city: string;
+          listingCount: number;
+          pathLabel: string;
+      }
+    | {
+          kind: "locality";
+          locality: string;
+          city: string;
+          state: string;
+          country: string;
+          listingCount: number;
+          pathLabel: string;
+      };
 
 function resolveStateForCity(city: string, state?: string): string {
     const trimmedState = state?.trim();
@@ -135,6 +165,21 @@ function normalizeSearchValue(value: string) {
     return value.trim().toLowerCase();
 }
 
+function matchesQuery(label: string, query: string) {
+    return label.toLowerCase().includes(query);
+}
+
+function startsWithQuery(label: string, query: string) {
+    return label.toLowerCase().startsWith(query);
+}
+
+const KIND_RANK: Record<OwnerListingLocationSearchHit["kind"], number> = {
+    country: 0,
+    state: 1,
+    city: 2,
+    locality: 3,
+};
+
 export function searchOwnerListingLocations(
     tree: OwnerListingLocationCountryGroup[],
     query: string,
@@ -147,15 +192,48 @@ export function searchOwnerListingLocations(
     const hits: OwnerListingLocationSearchHit[] = [];
 
     for (const countryGroup of tree) {
+        if (matchesQuery(countryGroup.country, normalizedQuery)) {
+            hits.push({
+                kind: "country",
+                country: countryGroup.country,
+                listingCount: countryGroup.listingCount,
+                pathLabel: "Country",
+            });
+        }
+
         for (const stateGroup of countryGroup.states) {
+            if (matchesQuery(stateGroup.state, normalizedQuery)) {
+                hits.push({
+                    kind: "state",
+                    country: stateGroup.country,
+                    state: stateGroup.state,
+                    listingCount: stateGroup.listingCount,
+                    pathLabel: formatPlaceName(stateGroup.country),
+                });
+            }
+
             for (const cityGroup of stateGroup.cities) {
+                if (matchesQuery(cityGroup.city, normalizedQuery)) {
+                    hits.push({
+                        kind: "city",
+                        country: cityGroup.country,
+                        state: cityGroup.state,
+                        city: cityGroup.city,
+                        listingCount: cityGroup.listingCount,
+                        pathLabel: formatLocationPathLabel("", cityGroup.state, cityGroup.country),
+                    });
+                }
+
                 for (const leaf of cityGroup.localities) {
-                    const haystack =
-                        `${leaf.locality} ${leaf.city} ${leaf.state} ${leaf.country}`.toLowerCase();
-                    if (haystack.includes(normalizedQuery)) {
+                    if (matchesQuery(leaf.locality, normalizedQuery)) {
                         hits.push({
-                            ...leaf,
-                            pathLabel: `${leaf.city}, ${leaf.state}`,
+                            kind: "locality",
+                            locality: leaf.locality,
+                            city: leaf.city,
+                            state: leaf.state,
+                            country: leaf.country,
+                            listingCount: leaf.listingCount,
+                            pathLabel: formatLocationPathLabel(leaf.city, leaf.state, leaf.country),
                         });
                     }
                 }
@@ -164,14 +242,107 @@ export function searchOwnerListingLocations(
     }
 
     return hits.sort((left, right) => {
-        const leftStarts = left.locality.toLowerCase().startsWith(normalizedQuery);
-        const rightStarts = right.locality.toLowerCase().startsWith(normalizedQuery);
+        const leftLabel =
+            left.kind === "country"
+                ? left.country
+                : left.kind === "state"
+                  ? left.state
+                  : left.kind === "city"
+                    ? left.city
+                    : left.locality;
+        const rightLabel =
+            right.kind === "country"
+                ? right.country
+                : right.kind === "state"
+                  ? right.state
+                  : right.kind === "city"
+                    ? right.city
+                    : right.locality;
+
+        const leftStarts = startsWithQuery(leftLabel, normalizedQuery);
+        const rightStarts = startsWithQuery(rightLabel, normalizedQuery);
         if (leftStarts !== rightStarts) {
             return leftStarts ? -1 : 1;
         }
 
-        return left.locality.localeCompare(right.locality, "en-IN");
+        const kindDelta = KIND_RANK[left.kind] - KIND_RANK[right.kind];
+        if (kindDelta !== 0) return kindDelta;
+
+        return leftLabel.localeCompare(rightLabel, "en-IN");
     });
+}
+
+export function findCountryGroup(
+    tree: OwnerListingLocationCountryGroup[],
+    country: string,
+): OwnerListingLocationCountryGroup | undefined {
+    return tree.find((group) => group.country.toLowerCase() === country.toLowerCase());
+}
+
+export function findStateGroup(
+    tree: OwnerListingLocationCountryGroup[],
+    country: string,
+    state: string,
+): OwnerListingLocationStateGroup | undefined {
+    return findCountryGroup(tree, country)?.states.find(
+        (group) => group.state.toLowerCase() === state.toLowerCase(),
+    );
+}
+
+export function findCityGroup(
+    tree: OwnerListingLocationCountryGroup[],
+    country: string,
+    state: string,
+    city: string,
+): OwnerListingLocationCityGroup | undefined {
+    return findStateGroup(tree, country, state)?.cities.find(
+        (group) => group.city.toLowerCase() === city.toLowerCase(),
+    );
+}
+
+export function citiesInCountry(
+    tree: OwnerListingLocationCountryGroup[],
+    country: string,
+): string[] {
+    const group = findCountryGroup(tree, country);
+    if (!group) return [];
+    return group.states.flatMap((state) => state.cities.map((city) => city.city));
+}
+
+export function citiesInState(
+    tree: OwnerListingLocationCountryGroup[],
+    country: string,
+    state: string,
+): string[] {
+    const group = findStateGroup(tree, country, state);
+    if (!group) return [];
+    return group.cities.map((city) => city.city);
+}
+
+export function sameCitySet(left: string[], right: string[]): boolean {
+    if (left.length !== right.length) return false;
+    const normalized = new Set(left.map((city) => city.toLowerCase()));
+    return right.every((city) => normalized.has(city.toLowerCase()));
+}
+
+/** Stable Where-filter key for a state under a country. */
+export function encodeOwnerListingStateKey(country: string, state: string): string {
+    return `${country}|${state}`;
+}
+
+export function decodeOwnerListingStateKey(key: string): { country: string; state: string } {
+    const index = key.indexOf("|");
+    if (index <= 0) return { country: "", state: key };
+    return { country: key.slice(0, index), state: key.slice(index + 1) };
+}
+
+export function toggleStringList(list: string[], value: string): string[] {
+    const needle = value.toLowerCase();
+    const exists = list.some((item) => item.toLowerCase() === needle);
+    if (exists) {
+        return list.filter((item) => item.toLowerCase() !== needle);
+    }
+    return [...list, value];
 }
 
 export function groupOwnerListingLocationsByCity(

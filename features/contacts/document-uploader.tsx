@@ -292,7 +292,9 @@ export function DocumentUploader({
                             htmlFor={inputId}
                             className={cn(
                                 "body-sm font-semibold text-brand-text",
-                                isDisabled ? "cursor-not-allowed" : "cursor-pointer hover:underline",
+                                isDisabled
+                                    ? "cursor-not-allowed"
+                                    : "cursor-pointer hover:underline",
                             )}
                         >
                             Choose files
@@ -318,7 +320,11 @@ export function DocumentUploader({
             {documents.length > 0 ? (
                 <>
                     <p className="body-xs flex items-center gap-1.5 text-ink-muted">
-                        <Paperclip aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                        <Paperclip
+                            aria-hidden
+                            className="block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
                         {documents.length} of {MAX_DOCUMENTS_PER_BUYER} attached
                     </p>
 

@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { File as FileIcon,FileImage, FileSpreadsheet, FileText } from "lucide-react";
+import { File as FileIcon, FileImage, FileSpreadsheet, FileText } from "lucide-react";
 
 /**
  * What a buyer document is for. Kept deliberately short — a broker filing a

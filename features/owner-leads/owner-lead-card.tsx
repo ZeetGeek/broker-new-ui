@@ -17,15 +17,16 @@ import {
 } from "lucide-react";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
-import { formatAreaSqft } from "@/lib/format/area";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { parseInr } from "@/lib/format/inr";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
@@ -43,7 +44,7 @@ import {
 function PartyCell({ name, role }: { name: string; role: string }) {
     return (
         <div className="flex items-center gap-2.5 min-inline-0">
-            <UserAvatar name={name} size="xs" fallback="character" className="shrink-0" />
+            <UserAvatar name={name} size="xs" className="shrink-0" />
             <div className="flex flex-col min-inline-0">
                 <span className="body-xs text-ink-subtle">{role}</span>
                 <span className="body-sm truncate font-semibold text-ink">{name}</span>
@@ -171,7 +172,7 @@ export function OwnerLeadCard({
                                 <span className="truncate">{location}</span>
                             </span>
                         ) : null}
-                        {facts.areaSqft || facts.configLabel ? (
+                        {facts.propertyTypeLabel || facts.areaSqft || facts.configLabel ? (
                             <>
                                 {location ? (
                                     <span aria-hidden className="text-border-warm">
@@ -184,12 +185,11 @@ export function OwnerLeadCard({
                                         className="block-4 inline-4"
                                         strokeWidth={1.75}
                                     />
-                                    {[
-                                        facts.areaSqft ? formatAreaSqft(facts.areaSqft) : null,
-                                        facts.configLabel,
-                                    ]
-                                        .filter(Boolean)
-                                        .join(" · ")}
+                                    {formatPropertyCardName(
+                                        facts.propertyTypeLabel ?? "",
+                                        facts.areaSqft,
+                                        { bhk: bhkFromConfigLabel(facts.configLabel) },
+                                    ) || facts.configLabel}
                                 </span>
                             </>
                         ) : null}
@@ -198,9 +198,12 @@ export function OwnerLeadCard({
 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     {facts.askingInr != null ? (
-                        <Price
+                        <PriceWithCommission
                             amountInr={facts.askingInr}
                             isRent={facts.isRent}
+                            commissionPercent={facts.commissionPercent}
+                            commissionAmountInr={facts.commissionAmountInr}
+                            audience="owner"
                             className="h5 text-brand"
                         />
                     ) : (
@@ -315,7 +318,7 @@ export function OwnerLeadCard({
                             className="flex-1"
                         >
                             <X aria-hidden strokeWidth={2} />
-                            Reject
+                            Cancel
                         </Button>
                         <Button
                             type="button"

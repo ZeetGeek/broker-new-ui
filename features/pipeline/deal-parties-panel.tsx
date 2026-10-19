@@ -60,7 +60,6 @@ export function DealPartiesPanel({
                         name={assignedAgent.name}
                         imageUrl={assignedAgent.avatarUrl}
                         size="xxs"
-                        fallback="character"
                     />
                     <span className="body-xs truncate font-semibold text-ink-muted capitalize">
                         {assignedAgent.name}

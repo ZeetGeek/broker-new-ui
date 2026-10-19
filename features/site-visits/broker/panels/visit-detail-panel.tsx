@@ -63,12 +63,7 @@ function ContactBlock({
         : undefined;
     return (
         <div className="flex items-center gap-3 rounded-inner bg-surface-muted p-3">
-            <UserAvatar
-                name={person.name}
-                imageUrl={person.avatarUrl}
-                size="md"
-                fallback="character"
-            />
+            <UserAvatar name={person.name} imageUrl={person.avatarUrl} size="md" />
             <div
                 className="
       flex-1 min-inline-0

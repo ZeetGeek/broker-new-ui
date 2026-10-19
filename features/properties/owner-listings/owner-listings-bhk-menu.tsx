@@ -33,6 +33,8 @@ export type OwnerListingsBhkMenuProps = {
     value: string[];
     onToggle: (value: string) => void;
     onClear: () => void;
+    /** Apply the reset to the results while the menu stays open. */
+    onCommit?: () => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
 };
@@ -41,6 +43,7 @@ export function OwnerListingsBhkMenu({
     value,
     onToggle,
     onClear,
+    onCommit,
     onOpenChange,
     className,
 }: OwnerListingsBhkMenuProps) {
@@ -63,6 +66,7 @@ export function OwnerListingsBhkMenu({
                             value={formatBhkLabel(value)}
                             className="inline-full"
                             isOpen={open}
+                            isActive={value.length > 0}
                         />
                     }
                 />
@@ -78,7 +82,11 @@ export function OwnerListingsBhkMenu({
                     <div className="flex flex-col gap-4 p-5">
                         <OwnerListingsBandMenuHeader
                             description="Select one or more"
-                            onClear={onClear}
+                            showReset={value.length > 0}
+                            onClear={() => {
+                                onClear();
+                                onCommit?.();
+                            }}
                         />
 
                         <div

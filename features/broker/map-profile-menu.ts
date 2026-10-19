@@ -2,10 +2,7 @@ import type { UserProfile } from "@/lib/api/profile";
 
 import type { BrokerProfileMenuBroker } from "./profile-menu";
 
-export type BrokerVerificationState =
-    | "PROFILE_INCOMPLETE"
-    | "PENDING_VERIFICATION"
-    | "VERIFIED";
+export type BrokerVerificationState = "PROFILE_INCOMPLETE" | "PENDING_VERIFICATION" | "VERIFIED";
 
 export function mapBrokerVerificationState(profile: UserProfile | null): BrokerVerificationState {
     const verified = profile?.verified ?? profile?.broker?.verified;

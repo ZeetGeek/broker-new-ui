@@ -7,7 +7,7 @@ import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
@@ -110,24 +110,19 @@ function PropertyRow({ property }: { property: RepresentedPropertyItem }) {
                         <PropertyTitleLink href={detailsHref} className="body font-semibold">
                             {property.configLabel} · {property.locality}
                         </PropertyTitleLink>
-                        <Price
+                        <PriceWithCommission
                             amountInr={property.amountInr}
                             isRent={property.isRent}
+                            commissionPercent={property.commissionPercent}
+                            commissionAmountInr={property.commissionAmountInr}
+                            audience="broker"
                             className="body font-semibold"
                         />
-                        <Badge
-                            className={
-                                property.isRent
-                                    ? "border-0 bg-sky-100 text-sky-800"
-                                    : "border-0 bg-emerald-100 text-emerald-800"
-                            }
-                        >
+                        <Badge color={property.isRent ? "orange" : "emerald"}>
                             {property.isRent ? "Rent" : "Sale"}
                         </Badge>
                         {property.stageLabel ? (
-                            <Badge className="border-0 bg-amber-100 text-amber-900">
-                                {property.stageLabel}
-                            </Badge>
+                            <Badge color="amber">{property.stageLabel}</Badge>
                         ) : null}
                     </div>
 

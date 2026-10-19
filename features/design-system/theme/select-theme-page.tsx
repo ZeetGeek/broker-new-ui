@@ -95,7 +95,9 @@ function ListingTypeDemo() {
                 startIcon={Building2}
                 success={touched && isValid}
                 errorText={touched && !isValid ? "Choose a listing type" : undefined}
-                helperText={!touched ? "Sale or rent — this drives the rest of the form" : undefined}
+                helperText={
+                    !touched ? "Sale or rent — this drives the rest of the form" : undefined
+                }
             >
                 <SelectValue placeholder="Listing type" />
             </SelectTrigger>
@@ -122,7 +124,9 @@ function LoadingDemo() {
             <SelectTrigger
                 startIcon={MapPin}
                 loading={loading}
-                helperText={loading ? "Checking availability" : "Checked against your service areas"}
+                helperText={
+                    loading ? "Checking availability" : "Checked against your service areas"
+                }
             >
                 <SelectValue placeholder="Service area" />
             </SelectTrigger>
@@ -284,9 +288,10 @@ export function SelectThemePage() {
                             overlay on this product.
                         </li>
                         <li>
-                            Standard 12px corners via <code className="body-xs">rounded-control</code>{" "}
-                            on the trigger, <code className="body-xs">rounded-card</code> on the
-                            popup. Never override radius at the call site.
+                            Standard 12px corners via{" "}
+                            <code className="body-xs">rounded-control</code> on the trigger,{" "}
+                            <code className="body-xs">rounded-card</code> on the popup. Never
+                            override radius at the call site.
                         </li>
                     </ul>
                 </section>

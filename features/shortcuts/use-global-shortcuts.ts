@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 import { tinykeys } from "tinykeys";
+
+import { useRouter } from "@/lib/navigation";
 
 function isEditable(el: EventTarget | null): boolean {
     if (!(el instanceof HTMLElement)) return false;
@@ -52,7 +53,11 @@ export type UseGlobalShortcutsOptions = {
  * docs/SHORTCUTS.md for the map, reserved keys, and the guard rules this
  * hook must follow.
  */
-export function useGlobalShortcuts({ routes, onShortcutsOpen, onLogoutFocus }: UseGlobalShortcutsOptions) {
+export function useGlobalShortcuts({
+    routes,
+    onShortcutsOpen,
+    onLogoutFocus,
+}: UseGlobalShortcutsOptions) {
     const router = useRouter();
 
     useEffect(() => {

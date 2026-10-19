@@ -5,13 +5,12 @@ import { Building2 } from "lucide-react";
 import { formatRelativePast } from "@/lib/format/date";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
-import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeColor } from "@/components/ui/badge";
 
 import type { BuyerLead, BuyerRow } from "@/features/contacts/types";
 
@@ -32,11 +31,14 @@ function stageLabel(stage: string): string {
     return STAGE_LABELS[stage] ?? stage.replace(/_/g, " ");
 }
 
-function stageTone(stage: string): "brand" | "neutral" | "success" | "muted" {
-    if (stage === "closed" || stage === "closed_won") return "success";
-    if (stage === "lost" || stage === "closed_lost") return "muted";
-    if (stage === "offer_made" || stage === "negotiation") return "brand";
-    return "neutral";
+function stageColor(stage: string): BadgeColor {
+    if (stage === "closed" || stage === "closed_won") return "emerald";
+    if (stage === "lost" || stage === "closed_lost") return "stone";
+    if (stage === "new") return "sky";
+    if (stage === "contacted") return "violet";
+    if (stage === "visit" || stage === "site_visit") return "amber";
+    if (stage === "offer_made" || stage === "negotiation") return "emerald";
+    return "sky";
 }
 
 function moneyLine(lead: BuyerLead): string | null {
@@ -53,13 +55,11 @@ function moneyLine(lead: BuyerLead): string | null {
 }
 
 function LeadRow({ lead }: { lead: BuyerLead }) {
-    const tone = stageTone(lead.stage);
+    const tone = stageColor(lead.stage);
     const money = moneyLine(lead);
 
     return (
-        <article
-            className="flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-3"
-        >
+        <article className="flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-3">
             <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5 min-inline-0">
                     <PropertyTitleLink
@@ -70,14 +70,7 @@ function LeadRow({ lead }: { lead: BuyerLead }) {
                     </PropertyTitleLink>
                     {lead.city ? <p className="body-xs text-ink-muted">{lead.city}</p> : null}
                 </div>
-                <Badge
-                    variant={tone === "brand" ? "brand" : "neutral"}
-                    className={cn(
-                        "shrink-0",
-                        tone === "success" && "border-success/30 text-success",
-                        tone === "muted" && "text-ink-muted",
-                    )}
-                >
+                <Badge color={tone} className="shrink-0">
                     {stageLabel(lead.stage)}
                 </Badge>
             </div>

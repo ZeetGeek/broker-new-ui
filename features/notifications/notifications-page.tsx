@@ -89,7 +89,7 @@ export function NotificationsPage() {
                     </p>
                 </div>
             ) : (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col">
                     <div
                         className="
                           overflow-hidden rounded-card border border-border-warm bg-surface

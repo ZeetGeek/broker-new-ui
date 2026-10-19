@@ -33,11 +33,7 @@ const FURNISHING = [
 const RADIO_OPTION_ITEM_CLASS =
     "shrink-0 border-ink-subtle bg-surface data-checked:border-brand data-checked:bg-brand";
 
-function optionCardClassName(
-    active: boolean,
-    hasDescription: boolean,
-    disabled?: boolean,
-) {
+function optionCardClassName(active: boolean, hasDescription: boolean, disabled?: boolean) {
     return cn(
         `
           flex cursor-pointer gap-3 rounded-control border px-4 py-3 text-start font-normal
@@ -98,10 +94,7 @@ function OptionCardGroup({
                             id={id}
                             value={option.value}
                             disabled={disabled}
-                            className={cn(
-                                RADIO_OPTION_ITEM_CLASS,
-                                hasDescription && "mts-0.5",
-                            )}
+                            className={cn(RADIO_OPTION_ITEM_CLASS, hasDescription && "mts-0.5")}
                         />
                         <span className="min-inline-0">
                             <span className="block text-sm leading-5 font-semibold">
@@ -239,8 +232,8 @@ export function RadioThemePage() {
                     <h2 className="h4 text-ink">States — live demo</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Pick a listing type. The message region follows real selection — the same
-                        wiring a form uses with <code className="body-xs">aria-invalid</code> on
-                        the group.
+                        wiring a form uses with <code className="body-xs">aria-invalid</code> on the
+                        group.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Swatch label="Listing type — validates on pick">
@@ -286,26 +279,24 @@ export function RadioThemePage() {
                             <code className="body-xs">Switch</code>. Multi-select is Checkbox.
                         </li>
                         <li>
-                            Keep the compound API —{" "}
-                            <code className="body-xs">RadioGroup</code> +{" "}
+                            Keep the compound API — <code className="body-xs">RadioGroup</code> +{" "}
                             <code className="body-xs">RadioGroupItem</code>. Do not invent a
                             standalone radio without a group.
                         </li>
                         <li>
                             Wrap each item in a <code className="body-xs">Label</code> (or native{" "}
-                            <code className="body-xs">&lt;label&gt;</code>) so the whole row or
-                            card is tappable — especially on phones.
+                            <code className="body-xs">&lt;label&gt;</code>) so the whole row or card
+                            is tappable — especially on phones.
                         </li>
                         <li>
                             Checked indicator fill is <code className="body-xs">brand</code>.
-                            Selected option cards use{" "}
-                            <code className="body-xs">border-brand</code> +{" "}
-                            <code className="body-xs">bg-brand-soft</code>. Hover only changes
-                            the border.
+                            Selected option cards use <code className="body-xs">border-brand</code>{" "}
+                            + <code className="body-xs">bg-brand-soft</code>. Hover only changes the
+                            border.
                         </li>
                         <li>
-                            Put <code className="body-xs">aria-invalid</code> on the group when
-                            the choice is required and empty — not on every item.
+                            Put <code className="body-xs">aria-invalid</code> on the group when the
+                            choice is required and empty — not on every item.
                         </li>
                         <li>
                             Circle geometry stays <code className="body-xs">rounded-full</code>.

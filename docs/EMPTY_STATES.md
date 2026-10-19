@@ -30,17 +30,17 @@ Three jobs, in order:
 Zero is a state, not a quantity. Counting nothing is cold and reads as
 failure.
 
-| ❌ | ✅ |
-|---|---|
-| 0 site visits, 0 requests waiting | No visits booked. No requests waiting. |
-| 0 clients | No clients yet |
-| 0 properties represented | You're not representing any properties yet |
-| You have 0 follow-ups | Nothing due today |
-| 0 new in your areas | No new properties in your areas this week |
+| ❌                                | ✅                                         |
+| --------------------------------- | ------------------------------------------ |
+| 0 site visits, 0 requests waiting | No visits booked. No requests waiting.     |
+| 0 clients                         | No clients yet                             |
+| 0 properties represented          | You're not representing any properties yet |
+| You have 0 follow-ups             | Nothing due today                          |
+| 0 new in your areas               | No new properties in your areas this week  |
 
 **The exception:** a zero inside a progress or ratio is fine, because the
 denominator gives it meaning — "0 of 5 photos uploaded", "Step 1 of 3". The
-rule is about zero as a *standalone count*.
+rule is about zero as a _standalone count_.
 
 Better still, when everything is zero, **stop counting and say something
 useful.** A summary line that adds up to nothing should be replaced, not
@@ -50,18 +50,18 @@ rendered.
 
 ## Three kinds — design differs, not just wording
 
-| Kind | Situation | Design |
-|---|---|---|
-| **First-run** | Never had data | Icon + headline + one line + **primary button**. The most important one. |
-| **Filtered** | Has data, filter hides it | No icon. Short line + **`Clear filters`**. Must never say "add your first…" |
-| **Cleared** | Had data, now done | Quiet and positive. No button. Small, low-contrast. |
+| Kind          | Situation                 | Design                                                                      |
+| ------------- | ------------------------- | --------------------------------------------------------------------------- |
+| **First-run** | Never had data            | Icon + headline + one line + **primary button**. The most important one.    |
+| **Filtered**  | Has data, filter hides it | No icon. Short line + **`Clear filters`**. Must never say "add your first…" |
+| **Cleared**   | Had data, now done        | Quiet and positive. No button. Small, low-contrast.                         |
 
 Getting this wrong is a bug. In the current dashboard, **"Nothing due. Nice."**
 is written as a cleared state, but a brand-new broker has never had a follow-up
 to clear. To them it reads as praise for nothing — slightly odd, and it teaches
 them nothing about what follow-ups are.
 
-For a new user that card should say what follow-ups *are*:
+For a new user that card should say what follow-ups _are_:
 
 > **No follow-ups yet**
 > Set a reminder to call a client back, and it'll show here.
@@ -85,19 +85,19 @@ For a new user that card should say what follow-ups *are*:
 └──────────────────────────────────┘
 ```
 
-| Element | Rule |
-|---|---|
-| Icon | Single line icon, ~40px, muted, optional soft tinted circle behind it. Never a large illustration — it costs bytes on mobile data. |
-| Headline | `text-h3`. States what's missing. No period on a fragment. |
-| Body | One line, `text-body-sm`, muted. Says what appears here or what to do. Never two lines on mobile. |
-| Action | **At most one** button per card. Others are text links. |
-| Height | Collapses to content. See below. |
-| Shadow | None — separation comes from the cream canvas against white cards. |
-| Orange | Never. Orange is reserved for time pressure. |
+| Element  | Rule                                                                                                                               |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Icon     | Single line icon, ~40px, muted, optional soft tinted circle behind it. Never a large illustration — it costs bytes on mobile data. |
+| Headline | `text-h3`. States what's missing. No period on a fragment.                                                                         |
+| Body     | One line, `text-body-sm`, muted. Says what appears here or what to do. Never two lines on mobile.                                  |
+| Action   | **At most one** button per card. Others are text links.                                                                            |
+| Height   | Collapses to content. See below.                                                                                                   |
+| Shadow   | None — separation comes from the cream canvas against white cards.                                                                 |
+| Orange   | Never. Orange is reserved for time pressure.                                                                                       |
 
 ### The ghost-preview variant
 
-For lists whose *shape* is unfamiliar — the pipeline, the activity feed, the
+For lists whose _shape_ is unfamiliar — the pipeline, the activity feed, the
 requests list — a stronger pattern than an icon is a **faded ghost of one real
 row**, at ~15% opacity, with a caption beneath.
 
@@ -125,8 +125,8 @@ instead of three, which matters far more on a phone than a desktop.
 ## The wall-of-empty problem
 
 Six empty cards stacked together is the real issue on the current dashboard.
-Each message is fine in isolation; together they read as *"this app has nothing
-in it."* That is the opposite of what a founding broker should feel on day one.
+Each message is fine in isolation; together they read as _"this app has nothing
+in it."_ That is the opposite of what a founding broker should feel on day one.
 
 Three rules:
 
@@ -164,12 +164,12 @@ second empty screen. And RERA verification gates what a broker can do at all.
 When a prerequisite is missing, the empty state's job changes: it should ask
 for the prerequisite, not the goal.
 
-| Broker state | The card should say |
-|---|---|
-| `PROFILE_INCOMPLETE` | **Add your RERA number to get verified**<br>Owners approve verified brokers far more often.<br>`[Add RERA number]` |
-| No service areas | **Tell us where you work**<br>We'll show you new properties in those areas.<br>`[Add service areas]` |
-| `PENDING_VERIFICATION` | **Verification in progress**<br>You can browse and add clients now. We'll email you when it's approved.<br>— |
-| `VERIFIED`, no data | The normal first-run empty state |
+| Broker state           | The card should say                                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `PROFILE_INCOMPLETE`   | **Add your RERA number to get verified**<br>Owners approve verified brokers far more often.<br>`[Add RERA number]` |
+| No service areas       | **Tell us where you work**<br>We'll show you new properties in those areas.<br>`[Add service areas]`               |
+| `PENDING_VERIFICATION` | **Verification in progress**<br>You can browse and add clients now. We'll email you when it's approved.<br>—       |
+| `VERIFIED`, no data    | The normal first-run empty state                                                                                   |
 
 The setup path is the empty state until setup is done. Everything else waits.
 
@@ -180,20 +180,20 @@ The setup path is the empty state until setup is done. Everything else waits.
 Consistent shape across every surface: **headline names what's missing, body
 explains where it comes from, action is one verb.**
 
-| Surface | First-run empty |
-|---|---|
-| Next visit | **No visits booked**<br>Schedule one when a client is ready to see a property. |
-| Today | **Nothing booked today**<br>Visits you schedule will appear here. |
-| Requests | **No requests sent yet**<br>Find a property you'd like to sell and ask the owner. |
-| Pipeline | **No clients yet**<br>Add a buyer or tenant to start tracking deals. |
-| Follow-ups | **No follow-ups yet**<br>Set a reminder to call a client back, and it'll show here. |
-| Activity | **Nothing yet**<br>Owner approvals, views, and updates will appear here. |
-| You represent | **Not representing any properties yet**<br>Once an owner approves your request, the property appears here. |
-| New in your areas | **Nothing new this week**<br>We'll show properties added in the areas you work in. |
-| Owner: properties | **No properties yet**<br>Add your first one — it takes about 2 minutes. |
-| Owner: requests | **No broker requests yet**<br>Brokers can see your property and ask to sell it. We'll let you know. |
-| Browse, filtered | **No properties match these filters**<br>Try a wider budget or a different locality. |
-| Search | **No results for "{query}"**<br>Check the spelling, or search by locality. |
+| Surface           | First-run empty                                                                                            |
+| ----------------- | ---------------------------------------------------------------------------------------------------------- |
+| Next visit        | **No visits booked**<br>Schedule one when a client is ready to see a property.                             |
+| Today             | **Nothing booked today**<br>Visits you schedule will appear here.                                          |
+| Requests          | **No requests sent yet**<br>Find a property you'd like to sell and ask the owner.                          |
+| Pipeline          | **No clients yet**<br>Add a buyer or tenant to start tracking deals.                                       |
+| Follow-ups        | **No follow-ups yet**<br>Set a reminder to call a client back, and it'll show here.                        |
+| Activity          | **Nothing yet**<br>Owner approvals, views, and updates will appear here.                                   |
+| You represent     | **Not representing any properties yet**<br>Once an owner approves your request, the property appears here. |
+| New in your areas | **Nothing new this week**<br>We'll show properties added in the areas you work in.                         |
+| Owner: properties | **No properties yet**<br>Add your first one — it takes about 2 minutes.                                    |
+| Owner: requests   | **No broker requests yet**<br>Brokers can see your property and ask to sell it. We'll let you know.        |
+| Browse, filtered  | **No properties match these filters**<br>Try a wider budget or a different locality.                       |
+| Search            | **No results for "{query}"**<br>Check the spelling, or search by locality.                                 |
 
 ---
 
@@ -218,11 +218,11 @@ explains where it comes from, action is one verb.**
 The current dashboard uses a solid black button, a plain text link, and a text
 link with an arrow — three treatments for the same tier of action.
 
-| Tier | Treatment |
-|---|---|
-| The one primary action on the screen | Solid button |
-| Secondary actions | Text link with a trailing chevron |
-| Tertiary / informational | Plain text link |
+| Tier                                 | Treatment                         |
+| ------------------------------------ | --------------------------------- |
+| The one primary action on the screen | Solid button                      |
+| Secondary actions                    | Text link with a trailing chevron |
+| Tertiary / informational             | Plain text link                   |
 
 Pick one arrow style and use it everywhere. `→` and `›` should not both appear
 on one screen.
@@ -282,7 +282,7 @@ And once there is real data, counting is finally correct:
 **Cards** — six become three:
 
 1. **Setup card** (primary, solid button) — Add RERA → service areas
-2. **One combined visits card** — not "Next Showing" *and* "Today"
+2. **One combined visits card** — not "Next Showing" _and_ "Today"
 3. **Requests**, with the ghost-preview treatment so the shape is learnable
 
 Pipeline, Follow-ups, and Activity collapse to a single quiet line each, or

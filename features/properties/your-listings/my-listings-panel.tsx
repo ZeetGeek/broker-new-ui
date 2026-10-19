@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tinykeys } from "tinykeys";
 
 import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
+import { propertiesApi } from "@/lib/api/properties";
 import { representativeApi } from "@/lib/api/representative";
 import { summarizePropertyBrokers } from "@/lib/format/property-brokers";
 import { getShortcut } from "@/lib/shortcuts";
@@ -19,6 +20,7 @@ import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buye
 import type { RequestItem } from "@/features/properties/my-requests/types";
 import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
+import { SAVED_PROPERTIES_QUERY_KEY } from "@/features/properties/saved-properties/saved-properties-query";
 import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
 import { InvitePropertyBrokerModal } from "@/features/properties/your-listings/invite-property-broker-modal";
 import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
@@ -102,8 +104,44 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     const [brokerInviteSession, setBrokerInviteSession] = useState(0);
     /** Bumped after a save so the list refetches without changing filters. */
     const [refreshToken, setRefreshToken] = useState(0);
+    const [savedOverrides, setSavedOverrides] = useState<Record<string, boolean>>({});
 
     const isOwnerPortal = portal === "owner";
+    const savedLookup = useQuery({
+        queryKey: [...SAVED_PROPERTIES_QUERY_KEY, "lookup"],
+        queryFn: ({ signal }) => propertiesApi.listBookmarks({ page: 1, limit: 100 }, signal),
+        enabled: !isOwnerPortal,
+        staleTime: 0,
+    });
+    const savedIds = useMemo(
+        () => new Set((savedLookup.data?.items ?? []).map((item) => item.id)),
+        [savedLookup.data],
+    );
+    const isListingSaved = useCallback(
+        (item: MyListingItem) =>
+            savedOverrides[item.id] ?? (savedIds.has(item.id) || Boolean(item.isBookmarked)),
+        [savedIds, savedOverrides],
+    );
+    const handleToggleSave = useCallback(
+        async (item: MyListingItem) => {
+            const nextSaved = !isListingSaved(item);
+            setSavedOverrides((prev) => ({ ...prev, [item.id]: nextSaved }));
+            try {
+                if (nextSaved) {
+                    await propertiesApi.bookmark(item.id);
+                    toast.success("Property saved");
+                } else {
+                    await propertiesApi.unbookmark(item.id);
+                    toast.success("Removed from saved");
+                }
+                void queryClient.invalidateQueries({ queryKey: SAVED_PROPERTIES_QUERY_KEY });
+            } catch (error) {
+                setSavedOverrides((prev) => ({ ...prev, [item.id]: !nextSaved }));
+                toast.error(error instanceof Error ? error.message : "Could not update bookmark");
+            }
+        },
+        [isListingSaved, queryClient],
+    );
     const representations = useQuery({
         queryKey: ["owner-property-representations"],
         queryFn: () => representativeApi.ownerList(),
@@ -259,6 +297,10 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                                       setIsOwnerAttachOpen(true);
                                   }
                         }
+                        onToggleSave={
+                            isOwnerPortal ? undefined : (listing) => void handleToggleSave(listing)
+                        }
+                        isSaved={isOwnerPortal ? undefined : isListingSaved}
                     />
                     <InfiniteListStatus
                         hasNextPage={Boolean(query.hasNextPage)}

@@ -38,6 +38,8 @@ export type ApiShowing = {
         bedrooms?: number | null;
         areaSqft?: number | null;
         photos?: string[] | null;
+        commissionPercent?: string | number | null;
+        commissionAmount?: string | number | null;
     } | null;
     owner?: {
         id: string;
@@ -129,6 +131,18 @@ function moneyNumber(value?: string | number | null): number {
 
 function purposeFromTransaction(type?: string | null): "sale" | "rent" {
     return type === "rent" ? "rent" : "sale";
+}
+
+function commissionFromSource(source: {
+    commissionPercent?: string | number | null;
+    commissionAmount?: string | number | null;
+}): Pick<VisitPropertySummary, "commissionPercent" | "commissionAmountInr"> {
+    const percent = moneyNumber(source.commissionPercent);
+    const amount = moneyNumber(source.commissionAmount);
+    return {
+        ...(percent > 0 ? { commissionPercent: percent } : {}),
+        ...(amount > 0 ? { commissionAmountInr: amount } : {}),
+    };
 }
 
 const BHK_CONFIG_LABEL: Record<string, string> = {
@@ -234,6 +248,7 @@ function mapShowingProperty(showing: ApiShowing): VisitPropertySummary {
         areaSqft: p?.areaSqft ?? 0,
         amountInr: amount,
         purpose: purposeFromTransaction(p?.transactionType),
+        ...commissionFromSource(p ?? {}),
         coverUrl: p?.photos?.[0] ?? undefined,
     };
 }
@@ -305,6 +320,8 @@ export type ApiBrokerOpenSlotItem = {
         bedrooms?: number | null;
         areaSqft?: number | null;
         photos?: string[] | null;
+        commissionPercent?: string | number | null;
+        commissionAmount?: string | number | null;
     };
     propertySource: "marketplace" | "own_listing";
     access: "accepted" | "none" | "requested";
@@ -364,6 +381,7 @@ export function mapBrokerOpenSlotItem(item: ApiBrokerOpenSlotItem): PropertyWith
             areaSqft: p.areaSqft ?? 0,
             amountInr: amount,
             purpose: purposeFromTransaction(p.transactionType),
+            ...commissionFromSource(p),
             coverUrl: p.photos?.[0] ?? undefined,
         },
         propertySource: item.propertySource,
@@ -392,6 +410,7 @@ function listingToPropertySummary(listing: MyListingItem | PropertyListing): Vis
             areaSqft: mine.areaSqft,
             amountInr: mine.saleAmountInr ?? mine.rentAmountInr ?? 0,
             purpose: mine.transactionType === "rent" ? "rent" : "sale",
+            ...commissionFromSource(mine),
             coverUrl: mine.imageSrc || mine.imageSrcs?.[0],
         };
     }
@@ -407,6 +426,7 @@ function listingToPropertySummary(listing: MyListingItem | PropertyListing): Vis
         areaSqft: api.areaSqft ?? 0,
         amountInr: moneyNumber(api.salePrice) || moneyNumber(api.monthlyRent),
         purpose: purposeFromTransaction(api.transactionType),
+        ...commissionFromSource(api),
         coverUrl: api.photos?.[0] ?? undefined,
     };
 }
@@ -431,6 +451,10 @@ export function representationToPropertyCard(
         areaSqft: item.propertyAreaSqft ?? 0,
         amountInr: amount,
         purpose: purposeFromTransaction(item.propertyTransactionType),
+        ...commissionFromSource({
+            commissionPercent: item.propertyCommissionPercent,
+            commissionAmount: item.propertyCommissionAmount,
+        }),
         coverUrl: item.propertyPhotos?.[0] ?? undefined,
     };
     const owner: PersonSummary = {

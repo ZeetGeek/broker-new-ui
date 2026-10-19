@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -12,6 +11,7 @@ import {
     GOOGLE_ONBOARDING_KEY,
     portalHomeForRole,
 } from "@/lib/auth/session";
+import { useRouter } from "@/lib/navigation";
 
 import { Button } from "@/components/ui/button";
 

@@ -185,6 +185,9 @@ export type PropertyBrowseQuery = {
     maxAreaSqft?: number;
     listedWithinDays?: number;
     minCommissionPercent?: number;
+    maxCommissionPercent?: number;
+    minCommissionAmount?: number;
+    maxCommissionAmount?: number;
     commissionSet?: boolean;
     readyToMove?: boolean;
     /** Only listings the caller has bookmarked. */
@@ -296,6 +299,15 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     }
     if (params.minCommissionPercent != null && !Number.isNaN(params.minCommissionPercent)) {
         q.set("minCommissionPercent", String(params.minCommissionPercent));
+    }
+    if (params.maxCommissionPercent != null && !Number.isNaN(params.maxCommissionPercent)) {
+        q.set("maxCommissionPercent", String(params.maxCommissionPercent));
+    }
+    if (params.minCommissionAmount != null && !Number.isNaN(params.minCommissionAmount)) {
+        q.set("minCommissionAmount", String(params.minCommissionAmount));
+    }
+    if (params.maxCommissionAmount != null && !Number.isNaN(params.maxCommissionAmount)) {
+        q.set("maxCommissionAmount", String(params.maxCommissionAmount));
     }
     if (params.commissionSet) q.set("commissionSet", "1");
     if (params.readyToMove) q.set("readyToMove", "1");
@@ -422,9 +434,74 @@ function mockListingById(id: string): PropertyListing | null {
         availableFrom: mine.availableFrom,
         publishStatus: mine.status === "published" ? "published" : "draft",
         isDraft: mine.status !== "published",
+        visibility: mine.status === "published" ? "public" : "private",
+        permissions: { canEdit: true },
         createdAt: mine.createdAt,
         updatedAt: mine.updatedAt,
         maintenanceCharges: mine.maintenanceInr,
+    };
+}
+
+const MOCK_BOOKMARKS_KEY = "broker_mock_bookmarks";
+
+function seedMockBookmarkIds(): string[] {
+    return MOCK_OWNER_LISTINGS.filter((item) => item.isBookmarked).map((item) => item.id);
+}
+
+function readMockBookmarkIds(): string[] {
+    if (typeof window === "undefined") return seedMockBookmarkIds();
+    try {
+        const raw = window.sessionStorage.getItem(MOCK_BOOKMARKS_KEY);
+        if (raw == null) {
+            const seed = seedMockBookmarkIds();
+            window.sessionStorage.setItem(MOCK_BOOKMARKS_KEY, JSON.stringify(seed));
+            return seed;
+        }
+        const parsed: unknown = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return seedMockBookmarkIds();
+        return parsed.filter((id): id is string => typeof id === "string");
+    } catch {
+        return seedMockBookmarkIds();
+    }
+}
+
+function writeMockBookmarkIds(ids: string[]) {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem(MOCK_BOOKMARKS_KEY, JSON.stringify(ids));
+}
+
+/** Ids the mock bookmark store currently holds. Seeded from owner listings. */
+export function mockBookmarkedIdSet(): Set<string> {
+    return new Set(readMockBookmarkIds());
+}
+
+function rememberMockBookmark(id: string) {
+    const ids = readMockBookmarkIds().filter((existing) => existing !== id);
+    writeMockBookmarkIds([id, ...ids]);
+}
+
+function forgetMockBookmark(id: string) {
+    writeMockBookmarkIds(readMockBookmarkIds().filter((existing) => existing !== id));
+}
+
+function mockBookmarkedPage(params?: PropertyListQuery): PropertyListPage {
+    const bookmarked: PropertyListing[] = [];
+    for (const id of readMockBookmarkIds()) {
+        const listing = mockListingById(id);
+        if (!listing) continue;
+        bookmarked.push({ ...listing, isBookmarked: true });
+    }
+    const limit = params?.limit ?? 20;
+    const page = params?.page ?? 1;
+    const start = (page - 1) * limit;
+    const total = bookmarked.length;
+
+    return {
+        items: bookmarked.slice(start, start + limit),
+        total,
+        page,
+        limit,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
     };
 }
 
@@ -526,8 +603,12 @@ export const propertiesApi = {
         });
     },
 
-    /** Save a public owner listing for the caller. */
+    /** Save a listing for the caller (owner pool or the broker’s own inventory). */
     bookmark(id: string) {
+        if (isMockMode()) {
+            rememberMockBookmark(id);
+            return Promise.resolve({ propertyId: id, isBookmarked: true as const });
+        }
         return apiFetch<{ propertyId: string; isBookmarked: true }>(`/properties/${id}/bookmark`, {
             method: "POST",
         });
@@ -535,13 +616,20 @@ export const propertiesApi = {
 
     /** Remove the caller’s bookmark for a listing. */
     unbookmark(id: string) {
+        if (isMockMode()) {
+            forgetMockBookmark(id);
+            return Promise.resolve({ propertyId: id, isBookmarked: false as const });
+        }
         return apiFetch<{ propertyId: string; isBookmarked: false }>(`/properties/${id}/bookmark`, {
             method: "DELETE",
         });
     },
 
-    /** Caller’s bookmarked owner listings. */
+    /** Caller’s saved listings, newest first. */
     listBookmarks(params?: PropertyListQuery, signal?: AbortSignal) {
+        if (isMockMode()) {
+            return Promise.resolve(mockBookmarkedPage(params));
+        }
         return apiFetch<PropertyListPage>(`/properties/bookmarks${buildListQuery(params)}`, {
             signal,
         });

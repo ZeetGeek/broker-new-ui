@@ -2,17 +2,14 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
-import { cn } from "@/lib/utils";
-
 import { TextLoop } from "@/components/motion-primitives/text-loop";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeColor } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { OwnerRequestsSummary, OwnerRequestsTab } from "@/features/owner-requests/types";
 
 const SUMMARY_LOOP_INTERVAL_S = 6.5;
 const META_TEXT = "body-sm font-medium text-ink-muted";
-const CHIP_SURFACE = "bg-surface";
 
 function countLabel(count: number, singular: string, plural: string) {
     return `${count} ${count === 1 ? singular : plural}`;
@@ -66,12 +63,12 @@ function StatusBadge({
     label,
     count,
     hint,
-    tone = "default",
+    color,
 }: {
     label: string;
     count: number;
     hint: string;
-    tone?: "default" | "urgent" | "success";
+    color: BadgeColor;
 }) {
     if (count <= 0) return null;
 
@@ -79,14 +76,7 @@ function StatusBadge({
         <Tooltip>
             <TooltipTrigger
                 render={
-                    <Badge
-                        variant={tone === "urgent" ? "urgent" : "outline"}
-                        className={cn(
-                            "cursor-help",
-                            tone !== "urgent" && CHIP_SURFACE,
-                            tone === "success" && "text-success",
-                        )}
-                    >
+                    <Badge color={color} className="cursor-help">
                         {label} · {count}
                     </Badge>
                 }
@@ -109,12 +99,13 @@ function RequestsStatusMeta({ summary }: { summary: OwnerRequestsSummary | null 
                 <StatusBadge
                     label="Waiting on you"
                     count={summary.incomingPending}
-                    tone="urgent"
+                    color="orange"
                     hint="Brokers waiting for you to say yes or no."
                 />
                 <StatusBadge
                     label="Sent invites"
                     count={summary.invitesPending}
+                    color="violet"
                     hint="Invites you sent that brokers have not answered yet."
                 />
             </div>

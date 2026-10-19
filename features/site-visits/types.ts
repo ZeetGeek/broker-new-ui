@@ -55,6 +55,10 @@ export type VisitProperty = {
     /** Ask in INR — rent when `isRent`, else sale. */
     amountInr: number;
     isRent: boolean;
+    /** Sale commission percent. Absent or 0 when unset. */
+    commissionPercent?: number | null;
+    /** Fixed rent brokerage in INR. Absent or 0 when unset. */
+    commissionAmountInr?: number | null;
     imageSrc: string;
 };
 

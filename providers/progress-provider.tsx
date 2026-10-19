@@ -9,10 +9,10 @@ import { ProgressProvider as BProgressProvider } from "@bprogress/next/app";
 export function ProgressProvider({ children }: { children: React.ReactNode }) {
     return (
         <BProgressProvider
-            height="4px"
-            color="linear-gradient(90deg,rgba(44, 121, 90, 0) 0%, rgba(44, 121, 90, 1) 100%)"
+            height="3px"
+            color="#1b7a5a"
             options={{ showSpinner: false }}
-            shallowRouting
+            startPosition={0.12}
         >
             {children}
         </BProgressProvider>

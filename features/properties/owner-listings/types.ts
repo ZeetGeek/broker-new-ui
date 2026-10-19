@@ -15,6 +15,8 @@ export type OwnerListingItem = {
     configLabel: string;
     propertyTypeLabel: OwnerListingPropertyType;
     bhk: number;
+    /** Bathrooms when the listing has them. Absent/null when unset. */
+    bathrooms?: number | null;
     locality: string;
     city: string;
     /** Indian state or union territory. Supplied by API when available. */
@@ -71,6 +73,13 @@ export type OwnerListingItem = {
 export type OwnerListingsFilters = {
     /** Sheet — free-text search */
     q: string;
+    /** Band — multi-select countries */
+    countries: string[];
+    /**
+     * Band — multi-select states as `country|state` keys.
+     * Encoded so the same state name can exist in more than one country.
+     */
+    states: string[];
     /** Band — multi-select cities (from browse cities API) */
     cities: string[];
     /** Band — multi-select localities */
@@ -91,16 +100,18 @@ export type OwnerListingsFilters = {
     maxAreaSqft: string;
     /** Sheet — listed within N days (`7` | `30` | "") */
     listedWithinDays: string;
-    /** Sheet — minimum owner commission percent */
+    /** Sheet — sale commission range in percent ("" = open end) */
     minCommissionPercent: string;
+    maxCommissionPercent: string;
+    /** Sheet — rent commission range in INR ("" = open end) */
+    minCommissionAmount: string;
+    maxCommissionAmount: string;
     /** Quick chips / sheet — instant toggles */
     yourAreas: boolean;
     newToday: boolean;
     slotsOpen: boolean;
     commissionSet: boolean;
     readyToMove: boolean;
-    /** Quick chip — listings the broker has bookmarked */
-    bookmarked: boolean;
     sort: OwnerListingSort;
     /** 1-based page as string (URL `cursor`). Empty = page 1. */
     cursor: string;
@@ -110,6 +121,8 @@ export type OwnerListingsFilters = {
 
 export type OwnerListingsBandFilters = Pick<
     OwnerListingsFilters,
+    | "countries"
+    | "states"
     | "cities"
     | "localities"
     | "bhk"
@@ -127,12 +140,14 @@ export type OwnerListingsSheetFilters = Pick<
     | "maxAreaSqft"
     | "listedWithinDays"
     | "minCommissionPercent"
+    | "maxCommissionPercent"
+    | "minCommissionAmount"
+    | "maxCommissionAmount"
     | "yourAreas"
     | "newToday"
     | "slotsOpen"
     | "commissionSet"
     | "readyToMove"
-    | "bookmarked"
 >;
 
 export type OwnerListingsFilterContext = {
@@ -151,6 +166,8 @@ export type OwnerListingsResult = {
 
 export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     q: "",
+    countries: [],
+    states: [],
     cities: [],
     localities: [],
     bhk: [],
@@ -163,17 +180,25 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     maxAreaSqft: "",
     listedWithinDays: "",
     minCommissionPercent: "",
-    /** Default Where → Serviceable areas. */
-    yourAreas: true,
+    maxCommissionPercent: "",
+    minCommissionAmount: "",
+    maxCommissionAmount: "",
+    /** Default Where → Anywhere. Serviceable areas is an explicit choice. */
+    yourAreas: false,
     newToday: false,
     slotsOpen: false,
     commissionSet: false,
     readyToMove: false,
-    bookmarked: false,
     sort: "newest",
     cursor: "",
     limit: 10,
 };
+
+/** Sale commission slider bounds (owners must share 0.1–5 %). */
+export const SALE_COMMISSION_RANGE = { min: 0.1, max: 5, step: 0.1 } as const;
+
+/** Rent commission slider bounds in INR. The top end means "and above". */
+export const RENT_COMMISSION_RANGE = { min: 0, max: 200_000, step: 5_000 } as const;
 
 export const OWNER_LISTING_PROPERTY_TYPES: { value: OwnerListingPropertyType; label: string }[] = [
     { value: "apartment", label: "Apartment" },

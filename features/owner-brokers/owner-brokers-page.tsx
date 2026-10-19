@@ -118,7 +118,7 @@ export function OwnerBrokersPage() {
         body = (
             <div
                 className={cn(
-                    "flex flex-col gap-2",
+                    "flex flex-col",
                     queue.isFetching &&
                         !queue.isFetchingNextPage &&
                         "opacity-60 transition-opacity duration-160",

@@ -1,16 +1,12 @@
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 
 /** True when listing can be sold. */
-export function offersSale(listing: {
-    saleAmountInr: number | null;
-}): boolean {
+export function offersSale(listing: { saleAmountInr: number | null }): boolean {
     return listing.saleAmountInr != null && listing.saleAmountInr > 0;
 }
 
 /** True when listing can be rented. */
-export function offersRent(listing: {
-    rentAmountInr: number | null;
-}): boolean {
+export function offersRent(listing: { rentAmountInr: number | null }): boolean {
     return listing.rentAmountInr != null && listing.rentAmountInr > 0;
 }
 

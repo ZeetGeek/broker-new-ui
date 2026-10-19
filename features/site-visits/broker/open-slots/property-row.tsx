@@ -4,13 +4,13 @@ import { memo, useMemo, useState } from "react";
 
 import { BadgeCheck, Building2, CalendarClock, ChevronDown, MapPin, Sparkles } from "lucide-react";
 
-import { formatAreaSqft } from "@/lib/format/area";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, istDateKey } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,7 +78,10 @@ export const PropertyRow = memo(function PropertyRow({
         item.propertySource === "own_listing"
             ? brokerPropertyDetailHref(item.property.id)
             : brokerOwnerListingDetailHref(item.property.id);
-    const propertyName = `${item.property.configLabel} · ${formatAreaSqft(item.property.areaSqft)}`;
+    const propertyName =
+        formatPropertyCardName(item.property.propertyType, item.property.areaSqft, {
+            bhk: bhkFromConfigLabel(item.property.configLabel),
+        }) || item.property.configLabel;
 
     return (
         <article
@@ -113,26 +116,29 @@ export const PropertyRow = memo(function PropertyRow({
                 <div className="flex flex-col pbs-1! min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
                         <Badge
-                            variant={
+                            color={
                                 hasAccess
-                                    ? "brand"
+                                    ? "emerald"
                                     : item.access === "requested"
-                                      ? "neutral"
-                                      : "outline"
+                                      ? "amber"
+                                      : "stone"
                             }
                         >
                             {hasAccess ? <BadgeCheck aria-hidden /> : null}
                             {accessLabel}
                         </Badge>
-                        <Badge variant="neutral">
+                        <Badge color={item.property.purpose === "rent" ? "orange" : "emerald"}>
                             <Building2 aria-hidden />
                             {purposeLabel}
                         </Badge>
                     </div>
 
-                    <Price
+                    <PriceWithCommission
                         amountInr={item.property.amountInr}
                         isRent={item.property.purpose === "rent"}
+                        commissionPercent={item.property.commissionPercent}
+                        commissionAmountInr={item.property.commissionAmountInr}
+                        audience="broker"
                         className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
                     />
 

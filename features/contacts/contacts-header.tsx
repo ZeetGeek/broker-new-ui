@@ -7,6 +7,7 @@ import { ArrowDownUp, ChevronDown, Plus, Search, UserRound, Users } from "lucide
 import { getShortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
+import { FilterChip, filterChipClassName } from "@/components/shared/filter-chip";
 import { Button } from "@/components/ui/button";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import {
@@ -24,11 +25,6 @@ import type {
     ContactsSummary,
     ContactsTab,
 } from "@/features/contacts/types";
-import {
-    formatChipCount,
-    ownerListingsChipClassName,
-    ownerListingsChipCountClassName,
-} from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
@@ -125,49 +121,19 @@ export function ContactsHeader({
                                 },
                             ] as const
                         ).map((chip) => {
-                            const Icon = chip.icon;
                             const active = filters.tab === chip.value;
                             return (
                                 <OwnerListingsChipsCarouselSlide key={chip.value}>
-                                    <Tooltip>
-                                        <TooltipTrigger
-                                            render={
-                                                <button
-                                                    type="button"
-                                                    className={ownerListingsChipClassName(active)}
-                                                    onClick={() => setTab(chip.value)}
-                                                    aria-pressed={active}
-                                                >
-                                                    <Icon
-                                                        aria-hidden
-                                                        className={cn(
-                                                            "block-4 inline-4",
-                                                            active
-                                                                ? "text-brand-text"
-                                                                : "text-brand",
-                                                        )}
-                                                        strokeWidth={1.75}
-                                                    />
-                                                    <span className="md:hidden">
-                                                        {chip.mobileLabel}
-                                                    </span>
-                                                    <span className="hidden md:inline">
-                                                        {chip.label}
-                                                    </span>
-                                                    <span
-                                                        className={ownerListingsChipCountClassName(
-                                                            active,
-                                                        )}
-                                                    >
-                                                        {formatChipCount(chip.count, isLoading)}
-                                                    </span>
-                                                </button>
-                                            }
-                                        />
-                                        <TooltipContent side="bottom">
-                                            {chip.description}
-                                        </TooltipContent>
-                                    </Tooltip>
+                                    <FilterChip
+                                        label={chip.label}
+                                        mobileLabel={chip.mobileLabel}
+                                        icon={chip.icon}
+                                        count={chip.count}
+                                        isLoading={isLoading}
+                                        isActive={active}
+                                        onClick={() => setTab(chip.value)}
+                                        description={chip.description}
+                                    />
                                 </OwnerListingsChipsCarouselSlide>
                             );
                         })}
@@ -193,28 +159,23 @@ export function ContactsHeader({
                                   ] as const
                               ).map((chip) => {
                                   const active = filters.ownerOrigin === chip.value;
+                                  const isDefault = chip.value === "all";
                                   return (
                                       <OwnerListingsChipsCarouselSlide key={chip.value}>
-                                          <button
-                                              type="button"
-                                              className={ownerListingsChipClassName(active)}
+                                          <FilterChip
+                                              label={chip.label}
+                                              count={chip.count}
+                                              isLoading={isLoading}
+                                              isActive={active}
+                                              clearable={!isDefault}
                                               onClick={() =>
                                                   onFiltersChange({
                                                       ...filters,
-                                                      ownerOrigin: chip.value,
+                                                      ownerOrigin:
+                                                          active && !isDefault ? "all" : chip.value,
                                                   })
                                               }
-                                              aria-pressed={active}
-                                          >
-                                              <span>{chip.label}</span>
-                                              <span
-                                                  className={ownerListingsChipCountClassName(
-                                                      active,
-                                                  )}
-                                              >
-                                                  {formatChipCount(chip.count, isLoading)}
-                                              </span>
-                                          </button>
+                                          />
                                       </OwnerListingsChipsCarouselSlide>
                                   );
                               })
@@ -236,7 +197,7 @@ export function ContactsHeader({
                                                 <button
                                                     type="button"
                                                     className={cn(
-                                                        ownerListingsChipClassName(
+                                                        filterChipClassName(
                                                             filters.sort !== "recent",
                                                         ),
                                                         "gap-2",

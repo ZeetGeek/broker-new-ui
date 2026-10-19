@@ -2,7 +2,18 @@
 
 import { useMemo, useState } from "react";
 
-import { type LucideIcon, MapPin, MapPinned, MapPinOff, Search } from "lucide-react";
+import {
+    type LucideIcon,
+    Building2,
+    ChevronLeft,
+    ChevronRight,
+    Globe2,
+    LandPlot,
+    MapPin,
+    MapPinned,
+    MapPinOff,
+    Search,
+} from "lucide-react";
 
 import {
     formatLocalitiesLabel,
@@ -19,14 +30,17 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import {
     buildOwnerListingsLocationTree,
-    flattenOwnerListingLocationLeaves,
+    encodeOwnerListingStateKey,
+    findCityGroup,
+    findCountryGroup,
+    findStateGroup,
     type OwnerListingLocationSearchHit,
     searchOwnerListingLocations,
+    toggleStringList,
 } from "@/features/properties/owner-listings/build-owner-listings-location-tree";
 import {
     OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
@@ -37,11 +51,17 @@ import { OwnerListingsBandMenuHeader } from "@/features/properties/owner-listing
 import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 
+type WhereBrowseLevel =
+    | { kind: "root" }
+    | { kind: "country"; country: string }
+    | { kind: "state"; country: string; state: string }
+    | { kind: "city"; country: string; state: string; city: string };
+
 const rowClass = (checked: boolean) =>
     cn(
         `
           group/row my-1 cursor-pointer! items-center gap-3 rounded-inner border border-transparent
-          px-2.5 py-3 pe-10
+          px-2.5 py-3
         `,
         "font-normal text-ink transition-[background-color,border-color,box-shadow] duration-160",
         "[--row-icon:var(--color-ink-subtle)]",
@@ -50,12 +70,23 @@ const rowClass = (checked: boolean) =>
         "data-highlighted:[--row-icon:var(--color-brand)]",
         "**:data-muted-line:text-ink-muted!",
         "**:data-muted-line:*:text-ink-muted!",
-        "hover:**:data-muted-line:text-ink-muted!",
-        "hover:**:data-muted-line:*:text-ink-muted!",
-        "focus:**:data-muted-line:text-ink-muted!",
-        "focus:**:data-muted-line:*:text-ink-muted!",
-        "data-highlighted:**:data-muted-line:text-ink-muted!",
-        "data-highlighted:**:data-muted-line:*:text-ink-muted!",
+        checked
+            ? [
+                  "border-brand bg-brand-soft! text-ink! shadow-sm ring-1 ring-brand/20",
+                  "[--row-icon:var(--color-brand)]",
+                  "data-checked:bg-brand-soft! data-checked:text-ink!",
+                  "**:data-[slot=where-location-title]:text-ink!",
+              ]
+            : [
+                  "data-highlighted:bg-surface-muted/70! data-highlighted:text-ink!",
+                  "focus:bg-surface-muted/70! focus:text-ink!",
+              ],
+    );
+
+const checkboxRowClass = (checked: boolean) =>
+    cn(
+        rowClass(checked),
+        "pe-10",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:pointer-events-none",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:absolute",
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:inset-e-4",
@@ -71,39 +102,11 @@ const rowClass = (checked: boolean) =>
         "**:data-[slot=dropdown-menu-checkbox-item-indicator]:[&_svg]:stroke-[2.25]",
         checked
             ? [
-                  "border-brand bg-brand-soft! text-ink! shadow-sm ring-1 ring-brand/20",
-                  "[--row-icon:var(--color-brand)]",
-                  "hover:[--row-icon:var(--color-brand)]",
-                  "focus:[--row-icon:var(--color-brand)]",
-                  "data-highlighted:[--row-icon:var(--color-brand)]",
-                  "data-checked:bg-brand-soft! data-checked:text-ink!",
-                  `
-                    data-checked:data-highlighted:bg-brand-soft!
-                    data-checked:data-highlighted:text-ink!
-                  `,
-                  "data-checked:focus:bg-brand-soft! data-checked:focus:text-ink!",
-                  "data-checked:hover:bg-brand-soft! data-checked:hover:text-ink!",
-                  "**:data-[slot=where-location-title]:text-ink!",
-                  "focus:**:data-[slot=where-location-title]:text-ink!",
-                  "data-highlighted:**:data-[slot=where-location-title]:text-ink!",
-                  "hover:**:data-[slot=where-location-title]:text-ink!",
-                  "**:data-muted-line:text-ink-muted!",
-                  "**:data-muted-line:*:text-ink-muted!",
-                  "focus:**:data-muted-line:text-ink-muted!",
-                  "focus:**:data-muted-line:*:text-ink-muted!",
-                  "data-highlighted:**:data-muted-line:text-ink-muted!",
-                  "data-highlighted:**:data-muted-line:*:text-ink-muted!",
-                  "hover:**:data-muted-line:text-ink-muted!",
-                  "hover:**:data-muted-line:*:text-ink-muted!",
                   "**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink!",
-                  "focus:**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink!",
-                  "data-highlighted:**:data-[slot=dropdown-menu-checkbox-item-indicator]:text-ink!",
                   "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-100",
                   "**:data-[slot=dropdown-menu-checkbox-item-indicator]:scale-100",
               ]
             : [
-                  "data-highlighted:bg-surface-muted/70! data-highlighted:text-ink!",
-                  "focus:bg-surface-muted/70! focus:text-ink!",
                   "**:data-[slot=dropdown-menu-checkbox-item-indicator]:opacity-0",
                   "**:data-[slot=dropdown-menu-checkbox-item-indicator]:scale-75",
               ],
@@ -113,6 +116,10 @@ function formatListingCount(count: number): string {
     return count === 1 ? "1 listing" : `${count} listings`;
 }
 
+function formatChildCount(count: number, singular: string, plural: string): string {
+    return count === 1 ? `1 ${singular}` : `${count} ${plural}`;
+}
+
 const WHERE_META_CLASS = cn(
     "truncate text-[12px] leading-snug font-medium tracking-[0.04em] text-ink-muted",
 );
@@ -120,6 +127,18 @@ const WHERE_META_CLASS = cn(
 const WHERE_TITLE_CLASS = cn(
     "truncate text-[15px] leading-snug font-medium tracking-[-0.01em] text-ink",
 );
+
+const WHERE_MENU_LIST_PANEL_CLASS = cn(
+    "relative overflow-hidden min-block-0",
+    "max-block-[min(18rem,calc(var(--available-height)-11rem))]",
+);
+
+const KIND_LABEL: Record<OwnerListingLocationSearchHit["kind"], string> = {
+    country: "Countries",
+    state: "States",
+    city: "Cities",
+    locality: "Areas",
+};
 
 function HighlightMatch({ text, query }: { text: string; query: string }) {
     const display = formatPlaceName(text);
@@ -157,71 +176,27 @@ function LocationIcon({ icon: Icon = MapPin }: { icon?: LucideIcon }) {
     );
 }
 
-function WhereLocationMeta({
-    pathLabel,
-    listingCount,
-    showCount,
-}: {
-    pathLabel: string;
-    listingCount?: number;
-    showCount?: boolean;
-}) {
+function WhereLocationMeta({ pathLabel }: { pathLabel: string }) {
     return (
         <span className={WHERE_META_CLASS} data-muted-line>
             <span className="capitalize">{pathLabel}</span>
-            {showCount && listingCount != null ? (
-                <>
-                    <span className="mx-1.5 text-ink-subtle" aria-hidden>
-                        ·
-                    </span>
-                    <span className="tracking-[0.02em] tabular-nums">
-                        {formatListingCount(listingCount)}
-                    </span>
-                </>
-            ) : null}
         </span>
     );
 }
 
-function WhereLocationRow({
-    locality,
-    city,
-    state,
-    listingCount,
-    query,
-    checked,
-    onToggle,
-}: {
-    locality: string;
-    city: string;
-    state: string;
-    listingCount: number;
-    query: string;
-    checked: boolean;
-    onToggle: () => void;
-}) {
-    const isSearching = query.trim().length > 0;
-    const title = formatPlaceName(locality);
-    const pathLabel = formatLocationPathLabel(city, state);
-
+function WhereListingCountBadge({ count, label }: { count: number; label?: string }) {
     return (
-        <DropdownMenuCheckboxItem
-            checked={checked}
-            onCheckedChange={onToggle}
-            className={rowClass(checked)}
+        <span
+            className="
+              body-xs inline-flex shrink-0 items-center justify-center rounded-full
+              bg-brand-soft px-1.5 font-semibold tracking-normal text-brand-text
+              tabular-nums
+              block-5 min-inline-5
+            "
+            aria-label={label ?? formatListingCount(count)}
         >
-            <LocationIcon />
-            <span className="flex flex-1 flex-col gap-1 text-start min-inline-0">
-                <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
-                    {isSearching ? <HighlightMatch text={locality} query={query} /> : title}
-                </span>
-                <WhereLocationMeta
-                    pathLabel={pathLabel}
-                    listingCount={listingCount}
-                    showCount={!isSearching}
-                />
-            </span>
-        </DropdownMenuCheckboxItem>
+            {count > 99 ? "99+" : count}
+        </span>
     );
 }
 
@@ -245,146 +220,545 @@ function WhereMenuEmptyState({
     );
 }
 
-const WHERE_MENU_LIST_PANEL_CLASS = cn(
-    "relative block-80 max-block-[min(20rem,calc(var(--available-height)-9rem))]",
-    "shrink-0 overflow-hidden min-block-52",
-);
-
-function renderSearchResults({
-    hits,
+function WhereBrowseRow({
+    title,
+    meta,
+    childCount,
+    childLabel,
     query,
-    selectedSet,
+    icon,
+    checked,
+    onToggleSelect,
+    onDrill,
+}: {
+    title: string;
+    meta: string;
+    /** States in country / cities in state / areas in city. */
+    childCount: number;
+    childLabel: string;
+    query?: string;
+    icon?: LucideIcon;
+    checked: boolean;
+    onToggleSelect: () => void;
+    onDrill: () => void;
+}) {
+    return (
+        <DropdownMenuCheckboxItem
+            checked={checked}
+            onCheckedChange={onToggleSelect}
+            className={cn(
+                checkboxRowClass(checked),
+                `
+                  pe-14
+                  **:data-[slot=dropdown-menu-checkbox-item-indicator]:inset-e-11
+                `,
+            )}
+        >
+            <LocationIcon icon={icon} />
+            <span className="flex flex-1 flex-col gap-1 text-start min-inline-0">
+                <span className="flex items-center gap-2 min-inline-0">
+                    <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
+                        {query ? (
+                            <HighlightMatch text={title} query={query} />
+                        ) : (
+                            formatPlaceName(title)
+                        )}
+                    </span>
+                    <WhereListingCountBadge count={childCount} label={childLabel} />
+                </span>
+                <WhereLocationMeta pathLabel={meta} />
+            </span>
+            <button
+                type="button"
+                aria-label={`Browse ${formatPlaceName(title)}`}
+                className={cn(
+                    `
+                      absolute inset-e-1.5 inline-flex items-center justify-center rounded-control
+                      text-ink-subtle
+                      hover:bg-ink/5 hover:text-ink
+                      block-8 inline-8
+                    `,
+                    "transition-[background-color,color] duration-160",
+                )}
+                onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onDrill();
+                }}
+                onPointerDown={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+            >
+                <ChevronRight aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+            </button>
+        </DropdownMenuCheckboxItem>
+    );
+}
+
+function WhereLocalityRow({
+    locality,
+    city,
+    state,
+    country,
+    listingCount,
+    query,
+    checked,
     onToggle,
 }: {
-    hits: OwnerListingLocationSearchHit[];
-    query: string;
-    selectedSet: Set<string>;
-    onToggle: (locality: string, city: string) => void;
+    locality: string;
+    city: string;
+    state: string;
+    country: string;
+    listingCount: number;
+    query?: string;
+    checked: boolean;
+    onToggle: () => void;
 }) {
-    return hits.map((hit) => (
-        <WhereLocationRow
-            key={`${hit.state}-${hit.city}-${hit.locality}`}
-            locality={hit.locality}
-            city={hit.city}
-            state={hit.state}
-            listingCount={hit.listingCount}
-            query={query}
-            checked={selectedSet.has(hit.locality)}
-            onToggle={() => onToggle(hit.locality, hit.city)}
-        />
-    ));
+    return (
+        <DropdownMenuCheckboxItem
+            checked={checked}
+            onCheckedChange={onToggle}
+            className={checkboxRowClass(checked)}
+        >
+            <LocationIcon />
+            <span className="flex flex-1 flex-col gap-1 text-start min-inline-0">
+                <span className="flex items-center gap-2 min-inline-0">
+                    <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
+                        {query ? (
+                            <HighlightMatch text={locality} query={query} />
+                        ) : (
+                            formatPlaceName(locality)
+                        )}
+                    </span>
+                    <WhereListingCountBadge count={listingCount} />
+                </span>
+                <WhereLocationMeta pathLabel={formatLocationPathLabel(city, state, country)} />
+            </span>
+        </DropdownMenuCheckboxItem>
+    );
 }
+
+function WhereNavBar({
+    level,
+    childCount,
+    onBack,
+}: {
+    level: WhereBrowseLevel;
+    childCount: number;
+    onBack: () => void;
+}) {
+    if (level.kind === "root") return null;
+
+    const title =
+        level.kind === "country"
+            ? formatPlaceName(level.country)
+            : level.kind === "state"
+              ? formatPlaceName(level.state)
+              : formatPlaceName(level.city);
+
+    const subtitle =
+        level.kind === "country"
+            ? formatChildCount(childCount, "state", "states")
+            : level.kind === "state"
+              ? formatChildCount(childCount, "city", "cities")
+              : formatChildCount(childCount, "area", "areas");
+
+    return (
+        <div className="flex items-center gap-2.5 border-bs border-border-warm/70 pbs-3">
+            <button
+                type="button"
+                onClick={onBack}
+                className="
+                  inline-flex shrink-0 items-center justify-center rounded-control border
+                  border-border-warm bg-surface text-ink shadow-sm
+                  transition-[background-color,border-color] duration-160
+                  hover:border-ink/25 hover:bg-surface-muted/60
+                  block-9 inline-9
+                "
+                aria-label="Go back"
+            >
+                <ChevronLeft className="block-4 inline-4" strokeWidth={1.75} />
+            </button>
+            <div className="flex min-inline-0 flex-1 flex-col gap-0.5">
+                <p className="truncate text-sm font-semibold text-ink">{title}</p>
+                <p className="body-xs truncate text-ink-muted">{subtitle}</p>
+            </div>
+        </div>
+    );
+}
+
+function groupSearchHits(hits: OwnerListingLocationSearchHit[]) {
+    const groups: {
+        kind: OwnerListingLocationSearchHit["kind"];
+        items: OwnerListingLocationSearchHit[];
+    }[] = [];
+
+    for (const kind of ["country", "state", "city", "locality"] as const) {
+        const items = hits.filter((hit) => hit.kind === kind);
+        if (items.length > 0) {
+            groups.push({ kind, items });
+        }
+    }
+
+    return groups;
+}
+
+export type OwnerListingsWhereSelection = {
+    countries: string[];
+    states: string[];
+    cities: string[];
+    localities: string[];
+    yourAreas: boolean;
+};
 
 export type OwnerListingsWhereMenuProps = {
     listings: OwnerListingItem[];
+    selectedCountries: string[];
+    selectedStates: string[];
     selectedCities: string[];
     selectedLocalities: string[];
     yourAreas: boolean;
     serviceAreas?: string[];
-    onWhereChange: (next: { cities: string[]; localities: string[]; yourAreas: boolean }) => void;
+    onWhereChange: (next: OwnerListingsWhereSelection) => void;
+    /** Apply the reset to the results while the menu stays open. */
+    onCommit?: () => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
 };
 
 export function OwnerListingsWhereMenu({
     listings,
+    selectedCountries,
+    selectedStates,
     selectedCities,
     selectedLocalities,
     yourAreas,
     serviceAreas = [],
     onWhereChange,
+    onCommit,
     onOpenChange,
     className,
 }: OwnerListingsWhereMenuProps) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
+    const [browseLevel, setBrowseLevel] = useState<WhereBrowseLevel>({ kind: "root" });
+    const [whereTooltipOpen, setWhereTooltipOpen] = useState(false);
 
     const locationTree = useMemo(() => buildOwnerListingsLocationTree(listings), [listings]);
-    const locationLeaves = useMemo(() => {
-        const leaves = flattenOwnerListingLocationLeaves(locationTree);
-        return [...leaves].sort((left, right) =>
-            left.locality.localeCompare(right.locality, "en-IN"),
-        );
-    }, [locationTree]);
     const searchHits = useMemo(
         () => searchOwnerListingLocations(locationTree, query),
         [locationTree, query],
     );
+    const searchGroups = useMemo(() => groupSearchHits(searchHits), [searchHits]);
     const selectedLocalitySet = useMemo(() => new Set(selectedLocalities), [selectedLocalities]);
     const hasListings = locationTree.length > 0;
     const isSearching = query.trim().length > 0;
     const showEmptyState = !hasListings || (isSearching && searchHits.length === 0);
-    const hasNoPinnedPlace = selectedCities.length === 0 && selectedLocalities.length === 0;
+    const hasNoPinnedPlace =
+        selectedCountries.length === 0 &&
+        selectedStates.length === 0 &&
+        selectedCities.length === 0 &&
+        selectedLocalities.length === 0;
     const isServiceableSelected = hasNoPinnedPlace && yourAreas;
     const isAnywhereSelected = hasNoPinnedPlace && !yourAreas;
+
+    const soleCountry = locationTree.length === 1 ? locationTree[0] : null;
 
     const serviceableMeta =
         serviceAreas.length > 0
             ? serviceAreas.map(formatPlaceName).join(" · ")
             : "Set areas in your profile";
 
+    const headerDescription = isSearching
+        ? "Matching places"
+        : browseLevel.kind === "root"
+          ? "Pick a country, state, city, or area"
+          : "Select one or more, or open a place to browse";
+
+    const emitWhere = (patch: Partial<OwnerListingsWhereSelection>) => {
+        onWhereChange({
+            countries: selectedCountries,
+            states: selectedStates,
+            cities: selectedCities,
+            localities: selectedLocalities,
+            yourAreas: false,
+            ...patch,
+        });
+    };
+
     const selectServiceable = () => {
         setQuery("");
-        onWhereChange({ cities: [], localities: [], yourAreas: true });
+        setBrowseLevel({ kind: "root" });
+        onWhereChange({
+            countries: [],
+            states: [],
+            cities: [],
+            localities: [],
+            yourAreas: true,
+        });
     };
 
     const selectAnywhere = () => {
         setQuery("");
-        onWhereChange({ cities: [], localities: [], yourAreas: false });
+        setBrowseLevel({ kind: "root" });
+        onWhereChange({
+            countries: [],
+            states: [],
+            cities: [],
+            localities: [],
+            yourAreas: false,
+        });
     };
 
     const clearSelection = () => {
-        // Clear pinned places back to the default serviceable scope.
-        selectServiceable();
+        selectAnywhere();
+        onCommit?.();
     };
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
         if (!nextOpen) {
             setQuery("");
+            setBrowseLevel({ kind: "root" });
         }
         onOpenChange?.(nextOpen);
     };
 
-    const toggleLocality = (locality: string, city: string) => {
-        const removing = selectedLocalitySet.has(locality);
-        const nextLocalities = removing
-            ? selectedLocalities.filter((item) => item !== locality)
-            : [...selectedLocalities, locality];
+    const isCountrySelected = (country: string) =>
+        selectedCountries.some((item) => item.toLowerCase() === country.toLowerCase());
 
-        if (nextLocalities.length === 0) {
-            onWhereChange({ cities: [], localities: [], yourAreas: true });
+    const isStateSelected = (country: string, state: string) => {
+        const key = encodeOwnerListingStateKey(country, state).toLowerCase();
+        return selectedStates.some((item) => item.toLowerCase() === key);
+    };
+
+    const isCitySelected = (city: string) =>
+        selectedCities.some((item) => item.toLowerCase() === city.toLowerCase());
+
+    const toggleCountrySelect = (country: string) => {
+        emitWhere({ countries: toggleStringList(selectedCountries, country) });
+    };
+
+    const toggleStateSelect = (country: string, state: string) => {
+        emitWhere({
+            states: toggleStringList(selectedStates, encodeOwnerListingStateKey(country, state)),
+        });
+    };
+
+    const toggleCitySelect = (city: string) => {
+        emitWhere({ cities: toggleStringList(selectedCities, city) });
+    };
+
+    const drillCountry = (country: string) => {
+        setQuery("");
+        setBrowseLevel({ kind: "country", country });
+    };
+
+    const drillState = (country: string, state: string) => {
+        setQuery("");
+        setBrowseLevel({ kind: "state", country, state });
+    };
+
+    const drillCity = (country: string, state: string, city: string) => {
+        setQuery("");
+        setBrowseLevel({ kind: "city", country, state, city });
+    };
+
+    const toggleLocality = (locality: string) => {
+        emitWhere({ localities: toggleStringList(selectedLocalities, locality) });
+    };
+
+    const browseChildCount = useMemo(() => {
+        if (browseLevel.kind === "country") {
+            return findCountryGroup(locationTree, browseLevel.country)?.states.length ?? 0;
+        }
+        if (browseLevel.kind === "state") {
+            return (
+                findStateGroup(locationTree, browseLevel.country, browseLevel.state)?.cities
+                    .length ?? 0
+            );
+        }
+        if (browseLevel.kind === "city") {
+            return (
+                findCityGroup(
+                    locationTree,
+                    browseLevel.country,
+                    browseLevel.state,
+                    browseLevel.city,
+                )?.localities.length ?? 0
+            );
+        }
+        return 0;
+    }, [browseLevel, locationTree]);
+
+    const goBack = () => {
+        if (browseLevel.kind === "city") {
+            setBrowseLevel({
+                kind: "state",
+                country: browseLevel.country,
+                state: browseLevel.state,
+            });
             return;
         }
-
-        const nextCities = Array.from(
-            new Set(
-                nextLocalities.map((loc) => {
-                    if (loc === locality) return city;
-                    const leaf = locationLeaves.find((entry) => entry.locality === loc);
-                    return leaf?.city ?? city;
-                }),
-            ),
-        );
-
-        onWhereChange({
-            cities: nextCities,
-            localities: nextLocalities,
-            yourAreas: false,
-        });
+        if (browseLevel.kind === "state") {
+            if (soleCountry) {
+                setBrowseLevel({ kind: "root" });
+                return;
+            }
+            setBrowseLevel({ kind: "country", country: browseLevel.country });
+            return;
+        }
+        setBrowseLevel({ kind: "root" });
     };
 
     const whereTooltipLabel = formatLocalitiesTooltip(
         selectedLocalities,
         selectedCities,
         yourAreas,
+        selectedCountries,
+        selectedStates,
     );
+    const showWhereTooltip = !open && Boolean(whereTooltipLabel);
+
+    const renderBrowseList = () => {
+        if (browseLevel.kind === "city") {
+            const cityGroup = findCityGroup(
+                locationTree,
+                browseLevel.country,
+                browseLevel.state,
+                browseLevel.city,
+            );
+            if (!cityGroup) return null;
+            return cityGroup.localities.map((leaf) => (
+                <WhereLocalityRow
+                    key={`${leaf.country}-${leaf.state}-${leaf.city}-${leaf.locality}`}
+                    locality={leaf.locality}
+                    city={leaf.city}
+                    state={leaf.state}
+                    country={leaf.country}
+                    listingCount={leaf.listingCount}
+                    checked={selectedLocalitySet.has(leaf.locality)}
+                    onToggle={() => toggleLocality(leaf.locality)}
+                />
+            ));
+        }
+
+        if (browseLevel.kind === "state") {
+            const stateGroup = findStateGroup(locationTree, browseLevel.country, browseLevel.state);
+            if (!stateGroup) return null;
+            return stateGroup.cities.map((cityGroup) => (
+                <WhereBrowseRow
+                    key={`${cityGroup.country}-${cityGroup.state}-${cityGroup.city}`}
+                    title={cityGroup.city}
+                    meta={formatListingCount(cityGroup.listingCount)}
+                    childCount={cityGroup.localities.length}
+                    childLabel={formatChildCount(cityGroup.localities.length, "area", "areas")}
+                    icon={Building2}
+                    checked={isCitySelected(cityGroup.city)}
+                    onToggleSelect={() => toggleCitySelect(cityGroup.city)}
+                    onDrill={() => drillCity(cityGroup.country, cityGroup.state, cityGroup.city)}
+                />
+            ));
+        }
+
+        if (browseLevel.kind === "country") {
+            const countryGroup = findCountryGroup(locationTree, browseLevel.country);
+            if (!countryGroup) return null;
+            return countryGroup.states.map((stateGroup) => (
+                <WhereBrowseRow
+                    key={`${stateGroup.country}-${stateGroup.state}`}
+                    title={stateGroup.state}
+                    meta={formatListingCount(stateGroup.listingCount)}
+                    childCount={stateGroup.cities.length}
+                    childLabel={formatChildCount(stateGroup.cities.length, "city", "cities")}
+                    icon={LandPlot}
+                    checked={isStateSelected(stateGroup.country, stateGroup.state)}
+                    onToggleSelect={() => toggleStateSelect(stateGroup.country, stateGroup.state)}
+                    onDrill={() => drillState(stateGroup.country, stateGroup.state)}
+                />
+            ));
+        }
+
+        // Root: Anywhere + Serviceable, then countries (or states when only one country).
+        return (
+            <>
+                <DropdownMenuCheckboxItem
+                    checked={isAnywhereSelected}
+                    onCheckedChange={selectAnywhere}
+                    className={checkboxRowClass(isAnywhereSelected)}
+                >
+                    <LocationIcon icon={MapPinOff} />
+                    <span className="flex flex-1 flex-col gap-1 text-start min-inline-0">
+                        <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
+                            Anywhere
+                        </span>
+                        <WhereLocationMeta pathLabel="All listed properties" />
+                    </span>
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                    checked={isServiceableSelected}
+                    onCheckedChange={selectServiceable}
+                    className={checkboxRowClass(isServiceableSelected)}
+                >
+                    <LocationIcon icon={MapPinned} />
+                    <span className="flex flex-1 flex-col gap-1 text-start min-inline-0">
+                        <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
+                            Serviceable areas
+                        </span>
+                        <WhereLocationMeta pathLabel={serviceableMeta} />
+                    </span>
+                </DropdownMenuCheckboxItem>
+
+                {soleCountry
+                    ? soleCountry.states.map((stateGroup) => (
+                          <WhereBrowseRow
+                              key={`${stateGroup.country}-${stateGroup.state}`}
+                              title={stateGroup.state}
+                              meta={formatListingCount(stateGroup.listingCount)}
+                              childCount={stateGroup.cities.length}
+                              childLabel={formatChildCount(
+                                  stateGroup.cities.length,
+                                  "city",
+                                  "cities",
+                              )}
+                              icon={LandPlot}
+                              checked={isStateSelected(stateGroup.country, stateGroup.state)}
+                              onToggleSelect={() =>
+                                  toggleStateSelect(stateGroup.country, stateGroup.state)
+                              }
+                              onDrill={() => drillState(stateGroup.country, stateGroup.state)}
+                          />
+                      ))
+                    : locationTree.map((countryGroup) => (
+                          <WhereBrowseRow
+                              key={countryGroup.country}
+                              title={countryGroup.country}
+                              meta={formatListingCount(countryGroup.listingCount)}
+                              childCount={countryGroup.states.length}
+                              childLabel={formatChildCount(
+                                  countryGroup.states.length,
+                                  "state",
+                                  "states",
+                              )}
+                              icon={Globe2}
+                              checked={isCountrySelected(countryGroup.country)}
+                              onToggleSelect={() => toggleCountrySelect(countryGroup.country)}
+                              onDrill={() => drillCountry(countryGroup.country)}
+                          />
+                      ))}
+            </>
+        );
+    };
 
     return (
         <div className={cn("inline-full min-inline-0", className)}>
             <DropdownMenu open={open} onOpenChange={handleOpenChange}>
                 <TooltipProvider>
-                    <Tooltip open={open || !whereTooltipLabel ? false : undefined}>
+                    <Tooltip
+                        open={showWhereTooltip && whereTooltipOpen}
+                        onOpenChange={(nextOpen) => {
+                            setWhereTooltipOpen(showWhereTooltip ? nextOpen : false);
+                        }}
+                    >
                         <TooltipTrigger
                             className="flex inline-full min-inline-0"
                             render={
@@ -398,9 +772,12 @@ export function OwnerListingsWhereMenu({
                                                 selectedLocalities,
                                                 selectedCities,
                                                 yourAreas,
+                                                selectedCountries,
+                                                selectedStates,
                                             )}
                                             className="inline-full"
                                             isOpen={open}
+                                            isActive={!isAnywhereSelected}
                                         />
                                     }
                                 />
@@ -424,130 +801,197 @@ export function OwnerListingsWhereMenu({
                     className={cn(
                         OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
                         OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
-                        `grid grid-rows-[auto_minmax(0,1fr)] overflow-hidden! p-0`,
+                        "flex flex-col overflow-hidden! p-0",
                         "max-block-[min(28rem,var(--available-height))]",
                     )}
                 >
-                    <div className="flex shrink-0 flex-col gap-3 px-4 pbs-4 pbe-1">
+                    <div className="flex shrink-0 flex-col gap-3 px-4 pbs-4 pbe-3">
                         <OwnerListingsBandMenuHeader
-                            description="Pick cities or areas"
+                            description={headerDescription}
+                            showReset={!isAnywhereSelected}
                             onClear={clearSelection}
                         />
                         <Input
                             value={query}
                             onValueChange={setQuery}
-                            placeholder="Search cities or areas"
+                            placeholder="Search places"
                             startIcon={Search}
                             clearable
                             size="lg"
                             autoFocus={open}
-                            aria-label="Search cities or areas"
-                            className="text-ink shadow-sm"
+                            aria-label="Search country, state, city or area"
+                            className="text-sm text-ink shadow-sm placeholder:text-sm"
                             wrapperClassName="text-ink"
                             onKeyDown={(event) => event.stopPropagation()}
                             onPointerDown={(event) => event.stopPropagation()}
                         />
+                        {!isSearching ? (
+                            <WhereNavBar
+                                level={browseLevel}
+                                childCount={browseChildCount}
+                                onBack={goBack}
+                            />
+                        ) : null}
                     </div>
 
                     {showEmptyState && isSearching ? (
                         <div
                             className={cn(
                                 WHERE_MENU_LIST_PANEL_CLASS,
-                                "flex items-center justify-center",
+                                "flex items-center justify-center px-3 py-10",
                             )}
                         >
                             <WhereMenuEmptyState
                                 icon={Search}
-                                title="No matching areas"
-                                description={`Nothing found for "${query.trim()}". Try another city or area.`}
+                                title="No properties here yet"
+                                description={`No one has listed a property for "${query.trim()}" yet. Try another place, or check back later.`}
                             />
                         </div>
                     ) : (
-                        <div className={WHERE_MENU_LIST_PANEL_CLASS}>
-                            <ScrollArea className="overflow-hidden block-full">
-                                <div className="px-3 pe-3 pbs-0 pbe-3">
-                                    {!isSearching ? (
-                                        <>
-                                            <DropdownMenuCheckboxItem
-                                                checked={isServiceableSelected}
-                                                onCheckedChange={selectServiceable}
-                                                className={rowClass(isServiceableSelected)}
-                                            >
-                                                <LocationIcon icon={MapPinned} />
-                                                <span
-                                                    className="
-                                                      flex flex-1 flex-col gap-1 text-start
-                                                      min-inline-0
-                                                    "
-                                                >
-                                                    <span
-                                                        data-slot="where-location-title"
-                                                        className={WHERE_TITLE_CLASS}
-                                                    >
-                                                        Serviceable areas
-                                                    </span>
-                                                    <WhereLocationMeta
-                                                        pathLabel={serviceableMeta}
+                        <div
+                            className={cn(
+                                WHERE_MENU_LIST_PANEL_CLASS,
+                                "overflow-y-auto overscroll-contain px-3 pbe-3",
+                            )}
+                        >
+                            {isSearching ? (
+                                searchGroups.map((group) => (
+                                    <div key={group.kind} className="flex flex-col">
+                                        <p
+                                            className="
+                                              body-xs px-2.5 py-2 font-semibold tracking-wide
+                                              text-ink-muted uppercase
+                                            "
+                                        >
+                                            {KIND_LABEL[group.kind]}
+                                        </p>
+                                        {group.items.map((hit) => {
+                                            if (hit.kind === "locality") {
+                                                return (
+                                                    <WhereLocalityRow
+                                                        key={`locality-${hit.country}-${hit.state}-${hit.city}-${hit.locality}`}
+                                                        locality={hit.locality}
+                                                        city={hit.city}
+                                                        state={hit.state}
+                                                        country={hit.country}
+                                                        listingCount={hit.listingCount}
+                                                        query={query}
+                                                        checked={selectedLocalitySet.has(
+                                                            hit.locality,
+                                                        )}
+                                                        onToggle={() =>
+                                                            toggleLocality(hit.locality)
+                                                        }
                                                     />
-                                                </span>
-                                            </DropdownMenuCheckboxItem>
-                                            <DropdownMenuCheckboxItem
-                                                checked={isAnywhereSelected}
-                                                onCheckedChange={selectAnywhere}
-                                                className={rowClass(isAnywhereSelected)}
-                                            >
-                                                <LocationIcon icon={MapPinOff} />
-                                                <span
-                                                    className="
-                                                      flex flex-1 flex-col gap-1 text-start
-                                                      min-inline-0
-                                                    "
-                                                >
-                                                    <span
-                                                        data-slot="where-location-title"
-                                                        className={WHERE_TITLE_CLASS}
-                                                    >
-                                                        Anywhere
-                                                    </span>
-                                                    <WhereLocationMeta pathLabel="All listed properties" />
-                                                </span>
-                                            </DropdownMenuCheckboxItem>
-                                        </>
-                                    ) : null}
+                                                );
+                                            }
 
-                                    {isSearching ? (
-                                        renderSearchResults({
-                                            hits: searchHits,
-                                            query,
-                                            selectedSet: selectedLocalitySet,
-                                            onToggle: toggleLocality,
-                                        })
-                                    ) : hasListings ? (
-                                        locationLeaves.map((leaf) => (
-                                            <WhereLocationRow
-                                                key={`${leaf.state}-${leaf.city}-${leaf.locality}`}
-                                                locality={leaf.locality}
-                                                city={leaf.city}
-                                                state={leaf.state}
-                                                listingCount={leaf.listingCount}
-                                                query=""
-                                                checked={selectedLocalitySet.has(leaf.locality)}
-                                                onToggle={() =>
-                                                    toggleLocality(leaf.locality, leaf.city)
-                                                }
-                                            />
-                                        ))
-                                    ) : (
-                                        <div className="flex items-center justify-center py-10">
-                                            <WhereMenuEmptyState
-                                                icon={MapPinOff}
-                                                title="No listings yet"
-                                                description="Owner listings will appear here once they are live in a city."
-                                            />
-                                        </div>
-                                    )}
+                                            const title =
+                                                hit.kind === "country"
+                                                    ? hit.country
+                                                    : hit.kind === "state"
+                                                      ? hit.state
+                                                      : hit.city;
+                                            const icon =
+                                                hit.kind === "country"
+                                                    ? Globe2
+                                                    : hit.kind === "state"
+                                                      ? LandPlot
+                                                      : Building2;
+                                            const checked =
+                                                hit.kind === "country"
+                                                    ? isCountrySelected(hit.country)
+                                                    : hit.kind === "state"
+                                                      ? isStateSelected(hit.country, hit.state)
+                                                      : isCitySelected(hit.city);
+
+                                            const childCount =
+                                                hit.kind === "country"
+                                                    ? (findCountryGroup(locationTree, hit.country)
+                                                          ?.states.length ?? 0)
+                                                    : hit.kind === "state"
+                                                      ? (findStateGroup(
+                                                            locationTree,
+                                                            hit.country,
+                                                            hit.state,
+                                                        )?.cities.length ?? 0)
+                                                      : (findCityGroup(
+                                                            locationTree,
+                                                            hit.country,
+                                                            hit.state,
+                                                            hit.city,
+                                                        )?.localities.length ?? 0);
+
+                                            const childLabel =
+                                                hit.kind === "country"
+                                                    ? formatChildCount(
+                                                          childCount,
+                                                          "state",
+                                                          "states",
+                                                      )
+                                                    : hit.kind === "state"
+                                                      ? formatChildCount(
+                                                            childCount,
+                                                            "city",
+                                                            "cities",
+                                                        )
+                                                      : formatChildCount(
+                                                            childCount,
+                                                            "area",
+                                                            "areas",
+                                                        );
+
+                                            return (
+                                                <WhereBrowseRow
+                                                    key={`${hit.kind}-${title}-${hit.pathLabel}`}
+                                                    title={title}
+                                                    meta={formatListingCount(hit.listingCount)}
+                                                    childCount={childCount}
+                                                    childLabel={childLabel}
+                                                    query={query}
+                                                    icon={icon}
+                                                    checked={checked}
+                                                    onToggleSelect={() => {
+                                                        if (hit.kind === "country") {
+                                                            toggleCountrySelect(hit.country);
+                                                            return;
+                                                        }
+                                                        if (hit.kind === "state") {
+                                                            toggleStateSelect(
+                                                                hit.country,
+                                                                hit.state,
+                                                            );
+                                                            return;
+                                                        }
+                                                        toggleCitySelect(hit.city);
+                                                    }}
+                                                    onDrill={() => {
+                                                        if (hit.kind === "country") {
+                                                            drillCountry(hit.country);
+                                                            return;
+                                                        }
+                                                        if (hit.kind === "state") {
+                                                            drillState(hit.country, hit.state);
+                                                            return;
+                                                        }
+                                                        drillCity(hit.country, hit.state, hit.city);
+                                                    }}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                ))
+                            ) : hasListings ? (
+                                renderBrowseList()
+                            ) : (
+                                <div className="flex items-center justify-center py-10">
+                                    <WhereMenuEmptyState
+                                        icon={MapPinOff}
+                                        title="No listings yet"
+                                        description="Owner listings will appear here once they are live in a city."
+                                    />
                                 </div>
-                            </ScrollArea>
+                            )}
                         </div>
                     )}
                 </DropdownMenuContent>

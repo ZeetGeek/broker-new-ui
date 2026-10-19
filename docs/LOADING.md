@@ -23,14 +23,14 @@ Every wait must answer three questions without the user having to think:
 
 ## Pick by duration — the decision table
 
-| Wait | Show | Why |
-|---|---|---|
-| < 100ms | **Nothing** | A spinner that flashes for 80ms makes the app feel *less* stable, not more |
-| 100ms – 1s | Skeleton, or inline spinner on the control | Enough to register, short enough not to need words |
-| 1s – 5s | Skeleton **+ message** | The user starts wondering; tell them what's happening |
-| 5s – 10s | Skeleton + message + reassurance after 5s | "Still working…" prevents the second tap |
-| > 10s, measurable | **Progress bar with real numbers** | Uploads. A percentage is the only honest answer |
-| > 10s, unmeasurable | Message + explicit "this can take a minute" | Never leave an unbounded spinner |
+| Wait                | Show                                        | Why                                                                        |
+| ------------------- | ------------------------------------------- | -------------------------------------------------------------------------- |
+| < 100ms             | **Nothing**                                 | A spinner that flashes for 80ms makes the app feel _less_ stable, not more |
+| 100ms – 1s          | Skeleton, or inline spinner on the control  | Enough to register, short enough not to need words                         |
+| 1s – 5s             | Skeleton **+ message**                      | The user starts wondering; tell them what's happening                      |
+| 5s – 10s            | Skeleton + message + reassurance after 5s   | "Still working…" prevents the second tap                                   |
+| > 10s, measurable   | **Progress bar with real numbers**          | Uploads. A percentage is the only honest answer                            |
+| > 10s, unmeasurable | Message + explicit "this can take a minute" | Never leave an unbounded spinner                                           |
 
 The sub-100ms rule is the one people get wrong. Showing and instantly hiding an
 indicator produces visual noise that feels like a glitch. Better to show
@@ -40,13 +40,13 @@ nothing.
 
 ## Skeleton vs spinner vs progress
 
-| Use | When | Example here |
-|---|---|---|
-| **Skeleton** | You know the *shape* of what's coming | Property list, property detail, pipeline board, dashboard cards |
-| **Spinner** | Small area, or shape unknown | Inside a button, inline next to a filter |
-| **Progress bar** | You can measure completion | Photo upload |
-| **Optimistic UI** | Action almost always succeeds and is cheap to reverse | Approve/reject, save property, move pipeline stage |
-| **Nothing** | Under 100ms | Cached navigation |
+| Use               | When                                                  | Example here                                                    |
+| ----------------- | ----------------------------------------------------- | --------------------------------------------------------------- |
+| **Skeleton**      | You know the _shape_ of what's coming                 | Property list, property detail, pipeline board, dashboard cards |
+| **Spinner**       | Small area, or shape unknown                          | Inside a button, inline next to a filter                        |
+| **Progress bar**  | You can measure completion                            | Photo upload                                                    |
+| **Optimistic UI** | Action almost always succeeds and is cheap to reverse | Approve/reject, save property, move pipeline stage              |
+| **Nothing**       | Under 100ms                                           | Cached navigation                                               |
 
 **Default to skeletons for content areas.** They hold the layout stable, which
 means no content jump when data arrives — so the skeleton doubles as CLS
@@ -112,8 +112,12 @@ start the indicator invisible and give it an animation delay, so it only ever
 appears if navigation exceeds the delay.
 
 ```css
-.link-hint { opacity: 0; }
-.link-hint.is-pending { animation: fade-in 150ms 100ms forwards; }
+.link-hint {
+    opacity: 0;
+}
+.link-hint.is-pending {
+    animation: fade-in 150ms 100ms forwards;
+}
 ```
 
 Note: there is also an experimental `useOffline` hook that keeps prefetched
@@ -136,7 +140,13 @@ const [state, formAction, isPending] = useActionState(submitProperty, null);
 
 ```tsx
 <Button disabled={isPending}>
-  {isPending ? <><Spinner className="mr-2" /> Saving…</> : "Save property"}
+    {isPending ? (
+        <>
+            <Spinner className="mr-2" /> Saving…
+        </>
+    ) : (
+        "Save property"
+    )}
 </Button>
 ```
 
@@ -152,13 +162,13 @@ Four rules:
 
 ### Optimistic UI — where it fits here
 
-| Action | Optimistic? | Why |
-|---|---|---|
-| Approve / reject a broker request | ✅ | Near-always succeeds, trivially reversible |
-| Save / shortlist a property | ✅ | Low stakes |
-| Move a client to the next stage | ✅ | Local, reversible |
-| Publish a property listing | ❌ | Too consequential to fake |
-| Upload photos | ❌ | Genuinely slow — show real progress |
+| Action                            | Optimistic? | Why                                        |
+| --------------------------------- | ----------- | ------------------------------------------ |
+| Approve / reject a broker request | ✅          | Near-always succeeds, trivially reversible |
+| Save / shortlist a property       | ✅          | Low stakes                                 |
+| Move a client to the next stage   | ✅          | Local, reversible                          |
+| Publish a property listing        | ❌          | Too consequential to fake                  |
+| Upload photos                     | ❌          | Genuinely slow — show real progress        |
 
 When an optimistic update fails, revert **and** say so. A silent revert is
 worse than a spinner, because the user believes the action worked.
@@ -208,17 +218,17 @@ Requirements:
 Users are not technical, and the Phase 1 UI is English. Plain words, present
 tense, no jargon.
 
-| ❌ Don't write | ✅ Write |
-|---|---|
-| Loading… | Finding properties near you… |
-| Fetching data | Getting your listings… |
-| Processing request | Sending your request to the owner… |
-| Submitting | Saving your property… |
-| Please wait | Uploading photo 2 of 5 |
-| Error: 500 | Something went wrong. Tap to try again. |
-| Request failed | Couldn't send your request. Check your connection and try again. |
-| No data | No properties yet — add your first one (2 minutes) |
-| Timeout exceeded | This is taking longer than usual. Still trying… |
+| ❌ Don't write     | ✅ Write                                                         |
+| ------------------ | ---------------------------------------------------------------- |
+| Loading…           | Finding properties near you…                                     |
+| Fetching data      | Getting your listings…                                           |
+| Processing request | Sending your request to the owner…                               |
+| Submitting         | Saving your property…                                            |
+| Please wait        | Uploading photo 2 of 5                                           |
+| Error: 500         | Something went wrong. Tap to try again.                          |
+| Request failed     | Couldn't send your request. Check your connection and try again. |
+| No data            | No properties yet — add your first one (2 minutes)               |
+| Timeout exceeded   | This is taking longer than usual. Still trying…                  |
 
 Rules:
 
@@ -235,12 +245,12 @@ Rules:
 Every data-driven view has four. Conflating them is the most common bug in this
 category.
 
-| State | Shows | Rule |
-|---|---|---|
-| **Loading** | Skeleton matching the real shape | Never blank |
-| **Empty** | Icon + what this is + the next action | Must **teach**, never just say "No data" |
-| **Error** | Plain explanation + retry button | Always offer a way forward |
-| **Success** | The content | — |
+| State       | Shows                                 | Rule                                     |
+| ----------- | ------------------------------------- | ---------------------------------------- |
+| **Loading** | Skeleton matching the real shape      | Never blank                              |
+| **Empty**   | Icon + what this is + the next action | Must **teach**, never just say "No data" |
+| **Error**   | Plain explanation + retry button      | Always offer a way forward               |
+| **Success** | The content                           | —                                        |
 
 Empty is not loading. A user who has genuinely never added a property should
 see "Add your first property," not a skeleton that never resolves.

@@ -1,6 +1,7 @@
 import { isMockMode } from "@/lib/api/mock-mode";
-import { propertiesApi } from "@/lib/api/properties";
+import { mockBookmarkedIdSet, propertiesApi } from "@/lib/api/properties";
 
+import { commissionRanges } from "@/features/properties/owner-listings/filter-owner-listings";
 import {
     bhkValuesToApiConfig,
     mapBrowseListingToOwnerItem,
@@ -31,12 +32,14 @@ function filterMockOwnerListings(
     const minArea = filters.minAreaSqft ? Number(filters.minAreaSqft) : null;
     const maxArea = filters.maxAreaSqft ? Number(filters.maxAreaSqft) : null;
     const listedWithin = filters.listedWithinDays ? Number(filters.listedWithinDays) : null;
-    const minCommission = filters.minCommissionPercent
-        ? Number(filters.minCommissionPercent)
-        : null;
+    const commission = commissionRanges(filters);
     const serviceAreas = (context.serviceAreas ?? []).map((area) => area.toLowerCase());
+    const savedIds = mockBookmarkedIdSet();
 
-    let items = MOCK_OWNER_LISTINGS.filter((item) => {
+    let items = MOCK_OWNER_LISTINGS.map((item) => ({
+        ...item,
+        isBookmarked: savedIds.has(item.id),
+    })).filter((item) => {
         if (needle) {
             const hay = [item.configLabel, item.locality, item.city, item.ownerName]
                 .join(" ")
@@ -62,18 +65,22 @@ function filterMockOwnerListings(
         ) {
             return false;
         }
-        if (
-            minCommission != null &&
-            !Number.isNaN(minCommission) &&
-            item.commissionPercent < minCommission
-        ) {
+        if (commission.minPercent != null && item.commissionPercent < commission.minPercent) {
+            return false;
+        }
+        if (commission.maxPercent != null && item.commissionPercent > commission.maxPercent) {
+            return false;
+        }
+        if (commission.minAmount != null && item.commissionAmount < commission.minAmount) {
+            return false;
+        }
+        if (commission.maxAmount != null && item.commissionAmount > commission.maxAmount) {
             return false;
         }
         if (filters.newToday && !item.isNew) return false;
         if (filters.slotsOpen && item.brokerSlotsOpen <= 0) return false;
         if (filters.commissionSet && item.commissionPercent <= 0) return false;
         if (filters.readyToMove && !item.readyToMove) return false;
-        if (filters.bookmarked && !item.isBookmarked) return false;
         if (filters.yourAreas && serviceAreas.length > 0) {
             const locality = item.locality.toLowerCase();
             const city = item.city.toLowerCase();
@@ -163,9 +170,7 @@ async function fetchBrowsePage({
         : filters.newToday
           ? 7
           : undefined;
-    const minCommission = filters.minCommissionPercent
-        ? Number(filters.minCommissionPercent)
-        : undefined;
+    const commission = commissionRanges(filters);
 
     const result = await propertiesApi.browse(
         {
@@ -185,11 +190,12 @@ async function fetchBrowsePage({
                 listedWithinDays != null && !Number.isNaN(listedWithinDays)
                     ? listedWithinDays
                     : undefined,
-            minCommissionPercent:
-                minCommission != null && !Number.isNaN(minCommission) ? minCommission : undefined,
+            minCommissionPercent: commission.minPercent ?? undefined,
+            maxCommissionPercent: commission.maxPercent ?? undefined,
+            minCommissionAmount: commission.minAmount ?? undefined,
+            maxCommissionAmount: commission.maxAmount ?? undefined,
             commissionSet: filters.commissionSet || undefined,
             readyToMove: filters.readyToMove || undefined,
-            bookmarked: filters.bookmarked || undefined,
             furnishingStatus: filters.furnishing || undefined,
             sort: filters.sort,
             cursor: cursor || undefined,

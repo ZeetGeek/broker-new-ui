@@ -106,10 +106,7 @@ export function NearbyPlacesField() {
     const [query, setQuery] = useState("");
     const [browseAll, setBrowseAll] = useState(false);
 
-    const selected = useMemo(
-        () => dedupePlaces(nearbyPlaces.map(String)),
-        [nearbyPlaces],
-    );
+    const selected = useMemo(() => dedupePlaces(nearbyPlaces.map(String)), [nearbyPlaces]);
     const selectedSet = useMemo(() => new Set(selected), [selected]);
 
     const popularSet = useMemo(() => new Set<string>(POPULAR_NEARBY), []);
@@ -139,7 +136,8 @@ export function NearbyPlacesField() {
 
     const exactInCatalog = catalog.some(
         (option) =>
-            option.value === queryValue || option.label.toLowerCase() === trimmedQuery.toLowerCase(),
+            option.value === queryValue ||
+            option.label.toLowerCase() === trimmedQuery.toLowerCase(),
     );
     const canAddCustom =
         Boolean(queryValue) && !selectedSet.has(queryValue) && selected.length < MAX_NEARBY_PLACES;
@@ -244,9 +242,7 @@ export function NearbyPlacesField() {
                     {icon}
                 </span>
                 {label}
-                {removable ? (
-                    <X className="block-3.5 inline-3.5 shrink-0" aria-hidden />
-                ) : null}
+                {removable ? <X className="block-3.5 inline-3.5 shrink-0" aria-hidden /> : null}
             </Button>
         );
     }
@@ -325,12 +321,7 @@ export function NearbyPlacesField() {
                         >
                             <AnimatePresence initial={false} mode="popLayout">
                                 {selected.map((value) => (
-                                    <motion.div
-                                        key={value}
-                                        role="listitem"
-                                        layout
-                                        {...chipMotion}
-                                    >
+                                    <motion.div key={value} role="listitem" layout {...chipMotion}>
                                         <ChipButton
                                             option={{
                                                 value,

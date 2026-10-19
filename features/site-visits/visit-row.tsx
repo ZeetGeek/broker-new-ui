@@ -5,9 +5,10 @@ import type { ReactNode } from "react";
 import { Clock3, Lock, MapPin, MoreHorizontal, PhoneCall, StickyNote } from "lucide-react";
 
 import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
 
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -173,7 +174,12 @@ export function VisitRow({
                               hover:text-brand hover:underline
                             "
                         >
-                            {visit.property.configLabel} · {visit.property.propertyTypeLabel}
+                            {formatPropertyCardName(
+                                visit.property.propertyTypeLabel,
+                                visit.property.areaSqft,
+                                { bhk: visit.property.bhk },
+                            ) ||
+                                `${visit.property.configLabel} · ${visit.property.propertyTypeLabel}`}
                         </button>
                     </Hint>
 
@@ -212,9 +218,12 @@ export function VisitRow({
                             <span className="text-ink-subtle">
                                 {visit.property.isRent ? "Rent" : "Asking"}
                             </span>
-                            <Price
+                            <PriceWithCommission
                                 amountInr={visit.property.amountInr}
                                 isRent={visit.property.isRent}
+                                commissionPercent={visit.property.commissionPercent}
+                                commissionAmountInr={visit.property.commissionAmountInr}
+                                audience={viewer}
                                 className="font-semibold"
                             />
                         </span>
@@ -272,9 +281,7 @@ export function VisitRow({
 
                 {visit.meetingNote ? (
                     <Hint label={visit.meetingNote}>
-                        <span
-                            className="body-sm flex items-center gap-1.5 text-ink-muted"
-                        >
+                        <span className="body-sm flex items-center gap-1.5 text-ink-muted">
                             <StickyNote aria-hidden className="shrink-0 block-3.5 inline-3.5" />
                             <span className="truncate">{visit.meetingNote}</span>
                         </span>

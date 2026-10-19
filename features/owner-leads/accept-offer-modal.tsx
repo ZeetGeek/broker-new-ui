@@ -3,7 +3,7 @@
 import { AlertCircle, Check, MapPin } from "lucide-react";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
-import { formatAreaSqft } from "@/lib/format/area";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { parseInr } from "@/lib/format/inr";
 import { formatPriceInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
@@ -50,7 +51,7 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 function Person({ name }: { name: string }) {
     return (
         <span className="flex items-center justify-end gap-2 min-inline-0">
-            <UserAvatar name={name} size="2xs" fallback="character" className="shrink-0" />
+            <UserAvatar name={name} size="2xs" className="shrink-0" />
             <span className="truncate">{name}</span>
         </span>
     );
@@ -84,8 +85,9 @@ export function AcceptOfferModal({
     const gap = offerInr != null ? priceGap(offerInr, facts.askingInr) : null;
     const notes = lead.notes?.trim();
     const configLine = [
-        facts.configLabel,
-        facts.areaSqft ? formatAreaSqft(facts.areaSqft) : null,
+        formatPropertyCardName(facts.propertyTypeLabel ?? "", facts.areaSqft, {
+            bhk: bhkFromConfigLabel(facts.configLabel),
+        }) || facts.configLabel,
         facts.locality,
     ]
         .filter(Boolean)
@@ -157,9 +159,12 @@ export function AcceptOfferModal({
                 <div className="flex flex-col divide-y divide-border-warm">
                     {facts.askingInr != null ? (
                         <DetailRow label="Your price">
-                            <Price
+                            <PriceWithCommission
                                 amountInr={facts.askingInr}
                                 isRent={facts.isRent}
+                                commissionPercent={facts.commissionPercent}
+                                commissionAmountInr={facts.commissionAmountInr}
+                                audience="owner"
                                 className="text-ink"
                             />
                         </DetailRow>

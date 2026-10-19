@@ -1,15 +1,10 @@
 "use client";
 
 import type { OwnerShowingFocus, OwnerShowingsSummary } from "@/lib/api/owner-slots";
-import { cn } from "@/lib/utils";
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { FilterChip } from "@/components/shared/filter-chip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-import {
-    formatChipCount,
-    ownerListingsChipClassName,
-    ownerListingsChipCountClassName,
-} from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
@@ -88,34 +83,17 @@ export function OwnerScheduledFilters({
                     const warning = Boolean(item.warning && count > 0 && !selected);
                     return (
                         <OwnerListingsChipsCarouselSlide key={item.key}>
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <button
-                                            type="button"
-                                            aria-pressed={selected}
-                                            onClick={() => onChange(selected ? undefined : item.key)}
-                                            className={cn(
-                                                ownerListingsChipClassName(selected),
-                                                warning &&
-                                                    "border-pending/20 bg-urgent-soft/70 text-pending shadow-none",
-                                            )}
-                                        >
-                                            <span className="md:hidden">{item.mobileLabel}</span>
-                                            <span className="hidden md:inline">{item.label}</span>
-                                            <span
-                                                className={cn(
-                                                    ownerListingsChipCountClassName(selected),
-                                                    warning && "text-pending",
-                                                )}
-                                            >
-                                                {formatChipCount(count, isLoading)}
-                                            </span>
-                                        </button>
-                                    }
-                                />
-                                <TooltipContent side="bottom">{item.description}</TooltipContent>
-                            </Tooltip>
+                            <FilterChip
+                                label={item.label}
+                                mobileLabel={item.mobileLabel}
+                                count={count}
+                                isLoading={isLoading}
+                                isActive={selected}
+                                clearable
+                                warning={warning}
+                                onClick={() => onChange(selected ? undefined : item.key)}
+                                description={item.description}
+                            />
                         </OwnerListingsChipsCarouselSlide>
                     );
                 })}

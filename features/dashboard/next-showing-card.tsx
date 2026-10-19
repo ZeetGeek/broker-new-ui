@@ -66,7 +66,7 @@ function statusBadgeContent(
     isStartingSoon: boolean,
     isPast: boolean,
     portal: "broker" | "owner",
-): { label: string; hint: string; className: string; variant?: "brand" | "urgent" | "outline" } {
+): { label: string; hint: string; color: "emerald" | "orange" | "lime" | "amber" } {
     if (isPast) {
         return {
             label: "In progress",
@@ -74,8 +74,7 @@ function statusBadgeContent(
                 portal === "owner"
                     ? "This visit's start time has passed. Check in with the broker if you need an update."
                     : "This visit's start time has passed. Mark it done or reschedule once you're finished.",
-            variant: "brand",
-            className: "font-semibold",
+            color: "emerald",
         };
     }
     if (isStartingSoon) {
@@ -85,8 +84,7 @@ function statusBadgeContent(
                 portal === "owner"
                     ? `Starts in under ${STARTING_SOON_MINUTES} minutes. The broker should be on the way with their client.`
                     : `Starts in under ${STARTING_SOON_MINUTES} minutes. Leave now if you aren't already on your way.`,
-            variant: "urgent",
-            className: "font-semibold",
+            color: "orange",
         };
     }
     if (status === "confirmed") {
@@ -96,7 +94,7 @@ function statusBadgeContent(
                 portal === "owner"
                     ? "You've confirmed this time slot. The visit is on."
                     : "The owner approved this time slot. The visit is on - no further action needed.",
-            className: "border-transparent bg-highlight font-semibold text-highlight-ink",
+            color: "emerald",
         };
     }
     return {
@@ -105,8 +103,7 @@ function statusBadgeContent(
             portal === "owner"
                 ? "A broker booked this slot. Confirm or cancel it from Visits if you need to change it."
                 : "The owner hasn't confirmed this slot yet. Nudge them, or reschedule if you don't hear back before the visit.",
-        variant: "outline",
-        className: "bg-surface font-semibold text-pending",
+        color: "amber",
     };
 }
 
@@ -121,12 +118,7 @@ function StatusBadge({
     isPast: boolean;
     portal: "broker" | "owner";
 }) {
-    const { label, hint, className, variant } = statusBadgeContent(
-        status,
-        isStartingSoon,
-        isPast,
-        portal,
-    );
+    const { label, hint, color } = statusBadgeContent(status, isStartingSoon, isPast, portal);
 
     return (
         <Tooltip>
@@ -140,9 +132,7 @@ function StatusBadge({
                           focus-visible:ring-2 focus-visible:ring-ring
                         "
                     >
-                        <Badge variant={variant} className={className}>
-                            {label}
-                        </Badge>
+                        <Badge color={color}>{label}</Badge>
                     </button>
                 }
             />
@@ -305,11 +295,8 @@ export function NextShowingCard({
                             </p>
                             {hasPrice || showing.meetNote ? (
                                 <Badge
-                                    className="
-                                      body-sm mbs-3! inline-flex items-center gap-1.5
-                                      border-border-warm bg-transparent px-3 py-1.5 font-medium
-                                      whitespace-normal text-ink-muted max-inline-100
-                                    "
+                                    color="stone"
+                                    className="body-sm mbs-3! whitespace-normal max-inline-100"
                                 >
                                     {hasPrice ? (
                                         <IndianRupee
@@ -410,8 +397,8 @@ export function NextShowingCard({
                                                         nativeButton={false}
                                                         render={<a href={phoneHref} />}
                                                         className="
-                                                          body-sm gap-1 p-0 font-medium text-ink-muted
-                                                          block-auto
+                                                          body-sm gap-1 p-0 font-medium
+                                                          text-ink-muted block-auto
                                                           hover:text-ink hover:underline
                                                         "
                                                     >

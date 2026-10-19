@@ -168,6 +168,8 @@ const rowClass = (checked: boolean) =>
 export type OwnerListingsPropertyTypeMenuProps = {
     value: PropertyTypeValue;
     onValueChange: (value: PropertyTypeValue) => void;
+    /** Apply the reset to the results while the menu stays open. */
+    onCommit?: () => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
 };
@@ -175,6 +177,7 @@ export type OwnerListingsPropertyTypeMenuProps = {
 export function OwnerListingsPropertyTypeMenu({
     value,
     onValueChange,
+    onCommit,
     onOpenChange,
     className,
 }: OwnerListingsPropertyTypeMenuProps) {
@@ -199,6 +202,7 @@ export function OwnerListingsPropertyTypeMenu({
                             value={formatPropertyTypeLabel(value)}
                             className="inline-full"
                             isOpen={open}
+                            isActive={Boolean(value)}
                         />
                     }
                 />
@@ -214,7 +218,11 @@ export function OwnerListingsPropertyTypeMenu({
                     <div className="flex flex-col gap-3 px-3 pe-3 pbs-3 pbe-3">
                         <OwnerListingsBandMenuHeader
                             description="Choose a category"
-                            onClear={() => onValueChange("")}
+                            showReset={value !== ""}
+                            onClear={() => {
+                                onValueChange("");
+                                onCommit?.();
+                            }}
                             className="px-2 pbs-1"
                         />
                         <DropdownMenuRadioGroup

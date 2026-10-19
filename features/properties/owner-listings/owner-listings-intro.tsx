@@ -21,7 +21,6 @@ const INTRO_DESCRIPTION =
 const SUMMARY_LOOP_INTERVAL_S = 6.5;
 const ICON_CLASS = "block-3 inline-3";
 const META_TEXT = "body-sm font-medium text-ink-muted";
-const CHIP_SURFACE = "bg-surface";
 
 const EMPTY_POOL_SUMMARY: OwnerListingsPoolSummary = {
     slotsOpenCount: 0,
@@ -114,7 +113,7 @@ function ServiceAreasMeta({ areas }: { areas: string[] }) {
                     Your areas
                 </span>
                 {areas.map((area) => (
-                    <Badge key={area} variant="outline" className={CHIP_SURFACE}>
+                    <Badge key={area} color="sky">
                         {area}
                     </Badge>
                 ))}
@@ -149,23 +148,19 @@ function BrowseHeader({
     isLoading,
 }: BrowseHeaderProps) {
     return (
-        <div className="flex items-center justify-between gap-3 text-start">
-            <h1 className={`${titleClassName} min-inline-0`}>
-                <span className="text-ink">{title}</span>
-                <span className="text-ink">.</span>{" "}
-                <OwnerListingsBrowseSummary
-                    totalCount={totalCount}
-                    newThisWeekCount={newThisWeekCount}
-                    serviceAreas={serviceAreas}
-                    poolSummary={poolSummary}
-                    filters={filters}
-                    hasActiveFilters={hasActiveFilters}
-                    isLoading={isLoading}
-                />
-            </h1>
-
-            <ServiceAreasMeta areas={serviceAreas} />
-        </div>
+        <h1 className={`${titleClassName} min-inline-0 text-start`}>
+            <span className="text-ink">{title}</span>
+            <span className="text-ink">.</span>{" "}
+            <OwnerListingsBrowseSummary
+                totalCount={totalCount}
+                newThisWeekCount={newThisWeekCount}
+                serviceAreas={serviceAreas}
+                poolSummary={poolSummary}
+                filters={filters}
+                hasActiveFilters={hasActiveFilters}
+                isLoading={isLoading}
+            />
+        </h1>
     );
 }
 
@@ -203,9 +198,15 @@ export function OwnerListingsIntro({
                 <p className="body hidden text-ink-muted max-inline-[52ch] sm:block">
                     {INTRO_DESCRIPTION}
                 </p>
+                <ServiceAreasMeta areas={serviceAreas} />
             </div>
         );
     }
 
-    return <BrowseHeader title="Browse" titleClassName="h3" {...headerProps} />;
+    return (
+        <div className="flex flex-col gap-3 text-start">
+            <BrowseHeader title="Browse" titleClassName="h3" {...headerProps} />
+            <ServiceAreasMeta areas={serviceAreas} />
+        </div>
+    );
 }

@@ -184,17 +184,10 @@ export function ProfileStats({
                         <Eye className="text-brand block-4 inline-4" aria-hidden />
                         At a glance
                     </p>
-                    {joined ? (
-                        <Badge
-                            variant="neutral"
-                            className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
-                        >
-                            {joined}
-                        </Badge>
-                    ) : null}
+                    {joined ? <Badge color="sky">{joined}</Badge> : null}
                 </div>
 
-                <div className="flex flex-col gap-2 px-3.5 py-3.5">
+                <div className="flex flex-col gap-2 p-3.5">
                     <p
                         className={cn(
                             "tabular text-xl font-bold tracking-[-0.02em]",
@@ -208,21 +201,24 @@ export function ProfileStats({
 
                     <div
                         className="
-                          mts-1 grid grid-cols-2 gap-2 rounded-control bg-surface-muted px-2.5
-                          py-2.5
+                          mts-1 grid grid-cols-2 gap-2 rounded-control bg-surface-muted p-2.5
                         "
                     >
                         {secondary.map((metric) => (
-                            <div key={metric.label} className="min-inline-0 text-center">
+                            <div key={metric.label} className="text-center min-inline-0">
                                 <p
                                     className={cn(
-                                        "truncate tabular text-sm font-semibold",
+                                        "tabular truncate text-sm font-semibold",
                                         metric.emphasize ? "text-ink" : "text-ink-muted",
                                     )}
                                 >
                                     {metric.value}
                                 </p>
-                                <p className="mts-0.5 truncate text-[11px] font-medium text-ink-muted">
+                                <p
+                                    className="
+                                  mts-0.5 truncate text-[11px] font-medium text-ink-muted
+                                "
+                                >
                                     {metric.label}
                                 </p>
                             </div>

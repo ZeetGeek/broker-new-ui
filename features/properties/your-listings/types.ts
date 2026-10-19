@@ -101,6 +101,7 @@ export type MyListingItem = {
     interestedBuyerIds?: string[];
     /** Buyers linked to this listing (for the avatar stack on the card). */
     attachedClients?: Array<{ id: string; name: string; avatarUrl?: string }>;
+    isBookmarked?: boolean;
 };
 
 export type MyListingsFilters = {

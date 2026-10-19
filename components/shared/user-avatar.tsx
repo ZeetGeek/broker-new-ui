@@ -67,56 +67,24 @@ const avvatarPixelSizes = {
     fill: 96,
 } as const;
 
-/**
- * avvvatars paints a fixed-size wrapper (and hardcodes Inter + weight 500 on
- * character text). Stretch to fill our frame and force DM Sans semibold.
- */
+/** Stretch avvvatars' fixed-size wrapper to fill our frame. */
 const avvatarFillClass = cn(
     "[&>div]:rounded-full! [&>div]:block-full! [&>div]:inline-full! [&>div]:max-inline-none!",
-    "[&_p]:font-sans! [&_p]:font-semibold!",
 );
-
-function initialsFromName(name: string): string {
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return "?";
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    const first = parts[0][0] ?? "";
-    const last = parts[parts.length - 1][0] ?? "";
-    return `${first}${last}`.toUpperCase();
-}
-
-export type UserAvatarFallback = "shape" | "character" | "brand";
 
 export type UserAvatarProps = VariantProps<typeof avatarFrameVariants> & {
     name: string;
     imageUrl?: string;
     className?: string;
-    /**
-     * No-photo placeholder.
-     * `shape` — unique abstract shape from avvvatars (product default).
-     * `character` — avvvatars initials (multi-hue; avoid on brand-critical surfaces).
-     * `brand` — brand-soft disc + brand-text initials (one-hue system).
-     */
-    fallback?: UserAvatarFallback;
 };
 
-export function UserAvatar({
-    name,
-    imageUrl,
-    size,
-    framed = true,
-    className,
-    fallback = "shape",
-}: UserAvatarProps) {
+export function UserAvatar({ name, imageUrl, size, framed = true, className }: UserAvatarProps) {
     const resolvedImageUrl = normalizeAvatarUrl(imageUrl);
     // Track the URL that failed, not a flag, so a new src retries without an effect.
     const [failedImageUrl, setFailedImageUrl] = useState<string>();
 
     const resolvedSize = size ?? "md";
     const showPhoto = Boolean(resolvedImageUrl) && resolvedImageUrl !== failedImageUrl;
-    const initials = initialsFromName(name);
-    const displayValue =
-        resolvedSize === "xxs" || resolvedSize === "2xs" ? initials.slice(0, 1) : initials;
 
     return (
         <span className={cn(avatarFrameVariants({ size, framed }), className)}>
@@ -133,33 +101,11 @@ export function UserAvatar({
                         className={avatarMediaClass}
                         onError={() => setFailedImageUrl(resolvedImageUrl)}
                     />
-                ) : fallback === "brand" ? (
-                    <span
-                        aria-hidden
-                        className="
-                          flex items-center justify-center bg-brand-soft font-sans font-semibold
-                          text-brand-text block-full inline-full
-                        "
-                    >
-                        <span
-                            className={cn(
-                                "leading-none",
-                                resolvedSize === "xxs" || resolvedSize === "2xs"
-                                    ? "text-[10px]"
-                                    : resolvedSize === "xs" || resolvedSize === "sm"
-                                      ? "text-xs"
-                                      : "text-sm",
-                            )}
-                        >
-                            {displayValue}
-                        </span>
-                    </span>
                 ) : (
                     <span aria-hidden className={cn("block-full inline-full", avvatarFillClass)}>
                         <Avvvatars
                             value={name}
-                            displayValue={fallback === "character" ? displayValue : undefined}
-                            style={fallback === "character" ? "character" : "shape"}
+                            style="shape"
                             size={avvatarPixelSizes[resolvedSize]}
                             shadow={false}
                         />

@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { formatDistanceToNowStrict } from "date-fns";
 
 import type { ApiOwnerOption, ApiPropertyOption } from "@/lib/api/broker-visits-map";
+import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { sortSlotsForBuyer } from "@/lib/visits/grouping";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
@@ -37,7 +37,21 @@ import {
 } from "@/features/site-visits/broker/visits-filter-chips";
 import { EmptyState, VisitsTabSkeleton } from "@/features/site-visits/broker/visits-states";
 
-const FILTER_KEYS = ["range", "from", "to", "owner", "time", "locality", "purpose", "type", "bhk", "minBudget", "maxBudget", "accepted", "full"];
+const FILTER_KEYS = [
+    "range",
+    "from",
+    "to",
+    "owner",
+    "time",
+    "locality",
+    "purpose",
+    "type",
+    "bhk",
+    "minBudget",
+    "maxBudget",
+    "accepted",
+    "full",
+];
 
 function readFilters(params: URLSearchParams): SlotFilterState {
     const rangeValue = params.get("range");
@@ -250,7 +264,7 @@ export function OpenSlotsTab({
                 </div>
                 <footer className="border-bs border-border-warm bg-surface px-5 py-4">
                     <AppModalFooter
-                        secondaryLabel="Clear all"
+                        secondaryLabel="Reset filter"
                         onSecondary={() => {
                             setDraftFilters(DEFAULT_SLOT_FILTERS);
                             setDraftBuyerId(undefined);

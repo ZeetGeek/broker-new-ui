@@ -11,10 +11,7 @@ import {
 } from "@/components/ui/card";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
-import {
-    CARD_SIZES,
-    CARD_SURFACES,
-} from "@/features/design-system/theme/card-tokens";
+import { CARD_SIZES, CARD_SURFACES } from "@/features/design-system/theme/card-tokens";
 
 function Swatch({ label, children }: { label: string; children: React.ReactNode }) {
     return (
@@ -33,9 +30,7 @@ function SurfaceDemo() {
                 <CardDescription>Listed 4 days ago · 2 requests</CardDescription>
             </CardHeader>
             <CardContent>
-                <p className="body-sm text-ink-muted">
-                    Semi-furnished · 1,450 sq ft
-                </p>
+                <p className="body-sm text-ink-muted">Semi-furnished · 1,450 sq ft</p>
             </CardContent>
         </Card>
     );
@@ -85,8 +80,8 @@ export function CardThemePage() {
                 <section>
                     <h2 className="h4 text-ink">Surfaces</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        Separation comes from white on warm cream — not from heavy borders.
-                        Dark attention is reserved for the one thing that needs action.
+                        Separation comes from white on warm cream — not from heavy borders. Dark
+                        attention is reserved for the one thing that needs action.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {CARD_SURFACES.map((surface) => (
@@ -137,10 +132,9 @@ export function CardThemePage() {
                             <code className="body-xs">shadow-md</code> only when raised.
                         </li>
                         <li>
-                            Dark attention cards use{" "}
-                            <code className="body-xs">brand-deep</code> or{" "}
-                            <code className="body-xs">brand-ink</code>, never a drop shadow.
-                            Max two per screen; one above the fold on mobile.
+                            Dark attention cards use <code className="body-xs">brand-deep</code> or{" "}
+                            <code className="body-xs">brand-ink</code>, never a drop shadow. Max two
+                            per screen; one above the fold on mobile.
                         </li>
                         <li>
                             Text on dark: headings white, body{" "}
@@ -148,10 +142,9 @@ export function CardThemePage() {
                             <code className="body-xs">highlight</code>. One highlight per card.
                         </li>
                         <li>
-                            Do not edit{" "}
-                            <code className="body-xs">components/ui/card.tsx</code> for one-off
-                            styling — pass <code className="body-xs">className</code>, or wrap
-                            in <code className="body-xs">components/shared/</code>.
+                            Do not edit <code className="body-xs">components/ui/card.tsx</code> for
+                            one-off styling — pass <code className="body-xs">className</code>, or
+                            wrap in <code className="body-xs">components/shared/</code>.
                         </li>
                     </ul>
                 </section>

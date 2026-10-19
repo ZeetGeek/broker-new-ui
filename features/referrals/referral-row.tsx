@@ -118,7 +118,7 @@ export function ReferralRow({
                     {/* Role only once they have picked one. A guess before
                         signup would be a label the row cannot stand behind. */}
                     {referral.role && RoleIcon ? (
-                        <Badge variant="outline">
+                        <Badge color="sky">
                             <RoleIcon aria-hidden />
                             {REFERRAL_ROLE_LABEL[referral.role]}
                         </Badge>

@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
+import { useRouter } from "@/lib/navigation";
 import {
     OWNER_PROPERTIES_HREF,
     OWNER_PROPERTIES_NEW_HREF,

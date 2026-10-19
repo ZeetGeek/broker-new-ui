@@ -4,12 +4,22 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-import { BadgeCheck, Building2, ChevronLeft, Lock, Mail, MapPin, Phone, UserRound } from "lucide-react";
+import {
+    BadgeCheck,
+    Building2,
+    ChevronLeft,
+    Lock,
+    Mail,
+    MapPin,
+    Phone,
+    UserRound,
+} from "lucide-react";
 
 import { type BrokerOwnerProfile, type OwnerProfileProperty, ownersApi } from "@/lib/api/owners";
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { formatPhoneIn } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
@@ -38,6 +48,10 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
     const photo = property.photos[0];
     const price = propertyPrice(property);
     const place = [property.address, property.city].filter(Boolean).join(", ");
+    const name =
+        formatPropertyCardName(property.propertyType ?? "", property.areaSqft, {
+            bhk: bhkFromConfigLabel(property.bhkConfig),
+        }) || property.title;
 
     return (
         <Link
@@ -55,7 +69,7 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
                 ) : null}
             </div>
             <div className="flex flex-col gap-1 p-4">
-                <p className="body truncate font-semibold text-ink">{property.title}</p>
+                <p className="body truncate font-semibold text-ink">{name}</p>
                 {place ? <p className="body-sm truncate text-ink-muted">{place}</p> : null}
                 {price ? <p className="body-sm font-semibold text-brand">{price}</p> : null}
             </div>
@@ -105,7 +119,9 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                     <UserAvatar name={name} imageUrl={profile.avatarUrl} size="lg" />
                     <div className="flex flex-col gap-1 min-inline-0">
                         <div className="flex items-center gap-2 min-inline-0">
-                            <h1 className="h3 truncate tracking-wide text-ink capitalize">{name}</h1>
+                            <h1 className="h3 truncate tracking-wide text-ink capitalize">
+                                {name}
+                            </h1>
                             {profile.verified ? (
                                 <BadgeCheck
                                     aria-label="Verified owner"
@@ -152,7 +168,11 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                                 href={`tel:+91${profile.phoneDigits}`}
                                 className="body-sm inline-flex items-center gap-1.5 font-medium text-ink"
                             >
-                                <Phone aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                                <Phone
+                                    aria-hidden
+                                    className="block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
                                 {formatPhoneIn(profile.phoneDigits)}
                             </a>
                         ) : null}
@@ -161,7 +181,11 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                                 href={`mailto:${profile.email}`}
                                 className="body-sm inline-flex items-center gap-1.5 font-medium text-ink"
                             >
-                                <Mail aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                                <Mail
+                                    aria-hidden
+                                    className="block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
                                 {profile.email}
                             </a>
                         ) : null}

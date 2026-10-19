@@ -47,7 +47,6 @@ export function ActiveBrokerCard({ item }: { item: OwnerRequestCardItem }) {
                     name={item.brokerName}
                     imageUrl={item.brokerAvatarUrl}
                     size="md"
-                    fallback="shape"
                     className="shrink-0"
                 />
                 <div className="min-inline-0 flex-1">

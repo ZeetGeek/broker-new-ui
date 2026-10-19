@@ -4,7 +4,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Check, UserPlus } from "lucide-react";
+import { Check, UserPlus, X } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
@@ -114,19 +114,20 @@ function InviteCardFooter({
                     variant="outline"
                     disabled={isBusy}
                     onClick={() => onDecline(item.id)}
-                    className={cn("flex-1", secondaryClass)}
+                    className={cn("flex-1 min-inline-0", secondaryClass)}
                 >
-                    Decline
+                    <X aria-hidden className="block-4 inline-4" strokeWidth={2} />
+                    Cancel
                 </Button>
                 <Button
                     size="md"
                     variant="accent"
                     disabled={isBusy}
                     onClick={() => onAccept(item.id)}
-                    className="flex-[1.4]"
+                    className="flex-1 min-inline-0"
                 >
                     <Check aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                    Accept invite
+                    Accept
                 </Button>
             </DealOverlayFooter>
         );
@@ -234,6 +235,7 @@ export function InviteCard({
                 <DealOverlayStats
                     listing={item}
                     ownerName={item.ownerName}
+                    ownerAvatarUrl={item.ownerAvatarUrl}
                     ownerPhoneDigits={ownerPhoneDigits}
                 />
                 {item.stage === "accepted" && item.attachedClients.length > 0 ? (

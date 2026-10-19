@@ -70,9 +70,9 @@ function UserAvatarDemo() {
     return (
         <div className="flex items-center gap-3">
             <UserAvatar name="Priya Shah" imageUrl={DEMO_PEOPLE[0].avatarUrl} size="md" />
-            <UserAvatar name="Neha Desai" size="md" fallback="shape" />
-            <UserAvatar name="Kavya Iyer" size="md" fallback="character" />
-            <UserAvatar name="Amit Patel" size="md" fallback="character" />
+            <UserAvatar name="Neha Desai" size="md" />
+            <UserAvatar name="Kavya Iyer" size="md" />
+            <UserAvatar name="Amit Patel" size="md" />
         </div>
     );
 }
@@ -124,8 +124,7 @@ export function AvatarThemePage() {
                     <h2 className="h4 text-ink">Uses</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Prefer <code className="body-xs">UserAvatar</code> in product screens —
-                        photo, shape, or character without assembling the compound parts each
-                        time.
+                        photo, shape, or character without assembling the compound parts each time.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         {AVATAR_USES.map((use) => (
@@ -151,8 +150,8 @@ export function AvatarThemePage() {
                         <code className="body-xs">shadow-xs</code>.{" "}
                         <code className="body-xs">UserAvatar</code> adds{" "}
                         <code className="body-xs">xxs</code> / <code className="body-xs">xs</code>{" "}
-                        for dense pipeline rows and{" "}
-                        <code className="body-xs">lg</code> at 56px for headers.
+                        for dense pipeline rows and <code className="body-xs">lg</code> at 56px for
+                        headers.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         {AVATAR_SIZES.map((size) => (
@@ -170,8 +169,8 @@ export function AvatarThemePage() {
                     <h2 className="h4 text-ink">Groups</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Overlapping faces for teams and shared deals. Prefer{" "}
-                        <code className="body-xs">AvatarStack</code> when names need tooltips or
-                        an overflow chip.
+                        <code className="body-xs">AvatarStack</code> when names need tooltips or an
+                        overflow chip.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {AVATAR_GROUPS.map((group) => (
@@ -190,8 +189,7 @@ export function AvatarThemePage() {
                     <p className="eyebrow text-highlight">Rules</p>
                     <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-[#B8CFC4]">
                         <li>
-                            Product screens use{" "}
-                            <code className="body-xs">UserAvatar</code> from{" "}
+                            Product screens use <code className="body-xs">UserAvatar</code> from{" "}
                             <code className="body-xs">components/shared/user-avatar.tsx</code>.
                             Always pass a real <code className="body-xs">name</code> for alt text
                             and avvvatars seed.
@@ -203,28 +201,24 @@ export function AvatarThemePage() {
                             drop shadow.
                         </li>
                         <li>
-                            Stacked faces go through{" "}
-                            <code className="body-xs">AvatarStack</code> (tooltips + overflow) or
-                            compound <code className="body-xs">AvatarGroup</code> for short static
-                            lists.
+                            Stacked faces go through <code className="body-xs">AvatarStack</code>{" "}
+                            (tooltips + overflow) or compound{" "}
+                            <code className="body-xs">AvatarGroup</code> for short static lists.
                         </li>
                         <li>
-                            Fallback order: photo →{" "}
-                            <code className="body-xs">avvvatars-react</code>{" "}
+                            Fallback order: photo → <code className="body-xs">avvvatars-react</code>{" "}
                             <code className="body-xs">shape</code> (default) or{" "}
                             <code className="body-xs">character</code>. Prefer character when
                             several different people sit in one row.
                         </li>
                         <li>
-                            Only avatar library:{" "}
-                            <code className="body-xs">avvvatars-react</code>. Do not add
-                            boring-avatars or another generator.
+                            Only avatar library: <code className="body-xs">avvvatars-react</code>.
+                            Do not add boring-avatars or another generator.
                         </li>
                         <li>
-                            Do not edit{" "}
-                            <code className="body-xs">components/ui/avatar.tsx</code> for one-off
-                            styling — pass <code className="body-xs">className</code>, or wrap in{" "}
-                            <code className="body-xs">components/shared/</code>.
+                            Do not edit <code className="body-xs">components/ui/avatar.tsx</code>{" "}
+                            for one-off styling — pass <code className="body-xs">className</code>,
+                            or wrap in <code className="body-xs">components/shared/</code>.
                         </li>
                     </ul>
                 </section>

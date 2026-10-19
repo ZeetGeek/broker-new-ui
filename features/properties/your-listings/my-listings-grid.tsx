@@ -25,6 +25,9 @@ export type MyListingsGridProps = {
     onInviteBroker?: (listing: MyListingItem) => void;
     brokersByProperty?: Map<string, PropertyBrokersSummary>;
     brokerSummaryState?: "loading" | "error" | "ready";
+    /** Broker portal only. Save / remove save on the card menu. */
+    onToggleSave?: (listing: MyListingItem) => void;
+    isSaved?: (listing: MyListingItem) => boolean;
 };
 
 const GRID_BREAKPOINTS = [
@@ -44,6 +47,8 @@ export function MyListingsGrid({
     onInviteBroker,
     brokersByProperty,
     brokerSummaryState,
+    onToggleSave,
+    isSaved,
 }: MyListingsGridProps) {
     const detailHref = portal === "owner" ? ownerPropertyDetailHref : brokerPropertyDetailHref;
     const editHref = portal === "owner" ? ownerPropertyEditHref : brokerPropertyEditHref;
@@ -63,6 +68,7 @@ export function MyListingsGrid({
                     <PropertyCard
                         variant="owned"
                         listing={listing}
+                        audience={portal}
                         detailsHref={detailHref(item.id)}
                         editHref={editHref(item.id)}
                         onEdit={onEditListing ? () => onEditListing(item) : undefined}
@@ -76,6 +82,8 @@ export function MyListingsGrid({
                         }
                         brokerSummary={brokersByProperty?.get(item.id)}
                         brokerSummaryState={brokerSummaryState}
+                        isSaved={isSaved?.(item) ?? false}
+                        onToggleSave={onToggleSave ? () => onToggleSave(item) : undefined}
                         priority={index === 0}
                         imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                     />

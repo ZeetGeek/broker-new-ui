@@ -7,11 +7,15 @@ import { cn } from "@/lib/utils";
 
 import { TextLoop } from "@/components/motion-primitives/text-loop";
 import { AddFab } from "@/components/shared/add-fab";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeColor } from "@/components/ui/badge";
 
 const SUMMARY_LOOP_INTERVAL_S = 6.5;
 const META_TEXT = "body-sm font-medium text-ink-muted";
-const CHIP_SURFACE = "bg-surface";
+const STATUS_COLOR: Record<string, BadgeColor> = {
+    published: "emerald",
+    draft: "amber",
+    unpublished: "red",
+};
 
 function countLabel(count: number, singular: string, plural: string) {
     return `${count} ${count === 1 ? singular : plural}`;
@@ -86,7 +90,7 @@ function InventoryStatusMeta({ summary }: { summary: MyListingsSummary | null })
             <div className="flex flex-wrap items-center gap-2">
                 <span className={META_TEXT}>Status</span>
                 {chips.map((chip) => (
-                    <Badge key={chip.key} variant="outline" className={CHIP_SURFACE}>
+                    <Badge key={chip.key} color={STATUS_COLOR[chip.key] ?? "stone"}>
                         {chip.label} · {chip.count}
                     </Badge>
                 ))}

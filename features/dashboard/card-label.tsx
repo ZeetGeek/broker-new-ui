@@ -56,7 +56,11 @@ export function CardLabel({ children, className, tone = "light", info }: CardLab
                                         : "text-ink-subtle hover:text-ink-muted",
                                 )}
                             >
-                                <Info aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
+                                <Info
+                                    aria-hidden
+                                    className="block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
                             </button>
                         }
                     />

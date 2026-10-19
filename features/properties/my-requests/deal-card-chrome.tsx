@@ -4,27 +4,31 @@ import type { ReactNode } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
-import { formatAreaSqft } from "@/lib/format/area";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
+import type { PropertyShareInput } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
 
+import { AttachedBuyersRow, AttachedOwnerRow } from "@/components/shared/attached-people-row";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
     OVERLAY_ICON_BUTTON_CLASS,
     OverlayCard,
     OverlayCardSummary,
-    OverlayChip,
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
-import { AttachedBuyersRow, AttachedOwnerRow } from "@/components/shared/attached-people-row";
 import { PhoneNumber } from "@/components/shared/phone-number";
+import {
+    type CommissionAudience,
+    PriceWithCommission,
+} from "@/components/shared/price-with-commission";
 import {
     PropertyCardMenu,
     type PropertyCardMenuContact,
 } from "@/components/shared/property-card-menu";
-import type { PropertyShareInput } from "@/lib/share/property";
+import { Badge, type BadgeColor } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
@@ -38,12 +42,15 @@ export type DealCardListing = {
     city: string;
     areaSqft: number;
     bhk: number;
+    bathrooms?: number | null;
     propertyTypeLabel: string;
     /** e.g. "2 BHK" — used in share text / specs when present. */
     configLabel?: string;
     amountInr: number;
     isRent: boolean;
     commissionPercent: number;
+    /** Fixed rent brokerage in INR. Absent or 0 when the owner left it blank. */
+    commissionAmount?: number | null;
     imageSrc: string;
 };
 
@@ -128,12 +135,12 @@ export function DealWhatsAppButton({
 
 export type DealStatusTone = "waiting" | "action" | "success" | "danger" | "closed";
 
-const STATUS_DOT_CLASS: Record<DealStatusTone, string> = {
-    waiting: "bg-surface/70",
-    action: "bg-urgent-mid",
-    success: "bg-success-mid",
-    danger: "bg-danger-mid",
-    closed: "bg-ink-subtle",
+const STATUS_BADGE_COLOR: Record<DealStatusTone, BadgeColor> = {
+    waiting: "amber",
+    action: "orange",
+    success: "emerald",
+    danger: "red",
+    closed: "stone",
 };
 
 const OVERLAY_IMAGE_SIZES = "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw";
@@ -204,6 +211,7 @@ export function DealOverlayCard({
     actions,
     children,
     detailHref,
+    audience = "broker",
 }: {
     listing: DealCardListing;
     configLabel: string;
@@ -215,9 +223,17 @@ export function DealOverlayCard({
     children: ReactNode;
     /** Defaults to the broker marketplace listing URL. */
     detailHref?: string;
+    /** Owner-side cards say "Broker gets". Broker cards say "You get". */
+    audience?: CommissionAudience;
 }) {
     const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
-    const specsLabel = [configLabel, formatAreaSqft(listing.areaSqft)].filter(Boolean).join(" · ");
+    const headline =
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
+            bhk: listing.bhk,
+            bathrooms: listing.bathrooms,
+        }) ||
+        configLabel ||
+        listing.title;
 
     return (
         <OverlayCard
@@ -229,25 +245,34 @@ export function DealOverlayCard({
             className={cn(isBusy && "pointer-events-none opacity-60")}
             chips={
                 <>
-                    <OverlayChip
-                        dotClassName={STATUS_DOT_CLASS[statusTone]}
+                    <Badge
+                        color={STATUS_BADGE_COLOR[statusTone]}
+                        blur="dark"
                         pulse={statusTone === "action"}
                     >
                         {statusLabel}
-                    </OverlayChip>
-                    <OverlayChip dotClassName={listing.isRent ? "bg-urgent-mid" : "bg-success-mid"}>
+                    </Badge>
+                    <Badge color={listing.isRent ? "orange" : "emerald"} blur="dark">
                         {listing.isRent ? "For rent" : "For sale"}
-                    </OverlayChip>
+                    </Badge>
                 </>
             }
             actions={actions}
         >
             <OverlayCardSummary
                 href={href}
-                priceLabel={dealPriceLabel(listing)}
-                headline={listing.title}
+                price={
+                    <PriceWithCommission
+                        amountInr={listing.amountInr}
+                        isRent={listing.isRent}
+                        commissionPercent={listing.commissionPercent}
+                        commissionAmountInr={listing.commissionAmount}
+                        audience={audience}
+                        className="h5 font-semibold tracking-wide"
+                    />
+                }
+                headline={headline}
                 locationLabel={`${listing.locality}, ${listing.city}`}
-                specsLabel={specsLabel || undefined}
             />
             {children}
         </OverlayCard>
@@ -258,11 +283,13 @@ export function DealOverlayCard({
 export function DealOverlayStats({
     listing,
     ownerName,
+    ownerAvatarUrl,
     ownerPhoneDigits,
     personLabel = "Owner",
 }: {
     listing: DealCardListing;
     ownerName: string;
+    ownerAvatarUrl?: string;
     ownerPhoneDigits?: string;
     /** Owner-side cards pass "Broker". */
     personLabel?: string;
@@ -274,8 +301,13 @@ export function DealOverlayStats({
         listing.commissionPercent > 0 ? `${listing.commissionPercent}% commission` : undefined;
 
     return (
-        <div className="flex flex-col gap-1 min-inline-0">
-            <OverlayPersonLine label={personLabel} name={ownerName} hint={phoneHint} />
+        <div className="flex flex-col gap-1.5 min-inline-0">
+            <OverlayPersonLine
+                label={personLabel}
+                name={ownerName}
+                avatarUrl={ownerAvatarUrl}
+                hint={phoneHint}
+            />
             {commissionHint ? (
                 <p className="body-sm tracking-wide text-ink-muted tabular-nums">
                     {commissionHint}

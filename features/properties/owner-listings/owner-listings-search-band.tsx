@@ -1,8 +1,7 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-import { Search } from "lucide-react";
 
 import { extractBandFilters } from "@/lib/format/owner-listings-labels";
 
@@ -15,11 +14,14 @@ import { OwnerListingsFurnishingMenu } from "@/features/properties/owner-listing
 import { OwnerListingsLookingForMenu } from "@/features/properties/owner-listings/owner-listings-looking-for-menu";
 import { OwnerListingsPropertyTypeMenu } from "@/features/properties/owner-listings/owner-listings-property-type-menu";
 import { OwnerListingsWhereMenu } from "@/features/properties/owner-listings/owner-listings-where-menu";
-import type {
-    OwnerListingItem,
-    OwnerListingsBandFilters,
-    OwnerListingsFilters,
+import {
+    DEFAULT_OWNER_LISTINGS_FILTERS,
+    type OwnerListingItem,
+    type OwnerListingsBandFilters,
+    type OwnerListingsFilters,
 } from "@/features/properties/owner-listings/types";
+
+const EMPTY_BAND_FILTERS = extractBandFilters(DEFAULT_OWNER_LISTINGS_FILTERS);
 
 export type OwnerListingsSearchBandProps = {
     appliedFilters: OwnerListingsFilters;
@@ -30,6 +32,8 @@ export type OwnerListingsSearchBandProps = {
 
 function bandSignature(band: OwnerListingsBandFilters): string {
     return [
+        band.countries.join(","),
+        band.states.join(","),
         band.cities.join(","),
         band.localities.join(","),
         band.yourAreas ? "1" : "0",
@@ -67,9 +71,17 @@ export function OwnerListingsSearchBand({
     }, []);
 
     const setWhereFilters = useCallback(
-        (next: { cities: string[]; localities: string[]; yourAreas: boolean }) => {
+        (next: {
+            countries: string[];
+            states: string[];
+            cities: string[];
+            localities: string[];
+            yourAreas: boolean;
+        }) => {
             const updated = {
                 ...draftRef.current,
+                countries: next.countries,
+                states: next.states,
                 cities: next.cities,
                 localities: next.localities,
                 yourAreas: next.yourAreas,
@@ -105,10 +117,6 @@ export function OwnerListingsSearchBand({
         }
     }, [appliedFilters, onApplyBand]);
 
-    const handleSearch = useCallback(() => {
-        onApplyBand(draftRef.current);
-    }, [onApplyBand]);
-
     const handleMenuOpenChange = useCallback(
         (open: boolean) => {
             if (!open) {
@@ -117,6 +125,15 @@ export function OwnerListingsSearchBand({
         },
         [applyDraftIfChanged],
     );
+
+    const hasBandFilters = bandSignature(draft) !== bandSignature(EMPTY_BAND_FILTERS);
+
+    const clearAllBandFilters = useCallback(() => {
+        const next = extractBandFilters(DEFAULT_OWNER_LISTINGS_FILTERS);
+        draftRef.current = next;
+        setDraft(next);
+        onApplyBand(next);
+    }, [onApplyBand]);
 
     return (
         <div
@@ -129,11 +146,14 @@ export function OwnerListingsSearchBand({
                 <div className="flex flex-1 p-0.5 min-inline-36">
                     <OwnerListingsWhereMenu
                         listings={listings}
+                        selectedCountries={draft.countries}
+                        selectedStates={draft.states}
                         selectedCities={draft.cities}
                         selectedLocalities={draft.localities}
                         yourAreas={draft.yourAreas}
                         serviceAreas={serviceAreas}
                         onWhereChange={setWhereFilters}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
@@ -150,6 +170,7 @@ export function OwnerListingsSearchBand({
                                 (Boolean(draft.min) || Boolean(draft.max));
                             updateDraft(budgetNeedsReset ? { type, min: "", max: "" } : { type });
                         }}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
@@ -163,6 +184,7 @@ export function OwnerListingsSearchBand({
                         max={draft.max}
                         lookingFor={draft.type}
                         onBudgetChange={({ min, max }) => updateDraft({ min, max })}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
@@ -175,6 +197,7 @@ export function OwnerListingsSearchBand({
                         value={draft.bhk}
                         onToggle={toggleBhk}
                         onClear={clearBhk}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
@@ -186,6 +209,7 @@ export function OwnerListingsSearchBand({
                     <OwnerListingsPropertyTypeMenu
                         value={draft.propertyType}
                         onValueChange={(propertyType) => updateDraft({ propertyType })}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
@@ -197,24 +221,29 @@ export function OwnerListingsSearchBand({
                     <OwnerListingsFurnishingMenu
                         value={draft.furnishing}
                         onValueChange={(furnishing) => updateDraft({ furnishing })}
+                        onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
                     />
                 </div>
             </div>
 
-            <div className="flex shrink-0 items-center ps-2 pe-4">
-                <Button
-                    type="button"
-                    size="icon-md"
-                    variant="accent"
-                    className="rounded-control"
-                    aria-label="Search properties"
-                    onClick={handleSearch}
-                >
-                    <Search aria-hidden strokeWidth={1.75} />
-                </Button>
-            </div>
+            {hasBandFilters ? (
+                <>
+                    <OwnerListingsBandDivider />
+                    <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        onClick={clearAllBandFilters}
+                        aria-label="Reset top bar filters"
+                        className="shrink-0 gap-1.5 px-5 text-brand hover:text-brand"
+                    >
+                        <X aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
+                        Reset filter
+                    </Button>
+                </>
+            ) : null}
         </div>
     );
 }

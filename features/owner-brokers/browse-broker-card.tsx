@@ -92,14 +92,12 @@ export function BrokerSpecialtyTags({
         <ul className="flex flex-wrap gap-1.5" aria-label="Specializations">
             {shown.map((tag) => (
                 <li key={tag}>
-                    <Badge variant="outline" className="font-medium">
-                        {tag}
-                    </Badge>
+                    <Badge color="violet">{tag}</Badge>
                 </li>
             ))}
             {rest > 0 ? (
                 <li>
-                    <Badge variant="outline" className="font-medium tabular-nums">
+                    <Badge color="violet" className="tabular-nums">
                         +{rest}
                     </Badge>
                 </li>
@@ -132,9 +130,10 @@ export function BrowseBrokerCard({
             }}
             className={cn(
                 `
-                  contact-card group/card relative flex h-full cursor-pointer flex-col gap-3
-                  rounded-card border border-border-warm bg-surface p-4 outline-none shadow-md
-                  transition-[box-shadow] duration-160 hover:shadow-lg
+                  contact-card group/card relative flex cursor-pointer flex-col gap-3 rounded-card
+                  border border-border-warm bg-surface p-4 shadow-md transition-shadow duration-160
+                  outline-none block-full
+                  hover:shadow-lg
                   focus-visible:ring-3 focus-visible:ring-brand/20
                 `,
             )}
@@ -144,14 +143,18 @@ export function BrowseBrokerCard({
                     name={name}
                     imageUrl={broker.avatarUrl ?? undefined}
                     size="md"
-                    fallback="shape"
                     className="shrink-0"
                 />
-                <div className="min-inline-0 flex-1">
+                <div className="flex-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
-                        <h2 className="body truncate font-bold capitalize text-ink">{name}</h2>
+                        <h2 className="body truncate font-bold text-ink capitalize">{name}</h2>
                         {broker.verified ? (
-                            <span className="body-xs inline-flex shrink-0 items-center gap-0.5 rounded-md bg-brand-soft px-1.5 py-0.5 font-semibold text-brand-text">
+                            <span
+                                className="
+                              body-xs inline-flex shrink-0 items-center gap-0.5 rounded-md
+                              bg-brand-soft px-1.5 py-0.5 font-semibold text-brand-text
+                            "
+                            >
                                 <BadgeCheck
                                     aria-hidden
                                     className="block-3 inline-3"
@@ -170,7 +173,7 @@ export function BrowseBrokerCard({
             </div>
 
             <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                <p className="h5 truncate font-semibold tabular text-brand">
+                <p className="h5 tabular truncate font-semibold text-brand">
                     {brokerHeroMetric(broker)}
                 </p>
                 {location ? (
@@ -196,7 +199,7 @@ export function BrowseBrokerCard({
             </div>
 
             <footer
-                className="mt-auto grid grid-cols-2 gap-2"
+                className="mbs-auto grid grid-cols-2 gap-2"
                 onClick={(event) => event.stopPropagation()}
             >
                 <Button

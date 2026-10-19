@@ -24,35 +24,58 @@ export function formatPlaceName(value: string): string {
         .join("");
 }
 
-/** City + state for Where rows — title-cased, no duplicated city/state. */
-export function formatLocationPathLabel(city: string, state: string): string {
-    const cityLabel = formatPlaceName(city);
-    const stateLabel = formatPlaceName(state);
+/**
+ * City + state (+ country) for Where rows — title-cased, no duplicated segments.
+ */
+export function formatLocationPathLabel(city: string, state: string, country?: string): string {
+    const parts: string[] = [];
+    const pushUnique = (value: string) => {
+        const label = formatPlaceName(value);
+        if (!label) return;
+        if (parts.some((part) => part.toLowerCase() === label.toLowerCase())) return;
+        parts.push(label);
+    };
 
-    if (!cityLabel) return stateLabel;
-    if (!stateLabel || cityLabel.toLowerCase() === stateLabel.toLowerCase()) {
-        return cityLabel;
-    }
+    pushUnique(city);
+    pushUnique(state);
+    if (country) pushUnique(country);
 
-    return `${cityLabel}, ${stateLabel}`;
+    return parts.join(", ");
+}
+
+function formatWherePlaceLabels(options: {
+    countries?: string[];
+    states?: string[];
+    cities?: string[];
+    localities?: string[];
+}): string[] {
+    const stateLabels = (options.states ?? []).map((key) => {
+        const index = key.indexOf("|");
+        const state = index > 0 ? key.slice(index + 1) : key;
+        return formatPlaceName(state);
+    });
+
+    return [
+        ...(options.countries ?? []).map(formatPlaceName),
+        ...stateLabels,
+        ...(options.cities ?? []).map(formatPlaceName),
+        ...(options.localities ?? []).map(formatPlaceName),
+    ];
 }
 
 export function formatLocalitiesLabel(
     localities: string[],
     cities: string[] = [],
     yourAreas = false,
+    countries: string[] = [],
+    states: string[] = [],
 ): string {
-    if (localities.length > 0) {
-        const labels = localities.map(formatPlaceName);
-        if (labels.length <= 2) return labels.join(", ");
-        return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
+    const labels = formatWherePlaceLabels({ countries, states, cities, localities });
+    if (labels.length === 0) {
+        return yourAreas ? "Serviceable areas" : "Anywhere";
     }
-    if (cities.length > 0) {
-        const labels = cities.map(formatPlaceName);
-        if (labels.length <= 2) return labels.join(", ");
-        return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
-    }
-    return yourAreas ? "Serviceable areas" : "Anywhere";
+    if (labels.length <= 2) return labels.join(", ");
+    return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
 }
 
 /** Full list for tooltips when the band label is truncated. */
@@ -60,20 +83,15 @@ export function formatLocalitiesTooltip(
     localities: string[],
     cities: string[] = [],
     yourAreas = false,
+    countries: string[] = [],
+    states: string[] = [],
 ): string | null {
-    if (localities.length > 2) {
-        return localities.map(formatPlaceName).join(", ");
-    }
-    if (localities.length === 0 && cities.length > 2) {
-        return cities.map(formatPlaceName).join(", ");
-    }
-    if (localities.length === 0 && cities.length === 0) {
+    const labels = formatWherePlaceLabels({ countries, states, cities, localities });
+    if (labels.length === 0) {
         return yourAreas ? "Listings in your serviceable areas" : "All listed properties";
     }
-    if (localities.length === 0 && cities.length > 0 && cities.length <= 2) {
-        return null;
-    }
-    return null;
+    if (labels.length <= 2) return null;
+    return labels.join(", ");
 }
 
 export function formatTransactionTypeLabel(type: OwnerListingTransactionType | ""): string {
@@ -169,8 +187,10 @@ export function formatResultsCountLine(
 
 export function extractBandFilters(filters: OwnerListingsFilters): OwnerListingsBandFilters {
     return {
-        cities: filters.cities,
-        localities: filters.localities,
+        countries: filters.countries ?? [],
+        states: filters.states ?? [],
+        cities: filters.cities ?? [],
+        localities: filters.localities ?? [],
         bhk: filters.bhk,
         type: filters.type,
         min: filters.min,
@@ -187,11 +207,13 @@ export function extractSheetFilters(filters: OwnerListingsFilters): OwnerListing
         maxAreaSqft: filters.maxAreaSqft,
         listedWithinDays: filters.listedWithinDays,
         minCommissionPercent: filters.minCommissionPercent,
+        maxCommissionPercent: filters.maxCommissionPercent,
+        minCommissionAmount: filters.minCommissionAmount,
+        maxCommissionAmount: filters.maxCommissionAmount,
         yourAreas: filters.yourAreas,
         newToday: filters.newToday,
         slotsOpen: filters.slotsOpen,
         commissionSet: filters.commissionSet,
         readyToMove: filters.readyToMove,
-        bookmarked: filters.bookmarked,
     };
 }

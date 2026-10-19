@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { PhoneNumber } from "@/components/shared/phone-number";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -214,9 +214,12 @@ export function DealDetailModal({
                             >
                                 {deal.property.title}
                             </PropertyTitleLink>
-                            <Price
+                            <PriceWithCommission
                                 amountInr={deal.property.amountInr}
                                 isRent={deal.property.isRent}
+                                commissionPercent={deal.property.commissionPercent}
+                                commissionAmountInr={deal.property.commissionAmountInr}
+                                audience="broker"
                                 className="body-sm font-semibold"
                             />
                             <p className="body-xs text-ink-muted">

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { type ReactNode, useEffect } from "react";
 
 import { portalHomeForRole } from "@/lib/auth/session";
+import { useRouter } from "@/lib/navigation";
 
 import { useAppSelector } from "@/store/hooks";
 

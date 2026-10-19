@@ -11,6 +11,8 @@ export type OwnerListingsBandSegmentProps = {
     className?: string;
     onClick?: () => void;
     isOpen?: boolean;
+    /** Non-default filter value — same fill as segment hover. */
+    isActive?: boolean;
 };
 
 export function OwnerListingsBandDivider({ className }: { className?: string }) {
@@ -29,6 +31,7 @@ export function OwnerListingsBandSegment({
     className,
     onClick,
     isOpen,
+    isActive = false,
 }: OwnerListingsBandSegmentProps) {
     return (
         <button
@@ -37,17 +40,18 @@ export function OwnerListingsBandSegment({
             className={cn(
                 `
                   group flex flex-1 items-center gap-2.5 rounded-inner px-3.5 py-2.5 text-start
-                  transition-colors duration-160 min-inline-0
-                  hover:bg-surface-muted/70
+                  transition-[background-color,box-shadow] duration-160 min-inline-0
                 `,
+                isActive ? "bg-surface-muted/70" : "hover:bg-surface-muted/70",
                 className,
             )}
             aria-expanded={isOpen}
+            data-active={isActive || undefined}
         >
             <Icon aria-hidden className="shrink-0 text-brand block-4 inline-4" strokeWidth={1.75} />
             <span className="flex flex-1 flex-col items-start gap-1 min-inline-0">
                 <span className="eyebrow shrink-0 text-ink-muted">{label}</span>
-                <span className="flex items-center gap-1.5 inline-full min-inline-0">
+                <span className="flex items-center gap-1 inline-full min-inline-0">
                     <span className="body-sm truncate font-medium text-ink">{value}</span>
                     <ChevronDown
                         aria-hidden

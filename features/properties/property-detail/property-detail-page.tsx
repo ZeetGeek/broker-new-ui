@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
 
 import { ChevronLeft, MapPin } from "lucide-react";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { useParams, useRouter } from "@/lib/navigation";
 import {
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
@@ -44,10 +44,10 @@ const STATUS_LABEL: Record<MyListingStatus, string> = {
     unpublished: "Unpublished",
 };
 
-const STATUS_VARIANT: Record<MyListingStatus, "brand" | "neutral" | "urgent"> = {
-    draft: "neutral",
-    published: "brand",
-    unpublished: "urgent",
+const STATUS_COLOR: Record<MyListingStatus, "amber" | "emerald" | "red"> = {
+    draft: "amber",
+    published: "emerald",
+    unpublished: "red",
 };
 
 function OwnedPropertyDetail({
@@ -145,13 +145,10 @@ function OwnedPropertyDetail({
                 editHref={editHref}
                 overlay={
                     <>
-                        <Badge
-                            variant={STATUS_VARIANT[item.status]}
-                            className="border-0 bg-surface/95 text-ink shadow-xs"
-                        >
+                        <Badge color={STATUS_COLOR[item.status]} blur="dark">
                             {STATUS_LABEL[item.status]}
                         </Badge>
-                        <Badge className="border-0 bg-surface/95 text-ink-muted shadow-xs">
+                        <Badge color="sky" blur="dark">
                             Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
                         </Badge>
                     </>
@@ -174,8 +171,13 @@ function OwnedPropertyDetail({
                         </p>
                     </header>
 
-                    <section className="rounded-card border border-border-warm bg-surface p-5 sm:p-6">
-                        <PropertyPriceBlock item={item} />
+                    <section
+                        className="
+                      rounded-card border border-border-warm bg-surface p-5
+                      sm:p-6
+                    "
+                    >
+                        <PropertyPriceBlock item={item} audience={portal} />
                     </section>
 
                     <section className="flex flex-col gap-4">

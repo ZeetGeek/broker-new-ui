@@ -4,7 +4,6 @@ import * as React from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Circle, Gift, Lock, Mail } from "lucide-react";
@@ -14,6 +13,7 @@ import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { generatePassword } from "@/lib/auth/generate-password";
 import { duration, ease } from "@/lib/motion/tokens";
+import { useRouter } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { PASSWORD_REQUIREMENTS, registerSchema, type RegisterValues } from "@/lib/validation/auth";
 
@@ -284,7 +284,11 @@ export function RegisterWizard({
                             />
                         </div>
 
-                        <PortalPicker value={portal} onChange={choosePortal} ariaLabel="Sign up as" />
+                        <PortalPicker
+                            value={portal}
+                            onChange={choosePortal}
+                            ariaLabel="Sign up as"
+                        />
 
                         <div className="mx-auto flex flex-col gap-6 inline-full max-inline-96">
                             <Button

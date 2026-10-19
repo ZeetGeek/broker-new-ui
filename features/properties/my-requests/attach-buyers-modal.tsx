@@ -105,11 +105,7 @@ function BuyerRow({
                 <div className="flex flex-1 flex-col gap-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="body-sm font-semibold text-ink">{client.name}</span>
-                        {mismatch ? (
-                            <Badge variant="outline" className="bg-surface">
-                                {mismatch}
-                            </Badge>
-                        ) : null}
+                        {mismatch ? <Badge color="amber">{mismatch}</Badge> : null}
                     </div>
 
                     <PhoneNumber

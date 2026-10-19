@@ -23,11 +23,7 @@ import { useFieldRules } from "@/lib/visibility/use-field-rules";
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
 
-import {
-    HOUSEKEEPING_OPTIONS,
-    PG_BED_TYPE_OPTIONS,
-    PG_GENDER_OPTIONS,
-} from "@/constants/property";
+import { HOUSEKEEPING_OPTIONS, PG_BED_TYPE_OPTIONS, PG_GENDER_OPTIONS } from "@/constants/property";
 import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import {
     CounterField,
@@ -246,7 +242,7 @@ export function StepPricing() {
             salePrice: expectedPrice,
             areaSqft,
             mode: values.commission.sale.mode,
-            value: values.commission.sale.value,
+            value: values.commission.sale.value ?? 0,
             paidBy: "owner",
             ownerSharePercent: 100,
             separateRates: values.commission.sale.separateRates

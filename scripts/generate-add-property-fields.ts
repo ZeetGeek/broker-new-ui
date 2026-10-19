@@ -1,11 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import {
-    PROPERTY_CATEGORY_OPTIONS,
-    PROPERTY_TYPES,
-    toLabel,
-} from "../constants/property";
+import { PROPERTY_CATEGORY_OPTIONS, PROPERTY_TYPES, toLabel } from "../constants/property";
 import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "../lib/schemas/property";
 import { isVisible, labelOf, levelOf, STEP_FIELD_PATHS } from "../lib/visibility/rules";
 
@@ -26,7 +22,11 @@ const LABEL_OVERRIDES: Record<string, string> = {
 
 const SECTION_HINTS: { match: (path: string) => boolean; title: string }[] = [
     {
-        match: (path) => path.startsWith("details.bedrooms") || path === "details.bathrooms" || path === "details.balconies" || path === "details.coveredParking",
+        match: (path) =>
+            path.startsWith("details.bedrooms") ||
+            path === "details.bathrooms" ||
+            path === "details.balconies" ||
+            path === "details.coveredParking",
         title: "Rooms and layout",
     },
     {

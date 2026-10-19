@@ -4,7 +4,6 @@ import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Mail } from "lucide-react";
@@ -12,6 +11,7 @@ import { Lock, Mail } from "lucide-react";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { destinationForRole } from "@/lib/auth/session";
+import { useRouter, useSearchParams } from "@/lib/navigation";
 import { loginSchema, type LoginValues } from "@/lib/validation/auth";
 
 import { Button } from "@/components/ui/button";

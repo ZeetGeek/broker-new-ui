@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 import { Building2, Check, Eye, MapPin, MoreHorizontal, Phone, X } from "lucide-react";
@@ -11,13 +10,15 @@ import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { parseInr } from "@/lib/format/inr";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr } from "@/lib/format/price";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
+import { useRouter } from "@/lib/navigation";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
-import { OverlayCardActions, OVERLAY_GLASS_BUTTON_CLASS } from "@/components/shared/overlay-card";
-import { Price } from "@/components/shared/price";
+import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -28,22 +29,18 @@ import {
 
 import {
     isFinishedLead,
+    LEAD_STAGE_TO_DEAL_STAGE,
     leadBrokerLabel,
     leadClientLabel,
     leadPropertyFacts,
     leadPropertyLabel,
     leadWhatsappMessage,
-    LEAD_STAGE_TO_DEAL_STAGE,
     OfferStatusPill,
 } from "@/features/owner-leads/owner-lead-meta";
 import { DEAL_OUTCOME_META, DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
-
-function formatCardArea(areaSqft: number): string {
-    return `${Math.round(areaSqft).toLocaleString("en-IN")} Sqft`;
-}
 
 const CHROME_ICON_BUTTON_CLASS = `
   flex shrink-0 items-center justify-center rounded-full border border-border-warm bg-surface
@@ -207,9 +204,12 @@ export function OwnerLeadBoardCard({
               ? DEAL_OUTCOME_META.lost
               : null;
     const OutcomeIcon = outcome?.icon;
-    const headline = [facts.configLabel, facts.areaSqft ? formatCardArea(facts.areaSqft) : null]
-        .filter(Boolean)
-        .join(" · ");
+    const headline =
+        formatPropertyCardName(facts.propertyTypeLabel ?? "", facts.areaSqft, {
+            bhk: bhkFromConfigLabel(facts.configLabel),
+        }) ||
+        facts.configLabel ||
+        leadPropertyLabel(lead);
     const locationLabel = [facts.locality, facts.city].filter(Boolean).join(", ");
 
     return (
@@ -338,9 +338,12 @@ export function OwnerLeadBoardCard({
 
                     <div className="flex flex-1 flex-col gap-1 min-inline-0">
                         {facts.askingInr != null ? (
-                            <Price
+                            <PriceWithCommission
                                 amountInr={facts.askingInr}
                                 isRent={facts.isRent}
+                                commissionPercent={facts.commissionPercent}
+                                commissionAmountInr={facts.commissionAmountInr}
+                                audience="owner"
                                 className="h5 font-semibold tracking-wide"
                             />
                         ) : null}
@@ -442,10 +445,13 @@ export function OwnerLeadBoardCard({
                                     size="md"
                                     disabled={busy}
                                     onClick={onReject}
-                                    className={cn("flex-1", OVERLAY_GLASS_BUTTON_CLASS)}
+                                    className={cn(
+                                        "flex-1 min-inline-0",
+                                        OVERLAY_GLASS_BUTTON_CLASS,
+                                    )}
                                 >
                                     <X aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                                    Reject
+                                    Cancel
                                 </Button>
                                 <Button
                                     type="button"
@@ -454,7 +460,7 @@ export function OwnerLeadBoardCard({
                                     disabled={busy}
                                     loading={busy}
                                     onClick={onAccept}
-                                    className="flex-[1.4] font-semibold"
+                                    className="flex-1 min-inline-0 font-semibold"
                                 >
                                     <Check
                                         aria-hidden

@@ -34,6 +34,8 @@ export type OwnerListingsBudgetMenuProps = {
     /** Looking-for mode — drives sale vs rent preset scales. */
     lookingFor: OwnerListingTransactionType | "";
     onBudgetChange: (next: { min: string; max: string }) => void;
+    /** Apply the reset to the results while the menu stays open. */
+    onCommit?: () => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
 };
@@ -43,6 +45,7 @@ export function OwnerListingsBudgetMenu({
     max,
     lookingFor,
     onBudgetChange,
+    onCommit,
     onOpenChange,
     className,
 }: OwnerListingsBudgetMenuProps) {
@@ -101,6 +104,7 @@ export function OwnerListingsBudgetMenu({
                             value={formatBudgetLabel(min, max, lookingFor)}
                             className="inline-full"
                             isOpen={open}
+                            isActive={Boolean(min || max)}
                         />
                     }
                 />
@@ -116,9 +120,11 @@ export function OwnerListingsBudgetMenu({
                     <div className="flex flex-col gap-3 p-5">
                         <OwnerListingsBandMenuHeader
                             description={hint}
+                            showReset={Boolean(min || max)}
                             onClear={() => {
                                 setStepIndex(0);
                                 onBudgetChange({ min: "", max: "" });
+                                onCommit?.();
                             }}
                         />
 

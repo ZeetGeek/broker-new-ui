@@ -51,6 +51,8 @@ type ApiLead = {
         bedrooms?: number | null;
         areaSqft?: number | null;
         photos?: string[] | null;
+        commissionPercent?: string | number | null;
+        commissionAmount?: string | number | null;
         exclusiveOwnerId?: string | null;
         isBrokerInventory?: boolean;
         isExclusiveProperty?: boolean;
@@ -258,6 +260,8 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             bhk,
             amountInr,
             isRent,
+            commissionPercent: toNumber(property.commissionPercent),
+            commissionAmountInr: toNumber(property.commissionAmount),
             // Empty, never a stock photo. A listing with no photos is a real
             // state the card renders deliberately (docs/DESIGN.md §4.5);
             // substituting someone else's building here would be a lie.

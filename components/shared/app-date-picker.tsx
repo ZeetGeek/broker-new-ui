@@ -5,12 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { addMonths } from "date-fns";
-import {
-    CalendarIcon,
-    ChevronLeftIcon,
-    ChevronRightIcon,
-    ChevronsUpDownIcon,
-} from "lucide-react";
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsUpDownIcon } from "lucide-react";
 import { type DayButton, getDefaultClassNames } from "react-day-picker";
 
 import { formatDateIn, formatDateIso } from "@/lib/format/date";
@@ -145,9 +140,7 @@ function DatePickerDayButton({
                   data-[selected-single=true]:hover:bg-brand
                   data-[selected-single=true]:hover:text-surface
                 `,
-                modifiers.today &&
-                    !modifiers.selected &&
-                    "bg-surface-muted font-medium text-ink",
+                modifiers.today && !modifiers.selected && "bg-surface-muted font-medium text-ink",
                 modifiers.outside && "text-ink-subtle/60 hover:text-ink-subtle",
                 defaultClassNames.day,
                 className,
@@ -253,7 +246,10 @@ function CalendarCaption({
                             className="block-3.5 inline-3.5 text-ink-muted"
                         />
                     </SelectTrigger>
-                    <SelectContent align="center" className="max-block-60 min-inline-24 inline-auto">
+                    <SelectContent
+                        align="center"
+                        className="max-block-60 min-inline-24 inline-auto"
+                    >
                         {years.map((year) => (
                             <SelectItem key={year} value={String(year)}>
                                 {year}

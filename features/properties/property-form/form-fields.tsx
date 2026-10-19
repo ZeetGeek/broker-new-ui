@@ -473,6 +473,7 @@ function CurrencyControl({
     placeholder,
     helperText,
     id,
+    allowZero = false,
 }: {
     value: unknown;
     onChange: (value: number | null) => void;
@@ -481,9 +482,12 @@ function CurrencyControl({
     placeholder?: string;
     helperText?: string;
     id: string;
+    allowZero?: boolean;
 }) {
     const numericValue = typeof value === "number" ? value : null;
-    const [display, setDisplay] = useState(() => formatInrInput(numericValue));
+    const format = (amount: number | null) =>
+        allowZero && amount === 0 ? "0" : formatInrInput(amount);
+    const [display, setDisplay] = useState(() => format(numericValue));
     const [focused, setFocused] = useState(false);
 
     return (
@@ -491,10 +495,10 @@ function CurrencyControl({
             id={id}
             inputMode="text"
             size="lg"
-            value={focused ? display : formatInrInput(numericValue)}
+            value={focused ? display : format(numericValue)}
             placeholder={placeholder ?? "e.g. 800000 or 800k"}
             onFocus={() => {
-                setDisplay(formatInrInput(numericValue));
+                setDisplay(format(numericValue));
                 setFocused(true);
             }}
             onValueChange={(next) => {
@@ -503,7 +507,7 @@ function CurrencyControl({
             }}
             onBlur={() => {
                 setFocused(false);
-                setDisplay(formatInrInput(numericValue));
+                setDisplay(format(numericValue));
                 onBlur();
             }}
             startIcon={IndianRupeeIcon}
@@ -534,6 +538,7 @@ export function CurrencyField({
     placeholder,
     helperText,
     onValueChange,
+    allowZero,
 }: {
     name: Path;
     label: string;
@@ -543,6 +548,8 @@ export function CurrencyField({
     placeholder?: string;
     helperText?: string;
     onValueChange?: (value: number | null) => void;
+    /** Show and keep 0 as a real value (e.g. "no commission"). */
+    allowZero?: boolean;
 }) {
     const {
         control,
@@ -573,6 +580,7 @@ export function CurrencyField({
                         error={error}
                         placeholder={placeholder}
                         helperText={helperText}
+                        allowZero={allowZero}
                     />
                 )}
             />

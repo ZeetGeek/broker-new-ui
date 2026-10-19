@@ -133,6 +133,8 @@ const rowClass = (checked: boolean) =>
 export type OwnerListingsLookingForMenuProps = {
     value: LookingForValue;
     onValueChange: (value: LookingForValue) => void;
+    /** Apply the reset to the results while the menu stays open. */
+    onCommit?: () => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
 };
@@ -140,6 +142,7 @@ export type OwnerListingsLookingForMenuProps = {
 export function OwnerListingsLookingForMenu({
     value,
     onValueChange,
+    onCommit,
     onOpenChange,
     className,
 }: OwnerListingsLookingForMenuProps) {
@@ -162,6 +165,7 @@ export function OwnerListingsLookingForMenu({
                             value={formatTransactionTypeLabel(value)}
                             className="inline-full"
                             isOpen={open}
+                            isActive={Boolean(value)}
                         />
                     }
                 />
@@ -177,7 +181,11 @@ export function OwnerListingsLookingForMenu({
                     <div className="flex flex-col gap-3 px-3 pe-3 pbs-3 pbe-3">
                         <OwnerListingsBandMenuHeader
                             description="Sale, rent, or both"
-                            onClear={() => onValueChange("")}
+                            showReset={value !== ""}
+                            onClear={() => {
+                                onValueChange("");
+                                onCommit?.();
+                            }}
                             className="px-2 pbs-1"
                         />
                         <DropdownMenuRadioGroup

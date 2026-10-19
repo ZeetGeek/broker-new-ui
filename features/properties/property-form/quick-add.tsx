@@ -5,6 +5,7 @@ import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import {
+    BadgePercent,
     ImageIcon,
     ImagePlus,
     Images,
@@ -20,7 +21,12 @@ import {
 import { createClientId } from "@/lib/client-id";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
-import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
+import {
+    DEFAULT_PROPERTY_DRAFT,
+    OWNER_SALE_COMMISSION_MAX,
+    OWNER_SALE_COMMISSION_MIN,
+    type PropertyDraftValues,
+} from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 import { useLocationOptions } from "@/hooks/use-locations";
@@ -64,9 +70,12 @@ const PHOTO_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif";
  */
 export function QuickAdd({
     photoFilesRef,
+    portal = "broker",
 }: {
     photoFilesRef: MutableRefObject<Map<string, File>>;
+    portal?: "broker" | "owner";
 }) {
+    const isOwner = portal === "owner";
     const { watch, setValue, getValues, formState } = useFormContext<PropertyDraftValues>();
     const { derived } = useFieldRules();
     const values = watch();
@@ -403,6 +412,29 @@ export function QuickAdd({
                     ) : null}
                     {showRent ? (
                         <CurrencyField name="rent.monthlyRent" label="Monthly rent" />
+                    ) : null}
+                    {isOwner && showSalePrice ? (
+                        <NumberField
+                            name="commission.sale.value"
+                            label="Sale commission (%)"
+                            step={0.1}
+                            min={OWNER_SALE_COMMISSION_MIN}
+                            max={OWNER_SALE_COMMISSION_MAX}
+                            placeholder="e.g. 2"
+                            visibility="public"
+                            startIcon={BadgePercent}
+                            hint={`Required. Between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}% of the sale price.`}
+                        />
+                    ) : null}
+                    {isOwner && derived.isRentLike ? (
+                        <CurrencyField
+                            name="commission.rent.value"
+                            label="Rent commission"
+                            placeholder="e.g. 25,000 (0 for none)"
+                            allowZero
+                            visibility="public"
+                            hint="Required. Fixed amount you pay the broker. For no commission, enter 0."
+                        />
                     ) : null}
                     <TextField
                         name="owner.phone"

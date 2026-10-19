@@ -160,11 +160,7 @@ export function PropertyCardSkeleton({
 
                 <div className="flex gap-2 pbs-1">
                     <div className="flex-1 animate-pulse rounded-control bg-surface-muted block-9" />
-                    <div
-                        className="
-                          flex-[1.4] animate-pulse rounded-control bg-surface-muted block-9
-                        "
-                    />
+                    <div className="flex-1 animate-pulse rounded-control bg-surface-muted block-9" />
                 </div>
             </div>
         </div>

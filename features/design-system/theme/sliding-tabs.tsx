@@ -19,8 +19,7 @@ function movePill(
         orientation === "vertical"
             ? `translateY(${tab.offsetTop}px)`
             : `translateX(${tab.offsetLeft}px)`;
-    const nextSize =
-        orientation === "vertical" ? `${tab.offsetHeight}px` : `${tab.offsetWidth}px`;
+    const nextSize = orientation === "vertical" ? `${tab.offsetHeight}px` : `${tab.offsetWidth}px`;
     const sizeProp = orientation === "vertical" ? "height" : "width";
 
     if (!animate) {

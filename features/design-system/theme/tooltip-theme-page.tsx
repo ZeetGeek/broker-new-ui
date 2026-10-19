@@ -5,18 +5,10 @@ import { Bell, Info, LayoutGrid } from "lucide-react";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Button } from "@/components/ui/button";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
-import {
-    TOOLTIP_SIDES,
-    TOOLTIP_USES,
-} from "@/features/design-system/theme/tooltip-tokens";
+import { TOOLTIP_SIDES, TOOLTIP_USES } from "@/features/design-system/theme/tooltip-tokens";
 
 function Swatch({ label, children }: { label: string; children: React.ReactNode }) {
     return (
@@ -63,11 +55,7 @@ function WithKbdDemo() {
     );
 }
 
-function SideDemo({
-    side,
-}: {
-    side: "top" | "bottom" | "inline-start" | "inline-end";
-}) {
+function SideDemo({ side }: { side: "top" | "bottom" | "inline-start" | "inline-end" }) {
     return (
         <Tooltip>
             <TooltipTrigger
@@ -111,8 +99,8 @@ export function TooltipThemePage() {
                     <section>
                         <h2 className="h4 text-ink">Sides</h2>
                         <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                            Default is <code className="body-xs">top</code> with an 8px gap.
-                            Pick the side that keeps the tip on-screen and clear of chrome.
+                            Default is <code className="body-xs">top</code> with an 8px gap. Pick
+                            the side that keeps the tip on-screen and clear of chrome.
                         </p>
                         <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             {TOOLTIP_SIDES.map((side) => (
@@ -192,8 +180,7 @@ export function TooltipThemePage() {
                                 never as the only label for a primary action.
                             </li>
                             <li>
-                                Keep the compound API —{" "}
-                                <code className="body-xs">Tooltip</code> +{" "}
+                                Keep the compound API — <code className="body-xs">Tooltip</code> +{" "}
                                 <code className="body-xs">TooltipTrigger</code> +{" "}
                                 <code className="body-xs">TooltipContent</code>. Wrap a tree in{" "}
                                 <code className="body-xs">TooltipProvider</code> when several tips
@@ -211,9 +198,10 @@ export function TooltipThemePage() {
                                 match the registry.
                             </li>
                             <li>
-                                Do not edit <code className="body-xs">components/ui/tooltip.tsx</code>{" "}
-                                for one-off styling — pass{" "}
-                                <code className="body-xs">className</code> on content, or wrap in{" "}
+                                Do not edit{" "}
+                                <code className="body-xs">components/ui/tooltip.tsx</code> for
+                                one-off styling — pass <code className="body-xs">className</code> on
+                                content, or wrap in{" "}
                                 <code className="body-xs">components/shared/</code>.
                             </li>
                             <li>

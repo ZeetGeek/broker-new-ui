@@ -17,15 +17,14 @@ import {
     Trash2,
 } from "lucide-react";
 
-import { APP_NAME } from "@/config";
-import { formatAreaSqft } from "@/lib/format/area";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
-import { VISIT_STATUS, isVisitCancelled, visitPrimaryAction } from "@/lib/visits/status";
+import { isVisitCancelled, VISIT_STATUS, visitPrimaryAction } from "@/lib/visits/status";
 import { durationMinutes, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,11 +35,23 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
+import { APP_NAME } from "@/config";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
+import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
 import { useAppSelector } from "@/store/hooks";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
+
+const VISIT_BADGE_COLOR = {
+    awaiting_owner: "amber",
+    confirmed: "emerald",
+    reschedule_pending: "amber",
+    cancelled_by_broker: "stone",
+    cancelled_by_owner: "red",
+    completed: "emerald",
+    no_show: "red",
+    expired: "stone",
+} as const satisfies Record<BrokerSiteVisit["status"], "amber" | "emerald" | "stone" | "red">;
 
 const DOT = "\u00B7";
 const EM_DASH = "\u2014";
@@ -60,7 +71,11 @@ export const VisitCard = memo(function VisitCard({
     const cancelled = isVisitCancelled(visit.status);
     const primary = visitPrimaryAction(visit.status, visit.startsAt, Boolean(visit.outcome));
     const primaryLabel =
-        primary === "outcome" ? "Log outcome" : primary === "withdraw" ? "Withdraw" : "Reschedule";
+        primary === "outcome"
+            ? "Log outcome"
+            : primary === "withdraw"
+              ? "Cancel request"
+              : "Reschedule";
     const PrimaryIcon =
         primary === "outcome" ? CircleCheck : primary === "withdraw" ? Trash2 : CalendarClock;
     const buyer = visit.buyers[0];
@@ -81,7 +96,10 @@ export const VisitCard = memo(function VisitCard({
     const buyerLabel =
         visit.buyers.length > 1 ? `Buyers ${DOT} +${visit.buyers.length - 1}` : "Buyer";
     const duration = durationMinutes(visit.startsAt, visit.endsAt);
-    const metaName = `${visit.property.configLabel} ${DOT} ${formatAreaSqft(visit.property.areaSqft)}`;
+    const metaName =
+        formatPropertyCardName(visit.property.propertyType, visit.property.areaSqft, {
+            bhk: bhkFromConfigLabel(visit.property.configLabel),
+        }) || visit.property.configLabel;
 
     return (
         <article
@@ -114,7 +132,7 @@ export const VisitCard = memo(function VisitCard({
 
                 <div className="flex flex-col pbs-1! min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
-                        <Badge variant="outline" className={status.tone}>
+                        <Badge color={VISIT_BADGE_COLOR[visit.status]}>
                             <StatusIcon aria-hidden />
                             {status.label}
                         </Badge>
@@ -126,9 +144,12 @@ export const VisitCard = memo(function VisitCard({
                         </Badge>
                     </div>
 
-                    <Price
+                    <PriceWithCommission
                         amountInr={visit.property.amountInr}
                         isRent={visit.property.purpose === "rent"}
+                        commissionPercent={visit.property.commissionPercent}
+                        commissionAmountInr={visit.property.commissionAmountInr}
+                        audience="broker"
                         className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
                     />
 
@@ -163,7 +184,7 @@ export const VisitCard = memo(function VisitCard({
                         <span className="truncate min-inline-0">
                             <span className="text-ink-subtle">{buyerLabel}</span>
                             <span className="text-ink-subtle/60"> </span>
-                            <span className="font-semibold capitalize text-ink">{buyer.name}</span>
+                            <span className="font-semibold text-ink capitalize">{buyer.name}</span>
                         </span>
                         <span className="text-ink-subtle" aria-hidden>
                             {DOT}
@@ -171,7 +192,7 @@ export const VisitCard = memo(function VisitCard({
                         <span className="truncate min-inline-0">
                             <span className="text-ink-subtle">Owner</span>
                             <span className="text-ink-subtle/60"> </span>
-                            <span className="font-semibold capitalize text-ink">
+                            <span className="font-semibold text-ink capitalize">
                                 {visit.owner.name}
                             </span>
                         </span>

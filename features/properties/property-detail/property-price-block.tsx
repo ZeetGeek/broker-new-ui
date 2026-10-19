@@ -10,8 +10,13 @@ import {
     offersRent,
     offersSale,
 } from "@/lib/format/listing-availability";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPriceInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
+
+import {
+    type CommissionAudience,
+    PriceWithCommission,
+} from "@/components/shared/price-with-commission";
 
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
@@ -20,7 +25,14 @@ import type { MyListingItem } from "@/features/properties/your-listings/types";
  * side by side makes neither readable. Show one at full size, switch with a
  * toggle, and keep the other as a quiet secondary line.
  */
-export function PropertyPriceBlock({ item }: { item: MyListingItem }) {
+export function PropertyPriceBlock({
+    item,
+    audience = "broker",
+}: {
+    item: MyListingItem;
+    /** Owner portal: "Broker gets". Broker portal: "You get". */
+    audience?: CommissionAudience;
+}) {
     const [mode, setMode] = useState<ListingPriceMode>(defaultPriceMode(item));
     const both = offersBoth(item);
 
@@ -72,13 +84,18 @@ export function PropertyPriceBlock({ item }: { item: MyListingItem }) {
                 ) : null}
 
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="display-3 tabular text-brand">
-                        {amount == null
-                            ? "Price on request"
-                            : showsSale
-                              ? formatPriceInr(amount)
-                              : formatRentInr(amount)}
-                    </span>
+                    {amount == null ? (
+                        <span className="display-3 tabular text-brand">Price on request</span>
+                    ) : (
+                        <PriceWithCommission
+                            amountInr={amount}
+                            isRent={!showsSale}
+                            commissionPercent={item.commissionPercent}
+                            commissionAmountInr={item.commissionAmount}
+                            audience={audience}
+                            className="display-3"
+                        />
+                    )}
                     {!both ? (
                         <span className="body-sm font-semibold text-ink-muted">
                             {offersRent(item) && !offersSale(item) ? "for rent" : "for sale"}
@@ -93,11 +110,18 @@ export function PropertyPriceBlock({ item }: { item: MyListingItem }) {
                     {both ? (
                         <span className="tabular">
                             Also {showsSale ? "for rent at" : "for sale at"}{" "}
-                            <span className="font-semibold text-ink">
-                                {showsSale
-                                    ? formatRentInr(item.rentAmountInr ?? 0)
-                                    : formatPriceInr(item.saleAmountInr ?? 0)}
-                            </span>
+                            <PriceWithCommission
+                                amountInr={
+                                    showsSale
+                                        ? (item.rentAmountInr ?? 0)
+                                        : (item.saleAmountInr ?? 0)
+                                }
+                                isRent={showsSale}
+                                commissionPercent={item.commissionPercent}
+                                commissionAmountInr={item.commissionAmount}
+                                audience={audience}
+                                className="font-semibold text-ink"
+                            />
                         </span>
                     ) : null}
                     {item.maintenanceInr != null && item.maintenanceInr > 0 ? (

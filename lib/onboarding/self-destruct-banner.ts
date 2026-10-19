@@ -42,8 +42,7 @@ export function shouldShowExpandedSelfDestructBanner(input: SelfDestructBannerIn
         return true;
     }
 
-    const daysElapsed =
-        (now.getTime() - firstSeenAt.getTime()) / (1000 * 60 * 60 * 24);
+    const daysElapsed = (now.getTime() - firstSeenAt.getTime()) / (1000 * 60 * 60 * 24);
 
     return daysElapsed < ttlDays;
 }

@@ -314,7 +314,9 @@ function SelectContent({
                     {...props}
                 >
                     <SelectScrollUpButton />
-                    <SelectPrimitive.List className="flex flex-col">{children}</SelectPrimitive.List>
+                    <SelectPrimitive.List className="flex flex-col">
+                        {children}
+                    </SelectPrimitive.List>
                     <SelectScrollDownButton />
                 </SelectPrimitive.Popup>
             </SelectPrimitive.Positioner>
@@ -351,9 +353,11 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
             )}
             {...props}
         >
-            <SelectPrimitive.ItemText className="
+            <SelectPrimitive.ItemText
+                className="
               flex flex-1 items-center gap-2 truncate min-inline-0
-            ">
+            "
+            >
                 {children}
             </SelectPrimitive.ItemText>
             <SelectPrimitive.ItemIndicator

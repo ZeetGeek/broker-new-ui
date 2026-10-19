@@ -76,7 +76,6 @@ export function ShowingRow({
                             name={brokerName}
                             imageUrl={showing.broker?.avatarUrl ?? undefined}
                             size="xs"
-                            fallback="character"
                         />
                         <p
                             className="

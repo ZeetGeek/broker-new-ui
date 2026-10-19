@@ -170,8 +170,8 @@ function OwnerListingsResults({
         <div
             className={
                 query.isFetching && !query.isFetchingNextPage
-                    ? "flex flex-col gap-2 opacity-60 transition-opacity duration-160"
-                    : "flex flex-col gap-2"
+                    ? "flex flex-col opacity-60 transition-opacity duration-160"
+                    : "flex flex-col"
             }
         >
             <OwnerListingsGrid items={query.items} serviceAreas={filterContext.serviceAreas} />

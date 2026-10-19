@@ -116,6 +116,8 @@ export type DashboardRepresentedProperty = {
     locality: string;
     amountInr: number;
     isRent: boolean;
+    commissionPercent?: string | number | null;
+    commissionAmount?: string | number | null;
     areaSqft: number;
     furnishingLabel: string;
     ownerFirstName: string;
@@ -141,6 +143,8 @@ export type DashboardAreaProperty = {
     locality: string;
     amountInr: number;
     isRent: boolean;
+    commissionPercent?: string | number | null;
+    commissionAmount?: string | number | null;
     areaSqft: number;
     furnishingLabel: string;
     detailLabel?: string;

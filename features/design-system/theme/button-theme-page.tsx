@@ -212,8 +212,8 @@ export function ButtonThemePage() {
                             punctuation.
                         </li>
                         <li>
-                            Standard 12px corners via `rounded-control`. Use the same token for every
-                            button size.
+                            Standard 12px corners via `rounded-control`. Use the same token for
+                            every button size.
                         </li>
                         <li>
                             `lg` is 48px (`control-xl`), matching input `lg`. Use it on primary

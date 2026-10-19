@@ -4,13 +4,13 @@ import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock } from "lucide-react";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { useRouter } from "@/lib/navigation";
 import { resetPasswordSchema, type ResetPasswordValues } from "@/lib/validation/auth";
 
 import { Button } from "@/components/ui/button";

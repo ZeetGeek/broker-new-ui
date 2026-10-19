@@ -31,6 +31,10 @@ export type VisitPropertySummary = {
     areaSqft: number;
     amountInr: number;
     purpose: "sale" | "rent";
+    /** Sale commission percent. Absent or 0 when unset. */
+    commissionPercent?: number | null;
+    /** Fixed rent brokerage in INR. Absent or 0 when unset. */
+    commissionAmountInr?: number | null;
     coverUrl?: string;
     latitude?: number;
     longitude?: number;

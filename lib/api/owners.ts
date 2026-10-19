@@ -90,8 +90,7 @@ function mapOwnerProfile(raw: OwnerProfileApi, fallbackId: string): BrokerOwnerP
     const locality = raw.locality?.trim() || undefined;
     const city = raw.city?.trim() || undefined;
     const locationLabel =
-        firstText(raw.locationLabel) ??
-        ([locality, city].filter(Boolean).join(", ") || undefined);
+        firstText(raw.locationLabel) ?? ([locality, city].filter(Boolean).join(", ") || undefined);
     const listingCount = raw.listingCount ?? raw.propertyCount ?? undefined;
     const localities = (raw.localities ?? raw.preferredLocalities ?? []).filter(
         (value): value is string => Boolean(value?.trim()),

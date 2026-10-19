@@ -48,13 +48,7 @@ export function PartyMeetRow({ left, right }: { left: PartyMeetSide; right: Part
 function PartyMeetPerson({ side }: { side: PartyMeetSide }) {
     const content = (
         <>
-            <UserAvatar
-                name={side.name}
-                imageUrl={side.avatarUrl}
-                size="xs"
-                fallback="character"
-                className="shrink-0"
-            />
+            <UserAvatar name={side.name} imageUrl={side.avatarUrl} size="xs" className="shrink-0" />
             <span className="flex min-inline-0 flex-col gap-0.5 text-start">
                 <span className="body-sm truncate font-semibold tracking-wide text-ink capitalize">
                     {side.name}
