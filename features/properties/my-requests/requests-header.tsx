@@ -9,6 +9,7 @@ import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { FilterChip, FilterChipCount } from "@/components/shared/filter-chip";
 import {
     Dialog,
     DialogClose,
@@ -39,11 +40,7 @@ import type {
     RequestsSummary,
     RequestsViewFilter,
 } from "@/features/properties/my-requests/types";
-import {
-    formatChipCount,
-    ownerListingsChipClassName,
-    ownerListingsChipCountClassName,
-} from "@/features/properties/owner-listings/owner-listings-chip-styles";
+import { ownerListingsChipClassName } from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
@@ -463,50 +460,23 @@ export function MyDealsHeader({
                     <div className="flex items-center justify-between gap-3 sm:gap-4">
                         <OwnerListingsChipsCarousel>
                             <OwnerListingsChipsCarouselSlide>
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={
-                                            <button
-                                                type="button"
-                                                className={cn(
-                                                    ownerListingsChipClassName(
-                                                        sheetFilterCount > 0,
-                                                    ),
-                                                    "gap-2",
-                                                )}
-                                                onClick={() => setSheetOpen(true)}
-                                                aria-pressed={sheetFilterCount > 0}
-                                            >
-                                                <SlidersHorizontal
-                                                    aria-hidden
-                                                    className={cn(
-                                                        "block-4 inline-4",
-                                                        sheetFilterCount > 0
-                                                            ? "text-brand-text"
-                                                            : "text-brand",
-                                                    )}
-                                                    strokeWidth={1.75}
-                                                />
-                                                <span>Filters</span>
-                                                {sheetFilterCount > 0 ? (
-                                                    <span
-                                                        className={ownerListingsChipCountClassName(
-                                                            true,
-                                                        )}
-                                                    >
-                                                        {formatChipCount(
-                                                            sheetFilterCount,
-                                                            isLoading,
-                                                        )}
-                                                    </span>
-                                                ) : null}
-                                            </button>
+                                <FilterChip
+                                    label="Filters"
+                                    icon={SlidersHorizontal}
+                                    count={sheetFilterCount}
+                                    isLoading={isLoading}
+                                    isActive={sheetFilterCount > 0}
+                                    clearable={sheetFilterCount > 0}
+                                    onClick={() => setSheetOpen(true)}
+                                    onClear={() => {
+                                        if (isInvites) {
+                                            onPatchInvites({ type: "", stage: "all", page: 1 });
+                                        } else {
+                                            onPatchSent({ type: "", view: "all", page: 1 });
                                         }
-                                    />
-                                    <TooltipContent side="bottom">
-                                        Sale/rent and status filters
-                                    </TooltipContent>
-                                </Tooltip>
+                                    }}
+                                    description="Sale/rent and status filters"
+                                />
                             </OwnerListingsChipsCarouselSlide>
 
                             <OwnerListingsChipsCarouselSlide>
@@ -522,16 +492,11 @@ export function MyDealsHeader({
                                                 <span className="hidden md:inline">
                                                     Sent by you
                                                 </span>
-                                                <span
-                                                    className={ownerListingsChipCountClassName(
-                                                        !isInvites,
-                                                    )}
-                                                >
-                                                    {formatChipCount(
-                                                        sentSummary?.counts.all ?? 0,
-                                                        isLoading && !sentSummary,
-                                                    )}
-                                                </span>
+                                                <FilterChipCount
+                                                    count={sentSummary?.counts.all ?? 0}
+                                                    isActive={!isInvites}
+                                                    isLoading={isLoading && !sentSummary}
+                                                />
                                             </Link>
                                         }
                                     />
@@ -557,16 +522,11 @@ export function MyDealsHeader({
                                                 <span className="hidden md:inline">
                                                     Invites from owners
                                                 </span>
-                                                <span
-                                                    className={ownerListingsChipCountClassName(
-                                                        isInvites,
-                                                    )}
-                                                >
-                                                    {formatChipCount(
-                                                        inviteSummary?.counts.all ?? 0,
-                                                        isLoading && !inviteSummary,
-                                                    )}
-                                                </span>
+                                                <FilterChipCount
+                                                    count={inviteSummary?.counts.all ?? 0}
+                                                    isActive={isInvites}
+                                                    isLoading={isLoading && !inviteSummary}
+                                                />
                                                 {(inviteSummary?.waitingOnYouCount ?? 0) > 0 ? (
                                                     <span
                                                         aria-label={`${inviteSummary?.waitingOnYouCount} waiting for you`}
@@ -593,49 +553,20 @@ export function MyDealsHeader({
                                       const active = inviteFilters.stage === chip.key;
                                       return (
                                           <OwnerListingsChipsCarouselSlide key={chip.key}>
-                                              <Tooltip>
-                                                  <TooltipTrigger
-                                                      render={
-                                                          <button
-                                                              type="button"
-                                                              className={ownerListingsChipClassName(
-                                                                  active,
-                                                              )}
-                                                              onClick={() =>
-                                                                  onPatchInvites({
-                                                                      stage: active
-                                                                          ? "all"
-                                                                          : chip.key,
-                                                                  })
-                                                              }
-                                                              aria-pressed={active}
-                                                          >
-                                                              <span className="md:hidden">
-                                                                  {chip.mobileLabel}
-                                                              </span>
-                                                              <span className="hidden md:inline">
-                                                                  {chip.label}
-                                                              </span>
-                                                              <span
-                                                                  className={ownerListingsChipCountClassName(
-                                                                      active,
-                                                                  )}
-                                                              >
-                                                                  {formatChipCount(
-                                                                      inviteChipCount(
-                                                                          inviteSummary,
-                                                                          chip.key,
-                                                                      ),
-                                                                      isLoading,
-                                                                  )}
-                                                              </span>
-                                                          </button>
-                                                      }
-                                                  />
-                                                  <TooltipContent side="bottom">
-                                                      {chip.description}
-                                                  </TooltipContent>
-                                              </Tooltip>
+                                              <FilterChip
+                                                  label={chip.label}
+                                                  mobileLabel={chip.mobileLabel}
+                                                  count={inviteChipCount(inviteSummary, chip.key)}
+                                                  isLoading={isLoading}
+                                                  isActive={active}
+                                                  clearable
+                                                  onClick={() =>
+                                                      onPatchInvites({
+                                                          stage: active ? "all" : chip.key,
+                                                      })
+                                                  }
+                                                  description={chip.description}
+                                              />
                                           </OwnerListingsChipsCarouselSlide>
                                       );
                                   })
@@ -643,49 +574,20 @@ export function MyDealsHeader({
                                       const active = sentFilters.view === chip.key;
                                       return (
                                           <OwnerListingsChipsCarouselSlide key={chip.key}>
-                                              <Tooltip>
-                                                  <TooltipTrigger
-                                                      render={
-                                                          <button
-                                                              type="button"
-                                                              className={ownerListingsChipClassName(
-                                                                  active,
-                                                              )}
-                                                              onClick={() =>
-                                                                  onPatchSent({
-                                                                      view: active
-                                                                          ? "all"
-                                                                          : chip.key,
-                                                                  })
-                                                              }
-                                                              aria-pressed={active}
-                                                          >
-                                                              <span className="md:hidden">
-                                                                  {chip.mobileLabel}
-                                                              </span>
-                                                              <span className="hidden md:inline">
-                                                                  {chip.label}
-                                                              </span>
-                                                              <span
-                                                                  className={ownerListingsChipCountClassName(
-                                                                      active,
-                                                                  )}
-                                                              >
-                                                                  {formatChipCount(
-                                                                      sentChipCount(
-                                                                          sentSummary,
-                                                                          chip.key,
-                                                                      ),
-                                                                      isLoading,
-                                                                  )}
-                                                              </span>
-                                                          </button>
-                                                      }
-                                                  />
-                                                  <TooltipContent side="bottom">
-                                                      {chip.description}
-                                                  </TooltipContent>
-                                              </Tooltip>
+                                              <FilterChip
+                                                  label={chip.label}
+                                                  mobileLabel={chip.mobileLabel}
+                                                  count={sentChipCount(sentSummary, chip.key)}
+                                                  isLoading={isLoading}
+                                                  isActive={active}
+                                                  clearable
+                                                  onClick={() =>
+                                                      onPatchSent({
+                                                          view: active ? "all" : chip.key,
+                                                      })
+                                                  }
+                                                  description={chip.description}
+                                              />
                                           </OwnerListingsChipsCarouselSlide>
                                       );
                                   })}

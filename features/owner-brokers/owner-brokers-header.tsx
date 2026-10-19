@@ -8,6 +8,7 @@ import { ArrowDownUp, ChevronDown, Search, UserRound, UserRoundSearch } from "lu
 import { ownerBrokersHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { FilterChipCount, filterChipClassName } from "@/components/shared/filter-chip";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,11 +20,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import type { OwnerBrokersTab } from "@/features/owner-brokers/types";
 import type { OwnerRequestsSort } from "@/features/owner-requests/owner-requests-header";
-import {
-    formatChipCount,
-    ownerListingsChipClassName,
-    ownerListingsChipCountClassName,
-} from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
@@ -124,7 +120,7 @@ function SortMenu({
                                 <button
                                     type="button"
                                     className={cn(
-                                        ownerListingsChipClassName(!isDefaultSort),
+                                        filterChipClassName(!isDefaultSort),
                                         "gap-2",
                                         isDefaultSort && "text-ink-muted",
                                     )}
@@ -204,7 +200,7 @@ export function OwnerBrokersHeader({
                                                     href={ownerBrokersHref(chip.key)}
                                                     aria-current={active ? "page" : undefined}
                                                     className={cn(
-                                                        ownerListingsChipClassName(active),
+                                                        filterChipClassName(active),
                                                         "gap-2",
                                                     )}
                                                 >
@@ -224,16 +220,11 @@ export function OwnerBrokersHeader({
                                                     <span className="hidden md:inline">
                                                         {chip.label}
                                                     </span>
-                                                    <span
-                                                        className={ownerListingsChipCountClassName(
-                                                            active,
-                                                        )}
-                                                    >
-                                                        {formatChipCount(
-                                                            count ?? 0,
-                                                            isLoading && count == null,
-                                                        )}
-                                                    </span>
+                                                    <FilterChipCount
+                                                        count={count ?? 0}
+                                                        isActive={active}
+                                                        isLoading={isLoading && count == null}
+                                                    />
                                                 </Link>
                                             }
                                         />

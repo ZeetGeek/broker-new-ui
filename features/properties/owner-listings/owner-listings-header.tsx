@@ -50,6 +50,19 @@ export function OwnerListingsHeader({
         setSheetOpen(true);
     }, []);
 
+    const handleClearSheetFilters = useCallback(() => {
+        onApplySheet({
+            minAreaSqft: "",
+            maxAreaSqft: "",
+            listedWithinDays: "",
+            minCommissionPercent: "",
+            maxCommissionPercent: "",
+            minCommissionAmount: "",
+            maxCommissionAmount: "",
+            cursor: "",
+        });
+    }, [onApplySheet]);
+
     return (
         <>
             <div className="sticky inset-bs-0 z-10 flex flex-col gap-6">
@@ -67,6 +80,7 @@ export function OwnerListingsHeader({
                     isLoading={isResultsLoading}
                     onToggleQuickChip={onToggleQuickChip}
                     onOpenFilters={handleOpenFilters}
+                    onClearSheetFilters={handleClearSheetFilters}
                     onQueryChange={(q) => onApplySheet({ q, cursor: "" })}
                     onSortChange={onSortChange}
                 />
