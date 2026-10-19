@@ -209,5 +209,9 @@ export function mapRepresentationToRequestItem(
         declineReason: stage === "declined" ? (rep.message ?? undefined) : undefined,
         imageSrc: photos[0] ?? "",
         timeline: buildTimeline(rep, stage, attemptNumber),
+        unreadMessageCount:
+            typeof rep.unreadMessageCount === "number" && rep.unreadMessageCount > 0
+                ? rep.unreadMessageCount
+                : undefined,
     };
 }

@@ -340,6 +340,23 @@ export function DealOverlayStats({
     );
 }
 
+function ChatUnreadBadge({ count }: { count: number }) {
+    if (count <= 0) return null;
+
+    return (
+        <span
+            aria-hidden
+            className="
+              tabular body-xs absolute -inset-e-1.5 -inset-bs-1.5 flex items-center justify-center
+              rounded-full bg-surface px-1 font-semibold text-brand ring-2 ring-brand/40 block-5
+              min-inline-5
+            "
+        >
+            {count > 9 ? "9+" : count}
+        </span>
+    );
+}
+
 /**
  * Bottom bar: WhatsApp (outline) + Chat (brand). Number on WhatsApp hover.
  */
@@ -347,12 +364,15 @@ export function DealContactSplitBar({
     ownerName,
     ownerPhoneDigits,
     onChat,
+    unreadMessageCount = 0,
 }: {
     ownerName: string;
     ownerPhoneDigits: string;
     onChat: () => void;
+    unreadMessageCount?: number;
 }) {
     const phoneLabel = formatPhoneIn(ownerPhoneDigits);
+    const unread = Math.max(0, unreadMessageCount);
 
     return (
         <div
@@ -394,9 +414,13 @@ export function DealContactSplitBar({
                 variant="accent"
                 size="md"
                 type="button"
-                className="flex-1 min-inline-0"
+                className="relative flex-1 min-inline-0"
                 onClick={onChat}
-                aria-label={`Chat with ${ownerName}`}
+                aria-label={
+                    unread > 0
+                        ? `Chat with ${ownerName}, ${unread} unread`
+                        : `Chat with ${ownerName}`
+                }
             >
                 <Icon
                     icon="tabler:message"
@@ -406,6 +430,7 @@ export function DealContactSplitBar({
                     aria-hidden
                 />
                 Chat
+                <ChatUnreadBadge count={unread} />
             </Button>
         </div>
     );

@@ -66,6 +66,8 @@ export type RepresentationItem = {
     brokerRatingCount?: number;
     brokerExperienceYears?: number | null;
     brokerServiceAreas?: string[];
+    /** Unread messages from the other party on this representation thread. */
+    unreadMessageCount?: number;
 };
 
 export type BrokerProfile = {

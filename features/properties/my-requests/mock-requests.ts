@@ -51,6 +51,7 @@ export const MOCK_REQUESTS: RequestItem[] = [
         reminderUsed: false,
         nudgedAt: null,
         imageSrc: IMAGES[0],
+        unreadMessageCount: 2,
         timeline: [
             { key: "sent", label: "You sent the request", at: daysAgo(4) },
             { key: "seen", label: "Owner opened your request", at: daysAgo(3, 4) },
@@ -86,6 +87,7 @@ export const MOCK_REQUESTS: RequestItem[] = [
         reminderUsed: false,
         nudgedAt: null,
         imageSrc: IMAGES[1],
+        unreadMessageCount: 1,
         timeline: [
             { key: "sent", label: "You sent the request", at: daysAgo(6) },
             { key: "seen", label: "Owner opened your request", at: daysAgo(5) },
@@ -121,6 +123,7 @@ export const MOCK_REQUESTS: RequestItem[] = [
         brokerSlotsTotal: 4,
         attemptNumber: 1,
         reminderCount: 0,
+        unreadMessageCount: 3,
         reminderUsed: false,
         nudgedAt: null,
         imageSrc: IMAGES[2],

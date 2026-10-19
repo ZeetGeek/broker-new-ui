@@ -130,5 +130,9 @@ export function mapRepresentationToInviteItem(
         brokerSlotsOpen: 0,
         brokerSlotsTotal: 3,
         imageSrc: photos[0] ?? "",
+        unreadMessageCount:
+            typeof rep.unreadMessageCount === "number" && rep.unreadMessageCount > 0
+                ? rep.unreadMessageCount
+                : undefined,
     };
 }

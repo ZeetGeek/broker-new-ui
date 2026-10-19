@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -197,9 +197,19 @@ export function RequestCard({
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+    const [unreadMessageCount, setUnreadMessageCount] = useState(item.unreadMessageCount ?? 0);
     const { openChat } = useChat();
     const actions = attemptActions(item);
     const ownerPhoneDigits = ownerPhoneFor(item);
+
+    useEffect(() => {
+        setUnreadMessageCount(item.unreadMessageCount ?? 0);
+    }, [item.id, item.unreadMessageCount]);
+
+    function openOwnerChat() {
+        setUnreadMessageCount(0);
+        openChat(chatPeerFor(item));
+    }
 
     async function toggleSave() {
         const next = !isSaved;
@@ -223,7 +233,7 @@ export function RequestCard({
             onToggleSave={() => void toggleSave()}
             contact={{
                 name: item.ownerName,
-                onMessage: () => openChat(chatPeerFor(item)),
+                onMessage: openOwnerChat,
             }}
             onOpenTimeline={() => setIsTimelineOpen(true)}
             onCancelRequest={actions.canCancel ? () => onWithdraw(item.id) : undefined}
@@ -267,7 +277,8 @@ export function RequestCard({
                         <DealContactSplitBar
                             ownerName={item.ownerName}
                             ownerPhoneDigits={ownerPhoneDigits}
-                            onChat={() => openChat(chatPeerFor(item))}
+                            unreadMessageCount={unreadMessageCount}
+                            onChat={openOwnerChat}
                         />
                     </div>
                 ) : (

@@ -85,6 +85,7 @@ export const MOCK_INVITES: InviteItem[] = [
         message: "My tenant is moving out next month.",
         invitedAt: daysAgo(11),
         respondedAt: daysAgo(10),
+        unreadMessageCount: 2,
         daysWaiting: 0,
         clientsAttached: 0,
         attachedClients: [],

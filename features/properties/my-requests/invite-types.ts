@@ -49,6 +49,8 @@ export type InviteItem = {
     brokerSlotsOpen: number;
     brokerSlotsTotal: number;
     imageSrc: string;
+    /** Unread owner chat messages for this representation. Omitted or 0 when none. */
+    unreadMessageCount?: number;
 };
 
 export type InvitesFilters = {

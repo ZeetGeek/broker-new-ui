@@ -86,6 +86,8 @@ export type RequestItem = {
     declineReason?: string;
     imageSrc: string;
     timeline: RequestTimelineStep[];
+    /** Unread owner chat messages for this representation. Omitted or 0 when none. */
+    unreadMessageCount?: number;
 };
 
 /**
