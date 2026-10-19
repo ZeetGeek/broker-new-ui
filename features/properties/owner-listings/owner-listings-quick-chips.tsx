@@ -37,28 +37,10 @@ type QuickChipConfig = {
 
 const QUICK_CHIPS: QuickChipConfig[] = [
     {
-        key: "yourAreas",
-        label: "Your areas",
-        mobileLabel: "Areas",
-        description: "Your service areas first, then elsewhere",
-    },
-    {
         key: "newToday",
         label: "New this week",
         mobileLabel: "New",
         description: "Created in the last 7 days",
-    },
-    {
-        key: "slotsOpen",
-        label: "Slots open",
-        mobileLabel: "Slots",
-        description: "Broker slots still available",
-    },
-    {
-        key: "commissionSet",
-        label: "Commission set",
-        mobileLabel: "Commission",
-        description: "Owner has set a commission",
     },
     {
         key: "readyToMove",
@@ -227,9 +209,7 @@ export function OwnerListingsQuickChips({
                         />
                     </OwnerListingsChipsCarouselSlide>
 
-                    {QUICK_CHIPS.filter(
-                        (chip) => chip.key !== "yourAreas" || chipCounts.yourAreas > 0,
-                    ).map((chip) => (
+                    {QUICK_CHIPS.map((chip) => (
                         <OwnerListingsChipsCarouselSlide key={chip.key}>
                             <QuickChipButton
                                 chip={chip}

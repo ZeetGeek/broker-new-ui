@@ -1011,7 +1011,7 @@ function BrowseOverlayPropertyCard({
                 />
             }
         >
-            <div className="flex flex-col gap-1.5 min-inline-0">
+            <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
                 <OverlayCardSummary
                     href={detailsHref}
                     price={<BrowseOverlayPrices listing={listing} />}
@@ -1019,7 +1019,14 @@ function BrowseOverlayPropertyCard({
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />
 
-                <OverlayPersonLine label="Owner" name={listing.owner.name} />
+                <div className="mbs-auto flex items-center gap-2 min-inline-0">
+                    <UserAvatar
+                        name={listing.owner.name}
+                        imageUrl={listing.owner.avatarUrl}
+                        size="2xs"
+                    />
+                    <OverlayPersonLine label="Owner" name={listing.owner.name} />
+                </div>
             </div>
 
             <OverlayCardActions>
