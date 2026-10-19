@@ -42,6 +42,7 @@ export type DealCardListing = {
     city: string;
     areaSqft: number;
     bhk: number;
+    bathrooms?: number | null;
     propertyTypeLabel: string;
     /** e.g. "2 BHK" — used in share text / specs when present. */
     configLabel?: string;
@@ -227,7 +228,10 @@ export function DealOverlayCard({
 }) {
     const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
     const headline =
-        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft) ||
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
+            bhk: listing.bhk,
+            bathrooms: listing.bathrooms,
+        }) ||
         configLabel ||
         listing.title;
 

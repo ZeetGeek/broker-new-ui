@@ -15,6 +15,8 @@ export type OwnerListingItem = {
     configLabel: string;
     propertyTypeLabel: OwnerListingPropertyType;
     bhk: number;
+    /** Bathrooms when the listing has them. Absent/null when unset. */
+    bathrooms?: number | null;
     locality: string;
     city: string;
     /** Indian state or union territory. Supplied by API when available. */

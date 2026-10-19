@@ -25,18 +25,63 @@ export function formatPropertyTypeDisplay(propertyTypeLabel: string): string {
         .join(" ");
 }
 
+function formatBhkLabel(bhk: number): string {
+    if (bhk >= 5) return "5+ BHK";
+    return `${Math.round(bhk)} BHK`;
+}
+
+const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
+    one_bhk: 1,
+    two_bhk: 2,
+    three_bhk: 3,
+    four_bhk: 4,
+    five_plus_bhk: 5,
+};
+
+/** Parse `2 BHK` / `5+ BHK` / `two_bhk` when no numeric bhk is on hand. */
+export function bhkFromConfigLabel(configLabel: string | null | undefined): number | undefined {
+    const text = configLabel?.trim();
+    if (!text) return undefined;
+    const fromKey = BHK_CONFIG_TO_NUMBER[text.toLowerCase().replace(/[\s-]+/g, "_")];
+    if (fromKey) return fromKey;
+    if (/^5\+\s*BHK$/i.test(text)) return 5;
+    const match = text.match(/^(\d+)\s*BHK$/i);
+    if (!match) return undefined;
+    const value = Number(match[1]);
+    return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function formatBathLabel(bathrooms: number): string {
+    const count = Math.round(bathrooms);
+    return count === 1 ? "1 Bath" : `${count} Bath`;
+}
+
+export type PropertyCardNameRooms = {
+    bhk?: number | null;
+    bathrooms?: number | null;
+};
+
 /**
- * Short card name used on every property card: `Office · 1,000 Sqft`.
- * Not the long listing title from the form.
+ * Short card name: `Apartment · 2 BHK · 2 Bath · 1,000 Sqft`.
+ * BHK / Bath only when present (> 0). Not the long listing title.
  */
 export function formatPropertyCardName(
     propertyTypeLabel: string,
     areaSqft: number | null | undefined,
+    rooms?: PropertyCardNameRooms,
 ): string {
     const type = formatPropertyTypeDisplay(propertyTypeLabel);
+    const bhk =
+        rooms?.bhk != null && Number.isFinite(rooms.bhk) && rooms.bhk > 0
+            ? formatBhkLabel(rooms.bhk)
+            : null;
+    const bath =
+        rooms?.bathrooms != null && Number.isFinite(rooms.bathrooms) && rooms.bathrooms > 0
+            ? formatBathLabel(rooms.bathrooms)
+            : null;
     const area =
         areaSqft != null && Number.isFinite(areaSqft) && areaSqft > 0
             ? formatPropertyCardArea(areaSqft)
             : null;
-    return [type, area].filter(Boolean).join(" · ");
+    return [type, bhk, bath, area].filter(Boolean).join(" · ");
 }

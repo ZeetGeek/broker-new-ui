@@ -20,7 +20,7 @@ import type { PropertyLead } from "@/lib/api/owner-leads";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { parseInr } from "@/lib/format/inr";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatPropertyCardName } from "@/lib/format/property-card-name";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
@@ -188,6 +188,7 @@ export function OwnerLeadCard({
                                     {formatPropertyCardName(
                                         facts.propertyTypeLabel ?? "",
                                         facts.areaSqft,
+                                        { bhk: bhkFromConfigLabel(facts.configLabel) },
                                     ) || facts.configLabel}
                                 </span>
                             </>

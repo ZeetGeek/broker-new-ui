@@ -4,7 +4,7 @@ import { memo, useMemo, useState } from "react";
 
 import { BadgeCheck, Building2, CalendarClock, ChevronDown, MapPin, Sparkles } from "lucide-react";
 
-import { formatPropertyCardName } from "@/lib/format/property-card-name";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, istDateKey } from "@/lib/visits/time";
@@ -79,8 +79,9 @@ export const PropertyRow = memo(function PropertyRow({
             ? brokerPropertyDetailHref(item.property.id)
             : brokerOwnerListingDetailHref(item.property.id);
     const propertyName =
-        formatPropertyCardName(item.property.propertyType, item.property.areaSqft) ||
-        item.property.configLabel;
+        formatPropertyCardName(item.property.propertyType, item.property.areaSqft, {
+            bhk: bhkFromConfigLabel(item.property.configLabel),
+        }) || item.property.configLabel;
 
     return (
         <article

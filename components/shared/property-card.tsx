@@ -375,6 +375,10 @@ type PropertyCardBase = {
     configLabel: string;
     propertyTypeLabel: string;
     areaSqft: number;
+    /** Bedrooms / BHK. 0 when not applicable (e.g. shop, office). */
+    bhk?: number;
+    /** Bathrooms. Null/0 when unset or not applicable. */
+    bathrooms?: number | null;
     amountInr: number;
     isRent: boolean;
     imageSrc?: string | null;
@@ -420,6 +424,7 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     locality: string;
     city: string;
     bhk: number;
+    bathrooms?: number | null;
     status: OwnedPropertyCardStatus;
     inboundRequestCount: number;
     listedDaysAgo: number;
@@ -983,7 +988,10 @@ function BrowseOverlayPropertyCard({
         ? formatRentInr(listing.rentAmountInr ?? 0)
         : formatPriceInr(listing.saleAmountInr ?? 0);
     const headline =
-        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft) || listing.title;
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
+            bhk: listing.bhk,
+            bathrooms: listing.bathrooms,
+        }) || listing.title;
 
     return (
         <OverlayCard
@@ -1240,8 +1248,10 @@ function RepresentedPropertyCard({
     className,
 }: Extract<PropertyCardProps, { variant: "represented" }>) {
     const titleLine =
-        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft) ||
-        `${listing.configLabel} · ${formatAreaSqft(listing.areaSqft)}`;
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
+            bhk: listing.bhk,
+            bathrooms: listing.bathrooms,
+        }) || `${listing.configLabel} · ${formatAreaSqft(listing.areaSqft)}`;
 
     return (
         <article
@@ -1514,6 +1524,7 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
         locality: listing.locality,
         city: listing.city,
         bhk: listing.bhk,
+        bathrooms: listing.bathrooms,
         brokerSlotsOpen: 0,
         brokerSlotsTotal: 0,
         commissionPercent: listing.commissionPercent ?? 0,
@@ -1567,7 +1578,10 @@ function OwnedOverlayPropertyCard({
         ? formatRentInr(listing.rentAmountInr ?? 0)
         : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
     const headline =
-        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft) || listing.title;
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
+            bhk: listing.bhk,
+            bathrooms: listing.bathrooms,
+        }) || listing.title;
     const metaParts = [
         listing.inboundRequestCount === 0
             ? "No requests"

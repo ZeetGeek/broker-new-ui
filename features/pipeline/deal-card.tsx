@@ -606,8 +606,9 @@ export function DealCard({
     const currentUserId = getStoredUser()?.id ?? null;
     const ignoreCardClickUntilRef = useRef(0);
     const headline =
-        formatPropertyCardName(deal.property.propertyTypeLabel, deal.property.areaSqft) ||
-        deal.property.configLabel;
+        formatPropertyCardName(deal.property.propertyTypeLabel, deal.property.areaSqft, {
+            bhk: deal.property.bhk,
+        }) || deal.property.configLabel;
     const locationLabel = `${deal.property.locality}, ${deal.property.city}`;
     const metaParts = [live && stageDays >= 1 ? `${stageDays}d in stage` : null].filter(Boolean);
 

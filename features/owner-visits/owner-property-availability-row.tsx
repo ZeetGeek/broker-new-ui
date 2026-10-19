@@ -6,7 +6,7 @@ import { Building2, CalendarPlus, Check, ChevronDown, MapPin, X } from "lucide-r
 
 import type { VisitSlot } from "@/lib/api/owner-slots";
 import type { PropertyListing } from "@/lib/api/properties";
-import { formatPropertyCardName } from "@/lib/format/property-card-name";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { formatTime24, parseApiInstant } from "@/lib/format/date";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
@@ -79,7 +79,12 @@ export const OwnerPropertyAvailabilityRow = memo(function OwnerPropertyAvailabil
     const purposeLabel = isRent ? "For rent" : "For sale";
     const typeKey = property.propertyType?.trim() || property.subtype?.trim() || "";
     const propertyName =
-        formatPropertyCardName(typeKey, property.areaSqft) || configLabel || "Property";
+        formatPropertyCardName(typeKey, property.areaSqft, {
+            bhk: bhkFromConfigLabel(configLabel),
+            bathrooms: property.bathrooms,
+        }) ||
+        configLabel ||
+        "Property";
     const title =
         property.title?.trim() || `${configLabel} in ${property.city?.trim() || "your city"}`;
 

@@ -31,6 +31,7 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         locality,
         city,
         bhk: item.bhk,
+        bathrooms: item.bathrooms ?? null,
         status: item.status,
         inboundRequestCount: item.inboundRequestCount,
         listedDaysAgo: item.listedDaysAgo,

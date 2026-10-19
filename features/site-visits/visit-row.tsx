@@ -177,6 +177,7 @@ export function VisitRow({
                             {formatPropertyCardName(
                                 visit.property.propertyTypeLabel,
                                 visit.property.areaSqft,
+                                { bhk: visit.property.bhk },
                             ) ||
                                 `${visit.property.configLabel} · ${visit.property.propertyTypeLabel}`}
                         </button>

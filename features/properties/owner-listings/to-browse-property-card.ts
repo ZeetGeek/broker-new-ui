@@ -26,6 +26,7 @@ export function toBrowsePropertyCardListing(item: OwnerListingItem): BrowsePrope
         photoCount: item.photoCount,
         isNew: item.isNew,
         bhk: item.bhk,
+        bathrooms: item.bathrooms ?? null,
         locality,
         city,
         brokerSlotsOpen: item.brokerSlotsOpen,

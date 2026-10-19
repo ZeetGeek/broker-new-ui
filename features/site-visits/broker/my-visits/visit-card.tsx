@@ -17,7 +17,7 @@ import {
     Trash2,
 } from "lucide-react";
 
-import { formatPropertyCardName } from "@/lib/format/property-card-name";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { isVisitCancelled, VISIT_STATUS, visitPrimaryAction } from "@/lib/visits/status";
@@ -97,8 +97,9 @@ export const VisitCard = memo(function VisitCard({
         visit.buyers.length > 1 ? `Buyers ${DOT} +${visit.buyers.length - 1}` : "Buyer";
     const duration = durationMinutes(visit.startsAt, visit.endsAt);
     const metaName =
-        formatPropertyCardName(visit.property.propertyType, visit.property.areaSqft) ||
-        visit.property.configLabel;
+        formatPropertyCardName(visit.property.propertyType, visit.property.areaSqft, {
+            bhk: bhkFromConfigLabel(visit.property.configLabel),
+        }) || visit.property.configLabel;
 
     return (
         <article

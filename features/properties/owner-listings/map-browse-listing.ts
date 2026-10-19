@@ -270,6 +270,7 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         configLabel: configLabel(bhk, propertyTypeLabel),
         propertyTypeLabel,
         bhk,
+        bathrooms: listing.bathrooms != null && listing.bathrooms > 0 ? listing.bathrooms : null,
         locality,
         city,
         country: listing.country?.trim() || "India",

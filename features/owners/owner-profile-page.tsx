@@ -19,7 +19,7 @@ import { type BrokerOwnerProfile, type OwnerProfileProperty, ownersApi } from "@
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { formatPhoneIn } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
-import { formatPropertyCardName } from "@/lib/format/property-card-name";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
@@ -49,7 +49,9 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
     const price = propertyPrice(property);
     const place = [property.address, property.city].filter(Boolean).join(", ");
     const name =
-        formatPropertyCardName(property.propertyType ?? "", property.areaSqft) || property.title;
+        formatPropertyCardName(property.propertyType ?? "", property.areaSqft, {
+            bhk: bhkFromConfigLabel(property.bhkConfig),
+        }) || property.title;
 
     return (
         <Link

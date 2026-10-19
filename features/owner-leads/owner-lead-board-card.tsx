@@ -10,7 +10,7 @@ import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { parseInr } from "@/lib/format/inr";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr } from "@/lib/format/price";
-import { formatPropertyCardName } from "@/lib/format/property-card-name";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { useRouter } from "@/lib/navigation";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
@@ -205,7 +205,9 @@ export function OwnerLeadBoardCard({
               : null;
     const OutcomeIcon = outcome?.icon;
     const headline =
-        formatPropertyCardName(facts.propertyTypeLabel ?? "", facts.areaSqft) ||
+        formatPropertyCardName(facts.propertyTypeLabel ?? "", facts.areaSqft, {
+            bhk: bhkFromConfigLabel(facts.configLabel),
+        }) ||
         facts.configLabel ||
         leadPropertyLabel(lead);
     const locationLabel = [facts.locality, facts.city].filter(Boolean).join(", ");
