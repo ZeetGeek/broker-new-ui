@@ -336,7 +336,7 @@ function SentFilterDialog({
                 </div>
                 <div className="border-bs border-border-warm/40 bg-surface px-5 py-4">
                     <AppModalFooter
-                        secondaryLabel="Clear all"
+                        secondaryLabel="Reset filter"
                         onSecondary={() => setDraft({ ...draft, type: "", view: "all" })}
                         primaryLabel="Apply filters"
                         onPrimary={() => {
@@ -413,7 +413,7 @@ function InviteFilterDialog({
                 </div>
                 <div className="border-bs border-border-warm/40 bg-surface px-5 py-4">
                     <AppModalFooter
-                        secondaryLabel="Clear all"
+                        secondaryLabel="Reset filter"
                         onSecondary={() => setDraft({ ...draft, type: "", stage: "all" })}
                         primaryLabel="Apply filters"
                         onPrimary={() => {

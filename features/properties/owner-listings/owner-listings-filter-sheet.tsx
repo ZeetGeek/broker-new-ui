@@ -406,6 +406,7 @@ export function OwnerListingsFilterSheet({
     };
 
     const hasDraftFilters = useMemo(() => {
+        // Quick chips (New this week / Ready to move) live outside this sheet.
         return (
             Boolean(draft.minAreaSqft) ||
             Boolean(draft.maxAreaSqft) ||
@@ -413,12 +414,7 @@ export function OwnerListingsFilterSheet({
             Boolean(draft.minCommissionPercent) ||
             Boolean(draft.maxCommissionPercent) ||
             Boolean(draft.minCommissionAmount) ||
-            Boolean(draft.maxCommissionAmount) ||
-            draft.yourAreas ||
-            draft.newToday ||
-            draft.slotsOpen ||
-            draft.commissionSet ||
-            draft.readyToMove
+            Boolean(draft.maxCommissionAmount)
         );
     }, [draft]);
 
@@ -429,23 +425,45 @@ export function OwnerListingsFilterSheet({
     const setListedPreset = (value: string) => {
         updateDraft({
             listedWithinDays: value,
-            newToday: value === "7",
+            // Listed → New chip only when picking Last 7 days; leave the chip alone otherwise.
+            ...(value === "7" ? { newToday: true } : {}),
         });
     };
 
     const handleApply = () => {
+        const leavingListedSeven =
+            appliedFilters.listedWithinDays === "7" && draft.listedWithinDays !== "7";
+
         onApply({
-            ...draft,
+            minAreaSqft: draft.minAreaSqft,
+            maxAreaSqft: draft.maxAreaSqft,
+            listedWithinDays: draft.listedWithinDays,
+            minCommissionPercent: draft.minCommissionPercent,
+            maxCommissionPercent: draft.maxCommissionPercent,
+            minCommissionAmount: draft.minCommissionAmount,
+            maxCommissionAmount: draft.maxCommissionAmount,
             type: draftType,
-            // Keep the New chip in sync with the Listed preset.
-            newToday: draft.listedWithinDays === "7",
+            // Sync New chip with Listed Last 7 days; do not wipe a quick-chip-only New.
+            ...(draft.listedWithinDays === "7"
+                ? { newToday: true }
+                : leavingListedSeven
+                  ? { newToday: false }
+                  : {}),
             cursor: "",
         });
         onOpenChange(false);
     };
 
     const handleClear = () => {
-        setDraft(EMPTY_SHEET_FILTERS);
+        setDraft((prev) => ({
+            ...EMPTY_SHEET_FILTERS,
+            // Preserve quick-chip flags so Reset does not clear New / Ready to move.
+            newToday: prev.listedWithinDays === "7" ? false : prev.newToday,
+            readyToMove: prev.readyToMove,
+            slotsOpen: prev.slotsOpen,
+            commissionSet: prev.commissionSet,
+            yourAreas: prev.yourAreas,
+        }));
     };
 
     return (
@@ -684,7 +702,7 @@ export function OwnerListingsFilterSheet({
 
                 <div className="shrink-0 border-bs border-border-warm bg-surface px-5 py-4 sm:px-7">
                     <AppModalFooter
-                        secondaryLabel="Clear all"
+                        secondaryLabel="Reset filter"
                         secondaryDisabled={!hasDraftFilters}
                         onSecondary={handleClear}
                         primaryLabel={`Show ${previewCount} properties`}

@@ -264,7 +264,7 @@ export function OpenSlotsTab({
                 </div>
                 <footer className="border-bs border-border-warm bg-surface px-5 py-4">
                     <AppModalFooter
-                        secondaryLabel="Clear all"
+                        secondaryLabel="Reset filter"
                         onSecondary={() => {
                             setDraftFilters(DEFAULT_SLOT_FILTERS);
                             setDraftBuyerId(undefined);
