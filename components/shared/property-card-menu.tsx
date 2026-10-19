@@ -11,11 +11,14 @@ import {
     Link2,
     MessageCircle,
     Pencil,
+    Phone,
     Share2,
     Trash2,
+    UserPlus,
     X,
 } from "lucide-react";
 
+import { formatPhoneIn, formatTelUrl } from "@/lib/format/phone";
 import {
     buildEmailShareUrl,
     buildFacebookShareUrl,
@@ -62,7 +65,7 @@ type ShareChannel = {
 
 export type PropertyCardMenuContact = {
     name: string;
-    /** @deprecated Prefer call / WhatsApp on the card owner section. Kept optional for callers. */
+    /** Shared phone — "Call …" in the ⋯ menu. */
     phoneDigits?: string;
     onMessage?: () => void;
 };
@@ -71,8 +74,10 @@ export type PropertyCardMenuProps = {
     listing: PropertyShareInput;
     isSaved?: boolean;
     onToggleSave?: () => void;
-    /** Message / WhatsApp the owner (or broker). */
+    /** Call / message the owner (or broker). */
     contact?: PropertyCardMenuContact;
+    /** Open the attach-buyers flow. */
+    onAddBuyer?: () => void;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
     /** Owned cards: open the edit form. */
@@ -147,6 +152,7 @@ export function PropertyCardMenu({
     isSaved = false,
     onToggleSave,
     contact,
+    onAddBuyer,
     onOpenTimeline,
     onCancelRequest,
     onEdit,
@@ -241,10 +247,11 @@ export function PropertyCardMenu({
         [shareText, shareUrl],
     );
 
-    const hasContact = Boolean(contact?.onMessage);
+    const hasContact = Boolean(contact?.onMessage || contact?.phoneDigits);
     const hasDealExtras = Boolean(
-        onOpenTimeline || onCancelRequest || onEdit || onDelete || extraItems,
+        onAddBuyer || onOpenTimeline || onCancelRequest || onEdit || onDelete || extraItems,
     );
+    const contactPhoneLabel = contact?.phoneDigits ? formatPhoneIn(contact.phoneDigits) : null;
 
     return (
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>
@@ -381,6 +388,19 @@ export function PropertyCardMenu({
 
                 {hasContact ? <DropdownMenuSeparator className={SEPARATOR_CLASS} /> : null}
 
+                {contact?.phoneDigits && contactPhoneLabel ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        onClick={() => {
+                            window.location.href = formatTelUrl(contact.phoneDigits!);
+                            setOpen(false);
+                        }}
+                    >
+                        <Phone aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        Call {contact.name.split(" ")[0]}
+                    </DropdownMenuItem>
+                ) : null}
+
                 {contact?.onMessage ? (
                     <DropdownMenuItem
                         className={ITEM_CLASS}
@@ -395,6 +415,19 @@ export function PropertyCardMenu({
                 ) : null}
 
                 {hasDealExtras ? <DropdownMenuSeparator className={SEPARATOR_CLASS} /> : null}
+
+                {onAddBuyer ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        onClick={() => {
+                            onAddBuyer();
+                            setOpen(false);
+                        }}
+                    >
+                        <UserPlus aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        Add buyer
+                    </DropdownMenuItem>
+                ) : null}
 
                 {onOpenTimeline ? (
                     <DropdownMenuItem className={ITEM_CLASS} onClick={onOpenTimeline}>

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
-import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
@@ -173,6 +173,7 @@ export function DealCardPhotoToolbar({
     isSaved = false,
     onToggleSave,
     contact,
+    onAddBuyer,
     onOpenTimeline,
     onCancelRequest,
     tone = "overlay",
@@ -181,6 +182,7 @@ export function DealCardPhotoToolbar({
     isSaved?: boolean;
     onToggleSave?: () => void;
     contact?: PropertyCardMenuContact;
+    onAddBuyer?: () => void;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
     tone?: "overlay" | "plain";
@@ -191,6 +193,7 @@ export function DealCardPhotoToolbar({
             isSaved={isSaved}
             onToggleSave={onToggleSave}
             contact={contact}
+            onAddBuyer={onAddBuyer}
             onOpenTimeline={onOpenTimeline}
             onCancelRequest={onCancelRequest}
             tone={tone}
@@ -281,66 +284,21 @@ export function DealOverlayCard({
     );
 }
 
-/** Owner line under the summary. Call shows when the number is shared. */
+/** Owner line under the summary. Call lives in the ⋯ menu. */
 export function DealOverlayStats({
     ownerName,
     ownerAvatarUrl,
-    ownerPhoneDigits,
     personLabel = "Owner",
 }: {
     listing: DealCardListing;
     ownerName: string;
     ownerAvatarUrl?: string;
+    /** Kept for callers; Call moved to the card ⋯ menu. */
     ownerPhoneDigits?: string;
     /** Owner-side cards pass "Broker". */
     personLabel?: string;
 }) {
-    const phoneLabel = ownerPhoneDigits ? formatPhoneIn(ownerPhoneDigits) : null;
-
-    return (
-        <OverlayPersonLine
-            label={personLabel}
-            name={ownerName}
-            avatarUrl={ownerAvatarUrl}
-            action={
-                ownerPhoneDigits && phoneLabel ? (
-                    <span onClick={(event) => event.stopPropagation()}>
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <Button
-                                        variant="link"
-                                        size="sm"
-                                        nativeButton={false}
-                                        className="
-                                          block-auto! min-block-0 gap-1 px-0 py-0
-                                          text-brand hover:text-brand/85
-                                        "
-                                        render={
-                                            <a
-                                                href={formatTelUrl(ownerPhoneDigits)}
-                                                aria-label={`Call ${ownerName} at ${phoneLabel}`}
-                                            />
-                                        }
-                                    />
-                                }
-                            >
-                                <Icon
-                                    icon="tabler:phone"
-                                    width={14}
-                                    height={14}
-                                    className="shrink-0 block-3.5 inline-3.5"
-                                    aria-hidden
-                                />
-                                Call
-                            </TooltipTrigger>
-                            <TooltipContent side="top">{phoneLabel}</TooltipContent>
-                        </Tooltip>
-                    </span>
-                ) : null
-            }
-        />
-    );
+    return <OverlayPersonLine label={personLabel} name={ownerName} avatarUrl={ownerAvatarUrl} />;
 }
 
 function ChatUnreadBadge({ count }: { count: number }) {
@@ -439,15 +397,15 @@ export function DealContactSplitBar({
     );
 }
 
-/** Attached buyers on an approved deal — tap opens the buyers modal. */
+/** Attached buyers on an approved deal. Add buyer lives in the ⋯ menu. */
 export function DealAttachedBuyers({
     buyers,
-    onManage,
 }: {
     buyers: Array<{ id: string; name: string; avatarUrl?: string }>;
+    /** @deprecated Add buyer moved to the card ⋯ menu. */
     onManage?: () => void;
 }) {
-    return <AttachedBuyersRow buyers={buyers} onManage={onManage} />;
+    return <AttachedBuyersRow buyers={buyers} />;
 }
 
 /** Exclusive owner attached to a broker listing — tap opens the owner picker. */

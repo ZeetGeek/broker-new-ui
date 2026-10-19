@@ -231,6 +231,12 @@ export function RequestCard({
             listing={item}
             isSaved={isSaved}
             onToggleSave={() => void toggleSave()}
+            contact={
+                ownerPhoneDigits
+                    ? { name: item.ownerName, phoneDigits: ownerPhoneDigits }
+                    : undefined
+            }
+            onAddBuyer={item.stage === "approved" ? () => setIsBuyersOpen(true) : undefined}
             onOpenTimeline={() => setIsTimelineOpen(true)}
             onCancelRequest={actions.canCancel ? () => onWithdraw(item.id) : undefined}
             tone="overlay"
@@ -256,10 +262,7 @@ export function RequestCard({
                         ownerPhoneDigits={ownerPhoneDigits}
                     />
                     {item.stage === "approved" && item.attachedClients.length > 0 ? (
-                        <DealAttachedBuyers
-                            buyers={item.attachedClients}
-                            onManage={() => setIsBuyersOpen(true)}
-                        />
+                        <DealAttachedBuyers buyers={item.attachedClients} />
                     ) : null}
                 </div>
                 {ownerPhoneDigits ? (
