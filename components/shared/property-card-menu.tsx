@@ -9,13 +9,11 @@ import {
     Ellipsis,
     History,
     Link2,
-    MessageCircle,
     Pencil,
     Phone,
     Share2,
     Trash2,
     UserPlus,
-    X,
 } from "lucide-react";
 
 import { formatPhoneIn, formatTelUrl } from "@/lib/format/phone";
@@ -31,8 +29,11 @@ import {
 import { cn } from "@/lib/utils";
 
 import { OVERLAY_ICON_BUTTON_CLASS } from "@/components/shared/overlay-card";
+import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import shareBrands from "@/components/shared/thesvg-color-share.json";
 import { Button } from "@/components/ui/button";
+
+addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -78,6 +79,10 @@ export type PropertyCardMenuProps = {
     contact?: PropertyCardMenuContact;
     /** Open the attach-buyers flow. */
     onAddBuyer?: () => void;
+    /** Nudge the owner on a pending request to represent. */
+    onRemind?: () => void;
+    /** When false, reminder stays visible but disabled. Default true when `onRemind` is set. */
+    canRemind?: boolean;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
     /** Owned cards: open the edit form. */
@@ -153,6 +158,8 @@ export function PropertyCardMenu({
     onToggleSave,
     contact,
     onAddBuyer,
+    onRemind,
+    canRemind = true,
     onOpenTimeline,
     onCancelRequest,
     onEdit,
@@ -249,7 +256,13 @@ export function PropertyCardMenu({
 
     const hasContact = Boolean(contact?.onMessage || contact?.phoneDigits);
     const hasDealExtras = Boolean(
-        onAddBuyer || onOpenTimeline || onCancelRequest || onEdit || onDelete || extraItems,
+        onAddBuyer ||
+        onRemind ||
+        onOpenTimeline ||
+        onCancelRequest ||
+        onEdit ||
+        onDelete ||
+        extraItems,
     );
     const contactPhoneLabel = contact?.phoneDigits ? formatPhoneIn(contact.phoneDigits) : null;
 
@@ -409,8 +422,14 @@ export function PropertyCardMenu({
                             setOpen(false);
                         }}
                     >
-                        <MessageCircle aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Message {contact.name.split(" ")[0]}
+                        <Icon
+                            icon="tabler:message"
+                            width={16}
+                            height={16}
+                            className={ICON_CLASS}
+                            aria-hidden
+                        />
+                        Chat here
                     </DropdownMenuItem>
                 ) : null}
 
@@ -426,6 +445,27 @@ export function PropertyCardMenu({
                     >
                         <UserPlus aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                         Add buyer
+                    </DropdownMenuItem>
+                ) : null}
+
+                {onRemind ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        disabled={!canRemind}
+                        onClick={() => {
+                            if (!canRemind) return;
+                            onRemind();
+                            setOpen(false);
+                        }}
+                    >
+                        <Icon
+                            icon="tabler:bell"
+                            width={16}
+                            height={16}
+                            className={ICON_CLASS}
+                            aria-hidden
+                        />
+                        {canRemind ? "Send reminder" : "Reminders used"}
                     </DropdownMenuItem>
                 ) : null}
 
@@ -451,10 +491,12 @@ export function PropertyCardMenu({
                         )}
                         onClick={onCancelRequest}
                     >
-                        <X
-                            aria-hidden
+                        <Icon
+                            icon="tabler:cancel"
+                            width={16}
+                            height={16}
                             className="menu-stroke-icon is-danger block-4 inline-4 shrink-0"
-                            strokeWidth={1.75}
+                            aria-hidden
                         />
                         Cancel request
                     </DropdownMenuItem>

@@ -10,6 +10,9 @@ import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/ro
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
+import { useChat } from "@/features/chat/chat-provider";
+import type { ChatPeer } from "@/features/chat/types";
+import { REMINDER_LIMIT } from "@/features/properties/my-requests/types";
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 import type { SavedProperty } from "@/features/properties/saved-properties/map-saved-property";
@@ -30,6 +33,19 @@ function mutationErrorMessage(error: unknown, fallback: string): string {
     return fallback;
 }
 
+function browseChatPeer(item: OwnerListingItem, representationId: string): ChatPeer {
+    return {
+        id: representationId,
+        name: item.ownerName,
+        avatarUrl: item.ownerAvatarUrl,
+        roleLabel: item.title,
+        representationId,
+        mySide: "broker",
+        canSend: true,
+        closed: false,
+    };
+}
+
 export function SavedPropertiesGrid({
     items,
     onUnsave,
@@ -37,8 +53,10 @@ export function SavedPropertiesGrid({
     items: SavedProperty[];
     onUnsave: (id: string) => void;
 }) {
+    const { openChat } = useChat();
     const [busyId, setBusyId] = useState<string | null>(null);
     const [requestOverrides, setRequestOverrides] = useState<Record<string, RequestOverride>>({});
+    const [remindCounts, setRemindCounts] = useState<Record<string, number>>({});
 
     const representationIdFor = useCallback(
         (item: OwnerListingItem): string | undefined => {
@@ -97,6 +115,11 @@ export function SavedPropertiesGrid({
                 }
                 await representativeApi.withdraw(representationId);
                 setRequestOverrides((prev) => ({ ...prev, [item.id]: false }));
+                setRemindCounts((prev) => {
+                    const next = { ...prev };
+                    delete next[item.id];
+                    return next;
+                });
                 toast.success("Request cancelled");
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not cancel request"));
@@ -105,6 +128,55 @@ export function SavedPropertiesGrid({
             }
         },
         [busyId, hasRequested, representationIdFor],
+    );
+
+    const handleRemind = useCallback(
+        async (item: OwnerListingItem) => {
+            if (busyId || !hasRequested(item)) return;
+            const used = remindCounts[item.id] ?? 0;
+            if (used >= REMINDER_LIMIT) return;
+
+            setBusyId(item.id);
+            try {
+                let representationId = representationIdFor(item);
+                if (!representationId) {
+                    representationId = await findPendingBrokerRepresentationId(item.id);
+                }
+                if (!representationId) {
+                    toast.error("Could not send reminder");
+                    return;
+                }
+                await representativeApi.remind(representationId);
+                setRemindCounts((prev) => ({ ...prev, [item.id]: used + 1 }));
+                toast.success("Reminder sent to the owner");
+            } catch (error) {
+                toast.error(mutationErrorMessage(error, "Could not send reminder"));
+            } finally {
+                setBusyId(null);
+            }
+        },
+        [busyId, hasRequested, remindCounts, representationIdFor],
+    );
+
+    const handleOpenChat = useCallback(
+        async (item: OwnerListingItem) => {
+            if (!hasRequested(item)) return;
+
+            let representationId = representationIdFor(item);
+            if (!representationId) {
+                representationId = await findPendingBrokerRepresentationId(item.id);
+                if (representationId) {
+                    const pendingId = representationId;
+                    setRequestOverrides((prev) => ({ ...prev, [item.id]: pendingId }));
+                }
+            }
+            if (!representationId) {
+                toast.error("Could not open chat");
+                return;
+            }
+            openChat(browseChatPeer(item, representationId));
+        },
+        [hasRequested, openChat, representationIdFor],
     );
 
     return (
@@ -151,6 +223,9 @@ export function SavedPropertiesGrid({
                         onCancelRequest={
                             requested ? () => void handleCancelRequest(item.listing) : undefined
                         }
+                        onRemind={requested ? () => void handleRemind(item.listing) : undefined}
+                        canRemind={(remindCounts[item.listing.id] ?? 0) < REMINDER_LIMIT}
+                        onChat={requested ? () => void handleOpenChat(item.listing) : undefined}
                         isSaved
                         onToggleSave={() => onUnsave(item.id)}
                     />

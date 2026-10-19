@@ -3,6 +3,7 @@
 import { type MouseEvent, type PointerEvent, useEffect, useState } from "react";
 import Link from "next/link";
 
+import { addCollection, Icon } from "@iconify/react/offline";
 import useEmblaCarousel from "embla-carousel-react";
 import {
     Bath,
@@ -64,11 +65,14 @@ import {
 } from "@/components/shared/price-with-commission";
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
+import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 
 const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted h-40 w-full";
 
@@ -99,8 +103,6 @@ const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
 const BROWSE_ASK_LABEL = "Ask to sell";
 const BROWSE_ASK_PENDING_LABEL = "Sending…";
-const BROWSE_WITHDRAW_LABEL = "Cancel request";
-const BROWSE_WITHDRAWING_LABEL = "Cancelling…";
 const BROWSE_REPRESENTING_LABEL = "You're representing";
 const BROWSE_INVITE_ACCEPT_LABEL = "Accept";
 const BROWSE_INVITE_ACCEPTING_LABEL = "Accepting…";
@@ -124,12 +126,18 @@ const BROWSE_STATUS = {
 const BROWSE_REQUEST_TOOLTIP = {
     idle: "Ask the owner for permission to sell this property",
     pending: "Sending your request…",
+    remind: "Send the owner a reminder about your request",
+    remindersUsed: "You already used both reminders for this request",
     withdraw: "Cancel this request. You can ask again later.",
-    withdrawing: "Cancelling your request…",
     representing: "The owner already approved you for this listing",
     inviteAccept: "Accept the invite and get the owner's number",
     inviteDecline: "Cancel this invite. The owner can ask someone else",
 } as const;
+
+const BROWSE_REMIND_LABEL = "Remind";
+const BROWSE_REMINDERS_USED_LABEL = "Reminded";
+const BROWSE_WITHDRAW_LABEL = "Cancel";
+const BROWSE_WITHDRAWING_LABEL = "Cancelling…";
 
 function BrowseActionHint({ children }: { children: string }) {
     return (
@@ -145,6 +153,8 @@ function BrowseRequestAction({
     inviteActionPending,
     onRequest,
     onCancelRequest,
+    onRemind,
+    canRemind = true,
     onAcceptInvite,
     onCancelInvite,
     tone = "light",
@@ -156,6 +166,8 @@ function BrowseRequestAction({
     inviteActionPending?: "accept" | "cancel";
     onRequest?: () => void;
     onCancelRequest?: () => void;
+    onRemind?: () => void;
+    canRemind?: boolean;
     onAcceptInvite?: () => void;
     onCancelInvite?: () => void;
     /** `overlay` = white listing-card panel; `light` = list-row chrome. */
@@ -277,41 +289,80 @@ function BrowseRequestAction({
             <TooltipProvider>
                 <div className="flex flex-col gap-1.5 inline-full">
                     <BrowseActionHint>{BROWSE_STATUS.waiting}</BrowseActionHint>
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <span className="inline-flex inline-full">
-                                    <Button
-                                        type="button"
-                                        size="md"
-                                        variant="outline"
-                                        className={cn("inline-full", outlineClass)}
-                                        disabled={isRequestPending}
-                                        loading={isRequestPending}
-                                        onClick={onCancelRequest}
-                                    >
-                                        {isRequestPending ? (
-                                            BROWSE_WITHDRAWING_LABEL
-                                        ) : (
-                                            <>
-                                                <X
+                    <div className="flex gap-2">
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <span className="inline-flex flex-1 min-inline-0">
+                                        <Button
+                                            type="button"
+                                            size="md"
+                                            variant="outline"
+                                            className={cn("inline-full", outlineClass)}
+                                            disabled={isRequestPending}
+                                            loading={isRequestPending}
+                                            onClick={onCancelRequest}
+                                        >
+                                            {isRequestPending ? (
+                                                BROWSE_WITHDRAWING_LABEL
+                                            ) : (
+                                                <>
+                                                    <Icon
+                                                        icon="tabler:cancel"
+                                                        width={16}
+                                                        height={16}
+                                                        className="shrink-0 block-4 inline-4"
+                                                        aria-hidden
+                                                    />
+                                                    {BROWSE_WITHDRAW_LABEL}
+                                                </>
+                                            )}
+                                        </Button>
+                                    </span>
+                                }
+                            />
+                            <TooltipContent side="top" className="text-center max-inline-xs">
+                                {BROWSE_REQUEST_TOOLTIP.withdraw}
+                            </TooltipContent>
+                        </Tooltip>
+                        {onRemind ? (
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <span className="inline-flex flex-1 min-inline-0">
+                                            <Button
+                                                type="button"
+                                                size="md"
+                                                variant={canRemind ? "accent" : "outline"}
+                                                className={cn(
+                                                    "inline-full",
+                                                    !canRemind && outlineClass,
+                                                )}
+                                                disabled={!canRemind || isRequestPending}
+                                                onClick={onRemind}
+                                            >
+                                                <Icon
+                                                    icon="tabler:bell"
+                                                    width={16}
+                                                    height={16}
+                                                    className="shrink-0 block-4 inline-4"
                                                     aria-hidden
-                                                    className="block-4 inline-4"
-                                                    strokeWidth={2}
                                                 />
-                                                {BROWSE_WITHDRAW_LABEL}
-                                            </>
-                                        )}
-                                    </Button>
-                                </span>
-                            }
-                        />
-                        <TooltipContent side="top" className="text-center max-inline-xs">
-                            {isRequestPending
-                                ? BROWSE_REQUEST_TOOLTIP.withdrawing
-                                : BROWSE_REQUEST_TOOLTIP.withdraw}
-                        </TooltipContent>
-                    </Tooltip>
+                                                {canRemind
+                                                    ? BROWSE_REMIND_LABEL
+                                                    : BROWSE_REMINDERS_USED_LABEL}
+                                            </Button>
+                                        </span>
+                                    }
+                                />
+                                <TooltipContent side="top" className="text-center max-inline-xs">
+                                    {canRemind
+                                        ? BROWSE_REQUEST_TOOLTIP.remind
+                                        : BROWSE_REQUEST_TOOLTIP.remindersUsed}
+                                </TooltipContent>
+                            </Tooltip>
+                        ) : null}
+                    </div>
                 </div>
             </TooltipProvider>
         );
@@ -446,8 +497,14 @@ export type PropertyCardProps = {
     priority?: boolean;
     imageSizes?: string;
     onRequest?: () => void;
-    /** Withdraw a pending broker request. Shown whenever the request is still pending. */
+    /** Withdraw a pending broker request — ⋯ menu while waiting. */
     onCancelRequest?: () => void;
+    /** Remind the owner on a pending request. */
+    onRemind?: () => void;
+    /** When false, reminder stays visible but disabled. */
+    canRemind?: boolean;
+    /** Open chat with the owner — ⋯ menu once a request is sent. */
+    onChat?: () => void;
     isRequestPending?: boolean;
     onAcceptInvite?: () => void;
     onCancelInvite?: () => void;
@@ -980,6 +1037,9 @@ function BrowseOverlayPropertyCard({
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     onRequest,
     onCancelRequest,
+    onRemind,
+    canRemind = true,
+    onChat,
     isRequestPending = false,
     onAcceptInvite,
     onCancelInvite,
@@ -1045,6 +1105,11 @@ function BrowseOverlayPropertyCard({
                     }}
                     isSaved={isSaved}
                     onToggleSave={onToggleSave}
+                    contact={
+                        listing.hasRequested && onChat
+                            ? { name: listing.owner.name, onMessage: onChat }
+                            : undefined
+                    }
                 />
             }
         >
@@ -1073,6 +1138,8 @@ function BrowseOverlayPropertyCard({
                     inviteActionPending={inviteActionPending}
                     onRequest={onRequest}
                     onCancelRequest={onCancelRequest}
+                    onRemind={onRemind}
+                    canRemind={canRemind}
                     onAcceptInvite={onAcceptInvite}
                     onCancelInvite={onCancelInvite}
                 />

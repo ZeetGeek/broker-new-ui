@@ -18,6 +18,9 @@ import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
+import { useChat } from "@/features/chat/chat-provider";
+import type { ChatPeer } from "@/features/chat/types";
+import { REMINDER_LIMIT } from "@/features/properties/my-requests/types";
 import { isNewInServiceAreas } from "@/features/properties/owner-listings/count-new-listings-this-week";
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
@@ -43,7 +46,7 @@ type RequestOverride = string | false | true;
 /** `false` declined; `"accepted"` accepted; a string is the pending invitation id. */
 type InviteOverride = string | false | "accepted";
 
-type BusyKind = "request" | "cancel" | "accept" | "invite-cancel" | "bookmark";
+type BusyKind = "request" | "cancel" | "remind" | "accept" | "invite-cancel" | "bookmark";
 
 function mutationErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof ApiError) return error.message;
@@ -67,11 +70,25 @@ function initialInviteOverrides(items: OwnerListingItem[]): Record<string, Invit
     );
 }
 
+function browseChatPeer(item: OwnerListingItem, representationId: string): ChatPeer {
+    return {
+        id: representationId,
+        name: item.ownerName,
+        avatarUrl: item.ownerAvatarUrl,
+        roleLabel: item.title,
+        representationId,
+        mySide: "broker",
+        canSend: true,
+        closed: false,
+    };
+}
+
 export function OwnerListingsGrid({
     items,
     serviceAreas = NO_SERVICE_AREAS,
 }: OwnerListingsGridProps) {
     const queryClient = useQueryClient();
+    const { openChat } = useChat();
     const serviceAreaSet = useMemo(() => new Set(serviceAreas), [serviceAreas]);
     const [busyId, setBusyId] = useState<string | null>(null);
     const [busyKind, setBusyKind] = useState<BusyKind | null>(null);
@@ -83,6 +100,8 @@ export function OwnerListingsGrid({
     );
     // Optimistic overrides until the next browse refetch.
     const [savedOverrides, setSavedOverrides] = useState<Record<string, boolean>>({});
+    /** Reminders sent this session per property (capped at REMINDER_LIMIT). */
+    const [remindCounts, setRemindCounts] = useState<Record<string, number>>({});
 
     const isSaved = useCallback(
         (item: OwnerListingItem): boolean => savedOverrides[item.id] ?? item.isBookmarked,
@@ -211,6 +230,11 @@ export function OwnerListingsGrid({
                 }
                 await representativeApi.withdraw(representationId);
                 setRequestOverrides((prev) => ({ ...prev, [item.id]: false }));
+                setRemindCounts((prev) => {
+                    const next = { ...prev };
+                    delete next[item.id];
+                    return next;
+                });
                 toast.success("Request cancelled");
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not cancel request"));
@@ -220,6 +244,61 @@ export function OwnerListingsGrid({
             }
         },
         [busyId, hasRequested, representationIdFor],
+    );
+
+    const handleRemind = useCallback(
+        async (item: OwnerListingItem) => {
+            if (busyId || !hasRequested(item)) return;
+            const used = remindCounts[item.id] ?? 0;
+            if (used >= REMINDER_LIMIT) return;
+
+            setBusyId(item.id);
+            setBusyKind("remind");
+            try {
+                let representationId = representationIdFor(item);
+                if (!representationId) {
+                    representationId = await findPendingBrokerRepresentationId(item.id);
+                    if (representationId) {
+                        const pendingId = representationId;
+                        setRequestOverrides((prev) => ({ ...prev, [item.id]: pendingId }));
+                    }
+                }
+                if (!representationId) {
+                    toast.error("Could not send reminder");
+                    return;
+                }
+                await representativeApi.remind(representationId);
+                setRemindCounts((prev) => ({ ...prev, [item.id]: used + 1 }));
+                toast.success("Reminder sent to the owner");
+            } catch (error) {
+                toast.error(mutationErrorMessage(error, "Could not send reminder"));
+            } finally {
+                setBusyId(null);
+                setBusyKind(null);
+            }
+        },
+        [busyId, hasRequested, remindCounts, representationIdFor],
+    );
+
+    const handleOpenChat = useCallback(
+        async (item: OwnerListingItem) => {
+            if (!hasRequested(item)) return;
+
+            let representationId = representationIdFor(item);
+            if (!representationId) {
+                representationId = await findPendingBrokerRepresentationId(item.id);
+                if (representationId) {
+                    const pendingId = representationId;
+                    setRequestOverrides((prev) => ({ ...prev, [item.id]: pendingId }));
+                }
+            }
+            if (!representationId) {
+                toast.error("Could not open chat");
+                return;
+            }
+            openChat(browseChatPeer(item, representationId));
+        },
+        [hasRequested, openChat, representationIdFor],
     );
 
     const resolveInvitationId = useCallback(
@@ -323,13 +402,19 @@ export function OwnerListingsGrid({
                         priority={index === 0}
                         imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
                         isRequestPending={
-                            isBusy && (busyKind === "request" || busyKind === "cancel")
+                            isBusy &&
+                            (busyKind === "request" ||
+                                busyKind === "cancel" ||
+                                busyKind === "remind")
                         }
                         inviteActionPending={inviteActionPending}
                         onRequest={() => void handleRequest(item)}
                         onCancelRequest={
                             requested ? () => void handleCancelRequest(item) : undefined
                         }
+                        onRemind={requested ? () => void handleRemind(item) : undefined}
+                        canRemind={(remindCounts[item.id] ?? 0) < REMINDER_LIMIT}
+                        onChat={requested ? () => void handleOpenChat(item) : undefined}
                         onAcceptInvite={
                             invitePending ? () => void handleAcceptInvite(item) : undefined
                         }
