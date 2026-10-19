@@ -29,13 +29,8 @@ type QuickChipConfig = {
     description: string;
 };
 
+/** Listed-age ("New this week") lives in Advanced filters → Listed. */
 const QUICK_CHIPS: QuickChipConfig[] = [
-    {
-        key: "newToday",
-        label: "New this week",
-        mobileLabel: "New",
-        description: "Created in the last 7 days",
-    },
     {
         key: "readyToMove",
         label: "Ready to move",

@@ -25,7 +25,7 @@ Pick by duration:
 measurable   → real progress bar with numbers (uploads)
 ```
 
-Six rules restated because they are the ones that make an app feel broken:
+Seven rules restated because they are the ones that make an app feel broken:
 
 1. **Every route that fetches data needs a `loading.tsx`.** It is a Server
    Component by default — zero client JS — and Next prefetches the fallback so
@@ -40,6 +40,10 @@ Six rules restated because they are the ones that make an app feel broken:
    the next action, never say "No data".
 6. **Messages name the object.** "Finding properties near you…", not
    "Loading". Never show a status code or stack trace to a user.
+7. **One spinner only — Tailspin via `<LoadingSpinner>`**
+   (`components/shared/loading-spinner.tsx`). Buttons use `<Button loading>`
+   (same ring). Never Lucide `Loader2`, never a spinner inside a rounded
+   count badge. Full table in `docs/LOADING.md`.
 
 Assume a cheap Android phone on congested 4G. A blank screen for two seconds
 does not read as slow to a non-technical user — it reads as broken.

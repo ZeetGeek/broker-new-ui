@@ -406,7 +406,7 @@ export function OwnerListingsFilterSheet({
     };
 
     const hasDraftFilters = useMemo(() => {
-        // Quick chips (New this week / Ready to move) live outside this sheet.
+        // Ready to move lives on the quick-chip row outside this sheet.
         return (
             Boolean(draft.minAreaSqft) ||
             Boolean(draft.maxAreaSqft) ||
