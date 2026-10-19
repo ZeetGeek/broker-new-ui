@@ -4,9 +4,9 @@ import type { ReactNode } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
-import { formatAreaSqft } from "@/lib/format/area";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import type { PropertyShareInput } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
@@ -226,7 +226,10 @@ export function DealOverlayCard({
     audience?: CommissionAudience;
 }) {
     const href = detailHref ?? brokerOwnerListingDetailHref(listing.propertyId);
-    const specsLabel = [configLabel, formatAreaSqft(listing.areaSqft)].filter(Boolean).join(" · ");
+    const headline =
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft) ||
+        configLabel ||
+        listing.title;
 
     return (
         <OverlayCard
@@ -264,9 +267,8 @@ export function DealOverlayCard({
                         className="h5 font-semibold tracking-wide"
                     />
                 }
-                headline={listing.title}
+                headline={headline}
                 locationLabel={`${listing.locality}, ${listing.city}`}
-                specsLabel={specsLabel || undefined}
             />
             {children}
         </OverlayCard>
@@ -277,11 +279,13 @@ export function DealOverlayCard({
 export function DealOverlayStats({
     listing,
     ownerName,
+    ownerAvatarUrl,
     ownerPhoneDigits,
     personLabel = "Owner",
 }: {
     listing: DealCardListing;
     ownerName: string;
+    ownerAvatarUrl?: string;
     ownerPhoneDigits?: string;
     /** Owner-side cards pass "Broker". */
     personLabel?: string;
@@ -294,7 +298,12 @@ export function DealOverlayStats({
 
     return (
         <div className="flex flex-col gap-1 min-inline-0">
-            <OverlayPersonLine label={personLabel} name={ownerName} hint={phoneHint} />
+            <OverlayPersonLine
+                label={personLabel}
+                name={ownerName}
+                avatarUrl={ownerAvatarUrl}
+                hint={phoneHint}
+            />
             {commissionHint ? (
                 <p className="body-sm tracking-wide text-ink-muted tabular-nums">
                     {commissionHint}

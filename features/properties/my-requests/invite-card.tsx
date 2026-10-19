@@ -234,6 +234,7 @@ export function InviteCard({
                 <DealOverlayStats
                     listing={item}
                     ownerName={item.ownerName}
+                    ownerAvatarUrl={item.ownerAvatarUrl}
                     ownerPhoneDigits={ownerPhoneDigits}
                 />
                 {item.stage === "accepted" && item.attachedClients.length > 0 ? (

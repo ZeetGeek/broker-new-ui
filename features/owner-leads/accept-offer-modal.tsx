@@ -3,7 +3,7 @@
 import { AlertCircle, Check, MapPin } from "lucide-react";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
-import { formatAreaSqft } from "@/lib/format/area";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { parseInr } from "@/lib/format/inr";
 import { formatPriceInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
@@ -85,8 +85,7 @@ export function AcceptOfferModal({
     const gap = offerInr != null ? priceGap(offerInr, facts.askingInr) : null;
     const notes = lead.notes?.trim();
     const configLine = [
-        facts.configLabel,
-        facts.areaSqft ? formatAreaSqft(facts.areaSqft) : null,
+        formatPropertyCardName(facts.propertyTypeLabel ?? "", facts.areaSqft) || facts.configLabel,
         facts.locality,
     ]
         .filter(Boolean)

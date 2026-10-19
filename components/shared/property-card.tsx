@@ -36,6 +36,7 @@ import {
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
+import { formatPropertyCardArea, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
 import { cn } from "@/lib/utils";
 
@@ -459,10 +460,6 @@ export type PropertyCardProps = {
     | { variant: "owned"; listing: OwnedPropertyCardListing }
 );
 
-function formatBrowseCardArea(areaSqft: number): string {
-    return `${Math.round(areaSqft).toLocaleString("en-IN")} sqft`;
-}
-
 function formatBedLabel(bhk: number): string {
     return bhk === 1 ? "1 Bed" : `${bhk} Bed`;
 }
@@ -737,14 +734,14 @@ function BrowsePropertyCardPhoto({
 
 function BrowsePropertyCardOwner({ owner }: { owner: PropertyCardOwner }) {
     return (
-        <div className="mbs-auto flex items-center gap-2 py-1.5 min-inline-0">
-            <UserAvatar
-                name={owner.name}
-                imageUrl={owner.avatarUrl}
-                size="sm"
-                className="shrink-0"
-            />
-            <div className="flex flex-col min-inline-0">
+        <div className="mbs-auto flex flex-col gap-1 py-1.5 min-inline-0">
+            <div className="flex items-center gap-1.5 min-inline-0">
+                <UserAvatar
+                    name={owner.name}
+                    imageUrl={owner.avatarUrl}
+                    size="2xs"
+                    className="shrink-0"
+                />
                 <Button
                     variant="link"
                     size="sm"
@@ -755,27 +752,19 @@ function BrowsePropertyCardOwner({ owner }: { owner: PropertyCardOwner }) {
                         ) : undefined
                     }
                     className="
-                      body-sm justify-start gap-1.5 truncate p-0 font-medium tracking-wide text-ink
+                      body-sm justify-start truncate p-0 font-medium tracking-wide text-ink
                       capitalize block-auto max-inline-full min-inline-0
                     "
                 >
                     {owner.name}
                 </Button>
-                {owner.locationLabel ? (
-                    <p
-                        className="
-                          body-xs flex items-center gap-1 tracking-wide text-ink-muted min-inline-0
-                        "
-                    >
-                        <MapPin
-                            aria-hidden
-                            className="shrink-0 block-3 inline-3"
-                            strokeWidth={1.75}
-                        />
-                        <span className="truncate capitalize">{owner.locationLabel}</span>
-                    </p>
-                ) : null}
             </div>
+            {owner.locationLabel ? (
+                <p className="body-xs flex items-center gap-1 tracking-wide text-ink-muted min-inline-0">
+                    <MapPin aria-hidden className="shrink-0 block-3 inline-3" strokeWidth={1.75} />
+                    <span className="truncate capitalize">{owner.locationLabel}</span>
+                </p>
+            ) : null}
         </div>
     );
 }
@@ -786,7 +775,7 @@ function BrowsePropertyCardSpecs({ listing }: { listing: BrowsePropertyCardListi
 
     return (
         <div className={PROPERTY_CARD_SPECS_CLASS}>
-            <BrowseSpecItem icon={Maximize2} label={formatBrowseCardArea(listing.areaSqft)} />
+            <BrowseSpecItem icon={Maximize2} label={formatPropertyCardArea(listing.areaSqft)} />
             {showBedBath ? (
                 <>
                     <BrowseSpecDivider />
@@ -958,9 +947,8 @@ function BrowseOverlayPropertyCard({
     const priceLabel = isRentOnly
         ? formatRentInr(listing.rentAmountInr ?? 0)
         : formatPriceInr(listing.saleAmountInr ?? 0);
-    const headline = [listing.configLabel, formatBrowseCardArea(listing.areaSqft)]
-        .filter(Boolean)
-        .join(" · ");
+    const headline =
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft) || listing.title;
 
     return (
         <OverlayCard
@@ -1015,18 +1003,15 @@ function BrowseOverlayPropertyCard({
                 <OverlayCardSummary
                     href={detailsHref}
                     price={<BrowseOverlayPrices listing={listing} />}
-                    headline={headline || listing.title}
+                    headline={headline}
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />
 
-                <div className="mbs-auto flex items-center gap-2 min-inline-0">
-                    <UserAvatar
-                        name={listing.owner.name}
-                        imageUrl={listing.owner.avatarUrl}
-                        size="2xs"
-                    />
-                    <OverlayPersonLine label="Owner" name={listing.owner.name} />
-                </div>
+                <OverlayPersonLine
+                    label="Owner"
+                    name={listing.owner.name}
+                    avatarUrl={listing.owner.avatarUrl}
+                />
             </div>
 
             <OverlayCardActions>
@@ -1219,7 +1204,9 @@ function RepresentedPropertyCard({
     crmHref,
     className,
 }: Extract<PropertyCardProps, { variant: "represented" }>) {
-    const titleLine = `${listing.configLabel} ${listing.propertyTypeLabel} · ${formatAreaSqft(listing.areaSqft)}`;
+    const titleLine =
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft) ||
+        `${listing.configLabel} · ${formatAreaSqft(listing.areaSqft)}`;
 
     return (
         <article
@@ -1544,9 +1531,8 @@ function OwnedOverlayPropertyCard({
     const sharePriceLabel = isRentOnly
         ? formatRentInr(listing.rentAmountInr ?? 0)
         : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
-    const headline = [listing.configLabel, formatBrowseCardArea(listing.areaSqft)]
-        .filter(Boolean)
-        .join(" · ");
+    const headline =
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft) || listing.title;
     const metaParts = [
         listing.inboundRequestCount === 0
             ? "No requests"
@@ -1619,7 +1605,7 @@ function OwnedOverlayPropertyCard({
                 <OverlayCardSummary
                     href={detailsHref}
                     price={<BrowseOverlayPrices listing={browse} audience={audience} />}
-                    headline={headline || listing.title}
+                    headline={headline}
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />
 

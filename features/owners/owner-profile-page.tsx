@@ -19,6 +19,7 @@ import { type BrokerOwnerProfile, type OwnerProfileProperty, ownersApi } from "@
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { formatPhoneIn } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
@@ -47,6 +48,8 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
     const photo = property.photos[0];
     const price = propertyPrice(property);
     const place = [property.address, property.city].filter(Boolean).join(", ");
+    const name =
+        formatPropertyCardName(property.propertyType ?? "", property.areaSqft) || property.title;
 
     return (
         <Link
@@ -64,7 +67,7 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
                 ) : null}
             </div>
             <div className="flex flex-col gap-1 p-4">
-                <p className="body truncate font-semibold text-ink">{property.title}</p>
+                <p className="body truncate font-semibold text-ink">{name}</p>
                 {place ? <p className="body-sm truncate text-ink-muted">{place}</p> : null}
                 {price ? <p className="body-sm font-semibold text-brand">{price}</p> : null}
             </div>

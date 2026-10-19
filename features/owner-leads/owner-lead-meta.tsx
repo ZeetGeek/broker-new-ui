@@ -65,6 +65,8 @@ export type LeadPropertyFacts = {
     locality: string;
     city: string;
     configLabel: string | null;
+    /** Raw type key or label for card names (`Office · 1,000 Sqft`). */
+    propertyTypeLabel: string | null;
     areaSqft: number | null;
     /** The listing's own price — sale price, or monthly rent for a rental. */
     askingInr: number | null;
@@ -99,6 +101,7 @@ export function leadPropertyFacts(lead: PropertyLead): LeadPropertyFacts {
         locality: titleCase(property?.address?.trim() || "") || city,
         city,
         configLabel,
+        propertyTypeLabel: typeLabel?.trim() || null,
         areaSqft: property?.areaSqft ?? null,
         askingInr: (isRent ? rent : sale) ?? parseInr(lead.listPrice),
         isRent,

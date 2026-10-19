@@ -30,6 +30,7 @@ import {
 import { isOverBudget } from "@/lib/api/pipeline";
 import { getStoredUser } from "@/lib/auth/session";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
@@ -98,11 +99,6 @@ function stopCard(event: { stopPropagation: () => void }) {
 function runMenuAction(event: { stopPropagation: () => void }, action: () => void) {
     event.stopPropagation();
     action();
-}
-
-/** Matches owned property cards: `Office · 54 Sqft`. */
-function formatCardArea(areaSqft: number): string {
-    return `${Math.round(areaSqft).toLocaleString("en-IN")} Sqft`;
 }
 
 const CHROME_ICON_BUTTON_CLASS = `
@@ -609,14 +605,11 @@ export function DealCard({
     const stageDays = live ? daysInStage(deal) : 0;
     const currentUserId = getStoredUser()?.id ?? null;
     const ignoreCardClickUntilRef = useRef(0);
-    const headline = [deal.property.configLabel, formatCardArea(deal.property.areaSqft)]
-        .filter(Boolean)
-        .join(" · ");
+    const headline =
+        formatPropertyCardName(deal.property.propertyTypeLabel, deal.property.areaSqft) ||
+        deal.property.configLabel;
     const locationLabel = `${deal.property.locality}, ${deal.property.city}`;
-    const metaParts = [
-        live && stageDays >= 1 ? `${stageDays}d in stage` : null,
-        deal.property.propertyTypeLabel || null,
-    ].filter(Boolean);
+    const metaParts = [live && stageDays >= 1 ? `${stageDays}d in stage` : null].filter(Boolean);
 
     const primary = (() => {
         if (!live) return null;

@@ -57,7 +57,12 @@ function BrokerOverlayStats({ item }: { item: OwnerRequestCardItem }) {
 
     return (
         <div className="flex flex-col gap-1 min-inline-0">
-            <OverlayPersonLine label="Broker" name={item.brokerName} hint={phoneHint} />
+            <OverlayPersonLine
+                label="Broker"
+                name={item.brokerName}
+                avatarUrl={item.brokerAvatarUrl}
+                hint={phoneHint}
+            />
             {item.commissionPercent > 0 ? (
                 <p className="body-sm tracking-wide text-ink-muted tabular-nums">
                     {item.commissionPercent}% commission

@@ -17,10 +17,10 @@ import {
 } from "lucide-react";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
-import { formatAreaSqft } from "@/lib/format/area";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { parseInr } from "@/lib/format/inr";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
@@ -172,7 +172,7 @@ export function OwnerLeadCard({
                                 <span className="truncate">{location}</span>
                             </span>
                         ) : null}
-                        {facts.areaSqft || facts.configLabel ? (
+                        {facts.propertyTypeLabel || facts.areaSqft || facts.configLabel ? (
                             <>
                                 {location ? (
                                     <span aria-hidden className="text-border-warm">
@@ -185,12 +185,10 @@ export function OwnerLeadCard({
                                         className="block-4 inline-4"
                                         strokeWidth={1.75}
                                     />
-                                    {[
-                                        facts.areaSqft ? formatAreaSqft(facts.areaSqft) : null,
-                                        facts.configLabel,
-                                    ]
-                                        .filter(Boolean)
-                                        .join(" · ")}
+                                    {formatPropertyCardName(
+                                        facts.propertyTypeLabel ?? "",
+                                        facts.areaSqft,
+                                    ) || facts.configLabel}
                                 </span>
                             </>
                         ) : null}

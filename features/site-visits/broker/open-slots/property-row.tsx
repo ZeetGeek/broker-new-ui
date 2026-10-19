@@ -4,7 +4,7 @@ import { memo, useMemo, useState } from "react";
 
 import { BadgeCheck, Building2, CalendarClock, ChevronDown, MapPin, Sparkles } from "lucide-react";
 
-import { formatAreaSqft } from "@/lib/format/area";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, istDateKey } from "@/lib/visits/time";
@@ -78,7 +78,9 @@ export const PropertyRow = memo(function PropertyRow({
         item.propertySource === "own_listing"
             ? brokerPropertyDetailHref(item.property.id)
             : brokerOwnerListingDetailHref(item.property.id);
-    const propertyName = `${item.property.configLabel} · ${formatAreaSqft(item.property.areaSqft)}`;
+    const propertyName =
+        formatPropertyCardName(item.property.propertyType, item.property.areaSqft) ||
+        item.property.configLabel;
 
     return (
         <article

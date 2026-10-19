@@ -243,6 +243,7 @@ export function RequestCard({
                 <DealOverlayStats
                     listing={item}
                     ownerName={item.ownerName}
+                    ownerAvatarUrl={item.ownerAvatarUrl}
                     ownerPhoneDigits={ownerPhoneDigits}
                 />
                 {item.stage === "approved" && item.attachedClients.length > 0 ? (

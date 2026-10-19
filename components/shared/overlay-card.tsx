@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { MarqueeText } from "@/components/shared/marquee-text";
 import { OverlayCardPhotos } from "@/components/shared/overlay-card-photos";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 /*
  * Property listing card: clear photo on top, white essentials panel below.
@@ -35,7 +36,10 @@ const PRICE_CLASS = "h5 font-semibold tracking-wide tabular-nums text-brand";
 const HEADLINE_CLASS = "body font-semibold tracking-wide text-ink capitalize hover:text-ink";
 const META_LINE_CLASS =
     "body-sm flex items-center gap-1.5 tracking-wide text-ink-muted min-inline-0";
-const PERSON_CLASS = "body-sm tracking-wide text-ink-muted min-inline-0";
+const PERSON_CLASS = `
+  body-sm flex items-center gap-1.5 tracking-wide text-ink-muted border-bs border-border-warm
+  pbs-2.5 mbs-0.5 min-inline-0
+`;
 
 /** Round glass icon button for the top-right corner of the photo. 48px hit area. */
 export const OVERLAY_ICON_BUTTON_CLASS = `
@@ -107,10 +111,10 @@ export function OverlayCardSummary({
     priceLabel?: string;
     /** Custom price block. When set, `priceLabel` is ignored. */
     price?: ReactNode;
-    /** Short “what” line — property title or config · area. */
+    /** Short “what” line — property type · Sqft. */
     headline: string;
     locationLabel: string;
-    /** Optional quieter specs under the location (config · area). */
+    /** Optional quieter specs under the location. */
     specsLabel?: string;
 }) {
     return (
@@ -139,28 +143,35 @@ export function OverlayCardSummary({
     );
 }
 
-/** Quiet person line under the summary (Owner / Broker). */
+/** Quiet person line under the summary (Owner / Broker). Avatar sits next to the name. */
 export function OverlayPersonLine({
     label,
     name,
     hint,
+    avatarUrl,
 }: {
     label: string;
     name: string;
     hint?: ReactNode;
+    avatarUrl?: string;
 }) {
     return (
-        <p className={PERSON_CLASS}>
-            <span className="text-ink-subtle">{label}</span>
-            <span className="text-ink-subtle/60"> · </span>
-            <span className="font-semibold text-ink capitalize">{name}</span>
+        <div className={PERSON_CLASS}>
+            <span className="shrink-0 text-ink-subtle">{label}</span>
+            <span className="shrink-0 text-ink-subtle/60" aria-hidden>
+                ·
+            </span>
+            <UserAvatar name={name} imageUrl={avatarUrl} size="2xs" className="shrink-0" />
+            <span className="truncate font-semibold text-ink capitalize">{name}</span>
             {hint ? (
                 <>
-                    <span className="text-ink-subtle/60"> · </span>
-                    <span className="text-ink-muted tabular-nums">{hint}</span>
+                    <span className="shrink-0 text-ink-subtle/60" aria-hidden>
+                        ·
+                    </span>
+                    <span className="truncate text-ink-muted tabular-nums">{hint}</span>
                 </>
             ) : null}
-        </p>
+        </div>
     );
 }
 

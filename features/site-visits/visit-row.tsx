@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Clock3, Lock, MapPin, MoreHorizontal, PhoneCall, StickyNote } from "lucide-react";
 
 import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
 
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
@@ -173,7 +174,11 @@ export function VisitRow({
                               hover:text-brand hover:underline
                             "
                         >
-                            {visit.property.configLabel} · {visit.property.propertyTypeLabel}
+                            {formatPropertyCardName(
+                                visit.property.propertyTypeLabel,
+                                visit.property.areaSqft,
+                            ) ||
+                                `${visit.property.configLabel} · ${visit.property.propertyTypeLabel}`}
                         </button>
                     </Hint>
 

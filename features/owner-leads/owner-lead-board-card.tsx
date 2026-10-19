@@ -10,6 +10,7 @@ import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { parseInr } from "@/lib/format/inr";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr } from "@/lib/format/price";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { useRouter } from "@/lib/navigation";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
@@ -40,10 +41,6 @@ import { DEAL_OUTCOME_META, DEAL_STAGE_META } from "@/features/pipeline/stage-me
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
-
-function formatCardArea(areaSqft: number): string {
-    return `${Math.round(areaSqft).toLocaleString("en-IN")} Sqft`;
-}
 
 const CHROME_ICON_BUTTON_CLASS = `
   flex shrink-0 items-center justify-center rounded-full border border-border-warm bg-surface
@@ -207,9 +204,10 @@ export function OwnerLeadBoardCard({
               ? DEAL_OUTCOME_META.lost
               : null;
     const OutcomeIcon = outcome?.icon;
-    const headline = [facts.configLabel, facts.areaSqft ? formatCardArea(facts.areaSqft) : null]
-        .filter(Boolean)
-        .join(" · ");
+    const headline =
+        formatPropertyCardName(facts.propertyTypeLabel ?? "", facts.areaSqft) ||
+        facts.configLabel ||
+        leadPropertyLabel(lead);
     const locationLabel = [facts.locality, facts.city].filter(Boolean).join(", ");
 
     return (

@@ -5,7 +5,7 @@ import { memo } from "react";
 import { addCollection, Icon } from "@iconify/react/offline";
 import { CalendarClock, Clock3, MapPin, PanelRight, RotateCcw, Trash2 } from "lucide-react";
 
-import { formatAreaSqft } from "@/lib/format/area";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { REQUEST_STATUS } from "@/lib/visits/status";
@@ -69,7 +69,9 @@ export const RequestRow = memo(function RequestRow({
     const buyer = request.buyers[0];
     const buyerLabel =
         request.buyers.length > 1 ? `Buyers ${DOT} +${request.buyers.length - 1}` : "Buyer";
-    const metaName = `${request.property.configLabel} ${DOT} ${formatAreaSqft(request.property.areaSqft)}`;
+    const metaName =
+        formatPropertyCardName(request.property.propertyType, request.property.areaSqft) ||
+        request.property.configLabel;
     const propertyHref = brokerOwnerListingDetailHref(request.property.id);
     const askedLabel = (() => {
         const age = visitAge(request.createdAt);
