@@ -1,1 +1,1 @@
-export type RequestsTab = "sent" | "invites";
+export type RequestsTab = "sent" | "invites" | "accepted" | "rejected";

@@ -220,7 +220,6 @@ export function RequestCard({
             onToggleSave={() => void toggleSave()}
             contact={{
                 name: item.ownerName,
-                phoneDigits: ownerPhoneDigits,
                 onMessage: () => openChat(chatPeerFor(item)),
             }}
             onOpenTimeline={() => setIsTimelineOpen(true)}

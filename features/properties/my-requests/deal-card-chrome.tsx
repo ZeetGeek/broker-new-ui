@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
-import { formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
@@ -19,7 +19,6 @@ import {
     OverlayCardSummary,
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
-import { PhoneNumber } from "@/components/shared/phone-number";
 import {
     type CommissionAudience,
     PriceWithCommission,
@@ -30,10 +29,13 @@ import {
 } from "@/components/shared/property-card-menu";
 import { Badge, type BadgeColor } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
+import tablerContactIcons from "@/features/properties/my-requests/tabler-contact.json";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
+addCollection(tablerContactIcons as Parameters<typeof addCollection>[0]);
 
 export type DealCardListing = {
     propertyId: string;
@@ -89,7 +91,7 @@ export function DealWhatsAppButton({
                 }
             >
                 <Icon
-                    icon="bi:whatsapp"
+                    icon="tabler:brand-whatsapp"
                     width={18}
                     height={18}
                     className="block-4.5 inline-4.5"
@@ -119,7 +121,7 @@ export function DealWhatsAppButton({
             }
         >
             <Icon
-                icon="bi:whatsapp"
+                icon="tabler:brand-whatsapp"
                 width={isOverlay ? 20 : 24}
                 height={isOverlay ? 20 : 24}
                 className={isOverlay ? "block-5 inline-5" : "block-6 inline-6"}
@@ -165,7 +167,7 @@ export function dealShareInput(listing: DealCardListing): PropertyShareInput {
     };
 }
 
-/** Single ⋯ menu on the photo: Share › channels, Save, Message, WhatsApp, deal extras. */
+/** Single ⋯ menu on the photo: Share › channels, Save, Message, deal extras. */
 export function DealCardPhotoToolbar({
     listing,
     isSaved = false,
@@ -279,9 +281,8 @@ export function DealOverlayCard({
     );
 }
 
-/** Owner line (+ optional commission / phone) under the summary. */
+/** Owner line + call / WhatsApp links. Number shows on hover. Commission on price hover. */
 export function DealOverlayStats({
-    listing,
     ownerName,
     ownerAvatarUrl,
     ownerPhoneDigits,
@@ -294,24 +295,76 @@ export function DealOverlayStats({
     /** Owner-side cards pass "Broker". */
     personLabel?: string;
 }) {
-    const phoneHint = ownerPhoneDigits ? (
-        <PhoneNumber phoneDigits={ownerPhoneDigits} className="text-inherit" />
-    ) : undefined;
-    const commissionHint =
-        listing.commissionPercent > 0 ? `${listing.commissionPercent}% commission` : undefined;
+    const phoneLabel = ownerPhoneDigits ? formatPhoneIn(ownerPhoneDigits) : null;
 
     return (
-        <div className="flex flex-col gap-1.5 min-inline-0">
-            <OverlayPersonLine
-                label={personLabel}
-                name={ownerName}
-                avatarUrl={ownerAvatarUrl}
-                hint={phoneHint}
-            />
-            {commissionHint ? (
-                <p className="body-sm tracking-wide text-ink-muted tabular-nums">
-                    {commissionHint}
-                </p>
+        <div className={cn("flex flex-col min-inline-0", ownerPhoneDigits ? "gap-2" : "gap-4")}>
+            <OverlayPersonLine label={personLabel} name={ownerName} avatarUrl={ownerAvatarUrl} />
+            {ownerPhoneDigits && phoneLabel ? (
+                <div
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 -mbe-2 min-inline-0"
+                    onClick={(event) => event.stopPropagation()}
+                >
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    variant="link"
+                                    size="sm"
+                                    nativeButton={false}
+                                    className="h-auto gap-1.5 px-0 text-brand hover:text-brand/85"
+                                    render={
+                                        <a
+                                            href={formatTelUrl(ownerPhoneDigits)}
+                                            aria-label={`Call ${ownerName} at ${phoneLabel}`}
+                                        />
+                                    }
+                                />
+                            }
+                        >
+                            <Icon
+                                icon="tabler:phone"
+                                width={16}
+                                height={16}
+                                className="shrink-0 block-4 inline-4"
+                                aria-hidden
+                            />
+                            Call here
+                        </TooltipTrigger>
+                        <TooltipContent side="top">{phoneLabel}</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    variant="link"
+                                    size="sm"
+                                    nativeButton={false}
+                                    className="h-auto gap-1.5 px-0 text-brand hover:text-brand/85"
+                                    render={
+                                        <a
+                                            href={formatWhatsAppUrl(ownerPhoneDigits)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label={`WhatsApp ${ownerName} at ${phoneLabel}`}
+                                        />
+                                    }
+                                />
+                            }
+                        >
+                            <Icon
+                                icon="tabler:brand-whatsapp"
+                                width={16}
+                                height={16}
+                                className="shrink-0 block-4 inline-4"
+                                aria-hidden
+                            />
+                            WhatsApp here
+                        </TooltipTrigger>
+                        <TooltipContent side="top">{phoneLabel}</TooltipContent>
+                    </Tooltip>
+                </div>
             ) : null}
         </div>
     );

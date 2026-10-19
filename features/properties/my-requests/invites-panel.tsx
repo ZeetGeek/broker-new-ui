@@ -48,7 +48,7 @@ export function InvitesPanel({
             setIsFetching(true);
 
             void ownerInvitesApi
-                .list(filters)
+                .list({ ...filters, stage: "pending" })
                 .then((next) => {
                     if (!cancelled) setResult(next);
                 })
@@ -129,12 +129,26 @@ export function InvitesPanel({
         body = <RequestsListSkeleton />;
     } else if (inviteSummary && inviteSummary.counts.all === 0) {
         body = <InvitesFirstRunEmpty />;
+    } else if (
+        inviteSummary &&
+        inviteSummary.waitingOnYouCount === 0 &&
+        !(filters.q.trim() || filters.type)
+    ) {
+        body = (
+            <div className="flex flex-col items-center gap-4 py-12 text-center">
+                <p className="h6 text-ink">No invitations waiting</p>
+                <p className="body-sm max-w-prose text-ink-muted">
+                    Invites you already answered are under Accepted.
+                </p>
+            </div>
+        );
     } else if (!result) {
         body = <RequestsListSkeleton />;
     } else if (result.items.length === 0) {
+        const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
         body = (
             <RequestsFilteredEmpty
-                onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                onClearFilters={narrowFilters || hasActiveFilters ? clearFilters : undefined}
                 searchQuery={filters.q}
             />
         );

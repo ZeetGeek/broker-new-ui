@@ -14,7 +14,9 @@ import {
     DEFAULT_INVITES_FILTERS,
     type InvitesSummary,
 } from "@/features/properties/my-requests/invite-types";
+import { AcceptedPanel } from "@/features/properties/my-requests/accepted-panel";
 import { InvitesPanel } from "@/features/properties/my-requests/invites-panel";
+import { RejectedPanel } from "@/features/properties/my-requests/rejected-panel";
 import { RequestCard } from "@/features/properties/my-requests/request-card";
 import {
     RequestsFilteredEmpty,
@@ -59,7 +61,7 @@ function SentRequestsPanel({
             setError(null);
 
             void myRequestsApi
-                .list(filters)
+                .list({ ...filters, view: "pending" })
                 .then((next) => {
                     if (!cancelled) setResult(next);
                 })
@@ -157,6 +159,20 @@ function SentRequestsPanel({
         body = <RequestsListSkeleton />;
     } else if (sentSummary != null && sentSummary.counts.all === 0) {
         body = <RequestsFirstRunEmpty />;
+    } else if (
+        sentSummary != null &&
+        sentSummary.counts.pending === 0 &&
+        !(filters.q.trim() || filters.type)
+    ) {
+        body = (
+            <div className="flex flex-col items-center gap-4 py-12 text-center">
+                <p className="h6 text-ink">Nothing waiting right now</p>
+                <p className="body-sm max-w-prose text-ink-muted">
+                    Accepted requests are under Accepted. Send a new request from owner listings
+                    when you need more.
+                </p>
+            </div>
+        );
     } else if (error) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -174,9 +190,10 @@ function SentRequestsPanel({
     } else if (!result) {
         body = <RequestsListSkeleton />;
     } else if (result.items.length === 0) {
+        const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
         body = (
             <RequestsFilteredEmpty
-                onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                onClearFilters={narrowFilters || hasActiveFilters ? clearFilters : undefined}
                 searchQuery={filters.q}
             />
         );
@@ -189,7 +206,7 @@ function SentRequestsPanel({
                     estimateRowHeight={520}
                     gap={24}
                     breakpoints={REQUESTS_GRID_BREAKPOINTS}
-                    ariaLabel="Representation requests"
+                    ariaLabel="Waiting representation requests"
                     renderItem={(item) => (
                         <RequestCard
                             item={item}
@@ -243,8 +260,6 @@ export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
         return <RequestsPageSkeleton />;
     }
 
-    const isInvites = activeTab === "invites";
-
     return (
         <div className="flex flex-col gap-6">
             <PortalSectionNav>
@@ -256,11 +271,25 @@ export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
                 />
             </PortalSectionNav>
 
-            {isInvites ? (
+            {activeTab === "invites" ? (
                 <InvitesPanel
                     sentSummary={sentSummary}
                     inviteSummary={inviteSummary}
                     onSummary={setInviteSummary}
+                />
+            ) : activeTab === "accepted" ? (
+                <AcceptedPanel
+                    sentSummary={sentSummary}
+                    inviteSummary={inviteSummary}
+                    onSentSummary={setSentSummary}
+                    onInviteSummary={setInviteSummary}
+                />
+            ) : activeTab === "rejected" ? (
+                <RejectedPanel
+                    sentSummary={sentSummary}
+                    inviteSummary={inviteSummary}
+                    onSentSummary={setSentSummary}
+                    onInviteSummary={setInviteSummary}
                 />
             ) : (
                 <SentRequestsPanel

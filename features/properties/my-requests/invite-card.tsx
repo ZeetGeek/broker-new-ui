@@ -209,7 +209,6 @@ export function InviteCard({
             onToggleSave={() => void toggleSave()}
             contact={{
                 name: item.ownerName,
-                phoneDigits: ownerPhoneDigits,
                 onMessage: () => openChat(chatPeerFor(item)),
             }}
             tone="overlay"
