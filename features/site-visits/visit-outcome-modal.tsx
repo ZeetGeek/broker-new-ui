@@ -133,9 +133,9 @@ const INTENT_COPY: Record<
         primary: "Send reply",
     },
     withdraw: {
-        title: "Withdraw this request",
+        title: "Cancel this request",
         description: "The owner will no longer see this request.",
-        primary: "Withdraw",
+        primary: "Cancel request",
     },
 };
 

@@ -71,7 +71,11 @@ export const VisitCard = memo(function VisitCard({
     const cancelled = isVisitCancelled(visit.status);
     const primary = visitPrimaryAction(visit.status, visit.startsAt, Boolean(visit.outcome));
     const primaryLabel =
-        primary === "outcome" ? "Log outcome" : primary === "withdraw" ? "Withdraw" : "Reschedule";
+        primary === "outcome"
+            ? "Log outcome"
+            : primary === "withdraw"
+              ? "Cancel request"
+              : "Reschedule";
     const PrimaryIcon =
         primary === "outcome" ? CircleCheck : primary === "withdraw" ? Trash2 : CalendarClock;
     const buyer = visit.buyers[0];

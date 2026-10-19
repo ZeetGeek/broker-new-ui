@@ -29,16 +29,16 @@ const SWEEP_CLASS = `
 const PHOTO_CLASS = "relative aspect-4/3 shrink-0 overflow-hidden inline-full";
 // Panel ignores the pointer so taps open the listing; links/buttons opt back in.
 const PANEL_CLASS = `
-  pointer-events-none relative z-10 flex flex-1 flex-col gap-2.5 px-4 py-3.5  text-ink
+  pointer-events-none relative z-10 flex flex-1 flex-col gap-4 px-4 py-4 text-ink
   [&_a]:pointer-events-auto [&_button]:pointer-events-auto
 `;
 const PRICE_CLASS = "h5 font-semibold tracking-wide tabular-nums text-brand";
 const HEADLINE_CLASS = "body font-semibold tracking-wide text-ink capitalize hover:text-ink";
 const META_LINE_CLASS =
     "body-sm flex items-center gap-1.5 tracking-wide text-ink-muted min-inline-0";
+/** Owner/broker credit — no hairline; space comes from panel rhythm. */
 const PERSON_CLASS = `
-  body-sm flex items-center gap-1.5 tracking-wide text-ink-muted border-bs border-border-warm
-  pbs-2.5 mbs-0.5 min-inline-0
+  body-sm flex items-center gap-2 tracking-wide text-ink-muted min-inline-0
 `;
 
 /** Round glass icon button for the top-right corner of the photo. 48px hit area. */
@@ -118,27 +118,33 @@ export function OverlayCardSummary({
     specsLabel?: string;
 }) {
     return (
-        <div className="flex flex-col gap-1 min-inline-0">
+        <div className="flex flex-col gap-2 min-inline-0">
             {price ?? (priceLabel ? <p className={PRICE_CLASS}>{priceLabel}</p> : null)}
-            <h3 className="max-inline-full min-inline-0">
-                <PropertyTitleLink href={href} className={HEADLINE_CLASS}>
-                    <MarqueeText text={headline} />
-                </PropertyTitleLink>
-            </h3>
-            <p className={META_LINE_CLASS}>
-                <MapPin aria-hidden className="shrink-0 block-3.5 inline-3.5" strokeWidth={1.75} />
-                <MarqueeText text={locationLabel} className="capitalize" />
-            </p>
-            {specsLabel ? (
+            <div className="flex flex-col gap-1 min-inline-0">
+                <h3 className="max-inline-full min-inline-0">
+                    <PropertyTitleLink href={href} className={HEADLINE_CLASS}>
+                        <MarqueeText text={headline} />
+                    </PropertyTitleLink>
+                </h3>
                 <p className={META_LINE_CLASS}>
-                    <Maximize2
+                    <MapPin
                         aria-hidden
                         className="shrink-0 block-3.5 inline-3.5"
                         strokeWidth={1.75}
                     />
-                    <MarqueeText text={specsLabel} />
+                    <MarqueeText text={locationLabel} className="capitalize" />
                 </p>
-            ) : null}
+                {specsLabel ? (
+                    <p className={META_LINE_CLASS}>
+                        <Maximize2
+                            aria-hidden
+                            className="shrink-0 block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
+                        <MarqueeText text={specsLabel} />
+                    </p>
+                ) : null}
+            </div>
         </div>
     );
 }
@@ -158,11 +164,10 @@ export function OverlayPersonLine({
     return (
         <div className={PERSON_CLASS}>
             <span className="shrink-0 text-ink-subtle">{label}</span>
-            <span className="shrink-0 text-ink-subtle/60" aria-hidden>
-                ·
+            <span className="flex min-inline-0 items-center gap-1.5">
+                <UserAvatar name={name} imageUrl={avatarUrl} size="2xs" className="shrink-0" />
+                <span className="truncate font-semibold text-ink capitalize">{name}</span>
             </span>
-            <UserAvatar name={name} imageUrl={avatarUrl} size="2xs" className="shrink-0" />
-            <span className="truncate font-semibold text-ink capitalize">{name}</span>
             {hint ? (
                 <>
                     <span className="shrink-0 text-ink-subtle/60" aria-hidden>
@@ -184,7 +189,9 @@ export function OverlayCardActions({
     className?: string;
 }) {
     return (
-        <div className={cn("pointer-events-auto mbs-auto flex gap-2", className)}>{children}</div>
+        <div className={cn("pointer-events-auto mbs-auto flex gap-2 pbs-1", className)}>
+            {children}
+        </div>
     );
 }
 

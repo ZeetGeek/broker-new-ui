@@ -287,7 +287,7 @@ export const RequestRow = memo(function RequestRow({
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" size="md" onClick={onDecline} disabled={busy}>
-                            Decline
+                            Cancel
                         </Button>
                         <Button size="md" onClick={onAccept} loading={busy}>
                             Accept {formatVisitTime(request.counterOffer.startsAt)}
@@ -323,7 +323,7 @@ export const RequestRow = memo(function RequestRow({
                                 onClick={onWithdraw}
                                 disabled={busy}
                             >
-                                <Trash2 aria-hidden /> Withdraw
+                                <Trash2 aria-hidden /> Cancel request
                             </Button>
                             <Button
                                 type="button"

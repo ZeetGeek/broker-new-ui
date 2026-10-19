@@ -317,7 +317,7 @@ export function OwnerLeadCard({
                             className="flex-1"
                         >
                             <X aria-hidden strokeWidth={2} />
-                            Reject
+                            Cancel
                         </Button>
                         <Button
                             type="button"

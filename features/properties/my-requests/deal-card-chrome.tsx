@@ -297,7 +297,7 @@ export function DealOverlayStats({
         listing.commissionPercent > 0 ? `${listing.commissionPercent}% commission` : undefined;
 
     return (
-        <div className="flex flex-col gap-1 min-inline-0">
+        <div className="flex flex-col gap-1.5 min-inline-0">
             <OverlayPersonLine
                 label={personLabel}
                 name={ownerName}

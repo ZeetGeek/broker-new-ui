@@ -23,6 +23,7 @@ import {
     UserPlus,
     UserRound,
     Users,
+    X,
 } from "lucide-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
@@ -98,13 +99,13 @@ const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
 const BROWSE_ASK_LABEL = "Ask to sell";
 const BROWSE_ASK_PENDING_LABEL = "Sending…";
-const BROWSE_WITHDRAW_LABEL = "Withdraw";
-const BROWSE_WITHDRAWING_LABEL = "Withdrawing…";
+const BROWSE_WITHDRAW_LABEL = "Cancel request";
+const BROWSE_WITHDRAWING_LABEL = "Cancelling…";
 const BROWSE_REPRESENTING_LABEL = "You're representing";
 const BROWSE_INVITE_ACCEPT_LABEL = "Accept";
 const BROWSE_INVITE_ACCEPTING_LABEL = "Accepting…";
-const BROWSE_INVITE_DECLINE_LABEL = "Decline";
-const BROWSE_INVITE_DECLINING_LABEL = "Declining…";
+const BROWSE_INVITE_DECLINE_LABEL = "Cancel";
+const BROWSE_INVITE_DECLINING_LABEL = "Cancelling…";
 
 const PROPERTY_CARD_TITLE_CLASS = "body truncate font-semibold tracking-wide text-ink capitalize";
 const PROPERTY_CARD_LOCATION_CLASS = `
@@ -123,11 +124,11 @@ const BROWSE_STATUS = {
 const BROWSE_REQUEST_TOOLTIP = {
     idle: "Ask the owner for permission to sell this property",
     pending: "Sending your request…",
-    withdraw: "Take back your request. You can ask again later.",
-    withdrawing: "Withdrawing your request…",
+    withdraw: "Cancel this request. You can ask again later.",
+    withdrawing: "Cancelling your request…",
     representing: "The owner already approved you for this listing",
     inviteAccept: "Accept the invite and get the owner's number",
-    inviteDecline: "Turn this down. The owner can ask someone else",
+    inviteDecline: "Cancel this invite. The owner can ask someone else",
 } as const;
 
 function BrowseActionHint({ children }: { children: string }) {
@@ -202,7 +203,7 @@ function BrowseRequestAction({
                         <Tooltip>
                             <TooltipTrigger
                                 render={
-                                    <span className="inline-flex flex-1">
+                                    <span className="inline-flex flex-1 min-inline-0">
                                         <Button
                                             type="button"
                                             size="md"
@@ -212,9 +213,18 @@ function BrowseRequestAction({
                                             loading={inviteActionPending === "cancel"}
                                             onClick={onCancelInvite}
                                         >
-                                            {inviteActionPending === "cancel"
-                                                ? BROWSE_INVITE_DECLINING_LABEL
-                                                : BROWSE_INVITE_DECLINE_LABEL}
+                                            {inviteActionPending === "cancel" ? (
+                                                BROWSE_INVITE_DECLINING_LABEL
+                                            ) : (
+                                                <>
+                                                    <X
+                                                        aria-hidden
+                                                        className="block-4 inline-4"
+                                                        strokeWidth={2}
+                                                    />
+                                                    {BROWSE_INVITE_DECLINE_LABEL}
+                                                </>
+                                            )}
                                         </Button>
                                     </span>
                                 }
@@ -226,7 +236,7 @@ function BrowseRequestAction({
                         <Tooltip>
                             <TooltipTrigger
                                 render={
-                                    <span className="inline-flex flex-[1.5]">
+                                    <span className="inline-flex flex-1 min-inline-0">
                                         <Button
                                             type="button"
                                             size="md"
@@ -280,9 +290,18 @@ function BrowseRequestAction({
                                         loading={isRequestPending}
                                         onClick={onCancelRequest}
                                     >
-                                        {isRequestPending
-                                            ? BROWSE_WITHDRAWING_LABEL
-                                            : BROWSE_WITHDRAW_LABEL}
+                                        {isRequestPending ? (
+                                            BROWSE_WITHDRAWING_LABEL
+                                        ) : (
+                                            <>
+                                                <X
+                                                    aria-hidden
+                                                    className="block-4 inline-4"
+                                                    strokeWidth={2}
+                                                />
+                                                {BROWSE_WITHDRAW_LABEL}
+                                            </>
+                                        )}
                                     </Button>
                                 </span>
                             }
@@ -901,16 +920,24 @@ function BrowseOverlayPrices({
         );
     }
 
-    return (
-        <div className="flex flex-col gap-0.5 min-inline-0">
-            <PriceWithCommission
-                amountInr={listing.saleAmountInr ?? 0}
-                commissionPercent={listing.commissionPercent}
-                audience={audience}
-                className={priceClass}
-            />
-            {both ? (
-                <p className="body-sm tracking-wide text-ink-muted">
+    if (both) {
+        return (
+            <p
+                className={cn(
+                    priceClass,
+                    "flex flex-wrap items-baseline gap-x-1.5 text-brand tabular-nums min-inline-0",
+                )}
+            >
+                <PriceWithCommission
+                    amountInr={listing.saleAmountInr ?? 0}
+                    commissionPercent={listing.commissionPercent}
+                    audience={audience}
+                    className={priceClass}
+                />
+                <span className="font-medium text-ink-subtle" aria-hidden>
+                    /
+                </span>
+                <span className="body-sm font-medium tracking-wide text-ink-muted">
                     Also{" "}
                     <PriceWithCommission
                         amountInr={listing.rentAmountInr ?? 0}
@@ -918,11 +945,19 @@ function BrowseOverlayPrices({
                         commissionAmountInr={listing.commissionAmount}
                         audience={audience}
                         className="font-semibold text-ink"
-                    />{" "}
-                    rent
-                </p>
-            ) : null}
-        </div>
+                    />
+                </span>
+            </p>
+        );
+    }
+
+    return (
+        <PriceWithCommission
+            amountInr={listing.saleAmountInr ?? 0}
+            commissionPercent={listing.commissionPercent}
+            audience={audience}
+            className={priceClass}
+        />
     );
 }
 
@@ -999,7 +1034,7 @@ function BrowseOverlayPropertyCard({
                 />
             }
         >
-            <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
+            <div className="flex flex-1 flex-col gap-3.5 min-inline-0">
                 <OverlayCardSummary
                     href={detailsHref}
                     price={<BrowseOverlayPrices listing={listing} />}
@@ -1262,7 +1297,7 @@ function RepresentedPropertyCard({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="flex-1 border-border-warm"
+                        className="flex-1 border-border-warm min-inline-0"
                         onClick={onShare}
                     >
                         Share
@@ -1274,7 +1309,7 @@ function RepresentedPropertyCard({
                             prefetch={false}
                             className={cn(
                                 buttonVariants({ size: "sm" }),
-                                "flex-[1.4] bg-brand-ink text-surface hover:bg-brand-ink/90",
+                                "flex-1 bg-brand-ink text-surface hover:bg-brand-ink/90 min-inline-0",
                             )}
                         >
                             Open in CRM
@@ -1283,7 +1318,7 @@ function RepresentedPropertyCard({
                         <Button
                             type="button"
                             size="sm"
-                            className="flex-[1.4] bg-brand-ink text-surface hover:bg-brand-ink/90"
+                            className="flex-1 bg-brand-ink text-surface hover:bg-brand-ink/90 min-inline-0"
                             onClick={onOpenCrm}
                         >
                             Open in CRM
@@ -1601,7 +1636,7 @@ function OwnedOverlayPropertyCard({
                 />
             }
         >
-            <div className="flex flex-col gap-1.5 min-inline-0">
+            <div className="flex flex-col gap-3.5 min-inline-0">
                 <OverlayCardSummary
                     href={detailsHref}
                     price={<BrowseOverlayPrices listing={browse} audience={audience} />}
@@ -1678,7 +1713,7 @@ function OwnedOverlayPropertyCard({
                                 variant="outline"
                                 type="button"
                                 className={cn(
-                                    showAddBuyerButton ? "flex-1" : "inline-full",
+                                    showAddBuyerButton ? "flex-1 min-inline-0" : "inline-full",
                                     OVERLAY_GLASS_BUTTON_CLASS,
                                 )}
                                 onClick={onAttachOwner}
@@ -1696,7 +1731,9 @@ function OwnedOverlayPropertyCard({
                                 size="md"
                                 variant="accent"
                                 type="button"
-                                className={showAttachOwnerButton ? "flex-1" : "inline-full"}
+                                className={
+                                    showAttachOwnerButton ? "flex-1 min-inline-0" : "inline-full"
+                                }
                                 onClick={onAddBuyer}
                             >
                                 <UserPlus

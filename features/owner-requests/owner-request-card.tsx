@@ -56,7 +56,7 @@ function BrokerOverlayStats({ item }: { item: OwnerRequestCardItem }) {
     ) : undefined;
 
     return (
-        <div className="flex flex-col gap-1 min-inline-0">
+        <div className="flex flex-col gap-1.5 min-inline-0">
             <OverlayPersonLine
                 label="Broker"
                 name={item.brokerName}
@@ -95,7 +95,7 @@ function CardFooter({
             size="md"
             variant="accent"
             nativeButton={false}
-            className="flex-[1.4]"
+            className="flex-1 min-inline-0"
             render={<Link href={detailsHref} prefetch={false} />}
         >
             View property
@@ -110,17 +110,17 @@ function CardFooter({
                     variant="outline"
                     disabled={isBusy}
                     onClick={onReject}
-                    className={cn("flex-1", secondaryClass)}
+                    className={cn("flex-1 min-inline-0", secondaryClass)}
                 >
                     <X aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    Decline
+                    Cancel
                 </Button>
                 <Button
                     size="md"
                     variant="accent"
                     disabled={isBusy}
                     onClick={onAccept}
-                    className="flex-[1.4]"
+                    className="flex-1 min-inline-0"
                 >
                     <Check aria-hidden className="block-4 inline-4" strokeWidth={2} />
                     Accept
@@ -137,16 +137,29 @@ function CardFooter({
                     variant="outline"
                     disabled={isBusy}
                     onClick={onWithdraw}
-                    className={cn("flex-1", secondaryClass)}
+                    className={cn("flex-1 min-inline-0", secondaryClass)}
                 >
-                    Withdraw
+                    <X aria-hidden className="block-4 inline-4" strokeWidth={2} />
+                    Cancel request
                 </Button>
                 {viewDetails}
             </DealOverlayFooter>
         );
     }
 
-    return <DealOverlayFooter>{viewDetails}</DealOverlayFooter>;
+    return (
+        <DealOverlayFooter>
+            <Button
+                size="md"
+                variant="accent"
+                nativeButton={false}
+                className="inline-full"
+                render={<Link href={detailsHref} prefetch={false} />}
+            >
+                View property
+            </Button>
+        </DealOverlayFooter>
+    );
 }
 
 export function OwnerRequestCard({

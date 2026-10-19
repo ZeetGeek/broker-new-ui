@@ -26,7 +26,11 @@ export const VisitTimelineRow = memo(function VisitTimelineRow({
     const status = VISIT_STATUS[visit.status];
     const primary = visitPrimaryAction(visit.status, visit.startsAt, Boolean(visit.outcome));
     const primaryLabel =
-        primary === "outcome" ? "Log outcome" : primary === "withdraw" ? "Withdraw" : "Reschedule";
+        primary === "outcome"
+            ? "Log outcome"
+            : primary === "withdraw"
+              ? "Cancel request"
+              : "Reschedule";
     const buyer = visit.buyers[0];
     const broker = useAppSelector((state) => state.auth.user);
     const brokerName = broker?.fullName?.trim() || broker?.email || "Your broker";

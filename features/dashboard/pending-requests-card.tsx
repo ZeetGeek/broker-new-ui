@@ -113,7 +113,7 @@ function PendingRequestRow({
                     className="border-border-warm bg-surface px-2.5 text-ink"
                 >
                     <X aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
-                    Decline
+                    Cancel
                 </Button>
             </div>
         </li>

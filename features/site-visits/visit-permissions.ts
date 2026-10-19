@@ -177,7 +177,7 @@ export function visitActionLabel(action: VisitAction, viewer: VisitViewer): stri
         case "record_outcome":
             return "Record what happened";
         case "withdraw":
-            return "Withdraw request";
+            return "Cancel request";
     }
 }
 

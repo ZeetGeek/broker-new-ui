@@ -809,7 +809,10 @@ export function DealCard({
                                     size="md"
                                     variant="outline"
                                     nativeButton={false}
-                                    className={cn("flex-1", OVERLAY_GLASS_BUTTON_CLASS)}
+                                    className={cn(
+                                        "flex-1 min-inline-0",
+                                        OVERLAY_GLASS_BUTTON_CLASS,
+                                    )}
                                     render={
                                         <a
                                             href={formatTelUrl(deal.buyer.phoneDigits)}
@@ -828,7 +831,10 @@ export function DealCard({
                                     size="md"
                                     variant="outline"
                                     nativeButton={false}
-                                    className={cn("flex-1", OVERLAY_GLASS_BUTTON_CLASS)}
+                                    className={cn(
+                                        "flex-1 min-inline-0",
+                                        OVERLAY_GLASS_BUTTON_CLASS,
+                                    )}
                                     render={
                                         <a
                                             href={formatWhatsAppUrl(

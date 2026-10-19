@@ -443,10 +443,13 @@ export function OwnerLeadBoardCard({
                                     size="md"
                                     disabled={busy}
                                     onClick={onReject}
-                                    className={cn("flex-1", OVERLAY_GLASS_BUTTON_CLASS)}
+                                    className={cn(
+                                        "flex-1 min-inline-0",
+                                        OVERLAY_GLASS_BUTTON_CLASS,
+                                    )}
                                 >
                                     <X aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                                    Reject
+                                    Cancel
                                 </Button>
                                 <Button
                                     type="button"
@@ -455,7 +458,7 @@ export function OwnerLeadBoardCard({
                                     disabled={busy}
                                     loading={busy}
                                     onClick={onAccept}
-                                    className="flex-[1.4] font-semibold"
+                                    className="flex-1 min-inline-0 font-semibold"
                                 >
                                     <Check
                                         aria-hidden
