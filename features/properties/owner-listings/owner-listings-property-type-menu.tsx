@@ -202,6 +202,7 @@ export function OwnerListingsPropertyTypeMenu({
                             value={formatPropertyTypeLabel(value)}
                             className="inline-full"
                             isOpen={open}
+                            isActive={Boolean(value)}
                         />
                     }
                 />

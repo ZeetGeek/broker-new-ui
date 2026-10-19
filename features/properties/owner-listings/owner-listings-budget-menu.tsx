@@ -104,6 +104,7 @@ export function OwnerListingsBudgetMenu({
                             value={formatBudgetLabel(min, max, lookingFor)}
                             className="inline-full"
                             isOpen={open}
+                            isActive={Boolean(min || max)}
                         />
                     }
                 />

@@ -165,6 +165,7 @@ export function OwnerListingsLookingForMenu({
                             value={formatTransactionTypeLabel(value)}
                             className="inline-full"
                             isOpen={open}
+                            isActive={Boolean(value)}
                         />
                     }
                 />

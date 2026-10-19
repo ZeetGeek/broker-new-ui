@@ -66,6 +66,7 @@ export function OwnerListingsBhkMenu({
                             value={formatBhkLabel(value)}
                             className="inline-full"
                             isOpen={open}
+                            isActive={value.length > 0}
                         />
                     }
                 />

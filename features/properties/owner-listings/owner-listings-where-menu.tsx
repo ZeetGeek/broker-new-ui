@@ -777,6 +777,7 @@ export function OwnerListingsWhereMenu({
                                             )}
                                             className="inline-full"
                                             isOpen={open}
+                                            isActive={!isAnywhereSelected}
                                         />
                                     }
                                 />
@@ -837,13 +838,13 @@ export function OwnerListingsWhereMenu({
                         <div
                             className={cn(
                                 WHERE_MENU_LIST_PANEL_CLASS,
-                                "flex items-center justify-center px-3 pbe-4",
+                                "flex items-center justify-center px-3 py-10",
                             )}
                         >
                             <WhereMenuEmptyState
                                 icon={Search}
-                                title="No matching places"
-                                description={`Nothing found for "${query.trim()}". Try a country, state, city, or area.`}
+                                title="No properties here yet"
+                                description={`No one has listed a property for "${query.trim()}" yet. Try another place, or check back later.`}
                             />
                         </div>
                     ) : (

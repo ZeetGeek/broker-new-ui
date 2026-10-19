@@ -171,6 +171,7 @@ export function OwnerListingsFurnishingMenu({
                             value={formatFurnishingLabel(value)}
                             className="inline-full"
                             isOpen={open}
+                            isActive={Boolean(value)}
                         />
                     }
                 />

@@ -1,8 +1,11 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { extractBandFilters } from "@/lib/format/owner-listings-labels";
+
+import { Button } from "@/components/ui/button";
 
 import { OwnerListingsBandDivider } from "@/features/properties/owner-listings/owner-listings-band-segment";
 import { OwnerListingsBhkMenu } from "@/features/properties/owner-listings/owner-listings-bhk-menu";
@@ -11,11 +14,14 @@ import { OwnerListingsFurnishingMenu } from "@/features/properties/owner-listing
 import { OwnerListingsLookingForMenu } from "@/features/properties/owner-listings/owner-listings-looking-for-menu";
 import { OwnerListingsPropertyTypeMenu } from "@/features/properties/owner-listings/owner-listings-property-type-menu";
 import { OwnerListingsWhereMenu } from "@/features/properties/owner-listings/owner-listings-where-menu";
-import type {
-    OwnerListingItem,
-    OwnerListingsBandFilters,
-    OwnerListingsFilters,
+import {
+    DEFAULT_OWNER_LISTINGS_FILTERS,
+    type OwnerListingItem,
+    type OwnerListingsBandFilters,
+    type OwnerListingsFilters,
 } from "@/features/properties/owner-listings/types";
+
+const EMPTY_BAND_FILTERS = extractBandFilters(DEFAULT_OWNER_LISTINGS_FILTERS);
 
 export type OwnerListingsSearchBandProps = {
     appliedFilters: OwnerListingsFilters;
@@ -120,6 +126,15 @@ export function OwnerListingsSearchBand({
         [applyDraftIfChanged],
     );
 
+    const hasBandFilters = bandSignature(draft) !== bandSignature(EMPTY_BAND_FILTERS);
+
+    const clearAllBandFilters = useCallback(() => {
+        const next = extractBandFilters(DEFAULT_OWNER_LISTINGS_FILTERS);
+        draftRef.current = next;
+        setDraft(next);
+        onApplyBand(next);
+    }, [onApplyBand]);
+
     return (
         <div
             className="
@@ -212,6 +227,23 @@ export function OwnerListingsSearchBand({
                     />
                 </div>
             </div>
+
+            {hasBandFilters ? (
+                <>
+                    <OwnerListingsBandDivider />
+                    <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        onClick={clearAllBandFilters}
+                        aria-label="Reset top bar filters"
+                        className="shrink-0 gap-1.5 px-5 text-brand hover:text-brand"
+                    >
+                        <X aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
+                        Reset filter
+                    </Button>
+                </>
+            ) : null}
         </div>
     );
 }
