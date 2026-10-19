@@ -43,6 +43,8 @@ export type OwnerListingsQuickChipsProps = {
     filters: OwnerListingsFilters;
     chipCounts: QuickChipCounts;
     sheetFilterCount: number;
+    /** Matching listings — same N as “Show N properties” in the sheet. */
+    filtersMatchCount: number;
     isLoading?: boolean;
     onToggleQuickChip: (key: QuickChipKey) => void;
     onOpenFilters: () => void;
@@ -100,6 +102,7 @@ export function OwnerListingsQuickChips({
     filters,
     chipCounts,
     sheetFilterCount,
+    filtersMatchCount,
     isLoading = false,
     onToggleQuickChip,
     onOpenFilters,
@@ -115,7 +118,7 @@ export function OwnerListingsQuickChips({
                         <FilterChip
                             label="Filters"
                             icon={SlidersHorizontal}
-                            count={sheetFilterCount}
+                            count={filtersMatchCount}
                             isLoading={isLoading}
                             isActive={sheetFilterCount > 0}
                             clearable={sheetFilterCount > 0 && Boolean(onClearSheetFilters)}
