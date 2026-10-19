@@ -1,3 +1,5 @@
+import { formatLocationPathLabel } from "@/lib/format/owner-listings-labels";
+
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 
 const DEFAULT_COUNTRY = "India";
@@ -155,7 +157,7 @@ export function searchOwnerListingLocations(
                     if (haystack.includes(normalizedQuery)) {
                         hits.push({
                             ...leaf,
-                            pathLabel: `${leaf.city}, ${leaf.state}`,
+                            pathLabel: formatLocationPathLabel(leaf.city, leaf.state, leaf.country),
                         });
                     }
                 }

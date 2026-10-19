@@ -24,17 +24,23 @@ export function formatPlaceName(value: string): string {
         .join("");
 }
 
-/** City + state for Where rows — title-cased, no duplicated city/state. */
-export function formatLocationPathLabel(city: string, state: string): string {
-    const cityLabel = formatPlaceName(city);
-    const stateLabel = formatPlaceName(state);
+/**
+ * City + state (+ country) for Where rows — title-cased, no duplicated segments.
+ */
+export function formatLocationPathLabel(city: string, state: string, country?: string): string {
+    const parts: string[] = [];
+    const pushUnique = (value: string) => {
+        const label = formatPlaceName(value);
+        if (!label) return;
+        if (parts.some((part) => part.toLowerCase() === label.toLowerCase())) return;
+        parts.push(label);
+    };
 
-    if (!cityLabel) return stateLabel;
-    if (!stateLabel || cityLabel.toLowerCase() === stateLabel.toLowerCase()) {
-        return cityLabel;
-    }
+    pushUnique(city);
+    pushUnique(state);
+    if (country) pushUnique(country);
 
-    return `${cityLabel}, ${stateLabel}`;
+    return parts.join(", ");
 }
 
 export function formatLocalitiesLabel(

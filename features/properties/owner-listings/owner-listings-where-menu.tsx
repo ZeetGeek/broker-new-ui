@@ -157,28 +157,26 @@ function LocationIcon({ icon: Icon = MapPin }: { icon?: LucideIcon }) {
     );
 }
 
-function WhereLocationMeta({
-    pathLabel,
-    listingCount,
-    showCount,
-}: {
-    pathLabel: string;
-    listingCount?: number;
-    showCount?: boolean;
-}) {
+function WhereLocationMeta({ pathLabel }: { pathLabel: string }) {
     return (
         <span className={WHERE_META_CLASS} data-muted-line>
             <span className="capitalize">{pathLabel}</span>
-            {showCount && listingCount != null ? (
-                <>
-                    <span className="mx-1.5 text-ink-subtle" aria-hidden>
-                        ·
-                    </span>
-                    <span className="tracking-[0.02em] tabular-nums">
-                        {formatListingCount(listingCount)}
-                    </span>
-                </>
-            ) : null}
+        </span>
+    );
+}
+
+function WhereListingCountBadge({ count }: { count: number }) {
+    return (
+        <span
+            className="
+              body-xs inline-flex shrink-0 items-center justify-center rounded-full
+              bg-brand-soft px-1.5 font-semibold tracking-normal text-brand-text
+              tabular-nums
+              block-5 min-inline-5
+            "
+            aria-label={formatListingCount(count)}
+        >
+            {count > 99 ? "99+" : count}
         </span>
     );
 }
@@ -187,6 +185,7 @@ function WhereLocationRow({
     locality,
     city,
     state,
+    country,
     listingCount,
     query,
     checked,
@@ -195,6 +194,7 @@ function WhereLocationRow({
     locality: string;
     city: string;
     state: string;
+    country: string;
     listingCount: number;
     query: string;
     checked: boolean;
@@ -202,7 +202,7 @@ function WhereLocationRow({
 }) {
     const isSearching = query.trim().length > 0;
     const title = formatPlaceName(locality);
-    const pathLabel = formatLocationPathLabel(city, state);
+    const pathLabel = formatLocationPathLabel(city, state, country);
 
     return (
         <DropdownMenuCheckboxItem
@@ -212,14 +212,13 @@ function WhereLocationRow({
         >
             <LocationIcon />
             <span className="flex flex-1 flex-col gap-1 text-start min-inline-0">
-                <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
-                    {isSearching ? <HighlightMatch text={locality} query={query} /> : title}
+                <span className="flex items-center gap-2 min-inline-0">
+                    <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
+                        {isSearching ? <HighlightMatch text={locality} query={query} /> : title}
+                    </span>
+                    <WhereListingCountBadge count={listingCount} />
                 </span>
-                <WhereLocationMeta
-                    pathLabel={pathLabel}
-                    listingCount={listingCount}
-                    showCount={!isSearching}
-                />
+                <WhereLocationMeta pathLabel={pathLabel} />
             </span>
         </DropdownMenuCheckboxItem>
     );
@@ -263,10 +262,11 @@ function renderSearchResults({
 }) {
     return hits.map((hit) => (
         <WhereLocationRow
-            key={`${hit.state}-${hit.city}-${hit.locality}`}
+            key={`${hit.country}-${hit.state}-${hit.city}-${hit.locality}`}
             locality={hit.locality}
             city={hit.city}
             state={hit.state}
+            country={hit.country}
             listingCount={hit.listingCount}
             query={query}
             checked={selectedSet.has(hit.locality)}
@@ -537,10 +537,11 @@ export function OwnerListingsWhereMenu({
                                     ) : hasListings ? (
                                         locationLeaves.map((leaf) => (
                                             <WhereLocationRow
-                                                key={`${leaf.state}-${leaf.city}-${leaf.locality}`}
+                                                key={`${leaf.country}-${leaf.state}-${leaf.city}-${leaf.locality}`}
                                                 locality={leaf.locality}
                                                 city={leaf.city}
                                                 state={leaf.state}
+                                                country={leaf.country}
                                                 listingCount={leaf.listingCount}
                                                 query=""
                                                 checked={selectedLocalitySet.has(leaf.locality)}
