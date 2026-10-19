@@ -29,6 +29,7 @@ import { attemptActions } from "@/features/properties/my-requests/attempt-rules"
 import {
     DealCardPhotoToolbar,
     DealAttachedBuyers,
+    DealContactSplitBar,
     DealOverlayCard,
     DealOverlayFooter,
     DealOverlayStats,
@@ -75,12 +76,14 @@ function RequestCardFooter({
     onRetry,
     onAddBuyers,
     isBusy,
+    pin = true,
 }: {
     item: RequestItem;
     onNudge: (id: string) => void;
     onRetry: (id: string) => void;
     onAddBuyers: () => void;
     isBusy: boolean;
+    pin?: boolean;
 }) {
     const actions = attemptActions(item);
     const secondaryClass = dealSecondaryButtonClass();
@@ -88,7 +91,7 @@ function RequestCardFooter({
     // Card tap already opens the listing — footer only keeps the stage action.
     if (item.stage === "pending") {
         return (
-            <DealOverlayFooter>
+            <DealOverlayFooter pin={pin}>
                 <Tooltip>
                     <TooltipTrigger
                         render={
@@ -125,7 +128,7 @@ function RequestCardFooter({
 
     if (actions.canRetry) {
         return (
-            <DealOverlayFooter>
+            <DealOverlayFooter pin={pin}>
                 <Button
                     size="md"
                     variant="accent"
@@ -145,7 +148,7 @@ function RequestCardFooter({
         if (item.attachedClients.length > 0) return null;
 
         return (
-            <DealOverlayFooter>
+            <DealOverlayFooter pin={pin}>
                 <Button
                     size="md"
                     variant="accent"
@@ -162,7 +165,7 @@ function RequestCardFooter({
     }
 
     return (
-        <DealOverlayFooter>
+        <DealOverlayFooter pin={pin}>
             <Button
                 size="md"
                 variant="outline"
@@ -251,13 +254,31 @@ export function RequestCard({
                         onManage={() => setIsBuyersOpen(true)}
                     />
                 ) : null}
-                <RequestCardFooter
-                    item={item}
-                    onNudge={onNudge}
-                    onRetry={onRetry}
-                    onAddBuyers={() => setIsBuyersOpen(true)}
-                    isBusy={isBusy}
-                />
+                {ownerPhoneDigits ? (
+                    <div className="mbs-auto flex flex-col gap-3 inline-full">
+                        <RequestCardFooter
+                            item={item}
+                            onNudge={onNudge}
+                            onRetry={onRetry}
+                            onAddBuyers={() => setIsBuyersOpen(true)}
+                            isBusy={isBusy}
+                            pin={false}
+                        />
+                        <DealContactSplitBar
+                            ownerName={item.ownerName}
+                            ownerPhoneDigits={ownerPhoneDigits}
+                            onChat={() => openChat(chatPeerFor(item))}
+                        />
+                    </div>
+                ) : (
+                    <RequestCardFooter
+                        item={item}
+                        onNudge={onNudge}
+                        onRetry={onRetry}
+                        onAddBuyers={() => setIsBuyersOpen(true)}
+                        isBusy={isBusy}
+                    />
+                )}
             </DealOverlayCard>
 
             <Dialog open={isTimelineOpen} onOpenChange={setIsTimelineOpen}>

@@ -281,7 +281,7 @@ export function DealOverlayCard({
     );
 }
 
-/** Owner line + call / WhatsApp links. Number shows on hover. Commission on price hover. */
+/** Owner line under the summary. Call shows when the number is shared. */
 export function DealOverlayStats({
     ownerName,
     ownerAvatarUrl,
@@ -298,74 +298,115 @@ export function DealOverlayStats({
     const phoneLabel = ownerPhoneDigits ? formatPhoneIn(ownerPhoneDigits) : null;
 
     return (
-        <div className={cn("flex flex-col min-inline-0", ownerPhoneDigits ? "gap-2" : "gap-4")}>
-            <OverlayPersonLine label={personLabel} name={ownerName} avatarUrl={ownerAvatarUrl} />
-            {ownerPhoneDigits && phoneLabel ? (
-                <div
-                    className="flex flex-wrap items-center gap-x-3 gap-y-1 -mbe-2 min-inline-0"
-                    onClick={(event) => event.stopPropagation()}
-                >
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button
-                                    variant="link"
-                                    size="sm"
-                                    nativeButton={false}
-                                    className="h-auto gap-1.5 px-0 text-brand hover:text-brand/85"
-                                    render={
-                                        <a
-                                            href={formatTelUrl(ownerPhoneDigits)}
-                                            aria-label={`Call ${ownerName} at ${phoneLabel}`}
-                                        />
-                                    }
+        <OverlayPersonLine
+            label={personLabel}
+            name={ownerName}
+            avatarUrl={ownerAvatarUrl}
+            action={
+                ownerPhoneDigits && phoneLabel ? (
+                    <span onClick={(event) => event.stopPropagation()}>
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        variant="link"
+                                        size="sm"
+                                        nativeButton={false}
+                                        className="h-auto gap-1 px-0 text-brand hover:text-brand/85"
+                                        render={
+                                            <a
+                                                href={formatTelUrl(ownerPhoneDigits)}
+                                                aria-label={`Call ${ownerName} at ${phoneLabel}`}
+                                            />
+                                        }
+                                    />
+                                }
+                            >
+                                <Icon
+                                    icon="tabler:phone"
+                                    width={14}
+                                    height={14}
+                                    className="shrink-0 block-3.5 inline-3.5"
+                                    aria-hidden
                                 />
-                            }
-                        >
-                            <Icon
-                                icon="tabler:phone"
-                                width={16}
-                                height={16}
-                                className="shrink-0 block-4 inline-4"
-                                aria-hidden
-                            />
-                            Call here
-                        </TooltipTrigger>
-                        <TooltipContent side="top">{phoneLabel}</TooltipContent>
-                    </Tooltip>
+                                Call here
+                            </TooltipTrigger>
+                            <TooltipContent side="top">{phoneLabel}</TooltipContent>
+                        </Tooltip>
+                    </span>
+                ) : null
+            }
+        />
+    );
+}
 
-                    <Tooltip>
-                        <TooltipTrigger
+/**
+ * Bottom bar: WhatsApp (outline) + Chat (brand). Number on WhatsApp hover.
+ */
+export function DealContactSplitBar({
+    ownerName,
+    ownerPhoneDigits,
+    onChat,
+}: {
+    ownerName: string;
+    ownerPhoneDigits: string;
+    onChat: () => void;
+}) {
+    const phoneLabel = formatPhoneIn(ownerPhoneDigits);
+
+    return (
+        <div
+            className="pointer-events-auto flex gap-2 inline-full"
+            onClick={(event) => event.stopPropagation()}
+        >
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <Button
+                            variant="outline"
+                            size="md"
+                            nativeButton={false}
+                            className="flex-1 min-inline-0"
                             render={
-                                <Button
-                                    variant="link"
-                                    size="sm"
-                                    nativeButton={false}
-                                    className="h-auto gap-1.5 px-0 text-brand hover:text-brand/85"
-                                    render={
-                                        <a
-                                            href={formatWhatsAppUrl(ownerPhoneDigits)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            aria-label={`WhatsApp ${ownerName} at ${phoneLabel}`}
-                                        />
-                                    }
+                                <a
+                                    href={formatWhatsAppUrl(ownerPhoneDigits)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`WhatsApp ${ownerName} at ${phoneLabel}`}
                                 />
                             }
-                        >
-                            <Icon
-                                icon="tabler:brand-whatsapp"
-                                width={16}
-                                height={16}
-                                className="shrink-0 block-4 inline-4"
-                                aria-hidden
-                            />
-                            WhatsApp here
-                        </TooltipTrigger>
-                        <TooltipContent side="top">{phoneLabel}</TooltipContent>
-                    </Tooltip>
-                </div>
-            ) : null}
+                        />
+                    }
+                >
+                    <Icon
+                        icon="tabler:brand-whatsapp"
+                        width={18}
+                        height={18}
+                        className="shrink-0 block-4.5 inline-4.5"
+                        aria-hidden
+                    />
+                    WhatsApp
+                </TooltipTrigger>
+                <TooltipContent side="top">{phoneLabel}</TooltipContent>
+            </Tooltip>
+
+            <Button
+                variant="accent"
+                size="md"
+                type="button"
+                className="flex-1 min-inline-0"
+                onClick={onChat}
+                aria-label={`Chat with ${ownerName}`}
+            >
+                <Icon
+                    icon="tabler:message"
+                    width={18}
+                    height={18}
+                    className="shrink-0 block-4.5 inline-4.5"
+                    aria-hidden
+                />
+                Chat
+            </Button>
         </div>
     );
 }
@@ -387,8 +428,19 @@ export function DealAttachedOwner({ name, onManage }: { name: string; onManage?:
 }
 
 /** Footer wrapper — one row of primary actions at the bottom. */
-export function DealOverlayFooter({ children }: { children: ReactNode }) {
-    return <div className="pointer-events-auto mbs-auto flex gap-2 inline-full">{children}</div>;
+export function DealOverlayFooter({
+    children,
+    pin = true,
+}: {
+    children: ReactNode;
+    /** When false, leave pinning to a parent (e.g. stacked with contact bar). */
+    pin?: boolean;
+}) {
+    return (
+        <div className={cn("pointer-events-auto flex gap-2 inline-full", pin && "mbs-auto")}>
+            {children}
+        </div>
+    );
 }
 
 export function DealOverlayFooterRow({ children }: { children: ReactNode }) {

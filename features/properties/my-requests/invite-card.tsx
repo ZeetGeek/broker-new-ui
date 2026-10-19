@@ -20,6 +20,7 @@ import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buye
 import {
     DealCardPhotoToolbar,
     DealAttachedBuyers,
+    DealContactSplitBar,
     DealOverlayCard,
     DealOverlayFooter,
     DealOverlayStats,
@@ -96,19 +97,21 @@ function InviteCardFooter({
     onDecline,
     onAddBuyers,
     isBusy,
+    pin = true,
 }: {
     item: InviteItem;
     onAccept: (id: string) => void;
     onDecline: (id: string) => void;
     onAddBuyers: () => void;
     isBusy: boolean;
+    pin?: boolean;
 }) {
     const secondaryClass = dealSecondaryButtonClass();
 
     // Card tap already opens the listing — footer only keeps the stage action.
     if (item.stage === "pending") {
         return (
-            <DealOverlayFooter>
+            <DealOverlayFooter pin={pin}>
                 <Button
                     size="md"
                     variant="outline"
@@ -138,7 +141,7 @@ function InviteCardFooter({
         if (item.attachedClients.length > 0) return null;
 
         return (
-            <DealOverlayFooter>
+            <DealOverlayFooter pin={pin}>
                 <Button
                     size="md"
                     variant="accent"
@@ -155,7 +158,7 @@ function InviteCardFooter({
     }
 
     return (
-        <DealOverlayFooter>
+        <DealOverlayFooter pin={pin}>
             <Button
                 size="md"
                 variant="outline"
@@ -243,13 +246,31 @@ export function InviteCard({
                         onManage={() => setIsBuyersOpen(true)}
                     />
                 ) : null}
-                <InviteCardFooter
-                    item={item}
-                    onAccept={onAccept}
-                    onDecline={onDecline}
-                    onAddBuyers={() => setIsBuyersOpen(true)}
-                    isBusy={isBusy}
-                />
+                {ownerPhoneDigits ? (
+                    <div className="mbs-auto flex flex-col gap-3 inline-full">
+                        <InviteCardFooter
+                            item={item}
+                            onAccept={onAccept}
+                            onDecline={onDecline}
+                            onAddBuyers={() => setIsBuyersOpen(true)}
+                            isBusy={isBusy}
+                            pin={false}
+                        />
+                        <DealContactSplitBar
+                            ownerName={item.ownerName}
+                            ownerPhoneDigits={ownerPhoneDigits}
+                            onChat={() => openChat(chatPeerFor(item))}
+                        />
+                    </div>
+                ) : (
+                    <InviteCardFooter
+                        item={item}
+                        onAccept={onAccept}
+                        onDecline={onDecline}
+                        onAddBuyers={() => setIsBuyersOpen(true)}
+                        isBusy={isBusy}
+                    />
+                )}
             </DealOverlayCard>
 
             {item.stage === "accepted" ? (

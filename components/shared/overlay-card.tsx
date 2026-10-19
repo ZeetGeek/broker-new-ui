@@ -149,24 +149,31 @@ export function OverlayCardSummary({
     );
 }
 
+/** Shared label column so Owner / Buyers / Broker lines align their faces. */
+export const OVERLAY_PERSON_LABEL_CLASS = "shrink-0 text-ink-subtle inline-14";
+
 /** Quiet person line under the summary (Owner / Broker). Avatar sits next to the name. */
 export function OverlayPersonLine({
     label,
     name,
     hint,
     avatarUrl,
+    action,
 }: {
     label: string;
     name: string;
     hint?: ReactNode;
     avatarUrl?: string;
+    /** Optional control after the name (e.g. Call). */
+    action?: ReactNode;
 }) {
     return (
         <div className={PERSON_CLASS}>
-            <span className="shrink-0 text-ink-subtle">{label}</span>
+            <span className={OVERLAY_PERSON_LABEL_CLASS}>{label}</span>
             <span className="flex min-inline-0 items-center gap-1.5">
                 <UserAvatar name={name} imageUrl={avatarUrl} size="2xs" className="shrink-0" />
                 <span className="truncate font-semibold text-ink capitalize">{name}</span>
+                {action}
             </span>
             {hint ? (
                 <>
