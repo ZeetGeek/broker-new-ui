@@ -329,7 +329,7 @@ export function DealOverlayStats({
                                     className="shrink-0 block-3.5 inline-3.5"
                                     aria-hidden
                                 />
-                                Call here
+                                Call
                             </TooltipTrigger>
                             <TooltipContent side="top">{phoneLabel}</TooltipContent>
                         </Tooltip>

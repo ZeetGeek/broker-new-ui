@@ -9,10 +9,12 @@ import { cn } from "@/lib/utils";
 import { AvatarStack } from "@/components/shared/avatar-stack";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
+    OVERLAY_PERSON_ACTION_CLASS,
     OVERLAY_PERSON_LABEL_CLASS,
 } from "@/components/shared/overlay-card";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import tablerContactIcons from "@/features/properties/my-requests/tabler-contact.json";
 
@@ -161,29 +163,40 @@ export function AttachedBuyersRow({
     return (
         <div className="body-sm flex items-center gap-2 tracking-wide text-ink-muted inline-full min-inline-0">
             <span className={OVERLAY_PERSON_LABEL_CLASS}>Buyers</span>
-            <span className="flex min-inline-0 items-center gap-1.5">
+            <span className="flex min-inline-0 flex-1 items-center gap-1.5">
                 <AvatarStack people={buyers} size="2xs" max={3} className="shrink-0" />
                 <span className="truncate font-semibold text-ink">{title}</span>
-                {onManage ? (
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="link"
-                        className="h-auto shrink-0 gap-1 px-0 text-brand hover:text-brand/85"
-                        onClick={onManage}
-                        aria-label="Add buyer"
-                    >
-                        <Icon
-                            icon="tabler:user-plus"
-                            width={14}
-                            height={14}
-                            className="shrink-0 block-3.5 inline-3.5"
-                            aria-hidden
-                        />
-                        Add
-                    </Button>
-                ) : null}
             </span>
+            {onManage ? (
+                <span className={OVERLAY_PERSON_ACTION_CLASS}>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="link"
+                                        className="h-auto gap-1 px-0 text-brand hover:text-brand/85"
+                                        onClick={onManage}
+                                        aria-label="Add buyer"
+                                    />
+                                }
+                            >
+                                <Icon
+                                    icon="tabler:user-plus"
+                                    width={14}
+                                    height={14}
+                                    className="shrink-0 block-3.5 inline-3.5"
+                                    aria-hidden
+                                />
+                                Add
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Add buyer</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </span>
+            ) : null}
         </div>
     );
 }

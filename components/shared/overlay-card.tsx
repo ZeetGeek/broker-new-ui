@@ -152,6 +152,9 @@ export function OverlayCardSummary({
 /** Shared label column so Owner / Buyers / Broker lines align their faces. */
 export const OVERLAY_PERSON_LABEL_CLASS = "shrink-0 text-ink-subtle inline-14";
 
+/** Shared action column so Call / Add line up on the reading end. */
+export const OVERLAY_PERSON_ACTION_CLASS = "flex shrink-0 items-center justify-end min-inline-24";
+
 /** Quiet person line under the summary (Owner / Broker). Avatar sits next to the name. */
 export function OverlayPersonLine({
     label,
@@ -164,25 +167,25 @@ export function OverlayPersonLine({
     name: string;
     hint?: ReactNode;
     avatarUrl?: string;
-    /** Optional control after the name (e.g. Call). */
+    /** Optional control pinned to the reading end (e.g. Call). */
     action?: ReactNode;
 }) {
     return (
-        <div className={PERSON_CLASS}>
+        <div className={cn(PERSON_CLASS, "inline-full")}>
             <span className={OVERLAY_PERSON_LABEL_CLASS}>{label}</span>
-            <span className="flex min-inline-0 items-center gap-1.5">
+            <span className="flex min-inline-0 flex-1 items-center gap-1.5">
                 <UserAvatar name={name} imageUrl={avatarUrl} size="2xs" className="shrink-0" />
                 <span className="truncate font-semibold text-ink capitalize">{name}</span>
-                {action}
+                {hint ? (
+                    <>
+                        <span className="shrink-0 text-ink-subtle/60" aria-hidden>
+                            ·
+                        </span>
+                        <span className="truncate text-ink-muted tabular-nums">{hint}</span>
+                    </>
+                ) : null}
             </span>
-            {hint ? (
-                <>
-                    <span className="shrink-0 text-ink-subtle/60" aria-hidden>
-                        ·
-                    </span>
-                    <span className="truncate text-ink-muted tabular-nums">{hint}</span>
-                </>
-            ) : null}
+            {action ? <span className={OVERLAY_PERSON_ACTION_CLASS}>{action}</span> : null}
         </div>
     );
 }
