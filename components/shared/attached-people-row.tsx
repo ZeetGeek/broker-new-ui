@@ -177,7 +177,10 @@ export function AttachedBuyersRow({
                                         type="button"
                                         size="sm"
                                         variant="link"
-                                        className="h-auto gap-1 px-0 text-brand hover:text-brand/85"
+                                        className="
+                                          block-auto! min-block-0 gap-1 px-0 py-0
+                                          text-brand hover:text-brand/85
+                                        "
                                         onClick={onManage}
                                         aria-label="Add buyer"
                                     />

@@ -231,10 +231,6 @@ export function RequestCard({
             listing={item}
             isSaved={isSaved}
             onToggleSave={() => void toggleSave()}
-            contact={{
-                name: item.ownerName,
-                onMessage: openOwnerChat,
-            }}
             onOpenTimeline={() => setIsTimelineOpen(true)}
             onCancelRequest={actions.canCancel ? () => onWithdraw(item.id) : undefined}
             tone="overlay"
@@ -252,18 +248,20 @@ export function RequestCard({
                 isBusy={isBusy}
                 actions={cardMenu}
             >
-                <DealOverlayStats
-                    listing={item}
-                    ownerName={item.ownerName}
-                    ownerAvatarUrl={item.ownerAvatarUrl}
-                    ownerPhoneDigits={ownerPhoneDigits}
-                />
-                {item.stage === "approved" && item.attachedClients.length > 0 ? (
-                    <DealAttachedBuyers
-                        buyers={item.attachedClients}
-                        onManage={() => setIsBuyersOpen(true)}
+                <div className="flex flex-col gap-3.5 min-inline-0">
+                    <DealOverlayStats
+                        listing={item}
+                        ownerName={item.ownerName}
+                        ownerAvatarUrl={item.ownerAvatarUrl}
+                        ownerPhoneDigits={ownerPhoneDigits}
                     />
-                ) : null}
+                    {item.stage === "approved" && item.attachedClients.length > 0 ? (
+                        <DealAttachedBuyers
+                            buyers={item.attachedClients}
+                            onManage={() => setIsBuyersOpen(true)}
+                        />
+                    ) : null}
+                </div>
                 {ownerPhoneDigits ? (
                     <div className="mbs-auto flex flex-col gap-3 inline-full">
                         <RequestCardFooter
@@ -295,7 +293,7 @@ export function RequestCard({
             <Dialog open={isTimelineOpen} onOpenChange={setIsTimelineOpen}>
                 <DialogPopup className="gap-0 p-0 max-inline-md">
                     <DialogHeader className="border-be border-border-warm px-5 py-4">
-                        <DialogTitle>What happened</DialogTitle>
+                        <DialogTitle>Request timeline</DialogTitle>
                         <DialogClose />
                     </DialogHeader>
                     <div className="px-5 py-4">

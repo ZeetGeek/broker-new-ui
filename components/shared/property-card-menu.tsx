@@ -399,7 +399,7 @@ export function PropertyCardMenu({
                 {onOpenTimeline ? (
                     <DropdownMenuItem className={ITEM_CLASS} onClick={onOpenTimeline}>
                         <History aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        What happened
+                        View timeline
                     </DropdownMenuItem>
                 ) : null}
 

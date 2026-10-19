@@ -312,7 +312,10 @@ export function DealOverlayStats({
                                         variant="link"
                                         size="sm"
                                         nativeButton={false}
-                                        className="h-auto gap-1 px-0 text-brand hover:text-brand/85"
+                                        className="
+                                          block-auto! min-block-0 gap-1 px-0 py-0
+                                          text-brand hover:text-brand/85
+                                        "
                                         render={
                                             <a
                                                 href={formatTelUrl(ownerPhoneDigits)}

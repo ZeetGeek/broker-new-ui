@@ -221,10 +221,6 @@ export function InviteCard({
             listing={item}
             isSaved={isSaved}
             onToggleSave={() => void toggleSave()}
-            contact={{
-                name: item.ownerName,
-                onMessage: openOwnerChat,
-            }}
             tone="overlay"
         />
     );
@@ -245,18 +241,20 @@ export function InviteCard({
                         “{item.message}”
                     </p>
                 ) : null}
-                <DealOverlayStats
-                    listing={item}
-                    ownerName={item.ownerName}
-                    ownerAvatarUrl={item.ownerAvatarUrl}
-                    ownerPhoneDigits={ownerPhoneDigits}
-                />
-                {item.stage === "accepted" && item.attachedClients.length > 0 ? (
-                    <DealAttachedBuyers
-                        buyers={item.attachedClients}
-                        onManage={() => setIsBuyersOpen(true)}
+                <div className="flex flex-col gap-3.5 min-inline-0">
+                    <DealOverlayStats
+                        listing={item}
+                        ownerName={item.ownerName}
+                        ownerAvatarUrl={item.ownerAvatarUrl}
+                        ownerPhoneDigits={ownerPhoneDigits}
                     />
-                ) : null}
+                    {item.stage === "accepted" && item.attachedClients.length > 0 ? (
+                        <DealAttachedBuyers
+                            buyers={item.attachedClients}
+                            onManage={() => setIsBuyersOpen(true)}
+                        />
+                    ) : null}
+                </div>
                 {ownerPhoneDigits ? (
                     <div className="mbs-auto flex flex-col gap-3 inline-full">
                         <InviteCardFooter
