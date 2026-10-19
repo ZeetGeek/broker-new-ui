@@ -43,22 +43,39 @@ export function formatLocationPathLabel(city: string, state: string, country?: s
     return parts.join(", ");
 }
 
+function formatWherePlaceLabels(options: {
+    countries?: string[];
+    states?: string[];
+    cities?: string[];
+    localities?: string[];
+}): string[] {
+    const stateLabels = (options.states ?? []).map((key) => {
+        const index = key.indexOf("|");
+        const state = index > 0 ? key.slice(index + 1) : key;
+        return formatPlaceName(state);
+    });
+
+    return [
+        ...(options.countries ?? []).map(formatPlaceName),
+        ...stateLabels,
+        ...(options.cities ?? []).map(formatPlaceName),
+        ...(options.localities ?? []).map(formatPlaceName),
+    ];
+}
+
 export function formatLocalitiesLabel(
     localities: string[],
     cities: string[] = [],
     yourAreas = false,
+    countries: string[] = [],
+    states: string[] = [],
 ): string {
-    if (localities.length > 0) {
-        const labels = localities.map(formatPlaceName);
-        if (labels.length <= 2) return labels.join(", ");
-        return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
+    const labels = formatWherePlaceLabels({ countries, states, cities, localities });
+    if (labels.length === 0) {
+        return yourAreas ? "Serviceable areas" : "Anywhere";
     }
-    if (cities.length > 0) {
-        const labels = cities.map(formatPlaceName);
-        if (labels.length <= 2) return labels.join(", ");
-        return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
-    }
-    return yourAreas ? "Serviceable areas" : "Anywhere";
+    if (labels.length <= 2) return labels.join(", ");
+    return `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`;
 }
 
 /** Full list for tooltips when the band label is truncated. */
@@ -66,20 +83,15 @@ export function formatLocalitiesTooltip(
     localities: string[],
     cities: string[] = [],
     yourAreas = false,
+    countries: string[] = [],
+    states: string[] = [],
 ): string | null {
-    if (localities.length > 2) {
-        return localities.map(formatPlaceName).join(", ");
-    }
-    if (localities.length === 0 && cities.length > 2) {
-        return cities.map(formatPlaceName).join(", ");
-    }
-    if (localities.length === 0 && cities.length === 0) {
+    const labels = formatWherePlaceLabels({ countries, states, cities, localities });
+    if (labels.length === 0) {
         return yourAreas ? "Listings in your serviceable areas" : "All listed properties";
     }
-    if (localities.length === 0 && cities.length > 0 && cities.length <= 2) {
-        return null;
-    }
-    return null;
+    if (labels.length <= 2) return null;
+    return labels.join(", ");
 }
 
 export function formatTransactionTypeLabel(type: OwnerListingTransactionType | ""): string {
@@ -175,8 +187,10 @@ export function formatResultsCountLine(
 
 export function extractBandFilters(filters: OwnerListingsFilters): OwnerListingsBandFilters {
     return {
-        cities: filters.cities,
-        localities: filters.localities,
+        countries: filters.countries ?? [],
+        states: filters.states ?? [],
+        cities: filters.cities ?? [],
+        localities: filters.localities ?? [],
         bhk: filters.bhk,
         type: filters.type,
         min: filters.min,

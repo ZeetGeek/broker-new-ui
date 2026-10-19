@@ -17,6 +17,8 @@ import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-list
 
 const OWNER_LISTINGS_URL_KEYS = [
     "q",
+    "country",
+    "state",
     "city",
     "locality",
     "bhk",
@@ -44,14 +46,21 @@ const OWNER_LISTINGS_URL_KEYS = [
 function isOwnerListingsFilters(value: unknown): value is OwnerListingsFilters {
     if (typeof value !== "object" || value === null) return false;
     const v = value as Partial<OwnerListingsFilters>;
-    return (
+    const ok =
         typeof v.q === "string" &&
+        (v.countries === undefined || Array.isArray(v.countries)) &&
+        (v.states === undefined || Array.isArray(v.states)) &&
         Array.isArray(v.cities) &&
         Array.isArray(v.localities) &&
         Array.isArray(v.bhk) &&
         typeof v.yourAreas === "boolean" &&
-        typeof v.sort === "string"
-    );
+        typeof v.sort === "string";
+    if (!ok) return false;
+
+    // Older prefs predate country/state multi-select.
+    if (!Array.isArray(v.countries)) v.countries = [];
+    if (!Array.isArray(v.states)) v.states = [];
+    return true;
 }
 
 function forStorage(filters: OwnerListingsFilters): OwnerListingsFilters {
@@ -99,6 +108,8 @@ function migrateLegacyWhereScope() {
         writePrefJson(PREF_KEYS.broker.ownerListings.filters, {
             ...DEFAULT_OWNER_LISTINGS_FILTERS,
             yourAreas: Boolean(parsed.yourAreas),
+            countries: [],
+            states: [],
             cities: Array.isArray(parsed.cities) ? parsed.cities.map(String) : [],
             localities: Array.isArray(parsed.localities) ? parsed.localities.map(String) : [],
         });
@@ -144,10 +155,19 @@ export function useOwnerListingsFilters() {
         replace({
             ...DEFAULT_OWNER_LISTINGS_FILTERS,
             yourAreas: filters.yourAreas,
+            countries: filters.countries ?? [],
+            states: filters.states ?? [],
             cities: filters.cities,
             localities: filters.localities,
         });
-    }, [filters.cities, filters.localities, filters.yourAreas, replace]);
+    }, [
+        filters.cities,
+        filters.countries,
+        filters.localities,
+        filters.states,
+        filters.yourAreas,
+        replace,
+    ]);
 
     const toggleQuickChip = useCallback(
         (key: "yourAreas" | "newToday" | "slotsOpen" | "commissionSet" | "readyToMove") => {
@@ -156,6 +176,8 @@ export function useOwnerListingsFilters() {
                 replace({
                     ...filters,
                     yourAreas: nextYourAreas,
+                    countries: [],
+                    states: [],
                     cities: [],
                     localities: [],
                     cursor: "",

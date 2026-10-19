@@ -26,6 +26,8 @@ export type OwnerListingsSearchBandProps = {
 
 function bandSignature(band: OwnerListingsBandFilters): string {
     return [
+        band.countries.join(","),
+        band.states.join(","),
         band.cities.join(","),
         band.localities.join(","),
         band.yourAreas ? "1" : "0",
@@ -63,9 +65,17 @@ export function OwnerListingsSearchBand({
     }, []);
 
     const setWhereFilters = useCallback(
-        (next: { cities: string[]; localities: string[]; yourAreas: boolean }) => {
+        (next: {
+            countries: string[];
+            states: string[];
+            cities: string[];
+            localities: string[];
+            yourAreas: boolean;
+        }) => {
             const updated = {
                 ...draftRef.current,
+                countries: next.countries,
+                states: next.states,
                 cities: next.cities,
                 localities: next.localities,
                 yourAreas: next.yourAreas,
@@ -121,6 +131,8 @@ export function OwnerListingsSearchBand({
                 <div className="flex flex-1 p-0.5 min-inline-36">
                     <OwnerListingsWhereMenu
                         listings={listings}
+                        selectedCountries={draft.countries}
+                        selectedStates={draft.states}
                         selectedCities={draft.cities}
                         selectedLocalities={draft.localities}
                         yourAreas={draft.yourAreas}
