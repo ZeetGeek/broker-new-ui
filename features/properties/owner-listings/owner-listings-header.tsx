@@ -3,7 +3,10 @@
 import { useCallback, useMemo, useState } from "react";
 
 import type { QuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
-import { countSheetFilters } from "@/features/properties/owner-listings/filter-owner-listings";
+import {
+    countSheetFilters,
+    filterOwnerListings,
+} from "@/features/properties/owner-listings/filter-owner-listings";
 import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
 import { OwnerListingsQuickChips } from "@/features/properties/owner-listings/owner-listings-quick-chips";
 import { OwnerListingsSearchBand } from "@/features/properties/owner-listings/owner-listings-search-band";
@@ -46,6 +49,12 @@ export function OwnerListingsHeader({
 
     const sheetFilterCount = useMemo(() => countSheetFilters(filters), [filters]);
 
+    /** Same number the sheet’s “Show N properties” uses — always on the Filters chip. */
+    const filtersMatchCount = useMemo(
+        () => filterOwnerListings(poolListings, filters, filterContext).totalCount,
+        [poolListings, filters, filterContext],
+    );
+
     const handleOpenFilters = useCallback(() => {
         setSheetOpen(true);
     }, []);
@@ -77,6 +86,7 @@ export function OwnerListingsHeader({
                     filters={filters}
                     chipCounts={chipCounts}
                     sheetFilterCount={sheetFilterCount}
+                    filtersMatchCount={filtersMatchCount}
                     isLoading={isResultsLoading}
                     onToggleQuickChip={onToggleQuickChip}
                     onOpenFilters={handleOpenFilters}

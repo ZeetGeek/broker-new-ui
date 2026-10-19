@@ -70,7 +70,9 @@ export function AvatarStack({
                                 </span>
                             }
                         />
-                        <TooltipContent side="top">{person.name}</TooltipContent>
+                        <TooltipContent side="top" className="capitalize">
+                            {person.name}
+                        </TooltipContent>
                     </Tooltip>
                 ))}
 
@@ -96,7 +98,7 @@ export function AvatarStack({
                                 </span>
                             }
                         />
-                        <TooltipContent side="top">
+                        <TooltipContent side="top" className="capitalize">
                             {overflowLabel ?? overflow.map((person) => person.name).join(", ")}
                         </TooltipContent>
                     </Tooltip>

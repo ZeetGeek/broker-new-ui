@@ -16,7 +16,6 @@ import {
     X,
 } from "lucide-react";
 
-import { formatWhatsAppUrl } from "@/lib/format/phone";
 import {
     buildEmailShareUrl,
     buildFacebookShareUrl,
@@ -63,6 +62,7 @@ type ShareChannel = {
 
 export type PropertyCardMenuContact = {
     name: string;
+    /** @deprecated Prefer call / WhatsApp on the card owner section. Kept optional for callers. */
     phoneDigits?: string;
     onMessage?: () => void;
 };
@@ -139,8 +139,8 @@ const ICON_CLASS = "menu-stroke-icon block-4 inline-4 shrink-0 text-ink!";
 const SEPARATOR_CLASS = "mx-1.5 my-1 bg-border-warm";
 
 /**
- * One ⋯ control for listing cards: Share (submenu), Save, Message, WhatsApp,
- * plus deal extras. Replaces the stacked photo icon buttons.
+ * One ⋯ control for listing cards: Share (submenu), Save, Message,
+ * plus deal extras. Call / WhatsApp live on the card owner section.
  */
 export function PropertyCardMenu({
     listing,
@@ -241,7 +241,7 @@ export function PropertyCardMenu({
         [shareText, shareUrl],
     );
 
-    const hasContact = Boolean(contact?.onMessage || contact?.phoneDigits);
+    const hasContact = Boolean(contact?.onMessage);
     const hasDealExtras = Boolean(
         onOpenTimeline || onCancelRequest || onEdit || onDelete || extraItems,
     );
@@ -391,28 +391,6 @@ export function PropertyCardMenu({
                     >
                         <MessageCircle aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                         Message {contact.name.split(" ")[0]}
-                    </DropdownMenuItem>
-                ) : null}
-
-                {contact?.phoneDigits ? (
-                    <DropdownMenuItem
-                        className={ITEM_CLASS}
-                        onClick={() => {
-                            window.open(
-                                formatWhatsAppUrl(contact.phoneDigits!),
-                                "_blank",
-                                "noopener,noreferrer",
-                            );
-                            setOpen(false);
-                        }}
-                    >
-                        <span
-                            className="flex shrink-0 items-center justify-center block-4 inline-4"
-                            aria-hidden
-                        >
-                            <Icon icon="thesvg-color:whatsapp" width={16} height={16} />
-                        </span>
-                        WhatsApp {contact.name.split(" ")[0]}
                     </DropdownMenuItem>
                 ) : null}
 

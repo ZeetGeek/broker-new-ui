@@ -26,19 +26,6 @@ function buildSentLines(summary: RequestsSummary | null, isLoading: boolean): Re
 
     const lines: ReactNode[] = [];
 
-    if (summary.needsFollowUpCount > 0) {
-        lines.push(
-            <>
-                {countLabel(
-                    summary.needsFollowUpCount,
-                    "accepted request needs",
-                    "accepted requests need",
-                )}{" "}
-                a buyer
-            </>,
-        );
-    }
-
     if (summary.counts.pending > 0) {
         lines.push(
             <>
@@ -57,39 +44,87 @@ function buildSentLines(summary: RequestsSummary | null, isLoading: boolean): Re
         );
     }
 
-    if (summary.counts.approved > 0) {
-        lines.push(
-            <>{countLabel(summary.counts.approved, "request was", "requests were")} accepted</>,
-        );
-    }
-
-    return lines.length > 0 ? lines : ["Every request you have sent"];
+    return lines.length > 0 ? lines : ["No requests waiting for a reply"];
 }
 
 function buildInviteLines(summary: InvitesSummary | null, isLoading: boolean): ReactNode[] {
     if (isLoading && !summary) return ["Getting your invites…"];
     if (!summary || summary.counts.all === 0) return ["No owner has invited you yet"];
 
-    const lines: ReactNode[] = [];
-
     if (summary.waitingOnYouCount > 0) {
-        lines.push(
+        return [
             <>
                 {countLabel(summary.waitingOnYouCount, "owner is", "owners are")} waiting on your
                 answer
             </>,
+        ];
+    }
+
+    return ["No invitations waiting for you"];
+}
+
+function buildAcceptedLines(
+    sentSummary: RequestsSummary | null,
+    inviteSummary: InvitesSummary | null,
+    isLoading: boolean,
+): ReactNode[] {
+    if (isLoading && !sentSummary && !inviteSummary) return ["Getting your deals…"];
+
+    const approved = sentSummary?.counts.approved ?? 0;
+    const acceptedInvites = inviteSummary?.counts.accepted ?? 0;
+    const total = approved + acceptedInvites;
+
+    if (total === 0) return ["No accepted deals yet"];
+
+    const lines: ReactNode[] = [];
+
+    if (approved > 0) {
+        lines.push(<>{countLabel(approved, "request was", "requests were")} accepted</>);
+    }
+    if (acceptedInvites > 0) {
+        lines.push(<>You accepted {countLabel(acceptedInvites, "invite", "invites")}</>);
+    }
+    if (sentSummary && sentSummary.needsFollowUpCount > 0) {
+        lines.push(
+            <>
+                {countLabel(
+                    sentSummary.needsFollowUpCount,
+                    "accepted request needs",
+                    "accepted requests need",
+                )}{" "}
+                a buyer
+            </>,
         );
     }
 
-    if (summary.counts.accepted > 0) {
-        lines.push(<>You accepted {countLabel(summary.counts.accepted, "invite", "invites")}</>);
+    return lines.length > 0 ? lines : ["Every deal you can sell"];
+}
+
+function buildRejectedLines(
+    sentSummary: RequestsSummary | null,
+    inviteSummary: InvitesSummary | null,
+    isLoading: boolean,
+): ReactNode[] {
+    if (isLoading && !sentSummary && !inviteSummary) return ["Getting your deals…"];
+
+    const ownerRejected = sentSummary?.counts.declined ?? 0;
+    const youTurnedDown = inviteSummary?.counts.declined ?? 0;
+    const total = ownerRejected + youTurnedDown;
+
+    if (total === 0) return ["No rejected deals"];
+
+    const lines: ReactNode[] = [];
+
+    if (ownerRejected > 0) {
+        lines.push(
+            <>{countLabel(ownerRejected, "request was", "requests were")} rejected by the owner</>,
+        );
+    }
+    if (youTurnedDown > 0) {
+        lines.push(<>You turned down {countLabel(youTurnedDown, "invite", "invites")}</>);
     }
 
-    if (summary.counts.declined > 0) {
-        lines.push(<>You turned down {countLabel(summary.counts.declined, "invite", "invites")}</>);
-    }
-
-    return lines.length > 0 ? lines : ["Every invite an owner has sent you"];
+    return lines;
 }
 
 function StatusBadge({
@@ -141,17 +176,63 @@ function DealsStatusMeta({
                         color="orange"
                         hint="Owners waiting for you to say yes or no."
                     />
+                </div>
+            </div>
+        );
+    }
+
+    if (activeTab === "accepted") {
+        const approved = sentSummary?.counts.approved ?? 0;
+        const acceptedInvites = inviteSummary?.counts.accepted ?? 0;
+        if (approved + acceptedInvites === 0) return null;
+
+        return (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className={META_TEXT}>Status</span>
                     <StatusBadge
-                        label="Accepted"
-                        count={inviteSummary.counts.accepted}
+                        label="From your requests"
+                        count={approved}
+                        color="emerald"
+                        hint="Requests the owner accepted. You can sell these."
+                    />
+                    <StatusBadge
+                        label="From invites"
+                        count={acceptedInvites}
                         color="emerald"
                         hint="Invites you took. You can sell these properties."
                     />
                     <StatusBadge
-                        label="Turned down"
-                        count={inviteSummary.counts.declined}
+                        label="Needs a buyer"
+                        count={sentSummary?.needsFollowUpCount ?? 0}
+                        color="orange"
+                        hint="Accepted requests where you have not added a buyer yet."
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    if (activeTab === "rejected") {
+        const ownerRejected = sentSummary?.counts.declined ?? 0;
+        const youTurnedDown = inviteSummary?.counts.declined ?? 0;
+        if (ownerRejected + youTurnedDown === 0) return null;
+
+        return (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className={META_TEXT}>Status</span>
+                    <StatusBadge
+                        label="Owner rejected"
+                        count={ownerRejected}
                         color="red"
-                        hint="Invites you said no to."
+                        hint="Requests you sent that the owner turned down."
+                    />
+                    <StatusBadge
+                        label="You turned down"
+                        count={youTurnedDown}
+                        color="red"
+                        hint="Owner invites you said no to."
                     />
                 </div>
             </div>
@@ -173,18 +254,6 @@ function DealsStatusMeta({
                             ? `Requests the owner has not replied to yet. Owners usually reply in ${sentSummary.avgResponseDays} days.`
                             : "Requests the owner has not replied to yet."
                     }
-                />
-                <StatusBadge
-                    label="Accepted"
-                    count={sentSummary.counts.approved}
-                    color="emerald"
-                    hint={`Requests the owner accepted. You can sell these. Of the requests owners replied to, ${sentSummary.approvalRate}% were accepted.`}
-                />
-                <StatusBadge
-                    label="Needs a buyer"
-                    count={sentSummary.needsFollowUpCount}
-                    color="orange"
-                    hint="Accepted requests where you have not added a buyer yet."
                 />
             </div>
 
@@ -217,15 +286,15 @@ export function MyDealsIntro({
     isLoading?: boolean;
 }) {
     const [isPaused, setIsPaused] = useState(false);
-    const isInvites = activeTab === "invites";
 
-    const lines = useMemo(
-        () =>
-            isInvites
-                ? buildInviteLines(inviteSummary, isLoading)
-                : buildSentLines(sentSummary, isLoading),
-        [inviteSummary, isInvites, isLoading, sentSummary],
-    );
+    const lines = useMemo(() => {
+        if (activeTab === "invites") return buildInviteLines(inviteSummary, isLoading);
+        if (activeTab === "accepted")
+            return buildAcceptedLines(sentSummary, inviteSummary, isLoading);
+        if (activeTab === "rejected")
+            return buildRejectedLines(sentSummary, inviteSummary, isLoading);
+        return buildSentLines(sentSummary, isLoading);
+    }, [activeTab, inviteSummary, isLoading, sentSummary]);
 
     return (
         <TooltipProvider>

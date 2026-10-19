@@ -30,7 +30,6 @@ import type {
     InvitesFilters,
     InviteSort,
     InvitesSummary,
-    InviteStageFilter,
 } from "@/features/properties/my-requests/invite-types";
 import type { RequestsTab } from "@/features/properties/my-requests/requests-tabs";
 import type {
@@ -38,7 +37,6 @@ import type {
     RequestsFilters,
     RequestSort,
     RequestsSummary,
-    RequestsViewFilter,
 } from "@/features/properties/my-requests/types";
 import { ownerListingsChipClassName } from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import {
@@ -61,85 +59,8 @@ const INVITE_SORT_OPTIONS: { value: InviteSort; label: string }[] = [
     { value: "price_asc", label: "Price low" },
 ];
 
-type SentStatusChip = {
-    key: Exclude<RequestsViewFilter, "all" | "declined" | "cancelled" | "locked" | "not_opened">;
-    label: string;
-    mobileLabel: string;
-    description: string;
-};
-
-const SENT_STATUS_CHIPS: SentStatusChip[] = [
-    {
-        key: "pending",
-        label: "Waiting",
-        mobileLabel: "Waiting",
-        description: "Requests the owner has not replied to yet",
-    },
-    {
-        key: "approved",
-        label: "Accepted",
-        mobileLabel: "Accepted",
-        description: "Requests the owner accepted — you can sell these",
-    },
-    {
-        key: "needs_buyer",
-        label: "Needs a buyer",
-        mobileLabel: "Buyer",
-        description: "Accepted requests where you have not added a buyer yet",
-    },
-];
-
-type InviteStatusChip = {
-    key: Exclude<InviteStageFilter, "all" | "expired">;
-    label: string;
-    mobileLabel: string;
-    description: string;
-};
-
-const INVITE_STATUS_CHIPS: InviteStatusChip[] = [
-    {
-        key: "pending",
-        label: "Waiting on you",
-        mobileLabel: "Waiting",
-        description: "Owners waiting for you to say yes or no",
-    },
-    {
-        key: "accepted",
-        label: "Accepted",
-        mobileLabel: "Accepted",
-        description: "Invites you took — you can sell these",
-    },
-    {
-        key: "declined",
-        label: "Turned down",
-        mobileLabel: "No",
-        description: "Invites you said no to",
-    },
-];
-
-function sentChipCount(summary: RequestsSummary | null, key: SentStatusChip["key"]): number {
-    if (!summary) return 0;
-    if (key === "needs_buyer") return summary.needsFollowUpCount;
-    return summary.counts[key];
-}
-
-function inviteChipCount(summary: InvitesSummary | null, key: InviteStatusChip["key"]): number {
-    if (!summary) return 0;
-    return summary.counts[key];
-}
-
-function countSentSheetFilters(filters: RequestsFilters): number {
-    let count = 0;
-    if (filters.type) count += 1;
-    if (filters.view !== "all") count += 1;
-    return count;
-}
-
-function countInviteSheetFilters(filters: InvitesFilters): number {
-    let count = 0;
-    if (filters.type) count += 1;
-    if (filters.stage !== "all") count += 1;
-    return count;
+function countTypeFilter(type: DealListingType): number {
+    return type ? 1 : 0;
 }
 
 function DealsQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
@@ -304,40 +225,14 @@ function SentFilterDialog({
                         type={draft.type}
                         onChange={(type) => setDraft({ ...draft, type })}
                     />
-                    <div className="flex flex-col gap-2">
-                        <p className="body-sm font-semibold text-ink">Status</p>
-                        <div className="flex flex-wrap gap-2">
-                            {(
-                                [
-                                    ["all", "Any"],
-                                    ["pending", "Waiting"],
-                                    ["approved", "Accepted"],
-                                    ["needs_buyer", "Needs a buyer"],
-                                    ["declined", "Rejected"],
-                                    ["cancelled", "Cancelled"],
-                                    ["locked", "No more attempts"],
-                                    ["not_opened", "Not opened yet"],
-                                ] as const
-                            ).map(([value, label]) => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    className={ownerListingsChipClassName(draft.view === value)}
-                                    onClick={() => setDraft({ ...draft, view: value })}
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
                 </div>
                 <div className="border-bs border-border-warm/40 bg-surface px-5 py-4">
                     <AppModalFooter
                         secondaryLabel="Reset filter"
-                        onSecondary={() => setDraft({ ...draft, type: "", view: "all" })}
+                        onSecondary={() => setDraft({ ...draft, type: "" })}
                         primaryLabel="Apply filters"
                         onPrimary={() => {
-                            onApply({ type: draft.type, view: draft.view, page: 1 });
+                            onApply({ type: draft.type, page: 1 });
                             onOpenChange(false);
                         }}
                     />
@@ -384,37 +279,14 @@ function InviteFilterDialog({
                         type={draft.type}
                         onChange={(type) => setDraft({ ...draft, type })}
                     />
-                    <div className="flex flex-col gap-2">
-                        <p className="body-sm font-semibold text-ink">Status</p>
-                        <div className="flex flex-wrap gap-2">
-                            {(
-                                [
-                                    ["all", "Any"],
-                                    ["pending", "Waiting on you"],
-                                    ["accepted", "Accepted"],
-                                    ["declined", "Turned down"],
-                                    ["expired", "Closed"],
-                                ] as const
-                            ).map(([value, label]) => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    className={ownerListingsChipClassName(draft.stage === value)}
-                                    onClick={() => setDraft({ ...draft, stage: value })}
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
                 </div>
                 <div className="border-bs border-border-warm/40 bg-surface px-5 py-4">
                     <AppModalFooter
                         secondaryLabel="Reset filter"
-                        onSecondary={() => setDraft({ ...draft, type: "", stage: "all" })}
+                        onSecondary={() => setDraft({ ...draft, type: "" })}
                         primaryLabel="Apply filters"
                         onPrimary={() => {
-                            onApply({ type: draft.type, stage: draft.stage, page: 1 });
+                            onApply({ type: draft.type, page: 1 });
                             onOpenChange(false);
                         }}
                     />
@@ -446,12 +318,30 @@ export function MyDealsHeader({
     isLoading = false,
 }: MyDealsHeaderProps) {
     const [sheetOpen, setSheetOpen] = useState(false);
+    const isSent = activeTab === "sent";
     const isInvites = activeTab === "invites";
-    const sheetFilterCount = useMemo(
-        () =>
-            isInvites ? countInviteSheetFilters(inviteFilters) : countSentSheetFilters(sentFilters),
-        [inviteFilters, isInvites, sentFilters],
-    );
+    const isAccepted = activeTab === "accepted";
+    const isRejected = activeTab === "rejected";
+
+    const sheetFilterCount = useMemo(() => {
+        if (isInvites) return countTypeFilter(inviteFilters.type);
+        return countTypeFilter(sentFilters.type);
+    }, [inviteFilters.type, isInvites, sentFilters.type]);
+
+    const sentWaitingCount = sentSummary?.counts.pending ?? 0;
+    const inviteWaitingCount = inviteSummary?.waitingOnYouCount ?? 0;
+    const acceptedCount =
+        (sentSummary?.counts.approved ?? 0) + (inviteSummary?.counts.accepted ?? 0);
+    const rejectedCount =
+        (sentSummary?.counts.declined ?? 0) + (inviteSummary?.counts.declined ?? 0);
+
+    const clearType = () => {
+        if (isInvites) {
+            onPatchInvites({ type: "", page: 1 });
+        } else {
+            onPatchSent({ type: "", page: 1 });
+        }
+    };
 
     return (
         <>
@@ -468,14 +358,8 @@ export function MyDealsHeader({
                                     isActive={sheetFilterCount > 0}
                                     clearable={sheetFilterCount > 0}
                                     onClick={() => setSheetOpen(true)}
-                                    onClear={() => {
-                                        if (isInvites) {
-                                            onPatchInvites({ type: "", stage: "all", page: 1 });
-                                        } else {
-                                            onPatchSent({ type: "", view: "all", page: 1 });
-                                        }
-                                    }}
-                                    description="Sale/rent and status filters"
+                                    onClear={clearType}
+                                    description="Sale or rent"
                                 />
                             </OwnerListingsChipsCarouselSlide>
 
@@ -485,23 +369,23 @@ export function MyDealsHeader({
                                         render={
                                             <Link
                                                 href={BROKER_MY_DEALS_HREF}
-                                                aria-current={!isInvites ? "page" : undefined}
-                                                className={ownerListingsChipClassName(!isInvites)}
+                                                aria-current={isSent ? "page" : undefined}
+                                                className={ownerListingsChipClassName(isSent)}
                                             >
                                                 <span className="md:hidden">Sent</span>
                                                 <span className="hidden md:inline">
                                                     Sent by you
                                                 </span>
                                                 <FilterChipCount
-                                                    count={sentSummary?.counts.all ?? 0}
-                                                    isActive={!isInvites}
+                                                    count={sentWaitingCount}
+                                                    isActive={isSent}
                                                     isLoading={isLoading && !sentSummary}
                                                 />
                                             </Link>
                                         }
                                     />
                                     <TooltipContent side="bottom">
-                                        Requests you sent to owners
+                                        Requests you sent that are still waiting
                                     </TooltipContent>
                                 </Tooltip>
                             </OwnerListingsChipsCarouselSlide>
@@ -520,77 +404,73 @@ export function MyDealsHeader({
                                             >
                                                 <span className="md:hidden">Invites</span>
                                                 <span className="hidden md:inline">
-                                                    Invites from owners
+                                                    Owner invitations
                                                 </span>
                                                 <FilterChipCount
-                                                    count={inviteSummary?.counts.all ?? 0}
+                                                    count={inviteWaitingCount}
                                                     isActive={isInvites}
                                                     isLoading={isLoading && !inviteSummary}
                                                 />
-                                                {(inviteSummary?.waitingOnYouCount ?? 0) > 0 ? (
-                                                    <span
-                                                        aria-label={`${inviteSummary?.waitingOnYouCount} waiting for you`}
-                                                        className="
-                                                          body-xs flex items-center justify-center
-                                                          rounded-md bg-urgent px-1 font-semibold
-                                                          text-surface block-5 min-inline-5
-                                                        "
-                                                    >
-                                                        {inviteSummary?.waitingOnYouCount}
-                                                    </span>
-                                                ) : null}
                                             </Link>
                                         }
                                     />
                                     <TooltipContent side="bottom">
-                                        Invites owners sent you
+                                        Owner invites waiting for your answer
                                     </TooltipContent>
                                 </Tooltip>
                             </OwnerListingsChipsCarouselSlide>
 
-                            {isInvites
-                                ? INVITE_STATUS_CHIPS.map((chip) => {
-                                      const active = inviteFilters.stage === chip.key;
-                                      return (
-                                          <OwnerListingsChipsCarouselSlide key={chip.key}>
-                                              <FilterChip
-                                                  label={chip.label}
-                                                  mobileLabel={chip.mobileLabel}
-                                                  count={inviteChipCount(inviteSummary, chip.key)}
-                                                  isLoading={isLoading}
-                                                  isActive={active}
-                                                  clearable
-                                                  onClick={() =>
-                                                      onPatchInvites({
-                                                          stage: active ? "all" : chip.key,
-                                                      })
-                                                  }
-                                                  description={chip.description}
-                                              />
-                                          </OwnerListingsChipsCarouselSlide>
-                                      );
-                                  })
-                                : SENT_STATUS_CHIPS.map((chip) => {
-                                      const active = sentFilters.view === chip.key;
-                                      return (
-                                          <OwnerListingsChipsCarouselSlide key={chip.key}>
-                                              <FilterChip
-                                                  label={chip.label}
-                                                  mobileLabel={chip.mobileLabel}
-                                                  count={sentChipCount(sentSummary, chip.key)}
-                                                  isLoading={isLoading}
-                                                  isActive={active}
-                                                  clearable
-                                                  onClick={() =>
-                                                      onPatchSent({
-                                                          view: active ? "all" : chip.key,
-                                                      })
-                                                  }
-                                                  description={chip.description}
-                                              />
-                                          </OwnerListingsChipsCarouselSlide>
-                                      );
-                                  })}
+                            <OwnerListingsChipsCarouselSlide>
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Link
+                                                href={`${BROKER_MY_DEALS_HREF}?tab=accepted`}
+                                                aria-current={isAccepted ? "page" : undefined}
+                                                className={ownerListingsChipClassName(isAccepted)}
+                                            >
+                                                Accepted
+                                                <FilterChipCount
+                                                    count={acceptedCount}
+                                                    isActive={isAccepted}
+                                                    isLoading={
+                                                        isLoading && !sentSummary && !inviteSummary
+                                                    }
+                                                />
+                                            </Link>
+                                        }
+                                    />
+                                    <TooltipContent side="bottom">
+                                        Accepted requests and invites you can sell
+                                    </TooltipContent>
+                                </Tooltip>
+                            </OwnerListingsChipsCarouselSlide>
+
+                            <OwnerListingsChipsCarouselSlide>
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Link
+                                                href={`${BROKER_MY_DEALS_HREF}?tab=rejected`}
+                                                aria-current={isRejected ? "page" : undefined}
+                                                className={ownerListingsChipClassName(isRejected)}
+                                            >
+                                                Rejected
+                                                <FilterChipCount
+                                                    count={rejectedCount}
+                                                    isActive={isRejected}
+                                                    isLoading={
+                                                        isLoading && !sentSummary && !inviteSummary
+                                                    }
+                                                />
+                                            </Link>
+                                        }
+                                    />
+                                    <TooltipContent side="bottom">
+                                        Owner rejections and invites you turned down
+                                    </TooltipContent>
+                                </Tooltip>
+                            </OwnerListingsChipsCarouselSlide>
                         </OwnerListingsChipsCarousel>
 
                         <div className="flex shrink-0 items-center gap-2.5">

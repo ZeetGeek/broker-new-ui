@@ -48,6 +48,21 @@ nothing.
 | **Optimistic UI** | Action almost always succeeds and is cheap to reverse | Approve/reject, save property, move pipeline stage              |
 | **Nothing**       | Under 100ms                                           | Cached navigation                                               |
 
+### The only spinner — Tailspin via `<LoadingSpinner>`
+
+One ring everywhere. Do **not** invent a second spinner.
+
+| Need                       | Use                                                   |
+| -------------------------- | ----------------------------------------------------- |
+| Button pending             | `<Button loading>` (same Tailspin, 16px)              |
+| Filter chip / inline count | `<LoadingSpinner size="sm" />`                        |
+| Page or panel wait         | `<LoadingSpinner />` or `<LoadingCenter label="…" />` |
+| Input / Select / Combobox  | Their built-in `loading` prop (same Tailspin)         |
+
+- Component: `components/shared/loading-spinner.tsx`
+- Library: `ldrs/react` **Tailspin** — thin fading ring, `currentColor`, no rounded badge behind it
+- **Never** Lucide `Loader2`, CSS `animate-spin` borders, or a spinner inside a `rounded-full` count pill
+
 **Default to skeletons for content areas.** They hold the layout stable, which
 means no content jump when data arrives — so the skeleton doubles as CLS
 protection. A centred spinner on a blank page gives up that benefit entirely.
@@ -292,6 +307,8 @@ see "Add your first property," not a skeleton that never resolves.
 - ❌ A silent optimistic revert
 - ❌ An indeterminate bar for an upload whose progress you can measure
 - ❌ Losing form input on a failed submit
+- ❌ Lucide `Loader2` or any spinner other than Tailspin / `<LoadingSpinner>`
+- ❌ A spinner sitting inside a rounded count badge background
 
 ---
 

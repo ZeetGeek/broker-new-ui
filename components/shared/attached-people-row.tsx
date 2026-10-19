@@ -2,11 +2,23 @@
 
 import type { ReactNode } from "react";
 
+import { addCollection, Icon } from "@iconify/react/offline";
+
 import { cn } from "@/lib/utils";
 
 import { AvatarStack } from "@/components/shared/avatar-stack";
-import { OVERLAY_GLASS_BUTTON_CLASS } from "@/components/shared/overlay-card";
+import {
+    OVERLAY_GLASS_BUTTON_CLASS,
+    OVERLAY_PERSON_ACTION_CLASS,
+    OVERLAY_PERSON_LABEL_CLASS,
+} from "@/components/shared/overlay-card";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+import tablerContactIcons from "@/features/properties/my-requests/tabler-contact.json";
+
+addCollection(tablerContactIcons as Parameters<typeof addCollection>[0]);
 
 type AttachedPerson = { id: string; name: string; avatarUrl?: string };
 
@@ -136,7 +148,7 @@ function AttachedPeopleShell({
     );
 }
 
-/** Attached buyers — tap opens the manage-buyers modal (add more / review). */
+/** Attached buyers — same quiet label layout as Owner, with an Add buyer control. */
 export function AttachedBuyersRow({
     buyers,
     onManage,
@@ -147,7 +159,46 @@ export function AttachedBuyersRow({
     if (buyers.length === 0) return null;
 
     const title = buyers.length === 1 ? "1 buyer" : `${buyers.length} buyers`;
-    return <AttachedPeopleShell people={buyers} title={title} onManage={onManage} />;
+
+    return (
+        <div className="body-sm flex items-center gap-2 tracking-wide text-ink-muted inline-full min-inline-0">
+            <span className={OVERLAY_PERSON_LABEL_CLASS}>Buyers</span>
+            <span className="flex min-inline-0 flex-1 items-center gap-1.5">
+                <AvatarStack people={buyers} size="2xs" max={3} className="shrink-0" />
+                <span className="truncate font-semibold text-ink">{title}</span>
+            </span>
+            {onManage ? (
+                <span className={OVERLAY_PERSON_ACTION_CLASS}>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="link"
+                                        className="h-auto gap-1 px-0 text-brand hover:text-brand/85"
+                                        onClick={onManage}
+                                        aria-label="Add buyer"
+                                    />
+                                }
+                            >
+                                <Icon
+                                    icon="tabler:user-plus"
+                                    width={14}
+                                    height={14}
+                                    className="shrink-0 block-3.5 inline-3.5"
+                                    aria-hidden
+                                />
+                                Add
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Add buyer</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </span>
+            ) : null}
+        </div>
+    );
 }
 
 /** Brokers with accepted consent for this property. */

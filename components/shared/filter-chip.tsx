@@ -1,11 +1,12 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const CHIP_HOVER_TRANSITION = "transition-[background-color,border-color,color] duration-160";
@@ -53,6 +54,17 @@ export function FilterChipCount({
 }: FilterChipCountProps) {
     if (!isLoading && count <= 0) return null;
 
+    // Loading: bare Tailspin only — no rounded count badge behind it.
+    if (isLoading) {
+        return (
+            <LoadingSpinner
+                label="Loading count"
+                size="sm"
+                className={cn(isActive ? "text-brand-text" : "text-ink-muted", className)}
+            />
+        );
+    }
+
     return (
         <span
             className={cn(
@@ -65,16 +77,9 @@ export function FilterChipCount({
                 warning && !isActive && "bg-urgent-soft text-pending",
                 className,
             )}
-            aria-hidden={!isLoading}
-            {...(isLoading ? { role: "status", "aria-label": "Loading count" } : {})}
+            aria-hidden
         >
-            {isLoading ? (
-                <Loader2 aria-hidden className="animate-spin block-3 inline-3" strokeWidth={2.25} />
-            ) : count > 99 ? (
-                "99+"
-            ) : (
-                count
-            )}
+            {count > 99 ? "99+" : count}
         </span>
     );
 }

@@ -1,6 +1,11 @@
 import { isMockMode } from "@/lib/api/mock-mode";
-import { mockBookmarkedIdSet, propertiesApi } from "@/lib/api/properties";
+import {
+    mockBookmarkedIdSet,
+    propertiesApi,
+    type PropertyBrowseCitiesResponse,
+} from "@/lib/api/properties";
 
+import { buildOwnerListingsLocationTree } from "@/features/properties/owner-listings/build-owner-listings-location-tree";
 import { commissionRanges } from "@/features/properties/owner-listings/filter-owner-listings";
 import {
     bhkValuesToApiConfig,
@@ -108,20 +113,23 @@ function filterMockOwnerListings(
     return items;
 }
 
-function mockOwnerListingsCities() {
-    const byCity = new Map<string, Map<string, number>>();
-    for (const item of MOCK_OWNER_LISTINGS) {
-        const localities = byCity.get(item.city) ?? new Map<string, number>();
-        localities.set(item.locality, (localities.get(item.locality) ?? 0) + 1);
-        byCity.set(item.city, localities);
-    }
+function mockOwnerListingsCities(): PropertyBrowseCitiesResponse {
+    const tree = buildOwnerListingsLocationTree(MOCK_OWNER_LISTINGS);
     return {
-        items: [...byCity.entries()].map(([city, localities]) => ({
-            city,
-            listingCount: [...localities.values()].reduce((sum, count) => sum + count, 0),
-            localities: [...localities.entries()].map(([name, listingCount]) => ({
-                name,
-                listingCount,
+        items: tree.map((countryGroup) => ({
+            country: countryGroup.country,
+            listingCount: countryGroup.listingCount,
+            states: countryGroup.states.map((stateGroup) => ({
+                state: stateGroup.state,
+                listingCount: stateGroup.listingCount,
+                cities: stateGroup.cities.map((cityGroup) => ({
+                    city: cityGroup.city,
+                    listingCount: cityGroup.listingCount,
+                    localities: cityGroup.localities.map((leaf) => ({
+                        name: leaf.locality,
+                        listingCount: leaf.listingCount,
+                    })),
+                })),
             })),
         })),
     };
