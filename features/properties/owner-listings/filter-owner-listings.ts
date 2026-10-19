@@ -62,6 +62,40 @@ const PROPERTY_TYPES = new Set<OwnerListingPropertyType>([
     "plot",
 ]);
 
+function parseNumberParam(
+    params: URLSearchParams | Record<string, string | string[] | undefined>,
+    key: string,
+): string {
+    const raw = parseParam(params, key).trim();
+    if (!raw) return "";
+    const value = Number(raw);
+    return Number.isFinite(value) && value >= 0 ? raw : "";
+}
+
+/** Commission range as numbers. `null` ends are open. */
+export function commissionRanges(filters: OwnerListingsFilters) {
+    const toNumber = (value: string) => {
+        if (!value) return null;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    };
+    return {
+        minPercent: toNumber(filters.minCommissionPercent),
+        maxPercent: toNumber(filters.maxCommissionPercent),
+        minAmount: toNumber(filters.minCommissionAmount),
+        maxAmount: toNumber(filters.maxCommissionAmount),
+    };
+}
+
+function hasCommissionRange(filters: OwnerListingsFilters): boolean {
+    return Boolean(
+        filters.minCommissionPercent ||
+            filters.maxCommissionPercent ||
+            filters.minCommissionAmount ||
+            filters.maxCommissionAmount,
+    );
+}
+
 function parseListedWithinDays(value: string): string {
     return value === "7" || value === "30" ? value : "";
 }
@@ -99,7 +133,10 @@ export function parseOwnerListingsFilters(
         minAreaSqft: parseParam(params, "minArea"),
         maxAreaSqft: parseParam(params, "maxArea"),
         listedWithinDays: parseListedWithinDays(parseParam(params, "listedWithin")),
-        minCommissionPercent: parseParam(params, "minCommission"),
+        minCommissionPercent: parseNumberParam(params, "minCommission"),
+        maxCommissionPercent: parseNumberParam(params, "maxCommission"),
+        minCommissionAmount: parseNumberParam(params, "minCommissionAmt"),
+        maxCommissionAmount: parseNumberParam(params, "maxCommissionAmt"),
         yourAreas,
         newToday: parseBoolParam(params, "newToday"),
         slotsOpen: parseBoolParam(params, "slotsOpen"),
@@ -135,6 +172,9 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     if (filters.maxAreaSqft) params.set("maxArea", filters.maxAreaSqft);
     if (filters.listedWithinDays) params.set("listedWithin", filters.listedWithinDays);
     if (filters.minCommissionPercent) params.set("minCommission", filters.minCommissionPercent);
+    if (filters.maxCommissionPercent) params.set("maxCommission", filters.maxCommissionPercent);
+    if (filters.minCommissionAmount) params.set("minCommissionAmt", filters.minCommissionAmount);
+    if (filters.maxCommissionAmount) params.set("maxCommissionAmt", filters.maxCommissionAmount);
     // Persist Your areas chip when Where is not pinned to a city/locality.
     if (filters.cities.length === 0 && filters.localities.length === 0) {
         params.set("yourAreas", filters.yourAreas ? "1" : "0");
@@ -156,7 +196,7 @@ export function countSheetFilters(filters: OwnerListingsFilters): number {
     let count = 0;
     if (filters.minAreaSqft || filters.maxAreaSqft) count++;
     if (filters.listedWithinDays || filters.newToday) count++;
-    if (filters.minCommissionPercent) count++;
+    if (hasCommissionRange(filters)) count++;
     if (filters.slotsOpen) count++;
     if (filters.commissionSet) count++;
     if (filters.readyToMove) count++;
@@ -177,7 +217,7 @@ export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): bo
         Boolean(filters.minAreaSqft) ||
         Boolean(filters.maxAreaSqft) ||
         Boolean(filters.listedWithinDays) ||
-        Boolean(filters.minCommissionPercent) ||
+        hasCommissionRange(filters) ||
         filters.newToday ||
         filters.slotsOpen ||
         filters.commissionSet ||
@@ -201,6 +241,9 @@ export function ownerListingsFilterSignature(filters: OwnerListingsFilters): str
         filters.maxAreaSqft,
         filters.listedWithinDays,
         filters.minCommissionPercent,
+        filters.maxCommissionPercent,
+        filters.minCommissionAmount,
+        filters.maxCommissionAmount,
         filters.yourAreas ? "1" : "0",
         filters.newToday ? "1" : "0",
         filters.slotsOpen ? "1" : "0",
@@ -238,6 +281,7 @@ export function filterOwnerListings(
 ): OwnerListingsResult {
     const minInr = filters.min ? Number(filters.min) : null;
     const maxInr = filters.max ? Number(filters.max) : null;
+    const commission = commissionRanges(filters);
     const bhkValues = filters.bhk.map(Number).filter((n) => !Number.isNaN(n));
     const serviceAreas = context.serviceAreas ?? [];
 
@@ -285,14 +329,16 @@ export function filterOwnerListings(
             return false;
         }
 
-        const minCommission = filters.minCommissionPercent
-            ? Number(filters.minCommissionPercent)
-            : null;
-        if (
-            minCommission !== null &&
-            !Number.isNaN(minCommission) &&
-            item.commissionPercent < minCommission
-        ) {
+        if (commission.minPercent !== null && item.commissionPercent < commission.minPercent) {
+            return false;
+        }
+        if (commission.maxPercent !== null && item.commissionPercent > commission.maxPercent) {
+            return false;
+        }
+        if (commission.minAmount !== null && item.commissionAmount < commission.minAmount) {
+            return false;
+        }
+        if (commission.maxAmount !== null && item.commissionAmount > commission.maxAmount) {
             return false;
         }
 

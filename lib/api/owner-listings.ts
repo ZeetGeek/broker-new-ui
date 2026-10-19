@@ -1,6 +1,7 @@
 import { isMockMode } from "@/lib/api/mock-mode";
 import { mockBookmarkedIdSet, propertiesApi } from "@/lib/api/properties";
 
+import { commissionRanges } from "@/features/properties/owner-listings/filter-owner-listings";
 import {
     bhkValuesToApiConfig,
     mapBrowseListingToOwnerItem,
@@ -31,9 +32,7 @@ function filterMockOwnerListings(
     const minArea = filters.minAreaSqft ? Number(filters.minAreaSqft) : null;
     const maxArea = filters.maxAreaSqft ? Number(filters.maxAreaSqft) : null;
     const listedWithin = filters.listedWithinDays ? Number(filters.listedWithinDays) : null;
-    const minCommission = filters.minCommissionPercent
-        ? Number(filters.minCommissionPercent)
-        : null;
+    const commission = commissionRanges(filters);
     const serviceAreas = (context.serviceAreas ?? []).map((area) => area.toLowerCase());
     const savedIds = mockBookmarkedIdSet();
 
@@ -66,11 +65,16 @@ function filterMockOwnerListings(
         ) {
             return false;
         }
-        if (
-            minCommission != null &&
-            !Number.isNaN(minCommission) &&
-            item.commissionPercent < minCommission
-        ) {
+        if (commission.minPercent != null && item.commissionPercent < commission.minPercent) {
+            return false;
+        }
+        if (commission.maxPercent != null && item.commissionPercent > commission.maxPercent) {
+            return false;
+        }
+        if (commission.minAmount != null && item.commissionAmount < commission.minAmount) {
+            return false;
+        }
+        if (commission.maxAmount != null && item.commissionAmount > commission.maxAmount) {
             return false;
         }
         if (filters.newToday && !item.isNew) return false;
@@ -166,9 +170,7 @@ async function fetchBrowsePage({
         : filters.newToday
           ? 7
           : undefined;
-    const minCommission = filters.minCommissionPercent
-        ? Number(filters.minCommissionPercent)
-        : undefined;
+    const commission = commissionRanges(filters);
 
     const result = await propertiesApi.browse(
         {
@@ -188,8 +190,10 @@ async function fetchBrowsePage({
                 listedWithinDays != null && !Number.isNaN(listedWithinDays)
                     ? listedWithinDays
                     : undefined,
-            minCommissionPercent:
-                minCommission != null && !Number.isNaN(minCommission) ? minCommission : undefined,
+            minCommissionPercent: commission.minPercent ?? undefined,
+            maxCommissionPercent: commission.maxPercent ?? undefined,
+            minCommissionAmount: commission.minAmount ?? undefined,
+            maxCommissionAmount: commission.maxAmount ?? undefined,
             commissionSet: filters.commissionSet || undefined,
             readyToMove: filters.readyToMove || undefined,
             furnishingStatus: filters.furnishing || undefined,

@@ -290,7 +290,7 @@ const commissionSchema = z.object({
     sale: z.object({
         // Picker removed — always percent; coerce legacy draft values.
         mode: z.preprocess(() => "percent" as const, z.literal("percent")),
-        value: z.number().min(0).max(1_000_000_000),
+        value: z.number().min(0).max(1_000_000_000).nullable(),
         paidBy: z.literal("owner"),
         ownerSharePercent: z.number().min(0).max(100),
         separateRates: z.boolean(),
@@ -303,7 +303,7 @@ const commissionSchema = z.object({
     rent: z.object({
         // Picker removed — always flat INR; coerce legacy "months" drafts.
         mode: z.preprocess(() => "flat" as const, z.literal("flat")),
-        value: z.number().min(0).max(1_000_000_000),
+        value: z.number().min(0).max(1_000_000_000).nullable(),
         paidBy: z.literal("owner"),
         ownerSharePercent: z.number().min(0).max(100),
         renewalFeeApplicable: z.boolean(),
@@ -470,6 +470,7 @@ export const stepSchemas = {
                 const sale = value.commission.sale;
                 if (
                     sale.mode === "percent" &&
+                    sale.value != null &&
                     ((sale.value > 0 && sale.value < 0.1) || sale.value > 10)
                 ) {
                     context.addIssue({
@@ -538,6 +539,55 @@ function makeFieldRuleSchema(step: PropertyFormStep) {
                 });
             }
         });
+}
+
+export const OWNER_SALE_COMMISSION_MIN = 0.1;
+export const OWNER_SALE_COMMISSION_MAX = 5;
+
+/**
+ * Owner listings must state the commission they share: sale as 0.1–5 %, rent
+ * as a fixed amount (0 = no commission). Broker listings skip this check.
+ */
+export function ownerCommissionIssues(
+    values: PropertyDraftValues,
+): { path: string; message: string }[] {
+    const listingFor = values.basics.listingFor;
+    const sells = listingFor === "sell" || listingFor === "both";
+    const rents =
+        listingFor === "rent" || listingFor === "lease" || listingFor === "pg" || listingFor === "both";
+    const issues: { path: string; message: string }[] = [];
+
+    if (sells) {
+        const value = values.commission.sale.value;
+        if (value == null || !Number.isFinite(value)) {
+            issues.push({
+                path: "commission.sale.value",
+                message: "Enter the sale commission you will share",
+            });
+        } else if (value < OWNER_SALE_COMMISSION_MIN || value > OWNER_SALE_COMMISSION_MAX) {
+            issues.push({
+                path: "commission.sale.value",
+                message: `Sale commission must be between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}%`,
+            });
+        }
+    }
+
+    if (rents) {
+        const value = values.commission.rent.value;
+        if (value == null || !Number.isFinite(value)) {
+            issues.push({
+                path: "commission.rent.value",
+                message: "Enter the rent commission. Put 0 for no commission",
+            });
+        } else if (value < 0) {
+            issues.push({
+                path: "commission.rent.value",
+                message: "Rent commission cannot be negative",
+            });
+        }
+    }
+
+    return issues;
 }
 
 export const fieldRuleSchemas = Object.fromEntries(

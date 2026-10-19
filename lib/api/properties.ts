@@ -185,6 +185,9 @@ export type PropertyBrowseQuery = {
     maxAreaSqft?: number;
     listedWithinDays?: number;
     minCommissionPercent?: number;
+    maxCommissionPercent?: number;
+    minCommissionAmount?: number;
+    maxCommissionAmount?: number;
     commissionSet?: boolean;
     readyToMove?: boolean;
     /** Only listings the caller has bookmarked. */
@@ -296,6 +299,15 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     }
     if (params.minCommissionPercent != null && !Number.isNaN(params.minCommissionPercent)) {
         q.set("minCommissionPercent", String(params.minCommissionPercent));
+    }
+    if (params.maxCommissionPercent != null && !Number.isNaN(params.maxCommissionPercent)) {
+        q.set("maxCommissionPercent", String(params.maxCommissionPercent));
+    }
+    if (params.minCommissionAmount != null && !Number.isNaN(params.minCommissionAmount)) {
+        q.set("minCommissionAmount", String(params.minCommissionAmount));
+    }
+    if (params.maxCommissionAmount != null && !Number.isNaN(params.maxCommissionAmount)) {
+        q.set("maxCommissionAmount", String(params.maxCommissionAmount));
     }
     if (params.commissionSet) q.set("commissionSet", "1");
     if (params.readyToMove) q.set("readyToMove", "1");

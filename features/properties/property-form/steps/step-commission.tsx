@@ -6,7 +6,11 @@ import { BadgePercent, Wallet } from "lucide-react";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
 import { formatInr } from "@/lib/format/inr";
-import type { PropertyDraftValues } from "@/lib/schemas/property";
+import {
+    OWNER_SALE_COMMISSION_MAX,
+    OWNER_SALE_COMMISSION_MIN,
+    type PropertyDraftValues,
+} from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
@@ -17,22 +21,25 @@ import {
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 
-export function StepCommission() {
+export function StepCommission({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const { watch } = useFormContext<PropertyDraftValues>();
     const values = watch();
     const { derived } = useFieldRules();
+    const isOwner = portal === "owner";
     const showSale = derived.isSell;
     const showRent = derived.isRentLike;
     const expectedPrice = values.sale.expectedPrice ?? 0;
     const areaSqft = values.area.areaSqft;
     const pricePerSqft = values.sale.pricePerSqft;
     const monthlyRent = values.rent.monthlyRent ?? 0;
+    const salePercent = values.commission.sale.value ?? 0;
+    const rentAmount = values.commission.rent.value ?? 0;
 
     const saleResult = calculateSaleCommission({
         salePrice: expectedPrice,
         areaSqft,
         mode: "percent",
-        value: values.commission.sale.value,
+        value: salePercent,
         paidBy: "owner",
         ownerSharePercent: 100,
         gstApplicable: values.commission.tax.gstApplicable,
@@ -49,7 +56,7 @@ export function StepCommission() {
         agreementMonths: values.rent.agreementDurationMonths ?? 11,
         escalationPercent: values.rent.rentEscalationPercent ?? 0,
         mode: "flat",
-        value: values.commission.rent.value,
+        value: rentAmount,
         paidBy: "owner",
         ownerSharePercent: 100,
         gstApplicable: values.commission.tax.gstApplicable,
@@ -72,8 +79,8 @@ export function StepCommission() {
               : 0;
 
     const commissionLabel = primaryIsSale
-        ? `Commission at ${values.commission.sale.value}%`
-        : `Brokerage · ${formatInr(values.commission.rent.value)}`;
+        ? `Commission at ${salePercent}%`
+        : `Brokerage · ${formatInr(rentAmount)}`;
 
     return (
         <div className={FORM_SECTIONS_CLASS}>
@@ -92,8 +99,12 @@ export function StepCommission() {
                               : "Rental brokerage"}
                     </>
                 }
-                description="Record the agreed fee. Sale uses a percent; rent uses a fixed amount. Broker-only."
-                tone="private"
+                description={
+                    isOwner
+                        ? "Required. The commission you will pay the broker who closes this deal. Brokers see it on your listing."
+                        : "Record the agreed fee. Sale uses a percent; rent uses a fixed amount. Broker-only."
+                }
+                tone={isOwner ? undefined : "private"}
             >
                 <div className="grid gap-4 md:grid-cols-2">
                     {showSale ? (
@@ -101,20 +112,30 @@ export function StepCommission() {
                             name="commission.sale.value"
                             label="Sale commission (%)"
                             step={0.1}
-                            max={10}
+                            min={isOwner ? OWNER_SALE_COMMISSION_MIN : 0}
+                            max={isOwner ? OWNER_SALE_COMMISSION_MAX : 10}
                             placeholder="e.g. 2"
-                            visibility="private"
+                            visibility={isOwner ? "public" : "private"}
                             startIcon={BadgePercent}
-                            hint="Percent of the sale price, charged to the owner."
+                            hint={
+                                isOwner
+                                    ? `Percent of the sale price. Between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}%.`
+                                    : "Percent of the sale price, charged to the owner."
+                            }
                         />
                     ) : null}
                     {showRent ? (
                         <CurrencyField
                             name="commission.rent.value"
                             label="Rent commission"
-                            placeholder="e.g. 25,000"
-                            visibility="private"
-                            hint="Fixed amount charged to the owner."
+                            placeholder="e.g. 25,000 (0 for none)"
+                            allowZero
+                            visibility={isOwner ? "public" : "private"}
+                            hint={
+                                isOwner
+                                    ? "Fixed amount you pay the broker. For no commission, enter 0."
+                                    : "Fixed amount charged to the owner. For no commission, enter 0."
+                            }
                         />
                     ) : null}
                 </div>
@@ -192,7 +213,7 @@ export function StepCommission() {
                             <IncomeRow label={commissionLabel} value={formatInr(result.gross)} />
                             {showSale && showRent ? (
                                 <IncomeRow
-                                    label={`Rent brokerage · ${formatInr(values.commission.rent.value)}`}
+                                    label={`Rent brokerage · ${formatInr(rentAmount)}`}
                                     value={formatInr(rentResult.gross)}
                                     muted
                                 />

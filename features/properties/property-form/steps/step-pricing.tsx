@@ -242,7 +242,7 @@ export function StepPricing() {
             salePrice: expectedPrice,
             areaSqft,
             mode: values.commission.sale.mode,
-            value: values.commission.sale.value,
+            value: values.commission.sale.value ?? 0,
             paidBy: "owner",
             ownerSharePercent: 100,
             separateRates: values.commission.sale.separateRates

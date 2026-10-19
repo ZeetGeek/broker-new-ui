@@ -23,6 +23,7 @@ import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/route
 import {
     DEFAULT_PROPERTY_DRAFT,
     fieldRuleSchemas,
+    ownerCommissionIssues,
     type PropertyDraftValues,
     STEP_ROOT_FIELDS,
     stepSchemas,
@@ -148,8 +149,9 @@ export function PropertyForm({
     const localStorageKey = `property-draft:v${LOCAL_DRAFT_VERSION}:${propertyId ?? "new"}`;
 
     const defaultValues = useMemo(
-        () => (initialListing ? listingToDraft(initialListing) : cloneDefaultDraft()),
-        [initialListing],
+        () =>
+            initialListing ? listingToDraft(initialListing, portal) : cloneDefaultDraft(portal),
+        [initialListing, portal],
     );
     const methods = useForm<PropertyDraftValues>({
         defaultValues,
@@ -205,11 +207,11 @@ export function PropertyForm({
             if (!stored) return;
             const parsed = JSON.parse(stored) as { values?: Partial<PropertyDraftValues> };
             if (parsed.values)
-                methods.reset(mergeDraft(listingToDraft(initialListing), parsed.values));
+                methods.reset(mergeDraft(listingToDraft(initialListing, portal), parsed.values));
         } catch {
             window.localStorage.removeItem(`property-extra:v${LOCAL_DRAFT_VERSION}:${propertyId}`);
         }
-    }, [initialListing, methods, mode, propertyId]);
+    }, [initialListing, methods, mode, portal, propertyId]);
 
     useEffect(() => {
         if (!formIsActive || recoveryCheckedRef.current) return;
@@ -241,7 +243,7 @@ export function PropertyForm({
                 autosaveReadyRef.current = true;
                 return;
             }
-            const recovered = mergeDraft(cloneDefaultDraft(), parsed.values);
+            const recovered = mergeDraft(cloneDefaultDraft(portal), parsed.values);
             methods.reset(recovered);
             const restoredStep = resolveDraftStep(parsed.ui?.step);
             if (restoredStep) setStep(restoredStep);
@@ -370,10 +372,22 @@ export function PropertyForm({
         const current = methods.getValues();
         const result = stepSchemas[target].safeParse(current);
         const ruleResult = fieldRuleSchemas[target].safeParse(current);
-        if (result.success && ruleResult.success) return true;
+        const ownerIssues =
+            portal === "owner" && target === "pricing"
+                ? ownerCommissionIssues(current).map((issue) => ({
+                      path: issue.path.split("."),
+                      message: issue.message,
+                  }))
+                : [];
+        if (result.success && ruleResult.success && ownerIssues.length === 0) return true;
+        // Owner commission messages are more specific than the generic required ones.
+        const ownerPaths = new Set(ownerIssues.map((issue) => issue.path.join(".")));
         const issues = [
-            ...(result.success ? [] : result.error.issues),
-            ...(ruleResult.success ? [] : ruleResult.error.issues),
+            ...ownerIssues,
+            ...[
+                ...(result.success ? [] : result.error.issues),
+                ...(ruleResult.success ? [] : ruleResult.error.issues),
+            ].filter((issue) => !ownerPaths.has(issue.path.join("."))),
         ];
         // Only surface errors for fields the user can see on this listing type.
         const visibleIssues = issues.filter((issue) => {
@@ -458,7 +472,24 @@ export function PropertyForm({
         // Quick add only validates its own fields (draft and publish). Full details
         // still runs the full step schemas on publish — leave that path alone.
         if (entryMode === "quick") {
-            if (!validateQuickAdd(methods, current)) {
+            if (!validateQuickAdd(methods, current, portal)) {
+                persistInFlightRef.current = false;
+                return;
+            }
+        } else if (forceDraft && portal === "owner") {
+            // The API requires commission on every owner listing, drafts included.
+            const commissionIssues = ownerCommissionIssues(current);
+            if (commissionIssues.length > 0) {
+                const pricingIndex = FORM_STEPS.findIndex((item) => item.id === "pricing");
+                setHighestUnlocked((value) => Math.max(value, pricingIndex));
+                setStep("pricing");
+                for (const issue of commissionIssues) {
+                    methods.setError(issue.path as FieldPath<PropertyDraftValues>, {
+                        type: "owner-commission",
+                        message: issue.message,
+                    });
+                }
+                pendingFocusPathRef.current = commissionIssues[0]!.path;
                 persistInFlightRef.current = false;
                 return;
             }
@@ -544,7 +575,7 @@ export function PropertyForm({
         }
         window.localStorage.removeItem(localStorageKey);
         if (mode === "create") {
-            methods.reset(cloneDefaultDraft());
+            methods.reset(cloneDefaultDraft(portal));
             setStep("basics");
             setHighestUnlocked(0);
             setCompletedSteps(new Set());
@@ -859,7 +890,7 @@ export function PropertyForm({
                                         {formBanner}
                                     </div>
                                 ) : null}
-                                <QuickAdd photoFilesRef={photoFilesRef} />
+                                <QuickAdd photoFilesRef={photoFilesRef} portal={portal} />
                             </div>
                         </main>
                     )}
@@ -1214,7 +1245,7 @@ function StepContent({
         return (
             <div className="flex flex-col gap-8">
                 <StepPricing />
-                <StepCommission />
+                <StepCommission portal={portal} />
             </div>
         );
     }
@@ -1402,8 +1433,14 @@ function MobileDealSummary({
     );
 }
 
-function cloneDefaultDraft(): PropertyDraftValues {
-    return JSON.parse(JSON.stringify(DEFAULT_PROPERTY_DRAFT)) as PropertyDraftValues;
+function cloneDefaultDraft(portal: "broker" | "owner" = "broker"): PropertyDraftValues {
+    const draft = JSON.parse(JSON.stringify(DEFAULT_PROPERTY_DRAFT)) as PropertyDraftValues;
+    // Owners must type the commission themselves; no pre-filled rate.
+    if (portal === "owner") {
+        draft.commission.sale.value = null;
+        draft.commission.rent.value = null;
+    }
+    return draft;
 }
 
 function mergeDraft(
@@ -1448,8 +1485,11 @@ function draftForStorage(values: PropertyDraftValues): PropertyDraftValues {
     return safe;
 }
 
-function listingToDraft(listing: MyListingItem): PropertyDraftValues {
-    const draft = cloneDefaultDraft();
+function listingToDraft(
+    listing: MyListingItem,
+    portal: "broker" | "owner" = "broker",
+): PropertyDraftValues {
+    const draft = cloneDefaultDraft(portal);
     draft.basics.listingFor =
         listing.transactionType === "sale"
             ? "sell"
@@ -1498,7 +1538,7 @@ function listingToDraft(listing: MyListingItem): PropertyDraftValues {
     draft.rent.securityDepositMode = listing.securityDepositMode ?? "months_of_rent";
     draft.commission.sale.value = listing.commissionPercent ?? draft.commission.sale.value;
     draft.commission.rent.mode = "flat";
-    draft.commission.rent.value = listing.commissionAmount ?? 0;
+    draft.commission.rent.value = listing.commissionAmount ?? (portal === "owner" ? null : 0);
     draft.rent.availableFrom = listing.availableFrom ?? "";
     draft.furnishing.status =
         listing.furnishing === "furnished"
@@ -1723,6 +1763,8 @@ const QUICK_ADD_ERROR_FIELDS = [
     "area.plotArea",
     "sale.expectedPrice",
     "rent.monthlyRent",
+    "commission.sale.value",
+    "commission.rent.value",
     MEDIA_COVER_ERROR_PATH,
 ] as const satisfies readonly FieldPath<PropertyDraftValues>[];
 
@@ -1730,6 +1772,7 @@ const QUICK_ADD_ERROR_FIELDS = [
 function validateQuickAdd(
     methods: ReturnType<typeof useForm<PropertyDraftValues>>,
     values: PropertyDraftValues,
+    portal: "broker" | "owner",
 ): boolean {
     methods.clearErrors([...QUICK_ADD_ERROR_FIELDS]);
     const issues: { path: FieldPath<PropertyDraftValues>; message: string }[] = [];
@@ -1768,6 +1811,14 @@ function validateQuickAdd(
         !values.rent.monthlyRent
     ) {
         issues.push({ path: "rent.monthlyRent", message: "Enter the monthly rent" });
+    }
+    if (portal === "owner") {
+        for (const issue of ownerCommissionIssues(values)) {
+            issues.push({
+                path: issue.path as FieldPath<PropertyDraftValues>,
+                message: issue.message,
+            });
+        }
     }
     const hasCover = values.media.photos.some(
         (photo) => photo.isCover && photo.status !== "error" && Boolean(photo.url),

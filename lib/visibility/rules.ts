@@ -223,7 +223,12 @@ export const FIELD_RULES = {
         level: required,
         label: () => "Rent brokerage mode",
     },
-    "commission.rent.value": { visible: (d) => d.isRentLike, level: required },
+    // 0 is a real answer ("no commission"); only a blank field is missing.
+    "commission.rent.value": {
+        visible: (d) => d.isRentLike,
+        level: required,
+        isEmpty: (values) => values.commission.rent.value == null,
+    },
     "commission.rent.paidBy": { visible: () => false, keepWhenHidden: true, level: required },
     "commission.rent.ownerSharePercent": {
         visible: () => false,

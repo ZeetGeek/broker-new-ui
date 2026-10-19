@@ -302,10 +302,11 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
             const raw = toNumber(listing.commissionPercent);
             return raw > 0 ? raw : null;
         })(),
-        commissionAmount: (() => {
-            const raw = toNumber(listing.commissionAmount);
-            return raw > 0 ? raw : null;
-        })(),
+        // 0 means "no commission" and is kept; only a missing value maps to null.
+        commissionAmount:
+            listing.commissionAmount == null || listing.commissionAmount === ""
+                ? null
+                : Math.max(0, toNumber(listing.commissionAmount)),
         securityDeposit: (() => {
             const raw = toNumber(listing.securityDeposit);
             return raw > 0 ? raw : null;

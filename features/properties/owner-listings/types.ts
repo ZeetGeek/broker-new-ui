@@ -93,8 +93,12 @@ export type OwnerListingsFilters = {
     maxAreaSqft: string;
     /** Sheet — listed within N days (`7` | `30` | "") */
     listedWithinDays: string;
-    /** Sheet — minimum owner commission percent */
+    /** Sheet — sale commission range in percent ("" = open end) */
     minCommissionPercent: string;
+    maxCommissionPercent: string;
+    /** Sheet — rent commission range in INR ("" = open end) */
+    minCommissionAmount: string;
+    maxCommissionAmount: string;
     /** Quick chips / sheet — instant toggles */
     yourAreas: boolean;
     newToday: boolean;
@@ -127,6 +131,9 @@ export type OwnerListingsSheetFilters = Pick<
     | "maxAreaSqft"
     | "listedWithinDays"
     | "minCommissionPercent"
+    | "maxCommissionPercent"
+    | "minCommissionAmount"
+    | "maxCommissionAmount"
     | "yourAreas"
     | "newToday"
     | "slotsOpen"
@@ -162,6 +169,9 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     maxAreaSqft: "",
     listedWithinDays: "",
     minCommissionPercent: "",
+    maxCommissionPercent: "",
+    minCommissionAmount: "",
+    maxCommissionAmount: "",
     /** Default Where → Anywhere. Serviceable areas is an explicit choice. */
     yourAreas: false,
     newToday: false,
@@ -172,6 +182,12 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     cursor: "",
     limit: 10,
 };
+
+/** Sale commission slider bounds (owners must share 0.1–5 %). */
+export const SALE_COMMISSION_RANGE = { min: 0.1, max: 5, step: 0.1 } as const;
+
+/** Rent commission slider bounds in INR. The top end means "and above". */
+export const RENT_COMMISSION_RANGE = { min: 0, max: 200_000, step: 5_000 } as const;
 
 export const OWNER_LISTING_PROPERTY_TYPES: { value: OwnerListingPropertyType; label: string }[] = [
     { value: "apartment", label: "Apartment" },
