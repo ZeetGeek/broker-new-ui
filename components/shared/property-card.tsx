@@ -831,8 +831,8 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
             ? Math.round((baseAmountInr * listing.commissionPercent) / 100)
             : 0;
     const commissionInr = activeMode === "rent" ? rentCommissionInr : saleCommissionInr;
-    const commissionLabel =
-        activeMode === "rent" ? formatRentInr(commissionInr) : formatPriceInr(commissionInr);
+    // Rent brokerage is a fixed fee — same formatter as sale cut, never `/mo`.
+    const commissionLabel = formatPriceInr(commissionInr);
     const hasCommission = commissionInr > 0 && (activeMode === "rent" || baseAmountInr > 0);
 
     const commissionBadge = (

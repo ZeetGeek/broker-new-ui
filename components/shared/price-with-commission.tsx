@@ -26,7 +26,7 @@ export type PriceWithCommissionProps = {
 };
 
 type CommissionTip = {
-    /** "You get ₹15,000/mo" */
+    /** "You get ₹15,000" (rent brokerage is a fixed fee, not monthly) */
     headline: string;
     /** "Fixed rent brokerage" or "2% of ₹85 L" */
     detail: string;
@@ -73,7 +73,7 @@ export function listingCommissionTip({
                 : null;
         }
         return {
-            headline: `${lead} ${formatRentInr(brokerageInr)}`,
+            headline: `${lead} ${formatPriceInr(brokerageInr)}`,
             detail: "Fixed rent brokerage",
         };
     }
