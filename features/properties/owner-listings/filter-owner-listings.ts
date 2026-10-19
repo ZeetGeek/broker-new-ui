@@ -107,16 +107,21 @@ export function parseOwnerListingsFilters(
     const type = parseParam(params, "type");
     const furnishing = parseParam(params, "furnishing");
     const propertyType = parseParam(params, "propertyType");
+    const countries = parseListParam(params, "country");
+    const states = parseListParam(params, "state");
     const cities = parseListParam(params, "city");
     const localities = parseListParam(params, "locality");
     const yourAreasRaw = parseParam(params, "yourAreas");
-    const hasLocationFilter = cities.length > 0 || localities.length > 0;
-    // Explicit city/locality picks turn off your-areas priority.
+    const hasLocationFilter =
+        countries.length > 0 || states.length > 0 || cities.length > 0 || localities.length > 0;
+    // Explicit place picks turn off your-areas priority.
     // Missing param defaults to Anywhere. Saved prefs and yourAreas=1 still select serviceable areas.
     const yourAreas = hasLocationFilter ? false : yourAreasRaw === "1";
 
     return {
         q: parseParam(params, "q"),
+        countries,
+        states,
         cities,
         localities,
         bhk: parseListParam(params, "bhk"),
@@ -160,6 +165,8 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     const params = new URLSearchParams();
 
     if (filters.q.trim()) params.set("q", filters.q.trim());
+    if (filters.countries.length > 0) params.set("country", filters.countries.join(","));
+    if (filters.states.length > 0) params.set("state", filters.states.join(","));
     if (filters.cities.length > 0) params.set("city", filters.cities.join(","));
     if (filters.localities.length > 0) params.set("locality", filters.localities.join(","));
     if (filters.bhk.length > 0) params.set("bhk", filters.bhk.join(","));
@@ -175,8 +182,13 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     if (filters.maxCommissionPercent) params.set("maxCommission", filters.maxCommissionPercent);
     if (filters.minCommissionAmount) params.set("minCommissionAmt", filters.minCommissionAmount);
     if (filters.maxCommissionAmount) params.set("maxCommissionAmt", filters.maxCommissionAmount);
-    // Persist Your areas chip when Where is not pinned to a city/locality.
-    if (filters.cities.length === 0 && filters.localities.length === 0) {
+    // Persist Your areas chip when Where is not pinned to a place.
+    if (
+        filters.countries.length === 0 &&
+        filters.states.length === 0 &&
+        filters.cities.length === 0 &&
+        filters.localities.length === 0
+    ) {
         params.set("yourAreas", filters.yourAreas ? "1" : "0");
     }
     if (filters.newToday) params.set("newToday", "1");
@@ -204,6 +216,8 @@ export function countSheetFilters(filters: OwnerListingsFilters): number {
 export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): boolean {
     return (
         Boolean(filters.q.trim()) ||
+        filters.countries.length > 0 ||
+        filters.states.length > 0 ||
         filters.cities.length > 0 ||
         filters.localities.length > 0 ||
         filters.bhk.length > 0 ||
@@ -227,6 +241,8 @@ export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): bo
 export function ownerListingsFilterSignature(filters: OwnerListingsFilters): string {
     return [
         filters.q,
+        filters.countries.join(","),
+        filters.states.join(","),
         filters.cities.join(","),
         filters.localities.join(","),
         filters.bhk.join(","),
@@ -286,14 +302,26 @@ export function filterOwnerListings(
     let filtered = items.filter((item) => {
         if (!matchesQuery(item, filters.q)) return false;
 
-        if (filters.cities.length > 0 || filters.localities.length > 0) {
-            if (
-                filters.cities.length > 0 &&
-                !filters.cities.some((city) => city.toLowerCase() === item.city.toLowerCase())
-            ) {
-                return false;
-            }
-            if (filters.localities.length > 0 && !filters.localities.includes(item.locality)) {
+        const hasPlaceFilter =
+            filters.countries.length > 0 ||
+            filters.states.length > 0 ||
+            filters.cities.length > 0 ||
+            filters.localities.length > 0;
+
+        if (hasPlaceFilter) {
+            const itemCountry = item.country?.trim() || "India";
+            const itemState = item.state?.trim() || item.city;
+            const itemCity = item.city.toLowerCase();
+            const stateKey = `${itemCountry}|${itemState}`.toLowerCase();
+
+            const matchesCountry = filters.countries.some(
+                (country) => country.toLowerCase() === itemCountry.toLowerCase(),
+            );
+            const matchesState = filters.states.some((state) => state.toLowerCase() === stateKey);
+            const matchesCity = filters.cities.some((city) => city.toLowerCase() === itemCity);
+            const matchesLocality = filters.localities.includes(item.locality);
+
+            if (!matchesCountry && !matchesState && !matchesCity && !matchesLocality) {
                 return false;
             }
         }

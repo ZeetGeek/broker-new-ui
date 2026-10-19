@@ -73,6 +73,13 @@ export type OwnerListingItem = {
 export type OwnerListingsFilters = {
     /** Sheet — free-text search */
     q: string;
+    /** Band — multi-select countries */
+    countries: string[];
+    /**
+     * Band — multi-select states as `country|state` keys.
+     * Encoded so the same state name can exist in more than one country.
+     */
+    states: string[];
     /** Band — multi-select cities (from browse cities API) */
     cities: string[];
     /** Band — multi-select localities */
@@ -114,6 +121,8 @@ export type OwnerListingsFilters = {
 
 export type OwnerListingsBandFilters = Pick<
     OwnerListingsFilters,
+    | "countries"
+    | "states"
     | "cities"
     | "localities"
     | "bhk"
@@ -157,6 +166,8 @@ export type OwnerListingsResult = {
 
 export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     q: "",
+    countries: [],
+    states: [],
     cities: [],
     localities: [],
     bhk: [],
