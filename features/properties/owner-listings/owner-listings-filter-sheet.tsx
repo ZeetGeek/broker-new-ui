@@ -2,16 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import {
-    BadgePercent,
-    CalendarDays,
-    DoorOpen,
-    KeyRound,
-    type LucideIcon,
-    MapPinned,
-    Ruler,
-    XIcon,
-} from "lucide-react";
+import { BadgePercent, CalendarDays, type LucideIcon, Ruler, XIcon } from "lucide-react";
 import SimpleBar from "simplebar-react";
 
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
@@ -26,7 +17,6 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
-import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { filterOwnerListings } from "@/features/properties/owner-listings/filter-owner-listings";
@@ -62,41 +52,6 @@ const COMMISSION_PRESETS: ChoicePreset[] = [
     { value: "1", label: "1%+", hint: "At least 1% shared" },
     { value: "2", label: "2%+", hint: "At least 2% shared" },
     { value: "3", label: "3%+", hint: "At least 3% shared" },
-];
-
-const DEAL_OPTIONS: {
-    key: keyof Pick<
-        OwnerListingsSheetFilters,
-        "yourAreas" | "readyToMove" | "slotsOpen" | "commissionSet"
-    >;
-    label: string;
-    description: string;
-    icon: LucideIcon;
-}[] = [
-    {
-        key: "yourAreas",
-        label: "Your areas first",
-        description: "Show your service localities before others",
-        icon: MapPinned,
-    },
-    {
-        key: "readyToMove",
-        label: "Ready to move",
-        description: "Immediate possession",
-        icon: KeyRound,
-    },
-    {
-        key: "slotsOpen",
-        label: "Slots open",
-        description: "Still taking broker requests",
-        icon: DoorOpen,
-    },
-    {
-        key: "commissionSet",
-        label: "Commission set",
-        description: "Owner already shared a rate",
-        icon: BadgePercent,
-    },
 ];
 
 const EMPTY_SHEET_FILTERS: OwnerListingsSheetFilters = {
@@ -232,69 +187,6 @@ function OptionCard({
     );
 }
 
-function DealToggle({
-    label,
-    description,
-    icon: Icon,
-    active,
-    onCheckedChange,
-}: {
-    label: string;
-    description: string;
-    icon: LucideIcon;
-    active: boolean;
-    onCheckedChange: (checked: boolean) => void;
-}) {
-    return (
-        <div
-            className={cn(
-                "flex items-start gap-3 rounded-inner border p-3.5 sm:p-4",
-                SELECT_TRANSITION,
-                active
-                    ? "border-brand bg-transparent"
-                    : "border-border-warm bg-transparent hover:border-brand/35",
-            )}
-        >
-            <button
-                type="button"
-                className="flex flex-1 items-start gap-3 text-start min-inline-0"
-                onClick={() => onCheckedChange(!active)}
-            >
-                <span
-                    className={cn(
-                        "flex shrink-0 items-center justify-center",
-                        SELECT_TRANSITION,
-                        active ? "text-brand" : "text-ink-muted",
-                    )}
-                >
-                    <Icon aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
-                </span>
-                <span className="flex flex-1 flex-col gap-0.5 min-inline-0">
-                    <span
-                        className={cn(
-                            "text-sm font-semibold",
-                            active ? "text-brand-text" : "text-ink",
-                        )}
-                    >
-                        {label}
-                    </span>
-                    <span className="body-sm text-ink-muted">{description}</span>
-                </span>
-            </button>
-            <Switch
-                checked={active}
-                onCheckedChange={onCheckedChange}
-                aria-label={label}
-                className="
-                  mts-1
-                  data-checked:border-brand data-checked:bg-brand
-                  data-unchecked:border-border-warm data-unchecked:bg-border-warm/80
-                "
-            />
-        </div>
-    );
-}
-
 export function OwnerListingsFilterSheet({
     open,
     onOpenChange,
@@ -386,8 +278,7 @@ export function OwnerListingsFilterSheet({
                             Advanced filters
                         </DialogTitle>
                         <p className="body-sm text-ink-muted">
-                            Extra controls beyond the search bar — area, timing, commission, and
-                            deal fit
+                            Extra controls beyond the search bar — area, timing, and commission
                         </p>
                     </div>
                     <Tooltip>
@@ -511,26 +402,6 @@ export function OwnerListingsFilterSheet({
                                     </div>
                                 </FilterPanel>
                             </div>
-
-                            <FilterPanel
-                                title="Deal fit"
-                                subtitle="Broker-side signals that are not on the search bar"
-                            >
-                                <div className="grid gap-2.5 sm:grid-cols-2">
-                                    {DEAL_OPTIONS.map((option) => (
-                                        <DealToggle
-                                            key={option.key}
-                                            label={option.label}
-                                            description={option.description}
-                                            icon={option.icon}
-                                            active={draft[option.key]}
-                                            onCheckedChange={(checked) =>
-                                                updateDraft({ [option.key]: checked })
-                                            }
-                                        />
-                                    ))}
-                                </div>
-                            </FilterPanel>
                         </div>
                     </SimpleBar>
                 </div>

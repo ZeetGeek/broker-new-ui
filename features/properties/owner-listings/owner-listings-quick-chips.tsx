@@ -181,7 +181,7 @@ function FiltersChipButton({
                 }
             />
             <TooltipContent side="bottom">
-                Advanced filters — area, timing, commission, and deal fit
+                Advanced filters — area, timing, and commission
             </TooltipContent>
         </Tooltip>
     );

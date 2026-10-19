@@ -2,7 +2,8 @@
 
 import type { ReactNode } from "react";
 import * as React from "react";
-import toast from "react-hot-toast";
+// Apple sign-in disabled for now — re-enable with the button below.
+// import toast from "react-hot-toast";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
@@ -15,6 +16,7 @@ import brands from "./thesvg-color-brands.json";
 
 addCollection(brands as Parameters<typeof addCollection>[0]);
 
+// "thesvg-color:apple-light" kept for when Apple sign-in is re-enabled.
 function BrandIcon({ icon }: { icon: "thesvg-color:google" | "thesvg-color:apple-light" }) {
     return (
         <Icon icon={icon} width={20} height={20} className="block-5 inline-5" aria-hidden="true" />
@@ -77,9 +79,10 @@ export function SocialAuthButtons({
         });
     }
 
-    function handleApple() {
-        toast("Apple sign-in is coming soon");
-    }
+    // Apple sign-in disabled — not working yet. Uncomment to restore.
+    // function handleApple() {
+    //     toast("Apple sign-in is coming soon");
+    // }
 
     return (
         <div className="flex flex-col gap-3">
@@ -91,6 +94,7 @@ export function SocialAuthButtons({
             >
                 {isOpeningGoogle ? "Opening Google" : `${action} with Google`}
             </SocialButton>
+            {/* Apple sign-in disabled — not working yet. Uncomment to restore.
             <SocialButton
                 mark={<BrandIcon icon="thesvg-color:apple-light" />}
                 onClick={handleApple}
@@ -98,6 +102,7 @@ export function SocialAuthButtons({
             >
                 {action} with Apple
             </SocialButton>
+            */}
         </div>
     );
 }
