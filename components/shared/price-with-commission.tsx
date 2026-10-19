@@ -20,6 +20,8 @@ export type PriceWithCommissionProps = {
      * Defaults to broker — marketplace and pipeline cards.
      */
     audience?: CommissionAudience;
+    /** Rent with no brokerage still gets a hover tip reading "No commission". */
+    showNoRentCommission?: boolean;
     className?: string;
 };
 
@@ -59,12 +61,17 @@ export function listingCommissionTip({
     commissionPercent,
     commissionAmountInr,
     audience = "broker",
+    showNoRentCommission = false,
 }: PriceWithCommissionProps): CommissionTip | null {
     const lead = audience === "owner" ? "Broker gets" : "You get";
 
     if (isRent) {
         const brokerageInr = positive(commissionAmountInr);
-        if (brokerageInr <= 0) return null;
+        if (brokerageInr <= 0) {
+            return showNoRentCommission
+                ? { headline: "No commission", detail: "The owner hasn't set a rent brokerage" }
+                : null;
+        }
         return {
             headline: `${lead} ${formatRentInr(brokerageInr)}`,
             detail: "Fixed rent brokerage",
@@ -93,6 +100,7 @@ export function PriceWithCommission({
     commissionPercent,
     commissionAmountInr,
     audience = "broker",
+    showNoRentCommission = false,
     className,
 }: PriceWithCommissionProps) {
     const priceLabel = isRent ? formatRentInr(amountInr) : formatPriceInr(amountInr);
@@ -102,6 +110,7 @@ export function PriceWithCommission({
         commissionPercent,
         commissionAmountInr,
         audience,
+        showNoRentCommission,
     });
 
     const priceClass = cn(

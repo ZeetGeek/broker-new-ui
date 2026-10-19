@@ -905,9 +905,11 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
 function BrowseOverlayPrices({
     listing,
     audience = "broker",
+    showNoRentCommission = false,
 }: {
     listing: BrowsePropertyCardListing;
     audience?: CommissionAudience;
+    showNoRentCommission?: boolean;
 }) {
     const isRentOnly = offersRent(listing) && !offersSale(listing);
     const both = offersBoth(listing);
@@ -920,6 +922,7 @@ function BrowseOverlayPrices({
                 isRent
                 commissionAmountInr={listing.commissionAmount}
                 audience={audience}
+                showNoRentCommission={showNoRentCommission}
                 className={priceClass}
             />
         );
@@ -949,6 +952,7 @@ function BrowseOverlayPrices({
                         isRent
                         commissionAmountInr={listing.commissionAmount}
                         audience={audience}
+                        showNoRentCommission={showNoRentCommission}
                         className="font-semibold text-ink"
                     />
                 </span>
@@ -1045,7 +1049,7 @@ function BrowseOverlayPropertyCard({
             <div className="flex flex-1 flex-col gap-3.5 min-inline-0">
                 <OverlayCardSummary
                     href={detailsHref}
-                    price={<BrowseOverlayPrices listing={listing} />}
+                    price={<BrowseOverlayPrices listing={listing} showNoRentCommission />}
                     headline={headline}
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />
