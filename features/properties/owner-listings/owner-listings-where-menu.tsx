@@ -461,8 +461,6 @@ export function OwnerListingsWhereMenu({
     const isServiceableSelected = hasNoPinnedPlace && yourAreas;
     const isAnywhereSelected = hasNoPinnedPlace && !yourAreas;
 
-    const soleCountry = locationTree.length === 1 ? locationTree[0] : null;
-
     const serviceableMeta =
         serviceAreas.length > 0
             ? serviceAreas.map(formatPlaceName).join(" · ")
@@ -600,10 +598,6 @@ export function OwnerListingsWhereMenu({
             return;
         }
         if (browseLevel.kind === "state") {
-            if (soleCountry) {
-                setBrowseLevel({ kind: "root" });
-                return;
-            }
             setBrowseLevel({ kind: "country", country: browseLevel.country });
             return;
         }
@@ -678,7 +672,7 @@ export function OwnerListingsWhereMenu({
             ));
         }
 
-        // Root: Anywhere + Serviceable, then countries (or states when only one country).
+        // Root: Anywhere + Serviceable, then the tree from countries down.
         return (
             <>
                 <DropdownMenuCheckboxItem
@@ -708,43 +702,19 @@ export function OwnerListingsWhereMenu({
                     </span>
                 </DropdownMenuCheckboxItem>
 
-                {soleCountry
-                    ? soleCountry.states.map((stateGroup) => (
-                          <WhereBrowseRow
-                              key={`${stateGroup.country}-${stateGroup.state}`}
-                              title={stateGroup.state}
-                              meta={formatListingCount(stateGroup.listingCount)}
-                              childCount={stateGroup.cities.length}
-                              childLabel={formatChildCount(
-                                  stateGroup.cities.length,
-                                  "city",
-                                  "cities",
-                              )}
-                              icon={LandPlot}
-                              checked={isStateSelected(stateGroup.country, stateGroup.state)}
-                              onToggleSelect={() =>
-                                  toggleStateSelect(stateGroup.country, stateGroup.state)
-                              }
-                              onDrill={() => drillState(stateGroup.country, stateGroup.state)}
-                          />
-                      ))
-                    : locationTree.map((countryGroup) => (
-                          <WhereBrowseRow
-                              key={countryGroup.country}
-                              title={countryGroup.country}
-                              meta={formatListingCount(countryGroup.listingCount)}
-                              childCount={countryGroup.states.length}
-                              childLabel={formatChildCount(
-                                  countryGroup.states.length,
-                                  "state",
-                                  "states",
-                              )}
-                              icon={Globe2}
-                              checked={isCountrySelected(countryGroup.country)}
-                              onToggleSelect={() => toggleCountrySelect(countryGroup.country)}
-                              onDrill={() => drillCountry(countryGroup.country)}
-                          />
-                      ))}
+                {locationTree.map((countryGroup) => (
+                    <WhereBrowseRow
+                        key={countryGroup.country}
+                        title={countryGroup.country}
+                        meta={formatListingCount(countryGroup.listingCount)}
+                        childCount={countryGroup.states.length}
+                        childLabel={formatChildCount(countryGroup.states.length, "state", "states")}
+                        icon={Globe2}
+                        checked={isCountrySelected(countryGroup.country)}
+                        onToggleSelect={() => toggleCountrySelect(countryGroup.country)}
+                        onDrill={() => drillCountry(countryGroup.country)}
+                    />
+                ))}
             </>
         );
     };

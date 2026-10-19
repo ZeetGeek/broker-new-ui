@@ -147,8 +147,21 @@ export type PropertyBrowseCity = {
     localities: PropertyBrowseCityLocality[];
 };
 
+export type PropertyBrowseState = {
+    state: string;
+    listingCount: number;
+    cities: PropertyBrowseCity[];
+};
+
+export type PropertyBrowseCountry = {
+    country: string;
+    listingCount: number;
+    states: PropertyBrowseState[];
+};
+
+/** Country → state → city → locality tree of owner-listed places. */
 export type PropertyBrowseCitiesResponse = {
-    items: PropertyBrowseCity[];
+    items: PropertyBrowseCountry[];
 };
 
 export type PropertyListingOptions = {

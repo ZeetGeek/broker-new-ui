@@ -1,5 +1,6 @@
 import type {
     PropertyBrowseCity,
+    PropertyBrowseCountry,
     PropertyBrowseListing,
     PropertyRepresentationStanding,
 } from "@/lib/api/properties";
@@ -312,51 +313,69 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
     };
 }
 
-/** Synthetic listings so the existing Where menu location tree keeps working. */
-export function citiesToLocationListings(cities: PropertyBrowseCity[]): OwnerListingItem[] {
+/** Synthetic listings so the Where menu location tree is built from the API tree. */
+export function locationTreeToListings(countries: PropertyBrowseCountry[]): OwnerListingItem[] {
     const stubs: OwnerListingItem[] = [];
 
-    for (const cityGroup of cities) {
-        const localities =
-            cityGroup.localities.length > 0
-                ? cityGroup.localities
-                : [{ name: cityGroup.city, listingCount: cityGroup.listingCount }];
-
-        for (const locality of localities) {
-            stubs.push({
-                id: `${cityGroup.city}:${locality.name}`,
-                configLabel: "Listing",
-                propertyTypeLabel: "apartment",
-                bhk: 0,
-                locality: locality.name,
-                city: cityGroup.city,
-                country: "India",
-                saleAmountInr: null,
-                rentAmountInr: null,
-                areaSqft: 0,
-                furnishingLabel: "Unfurnished",
-                furnishing: "unfurnished",
-                listedHoursAgo: 0,
-                brokerRequestCount: 0,
-                brokerSlotsTotal: DEFAULT_BROKER_SLOTS_TOTAL,
-                brokerSlotsOpen: DEFAULT_BROKER_SLOTS_TOTAL,
-                commissionPercent: 0,
-                commissionAmount: 0,
-                ownerName: "Owner",
-                photoCount: 0,
-                isNew: false,
-                readyToMove: true,
-                hasRequested: false,
-                isRepresenting: false,
-                isInvitePending: false,
-                isBookmarked: false,
-                imageSrc: "",
-                imageSrcs: [],
-                status: "active",
-                // Carry API count through for the location tree.
-                detailLabel: String(locality.listingCount),
-            });
+    for (const countryGroup of countries) {
+        for (const stateGroup of countryGroup.states) {
+            for (const cityGroup of stateGroup.cities) {
+                stubs.push(
+                    ...cityToLocationStubs(cityGroup, stateGroup.state, countryGroup.country),
+                );
+            }
         }
+    }
+
+    return stubs;
+}
+
+function cityToLocationStubs(
+    cityGroup: PropertyBrowseCity,
+    state: string,
+    country: string,
+): OwnerListingItem[] {
+    const stubs: OwnerListingItem[] = [];
+    const localities =
+        cityGroup.localities.length > 0
+            ? cityGroup.localities
+            : [{ name: cityGroup.city, listingCount: cityGroup.listingCount }];
+
+    for (const locality of localities) {
+        stubs.push({
+            id: `${country}:${state}:${cityGroup.city}:${locality.name}`,
+            configLabel: "Listing",
+            propertyTypeLabel: "apartment",
+            bhk: 0,
+            locality: locality.name,
+            city: cityGroup.city,
+            state,
+            country,
+            saleAmountInr: null,
+            rentAmountInr: null,
+            areaSqft: 0,
+            furnishingLabel: "Unfurnished",
+            furnishing: "unfurnished",
+            listedHoursAgo: 0,
+            brokerRequestCount: 0,
+            brokerSlotsTotal: DEFAULT_BROKER_SLOTS_TOTAL,
+            brokerSlotsOpen: DEFAULT_BROKER_SLOTS_TOTAL,
+            commissionPercent: 0,
+            commissionAmount: 0,
+            ownerName: "Owner",
+            photoCount: 0,
+            isNew: false,
+            readyToMove: true,
+            hasRequested: false,
+            isRepresenting: false,
+            isInvitePending: false,
+            isBookmarked: false,
+            imageSrc: "",
+            imageSrcs: [],
+            status: "active",
+            // Carry API count through for the location tree.
+            detailLabel: String(locality.listingCount),
+        });
     }
 
     return stubs;

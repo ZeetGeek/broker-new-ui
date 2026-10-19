@@ -15,7 +15,7 @@ import {
 import type { OwnerListingsPoolSummary } from "@/features/properties/owner-listings/build-owner-listings-summary-lines";
 import { buildQuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
 import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/owner-listings/count-new-listings-this-week";
-import { citiesToLocationListings } from "@/features/properties/owner-listings/map-browse-listing";
+import { locationTreeToListings } from "@/features/properties/owner-listings/map-browse-listing";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
 import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
@@ -296,7 +296,7 @@ export function OwnerListingsPage() {
         void fetchOwnerListingCities()
             .then((data) => {
                 if (!cancelled) {
-                    setLocationListings(citiesToLocationListings(data.items));
+                    setLocationListings(locationTreeToListings(data.items));
                 }
             })
             .catch(() => {
