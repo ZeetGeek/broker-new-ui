@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import { cn } from "@/lib/utils";
-
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { FilterChip } from "@/components/shared/filter-chip";
 import {
     Dialog,
     DialogClose,
@@ -13,13 +12,9 @@ import {
     DialogPopup,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import type { BrokerVisitSummary, SummaryFilter } from "@/features/site-visits/broker/model";
-import {
-    formatChipCount,
-    ownerListingsChipClassName,
-    ownerListingsChipCountClassName,
-} from "@/features/properties/owner-listings/owner-listings-chip-styles";
 
 const FOCUS_OPTIONS: {
     key: SummaryFilter;
@@ -87,27 +82,25 @@ export function VisitsFocusFiltersDialog({
                     <DialogDescription>Narrow the schedule by day or status.</DialogDescription>
                     <DialogClose />
                 </DialogHeader>
-                <div className="flex flex-wrap gap-2 p-5">
-                    {FOCUS_OPTIONS.map((option) => {
-                        const selected = draft === option.key;
-                        const count = summary[option.field];
-                        return (
-                            <button
-                                key={option.key}
-                                type="button"
-                                aria-pressed={selected}
-                                title={option.description}
-                                onClick={() => setDraft(selected ? undefined : option.key)}
-                                className={cn(ownerListingsChipClassName(selected), "gap-1.5")}
-                            >
-                                {option.label}
-                                <span className={ownerListingsChipCountClassName(selected)}>
-                                    {formatChipCount(count)}
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
+                <TooltipProvider>
+                    <div className="flex flex-wrap gap-2 p-5">
+                        {FOCUS_OPTIONS.map((option) => {
+                            const selected = draft === option.key;
+                            const count = summary[option.field];
+                            return (
+                                <FilterChip
+                                    key={option.key}
+                                    label={option.label}
+                                    count={count}
+                                    isActive={selected}
+                                    clearable
+                                    onClick={() => setDraft(selected ? undefined : option.key)}
+                                    description={option.description}
+                                />
+                            );
+                        })}
+                    </div>
+                </TooltipProvider>
                 <footer className="border-bs border-border-warm bg-surface px-5 py-4">
                     <AppModalFooter
                         secondaryLabel="Clear"

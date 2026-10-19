@@ -2,15 +2,9 @@
 
 import { SlidersHorizontal } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { FilterChip, FilterChipCount, filterChipClassName } from "@/components/shared/filter-chip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-import {
-    formatChipCount,
-    ownerListingsChipClassName,
-    ownerListingsChipCountClassName,
-} from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
@@ -31,6 +25,7 @@ export function VisitsTabs({
     filtersCount = 0,
     onChange,
     onFilters,
+    onClearFilters,
     rangeToolbar,
 }: {
     value: BrokerVisitsTab;
@@ -38,6 +33,7 @@ export function VisitsTabs({
     filtersCount?: number;
     onChange: (tab: BrokerVisitsTab) => void;
     onFilters: () => void;
+    onClearFilters?: () => void;
     rangeToolbar?: {
         query: string;
         onQueryChange: (next: string) => void;
@@ -63,45 +59,16 @@ export function VisitsTabs({
                 <div className="flex items-center justify-between gap-3 sm:gap-4">
                     <OwnerListingsChipsCarousel>
                         <OwnerListingsChipsCarouselSlide>
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <button
-                                            type="button"
-                                            className={cn(
-                                                ownerListingsChipClassName(filtersActive),
-                                                "gap-2",
-                                            )}
-                                            onClick={onFilters}
-                                            aria-pressed={filtersActive}
-                                        >
-                                            <SlidersHorizontal
-                                                aria-hidden
-                                                className={cn(
-                                                    "block-4 inline-4",
-                                                    filtersActive
-                                                        ? "text-brand-text"
-                                                        : "text-brand",
-                                                )}
-                                                strokeWidth={1.75}
-                                            />
-                                            <span>Filters</span>
-                                            {filtersActive ? (
-                                                <span
-                                                    className={ownerListingsChipCountClassName(
-                                                        true,
-                                                    )}
-                                                >
-                                                    {formatChipCount(filtersCount)}
-                                                </span>
-                                            ) : null}
-                                        </button>
-                                    }
-                                />
-                                <TooltipContent side="bottom">
-                                    Filter the current visits section
-                                </TooltipContent>
-                            </Tooltip>
+                            <FilterChip
+                                label="Filters"
+                                icon={SlidersHorizontal}
+                                count={filtersCount}
+                                isActive={filtersActive}
+                                clearable={filtersActive && Boolean(onClearFilters)}
+                                onClick={onFilters}
+                                onClear={onClearFilters}
+                                description="Filter the current visits section"
+                            />
                         </OwnerListingsChipsCarouselSlide>
 
                         {TABS.map((tab) => {
@@ -113,13 +80,14 @@ export function VisitsTabs({
                                         role="tab"
                                         aria-selected={active}
                                         onClick={() => onChange(tab.value)}
-                                        className={ownerListingsChipClassName(active)}
+                                        className={filterChipClassName(active)}
                                     >
                                         <span className="md:hidden">{tab.mobileLabel}</span>
                                         <span className="hidden md:inline">{tab.label}</span>
-                                        <span className={ownerListingsChipCountClassName(active)}>
-                                            {formatChipCount(counts[tab.value])}
-                                        </span>
+                                        <FilterChipCount
+                                            count={counts[tab.value]}
+                                            isActive={active}
+                                        />
                                     </button>
                                 </OwnerListingsChipsCarouselSlide>
                             );

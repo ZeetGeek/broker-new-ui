@@ -8,6 +8,7 @@ import { ArrowDownUp, ChevronDown, Search } from "lucide-react";
 import { ownerRequestsHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { FilterChipCount, filterChipClassName } from "@/components/shared/filter-chip";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -18,11 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { OwnerRequestsSummary, OwnerRequestsTab } from "@/features/owner-requests/types";
-import {
-    formatChipCount,
-    ownerListingsChipClassName,
-    ownerListingsChipCountClassName,
-} from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
@@ -125,7 +121,7 @@ function SortMenu({
                     <button
                         type="button"
                         className={cn(
-                            ownerListingsChipClassName(!isDefaultSort),
+                            filterChipClassName(!isDefaultSort),
                             "gap-2",
                             isDefaultSort && "text-ink-muted",
                         )}
@@ -197,7 +193,7 @@ export function OwnerRequestsHeader({
                                                     href={ownerRequestsHref(chip.key)}
                                                     aria-current={active ? "page" : undefined}
                                                     className={cn(
-                                                        ownerListingsChipClassName(active),
+                                                        filterChipClassName(active),
                                                         "gap-2",
                                                     )}
                                                 >
@@ -207,16 +203,11 @@ export function OwnerRequestsHeader({
                                                     <span className="hidden md:inline">
                                                         {chip.label}
                                                     </span>
-                                                    <span
-                                                        className={ownerListingsChipCountClassName(
-                                                            active,
-                                                        )}
-                                                    >
-                                                        {formatChipCount(
-                                                            count,
-                                                            isLoading && !summary,
-                                                        )}
-                                                    </span>
+                                                    <FilterChipCount
+                                                        count={count}
+                                                        isActive={active}
+                                                        isLoading={isLoading && !summary}
+                                                    />
                                                     {chip.key === "requests" &&
                                                     (summary?.incomingPending ?? 0) > 0 ? (
                                                         <span

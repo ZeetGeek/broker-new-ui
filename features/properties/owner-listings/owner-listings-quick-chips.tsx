@@ -4,20 +4,14 @@ import { useEffect, useState } from "react";
 
 import { Search, SlidersHorizontal } from "lucide-react";
 
-import { cn } from "@/lib/utils";
-
+import { FilterChip } from "@/components/shared/filter-chip";
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import type {
     QuickChipCounts,
     QuickChipKey,
 } from "@/features/properties/owner-listings/build-quick-chip-counts";
-import {
-    formatChipCount,
-    ownerListingsChipClassName,
-    ownerListingsChipCountClassName,
-} from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
@@ -57,6 +51,7 @@ export type OwnerListingsQuickChipsProps = {
     isLoading?: boolean;
     onToggleQuickChip: (key: QuickChipKey) => void;
     onOpenFilters: () => void;
+    onClearSheetFilters?: () => void;
     onQueryChange: (q: string) => void;
     onSortChange: (sort: OwnerListingSort) => void;
 };
@@ -106,87 +101,6 @@ function OwnerListingsQueryInput({
     );
 }
 
-function QuickChipButton({
-    chip,
-    count,
-    isActive,
-    isLoading,
-    onClick,
-}: {
-    chip: QuickChipConfig;
-    count: number;
-    isActive: boolean;
-    isLoading?: boolean;
-    onClick: () => void;
-}) {
-    return (
-        <Tooltip>
-            <TooltipTrigger
-                render={
-                    <button
-                        type="button"
-                        className={ownerListingsChipClassName(isActive)}
-                        onClick={onClick}
-                        aria-pressed={isActive}
-                    >
-                        <span className="md:hidden">{chip.mobileLabel}</span>
-                        <span className="hidden md:inline">{chip.label}</span>
-                        <span className={ownerListingsChipCountClassName(isActive)}>
-                            {formatChipCount(count, isLoading)}
-                        </span>
-                    </button>
-                }
-            />
-            <TooltipContent side="bottom">{chip.description}</TooltipContent>
-        </Tooltip>
-    );
-}
-
-function FiltersChipButton({
-    sheetFilterCount,
-    isLoading,
-    onClick,
-}: {
-    sheetFilterCount: number;
-    isLoading?: boolean;
-    onClick: () => void;
-}) {
-    const isActive = sheetFilterCount > 0;
-
-    return (
-        <Tooltip>
-            <TooltipTrigger
-                render={
-                    <button
-                        type="button"
-                        className={cn(ownerListingsChipClassName(isActive), "gap-2")}
-                        onClick={onClick}
-                        aria-pressed={isActive}
-                    >
-                        <SlidersHorizontal
-                            aria-hidden
-                            className={cn(
-                                "block-4 inline-4",
-                                isActive ? "text-brand-text" : "text-brand",
-                            )}
-                            strokeWidth={1.75}
-                        />
-                        <span>Filters</span>
-                        {sheetFilterCount > 0 ? (
-                            <span className={ownerListingsChipCountClassName(isActive)}>
-                                {formatChipCount(sheetFilterCount, isLoading)}
-                            </span>
-                        ) : null}
-                    </button>
-                }
-            />
-            <TooltipContent side="bottom">
-                Advanced filters — area, timing, and commission
-            </TooltipContent>
-        </Tooltip>
-    );
-}
-
 export function OwnerListingsQuickChips({
     filters,
     chipCounts,
@@ -194,6 +108,7 @@ export function OwnerListingsQuickChips({
     isLoading = false,
     onToggleQuickChip,
     onOpenFilters,
+    onClearSheetFilters,
     onQueryChange,
     onSortChange,
 }: OwnerListingsQuickChipsProps) {
@@ -202,21 +117,30 @@ export function OwnerListingsQuickChips({
             <div className="flex items-center justify-between gap-3 sm:gap-4">
                 <OwnerListingsChipsCarousel>
                     <OwnerListingsChipsCarouselSlide>
-                        <FiltersChipButton
-                            sheetFilterCount={sheetFilterCount}
+                        <FilterChip
+                            label="Filters"
+                            icon={SlidersHorizontal}
+                            count={sheetFilterCount}
                             isLoading={isLoading}
+                            isActive={sheetFilterCount > 0}
+                            clearable={sheetFilterCount > 0 && Boolean(onClearSheetFilters)}
                             onClick={onOpenFilters}
+                            onClear={onClearSheetFilters}
+                            description="Advanced filters — area, timing, and commission"
                         />
                     </OwnerListingsChipsCarouselSlide>
 
                     {QUICK_CHIPS.map((chip) => (
                         <OwnerListingsChipsCarouselSlide key={chip.key}>
-                            <QuickChipButton
-                                chip={chip}
+                            <FilterChip
+                                label={chip.label}
+                                mobileLabel={chip.mobileLabel}
                                 count={chipCounts[chip.key]}
-                                isActive={filters[chip.key]}
                                 isLoading={isLoading}
+                                isActive={filters[chip.key]}
+                                clearable
                                 onClick={() => onToggleQuickChip(chip.key)}
+                                description={chip.description}
                             />
                         </OwnerListingsChipsCarouselSlide>
                     ))}

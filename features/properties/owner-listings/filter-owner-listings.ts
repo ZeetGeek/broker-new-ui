@@ -90,9 +90,9 @@ export function commissionRanges(filters: OwnerListingsFilters) {
 function hasCommissionRange(filters: OwnerListingsFilters): boolean {
     return Boolean(
         filters.minCommissionPercent ||
-            filters.maxCommissionPercent ||
-            filters.minCommissionAmount ||
-            filters.maxCommissionAmount,
+        filters.maxCommissionPercent ||
+        filters.minCommissionAmount ||
+        filters.maxCommissionAmount,
     );
 }
 
@@ -192,14 +192,12 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     return params;
 }
 
+/** Counts only Advanced filters sheet controls — not quick chips (New / Ready to move). */
 export function countSheetFilters(filters: OwnerListingsFilters): number {
     let count = 0;
     if (filters.minAreaSqft || filters.maxAreaSqft) count++;
-    if (filters.listedWithinDays || filters.newToday) count++;
+    if (filters.listedWithinDays) count++;
     if (hasCommissionRange(filters)) count++;
-    if (filters.slotsOpen) count++;
-    if (filters.commissionSet) count++;
-    if (filters.readyToMove) count++;
     return count;
 }
 

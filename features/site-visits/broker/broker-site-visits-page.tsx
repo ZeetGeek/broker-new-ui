@@ -361,6 +361,18 @@ export function BrokerSiteVisitsPage() {
                     if (tab === "slots") setSlotFiltersOpen(true);
                     else setVisitFiltersOpen(true);
                 }}
+                onClearFilters={() => {
+                    if (tab === "slots") {
+                        updateUrl({
+                            tab: "slots",
+                            buyer: undefined,
+                            propertyId: undefined,
+                            owner: undefined,
+                        });
+                    } else {
+                        updateUrl({ focus: undefined });
+                    }
+                }}
                 rangeToolbar={{
                     query: slotQuery,
                     onQueryChange: (next) =>

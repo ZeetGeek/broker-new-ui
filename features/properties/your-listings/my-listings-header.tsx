@@ -10,6 +10,7 @@ import { getShortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { FilterChip } from "@/components/shared/filter-chip";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -28,11 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import {
-    formatChipCount,
-    ownerListingsChipClassName,
-    ownerListingsChipCountClassName,
-} from "@/features/properties/owner-listings/owner-listings-chip-styles";
+import { ownerListingsChipClassName } from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
@@ -317,7 +314,7 @@ function MyListingsFilterDialog({
                 </div>
                 <div className="border-bs border-border-warm/40 bg-surface px-5 py-4">
                     <AppModalFooter
-                        secondaryLabel="Clear all"
+                        secondaryLabel="Reset filter"
                         onSecondary={() =>
                             setDraft({
                                 ...draft,
@@ -414,90 +411,42 @@ export function MyListingsHeader({
                     <div className="flex items-center justify-between gap-3 sm:gap-4">
                         <OwnerListingsChipsCarousel>
                             <OwnerListingsChipsCarouselSlide>
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={
-                                            <button
-                                                type="button"
-                                                className={cn(
-                                                    ownerListingsChipClassName(
-                                                        sheetFilterCount > 0,
-                                                    ),
-                                                    "gap-2",
-                                                )}
-                                                onClick={() => setSheetOpen(true)}
-                                                aria-pressed={sheetFilterCount > 0}
-                                            >
-                                                <SlidersHorizontal
-                                                    aria-hidden
-                                                    className={cn(
-                                                        "block-4 inline-4",
-                                                        sheetFilterCount > 0
-                                                            ? "text-brand-text"
-                                                            : "text-brand",
-                                                    )}
-                                                    strokeWidth={1.75}
-                                                />
-                                                <span>Filters</span>
-                                                {sheetFilterCount > 0 ? (
-                                                    <span
-                                                        className={ownerListingsChipCountClassName(
-                                                            true,
-                                                        )}
-                                                    >
-                                                        {formatChipCount(
-                                                            sheetFilterCount,
-                                                            isLoading,
-                                                        )}
-                                                    </span>
-                                                ) : null}
-                                            </button>
-                                        }
-                                    />
-                                    <TooltipContent side="bottom">
-                                        Sale/rent, BHK, and status filters
-                                    </TooltipContent>
-                                </Tooltip>
+                                <FilterChip
+                                    label="Filters"
+                                    icon={SlidersHorizontal}
+                                    count={sheetFilterCount}
+                                    isLoading={isLoading}
+                                    isActive={sheetFilterCount > 0}
+                                    clearable={sheetFilterCount > 0}
+                                    onClick={() => setSheetOpen(true)}
+                                    onClear={() =>
+                                        onFiltersChange({
+                                            ...filters,
+                                            propertyType: "",
+                                            bhk: [],
+                                            type: "",
+                                            status: "",
+                                            page: 1,
+                                        })
+                                    }
+                                    description="Sale/rent, BHK, and status filters"
+                                />
                             </OwnerListingsChipsCarouselSlide>
 
                             {QUICK_CHIPS.map((chip) => {
                                 const active = chipIsActive(filters, chip.key);
                                 return (
                                     <OwnerListingsChipsCarouselSlide key={chip.key}>
-                                        <Tooltip>
-                                            <TooltipTrigger
-                                                render={
-                                                    <button
-                                                        type="button"
-                                                        className={ownerListingsChipClassName(
-                                                            active,
-                                                        )}
-                                                        onClick={() => toggleChip(chip.key)}
-                                                        aria-pressed={active}
-                                                    >
-                                                        <span className="md:hidden">
-                                                            {chip.mobileLabel}
-                                                        </span>
-                                                        <span className="hidden md:inline">
-                                                            {chip.label}
-                                                        </span>
-                                                        <span
-                                                            className={ownerListingsChipCountClassName(
-                                                                active,
-                                                            )}
-                                                        >
-                                                            {formatChipCount(
-                                                                chipCount(summary, chip.key),
-                                                                isLoading,
-                                                            )}
-                                                        </span>
-                                                    </button>
-                                                }
-                                            />
-                                            <TooltipContent side="bottom">
-                                                {chip.description}
-                                            </TooltipContent>
-                                        </Tooltip>
+                                        <FilterChip
+                                            label={chip.label}
+                                            mobileLabel={chip.mobileLabel}
+                                            count={chipCount(summary, chip.key)}
+                                            isLoading={isLoading}
+                                            isActive={active}
+                                            clearable
+                                            onClick={() => toggleChip(chip.key)}
+                                            description={chip.description}
+                                        />
                                     </OwnerListingsChipsCarouselSlide>
                                 );
                             })}
