@@ -44,6 +44,7 @@ export type RepresentationItem = {
     propertySubtype?: string | null;
     propertyBhkConfig?: string | null;
     propertyBedrooms?: number | null;
+    propertyBathrooms?: number | null;
     propertyAreaSqft?: number | null;
     propertySalePrice?: string | number | null;
     propertyMonthlyRent?: string | number | null;
@@ -206,7 +207,7 @@ export const representativeApi = {
     },
 
     /** Remind the owner about a pending request (capped server-side). */
-    remind(representationId: string) {
+    remind(representationId: string): Promise<RepresentationItem> {
         if (isMockMode()) {
             return Promise.resolve({
                 id: representationId,

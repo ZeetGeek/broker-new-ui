@@ -22,6 +22,7 @@ export type InviteItem = {
     city: string;
     areaSqft: number;
     bhk: number;
+    bathrooms?: number | null;
     /** Ask in INR — rent when `isRent`, else sale. */
     amountInr: number;
     isRent: boolean;

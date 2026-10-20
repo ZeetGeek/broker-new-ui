@@ -50,6 +50,7 @@ function asRequestShape(item: InviteItem): RequestItem {
         city: item.city,
         areaSqft: item.areaSqft,
         bhk: item.bhk,
+        bathrooms: item.bathrooms,
         amountInr: item.amountInr,
         isRent: item.isRent,
         commissionPercent: item.commissionPercent,

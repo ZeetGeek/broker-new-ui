@@ -1,3 +1,5 @@
+import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
+
 /**
  * Lifecycle of a "request to represent" from the broker's side.
  *
@@ -41,6 +43,7 @@ export type RequestItem = {
     city: string;
     areaSqft: number;
     bhk: number;
+    bathrooms?: number | null;
     /** Ask in INR — rent when `isRent`, else sale. */
     amountInr: number;
     isRent: boolean;
@@ -152,5 +155,5 @@ export const DEFAULT_REQUESTS_FILTERS: RequestsFilters = {
  */
 export const ATTEMPT_LIMIT = 3;
 
-/** Reminders allowed per pending attempt. Raised in one place when product asks. */
-export const REMINDER_LIMIT = 3;
+/** Reminders allowed per pending attempt. */
+export const REMINDER_LIMIT = REPRESENTATION_REMINDER_LIMIT;

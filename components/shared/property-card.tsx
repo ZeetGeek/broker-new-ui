@@ -72,6 +72,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
+
 addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 
 const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted h-40 w-full";
@@ -127,7 +129,7 @@ const BROWSE_REQUEST_TOOLTIP = {
     idle: "Ask the owner for permission to sell this property",
     pending: "Sending your request…",
     remind: "Send the owner a reminder about your request",
-    remindersUsed: "You already used all three reminders for this request",
+    remindersUsed: "You already used both reminders for this request",
     withdraw: "Cancel this request. You can ask again later.",
     representing: "The owner already approved you for this listing",
     inviteAccept: "Accept the invite and get the owner's number",
@@ -136,9 +138,6 @@ const BROWSE_REQUEST_TOOLTIP = {
 
 const BROWSE_WITHDRAW_LABEL = "Cancel request";
 const BROWSE_WITHDRAWING_LABEL = "Cancelling…";
-/** Matches product reminder budget on a pending request (same as My deals). */
-const BROWSE_REMINDER_LIMIT_DEFAULT = 3;
-
 function BrowseActionHint({ children }: { children: string }) {
     return (
         <p className="body-xs text-center font-medium tracking-wide text-ink-muted">{children}</p>
@@ -468,7 +467,7 @@ export type PropertyCardProps = {
     canRemind?: boolean;
     /** Reminders already sent on this pending request. */
     remindersUsed?: number;
-    /** Max reminders for this request. Defaults to 3. */
+    /** Max reminders for this request. Defaults to REPRESENTATION_REMINDER_LIMIT. */
     remindersLimit?: number;
     /** Open chat with the owner — ⋯ menu once a request is sent. */
     onChat?: () => void;
@@ -1013,7 +1012,7 @@ function BrowseOverlayPropertyCard({
     onRemind,
     canRemind = true,
     remindersUsed = 0,
-    remindersLimit = BROWSE_REMINDER_LIMIT_DEFAULT,
+    remindersLimit = REPRESENTATION_REMINDER_LIMIT,
     onChat,
     onOpenTimeline,
     isRequestPending = false,

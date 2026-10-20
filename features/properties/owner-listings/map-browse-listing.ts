@@ -86,16 +86,24 @@ function furnishingLabel(value: OwnerListingFurnishing): string {
     return "Unfurnished";
 }
 
-function mapPropertyType(listing: PropertyBrowseListing): OwnerListingPropertyType {
-    const subtype = listing.subtype?.trim().toLowerCase();
+/** API `subtype` / `propertyType` → the card type. Shared with My deals so both name a listing alike. */
+export function mapApiPropertyType(
+    subtypeRaw: string | null | undefined,
+    propertyTypeRaw: string | null | undefined,
+): OwnerListingPropertyType {
+    const subtype = subtypeRaw?.trim().toLowerCase();
     if (subtype && SUBTYPE_TO_UI[subtype]) {
         return SUBTYPE_TO_UI[subtype];
     }
 
-    const category = listing.propertyType?.trim().toLowerCase();
+    const category = propertyTypeRaw?.trim().toLowerCase();
     if (category === "commercial") return "office";
     if (category === "land" || category === "agricultural") return "plot";
     return "apartment";
+}
+
+function mapPropertyType(listing: PropertyBrowseListing): OwnerListingPropertyType {
+    return mapApiPropertyType(listing.subtype, listing.propertyType);
 }
 
 function mapBhk(listing: PropertyBrowseListing): number {

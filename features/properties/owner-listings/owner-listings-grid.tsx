@@ -21,6 +21,10 @@ import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { REMINDER_LIMIT } from "@/features/properties/my-requests/types";
+import {
+    PENDING_REMINDER_COUNTS_QUERY_KEY,
+    usePendingReminderCounts,
+} from "@/features/properties/my-requests/use-pending-reminder-counts";
 import { BrowseRequestTimelineDialog } from "@/features/properties/owner-listings/browse-request-timeline-dialog";
 import { isNewInServiceAreas } from "@/features/properties/owner-listings/count-new-listings-this-week";
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
@@ -101,8 +105,14 @@ export function OwnerListingsGrid({
     );
     // Optimistic overrides until the next browse refetch.
     const [savedOverrides, setSavedOverrides] = useState<Record<string, boolean>>({});
-    /** Reminders sent this session per property (capped at REMINDER_LIMIT). */
+    const serverReminderCounts = usePendingReminderCounts();
+    /** Reminder counts changed on this page, until the server list refetches. */
     const [remindCounts, setRemindCounts] = useState<Record<string, number>>({});
+    const remindersUsedFor = useCallback(
+        (item: OwnerListingItem): number =>
+            remindCounts[item.id] ?? serverReminderCounts.get(item.id) ?? 0,
+        [remindCounts, serverReminderCounts],
+    );
     const [timelineTarget, setTimelineTarget] = useState<{
         propertyId: string;
         representationId?: string;
@@ -204,6 +214,8 @@ export function OwnerListingsGrid({
                     ...prev,
                     [item.id]: representation.id || true,
                 }));
+                setRemindCounts((prev) => ({ ...prev, [item.id]: 0 }));
+                void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
                 toast.success("Request sent. The owner will be notified.");
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not send request"));
@@ -212,7 +224,7 @@ export function OwnerListingsGrid({
                 setBusyKind(null);
             }
         },
-        [busyId, hasRequested, isInvitePending, isRepresenting],
+        [busyId, hasRequested, isInvitePending, isRepresenting, queryClient],
     );
 
     const handleCancelRequest = useCallback(
@@ -236,11 +248,8 @@ export function OwnerListingsGrid({
                 }
                 await representativeApi.withdraw(representationId);
                 setRequestOverrides((prev) => ({ ...prev, [item.id]: false }));
-                setRemindCounts((prev) => {
-                    const next = { ...prev };
-                    delete next[item.id];
-                    return next;
-                });
+                setRemindCounts((prev) => ({ ...prev, [item.id]: 0 }));
+                void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
                 toast.success("Request cancelled");
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not cancel request"));
@@ -249,13 +258,13 @@ export function OwnerListingsGrid({
                 setBusyKind(null);
             }
         },
-        [busyId, hasRequested, representationIdFor],
+        [busyId, hasRequested, queryClient, representationIdFor],
     );
 
     const handleRemind = useCallback(
         async (item: OwnerListingItem) => {
             if (busyId || !hasRequested(item)) return;
-            const used = remindCounts[item.id] ?? 0;
+            const used = remindersUsedFor(item);
             if (used >= REMINDER_LIMIT) return;
 
             setBusyId(item.id);
@@ -273,9 +282,10 @@ export function OwnerListingsGrid({
                     toast.error("Could not send reminder");
                     return;
                 }
-                await representativeApi.remind(representationId);
-                const nextUsed = used + 1;
+                const updated = await representativeApi.remind(representationId);
+                const nextUsed = Math.min(REMINDER_LIMIT, updated.reminderCount ?? used + 1);
                 setRemindCounts((prev) => ({ ...prev, [item.id]: nextUsed }));
+                void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
                 toast.success(
                     nextUsed >= REMINDER_LIMIT
                         ? `Reminder sent. You've used all ${REMINDER_LIMIT} reminders.`
@@ -288,7 +298,7 @@ export function OwnerListingsGrid({
                 setBusyKind(null);
             }
         },
-        [busyId, hasRequested, remindCounts, representationIdFor],
+        [busyId, hasRequested, queryClient, remindersUsedFor, representationIdFor],
     );
 
     const handleOpenChat = useCallback(
@@ -422,8 +432,8 @@ export function OwnerListingsGrid({
                                 requested ? () => void handleCancelRequest(item) : undefined
                             }
                             onRemind={requested ? () => void handleRemind(item) : undefined}
-                            canRemind={(remindCounts[item.id] ?? 0) < REMINDER_LIMIT}
-                            remindersUsed={remindCounts[item.id] ?? 0}
+                            canRemind={remindersUsedFor(item) < REMINDER_LIMIT}
+                            remindersUsed={remindersUsedFor(item)}
                             remindersLimit={REMINDER_LIMIT}
                             onChat={requested ? () => void handleOpenChat(item) : undefined}
                             onOpenTimeline={

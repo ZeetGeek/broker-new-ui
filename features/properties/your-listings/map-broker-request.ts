@@ -3,6 +3,8 @@ import type { RepresentationItem } from "@/lib/api/representative";
 import { calendarDaysBetween, formatDateIso } from "@/lib/format/date";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
+import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
+
 import type {
     BrokerRequestItem,
     BrokerRequestRowType,
@@ -96,7 +98,7 @@ function mapRow(rep: RepresentationItem, now: Date): BrokerRequestItem | null {
     const isPending = type === "pending" || type === "pending_stale";
     const isApproved = type === "approved";
     const reminderCount = rep.reminderCount ?? 0;
-    const remindersRemaining = rep.remindersRemaining ?? Math.max(0, 3 - reminderCount);
+    const remindersRemaining = rep.remindersRemaining ?? Math.max(0, REPRESENTATION_REMINDER_LIMIT - reminderCount);
     const canRemind = isPending && remindersRemaining > 0;
 
     const href = brokerOwnerListingDetailHref(rep.propertyId);

@@ -12,6 +12,9 @@ export const PIPELINE_STAGES = [
 
 export type PipelineStageId = (typeof PIPELINE_STAGES)[number]["id"];
 
+/** Reminders a broker may send the owner on one pending request. */
+export const REPRESENTATION_REMINDER_LIMIT = 2;
+
 /** WhatsApp support line — replace when a real number is assigned. */
 export const SUPPORT_WHATSAPP_E164 = "919824000000";
 

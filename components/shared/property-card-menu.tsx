@@ -33,6 +33,8 @@ import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import shareBrands from "@/components/shared/thesvg-color-share.json";
 import { Button } from "@/components/ui/button";
 
+import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
+
 addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 import {
     DropdownMenu,
@@ -85,7 +87,7 @@ export type PropertyCardMenuProps = {
     canRemind?: boolean;
     /** Reminders already sent — shown as Remind used/limit under Chat. */
     remindersUsed?: number;
-    /** Max reminders for this request. Defaults to 3. */
+    /** Max reminders for this request. Defaults to REPRESENTATION_REMINDER_LIMIT. */
     remindersLimit?: number;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
@@ -165,7 +167,7 @@ export function PropertyCardMenu({
     onRemind,
     canRemind = true,
     remindersUsed = 0,
-    remindersLimit = 3,
+    remindersLimit = REPRESENTATION_REMINDER_LIMIT,
     onOpenTimeline,
     onCancelRequest,
     onEdit,

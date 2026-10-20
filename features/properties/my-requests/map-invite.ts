@@ -2,6 +2,7 @@ import type { RepresentationItem } from "@/lib/api/representative";
 import { calendarDaysBetween } from "@/lib/format/date";
 
 import type { InviteItem, InviteStage } from "@/features/properties/my-requests/invite-types";
+import { mapApiPropertyType } from "@/features/properties/owner-listings/map-browse-listing";
 
 const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
     one_rk: 1,
@@ -55,11 +56,19 @@ function configLabel(rep: RepresentationItem): string {
 }
 
 function propertyTypeLabel(rep: RepresentationItem): string {
-    const subtype = rep.propertySubtype?.trim();
-    if (subtype && SUBTYPE_LABELS[subtype]) return SUBTYPE_LABELS[subtype];
-    const type = rep.propertyType?.trim();
-    if (type) return titleCase(type.replace(/_/g, " "));
-    return "Property";
+    return mapApiPropertyType(rep.propertySubtype, rep.propertyType);
+}
+
+/** Bedrooms first, then the BHK key — same order as the owner-listings card. */
+function bhkCount(rep: RepresentationItem): number {
+    if (rep.propertyBedrooms != null && rep.propertyBedrooms > 0) return rep.propertyBedrooms;
+    return rep.propertyBhkConfig ? (BHK_CONFIG_TO_NUMBER[rep.propertyBhkConfig] ?? 0) : 0;
+}
+
+function bathroomCount(rep: RepresentationItem): number | null {
+    return rep.propertyBathrooms != null && rep.propertyBathrooms > 0
+        ? rep.propertyBathrooms
+        : null;
 }
 
 function mapStage(status: string | undefined): InviteStage {
@@ -99,9 +108,7 @@ export function mapRepresentationToInviteItem(
     const invitedAt = rep.createdAt ?? new Date().toISOString();
     const respondedAt = stage === "pending" ? null : (rep.decidedAt ?? rep.updatedAt ?? invitedAt);
     const photos = (rep.propertyPhotos ?? []).filter(Boolean);
-    const bhk = rep.propertyBhkConfig
-        ? (BHK_CONFIG_TO_NUMBER[rep.propertyBhkConfig] ?? rep.propertyBedrooms ?? 0)
-        : (rep.propertyBedrooms ?? 0);
+    const bhk = bhkCount(rep);
 
     return {
         id: rep.id,
@@ -114,6 +121,7 @@ export function mapRepresentationToInviteItem(
         city,
         areaSqft: rep.propertyAreaSqft ?? 0,
         bhk,
+        bathrooms: bathroomCount(rep),
         amountInr,
         isRent,
         commissionPercent: toNumber(rep.propertyCommissionPercent),
