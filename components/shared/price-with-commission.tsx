@@ -24,9 +24,8 @@ export type PriceWithCommissionProps = {
      */
     audience?: CommissionAudience;
     /**
-     * When commission is unset, still show a hover tip (no underline).
-     * Works for rent, sale, and both. Only a set fee underlines the price.
-     * Defaults on so every listing price surfaces the tip.
+     * When commission is unset, still show a hover tip (dashed underline).
+     * Works for rent, sale, and both. Defaults on so every listing price tips.
      */
     showNoRentCommission?: boolean;
     className?: string;
@@ -111,7 +110,8 @@ export function listingCommissionTip({
 
 /**
  * Listing price. Hover shows the brokerage when a commission was set.
- * Unset commission tips with role-specific copy (no underline) by default.
+ * Unset commission tips with role-specific copy; price stays underlined
+ * (dashed) so the tip is discoverable on dense surfaces like Pipeline.
  */
 export function PriceWithCommission({
     amountInr,
@@ -132,12 +132,13 @@ export function PriceWithCommission({
         showNoRentCommission,
     });
 
-    const underline = Boolean(tip && !tip.plain);
+    // Always underline when a tip exists so the price reads as hoverable.
+    // Dashed = no commission yet; solid = fee is set (matches My Deals / browse).
     const priceClass = cn(
         "tabular text-brand",
         className,
-        underline &&
-            "cursor-help underline decoration-brand/30 decoration-from-font underline-offset-2",
+        tip && "cursor-help underline decoration-brand/40 decoration-from-font underline-offset-2",
+        tip?.plain && "decoration-dashed",
     );
 
     if (!tip) {
@@ -156,11 +157,15 @@ export function PriceWithCommission({
                     render={
                         <button
                             type="button"
-                            className={cn(
-                                "inline border-0 bg-transparent p-0 text-start text-inherit",
-                                tip.plain ? "cursor-default" : "cursor-help",
-                            )}
+                            className="inline cursor-help border-0 bg-transparent p-0 text-start text-inherit"
                             aria-label={ariaLabel}
+                            onClick={(event) => {
+                                // Pipeline / deal cards open on article click — keep the tip control local.
+                                event.stopPropagation();
+                            }}
+                            onPointerDown={(event) => {
+                                event.stopPropagation();
+                            }}
                         >
                             <span className={priceClass}>{priceLabel}</span>
                         </button>

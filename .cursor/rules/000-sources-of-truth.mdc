@@ -12,7 +12,7 @@ Authorities live in files. Rules only restates expensive mistakes.
 
 | File | Covers |
 |---|---|
-| `AGENTS.md` | Product, core loop, roles, vocabulary, market, repo boundary, deferred scope, open questions |
+| `AGENTS.md` | Product, core loop, roles, vocabulary, market, repo boundary, deferred scope, open questions, listing-price UI (`PriceWithCommission`) |
 | `.cursor/rules/structure.mdc` | Where code lives (full detail: `docs/STRUCTURE.md`) |
 | `.cursor/rules/001-hard-constraints.mdc` | Cross-cutting constraints that affect planning before any file is open |
 

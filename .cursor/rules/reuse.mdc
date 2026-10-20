@@ -36,9 +36,11 @@ Five rules restated because they are the ones that create duplication:
 2. **No `@apply` piling utilities into a class.** That recreates the
    unmaintainable CSS Tailwind exists to avoid. If it needs markup, make a
    component.
-3. **Never format a price, phone, or date inline.** Use `<Price>`,
-   `<PhoneNumber>`, `<DateDisplay>`. Contact masking in particular is a product
-   rule — hand-written masking is a data leak waiting to happen.
+3. **Never format a price, phone, or date inline.** Listing ask prices use
+   `<PriceWithCommission>` (`audience` broker|owner + commission fields). Other
+   money (offers, budgets, totals) may use `<Price>`. Also `<PhoneNumber>`,
+   `<DateDisplay>`. Contact masking is a product rule — hand-written masking is
+   a data leak waiting to happen.
 4. **No raw hex or arbitrary values.** `bg-[#2563eb]` is a token that escaped.
    Name colours by meaning: `--color-danger`, never `--color-red`.
 5. **Rule of three.** First use is a component. Second is a coincidence. Third
