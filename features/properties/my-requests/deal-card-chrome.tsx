@@ -414,13 +414,15 @@ export function DealContactSplitBar({
     );
 }
 
-/** Attached buyers on an approved deal. Attach buyer lives in the ⋯ menu. */
+/** Buyers on an approved deal — empty shows link "Attach buyers". */
 export function DealAttachedBuyers({
     buyers,
+    onAttach,
 }: {
     buyers: Array<{ id: string; name: string; avatarUrl?: string }>;
+    onAttach?: () => void;
 }) {
-    return <AttachedBuyersRow buyers={buyers} />;
+    return <AttachedBuyersRow buyers={buyers} onAttach={onAttach} />;
 }
 
 /** Exclusive owner attached to a broker listing — tap opens the owner picker. */

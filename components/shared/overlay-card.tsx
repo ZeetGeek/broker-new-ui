@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { MapPin, Maximize2 } from "@/components/shared/icons";
+import { type AppIcon, MapPin, Maximize2, UserPlus } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ import { MarqueeText } from "@/components/shared/marquee-text";
 import { OverlayCardPhotos } from "@/components/shared/overlay-card-photos";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { Button } from "@/components/ui/button";
 
 /*
  * Property listing card: clear photo on top, white essentials panel below.
@@ -186,6 +187,42 @@ export function OverlayPersonLine({
                 ) : null}
             </span>
             {action ? <span className={OVERLAY_PERSON_ACTION_CLASS}>{action}</span> : null}
+        </div>
+    );
+}
+
+/**
+ * Empty Owner / Buyers row — same label column as {@link OverlayPersonLine},
+ * with a brand `link` + icon where the name would sit ("Attach owner", …).
+ */
+export function OverlayPersonAttachLine({
+    label,
+    actionLabel,
+    onAttach,
+    icon: Icon = UserPlus,
+}: {
+    label: string;
+    actionLabel: string;
+    onAttach: () => void;
+    icon?: AppIcon;
+}) {
+    return (
+        <div className={cn(PERSON_CLASS, "inline-full")}>
+            <span className={OVERLAY_PERSON_LABEL_CLASS}>{label}</span>
+            <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={onAttach}
+                className="
+                  body-sm block-auto! min-block-0 flex-1 justify-start gap-1.5 px-0 py-0
+                  font-semibold text-brand underline-offset-4
+                  hover:text-brand-text hover:underline
+                "
+            >
+                <Icon aria-hidden strokeWidth={1.75} className="block-3.5 inline-3.5" />
+                {actionLabel}
+            </Button>
         </div>
     );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Check, Send, UserPlus, X } from "@/components/shared/icons";
+import { Check, Send, X } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
@@ -137,7 +137,6 @@ function InviteCardFooter({
     onAccept,
     onDecline,
     onAskToSell,
-    onAddBuyers,
     isBusy,
     pin = true,
 }: {
@@ -146,7 +145,6 @@ function InviteCardFooter({
     onDecline: (id: string) => void;
     /** Declined / expired — reset to the same Ask to sell CTA as owner listings. */
     onAskToSell?: (propertyId: string) => void;
-    onAddBuyers: () => void;
     isBusy: boolean;
     pin?: boolean;
 }) {
@@ -180,25 +178,9 @@ function InviteCardFooter({
         );
     }
 
+    // Accepted: attach buyers lives on the Buyers row (link), not a footer CTA.
     if (item.stage === "accepted") {
-        // Buyers already on the card open the modal — no duplicate button.
-        if (item.attachedClients.length > 0) return null;
-
-        return (
-            <DealOverlayFooter pin={pin}>
-                <Button
-                    size="md"
-                    variant="accent"
-                    type="button"
-                    disabled={isBusy}
-                    onClick={onAddBuyers}
-                    className="inline-full"
-                >
-                    <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    Attach buyer
-                </Button>
-            </DealOverlayFooter>
-        );
+        return null;
     }
 
     // Declined / expired — same reset card as owner listings (no Find similar).
@@ -313,8 +295,11 @@ export function InviteCard({
                         ownerAvatarUrl={item.ownerAvatarUrl}
                         ownerPhoneDigits={ownerPhoneDigits}
                     />
-                    {item.stage === "accepted" && item.attachedClients.length > 0 ? (
-                        <DealAttachedBuyers buyers={item.attachedClients} />
+                    {item.stage === "accepted" ? (
+                        <DealAttachedBuyers
+                            buyers={item.attachedClients}
+                            onAttach={() => setIsBuyersOpen(true)}
+                        />
                     ) : null}
                 </div>
                 {ownerPhoneDigits ? (
@@ -324,7 +309,6 @@ export function InviteCard({
                             onAccept={onAccept}
                             onDecline={onDecline}
                             onAskToSell={onAskToSell}
-                            onAddBuyers={() => setIsBuyersOpen(true)}
                             isBusy={isBusy}
                             pin={false}
                         />
@@ -341,7 +325,6 @@ export function InviteCard({
                         onAccept={onAccept}
                         onDecline={onDecline}
                         onAskToSell={onAskToSell}
-                        onAddBuyers={() => setIsBuyersOpen(true)}
                         isBusy={isBusy}
                     />
                 )}

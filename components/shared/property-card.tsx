@@ -55,6 +55,7 @@ import {
     OverlayCard,
     OverlayCardActions,
     OverlayCardSummary,
+    OverlayPersonAttachLine,
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
@@ -1699,8 +1700,8 @@ function OwnedContactSplitBar({
 
 /**
  * Broker/owner inventory card — same overlay chrome as Owner listings and My
- * Deals. Attach owner / Add buyer live in the ⋯ menu. Footer is WhatsApp +
- * Call (no Chat, timeline, Ask to sell, or Cancel request).
+ * Deals. Empty Owner / Buyers rows use link "Attach owner" / "Attach buyers";
+ * the ⋯ menu still offers those actions. Footer is WhatsApp + Call.
  */
 function OwnedOverlayPropertyCard({
     listing,
@@ -1817,9 +1818,19 @@ function OwnedOverlayPropertyCard({
                         locationLabel={`${listing.locality}, ${listing.city}`}
                     />
 
-                    {hasOwner ? <OverlayPersonLine label="Owner" name={ownerName} /> : null}
+                    {hasOwner ? (
+                        <OverlayPersonLine label="Owner" name={ownerName} />
+                    ) : onAttachOwner ? (
+                        <OverlayPersonAttachLine
+                            label="Owner"
+                            actionLabel={OWNED_ATTACH_OWNER_LABEL}
+                            onAttach={onAttachOwner}
+                        />
+                    ) : null}
 
-                    {hasBuyers ? <AttachedBuyersRow buyers={buyers} /> : null}
+                    {hasBuyers || onAddBuyer ? (
+                        <AttachedBuyersRow buyers={buyers} onAttach={onAddBuyer} />
+                    ) : null}
                 </div>
 
                 <OverlayCardActions className="flex-col gap-2">
