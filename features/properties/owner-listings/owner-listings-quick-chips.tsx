@@ -12,6 +12,7 @@ import type {
     QuickChipCounts,
     QuickChipKey,
 } from "@/features/properties/owner-listings/build-quick-chip-counts";
+import { ownerListingsFilterVisibility } from "@/features/properties/owner-listings/filter-visibility";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
@@ -110,6 +111,11 @@ export function OwnerListingsQuickChips({
     onQueryChange,
     onSortChange,
 }: OwnerListingsQuickChipsProps) {
+    const visibility = ownerListingsFilterVisibility(filters);
+    const visibleQuickChips = QUICK_CHIPS.filter(
+        (chip) => chip.key !== "readyToMove" || visibility.showReadyToMove,
+    );
+
     return (
         <TooltipProvider>
             <div className="flex items-center justify-between gap-3 sm:gap-4">
@@ -124,11 +130,11 @@ export function OwnerListingsQuickChips({
                             clearable={sheetFilterCount > 0 && Boolean(onClearSheetFilters)}
                             onClick={onOpenFilters}
                             onClear={onClearSheetFilters}
-                            description="Advanced filters — area, timing, and commission"
+                            description="Advanced filters — layout, timing, and commission"
                         />
                     </OwnerListingsChipsCarouselSlide>
 
-                    {QUICK_CHIPS.map((chip) => (
+                    {visibleQuickChips.map((chip) => (
                         <OwnerListingsChipsCarouselSlide key={chip.key}>
                             <FilterChip
                                 label={chip.label}

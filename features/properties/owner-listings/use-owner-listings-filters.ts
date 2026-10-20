@@ -12,6 +12,7 @@ import {
     ownerListingsFilterSignature,
     parseOwnerListingsFilters,
 } from "@/features/properties/owner-listings/filter-owner-listings";
+import { stripHiddenOwnerListingsFilters } from "@/features/properties/owner-listings/filter-visibility";
 import type { OwnerListingsFilters } from "@/features/properties/owner-listings/types";
 import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
 
@@ -26,6 +27,7 @@ const OWNER_LISTINGS_URL_KEYS = [
     "min",
     "max",
     "furnishing",
+    "category",
     "propertyType",
     "minArea",
     "maxArea",
@@ -57,9 +59,10 @@ function isOwnerListingsFilters(value: unknown): value is OwnerListingsFilters {
         typeof v.sort === "string";
     if (!ok) return false;
 
-    // Older prefs predate country/state multi-select.
+    // Older prefs predate country/state multi-select and category.
     if (!Array.isArray(v.countries)) v.countries = [];
     if (!Array.isArray(v.states)) v.states = [];
+    if (v.category === undefined) v.category = "";
     return true;
 }
 
@@ -136,7 +139,7 @@ export function useOwnerListingsFilters() {
 
     const setFilters = useCallback(
         (patch: Partial<OwnerListingsFilters>) => {
-            replace({ ...filters, ...patch });
+            replace(stripHiddenOwnerListingsFilters({ ...filters, ...patch }));
         },
         [filters, replace],
     );
@@ -191,7 +194,7 @@ export function useOwnerListingsFilters() {
 
     const applyFilters = useCallback(
         (next: OwnerListingsFilters) => {
-            replace(next);
+            replace(stripHiddenOwnerListingsFilters(next));
         },
         [replace],
     );

@@ -12,7 +12,7 @@ Authorities live in files. Rules only restates expensive mistakes.
 
 | File | Covers |
 |---|---|
-| `AGENTS.md` | Product, core loop, roles, vocabulary, market, repo boundary, deferred scope, open questions, listing-price UI (`PriceWithCommission`) |
+| `AGENTS.md` | Product, core loop, roles, vocabulary, market, repo boundary, deferred scope, open questions, listing-price UI (`PriceWithCommission`), list filter chrome (marketplace band vs Filters sheet), conditional property filters |
 | `.cursor/rules/structure.mdc` | Where code lives (full detail: `docs/STRUCTURE.md`) |
 | `.cursor/rules/001-hard-constraints.mdc` | Cross-cutting constraints that affect planning before any file is open |
 
@@ -21,7 +21,7 @@ Authorities live in files. Rules only restates expensive mistakes.
 | Doc | When |
 |---|---|
 | `docs/STRUCTURE.md` | Creating any file or folder |
-| `docs/DESIGN.md` | Colour, type, spacing, layout, components |
+| `docs/DESIGN.md` | Colour, type, spacing, layout, components (incl. §5.6–5.7 filter chrome + conditional filters) |
 | `docs/DESIGN-SYSTEM-SYNC.md` | Adding/changing tokens, fonts, shadows |
 | `docs/NAMING.md` | Naming files, folders, ids, types, API fields |
 | `docs/REUSE.md` | Tokens vs utilities vs shared components |

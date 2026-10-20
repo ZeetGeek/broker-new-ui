@@ -15,6 +15,7 @@ import {
 import type { OwnerListingsPoolSummary } from "@/features/properties/owner-listings/build-owner-listings-summary-lines";
 import { buildQuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
 import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/owner-listings/count-new-listings-this-week";
+import { stripHiddenOwnerListingsFilters } from "@/features/properties/owner-listings/filter-visibility";
 import { locationTreeToListings } from "@/features/properties/owner-listings/map-browse-listing";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
@@ -233,18 +234,26 @@ export function OwnerListingsPage() {
 
     const handleApplyBand = useCallback(
         (band: OwnerListingsBandFilters) => {
-            applyFilters({
-                ...filters,
-                ...band,
-                cursor: "",
-            });
+            applyFilters(
+                stripHiddenOwnerListingsFilters({
+                    ...filters,
+                    ...band,
+                    cursor: "",
+                }),
+            );
         },
         [applyFilters, filters],
     );
 
     const handleApplySheet = useCallback(
         (patch: Partial<OwnerListingsFilters>) => {
-            applyFilters({ ...filters, ...patch, cursor: "" });
+            applyFilters(
+                stripHiddenOwnerListingsFilters({
+                    ...filters,
+                    ...patch,
+                    cursor: "",
+                }),
+            );
         },
         [applyFilters, filters],
     );

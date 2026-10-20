@@ -42,19 +42,28 @@ These are expensive to get wrong even in planning. Full detail lives in
 12. **Same tokens, same components.** Owner screens use the same
     `docs/DESIGN.md` tokens, type classes, and shared primitives as broker.
     Role-specific copy, nav items, and data only — not a separate look.
+13. **Marketplace band only on pool browse.** The multi-segment Owner listings
+    top search bar is for marketplace discovery only. My Deals, Your listings,
+    Pipeline, Visits (and owner mirrors) use a **Filters** button/sheet with
+    page-specific dims — not that band. Detail: `AGENTS.md` + `docs/DESIGN.md`
+    §5.6.
+14. **Property filters are condition-based.** Match Add Property visibility
+    (`lib/visibility/derive.ts` + `FIELD_RULES`). Land/plot → hide BHK,
+    furnishing, bathrooms, etc.; clear values when a control hides. No second
+    visibility matrix. Detail: `AGENTS.md` + `docs/DESIGN.md` §5.7.
 
 ## Design & code shape
 
-13. **Canvas is warm cream `#EFEAE0`, not white.** One green hue family only.
+15. **Canvas is warm cream `#EFEAE0`, not white.** One green hue family only.
     `urgent` = deadline, `danger` = destructive — never decorative.
-14. **Never edit `components/ui/`** (vendored shadcn). Wrap in `components/shared/`.
-15. **Never bare `brokerId` / `ownerId`.** Use `brokerUserId` /
+16. **Never edit `components/ui/`** (vendored shadcn). Wrap in `components/shared/`.
+17. **Never bare `brokerId` / `ownerId`.** Use `brokerUserId` /
     `brokerProfileId` (and owner equivalents) — wrong id = wrong person's data.
-16. **Format via `lib/format/`** (and shared display components). No inline
+18. **Format via `lib/format/`** (and shared display components). No inline
     price/phone/date formatting. **Listing ask prices** →
     `<PriceWithCommission>` (never bare `<Price>` / `formatPriceInr` in JSX for
     sale/rent on a property). `snake_case` only inside `lib/api/`.
-17. **Icons are Tabler via `components/shared/icons.tsx`.** Never import
+19. **Icons are Tabler via `components/shared/icons.tsx`.** Never import
     `lucide-react` or raw `@tabler/icons-react` — add to the registry first.
     Use `WhatsAppIcon` / `CallIcon` / `MailIcon` for those CTAs so the glyph
     never drifts. Remap any Lucide that `npx shadcn add` reintroduces.

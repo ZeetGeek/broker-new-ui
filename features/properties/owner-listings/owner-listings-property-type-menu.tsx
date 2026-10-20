@@ -1,18 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-import {
-    Briefcase,
-    Building2,
-    Home,
-    Hotel,
-    LandPlot,
-    Layers,
-    type AppIcon,
-    Store,
-} from "@/components/shared/icons";
+import { Layers } from "@/components/shared/icons";
 
+import { propertyTypeOptions, toLabel } from "@/constants/property";
 import { formatPropertyTypeLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
@@ -31,79 +23,13 @@ import {
 } from "@/features/properties/owner-listings/owner-listings-band-menu-content";
 import { OwnerListingsBandMenuHeader } from "@/features/properties/owner-listings/owner-listings-band-menu-header";
 import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
-import type { OwnerListingPropertyType } from "@/features/properties/owner-listings/types";
+import type { OwnerListingCategory } from "@/features/properties/owner-listings/types";
+import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
 
-type PropertyTypeValue = OwnerListingPropertyType | "";
+type PropertyTypeValue = string;
 
 const ANY_RADIO_VALUE = "any";
 
-const PROPERTY_TYPE_OPTIONS: {
-    value: PropertyTypeValue;
-    radioValue: string;
-    label: string;
-    description: string;
-    icon: AppIcon;
-}[] = [
-    {
-        value: "",
-        radioValue: ANY_RADIO_VALUE,
-        label: "Any type",
-        description: "All residential and commercial",
-        icon: Layers,
-    },
-    {
-        value: "apartment",
-        radioValue: "apartment",
-        label: "Apartment",
-        description: "Flats in a building",
-        icon: Building2,
-    },
-    {
-        value: "villa",
-        radioValue: "villa",
-        label: "Villa",
-        description: "Independent house",
-        icon: Home,
-    },
-    {
-        value: "penthouse",
-        radioValue: "penthouse",
-        label: "Penthouse",
-        description: "Top-floor luxury",
-        icon: Hotel,
-    },
-    {
-        value: "shop",
-        radioValue: "shop",
-        label: "Shop",
-        description: "Retail space",
-        icon: Store,
-    },
-    {
-        value: "office",
-        radioValue: "office",
-        label: "Office",
-        description: "Workspaces",
-        icon: Briefcase,
-    },
-    {
-        value: "plot",
-        radioValue: "plot",
-        label: "Plot",
-        description: "Land ready to build",
-        icon: LandPlot,
-    },
-];
-
-function toRadioValue(value: PropertyTypeValue): string {
-    return value === "" ? ANY_RADIO_VALUE : value;
-}
-
-function fromRadioValue(radioValue: string): PropertyTypeValue {
-    return radioValue === ANY_RADIO_VALUE ? "" : (radioValue as OwnerListingPropertyType);
-}
-
-/** Matches Looking for / Where row treatment — brand-soft when selected. */
 const rowClass = (checked: boolean) =>
     cn(
         `
@@ -149,10 +75,6 @@ const rowClass = (checked: boolean) =>
                   "**:data-[slot=property-type-title]:text-ink!",
                   "focus:**:data-[slot=property-type-title]:text-ink!",
                   "data-highlighted:**:data-[slot=property-type-title]:text-ink!",
-                  "hover:**:data-muted-line:text-ink-muted!",
-                  "focus:**:data-muted-line:text-ink-muted!",
-                  "data-highlighted:**:data-muted-line:text-ink-muted!",
-                  "data-checked:**:data-muted-line:text-ink-muted!",
                   "**:data-[slot=dropdown-menu-radio-item-indicator]:text-ink!",
                   "**:data-[slot=dropdown-menu-radio-item-indicator]:opacity-100",
                   "**:data-[slot=dropdown-menu-radio-item-indicator]:scale-100",
@@ -167,8 +89,9 @@ const rowClass = (checked: boolean) =>
 
 export type OwnerListingsPropertyTypeMenuProps = {
     value: PropertyTypeValue;
+    /** When set, options shrink to that category’s Add Property subtypes. */
+    category?: OwnerListingCategory | "";
     onValueChange: (value: PropertyTypeValue) => void;
-    /** Apply the reset to the results while the menu stays open. */
     onCommit?: () => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
@@ -176,14 +99,47 @@ export type OwnerListingsPropertyTypeMenuProps = {
 
 export function OwnerListingsPropertyTypeMenu({
     value,
+    category = "",
     onValueChange,
     onCommit,
     onOpenChange,
     className,
 }: OwnerListingsPropertyTypeMenuProps) {
     const [open, setOpen] = useState(false);
-    const triggerIcon =
-        PROPERTY_TYPE_OPTIONS.find((option) => option.value === value)?.icon ?? Layers;
+
+    const options = useMemo(() => {
+        const anyOption = {
+            value: "",
+            radioValue: ANY_RADIO_VALUE,
+            label: "Any type",
+            description: category
+                ? `All ${toLabel(category).toLowerCase()} types`
+                : "Pick a category to narrow types",
+        };
+
+        if (category) {
+            return [
+                anyOption,
+                ...propertyTypeOptions(category).map((option) => ({
+                    value: option.value,
+                    radioValue: option.value,
+                    label: option.label,
+                    description: toLabel(category),
+                })),
+            ];
+        }
+
+        // No category — keep coarse discovery chips until category is chosen.
+        return [
+            anyOption,
+            ...OWNER_LISTING_PROPERTY_TYPES.map((option) => ({
+                value: option.value,
+                radioValue: option.value,
+                label: option.label,
+                description: "All categories",
+            })),
+        ];
+    }, [category]);
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
@@ -198,7 +154,7 @@ export function OwnerListingsPropertyTypeMenu({
                     render={
                         <OwnerListingsBandSegment
                             label="Property type"
-                            icon={triggerIcon}
+                            icon={Layers}
                             value={formatPropertyTypeLabel(value)}
                             className="inline-full"
                             isOpen={open}
@@ -212,12 +168,16 @@ export function OwnerListingsPropertyTypeMenu({
                     className={cn(
                         OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
                         OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
-                        "overflow-hidden! p-0",
+                        "max-block-80 overflow-y-auto! overflow-x-hidden! p-0",
                     )}
                 >
                     <div className="flex flex-col gap-3 px-3 pe-3 pbs-3 pbe-3">
                         <OwnerListingsBandMenuHeader
-                            description="Choose a category"
+                            description={
+                                category
+                                    ? "Subtype for this category"
+                                    : "Choose a category for full subtypes"
+                            }
                             showReset={value !== ""}
                             onClear={() => {
                                 onValueChange("");
@@ -226,23 +186,21 @@ export function OwnerListingsPropertyTypeMenu({
                             className="px-2 pbs-1"
                         />
                         <DropdownMenuRadioGroup
-                            value={toRadioValue(value)}
+                            value={value || ANY_RADIO_VALUE}
                             onValueChange={(next) => {
-                                onValueChange(fromRadioValue(next));
+                                onValueChange(next === ANY_RADIO_VALUE ? "" : next);
                                 handleOpenChange(false);
                             }}
                         >
-                            {PROPERTY_TYPE_OPTIONS.map((option) => {
-                                const checked = value === option.value;
-                                const Icon = option.icon;
-
+                            {options.map((option) => {
+                                const checked = (value || "") === option.value;
                                 return (
                                     <DropdownMenuRadioItem
                                         key={option.radioValue}
                                         value={option.radioValue}
                                         className={rowClass(checked)}
                                     >
-                                        <Icon
+                                        <Layers
                                             aria-hidden
                                             data-slot="property-type-icon"
                                             color="var(--row-icon)"

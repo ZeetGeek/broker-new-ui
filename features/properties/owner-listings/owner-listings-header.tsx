@@ -61,13 +61,14 @@ export function OwnerListingsHeader({
 
     const handleClearSheetFilters = useCallback(() => {
         onApplySheet({
-            minAreaSqft: "",
-            maxAreaSqft: "",
             listedWithinDays: "",
             minCommissionPercent: "",
             maxCommissionPercent: "",
             minCommissionAmount: "",
             maxCommissionAmount: "",
+            bhk: [],
+            furnishing: "",
+            readyToMove: false,
             cursor: "",
         });
     }, [onApplySheet]);
@@ -78,6 +79,7 @@ export function OwnerListingsHeader({
                 <OwnerListingsSearchBand
                     appliedFilters={filters}
                     listings={listings}
+                    poolListings={poolListings}
                     serviceAreas={filterContext.serviceAreas}
                     onApplyBand={onApplyBand}
                 />
