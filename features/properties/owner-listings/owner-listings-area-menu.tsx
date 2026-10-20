@@ -241,7 +241,7 @@ export function OwnerListingsAreaMenu({
                         </div>
 
                         <div className="flex flex-col gap-3">
-                            <div className="flex items-end gap-px px-0.5 block-16" aria-hidden>
+                            <div className="flex items-end gap-1 px-0.5 block-16" aria-hidden>
                                 {histogram.map((height, index) => {
                                     const span =
                                         OWNER_LISTINGS_AREA_RANGE.max -
@@ -259,7 +259,7 @@ export function OwnerListingsAreaMenu({
                                             key={index}
                                             className={cn(
                                                 `
-                                                  min-inline-0 flex-1 rounded-t-[3px]
+                                                  min-inline-0 flex-1 rounded-[3px]
                                                   transition-[background-color,opacity,transform]
                                                   duration-160
                                                   ease-[cubic-bezier(0.22,1,0.36,1)]
@@ -269,7 +269,7 @@ export function OwnerListingsAreaMenu({
                                                     : "bg-border-warm opacity-85",
                                             )}
                                             style={{
-                                                height: `${Math.max(10, Math.round(height * 100))}%`,
+                                                height: `${Math.round(Math.max(0.08, height) * 100)}%`,
                                                 transitionDelay: open
                                                     ? `${Math.min(index, 14) * 10}ms`
                                                     : "0ms",

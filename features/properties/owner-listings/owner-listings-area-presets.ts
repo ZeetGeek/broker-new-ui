@@ -100,11 +100,16 @@ export function formatAreaSqftDisplay(value: number, openAtMax = false): string 
     return value.toLocaleString("en-IN");
 }
 
-const HISTOGRAM_BUCKETS = 28;
+const HISTOGRAM_BUCKETS = 20;
 
-/** Soft fallback curve when the pool has little area data. */
+/**
+ * Soft fallback curve when the pool has little area data.
+ * Main crest mid-left, then a taller secondary ridge on the right (no flat tail).
+ */
 function fallbackHistogramHeights(): number[] {
-    const peaks = [0.15, 0.28, 0.45, 0.7, 0.95, 1, 0.92, 0.85, 0.72, 0.6, 0.55, 0.48, 0.42, 0.38];
+    const peaks = [
+        0.22, 0.4, 0.58, 0.45, 0.68, 0.88, 1, 0.74, 0.48, 0.62, 0.38, 0.72, 0.9, 0.55, 0.32,
+    ];
     const heights: number[] = [];
     for (let i = 0; i < HISTOGRAM_BUCKETS; i++) {
         const t = i / (HISTOGRAM_BUCKETS - 1);
@@ -117,15 +122,26 @@ function fallbackHistogramHeights(): number[] {
     return heights;
 }
 
+/** Soften raw bucket counts so the bar ridge reads as a curve, not stairs. */
+function smoothHistogramCounts(counts: number[]): number[] {
+    return counts.map((_, index) => {
+        const left = counts[index - 1] ?? counts[index]!;
+        const mid = counts[index]!;
+        const right = counts[index + 1] ?? counts[index]!;
+        return left * 0.2 + mid * 0.6 + right * 0.2;
+    });
+}
+
 /** Relative bar heights 0–1 for the Area slider histogram. */
 export function buildAreaHistogram(
     areaSqftValues: number[],
     bounds: { min: number; max: number } = OWNER_LISTINGS_AREA_RANGE,
 ): number[] {
+    const ambient = fallbackHistogramHeights();
     const usable = areaSqftValues.filter(
         (value) => Number.isFinite(value) && value > 0 && value <= bounds.max * 1.25,
     );
-    if (usable.length < 3) return fallbackHistogramHeights();
+    if (usable.length < 3) return ambient;
 
     const counts = Array.from({ length: HISTOGRAM_BUCKETS }, () => 0);
     const span = bounds.max - bounds.min || 1;
@@ -137,6 +153,17 @@ export function buildAreaHistogram(
         );
         counts[index] = (counts[index] ?? 0) + 1;
     }
-    const peak = Math.max(...counts, 1);
-    return counts.map((count) => Math.max(0.08, count / peak));
+    const smoothed = smoothHistogramCounts(counts);
+    const peak = Math.max(...smoothed, 1);
+
+    // Sparse / empty buckets lift toward the ambient ridge so the right side
+    // still shows tall bars instead of a flat fence.
+    return smoothed.map((count, index) => {
+        const ratio = count / peak;
+        const ridge = ambient[index]!;
+        if (ratio <= 0.08) {
+            return Math.max(0.18, ridge * 0.85);
+        }
+        return Math.max(ratio, ridge * 0.28);
+    });
 }

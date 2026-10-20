@@ -28,9 +28,8 @@ const STACK_FACE_CLASS = `
 `;
 
 /**
- * Overlapping faces with the leading one on top. Hovering lifts a face above
- * its neighbours — `z-index` alone cannot do this because later siblings paint
- * over earlier ones, so the hovered item raises its own stacking order.
+ * Overlapping faces. Triggers opt into pointer events even inside a card panel
+ * that lets clicks pass through. Hovered or focused faces rise above neighbours.
  */
 export function AvatarStack({
     people,
@@ -47,16 +46,22 @@ export function AvatarStack({
 
     return (
         <TooltipProvider>
-            <div className={cn("flex items-center", className)}>
+            <div className={cn("isolate flex items-center", className)}>
                 {visible.map((person, index) => (
                     <Tooltip key={person.id}>
                         <TooltipTrigger
+                            tabIndex={0}
+                            aria-label={person.name}
                             render={
                                 <span
                                     className={cn(
                                         `
-                                          group/avatar relative inline-flex cursor-default
+                                          group/avatar pointer-events-auto relative inline-flex
+                                          cursor-default rounded-full
                                           hover:z-10
+                                          focus-visible:z-10 focus-visible:outline-2
+                                          focus-visible:outline-offset-2 focus-visible:outline-ring
+                                          data-popup-open:z-10
                                         `,
                                         index > 0 && (compact ? "-ms-1.5" : "-ms-2.5"),
                                     )}
@@ -79,15 +84,23 @@ export function AvatarStack({
                 {overflow.length > 0 ? (
                     <Tooltip>
                         <TooltipTrigger
+                            tabIndex={0}
+                            aria-label={
+                                overflowLabel ?? overflow.map((person) => person.name).join(", ")
+                            }
                             render={
                                 <span
                                     className={cn(
                                         `
-                                          group/avatar body-xs relative inline-flex
-                                          cursor-default items-center justify-center rounded-full
-                                          bg-ink font-sans font-semibold text-surface shadow-xs
-                                          ring-2 ring-surface transition-transform duration-160
+                                          group/avatar body-xs pointer-events-auto relative
+                                          inline-flex cursor-default items-center justify-center
+                                          rounded-full bg-ink font-sans font-semibold text-surface
+                                          shadow-xs ring-2 ring-surface transition-transform
+                                          duration-160
                                           hover:z-10 hover:-translate-y-0.5
+                                          focus-visible:z-10 focus-visible:outline-2
+                                          focus-visible:outline-offset-2 focus-visible:outline-ring
+                                          data-popup-open:z-10
                                         `,
                                         compact
                                             ? "-ms-1.5 block-6 inline-6"
@@ -98,8 +111,23 @@ export function AvatarStack({
                                 </span>
                             }
                         />
-                        <TooltipContent side="top" className="capitalize">
-                            {overflowLabel ?? overflow.map((person) => person.name).join(", ")}
+                        <TooltipContent
+                            side="top"
+                            className="flex-col items-stretch gap-3 p-3 pe-5 capitalize"
+                        >
+                            {overflowLabel ??
+                                overflow.map((person) => (
+                                    <span key={person.id} className="flex items-center gap-2.5">
+                                        <UserAvatar
+                                            name={person.name}
+                                            imageUrl={person.avatarUrl}
+                                            size="2xs"
+                                        />
+                                        <span className="wrap-anywhere min-inline-0">
+                                            {person.name}
+                                        </span>
+                                    </span>
+                                ))}
                         </TooltipContent>
                     </Tooltip>
                 ) : null}
