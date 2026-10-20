@@ -232,8 +232,9 @@ export function DealOverlayCard({
 }: {
     listing: DealCardListing;
     configLabel: string;
-    statusLabel: string;
-    statusTone: DealStatusTone;
+    /** Omit to match a fresh owner-listing card (only For sale / For rent). */
+    statusLabel?: string;
+    statusTone?: DealStatusTone;
     muted?: boolean;
     isBusy?: boolean;
     actions?: ReactNode;
@@ -251,6 +252,7 @@ export function DealOverlayCard({
         }) ||
         configLabel ||
         listing.title;
+    const tone = statusTone ?? "closed";
 
     return (
         <OverlayCard
@@ -262,13 +264,15 @@ export function DealOverlayCard({
             className={cn(isBusy && "pointer-events-none opacity-60")}
             chips={
                 <>
-                    <Badge
-                        color={STATUS_BADGE_COLOR[statusTone]}
-                        blur="dark"
-                        pulse={statusTone === "action"}
-                    >
-                        {statusLabel}
-                    </Badge>
+                    {statusLabel ? (
+                        <Badge
+                            color={STATUS_BADGE_COLOR[tone]}
+                            blur="dark"
+                            pulse={tone === "action"}
+                        >
+                            {statusLabel}
+                        </Badge>
+                    ) : null}
                     <Badge color={listing.isRent ? "orange" : "emerald"} blur="dark">
                         {listing.isRent ? "For rent" : "For sale"}
                     </Badge>

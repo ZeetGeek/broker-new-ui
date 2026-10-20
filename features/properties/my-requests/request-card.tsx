@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 import { Send, UserPlus } from "lucide-react";
@@ -10,7 +9,6 @@ import { Send, UserPlus } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
 import { formatRelativePast } from "@/lib/format/date";
-import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import tablerMenuIcons from "@/components/shared/tabler-menu.json";
@@ -140,6 +138,7 @@ function RequestCardFooter({
         );
     }
 
+    // Rejected / cancelled with attempts left — same CTA as a fresh owner listing.
     if (actions.canRetry) {
         return (
             <DealOverlayFooter pin={pin}>
@@ -151,7 +150,7 @@ function RequestCardFooter({
                     className="inline-full"
                 >
                     <Send aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    Ask again
+                    Ask to sell
                 </Button>
             </DealOverlayFooter>
         );
@@ -178,19 +177,8 @@ function RequestCardFooter({
         );
     }
 
-    return (
-        <DealOverlayFooter pin={pin}>
-            <Button
-                size="md"
-                variant="outline"
-                nativeButton={false}
-                className={cn("inline-full", secondaryClass)}
-                render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
-            >
-                Find similar
-            </Button>
-        </DealOverlayFooter>
-    );
+    // Locked / ended with no retry — no Find similar; card stays quiet.
+    return null;
 }
 
 export function RequestCard({
@@ -271,7 +259,7 @@ export function RequestCard({
             <DealOverlayCard
                 listing={item}
                 configLabel={item.configLabel}
-                statusLabel={REQUEST_STAGE_META[item.stage].label}
+                statusLabel={actions.canRetry ? undefined : REQUEST_STAGE_META[item.stage].label}
                 statusTone={STATUS_TONE[item.stage]}
                 muted={item.stage !== "pending" && item.stage !== "approved" && !actions.canRetry}
                 isBusy={isBusy}

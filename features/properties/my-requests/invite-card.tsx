@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
-import { Check, UserPlus, X } from "lucide-react";
+import { Check, Send, UserPlus, X } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
 import { formatRelativePast } from "@/lib/format/date";
-import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
@@ -138,6 +136,7 @@ function InviteCardFooter({
     item,
     onAccept,
     onDecline,
+    onAskToSell,
     onAddBuyers,
     isBusy,
     pin = true,
@@ -145,6 +144,8 @@ function InviteCardFooter({
     item: InviteItem;
     onAccept: (id: string) => void;
     onDecline: (id: string) => void;
+    /** Declined / expired — reset to the same Ask to sell CTA as owner listings. */
+    onAskToSell?: (propertyId: string) => void;
     onAddBuyers: () => void;
     isBusy: boolean;
     pin?: boolean;
@@ -200,34 +201,43 @@ function InviteCardFooter({
         );
     }
 
-    return (
-        <DealOverlayFooter pin={pin}>
-            <Button
-                size="md"
-                variant="outline"
-                nativeButton={false}
-                className={cn("inline-full", secondaryClass)}
-                render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
-            >
-                Find similar
-            </Button>
-        </DealOverlayFooter>
-    );
+    // Declined / expired — same reset card as owner listings (no Find similar).
+    if (onAskToSell) {
+        return (
+            <DealOverlayFooter pin={pin}>
+                <Button
+                    size="md"
+                    variant="accent"
+                    disabled={isBusy}
+                    onClick={() => onAskToSell(item.propertyId)}
+                    className="inline-full"
+                >
+                    <Send aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                    Ask to sell
+                </Button>
+            </DealOverlayFooter>
+        );
+    }
+
+    return null;
 }
 
 export function InviteCard({
     item,
     onAccept,
     onDecline,
+    onAskToSell,
     onBuyersChanged,
     isBusy = false,
 }: {
     item: InviteItem;
     onAccept: (id: string) => void;
     onDecline: (id: string) => void;
+    onAskToSell?: (propertyId: string) => void;
     onBuyersChanged: () => void;
     isBusy?: boolean;
 }) {
+    const isResetCard = item.stage === "declined" || item.stage === "expired";
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
@@ -285,9 +295,9 @@ export function InviteCard({
             <DealOverlayCard
                 listing={item}
                 configLabel={item.configLabel}
-                statusLabel={INVITE_STAGE_META[item.stage].label}
+                statusLabel={isResetCard ? undefined : INVITE_STAGE_META[item.stage].label}
                 statusTone={STATUS_TONE[item.stage]}
-                muted={item.stage === "declined" || item.stage === "expired"}
+                muted={false}
                 isBusy={isBusy}
                 actions={cardMenu}
             >
@@ -313,6 +323,7 @@ export function InviteCard({
                             item={item}
                             onAccept={onAccept}
                             onDecline={onDecline}
+                            onAskToSell={onAskToSell}
                             onAddBuyers={() => setIsBuyersOpen(true)}
                             isBusy={isBusy}
                             pin={false}
@@ -329,6 +340,7 @@ export function InviteCard({
                         item={item}
                         onAccept={onAccept}
                         onDecline={onDecline}
+                        onAskToSell={onAskToSell}
                         onAddBuyers={() => setIsBuyersOpen(true)}
                         isBusy={isBusy}
                     />
