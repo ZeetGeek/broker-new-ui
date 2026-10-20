@@ -58,7 +58,6 @@ import {
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
-import { Price } from "@/components/shared/price";
 import {
     type CommissionAudience,
     PriceWithCommission,
@@ -429,6 +428,8 @@ export type RepresentedPropertyCardListing = PropertyCardBase & {
     sharedBrokerCount: number;
     visitsBookedCount: number;
     clientsMatchedCount: number;
+    commissionPercent?: number | null;
+    commissionAmount?: number | null;
 };
 
 export type OwnedPropertyCardStatus = "draft" | "published" | "unpublished";
@@ -935,7 +936,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
 function BrowseOverlayPrices({
     listing,
     audience = "broker",
-    showNoRentCommission = false,
+    showNoRentCommission = true,
 }: {
     listing: BrowsePropertyCardListing;
     audience?: CommissionAudience;
@@ -1330,9 +1331,12 @@ function RepresentedPropertyCard({
 
             <div className="flex flex-1 flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-3">
-                    <Price
+                    <PriceWithCommission
                         amountInr={listing.amountInr}
                         isRent={listing.isRent}
+                        commissionPercent={listing.commissionPercent}
+                        commissionAmountInr={listing.commissionAmount}
+                        audience="broker"
                         className="h6 font-semibold"
                     />
                     <TransactionBadge isRent={listing.isRent} />

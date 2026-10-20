@@ -8,7 +8,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 /** Who is looking. Brokers earn the cut; owners see what they offered a broker. */
 export type CommissionAudience = "broker" | "owner";
 
-const NO_COMMISSION_TIP = "Owner hasn't added a commission";
+const NO_COMMISSION_TIP_BROKER = "Owner hasn't added a commission";
+const NO_COMMISSION_TIP_OWNER = "You haven't added a commission";
 
 export type PriceWithCommissionProps = {
     amountInr: number;
@@ -25,6 +26,7 @@ export type PriceWithCommissionProps = {
     /**
      * When commission is unset, still show a hover tip (no underline).
      * Works for rent, sale, and both. Only a set fee underlines the price.
+     * Defaults on so every listing price surfaces the tip.
      */
     showNoRentCommission?: boolean;
     className?: string;
@@ -57,8 +59,12 @@ function formatPercent(percent: number): string {
     return `${rounded}%`;
 }
 
-function noCommissionTip(): CommissionTip {
-    return { headline: NO_COMMISSION_TIP, detail: "", plain: true };
+function noCommissionTip(audience: CommissionAudience): CommissionTip {
+    return {
+        headline: audience === "owner" ? NO_COMMISSION_TIP_OWNER : NO_COMMISSION_TIP_BROKER,
+        detail: "",
+        plain: true,
+    };
 }
 
 /**
@@ -72,14 +78,14 @@ export function listingCommissionTip({
     commissionPercent,
     commissionAmountInr,
     audience = "broker",
-    showNoRentCommission = false,
+    showNoRentCommission = true,
 }: PriceWithCommissionProps): CommissionTip | null {
     const lead = audience === "owner" ? "Broker gets" : "You get";
 
     if (isRent) {
         const brokerageInr = positive(commissionAmountInr);
         if (brokerageInr <= 0) {
-            return showNoRentCommission ? noCommissionTip() : null;
+            return showNoRentCommission ? noCommissionTip(audience) : null;
         }
         return {
             headline: `${lead} ${formatPriceInr(brokerageInr)}`,
@@ -90,7 +96,7 @@ export function listingCommissionTip({
     const percent = positive(commissionPercent);
     const priceInr = positive(amountInr);
     if (percent <= 0) {
-        return showNoRentCommission ? noCommissionTip() : null;
+        return showNoRentCommission ? noCommissionTip(audience) : null;
     }
     if (priceInr <= 0) return null;
 
@@ -105,7 +111,7 @@ export function listingCommissionTip({
 
 /**
  * Listing price. Hover shows the brokerage when a commission was set.
- * Unset commission can still tip (no underline) when `showNoRentCommission`.
+ * Unset commission tips with role-specific copy (no underline) by default.
  */
 export function PriceWithCommission({
     amountInr,
@@ -113,7 +119,7 @@ export function PriceWithCommission({
     commissionPercent,
     commissionAmountInr,
     audience = "broker",
-    showNoRentCommission = false,
+    showNoRentCommission = true,
     className,
 }: PriceWithCommissionProps) {
     const priceLabel = isRent ? formatRentInr(amountInr) : formatPriceInr(amountInr);

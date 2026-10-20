@@ -144,6 +144,10 @@ export type BrokerRequestItem = {
     title: string;
     amountInr: number;
     isRent: boolean;
+    /** Sale commission percent when the owner set one. */
+    commissionPercent?: number | null;
+    /** Fixed rent brokerage in INR when the owner set one. */
+    commissionAmount?: number | null;
     note: string;
     action: { label: string; href: string; kind?: "remind" | "open" | "view" };
     /** Pending only — reminders already sent on this attempt. */

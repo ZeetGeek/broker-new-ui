@@ -5,10 +5,10 @@ import Link from "next/link";
 import { addCollection, Icon } from "@iconify/react/offline";
 import { MapPin, Phone } from "lucide-react";
 
-import { formatIndianPrice } from "@/lib/format/price";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,6 @@ import type { OwnerRequestCardItem } from "@/features/owner-requests/types";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
-
-function listingPriceLabel(item: OwnerRequestCardItem): string {
-    if (!item.amountInr) return "Price on request";
-    return formatIndianPrice(item.amountInr, item.isRent ? "rent" : "buy");
-}
 
 function listingPlace(item: OwnerRequestCardItem): string {
     return [item.locality, item.city].filter(Boolean).join(", ") || "Surat";
@@ -76,9 +71,18 @@ export function ActiveBrokerCard({ item }: { item: OwnerRequestCardItem }) {
             </div>
 
             <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                <p className="h5 truncate font-semibold tabular text-brand">
-                    {listingPriceLabel(item)}
-                </p>
+                {item.amountInr > 0 ? (
+                    <PriceWithCommission
+                        amountInr={item.amountInr}
+                        isRent={item.isRent}
+                        commissionPercent={item.commissionPercent}
+                        commissionAmountInr={item.commissionAmount}
+                        audience="owner"
+                        className="h5 truncate font-semibold"
+                    />
+                ) : (
+                    <p className="h5 truncate font-semibold text-ink-muted">Price on request</p>
+                )}
                 <p className="body-sm truncate text-ink-muted">{item.title}</p>
                 <p className="body-sm flex items-center gap-1.5 truncate text-ink-subtle">
                     <MapPin

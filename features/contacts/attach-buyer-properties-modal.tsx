@@ -7,12 +7,12 @@ import { Building2, Link2, Search } from "lucide-react";
 
 import { clientsApi } from "@/lib/api/clients";
 import { type RepresentationItem, representativeApi } from "@/lib/api/representative";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +26,8 @@ type AttachableProperty = {
     city: string;
     isRent: boolean;
     amountInr: number;
+    commissionPercent: number | null;
+    commissionAmount: number | null;
 };
 
 function toNumber(value: string | number | null | undefined): number {
@@ -52,6 +54,8 @@ function mapRepresentation(rep: RepresentationItem): AttachableProperty | null {
         city: rep.propertyCity?.trim() || "",
         isRent,
         amountInr: isRent ? rent : sale,
+        commissionPercent: toNumber(rep.propertyCommissionPercent) || null,
+        commissionAmount: toNumber(rep.propertyCommissionAmount) || null,
     };
 }
 
@@ -221,9 +225,6 @@ export function AttachBuyerPropertiesModal({
                     renderItem={(property) => {
                         const isSelected = selectedIds.includes(property.id);
                         const alreadyLinked = attachedIds.includes(property.id);
-                        const amount = property.isRent
-                            ? formatRentInr(property.amountInr)
-                            : formatPriceInr(property.amountInr);
 
                         return (
                             <div>
@@ -261,8 +262,21 @@ export function AttachBuyerPropertiesModal({
                                                 <Badge color="emerald">Already linked</Badge>
                                             ) : null}
                                         </div>
-                                        <p className="body-xs text-ink-muted">
-                                            {[property.city, amount].filter(Boolean).join(" · ")}
+                                        <p className="body-xs flex flex-wrap items-center gap-x-1 text-ink-muted">
+                                            {property.city ? (
+                                                <>
+                                                    <span>{property.city}</span>
+                                                    <span aria-hidden>·</span>
+                                                </>
+                                            ) : null}
+                                            <PriceWithCommission
+                                                amountInr={property.amountInr}
+                                                isRent={property.isRent}
+                                                commissionPercent={property.commissionPercent}
+                                                commissionAmountInr={property.commissionAmount}
+                                                audience="broker"
+                                                className="body-xs font-medium text-ink-muted"
+                                            />
                                         </p>
                                     </div>
                                 </label>
