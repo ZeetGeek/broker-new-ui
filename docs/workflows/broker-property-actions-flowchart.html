@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Broker Property Actions — Block, Cancel, Mark Sold</title>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      flowchart: { htmlLabels: true, curve: "basis", padding: 16, nodeSpacing: 40, rankSpacing: 50 },
+      themeVariables: {
+        fontFamily: "Segoe UI, system-ui, sans-serif",
+        fontSize: "15px",
+        primaryColor: "#e8f5e9",
+        primaryTextColor: "#1a1a1a",
+        primaryBorderColor: "#2e7d32",
+        lineColor: "#555",
+        secondaryColor: "#fff8e1",
+        tertiaryColor: "#fce4ec",
+      },
+    });
+  </script>
+  <style>
+    :root {
+      --ink: #1c1917;
+      --muted: #57534e;
+      --line: #e7e5e4;
+      --brand: #1b5e3b;
+      --cream: #faf7f2;
+      --card: #fff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--cream);
+      line-height: 1.55;
+      font-size: 16px;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 64px; }
+    header {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.6rem; color: var(--brand); }
+    .sub { color: var(--muted); margin: 0; }
+    .actions {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px;
+    }
+    button, .btn {
+      appearance: none; border: 1px solid var(--brand); background: var(--brand);
+      color: #fff; font: inherit; font-weight: 600; padding: 10px 16px;
+      border-radius: 10px; cursor: pointer; text-decoration: none;
+    }
+    button.secondary, .btn.secondary {
+      background: #fff; color: var(--brand);
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 22px 26px;
+      margin-bottom: 18px;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 1.2rem;
+      color: var(--brand);
+      border-bottom: 2px solid #c8e6c9;
+      padding-bottom: 8px;
+    }
+    h3 { margin: 18px 0 8px; font-size: 1.05rem; }
+    p, li { color: var(--ink); }
+    .muted { color: var(--muted); }
+    ol.steps { padding-left: 1.3rem; }
+    ol.steps li { margin-bottom: 8px; }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-top: 8px;
+    }
+    th, td {
+      border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top;
+    }
+    th { background: #f0fdf4; }
+    .chart {
+      overflow-x: auto;
+      background: #fafafa;
+      border: 1px dashed #ccc;
+      border-radius: 12px;
+      padding: 16px 8px;
+      margin-top: 12px;
+    }
+    .mermaid { display: flex; justify-content: center; }
+    .callout {
+      background: #fff8e1;
+      border-left: 4px solid #f9a825;
+      padding: 12px 14px;
+      border-radius: 0 10px 10px 0;
+      margin: 12px 0;
+    }
+    .good {
+      background: #e8f5e9;
+      border-left: 4px solid #2e7d32;
+      padding: 12px 14px;
+      border-radius: 0 10px 10px 0;
+      margin: 12px 0;
+    }
+    footer {
+      text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 8px;
+    }
+    @media print {
+      body { background: #fff; }
+      .actions { display: none !important; }
+      section, header { break-inside: avoid; box-shadow: none; }
+      .chart { border-style: solid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Broker property actions — simple guide</h1>
+      <p class="sub">
+        Three features for My Deals / Owner listings:
+        <strong>Block property</strong>,
+        <strong>Cancel representation</strong>, and
+        <strong>Mark as sold / rented</strong>.
+      </p>
+      <p class="sub" style="margin-top:8px">
+        Written in simple English so you can share with your team.
+        Open this file in Chrome → click <strong>Save as PDF</strong> → send to your friend.
+      </p>
+      <div class="actions">
+        <button type="button" onclick="window.print()">Save as PDF / Print</button>
+        <a class="btn secondary" href="#final-chart">Jump to final chart</a>
+      </div>
+    </header>
+
+    <section>
+      <h2>1. First understand — what is each button for?</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>In simple words</th>
+            <th>When broker can use it</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Block property</strong></td>
+            <td>Hide this property from my list. I don’t want to see it again. Owner is <em>not</em> told.</td>
+            <td>While browsing, or after a deal has already ended. <strong>Not</strong> while you are actively representing.</td>
+          </tr>
+          <tr>
+            <td><strong>Cancel representation</strong></td>
+            <td>I already got permission to sell, but now I want to stop. Owner <em>is</em> told.</td>
+            <td>Only on <strong>Representing</strong> (accepted) deals.</td>
+          </tr>
+          <tr>
+            <td><strong>Mark as sold / rented</strong></td>
+            <td>I sold (or rented) this property. Owner must <em>confirm</em> before the listing goes off the market.</td>
+            <td>Only on <strong>Representing</strong> deals.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <strong>Important:</strong> Don’t mix these up.
+        Block = hide for me.
+        Cancel = leave the deal.
+        Mark sold = tell owner the deal is done (owner must say yes).
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Chart A — which button should show?</h2>
+      <p class="muted">Read from top. Check the current status of the broker–owner link, then follow the box.</p>
+      <div class="chart">
+        <pre class="mermaid">
+flowchart TD
+  A["Broker opens a property card"] --> B{"What is the current status with this owner?"}
+
+  B -->|"No request yet, OR deal already ended"| C["Show: Block property\nDo NOT show Cancel representation\nDo NOT show Mark sold"]
+  B -->|"Request sent / invite waiting\n(not accepted yet)"| D["Show: Cancel request OR Decline invite\nAlso allow: Block property\nDo NOT show Mark sold"]
+  B -->|"Accepted — you are Representing"| E["Show: Cancel representation\nShow: Mark as sold / rented\nDo NOT show Block here"]
+
+  C --> C1["If broker blocks → property hides from this broker only\nOwner gets NO notification\nListing stays live for others"]
+  D --> D1["If broker blocks while pending →\nfirst cancel/decline the pending thing,\nthen hide the property"]
+  E --> E1["If broker wants to hide it also,\nfirst Cancel representation,\nthen ask: Also block this property?"]
+        </pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Feature 1 — Block property (step by step)</h2>
+      <ol class="steps">
+        <li>Broker sees a property they don’t want (wrong area, not useful, etc.).</li>
+        <li>Broker taps <strong>⋯ menu → Block property</strong>.</li>
+        <li>App asks: <em>“Hide this property from your list? The owner will not be told.”</em></li>
+        <li>Broker confirms.</li>
+        <li>Property disappears from Owner listings for <strong>this broker only</strong>.</li>
+        <li>Listing stays published. Other brokers can still see it. Owner status does not change.</li>
+        <li>If owner invites this broker later on the same property, invite is auto-declined quietly (don’t say “blocked” to the owner).</li>
+        <li>Broker can unblock later from a Blocked list if needed.</li>
+      </ol>
+      <div class="good"><strong>Recommendation:</strong> No notification to owner. Blocking is private, like mute.</div>
+    </section>
+
+    <section>
+      <h2>4. Feature 2 — Cancel representation (step by step)</h2>
+      <ol class="steps">
+        <li>Broker is on <strong>Representing</strong> tab (deal already accepted).</li>
+        <li>Broker taps <strong>⋯ → Cancel representation</strong> (wording in app can be: “Stop selling this property”).</li>
+        <li>App shows a strong confirm: you will lose owner phone / chat on this deal.</li>
+        <li>Optional: broker writes a short reason.</li>
+        <li>On confirm, cancel is <strong>immediate</strong> — no waiting for owner approval.</li>
+        <li>Owner gets notification: <em>“{Broker name} is no longer representing {property}.”</em></li>
+        <li>Card leaves Representing tab.</li>
+        <li>App may ask: <em>“Also block this property so you don’t see it again?”</em></li>
+      </ol>
+      <div class="good">
+        <strong>Recommendation:</strong> Cancel immediately (same idea as owner revoke today).
+        Don’t make owner accept/reject the cancel — that can trap the broker if owner never replies.
+      </div>
+    </section>
+
+    <section>
+      <h2>5. Feature 3 — Mark as sold / rented (step by step)</h2>
+      <ol class="steps">
+        <li>Broker is Representing and has closed the deal offline / with a buyer.</li>
+        <li>Broker taps <strong>⋯ → Mark as sold</strong> (or <strong>Mark as rented</strong> for rent listings).</li>
+        <li>Broker can optionally add buyer, amount, and a short note.</li>
+        <li>Listing becomes <strong>“Sale waiting for owner”</strong> (still visible, but claim is pending).</li>
+        <li>Owner gets notification with two buttons: <strong>Confirm sale</strong> or <strong>Not sold</strong>.</li>
+        <li><strong>If owner confirms:</strong> property marked sold/rented, removed from market, <em>all</em> brokers on that property get closed, proposing broker gets success.</li>
+        <li><strong>If owner says Not sold:</strong> listing goes back to normal, broker stays Representing, broker is notified.</li>
+        <li>Owner can also mark sold themselves anytime (no broker needed).</li>
+      </ol>
+      <div class="good">
+        <strong>Recommendation:</strong> Owner must confirm.
+        Reason: property belongs to owner, and more than one broker may be representing the same property.
+        Broker alone should not take the listing off the market for everyone.
+      </div>
+    </section>
+
+    <section>
+      <h2>6. Who gets notified?</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>What happened</th>
+            <th>Broker</th>
+            <th>Owner</th>
+            <th>Other brokers on same property</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Block property</td>
+            <td>Toast only</td>
+            <td>No</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Cancel representation</td>
+            <td>Toast</td>
+            <td><strong>Yes — must notify</strong></td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Broker marks sold (waiting)</td>
+            <td>“Waiting for owner”</td>
+            <td><strong>Yes — Confirm / Not sold</strong></td>
+            <td>Optional soft notice</td>
+          </tr>
+          <tr>
+            <td>Owner confirms sale</td>
+            <td><strong>Yes — success</strong></td>
+            <td>Toast</td>
+            <td><strong>Yes — listing closed</strong></td>
+          </tr>
+          <tr>
+            <td>Owner rejects sale claim</td>
+            <td><strong>Yes — not confirmed</strong></td>
+            <td>Toast</td>
+            <td>No</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="final-chart">
+      <h2>7. Final chart — full flow (share this)</h2>
+      <p>
+        This is the <strong>one chart</strong> to share with your friend.
+        It covers all three features from start to end.
+      </p>
+      <div class="chart">
+        <pre class="mermaid">
+flowchart TD
+  START["START: Broker is looking at a property card"] --> Q{"Check status:\nAre you already allowed to sell this property?"}
+
+  Q -->|"No — only browsing\nor deal already finished"| BLOCK["ACTION: Block property\nMeaning: Hide from my list only"]
+  Q -->|"Waiting — request or invite\nnot decided yet"| PENDING["ACTIONS:\n1 Cancel request / Decline invite\n2 OR Block property"]
+  Q -->|"Yes — Representing tab\nOwner already accepted"| LIVE["ACTIONS on ⋯ menu:\n1 Cancel representation\n2 Mark as sold or rented"]
+
+  BLOCK --> BLOCK_OK["Broker confirms hide\nResult: property hidden for this broker\nOwner NOT told\nListing still live for others"]
+  PENDING --> BLOCK_OK
+
+  LIVE --> CANCEL["Path A — Cancel representation\nSimple meaning: I want to stop selling"]
+  LIVE --> SOLD["Path B — Mark as sold / rented\nSimple meaning: Deal is done, tell the owner"]
+
+  CANCEL --> CANCEL_ASK["App asks for confirmation\nOptional reason\nWarn: you will lose owner contact on this deal"]
+  CANCEL_ASK --> CANCEL_DONE["Happens immediately\nStatus: representation closed by broker\nOwner GETS notification"]
+  CANCEL_DONE --> ALSO_BLOCK{"App asks:\nAlso block this property\nso you don't see it again?"}
+  ALSO_BLOCK -->|Yes| BLOCK_OK
+  ALSO_BLOCK -->|No| END_CANCEL["Done. Card leaves Representing"]
+
+  SOLD --> SOLD_FORM["Broker fills optional details:\nbuyer, price, note"]
+  SOLD_FORM --> WAIT["Listing status: waiting for owner confirm\nProperty is NOT off market yet"]
+  WAIT --> OWNER["Owner gets notification\nwith two choices"]
+
+  OWNER -->|Owner taps Confirm sale| WIN["Property marked sold or rented\nRemoved from market\nClose ALL brokers on this property\nNotify everyone"]
+  OWNER -->|Owner taps Not sold| FAIL["Listing becomes available again\nBroker stays Representing\nBroker gets 'Owner did not confirm'"]
+
+  WIN --> END_SOLD["END: Sale complete"]
+  FAIL --> END_RETRY["END for now — broker can try again later"]
+  END_CANCEL --> FINISH["END"]
+  BLOCK_OK --> FINISH
+  END_SOLD --> FINISH
+  END_RETRY --> FINISH
+        </pre>
+      </div>
+
+      <h3>Quick rules to remember</h3>
+      <ol class="steps">
+        <li><strong>Block</strong> = private hide. No owner message. Not while Representing.</li>
+        <li><strong>Cancel representation</strong> = leave the deal now. Owner is informed.</li>
+        <li><strong>Mark sold</strong> = broker proposes, <strong>owner confirms</strong>, then listing closes for everyone.</li>
+        <li>While sale is waiting for owner, broker should not Cancel until claim is cleared (or must withdraw claim first).</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>8. How to download / share</h2>
+      <ol class="steps">
+        <li>Open this file in <strong>Chrome</strong> or Edge.</li>
+        <li>Click the green button <strong>Save as PDF / Print</strong> at the top (or press <kbd>Ctrl</kbd>+<kbd>P</kbd>).</li>
+        <li>Choose <strong>Save as PDF</strong> as the printer.</li>
+        <li>Send the PDF on WhatsApp / email to your friend.</li>
+      </ol>
+      <p class="muted">
+        File location on your computer:<br />
+        <code>docs/workflows/broker-property-actions-flowchart.html</code>
+      </p>
+    </section>
+
+    <footer>
+      Internal workflow draft for YesBroker (placeholder name) · Broker + Owner modules · Not final branding
+    </footer>
+  </div>
+</body>
+</html>

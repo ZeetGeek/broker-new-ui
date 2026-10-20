@@ -138,7 +138,7 @@ export function InvitesPanel({
             <div className="flex flex-col items-center gap-4 py-12 text-center">
                 <p className="h6 text-ink">No invitations waiting</p>
                 <p className="body-sm max-w-prose text-ink-muted">
-                    Invites you already answered are under Accepted.
+                    Invites you already answered are under Representing.
                 </p>
             </div>
         );

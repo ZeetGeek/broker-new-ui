@@ -74,30 +74,30 @@ function buildAcceptedLines(
     const acceptedInvites = inviteSummary?.counts.accepted ?? 0;
     const total = approved + acceptedInvites;
 
-    if (total === 0) return ["No accepted deals yet"];
+    if (total === 0) return ["Nothing to represent yet"];
 
     const lines: ReactNode[] = [];
 
     if (approved > 0) {
-        lines.push(<>{countLabel(approved, "request was", "requests were")} accepted</>);
+        lines.push(<>{countLabel(approved, "request lets", "requests let")} you sell</>);
     }
     if (acceptedInvites > 0) {
-        lines.push(<>You accepted {countLabel(acceptedInvites, "invite", "invites")}</>);
+        lines.push(<>{countLabel(acceptedInvites, "invite lets", "invites let")} you sell</>);
     }
     if (sentSummary && sentSummary.needsFollowUpCount > 0) {
         lines.push(
             <>
                 {countLabel(
                     sentSummary.needsFollowUpCount,
-                    "accepted request needs",
-                    "accepted requests need",
+                    "property still needs",
+                    "properties still need",
                 )}{" "}
                 a buyer
             </>,
         );
     }
 
-    return lines.length > 0 ? lines : ["Every deal you can sell"];
+    return lines.length > 0 ? lines : ["Every property you can sell"];
 }
 
 function buildRejectedLines(
@@ -206,7 +206,7 @@ function DealsStatusMeta({
                         label="Needs a buyer"
                         count={sentSummary?.needsFollowUpCount ?? 0}
                         color="orange"
-                        hint="Accepted requests where you have not added a buyer yet."
+                        hint="Properties you represent that still need a buyer."
                     />
                 </div>
             </div>
