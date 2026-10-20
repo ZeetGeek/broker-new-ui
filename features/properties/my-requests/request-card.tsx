@@ -172,7 +172,7 @@ function RequestCardFooter({
                     className="inline-full"
                 >
                     <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    Add buyer
+                    Attach buyer
                 </Button>
             </DealOverlayFooter>
         );

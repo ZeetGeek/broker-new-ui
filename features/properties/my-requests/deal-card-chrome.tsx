@@ -409,13 +409,11 @@ export function DealContactSplitBar({
     );
 }
 
-/** Attached buyers on an approved deal. Add buyer lives in the ⋯ menu. */
+/** Attached buyers on an approved deal. Attach buyer lives in the ⋯ menu. */
 export function DealAttachedBuyers({
     buyers,
 }: {
     buyers: Array<{ id: string; name: string; avatarUrl?: string }>;
-    /** @deprecated Add buyer moved to the card ⋯ menu. */
-    onManage?: () => void;
 }) {
     return <AttachedBuyersRow buyers={buyers} />;
 }

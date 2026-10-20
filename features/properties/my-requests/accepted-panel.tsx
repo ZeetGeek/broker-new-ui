@@ -101,7 +101,9 @@ export function AcceptedPanel({
                     setRows(next);
                 })
                 .catch(() => {
-                    if (!cancelled) setError("Could not load accepted deals. Try again.");
+                    if (!cancelled) {
+                        setError("Could not load properties you represent. Try again.");
+                    }
                 })
                 .finally(() => {
                     if (!cancelled) setIsFetching(false);
@@ -204,7 +206,7 @@ export function AcceptedPanel({
     } else if (error) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load accepted deals</p>
+                <p className="h6 text-ink">Could not load properties you represent</p>
                 <p className="body-sm text-ink-muted">{error}</p>
                 <button
                     type="button"
@@ -220,7 +222,7 @@ export function AcceptedPanel({
     } else if (acceptedTotal === 0 && !narrowFilters) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">No accepted deals yet</p>
+                <p className="h6 text-ink">Nothing to represent yet</p>
                 <p className="body-sm max-w-prose text-ink-muted">
                     When an owner accepts your request, or you accept their invite, it shows up
                     here.
@@ -243,7 +245,7 @@ export function AcceptedPanel({
                     estimateRowHeight={520}
                     gap={24}
                     breakpoints={REQUESTS_GRID_BREAKPOINTS}
-                    ariaLabel="Accepted deals"
+                    ariaLabel="Properties you represent"
                     renderItem={(row) =>
                         row.kind === "request" ? (
                             <RequestCard

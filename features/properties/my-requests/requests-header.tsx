@@ -369,6 +369,32 @@ export function MyDealsHeader({
                                         render={
                                             <Link
                                                 href={BROKER_MY_DEALS_HREF}
+                                                aria-current={isAccepted ? "page" : undefined}
+                                                className={ownerListingsChipClassName(isAccepted)}
+                                            >
+                                                Representing
+                                                <FilterChipCount
+                                                    count={acceptedCount}
+                                                    isActive={isAccepted}
+                                                    isLoading={
+                                                        isLoading && !sentSummary && !inviteSummary
+                                                    }
+                                                />
+                                            </Link>
+                                        }
+                                    />
+                                    <TooltipContent side="bottom">
+                                        Properties you can sell for the owner
+                                    </TooltipContent>
+                                </Tooltip>
+                            </OwnerListingsChipsCarouselSlide>
+
+                            <OwnerListingsChipsCarouselSlide>
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Link
+                                                href={`${BROKER_MY_DEALS_HREF}?tab=sent`}
                                                 aria-current={isSent ? "page" : undefined}
                                                 className={ownerListingsChipClassName(isSent)}
                                             >
@@ -416,32 +442,6 @@ export function MyDealsHeader({
                                     />
                                     <TooltipContent side="bottom">
                                         Owner invites waiting for your answer
-                                    </TooltipContent>
-                                </Tooltip>
-                            </OwnerListingsChipsCarouselSlide>
-
-                            <OwnerListingsChipsCarouselSlide>
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={
-                                            <Link
-                                                href={`${BROKER_MY_DEALS_HREF}?tab=accepted`}
-                                                aria-current={isAccepted ? "page" : undefined}
-                                                className={ownerListingsChipClassName(isAccepted)}
-                                            >
-                                                Accepted
-                                                <FilterChipCount
-                                                    count={acceptedCount}
-                                                    isActive={isAccepted}
-                                                    isLoading={
-                                                        isLoading && !sentSummary && !inviteSummary
-                                                    }
-                                                />
-                                            </Link>
-                                        }
-                                    />
-                                    <TooltipContent side="bottom">
-                                        Accepted requests and invites you can sell
                                     </TooltipContent>
                                 </Tooltip>
                             </OwnerListingsChipsCarouselSlide>

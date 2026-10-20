@@ -413,7 +413,7 @@ export function PropertyCardMenu({
                         }}
                     >
                         <Phone aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Call {contact.name.split(" ")[0]}
+                        Call owner
                     </DropdownMenuItem>
                 ) : null}
 
@@ -479,7 +479,7 @@ export function PropertyCardMenu({
                         }}
                     >
                         <UserPlus aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Add buyer
+                        Attach buyer
                     </DropdownMenuItem>
                 ) : null}
 

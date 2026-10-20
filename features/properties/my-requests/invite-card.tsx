@@ -8,10 +8,18 @@ import { Check, UserPlus, X } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
+import { formatRelativePast } from "@/lib/format/date";
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogHeader,
+    DialogPopup,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { useChat } from "@/features/chat/chat-provider";
@@ -29,7 +37,8 @@ import {
 } from "@/features/properties/my-requests/deal-card-chrome";
 import { INVITE_STAGE_META } from "@/features/properties/my-requests/invite-stage-meta";
 import type { InviteItem, InviteStage } from "@/features/properties/my-requests/invite-types";
-import type { RequestItem } from "@/features/properties/my-requests/types";
+import { RequestTimeline } from "@/features/properties/my-requests/request-timeline";
+import type { RequestItem, RequestTimelineStep } from "@/features/properties/my-requests/types";
 const STATUS_TONE: Record<InviteStage, DealStatusTone> = {
     // The owner is waiting on the broker — the one state here that needs action.
     pending: "action",
@@ -83,7 +92,8 @@ function chatPeerFor(item: InviteItem): ChatPeer {
         isOnline: item.stage === "accepted",
         representationId: item.id,
         mySide: "broker",
-        canSend: true,
+        // Chat opens once the owner has invited — broker need not accept first.
+        canSend: item.stage === "pending" || item.stage === "accepted",
         closed: item.stage === "declined" || item.stage === "expired",
     };
 }
@@ -91,6 +101,38 @@ function chatPeerFor(item: InviteItem): ChatPeer {
 /** The owner's number is shared only once the broker accepts. */
 function ownerPhoneFor(item: InviteItem): string | undefined {
     return item.stage === "accepted" ? item.ownerPhoneDigits : undefined;
+}
+
+function inviteTimeline(item: InviteItem): RequestTimelineStep[] {
+    const steps: RequestTimelineStep[] = [
+        {
+            key: "sent",
+            label: "Owner invited you",
+            at: item.invitedAt,
+        },
+    ];
+
+    if (item.stage === "accepted" && item.respondedAt) {
+        steps.push({
+            key: "approved",
+            label: "You accepted the invite",
+            at: item.respondedAt,
+        });
+    } else if (item.stage === "declined" && item.respondedAt) {
+        steps.push({
+            key: "declined",
+            label: "You declined the invite",
+            at: item.respondedAt,
+        });
+    } else if (item.stage === "expired") {
+        steps.push({
+            key: "cancelled",
+            label: "Invite expired",
+            at: item.respondedAt ?? item.invitedAt,
+        });
+    }
+
+    return steps;
 }
 
 function InviteCardFooter({
@@ -153,7 +195,7 @@ function InviteCardFooter({
                     className="inline-full"
                 >
                     <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    Add buyer
+                    Attach buyer
                 </Button>
             </DealOverlayFooter>
         );
@@ -188,10 +230,12 @@ export function InviteCard({
     isBusy?: boolean;
 }) {
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
+    const [isTimelineOpen, setIsTimelineOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [unreadMessageCount, setUnreadMessageCount] = useState(item.unreadMessageCount ?? 0);
     const { openChat } = useChat();
     const ownerPhoneDigits = ownerPhoneFor(item);
+    const canChat = item.stage === "pending" || item.stage === "accepted";
 
     useEffect(() => {
         setUnreadMessageCount(item.unreadMessageCount ?? 0);
@@ -223,11 +267,16 @@ export function InviteCard({
             isSaved={isSaved}
             onToggleSave={() => void toggleSave()}
             contact={
-                ownerPhoneDigits
-                    ? { name: item.ownerName, phoneDigits: ownerPhoneDigits }
+                canChat
+                    ? {
+                          name: item.ownerName,
+                          phoneDigits: ownerPhoneDigits,
+                          onMessage: openOwnerChat,
+                      }
                     : undefined
             }
             onAddBuyer={item.stage === "accepted" ? () => setIsBuyersOpen(true) : undefined}
+            onOpenTimeline={() => setIsTimelineOpen(true)}
             tone="overlay"
         />
     );
@@ -286,6 +335,21 @@ export function InviteCard({
                     />
                 )}
             </DealOverlayCard>
+
+            <Dialog open={isTimelineOpen} onOpenChange={setIsTimelineOpen}>
+                <DialogPopup className="gap-0 p-0 max-inline-md">
+                    <DialogHeader className="border-be border-border-warm px-5 py-4">
+                        <DialogTitle>Request timeline</DialogTitle>
+                        <DialogClose />
+                    </DialogHeader>
+                    <div className="px-5 py-4">
+                        <p className="body-xs text-ink-muted">
+                            Invited {formatRelativePast(new Date(item.invitedAt), new Date())}
+                        </p>
+                        <RequestTimeline steps={inviteTimeline(item)} />
+                    </div>
+                </DialogPopup>
+            </Dialog>
 
             {item.stage === "accepted" ? (
                 <AttachBuyersModal

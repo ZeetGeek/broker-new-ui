@@ -178,8 +178,8 @@ function SentRequestsPanel({
             <div className="flex flex-col items-center gap-4 py-12 text-center">
                 <p className="h6 text-ink">Nothing waiting right now</p>
                 <p className="body-sm max-w-prose text-ink-muted">
-                    Accepted requests are under Accepted. Send a new request from owner listings
-                    when you need more.
+                    Properties you can sell are under Representing. Send a new request from owner
+                    listings when you need more.
                 </p>
             </div>
         );
