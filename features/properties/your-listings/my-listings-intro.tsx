@@ -14,7 +14,6 @@ const META_TEXT = "body-sm font-medium text-ink-muted";
 const STATUS_COLOR: Record<string, BadgeColor> = {
     published: "emerald",
     draft: "amber",
-    unpublished: "red",
 };
 
 function countLabel(count: number, singular: string, plural: string) {
@@ -61,12 +60,6 @@ function buildMyListingsSummaryLines({
         lines.push(<>{countLabel(summary.draft, "draft", "drafts")} waiting to publish</>);
     }
 
-    if (summary && summary.unpublished > 0) {
-        lines.push(
-            <>{countLabel(summary.unpublished, "listing is", "listings are")} unpublished</>,
-        );
-    }
-
     return lines.length > 0 ? lines : ["Your inventory"];
 }
 
@@ -78,7 +71,6 @@ function InventoryStatusMeta({ summary }: { summary: MyListingsSummary | null })
     const chips: { key: string; label: string; count: number }[] = [
         { key: "published", label: "Published", count: summary.published },
         { key: "draft", label: "Draft", count: summary.draft },
-        { key: "unpublished", label: "Unpublished", count: summary.unpublished },
     ].filter((chip) => chip.count > 0);
 
     if (chips.length === 0) {

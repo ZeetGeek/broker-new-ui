@@ -96,6 +96,8 @@ export type MyListingItem = {
     ownerId?: string | null;
     ownerOrigin?: "platform" | "custom" | null;
     ownerName?: string | null;
+    /** Exclusive owner mobile digits for Call / WhatsApp on inventory cards. */
+    ownerPhoneDigits?: string | null;
     exclusiveOwnerId?: string | null;
     visibility?: "private" | "marketplace";
     interestedBuyerIds?: string[];
@@ -127,7 +129,7 @@ export const DEFAULT_MY_LISTINGS_FILTERS: MyListingsFilters = {
     type: "",
     propertyType: "",
     bhk: [],
-    status: "",
+    status: "published",
     sort: "newest",
     page: 1,
 };
