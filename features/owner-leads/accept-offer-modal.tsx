@@ -165,6 +165,8 @@ export function AcceptOfferModal({
                                 commissionPercent={facts.commissionPercent}
                                 commissionAmountInr={facts.commissionAmountInr}
                                 audience="owner"
+                                size="md"
+                                showEmptyTip
                                 className="text-ink"
                             />
                         </DetailRow>

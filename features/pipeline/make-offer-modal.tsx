@@ -117,6 +117,8 @@ export function MakeOfferModal({
                         commissionPercent={deal.property.commissionPercent}
                         commissionAmountInr={deal.property.commissionAmountInr}
                         audience="broker"
+                        size="sm"
+                        showEmptyTip
                         className="font-medium text-ink"
                     />
                 </p>

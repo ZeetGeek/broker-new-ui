@@ -106,7 +106,8 @@ function RequestRow({
                             commissionPercent={item.commissionPercent}
                             commissionAmountInr={item.commissionAmount}
                             audience="broker"
-                            className="body-sm font-semibold text-brand"
+                            size="sm"
+                            showEmptyTip
                         />
                     </div>
                     <p className="body-sm text-ink-muted">{item.note}</p>

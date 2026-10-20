@@ -289,7 +289,8 @@ export function DealOverlayCard({
                         commissionPercent={listing.commissionPercent}
                         commissionAmountInr={listing.commissionAmount}
                         audience={audience}
-                        className="h5 font-semibold tracking-wide"
+                        size="lg"
+                        showEmptyTip
                     />
                 }
                 headline={headline}

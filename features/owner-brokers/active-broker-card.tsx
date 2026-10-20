@@ -78,7 +78,9 @@ export function ActiveBrokerCard({ item }: { item: OwnerRequestCardItem }) {
                         commissionPercent={item.commissionPercent}
                         commissionAmountInr={item.commissionAmount}
                         audience="owner"
-                        className="h5 truncate font-semibold"
+                        size="lg"
+                        showEmptyTip
+                        className="truncate"
                     />
                 ) : (
                     <p className="h5 truncate font-semibold text-ink-muted">Price on request</p>

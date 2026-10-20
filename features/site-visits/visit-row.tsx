@@ -224,7 +224,8 @@ export function VisitRow({
                                 commissionPercent={visit.property.commissionPercent}
                                 commissionAmountInr={visit.property.commissionAmountInr}
                                 audience={viewer}
-                                className="font-semibold"
+                                size="sm"
+                                showEmptyTip
                             />
                         </span>
                     </Hint>

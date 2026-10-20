@@ -936,15 +936,14 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
 function BrowseOverlayPrices({
     listing,
     audience = "broker",
-    showNoRentCommission = true,
+    showEmptyTip = true,
 }: {
     listing: BrowsePropertyCardListing;
     audience?: CommissionAudience;
-    showNoRentCommission?: boolean;
+    showEmptyTip?: boolean;
 }) {
     const isRentOnly = offersRent(listing) && !offersSale(listing);
     const both = offersBoth(listing);
-    const priceClass = "h5 font-semibold tracking-wide";
 
     if (isRentOnly) {
         return (
@@ -953,26 +952,21 @@ function BrowseOverlayPrices({
                 isRent
                 commissionAmountInr={listing.commissionAmount}
                 audience={audience}
-                showNoRentCommission={showNoRentCommission}
-                className={priceClass}
+                showEmptyTip={showEmptyTip}
+                size="lg"
             />
         );
     }
 
     if (both) {
         return (
-            <p
-                className={cn(
-                    priceClass,
-                    "flex flex-wrap items-baseline gap-x-1.5 text-brand tabular-nums min-inline-0",
-                )}
-            >
+            <p className="flex flex-wrap items-baseline gap-x-1.5 text-brand tabular-nums min-inline-0">
                 <PriceWithCommission
                     amountInr={listing.saleAmountInr ?? 0}
                     commissionPercent={listing.commissionPercent}
                     audience={audience}
-                    showNoRentCommission={showNoRentCommission}
-                    className={priceClass}
+                    showEmptyTip={showEmptyTip}
+                    size="lg"
                 />
                 <span className="font-medium text-ink-subtle" aria-hidden>
                     /
@@ -984,8 +978,9 @@ function BrowseOverlayPrices({
                         isRent
                         commissionAmountInr={listing.commissionAmount}
                         audience={audience}
-                        showNoRentCommission={showNoRentCommission}
-                        className="font-semibold text-ink"
+                        showEmptyTip={showEmptyTip}
+                        size="sm"
+                        className="text-ink"
                     />
                 </span>
             </p>
@@ -997,8 +992,8 @@ function BrowseOverlayPrices({
             amountInr={listing.saleAmountInr ?? 0}
             commissionPercent={listing.commissionPercent}
             audience={audience}
-            showNoRentCommission={showNoRentCommission}
-            className={priceClass}
+            showEmptyTip={showEmptyTip}
+            size="lg"
         />
     );
 }
@@ -1100,7 +1095,7 @@ function BrowseOverlayPropertyCard({
             <div className="flex flex-1 flex-col gap-3.5 min-inline-0">
                 <OverlayCardSummary
                     href={detailsHref}
-                    price={<BrowseOverlayPrices listing={listing} showNoRentCommission />}
+                    price={<BrowseOverlayPrices listing={listing} showEmptyTip />}
                     headline={headline}
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />
@@ -1337,7 +1332,7 @@ function RepresentedPropertyCard({
                         commissionPercent={listing.commissionPercent}
                         commissionAmountInr={listing.commissionAmount}
                         audience="broker"
-                        className="h6 font-semibold"
+                        size="md"
                     />
                     <TransactionBadge isRent={listing.isRent} />
                 </div>

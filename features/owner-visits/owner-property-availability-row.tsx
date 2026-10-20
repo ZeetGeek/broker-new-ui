@@ -134,7 +134,9 @@ export const OwnerPropertyAvailabilityRow = memo(function OwnerPropertyAvailabil
                             commissionPercent={toCommissionNumber(property.commissionPercent)}
                             commissionAmountInr={toCommissionNumber(property.commissionAmount)}
                             audience="owner"
-                            className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
+                            size="lg"
+                            showEmptyTip
+                            className="mbs-3 mbe-0.5 leading-none"
                         />
                     ) : (
                         <p className="h5 mbs-3 mbe-0.5 font-semibold text-ink-muted">Price TBD</p>

@@ -202,6 +202,10 @@ import { PriceWithCommission } from "@/components/shared/price-with-commission";
   commissionPercent={listing.commissionPercent}
   commissionAmountInr={listing.commissionAmount}
   audience="broker" // or "owner"
+  size="lg" // xs | sm | md | lg | xl | 2xl — prefer over type classes in className
+  // showEmptyTip show underline tip when commission unset (default true)
+  // underline="auto" | "never"
+  // tooltipSide="top" | "bottom" | …
 />
 
 // Non-listing money — offers, budgets, totals

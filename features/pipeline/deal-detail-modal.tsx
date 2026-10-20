@@ -220,7 +220,8 @@ export function DealDetailModal({
                                 commissionPercent={deal.property.commissionPercent}
                                 commissionAmountInr={deal.property.commissionAmountInr}
                                 audience="broker"
-                                className="body-sm font-semibold"
+                                size="sm"
+                                showEmptyTip
                             />
                             <p className="body-xs text-ink-muted">
                                 {formatAreaSqft(deal.property.areaSqft)} ·{" "}
@@ -281,7 +282,20 @@ export function DealDetailModal({
 
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                         <DetailField label="List price">
-                            {formatMoney(deal.listPriceInr, deal.property.isRent)}
+                            {deal.listPriceInr != null && deal.listPriceInr > 0 ? (
+                                <PriceWithCommission
+                                    amountInr={deal.listPriceInr}
+                                    isRent={deal.property.isRent}
+                                    commissionPercent={deal.property.commissionPercent}
+                                    commissionAmountInr={deal.property.commissionAmountInr}
+                                    audience="broker"
+                                    size="sm"
+                                    showEmptyTip
+                                    className="text-ink"
+                                />
+                            ) : (
+                                "—"
+                            )}
                         </DetailField>
                         <DetailField label="Offer amount">
                             {formatMoney(deal.offerAmountInr, deal.property.isRent)}

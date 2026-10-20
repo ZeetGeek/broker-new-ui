@@ -275,7 +275,9 @@ export function AttachBuyerPropertiesModal({
                                                 commissionPercent={property.commissionPercent}
                                                 commissionAmountInr={property.commissionAmount}
                                                 audience="broker"
-                                                className="body-xs font-medium text-ink-muted"
+                                                size="xs"
+                                                showEmptyTip
+                                                className="text-ink-muted"
                                             />
                                         </p>
                                     </div>
