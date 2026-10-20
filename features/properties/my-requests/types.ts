@@ -153,4 +153,4 @@ export const DEFAULT_REQUESTS_FILTERS: RequestsFilters = {
 export const ATTEMPT_LIMIT = 3;
 
 /** Reminders allowed per pending attempt. Raised in one place when product asks. */
-export const REMINDER_LIMIT = 2;
+export const REMINDER_LIMIT = 3;

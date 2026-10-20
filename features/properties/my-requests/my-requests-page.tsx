@@ -30,7 +30,11 @@ import {
     RequestsPageSkeleton,
 } from "@/features/properties/my-requests/requests-skeleton";
 import type { RequestsTab } from "@/features/properties/my-requests/requests-tabs";
-import type { RequestsResult, RequestsSummary } from "@/features/properties/my-requests/types";
+import {
+    REMINDER_LIMIT,
+    type RequestsResult,
+    type RequestsSummary,
+} from "@/features/properties/my-requests/types";
 import { useRequestsFilters } from "@/features/properties/my-requests/use-requests-filters";
 
 function SentRequestsPanel({
@@ -118,9 +122,15 @@ function SentRequestsPanel({
 
     const handleNudge = useCallback(
         (id: string) => {
-            void runMutation(id, () => myRequestsApi.nudge(id), "Reminder sent to the owner");
+            const item = result?.items.find((row) => row.id === id);
+            const nextUsed = (item?.reminderCount ?? 0) + 1;
+            const successMessage =
+                nextUsed >= REMINDER_LIMIT
+                    ? `Reminder sent. You've used all ${REMINDER_LIMIT} reminders.`
+                    : `Reminder sent to the owner (${nextUsed} of ${REMINDER_LIMIT} used).`;
+            void runMutation(id, () => myRequestsApi.nudge(id), successMessage);
         },
-        [runMutation],
+        [result?.items, runMutation],
     );
 
     const handleWithdraw = useCallback(

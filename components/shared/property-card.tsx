@@ -127,17 +127,17 @@ const BROWSE_REQUEST_TOOLTIP = {
     idle: "Ask the owner for permission to sell this property",
     pending: "Sending your request…",
     remind: "Send the owner a reminder about your request",
-    remindersUsed: "You already used both reminders for this request",
+    remindersUsed: "You already used all three reminders for this request",
     withdraw: "Cancel this request. You can ask again later.",
     representing: "The owner already approved you for this listing",
     inviteAccept: "Accept the invite and get the owner's number",
     inviteDecline: "Cancel this invite. The owner can ask someone else",
 } as const;
 
-const BROWSE_REMIND_LABEL = "Remind";
-const BROWSE_REMINDERS_USED_LABEL = "Reminded";
-const BROWSE_WITHDRAW_LABEL = "Cancel";
+const BROWSE_WITHDRAW_LABEL = "Cancel request";
 const BROWSE_WITHDRAWING_LABEL = "Cancelling…";
+/** Matches product reminder budget on a pending request (same as My deals). */
+const BROWSE_REMINDER_LIMIT_DEFAULT = 3;
 
 function BrowseActionHint({ children }: { children: string }) {
     return (
@@ -150,11 +150,11 @@ function BrowseRequestAction({
     isRepresenting,
     isInvitePending,
     isRequestPending,
+    isCancelPending = false,
+    isRemindPending = false,
     inviteActionPending,
     onRequest,
     onCancelRequest,
-    onRemind,
-    canRemind = true,
     onAcceptInvite,
     onCancelInvite,
     tone = "light",
@@ -163,17 +163,18 @@ function BrowseRequestAction({
     isRepresenting?: boolean;
     isInvitePending?: boolean;
     isRequestPending: boolean;
+    isCancelPending?: boolean;
+    isRemindPending?: boolean;
     inviteActionPending?: "accept" | "cancel";
     onRequest?: () => void;
     onCancelRequest?: () => void;
-    onRemind?: () => void;
-    canRemind?: boolean;
     onAcceptInvite?: () => void;
     onCancelInvite?: () => void;
     /** `overlay` = white listing-card panel; `light` = list-row chrome. */
     tone?: "light" | "overlay";
 }) {
     const canWithdraw = Boolean(hasRequested && onCancelRequest);
+    const waitingBusy = isCancelPending || isRemindPending;
     const canRespondToInvite = Boolean(isInvitePending && onAcceptInvite && onCancelInvite);
     const inviteBusy = Boolean(inviteActionPending);
     const outlineClass =
@@ -285,84 +286,46 @@ function BrowseRequestAction({
     }
 
     if (canWithdraw) {
+        // Remind lives in the photo ⋯ menu under Chat here.
         return (
             <TooltipProvider>
                 <div className="flex flex-col gap-1.5 inline-full">
                     <BrowseActionHint>{BROWSE_STATUS.waiting}</BrowseActionHint>
-                    <div className="flex gap-2">
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <span className="inline-flex flex-1 min-inline-0">
-                                        <Button
-                                            type="button"
-                                            size="md"
-                                            variant="outline"
-                                            className={cn("inline-full", outlineClass)}
-                                            disabled={isRequestPending}
-                                            loading={isRequestPending}
-                                            onClick={onCancelRequest}
-                                        >
-                                            {isRequestPending ? (
-                                                BROWSE_WITHDRAWING_LABEL
-                                            ) : (
-                                                <>
-                                                    <Icon
-                                                        icon="tabler:cancel"
-                                                        width={16}
-                                                        height={16}
-                                                        className="shrink-0 block-4 inline-4"
-                                                        aria-hidden
-                                                    />
-                                                    {BROWSE_WITHDRAW_LABEL}
-                                                </>
-                                            )}
-                                        </Button>
-                                    </span>
-                                }
-                            />
-                            <TooltipContent side="top" className="text-center max-inline-xs">
-                                {BROWSE_REQUEST_TOOLTIP.withdraw}
-                            </TooltipContent>
-                        </Tooltip>
-                        {onRemind ? (
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <span className="inline-flex flex-1 min-inline-0">
-                                            <Button
-                                                type="button"
-                                                size="md"
-                                                variant={canRemind ? "accent" : "outline"}
-                                                className={cn(
-                                                    "inline-full",
-                                                    !canRemind && outlineClass,
-                                                )}
-                                                disabled={!canRemind || isRequestPending}
-                                                onClick={onRemind}
-                                            >
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <span className="inline-flex inline-full">
+                                    <Button
+                                        type="button"
+                                        size="md"
+                                        variant="outline"
+                                        className={cn("inline-full", outlineClass)}
+                                        disabled={waitingBusy}
+                                        loading={isCancelPending}
+                                        onClick={onCancelRequest}
+                                    >
+                                        {isCancelPending ? (
+                                            BROWSE_WITHDRAWING_LABEL
+                                        ) : (
+                                            <>
                                                 <Icon
-                                                    icon="tabler:bell"
+                                                    icon="tabler:x"
                                                     width={16}
                                                     height={16}
                                                     className="shrink-0 block-4 inline-4"
                                                     aria-hidden
                                                 />
-                                                {canRemind
-                                                    ? BROWSE_REMIND_LABEL
-                                                    : BROWSE_REMINDERS_USED_LABEL}
-                                            </Button>
-                                        </span>
-                                    }
-                                />
-                                <TooltipContent side="top" className="text-center max-inline-xs">
-                                    {canRemind
-                                        ? BROWSE_REQUEST_TOOLTIP.remind
-                                        : BROWSE_REQUEST_TOOLTIP.remindersUsed}
-                                </TooltipContent>
-                            </Tooltip>
-                        ) : null}
-                    </div>
+                                                {BROWSE_WITHDRAW_LABEL}
+                                            </>
+                                        )}
+                                    </Button>
+                                </span>
+                            }
+                        />
+                        <TooltipContent side="top" className="text-center max-inline-xs">
+                            {BROWSE_REQUEST_TOOLTIP.withdraw}
+                        </TooltipContent>
+                    </Tooltip>
                 </div>
             </TooltipProvider>
         );
@@ -503,9 +466,19 @@ export type PropertyCardProps = {
     onRemind?: () => void;
     /** When false, reminder stays visible but disabled. */
     canRemind?: boolean;
+    /** Reminders already sent on this pending request. */
+    remindersUsed?: number;
+    /** Max reminders for this request. Defaults to 3. */
+    remindersLimit?: number;
     /** Open chat with the owner — ⋯ menu once a request is sent. */
     onChat?: () => void;
+    /** Open request timeline — ⋯ menu once a request is sent. */
+    onOpenTimeline?: () => void;
     isRequestPending?: boolean;
+    /** Cancel button loading — do not share with remind. */
+    isCancelPending?: boolean;
+    /** Remind button loading — do not share with cancel. */
+    isRemindPending?: boolean;
     onAcceptInvite?: () => void;
     onCancelInvite?: () => void;
     inviteActionPending?: "accept" | "cancel";
@@ -1039,8 +1012,13 @@ function BrowseOverlayPropertyCard({
     onCancelRequest,
     onRemind,
     canRemind = true,
+    remindersUsed = 0,
+    remindersLimit = BROWSE_REMINDER_LIMIT_DEFAULT,
     onChat,
+    onOpenTimeline,
     isRequestPending = false,
+    isCancelPending = false,
+    isRemindPending = false,
     onAcceptInvite,
     onCancelInvite,
     inviteActionPending,
@@ -1110,6 +1088,11 @@ function BrowseOverlayPropertyCard({
                             ? { name: listing.owner.name, onMessage: onChat }
                             : undefined
                     }
+                    onRemind={listing.hasRequested ? onRemind : undefined}
+                    canRemind={canRemind}
+                    remindersUsed={remindersUsed}
+                    remindersLimit={remindersLimit}
+                    onOpenTimeline={listing.hasRequested ? onOpenTimeline : undefined}
                 />
             }
         >
@@ -1135,11 +1118,11 @@ function BrowseOverlayPropertyCard({
                     isRepresenting={listing.isRepresenting}
                     isInvitePending={listing.isInvitePending}
                     isRequestPending={isRequestPending}
+                    isCancelPending={isCancelPending}
+                    isRemindPending={isRemindPending}
                     inviteActionPending={inviteActionPending}
                     onRequest={onRequest}
                     onCancelRequest={onCancelRequest}
-                    onRemind={onRemind}
-                    canRemind={canRemind}
                     onAcceptInvite={onAcceptInvite}
                     onCancelInvite={onCancelInvite}
                 />

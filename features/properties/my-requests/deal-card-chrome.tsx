@@ -174,6 +174,10 @@ export function DealCardPhotoToolbar({
     onToggleSave,
     contact,
     onAddBuyer,
+    onRemind,
+    canRemind,
+    remindersUsed,
+    remindersLimit,
     onOpenTimeline,
     onCancelRequest,
     tone = "overlay",
@@ -183,6 +187,10 @@ export function DealCardPhotoToolbar({
     onToggleSave?: () => void;
     contact?: PropertyCardMenuContact;
     onAddBuyer?: () => void;
+    onRemind?: () => void;
+    canRemind?: boolean;
+    remindersUsed?: number;
+    remindersLimit?: number;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
     tone?: "overlay" | "plain";
@@ -194,6 +202,10 @@ export function DealCardPhotoToolbar({
             onToggleSave={onToggleSave}
             contact={contact}
             onAddBuyer={onAddBuyer}
+            onRemind={onRemind}
+            canRemind={canRemind}
+            remindersUsed={remindersUsed}
+            remindersLimit={remindersLimit}
             onOpenTimeline={onOpenTimeline}
             onCancelRequest={onCancelRequest}
             tone={tone}

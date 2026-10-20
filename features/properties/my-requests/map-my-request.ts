@@ -86,7 +86,8 @@ function mapStage(
     return "cancelled";
 }
 
-function buildTimeline(
+/** Shared by My Deals cards and owner-listing request timeline. */
+export function buildRepresentationTimeline(
     rep: RepresentationItem,
     stage: RequestStage,
     attemptNumber: number,
@@ -208,7 +209,7 @@ export function mapRepresentationToRequestItem(
         nudgedAt: rep.lastRemindedAt ?? null,
         declineReason: stage === "declined" ? (rep.message ?? undefined) : undefined,
         imageSrc: photos[0] ?? "",
-        timeline: buildTimeline(rep, stage, attemptNumber),
+        timeline: buildRepresentationTimeline(rep, stage, attemptNumber),
         unreadMessageCount:
             typeof rep.unreadMessageCount === "number" && rep.unreadMessageCount > 0
                 ? rep.unreadMessageCount

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Bell, Send, UserPlus } from "lucide-react";
+import { addCollection, Icon } from "@iconify/react/offline";
+import { Send, UserPlus } from "lucide-react";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
@@ -12,6 +13,7 @@ import { formatRelativePast } from "@/lib/format/date";
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -43,6 +45,8 @@ import {
     type RequestItem,
     type RequestStage,
 } from "@/features/properties/my-requests/types";
+
+addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 const STATUS_TONE: Record<RequestStage, DealStatusTone> = {
     pending: "waiting",
     approved: "success",
@@ -60,7 +64,8 @@ function chatPeerFor(item: RequestItem): ChatPeer {
         isOnline: item.stage === "approved",
         representationId: item.id,
         mySide: "broker",
-        canSend: true,
+        // Chat opens once the broker has sent a request — approval not required.
+        canSend: item.stage === "pending" || item.stage === "approved",
         closed: item.stage === "declined" || item.stage === "cancelled" || item.stage === "locked",
     };
 }
@@ -72,14 +77,14 @@ function ownerPhoneFor(item: RequestItem): string | undefined {
 
 function RequestCardFooter({
     item,
-    onNudge,
+    onWithdraw,
     onRetry,
     onAddBuyers,
     isBusy,
     pin = true,
 }: {
     item: RequestItem;
-    onNudge: (id: string) => void;
+    onWithdraw: (id: string) => void;
     onRetry: (id: string) => void;
     onAddBuyers: () => void;
     isBusy: boolean;
@@ -88,40 +93,49 @@ function RequestCardFooter({
     const actions = attemptActions(item);
     const secondaryClass = dealSecondaryButtonClass();
 
-    // Card tap already opens the listing — footer only keeps the stage action.
+    // Pending: match owner-listing request card — remind is in ⋯; footer is cancel.
     if (item.stage === "pending") {
         return (
             <DealOverlayFooter pin={pin}>
-                <Tooltip>
-                    <TooltipTrigger
-                        render={
-                            <span className="inline-flex inline-full">
-                                <Button
-                                    size="md"
-                                    variant={actions.canRemind ? "accent" : "outline"}
-                                    disabled={!actions.canRemind || isBusy}
-                                    onClick={() => onNudge(item.id)}
-                                    className={cn(
-                                        "inline-full",
-                                        !actions.canRemind && secondaryClass,
-                                    )}
-                                >
-                                    <Bell
-                                        aria-hidden
-                                        className="block-4 inline-4"
-                                        strokeWidth={1.75}
-                                    />
-                                    {actions.canRemind ? "Send reminder" : "Reminders used"}
-                                </Button>
-                            </span>
-                        }
-                    />
-                    <TooltipContent>
-                        {actions.canRemind
-                            ? `Send the owner a reminder (${actions.remindersLeft} of ${REMINDER_LIMIT} left).`
-                            : "You already used both reminders for this attempt."}
-                    </TooltipContent>
-                </Tooltip>
+                <div className="flex flex-col gap-1.5 inline-full">
+                    <p className="body-xs text-center font-medium tracking-wide text-ink-muted">
+                        Waiting for the owner
+                    </p>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <span className="inline-flex inline-full">
+                                    <Button
+                                        size="md"
+                                        variant="outline"
+                                        disabled={isBusy}
+                                        loading={isBusy}
+                                        onClick={() => onWithdraw(item.id)}
+                                        className={cn("inline-full", secondaryClass)}
+                                    >
+                                        {isBusy ? (
+                                            "Cancelling…"
+                                        ) : (
+                                            <>
+                                                <Icon
+                                                    icon="tabler:x"
+                                                    width={16}
+                                                    height={16}
+                                                    className="shrink-0 block-4 inline-4"
+                                                    aria-hidden
+                                                />
+                                                Cancel request
+                                            </>
+                                        )}
+                                    </Button>
+                                </span>
+                            }
+                        />
+                        <TooltipContent>
+                            Cancel this request. You can ask again later.
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
             </DealOverlayFooter>
         );
     }
@@ -226,19 +240,28 @@ export function RequestCard({
         }
     }
 
+    const canChat = item.stage === "pending" || item.stage === "approved";
+
     const cardMenu = (
         <DealCardPhotoToolbar
             listing={item}
             isSaved={isSaved}
             onToggleSave={() => void toggleSave()}
             contact={
-                ownerPhoneDigits
-                    ? { name: item.ownerName, phoneDigits: ownerPhoneDigits }
+                canChat
+                    ? {
+                          name: item.ownerName,
+                          phoneDigits: ownerPhoneDigits,
+                          onMessage: openOwnerChat,
+                      }
                     : undefined
             }
+            onRemind={item.stage === "pending" ? () => onNudge(item.id) : undefined}
+            canRemind={item.stage === "pending" ? actions.canRemind : undefined}
+            remindersUsed={item.stage === "pending" ? actions.remindersUsed : undefined}
+            remindersLimit={item.stage === "pending" ? REMINDER_LIMIT : undefined}
             onAddBuyer={item.stage === "approved" ? () => setIsBuyersOpen(true) : undefined}
             onOpenTimeline={() => setIsTimelineOpen(true)}
-            onCancelRequest={actions.canCancel ? () => onWithdraw(item.id) : undefined}
             tone="overlay"
         />
     );
@@ -269,7 +292,7 @@ export function RequestCard({
                     <div className="mbs-auto flex flex-col gap-3 inline-full">
                         <RequestCardFooter
                             item={item}
-                            onNudge={onNudge}
+                            onWithdraw={onWithdraw}
                             onRetry={onRetry}
                             onAddBuyers={() => setIsBuyersOpen(true)}
                             isBusy={isBusy}
@@ -285,7 +308,7 @@ export function RequestCard({
                 ) : (
                     <RequestCardFooter
                         item={item}
-                        onNudge={onNudge}
+                        onWithdraw={onWithdraw}
                         onRetry={onRetry}
                         onAddBuyers={() => setIsBuyersOpen(true)}
                         isBusy={isBusy}

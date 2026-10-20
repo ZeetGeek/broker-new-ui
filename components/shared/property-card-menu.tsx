@@ -83,6 +83,10 @@ export type PropertyCardMenuProps = {
     onRemind?: () => void;
     /** When false, reminder stays visible but disabled. Default true when `onRemind` is set. */
     canRemind?: boolean;
+    /** Reminders already sent — shown as Remind used/limit under Chat. */
+    remindersUsed?: number;
+    /** Max reminders for this request. Defaults to 3. */
+    remindersLimit?: number;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
     /** Owned cards: open the edit form. */
@@ -160,6 +164,8 @@ export function PropertyCardMenu({
     onAddBuyer,
     onRemind,
     canRemind = true,
+    remindersUsed = 0,
+    remindersLimit = 3,
     onOpenTimeline,
     onCancelRequest,
     onEdit,
@@ -254,16 +260,11 @@ export function PropertyCardMenu({
         [shareText, shareUrl],
     );
 
-    const hasContact = Boolean(contact?.onMessage || contact?.phoneDigits);
+    const hasContact = Boolean(contact?.onMessage || contact?.phoneDigits || onRemind);
     const hasDealExtras = Boolean(
-        onAddBuyer ||
-        onRemind ||
-        onOpenTimeline ||
-        onCancelRequest ||
-        onEdit ||
-        onDelete ||
-        extraItems,
+        onAddBuyer || onOpenTimeline || onCancelRequest || onEdit || onDelete || extraItems,
     );
+    const remindUsed = Math.max(0, Math.min(remindersUsed, remindersLimit));
     const contactPhoneLabel = contact?.phoneDigits ? formatPhoneIn(contact.phoneDigits) : null;
 
     return (
@@ -433,6 +434,38 @@ export function PropertyCardMenu({
                     </DropdownMenuItem>
                 ) : null}
 
+                {onRemind ? (
+                    <DropdownMenuItem
+                        className={cn(ITEM_CLASS, "justify-between gap-3")}
+                        disabled={!canRemind}
+                        onClick={() => {
+                            if (!canRemind) return;
+                            onRemind();
+                            setOpen(false);
+                        }}
+                    >
+                        <span className="flex min-inline-0 items-center gap-3">
+                            <Icon
+                                icon="tabler:bell"
+                                width={16}
+                                height={16}
+                                className={ICON_CLASS}
+                                aria-hidden
+                            />
+                            Remind owner
+                        </span>
+                        <span
+                            className={cn(
+                                "tabular body-xs shrink-0 font-semibold tracking-wide",
+                                canRemind ? "text-ink-muted" : "text-ink-subtle",
+                            )}
+                            aria-label={`${remindUsed} of ${remindersLimit} reminders used`}
+                        >
+                            {remindUsed}/{remindersLimit}
+                        </span>
+                    </DropdownMenuItem>
+                ) : null}
+
                 {hasDealExtras ? <DropdownMenuSeparator className={SEPARATOR_CLASS} /> : null}
 
                 {onAddBuyer ? (
@@ -445,27 +478,6 @@ export function PropertyCardMenu({
                     >
                         <UserPlus aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                         Add buyer
-                    </DropdownMenuItem>
-                ) : null}
-
-                {onRemind ? (
-                    <DropdownMenuItem
-                        className={ITEM_CLASS}
-                        disabled={!canRemind}
-                        onClick={() => {
-                            if (!canRemind) return;
-                            onRemind();
-                            setOpen(false);
-                        }}
-                    >
-                        <Icon
-                            icon="tabler:bell"
-                            width={16}
-                            height={16}
-                            className={ICON_CLASS}
-                            aria-hidden
-                        />
-                        {canRemind ? "Send reminder" : "Reminders used"}
                     </DropdownMenuItem>
                 ) : null}
 

@@ -399,7 +399,7 @@ export const representativeApi = {
     },
 };
 
-function representationListItems(
+export function representationListItems(
     result: RepresentationItem[] | RepresentationListPage | unknown,
 ): RepresentationItem[] {
     if (Array.isArray(result)) return result;
