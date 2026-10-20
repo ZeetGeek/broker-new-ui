@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import { spring } from "@/lib/motion/tokens";

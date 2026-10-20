@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { MapPin } from "lucide-react";
+import { MapPin } from "@/components/shared/icons";
 
 import { useSelfDestructBanner } from "@/lib/onboarding/use-self-destruct-banner";
 

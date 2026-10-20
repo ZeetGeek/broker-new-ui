@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "@/components/shared/icons";
 
 import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";

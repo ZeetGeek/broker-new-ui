@@ -1,7 +1,7 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
-import { X } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
+import { X } from "@/components/shared/icons";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -114,7 +114,7 @@ export type FilterChipProps = {
     onClear?: () => void;
     /** When true and active, show an X to clear the filter. */
     clearable?: boolean;
-    icon?: LucideIcon;
+    icon?: AppIcon;
     description?: string;
     warning?: boolean;
     className?: string;

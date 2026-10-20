@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Clock3, RotateCw, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, Clock3, RotateCw, SlidersHorizontal } from "@/components/shared/icons";
 
 import { Button } from "@/components/ui/button";
 

@@ -25,7 +25,7 @@ import {
     PinOff,
     StickyNote,
     Undo2,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { isOverBudget } from "@/lib/api/pipeline";
 import { getStoredUser } from "@/lib/auth/session";

@@ -10,6 +10,7 @@ import {
     BedDouble,
     Building2,
     Calendar,
+    CallIcon,
     Camera,
     Check,
     ChevronLeft,
@@ -18,14 +19,14 @@ import {
     Clock,
     MapPin,
     Maximize2,
-    MessageCircle,
     Send,
     Trash2,
     UserPlus,
     UserRound,
     Users,
+    WhatsAppIcon,
     X,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import {
@@ -1238,7 +1239,7 @@ function PropertyCardOwnerBlock({
                     />
                 }
             >
-                <MessageCircle aria-hidden strokeWidth={1.75} />
+                <WhatsAppIcon aria-hidden strokeWidth={1.75} />
             </Button>
         </div>
     );
@@ -1645,12 +1646,10 @@ function OwnedContactSplitBar({
                         )
                     }
                 >
-                    <Icon
-                        icon="tabler:brand-whatsapp"
-                        width={18}
-                        height={18}
-                        className="shrink-0 block-4.5 inline-4.5"
+                    <WhatsAppIcon
                         aria-hidden
+                        strokeWidth={1.75}
+                        className="shrink-0 block-4.5 inline-4.5"
                     />
                     WhatsApp
                 </TooltipTrigger>
@@ -1685,12 +1684,10 @@ function OwnedContactSplitBar({
                         )
                     }
                 >
-                    <Icon
-                        icon="tabler:phone"
-                        width={18}
-                        height={18}
-                        className="shrink-0 block-4.5 inline-4.5"
+                    <CallIcon
                         aria-hidden
+                        strokeWidth={1.75}
+                        className="shrink-0 block-4.5 inline-4.5"
                     />
                     Call Owner
                 </TooltipTrigger>

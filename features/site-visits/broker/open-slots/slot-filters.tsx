@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, UserRound } from "lucide-react";
+import { Building2, UserRound } from "@/components/shared/icons";
 
 import {
     Select,

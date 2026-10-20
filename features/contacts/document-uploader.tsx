@@ -2,8 +2,8 @@
 
 import { type DragEvent, useCallback, useId, useRef, useState } from "react";
 
-import type { LucideIcon } from "lucide-react";
-import { Paperclip, Trash2, Upload } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
+import { Paperclip, Trash2, Upload } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
@@ -37,7 +37,7 @@ import {
  * prop — the same shape `EmptyState` uses — so React sees a stable component
  * type rather than one resolved mid-render.
  */
-function DocumentGlyph({ icon: Icon }: { icon: LucideIcon }) {
+function DocumentGlyph({ icon: Icon }: { icon: AppIcon }) {
     return <Icon className="block-4.5 inline-4.5" strokeWidth={1.75} aria-hidden />;
 }
 

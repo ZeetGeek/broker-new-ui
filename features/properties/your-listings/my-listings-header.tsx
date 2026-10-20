@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { ArrowDownUp, ChevronDown, Plus, Search, SlidersHorizontal } from "lucide-react";
+import {
+    ArrowDownUp,
+    ChevronDown,
+    Plus,
+    Search,
+    SlidersHorizontal,
+} from "@/components/shared/icons";
 
 import type { MyListingsSummary } from "@/lib/api/my-listings";
 import { formatSortLabel } from "@/lib/format/owner-listings-labels";

@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
 import {
     Briefcase,
     Building2,
@@ -15,7 +15,7 @@ import {
     Send,
     UserRoundSearch,
     Users,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
@@ -27,7 +27,7 @@ export type PortalMobileNavProps = {
     items: NavItem[];
 };
 
-const NAV_ICONS: Record<string, LucideIcon> = {
+const NAV_ICONS: Record<string, AppIcon> = {
     "/broker/dashboard": LayoutDashboard,
     "/broker/owner-listings": Building2,
     "/broker/my-deals": Send,

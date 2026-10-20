@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Check, MapPin } from "lucide-react";
+import { AlertCircle, Check, MapPin } from "@/components/shared/icons";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";

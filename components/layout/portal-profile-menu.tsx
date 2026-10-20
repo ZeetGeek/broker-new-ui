@@ -4,7 +4,7 @@ import { type ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/shared/icons";
 
 import { useRouter } from "@/lib/navigation";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";

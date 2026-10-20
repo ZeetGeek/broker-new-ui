@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { Building2, Check, ChevronDown, Search } from "lucide-react";
+import { Building2, Check, ChevronDown, Search } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

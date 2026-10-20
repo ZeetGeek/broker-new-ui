@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { MapPin, Phone } from "lucide-react";
+import { MapPin, Phone } from "@/components/shared/icons";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";

@@ -16,7 +16,7 @@ import {
     Pencil,
     RotateCcw,
     Route,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 

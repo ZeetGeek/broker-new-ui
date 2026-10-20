@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { Eye, StickyNote } from "lucide-react";
+import { Eye, StickyNote } from "@/components/shared/icons";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { formatDateIn, formatRelativePast, formatTimeIn } from "@/lib/format/date";

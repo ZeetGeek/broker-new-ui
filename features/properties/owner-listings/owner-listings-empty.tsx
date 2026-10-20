@@ -1,4 +1,4 @@
-import { MapPin, Search } from "lucide-react";
+import { MapPin, Search } from "@/components/shared/icons";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { TextLinkButton } from "@/components/shared/text-link-button";

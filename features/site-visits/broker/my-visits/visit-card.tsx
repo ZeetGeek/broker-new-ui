@@ -15,7 +15,7 @@ import {
     Phone,
     Route,
     Trash2,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";

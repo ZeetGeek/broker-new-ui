@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BellRing, MessageSquare, MoreHorizontal } from "lucide-react";
+import { ArrowRight, BellRing, MessageSquare, MoreHorizontal } from "@/components/shared/icons";
 
 import { formatRelativePast } from "@/lib/format/date";
 import { buildWhatsAppInviteUrl } from "@/lib/share/referral";

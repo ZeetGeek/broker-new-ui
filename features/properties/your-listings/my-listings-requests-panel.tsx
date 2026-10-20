@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Check, Clock, Send, X } from "lucide-react";
+import { Check, Clock, Send, X } from "@/components/shared/icons";
 
 import { brokerRequestsApi } from "@/lib/api/broker-requests";
 import { PREF_KEYS } from "@/lib/prefs/keys";

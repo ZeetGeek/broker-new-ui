@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Check, Send, UserPlus, X } from "lucide-react";
+import { Check, Send, UserPlus, X } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";

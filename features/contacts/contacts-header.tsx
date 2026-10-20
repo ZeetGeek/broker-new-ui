@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-import { ArrowDownUp, ChevronDown, Plus, Search, UserRound, Users } from "lucide-react";
+import {
+    ArrowDownUp,
+    ChevronDown,
+    Plus,
+    Search,
+    UserRound,
+    Users,
+} from "@/components/shared/icons";
 
 import { getShortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";

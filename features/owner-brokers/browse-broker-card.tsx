@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { BadgeCheck, MapPin, Send } from "lucide-react";
+import { BadgeCheck, MapPin, Send } from "@/components/shared/icons";
 
 import type { BrokerProfile } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";

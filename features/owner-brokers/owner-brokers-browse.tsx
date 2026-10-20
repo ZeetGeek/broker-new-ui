@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { UserRoundSearch } from "lucide-react";
+import { UserRoundSearch } from "@/components/shared/icons";
 
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";

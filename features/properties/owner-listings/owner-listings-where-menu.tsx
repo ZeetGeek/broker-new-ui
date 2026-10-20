@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import {
-    type LucideIcon,
+    type AppIcon,
     Building2,
     ChevronLeft,
     ChevronRight,
@@ -13,7 +13,7 @@ import {
     MapPinned,
     MapPinOff,
     Search,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import {
     formatLocalitiesLabel,
@@ -164,7 +164,7 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
     );
 }
 
-function LocationIcon({ icon: Icon = MapPin }: { icon?: LucideIcon }) {
+function LocationIcon({ icon: Icon = MapPin }: { icon?: AppIcon }) {
     return (
         <Icon
             aria-hidden
@@ -205,7 +205,7 @@ function WhereMenuEmptyState({
     title,
     description,
 }: {
-    icon: LucideIcon;
+    icon: AppIcon;
     title: string;
     description: string;
 }) {
@@ -237,7 +237,7 @@ function WhereBrowseRow({
     childCount: number;
     childLabel: string;
     query?: string;
-    icon?: LucideIcon;
+    icon?: AppIcon;
     checked: boolean;
     onToggleSelect: () => void;
     onDrill: () => void;

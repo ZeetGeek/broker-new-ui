@@ -2,7 +2,7 @@
 
 import type { KeyboardEvent } from "react";
 
-import { Plus } from "lucide-react";
+import { Plus } from "@/components/shared/icons";
 
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";

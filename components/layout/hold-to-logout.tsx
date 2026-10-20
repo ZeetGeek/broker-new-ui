@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { LogOut } from "lucide-react";
+import { LogOut } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import { getShortcut } from "@/lib/shortcuts";

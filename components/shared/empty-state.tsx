@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
 export type EmptyStateProps = {
-    icon: LucideIcon;
+    icon: AppIcon;
     heading: ReactNode;
     description: string;
     children?: ReactNode;

@@ -5,7 +5,7 @@ import * as React from "react";
 import { Combobox as ComboboxPrimitive } from "@base-ui/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tailspin } from "ldrs/react";
-import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, XIcon } from "@/components/shared/icons";
 
 import { clearInputError, shakeInput } from "@/lib/motion/shake-input";
 import { swapText } from "@/lib/motion/swap-text";

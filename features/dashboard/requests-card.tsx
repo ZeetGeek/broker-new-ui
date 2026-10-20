@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Check, Clock, Send, X } from "lucide-react";
+import { Check, Clock, Send, X } from "@/components/shared/icons";
 
 import { formatDateShort } from "@/lib/format/date";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";

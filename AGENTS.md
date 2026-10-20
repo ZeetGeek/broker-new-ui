@@ -134,6 +134,35 @@ These are genuinely undecided. Do not invent an answer — ask.
 
 ---
 
+## UI conventions (icons)
+
+**All app icons come from Tabler** via one registry:
+
+`components/shared/icons.tsx`
+
+```tsx
+import { WhatsAppIcon, CallIcon, Search, MapPin } from "@/components/shared/icons";
+```
+
+Rules:
+
+1. **Never import from `lucide-react`.** The app uses Tabler only. If
+   `npx shadcn add` reintroduces Lucide in `components/ui/`, remap those
+   imports to `@/components/shared/icons` immediately.
+2. **Never import `@tabler/icons-react` directly** in feature / UI code. Add
+   the icon to `icons.tsx` first, then import from there — so the glyph stays
+   the same everywhere.
+3. **Product actions use semantic names** so Call / WhatsApp never drift:
+    - `WhatsAppIcon` — every WhatsApp CTA
+    - `CallIcon` — every dial / `tel:` CTA
+    - `MailIcon` — email channel actions
+4. Prefer short aliases already in the registry (`Search`, `MapPin`, `Check`)
+   for general UI. Type for icon props: `AppIcon` (not `LucideIcon`).
+5. To add an icon: update `scripts/generate-icons-module.mjs` (or add a
+   semantic export in `icons.tsx`) and re-run the generator if needed.
+
+---
+
 ## UI conventions (price)
 
 **Listing ask prices** (sale price, monthly rent on a property) always render

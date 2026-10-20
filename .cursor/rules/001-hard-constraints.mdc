@@ -54,5 +54,9 @@ These are expensive to get wrong even in planning. Full detail lives in
     price/phone/date formatting. **Listing ask prices** →
     `<PriceWithCommission>` (never bare `<Price>` / `formatPriceInr` in JSX for
     sale/rent on a property). `snake_case` only inside `lib/api/`.
+17. **Icons are Tabler via `components/shared/icons.tsx`.** Never import
+    `lucide-react` or raw `@tabler/icons-react` — add to the registry first.
+    Use `WhatsAppIcon` / `CallIcon` / `MailIcon` for those CTAs so the glyph
+    never drifts. Remap any Lucide that `npx shadcn add` reintroduces.
 
 If a request fights these, stop and ask or flag deferred scope.

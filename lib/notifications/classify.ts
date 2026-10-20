@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
 import {
     BadgeCheck,
     Bell,
@@ -11,7 +11,7 @@ import {
     ShieldCheck,
     UserPlus,
     XCircle,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import type { NotificationItem, NotificationType } from "@/lib/api/notifications";
 import { formatActivityDayLabel, formatDateIso } from "@/lib/format/date";
@@ -24,7 +24,7 @@ export type NotificationActor = {
 };
 
 export type NotificationVisual = {
-    Icon: LucideIcon;
+    Icon: AppIcon;
     colorClass: string;
 };
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { Check, Inbox, X } from "lucide-react";
+import { Check, Inbox, X } from "@/components/shared/icons";
 
 import type { DashboardOwnerBrokerRequest } from "@/lib/api/dashboard";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";

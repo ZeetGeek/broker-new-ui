@@ -179,6 +179,7 @@ This is where reuse actually pays on this platform. Each of these exists
 | `<UserAvatar>`          | Photo or avvvatars-react shape/character fallback.                                                                                                                                |
 | `<VerifiedBadge>`       | The trust signal on the approve screen. Its meaning must never drift.                                                                                                             |
 | `<LoadingSkeleton>`     | Per-shape skeletons. No blank white flashes.                                                                                                                                      |
+| Icons (`icons.tsx`)     | **One Tabler registry.** Import `WhatsAppIcon` / `CallIcon` / `MailIcon` (and other aliases) from `components/shared/icons` — never `lucide-react` or raw `@tabler/icons-react`.  |
 
 Use `<AppImage>` for every rendered raster photo, including property photos,
 avatars, upload previews, and remote media. A `fill` image must sit in a

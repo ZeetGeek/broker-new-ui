@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck } from "@/components/shared/icons";
 
 import { Badge } from "@/components/ui/badge";
 

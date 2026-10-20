@@ -62,7 +62,7 @@ import {
     Waves,
     Wind,
     Zap,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import type { PropertyCategory, PropertyFormValues, PropertyType } from "@/lib/validation/property";
 

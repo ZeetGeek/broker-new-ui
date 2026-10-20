@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { MapPin, Maximize2 } from "lucide-react";
+import { MapPin, Maximize2 } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

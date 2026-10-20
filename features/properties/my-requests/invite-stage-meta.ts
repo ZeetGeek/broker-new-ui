@@ -1,12 +1,12 @@
-import type { LucideIcon } from "lucide-react";
-import { CircleCheck, CircleX, Clock, Hourglass } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
+import { CircleCheck, CircleX, Clock, Hourglass } from "@/components/shared/icons";
 
 import type { InviteStage } from "@/features/properties/my-requests/invite-types";
 
 export type InviteStageMeta = {
     label: string;
     hint: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     badgeVariant: "brand" | "urgent" | "danger" | "neutral" | "outline";
 };
 

@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 
-import { Check, Clock3, Info, X } from "lucide-react";
+import { Check, Clock3, Info, X } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 import { getSlotVisualState } from "@/lib/visits/status";

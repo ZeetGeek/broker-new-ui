@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X } from "@/components/shared/icons";
 
 import { formatPriceInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";

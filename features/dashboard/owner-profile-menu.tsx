@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { Command, Gift, Home, LifeBuoy, User } from "lucide-react";
+import { Command, Gift, Home, LifeBuoy, User } from "@/components/shared/icons";
 
 import { OWNER_PROFILE_HREF, OWNER_REFERRALS_HREF } from "@/lib/routes/owner";
 

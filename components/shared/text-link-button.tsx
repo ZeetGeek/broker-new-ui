@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { MoveRight } from "lucide-react";
+import { MoveRight } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

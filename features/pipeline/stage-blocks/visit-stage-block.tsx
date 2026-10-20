@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Calendar, Pencil } from "lucide-react";
+import { Calendar, Pencil } from "@/components/shared/icons";
 
 import { formatDateShort, formatTimeIn, isSameCalendarDay } from "@/lib/format/date";
 import { cn } from "@/lib/utils";

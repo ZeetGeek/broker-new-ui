@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { Eye, EyeOff, Inbox, Pencil, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Inbox, Pencil, Trash2 } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

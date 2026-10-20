@@ -1,7 +1,7 @@
 "use client";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { BadgeCheck, MapPin, Phone, UserPlus } from "lucide-react";
+import { BadgeCheck, MapPin, Phone, UserPlus } from "@/components/shared/icons";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";

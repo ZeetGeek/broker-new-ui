@@ -12,7 +12,7 @@ import {
     LifeBuoy,
     ShieldCheck,
     User,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import {
     PortalProfileMenu,

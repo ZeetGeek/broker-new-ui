@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { GripVertical, Plus } from "lucide-react";
+import { GripVertical, Plus } from "@/components/shared/icons";
 
 import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";

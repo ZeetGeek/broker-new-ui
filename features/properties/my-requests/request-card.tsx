@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { Send, UserPlus } from "lucide-react";
+import { Send, UserPlus } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";

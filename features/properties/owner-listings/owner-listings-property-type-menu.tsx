@@ -9,9 +9,9 @@ import {
     Hotel,
     LandPlot,
     Layers,
-    type LucideIcon,
+    type AppIcon,
     Store,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { formatPropertyTypeLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
@@ -42,7 +42,7 @@ const PROPERTY_TYPE_OPTIONS: {
     radioValue: string;
     label: string;
     description: string;
-    icon: LucideIcon;
+    icon: AppIcon;
 }[] = [
     {
         value: "",

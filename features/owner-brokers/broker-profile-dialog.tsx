@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Send, ShieldCheck } from "lucide-react";
+import { Send, ShieldCheck } from "@/components/shared/icons";
 
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
 

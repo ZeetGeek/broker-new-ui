@@ -3,7 +3,7 @@
 import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { Controller, type FieldPath, useFormContext } from "react-hook-form";
 
-import { Check, type LucideIcon, Minus, Plus, X } from "lucide-react";
+import { Check, type AppIcon, Minus, Plus, X } from "@/components/shared/icons";
 
 import { formatInrInput, inrWordHint, parseInr } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
@@ -266,7 +266,7 @@ export function SelectField({
     hint?: ReactNode;
     visibility?: FieldVisibility;
     className?: string;
-    startIcon?: LucideIcon;
+    startIcon?: AppIcon;
     onBlur?: () => void;
     onValueChange?: (value: string) => void;
     /** Shows a spinner and blocks input while the options are being fetched. */
@@ -420,7 +420,7 @@ export function NumberField({
     step?: number;
     placeholder?: string;
     className?: string;
-    startIcon?: LucideIcon;
+    startIcon?: AppIcon;
     onValueChange?: (value: number | null) => void;
 }) {
     const {
@@ -1185,7 +1185,7 @@ export function CounterField({
     min?: number;
     max?: number;
     visibility?: FieldVisibility;
-    startIcon?: LucideIcon;
+    startIcon?: AppIcon;
     storeAsString?: boolean;
     className?: string;
 }) {

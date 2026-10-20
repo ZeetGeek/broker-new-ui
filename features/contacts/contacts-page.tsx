@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useQuery } from "@tanstack/react-query";
-import { Search, UserPlus, UserRound, UserRoundPlus, Users } from "lucide-react";
+import { Search, UserPlus, UserRound, UserRoundPlus, Users } from "@/components/shared/icons";
 import { tinykeys } from "tinykeys";
 
 import { ApiError } from "@/lib/api/client";

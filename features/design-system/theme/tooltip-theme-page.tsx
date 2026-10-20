@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Info, LayoutGrid } from "lucide-react";
+import { Bell, Info, LayoutGrid } from "@/components/shared/icons";
 
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Button } from "@/components/ui/button";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List } from "@/components/shared/icons";
 
 import { IconSegmentedToggle } from "@/components/shared/icon-segmented-toggle";
 import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";

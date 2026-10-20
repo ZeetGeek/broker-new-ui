@@ -5,7 +5,7 @@ import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarClock, MapPin } from "lucide-react";
+import { CalendarClock, MapPin } from "@/components/shared/icons";
 
 import { useBookSlot } from "@/hooks/use-book-slot";
 import { ApiError } from "@/lib/api/client";

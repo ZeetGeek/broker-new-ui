@@ -3,7 +3,7 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
-import { Camera, ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Expand, X } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

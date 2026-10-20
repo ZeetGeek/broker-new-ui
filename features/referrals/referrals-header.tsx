@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Search } from "lucide-react";
+import { Search } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

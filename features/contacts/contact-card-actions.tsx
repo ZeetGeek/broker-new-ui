@@ -2,8 +2,17 @@
 
 import type { SyntheticEvent } from "react";
 
-import { addCollection, Icon } from "@iconify/react/offline";
-import { Eye, Link2, Lock, MoreHorizontal, Pencil, StickyNote, Trash2, Phone } from "lucide-react";
+import {
+    CallIcon,
+    Eye,
+    Link2,
+    Lock,
+    MoreHorizontal,
+    Pencil,
+    StickyNote,
+    Trash2,
+    WhatsAppIcon,
+} from "@/components/shared/icons";
 
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
@@ -17,10 +26,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
-import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
-
-addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
 
 export type ContactCardActionsProps = {
     name: string;
@@ -72,7 +77,7 @@ export function ContactCardActions({
                             />
                         }
                     >
-                        <Phone aria-hidden strokeWidth={1.75} />
+                        <CallIcon aria-hidden strokeWidth={1.75} className="size-4" />
                     </TooltipTrigger>
                     <TooltipContent>Call {name}</TooltipContent>
                 </Tooltip>
@@ -99,7 +104,7 @@ export function ContactCardActions({
                             />
                         }
                     >
-                        <Icon icon="bi:whatsapp" width={16} height={16} aria-hidden />
+                        <WhatsAppIcon aria-hidden strokeWidth={1.75} className="size-4" />
                     </TooltipTrigger>
                     <TooltipContent>WhatsApp {name}</TooltipContent>
                 </Tooltip>

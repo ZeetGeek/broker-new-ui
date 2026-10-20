@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, FileText, X } from "lucide-react";
+import { Download, FileText, X } from "@/components/shared/icons";
 
 import {
     Attachment,

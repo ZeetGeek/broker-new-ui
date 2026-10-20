@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-import { ChevronLeft, Lock, MapPin, MessageCircle, Phone } from "lucide-react";
+import { CallIcon, ChevronLeft, Lock, MapPin, WhatsAppIcon } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
@@ -128,7 +128,7 @@ function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
                             className="border-border-warm"
                             render={<a href={`tel:+91${phone}`} />}
                         >
-                            <Phone
+                            <CallIcon
                                 aria-hidden
                                 className="block-3.5 inline-3.5"
                                 strokeWidth={1.75}
@@ -147,7 +147,7 @@ function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
                                 />
                             }
                         >
-                            <MessageCircle
+                            <WhatsAppIcon
                                 aria-hidden
                                 className="block-3.5 inline-3.5"
                                 strokeWidth={1.75}

@@ -3,7 +3,7 @@
 import { type ChangeEvent, type FormEvent, type KeyboardEvent, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 
-import { Mic, Paperclip, Send, Smile, X } from "lucide-react";
+import { Mic, Paperclip, Send, Smile, X } from "@/components/shared/icons";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail } from "lucide-react";
+import { Mail } from "@/components/shared/icons";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";

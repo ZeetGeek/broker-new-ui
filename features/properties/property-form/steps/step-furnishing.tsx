@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useFormContext } from "react-hook-form";
 import { AnimatePresence, motion } from "motion/react";
 
-import { Plus, Search, Sofa, Sparkles, X } from "lucide-react";
+import { Plus, Search, Sofa, Sparkles, X } from "@/components/shared/icons";
 
 import { duration, ease } from "@/lib/motion/tokens";
 import type { PropertyDraftValues } from "@/lib/schemas/property";

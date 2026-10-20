@@ -13,7 +13,7 @@ import {
 import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { ChevronDown, RotateCcw, X } from "lucide-react";
+import { ChevronDown, RotateCcw, X } from "@/components/shared/icons";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
@@ -149,8 +149,7 @@ export function PropertyForm({
     const localStorageKey = `property-draft:v${LOCAL_DRAFT_VERSION}:${propertyId ?? "new"}`;
 
     const defaultValues = useMemo(
-        () =>
-            initialListing ? listingToDraft(initialListing, portal) : cloneDefaultDraft(portal),
+        () => (initialListing ? listingToDraft(initialListing, portal) : cloneDefaultDraft(portal)),
         [initialListing, portal],
     );
     const methods = useForm<PropertyDraftValues>({

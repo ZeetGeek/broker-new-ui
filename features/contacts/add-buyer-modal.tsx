@@ -5,7 +5,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link2 } from "lucide-react";
+import { Link2 } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import type { NewBuyerInput } from "@/lib/api/clients";

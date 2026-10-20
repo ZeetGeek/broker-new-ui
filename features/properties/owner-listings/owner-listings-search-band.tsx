@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X } from "@/components/shared/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { extractBandFilters } from "@/lib/format/owner-listings-labels";

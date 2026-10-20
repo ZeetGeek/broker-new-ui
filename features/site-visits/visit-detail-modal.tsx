@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 
-import { CalendarClock, Clock3, Lock, MapPin, PhoneCall, StickyNote } from "lucide-react";
+import {
+    CalendarClock,
+    Clock3,
+    Lock,
+    MapPin,
+    PhoneCall,
+    StickyNote,
+} from "@/components/shared/icons";
 
 import { formatRelativePast, formatShowingWhen } from "@/lib/format/date";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";

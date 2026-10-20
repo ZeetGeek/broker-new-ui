@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
-import { ArrowDownUp, ChevronDown, Search } from "lucide-react";
+import { ArrowDownUp, ChevronDown, Search } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

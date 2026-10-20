@@ -2,7 +2,14 @@
 
 import { memo, useMemo, useState } from "react";
 
-import { BadgeCheck, Building2, CalendarClock, ChevronDown, MapPin, Sparkles } from "lucide-react";
+import {
+    BadgeCheck,
+    Building2,
+    CalendarClock,
+    ChevronDown,
+    MapPin,
+    Sparkles,
+} from "@/components/shared/icons";
 
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";

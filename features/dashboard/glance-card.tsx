@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { CalendarClock, Send } from "lucide-react";
+import { CalendarClock, Send } from "@/components/shared/icons";
 
 import type { DashboardOwnerSummary } from "@/lib/api/dashboard";
 import { formatRelativePast, formatShowingWhen } from "@/lib/format/date";

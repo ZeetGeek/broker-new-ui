@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { BadgePercent, CalendarDays, type LucideIcon, Ruler, XIcon } from "lucide-react";
+import { BadgePercent, CalendarDays, type AppIcon, Ruler, XIcon } from "@/components/shared/icons";
 import SimpleBar from "simplebar-react";
 
 import { formatInr } from "@/lib/format/inr";
@@ -101,7 +101,7 @@ function formatPercent(value: number): string {
 //     >;
 //     label: string;
 //     description: string;
-//     icon: LucideIcon;
+//     icon: AppIcon;
 // }[] = [
 //     {
 //         key: "yourAreas",
@@ -223,7 +223,7 @@ function OptionCard({
     label: string;
     hint?: string;
     active: boolean;
-    icon?: LucideIcon;
+    icon?: AppIcon;
     onClick: () => void;
 }) {
     return (
@@ -303,7 +303,7 @@ function DealToggle({
 }: {
     label: string;
     description: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     active: boolean;
     onCheckedChange: (checked: boolean) => void;
 }) {

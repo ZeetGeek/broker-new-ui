@@ -547,7 +547,8 @@ Standard control radius (`rounded-control`), 2px `border-warm`, `surface` fill. 
 carries no shadow — `shadow-xs` is reserved for the rare case an input sits
 directly on `canvas` rather than inside a card that already separates it.
 
-**Icon slots.** `startIcon` and `endIcon` accept a Lucide icon component.
+**Icon slots.** `startIcon` and `endIcon` accept an `AppIcon` from
+`components/shared/icons` (Tabler).
 Only one thing occupies the end
 slot at a time — `loading`, `success`, `clearable`, and `type="password"`
 each claim it automatically, in that priority order, ahead of a plain

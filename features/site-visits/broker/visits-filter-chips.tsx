@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X } from "@/components/shared/icons";
 
 import type { SlotDateRange } from "@/features/site-visits/broker/open-slots/slot-filters";
 

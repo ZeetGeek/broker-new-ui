@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Home } from "lucide-react";
+import { Home } from "@/components/shared/icons";
 
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";

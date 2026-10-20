@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal } from "@/components/shared/icons";
 
 import { FilterChip } from "@/components/shared/filter-chip";
 import { Input } from "@/components/ui/input";

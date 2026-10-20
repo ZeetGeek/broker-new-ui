@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
-import { Ban, CircleCheck, CircleX, Hourglass, Lock } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
+import { Ban, CircleCheck, CircleX, Hourglass, Lock } from "@/components/shared/icons";
 
 import type { RequestStage } from "@/features/properties/my-requests/types";
 
@@ -8,7 +8,7 @@ export type RequestStageMeta = {
     label: string;
     /** One line explaining what the broker should expect next. */
     hint: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     badgeVariant: "brand" | "urgent" | "danger" | "neutral" | "outline";
     /** Text tone class for icons rendered outside a badge. */
     toneClass: string;

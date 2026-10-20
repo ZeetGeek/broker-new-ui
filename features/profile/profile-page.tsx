@@ -22,7 +22,7 @@ import {
     Home,
     Landmark,
     Link2,
-    type LucideIcon,
+    type AppIcon,
     Mail,
     Map,
     MapPinned,
@@ -31,7 +31,7 @@ import {
     Receipt,
     Tags,
     UserRound,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
@@ -71,7 +71,7 @@ function Section({
 }: {
     title: string;
     description?: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     children: ReactNode;
 }) {
     return (
