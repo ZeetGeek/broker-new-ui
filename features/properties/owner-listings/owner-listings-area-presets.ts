@@ -43,19 +43,38 @@ function formatSqftCompact(value: number): string {
     return value.toLocaleString("en-IN");
 }
 
+/** Open upper bound — include listings above the 5,000 sqft slider ceiling. */
+export const AREA_ABOVE_MAX_TOKEN = `${OWNER_LISTINGS_AREA_RANGE.max}+`;
+
+export function isAreaAboveMax(maxAreaSqft: string): boolean {
+    return maxAreaSqft.endsWith("+");
+}
+
+const AREA_PLUS_LABEL = `${OWNER_LISTINGS_AREA_RANGE.max.toLocaleString("en-IN")}+`;
+
 export function formatAreaFilterLabel(minAreaSqft: string, maxAreaSqft: string): string {
-    const preset = findAreaPreset(minAreaSqft, maxAreaSqft);
-    if (preset) return preset.shortLabel;
     if (!minAreaSqft && !maxAreaSqft) return "Any";
 
     const min = minAreaSqft ? Number(minAreaSqft) : null;
-    const max = maxAreaSqft ? Number(maxAreaSqft) : null;
+    const openMax = isAreaAboveMax(maxAreaSqft) || !maxAreaSqft;
 
-    if (min != null && !Number.isNaN(min) && max != null && !Number.isNaN(max)) {
-        return `${formatSqftCompact(min)}–${formatSqftCompact(max)}`;
+    if (openMax) {
+        if (
+            min == null ||
+            Number.isNaN(min) ||
+            min <= OWNER_LISTINGS_AREA_RANGE.min ||
+            min >= OWNER_LISTINGS_AREA_RANGE.max
+        ) {
+            return AREA_PLUS_LABEL;
+        }
+        return `${formatSqftCompact(min)}–${AREA_PLUS_LABEL} sqft`;
     }
-    if (max != null && !Number.isNaN(max)) return `Under ${formatSqftCompact(max)}`;
-    if (min != null && !Number.isNaN(min)) return `${formatSqftCompact(min)}+`;
+
+    const max = Number(maxAreaSqft);
+    const low = min != null && !Number.isNaN(min) ? min : OWNER_LISTINGS_AREA_RANGE.min;
+    if (Number.isFinite(max)) {
+        return `${formatSqftCompact(low)}–${formatSqftCompact(max)} sqft`;
+    }
     return "Any";
 }
 
@@ -78,19 +97,31 @@ export function areaDraftToRange(
     bounds: { min: number; max: number } = OWNER_LISTINGS_AREA_RANGE,
 ): [number, number] {
     const low = minAreaSqft ? Number(minAreaSqft) : bounds.min;
-    const high = maxAreaSqft ? Number(maxAreaSqft) : bounds.max;
+    const high = isAreaAboveMax(maxAreaSqft)
+        ? bounds.max
+        : maxAreaSqft
+          ? Number(maxAreaSqft)
+          : bounds.max;
     return [
         Number.isFinite(low) ? Math.max(bounds.min, Math.min(bounds.max, low)) : bounds.min,
         Number.isFinite(high) ? Math.max(bounds.min, Math.min(bounds.max, high)) : bounds.max,
     ];
 }
 
-/** Drop legacy / impossible floors (e.g. URL `minArea=0`). */
+/** Drop legacy / impossible floors (e.g. URL `minArea=0`). Keeps an explicit 5,000 cap and the 5,000+ token. */
 export function normalizeAreaFilterStrings(
     minAreaSqft: string,
     maxAreaSqft: string,
 ): { minAreaSqft: string; maxAreaSqft: string } {
-    return areaRangeToDraft(areaDraftToRange(minAreaSqft, maxAreaSqft));
+    if (isAreaAboveMax(maxAreaSqft)) {
+        const min = areaRangeToDraft(areaDraftToRange(minAreaSqft, "")).minAreaSqft;
+        return { minAreaSqft: min, maxAreaSqft: AREA_ABOVE_MAX_TOKEN };
+    }
+    const [low, high] = areaDraftToRange(minAreaSqft, maxAreaSqft);
+    return {
+        minAreaSqft: low <= OWNER_LISTINGS_AREA_RANGE.min ? "" : String(Math.round(low)),
+        maxAreaSqft: maxAreaSqft ? String(Math.round(high)) : "",
+    };
 }
 
 export function formatAreaSqftDisplay(value: number, openAtMax = false): string {
@@ -100,70 +131,20 @@ export function formatAreaSqftDisplay(value: number, openAtMax = false): string 
     return value.toLocaleString("en-IN");
 }
 
-const HISTOGRAM_BUCKETS = 20;
+/**
+ * Fixed decorative bar pattern for the Area slider histogram.
+ * Dual crest (taller left, secondary right) with a soft valley in between —
+ * kept constant so the menu never flickers between pool-data shapes on load.
+ */
+const AREA_HISTOGRAM_PATTERN: readonly number[] = [
+    0.18, 0.22, 0.4, 0.75, 1, 0.78, 0.42, 0.32, 0.28, 0.24, 0.3, 0.48, 0.52, 0.4, 0.58, 0.85, 0.95,
+    0.72, 0.42, 0.22,
+];
 
 /**
- * Soft fallback curve when the pool has little area data.
- * Main crest mid-left, then a taller secondary ridge on the right (no flat tail).
+ * Relative bar heights 0–1 for the Area slider histogram.
+ * Pattern is fixed on purpose — live pool values only drive active/inactive tint.
  */
-function fallbackHistogramHeights(): number[] {
-    const peaks = [
-        0.22, 0.4, 0.58, 0.45, 0.68, 0.88, 1, 0.74, 0.48, 0.62, 0.38, 0.72, 0.9, 0.55, 0.32,
-    ];
-    const heights: number[] = [];
-    for (let i = 0; i < HISTOGRAM_BUCKETS; i++) {
-        const t = i / (HISTOGRAM_BUCKETS - 1);
-        const idx = t * (peaks.length - 1);
-        const a = Math.floor(idx);
-        const b = Math.min(peaks.length - 1, a + 1);
-        const mix = idx - a;
-        heights.push(peaks[a]! * (1 - mix) + peaks[b]! * mix);
-    }
-    return heights;
-}
-
-/** Soften raw bucket counts so the bar ridge reads as a curve, not stairs. */
-function smoothHistogramCounts(counts: number[]): number[] {
-    return counts.map((_, index) => {
-        const left = counts[index - 1] ?? counts[index]!;
-        const mid = counts[index]!;
-        const right = counts[index + 1] ?? counts[index]!;
-        return left * 0.2 + mid * 0.6 + right * 0.2;
-    });
-}
-
-/** Relative bar heights 0–1 for the Area slider histogram. */
-export function buildAreaHistogram(
-    areaSqftValues: number[],
-    bounds: { min: number; max: number } = OWNER_LISTINGS_AREA_RANGE,
-): number[] {
-    const ambient = fallbackHistogramHeights();
-    const usable = areaSqftValues.filter(
-        (value) => Number.isFinite(value) && value > 0 && value <= bounds.max * 1.25,
-    );
-    if (usable.length < 3) return ambient;
-
-    const counts = Array.from({ length: HISTOGRAM_BUCKETS }, () => 0);
-    const span = bounds.max - bounds.min || 1;
-    for (const value of usable) {
-        const clamped = Math.min(bounds.max, Math.max(bounds.min, value));
-        const index = Math.min(
-            HISTOGRAM_BUCKETS - 1,
-            Math.floor(((clamped - bounds.min) / span) * HISTOGRAM_BUCKETS),
-        );
-        counts[index] = (counts[index] ?? 0) + 1;
-    }
-    const smoothed = smoothHistogramCounts(counts);
-    const peak = Math.max(...smoothed, 1);
-
-    // Sparse / empty buckets lift toward the ambient ridge so the right side
-    // still shows tall bars instead of a flat fence.
-    return smoothed.map((count, index) => {
-        const ratio = count / peak;
-        const ridge = ambient[index]!;
-        if (ratio <= 0.08) {
-            return Math.max(0.18, ridge * 0.85);
-        }
-        return Math.max(ratio, ridge * 0.28);
-    });
+export function buildAreaHistogram(_areaSqftValues?: number[]): number[] {
+    return [...AREA_HISTOGRAM_PATTERN];
 }

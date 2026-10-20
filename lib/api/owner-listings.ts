@@ -35,7 +35,10 @@ function filterMockOwnerListings(
     const min = filters.min ? Number(filters.min) : null;
     const max = filters.max ? Number(filters.max) : null;
     const minArea = filters.minAreaSqft ? Number(filters.minAreaSqft) : null;
-    const maxArea = filters.maxAreaSqft ? Number(filters.maxAreaSqft) : null;
+    const maxArea =
+        filters.maxAreaSqft && !filters.maxAreaSqft.endsWith("+")
+            ? Number(filters.maxAreaSqft)
+            : null;
     const listedWithin = filters.listedWithinDays ? Number(filters.listedWithinDays) : null;
     const commission = commissionRanges(filters);
     const serviceAreas = (context.serviceAreas ?? []).map((area) => area.toLowerCase());
@@ -202,7 +205,10 @@ async function fetchBrowsePage({
             minPrice: filters.min ? Number(filters.min) : undefined,
             maxPrice: filters.max ? Number(filters.max) : undefined,
             minAreaSqft: filters.minAreaSqft ? Number(filters.minAreaSqft) : undefined,
-            maxAreaSqft: filters.maxAreaSqft ? Number(filters.maxAreaSqft) : undefined,
+            maxAreaSqft:
+                filters.maxAreaSqft && !filters.maxAreaSqft.endsWith("+")
+                    ? Number(filters.maxAreaSqft)
+                    : undefined,
             listedWithinDays:
                 listedWithinDays != null && !Number.isNaN(listedWithinDays)
                     ? listedWithinDays
@@ -301,9 +307,9 @@ export async function fetchOwnerListings(
     });
 }
 
-export async function fetchOwnerListingCities() {
+export async function fetchOwnerListingCities(signal?: AbortSignal) {
     if (isMockMode()) {
         return mockOwnerListingsCities();
     }
-    return propertiesApi.browseCities();
+    return propertiesApi.browseCities(signal);
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import type { AppIcon } from "@/components/shared/icons";
-import { X } from "@/components/shared/icons";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import type { AppIcon } from "@/components/shared/icons";
+import { X } from "@/components/shared/icons";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { Skeleton } from "@/components/shared/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const CHIP_HOVER_TRANSITION = "transition-[background-color,border-color,color] duration-160";
@@ -34,7 +35,8 @@ export function filterChipClassName(isActive: boolean) {
 export const ownerListingsChipClassName = filterChipClassName;
 
 export type FilterChipCountProps = {
-    count: number;
+    reserveSpace?: boolean;
+    count?: number;
     isActive?: boolean;
     isLoading?: boolean;
     warning?: boolean;
@@ -51,8 +53,36 @@ export function FilterChipCount({
     isLoading = false,
     warning = false,
     className,
+    reserveSpace = false,
 }: FilterChipCountProps) {
-    if (!isLoading && count <= 0) return null;
+    if (reserveSpace) {
+        return (
+            <span
+                className="inline-flex shrink-0 items-center justify-center block-5 inline-8"
+                aria-hidden
+            >
+                {isLoading ? (
+                    <Skeleton className="block-4 inline-7" />
+                ) : count != null ? (
+                    <span
+                        className={cn(
+                            `
+                              body-xs inline-flex items-center justify-center rounded-full px-1.5
+                              font-semibold tabular-nums block-5 min-inline-5
+                            `,
+                            isActive
+                                ? "bg-brand-text/12 text-brand-text"
+                                : "bg-ink/6 text-ink-muted",
+                            className,
+                        )}
+                    >
+                        {count > 99 ? "99+" : count}
+                    </span>
+                ) : null}
+            </span>
+        );
+    }
+    if (count == null || (!isLoading && count <= 0)) return null;
 
     // Loading: bare Tailspin only — no rounded count badge behind it.
     if (isLoading) {
@@ -69,11 +99,10 @@ export function FilterChipCount({
         <span
             className={cn(
                 `
-                  body-xs inline-flex items-center justify-center rounded-full px-1.5
-                  font-semibold tracking-normal tabular-nums
-                  block-5 min-inline-5
+                  body-xs inline-flex items-center justify-center rounded-full px-1.5 font-semibold
+                  tracking-normal tabular-nums block-5 min-inline-5
                 `,
-                isActive ? "bg-brand-text/12 text-brand-text" : "bg-ink/[0.06] text-ink-muted",
+                isActive ? "bg-brand-text/12 text-brand-text" : "bg-ink/6 text-ink-muted",
                 warning && !isActive && "bg-urgent-soft text-pending",
                 className,
             )}
@@ -89,10 +118,9 @@ export function ownerListingsChipCountClassName(isActive: boolean) {
     return cn(
         `
           body-xs inline-flex items-center justify-center rounded-full px-1.5 font-semibold
-          tabular-nums
-          block-5 min-inline-5
+          tabular-nums block-5 min-inline-5
         `,
-        isActive ? "bg-brand-text/12 text-brand-text" : "bg-ink/[0.06] text-ink-muted",
+        isActive ? "bg-brand-text/12 text-brand-text" : "bg-ink/6 text-ink-muted",
     );
 }
 
@@ -104,6 +132,7 @@ export function formatChipCount(count: number, isLoading?: boolean) {
 }
 
 export type FilterChipProps = {
+    reserveCountSpace?: boolean;
     label: ReactNode;
     mobileLabel?: ReactNode;
     count?: number;
@@ -126,6 +155,7 @@ export function FilterChip({
     mobileLabel,
     count,
     isLoading = false,
+    reserveCountSpace = false,
     isActive = false,
     onClick,
     onClear,
@@ -171,11 +201,12 @@ export function FilterChip({
             ) : (
                 <span>{label}</span>
             )}
-            {count != null ? (
+            {count != null || reserveCountSpace ? (
                 <FilterChipCount
                     count={count}
                     isActive={isActive}
                     isLoading={isLoading}
+                    reserveSpace={reserveCountSpace}
                     warning={warning}
                 />
             ) : null}
@@ -187,9 +218,8 @@ export function FilterChip({
                     className={cn(
                         `
                           -me-1 inline-flex items-center justify-center rounded-full
-                          text-brand-text/70
+                          text-brand-text/70 block-5 inline-5
                           hover:bg-brand-text/10 hover:text-brand-text
-                          block-5 inline-5
                         `,
                         CHIP_HOVER_TRANSITION,
                     )}

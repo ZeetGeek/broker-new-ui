@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
 
+import { Skeleton } from "@/components/shared/skeleton";
+
 const BROWSE_CARD_PHOTO_FRAME_CLASS = "shrink-0 rounded-card bg-surface p-1 shadow-md w-full";
 const BROWSE_CARD_PHOTO_INNER_CLASS =
     "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted aspect-[4/3] w-full animate-pulse";
@@ -20,13 +22,18 @@ export function PropertyCardSkeleton({
                 )}
                 aria-hidden
             >
-                <div className="aspect-4/3 animate-pulse bg-surface-muted inline-full" />
-                <div className="flex flex-col gap-2.5 px-4 pbs-3.5 pbe-3">
-                    <div className="animate-pulse rounded-sm bg-surface-muted block-7 inline-1/3" />
-                    <div className="animate-pulse rounded-sm bg-surface-muted block-5 inline-3/5" />
-                    <div className="animate-pulse rounded-sm bg-surface-muted block-4 inline-2/5" />
-                    <div className="animate-pulse rounded-sm bg-surface-muted block-4 inline-1/2" />
-                    <div className="animate-pulse rounded-control bg-surface-muted block-11 inline-full" />
+                <div className="aspect-4/3 shrink-0 bg-border-warm inline-full">
+                    <Skeleton className="rounded-none bg-ink/3 block-full inline-full" />
+                </div>
+                <div className="flex flex-1 flex-col gap-4 p-4">
+                    <Skeleton className="block-7 inline-1/3" />
+                    <Skeleton className="block-5 inline-3/5" />
+                    <Skeleton className="block-4 inline-2/5" />
+                    <div className="flex items-center gap-2">
+                        <Skeleton className="shrink-0 rounded-full block-5 inline-5" />
+                        <Skeleton className="block-4 inline-1/2" />
+                    </div>
+                    <Skeleton className="mbs-auto block-11 inline-full" />
                 </div>
             </div>
         );
@@ -35,7 +42,7 @@ export function PropertyCardSkeleton({
     if (variant === "browse") {
         return (
             <div
-                className={cn("flex min-inline-0 flex-col gap-3 flex-1 block-full", className)}
+                className={cn("flex flex-1 flex-col gap-3 block-full min-inline-0", className)}
                 aria-hidden
             >
                 <div className={BROWSE_CARD_PHOTO_FRAME_CLASS}>
@@ -44,7 +51,7 @@ export function PropertyCardSkeleton({
 
                 <div className="flex flex-1 flex-col gap-2.5 px-2 min-inline-0">
                     <div className="flex flex-1 items-stretch gap-2 min-block-0">
-                        <div className="flex flex-1 flex-col gap-1.5 min-inline-0 min-block-0">
+                        <div className="flex flex-1 flex-col gap-1.5 min-block-0 min-inline-0">
                             <div className="flex flex-col gap-1.5">
                                 <div
                                     className="

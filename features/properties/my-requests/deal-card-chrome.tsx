@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
+import { DEAL_CARD_CLASS } from "@/features/properties/my-requests/requests-grid-class";
 import tablerContactIcons from "@/features/properties/my-requests/tabler-contact.json";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
@@ -261,7 +262,10 @@ export function DealOverlayCard({
             imageAlt={listing.title}
             imageSizes={OVERLAY_IMAGE_SIZES}
             muted={muted}
-            className={cn(isBusy && "pointer-events-none opacity-60")}
+            className={cn(
+                audience === "broker" && DEAL_CARD_CLASS,
+                isBusy && "pointer-events-none opacity-60",
+            )}
             chips={
                 <>
                     {statusLabel ? (

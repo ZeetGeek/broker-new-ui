@@ -1,10 +1,10 @@
 "use client";
 
-import { X } from "@/components/shared/icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { extractBandFilters } from "@/lib/format/owner-listings-labels";
 
+import { X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import { stripHiddenOwnerListingsFilters } from "@/features/properties/owner-listings/filter-visibility";
@@ -28,8 +28,9 @@ export type OwnerListingsSearchBandProps = {
     appliedFilters: OwnerListingsFilters;
     /** Location tree stubs for the Where menu. */
     listings: OwnerListingItem[];
-    /** Live pool rows — Area histogram distribution. */
-    poolListings?: OwnerListingItem[];
+    locationsLoading?: boolean;
+    locationsError?: boolean;
+    onRetryLocations?: () => void;
     serviceAreas?: string[];
     onApplyBand: (band: OwnerListingsBandFilters) => void;
 };
@@ -54,7 +55,9 @@ function bandSignature(band: OwnerListingsBandFilters): string {
 export function OwnerListingsSearchBand({
     appliedFilters,
     listings,
-    poolListings = [],
+    locationsLoading,
+    locationsError,
+    onRetryLocations,
     serviceAreas = [],
     onApplyBand,
 }: OwnerListingsSearchBandProps) {
@@ -135,6 +138,9 @@ export function OwnerListingsSearchBand({
                 <div className="flex flex-1 p-0.5 min-inline-36">
                     <OwnerListingsWhereMenu
                         listings={listings}
+                        isLoading={locationsLoading}
+                        hasError={locationsError}
+                        onRetry={onRetryLocations}
                         selectedCountries={draft.countries}
                         selectedStates={draft.states}
                         selectedCities={draft.cities}
@@ -185,7 +191,6 @@ export function OwnerListingsSearchBand({
                     <OwnerListingsAreaMenu
                         minAreaSqft={draft.minAreaSqft}
                         maxAreaSqft={draft.maxAreaSqft}
-                        listings={poolListings}
                         onAreaChange={({ minAreaSqft, maxAreaSqft }) =>
                             updateDraft({ minAreaSqft, maxAreaSqft })
                         }

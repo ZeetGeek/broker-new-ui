@@ -1,198 +1,51 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
+
+import { useQuery } from "@tanstack/react-query";
 
 import { fetchOwnerListingCities, fetchOwnerListings } from "@/lib/api/owner-listings";
+import { profileApi } from "@/lib/api/profile";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
+import { Button } from "@/components/ui/button";
 
-import {
-    type BrokerVerificationState,
-    mapBrokerVerificationState,
-} from "@/features/broker/map-profile-menu";
-import type { OwnerListingsPoolSummary } from "@/features/properties/owner-listings/build-owner-listings-summary-lines";
+import { mapBrokerVerificationState } from "@/features/broker/map-profile-menu";
 import { buildQuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
 import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/owner-listings/count-new-listings-this-week";
-import { stripHiddenOwnerListingsFilters } from "@/features/properties/owner-listings/filter-visibility";
+import {
+    ownerListingsFilterVisibility,
+    stripHiddenOwnerListingsFilters,
+} from "@/features/properties/owner-listings/filter-visibility";
 import { locationTreeToListings } from "@/features/properties/owner-listings/map-browse-listing";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
-import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { OwnerListingsHeader } from "@/features/properties/owner-listings/owner-listings-header";
 import { OwnerListingsIntro } from "@/features/properties/owner-listings/owner-listings-intro";
-import { OwnerListingsPageSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
+import {
+    OwnerListingsCardsSkeleton,
+    OwnerListingsPageSkeleton,
+} from "@/features/properties/owner-listings/owner-listings-skeleton";
 import type {
     OwnerListingItem,
     OwnerListingsBandFilters,
-    OwnerListingsFilterContext,
     OwnerListingsFilters,
     OwnerListingSort,
-    OwnerListingsResult,
 } from "@/features/properties/owner-listings/types";
 import { useOwnerListingsFilters } from "@/features/properties/owner-listings/use-owner-listings-filters";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
+import { setProfile } from "@/store/slices/dashboard-slice";
 
-function resolveBlockedReason(
-    verificationState: BrokerVerificationState,
-    serviceAreaCount: number,
-): "no_service_areas" | "profile_incomplete" | null {
-    if (serviceAreaCount === 0) return "no_service_areas";
-    if (verificationState === "PROFILE_INCOMPLETE") return "profile_incomplete";
-    return null;
-}
-
-const EMPTY_SERVICE_AREAS: string[] = [];
-const EMPTY_LOCATION_LISTINGS: OwnerListingItem[] = [];
-
-const EMPTY_POOL_SUMMARY: OwnerListingsPoolSummary = {
-    slotsOpenCount: 0,
-    newTodayCount: 0,
-    commissionSetCount: 0,
-    readyToMoveCount: 0,
-};
-
-function summarizePool(items: OwnerListingsResult["items"]): OwnerListingsPoolSummary {
-    return {
-        slotsOpenCount: items.filter((item) => item.brokerSlotsOpen > 0).length,
-        newTodayCount: items.filter((item) => item.isNew).length,
-        commissionSetCount: items.filter(
-            (item) => item.commissionPercent > 0 || item.commissionAmount > 0,
-        ).length,
-        readyToMoveCount: items.filter((item) => item.readyToMove).length,
-    };
-}
-
-function OwnerListingsResults({
-    filterSignature,
-    serviceAreasKey,
-    filters,
-    filterContext,
-    hasActiveFilters,
-    onClearFilters,
-    onLoaded,
-    onLoadingChange,
-    enabled,
-}: {
-    filterSignature: string;
-    serviceAreasKey: string;
-    filters: OwnerListingsFilters;
-    filterContext: OwnerListingsFilterContext;
-    hasActiveFilters: boolean;
-    onClearFilters: () => void;
-    onLoaded: (result: OwnerListingsResult) => void;
-    onLoadingChange: (isLoading: boolean) => void;
-    enabled: boolean;
-}) {
-    const query = useInfiniteItems({
-        queryKey: ["owner-listings", filterSignature, serviceAreasKey],
-        enabled,
-        queryFn: async ({ cursor, signal }) => {
-            const page = await fetchOwnerListings(
-                {
-                    ...filters,
-                    cursor: cursor ?? "",
-                    limit: 20,
-                },
-                filterContext,
-                signal,
-            );
-            return {
-                items: page.items,
-                total: page.totalCount,
-                nextCursor: page.nextCursor,
-            };
-        },
-    });
-
-    useEffect(() => {
-        onLoadingChange(query.isFetching || !enabled);
-    }, [enabled, onLoadingChange, query.isFetching]);
-
-    useEffect(() => {
-        const pages = query.data?.pages;
-        if (!pages?.length) return;
-        const lastPage = pages.at(-1)!;
-        // Prefer the latest page total so priority mode can surface the full pool size
-        // once the anywhere phase begins.
-        const totalCount = Math.max(...pages.map((page) => page.total), query.total);
-        onLoaded({
-            items: query.items,
-            totalCount,
-            marketValueInr: query.items.reduce((sum, item) => sum + (item.saleAmountInr ?? 0), 0),
-            nextCursor: lastPage.nextCursor,
-            hasMore: Boolean(lastPage.nextCursor),
-        });
-    }, [onLoaded, query.data?.pages, query.items, query.total]);
-
-    if (!enabled || query.isPending) {
-        return (
-            <div className={OWNER_LISTINGS_GRID_CLASS}>
-                {Array.from({ length: 10 }).map((_, index) => (
-                    <div
-                        key={index}
-                        className="animate-pulse rounded-card bg-surface-muted block-80"
-                        aria-hidden
-                    />
-                ))}
-            </div>
-        );
-    }
-
-    if (query.isError && query.items.length === 0) {
-        return (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load owner listings</p>
-                <p className="body-sm text-ink-muted">Could not load owner listings. Try again.</p>
-                <button
-                    type="button"
-                    onClick={() => void query.refetch()}
-                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                >
-                    Try again
-                </button>
-            </div>
-        );
-    }
-
-    if (query.items.length === 0) {
-        return (
-            <OwnerListingsEmpty
-                variant={hasActiveFilters ? "filtered" : "first_run"}
-                searchQuery={filters.q}
-                onClearFilters={hasActiveFilters ? onClearFilters : undefined}
-            />
-        );
-    }
-
-    return (
-        <div
-            className={
-                query.isFetching && !query.isFetchingNextPage
-                    ? "flex flex-col opacity-60 transition-opacity duration-160"
-                    : "flex flex-col"
-            }
-        >
-            <OwnerListingsGrid items={query.items} serviceAreas={filterContext.serviceAreas} />
-            <InfiniteListStatus
-                hasNextPage={Boolean(query.hasNextPage)}
-                isFetchingNextPage={query.isFetchingNextPage}
-                error={query.isFetchNextPageError ? query.error : null}
-                onLoadMore={() => void query.fetchNextPage()}
-            />
-        </div>
-    );
-}
+const EMPTY_AREAS: string[] = [];
+const EMPTY_ITEMS: OwnerListingItem[] = [];
 
 export function OwnerListingsPage() {
     const dispatch = useAppDispatch();
-    const profile = useAppSelector((state) => state.dashboard.profile);
+    const cachedProfile = useAppSelector((state) => state.dashboard.profile);
     const dashboardData = useAppSelector((state) => state.dashboard.data);
     const authUser = useAppSelector((state) => state.auth.user);
-    const dashboardStatus = useAppSelector((state) => state.dashboard.status);
-
     const {
         filters,
         applyFilters,
@@ -203,166 +56,238 @@ export function OwnerListingsPage() {
         scopeReady,
     } = useOwnerListingsFilters();
 
-    const serviceAreas = profile?.broker?.serviceAreas ?? EMPTY_SERVICE_AREAS;
-    const serviceAreasKey = serviceAreas.join("|");
+    // Browsing only needs the profile, not the entire dashboard payload.
+    const profileQuery = useQuery({
+        queryKey: ["owner-listings-profile", authUser?.id],
+        queryFn: ({ signal }) => profileApi.get(signal),
+        enabled: !cachedProfile,
+    });
+    const profile = cachedProfile ?? profileQuery.data;
+    useEffect(() => {
+        if (!cachedProfile && profileQuery.data) dispatch(setProfile(profileQuery.data));
+    }, [cachedProfile, dispatch, profileQuery.data]);
+
+    const serviceAreas = profile?.broker?.serviceAreas ?? EMPTY_AREAS;
     const filterContext = useMemo(() => ({ serviceAreas }), [serviceAreas]);
-
-    const userId = profile?.id ?? authUser?.id;
-    const hasApprovedRepresentation = (dashboardData?.youRepresent?.totalCount ?? 0) > 0;
-
-    const [locationListings, setLocationListings] =
-        useState<OwnerListingItem[]>(EMPTY_LOCATION_LISTINGS);
-    const [poolItems, setPoolItems] = useState<OwnerListingItem[]>([]);
-    const [totalCount, setTotalCount] = useState(0);
-    const [poolSummary, setPoolSummary] = useState<OwnerListingsPoolSummary>(EMPTY_POOL_SUMMARY);
-    const [isResultsLoading, setIsResultsLoading] = useState(true);
-
-    const newThisWeekCount = useMemo(
-        () => countNewListingsInServiceAreasThisWeek(poolItems, serviceAreas),
-        [poolItems, serviceAreas],
-    );
-    const chipCounts = useMemo(
-        () => buildQuickChipCounts(poolItems, serviceAreas),
-        [poolItems, serviceAreas],
-    );
-
-    const handleLoaded = useCallback((result: OwnerListingsResult) => {
-        setTotalCount(result.totalCount);
-        setPoolSummary(summarizePool(result.items));
-        setPoolItems(result.items);
-    }, []);
-
-    const handleApplyBand = useCallback(
-        (band: OwnerListingsBandFilters) => {
-            applyFilters(
-                stripHiddenOwnerListingsFilters({
-                    ...filters,
-                    ...band,
-                    cursor: "",
-                }),
+    const blockedReason =
+        serviceAreas.length === 0
+            ? "no_service_areas"
+            : mapBrokerVerificationState(profile ?? null) === "PROFILE_INCOMPLETE"
+              ? "profile_incomplete"
+              : null;
+    const enabled = Boolean(profile) && !blockedReason && scopeReady;
+    const query = useInfiniteItems({
+        queryKey: ["owner-listings", authUser?.id, filterSignature, serviceAreas.join("|")],
+        enabled,
+        queryFn: async ({ cursor, signal }) => {
+            const page = await fetchOwnerListings(
+                { ...filters, cursor: cursor ?? "", limit: 20 },
+                filterContext,
+                signal,
             );
+            return { items: page.items, total: page.totalCount, nextCursor: page.nextCursor };
         },
-        [applyFilters, filters],
+    });
+    const locations = useQuery({
+        queryKey: ["owner-listing-cities", authUser?.id],
+        queryFn: ({ signal }) => fetchOwnerListingCities(signal),
+        enabled,
+        staleTime: 5 * 60_000,
+        select: (data) => locationTreeToListings(data.items),
+    });
+    const isInitialLoading = !scopeReady || query.isPending;
+    const readyToMoveCountQuery = useQuery({
+        queryKey: [
+            "owner-listings-ready-count",
+            authUser?.id,
+            filterSignature,
+            serviceAreas.join("|"),
+        ],
+        enabled:
+            enabled &&
+            !filters.readyToMove &&
+            ownerListingsFilterVisibility(filters).showReadyToMove,
+        queryFn: ({ signal }) =>
+            fetchOwnerListings(
+                { ...filters, readyToMove: true, cursor: "", limit: 1 },
+                filterContext,
+                signal,
+            ),
+        select: (result) => result.totalCount,
+    });
+    const readyToMoveCount = filters.readyToMove
+        ? query.data
+            ? query.total
+            : undefined
+        : readyToMoveCountQuery.data;
+    const isReadyToMoveCountLoading = filters.readyToMove
+        ? isInitialLoading
+        : readyToMoveCountQuery.isPending;
+    const complete = !isInitialLoading && !query.isError && !query.hasNextPage;
+    // Facet totals cannot be inferred from a partially downloaded result set.
+    const chipCounts = useMemo(
+        () => (complete ? buildQuickChipCounts(query.items, serviceAreas) : undefined),
+        [complete, query.items, serviceAreas],
+    );
+    const newThisWeekCount = useMemo(
+        () => countNewListingsInServiceAreasThisWeek(query.items, serviceAreas),
+        [query.items, serviceAreas],
     );
 
     const handleApplySheet = useCallback(
         (patch: Partial<OwnerListingsFilters>) => {
-            applyFilters(
-                stripHiddenOwnerListingsFilters({
-                    ...filters,
-                    ...patch,
-                    cursor: "",
-                }),
-            );
+            applyFilters(stripHiddenOwnerListingsFilters({ ...filters, ...patch, cursor: "" }));
         },
         [applyFilters, filters],
     );
-
+    const handleApplyBand = useCallback(
+        (band: OwnerListingsBandFilters) => handleApplySheet(band),
+        [handleApplySheet],
+    );
     const handleSortChange = useCallback(
-        (sort: OwnerListingSort) => {
-            applyFilters({ ...filters, sort, cursor: "" });
-        },
-        [applyFilters, filters],
+        (sort: OwnerListingSort) => handleApplySheet({ sort }),
+        [handleApplySheet],
     );
-
     const introSection = useMemo(
         () => (
             <OwnerListingsIntro
-                userId={userId}
-                hasApprovedRepresentation={hasApprovedRepresentation}
+                userId={profile?.id ?? authUser?.id}
+                hasApprovedRepresentation={(dashboardData?.youRepresent?.totalCount ?? 0) > 0}
                 newThisWeekCount={newThisWeekCount}
+                hasMoreResults={Boolean(query.hasNextPage)}
+                poolSummary={
+                    chipCounts
+                        ? {
+                              slotsOpenCount: chipCounts.slotsOpen,
+                              newTodayCount: chipCounts.newToday,
+                              commissionSetCount: chipCounts.commissionSet,
+                              readyToMoveCount: chipCounts.readyToMove,
+                          }
+                        : undefined
+                }
                 serviceAreas={serviceAreas}
-                totalCount={totalCount}
-                poolSummary={poolSummary}
+                totalCount={query.total}
                 filters={filters}
                 hasActiveFilters={hasActiveFilters}
-                isLoading={isResultsLoading}
+                isLoading={isInitialLoading}
+                hasError={query.isError && query.items.length === 0}
             />
         ),
         [
-            userId,
-            hasApprovedRepresentation,
+            profile?.id,
+            authUser?.id,
+            dashboardData?.youRepresent?.totalCount,
             newThisWeekCount,
+            chipCounts,
+            query.hasNextPage,
             serviceAreas,
-            totalCount,
-            poolSummary,
+            query.total,
             filters,
             hasActiveFilters,
-            isResultsLoading,
+            isInitialLoading,
+            query.isError,
+            query.items.length,
         ],
     );
 
-    useEffect(() => {
-        if (dashboardStatus === "idle") {
-            void dispatch(fetchBrokerDashboard());
-        }
-    }, [dashboardStatus, dispatch]);
-
-    useEffect(() => {
-        if (dashboardStatus !== "succeeded") return;
-
-        let cancelled = false;
-        void fetchOwnerListingCities()
-            .then((data) => {
-                if (!cancelled) {
-                    setLocationListings(locationTreeToListings(data.items));
-                }
-            })
-            .catch(() => {
-                if (!cancelled) {
-                    setLocationListings(EMPTY_LOCATION_LISTINGS);
-                }
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [dashboardStatus, serviceAreasKey]);
-
-    const verificationState = mapBrokerVerificationState(profile);
-    const serviceAreaCount = serviceAreas.length;
-    const blockedReason = resolveBlockedReason(verificationState, serviceAreaCount);
-
-    if (dashboardStatus === "loading" || dashboardStatus === "idle") {
-        return <OwnerListingsPageSkeleton />;
+    if (!profile) {
+        if (profileQuery.isError)
+            return (
+                <div role="alert" className="flex flex-col items-center gap-4 py-12 text-center">
+                    <h1 className="h6 text-ink">Could not load your profile</h1>
+                    <p className="body-sm text-ink-muted">Check your connection and try again.</p>
+                    <Button variant="outline" onClick={() => void profileQuery.refetch()}>
+                        Try again
+                    </Button>
+                </div>
+            );
+        return <OwnerListingsPageSkeleton filters={filters} />;
     }
-
-    if (blockedReason) {
-        return (
-            <div className="flex flex-col gap-6">
-                <OwnerListingsEmpty variant="blocked" blockedReason={blockedReason} />
-            </div>
-        );
-    }
+    if (blockedReason)
+        return <OwnerListingsEmpty variant="blocked" blockedReason={blockedReason} />;
 
     return (
         <div className="flex flex-col gap-6">
             <PortalSectionNav>{introSection}</PortalSectionNav>
-
             <OwnerListingsHeader
                 filters={filters}
-                listings={locationListings}
+                listings={locations.data ?? EMPTY_ITEMS}
+                locationsLoading={locations.isPending}
+                locationsError={locations.isError}
+                onRetryLocations={() => void locations.refetch()}
                 filterContext={filterContext}
                 chipCounts={chipCounts}
-                poolListings={poolItems}
-                isResultsLoading={isResultsLoading}
+                readyToMoveCount={readyToMoveCount}
+                isReadyToMoveCountLoading={isReadyToMoveCountLoading}
+                totalCount={query.total}
+                isResultsLoading={isInitialLoading}
                 onApplyBand={handleApplyBand}
                 onApplySheet={handleApplySheet}
                 onToggleQuickChip={toggleQuickChip}
                 onSortChange={handleSortChange}
             />
-
-            <OwnerListingsResults
-                filterSignature={filterSignature}
-                serviceAreasKey={serviceAreasKey}
-                filters={filters}
-                filterContext={filterContext}
-                hasActiveFilters={hasActiveFilters}
-                onClearFilters={clearFilters}
-                onLoaded={handleLoaded}
-                onLoadingChange={setIsResultsLoading}
-                enabled={scopeReady}
-            />
+            <section
+                aria-label="Owner listings results"
+                aria-busy={isInitialLoading || query.isFetching}
+            >
+                {isInitialLoading ? (
+                    <OwnerListingsCardsSkeleton />
+                ) : query.isError && query.items.length === 0 ? (
+                    <div
+                        role="alert"
+                        className="flex flex-col items-center gap-4 py-12 text-center"
+                    >
+                        <h2 className="h6 text-ink">Could not load owner listings</h2>
+                        <p className="body-sm text-ink-muted">
+                            Check your connection and try again.
+                        </p>
+                        <Button variant="outline" onClick={() => void query.refetch()}>
+                            Try again
+                        </Button>
+                    </div>
+                ) : query.items.length === 0 ? (
+                    <OwnerListingsEmpty
+                        variant={hasActiveFilters ? "filtered" : "first_run"}
+                        searchQuery={filters.q}
+                        onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                    />
+                ) : (
+                    <>
+                        {query.isRefetchError && !query.isFetchNextPageError ? (
+                            <div
+                                role="alert"
+                                className="
+                                  body-sm flex flex-wrap items-center gap-3 py-3 text-ink-muted
+                                "
+                            >
+                                Could not refresh listings. Showing the last loaded results.
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => void query.refetch()}
+                                >
+                                    Try again
+                                </Button>
+                            </div>
+                        ) : null}
+                        <OwnerListingsGrid items={query.items} serviceAreas={serviceAreas} />
+                        {query.isFetchingNextPage ? (
+                            <div className="pbs-6">
+                                <OwnerListingsCardsSkeleton
+                                    count={5}
+                                    label="Loading more properties"
+                                />
+                            </div>
+                        ) : null}
+                        <InfiniteListStatus
+                            hasNextPage={Boolean(query.hasNextPage)}
+                            isFetchingNextPage={query.isFetchingNextPage}
+                            error={query.isFetchNextPageError ? query.error : null}
+                            onLoadMore={() => void query.fetchNextPage()}
+                        />
+                    </>
+                )}
+            </section>
         </div>
     );
 }

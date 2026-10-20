@@ -1,26 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
-import { MapPin } from "@/components/shared/icons";
+import { useMemo } from "react";
 
 import { useSelfDestructBanner } from "@/lib/onboarding/use-self-destruct-banner";
 
-import { TextLoop } from "@/components/motion-primitives/text-loop";
-import { Badge } from "@/components/ui/badge";
+import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
+import { Skeleton } from "@/components/shared/skeleton";
 
 import {
     buildOwnerListingsSummaryLines,
+    OWNER_LISTINGS_APPROVAL_MESSAGE,
     type OwnerListingsPoolSummary,
 } from "@/features/properties/owner-listings/build-owner-listings-summary-lines";
 import type { OwnerListingsFilters } from "@/features/properties/owner-listings/types";
+import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
+import { useAppSelector } from "@/store/hooks";
 
-const INTRO_TITLE = "Find properties to represent";
-const INTRO_DESCRIPTION =
-    "Every property here is listed by the owner. Send a request, and once they approve it, the property moves straight into your pipeline.";
-const SUMMARY_LOOP_INTERVAL_S = 6.5;
-const ICON_CLASS = "block-3 inline-3";
-const META_TEXT = "body-sm font-medium text-ink-muted";
+const INTRO_TITLE = "Find your next deal";
 
 const EMPTY_POOL_SUMMARY: OwnerListingsPoolSummary = {
     slotsOpenCount: 0,
@@ -39,6 +35,8 @@ export type OwnerListingsIntroProps = {
     filters: OwnerListingsFilters;
     hasActiveFilters: boolean;
     isLoading?: boolean;
+    hasError?: boolean;
+    hasMoreResults?: boolean;
 };
 
 function OwnerListingsBrowseSummary({
@@ -49,6 +47,8 @@ function OwnerListingsBrowseSummary({
     filters,
     hasActiveFilters,
     isLoading,
+    hasError,
+    hasMoreResults,
 }: Pick<
     OwnerListingsIntroProps,
     | "totalCount"
@@ -58,9 +58,9 @@ function OwnerListingsBrowseSummary({
     | "filters"
     | "hasActiveFilters"
     | "isLoading"
+    | "hasError"
+    | "hasMoreResults"
 >) {
-    const [isPaused, setIsPaused] = useState(false);
-
     const lines = useMemo(
         () =>
             buildOwnerListingsSummaryLines({
@@ -71,6 +71,7 @@ function OwnerListingsBrowseSummary({
                 poolSummary: poolSummary ?? EMPTY_POOL_SUMMARY,
                 isLoading: isLoading ?? false,
                 hasActiveFilters,
+                hasMoreResults,
             }),
         [
             totalCount,
@@ -80,45 +81,38 @@ function OwnerListingsBrowseSummary({
             filters,
             hasActiveFilters,
             isLoading,
+            hasMoreResults,
         ],
     );
 
     return (
-        <span
-            aria-live="polite"
-            aria-atomic="true"
-            className="text-ink-muted"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-        >
-            <TextLoop interval={SUMMARY_LOOP_INTERVAL_S} trigger={!isPaused}>
-                {lines.map((line, index) => (
-                    <span key={index}>{line}</span>
-                ))}
-            </TextLoop>
-        </span>
+        <RotatingHeaderSummary
+            lines={lines}
+            isLoading={isLoading}
+            loadingLabel="Loading property count"
+            loadingPlaceholder={OWNER_LISTINGS_APPROVAL_MESSAGE}
+            errorMessage={hasError ? "Could not load properties. Please try again." : undefined}
+        />
     );
 }
 
-function ServiceAreasMeta({ areas }: { areas: string[] }) {
-    if (areas.length === 0) {
-        return null;
-    }
-
+/** Same heading and message slot as the loaded header, with no data-dependent copy. */
+export function OwnerListingsIntroSkeleton() {
+    const userId = useAppSelector((state) => state.dashboard.profile?.id ?? state.auth.user?.id);
+    const hasApprovedRepresentation = useAppSelector(
+        (state) => (state.dashboard.data?.youRepresent?.totalCount ?? 0) > 0,
+    );
     return (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-                <span className={`inline-flex items-center gap-1 ${META_TEXT}`}>
-                    <MapPin aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                    Your areas
-                </span>
-                {areas.map((area) => (
-                    <Badge key={area} color="sky">
-                        {area}
-                    </Badge>
-                ))}
-            </div>
-        </div>
+        <OwnerListingsIntro
+            userId={userId}
+            hasApprovedRepresentation={hasApprovedRepresentation}
+            totalCount={0}
+            newThisWeekCount={0}
+            serviceAreas={[]}
+            filters={DEFAULT_OWNER_LISTINGS_FILTERS}
+            hasActiveFilters={false}
+            isLoading
+        />
     );
 }
 
@@ -131,6 +125,8 @@ type BrowseHeaderProps = Pick<
     | "filters"
     | "hasActiveFilters"
     | "isLoading"
+    | "hasError"
+    | "hasMoreResults"
 > & {
     title: string;
     titleClassName: string;
@@ -146,11 +142,24 @@ function BrowseHeader({
     filters,
     hasActiveFilters,
     isLoading,
+    hasError,
+    hasMoreResults,
 }: BrowseHeaderProps) {
     return (
-        <h1 className={`${titleClassName} min-inline-0 text-start`}>
-            <span className="text-ink">{title}</span>
-            <span className="text-ink">.</span>{" "}
+        <h1 className={`${titleClassName} text-start min-inline-0`}>
+            {isLoading ? (
+                <span className="relative inline-block align-bottom" aria-hidden>
+                    <span className="invisible">{title}.</span>
+                    <span
+                        aria-hidden
+                        className="absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control bg-border-warm block-[0.8em] inline-full"
+                    >
+                        <Skeleton className="bg-ink/3 block-full inline-full" />
+                    </span>
+                </span>
+            ) : (
+                <span className="text-ink">{title}.</span>
+            )}{" "}
             <OwnerListingsBrowseSummary
                 totalCount={totalCount}
                 newThisWeekCount={newThisWeekCount}
@@ -159,6 +168,8 @@ function BrowseHeader({
                 filters={filters}
                 hasActiveFilters={hasActiveFilters}
                 isLoading={isLoading}
+                hasError={hasError}
+                hasMoreResults={hasMoreResults}
             />
         </h1>
     );
@@ -174,6 +185,8 @@ export function OwnerListingsIntro({
     filters,
     hasActiveFilters,
     isLoading = false,
+    hasError = false,
+    hasMoreResults = false,
 }: OwnerListingsIntroProps) {
     const isExpanded = useSelfDestructBanner({
         bannerKey: "owner_listings_intro",
@@ -189,24 +202,21 @@ export function OwnerListingsIntro({
         filters,
         hasActiveFilters,
         isLoading,
+        hasError,
+        hasMoreResults,
     };
 
     if (isExpanded) {
         return (
             <div className="flex flex-col gap-3 text-start">
                 <BrowseHeader title={INTRO_TITLE} titleClassName="h2" {...headerProps} />
-                <p className="body hidden text-ink-muted max-inline-[52ch] sm:block">
-                    {INTRO_DESCRIPTION}
-                </p>
-                <ServiceAreasMeta areas={serviceAreas} />
             </div>
         );
     }
 
     return (
         <div className="flex flex-col gap-3 text-start">
-            <BrowseHeader title="Browse" titleClassName="h3" {...headerProps} />
-            <ServiceAreasMeta areas={serviceAreas} />
+            <BrowseHeader title={INTRO_TITLE} titleClassName="h3" {...headerProps} />
         </div>
     );
 }

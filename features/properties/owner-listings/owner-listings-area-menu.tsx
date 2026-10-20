@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import { Ruler } from "@/components/shared/icons";
 
@@ -15,10 +15,11 @@ import { Input } from "@/components/ui/input";
 import { RangeSlider } from "@/components/ui/slider";
 
 import {
+    AREA_ABOVE_MAX_TOKEN,
     areaDraftToRange,
-    areaRangeToDraft,
     buildAreaHistogram,
     formatAreaFilterLabel,
+    isAreaAboveMax,
     OWNER_LISTINGS_AREA_RANGE,
 } from "@/features/properties/owner-listings/owner-listings-area-presets";
 import {
@@ -27,18 +28,17 @@ import {
 } from "@/features/properties/owner-listings/owner-listings-band-menu-content";
 import { OwnerListingsBandMenuHeader } from "@/features/properties/owner-listings/owner-listings-band-menu-header";
 import { OwnerListingsBandSegment } from "@/features/properties/owner-listings/owner-listings-band-segment";
-import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 
 export type OwnerListingsAreaMenuProps = {
     minAreaSqft: string;
     maxAreaSqft: string;
-    /** Pool listings — drives the soft distribution histogram above the slider. */
-    listings?: OwnerListingItem[];
     onAreaChange: (next: { minAreaSqft: string; maxAreaSqft: string }) => void;
     onCommit?: () => void;
     onOpenChange?: (open: boolean) => void;
     className?: string;
 };
+
+const AREA_HISTOGRAM = buildAreaHistogram();
 
 const AREA_MENU_WIDTH_CLASS = cn(
     "min-inline-0!",
@@ -66,6 +66,8 @@ const AREA_INPUT_CLASS = `
       [&::-webkit-outer-spin-button]:appearance-none
     ` as const;
 
+const OPEN_MAX_LABEL = `${OWNER_LISTINGS_AREA_RANGE.max.toLocaleString("en-IN")}+`;
+
 function snapArea(value: number): number {
     const stepped =
         Math.round(value / OWNER_LISTINGS_AREA_RANGE.step) * OWNER_LISTINGS_AREA_RANGE.step;
@@ -75,10 +77,53 @@ function snapArea(value: number): number {
     );
 }
 
+/** Field text for an applied filter. The ceiling always reads as 5,000+. */
+function draftsFromApplied(
+    minAreaSqft: string,
+    maxAreaSqft: string,
+): {
+    minDraft: string;
+    maxDraft: string;
+} {
+    const [low, high] = areaDraftToRange(minAreaSqft, maxAreaSqft);
+    const atCeiling =
+        !maxAreaSqft || isAreaAboveMax(maxAreaSqft) || high >= OWNER_LISTINGS_AREA_RANGE.max;
+    return {
+        minDraft: String(low),
+        maxDraft: atCeiling ? OPEN_MAX_LABEL : String(high),
+    };
+}
+
+/**
+ * Parse typed sqft. Trailing `+` or any value ≥ slider ceiling means open max (5,000+).
+ */
+function parseAreaField(raw: string, side: "min" | "max"): number | null {
+    const trimmed = raw.trim().replace(/,/g, "");
+    if (!trimmed) return null;
+
+    const openEnded = trimmed.endsWith("+");
+    const numericPart = openEnded ? trimmed.slice(0, -1).trim() : trimmed;
+    if (!numericPart) {
+        return side === "max" && openEnded ? OWNER_LISTINGS_AREA_RANGE.max : null;
+    }
+
+    const value = Number(numericPart);
+    if (!Number.isFinite(value) || value < 0) return null;
+
+    if (side === "max" && (openEnded || value >= OWNER_LISTINGS_AREA_RANGE.max)) {
+        return OWNER_LISTINGS_AREA_RANGE.max;
+    }
+
+    return value;
+}
+
+function stopMenuKeys(event: KeyboardEvent | PointerEvent) {
+    event.stopPropagation();
+}
+
 export function OwnerListingsAreaMenu({
     minAreaSqft,
     maxAreaSqft,
-    listings = [],
     onAreaChange,
     onCommit,
     onOpenChange,
@@ -86,57 +131,54 @@ export function OwnerListingsAreaMenu({
 }: OwnerListingsAreaMenuProps) {
     const [open, setOpen] = useState(false);
     const range = areaDraftToRange(minAreaSqft, maxAreaSqft);
-    // Always show the floor (200) / ceiling in the fields — never a blank "Any".
-    const [minDraft, setMinDraft] = useState(String(range[0]));
-    const [maxDraft, setMaxDraft] = useState(
-        maxAreaSqft ? String(range[1]) : String(OWNER_LISTINGS_AREA_RANGE.max),
-    );
+    const synced = draftsFromApplied(minAreaSqft, maxAreaSqft);
+    const [minDraft, setMinDraft] = useState(synced.minDraft);
+    const [maxDraft, setMaxDraft] = useState(synced.maxDraft);
     const isActive = Boolean(minAreaSqft || maxAreaSqft);
 
     useEffect(() => {
-        const next = areaDraftToRange(minAreaSqft, maxAreaSqft);
-        setMinDraft(String(next[0]));
-        setMaxDraft(maxAreaSqft ? String(next[1]) : String(OWNER_LISTINGS_AREA_RANGE.max));
+        const next = draftsFromApplied(minAreaSqft, maxAreaSqft);
+        setMinDraft(next.minDraft);
+        setMaxDraft(next.maxDraft);
     }, [minAreaSqft, maxAreaSqft]);
-
-    const histogram = useMemo(
-        () => buildAreaHistogram(listings.map((item) => item.areaSqft)),
-        [listings],
-    );
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
         onOpenChange?.(nextOpen);
     };
 
-    const commitRange = (next: readonly [number, number]) => {
-        const low = snapArea(Math.min(next[0], next[1]));
-        const high = snapArea(Math.max(next[0], next[1]));
-        onAreaChange(areaRangeToDraft([low, high]));
-    };
+    const commitRange = (low: number, high: number) => {
+        let nextLow = snapArea(low);
+        let nextHigh = snapArea(high);
+        // A max under min is raised so it stays above the minimum.
+        if (nextHigh < nextLow) nextHigh = nextLow;
 
-    const commitInputs = () => {
-        const hasMin = minDraft.trim() !== "";
-        const hasMax = maxDraft.trim() !== "";
-        const parsedMin = hasMin ? Number(minDraft) : OWNER_LISTINGS_AREA_RANGE.min;
-        const parsedMax = hasMax ? Number(maxDraft) : OWNER_LISTINGS_AREA_RANGE.max;
+        const atCeiling = nextHigh >= OWNER_LISTINGS_AREA_RANGE.max;
+        const nextMin = nextLow <= OWNER_LISTINGS_AREA_RANGE.min ? "" : String(nextLow);
+        const nextMax = atCeiling ? AREA_ABOVE_MAX_TOKEN : String(nextHigh);
 
-        if (!Number.isFinite(parsedMin) || !Number.isFinite(parsedMax)) {
-            setMinDraft(String(range[0]));
-            setMaxDraft(maxAreaSqft ? String(range[1]) : String(OWNER_LISTINGS_AREA_RANGE.max));
+        // Full span is the default "Any" — don't mark 5,000+ until the range is narrowed
+        // or the thumb is explicitly parked on the ceiling after a real max was set.
+        if (!nextMin && atCeiling && !minAreaSqft && !maxAreaSqft) {
+            onAreaChange({ minAreaSqft: "", maxAreaSqft: "" });
             return;
         }
 
-        let low = snapArea(parsedMin);
-        let high = snapArea(parsedMax);
+        onAreaChange({ minAreaSqft: nextMin, maxAreaSqft: nextMax });
+    };
 
-        // Max must never sit below min.
-        if (high < low) {
-            if (hasMax && !hasMin) low = high;
-            else high = low;
+    const commitInputs = () => {
+        const parsedMin = parseAreaField(minDraft, "min");
+        const parsedMax = parseAreaField(maxDraft, "max");
+
+        if (parsedMin == null || parsedMax == null) {
+            const next = draftsFromApplied(minAreaSqft, maxAreaSqft);
+            setMinDraft(next.minDraft);
+            setMaxDraft(next.maxDraft);
+            return;
         }
 
-        commitRange([low, high]);
+        commitRange(parsedMin, parsedMax);
     };
 
     return (
@@ -185,22 +227,22 @@ export function OwnerListingsAreaMenu({
                                     </span>
                                     <span className="block-3.5 inline-px bg-border" aria-hidden />
                                     <Input
-                                        type="number"
+                                        type="text"
                                         inputMode="numeric"
-                                        min={OWNER_LISTINGS_AREA_RANGE.min}
-                                        max={OWNER_LISTINGS_AREA_RANGE.max}
-                                        step={OWNER_LISTINGS_AREA_RANGE.step}
+                                        autoComplete="off"
                                         value={minDraft}
                                         placeholder={String(OWNER_LISTINGS_AREA_RANGE.min)}
                                         aria-label="Minimum area in square feet"
                                         onValueChange={setMinDraft}
                                         onBlur={commitInputs}
                                         onKeyDown={(event) => {
+                                            stopMenuKeys(event);
                                             if (event.key === "Enter") {
                                                 event.preventDefault();
                                                 commitInputs();
                                             }
                                         }}
+                                        onPointerDown={stopMenuKeys}
                                         className={AREA_INPUT_CLASS}
                                         wrapperClassName="flex-1 shadow-none min-inline-0"
                                     />
@@ -217,22 +259,22 @@ export function OwnerListingsAreaMenu({
                                     </span>
                                     <span className="block-3.5 inline-px bg-border" aria-hidden />
                                     <Input
-                                        type="number"
+                                        type="text"
                                         inputMode="numeric"
-                                        min={OWNER_LISTINGS_AREA_RANGE.min}
-                                        max={OWNER_LISTINGS_AREA_RANGE.max}
-                                        step={OWNER_LISTINGS_AREA_RANGE.step}
+                                        autoComplete="off"
                                         value={maxDraft}
-                                        placeholder={`${OWNER_LISTINGS_AREA_RANGE.max.toLocaleString("en-IN")}+`}
+                                        placeholder={OPEN_MAX_LABEL}
                                         aria-label="Maximum area in square feet"
                                         onValueChange={setMaxDraft}
                                         onBlur={commitInputs}
                                         onKeyDown={(event) => {
+                                            stopMenuKeys(event);
                                             if (event.key === "Enter") {
                                                 event.preventDefault();
                                                 commitInputs();
                                             }
                                         }}
+                                        onPointerDown={stopMenuKeys}
                                         className={AREA_INPUT_CLASS}
                                         wrapperClassName="flex-1 shadow-none min-inline-0"
                                     />
@@ -242,16 +284,16 @@ export function OwnerListingsAreaMenu({
 
                         <div className="flex flex-col gap-3">
                             <div className="flex items-end gap-1 px-0.5 block-16" aria-hidden>
-                                {histogram.map((height, index) => {
+                                {AREA_HISTOGRAM.map((height, index) => {
                                     const span =
                                         OWNER_LISTINGS_AREA_RANGE.max -
                                         OWNER_LISTINGS_AREA_RANGE.min;
                                     const bucketMin =
                                         OWNER_LISTINGS_AREA_RANGE.min +
-                                        (index / histogram.length) * span;
+                                        (index / AREA_HISTOGRAM.length) * span;
                                     const bucketMax =
                                         OWNER_LISTINGS_AREA_RANGE.min +
-                                        ((index + 1) / histogram.length) * span;
+                                        ((index + 1) / AREA_HISTOGRAM.length) * span;
                                     const active = bucketMax >= range[0] && bucketMin <= range[1];
 
                                     return (
@@ -284,11 +326,11 @@ export function OwnerListingsAreaMenu({
                                 min={OWNER_LISTINGS_AREA_RANGE.min}
                                 max={OWNER_LISTINGS_AREA_RANGE.max}
                                 step={OWNER_LISTINGS_AREA_RANGE.step}
+                                thumbAlignment="edge"
                                 thumbLabels={["Minimum area", "Maximum area"]}
                                 onValueChange={(next) => {
                                     const [low, high] = next as [number, number];
-                                    // Guard: thumbs must stay ordered.
-                                    commitRange([Math.min(low, high), Math.max(low, high)]);
+                                    commitRange(Math.min(low, high), Math.max(low, high));
                                 }}
                                 className="
                                   [&>div]:py-2.5

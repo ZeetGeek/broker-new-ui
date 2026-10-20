@@ -355,7 +355,10 @@ export function filterOwnerListings(
         if (filters.readyToMove && !item.readyToMove) return false;
 
         const minArea = filters.minAreaSqft ? Number(filters.minAreaSqft) : null;
-        const maxArea = filters.maxAreaSqft ? Number(filters.maxAreaSqft) : null;
+        const maxArea =
+            filters.maxAreaSqft && !filters.maxAreaSqft.endsWith("+")
+                ? Number(filters.maxAreaSqft)
+                : null;
         if (minArea !== null && !Number.isNaN(minArea) && item.areaSqft < minArea) return false;
         if (maxArea !== null && !Number.isNaN(maxArea) && item.areaSqft > maxArea) return false;
 

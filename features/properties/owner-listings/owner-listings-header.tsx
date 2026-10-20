@@ -3,10 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import type { QuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
-import {
-    countSheetFilters,
-    filterOwnerListings,
-} from "@/features/properties/owner-listings/filter-owner-listings";
+import { countSheetFilters } from "@/features/properties/owner-listings/filter-owner-listings";
 import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
 import { OwnerListingsQuickChips } from "@/features/properties/owner-listings/owner-listings-quick-chips";
 import { OwnerListingsSearchBand } from "@/features/properties/owner-listings/owner-listings-search-band";
@@ -22,8 +19,13 @@ export type OwnerListingsHeaderProps = {
     filters: OwnerListingsFilters;
     listings: OwnerListingItem[];
     filterContext: OwnerListingsFilterContext;
-    chipCounts: QuickChipCounts;
-    poolListings: OwnerListingItem[];
+    chipCounts?: QuickChipCounts;
+    readyToMoveCount?: number;
+    isReadyToMoveCountLoading?: boolean;
+    totalCount: number;
+    locationsLoading: boolean;
+    locationsError: boolean;
+    onRetryLocations: () => void;
     isResultsLoading?: boolean;
     onApplyBand: (band: OwnerListingsBandFilters) => void;
     onApplySheet: (patch: Partial<OwnerListingsFilters>) => void;
@@ -38,7 +40,12 @@ export function OwnerListingsHeader({
     listings,
     filterContext,
     chipCounts,
-    poolListings,
+    readyToMoveCount,
+    isReadyToMoveCountLoading,
+    totalCount,
+    locationsLoading,
+    locationsError,
+    onRetryLocations,
     isResultsLoading = false,
     onApplyBand,
     onApplySheet,
@@ -48,12 +55,6 @@ export function OwnerListingsHeader({
     const [sheetOpen, setSheetOpen] = useState(false);
 
     const sheetFilterCount = useMemo(() => countSheetFilters(filters), [filters]);
-
-    /** Same number the sheet’s “Show N properties” uses — always on the Filters chip. */
-    const filtersMatchCount = useMemo(
-        () => filterOwnerListings(poolListings, filters, filterContext).totalCount,
-        [poolListings, filters, filterContext],
-    );
 
     const handleOpenFilters = useCallback(() => {
         setSheetOpen(true);
@@ -79,7 +80,9 @@ export function OwnerListingsHeader({
                 <OwnerListingsSearchBand
                     appliedFilters={filters}
                     listings={listings}
-                    poolListings={poolListings}
+                    locationsLoading={locationsLoading}
+                    locationsError={locationsError}
+                    onRetryLocations={onRetryLocations}
                     serviceAreas={filterContext.serviceAreas}
                     onApplyBand={onApplyBand}
                 />
@@ -87,8 +90,10 @@ export function OwnerListingsHeader({
                 <OwnerListingsQuickChips
                     filters={filters}
                     chipCounts={chipCounts}
+                    readyToMoveCount={readyToMoveCount}
+                    isReadyToMoveCountLoading={isReadyToMoveCountLoading}
                     sheetFilterCount={sheetFilterCount}
-                    filtersMatchCount={filtersMatchCount}
+                    filtersMatchCount={totalCount}
                     isLoading={isResultsLoading}
                     onToggleQuickChip={onToggleQuickChip}
                     onOpenFilters={handleOpenFilters}
@@ -101,8 +106,6 @@ export function OwnerListingsHeader({
                 open={sheetOpen}
                 onOpenChange={setSheetOpen}
                 appliedFilters={filters}
-                filterContext={filterContext}
-                listings={poolListings}
                 onApply={onApplySheet}
             />
         </>

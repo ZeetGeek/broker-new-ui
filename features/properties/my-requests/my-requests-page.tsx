@@ -22,7 +22,10 @@ import {
     RequestsFilteredEmpty,
     RequestsFirstRunEmpty,
 } from "@/features/properties/my-requests/requests-empty";
-import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
+import {
+    REQUESTS_GRID_BREAKPOINTS,
+    REQUESTS_GRID_CLASS,
+} from "@/features/properties/my-requests/requests-grid-class";
 import { MyDealsHeader } from "@/features/properties/my-requests/requests-header";
 import { MyDealsIntro } from "@/features/properties/my-requests/requests-intro";
 import {
@@ -166,7 +169,12 @@ function SentRequestsPanel({
     let body: ReactNode;
 
     if (!result && isFetching) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="sent"
+                count={Math.max(1, Math.min(10, sentSummary?.counts.pending || 5))}
+            />
+        );
     } else if (sentSummary != null && sentSummary.counts.all === 0) {
         body = <RequestsFirstRunEmpty />;
     } else if (
@@ -198,7 +206,12 @@ function SentRequestsPanel({
             </div>
         );
     } else if (!result) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="sent"
+                count={Math.max(1, Math.min(10, sentSummary?.counts.pending || 5))}
+            />
+        );
     } else if (result.items.length === 0) {
         const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
         body = (
@@ -216,6 +229,7 @@ function SentRequestsPanel({
                     estimateRowHeight={520}
                     gap={24}
                     breakpoints={REQUESTS_GRID_BREAKPOINTS}
+                    gridClassName={REQUESTS_GRID_CLASS}
                     ariaLabel="Waiting representation requests"
                     renderItem={(item) => (
                         <RequestCard
@@ -267,7 +281,7 @@ export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
     }, []);
 
     if (!summariesReady) {
-        return <RequestsPageSkeleton />;
+        return <RequestsPageSkeleton activeTab={activeTab} />;
     }
 
     return (

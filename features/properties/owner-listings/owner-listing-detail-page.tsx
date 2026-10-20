@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-import { CallIcon, ChevronLeft, Lock, MapPin, WhatsAppIcon } from "@/components/shared/icons";
+import { useQuery } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api/client";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
@@ -25,10 +25,12 @@ import {
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
+import { CallIcon, ChevronLeft, Lock, MapPin, WhatsAppIcon } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { OwnerListingDetailSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
 import {
     buildPropertyFacts,
     factColumnsClass,
@@ -38,6 +40,7 @@ import { PropertyGallery } from "@/features/properties/property-detail/property-
 import { PropertyPriceBlock } from "@/features/properties/property-detail/property-price-block";
 import { mapPropertyListingToMyItem } from "@/features/properties/your-listings/map-my-listing";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
+import { useAppSelector } from "@/store/hooks";
 
 type RepresentationStanding = {
     id: string;
@@ -86,11 +89,7 @@ function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
     const phone = accepted ? detail.ownerPhoneDigits : undefined;
 
     return (
-        <section
-            className="
-          flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-5
-        "
-        >
+        <section className="flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-5">
             <h2 className="eyebrow">Owner contact</h2>
             <div className="flex items-center gap-3">
                 <UserAvatar name={detail.ownerName} imageUrl={detail.ownerAvatarUrl} size="lg" />
@@ -373,7 +372,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
         } finally {
             setBusy(false);
         }
-    }, [busy, detail.representation?.id, item.id]);
+    }, [busy, detail.representation, item.id]);
 
     const handleAcceptInvite = useCallback(async () => {
         if (busy || inviteActionPending) return;
@@ -408,7 +407,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
         } finally {
             setInviteActionPending(null);
         }
-    }, [busy, detail.representation?.id, inviteActionPending, item.id]);
+    }, [busy, detail.representation, inviteActionPending, item.id]);
 
     const handleCancelInvite = useCallback(async () => {
         if (busy || inviteActionPending) return;
@@ -436,7 +435,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
         } finally {
             setInviteActionPending(null);
         }
-    }, [busy, detail.representation?.id, inviteActionPending, item.id]);
+    }, [busy, detail.representation, inviteActionPending, item.id]);
 
     const canRequest =
         !detail.representation || !["pending", "accepted"].includes(detail.representation.status);
@@ -487,12 +486,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                         </p>
                     </header>
 
-                    <section
-                        className="
-                      rounded-card border border-border-warm bg-surface p-5
-                      sm:p-6
-                    "
-                    >
+                    <section className="rounded-card border border-border-warm bg-surface p-5 sm:p-6">
                         <PropertyPriceBlock item={item} />
                     </section>
 
@@ -697,50 +691,60 @@ function NotFoundState() {
 export function OwnerListingDetailPage() {
     const params = useParams<{ id: string }>();
     const propertyId = params.id;
-    const [detail, setDetail] = useState<OwnerListingDetail | null | undefined>(undefined);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        void propertiesApi
-            .browseById(propertyId)
-            .then((raw) => {
-                if (cancelled) return;
-                const listing = mapPropertyListingToMyItem(raw);
-                const commissionRaw = Number(raw.commissionPercent);
-                const commissionAmountRaw = Number(raw.commissionAmount);
-                setDetail({
-                    listing,
-                    ownerUserId: raw.ownerUserId ?? raw.owner?.userId ?? undefined,
-                    ownerName: raw.ownerName?.trim() || raw.organizationName?.trim() || "Owner",
-                    ownerAvatarUrl: raw.ownerAvatarUrl ?? undefined,
-                    ownerPhoneDigits: normalizePhoneDigits(raw.ownerPhone),
-                    representation: raw.representation
-                        ? {
-                              id: raw.representation.id,
-                              status: raw.representation.status,
-                              initiatedBy: raw.representation.initiatedBy,
-                          }
+    const userId = useAppSelector((state) => state.auth.user?.id);
+    const query = useQuery({
+        queryKey: ["owner-listing-detail", userId, propertyId],
+        queryFn: async ({ signal }): Promise<OwnerListingDetail> => {
+            const raw = await propertiesApi.browseById(propertyId, signal);
+            const commissionRaw = Number(raw.commissionPercent);
+            const commissionAmountRaw = Number(raw.commissionAmount);
+            return {
+                listing: mapPropertyListingToMyItem(raw),
+                ownerUserId: raw.ownerUserId ?? raw.owner?.userId ?? undefined,
+                ownerName: raw.ownerName?.trim() || raw.organizationName?.trim() || "Owner",
+                ownerAvatarUrl: raw.ownerAvatarUrl ?? undefined,
+                ownerPhoneDigits: normalizePhoneDigits(raw.ownerPhone),
+                representation: raw.representation
+                    ? {
+                          id: raw.representation.id,
+                          status: raw.representation.status,
+                          initiatedBy: raw.representation.initiatedBy,
+                      }
+                    : null,
+                commissionPercent:
+                    Number.isFinite(commissionRaw) && commissionRaw > 0 ? commissionRaw : null,
+                commissionAmount:
+                    Number.isFinite(commissionAmountRaw) && commissionAmountRaw > 0
+                        ? commissionAmountRaw
                         : null,
-                    commissionPercent:
-                        Number.isFinite(commissionRaw) && commissionRaw > 0 ? commissionRaw : null,
-                    commissionAmount:
-                        Number.isFinite(commissionAmountRaw) && commissionAmountRaw > 0
-                            ? commissionAmountRaw
-                            : null,
-                });
-            })
-            .catch(() => {
-                if (!cancelled) setDetail(null);
-            });
+            };
+        },
+        retry: (failureCount, error) =>
+            !(error instanceof ApiError && error.status === 404) && failureCount < 1,
+        // The view owns optimistic representation actions; always load fresh standing on return.
+        staleTime: 0,
+        gcTime: 0,
+    });
 
-        return () => {
-            cancelled = true;
-        };
-    }, [propertyId]);
+    if (query.isPending) return <OwnerListingDetailSkeleton />;
+    if (query.isError) {
+        if (query.error instanceof ApiError && query.error.status === 404) return <NotFoundState />;
+        return (
+            <div role="alert" className="flex flex-col items-center gap-4 py-16 text-center">
+                <h1 className="h3 text-ink">Could not load this property</h1>
+                <p className="body text-ink-muted">Check your connection and try again.</p>
+                <Button variant="outline" onClick={() => void query.refetch()}>
+                    Try again
+                </Button>
+                <Link
+                    href={BROKER_OWNER_LISTINGS_HREF}
+                    className="body-sm inline-flex items-center text-brand min-block-11"
+                >
+                    Back to owner listings
+                </Link>
+            </div>
+        );
+    }
 
-    if (detail === undefined) return null;
-    if (!detail) return <NotFoundState />;
-
-    return <OwnerListingDetailView initial={detail} />;
+    return <OwnerListingDetailView key={propertyId} initial={query.data} />;
 }

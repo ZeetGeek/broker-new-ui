@@ -2,15 +2,6 @@
 
 import { useMemo, useState } from "react";
 
-import {
-    BadgePercent,
-    BedDouble,
-    CalendarDays,
-    type AppIcon,
-    KeyRound,
-    Sofa,
-    XIcon,
-} from "@/components/shared/icons";
 import SimpleBar from "simplebar-react";
 
 import { formatInr } from "@/lib/format/inr";
@@ -18,6 +9,15 @@ import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import {
+    type AppIcon,
+    BadgePercent,
+    BedDouble,
+    CalendarDays,
+    KeyRound,
+    Sofa,
+    XIcon,
+} from "@/components/shared/icons";
 import {
     Dialog,
     DialogClose,
@@ -30,15 +30,12 @@ import { RangeSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { filterOwnerListings } from "@/features/properties/owner-listings/filter-owner-listings";
 import {
     ownerListingsFilterVisibility,
     stripHiddenOwnerListingsFilters,
 } from "@/features/properties/owner-listings/filter-visibility";
 import {
     type OwnerListingFurnishing,
-    type OwnerListingItem,
-    type OwnerListingsFilterContext,
     type OwnerListingsFilters,
     type OwnerListingsSheetFilters,
     type OwnerListingTransactionType,
@@ -166,8 +163,6 @@ export type OwnerListingsFilterSheetProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     appliedFilters: OwnerListingsFilters;
-    filterContext: OwnerListingsFilterContext;
-    listings: OwnerListingItem[];
     onApply: (patch: Partial<OwnerListingsFilters>) => void;
 };
 
@@ -379,8 +374,6 @@ export function OwnerListingsFilterSheet({
     open,
     onOpenChange,
     appliedFilters,
-    filterContext,
-    listings,
     onApply,
 }: OwnerListingsFilterSheetProps) {
     const [draft, setDraft] = useState(() => extractSheetFilters(appliedFilters));
@@ -405,15 +398,6 @@ export function OwnerListingsFilterSheet({
             }),
         [appliedFilters.category, appliedFilters.propertyType],
     );
-
-    const previewCount = useMemo(() => {
-        const merged = stripHiddenOwnerListingsFilters({
-            ...appliedFilters,
-            ...draft,
-            type: draftType,
-        });
-        return filterOwnerListings(listings, merged, filterContext).totalCount;
-    }, [appliedFilters, draft, draftType, filterContext, listings]);
 
     const saleRange = draftToRange(
         draft.minCommissionPercent,
@@ -539,7 +523,12 @@ export function OwnerListingsFilterSheet({
                     "
                 >
                     <div className="flex flex-col gap-1">
-                        <DialogTitle className="font-display text-base font-medium text-ink sm:text-lg">
+                        <DialogTitle
+                            className="
+                          font-display text-base font-medium text-ink
+                          sm:text-lg
+                        "
+                        >
                             Advanced filters
                         </DialogTitle>
                         <p className="body-sm text-ink-muted">
@@ -594,7 +583,11 @@ export function OwnerListingsFilterSheet({
                                             title="BHK"
                                             subtitle="Bedroom configuration for homes"
                                         >
-                                            <div className="flex flex-1 flex-wrap content-start gap-2">
+                                            <div
+                                                className="
+                                              flex flex-1 flex-wrap content-start gap-2
+                                            "
+                                            >
                                                 {BHK_OPTIONS.map((option) => {
                                                     const active = draft.bhk.includes(option.value);
                                                     return (
@@ -607,7 +600,11 @@ export function OwnerListingsFilterSheet({
                                                     );
                                                 })}
                                             </div>
-                                            <div className="mts-auto flex items-center gap-2 text-ink-muted">
+                                            <div
+                                                className="
+                                              mts-auto flex items-center gap-2 text-ink-muted
+                                            "
+                                            >
                                                 <BedDouble
                                                     className="block-4 inline-4"
                                                     strokeWidth={1.75}
@@ -624,7 +621,11 @@ export function OwnerListingsFilterSheet({
                                             title="Furnishing"
                                             subtitle="How finished the interior is"
                                         >
-                                            <div className="flex flex-1 flex-wrap content-start gap-2">
+                                            <div
+                                                className="
+                                              flex flex-1 flex-wrap content-start gap-2
+                                            "
+                                            >
                                                 {FURNISHING_OPTIONS.map((option) => (
                                                     <ChoiceChip
                                                         key={option.label}
@@ -638,7 +639,11 @@ export function OwnerListingsFilterSheet({
                                                     />
                                                 ))}
                                             </div>
-                                            <div className="mts-auto flex items-center gap-2 text-ink-muted">
+                                            <div
+                                                className="
+                                              mts-auto flex items-center gap-2 text-ink-muted
+                                            "
+                                            >
                                                 <Sofa
                                                     className="block-4 inline-4"
                                                     strokeWidth={1.75}
@@ -815,7 +820,7 @@ export function OwnerListingsFilterSheet({
                         secondaryLabel="Reset filter"
                         secondaryDisabled={!hasDraftFilters}
                         onSecondary={handleClear}
-                        primaryLabel={`Show ${previewCount} properties`}
+                        primaryLabel="Show properties"
                         onPrimary={handleApply}
                     />
                 </div>
