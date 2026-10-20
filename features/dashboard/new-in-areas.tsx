@@ -121,7 +121,8 @@ function PropertyRow({
                             commissionPercent={property.commissionPercent}
                             commissionAmountInr={property.commissionAmountInr}
                             audience="broker"
-                            className="body font-semibold"
+                            size="md"
+                            showEmptyTip
                         />
                         <Badge color={property.isRent ? "orange" : "emerald"}>
                             {property.isRent ? "Rent" : "Sale"}

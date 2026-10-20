@@ -325,6 +325,7 @@ const SEED_DRAFTS: SeedDraft[] = [
         facing: "north_east",
         parking: "2",
         ownerName: "Ramesh Patel",
+        ownerPhoneDigits: "9825012345",
         exclusiveOwnerId: "eo_ramesh",
         attachedClients: [
             { id: "buy_01", name: "Ayush" },

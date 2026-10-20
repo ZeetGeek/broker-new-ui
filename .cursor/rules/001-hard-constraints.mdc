@@ -51,6 +51,8 @@ These are expensive to get wrong even in planning. Full detail lives in
 15. **Never bare `brokerId` / `ownerId`.** Use `brokerUserId` /
     `brokerProfileId` (and owner equivalents) — wrong id = wrong person's data.
 16. **Format via `lib/format/`** (and shared display components). No inline
-    price/phone/date formatting. `snake_case` only inside `lib/api/`.
+    price/phone/date formatting. **Listing ask prices** →
+    `<PriceWithCommission>` (never bare `<Price>` / `formatPriceInr` in JSX for
+    sale/rent on a property). `snake_case` only inside `lib/api/`.
 
 If a request fights these, stop and ask or flag deferred scope.

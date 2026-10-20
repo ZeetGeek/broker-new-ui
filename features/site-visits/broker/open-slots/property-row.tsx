@@ -139,7 +139,9 @@ export const PropertyRow = memo(function PropertyRow({
                         commissionPercent={item.property.commissionPercent}
                         commissionAmountInr={item.property.commissionAmountInr}
                         audience="broker"
-                        className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
+                        size="lg"
+                        showEmptyTip
+                        className="mbs-3 mbe-0.5 leading-none"
                     />
 
                     <p

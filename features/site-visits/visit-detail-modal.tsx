@@ -148,7 +148,8 @@ export function VisitDetailModal({
                             commissionPercent={visit.property.commissionPercent}
                             commissionAmountInr={visit.property.commissionAmountInr}
                             audience={viewer}
-                            className="body-sm font-semibold"
+                            size="sm"
+                            showEmptyTip
                         />
                         <p className="body-sm text-ink-muted">
                             {visit.property.areaSqft.toLocaleString("en-IN")} sq ft

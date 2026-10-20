@@ -150,7 +150,9 @@ export const VisitCard = memo(function VisitCard({
                         commissionPercent={visit.property.commissionPercent}
                         commissionAmountInr={visit.property.commissionAmountInr}
                         audience="broker"
-                        className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
+                        size="lg"
+                        showEmptyTip
+                        className="mbs-3 mbe-0.5 leading-none"
                     />
 
                     <p

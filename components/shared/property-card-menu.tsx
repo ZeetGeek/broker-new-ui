@@ -14,6 +14,7 @@ import {
     Share2,
     Trash2,
     UserPlus,
+    UserRound,
 } from "lucide-react";
 
 import { formatPhoneIn, formatTelUrl } from "@/lib/format/phone";
@@ -81,6 +82,10 @@ export type PropertyCardMenuProps = {
     contact?: PropertyCardMenuContact;
     /** Open the attach-buyers flow. */
     onAddBuyer?: () => void;
+    /** Owned inventory: attach or change the exclusive owner. */
+    onAttachOwner?: () => void;
+    /** Defaults to "Attach owner". */
+    attachOwnerLabel?: string;
     /** Nudge the owner on a pending request to represent. */
     onRemind?: () => void;
     /** When false, reminder stays visible but disabled. Default true when `onRemind` is set. */
@@ -166,6 +171,8 @@ export function PropertyCardMenu({
     onToggleSave,
     contact,
     onAddBuyer,
+    onAttachOwner,
+    attachOwnerLabel = "Attach owner",
     onRemind,
     canRemind = true,
     remindersUsed = 0,
@@ -271,6 +278,7 @@ export function PropertyCardMenu({
         onOpenTimeline ||
         onCancelRequest ||
         onStopRepresenting ||
+        onAttachOwner ||
         onEdit ||
         onDelete ||
         extraItems,
@@ -478,6 +486,19 @@ export function PropertyCardMenu({
                 ) : null}
 
                 {hasDealExtras ? <DropdownMenuSeparator className={SEPARATOR_CLASS} /> : null}
+
+                {onAttachOwner ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        onClick={() => {
+                            onAttachOwner();
+                            setOpen(false);
+                        }}
+                    >
+                        <UserRound aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        {attachOwnerLabel}
+                    </DropdownMenuItem>
+                ) : null}
 
                 {onAddBuyer ? (
                     <DropdownMenuItem

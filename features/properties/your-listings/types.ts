@@ -96,6 +96,8 @@ export type MyListingItem = {
     ownerId?: string | null;
     ownerOrigin?: "platform" | "custom" | null;
     ownerName?: string | null;
+    /** Exclusive owner mobile digits for Call / WhatsApp on inventory cards. */
+    ownerPhoneDigits?: string | null;
     exclusiveOwnerId?: string | null;
     visibility?: "private" | "marketplace";
     interestedBuyerIds?: string[];
@@ -127,7 +129,7 @@ export const DEFAULT_MY_LISTINGS_FILTERS: MyListingsFilters = {
     type: "",
     propertyType: "",
     bhk: [],
-    status: "",
+    status: "published",
     sort: "newest",
     page: 1,
 };
@@ -144,6 +146,10 @@ export type BrokerRequestItem = {
     title: string;
     amountInr: number;
     isRent: boolean;
+    /** Sale commission percent when the owner set one. */
+    commissionPercent?: number | null;
+    /** Fixed rent brokerage in INR when the owner set one. */
+    commissionAmount?: number | null;
     note: string;
     action: { label: string; href: string; kind?: "remind" | "open" | "view" };
     /** Pending only — reminders already sent on this attempt. */

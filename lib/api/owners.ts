@@ -14,6 +14,8 @@ export type OwnerProfileProperty = {
     areaSqft?: number | null;
     salePrice?: string | null;
     monthlyRent?: string | null;
+    commissionPercent?: number | null;
+    commissionAmount?: number | null;
     photos: string[];
 };
 
@@ -68,6 +70,8 @@ type OwnerProfileApi = {
         areaSqft?: number | null;
         salePrice?: string | number | null;
         monthlyRent?: string | number | null;
+        commissionPercent?: string | number | null;
+        commissionAmount?: string | number | null;
         photos?: string[] | null;
     }> | null;
 };
@@ -110,6 +114,14 @@ function mapOwnerProfile(raw: OwnerProfileApi, fallbackId: string): BrokerOwnerP
             areaSqft: row.areaSqft ?? undefined,
             salePrice: row.salePrice != null ? String(row.salePrice) : undefined,
             monthlyRent: row.monthlyRent != null ? String(row.monthlyRent) : undefined,
+            commissionPercent: (() => {
+                const n = Number(row.commissionPercent);
+                return Number.isFinite(n) && n > 0 ? n : null;
+            })(),
+            commissionAmount: (() => {
+                const n = Number(row.commissionAmount);
+                return Number.isFinite(n) && n > 0 ? n : null;
+            })(),
             photos: (row.photos ?? []).filter((src): src is string => Boolean(src)),
         }));
 

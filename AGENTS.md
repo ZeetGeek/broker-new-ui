@@ -134,5 +134,27 @@ These are genuinely undecided. Do not invent an answer — ask.
 
 ---
 
-_Sections for UI conventions, SEO, and code style will be added to this file
-later. They are intentionally absent for now._
+## UI conventions (price)
+
+**Listing ask prices** (sale price, monthly rent on a property) always render
+through `<PriceWithCommission>` from `components/shared/price-with-commission.tsx`.
+
+Do **not** use bare `<Price>`, `formatPriceInr` / `formatRentInr` in JSX, or a
+hand-rolled hover tip for those amounts.
+
+| Role   | When commission is set      | When commission is unset          |
+| ------ | --------------------------- | --------------------------------- |
+| Broker | "You get ₹…" (+ detail)     | "Owner hasn't added a commission" |
+| Owner  | "Broker gets ₹…" (+ detail) | "You haven't added a commission"  |
+
+Pass `audience="broker"` or `audience="owner"` to match the portal. Pass
+`commissionPercent` (sale) and/or `commissionAmountInr` (rent). Prefer `size`
+(`xs`–`2xl`) over one-off type classes. Empty tip is on by default
+(`showEmptyTip`). Price stays underlined whenever a tip exists (dashed when
+unset, solid when a fee is set) so dense boards like Pipeline stay discoverable.
+
+**Exceptions — keep `<Price>` or `lib/format/price`:** buyer offers, budgets,
+totals ("₹X in play"), per-sqft helpers, form live previews, and any amount that
+is not a listing ask. Formatting still goes through `lib/format/` — never inline.
+
+Full reuse table: `docs/REUSE.md`.

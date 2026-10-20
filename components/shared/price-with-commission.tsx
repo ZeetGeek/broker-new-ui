@@ -1,5 +1,7 @@
 "use client";
 
+import { cva, type VariantProps } from "class-variance-authority";
+
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
@@ -8,25 +10,75 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 /** Who is looking. Brokers earn the cut; owners see what they offered a broker. */
 export type CommissionAudience = "broker" | "owner";
 
-const NO_COMMISSION_TIP = "Owner hasn't added a commission";
+/** Type-scale sizes for listing ask prices. Prefer `size` over one-off `className`. */
+export type PriceWithCommissionSize = NonNullable<
+    VariantProps<typeof priceWithCommissionSize>["size"]
+>;
 
-export type PriceWithCommissionProps = {
+const NO_COMMISSION_TIP_BROKER = "Owner hasn't added a commission";
+const NO_COMMISSION_TIP_OWNER = "You haven't added a commission";
+
+const priceWithCommissionSize = cva("tabular text-brand", {
+    variants: {
+        size: {
+            /** Dense rows — attach lists, compact meta. */
+            xs: "body-xs font-semibold",
+            /** Dashboard strips, request rows. */
+            sm: "body-sm font-semibold",
+            /** Inline next to titles. */
+            md: "body font-semibold",
+            /** Default card price (browse, deals, pipeline). */
+            lg: "h5 font-semibold tracking-wide",
+            /** Emphasized card / modal header. */
+            xl: "h4 font-semibold tracking-wide",
+            /** Property detail hero. */
+            "2xl": "display-3",
+        },
+    },
+    defaultVariants: {
+        size: "lg",
+    },
+});
+
+type TipInput = {
     amountInr: number;
     isRent?: boolean;
-    /** Sale commission percent. Hidden when unset or 0. */
     commissionPercent?: number | null;
-    /** Fixed rent brokerage in INR. Hidden when unset or 0. */
     commissionAmountInr?: number | null;
+    audience?: CommissionAudience;
+    /** When commission is unset, still show a hover tip. Defaults on. */
+    showEmptyTip?: boolean;
+};
+
+export type PriceWithCommissionProps = TipInput & {
+    /**
+     * Type step for the price. Prefer this over raw type classes in `className`.
+     * @default "lg"
+     */
+    size?: PriceWithCommissionSize;
     /**
      * Broker: "You get ₹…". Owner: "Broker gets ₹…".
-     * Defaults to broker — marketplace and pipeline cards.
+     * @default "broker"
      */
     audience?: CommissionAudience;
     /**
-     * When commission is unset, still show a hover tip (no underline).
-     * Works for rent, sale, and both. Only a set fee underlines the price.
+     * When commission is unset, still show a hover tip (dashed underline).
+     * @default true
+     */
+    showEmptyTip?: boolean;
+    /**
+     * @deprecated Use `showEmptyTip`. Kept so existing call sites keep working.
      */
     showNoRentCommission?: boolean;
+    /**
+     * `auto` — underline when a tip exists (dashed if empty, solid if set).
+     * `never` — tip may still open on hover, but price is not underlined.
+     * @default "auto"
+     */
+    underline?: "auto" | "never";
+    /** Tooltip placement. @default "top" */
+    tooltipSide?: "top" | "bottom" | "left" | "right";
+    /** Extra classes merged after `size` (colour, truncate, etc.). */
     className?: string;
 };
 
@@ -35,7 +87,7 @@ type CommissionTip = {
     headline: string;
     /** "Fixed amount" or "2% of ₹85 L". Empty for the no-commission tip. */
     detail: string;
-    /** When true, tip is informational only — do not underline the price. */
+    /** When true, tip is the empty-commission message. */
     plain?: boolean;
 };
 
@@ -57,14 +109,27 @@ function formatPercent(percent: number): string {
     return `${rounded}%`;
 }
 
-function noCommissionTip(): CommissionTip {
-    return { headline: NO_COMMISSION_TIP, detail: "", plain: true };
+function noCommissionTip(audience: CommissionAudience): CommissionTip {
+    return {
+        headline: audience === "owner" ? NO_COMMISSION_TIP_OWNER : NO_COMMISSION_TIP_BROKER,
+        detail: "",
+        plain: true,
+    };
+}
+
+function resolveShowEmptyTip({
+    showEmptyTip,
+    showNoRentCommission,
+}: Pick<PriceWithCommissionProps, "showEmptyTip" | "showNoRentCommission">): boolean {
+    if (showEmptyTip != null) return showEmptyTip;
+    if (showNoRentCommission != null) return showNoRentCommission;
+    return true;
 }
 
 /**
  * Commission the owner actually set for this price.
  * Rent is a fixed fee (no `/mo`). Sale is a percent of the ask.
- * Returns null when that side was left blank — unless `showNoRentCommission`.
+ * Returns null when that side was left blank — unless `showEmptyTip`.
  */
 export function listingCommissionTip({
     amountInr,
@@ -72,14 +137,14 @@ export function listingCommissionTip({
     commissionPercent,
     commissionAmountInr,
     audience = "broker",
-    showNoRentCommission = false,
-}: PriceWithCommissionProps): CommissionTip | null {
+    showEmptyTip = true,
+}: TipInput): CommissionTip | null {
     const lead = audience === "owner" ? "Broker gets" : "You get";
 
     if (isRent) {
         const brokerageInr = positive(commissionAmountInr);
         if (brokerageInr <= 0) {
-            return showNoRentCommission ? noCommissionTip() : null;
+            return showEmptyTip ? noCommissionTip(audience) : null;
         }
         return {
             headline: `${lead} ${formatPriceInr(brokerageInr)}`,
@@ -90,7 +155,7 @@ export function listingCommissionTip({
     const percent = positive(commissionPercent);
     const priceInr = positive(amountInr);
     if (percent <= 0) {
-        return showNoRentCommission ? noCommissionTip() : null;
+        return showEmptyTip ? noCommissionTip(audience) : null;
     }
     if (priceInr <= 0) return null;
 
@@ -104,8 +169,10 @@ export function listingCommissionTip({
 }
 
 /**
- * Listing price. Hover shows the brokerage when a commission was set.
- * Unset commission can still tip (no underline) when `showNoRentCommission`.
+ * Shared listing-ask price. Hover shows brokerage (or empty-commission copy).
+ *
+ * Use this for sale / monthly rent on a property. Prefer `size` for type scale;
+ * keep `<Price>` for offers, budgets, and totals.
  */
 export function PriceWithCommission({
     amountInr,
@@ -113,9 +180,14 @@ export function PriceWithCommission({
     commissionPercent,
     commissionAmountInr,
     audience = "broker",
-    showNoRentCommission = false,
+    showEmptyTip,
+    showNoRentCommission,
+    size = "lg",
+    underline = "auto",
+    tooltipSide = "top",
     className,
 }: PriceWithCommissionProps) {
+    const emptyTip = resolveShowEmptyTip({ showEmptyTip, showNoRentCommission });
     const priceLabel = isRent ? formatRentInr(amountInr) : formatPriceInr(amountInr);
     const tip = listingCommissionTip({
         amountInr,
@@ -123,15 +195,16 @@ export function PriceWithCommission({
         commissionPercent,
         commissionAmountInr,
         audience,
-        showNoRentCommission,
+        showEmptyTip: emptyTip,
     });
 
-    const underline = Boolean(tip && !tip.plain);
+    const showUnderline = Boolean(tip) && underline === "auto";
     const priceClass = cn(
-        "tabular text-brand",
+        priceWithCommissionSize({ size }),
         className,
-        underline &&
-            "cursor-help underline decoration-brand/30 decoration-from-font underline-offset-2",
+        showUnderline &&
+            "cursor-help underline decoration-brand/40 decoration-from-font underline-offset-2",
+        showUnderline && tip?.plain && "decoration-dashed",
     );
 
     if (!tip) {
@@ -150,18 +223,22 @@ export function PriceWithCommission({
                     render={
                         <button
                             type="button"
-                            className={cn(
-                                "inline border-0 bg-transparent p-0 text-start text-inherit",
-                                tip.plain ? "cursor-default" : "cursor-help",
-                            )}
+                            className="inline cursor-help border-0 bg-transparent p-0 text-start text-inherit"
                             aria-label={ariaLabel}
+                            onClick={(event) => {
+                                // Pipeline / deal cards open on article click — keep the tip control local.
+                                event.stopPropagation();
+                            }}
+                            onPointerDown={(event) => {
+                                event.stopPropagation();
+                            }}
                         >
                             <span className={priceClass}>{priceLabel}</span>
                         </button>
                     }
                 />
                 <TooltipContent
-                    side="top"
+                    side={tooltipSide}
                     className={cn(
                         "text-center",
                         tip.plain ? "whitespace-nowrap max-inline-none" : "max-inline-xs",

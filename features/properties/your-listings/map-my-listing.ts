@@ -1,3 +1,4 @@
+import { exclusiveOwnerPhoneDigits } from "@/lib/api/exclusive-owners";
 import type { PropertyListing } from "@/lib/api/properties";
 import { buildPropertyTitle } from "@/lib/format/property-title";
 import {
@@ -337,6 +338,12 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         updatedAt: listing.updatedAt ?? listing.createdAt ?? new Date().toISOString(),
         exclusiveOwnerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
         ownerName: listing.exclusiveOwner?.fullName ?? listing.ownerName ?? null,
+        ownerPhoneDigits: (() => {
+            const phone = listing.exclusiveOwner?.phone?.trim();
+            if (!phone) return null;
+            const digits = exclusiveOwnerPhoneDigits(phone);
+            return digits.length === 10 ? digits : null;
+        })(),
         ownerOrigin: listing.exclusiveOwnerId || listing.exclusiveOwner?.id ? "custom" : null,
         ownerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
         isBookmarked: Boolean(listing.isBookmarked),

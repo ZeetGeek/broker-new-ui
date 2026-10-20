@@ -93,7 +93,8 @@ export function PropertyPriceBlock({
                             commissionPercent={item.commissionPercent}
                             commissionAmountInr={item.commissionAmount}
                             audience={audience}
-                            className="display-3"
+                            size="2xl"
+                            showEmptyTip
                         />
                     )}
                     {!both ? (
@@ -120,7 +121,9 @@ export function PropertyPriceBlock({
                                 commissionPercent={item.commissionPercent}
                                 commissionAmountInr={item.commissionAmount}
                                 audience={audience}
-                                className="font-semibold text-ink"
+                                size="sm"
+                                showEmptyTip
+                                className="text-ink"
                             />
                         </span>
                     ) : null}

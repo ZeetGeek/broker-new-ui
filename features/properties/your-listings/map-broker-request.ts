@@ -123,6 +123,8 @@ function mapRow(rep: RepresentationItem, now: Date): BrokerRequestItem | null {
         title,
         amountInr,
         isRent,
+        commissionPercent: toNumber(rep.propertyCommissionPercent) || null,
+        commissionAmount: toNumber(rep.propertyCommissionAmount) || null,
         note: requestNote(type, isApproved ? daysSince : daysWaiting),
         action,
         reminderCount,

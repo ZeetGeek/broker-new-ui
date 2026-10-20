@@ -12,7 +12,7 @@ import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
@@ -100,10 +100,14 @@ function RequestRow({
                         >
                             {item.title}
                         </PropertyTitleLink>
-                        <Price
+                        <PriceWithCommission
                             amountInr={item.amountInr}
                             isRent={item.isRent}
-                            className="body-sm font-semibold text-brand"
+                            commissionPercent={item.commissionPercent}
+                            commissionAmountInr={item.commissionAmount}
+                            audience="broker"
+                            size="sm"
+                            showEmptyTip
                         />
                     </div>
                     <p className="body-sm text-ink-muted">{item.note}</p>

@@ -204,7 +204,8 @@ export function OwnerLeadCard({
                             commissionPercent={facts.commissionPercent}
                             commissionAmountInr={facts.commissionAmountInr}
                             audience="owner"
-                            className="h5 text-brand"
+                            size="lg"
+                            showEmptyTip
                         />
                     ) : (
                         <span />

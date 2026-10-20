@@ -40,6 +40,7 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         commissionPercent: item.commissionPercent,
         commissionAmount: item.commissionAmount,
         ownerName: item.ownerName,
+        ownerPhoneDigits: item.ownerPhoneDigits,
         visibility: item.visibility,
         attachedClients: item.attachedClients ?? [],
     };

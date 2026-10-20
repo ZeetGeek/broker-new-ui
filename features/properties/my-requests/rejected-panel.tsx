@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 import { myRequestsApi } from "@/lib/api/my-requests";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
+import { representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -178,6 +179,16 @@ export function RejectedPanel({
         [runMutation],
     );
 
+    const handleAskToSell = useCallback(
+        (propertyId: string) => {
+            void runMutation(propertyId, async () => {
+                await representativeApi.requestRepresentation(propertyId);
+                toast.success("Request sent to the owner");
+            });
+        },
+        [runMutation],
+    );
+
     const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
 
     const rejectedTotal = useMemo(
@@ -266,8 +277,9 @@ export function RejectedPanel({
                                 item={row.item}
                                 onAccept={() => undefined}
                                 onDecline={() => undefined}
+                                onAskToSell={handleAskToSell}
                                 onBuyersChanged={handleRefresh}
-                                isBusy={busyId === row.item.id}
+                                isBusy={busyId === row.item.id || busyId === row.item.propertyId}
                             />
                         )
                     }

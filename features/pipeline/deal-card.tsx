@@ -772,7 +772,8 @@ export function DealCard({
                             commissionPercent={deal.property.commissionPercent}
                             commissionAmountInr={deal.property.commissionAmountInr}
                             audience="broker"
-                            className="h5 font-semibold tracking-wide"
+                            size="lg"
+                            showEmptyTip
                         />
                         <h3
                             className="

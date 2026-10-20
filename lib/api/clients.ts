@@ -58,6 +58,8 @@ export type ApiClientLead = {
         address?: string | null;
         salePrice?: string | null;
         monthlyRent?: string | null;
+        commissionPercent?: string | number | null;
+        commissionAmount?: string | number | null;
         photos?: unknown;
     } | null;
 };
@@ -93,6 +95,8 @@ export type ClientLeadDetail = {
     listPriceInr: number | null;
     closedAmountInr: number | null;
     isRent: boolean;
+    commissionPercent?: number | null;
+    commissionAmountInr?: number | null;
 };
 
 export type ClientLeadSummary = {
@@ -180,6 +184,8 @@ function mockLeadSummary(clientId: string): ClientLeadSummary {
         listPriceInr: deal.property.amountInr,
         closedAmountInr: deal.closedAmountInr,
         isRent: deal.property.isRent,
+        commissionPercent: deal.property.commissionPercent ?? null,
+        commissionAmountInr: deal.property.commissionAmountInr ?? null,
     }));
 
     return {
@@ -315,6 +321,9 @@ function mapLeadDetail(lead: ApiClientLead): ClientLeadDetail | null {
     const sale = toMoney(lead.property?.salePrice);
     const isRent = (rent ?? 0) > 0 && (sale ?? 0) <= 0;
 
+    const commissionPercent = toMoney(lead.property?.commissionPercent);
+    const commissionAmountInr = toMoney(lead.property?.commissionAmount);
+
     return {
         leadId: lead.id,
         propertyId,
@@ -326,6 +335,10 @@ function mapLeadDetail(lead: ApiClientLead): ClientLeadDetail | null {
         listPriceInr: toMoney(lead.listPrice) ?? sale ?? rent,
         closedAmountInr: toMoney(lead.closedAmount),
         isRent,
+        commissionPercent:
+            commissionPercent != null && commissionPercent > 0 ? commissionPercent : null,
+        commissionAmountInr:
+            commissionAmountInr != null && commissionAmountInr > 0 ? commissionAmountInr : null,
     };
 }
 

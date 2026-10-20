@@ -8,6 +8,7 @@ import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -110,11 +111,16 @@ export function MakeOfferModal({
             <div className="flex flex-col gap-4">
                 <p className="body-sm text-ink-muted">
                     List price{" "}
-                    <span className="font-medium text-ink">
-                        {deal.property.isRent
-                            ? formatRentInr(deal.property.amountInr)
-                            : formatPriceInr(deal.property.amountInr)}
-                    </span>
+                    <PriceWithCommission
+                        amountInr={deal.property.amountInr}
+                        isRent={deal.property.isRent}
+                        commissionPercent={deal.property.commissionPercent}
+                        commissionAmountInr={deal.property.commissionAmountInr}
+                        audience="broker"
+                        size="sm"
+                        showEmptyTip
+                        className="font-medium text-ink"
+                    />
                 </p>
 
                 <div className="flex flex-col gap-2">
