@@ -15,6 +15,7 @@ import {
 import type { OwnerListingsPoolSummary } from "@/features/properties/owner-listings/build-owner-listings-summary-lines";
 import { buildQuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
 import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/owner-listings/count-new-listings-this-week";
+import { commissionRangeForType } from "@/features/properties/owner-listings/filter-owner-listings";
 import { locationTreeToListings } from "@/features/properties/owner-listings/map-browse-listing";
 import { OwnerListingsEmpty } from "@/features/properties/owner-listings/owner-listings-empty";
 import { OwnerListingsGrid } from "@/features/properties/owner-listings/owner-listings-grid";
@@ -236,6 +237,7 @@ export function OwnerListingsPage() {
             applyFilters({
                 ...filters,
                 ...band,
+                ...commissionRangeForType(band.type),
                 cursor: "",
             });
         },

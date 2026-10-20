@@ -87,6 +87,26 @@ export function commissionRanges(filters: OwnerListingsFilters) {
     };
 }
 
+/**
+ * Clears the commission range that does not apply to "Looking for":
+ * Sale keeps only the percent range, Rent keeps only the amount range, Any keeps both.
+ */
+export function commissionRangeForType(
+    type: OwnerListingsFilters["type"],
+): Partial<
+    Pick<
+        OwnerListingsFilters,
+        | "minCommissionPercent"
+        | "maxCommissionPercent"
+        | "minCommissionAmount"
+        | "maxCommissionAmount"
+    >
+> {
+    if (type === "sale") return { minCommissionAmount: "", maxCommissionAmount: "" };
+    if (type === "rent") return { minCommissionPercent: "", maxCommissionPercent: "" };
+    return {};
+}
+
 function hasCommissionRange(filters: OwnerListingsFilters): boolean {
     return Boolean(
         filters.minCommissionPercent ||

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { BadgePercent, CalendarDays, type LucideIcon, Ruler, XIcon } from "lucide-react";
+import { CalendarDays, type LucideIcon, Ruler, XIcon } from "lucide-react";
 import SimpleBar from "simplebar-react";
 
 import { formatInr } from "@/lib/format/inr";
@@ -22,13 +22,15 @@ import { RangeSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { filterOwnerListings } from "@/features/properties/owner-listings/filter-owner-listings";
+import {
+    commissionRangeForType,
+    filterOwnerListings,
+} from "@/features/properties/owner-listings/filter-owner-listings";
 import {
     type OwnerListingItem,
     type OwnerListingsFilterContext,
     type OwnerListingsFilters,
     type OwnerListingsSheetFilters,
-    type OwnerListingTransactionType,
     RENT_COMMISSION_RANGE,
     SALE_COMMISSION_RANGE,
 } from "@/features/properties/owner-listings/types";
@@ -51,11 +53,6 @@ const LISTED_PRESETS: ChoicePreset[] = [
     { value: "", label: "Any time", hint: "All listing ages" },
     { value: "7", label: "Last 7 days", hint: "Fresh to the pool" },
     { value: "30", label: "Last 30 days", hint: "Still recent inventory" },
-];
-
-const COMMISSION_TYPES: { value: OwnerListingTransactionType; label: string }[] = [
-    { value: "sale", label: "Sale" },
-    { value: "rent", label: "Rent" },
 ];
 
 const EMPTY_COMMISSION_RANGE = {
@@ -366,15 +363,15 @@ export function OwnerListingsFilterSheet({
     onApply,
 }: OwnerListingsFilterSheetProps) {
     const [draft, setDraft] = useState(() => extractSheetFilters(appliedFilters));
-    // "Looking for" drives which commission slider shows; picking it here also
-    // sets the band's Sale / Rent filter on apply.
-    const [draftType, setDraftType] = useState(appliedFilters.type);
     const [draftSource, setDraftSource] = useState({ open: false, appliedFilters });
+    // "Looking for" in the main filter bar decides which commission sliders show.
+    const lookingFor = appliedFilters.type;
+    const showSaleCommission = lookingFor !== "rent";
+    const showRentCommission = lookingFor !== "sale";
 
     if (open && (!draftSource.open || draftSource.appliedFilters !== appliedFilters)) {
         setDraftSource({ open: true, appliedFilters });
         setDraft(extractSheetFilters(appliedFilters));
-        setDraftType(appliedFilters.type);
     } else if (!open && draftSource.open) {
         setDraftSource({ open: false, appliedFilters });
     }
@@ -383,10 +380,10 @@ export function OwnerListingsFilterSheet({
         const merged: OwnerListingsFilters = {
             ...appliedFilters,
             ...draft,
-            type: draftType,
+            ...commissionRangeForType(lookingFor),
         };
         return filterOwnerListings(listings, merged, filterContext).totalCount;
-    }, [appliedFilters, draft, draftType, filterContext, listings]);
+    }, [appliedFilters, draft, filterContext, listings, lookingFor]);
 
     const saleRange = draftToRange(
         draft.minCommissionPercent,
@@ -398,12 +395,6 @@ export function OwnerListingsFilterSheet({
         draft.maxCommissionAmount,
         RENT_COMMISSION_RANGE,
     );
-
-    const setCommissionType = (type: OwnerListingTransactionType) => {
-        // A sale range means nothing on rent listings and vice versa.
-        setDraftType(type);
-        setDraft((prev) => ({ ...prev, ...EMPTY_COMMISSION_RANGE }));
-    };
 
     const hasDraftFilters = useMemo(() => {
         // Ready to move lives on the quick-chip row outside this sheet.
@@ -442,7 +433,7 @@ export function OwnerListingsFilterSheet({
             maxCommissionPercent: draft.maxCommissionPercent,
             minCommissionAmount: draft.minCommissionAmount,
             maxCommissionAmount: draft.maxCommissionAmount,
-            type: draftType,
+            ...commissionRangeForType(lookingFor),
             // Sync New chip with Listed Last 7 days; do not wipe a quick-chip-only New.
             ...(draft.listedWithinDays === "7"
                 ? { newToday: true }
@@ -591,109 +582,95 @@ export function OwnerListingsFilterSheet({
                                 <FilterPanel
                                     title="Commission"
                                     subtitle={
-                                        draftType === "rent"
+                                        lookingFor === "rent"
                                             ? "Fixed rent commission the owner has shared"
-                                            : draftType === "sale"
+                                            : lookingFor === "sale"
                                               ? "Sale commission percent the owner has shared"
-                                              : "Choose what you are looking for to set a range"
+                                              : "Sale is a percent of the price. Rent is a fixed amount."
                                     }
                                     className="md:col-span-2"
                                 >
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="body-sm text-ink-muted">Looking for</span>
-                                        {COMMISSION_TYPES.map((option) => (
-                                            <ChoiceChip
-                                                key={option.value}
-                                                label={option.label}
-                                                active={draftType === option.value}
-                                                onClick={() => setCommissionType(option.value)}
-                                            />
-                                        ))}
+                                    <div
+                                        className={cn(
+                                            "grid gap-3",
+                                            showSaleCommission &&
+                                                showRentCommission &&
+                                                "md:grid-cols-2",
+                                        )}
+                                    >
+                                        {showSaleCommission ? (
+                                            <CommissionRange
+                                                label="Sale commission"
+                                                minLabel={formatPercent(saleRange[0])}
+                                                maxLabel={formatPercent(saleRange[1])}
+                                                isAny={
+                                                    !draft.minCommissionPercent &&
+                                                    !draft.maxCommissionPercent
+                                                }
+                                                boundsLabel={`${formatPercent(SALE_COMMISSION_RANGE.min)} – ${formatPercent(SALE_COMMISSION_RANGE.max)}`}
+                                            >
+                                                <RangeSlider
+                                                    value={saleRange}
+                                                    min={SALE_COMMISSION_RANGE.min}
+                                                    max={SALE_COMMISSION_RANGE.max}
+                                                    step={SALE_COMMISSION_RANGE.step}
+                                                    thumbLabels={[
+                                                        "Minimum sale commission",
+                                                        "Maximum sale commission",
+                                                    ]}
+                                                    onValueChange={(next) => {
+                                                        const [min, max] = rangeToDraft(
+                                                            next,
+                                                            SALE_COMMISSION_RANGE,
+                                                            1,
+                                                        );
+                                                        updateDraft({
+                                                            minCommissionPercent: min,
+                                                            maxCommissionPercent: max,
+                                                        });
+                                                    }}
+                                                />
+                                            </CommissionRange>
+                                        ) : null}
+                                        {showRentCommission ? (
+                                            <CommissionRange
+                                                label="Rent commission"
+                                                minLabel={formatInr(rentRange[0])}
+                                                maxLabel={
+                                                    rentRange[1] >= RENT_COMMISSION_RANGE.max
+                                                        ? `${formatInr(RENT_COMMISSION_RANGE.max)}+`
+                                                        : formatInr(rentRange[1])
+                                                }
+                                                isAny={
+                                                    !draft.minCommissionAmount &&
+                                                    !draft.maxCommissionAmount
+                                                }
+                                                boundsLabel={`${formatInr(RENT_COMMISSION_RANGE.min)} – ${formatInr(RENT_COMMISSION_RANGE.max)}+`}
+                                            >
+                                                <RangeSlider
+                                                    value={rentRange}
+                                                    min={RENT_COMMISSION_RANGE.min}
+                                                    max={RENT_COMMISSION_RANGE.max}
+                                                    step={RENT_COMMISSION_RANGE.step}
+                                                    thumbLabels={[
+                                                        "Minimum rent commission",
+                                                        "Maximum rent commission",
+                                                    ]}
+                                                    onValueChange={(next) => {
+                                                        const [min, max] = rangeToDraft(
+                                                            next,
+                                                            RENT_COMMISSION_RANGE,
+                                                            0,
+                                                        );
+                                                        updateDraft({
+                                                            minCommissionAmount: min,
+                                                            maxCommissionAmount: max,
+                                                        });
+                                                    }}
+                                                />
+                                            </CommissionRange>
+                                        ) : null}
                                     </div>
-
-                                    {draftType === "sale" ? (
-                                        <CommissionRange
-                                            label="Sale commission"
-                                            minLabel={formatPercent(saleRange[0])}
-                                            maxLabel={formatPercent(saleRange[1])}
-                                            isAny={
-                                                !draft.minCommissionPercent &&
-                                                !draft.maxCommissionPercent
-                                            }
-                                            boundsLabel={`${formatPercent(SALE_COMMISSION_RANGE.min)} – ${formatPercent(SALE_COMMISSION_RANGE.max)}`}
-                                        >
-                                            <RangeSlider
-                                                value={saleRange}
-                                                min={SALE_COMMISSION_RANGE.min}
-                                                max={SALE_COMMISSION_RANGE.max}
-                                                step={SALE_COMMISSION_RANGE.step}
-                                                thumbLabels={[
-                                                    "Minimum sale commission",
-                                                    "Maximum sale commission",
-                                                ]}
-                                                onValueChange={(next) => {
-                                                    const [min, max] = rangeToDraft(
-                                                        next,
-                                                        SALE_COMMISSION_RANGE,
-                                                        1,
-                                                    );
-                                                    updateDraft({
-                                                        minCommissionPercent: min,
-                                                        maxCommissionPercent: max,
-                                                    });
-                                                }}
-                                            />
-                                        </CommissionRange>
-                                    ) : draftType === "rent" ? (
-                                        <CommissionRange
-                                            label="Rent commission"
-                                            minLabel={formatInr(rentRange[0])}
-                                            maxLabel={
-                                                rentRange[1] >= RENT_COMMISSION_RANGE.max
-                                                    ? `${formatInr(RENT_COMMISSION_RANGE.max)}+`
-                                                    : formatInr(rentRange[1])
-                                            }
-                                            isAny={
-                                                !draft.minCommissionAmount &&
-                                                !draft.maxCommissionAmount
-                                            }
-                                            boundsLabel={`${formatInr(RENT_COMMISSION_RANGE.min)} – ${formatInr(RENT_COMMISSION_RANGE.max)}+`}
-                                        >
-                                            <RangeSlider
-                                                value={rentRange}
-                                                min={RENT_COMMISSION_RANGE.min}
-                                                max={RENT_COMMISSION_RANGE.max}
-                                                step={RENT_COMMISSION_RANGE.step}
-                                                thumbLabels={[
-                                                    "Minimum rent commission",
-                                                    "Maximum rent commission",
-                                                ]}
-                                                onValueChange={(next) => {
-                                                    const [min, max] = rangeToDraft(
-                                                        next,
-                                                        RENT_COMMISSION_RANGE,
-                                                        0,
-                                                    );
-                                                    updateDraft({
-                                                        minCommissionAmount: min,
-                                                        maxCommissionAmount: max,
-                                                    });
-                                                }}
-                                            />
-                                        </CommissionRange>
-                                    ) : (
-                                        <div className="flex items-center gap-2 text-ink-muted">
-                                            <BadgePercent
-                                                className="block-4 inline-4"
-                                                strokeWidth={1.75}
-                                                aria-hidden
-                                            />
-                                            <span className="body-sm">
-                                                Sale shows a percent range. Rent shows a fixed
-                                                amount range.
-                                            </span>
-                                        </div>
-                                    )}
                                 </FilterPanel>
                             </div>
                         </div>

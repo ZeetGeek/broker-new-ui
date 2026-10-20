@@ -150,8 +150,8 @@ hand-rolled hover tip for those amounts.
 Pass `audience="broker"` or `audience="owner"` to match the portal. Pass
 `commissionPercent` (sale) and/or `commissionAmountInr` (rent). Prefer `size`
 (`xs`–`2xl`) over one-off type classes. Empty tip is on by default
-(`showEmptyTip`). Price stays underlined whenever a tip exists (dashed when
-unset, solid when a fee is set) so dense boards like Pipeline stay discoverable.
+(`showEmptyTip`). The price is underlined only when a commission is set; with
+no commission it still shows the hover tip, without an underline.
 
 **Exceptions — keep `<Price>` or `lib/format/price`:** buyer offers, budgets,
 totals ("₹X in play"), per-sqft helpers, form live previews, and any amount that

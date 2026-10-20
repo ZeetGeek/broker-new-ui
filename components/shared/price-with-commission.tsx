@@ -62,7 +62,7 @@ export type PriceWithCommissionProps = TipInput & {
      */
     audience?: CommissionAudience;
     /**
-     * When commission is unset, still show a hover tip (dashed underline).
+     * When commission is unset, still show a hover tip. The price is not underlined.
      * @default true
      */
     showEmptyTip?: boolean;
@@ -71,7 +71,7 @@ export type PriceWithCommissionProps = TipInput & {
      */
     showNoRentCommission?: boolean;
     /**
-     * `auto` — underline when a tip exists (dashed if empty, solid if set).
+     * `auto` — underline only when a commission is set.
      * `never` — tip may still open on hover, but price is not underlined.
      * @default "auto"
      */
@@ -198,13 +198,12 @@ export function PriceWithCommission({
         showEmptyTip: emptyTip,
     });
 
-    const showUnderline = Boolean(tip) && underline === "auto";
+    const showUnderline = Boolean(tip && !tip.plain) && underline === "auto";
     const priceClass = cn(
         priceWithCommissionSize({ size }),
         className,
         showUnderline &&
             "cursor-help underline decoration-brand/40 decoration-from-font underline-offset-2",
-        showUnderline && tip?.plain && "decoration-dashed",
     );
 
     if (!tip) {
@@ -223,7 +222,10 @@ export function PriceWithCommission({
                     render={
                         <button
                             type="button"
-                            className="inline cursor-help border-0 bg-transparent p-0 text-start text-inherit"
+                            className={cn(
+                                "inline border-0 bg-transparent p-0 text-start text-inherit",
+                                tip.plain ? "cursor-default" : "cursor-help",
+                            )}
                             aria-label={ariaLabel}
                             onClick={(event) => {
                                 // Pipeline / deal cards open on article click — keep the tip control local.
