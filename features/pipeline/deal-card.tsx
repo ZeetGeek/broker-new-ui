@@ -11,6 +11,7 @@ import {
 
 import { addCollection, Icon } from "@iconify/react/offline";
 import {
+    Ban,
     Building2,
     Check,
     CircleSlash,
@@ -85,6 +86,8 @@ export type DealCardHandlers = {
     onMakeOffer: (dealId: string) => void;
     onPin: (dealId: string) => void;
     onNote: (dealId: string) => void;
+    /** End the accepted representation behind this deal ("Stop selling this property"). */
+    onStopRepresenting?: (dealId: string) => void;
 };
 
 function whatsappMessage(deal: DealItem): string {
@@ -406,6 +409,12 @@ function DealCardMenu({
     onMenuAction?: () => void;
 }) {
     const live = isLiveStage(deal.status);
+    const canStopRepresenting = Boolean(
+        handlers.onStopRepresenting &&
+        deal.owner.origin === "platform" &&
+        deal.owner.isRepresentationActive &&
+        deal.owner.representationId,
+    );
 
     function act(event: { stopPropagation: () => void }, action: () => void) {
         runMenuAction(event, () => {
@@ -536,6 +545,25 @@ function DealCardMenu({
                             />
                             Mark as lost
                         </DropdownMenuItem>
+                        {canStopRepresenting ? (
+                            <>
+                                <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
+                                <DropdownMenuItem
+                                    className={DEAL_MENU_ITEM_CLASS}
+                                    variant="destructive"
+                                    onClick={(event) =>
+                                        act(event, () => handlers.onStopRepresenting?.(deal.id))
+                                    }
+                                >
+                                    <Ban
+                                        aria-hidden
+                                        className={cn(DEAL_MENU_ICON_CLASS, "is-danger")}
+                                        strokeWidth={1.75}
+                                    />
+                                    Stop selling this property
+                                </DropdownMenuItem>
+                            </>
+                        ) : null}
                     </>
                 ) : (
                     <>

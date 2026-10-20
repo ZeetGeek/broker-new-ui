@@ -322,6 +322,7 @@ export function MyDealsHeader({
     const isInvites = activeTab === "invites";
     const isAccepted = activeTab === "accepted";
     const isRejected = activeTab === "rejected";
+    const isCancelled = activeTab === "cancelled";
 
     const sheetFilterCount = useMemo(() => {
         if (isInvites) return countTypeFilter(inviteFilters.type);
@@ -334,6 +335,7 @@ export function MyDealsHeader({
         (sentSummary?.counts.approved ?? 0) + (inviteSummary?.counts.accepted ?? 0);
     const rejectedCount =
         (sentSummary?.counts.declined ?? 0) + (inviteSummary?.counts.declined ?? 0);
+    const cancelledCount = (sentSummary?.counts.ended ?? 0) + (inviteSummary?.counts.ended ?? 0);
 
     const clearType = () => {
         if (isInvites) {
@@ -468,6 +470,32 @@ export function MyDealsHeader({
                                     />
                                     <TooltipContent side="bottom">
                                         Owner rejections and invites you turned down
+                                    </TooltipContent>
+                                </Tooltip>
+                            </OwnerListingsChipsCarouselSlide>
+
+                            <OwnerListingsChipsCarouselSlide>
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Link
+                                                href={`${BROKER_MY_DEALS_HREF}?tab=cancelled`}
+                                                aria-current={isCancelled ? "page" : undefined}
+                                                className={ownerListingsChipClassName(isCancelled)}
+                                            >
+                                                Cancelled
+                                                <FilterChipCount
+                                                    count={cancelledCount}
+                                                    isActive={isCancelled}
+                                                    isLoading={
+                                                        isLoading && !sentSummary && !inviteSummary
+                                                    }
+                                                />
+                                            </Link>
+                                        }
+                                    />
+                                    <TooltipContent side="bottom">
+                                        Representations you or the owner cancelled
                                     </TooltipContent>
                                 </Tooltip>
                             </OwnerListingsChipsCarouselSlide>

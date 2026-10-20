@@ -7,7 +7,17 @@ import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
  * replied, so the broker may not approach them again on this property. The
  * owner can still start a conversation from their side.
  */
-export type RequestStage = "pending" | "approved" | "declined" | "locked" | "cancelled";
+export type RequestStage =
+    | "pending"
+    | "approved"
+    | "declined"
+    | "locked"
+    | "cancelled"
+    /** Was approved, then the owner or the broker cancelled the representation. */
+    | "ended";
+
+/** Who ended an approved representation. */
+export type RepresentationEndedBy = "owner" | "broker";
 
 export type RequestStageFilter = "all" | RequestStage;
 
@@ -87,6 +97,10 @@ export type RequestItem = {
     nudgedAt: string | null;
     /** Owner's reason, when they gave one on decline. */
     declineReason?: string;
+    /** Set when `stage` is "ended". */
+    endedBy?: RepresentationEndedBy;
+    /** Reason given when the representation was cancelled. */
+    cancelReason?: string;
     imageSrc: string;
     timeline: RequestTimelineStep[];
     /** Unread owner chat messages for this representation. Omitted or 0 when none. */

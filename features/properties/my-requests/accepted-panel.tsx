@@ -254,6 +254,7 @@ export function AcceptedPanel({
                                 onWithdraw={handleWithdraw}
                                 onRetry={handleRetry}
                                 onBuyersChanged={handleRefresh}
+                                onRepresentationCancelled={handleRefresh}
                                 isBusy={busyId === row.item.id}
                             />
                         ) : (
@@ -262,6 +263,7 @@ export function AcceptedPanel({
                                 onAccept={() => undefined}
                                 onDecline={() => undefined}
                                 onBuyersChanged={handleRefresh}
+                                onRepresentationCancelled={handleRefresh}
                                 isBusy={busyId === row.item.id}
                             />
                         )

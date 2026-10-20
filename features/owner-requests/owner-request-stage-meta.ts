@@ -42,6 +42,18 @@ export const OWNER_REQUEST_STAGE_META: Record<OwnerRepStatus, OwnerRequestStageM
         icon: Ban,
         tone: "closed",
     },
+    owner_cancelled: {
+        label: "You removed",
+        hint: "You ended this broker's representation.",
+        icon: Ban,
+        tone: "closed",
+    },
+    broker_cancelled: {
+        label: "Broker stopped",
+        hint: "The broker stopped selling this property.",
+        icon: Ban,
+        tone: "closed",
+    },
     unknown: {
         label: "Request",
         hint: "Representation status",

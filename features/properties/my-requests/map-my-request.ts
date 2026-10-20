@@ -91,8 +91,19 @@ function mapStage(
     if (status === "withdrawn") {
         return requestsRemaining <= 0 || attemptNumber >= ATTEMPT_LIMIT ? "locked" : "cancelled";
     }
+    if (status === "owner_cancelled" || status === "broker_cancelled") return "ended";
     if (status === "revoked") return "declined";
     return "cancelled";
+}
+
+/** Who ended an approved representation, from the API status. */
+export function representationEndedBy(
+    status: string | null | undefined,
+): "owner" | "broker" | undefined {
+    const value = status?.toLowerCase();
+    if (value === "owner_cancelled") return "owner";
+    if (value === "broker_cancelled") return "broker";
+    return undefined;
 }
 
 /** Shared by My Deals cards and owner-listing request timeline. */
@@ -144,6 +155,18 @@ export function buildRepresentationTimeline(
             label: "No attempts left — owner never approved",
             at: resolvedAt,
         });
+    } else if (stage === "ended") {
+        steps.push({ key: "approved", label: "Owner approved", at: resolvedAt });
+        const reason = rep.cancelReason?.trim();
+        const who =
+            representationEndedBy(rep.status) === "owner"
+                ? "Owner cancelled the representation"
+                : "You stopped selling this property";
+        steps.push({
+            key: "cancelled",
+            label: reason ? `${who}: ${reason}` : who,
+            at: rep.cancelledAt ?? rep.updatedAt ?? resolvedAt,
+        });
     }
 
     return steps;
@@ -179,7 +202,12 @@ export function mapRepresentationToRequestItem(
         [config, locality || city].filter(Boolean).join(" · ") ||
         "Property";
     const requestedAt = rep.createdAt ?? new Date().toISOString();
-    const resolvedAt = stage === "pending" ? null : (rep.decidedAt ?? rep.updatedAt ?? requestedAt);
+    const resolvedAt =
+        stage === "pending"
+            ? null
+            : stage === "ended"
+              ? (rep.cancelledAt ?? rep.updatedAt ?? requestedAt)
+              : (rep.decidedAt ?? rep.updatedAt ?? requestedAt);
     const photos = (rep.propertyPhotos ?? []).filter(Boolean);
     const bhk = bhkCount(rep);
 
@@ -187,6 +215,8 @@ export function mapRepresentationToRequestItem(
         id: rep.id,
         propertyId: rep.propertyId,
         stage,
+        endedBy: stage === "ended" ? representationEndedBy(rep.status) : undefined,
+        cancelReason: stage === "ended" ? rep.cancelReason?.trim() || undefined : undefined,
         title,
         configLabel: config,
         propertyTypeLabel: typeLabel,

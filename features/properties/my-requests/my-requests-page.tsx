@@ -15,6 +15,7 @@ import {
     type InvitesSummary,
 } from "@/features/properties/my-requests/invite-types";
 import { AcceptedPanel } from "@/features/properties/my-requests/accepted-panel";
+import { CancelledPanel } from "@/features/properties/my-requests/cancelled-panel";
 import { InvitesPanel } from "@/features/properties/my-requests/invites-panel";
 import { RejectedPanel } from "@/features/properties/my-requests/rejected-panel";
 import { RequestCard } from "@/features/properties/my-requests/request-card";
@@ -296,6 +297,13 @@ export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
                 />
             ) : activeTab === "rejected" ? (
                 <RejectedPanel
+                    sentSummary={sentSummary}
+                    inviteSummary={inviteSummary}
+                    onSentSummary={setSentSummary}
+                    onInviteSummary={setInviteSummary}
+                />
+            ) : activeTab === "cancelled" ? (
+                <CancelledPanel
                     sentSummary={sentSummary}
                     inviteSummary={inviteSummary}
                     onSentSummary={setSentSummary}

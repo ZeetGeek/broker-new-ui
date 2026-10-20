@@ -18,7 +18,10 @@ import {
     OWNER_INVITE_PENDING_META,
     OWNER_REQUEST_STAGE_META,
 } from "@/features/owner-requests/owner-request-stage-meta";
-import type { OwnerRequestCardItem } from "@/features/owner-requests/types";
+import {
+    CLOSED_OWNER_REP_STATUSES,
+    type OwnerRequestCardItem,
+} from "@/features/owner-requests/types";
 import {
     DealCardPhotoToolbar,
     DealOverlayCard,
@@ -45,8 +48,7 @@ function chatPeerFor(item: OwnerRequestCardItem): ChatPeer {
         representationId: item.id,
         mySide: "owner",
         canSend: true,
-        closed:
-            item.status === "rejected" || item.status === "withdrawn" || item.status === "revoked",
+        closed: CLOSED_OWNER_REP_STATUSES.includes(item.status),
     };
 }
 
@@ -179,8 +181,7 @@ export function OwnerRequestCard({
 }) {
     const meta = stageMetaFor(item, actions);
     const detailHref = ownerRequestDetailHref(item.propertyId);
-    const muted =
-        item.status === "rejected" || item.status === "withdrawn" || item.status === "revoked";
+    const muted = CLOSED_OWNER_REP_STATUSES.includes(item.status);
     const { openChat } = useChat();
 
     const cardMenu = (

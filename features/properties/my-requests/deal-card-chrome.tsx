@@ -180,6 +180,7 @@ export function DealCardPhotoToolbar({
     remindersLimit,
     onOpenTimeline,
     onCancelRequest,
+    onStopRepresenting,
     tone = "overlay",
 }: {
     listing: DealCardListing;
@@ -193,6 +194,7 @@ export function DealCardPhotoToolbar({
     remindersLimit?: number;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
+    onStopRepresenting?: () => void;
     tone?: "overlay" | "plain";
 }) {
     return (
@@ -208,6 +210,7 @@ export function DealCardPhotoToolbar({
             remindersLimit={remindersLimit}
             onOpenTimeline={onOpenTimeline}
             onCancelRequest={onCancelRequest}
+            onStopRepresenting={onStopRepresenting}
             tone={tone}
         />
     );

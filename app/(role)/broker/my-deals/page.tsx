@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     robots: { index: false, follow: false },
 };
 
-const VALID_TABS: RequestsTab[] = ["sent", "invites", "accepted", "rejected"];
+const VALID_TABS: RequestsTab[] = ["sent", "invites", "accepted", "rejected", "cancelled"];
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
     const { tab } = await searchParams;

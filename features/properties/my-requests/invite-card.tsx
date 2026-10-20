@@ -25,6 +25,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
+import { CancelRepresentationDialog } from "@/features/representation/cancel-representation-dialog";
 import {
     DealCardPhotoToolbar,
     DealAttachedBuyers,
@@ -36,6 +37,8 @@ import {
     type DealStatusTone,
 } from "@/features/properties/my-requests/deal-card-chrome";
 import { INVITE_STAGE_META } from "@/features/properties/my-requests/invite-stage-meta";
+import { CancelledNote } from "@/features/properties/my-requests/cancelled-note";
+import { endedStageLabel } from "@/features/properties/my-requests/request-stage-meta";
 import type { InviteItem, InviteStage } from "@/features/properties/my-requests/invite-types";
 import { RequestTimeline } from "@/features/properties/my-requests/request-timeline";
 import type { RequestItem, RequestTimelineStep } from "@/features/properties/my-requests/types";
@@ -45,6 +48,7 @@ const STATUS_TONE: Record<InviteStage, DealStatusTone> = {
     accepted: "success",
     declined: "closed",
     expired: "closed",
+    ended: "closed",
 };
 
 function asRequestShape(item: InviteItem): RequestItem {
@@ -221,15 +225,19 @@ export function InviteCard({
     onAccept,
     onDecline,
     onBuyersChanged,
+    onRepresentationCancelled,
     isBusy = false,
 }: {
     item: InviteItem;
     onAccept: (id: string) => void;
     onDecline: (id: string) => void;
     onBuyersChanged: () => void;
+    /** Accepted deal ended from the ⋯ menu — refresh so the card leaves the tab. */
+    onRepresentationCancelled?: () => void;
     isBusy?: boolean;
 }) {
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
+    const [isStopOpen, setIsStopOpen] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [unreadMessageCount, setUnreadMessageCount] = useState(item.unreadMessageCount ?? 0);
@@ -277,6 +285,7 @@ export function InviteCard({
             }
             onAddBuyer={item.stage === "accepted" ? () => setIsBuyersOpen(true) : undefined}
             onOpenTimeline={() => setIsTimelineOpen(true)}
+            onStopRepresenting={item.stage === "accepted" ? () => setIsStopOpen(true) : undefined}
             tone="overlay"
         />
     );
@@ -286,9 +295,15 @@ export function InviteCard({
             <DealOverlayCard
                 listing={item}
                 configLabel={item.configLabel}
-                statusLabel={INVITE_STAGE_META[item.stage].label}
+                statusLabel={
+                    item.stage === "ended"
+                        ? endedStageLabel(item.endedBy)
+                        : INVITE_STAGE_META[item.stage].label
+                }
                 statusTone={STATUS_TONE[item.stage]}
-                muted={item.stage === "declined" || item.stage === "expired"}
+                muted={
+                    item.stage === "declined" || item.stage === "expired" || item.stage === "ended"
+                }
                 isBusy={isBusy}
                 actions={cardMenu}
             >
@@ -306,6 +321,9 @@ export function InviteCard({
                     />
                     {item.stage === "accepted" && item.attachedClients.length > 0 ? (
                         <DealAttachedBuyers buyers={item.attachedClients} />
+                    ) : null}
+                    {item.stage === "ended" ? (
+                        <CancelledNote endedBy={item.endedBy} reason={item.cancelReason} />
                     ) : null}
                 </div>
                 {ownerPhoneDigits ? (
@@ -352,12 +370,23 @@ export function InviteCard({
             </Dialog>
 
             {item.stage === "accepted" ? (
-                <AttachBuyersModal
-                    open={isBuyersOpen}
-                    onOpenChange={setIsBuyersOpen}
-                    request={asRequestShape(item)}
-                    onSaved={onBuyersChanged}
-                />
+                <>
+                    <AttachBuyersModal
+                        open={isBuyersOpen}
+                        onOpenChange={setIsBuyersOpen}
+                        request={asRequestShape(item)}
+                        onSaved={onBuyersChanged}
+                    />
+                    <CancelRepresentationDialog
+                        open={isStopOpen}
+                        onOpenChange={setIsStopOpen}
+                        representationId={item.id}
+                        side="broker"
+                        propertyTitle={item.title}
+                        counterpartName={item.ownerName}
+                        onCancelled={onRepresentationCancelled ?? onBuyersChanged}
+                    />
+                </>
             ) : null}
         </TooltipProvider>
     );

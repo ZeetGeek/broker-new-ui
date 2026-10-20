@@ -25,8 +25,19 @@ export type RepresentationItem = {
     propertyId: string;
     brokerId?: string;
     initiatedBy?: "broker" | "owner" | string;
-    status: "pending" | "accepted" | "rejected" | "withdrawn" | "revoked" | string;
+    status:
+        | "pending"
+        | "accepted"
+        | "rejected"
+        | "withdrawn"
+        | "revoked"
+        | "owner_cancelled"
+        | "broker_cancelled"
+        | string;
     message?: string | null;
+    /** Reason given when an accepted representation was cancelled. */
+    cancelReason?: string | null;
+    cancelledAt?: string | null;
     endsAt?: string | null;
     decidedAt?: string | null;
     createdAt?: string | null;
@@ -232,6 +243,25 @@ export const representativeApi = {
         }
         return apiFetch<RepresentationItem>(`/representative/${representationId}/withdraw`, {
             method: "PUT",
+        });
+    },
+
+    /**
+     * End an accepted representation now (either side). Open deals on the
+     * property close as lost with `reason` in their note.
+     */
+    cancel(representationId: string, reason?: string) {
+        if (isMockMode()) {
+            return Promise.resolve({
+                id: representationId,
+                propertyId: "",
+                status: "broker_cancelled",
+                cancelReason: reason?.trim() || null,
+            } satisfies RepresentationItem);
+        }
+        return apiFetch<RepresentationItem>(`/representative/${representationId}/cancel`, {
+            method: "PUT",
+            body: JSON.stringify({ reason: reason?.trim() || undefined }),
         });
     },
 

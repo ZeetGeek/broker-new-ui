@@ -54,6 +54,7 @@ export function countInvitesByStage(items: InviteItem[]): InvitesCounts {
         accepted: 0,
         declined: 0,
         expired: 0,
+        ended: 0,
     };
 
     for (const item of items) {

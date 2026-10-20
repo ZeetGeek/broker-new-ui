@@ -272,6 +272,8 @@ export function getRepresentationDecisionLabel(item: NotificationItem): string |
     if (status === "rejected") return "Declined";
     if (status === "withdrawn") return "Withdrawn";
     if (status === "revoked") return "Revoked";
+    if (status === "owner_cancelled") return "Cancelled by owner";
+    if (status === "broker_cancelled") return "Cancelled by broker";
     return status.charAt(0).toUpperCase() + status.slice(1);
 }
 

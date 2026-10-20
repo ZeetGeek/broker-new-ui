@@ -37,6 +37,8 @@ export type DealOwner = {
     isRepresentationActive: boolean;
     /** Platform represented owner vs broker exclusive CRM contact. */
     origin?: "platform" | "exclusive";
+    /** Accepted representation behind a platform deal. Lets the broker cancel it. */
+    representationId?: string | null;
 };
 
 /** The property side, also denormalized from the owner's listing. */

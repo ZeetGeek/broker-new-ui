@@ -1,7 +1,23 @@
 export type OwnerRequestsTab = "requests" | "invitations";
 
 export type OwnerRepStatus =
-    "pending" | "accepted" | "rejected" | "withdrawn" | "revoked" | "unknown";
+    | "pending"
+    | "accepted"
+    | "rejected"
+    | "withdrawn"
+    | "revoked"
+    | "owner_cancelled"
+    | "broker_cancelled"
+    | "unknown";
+
+/** Statuses after which the representation is over (no chat, no contact). */
+export const CLOSED_OWNER_REP_STATUSES: readonly OwnerRepStatus[] = [
+    "rejected",
+    "withdrawn",
+    "revoked",
+    "owner_cancelled",
+    "broker_cancelled",
+];
 
 export type OwnerRequestsSummary = {
     incomingPending: number;

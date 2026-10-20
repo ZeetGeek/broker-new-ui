@@ -80,6 +80,7 @@ export function countRequestsByStage(items: RequestItem[]): RequestsCounts {
         declined: 0,
         cancelled: 0,
         locked: 0,
+        ended: 0,
     };
 
     for (const item of items) {

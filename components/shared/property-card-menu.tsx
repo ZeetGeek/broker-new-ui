@@ -91,6 +91,8 @@ export type PropertyCardMenuProps = {
     remindersLimit?: number;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
+    /** Accepted representation: end it ("Stop selling this property"). */
+    onStopRepresenting?: () => void;
     /** Owned cards: open the edit form. */
     onEdit?: () => void;
     /** Owned cards: ask to delete this listing. */
@@ -170,6 +172,7 @@ export function PropertyCardMenu({
     remindersLimit = REPRESENTATION_REMINDER_LIMIT,
     onOpenTimeline,
     onCancelRequest,
+    onStopRepresenting,
     onEdit,
     onDelete,
     extraItems,
@@ -264,7 +267,13 @@ export function PropertyCardMenu({
 
     const hasContact = Boolean(contact?.onMessage || contact?.phoneDigits || onRemind);
     const hasDealExtras = Boolean(
-        onAddBuyer || onOpenTimeline || onCancelRequest || onEdit || onDelete || extraItems,
+        onAddBuyer ||
+        onOpenTimeline ||
+        onCancelRequest ||
+        onStopRepresenting ||
+        onEdit ||
+        onDelete ||
+        extraItems,
     );
     const remindUsed = Math.max(0, Math.min(remindersUsed, remindersLimit));
     const contactPhoneLabel = contact?.phoneDigits ? formatPhoneIn(contact.phoneDigits) : null;
@@ -513,6 +522,35 @@ export function PropertyCardMenu({
                             aria-hidden
                         />
                         Cancel request
+                    </DropdownMenuItem>
+                ) : null}
+
+                {onStopRepresenting ? (
+                    <DropdownMenuItem
+                        variant="destructive"
+                        className={cn(
+                            ITEM_CLASS,
+                            `
+                              text-danger!
+                              focus:bg-danger-soft! focus:text-danger!
+                              data-highlighted:bg-danger-soft! data-highlighted:text-danger!
+                              focus:[&>svg]:text-danger!
+                              data-highlighted:[&>svg]:text-danger!
+                            `,
+                        )}
+                        onClick={() => {
+                            onStopRepresenting();
+                            setOpen(false);
+                        }}
+                    >
+                        <Icon
+                            icon="tabler:cancel"
+                            width={16}
+                            height={16}
+                            className="menu-stroke-icon is-danger block-4 inline-4 shrink-0"
+                            aria-hidden
+                        />
+                        Stop selling this property
                     </DropdownMenuItem>
                 ) : null}
 

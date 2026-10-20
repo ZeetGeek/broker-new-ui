@@ -2,6 +2,7 @@ import type { RepresentationItem } from "@/lib/api/representative";
 import { calendarDaysBetween } from "@/lib/format/date";
 
 import type { InviteItem, InviteStage } from "@/features/properties/my-requests/invite-types";
+import { representationEndedBy } from "@/features/properties/my-requests/map-my-request";
 import { mapApiPropertyType } from "@/features/properties/owner-listings/map-browse-listing";
 
 const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
@@ -76,6 +77,8 @@ function mapStage(status: string | undefined): InviteStage {
     if (value === "pending") return "pending";
     if (value === "accepted") return "accepted";
     if (value === "rejected") return "declined";
+    // Accepted, then the owner or the broker cancelled it.
+    if (value === "owner_cancelled" || value === "broker_cancelled") return "ended";
     // Owner revoked / broker withdrew without a decision → invite closed.
     if (value === "withdrawn" || value === "revoked") return "expired";
     return "expired";
@@ -106,7 +109,12 @@ export function mapRepresentationToInviteItem(
         [config, locality || city].filter(Boolean).join(" · ") ||
         "Property";
     const invitedAt = rep.createdAt ?? new Date().toISOString();
-    const respondedAt = stage === "pending" ? null : (rep.decidedAt ?? rep.updatedAt ?? invitedAt);
+    const respondedAt =
+        stage === "pending"
+            ? null
+            : stage === "ended"
+              ? (rep.cancelledAt ?? rep.updatedAt ?? invitedAt)
+              : (rep.decidedAt ?? rep.updatedAt ?? invitedAt);
     const photos = (rep.propertyPhotos ?? []).filter(Boolean);
     const bhk = bhkCount(rep);
 
@@ -114,6 +122,8 @@ export function mapRepresentationToInviteItem(
         id: rep.id,
         propertyId: rep.propertyId,
         stage,
+        endedBy: stage === "ended" ? representationEndedBy(rep.status) : undefined,
+        cancelReason: stage === "ended" ? rep.cancelReason?.trim() || undefined : undefined,
         title,
         configLabel: config,
         propertyTypeLabel: typeLabel,

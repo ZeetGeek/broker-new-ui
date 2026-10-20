@@ -127,6 +127,31 @@ function buildRejectedLines(
     return lines;
 }
 
+function countEnded(
+    sentSummary: RequestsSummary | null,
+    inviteSummary: InvitesSummary | null,
+): number {
+    return (sentSummary?.counts.ended ?? 0) + (inviteSummary?.counts.ended ?? 0);
+}
+
+function buildCancelledLines(
+    sentSummary: RequestsSummary | null,
+    inviteSummary: InvitesSummary | null,
+    isLoading: boolean,
+): ReactNode[] {
+    if (isLoading && !sentSummary && !inviteSummary) return ["Getting your deals…"];
+
+    const total = countEnded(sentSummary, inviteSummary);
+    if (total === 0) return ["No cancelled representations"];
+
+    return [
+        <>
+            {countLabel(total, "representation was", "representations were")} cancelled by you or
+            the owner
+        </>,
+    ];
+}
+
 function StatusBadge({
     label,
     count,
@@ -239,6 +264,8 @@ function DealsStatusMeta({
         );
     }
 
+    if (activeTab === "cancelled") return null;
+
     if (!sentSummary || sentSummary.counts.all === 0) return null;
 
     return (
@@ -293,6 +320,8 @@ export function MyDealsIntro({
             return buildAcceptedLines(sentSummary, inviteSummary, isLoading);
         if (activeTab === "rejected")
             return buildRejectedLines(sentSummary, inviteSummary, isLoading);
+        if (activeTab === "cancelled")
+            return buildCancelledLines(sentSummary, inviteSummary, isLoading);
         return buildSentLines(sentSummary, isLoading);
     }, [activeTab, inviteSummary, isLoading, sentSummary]);
 
