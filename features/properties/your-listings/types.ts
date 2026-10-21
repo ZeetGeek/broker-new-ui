@@ -85,6 +85,10 @@ export type MyListingItem = {
     virtualTourUrl: string;
     availableFrom: string | null;
     status: MyListingStatus;
+    /** Owner marked it sold. Its deals are closed and it left the broker feed. */
+    isSold?: boolean;
+    soldAt?: string | null;
+    soldReason?: string | null;
     inboundRequestCount: number;
     listedDaysAgo: number;
     photoCount: number;

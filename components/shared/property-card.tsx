@@ -441,6 +441,8 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     bhk: number;
     bathrooms?: number | null;
     status: OwnedPropertyCardStatus;
+    /** Owner marked it sold — shows a Sold chip and hides selling actions. */
+    isSold?: boolean;
     inboundRequestCount: number;
     listedDaysAgo: number;
     saleAmountInr: number | null;
@@ -501,6 +503,8 @@ export type PropertyCardProps = {
     brokerSummaryState?: "loading" | "error" | "ready";
     /** Owned cards: ask to delete this listing (caller shows confirm). */
     onDelete?: () => void;
+    /** Owner cards: mark this listing as sold (caller shows confirm). */
+    onMarkSold?: () => void;
     /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
     isSaved?: boolean;
     onToggleSave?: () => void;
@@ -1714,11 +1718,13 @@ function OwnedOverlayPropertyCard({
     brokerSummary,
     brokerSummaryState,
     onDelete,
+    onMarkSold,
     isSaved = false,
     onToggleSave,
     audience = "broker",
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
+    const isSold = Boolean(listing.isSold);
     const browse = ownedToBrowseListing(listing);
     const isRentOnly = offersRent(browse) && !offersSale(browse);
     const sharePriceLabel = isRentOnly
@@ -1748,14 +1754,20 @@ function OwnedOverlayPropertyCard({
                 imageAlt={listing.title}
                 imageSizes={imageSizes}
                 priority={priority}
-                // A listing nobody can see yet reads as inactive while scanning.
-                muted={listing.status !== "published"}
+                // A listing nobody can see yet, or one already sold, reads as inactive.
+                muted={isSold || listing.status !== "published"}
                 className={className}
                 chips={
                     <>
-                        <Badge color={OWNED_STATUS_COLOR[listing.status]} blur="dark">
-                            {OWNED_STATUS_LABEL[listing.status]}
-                        </Badge>
+                        {isSold ? (
+                            <Badge color="red" blur="dark">
+                                Sold
+                            </Badge>
+                        ) : (
+                            <Badge color={OWNED_STATUS_COLOR[listing.status]} blur="dark">
+                                {OWNED_STATUS_LABEL[listing.status]}
+                            </Badge>
+                        )}
                         {offersSale(browse) ? (
                             <Badge color="emerald" blur="dark">
                                 For sale
@@ -1791,6 +1803,7 @@ function OwnedOverlayPropertyCard({
                         }}
                         onEdit={onEdit}
                         onDelete={onDelete}
+                        onMarkSold={isSold ? undefined : onMarkSold}
                         isSaved={isSaved}
                         onToggleSave={onToggleSave}
                         onAttachOwner={onAttachOwner}
@@ -1833,7 +1846,11 @@ function OwnedOverlayPropertyCard({
                 </div>
 
                 <OverlayCardActions className="flex-col gap-2">
-                    {onInviteBroker ? (
+                    {isSold ? (
+                        <p className="body-sm rounded-control bg-surface-muted px-3 py-2 text-center font-medium text-ink-muted">
+                            Sold — no longer shown to brokers
+                        </p>
+                    ) : onInviteBroker ? (
                         <>
                             {brokerSummaryState === "loading" ? (
                                 <p className="body-sm text-ink-muted" role="status">

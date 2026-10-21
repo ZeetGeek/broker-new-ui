@@ -30,7 +30,11 @@ export type PropertyBrowseListing = {
     city?: string | null;
     address?: string | null;
     country?: string | null;
+    /** `available` | `sold` | `unavailable`. */
     status?: string | null;
+    /** When the owner marked it sold. */
+    soldAt?: string | null;
+    soldReason?: string | null;
     salePrice?: string | number | null;
     monthlyRent?: string | number | null;
     /** Deposit value: INR when mode is `amount`, months when `months_of_rent`. */
@@ -656,6 +660,17 @@ export const propertiesApi = {
     remove(id: string) {
         return apiFetch<{ id: string; deleted: boolean }>(`/properties/${id}`, {
             method: "DELETE",
+        });
+    },
+
+    /**
+     * Owner marks their listing as sold. Open deals on it close as lost (with
+     * `reason` in their note) and representing brokers are notified.
+     */
+    markSold(id: string, reason?: string) {
+        return apiFetch<PropertyListing>(`/properties/${id}/mark-sold`, {
+            method: "POST",
+            body: JSON.stringify({ reason: reason?.trim() || undefined }),
         });
     },
 };

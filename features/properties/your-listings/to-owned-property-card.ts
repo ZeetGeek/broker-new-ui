@@ -33,6 +33,7 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         bhk: item.bhk,
         bathrooms: item.bathrooms ?? null,
         status: item.status,
+        isSold: Boolean(item.isSold),
         inboundRequestCount: item.inboundRequestCount,
         listedDaysAgo: item.listedDaysAgo,
         saleAmountInr: item.saleAmountInr,
