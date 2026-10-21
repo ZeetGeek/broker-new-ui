@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "@/components/shared/icons";
 
 import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
@@ -52,6 +52,11 @@ const SENT_SORT_OPTIONS: { value: RequestSort; label: string }[] = [
     { value: "price_asc", label: "Price low" },
 ];
 
+export const DEALS_TOOLBAR_CLASS = "flex flex-wrap items-center justify-between gap-3 sm:gap-4";
+export const DEALS_SEARCH_CLASS =
+    "min-inline-44 inline-44 shadow-sm sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64";
+export const DEALS_SORT_CLASS = "justify-between inline-24 sm:inline-40";
+
 const INVITE_SORT_OPTIONS: { value: InviteSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
     { value: "oldest", label: "Oldest first" },
@@ -87,11 +92,7 @@ function DealsQueryInput({ value, onChange }: { value: string; onChange: (q: str
             aria-label="Search your deals"
             startIcon={Search}
             clearable
-            wrapperClassName="
-              min-inline-44 inline-44 shadow-sm
-              sm:min-inline-52 sm:inline-52
-              lg:min-inline-64 lg:inline-64
-            "
+            wrapperClassName={DEALS_SEARCH_CLASS}
             className="
               rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
               block-[38px]!
@@ -123,6 +124,7 @@ function DealsSortMenu({
                         className={cn(
                             ownerListingsChipClassName(!isDefaultSort),
                             "gap-2",
+                            DEALS_SORT_CLASS,
                             isDefaultSort && "text-ink-muted",
                         )}
                     >
@@ -349,13 +351,14 @@ export function MyDealsHeader({
         <>
             <div className="sticky inset-bs-0 z-10">
                 <TooltipProvider>
-                    <div className="flex items-center justify-between gap-3 sm:gap-4">
+                    <div className={DEALS_TOOLBAR_CLASS}>
                         <OwnerListingsChipsCarousel>
                             <OwnerListingsChipsCarouselSlide>
                                 <FilterChip
                                     label="Filters"
                                     icon={SlidersHorizontal}
-                                    count={sheetFilterCount}
+                                    count={sheetFilterCount || undefined}
+                                    reserveCountSpace
                                     isLoading={isLoading}
                                     isActive={sheetFilterCount > 0}
                                     clearable={sheetFilterCount > 0}
@@ -376,6 +379,7 @@ export function MyDealsHeader({
                                             >
                                                 Representing
                                                 <FilterChipCount
+                                                    reserveSpace
                                                     count={acceptedCount}
                                                     isActive={isAccepted}
                                                     isLoading={
@@ -405,6 +409,7 @@ export function MyDealsHeader({
                                                     Sent by you
                                                 </span>
                                                 <FilterChipCount
+                                                    reserveSpace
                                                     count={sentWaitingCount}
                                                     isActive={isSent}
                                                     isLoading={isLoading && !sentSummary}
@@ -435,6 +440,7 @@ export function MyDealsHeader({
                                                     Owner invitations
                                                 </span>
                                                 <FilterChipCount
+                                                    reserveSpace
                                                     count={inviteWaitingCount}
                                                     isActive={isInvites}
                                                     isLoading={isLoading && !inviteSummary}
@@ -459,6 +465,7 @@ export function MyDealsHeader({
                                             >
                                                 Rejected
                                                 <FilterChipCount
+                                                    reserveSpace
                                                     count={rejectedCount}
                                                     isActive={isRejected}
                                                     isLoading={
@@ -501,7 +508,7 @@ export function MyDealsHeader({
                             </OwnerListingsChipsCarouselSlide>
                         </OwnerListingsChipsCarousel>
 
-                        <div className="flex shrink-0 items-center gap-2.5">
+                        <div className="flex shrink-0 items-center gap-2.5 max-inline-full">
                             {isInvites ? (
                                 <DealsQueryInput
                                     value={inviteFilters.q}

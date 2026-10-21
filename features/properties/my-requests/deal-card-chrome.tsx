@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
+import { DEAL_CARD_CLASS } from "@/features/properties/my-requests/requests-grid-class";
 import tablerContactIcons from "@/features/properties/my-requests/tabler-contact.json";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
@@ -264,7 +265,10 @@ export function DealOverlayCard({
             imageAlt={listing.title}
             imageSizes={OVERLAY_IMAGE_SIZES}
             muted={muted}
-            className={cn(isBusy && "pointer-events-none opacity-60")}
+            className={cn(
+                audience === "broker" && DEAL_CARD_CLASS,
+                isBusy && "pointer-events-none opacity-60",
+            )}
             chips={
                 <>
                     {statusLabel ? (
@@ -417,13 +421,15 @@ export function DealContactSplitBar({
     );
 }
 
-/** Attached buyers on an approved deal. Attach buyer lives in the ⋯ menu. */
+/** Buyers on an approved deal — empty shows link "Attach buyers". */
 export function DealAttachedBuyers({
     buyers,
+    onAttach,
 }: {
     buyers: Array<{ id: string; name: string; avatarUrl?: string }>;
+    onAttach?: () => void;
 }) {
-    return <AttachedBuyersRow buyers={buyers} />;
+    return <AttachedBuyersRow buyers={buyers} onAttach={onAttach} />;
 }
 
 /** Exclusive owner attached to a broker listing — tap opens the owner picker. */

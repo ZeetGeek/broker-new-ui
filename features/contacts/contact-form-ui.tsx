@@ -2,7 +2,7 @@
 
 import { type ComponentProps, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
-import { Check, ChevronDown, MapPin, X } from "lucide-react";
+import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
 import { tinykeys } from "tinykeys";
 
 import { formatInrInput, parseInr } from "@/lib/format/inr";

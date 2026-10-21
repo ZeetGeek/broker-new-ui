@@ -9,12 +9,12 @@ import {
     FileText,
     KeyRound,
     MapPin,
-    MessageCircle,
+    WhatsAppIcon,
     Phone,
     Route,
     SquareParking,
     Trash2,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { formatInrCompact } from "@/lib/format/inr";
 import { VISIT_STATUS } from "@/lib/visits/status";
@@ -103,7 +103,7 @@ function ContactBlock({
                         size="md"
                         aria-label={`WhatsApp ${person.name}`}
                     >
-                        <MessageCircle aria-hidden />
+                        <WhatsAppIcon aria-hidden />
                     </Button>
                 </div>
             ) : null}

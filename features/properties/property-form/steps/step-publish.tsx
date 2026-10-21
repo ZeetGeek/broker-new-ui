@@ -3,7 +3,7 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { Check, Search, UserRound, Users, X } from "lucide-react";
+import { Check, Search, UserRound, Users, X } from "@/components/shared/icons";
 
 import { contactsApi } from "@/lib/api/contacts";
 import type { PropertyDraftValues } from "@/lib/schemas/property";

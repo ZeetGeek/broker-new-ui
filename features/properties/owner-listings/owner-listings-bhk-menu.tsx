@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { BedDouble } from "lucide-react";
+import { BedDouble } from "@/components/shared/icons";
 
 import { formatBhkLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";

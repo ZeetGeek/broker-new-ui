@@ -16,7 +16,7 @@ import {
     Tag,
     Upload,
     X,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { createClientId } from "@/lib/client-id";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";

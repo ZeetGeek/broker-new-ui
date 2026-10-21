@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import { Camera, CropIcon } from "lucide-react";
+import { Camera, CropIcon } from "@/components/shared/icons";
 
 import type { UserProfile } from "@/lib/api/profile";
 import { profileApi } from "@/lib/api/profile";

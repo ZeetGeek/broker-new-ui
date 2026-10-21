@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { ArrowRightLeft, Hash, Ruler, Scale } from "lucide-react";
+import { ArrowRightLeft, Hash, Ruler, Scale } from "@/components/shared/icons";
 
 import { areaToSqft, convertArea } from "@/lib/calc/area";
 import type { PropertyDraftValues } from "@/lib/schemas/property";

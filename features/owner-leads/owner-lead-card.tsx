@@ -9,12 +9,12 @@ import {
     HandCoins,
     Images,
     MapPin,
-    MessageCircle,
+    WhatsAppIcon,
     Move3d,
     Phone,
     StickyNote,
     X,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
@@ -290,7 +290,7 @@ export function OwnerLeadCard({
                                 rel="noopener noreferrer"
                                 className={actionButtonClass}
                             >
-                                <MessageCircle
+                                <WhatsAppIcon
                                     aria-hidden
                                     className="block-4 inline-4"
                                     strokeWidth={1.75}

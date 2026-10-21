@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Search, Building2 } from "lucide-react";
+import { Search, Building2 } from "@/components/shared/icons";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { propertiesApi } from "@/lib/api/properties";

@@ -1,4 +1,4 @@
-import { CalendarDays } from "lucide-react";
+import { CalendarDays } from "@/components/shared/icons";
 
 import { formatDateIso, formatDateShort, formatTimeIn } from "@/lib/format/date";
 import { OWNER_VISITS_HREF } from "@/lib/routes/owner";

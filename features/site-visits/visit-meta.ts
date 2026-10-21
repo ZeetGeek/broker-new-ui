@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
 import {
     CalendarCheck,
     CalendarClock,
@@ -9,7 +9,7 @@ import {
     ThumbsDown,
     UserRoundX,
     XCircle,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import type {
     VisitCancelReason,
@@ -21,7 +21,7 @@ import type {
 export type VisitStatusMeta = {
     /** Plain language, sentence case. Never the internal key. */
     label: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     /** Badge variant from components/ui/badge.tsx. No new colours. */
     badgeVariant: "brand" | "urgent" | "danger" | "neutral" | "outline";
     /** Left accent on a list row. Single-sided border, so no radius. §3.2. */
@@ -115,7 +115,7 @@ export const VISIT_STATUS_HINT: Record<VisitStatus, Record<VisitViewer, string>>
 
 export const VISIT_OUTCOME_META: Record<
     VisitOutcome,
-    { label: string; icon: LucideIcon; badgeVariant: "brand" | "neutral" | "danger" }
+    { label: string; icon: AppIcon; badgeVariant: "brand" | "neutral" | "danger" }
 > = {
     made_offer: { label: "Made an offer", icon: Handshake, badgeVariant: "brand" },
     interested: { label: "Interested", icon: HeartHandshake, badgeVariant: "brand" },

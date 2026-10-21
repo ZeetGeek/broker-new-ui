@@ -459,6 +459,13 @@ export const MOCK_OWNER_LISTINGS: OwnerListingItem[] = ENTRIES.map((entry, index
         imageSrc: imageSrcs[0]!,
         imageSrcs,
         propertyTypeLabel: PROPERTY_TYPES[index % PROPERTY_TYPES.length]!,
+        category: (() => {
+            const type = PROPERTY_TYPES[index % PROPERTY_TYPES.length]!;
+            if (type === "shop" || type === "office") return "commercial" as const;
+            if (type === "plot") return "land" as const;
+            return "residential" as const;
+        })(),
+        subtype: PROPERTY_TYPES[index % PROPERTY_TYPES.length]!,
         brokerSlotsTotal: 3,
         brokerSlotsOpen: Math.max(0, 3 - entry.brokerRequestCount),
         commissionPercent: index % 4 === 0 ? 0 : index % 3 === 0 ? 2.5 : 2,

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { IndianRupee } from "lucide-react";
+import { IndianRupee } from "@/components/shared/icons";
 
 import { formatBudgetLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";

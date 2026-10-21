@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { MapPin, MoreHorizontal, Phone, UserMinus } from "lucide-react";
+
+import { MapPin, MoreHorizontal, Phone, UserMinus } from "@/components/shared/icons";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";

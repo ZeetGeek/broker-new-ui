@@ -10,6 +10,7 @@ import {
     BedDouble,
     Building2,
     Calendar,
+    CallIcon,
     Camera,
     Check,
     ChevronLeft,
@@ -18,14 +19,14 @@ import {
     Clock,
     MapPin,
     Maximize2,
-    MessageCircle,
     Send,
     Trash2,
     UserPlus,
     UserRound,
     Users,
+    WhatsAppIcon,
     X,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import {
@@ -54,6 +55,7 @@ import {
     OverlayCard,
     OverlayCardActions,
     OverlayCardSummary,
+    OverlayPersonAttachLine,
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
@@ -1237,7 +1239,7 @@ function PropertyCardOwnerBlock({
                     />
                 }
             >
-                <MessageCircle aria-hidden strokeWidth={1.75} />
+                <WhatsAppIcon aria-hidden strokeWidth={1.75} />
             </Button>
         </div>
     );
@@ -1644,12 +1646,10 @@ function OwnedContactSplitBar({
                         )
                     }
                 >
-                    <Icon
-                        icon="tabler:brand-whatsapp"
-                        width={18}
-                        height={18}
-                        className="shrink-0 block-4.5 inline-4.5"
+                    <WhatsAppIcon
                         aria-hidden
+                        strokeWidth={1.75}
+                        className="shrink-0 block-4.5 inline-4.5"
                     />
                     WhatsApp
                 </TooltipTrigger>
@@ -1684,12 +1684,10 @@ function OwnedContactSplitBar({
                         )
                     }
                 >
-                    <Icon
-                        icon="tabler:phone"
-                        width={18}
-                        height={18}
-                        className="shrink-0 block-4.5 inline-4.5"
+                    <CallIcon
                         aria-hidden
+                        strokeWidth={1.75}
+                        className="shrink-0 block-4.5 inline-4.5"
                     />
                     Call Owner
                 </TooltipTrigger>
@@ -1701,8 +1699,8 @@ function OwnedContactSplitBar({
 
 /**
  * Broker/owner inventory card — same overlay chrome as Owner listings and My
- * Deals. Attach owner / Add buyer live in the ⋯ menu. Footer is WhatsApp +
- * Call (no Chat, timeline, Ask to sell, or Cancel request).
+ * Deals. Empty Owner / Buyers rows use link "Attach owner" / "Attach buyers";
+ * the ⋯ menu still offers those actions. Footer is WhatsApp + Call.
  */
 function OwnedOverlayPropertyCard({
     listing,
@@ -1819,9 +1817,19 @@ function OwnedOverlayPropertyCard({
                         locationLabel={`${listing.locality}, ${listing.city}`}
                     />
 
-                    {hasOwner ? <OverlayPersonLine label="Owner" name={ownerName} /> : null}
+                    {hasOwner ? (
+                        <OverlayPersonLine label="Owner" name={ownerName} />
+                    ) : onAttachOwner ? (
+                        <OverlayPersonAttachLine
+                            label="Owner"
+                            actionLabel={OWNED_ATTACH_OWNER_LABEL}
+                            onAttach={onAttachOwner}
+                        />
+                    ) : null}
 
-                    {hasBuyers ? <AttachedBuyersRow buyers={buyers} /> : null}
+                    {hasBuyers || onAddBuyer ? (
+                        <AttachedBuyersRow buyers={buyers} onAttach={onAddBuyer} />
+                    ) : null}
                 </div>
 
                 <OverlayCardActions className="flex-col gap-2">

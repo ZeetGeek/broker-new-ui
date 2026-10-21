@@ -17,7 +17,7 @@ import {
     Scaling,
     Upload,
     X,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
 import { formatInr, formatInrCompact } from "@/lib/format/inr";

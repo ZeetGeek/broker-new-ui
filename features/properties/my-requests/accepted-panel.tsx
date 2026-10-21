@@ -13,7 +13,10 @@ import { InviteCard } from "@/features/properties/my-requests/invite-card";
 import type { InviteItem, InvitesSummary } from "@/features/properties/my-requests/invite-types";
 import { RequestCard } from "@/features/properties/my-requests/request-card";
 import { RequestsFilteredEmpty } from "@/features/properties/my-requests/requests-empty";
-import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
+import {
+    REQUESTS_GRID_BREAKPOINTS,
+    REQUESTS_GRID_CLASS,
+} from "@/features/properties/my-requests/requests-grid-class";
 import { MyDealsHeader } from "@/features/properties/my-requests/requests-header";
 import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 import type { RequestItem, RequestsSummary } from "@/features/properties/my-requests/types";
@@ -202,7 +205,12 @@ export function AcceptedPanel({
     let body: ReactNode;
 
     if (!rows && isFetching) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="accepted"
+                count={Math.max(1, Math.min(10, acceptedTotal || 5))}
+            />
+        );
     } else if (error) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -218,7 +226,12 @@ export function AcceptedPanel({
             </div>
         );
     } else if (!rows) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="accepted"
+                count={Math.max(1, Math.min(10, acceptedTotal || 5))}
+            />
+        );
     } else if (acceptedTotal === 0 && !narrowFilters) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -245,6 +258,7 @@ export function AcceptedPanel({
                     estimateRowHeight={520}
                     gap={24}
                     breakpoints={REQUESTS_GRID_BREAKPOINTS}
+                    gridClassName={REQUESTS_GRID_CLASS}
                     ariaLabel="Properties you represent"
                     renderItem={(row) =>
                         row.kind === "request" ? (

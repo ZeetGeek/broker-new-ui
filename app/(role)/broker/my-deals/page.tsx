@@ -16,7 +16,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
     const activeTab = VALID_TABS.includes(tab as RequestsTab) ? (tab as RequestsTab) : "accepted";
 
     return (
-        <Suspense fallback={<RequestsPageSkeleton />}>
+        <Suspense fallback={<RequestsPageSkeleton activeTab={activeTab} />}>
             <MyRequestsPage activeTab={activeTab} />
         </Suspense>
     );

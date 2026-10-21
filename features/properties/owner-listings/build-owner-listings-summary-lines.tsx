@@ -1,9 +1,7 @@
-import type { ReactNode } from "react";
-
-import { formatResultsCountLine } from "@/lib/format/owner-listings-labels";
-
-import { formatNewInAreasThisWeekLine } from "@/features/properties/owner-listings/count-new-listings-this-week";
 import type { OwnerListingsFilters } from "@/features/properties/owner-listings/types";
+
+export const OWNER_LISTINGS_APPROVAL_MESSAGE =
+    "Once the owner approves, it goes to My Deals. No need to add it again";
 
 export type OwnerListingsPoolSummary = {
     slotsOpenCount: number;
@@ -20,12 +18,10 @@ export type OwnerListingsSummaryInput = {
     poolSummary: OwnerListingsPoolSummary;
     isLoading: boolean;
     hasActiveFilters: boolean;
+    hasMoreResults?: boolean;
 };
 
-function countLabel(count: number, singular: string, plural: string) {
-    return `${count} ${count === 1 ? singular : plural}`;
-}
-
+/** Use real browse results for updates, followed by the two steps needed to work a deal. */
 export function buildOwnerListingsSummaryLines({
     totalCount,
     newThisWeekCount,
@@ -34,69 +30,65 @@ export function buildOwnerListingsSummaryLines({
     poolSummary,
     isLoading,
     hasActiveFilters,
-}: OwnerListingsSummaryInput): ReactNode[] {
-    if (isLoading) {
-        return ["Finding properties near you…"];
-    }
-
-    const lines: ReactNode[] = [];
-    const resultsLine = formatResultsCountLine(totalCount, filters, serviceAreas);
+    hasMoreResults = false,
+}: OwnerListingsSummaryInput): string[] {
+    if (isLoading) return ["Loading properties from owners…"];
 
     if (totalCount === 0) {
-        lines.push(
+        return [
             hasActiveFilters
-                ? "No properties match these filters — try clearing a few"
-                : "No owner listings in the pool yet",
+                ? "No properties match. Try changing your filters"
+                : "No properties listed here yet. Please check again later",
+        ];
+    }
+
+    const propertyLabel = totalCount === 1 ? "property" : "properties";
+    const hasSelectedPlaces = filters.localities.length > 0 || filters.cities.length > 0;
+    const areaLabel = hasSelectedPlaces
+        ? " in your selected areas"
+        : filters.yourAreas && serviceAreas.length > 0
+          ? " in your areas"
+          : "";
+    const resultsLine = hasActiveFilters
+        ? `${totalCount} ${propertyLabel} from owners ${totalCount === 1 ? "matches" : "match"} your filters`
+        : `${totalCount} ${propertyLabel} listed by owners${areaLabel}`;
+
+    const lines: string[] = [];
+    if (newThisWeekCount > 0 && serviceAreas.length > 0) {
+        const noun = hasActiveFilters
+            ? newThisWeekCount === 1
+                ? "match"
+                : "matches"
+            : newThisWeekCount === 1
+              ? "property"
+              : "properties";
+        lines.push(
+            `${hasMoreResults ? "At least " : ""}${newThisWeekCount} new ${noun} in your areas this week`,
+        );
+    }
+    lines.push(resultsLine);
+
+    // Exact feature counts are only available once every result has loaded.
+    if (!hasMoreResults && poolSummary.readyToMoveCount > 0) {
+        const count = poolSummary.readyToMoveCount;
+        lines.push(`${count} ${count === 1 ? "property is" : "properties are"} ready to move in`);
+    }
+    if (!hasMoreResults && poolSummary.commissionSetCount > 0) {
+        const count = poolSummary.commissionSetCount;
+        lines.push(
+            `Owners have added commission details for ${count} ${count === 1 ? "property" : "properties"}`,
         );
     } else {
-        lines.push(resultsLine);
+        lines.push("Check each property's price and your commission");
     }
 
-    const newThisWeekLine = formatNewInAreasThisWeekLine(newThisWeekCount, serviceAreas);
-    if (newThisWeekLine) {
-        lines.push(newThisWeekLine);
-    }
-
-    if (poolSummary.slotsOpenCount > 0) {
-        lines.push(
-            <>
-                {countLabel(poolSummary.slotsOpenCount, "property has", "properties have")} broker
-                slots open
-            </>,
-        );
-    }
-
-    if (poolSummary.newTodayCount > 0) {
-        lines.push(
-            <>{countLabel(poolSummary.newTodayCount, "new listing", "new listings")} this week</>,
-        );
-    }
-
-    if (poolSummary.commissionSetCount > 0) {
-        lines.push(
-            <>
-                {countLabel(poolSummary.commissionSetCount, "property has", "properties have")}{" "}
-                commission set
-            </>,
-        );
-    }
-
-    if (poolSummary.readyToMoveCount > 0) {
-        lines.push(
-            <>
-                {countLabel(poolSummary.readyToMoveCount, "property is", "properties are")} ready to
-                move
-            </>,
-        );
-    }
-
-    if (filters.yourAreas && serviceAreas.length > 0 && totalCount > 0) {
-        lines.push("Showing only listings in your service areas");
-    }
-
-    if (lines.length === 1 && totalCount > 0) {
-        lines.push("Send a request — approved listings land in your pipeline");
-    }
-
+    const action =
+        filters.type === "sale"
+            ? "sell"
+            : filters.type === "rent"
+              ? "rent out"
+              : "sell or rent out";
+    lines.push(`Send the owner a request to ${action} their property`);
+    lines.push(OWNER_LISTINGS_APPROVAL_MESSAGE);
     return lines;
 }

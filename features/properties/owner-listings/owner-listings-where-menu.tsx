@@ -3,7 +3,15 @@
 import { useMemo, useState } from "react";
 
 import {
-    type LucideIcon,
+    formatLocalitiesLabel,
+    formatLocalitiesTooltip,
+    formatLocationPathLabel,
+    formatPlaceName,
+} from "@/lib/format/owner-listings-labels";
+import { cn } from "@/lib/utils";
+
+import {
+    type AppIcon,
     Building2,
     ChevronLeft,
     ChevronRight,
@@ -13,16 +21,7 @@ import {
     MapPinned,
     MapPinOff,
     Search,
-} from "lucide-react";
-
-import {
-    formatLocalitiesLabel,
-    formatLocalitiesTooltip,
-    formatLocationPathLabel,
-    formatPlaceName,
-} from "@/lib/format/owner-listings-labels";
-import { cn } from "@/lib/utils";
-
+} from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -164,7 +163,7 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
     );
 }
 
-function LocationIcon({ icon: Icon = MapPin }: { icon?: LucideIcon }) {
+function LocationIcon({ icon: Icon = MapPin }: { icon?: AppIcon }) {
     return (
         <Icon
             aria-hidden
@@ -188,10 +187,8 @@ function WhereListingCountBadge({ count, label }: { count: number; label?: strin
     return (
         <span
             className="
-              body-xs inline-flex shrink-0 items-center justify-center rounded-full
-              bg-brand-soft px-1.5 font-semibold tracking-normal text-brand-text
-              tabular-nums
-              block-5 min-inline-5
+              body-xs inline-flex shrink-0 items-center justify-center rounded-full bg-brand-soft
+              px-1.5 font-semibold tracking-normal text-brand-text tabular-nums block-5 min-inline-5
             "
             aria-label={label ?? formatListingCount(count)}
         >
@@ -205,7 +202,7 @@ function WhereMenuEmptyState({
     title,
     description,
 }: {
-    icon: LucideIcon;
+    icon: AppIcon;
     title: string;
     description: string;
 }) {
@@ -237,7 +234,7 @@ function WhereBrowseRow({
     childCount: number;
     childLabel: string;
     query?: string;
-    icon?: LucideIcon;
+    icon?: AppIcon;
     checked: boolean;
     onToggleSelect: () => void;
     onDrill: () => void;
@@ -248,10 +245,7 @@ function WhereBrowseRow({
             onCheckedChange={onToggleSelect}
             className={cn(
                 checkboxRowClass(checked),
-                `
-                  pe-14
-                  **:data-[slot=dropdown-menu-checkbox-item-indicator]:inset-e-11
-                `,
+                `pe-14 **:data-[slot=dropdown-menu-checkbox-item-indicator]:inset-e-11`,
             )}
         >
             <LocationIcon icon={icon} />
@@ -274,9 +268,8 @@ function WhereBrowseRow({
                 className={cn(
                     `
                       absolute inset-e-1.5 inline-flex items-center justify-center rounded-control
-                      text-ink-subtle
+                      text-ink-subtle block-8 inline-8
                       hover:bg-ink/5 hover:text-ink
-                      block-8 inline-8
                     `,
                     "transition-[background-color,color] duration-160",
                 )}
@@ -370,15 +363,14 @@ function WhereNavBar({
                 className="
                   inline-flex shrink-0 items-center justify-center rounded-control border
                   border-border-warm bg-surface text-ink shadow-sm
-                  transition-[background-color,border-color] duration-160
+                  transition-[background-color,border-color] duration-160 block-9 inline-9
                   hover:border-ink/25 hover:bg-surface-muted/60
-                  block-9 inline-9
                 "
                 aria-label="Go back"
             >
                 <ChevronLeft className="block-4 inline-4" strokeWidth={1.75} />
             </button>
-            <div className="flex min-inline-0 flex-1 flex-col gap-0.5">
+            <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
                 <p className="truncate text-sm font-semibold text-ink">{title}</p>
                 <p className="body-xs truncate text-ink-muted">{subtitle}</p>
             </div>
@@ -411,6 +403,9 @@ export type OwnerListingsWhereSelection = {
 };
 
 export type OwnerListingsWhereMenuProps = {
+    isLoading?: boolean;
+    hasError?: boolean;
+    onRetry?: () => void;
     listings: OwnerListingItem[];
     selectedCountries: string[];
     selectedStates: string[];
@@ -426,6 +421,9 @@ export type OwnerListingsWhereMenuProps = {
 };
 
 export function OwnerListingsWhereMenu({
+    isLoading = false,
+    hasError = false,
+    onRetry,
     listings,
     selectedCountries,
     selectedStates,
@@ -804,7 +802,42 @@ export function OwnerListingsWhereMenu({
                         ) : null}
                     </div>
 
-                    {showEmptyState && isSearching ? (
+                    {isLoading ? (
+                        <div
+                            role="status"
+                            aria-busy="true"
+                            className="flex flex-col gap-3 p-4 min-block-48"
+                        >
+                            <span className="sr-only">Loading places</span>
+                            {Array.from({ length: 4 }, (_, index) => (
+                                <span
+                                    key={index}
+                                    aria-hidden
+                                    className="
+                                      block animate-pulse rounded-control bg-surface-muted block-8
+                                      inline-full
+                                      motion-reduce:animate-none
+                                    "
+                                />
+                            ))}
+                        </div>
+                    ) : hasError ? (
+                        <div
+                            role="alert"
+                            className="
+                              flex flex-col items-center justify-center gap-3 px-4 py-6 min-block-48
+                            "
+                        >
+                            <p className="body-sm text-ink-muted">Could not load places.</p>
+                            <button
+                                type="button"
+                                onClick={onRetry}
+                                className="body-sm px-4 font-semibold text-brand min-block-11"
+                            >
+                                Try again
+                            </button>
+                        </div>
+                    ) : showEmptyState && isSearching ? (
                         <div
                             className={cn(
                                 WHERE_MENU_LIST_PANEL_CLASS,

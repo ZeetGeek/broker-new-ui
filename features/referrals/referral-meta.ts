@@ -2,14 +2,14 @@ import {
     Building2,
     CircleCheckBig,
     Hourglass,
-    type LucideIcon,
+    type AppIcon,
     MailCheck,
     MailOpen,
     Send,
     TimerOff,
     UserRound,
     UserRoundCheck,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { calendarDaysBetween } from "@/lib/format/date";
 
@@ -30,7 +30,7 @@ type BadgeVariant = "brand" | "urgent" | "danger" | "neutral" | "outline";
 export type ReferralStatusMeta = {
     /** Sentence case, as the badge says it. */
     label: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     variant: BadgeVariant;
 };
 
@@ -87,7 +87,7 @@ export const REFERRAL_ROLE_LABEL: Record<ReferralRole, string> = {
     owner: "Owner",
 };
 
-export const REFERRAL_ROLE_ICON: Record<ReferralRole, LucideIcon> = {
+export const REFERRAL_ROLE_ICON: Record<ReferralRole, AppIcon> = {
     broker: UserRound,
     owner: Building2,
 };

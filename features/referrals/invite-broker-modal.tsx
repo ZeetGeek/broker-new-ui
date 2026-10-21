@@ -4,7 +4,7 @@ import { type ReactNode, useCallback, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MessageSquare, Phone, Send, UserRound } from "lucide-react";
+import { MessageSquare, Phone, Send, UserRound } from "@/components/shared/icons";
 
 import { buildSmsInviteUrl, buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import {

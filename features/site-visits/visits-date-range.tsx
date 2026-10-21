@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 
-import { CalendarRange } from "lucide-react";
+import { CalendarRange } from "@/components/shared/icons";
 
 import { formatDateIso, formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";

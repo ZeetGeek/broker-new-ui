@@ -2,7 +2,7 @@
 
 import { addDays, startOfWeek } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 import { VISITS_TIME_ZONE } from "@/lib/visits/constants";

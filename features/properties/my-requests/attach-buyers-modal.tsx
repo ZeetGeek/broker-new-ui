@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Search, UserPlus, Users } from "lucide-react";
+import { Search, UserPlus, Users } from "@/components/shared/icons";
 
 import { clientsApi } from "@/lib/api/clients";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";

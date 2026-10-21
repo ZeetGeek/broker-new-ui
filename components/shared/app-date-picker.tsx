@@ -5,7 +5,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { addMonths } from "date-fns";
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsUpDownIcon } from "lucide-react";
+import {
+    CalendarIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    ChevronsUpDownIcon,
+} from "@/components/shared/icons";
 import { type DayButton, getDefaultClassNames } from "react-day-picker";
 
 import { formatDateIn, formatDateIso } from "@/lib/format/date";

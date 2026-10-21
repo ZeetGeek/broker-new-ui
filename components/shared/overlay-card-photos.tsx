@@ -4,7 +4,7 @@ import { type MouseEvent, type PointerEvent, useEffect, useRef, useState } from 
 import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
-import { Building2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

@@ -3,7 +3,7 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { CalendarDays } from "lucide-react";
+import { CalendarDays } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import {

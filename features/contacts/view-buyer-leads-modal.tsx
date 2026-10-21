@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2 } from "lucide-react";
+import { Building2 } from "@/components/shared/icons";
 
 import { formatRelativePast } from "@/lib/format/date";
 import { formatPriceInr } from "@/lib/format/price";

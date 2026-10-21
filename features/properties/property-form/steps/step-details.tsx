@@ -22,7 +22,7 @@ import {
     Users,
     Wind,
     Zap,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import type { PropertyDraftValues } from "@/lib/schemas/property";

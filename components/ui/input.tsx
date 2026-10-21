@@ -5,7 +5,7 @@ import * as React from "react";
 import { Input as InputPrimitive } from "@base-ui/react/input";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tailspin } from "ldrs/react";
-import { AlertCircle, CheckCircle2, Eye, EyeOff, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff, X } from "@/components/shared/icons";
 
 import {
     copyInputTypeMetrics,

@@ -1,8 +1,12 @@
 import { listingCompareAmountInr } from "@/lib/format/listing-availability";
 
+import { normalizeAreaFilterStrings } from "@/features/properties/owner-listings/owner-listings-area-presets";
+import {
+    isOwnerListingCategory,
+    isOwnerListingSubtype,
+} from "@/features/properties/owner-listings/filter-visibility";
 import type {
     OwnerListingItem,
-    OwnerListingPropertyType,
     OwnerListingsFilterContext,
     OwnerListingsFilters,
     OwnerListingsResult,
@@ -52,15 +56,6 @@ function parseBoolParam(
 ): boolean {
     return parseParam(params, key) === "1";
 }
-
-const PROPERTY_TYPES = new Set<OwnerListingPropertyType>([
-    "apartment",
-    "villa",
-    "penthouse",
-    "shop",
-    "office",
-    "plot",
-]);
 
 function parseNumberParam(
     params: URLSearchParams | Record<string, string | string[] | undefined>,
@@ -126,6 +121,7 @@ export function parseOwnerListingsFilters(
     const sort = parseParam(params, "sort");
     const type = parseParam(params, "type");
     const furnishing = parseParam(params, "furnishing");
+    const categoryRaw = parseParam(params, "category");
     const propertyType = parseParam(params, "propertyType");
     const countries = parseListParam(params, "country");
     const states = parseListParam(params, "state");
@@ -152,11 +148,9 @@ export function parseOwnerListingsFilters(
             furnishing === "furnished" || furnishing === "semi" || furnishing === "unfurnished"
                 ? furnishing
                 : "",
-        propertyType: PROPERTY_TYPES.has(propertyType as OwnerListingPropertyType)
-            ? (propertyType as OwnerListingPropertyType)
-            : "",
-        minAreaSqft: parseParam(params, "minArea"),
-        maxAreaSqft: parseParam(params, "maxArea"),
+        category: isOwnerListingCategory(categoryRaw) ? categoryRaw : "",
+        propertyType: isOwnerListingSubtype(propertyType) ? propertyType : "",
+        ...normalizeAreaFilterStrings(parseParam(params, "minArea"), parseParam(params, "maxArea")),
         listedWithinDays: parseListedWithinDays(parseParam(params, "listedWithin")),
         minCommissionPercent: parseNumberParam(params, "minCommission"),
         maxCommissionPercent: parseNumberParam(params, "maxCommission"),
@@ -194,6 +188,7 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     if (filters.min) params.set("min", filters.min);
     if (filters.max) params.set("max", filters.max);
     if (filters.furnishing) params.set("furnishing", filters.furnishing);
+    if (filters.category) params.set("category", filters.category);
     if (filters.propertyType) params.set("propertyType", filters.propertyType);
     if (filters.minAreaSqft) params.set("minArea", filters.minAreaSqft);
     if (filters.maxAreaSqft) params.set("maxArea", filters.maxAreaSqft);
@@ -224,12 +219,14 @@ export function filtersToSearchParams(filters: OwnerListingsFilters): URLSearchP
     return params;
 }
 
-/** Counts only Advanced filters sheet controls — not quick chips (New / Ready to move). */
+/** Counts Advanced sheet controls (listed, commission, BHK, furnishing, ready-to-move). */
 export function countSheetFilters(filters: OwnerListingsFilters): number {
     let count = 0;
-    if (filters.minAreaSqft || filters.maxAreaSqft) count++;
     if (filters.listedWithinDays) count++;
     if (hasCommissionRange(filters)) count++;
+    if (filters.bhk.length > 0) count++;
+    if (filters.furnishing) count++;
+    if (filters.readyToMove) count++;
     return count;
 }
 
@@ -245,6 +242,7 @@ export function hasActiveOwnerListingsFilters(filters: OwnerListingsFilters): bo
         Boolean(filters.min) ||
         Boolean(filters.max) ||
         Boolean(filters.furnishing) ||
+        Boolean(filters.category) ||
         Boolean(filters.propertyType) ||
         Boolean(filters.minAreaSqft) ||
         Boolean(filters.maxAreaSqft) ||
@@ -270,6 +268,7 @@ export function ownerListingsFilterSignature(filters: OwnerListingsFilters): str
         filters.min,
         filters.max,
         filters.furnishing,
+        filters.category,
         filters.propertyType,
         filters.minAreaSqft,
         filters.maxAreaSqft,
@@ -354,7 +353,21 @@ export function filterOwnerListings(
             return false;
         }
         if (filters.furnishing && item.furnishing !== filters.furnishing) return false;
-        if (filters.propertyType && item.propertyTypeLabel !== filters.propertyType) return false;
+        if (filters.category) {
+            const itemCategory = item.category || "";
+            if (itemCategory && itemCategory !== filters.category) return false;
+        }
+        if (filters.propertyType) {
+            const subtype = item.subtype || item.propertyTypeLabel;
+            const matchesSubtype =
+                subtype === filters.propertyType ||
+                item.propertyTypeLabel === filters.propertyType ||
+                (filters.propertyType === "office" && subtype === "office_space") ||
+                (filters.propertyType === "office_space" && item.propertyTypeLabel === "office") ||
+                (filters.propertyType === "plot" &&
+                    (item.propertyTypeLabel === "plot" || Boolean(item.subtype?.includes("plot"))));
+            if (!matchesSubtype) return false;
+        }
         if (filters.newToday && !item.isNew) return false;
         if (filters.slotsOpen && item.brokerSlotsOpen <= 0) return false;
         if (filters.commissionSet && item.commissionPercent <= 0 && item.commissionAmount <= 0)
@@ -362,7 +375,10 @@ export function filterOwnerListings(
         if (filters.readyToMove && !item.readyToMove) return false;
 
         const minArea = filters.minAreaSqft ? Number(filters.minAreaSqft) : null;
-        const maxArea = filters.maxAreaSqft ? Number(filters.maxAreaSqft) : null;
+        const maxArea =
+            filters.maxAreaSqft && !filters.maxAreaSqft.endsWith("+")
+                ? Number(filters.maxAreaSqft)
+                : null;
         if (minArea !== null && !Number.isNaN(minArea) && item.areaSqft < minArea) return false;
         if (maxArea !== null && !Number.isNaN(maxArea) && item.areaSqft > maxArea) return false;
 

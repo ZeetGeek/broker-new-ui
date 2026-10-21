@@ -1,4 +1,4 @@
-import { Handshake, Search, UserRoundSearch } from "lucide-react";
+import { Handshake, Search, UserRoundSearch } from "@/components/shared/icons";
 import Link from "next/link";
 
 import { ownerBrokersHref } from "@/lib/routes/owner";

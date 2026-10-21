@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { MapPin, Pencil, Search, UserRoundPlus } from "lucide-react";
+import { MapPin, Pencil, Search, UserRoundPlus } from "@/components/shared/icons";
 
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";

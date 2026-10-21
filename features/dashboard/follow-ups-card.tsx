@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { BellRing, MessageCircle, Phone } from "lucide-react";
+import { BellRing, CallIcon, WhatsAppIcon } from "@/components/shared/icons";
 import { AnimatePresence, motion } from "motion/react";
 
 import { duration, ease } from "@/lib/motion/tokens";
@@ -96,7 +96,7 @@ function ChannelAction({ item }: { item: FollowUp }) {
                 className={className}
                 onClick={(event) => event.stopPropagation()}
             >
-                <MessageCircle aria-hidden className="block-4.5 inline-4.5" strokeWidth={1.75} />
+                <WhatsAppIcon aria-hidden className="block-4.5 inline-4.5" strokeWidth={1.75} />
             </a>
         );
     }
@@ -108,7 +108,7 @@ function ChannelAction({ item }: { item: FollowUp }) {
             className={className}
             onClick={(event) => event.stopPropagation()}
         >
-            <Phone aria-hidden className="block-4.5 inline-4.5" strokeWidth={1.75} />
+            <CallIcon aria-hidden className="block-4.5 inline-4.5" strokeWidth={1.75} />
         </a>
     );
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { Check, X } from "lucide-react";
+import { Check, X } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

@@ -2,7 +2,7 @@
 
 import { memo, useMemo, useState } from "react";
 
-import { Building2, CalendarPlus, Check, ChevronDown, MapPin, X } from "lucide-react";
+import { Building2, CalendarPlus, Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
 
 import type { VisitSlot } from "@/lib/api/owner-slots";
 import type { PropertyListing } from "@/lib/api/properties";

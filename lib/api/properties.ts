@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api/client";
+import { ApiError, apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
 
 import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
@@ -525,16 +525,16 @@ export const propertiesApi = {
         });
     },
 
-    browseCities() {
-        return apiFetch<PropertyBrowseCitiesResponse>("/properties/browse/cities");
+    browseCities(signal?: AbortSignal) {
+        return apiFetch<PropertyBrowseCitiesResponse>("/properties/browse/cities", { signal });
     },
 
     /** One public owner listing for the Owner-listings detail page. */
-    browseById(id: string) {
+    browseById(id: string, signal?: AbortSignal) {
         if (isMockMode()) {
             const listing = mockListingById(id);
             if (!listing) {
-                return Promise.reject(new Error("Listing not found"));
+                return Promise.reject(new ApiError("Listing not found", 404));
             }
             return Promise.resolve(listing);
         }
@@ -543,7 +543,7 @@ export const propertiesApi = {
                 representation?: PropertyRepresentationStanding | null;
                 ownerPhone?: string | null;
             }
-        >(`/properties/browse/${id}`);
+        >(`/properties/browse/${id}`, { signal });
     },
 
     /** Caller's inventory listings (My listings). */

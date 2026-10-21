@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { Plus, UserPlus, UserRoundPlus, X } from "lucide-react";
+import { Plus, UserPlus, UserRoundPlus, X } from "@/components/shared/icons";
 
 export function ContactsSpeedDial({
     onAddBuyer,

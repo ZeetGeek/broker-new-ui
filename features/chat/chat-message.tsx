@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CheckCheck } from "lucide-react";
+import { Check, CheckCheck } from "@/components/shared/icons";
 
 import { formatTimeIn } from "@/lib/format/date";
 import { cn } from "@/lib/utils";

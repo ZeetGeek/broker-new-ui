@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { Send, UserPlus } from "lucide-react";
+import { Send } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
@@ -83,14 +83,12 @@ function RequestCardFooter({
     item,
     onWithdraw,
     onRetry,
-    onAddBuyers,
     isBusy,
     pin = true,
 }: {
     item: RequestItem;
     onWithdraw: (id: string) => void;
     onRetry: (id: string) => void;
-    onAddBuyers: () => void;
     isBusy: boolean;
     pin?: boolean;
 }) {
@@ -162,25 +160,9 @@ function RequestCardFooter({
         );
     }
 
+    // Approved: attach buyers lives on the Buyers row (link), not a footer CTA.
     if (item.stage === "approved") {
-        // Buyers already on the card open the modal — no duplicate button.
-        if (item.attachedClients.length > 0) return null;
-
-        return (
-            <DealOverlayFooter pin={pin}>
-                <Button
-                    size="md"
-                    variant="accent"
-                    type="button"
-                    disabled={isBusy}
-                    onClick={onAddBuyers}
-                    className="inline-full"
-                >
-                    <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    Attach buyer
-                </Button>
-            </DealOverlayFooter>
-        );
+        return null;
     }
 
     // Locked / ended with no retry — no Find similar; card stays quiet.
@@ -287,8 +269,11 @@ export function RequestCard({
                         ownerAvatarUrl={item.ownerAvatarUrl}
                         ownerPhoneDigits={ownerPhoneDigits}
                     />
-                    {item.stage === "approved" && item.attachedClients.length > 0 ? (
-                        <DealAttachedBuyers buyers={item.attachedClients} />
+                    {item.stage === "approved" ? (
+                        <DealAttachedBuyers
+                            buyers={item.attachedClients}
+                            onAttach={() => setIsBuyersOpen(true)}
+                        />
                     ) : null}
                     {item.stage === "ended" ? (
                         <CancelledNote endedBy={item.endedBy} reason={item.cancelReason} />
@@ -300,7 +285,6 @@ export function RequestCard({
                             item={item}
                             onWithdraw={onWithdraw}
                             onRetry={onRetry}
-                            onAddBuyers={() => setIsBuyersOpen(true)}
                             isBusy={isBusy}
                             pin={false}
                         />
@@ -316,7 +300,6 @@ export function RequestCard({
                         item={item}
                         onWithdraw={onWithdraw}
                         onRetry={onRetry}
-                        onAddBuyers={() => setIsBuyersOpen(true)}
                         isBusy={isBusy}
                     />
                 )}

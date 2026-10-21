@@ -2,7 +2,14 @@
 
 import type { ReactNode } from "react";
 
-import { Clock3, Lock, MapPin, MoreHorizontal, PhoneCall, StickyNote } from "lucide-react";
+import {
+    Clock3,
+    Lock,
+    MapPin,
+    MoreHorizontal,
+    PhoneCall,
+    StickyNote,
+} from "@/components/shared/icons";
 
 import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { Check, Link2, Share2 } from "lucide-react";
+import { Check, Link2, Share2 } from "@/components/shared/icons";
 
 import {
     buildEmailShareUrl,

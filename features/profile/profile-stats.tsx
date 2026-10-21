@@ -1,4 +1,4 @@
-import { BadgeCheck, Eye, ShieldCheck, ShieldQuestion } from "lucide-react";
+import { BadgeCheck, Eye, ShieldCheck, ShieldQuestion } from "@/components/shared/icons";
 
 import type { UserProfile } from "@/lib/api/profile";
 import { formatDateShort } from "@/lib/format/date";

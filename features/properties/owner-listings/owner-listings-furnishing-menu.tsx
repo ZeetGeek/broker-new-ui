@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Armchair, Layers, type LucideIcon, PackageOpen, Sofa } from "lucide-react";
+import { Armchair, Layers, type AppIcon, PackageOpen, Sofa } from "@/components/shared/icons";
 
 import { formatFurnishingLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ const FURNISHING_OPTIONS: {
     radioValue: string;
     label: string;
     description: string;
-    icon: LucideIcon;
+    icon: AppIcon;
 }[] = [
     {
         value: "",

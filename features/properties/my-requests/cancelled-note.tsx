@@ -1,4 +1,4 @@
-import { Ban } from "lucide-react";
+import { Ban } from "@/components/shared/icons";
 
 /** Who ended the representation and why, on a Cancelled card. */
 export function CancelledNote({

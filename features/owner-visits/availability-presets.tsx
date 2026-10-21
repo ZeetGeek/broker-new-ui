@@ -6,7 +6,7 @@
  */
 
 /*
-import { Plus } from "lucide-react";
+import { Plus } from "@/components/shared/icons";
 import { QUICK_PRESETS, type QuickPreset } from "@/features/owner-visits/availability-helpers";
 
 export function AvailabilityPresets({ ... }) { ... }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownUp, ChevronDown } from "lucide-react";
+import { ArrowDownUp, ChevronDown } from "@/components/shared/icons";
 
 import { formatSortLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";

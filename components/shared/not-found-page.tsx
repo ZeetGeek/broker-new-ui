@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, Home } from "@/components/shared/icons";
 
 import { useRouter } from "@/lib/navigation";
 

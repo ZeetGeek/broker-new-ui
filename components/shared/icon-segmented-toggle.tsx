@@ -1,6 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import { spring } from "@/lib/motion/tokens";
@@ -11,7 +11,7 @@ import { AnimatedBackground } from "@/components/motion-primitives/animated-back
 export type IconSegmentedOption<T extends string = string> = {
     value: T;
     label: string;
-    icon: LucideIcon;
+    icon: AppIcon;
 };
 
 export type IconSegmentedToggleProps<T extends string> = {

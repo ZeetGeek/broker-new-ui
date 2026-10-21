@@ -29,7 +29,7 @@ broker-new-ui/
 ├── components/
 │   ├── ui/                       # shadcn — VENDORED, do not edit
 │   ├── layout/                   # shells, nav, bottom bar, headers
-│   └── shared/                   # used by 3+ features
+│   └── shared/                   # used by 3+ features (icons.tsx = Tabler registry)
 │
 ├── features/                     # domain code, grouped by what it does
 │   ├── properties/

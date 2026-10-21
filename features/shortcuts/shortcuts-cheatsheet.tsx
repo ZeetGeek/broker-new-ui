@@ -12,13 +12,13 @@ import {
     KeyRound,
     LayoutDashboard,
     LogOut,
-    type LucideProps,
+    type IconProps,
     Plus,
     Send,
     Settings,
     UserRound,
     Users,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { type ShortcutDef, type ShortcutId, SHORTCUTS } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,7 @@ export type ShortcutsCheatsheetProps = {
     onOpenChange: (open: boolean) => void;
 };
 
-const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<LucideProps>> = {
+const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<IconProps>> = {
     shortcuts_cheatsheet: Keyboard,
     dashboard: LayoutDashboard,
     owner_listings: Building2,

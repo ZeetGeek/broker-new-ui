@@ -2,7 +2,7 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import {

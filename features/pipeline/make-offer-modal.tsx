@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Handshake } from "lucide-react";
+import { Handshake } from "@/components/shared/icons";
 
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 

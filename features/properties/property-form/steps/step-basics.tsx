@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { Building2 } from "lucide-react";
+import { Building2 } from "@/components/shared/icons";
 
 import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
 

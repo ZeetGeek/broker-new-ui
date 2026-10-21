@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { CalendarDays, MapPin, Pencil, Plus } from "lucide-react";
+import { CalendarDays, MapPin, Pencil, Plus } from "@/components/shared/icons";
 
 import {
     OWNER_PROFILE_HREF,

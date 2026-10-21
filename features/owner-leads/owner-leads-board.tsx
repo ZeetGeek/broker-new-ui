@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { GripVertical, Plus } from "lucide-react";
+import { GripVertical, Plus } from "@/components/shared/icons";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";

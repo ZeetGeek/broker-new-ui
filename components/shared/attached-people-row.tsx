@@ -2,23 +2,16 @@
 
 import type { ReactNode } from "react";
 
-import { addCollection, Icon } from "@iconify/react/offline";
-
 import { cn } from "@/lib/utils";
 
 import { AvatarStack } from "@/components/shared/avatar-stack";
+import { UserPlus } from "@/components/shared/icons";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
-    OVERLAY_PERSON_ACTION_CLASS,
     OVERLAY_PERSON_LABEL_CLASS,
+    OverlayPersonAttachLine,
 } from "@/components/shared/overlay-card";
 import { UserAvatar } from "@/components/shared/user-avatar";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-import tablerContactIcons from "@/features/properties/my-requests/tabler-contact.json";
-
-addCollection(tablerContactIcons as Parameters<typeof addCollection>[0]);
 
 type AttachedPerson = { id: string; name: string; avatarUrl?: string };
 
@@ -148,15 +141,29 @@ function AttachedPeopleShell({
     );
 }
 
-/** Attached buyers — same quiet label layout as Owner, with an Add buyer control. */
+/**
+ * Buyers row — empty + `onAttach`: brand "Attach buyers" link (UserPlus).
+ * Once any buyer is attached, only the stack + count (no Add control).
+ */
 export function AttachedBuyersRow({
     buyers,
-    onManage,
+    onAttach,
 }: {
     buyers: AttachedPerson[];
-    onManage?: () => void;
+    /** Opens the buyer picker when the row is empty. */
+    onAttach?: () => void;
 }) {
-    if (buyers.length === 0) return null;
+    if (buyers.length === 0) {
+        if (!onAttach) return null;
+        return (
+            <OverlayPersonAttachLine
+                label="Buyers"
+                actionLabel="Attach buyers"
+                onAttach={onAttach}
+                icon={UserPlus}
+            />
+        );
+    }
 
     const title = buyers.length === 1 ? "1 buyer" : `${buyers.length} buyers`;
 
@@ -167,39 +174,6 @@ export function AttachedBuyersRow({
                 <AvatarStack people={buyers} size="2xs" max={3} className="shrink-0" />
                 <span className="truncate font-semibold text-ink">{title}</span>
             </span>
-            {onManage ? (
-                <span className={OVERLAY_PERSON_ACTION_CLASS}>
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="link"
-                                        className="
-                                          block-auto! min-block-0 gap-1 px-0 py-0
-                                          text-brand hover:text-brand/85
-                                        "
-                                        onClick={onManage}
-                                        aria-label="Add buyer"
-                                    />
-                                }
-                            >
-                                <Icon
-                                    icon="tabler:user-plus"
-                                    width={14}
-                                    height={14}
-                                    className="shrink-0 block-3.5 inline-3.5"
-                                    aria-hidden
-                                />
-                                Add
-                            </TooltipTrigger>
-                            <TooltipContent side="top">Add buyer</TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </span>
-            ) : null}
         </div>
     );
 }

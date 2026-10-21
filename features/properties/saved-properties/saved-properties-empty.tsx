@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Bookmark } from "lucide-react";
+import { Bookmark } from "@/components/shared/icons";
 
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 

@@ -209,8 +209,9 @@ when it genuinely needs state, an effect, or a browser API.
 - **Audit before adding a dependency.** Prefer `date-fns` over `moment`; prefer
   `Intl.NumberFormat` over a currency library; import individual `lodash-es`
   functions, never the whole package.
-- **Long lists of icons** — import individually from `lucide-react`; never
-  `import * as Icons`.
+- **Long lists of icons** — import named icons from
+  `@/components/shared/icons` (Tabler). Never `import * as Icons` from
+  `@tabler/icons-react`, and never import `lucide-react`.
 
 ### React Compiler — measure, don't assume
 

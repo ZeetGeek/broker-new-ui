@@ -1,13 +1,13 @@
 "use client";
 
-import { ChevronDown, type LucideIcon } from "lucide-react";
+import { ChevronDown, type AppIcon } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
 export type OwnerListingsBandSegmentProps = {
     label: string;
     value: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     className?: string;
     onClick?: () => void;
     isOpen?: boolean;

@@ -7,10 +7,10 @@ import {
     Check,
     Eye,
     Link2,
-    type LucideIcon,
+    type AppIcon,
     TrendingDown,
     X,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { formatActivityDayLabel, formatCompactRelative, formatDateIso } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -42,7 +42,7 @@ type ActivityDaySection = {
     items: ActivityItem[];
 };
 
-const ACTIVITY_ICON: Record<ActivityEventType, LucideIcon> = {
+const ACTIVITY_ICON: Record<ActivityEventType, AppIcon> = {
     request_approved: Check,
     request_declined: X,
     request_viewed: Eye,

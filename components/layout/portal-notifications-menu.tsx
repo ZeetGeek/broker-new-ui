@@ -16,7 +16,7 @@ import Link from "next/link";
 
 import { BellIcon, type BellIconHandle } from "@animateicons/react/lucide/bell-icon";
 import { BellRingIcon, type BellRingIconHandle } from "@animateicons/react/lucide/bell-ring-icon";
-import { Bell, Building2, CalendarClock, CheckCheck, Clock3 } from "lucide-react";
+import { Bell, Building2, CalendarClock, CheckCheck, Clock3 } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import { ApiError } from "@/lib/api/client";

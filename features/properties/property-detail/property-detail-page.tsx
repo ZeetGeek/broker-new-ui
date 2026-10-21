@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { ChevronLeft, MapPin } from "lucide-react";
+import { ChevronLeft, MapPin } from "@/components/shared/icons";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";

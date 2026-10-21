@@ -15,7 +15,7 @@ import {
     Trash2,
     UserPlus,
     UserRound,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { formatPhoneIn, formatTelUrl } from "@/lib/format/phone";
 import {

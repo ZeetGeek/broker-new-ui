@@ -13,7 +13,7 @@ import {
     MapPin,
     Phone,
     UserRound,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { type BrokerOwnerProfile, type OwnerProfileProperty, ownersApi } from "@/lib/api/owners";
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";

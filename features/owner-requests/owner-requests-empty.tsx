@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Inbox, Mail } from "lucide-react";
+import { Inbox, Mail } from "@/components/shared/icons";
 
 import { ownerBrokersHref } from "@/lib/routes/owner";
 

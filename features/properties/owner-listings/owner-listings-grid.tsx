@@ -27,6 +27,7 @@ import {
 } from "@/features/properties/my-requests/use-pending-reminder-counts";
 import { BrowseRequestTimelineDialog } from "@/features/properties/owner-listings/browse-request-timeline-dialog";
 import { isNewInServiceAreas } from "@/features/properties/owner-listings/count-new-listings-this-week";
+import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 import { SAVED_PROPERTIES_QUERY_KEY } from "@/features/properties/saved-properties/saved-properties-query";
@@ -390,6 +391,7 @@ export function OwnerListingsGrid({
     return (
         <>
             <WindowVirtualGrid
+                gridClassName={OWNER_LISTINGS_GRID_CLASS}
                 items={items}
                 getKey={(item) => item.id}
                 estimateRowHeight={520}
@@ -422,7 +424,7 @@ export function OwnerListingsGrid({
                             }}
                             detailsHref={brokerOwnerListingDetailHref(item.id)}
                             priority={index === 0}
-                            imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
+                            imageSizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                             isRequestPending={isBusy && busyKind === "request"}
                             isCancelPending={isBusy && busyKind === "cancel"}
                             isRemindPending={isBusy && busyKind === "remind"}

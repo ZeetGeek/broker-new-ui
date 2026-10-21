@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { StickyNote } from "lucide-react";
+import { StickyNote } from "@/components/shared/icons";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";

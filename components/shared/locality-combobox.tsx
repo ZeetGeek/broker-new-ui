@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { MapPinned } from "lucide-react";
+import { MapPinned } from "@/components/shared/icons";
 
 import { useDebouncedValue, useLocalitySearch } from "@/hooks/use-locations";
 

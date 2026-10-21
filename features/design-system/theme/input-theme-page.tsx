@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Mail, Phone, Search, User } from "lucide-react";
+import { Mail, Phone, Search, User } from "@/components/shared/icons";
 
 import { Input } from "@/components/ui/input";
 

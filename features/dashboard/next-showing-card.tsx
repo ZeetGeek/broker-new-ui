@@ -8,7 +8,7 @@ import {
     Navigation,
     Phone,
     User,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
 import { OWNER_VISITS_HREF } from "@/lib/routes/owner";

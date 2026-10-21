@@ -6,10 +6,12 @@ import type {
 } from "@/lib/api/properties";
 
 import type {
+    OwnerListingCategory,
     OwnerListingFurnishing,
     OwnerListingItem,
     OwnerListingPropertyType,
 } from "@/features/properties/owner-listings/types";
+import { isOwnerListingCategory } from "@/features/properties/owner-listings/filter-visibility";
 
 const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
     one_rk: 1,
@@ -95,6 +97,11 @@ export function mapApiPropertyType(
     if (subtype && SUBTYPE_TO_UI[subtype]) {
         return SUBTYPE_TO_UI[subtype];
     }
+    if (subtype === "shop") return "shop";
+    if (subtype === "office" || subtype === "office_space") return "office";
+    if (subtype?.includes("plot") || subtype === "agricultural_land" || subtype === "farm_land") {
+        return "plot";
+    }
 
     const category = propertyTypeRaw?.trim().toLowerCase();
     if (category === "commercial") return "office";
@@ -104,6 +111,11 @@ export function mapApiPropertyType(
 
 function mapPropertyType(listing: PropertyBrowseListing): OwnerListingPropertyType {
     return mapApiPropertyType(listing.subtype, listing.propertyType);
+}
+
+function mapCategory(listing: PropertyBrowseListing): OwnerListingCategory | "" {
+    const raw = listing.propertyType?.trim().toLowerCase() ?? "";
+    return isOwnerListingCategory(raw) ? raw : "";
 }
 
 function mapBhk(listing: PropertyBrowseListing): number {
@@ -212,7 +224,7 @@ export function propertyTypeToApiSubtype(
     return UI_TO_SUBTYPE[propertyType];
 }
 
-/** Maps UI property-type chips to browse API `propertyType` / `subtype` filters. */
+/** @deprecated Prefer `browseApiTypeFilters` from filter-visibility. */
 export function propertyTypeToApiFilters(propertyType: OwnerListingPropertyType | ""): {
     propertyType?: string;
     subtype?: string;
@@ -253,6 +265,8 @@ function mapPricing(listing: PropertyBrowseListing): {
 
 export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): OwnerListingItem {
     const propertyTypeLabel = mapPropertyType(listing);
+    const category = mapCategory(listing);
+    const subtype = listing.subtype?.trim().toLowerCase() || undefined;
     const bhk = mapBhk(listing);
     const { saleAmountInr, rentAmountInr } = mapPricing(listing);
     const furnishing = mapFurnishing(listing.furnishingStatus);
@@ -278,6 +292,8 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         title: listing?.title as string,
         configLabel: configLabel(bhk, propertyTypeLabel),
         propertyTypeLabel,
+        category,
+        subtype,
         bhk,
         bathrooms: listing.bathrooms != null && listing.bathrooms > 0 ? listing.bathrooms : null,
         locality,
