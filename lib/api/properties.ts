@@ -162,6 +162,11 @@ export type PropertyBrowseCountry = {
 /** Country → state → city → locality tree of owner-listed places. */
 export type PropertyBrowseCitiesResponse = {
     items: PropertyBrowseCountry[];
+    /** The broker's service areas and how many owner listings fall inside them. */
+    serviceableAreas?: {
+        areas: string[];
+        listingCount: number;
+    };
 };
 
 export type PropertyListingOptions = {

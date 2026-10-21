@@ -18,6 +18,8 @@ import type {
 export type OwnerListingsHeaderProps = {
     filters: OwnerListingsFilters;
     listings: OwnerListingItem[];
+    /** Owner listings inside the broker's service areas, from the cities API. */
+    serviceableListingCount?: number;
     filterContext: OwnerListingsFilterContext;
     chipCounts?: QuickChipCounts;
     readyToMoveCount?: number;
@@ -38,6 +40,7 @@ export type OwnerListingsHeaderProps = {
 export function OwnerListingsHeader({
     filters,
     listings,
+    serviceableListingCount,
     filterContext,
     chipCounts,
     readyToMoveCount,
@@ -80,6 +83,7 @@ export function OwnerListingsHeader({
                 <OwnerListingsSearchBand
                     appliedFilters={filters}
                     listings={listings}
+                    serviceableListingCount={serviceableListingCount}
                     locationsLoading={locationsLoading}
                     locationsError={locationsError}
                     onRetryLocations={onRetryLocations}

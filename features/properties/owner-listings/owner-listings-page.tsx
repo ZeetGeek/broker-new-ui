@@ -94,7 +94,10 @@ export function OwnerListingsPage() {
         queryFn: ({ signal }) => fetchOwnerListingCities(signal),
         enabled,
         staleTime: 5 * 60_000,
-        select: (data) => locationTreeToListings(data.items),
+        select: (data) => ({
+            listings: locationTreeToListings(data.items),
+            serviceableCount: data.serviceableAreas?.listingCount,
+        }),
     });
     const isInitialLoading = !scopeReady || query.isPending;
     const readyToMoveCountQuery = useQuery({
@@ -217,7 +220,8 @@ export function OwnerListingsPage() {
             <PortalSectionNav>{introSection}</PortalSectionNav>
             <OwnerListingsHeader
                 filters={filters}
-                listings={locations.data ?? EMPTY_ITEMS}
+                listings={locations.data?.listings ?? EMPTY_ITEMS}
+                serviceableListingCount={locations.data?.serviceableCount}
                 locationsLoading={locations.isPending}
                 locationsError={locations.isError}
                 onRetryLocations={() => void locations.refetch()}
