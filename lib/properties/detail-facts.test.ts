@@ -155,6 +155,13 @@ test("detail mapping keeps optional API location and property facts without inve
     assert.equal(facts.find((fact) => fact.key === "propertyAge")?.value, "5 years old");
     assert.equal(facts.find((fact) => fact.key === "condition")?.value, "Ready to move");
 
+    const underConstruction = {
+        ...listing,
+        propertyAge: 5,
+        propertyCondition: "under_construction",
+    };
+    assert.ok(!buildPropertyFacts(underConstruction).some((fact) => fact.key === "propertyAge"));
+
     const missing = mapPropertyListingToMyItem({ id: "sparse-property", subtype: "apartment" });
     assert.equal(missing.state, null);
     assert.equal(missing.carpetAreaSqft, null);

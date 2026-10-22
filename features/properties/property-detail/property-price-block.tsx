@@ -11,15 +11,18 @@ import {
     offersSale,
 } from "@/lib/format/listing-availability";
 import { formatPriceInr } from "@/lib/format/price";
-import { cn } from "@/lib/utils";
 
+import { HandCoins } from "@/components/shared/icons";
 import {
     type CommissionAudience,
     listingCommissionTip,
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
 
+import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
+
+import styles from "./property-detail.module.css";
 
 /**
  * A listing offered for both sale and rent has two asks, and jamming them
@@ -74,33 +77,16 @@ export function PropertyPriceBlock({
         >
             <div className="flex flex-col gap-3">
                 {both ? (
-                    <div
-                        className="
-                          inline-flex rounded-control border border-border-warm bg-surface-muted
-                          p-0.5 inline-fit
-                        "
-                    >
-                        {(["sale", "rent"] as const).map((value) => (
-                            <button
-                                key={value}
-                                type="button"
-                                onClick={() => setMode(value)}
-                                aria-pressed={mode === value}
-                                style={compact ? { minHeight: 44 } : undefined}
-                                className={cn(
-                                    `
-                                      body-sm rounded-control px-4 py-1.5 font-semibold
-                                      transition-colors duration-160
-                                    `,
-                                    mode === value
-                                        ? "bg-surface text-ink shadow-xs"
-                                        : "text-ink-muted hover:text-ink",
-                                )}
-                            >
-                                {value === "sale" ? "For sale" : "For rent"}
-                            </button>
-                        ))}
-                    </div>
+                    <SlidingTabs
+                        value={mode}
+                        onValueChange={setMode}
+                        ariaLabel="Property price"
+                        options={[
+                            { value: "sale", label: "For sale" },
+                            { value: "rent", label: "For rent" },
+                        ]}
+                        className="t-tabs-compact self-start"
+                    />
                 ) : null}
 
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -169,18 +155,14 @@ export function PropertyPriceBlock({
                               audience,
                           });
                           return tip ? (
-                              <div
-                                  className={cn(
-                                      "body-sm flex flex-col gap-1 rounded-control p-3",
-                                      tip.plain
-                                          ? "bg-surface-muted text-ink-muted"
-                                          : "bg-brand-soft text-brand-text",
-                                  )}
-                              >
-                                  <span>{tip.headline}</span>
-                                  {tip.detail ? (
-                                      <span className="body-xs opacity-80">{tip.detail}</span>
-                                  ) : null}
+                              <div className={styles.commissionSummary}>
+                                  <HandCoins size={22} strokeWidth={1.75} aria-hidden />
+                                  <div>
+                                      <p className={tip.plain ? "text-ink-muted" : "text-ink"}>
+                                          {tip.headline}
+                                      </p>
+                                      {tip.detail ? <span>{tip.detail}</span> : null}
+                                  </div>
                               </div>
                           ) : null;
                       })()

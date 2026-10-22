@@ -7,7 +7,11 @@ import { PROPERTY_FACING_OPTIONS, PROPERTY_PARKING_OPTIONS } from "@/lib/validat
 import { derive } from "@/lib/visibility/derive";
 import { FIELD_RULES, type FieldRule } from "@/lib/visibility/rules";
 
-import { PROPERTY_CATEGORY_OPTIONS, PROPERTY_CONDITION_OPTIONS } from "@/constants/property";
+import {
+    PROPERTY_AGE_OPTIONS,
+    PROPERTY_CATEGORY_OPTIONS,
+    PROPERTY_CONDITION_OPTIONS,
+} from "@/constants/property";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 export type PropertyFact = {
@@ -124,6 +128,9 @@ export function buildPropertyFacts(item: MyListingItem): PropertyFact[] {
         String(item.propertyAge).trim() !== ""
     ) {
         const numericAge = Number(item.propertyAge);
+        const ageOption = PROPERTY_AGE_OPTIONS.find(
+            (option) => option.value === String(item.propertyAge),
+        )?.label;
         facts.push({
             key: "propertyAge",
             label: "Property age",
@@ -132,7 +139,7 @@ export function buildPropertyFacts(item: MyListingItem): PropertyFact[] {
                     ? numericAge === 0
                         ? "New property"
                         : `${numericAge} ${numericAge === 1 ? "year" : "years"} old`
-                    : String(item.propertyAge),
+                    : (ageOption ?? String(item.propertyAge).replaceAll("_", " ")),
         });
     }
 
@@ -218,6 +225,14 @@ export function propertyDetailFieldVisible(item: MyListingItem, path: keyof type
             category: item.category,
             propertyType,
             listingFor: item.transactionType === "sale" ? "sell" : item.transactionType,
+        },
+        details: {
+            ...DEFAULT_PROPERTY_DRAFT.details,
+            propertyAge:
+                item.propertyAge != null && Number.isFinite(Number(item.propertyAge))
+                    ? Number(item.propertyAge)
+                    : null,
+            propertyCondition: item.propertyCondition ?? "",
         },
     };
     const rule = FIELD_RULES[path] as FieldRule;

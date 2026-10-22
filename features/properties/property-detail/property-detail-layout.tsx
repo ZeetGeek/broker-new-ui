@@ -1,8 +1,12 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
-import Link from "next/link";
+import toast from "react-hot-toast";
 
+import { useQueryClient } from "@tanstack/react-query";
+
+import { propertiesApi } from "@/lib/api/properties";
+import { formatAreaSqft } from "@/lib/format/area";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
@@ -13,13 +17,14 @@ import {
     Armchair,
     Bath,
     BedDouble,
+    Bookmark,
     Building2,
     CalendarCheck,
     CalendarClock,
     Car,
     Check,
-    ChevronLeft,
     ChevronRight,
+    Clock,
     Compass,
     DoorOpen,
     Droplets,
@@ -44,9 +49,11 @@ import {
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertySharePopover } from "@/components/shared/property-share-popover";
+import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { SAVED_PROPERTIES_QUERY_KEY } from "../saved-properties/saved-properties-query";
 import type { MyListingItem } from "../your-listings/types";
 
 import {
@@ -118,8 +125,6 @@ function PropertyFactsList({ facts }: { facts: ReturnType<typeof buildPropertyFa
 
 export function PropertyDetailLayout({
     item,
-    backHref,
-    backLabel,
     status,
     statusColor = "stone",
     actions,
@@ -143,22 +148,67 @@ export function PropertyDetailLayout({
 }) {
     const { amountInr, isRent } = toLegacyAmountFields(item);
     const hasPrice = (isRent ? item.rentAmountInr : item.saleAmountInr) != null;
+    const queryClient = useQueryClient();
+    const [saved, setSaved] = useState(Boolean(item.isBookmarked));
+    const [saving, setSaving] = useState(false);
+    const headerFacts = buildPropertyFacts(item);
+    const headerLocation = item.locality || item.city;
+    const summaryLines = [
+        `${item.propertyTypeLabel}${headerLocation ? ` in ${headerLocation}` : ""}`,
+        item.transactionType === "both"
+            ? "For sale & rent"
+            : item.transactionType === "rent"
+              ? "For rent"
+              : "For sale",
+        item.areaSqft > 0
+            ? `${formatAreaSqft(item.areaSqft)}${headerFacts.some((fact) => fact.key === "bhk") ? ` · ${item.configLabel}` : ""}`
+            : null,
+        headerFacts.find((fact) => fact.key === "furnishing")?.value,
+        headerFacts.find((fact) => fact.key === "condition")?.value,
+    ].filter((line): line is string => Boolean(line));
+    async function toggleSave() {
+        if (saving) return;
+        setSaving(true);
+        try {
+            if (saved) await propertiesApi.unbookmark(item.id);
+            else await propertiesApi.bookmark(item.id);
+            setSaved(!saved);
+            void queryClient.invalidateQueries({ queryKey: SAVED_PROPERTIES_QUERY_KEY });
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Couldn't update saved property");
+        } finally {
+            setSaving(false);
+        }
+    }
     return (
         <div className={styles.page} data-property-detail>
-            <div className={styles.topline}>
-                <Link href={backHref} className={styles.back}>
-                    <ChevronLeft size={16} aria-hidden />
-                    {backLabel}
-                </Link>
-                <span className={styles.listed}>
-                    Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
-                </span>
-            </div>
             <header className={styles.header}>
-                <div className={styles.headingRow}>
-                    <h1>{item.title}</h1>
+                <h1>
+                    <span>Property details.</span>{" "}
+                    <RotatingHeaderSummary
+                        key={item.id}
+                        lines={[...new Set(summaryLines)]}
+                        loadingPlaceholder={item.title}
+                    />
+                </h1>
+                <div className={styles.locationLine}>
+                    <div className={styles.propertyMeta}>
+                        <span className={styles.location}>
+                            <span className={styles.locationIcon}>
+                                <MapPin size={18} strokeWidth={1.75} aria-hidden />
+                            </span>
+                            {[item.locality, item.city, item.country].filter(Boolean).join(", ")}
+                        </span>
+                        <Badge color={statusColor}>{status}</Badge>
+                        <span className={styles.listed}>
+                            <Clock size={15} strokeWidth={1.75} aria-hidden />
+                            Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
+                        </span>
+                    </div>
                     <div className={styles.headerActions}>
                         <PropertySharePopover
+                            iconOnly
+                            className={styles.circleButton}
                             listing={{
                                 id: item.id,
                                 title: item.title,
@@ -175,18 +225,33 @@ export function PropertyDetailLayout({
                                 listingKind: isRent ? "rent" : "sale",
                             }}
                         />
+                        <Button
+                            type="button"
+                            variant="surface"
+                            size="icon"
+                            className={styles.circleButton}
+                            aria-label={saved ? "Unsave property" : "Save property"}
+                            aria-pressed={saved}
+                            disabled={saving}
+                            onClick={() => void toggleSave()}
+                        >
+                            <Bookmark
+                                aria-hidden
+                                size={20}
+                                fill={saved ? "currentColor" : "none"}
+                            />
+                        </Button>
                         {actions}
                     </div>
                 </div>
-                <div className={styles.locationLine}>
-                    <span className={styles.location}>
-                        <MapPin size={16} aria-hidden />
-                        {[item.locality, item.city].filter(Boolean).join(", ")}
-                    </span>
-                    <Badge color={statusColor}>{status}</Badge>
-                </div>
             </header>
-            <PropertyGallery title={item.title} imageSrcs={item.imageSrcs} editHref={editHref} />
+            <div className={styles.fullWidthGallery}>
+                <PropertyGallery
+                    title={item.title}
+                    imageSrcs={item.imageSrcs}
+                    editHref={editHref}
+                />
+            </div>
             <div className={styles.bodyGrid}>
                 <PropertyDetailContent item={item} revealAddress={revealAddress} />
                 <aside className={styles.rail} aria-label="Property actions">
@@ -343,7 +408,7 @@ function PropertyDetailContent({
                             aria-controls={`description-${item.id}`}
                             onClick={() => setExpanded(!expanded)}
                         >
-                            {expanded ? "Show less" : "Read more"}
+                            {expanded ? "Show less" : "Show more"}
                             <ChevronRight size={16} aria-hidden />
                         </Button>
                     ) : null}
@@ -394,11 +459,14 @@ function PropertyDetailContent({
             <section className={styles.section}>
                 <h2>Location</h2>
                 <div className={styles.address}>
-                    <MapPin size={25} strokeWidth={1.5} aria-hidden />
                     <div>
+                        <div className={styles.addressLabel}>
+                            <MapPin size={24} strokeWidth={1.75} aria-hidden />
+                            <span>{revealAddress ? "Full address" : "Area"}</span>
+                        </div>
                         <p>
                             {address || "Location not provided"}
-                            {revealAddress && item.pinCode ? ` ${item.pinCode}` : ""}
+                            {revealAddress && item.pinCode ? `, ${item.pinCode}` : ""}
                         </p>
                         <small>
                             {!revealAddress

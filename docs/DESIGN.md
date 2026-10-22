@@ -988,16 +988,14 @@ matching form field for some selections — if yes, the filter must hide too.
 ### 5.8 Property details: scoped presentation
 
 The property-detail routes use the user's pinned Airbnb reference for composition
-within the existing app identity. This is a route-specific exception to the cream
-page canvas, two-tone screen heading and general mobile control floor above; it
-does not replace the global design system or change other portal screens.
+within the existing app identity. They keep the portal's warm canvas and surface
+language so moving from Owner listings or My Deals into a property feels continuous.
 
-- Use a centred 1120px white reading surface. Put the property title, location and
-  status above the gallery, then open information sections separated by warm
-  hairlines. Keep the established fonts, green actions, icons and global tokens.
-  Scoped secondary copy mixes the existing ink and surface tokens:
-  `color-mix(in oklch, var(--color-ink) 70%, var(--color-surface))`.
-  Reuse shared Button and Badge components for actions and explicit status labels.
+- Use a centred 1120px container. Put the property title, location and status above
+  the gallery, then place details in one white surface card and actions in matching
+  rail cards. Group sections with generous spacing rather than horizontal rules.
+  Keep the established fonts, green actions, icons, canvas and global tokens. Reuse
+  shared Button and Badge components for actions and explicit status labels.
 - Adapt the gallery to the actual photo count, with a 432px maximum height on
   larger screens and one 4:3 photo on phones. Round each photo individually using
   the control-radius token. Four photos use a large left image and three right
@@ -1019,11 +1017,13 @@ does not replace the global design system or change other portal screens.
 - Listing asks use `PriceWithCommission` with the correct audience, including the
   fixed phone bar. Detail facts reuse `derive` and `FIELD_RULES` through
   `property-detail-facts.ts`; show only applicable, API-supplied facts with Tabler
-  icons. Facts form an open grid without per-fact dividers; section dividers remain.
-  Costs, availability and suitable-use details appear only when supplied and
-  applicable. Preserve missing parking/furnishing as missing rather than guessing.
-  Keep location textual and media links data-driven. Do not fabricate maps,
-  reviews, booking calendars, amenities or property claims from the reference.
+  icons. Facts and sections have no divider lines. Category, state, unit/street,
+  property age, condition and carpet area render only when the API supplies them;
+  accepted brokers come from the representation API. Costs, availability and
+  suitable-use details appear only when supplied and applicable. Preserve missing
+  parking/furnishing as missing rather than guessing. Keep location textual and
+  media links data-driven. Do not fabricate maps, reviews, booking calendars,
+  people, amenities or property claims from the reference.
 
 Source: `features/properties/property-detail/` and
 `features/properties/owner-listings/owner-listing-detail-page.tsx`. The surface

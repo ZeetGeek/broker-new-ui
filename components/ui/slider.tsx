@@ -24,9 +24,15 @@ function RangeSlider({
             {...props}
         >
             <SliderPrimitive.Control
-                className="flex items-center py-2 touch-none select-none inline-full"
+                className="
+              flex touch-none items-center py-2 select-none inline-full
+            "
             >
-                <SliderPrimitive.Track className="relative rounded-full bg-border-warm block-1.5 inline-full">
+                <SliderPrimitive.Track
+                    className="
+                  relative rounded-full bg-border-warm block-1.5 inline-full
+                "
+                >
                     <SliderPrimitive.Indicator className="rounded-full bg-brand" />
                     {thumbLabels.map((label, index) => (
                         <SliderPrimitive.Thumb
@@ -34,9 +40,8 @@ function RangeSlider({
                             index={index}
                             aria-label={label}
                             className="
-                              rounded-full border-2 border-brand bg-surface shadow-sm outline-none
-                              block-5 inline-5
-                              transition-[box-shadow] duration-160
+                              rounded-full border-2 border-brand bg-surface shadow-sm
+                              transition-shadow duration-160 outline-none block-5 inline-5
                               focus-visible:ring-3 focus-visible:ring-ring/30
                               data-dragging:ring-3 data-dragging:ring-brand/25
                             "
@@ -48,4 +53,42 @@ function RangeSlider({
     );
 }
 
-export { RangeSlider };
+/** Single-value slider using the same track and outlined thumb as range filters. */
+function Slider({
+    className,
+    label,
+    ...props
+}: SliderPrimitive.Root.Props<number> & { label: string }) {
+    return (
+        <SliderPrimitive.Root
+            data-slot="slider"
+            className={cn("inline-full", className)}
+            {...props}
+        >
+            <SliderPrimitive.Control
+                className="
+              flex touch-none items-center select-none inline-full min-block-11
+            "
+            >
+                <SliderPrimitive.Track
+                    className="
+                  relative rounded-full bg-border-warm block-1.5 inline-full
+                "
+                >
+                    <SliderPrimitive.Indicator className="rounded-full bg-brand" />
+                    <SliderPrimitive.Thumb
+                        aria-label={label}
+                        className="
+                          rounded-full border-2 border-brand bg-surface outline-none block-5
+                          inline-5
+                          focus-visible:ring-3 focus-visible:ring-ring/30
+                          data-dragging:ring-3 data-dragging:ring-brand/25
+                        "
+                    />
+                </SliderPrimitive.Track>
+            </SliderPrimitive.Control>
+        </SliderPrimitive.Root>
+    );
+}
+
+export { RangeSlider, Slider };

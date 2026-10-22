@@ -172,7 +172,7 @@ export function PropertyActionRail({
                 <section className={styles.contact}>
                     <h2>Property owner</h2>
                     <div className={styles.contactIdentity}>
-                        <UserAvatar name={item.ownerName || "Owner"} size="lg" />
+                        <UserAvatar name={item.ownerName || "Owner"} size="md" />
                         <div>
                             <strong>{item.ownerName || "No owner linked yet"}</strong>
                             <p>

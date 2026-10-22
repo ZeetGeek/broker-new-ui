@@ -78,7 +78,7 @@ function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
         <section className={styles.contact}>
             <h2>Listed by the owner</h2>
             <div className={styles.contactIdentity}>
-                <UserAvatar name={detail.ownerName} imageUrl={detail.ownerAvatarUrl} size="lg" />
+                <UserAvatar name={detail.ownerName} imageUrl={detail.ownerAvatarUrl} size="md" />
                 <div>
                     {detail.ownerUserId ? (
                         <Link href={brokerOwnerProfileHref(detail.ownerUserId)}>
