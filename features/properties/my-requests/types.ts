@@ -54,6 +54,15 @@ export type RequestItem = {
     areaSqft: number;
     bhk: number;
     bathrooms?: number | null;
+    balconies?: number | null;
+    parkingSpaces?: number | null;
+    floorNumber?: number | null;
+    facing?: string | null;
+    propertyCondition?: string | null;
+    propertyAge?: string | null;
+    suitableFor?: string[] | null;
+    furnishing?: string | null;
+    listedAt?: string | null;
     /** Ask in INR — rent when `isRent`, else sale. */
     amountInr: number;
     isRent: boolean;
@@ -121,6 +130,7 @@ export type RequestsViewFilter =
 export type DealListingType = "" | "sale" | "rent";
 
 export type RequestsFilters = {
+    propertyFilters?: import("@/lib/properties/list-criteria").PropertyListCriteria;
     q: string;
     view: RequestsViewFilter;
     sort: RequestSort;

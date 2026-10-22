@@ -1,4 +1,10 @@
 import {
+    parsePropertyCriteria,
+    propertyCriteriaCount,
+    serializePropertyCriteria,
+} from "@/lib/properties/list-criteria";
+
+import {
     type DealListingType,
     DEFAULT_REQUESTS_FILTERS,
     type RequestsFilters,
@@ -36,6 +42,7 @@ export function parseRequestsFilters(record: Record<string, string | string[]>):
 
     return {
         q: first(record.q),
+        propertyFilters: parsePropertyCriteria(first(record.propertyFilters)),
         view: VIEWS.includes(view) ? view : DEFAULT_REQUESTS_FILTERS.view,
         sort: SORTS.includes(sort) ? sort : DEFAULT_REQUESTS_FILTERS.sort,
         type: TYPES.includes(type) ? type : DEFAULT_REQUESTS_FILTERS.type,
@@ -56,9 +63,15 @@ export function serializeRequestsFilters(filters: RequestsFilters): URLSearchPar
     if (filters.limit !== DEFAULT_REQUESTS_FILTERS.limit)
         params.set("limit", String(filters.limit));
 
+    serializePropertyCriteria(params, filters.propertyFilters);
     return params;
 }
 
 export function hasActiveRequestsFilters(filters: RequestsFilters): boolean {
-    return filters.q.trim().length > 0 || filters.view !== "all" || Boolean(filters.type);
+    return (
+        propertyCriteriaCount(filters.propertyFilters) > 0 ||
+        filters.q.trim().length > 0 ||
+        filters.view !== "all" ||
+        Boolean(filters.type)
+    );
 }

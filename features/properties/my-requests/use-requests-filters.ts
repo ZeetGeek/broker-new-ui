@@ -15,7 +15,7 @@ import {
     type RequestsFilters,
 } from "@/features/properties/my-requests/types";
 
-const REQUESTS_URL_KEYS = ["q", "view", "sort", "type", "limit"] as const;
+const REQUESTS_URL_KEYS = ["q", "view", "sort", "type", "limit", "propertyFilters"] as const;
 
 function isRequestsFilters(value: unknown): value is RequestsFilters {
     if (typeof value !== "object" || value === null) return false;

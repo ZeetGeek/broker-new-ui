@@ -1,10 +1,10 @@
 "use client";
-
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { myRequestsApi } from "@/lib/api/my-requests";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
+import { propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -64,6 +64,7 @@ export function AcceptedPanel({
                 sort: (filters.sort === "waiting_longest" ? "recent" : filters.sort) as
                     "recent" | "oldest" | "price_desc" | "price_asc",
                 type: filters.type,
+                propertyFilters: filters.propertyFilters,
                 page: 1,
                 limit: filters.limit,
             };
@@ -173,7 +174,10 @@ export function AcceptedPanel({
         [runMutation],
     );
 
-    const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
+    const narrowFilters =
+        filters.q.trim().length > 0 ||
+        Boolean(filters.type) ||
+        propertyCriteriaCount(filters.propertyFilters) > 0;
 
     const acceptedTotal = useMemo(
         () => (sentSummary?.counts.approved ?? 0) + (inviteSummary?.counts.accepted ?? 0),
@@ -194,6 +198,7 @@ export function AcceptedPanel({
                         ? "recent"
                         : (filters.sort as "recent" | "oldest" | "price_desc" | "price_asc"),
                 type: filters.type,
+                propertyFilters: filters.propertyFilters,
                 page: 1,
                 limit: filters.limit,
             }}

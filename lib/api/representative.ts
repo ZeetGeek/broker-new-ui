@@ -56,6 +56,15 @@ export type RepresentationItem = {
     propertyBhkConfig?: string | null;
     propertyBedrooms?: number | null;
     propertyBathrooms?: number | null;
+    propertyBalconies?: number | null;
+    propertyParkingSpaces?: number | null;
+    propertyFloorNumber?: number | null;
+    propertyFacing?: string | null;
+    propertyCondition?: string | null;
+    propertyAge?: string | null;
+    propertySuitableFor?: string[] | null;
+    propertyFurnishing?: string | null;
+    propertyListedAt?: string | null;
     propertyAreaSqft?: number | null;
     propertySalePrice?: string | number | null;
     propertyMonthlyRent?: string | number | null;

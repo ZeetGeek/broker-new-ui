@@ -32,6 +32,15 @@ export type InviteItem = {
     areaSqft: number;
     bhk: number;
     bathrooms?: number | null;
+    balconies?: number | null;
+    parkingSpaces?: number | null;
+    floorNumber?: number | null;
+    facing?: string | null;
+    propertyCondition?: string | null;
+    propertyAge?: string | null;
+    suitableFor?: string[] | null;
+    furnishing?: string | null;
+    listedAt?: string | null;
     /** Ask in INR — rent when `isRent`, else sale. */
     amountInr: number;
     isRent: boolean;
@@ -68,6 +77,7 @@ export type InviteItem = {
 };
 
 export type InvitesFilters = {
+    propertyFilters?: import("@/lib/properties/list-criteria").PropertyListCriteria;
     q: string;
     stage: InviteStageFilter;
     sort: InviteSort;

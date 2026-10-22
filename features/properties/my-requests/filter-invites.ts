@@ -1,3 +1,5 @@
+import { matchesPropertyCriteria } from "@/lib/properties/list-criteria";
+
 import type {
     InviteItem,
     InvitesCounts,
@@ -24,7 +26,8 @@ export function filterInvites(items: InviteItem[], filters: InvitesFilters): Inv
         (item) =>
             (filters.stage === "all" || item.stage === filters.stage) &&
             matchesQuery(item, filters.q) &&
-            matchesType(item.isRent, filters.type),
+            matchesType(item.isRent, filters.type) &&
+            matchesPropertyCriteria(item, filters.propertyFilters),
     );
 }
 

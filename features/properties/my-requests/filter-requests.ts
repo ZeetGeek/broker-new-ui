@@ -1,3 +1,5 @@
+import { matchesPropertyCriteria } from "@/lib/properties/list-criteria";
+
 import {
     type RequestItem,
     type RequestsCounts,
@@ -47,7 +49,8 @@ export function filterRequests(items: RequestItem[], filters: RequestsFilters): 
         (item) =>
             matchesView(item, filters.view) &&
             matchesQuery(item, filters.q) &&
-            matchesType(item.isRent, filters.type),
+            matchesType(item.isRent, filters.type) &&
+            matchesPropertyCriteria(item, filters.propertyFilters),
     );
 }
 

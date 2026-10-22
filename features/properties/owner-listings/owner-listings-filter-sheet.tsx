@@ -4,9 +4,16 @@ import { useCallback, useMemo, useState } from "react";
 
 import { formatInr } from "@/lib/format/inr";
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
+import {
+    EMPTY_PROPERTY_CRITERIA,
+    normalizePropertyCriteria,
+    propertyCriteriaCount,
+    type PropertyListCriteria,
+} from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { PropertyFilterFields } from "@/components/shared/property-filter-fields";
 import {
     type AppIcon,
     Armchair,
@@ -524,7 +531,12 @@ export type OwnerListingsFilterSheetProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     appliedFilters: OwnerListingsFilters;
-    onApply: (patch: Partial<OwnerListingsFilters>) => void;
+    onApply: (
+        patch: Partial<OwnerListingsFilters>,
+        discoveryFilters?: PropertyListCriteria,
+    ) => void;
+    showDiscoveryFilters?: boolean;
+    discoveryFilters?: Partial<PropertyListCriteria>;
 };
 
 export function OwnerListingsFilterSheet({
@@ -532,8 +544,13 @@ export function OwnerListingsFilterSheet({
     onOpenChange,
     appliedFilters,
     onApply,
+    showDiscoveryFilters = false,
+    discoveryFilters,
 }: OwnerListingsFilterSheetProps) {
     const [draft, setDraft] = useState(() => extractSheetFilters(appliedFilters));
+    const [draftDiscovery, setDraftDiscovery] = useState(() =>
+        normalizePropertyCriteria(discoveryFilters),
+    );
     const [hasContentBelow, setHasContentBelow] = useState(false);
     const scrollRef = useCallback((node: HTMLDivElement | null) => {
         if (!node) return;
@@ -553,7 +570,7 @@ export function OwnerListingsFilterSheet({
         };
     }, []);
     const [draftSource, setDraftSource] = useState({ open: false, appliedFilters });
-    const lookingFor = appliedFilters.type;
+    const lookingFor = showDiscoveryFilters ? draftDiscovery.type : appliedFilters.type;
     const showSaleCommission = lookingFor !== "rent";
     const showRentCommission = lookingFor !== "sale";
 
@@ -565,6 +582,7 @@ export function OwnerListingsFilterSheet({
             next.propertyConditions = [...next.propertyConditions, "ready_to_move"];
         }
         setDraft(next);
+        setDraftDiscovery(normalizePropertyCriteria(discoveryFilters));
     } else if (!open && draftSource.open) {
         setDraftSource({ open: false, appliedFilters });
     }
@@ -572,11 +590,20 @@ export function OwnerListingsFilterSheet({
     const visibility = useMemo(
         () =>
             ownerListingsFilterVisibility({
-                category: appliedFilters.category,
-                propertyType: appliedFilters.propertyType,
+                category: showDiscoveryFilters ? draftDiscovery.category : appliedFilters.category,
+                propertyType: showDiscoveryFilters
+                    ? draftDiscovery.propertyType
+                    : appliedFilters.propertyType,
                 propertyConditions: draft.propertyConditions,
             }),
-        [appliedFilters.category, appliedFilters.propertyType, draft.propertyConditions],
+        [
+            appliedFilters.category,
+            appliedFilters.propertyType,
+            draft.propertyConditions,
+            draftDiscovery.category,
+            draftDiscovery.propertyType,
+            showDiscoveryFilters,
+        ],
     );
 
     const saleRange = draftToRange(
@@ -607,9 +634,10 @@ export function OwnerListingsFilterSheet({
             draft.propertyAges.length > 0 ||
             draft.suitableFor.length > 0 ||
             Boolean(draft.furnishing) ||
-            draft.readyToMove
+            draft.readyToMove ||
+            (showDiscoveryFilters && propertyCriteriaCount(draftDiscovery) > 0)
         );
-    }, [draft]);
+    }, [draft, draftDiscovery, showDiscoveryFilters]);
 
     const labelSummary = (
         values: string[],
@@ -695,6 +723,7 @@ export function OwnerListingsFilterSheet({
     ]);
 
     const defaultOpenSections = [
+        ...(showDiscoveryFilters ? ["discovery"] : []),
         ...(showLayoutSection ? ["layout"] : []),
         ...(showMoreSection ? ["more"] : []),
         "deal",
@@ -733,8 +762,20 @@ export function OwnerListingsFilterSheet({
             appliedFilters.listedWithinDays === "7" && draft.listedWithinDays !== "7";
         const readyToMove = draft.propertyConditions.includes("ready_to_move") || draft.readyToMove;
 
+        const normalizedDiscovery = normalizePropertyCriteria(draftDiscovery);
         const patch = stripHiddenOwnerListingsFilters({
             ...appliedFilters,
+            ...(showDiscoveryFilters
+                ? {
+                      type: normalizedDiscovery.type,
+                      min: normalizedDiscovery.min,
+                      max: normalizedDiscovery.max,
+                      minAreaSqft: normalizedDiscovery.minAreaSqft,
+                      maxAreaSqft: normalizedDiscovery.maxAreaSqft,
+                      category: normalizedDiscovery.category,
+                      propertyType: normalizedDiscovery.propertyType,
+                  }
+                : {}),
             listedWithinDays: draft.listedWithinDays,
             minCommissionPercent: draft.minCommissionPercent,
             maxCommissionPercent: draft.maxCommissionPercent,
@@ -760,26 +801,40 @@ export function OwnerListingsFilterSheet({
             cursor: "",
         });
 
-        onApply({
-            listedWithinDays: patch.listedWithinDays,
-            minCommissionPercent: patch.minCommissionPercent,
-            maxCommissionPercent: patch.maxCommissionPercent,
-            minCommissionAmount: patch.minCommissionAmount,
-            maxCommissionAmount: patch.maxCommissionAmount,
-            bhk: patch.bhk,
-            bathrooms: patch.bathrooms,
-            balconies: patch.balconies,
-            parking: patch.parking,
-            floors: patch.floors,
-            facing: patch.facing,
-            propertyConditions: patch.propertyConditions,
-            propertyAges: patch.propertyAges,
-            suitableFor: patch.suitableFor,
-            furnishing: patch.furnishing,
-            readyToMove: patch.readyToMove,
-            newToday: patch.newToday,
-            cursor: "",
-        });
+        onApply(
+            {
+                ...(showDiscoveryFilters
+                    ? {
+                          type: patch.type,
+                          min: patch.min,
+                          max: patch.max,
+                          minAreaSqft: patch.minAreaSqft,
+                          maxAreaSqft: patch.maxAreaSqft,
+                          category: patch.category,
+                          propertyType: patch.propertyType,
+                      }
+                    : {}),
+                listedWithinDays: patch.listedWithinDays,
+                minCommissionPercent: patch.minCommissionPercent,
+                maxCommissionPercent: patch.maxCommissionPercent,
+                minCommissionAmount: patch.minCommissionAmount,
+                maxCommissionAmount: patch.maxCommissionAmount,
+                bhk: patch.bhk,
+                bathrooms: patch.bathrooms,
+                balconies: patch.balconies,
+                parking: patch.parking,
+                floors: patch.floors,
+                facing: patch.facing,
+                propertyConditions: patch.propertyConditions,
+                propertyAges: patch.propertyAges,
+                suitableFor: patch.suitableFor,
+                furnishing: patch.furnishing,
+                readyToMove: patch.readyToMove,
+                newToday: patch.newToday,
+                cursor: "",
+            },
+            showDiscoveryFilters ? normalizedDiscovery : undefined,
+        );
         onOpenChange(false);
     };
 
@@ -791,6 +846,7 @@ export function OwnerListingsFilterSheet({
             commissionSet: prev.commissionSet,
             yourAreas: prev.yourAreas,
         }));
+        if (showDiscoveryFilters) setDraftDiscovery({ ...EMPTY_PROPERTY_CRITERIA });
     };
 
     return (
@@ -854,9 +910,31 @@ export function OwnerListingsFilterSheet({
                               **:data-[slot=accordion-content]:-mx-1
                               **:data-[slot=accordion-content]:border-0
                               **:data-[slot=accordion-content]:px-1
-                              [&_[data-slot=accordion-content]>div]:border-0
+                            [&_[data-slot=accordion-content]>div]:border-0
                             "
                         >
+                            {showDiscoveryFilters ? (
+                                <AccordionItem
+                                    value="discovery"
+                                    className="
+                                      border-0 border-border-warm not-last:border-be
+                                      data-open:bg-transparent
+                                    "
+                                >
+                                    <FilterAccordionTrigger
+                                        title="Property search"
+                                        description="Narrow these deals by location, budget and property type."
+                                    />
+                                    <AccordionContent className="px-0 pbe-0">
+                                        <div className="border-0 pbe-6">
+                                            <PropertyFilterFields
+                                                value={draftDiscovery}
+                                                onChange={setDraftDiscovery}
+                                            />
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ) : null}
                             {showLayoutSection ? (
                                 <AccordionItem
                                     value="layout"

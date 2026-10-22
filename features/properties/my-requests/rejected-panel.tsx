@@ -1,11 +1,11 @@
 "use client";
-
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { myRequestsApi } from "@/lib/api/my-requests";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { representativeApi } from "@/lib/api/representative";
+import { propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -75,6 +75,7 @@ export function RejectedPanel({
                 stage: "declined" as const,
                 sort: inviteSortFromRequestSort(filters.sort),
                 type: filters.type,
+                propertyFilters: filters.propertyFilters,
                 page: 1,
                 limit: filters.limit,
             };
@@ -192,7 +193,10 @@ export function RejectedPanel({
         [runMutation],
     );
 
-    const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
+    const narrowFilters =
+        filters.q.trim().length > 0 ||
+        Boolean(filters.type) ||
+        propertyCriteriaCount(filters.propertyFilters) > 0;
 
     const rejectedTotal = useMemo(
         () => (sentSummary?.counts.declined ?? 0) + (inviteSummary?.counts.declined ?? 0),
@@ -210,6 +214,7 @@ export function RejectedPanel({
                 stage: "declined",
                 sort: inviteSortFromRequestSort(filters.sort),
                 type: filters.type,
+                propertyFilters: filters.propertyFilters,
                 page: 1,
                 limit: filters.limit,
             }}

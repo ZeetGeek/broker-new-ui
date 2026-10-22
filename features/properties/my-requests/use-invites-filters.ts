@@ -1,8 +1,12 @@
 "use client";
-
 import { useCallback, useMemo } from "react";
 
 import { PREF_KEYS } from "@/lib/prefs/keys";
+import {
+    parsePropertyCriteria,
+    propertyCriteriaCount,
+    serializePropertyCriteria,
+} from "@/lib/properties/list-criteria";
 import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
 
 import {
@@ -18,7 +22,7 @@ const SORTS: InviteSort[] = ["recent", "oldest", "price_desc", "price_asc"];
 const TYPES: DealListingType[] = ["", "sale", "rent"];
 const PAGE_SIZES = [10, 20, 50];
 
-const INVITES_URL_KEYS = ["q", "stage", "sort", "type", "limit"] as const;
+const INVITES_URL_KEYS = ["q", "stage", "sort", "type", "limit", "propertyFilters"] as const;
 
 function parseRecord(record: Record<string, string>): InvitesFilters {
     const stage = record.stage as InviteStageFilter;
@@ -29,6 +33,7 @@ function parseRecord(record: Record<string, string>): InvitesFilters {
 
     return {
         q: record.q ?? "",
+        propertyFilters: parsePropertyCriteria(record.propertyFilters),
         stage: STAGES.includes(stage) ? stage : DEFAULT_INVITES_FILTERS.stage,
         sort: SORTS.includes(sort) ? sort : DEFAULT_INVITES_FILTERS.sort,
         type: TYPES.includes(type) ? type : DEFAULT_INVITES_FILTERS.type,
@@ -47,6 +52,7 @@ function serialize(filters: InvitesFilters): URLSearchParams {
     if (filters.page > 1) params.set("page", String(filters.page));
     if (filters.limit !== DEFAULT_INVITES_FILTERS.limit) params.set("limit", String(filters.limit));
 
+    serializePropertyCriteria(params, filters.propertyFilters);
     return params;
 }
 
@@ -118,7 +124,10 @@ export function useInvitesFilters() {
         patchFilters,
         clearFilters,
         hasActiveFilters:
-            resolved.q.trim().length > 0 || resolved.stage !== "all" || Boolean(resolved.type),
+            resolved.q.trim().length > 0 ||
+            propertyCriteriaCount(resolved.propertyFilters) > 0 ||
+            resolved.stage !== "all" ||
+            Boolean(resolved.type),
         filterSignature,
         scopeReady: ready,
     };

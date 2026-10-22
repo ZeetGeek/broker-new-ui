@@ -1,9 +1,9 @@
 "use client";
-
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 
 import { myRequestsApi } from "@/lib/api/my-requests";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
+import { propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -77,6 +77,7 @@ export function CancelledPanel({
                     stage: "ended",
                     sort: inviteSortFromRequestSort(filters.sort),
                     type: filters.type,
+                    propertyFilters: filters.propertyFilters,
                     page: 1,
                     limit: filters.limit,
                 }),
@@ -147,7 +148,10 @@ export function CancelledPanel({
 
     const handleRefresh = useCallback(() => setRevision((prev) => prev + 1), []);
 
-    const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
+    const narrowFilters =
+        filters.q.trim().length > 0 ||
+        Boolean(filters.type) ||
+        propertyCriteriaCount(filters.propertyFilters) > 0;
 
     const cancelledTotal = useMemo(
         () => (sentSummary?.counts.ended ?? 0) + (inviteSummary?.counts.ended ?? 0),
@@ -165,6 +169,7 @@ export function CancelledPanel({
                 stage: "ended",
                 sort: inviteSortFromRequestSort(filters.sort),
                 type: filters.type,
+                propertyFilters: filters.propertyFilters,
                 page: 1,
                 limit: filters.limit,
             }}

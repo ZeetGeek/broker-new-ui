@@ -4,33 +4,15 @@ import {
     type PropertyCategory,
     type PropertyType,
 } from "@/constants/property";
+import { DEFAULT_PROPERTY_DRAFT } from "@/lib/schemas/property";
+import { derive } from "@/lib/visibility/derive";
+import { FIELD_RULES } from "@/lib/visibility/rules";
 
 import type {
     OwnerListingCategory,
     OwnerListingPropertyType,
     OwnerListingsFilters,
 } from "@/features/properties/owner-listings/types";
-
-/** Plot / land subtypes from the Add Property form (`lib/visibility/derive.ts`). */
-const PLOT_SUBTYPES = new Set<string>([
-    "residential_plot",
-    "commercial_plot",
-    "industrial_plot",
-    "agricultural_land",
-    "farm_land",
-    "na_plot",
-    "plot",
-    "agricultural",
-]);
-
-/** Independent homes — floor number is not an in-building dim (`derive.ts`). */
-const INDEPENDENT_SUBTYPES = new Set<string>([
-    "independent_house",
-    "villa",
-    "row_house",
-    "farm_house",
-    "bungalow",
-]);
 
 const LEGACY_COARSE_TYPES = new Set<string>([
     "apartment",
@@ -95,28 +77,54 @@ export function ownerListingsFilterVisibility(input: {
     propertyType: OwnerListingPropertyType | string | "";
     propertyConditions?: string[];
 }): OwnerListingsFilterVisibility {
-    const category = input.category;
-    const subtype = input.propertyType;
-    const isPlot =
-        category === "land" ||
-        category === "agricultural" ||
-        (Boolean(subtype) && PLOT_SUBTYPES.has(subtype));
-    const isIndependent = Boolean(subtype) && INDEPENDENT_SUBTYPES.has(subtype);
-    const isInBuilding = !isPlot && !isIndependent;
-    const underConstructionSelected = (input.propertyConditions ?? []).some(
-        (value) => value === "under_construction" || value === "new_launch",
-    );
+    const aliases: Record<string, string> = {
+        office: "office_space",
+        plot: "residential_plot",
+        agricultural: "agricultural_land",
+        one_rk: "1rk",
+    };
+    const requestedSubtype = aliases[input.propertyType] ?? input.propertyType;
+    const category =
+        input.category || categoryForSubtype(requestedSubtype) || ("residential" as const);
+    const allowedTypes = PROPERTY_TYPES[category as PropertyCategory] as readonly string[];
+    const propertyType = allowedTypes.includes(requestedSubtype)
+        ? requestedSubtype
+        : (allowedTypes[0] ?? DEFAULT_PROPERTY_DRAFT.basics.propertyType);
+    const propertyCondition =
+        (input.propertyConditions ?? []).find((value) =>
+            ["ready_to_move", "under_construction", "new_launch"].includes(value),
+        ) ?? "";
+    const values = {
+        ...DEFAULT_PROPERTY_DRAFT,
+        basics: {
+            ...DEFAULT_PROPERTY_DRAFT.basics,
+            category,
+            propertyType,
+        },
+        details: {
+            ...DEFAULT_PROPERTY_DRAFT.details,
+            propertyCondition,
+        },
+    };
+    const flags = derive(values);
+    const isVisible = (path: keyof typeof FIELD_RULES) => {
+        const rule = FIELD_RULES[path] as {
+            visible?: (derived: typeof flags, draft: typeof values) => boolean;
+        };
+        return rule.visible?.(flags, values) ?? true;
+    };
 
-    const showBhk = !isPlot && (category === "" || category === "residential");
-    const showBathrooms = !isPlot;
-    const showBalconies = !isPlot && (category === "" || category === "residential");
-    const showParking = !isPlot;
-    const showFloors = isInBuilding && (category === "" || !isPlot);
-    const showFacing = true;
-    const showFurnishing = !isPlot;
-    const showPropertyCondition = !isPlot;
-    const showPropertyAge = !isPlot && !underConstructionSelected;
-    const showSuitableFor = category === "" || category === "commercial";
+    const isPlot = flags.isPlot;
+    const showBhk = isVisible("details.bedrooms");
+    const showBathrooms = isVisible("details.bathrooms");
+    const showBalconies = isVisible("details.balconies");
+    const showParking = isVisible("details.coveredParking");
+    const showFloors = isVisible("details.floorNumber");
+    const showFacing = isVisible("details.facing");
+    const showFurnishing = isVisible("furnishing.status");
+    const showPropertyCondition = isVisible("details.propertyCondition");
+    const showPropertyAge = isVisible("details.propertyAge");
+    const showSuitableFor = isVisible("details.commercial.suitableFor");
     const showReadyToMove = showPropertyCondition;
 
     return {
