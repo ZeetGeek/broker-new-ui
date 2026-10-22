@@ -12,18 +12,28 @@ import {
     Armchair,
     Bath,
     Bed,
+    Briefcase,
     Building2,
     CalendarDays,
     Car,
     Check,
     Clock,
     Compass,
+    Dumbbell,
     Fence,
     Home,
+    Hospital,
     KeyRound,
+    Landmark,
     Minus,
     Plus,
+    School,
+    Scissors,
+    ShoppingBag,
     Sofa,
+    Store,
+    Utensils,
+    Warehouse,
     XIcon,
 } from "@/components/shared/icons";
 import {
@@ -446,6 +456,19 @@ function ChipGroup({
         unfurnished: Home,
     };
     const Icon = groupIcons[label];
+    const suitableForIcons: Record<string, AppIcon> = {
+        office: Briefcase,
+        retail: ShoppingBag,
+        clinic: Hospital,
+        restaurant: Utensils,
+        showroom: Store,
+        warehouse: Warehouse,
+        salon: Scissors,
+        gym: Dumbbell,
+        bank: Landmark,
+        school: School,
+        hostel: Bed,
+    };
     return (
         <div role="group" aria-label={label} className="flex flex-col gap-3 border-0">
             <span className="flex items-center gap-2.5 border-0 text-sm font-medium text-ink">
@@ -478,11 +501,13 @@ function ChipGroup({
                             icon={
                                 isFurnishing
                                     ? furnishingIcons[option.value]
-                                    : label === "Condition"
-                                      ? option.value === "ready_to_move"
-                                          ? KeyRound
-                                          : Building2
-                                      : Icon
+                                    : label === "Suitable for"
+                                      ? suitableForIcons[option.value]
+                                      : label === "Condition"
+                                        ? option.value === "ready_to_move"
+                                            ? KeyRound
+                                            : Building2
+                                        : Icon
                             }
                             onClick={() =>
                                 single ? onSelect?.(option.value) : onToggle?.(option.value)
