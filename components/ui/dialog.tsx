@@ -3,12 +3,12 @@
 import * as React from "react";
 
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
-import { XIcon } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
-import { Kbd } from "@/components/ui/kbd";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { XIcon } from "@/components/shared/icons";
+
+import styles from "./dialog.module.css";
 
 /** Padding + close-button inset. Change once — both stay in sync. */
 const DIALOG_PAD = "1.5rem";
@@ -65,40 +65,33 @@ function DialogPopup({
                 className={cn(
                     `
                       t-modal fixed inset-s-1/2 inset-bs-1/2 z-50 grid -translate-1/2 gap-4
-                      rounded-card border border-border-warm bg-surface p-(--dialog-pad) shadow-xl
-                      outline-none inline-full max-inline-md
+                      rounded-[26px] border border-surface bg-surface p-(--dialog-pad)
+                      shadow-[0_16px_56px_-16px_rgb(0_0_0/0.28)] outline-none
+                      inline-[calc(100vw-2rem)] max-inline-md
                     `,
+                    styles.popup,
                     className,
                 )}
                 {...props}
             >
                 {children}
                 {showCloseButton ? (
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <DialogClose
-                                    className="
-                                      absolute inset-e-(--dialog-pad) inset-bs-(--dialog-pad) flex
-                                      items-center justify-center text-ink-muted
-                                      transition-[color,transform] duration-160 ease-out
-                                      outline-none
-                                      hover:text-ink
+                    <DialogClose
+                        className="
+                                      absolute inset-e-[calc(var(--dialog-pad)-0.75rem)]
+                                      inset-bs-[calc(var(--dialog-pad)-0.75rem)] flex items-center
+                                      justify-center rounded-full text-ink-muted
+                                      transition-[color,background-color,transform] duration-160
+                                      ease-out outline-none block-9 inline-9
+                                      hover:bg-ink/5 hover:text-ink
                                       focus-visible:ring-2 focus-visible:ring-brand
                                       focus-visible:ring-offset-2 focus-visible:ring-offset-surface
                                       active:scale-[0.94]
                                     "
-                                />
-                            }
-                        >
-                            <XIcon className="block-4.5 inline-4.5" strokeWidth={2} aria-hidden />
-                            <span className="sr-only">Close</span>
-                        </TooltipTrigger>
-                        <TooltipContent side="inline-start">
-                            Close
-                            <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
-                        </TooltipContent>
-                    </Tooltip>
+                    >
+                        <XIcon className="block-4 inline-4" strokeWidth={1.7} aria-hidden />
+                        <span className="sr-only">Close</span>
+                    </DialogClose>
                 ) : null}
             </DialogPrimitive.Popup>
         </DialogPortal>
@@ -110,10 +103,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
         <div
             data-slot="dialog-header"
             className={cn(
-                `
-                  flex flex-col gap-1.5 pe-[calc(var(--dialog-pad)+1.25rem)] text-center
-                  sm:text-start
-                `,
+                `flex flex-col gap-1.5 pe-[calc(var(--dialog-pad)+1.25rem)] text-start`,
                 className,
             )}
             {...props}
@@ -125,7 +115,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
     return (
         <DialogPrimitive.Title
             data-slot="dialog-title"
-            className={cn("font-display text-lg font-medium text-ink", className)}
+            className={cn("font-display text-lg font-semibold tracking-tight text-ink", className)}
             {...props}
         />
     );

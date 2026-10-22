@@ -1,21 +1,38 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
-import SimpleBar from "simplebar-react";
+import { useCallback, useMemo, useState } from "react";
 
 import { formatInr } from "@/lib/format/inr";
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { XIcon } from "@/components/shared/icons";
+import {
+    type AppIcon,
+    Armchair,
+    Bath,
+    Bed,
+    Building2,
+    CalendarDays,
+    Car,
+    Check,
+    Clock,
+    Compass,
+    Fence,
+    Home,
+    KeyRound,
+    Minus,
+    Plus,
+    Sofa,
+    XIcon,
+} from "@/components/shared/icons";
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogClose,
@@ -23,9 +40,7 @@ import {
     DialogPopup,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Kbd } from "@/components/ui/kbd";
 import { RangeSlider } from "@/components/ui/slider";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import {
     FACING_OPTIONS,
@@ -45,8 +60,6 @@ import {
     RENT_COMMISSION_RANGE,
     SALE_COMMISSION_RANGE,
 } from "@/features/properties/owner-listings/types";
-
-import "simplebar-react/dist/simplebar.min.css";
 
 const LISTED_OPTIONS = [
     { value: "", label: "Any time" },
@@ -164,32 +177,127 @@ function ChoiceChip({
     label,
     active,
     onClick,
+    icon: Icon,
+    tile = false,
 }: {
     label: string;
     active: boolean;
     onClick: () => void;
+    icon?: AppIcon;
+    tile?: boolean;
 }) {
     return (
-        <button
+        <Button
             type="button"
+            variant="outline"
             aria-pressed={active}
             onClick={onClick}
             className={cn(
                 `
-                  inline-flex items-center justify-center rounded-full border px-4 py-2.5 text-sm
-                  font-semibold whitespace-nowrap
+                  relative gap-2 rounded-full px-4 py-3 text-sm font-normal shadow-none block-auto
+                  min-block-11
                 `,
                 SELECT_TRANSITION,
                 active
-                    ? "border-brand bg-brand-soft text-brand-text"
+                    ? `
+                      border-brand bg-brand-soft font-medium text-brand-text ring-1 ring-brand
+                      hover:bg-brand-soft hover:text-brand-text
+                    `
                     : `
-                      border-border-warm bg-transparent text-ink
-                      hover:border-brand/40
+                      border-border-warm bg-surface text-ink
+                      hover:border-ink/40 hover:bg-surface-muted hover:text-ink
+                    `,
+                tile &&
+                    `
+                      flex-1 flex-col items-start justify-between gap-4 rounded-inner p-4 text-start
+                      whitespace-normal inline-full min-block-24
                     `,
             )}
         >
+            {Icon ? (
+                <Icon
+                    className={tile ? "block-6 inline-6" : "block-5 inline-5"}
+                    strokeWidth={1.6}
+                    aria-hidden
+                />
+            ) : null}
             {label}
-        </button>
+            {tile && active ? (
+                <Check className="absolute inset-e-2 inset-bs-2 block-3.5 inline-3.5" aria-hidden />
+            ) : null}
+        </Button>
+    );
+}
+
+function CountFilter({
+    label,
+    icon: Icon,
+    options,
+    selected,
+    onChange,
+}: {
+    label: string;
+    icon: AppIcon;
+    options: readonly { value: string; label: string }[];
+    selected: string[];
+    onChange: (values: string[]) => void;
+}) {
+    const index = options.findIndex((option) => selected.includes(option.value));
+    const current =
+        selected.length > 1
+            ? "Multiple"
+            : index < 0
+              ? "Any"
+              : options[index].label.replace(" BHK", "");
+    const step = (direction: -1 | 1) => {
+        const next = index + direction;
+        onChange(next < 0 ? [] : [options[Math.min(next, options.length - 1)].value]);
+    };
+
+    return (
+        <div role="group" aria-label={label} className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2.5 text-sm font-medium text-ink">
+                <Icon className="shrink-0 block-5 inline-5" strokeWidth={1.5} aria-hidden />
+                {label}
+            </span>
+            <div className="flex shrink-0 items-center gap-1">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label={`Decrease ${label.toLowerCase()}`}
+                    disabled={selected.length === 0}
+                    onClick={() => step(-1)}
+                    className="
+                      rounded-full border-border-warm bg-surface shadow-none block-11 inline-11
+                      hover:bg-surface-muted
+                    "
+                >
+                    <Minus aria-hidden />
+                </Button>
+                <span
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className="text-center text-sm text-ink tabular-nums inline-16"
+                >
+                    {current}
+                </span>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label={`Increase ${label.toLowerCase()}`}
+                    disabled={index === options.length - 1 && selected.length === 1}
+                    onClick={() => step(1)}
+                    className="
+                      rounded-full border-border-warm bg-surface shadow-none block-11 inline-11
+                      hover:bg-surface-muted
+                    "
+                >
+                    <Plus aria-hidden />
+                </Button>
+            </div>
+        </div>
     );
 }
 
@@ -209,33 +317,78 @@ function CommissionRange({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
             <div className="flex items-baseline justify-between gap-3">
-                <span className="text-sm font-semibold text-ink">{label}</span>
+                <span className="text-sm font-medium text-ink">{label}</span>
                 <span className="tabular text-sm font-semibold text-brand-text">
                     {isAny ? "Any" : `${minLabel} – ${maxLabel}`}
                 </span>
             </div>
-            {children}
-            <p className="body-sm text-ink-muted">{boundsLabel}</p>
+            <div className="px-1 py-2">{children}</div>
+            <dl className="flex items-center justify-between gap-4">
+                <div className="flex flex-col gap-1.5">
+                    <dt className="text-xs text-ink-muted">Minimum</dt>
+                    <dd
+                        className="
+                          rounded-full border border-border-warm px-5 py-2.5 text-sm font-medium
+                          text-ink tabular-nums
+                        "
+                    >
+                        {minLabel}
+                    </dd>
+                </div>
+                <div className="flex flex-col items-end gap-1.5">
+                    <dt className="text-xs text-ink-muted">Maximum</dt>
+                    <dd
+                        className="
+                          rounded-full border border-border-warm px-5 py-2.5 text-sm font-medium
+                          text-ink tabular-nums
+                        "
+                    >
+                        {maxLabel}
+                    </dd>
+                </div>
+            </dl>
+            <span className="sr-only">Available range: {boundsLabel}</span>
         </div>
     );
 }
 
-function FilterAccordionTrigger({ title, summary }: { title: string; summary?: string }) {
+function FilterAccordionTrigger({
+    title,
+    summary,
+    description,
+}: {
+    title: string;
+    summary?: string;
+    description?: string;
+}) {
     return (
         <AccordionTrigger
             className="
-              gap-3 rounded-none px-0 py-5 text-ink hover:no-underline
+              items-center gap-3 rounded-none border-0 px-0 py-5 text-ink
+              hover:no-underline
               focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
               focus-visible:ring-offset-surface
               data-panel-open:text-ink
             "
         >
-            <span className="flex flex-1 flex-col items-start gap-0.5 min-inline-0">
-                <span className="font-display text-base font-medium">{title}</span>
+            <span className="flex flex-1 flex-col items-start gap-1.5 min-inline-0">
+                <span className="font-display text-lg font-semibold tracking-tight">{title}</span>
+                {description ? (
+                    <span className="hidden text-xs/relaxed font-normal text-ink-muted group-aria-expanded/accordion-trigger:block">
+                        {description}
+                    </span>
+                ) : null}
                 {summary ? (
-                    <span className="body-sm truncate font-normal text-ink-muted">{summary}</span>
+                    <span
+                        className="
+                          body-sm font-normal text-ink-muted
+                          group-aria-expanded/accordion-trigger:hidden
+                        "
+                    >
+                        {summary}
+                    </span>
                 ) : null}
             </span>
         </AccordionTrigger>
@@ -260,10 +413,37 @@ function ChipGroup({
     value?: string;
     onSelect?: (value: string) => void;
 }) {
+    const isFurnishing = label === "Furnishing";
+    const groupIcons: Record<string, AppIcon> = {
+        Floor: Building2,
+        Facing: Compass,
+        Listed: CalendarDays,
+        Age: Clock,
+    };
+    const furnishingIcons: Record<string, AppIcon> = {
+        "": Home,
+        furnished: Sofa,
+        semi: Armchair,
+        unfurnished: Home,
+    };
+    const Icon = groupIcons[label];
     return (
-        <div className="flex flex-col gap-2">
-            <span className="body-sm font-medium text-ink">{label}</span>
-            <div className="flex flex-wrap gap-2">
+        <div role="group" aria-label={label} className="flex flex-col gap-3 border-0">
+            <span className="flex items-center gap-2.5 border-0 text-sm font-medium text-ink">
+                {label === "BHK"
+                    ? "Bedrooms (BHK)"
+                    : label === "Age"
+                      ? "Property age"
+                      : label === "Listed"
+                        ? "Listed within"
+                        : label}
+            </span>
+            <div
+                className={cn(
+                    "flex flex-wrap gap-2 border-0",
+                    isFurnishing && "grid grid-cols-2 sm:grid-cols-4",
+                )}
+            >
                 {options.map((option) => {
                     const active = single
                         ? value === option.value
@@ -271,8 +451,20 @@ function ChipGroup({
                     return (
                         <ChoiceChip
                             key={option.value || option.label}
-                            label={option.label}
+                            label={
+                                label === "BHK" ? option.label.replace(" BHK", "") : option.label
+                            }
                             active={active}
+                            tile={isFurnishing}
+                            icon={
+                                isFurnishing
+                                    ? furnishingIcons[option.value]
+                                    : label === "Condition"
+                                      ? option.value === "ready_to_move"
+                                          ? KeyRound
+                                          : Building2
+                                      : Icon
+                            }
                             onClick={() =>
                                 single ? onSelect?.(option.value) : onToggle?.(option.value)
                             }
@@ -298,6 +490,24 @@ export function OwnerListingsFilterSheet({
     onApply,
 }: OwnerListingsFilterSheetProps) {
     const [draft, setDraft] = useState(() => extractSheetFilters(appliedFilters));
+    const [hasContentBelow, setHasContentBelow] = useState(false);
+    const scrollRef = useCallback((node: HTMLDivElement | null) => {
+        if (!node) return;
+
+        const updateScrollState = () => {
+            setHasContentBelow(node.scrollHeight - node.clientHeight - node.scrollTop > 1);
+        };
+        const observer = new ResizeObserver(updateScrollState);
+        observer.observe(node);
+        if (node.firstElementChild) observer.observe(node.firstElementChild);
+        node.addEventListener("scroll", updateScrollState, { passive: true });
+        updateScrollState();
+
+        return () => {
+            observer.disconnect();
+            node.removeEventListener("scroll", updateScrollState);
+        };
+    }, []);
     const [draftSource, setDraftSource] = useState({ open: false, appliedFilters });
     const lookingFor = appliedFilters.type;
     const showSaleCommission = lookingFor !== "rent";
@@ -440,35 +650,11 @@ export function OwnerListingsFilterSheet({
         showSaleCommission,
     ]);
 
-    const defaultOpenSections = useMemo(() => {
-        const openKeys: string[] = [];
-        const layoutActive =
-            draft.bhk.length > 0 ||
-            draft.bathrooms.length > 0 ||
-            draft.balconies.length > 0 ||
-            draft.parking.length > 0 ||
-            draft.floors.length > 0;
-        const moreActive =
-            Boolean(draft.furnishing) ||
-            draft.propertyConditions.length > 0 ||
-            draft.propertyAges.length > 0 ||
-            draft.facing.length > 0 ||
-            draft.suitableFor.length > 0;
-        const dealActive =
-            Boolean(draft.listedWithinDays) ||
-            Boolean(draft.minCommissionPercent) ||
-            Boolean(draft.maxCommissionPercent) ||
-            Boolean(draft.minCommissionAmount) ||
-            Boolean(draft.maxCommissionAmount);
-
-        if (showLayoutSection && layoutActive) openKeys.push("layout");
-        if (showMoreSection && moreActive) openKeys.push("more");
-        if (dealActive) openKeys.push("deal");
-        if (openKeys.length > 0) return openKeys;
-        if (showLayoutSection) return ["layout"];
-        if (showMoreSection) return ["more"];
-        return ["deal"];
-    }, [draft, showLayoutSection, showMoreSection]);
+    const defaultOpenSections = [
+        ...(showLayoutSection ? ["layout"] : []),
+        ...(showMoreSection ? ["more"] : []),
+        "deal",
+    ];
 
     const updateDraft = (patch: Partial<OwnerListingsSheetFilters>) => {
         setDraft((prev) => ({ ...prev, ...patch }));
@@ -570,348 +756,338 @@ export function OwnerListingsFilterSheet({
                 className={cn(
                     `
                       flex flex-col gap-0 overflow-hidden border-border-warm bg-surface p-0
-                      block-[min(90dvh,calc(100%-1.5rem))]
-                      inline-[min(36rem,calc(100vw-1.5rem))]
-                      max-inline-[min(36rem,calc(100vw-1.5rem))]
-                      sm:inline-[min(36rem,calc(100vw-3rem))]
-                      sm:max-inline-[min(36rem,calc(100vw-3rem))]
+                      block-[min(90dvh,calc(100%-1.5rem))] inline-[min(40rem,calc(100vw-1rem))]
+                      max-inline-[min(40rem,calc(100vw-1rem))]
+                      sm:inline-[min(40rem,calc(100vw-3rem))]
+                      sm:max-inline-[min(40rem,calc(100vw-3rem))]
                     `,
                 )}
             >
                 <DialogHeader
                     className="
-                      relative shrink-0 flex-row items-center justify-center border-be
-                      border-border-warm bg-surface px-5 py-4 text-center
-                      sm:px-6 sm:py-5
+                      relative shrink-0 flex-row items-center justify-start border-be
+                      border-border-warm bg-surface px-5 py-4 text-start
+                      sm:px-8 sm:py-5
                     "
                 >
-                    <DialogTitle className="font-display text-base font-medium text-ink sm:text-lg">
+                    <DialogTitle className="font-display text-lg font-semibold text-ink">
                         Filters
                     </DialogTitle>
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <DialogClose
-                                    className="
-                                      absolute end-4 top-1/2 flex shrink-0 -translate-y-1/2
-                                      items-center justify-center rounded-control border
-                                      border-border-warm bg-surface text-ink-muted
-                                      transition-[background-color,border-color,color,transform]
-                                      duration-160 block-10 inline-10
-                                      hover:border-brand/40 hover:bg-brand-soft
-                                      hover:text-brand-text
-                                      focus-visible:ring-2 focus-visible:ring-brand
-                                      focus-visible:ring-offset-2 focus-visible:ring-offset-surface
-                                      active:scale-[0.94]
-                                      sm:end-5
-                                    "
-                                >
-                                    <XIcon
-                                        className="block-4.5 inline-4.5"
-                                        strokeWidth={2}
-                                        aria-hidden
-                                    />
-                                    <span className="sr-only">Close</span>
-                                </DialogClose>
-                            }
-                        />
-                        <TooltipContent side="inline-start">
-                            Close
-                            <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
-                        </TooltipContent>
-                    </Tooltip>
+                    <DialogClose
+                        className="
+                          absolute inset-e-4 inset-bs-1/2 flex shrink-0 -translate-y-1/2
+                          items-center justify-center rounded-control border border-border-warm
+                          bg-surface text-ink-muted
+                          transition-[background-color,border-color,color,transform] duration-160
+                          block-9 inline-9
+                          hover:border-ink/20 hover:bg-ink/5 hover:text-ink
+                          focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
+                          focus-visible:ring-offset-surface
+                          active:scale-[0.94]
+                          sm:inset-e-5
+                        "
+                    >
+                        <XIcon className="block-4 inline-4" strokeWidth={2} aria-hidden />
+                        <span className="sr-only">Close</span>
+                    </DialogClose>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-hidden bg-surface min-block-0">
-                    <SimpleBar
-                        className="app-modal-simplebar block-full"
-                        style={{ maxHeight: "100%", height: "100%" }}
-                        autoHide={false}
-                    >
-                        <div className="px-5 sm:px-6">
-                            <Accordion
-                                key={open ? "open" : "closed"}
-                                multiple
-                                defaultValue={defaultOpenSections}
-                                className="
-                                  rounded-none border-0
-                                  [&_[data-slot=accordion-content]]:px-0
-                                "
-                            >
-                                {showLayoutSection ? (
-                                    <AccordionItem
-                                        value="layout"
-                                        className="border-be border-border-warm data-open:bg-transparent"
-                                    >
-                                        <FilterAccordionTrigger
-                                            title="Rooms & layout"
-                                            summary={layoutSummary}
-                                        />
-                                        <AccordionContent className="px-0">
-                                            <div className="flex flex-col gap-4 pbe-5">
-                                                {visibility.showBhk ? (
-                                                    <ChipGroup
-                                                        label="BHK"
-                                                        options={BHK_OPTIONS}
-                                                        selected={draft.bhk}
-                                                        onToggle={(value) =>
-                                                            updateDraft({
-                                                                bhk: toggleListValue(
-                                                                    draft.bhk,
-                                                                    value,
-                                                                ),
-                                                            })
-                                                        }
-                                                    />
-                                                ) : null}
-                                                {visibility.showBathrooms ? (
-                                                    <ChipGroup
-                                                        label="Bathrooms"
-                                                        options={BATHROOM_OPTIONS}
-                                                        selected={draft.bathrooms}
-                                                        onToggle={(value) =>
-                                                            updateDraft({
-                                                                bathrooms: toggleListValue(
-                                                                    draft.bathrooms,
-                                                                    value,
-                                                                ),
-                                                            })
-                                                        }
-                                                    />
-                                                ) : null}
-                                                {visibility.showBalconies ? (
-                                                    <ChipGroup
-                                                        label="Balconies"
-                                                        options={BALCONY_OPTIONS}
-                                                        selected={draft.balconies}
-                                                        onToggle={(value) =>
-                                                            updateDraft({
-                                                                balconies: toggleListValue(
-                                                                    draft.balconies,
-                                                                    value,
-                                                                ),
-                                                            })
-                                                        }
-                                                    />
-                                                ) : null}
-                                                {visibility.showParking ? (
-                                                    <ChipGroup
-                                                        label="Parking"
-                                                        options={PARKING_OPTIONS}
-                                                        selected={draft.parking}
-                                                        onToggle={(value) =>
-                                                            updateDraft({
-                                                                parking: toggleListValue(
-                                                                    draft.parking,
-                                                                    value,
-                                                                ),
-                                                            })
-                                                        }
-                                                    />
-                                                ) : null}
-                                                {visibility.showFloors ? (
-                                                    <ChipGroup
-                                                        label="Floor"
-                                                        options={FLOOR_OPTIONS}
-                                                        selected={draft.floors}
-                                                        onToggle={(value) =>
-                                                            updateDraft({
-                                                                floors: toggleListValue(
-                                                                    draft.floors,
-                                                                    value,
-                                                                ),
-                                                            })
-                                                        }
-                                                    />
-                                                ) : null}
-                                            </div>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                ) : null}
-
-                                {showMoreSection ? (
-                                    <AccordionItem
-                                        value="more"
-                                        className="border-be border-border-warm data-open:bg-transparent"
-                                    >
-                                        <FilterAccordionTrigger
-                                            title="More filters"
-                                            summary={moreSummary}
-                                        />
-                                        <AccordionContent className="px-0">
-                                            <div className="flex flex-col gap-4 pbe-5">
-                                                {visibility.showFurnishing ? (
-                                                    <ChipGroup
-                                                        label="Furnishing"
-                                                        options={FURNISHING_OPTIONS}
-                                                        single
-                                                        value={draft.furnishing}
-                                                        onSelect={(value) =>
-                                                            updateDraft({
-                                                                furnishing: value as
-                                                                    OwnerListingFurnishing | "",
-                                                            })
-                                                        }
-                                                    />
-                                                ) : null}
-                                                {visibility.showPropertyCondition ? (
-                                                    <ChipGroup
-                                                        label="Condition"
-                                                        options={PROPERTY_CONDITION_OPTIONS}
-                                                        selected={draft.propertyConditions}
-                                                        onToggle={toggleCondition}
-                                                    />
-                                                ) : null}
-                                                {visibility.showPropertyAge ? (
-                                                    <ChipGroup
-                                                        label="Age"
-                                                        options={PROPERTY_AGE_OPTIONS}
-                                                        selected={draft.propertyAges}
-                                                        onToggle={(value) =>
-                                                            updateDraft({
-                                                                propertyAges: toggleListValue(
-                                                                    draft.propertyAges,
-                                                                    value,
-                                                                ),
-                                                            })
-                                                        }
-                                                    />
-                                                ) : null}
-                                                {visibility.showFacing ? (
-                                                    <ChipGroup
-                                                        label="Facing"
-                                                        options={FACING_OPTIONS}
-                                                        selected={draft.facing}
-                                                        onToggle={(value) =>
-                                                            updateDraft({
-                                                                facing: toggleListValue(
-                                                                    draft.facing,
-                                                                    value,
-                                                                ),
-                                                            })
-                                                        }
-                                                    />
-                                                ) : null}
-                                                {visibility.showSuitableFor ? (
-                                                    <ChipGroup
-                                                        label="Suitable for"
-                                                        options={SUITABLE_FOR_OPTIONS}
-                                                        selected={draft.suitableFor}
-                                                        onToggle={(value) =>
-                                                            updateDraft({
-                                                                suitableFor: toggleListValue(
-                                                                    draft.suitableFor,
-                                                                    value,
-                                                                ),
-                                                            })
-                                                        }
-                                                    />
-                                                ) : null}
-                                            </div>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                ) : null}
-
+                <div
+                    ref={scrollRef}
+                    className="
+                      flex-1 scrollbar-thin [scrollbar-color:var(--color-border-warm)_transparent]
+                      overflow-y-auto overscroll-contain bg-surface min-block-0
+                    "
+                >
+                    <div className="px-5 pbe-3 sm:px-8">
+                        <Accordion
+                            key={open ? "open" : "closed"}
+                            multiple
+                            defaultValue={defaultOpenSections}
+                            className="
+                              overflow-visible rounded-none border-0
+                              **:data-[slot=accordion-content]:-mx-1
+                              **:data-[slot=accordion-content]:border-0
+                              **:data-[slot=accordion-content]:px-1
+                              [&_[data-slot=accordion-content]>div]:border-0
+                            "
+                        >
+                            {showLayoutSection ? (
                                 <AccordionItem
-                                    value="deal"
-                                    className="border-border-warm data-open:bg-transparent"
+                                    value="layout"
+                                    className="
+                                      border-0 border-border-warm
+                                      not-last:border-be
+                                      data-open:bg-transparent
+                                    "
                                 >
                                     <FilterAccordionTrigger
-                                        title="Listed & commission"
-                                        summary={dealSummary}
+                                        title="Rooms & layout"
+                                        summary={layoutSummary}
+                                        description="Set a count, or keep Any to see all options."
                                     />
-                                    <AccordionContent className="px-0">
-                                        <div className="flex flex-col gap-5 pbe-5">
-                                            <ChipGroup
-                                                label="Listed"
-                                                options={LISTED_OPTIONS}
-                                                single
-                                                value={draft.listedWithinDays}
-                                                onSelect={setListedPreset}
-                                            />
-                                            {showSaleCommission ? (
-                                                <CommissionRange
-                                                    label="Sale commission (%)"
-                                                    minLabel={formatPercent(saleRange[0])}
-                                                    maxLabel={formatPercent(saleRange[1])}
-                                                    isAny={
-                                                        !draft.minCommissionPercent &&
-                                                        !draft.maxCommissionPercent
+                                    <AccordionContent className="px-0 pbe-0">
+                                        <div className="flex flex-col gap-5 border-0 pbe-6">
+                                            {visibility.showBhk ? (
+                                                <CountFilter
+                                                    label="Bedrooms (BHK)"
+                                                    icon={Bed}
+                                                    options={BHK_OPTIONS}
+                                                    selected={draft.bhk}
+                                                    onChange={(values) =>
+                                                        updateDraft({ bhk: values })
                                                     }
-                                                    boundsLabel={`${formatPercent(SALE_COMMISSION_RANGE.min)} – ${formatPercent(SALE_COMMISSION_RANGE.max)}`}
-                                                >
-                                                    <RangeSlider
-                                                        value={saleRange}
-                                                        min={SALE_COMMISSION_RANGE.min}
-                                                        max={SALE_COMMISSION_RANGE.max}
-                                                        step={SALE_COMMISSION_RANGE.step}
-                                                        thumbLabels={[
-                                                            "Minimum sale commission",
-                                                            "Maximum sale commission",
-                                                        ]}
-                                                        onValueChange={(next) => {
-                                                            const [min, max] = rangeToDraft(
-                                                                next,
-                                                                SALE_COMMISSION_RANGE,
-                                                                1,
-                                                            );
-                                                            updateDraft({
-                                                                minCommissionPercent: min,
-                                                                maxCommissionPercent: max,
-                                                            });
-                                                        }}
-                                                    />
-                                                </CommissionRange>
+                                                />
                                             ) : null}
-                                            {showRentCommission ? (
-                                                <CommissionRange
-                                                    label="Rent commission (fixed ₹)"
-                                                    minLabel={formatInr(rentRange[0])}
-                                                    maxLabel={
-                                                        rentRange[1] >= RENT_COMMISSION_RANGE.max
-                                                            ? `${formatInr(RENT_COMMISSION_RANGE.max)}+`
-                                                            : formatInr(rentRange[1])
+                                            {visibility.showBathrooms ? (
+                                                <CountFilter
+                                                    label="Bathrooms"
+                                                    icon={Bath}
+                                                    options={BATHROOM_OPTIONS}
+                                                    selected={draft.bathrooms}
+                                                    onChange={(values) =>
+                                                        updateDraft({ bathrooms: values })
                                                     }
-                                                    isAny={
-                                                        !draft.minCommissionAmount &&
-                                                        !draft.maxCommissionAmount
+                                                />
+                                            ) : null}
+                                            {visibility.showBalconies ? (
+                                                <CountFilter
+                                                    label="Balconies"
+                                                    icon={Fence}
+                                                    options={BALCONY_OPTIONS}
+                                                    selected={draft.balconies}
+                                                    onChange={(values) =>
+                                                        updateDraft({ balconies: values })
                                                     }
-                                                    boundsLabel={`${formatInr(RENT_COMMISSION_RANGE.min)} – ${formatInr(RENT_COMMISSION_RANGE.max)}+`}
-                                                >
-                                                    <RangeSlider
-                                                        value={rentRange}
-                                                        min={RENT_COMMISSION_RANGE.min}
-                                                        max={RENT_COMMISSION_RANGE.max}
-                                                        step={RENT_COMMISSION_RANGE.step}
-                                                        thumbLabels={[
-                                                            "Minimum rent commission",
-                                                            "Maximum rent commission",
-                                                        ]}
-                                                        onValueChange={(next) => {
-                                                            const [min, max] = rangeToDraft(
-                                                                next,
-                                                                RENT_COMMISSION_RANGE,
-                                                                0,
-                                                            );
-                                                            updateDraft({
-                                                                minCommissionAmount: min,
-                                                                maxCommissionAmount: max,
-                                                            });
-                                                        }}
-                                                    />
-                                                </CommissionRange>
+                                                />
+                                            ) : null}
+                                            {visibility.showParking ? (
+                                                <CountFilter
+                                                    label="Parking"
+                                                    icon={Car}
+                                                    options={PARKING_OPTIONS}
+                                                    selected={draft.parking}
+                                                    onChange={(values) =>
+                                                        updateDraft({ parking: values })
+                                                    }
+                                                />
+                                            ) : null}
+                                            {visibility.showFloors ? (
+                                                <ChipGroup
+                                                    label="Floor"
+                                                    options={FLOOR_OPTIONS}
+                                                    selected={draft.floors}
+                                                    onToggle={(value) =>
+                                                        updateDraft({
+                                                            floors: toggleListValue(
+                                                                draft.floors,
+                                                                value,
+                                                            ),
+                                                        })
+                                                    }
+                                                />
                                             ) : null}
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>
-                            </Accordion>
-                        </div>
-                    </SimpleBar>
+                            ) : null}
+
+                            {showMoreSection ? (
+                                <AccordionItem
+                                    value="more"
+                                    className="
+                                      border-0 border-border-warm
+                                      not-last:border-be
+                                      data-open:bg-transparent
+                                    "
+                                >
+                                    <FilterAccordionTrigger
+                                        title="Property details"
+                                        summary={moreSummary}
+                                    />
+                                    <AccordionContent className="px-0 pbe-0">
+                                        <div className="flex flex-col gap-7 border-0 pbe-6">
+                                            {visibility.showFurnishing ? (
+                                                <ChipGroup
+                                                    label="Furnishing"
+                                                    options={FURNISHING_OPTIONS}
+                                                    single
+                                                    value={draft.furnishing}
+                                                    onSelect={(value) =>
+                                                        updateDraft({
+                                                            furnishing: value as
+                                                                OwnerListingFurnishing | "",
+                                                        })
+                                                    }
+                                                />
+                                            ) : null}
+                                            {visibility.showPropertyCondition ? (
+                                                <ChipGroup
+                                                    label="Condition"
+                                                    options={PROPERTY_CONDITION_OPTIONS}
+                                                    selected={draft.propertyConditions}
+                                                    onToggle={toggleCondition}
+                                                />
+                                            ) : null}
+                                            {visibility.showPropertyAge ? (
+                                                <ChipGroup
+                                                    label="Age"
+                                                    options={PROPERTY_AGE_OPTIONS}
+                                                    selected={draft.propertyAges}
+                                                    onToggle={(value) =>
+                                                        updateDraft({
+                                                            propertyAges: toggleListValue(
+                                                                draft.propertyAges,
+                                                                value,
+                                                            ),
+                                                        })
+                                                    }
+                                                />
+                                            ) : null}
+                                            {visibility.showFacing ? (
+                                                <ChipGroup
+                                                    label="Facing"
+                                                    options={FACING_OPTIONS}
+                                                    selected={draft.facing}
+                                                    onToggle={(value) =>
+                                                        updateDraft({
+                                                            facing: toggleListValue(
+                                                                draft.facing,
+                                                                value,
+                                                            ),
+                                                        })
+                                                    }
+                                                />
+                                            ) : null}
+                                            {visibility.showSuitableFor ? (
+                                                <ChipGroup
+                                                    label="Suitable for"
+                                                    options={SUITABLE_FOR_OPTIONS}
+                                                    selected={draft.suitableFor}
+                                                    onToggle={(value) =>
+                                                        updateDraft({
+                                                            suitableFor: toggleListValue(
+                                                                draft.suitableFor,
+                                                                value,
+                                                            ),
+                                                        })
+                                                    }
+                                                />
+                                            ) : null}
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ) : null}
+
+                            <AccordionItem
+                                value="deal"
+                                className="border-0 border-border-warm data-open:bg-transparent"
+                            >
+                                <FilterAccordionTrigger
+                                    title="Listed & commission"
+                                    summary={dealSummary}
+                                />
+                                <AccordionContent className="px-0 pbe-0">
+                                    <div className="flex flex-col gap-7">
+                                        <ChipGroup
+                                            label="Listed"
+                                            options={LISTED_OPTIONS}
+                                            single
+                                            value={draft.listedWithinDays}
+                                            onSelect={setListedPreset}
+                                        />
+                                        {showSaleCommission ? (
+                                            <CommissionRange
+                                                label="Sale commission (%)"
+                                                minLabel={formatPercent(saleRange[0])}
+                                                maxLabel={formatPercent(saleRange[1])}
+                                                isAny={
+                                                    !draft.minCommissionPercent &&
+                                                    !draft.maxCommissionPercent
+                                                }
+                                                boundsLabel={`${formatPercent(SALE_COMMISSION_RANGE.min)} – ${formatPercent(SALE_COMMISSION_RANGE.max)}`}
+                                            >
+                                                <RangeSlider
+                                                    value={saleRange}
+                                                    min={SALE_COMMISSION_RANGE.min}
+                                                    max={SALE_COMMISSION_RANGE.max}
+                                                    step={SALE_COMMISSION_RANGE.step}
+                                                    thumbAlignment="edge"
+                                                    thumbLabels={[
+                                                        "Minimum sale commission",
+                                                        "Maximum sale commission",
+                                                    ]}
+                                                    onValueChange={(next) => {
+                                                        const [min, max] = rangeToDraft(
+                                                            next,
+                                                            SALE_COMMISSION_RANGE,
+                                                            1,
+                                                        );
+                                                        updateDraft({
+                                                            minCommissionPercent: min,
+                                                            maxCommissionPercent: max,
+                                                        });
+                                                    }}
+                                                />
+                                            </CommissionRange>
+                                        ) : null}
+                                        {showRentCommission ? (
+                                            <CommissionRange
+                                                label="Rent commission (fixed ₹)"
+                                                minLabel={formatInr(rentRange[0])}
+                                                maxLabel={
+                                                    rentRange[1] >= RENT_COMMISSION_RANGE.max
+                                                        ? `${formatInr(RENT_COMMISSION_RANGE.max)}+`
+                                                        : formatInr(rentRange[1])
+                                                }
+                                                isAny={
+                                                    !draft.minCommissionAmount &&
+                                                    !draft.maxCommissionAmount
+                                                }
+                                                boundsLabel={`${formatInr(RENT_COMMISSION_RANGE.min)} – ${formatInr(RENT_COMMISSION_RANGE.max)}+`}
+                                            >
+                                                <RangeSlider
+                                                    value={rentRange}
+                                                    min={RENT_COMMISSION_RANGE.min}
+                                                    max={RENT_COMMISSION_RANGE.max}
+                                                    step={RENT_COMMISSION_RANGE.step}
+                                                    thumbAlignment="edge"
+                                                    thumbLabels={[
+                                                        "Minimum rent commission",
+                                                        "Maximum rent commission",
+                                                    ]}
+                                                    onValueChange={(next) => {
+                                                        const [min, max] = rangeToDraft(
+                                                            next,
+                                                            RENT_COMMISSION_RANGE,
+                                                            0,
+                                                        );
+                                                        updateDraft({
+                                                            minCommissionAmount: min,
+                                                            maxCommissionAmount: max,
+                                                        });
+                                                    }}
+                                                />
+                                            </CommissionRange>
+                                        ) : null}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </div>
                 </div>
 
-                <div className="shrink-0 border-bs border-border-warm bg-surface px-5 py-4 sm:px-6">
+                <div
+                    className={cn(
+                        "relative z-1 shrink-0 border-bs border-border-warm bg-surface p-5 sm:px-8",
+                        hasContentBelow && "shadow-[0_-6px_16px_-8px_rgb(0_0_0/0.2)]",
+                    )}
+                >
                     <AppModalFooter
-                        className="justify-between"
+                        className="
+                          justify-between
+                          [&_button]:rounded-inner [&_button]:px-5 [&_button]:min-block-11
+                        "
                         secondaryLabel="Clear all"
                         secondaryDisabled={!hasDraftFilters}
                         onSecondary={handleClear}
