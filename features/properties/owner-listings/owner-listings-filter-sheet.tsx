@@ -40,6 +40,7 @@ import {
     DialogPopup,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { RangeSlider } from "@/components/ui/slider";
 
 import {
@@ -792,11 +793,12 @@ export function OwnerListingsFilterSheet({
                     </DialogClose>
                 </DialogHeader>
 
-                <div
-                    ref={scrollRef}
+                <ScrollArea
+                    viewportRef={scrollRef}
                     className="
-                      flex-1 scrollbar-thin [scrollbar-color:var(--color-border-warm)_transparent]
-                      overflow-y-auto overscroll-contain bg-surface min-block-0
+                      flex-1 bg-surface min-block-0
+                      [&_[data-slot=scroll-area-viewport]]:overscroll-contain
+                      [&_[data-slot=scroll-area-scrollbar]]:inset-e-1.5
                     "
                 >
                     <div className="px-5 pbe-3 sm:px-8">
@@ -1075,7 +1077,7 @@ export function OwnerListingsFilterSheet({
                             </AccordionItem>
                         </Accordion>
                     </div>
-                </div>
+                </ScrollArea>
 
                 <div
                     className={cn(
