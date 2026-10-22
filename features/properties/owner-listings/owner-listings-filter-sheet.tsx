@@ -13,7 +13,6 @@ import {
 import { cn } from "@/lib/utils";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { PropertyFilterFields } from "@/components/shared/property-filter-fields";
 import {
     type AppIcon,
     Armchair,
@@ -43,6 +42,7 @@ import {
     Warehouse,
     XIcon,
 } from "@/components/shared/icons";
+import { PropertyFilterFields } from "@/components/shared/property-filter-fields";
 import {
     Accordion,
     AccordionContent,
@@ -409,9 +409,9 @@ function FilterAccordionTrigger({
                 {description ? (
                     <span
                         className="
-                      hidden text-xs/relaxed font-normal text-ink/65
-                      group-aria-expanded/accordion-trigger:block
-                    "
+                          hidden text-xs/relaxed font-normal text-ink/65
+                          group-aria-expanded/accordion-trigger:block
+                        "
                     >
                         {description}
                     </span>
@@ -723,7 +723,7 @@ export function OwnerListingsFilterSheet({
     ]);
 
     const defaultOpenSections = [
-        ...(showDiscoveryFilters ? ["discovery"] : []),
+        ...(showDiscoveryFilters ? ["discovery", "discovery-type"] : []),
         ...(showLayoutSection ? ["layout"] : []),
         ...(showMoreSection ? ["more"] : []),
         "deal",
@@ -910,14 +910,15 @@ export function OwnerListingsFilterSheet({
                               **:data-[slot=accordion-content]:-mx-1
                               **:data-[slot=accordion-content]:border-0
                               **:data-[slot=accordion-content]:px-1
-                            [&_[data-slot=accordion-content]>div]:border-0
+                              [&_[data-slot=accordion-content]>div]:border-0
                             "
                         >
                             {showDiscoveryFilters ? (
                                 <AccordionItem
                                     value="discovery"
                                     className="
-                                      border-0 border-border-warm not-last:border-be
+                                      border-0 border-border-warm
+                                      not-last:border-be
                                       data-open:bg-transparent
                                     "
                                 >
@@ -930,6 +931,33 @@ export function OwnerListingsFilterSheet({
                                             <PropertyFilterFields
                                                 value={draftDiscovery}
                                                 onChange={setDraftDiscovery}
+                                                presentation="owner-listings"
+                                                fields={["where", "type", "budget"]}
+                                            />
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ) : null}
+                            {showDiscoveryFilters ? (
+                                <AccordionItem
+                                    value="discovery-type"
+                                    className="
+                                      border-0 border-border-warm
+                                      not-last:border-be
+                                      data-open:bg-transparent
+                                    "
+                                >
+                                    <FilterAccordionTrigger
+                                        title="Size & property type"
+                                        description="Choose the size, category and property type."
+                                    />
+                                    <AccordionContent className="px-0 pbe-0">
+                                        <div className="border-0 pbe-6">
+                                            <PropertyFilterFields
+                                                value={draftDiscovery}
+                                                onChange={setDraftDiscovery}
+                                                presentation="owner-listings"
+                                                fields={["area", "category", "propertyType"]}
                                             />
                                         </div>
                                     </AccordionContent>
