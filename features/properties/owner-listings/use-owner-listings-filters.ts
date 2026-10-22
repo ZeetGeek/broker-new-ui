@@ -23,6 +23,14 @@ const OWNER_LISTINGS_URL_KEYS = [
     "city",
     "locality",
     "bhk",
+    "baths",
+    "balconies",
+    "parking",
+    "floors",
+    "facing",
+    "condition",
+    "age",
+    "suitableFor",
     "type",
     "min",
     "max",
@@ -59,10 +67,18 @@ function isOwnerListingsFilters(value: unknown): value is OwnerListingsFilters {
         typeof v.sort === "string";
     if (!ok) return false;
 
-    // Older prefs predate country/state multi-select and category.
+    // Older prefs predate country/state multi-select, category, and sheet dims.
     if (!Array.isArray(v.countries)) v.countries = [];
     if (!Array.isArray(v.states)) v.states = [];
     if (v.category === undefined) v.category = "";
+    if (!Array.isArray(v.bathrooms)) v.bathrooms = [];
+    if (!Array.isArray(v.balconies)) v.balconies = [];
+    if (!Array.isArray(v.parking)) v.parking = [];
+    if (!Array.isArray(v.floors)) v.floors = [];
+    if (!Array.isArray(v.facing)) v.facing = [];
+    if (!Array.isArray(v.propertyConditions)) v.propertyConditions = [];
+    if (!Array.isArray(v.propertyAges)) v.propertyAges = [];
+    if (!Array.isArray(v.suitableFor)) v.suitableFor = [];
     return true;
 }
 

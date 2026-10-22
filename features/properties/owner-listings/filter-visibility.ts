@@ -23,6 +23,15 @@ const PLOT_SUBTYPES = new Set<string>([
     "agricultural",
 ]);
 
+/** Independent homes — floor number is not an in-building dim (`derive.ts`). */
+const INDEPENDENT_SUBTYPES = new Set<string>([
+    "independent_house",
+    "villa",
+    "row_house",
+    "farm_house",
+    "bungalow",
+]);
+
 const LEGACY_COARSE_TYPES = new Set<string>([
     "apartment",
     "villa",
@@ -39,7 +48,16 @@ const ALL_FORM_SUBTYPES = new Set<string>(
 export type OwnerListingsFilterVisibility = {
     isPlot: boolean;
     showBhk: boolean;
+    showBathrooms: boolean;
+    showBalconies: boolean;
+    showParking: boolean;
+    showFloors: boolean;
+    showFacing: boolean;
     showFurnishing: boolean;
+    showPropertyCondition: boolean;
+    showPropertyAge: boolean;
+    showSuitableFor: boolean;
+    /** @deprecated use showPropertyCondition — kept for quick-chip Ready to move */
     showReadyToMove: boolean;
 };
 
@@ -70,11 +88,12 @@ export function subtypesForCategory(category: OwnerListingCategory | ""): string
 
 /**
  * Browse filter visibility — mirrors Add Property `FIELD_RULES` for the dims we expose.
- * When category/type is unset, residential-ish dims stay available for discovery.
+ * When category/type is unset, discovery dims stay available where the form would allow them.
  */
 export function ownerListingsFilterVisibility(input: {
     category: OwnerListingCategory | "";
     propertyType: OwnerListingPropertyType | string | "";
+    propertyConditions?: string[];
 }): OwnerListingsFilterVisibility {
     const category = input.category;
     const subtype = input.propertyType;
@@ -82,12 +101,38 @@ export function ownerListingsFilterVisibility(input: {
         category === "land" ||
         category === "agricultural" ||
         (Boolean(subtype) && PLOT_SUBTYPES.has(subtype));
+    const isIndependent = Boolean(subtype) && INDEPENDENT_SUBTYPES.has(subtype);
+    const isInBuilding = !isPlot && !isIndependent;
+    const underConstructionSelected = (input.propertyConditions ?? []).some(
+        (value) => value === "under_construction" || value === "new_launch",
+    );
 
     const showBhk = !isPlot && (category === "" || category === "residential");
+    const showBathrooms = !isPlot;
+    const showBalconies = !isPlot && (category === "" || category === "residential");
+    const showParking = !isPlot;
+    const showFloors = isInBuilding && (category === "" || !isPlot);
+    const showFacing = true;
     const showFurnishing = !isPlot;
-    const showReadyToMove = !isPlot;
+    const showPropertyCondition = !isPlot;
+    const showPropertyAge = !isPlot && !underConstructionSelected;
+    const showSuitableFor = category === "" || category === "commercial";
+    const showReadyToMove = showPropertyCondition;
 
-    return { isPlot, showBhk, showFurnishing, showReadyToMove };
+    return {
+        isPlot,
+        showBhk,
+        showBathrooms,
+        showBalconies,
+        showParking,
+        showFloors,
+        showFacing,
+        showFurnishing,
+        showPropertyCondition,
+        showPropertyAge,
+        showSuitableFor,
+        showReadyToMove,
+    };
 }
 
 /**
@@ -98,11 +143,14 @@ export function stripHiddenOwnerListingsFilters(
     filters: OwnerListingsFilters,
 ): OwnerListingsFilters {
     const next: OwnerListingsFilters = { ...filters };
-    const visibility = ownerListingsFilterVisibility(next);
+    const visibility = ownerListingsFilterVisibility({
+        category: next.category,
+        propertyType: next.propertyType,
+        propertyConditions: next.propertyConditions,
+    });
 
     if (next.category && next.propertyType) {
         const allowed = new Set(subtypesForCategory(next.category));
-        // Keep legacy coarse chips that map into this category.
         if (next.category === "residential") {
             allowed.add("apartment");
             allowed.add("villa");
@@ -122,8 +170,22 @@ export function stripHiddenOwnerListingsFilters(
     }
 
     if (!visibility.showBhk) next.bhk = [];
+    if (!visibility.showBathrooms) next.bathrooms = [];
+    if (!visibility.showBalconies) next.balconies = [];
+    if (!visibility.showParking) next.parking = [];
+    if (!visibility.showFloors) next.floors = [];
     if (!visibility.showFurnishing) next.furnishing = "";
-    if (!visibility.showReadyToMove) next.readyToMove = false;
+    if (!visibility.showPropertyCondition) {
+        next.propertyConditions = [];
+        next.readyToMove = false;
+    }
+    if (!visibility.showPropertyAge) next.propertyAges = [];
+    if (!visibility.showSuitableFor) next.suitableFor = [];
+
+    // Keep readyToMove in sync with Property condition when that chip is used.
+    if (next.propertyConditions.includes("ready_to_move")) {
+        next.readyToMove = true;
+    }
 
     return next;
 }
@@ -138,7 +200,6 @@ export function browseApiTypeFilters(
     const resolvedCategory = category || categoryForSubtype(subtype) || undefined;
     let apiSubtype = subtype || undefined;
 
-    // Browse API historically used short commercial/land keys.
     if (apiSubtype === "office") apiSubtype = "office_space";
     if (apiSubtype === "plot") apiSubtype = undefined;
     if (apiSubtype === "1rk") apiSubtype = "one_rk";

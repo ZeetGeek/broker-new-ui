@@ -26,6 +26,14 @@ export type OwnerListingItem = {
     bhk: number;
     /** Bathrooms when the listing has them. Absent/null when unset. */
     bathrooms?: number | null;
+    /** Design / future browse fields — null until the API sends them. */
+    balconies?: number | null;
+    parkingSpaces?: number | null;
+    floorNumber?: number | null;
+    facing?: string | null;
+    propertyCondition?: string | null;
+    propertyAge?: string | null;
+    suitableFor?: string[] | null;
     locality: string;
     city: string;
     /** Indian state or union territory. Supplied by API when available. */
@@ -95,6 +103,22 @@ export type OwnerListingsFilters = {
     localities: string[];
     /** Sheet — multi-select BHK (residential only; cleared when hidden) */
     bhk: string[];
+    /** Sheet — bathroom counts (`1`…`4`, `5` = 5+) */
+    bathrooms: string[];
+    /** Sheet — balcony counts (`1`…`3`, `4` = 4+) */
+    balconies: string[];
+    /** Sheet — parking spaces (`1`…`3`, `4` = 4+) */
+    parking: string[];
+    /** Sheet — floor buckets: `ground` | `low` | `mid` | `high` */
+    floors: string[];
+    /** Sheet — facing directions (form FACING_OPTIONS values) */
+    facing: string[];
+    /** Sheet — property condition (form PROPERTY_CONDITION_OPTIONS values) */
+    propertyConditions: string[];
+    /** Sheet — property age (form PROPERTY_AGE_OPTIONS values) */
+    propertyAges: string[];
+    /** Sheet — commercial suitable-for tags */
+    suitableFor: string[];
     /** Band — sale or rent */
     type: OwnerListingTransactionType | "";
     min: string;
@@ -117,7 +141,7 @@ export type OwnerListingsFilters = {
     /** Sheet — sale commission range in percent ("" = open end) */
     minCommissionPercent: string;
     maxCommissionPercent: string;
-    /** Sheet — rent commission range in INR ("" = open end) */
+    /** Sheet — rent commission range in INR / fixed brokerage ("" = open end) */
     minCommissionAmount: string;
     maxCommissionAmount: string;
     /** Quick chips / sheet — instant toggles */
@@ -150,7 +174,7 @@ export type OwnerListingsBandFilters = Pick<
     | "yourAreas"
 >;
 
-/** Advanced + type-specific dims (BHK / furnishing / ready-to-move when visible). */
+/** Advanced + type-specific dims (layout, timing, commission when visible). */
 export type OwnerListingsSheetFilters = Pick<
     OwnerListingsFilters,
     | "listedWithinDays"
@@ -159,6 +183,14 @@ export type OwnerListingsSheetFilters = Pick<
     | "minCommissionAmount"
     | "maxCommissionAmount"
     | "bhk"
+    | "bathrooms"
+    | "balconies"
+    | "parking"
+    | "floors"
+    | "facing"
+    | "propertyConditions"
+    | "propertyAges"
+    | "suitableFor"
     | "furnishing"
     | "yourAreas"
     | "newToday"
@@ -188,6 +220,14 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     cities: [],
     localities: [],
     bhk: [],
+    bathrooms: [],
+    balconies: [],
+    parking: [],
+    floors: [],
+    facing: [],
+    propertyConditions: [],
+    propertyAges: [],
+    suitableFor: [],
     type: "",
     min: "",
     max: "",
