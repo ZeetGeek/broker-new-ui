@@ -1,20 +1,11 @@
 "use client";
 
-import toast from "react-hot-toast";
-
 import { formatTimeIn } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
-import { Check, CheckCheck, Copy, MoreHorizontal } from "@/components/shared/icons";
+import { Check, CheckCheck } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
-import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import { ChatAttachmentBlock } from "@/features/chat/chat-attachments";
 import type { ChatMessage, ChatPeer } from "@/features/chat/types";
@@ -38,7 +29,7 @@ export function ChatMessageRow({ message, peer }: { message: ChatMessage; peer: 
     const attachmentOnly = Boolean(attachment) && !text;
 
     return (
-        <li className={cn("group/message flex items-end gap-2", isOwn && "flex-row-reverse")}>
+        <li className={cn("flex items-end gap-2", isOwn && "flex-row-reverse")}>
             {!isOwn && peer ? (
                 <UserAvatar
                     name={peer.name}
@@ -82,47 +73,6 @@ export function ChatMessageRow({ message, peer }: { message: ChatMessage; peer: 
                     ) : null}
                 </div>
             </div>
-            {text ? (
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-md"
-                                aria-label="Message actions"
-                                className="
-                                  shrink-0 self-center text-ink/60
-                                  group-focus-within/message:opacity-100
-                                  group-hover/message:opacity-100
-                                  hover:bg-surface-muted hover:text-ink
-                                  aria-expanded:opacity-100
-                                  pointer-fine:opacity-0
-                                "
-                            />
-                        }
-                    >
-                        <MoreHorizontal aria-hidden strokeWidth={1.75} />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align={isOwn ? "end" : "start"} className="min-inline-36">
-                        <DropdownMenuItem
-                            onClick={() => {
-                                void navigator.clipboard
-                                    .writeText(text)
-                                    .then(() => toast.success("Message copied"))
-                                    .catch(() =>
-                                        toast.error(
-                                            "Couldn't copy this message. Try selecting the text.",
-                                        ),
-                                    );
-                            }}
-                        >
-                            <Copy aria-hidden />
-                            Copy message
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            ) : null}
         </li>
     );
 }

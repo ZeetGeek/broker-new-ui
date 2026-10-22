@@ -13,17 +13,11 @@ import type { ChatAttachment, ChatMedia } from "@/features/chat/types";
 /** Past this many tiles the rest collapse behind a "+N" overlay. */
 const MEDIA_TILE_LIMIT = 4;
 
-/**
- * Outgoing attachments sit on the same soft green as outgoing text.
- */
-const ATTACHMENT_BUTTON_OWN = `
-  border-brand/15 bg-surface/70 text-brand-ink
-  hover:bg-surface hover:text-brand-ink
-`;
-
-const ATTACHMENT_BUTTON_PEER = `
-  border-border-warm bg-surface-muted text-ink
-  hover:bg-surface hover:text-ink
+const ATTACHMENT_BUTTON_CLASS = `
+  flex-1 border-border-warm bg-surface px-3 text-xs text-ink/75
+  hover:bg-surface-muted hover:text-ink
+  focus-visible:border-ink/25 focus-visible:ring-ink/10
+  sm:block-control-sm
 `;
 
 function FileAttachment({
@@ -37,7 +31,6 @@ function FileAttachment({
     url: string;
     isOwn: boolean;
 }) {
-    const buttonClass = isOwn ? ATTACHMENT_BUTTON_OWN : ATTACHMENT_BUTTON_PEER;
     const iconWrap = isOwn ? "bg-surface/70 text-brand" : "bg-brand-soft text-brand";
     const titleClass = isOwn ? "text-brand-ink" : "text-ink";
     const metaClass = isOwn ? "text-brand-ink/65" : "text-ink/65";
@@ -64,18 +57,18 @@ function FileAttachment({
 
             <div className="flex flex-wrap items-center gap-2">
                 <Button
-                    size="xs"
-                    variant="secondary"
-                    className={buttonClass}
+                    size="md"
+                    variant="outline"
+                    className={ATTACHMENT_BUTTON_CLASS}
                     render={<a href={url} download aria-label={`Download ${name}`} />}
                 >
                     <Download aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
                     Download
                 </Button>
                 <Button
-                    size="xs"
-                    variant="secondary"
-                    className={buttonClass}
+                    size="md"
+                    variant="outline"
+                    className={ATTACHMENT_BUTTON_CLASS}
                     render={
                         <a
                             href={url}
@@ -244,7 +237,7 @@ function MediaTile({
     );
 }
 
-function MediaAttachment({ items, isOwn }: { items: ChatMedia[]; isOwn: boolean }) {
+function MediaAttachment({ items }: { items: ChatMedia[] }) {
     if (items.length === 1) {
         const item = items[0];
         return (
@@ -252,9 +245,9 @@ function MediaAttachment({ items, isOwn }: { items: ChatMedia[]; isOwn: boolean 
                 <MediaTile item={item} className="aspect-4/3 block-48 inline-full max-block-72" />
                 <div className="flex flex-wrap items-center gap-2">
                     <Button
-                        size="xs"
-                        variant="secondary"
-                        className={isOwn ? ATTACHMENT_BUTTON_OWN : ATTACHMENT_BUTTON_PEER}
+                        size="md"
+                        variant="outline"
+                        className={ATTACHMENT_BUTTON_CLASS}
                         render={
                             <a
                                 href={item.src}
@@ -272,9 +265,9 @@ function MediaAttachment({ items, isOwn }: { items: ChatMedia[]; isOwn: boolean 
                         Open
                     </Button>
                     <Button
-                        size="xs"
-                        variant="secondary"
-                        className={isOwn ? ATTACHMENT_BUTTON_OWN : ATTACHMENT_BUTTON_PEER}
+                        size="md"
+                        variant="outline"
+                        className={ATTACHMENT_BUTTON_CLASS}
                         render={<a href={item.src} download aria-label="Download attachment" />}
                     >
                         <Download aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
@@ -324,5 +317,5 @@ export function ChatAttachmentBlock({
         return <AudioAttachment url={attachment.url} durationLabel={attachment.durationLabel} />;
     }
 
-    return <MediaAttachment items={attachment.items} isOwn={isOwn} />;
+    return <MediaAttachment items={attachment.items} />;
 }
