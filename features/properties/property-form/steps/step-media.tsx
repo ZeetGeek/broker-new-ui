@@ -4,6 +4,20 @@ import { type MutableRefObject, type ReactNode, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { createClientId } from "@/lib/client-id";
+import {
+    hasNonEmptyUrl,
+    type MediaEmbed,
+    parseTourEmbed,
+    parseVideoEmbed,
+} from "@/lib/media/embed-url";
+import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
+import { MAX_PROPERTY_PHOTOS } from "@/lib/properties/form-media";
+import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { cn } from "@/lib/utils";
+
+import { FieldLabel } from "@/components/property/fields/field-label";
+import { AppImage } from "@/components/shared/app-image";
 import {
     Check,
     CircleAlert,
@@ -15,19 +29,6 @@ import {
     View,
     X,
 } from "@/components/shared/icons";
-
-import { createClientId } from "@/lib/client-id";
-import {
-    hasNonEmptyUrl,
-    parseTourEmbed,
-    parseVideoEmbed,
-    type MediaEmbed,
-} from "@/lib/media/embed-url";
-import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
-import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { cn } from "@/lib/utils";
-import { FieldLabel } from "@/components/property/fields/field-label";
-import { AppImage } from "@/components/shared/app-image";
 import {
     Attachment,
     AttachmentAction,
@@ -42,9 +43,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import {
+    type DraftPhoto,
     normalizePhotoOrder,
     replaceCoverPhoto,
-    type DraftPhoto,
 } from "@/features/properties/property-form/cover-photo";
 import {
     FORM_GRID_CLASS,
@@ -54,7 +55,7 @@ import {
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 
-const MAX_PHOTOS = 30;
+const MAX_PHOTOS = MAX_PROPERTY_PHOTOS;
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 
@@ -64,8 +65,8 @@ function DropzoneIcon({ children }: { children: ReactNode }) {
     return (
         <span
             className="
-              flex items-center justify-center rounded-full border-2 border-dashed
-              border-brand/35 bg-brand-soft/40 text-brand block-12 inline-12
+              flex items-center justify-center rounded-full border-2 border-dashed border-brand/35
+              bg-brand-soft/40 text-brand block-12 inline-12
             "
         >
             {children}
@@ -258,23 +259,23 @@ export function StepMedia({
     return (
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title={
-                    <>
-                        <Images
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Property photos
-                    </>
-                }
+                title={<>Property photos</>}
                 description="Upload one vertical cover for the listing card, then at least 3 property photos. Both are required to publish."
             >
                 <div className={FORM_STACK_CLASS}>
-                    <div className="grid gap-4 md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] md:items-stretch">
+                    <div
+                        className="
+                          grid gap-4
+                          md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] md:items-stretch
+                        "
+                    >
                         <div className="flex flex-col gap-3">
                             <div className="flex flex-wrap items-baseline justify-between gap-2">
-                                <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+                                <p
+                                    className="
+                                      flex items-center gap-2 text-sm font-semibold text-ink
+                                    "
+                                >
                                     <ImageIcon
                                         className="shrink-0 text-brand block-4 inline-4"
                                         strokeWidth={1.75}
@@ -303,10 +304,9 @@ export function StepMedia({
                                 <Label
                                     htmlFor="property-cover-upload"
                                     className="
-                                      flex flex-1 cursor-pointer flex-col items-center
+                                      flex aspect-3/4 flex-1 cursor-pointer flex-col items-center
                                       justify-center rounded-card border-2 border-dashed
                                       border-brand/35 bg-brand-soft/40 px-4 py-6 text-center
-                                      aspect-3/4
                                       focus-within:ring-3 focus-within:ring-ring/30
                                     "
                                 >
@@ -340,7 +340,11 @@ export function StepMedia({
 
                         <div className="flex flex-col gap-3 min-inline-0">
                             <div className="flex flex-wrap items-baseline justify-between gap-2">
-                                <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+                                <p
+                                    className="
+                                      flex items-center gap-2 text-sm font-semibold text-ink
+                                    "
+                                >
                                     <Images
                                         className="shrink-0 text-brand block-4 inline-4"
                                         strokeWidth={1.75}
@@ -399,7 +403,7 @@ export function StepMedia({
 
                     {galleryPhotos.length ? (
                         <div
-                            className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
                             role="list"
                             aria-label="Property photos"
                         >
@@ -435,16 +439,7 @@ export function StepMedia({
             </WizardSection>
 
             <WizardSection
-                title={
-                    <>
-                        <Video
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Video and virtual tour
-                    </>
-                }
+                title={<>Video and virtual tour</>}
                 description="Optional links for buyers. Paste a hosted URL — no file upload here."
             >
                 <div className={FORM_GRID_CLASS}>
@@ -488,16 +483,12 @@ export function StepMedia({
 
 function MediaEmbedPreview({ embed }: { embed: MediaEmbed }) {
     return (
-        <div
-            className="
-              overflow-hidden rounded-card border border-border-warm bg-surface
-            "
-        >
+        <div className="overflow-hidden rounded-card border border-border-warm bg-surface">
             <div className="relative aspect-video bg-surface-muted">
                 <iframe
                     title={embed.title}
                     src={embed.embedUrl}
-                    className="absolute inset-0 block-full inline-full border-0"
+                    className="absolute inset-0 border-0 block-full inline-full"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                     allowFullScreen
                     loading="lazy"
@@ -539,8 +530,8 @@ function CoverPreview({
     return (
         <div
             className="
-              group relative flex-1 overflow-hidden rounded-card border-2 border-border-warm
-              bg-surface-muted aspect-3/4 min-block-0
+              group relative aspect-3/4 flex-1 overflow-hidden rounded-card border-2
+              border-border-warm bg-surface-muted min-block-0
             "
         >
             {hasImage ? (
@@ -557,7 +548,7 @@ function CoverPreview({
                     }
                 />
             ) : (
-                <div className="flex block-full items-center justify-center px-4 text-center">
+                <div className="flex items-center justify-center px-4 text-center block-full">
                     <p className="text-sm text-ink-muted">
                         {photo.errorMessage ?? "Cover preview unavailable"}
                     </p>
@@ -580,7 +571,9 @@ function CoverPreview({
                 className="
                   absolute inset-0 flex flex-col items-center justify-center gap-2 bg-ink/55 p-3
                   opacity-100 transition-opacity duration-160
-                  md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100
+                  md:opacity-0
+                  md:group-focus-within:opacity-100
+                  md:group-hover:opacity-100
                 "
             >
                 <Button
@@ -621,7 +614,7 @@ function CoverPreview({
             {photo.status === "queued" || photo.status === "processing" ? (
                 <p
                     className="
-                      absolute inset-inline-2 inset-be-2 rounded-control bg-ink/70 px-2 py-1
+                      inset-inline-2 absolute inset-be-2 rounded-control bg-ink/70 px-2 py-1
                       text-center text-[11px] font-medium text-surface
                     "
                 >
@@ -667,21 +660,21 @@ function PhotoAttachment({
             state={state}
             orientation="horizontal"
             className="
-              min-w-0 w-full max-w-none gap-2.5 p-2.5 shadow-none
+              gap-2.5 p-2.5 shadow-none inline-full max-inline-none min-inline-0
+              focus-within:border-border-warm focus-within:ring-0
               hover:bg-surface
               has-[>a,>button]:hover:bg-surface
-              focus-within:border-border-warm focus-within:ring-0
             "
             role="listitem"
         >
-            <AttachmentMedia variant="image" className="size-11 shrink-0 opacity-100">
+            <AttachmentMedia variant="image" className="shrink-0 opacity-100 block-11 inline-11">
                 {photo.url ? (
                     <AppImage
                         src={photo.url}
                         alt={photo.name}
                         width={88}
                         height={88}
-                        className="size-full object-cover"
+                        className="object-cover block-full inline-full"
                         sizes="44px"
                         unoptimized={
                             photo.url.startsWith("http://") || photo.url.startsWith("https://")
@@ -691,7 +684,7 @@ function PhotoAttachment({
                     <CircleAlert className="text-danger block-5 inline-5" aria-hidden />
                 )}
             </AttachmentMedia>
-            <AttachmentContent className="min-w-0">
+            <AttachmentContent className="min-inline-0">
                 <AttachmentTitle className="text-sm [&.shimmer]:animate-none">
                     {photo.name}
                 </AttachmentTitle>

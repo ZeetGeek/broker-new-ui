@@ -49,12 +49,40 @@ const TAB_CHIPS: {
         mobileLabel: "Sent",
         description: "Invites you sent to brokers",
     },
+    {
+        key: "accepted",
+        label: "Accepted",
+        mobileLabel: "Accepted",
+        description: "Brokers currently selling your listings",
+    },
+    {
+        key: "rejected",
+        label: "Rejected",
+        mobileLabel: "Rejected",
+        description: "Requests you turned down and invites brokers turned down",
+    },
+    {
+        key: "cancelled",
+        label: "Cancelled",
+        mobileLabel: "Cancelled",
+        description: "Representations you or the broker cancelled",
+    },
 ];
 
 function tabCount(summary: OwnerRequestsSummary | null, key: OwnerRequestsTab): number {
     if (!summary) return 0;
-    if (key === "requests") return summary.incomingPending;
-    return summary.invitesPending;
+    switch (key) {
+        case "requests":
+            return summary.incomingPending;
+        case "invitations":
+            return summary.invitesPending;
+        case "accepted":
+            return summary.accepted;
+        case "rejected":
+            return summary.rejected;
+        case "cancelled":
+            return summary.cancelled;
+    }
 }
 
 function QueryInput({

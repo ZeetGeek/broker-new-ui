@@ -819,7 +819,12 @@ export const clientsApi = {
      * (no detach endpoint yet) — the next open still shows them as attached.
      */
     async setPropertyClients(propertyId: string, clientIds: string[]): Promise<void> {
-        if (isMockMode()) return;
+        if (isMockMode()) {
+            MOCK_PROPERTY_CLIENTS[propertyId] = [
+                ...new Set([...(MOCK_PROPERTY_CLIENTS[propertyId] ?? []), ...clientIds]),
+            ];
+            return;
+        }
         if (clientIds.length === 0) return;
 
         await apiFetch<AttachClientsResponse>("/clients/leads", {

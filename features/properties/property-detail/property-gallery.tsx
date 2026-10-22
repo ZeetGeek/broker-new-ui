@@ -1,17 +1,20 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Camera, ChevronLeft, ChevronRight, X } from "@/components/shared/icons";
+import { Camera } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
 
 import { PropertyGalleryControls } from "./property-gallery-controls";
 
 import styles from "./property-detail.module.css";
+
+const PropertyLightbox = dynamic(() => import("./property-lightbox"), { ssr: false });
 
 export function mosaicLayout(photoCount: number) {
     if (photoCount <= 1) return { grid: "md:grid-cols-1", hero: "", sideTiles: 0 };
@@ -135,30 +138,6 @@ export function PropertyGallery({ title, imageSrcs, editHref, overlay }: Propert
         };
     }, [emblaApi]);
     const [index, setIndex] = useState<number | null>(null);
-    const dialogRef = useRef<HTMLDialogElement>(null);
-    const isOpen = index != null;
-    const close = useCallback(() => setIndex(null), []);
-    const step = useCallback(
-        (delta: number) =>
-            setIndex((current) =>
-                current == null ? null : (current + delta + imageSrcs.length) % imageSrcs.length,
-            ),
-        [imageSrcs.length],
-    );
-    useEffect(() => {
-        const dialog = dialogRef.current;
-        if (!isOpen || !dialog) return;
-        const previousFocus =
-            document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        dialog.showModal();
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-        return () => {
-            document.body.style.overflow = previousOverflow;
-            dialog.close();
-            previousFocus?.focus();
-        };
-    }, [isOpen]);
 
     if (imageSrcs.length === 0)
         return (
@@ -201,60 +180,12 @@ export function PropertyGallery({ title, imageSrcs, editHref, overlay }: Propert
             ) : null}
             <PropertyGalleryControls api={emblaApi} count={imageSrcs.length} />
             {index != null ? (
-                <dialog
-                    ref={dialogRef}
-                    className={styles.lightbox}
-                    aria-label={`${title} photos`}
-                    onCancel={close}
-                    onKeyDown={(event) => {
-                        if (event.key === "ArrowLeft") {
-                            event.preventDefault();
-                            step(-1);
-                        }
-                        if (event.key === "ArrowRight") {
-                            event.preventDefault();
-                            step(1);
-                        }
-                    }}
-                >
-                    <div className={styles.lightboxHeader}>
-                        <span aria-live="polite">
-                            {index + 1} / {imageSrcs.length}
-                        </span>
-                        <button type="button" onClick={close} aria-label="Close photos" autoFocus>
-                            <X size={24} aria-hidden />
-                        </button>
-                    </div>
-                    <div className={styles.lightboxImage}>
-                        <AppImage
-                            src={imageSrcs[index]}
-                            alt={`${title} — photo ${index + 1}`}
-                            fill
-                            sizes="100vw"
-                            className="object-contain"
-                        />
-                        {imageSrcs.length > 1 ? (
-                            <>
-                                <button
-                                    type="button"
-                                    className={styles.previousPhoto}
-                                    onClick={() => step(-1)}
-                                    aria-label="Previous photo"
-                                >
-                                    <ChevronLeft size={24} aria-hidden />
-                                </button>
-                                <button
-                                    type="button"
-                                    className={styles.nextPhoto}
-                                    onClick={() => step(1)}
-                                    aria-label="Next photo"
-                                >
-                                    <ChevronRight size={24} aria-hidden />
-                                </button>
-                            </>
-                        ) : null}
-                    </div>
-                </dialog>
+                <PropertyLightbox
+                    title={title}
+                    imageSrcs={imageSrcs}
+                    index={index}
+                    onClose={() => setIndex(null)}
+                />
             ) : null}
         </div>
     );

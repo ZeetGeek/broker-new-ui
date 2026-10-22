@@ -102,7 +102,7 @@ export function MyListingsPageSkeleton({ portal = "broker" }: { portal?: "broker
 }
 
 export function MyListingsResultsSkeleton({
-    count = 5,
+    count = 10,
     portal = "broker",
     label = "Loading your listings",
 }: {

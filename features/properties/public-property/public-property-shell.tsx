@@ -9,8 +9,8 @@ export function PublicPropertyShell({ children }: { children: ReactNode }) {
     return (
         <div className={styles.publicShell}>
             <header className={styles.publicMasthead}>
-                <Logo size="sm" />
-                <span>Property preview</span>
+                <Logo />
+                <span className={styles.publicHeaderLabel}>Shared property</span>
             </header>
             <main className={styles.publicMain}>{children}</main>
         </div>

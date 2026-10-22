@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
 import { Check, X } from "@/components/shared/icons";
@@ -22,18 +23,24 @@ import {
     CLOSED_OWNER_REP_STATUSES,
     type OwnerRequestCardItem,
 } from "@/features/owner-requests/types";
+import { CancelledNote } from "@/features/properties/my-requests/cancelled-note";
 import {
     DealCardPhotoToolbar,
     DealOverlayCard,
     DealOverlayFooter,
     dealSecondaryButtonClass,
 } from "@/features/properties/my-requests/deal-card-chrome";
+import { CancelRepresentationDialog } from "@/features/representation/cancel-representation-dialog";
 
 type CardActions = "respond" | "withdraw" | "none";
 
 function stageMetaFor(item: OwnerRequestCardItem, actions: CardActions) {
     if (actions === "withdraw" && item.status === "pending") {
         return OWNER_INVITE_PENDING_META;
+    }
+    // A rejected invitation was turned down by the broker, not by you.
+    if (item.status === "rejected" && item.initiatedBy === "owner") {
+        return { ...OWNER_REQUEST_STAGE_META.rejected, label: "Broker said no" };
     }
     return OWNER_REQUEST_STAGE_META[item.status];
 }
@@ -170,6 +177,7 @@ export function OwnerRequestCard({
     onAccept,
     onReject,
     onWithdraw,
+    onRemoved,
     isBusy = false,
 }: {
     item: OwnerRequestCardItem;
@@ -177,12 +185,17 @@ export function OwnerRequestCard({
     onAccept?: () => void;
     onReject?: () => void;
     onWithdraw?: () => void;
+    /** Accepted cards: offer "Remove broker"; called after it succeeds. */
+    onRemoved?: () => void;
     isBusy?: boolean;
 }) {
     const meta = stageMetaFor(item, actions);
     const detailHref = ownerRequestDetailHref(item.propertyId);
     const muted = CLOSED_OWNER_REP_STATUSES.includes(item.status);
     const { openChat } = useChat();
+    const [isRemoveOpen, setIsRemoveOpen] = useState(false);
+    const canRemove = Boolean(onRemoved) && item.status === "accepted";
+    const isCancelled = item.status === "owner_cancelled" || item.status === "broker_cancelled";
 
     const cardMenu = (
         <DealCardPhotoToolbar
@@ -192,6 +205,8 @@ export function OwnerRequestCard({
                 phoneDigits: item.brokerPhoneDigits,
                 onMessage: () => openChat(chatPeerFor(item)),
             }}
+            onStopRepresenting={canRemove ? () => setIsRemoveOpen(true) : undefined}
+            stopRepresentingLabel="Remove broker"
         />
     );
 
@@ -209,6 +224,13 @@ export function OwnerRequestCard({
                 actions={cardMenu}
             >
                 <BrokerOverlayStats item={item} />
+                {isCancelled ? (
+                    <CancelledNote
+                        viewer="owner"
+                        endedBy={item.status === "owner_cancelled" ? "owner" : "broker"}
+                        reason={item.cancelReason}
+                    />
+                ) : null}
                 <CardFooter
                     item={item}
                     actions={actions}
@@ -218,6 +240,18 @@ export function OwnerRequestCard({
                     isBusy={isBusy}
                 />
             </DealOverlayCard>
+
+            {canRemove ? (
+                <CancelRepresentationDialog
+                    open={isRemoveOpen}
+                    onOpenChange={setIsRemoveOpen}
+                    representationId={item.id}
+                    side="owner"
+                    propertyTitle={item.title}
+                    counterpartName={item.brokerName}
+                    onCancelled={onRemoved}
+                />
+            ) : null}
         </TooltipProvider>
     );
 }

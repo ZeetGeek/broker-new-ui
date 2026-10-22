@@ -4,6 +4,13 @@ import { type MutableRefObject, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
+import { formatInr, formatInrCompact } from "@/lib/format/inr";
+import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
+import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { cn } from "@/lib/utils";
+
+import { AppImage } from "@/components/shared/app-image";
 import {
     Bath,
     BedDouble,
@@ -18,14 +25,6 @@ import {
     Upload,
     X,
 } from "@/components/shared/icons";
-
-import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
-import { formatInr, formatInrCompact } from "@/lib/format/inr";
-import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
-import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { cn } from "@/lib/utils";
-
-import { AppImage } from "@/components/shared/app-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -75,12 +74,14 @@ function areaLabel(values: PropertyDraftValues): string {
 }
 
 export function LiveSummaryPanel({
+    audience = "broker",
     values,
     stepIndex,
     compact = false,
     onGoToMedia,
     photoFilesRef,
 }: {
+    audience?: "owner" | "broker";
     values: PropertyDraftValues;
     stepIndex: number;
     compact?: boolean;
@@ -113,9 +114,9 @@ export function LiveSummaryPanel({
                           buyerPercent: values.commission.sale.buyerPercent ?? 0,
                       }
                     : undefined,
-                gstApplicable: values.commission.tax.gstApplicable,
+                gstApplicable: false,
                 gstMode: values.commission.tax.gstMode,
-                tdsApplicable: values.commission.tax.tdsApplicable,
+                tdsApplicable: false,
                 tdsRate: values.commission.tax.tdsRate,
                 otherOwnerDeductions: ownerDeductions,
                 buyerSideCharges: buyerCharges,
@@ -136,9 +137,9 @@ export function LiveSummaryPanel({
             renewalFeeMonths: values.commission.rent.renewalFeeApplicable
                 ? (values.commission.rent.renewalFeeValue ?? 0)
                 : 0,
-            gstApplicable: values.commission.tax.gstApplicable,
+            gstApplicable: false,
             gstMode: values.commission.tax.gstMode,
-            tdsApplicable: values.commission.tax.tdsApplicable,
+            tdsApplicable: false,
             tdsRate: values.commission.tax.tdsRate,
         });
     }, [buyerCharges, deposit, isSale, ownerDeductions, values]);
@@ -163,7 +164,7 @@ export function LiveSummaryPanel({
                   coBrokerShare > 0
                       ? `Co-broker (${coBrokerPercent}%): ${formatInr(coBrokerShare)}`
                       : null,
-                  `Broker earns: ${formatInr(brokerAfterSplit)}`,
+                  `Estimated commission: ${formatInr(brokerAfterSplit)}`,
               ].filter((line): line is string => Boolean(line))
             : "ownerFirstPayout" in result
               ? [
@@ -173,10 +174,12 @@ export function LiveSummaryPanel({
                     coBrokerShare > 0
                         ? `Co-broker (${coBrokerPercent}%): ${formatInr(coBrokerShare)}`
                         : null,
-                    `Broker earns: ${formatInr(brokerAfterSplit)}`,
+                    `Estimated commission: ${formatInr(brokerAfterSplit)}`,
                 ].filter((line): line is string => Boolean(line))
               : [];
-    const summaryText = [title, ...dealSheetLines].join("\n");
+    const summaryText = [title, ...dealSheetLines, "Before applicable taxes and deductions."].join(
+        "\n",
+    );
 
     async function copySummary() {
         try {
@@ -225,11 +228,14 @@ export function LiveSummaryPanel({
         return (
             <div className="flex items-center justify-between gap-4">
                 <div className="min-inline-0">
-                    <p className="text-xs text-surface/65">Broker earns</p>
+                    <p className="text-xs text-surface/65">Estimated commission</p>
                     <AnimatedMoney
                         value={money(brokerAfterSplit)}
                         className="text-base text-surface"
                     />
+                    <p className="text-xs text-surface/65">
+                        Before applicable taxes and deductions.
+                    </p>
                 </div>
                 <p className="truncate text-xs text-surface/70">
                     {price ? formatInrCompact(price) : "Add a price to calculate"}
@@ -239,9 +245,9 @@ export function LiveSummaryPanel({
     }
 
     return (
-        <aside className="flex flex-col gap-3">
-            <article className="overflow-hidden rounded-card border border-border-warm bg-surface">
-                <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
+        <aside className="flex flex-col gap-4">
+            <article className="overflow-hidden rounded-card bg-surface px-4 py-5 shadow-sm">
+                <div className="mbe-4 flex items-center justify-between gap-2">
                     <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
                         <Eye className="text-brand block-4 inline-4" aria-hidden />
                         Listing preview
@@ -251,8 +257,8 @@ export function LiveSummaryPanel({
 
                 <div
                     className="
-                  group relative mx-3.5 aspect-4/3 overflow-hidden rounded-inner bg-surface-muted
-                "
+                      group relative aspect-4/3 overflow-hidden rounded-inner bg-surface-muted
+                    "
                 >
                     {cover ? (
                         <>
@@ -382,7 +388,7 @@ export function LiveSummaryPanel({
                     )}
                 </div>
 
-                <div className="flex flex-col gap-2 p-3.5">
+                <div className="mbs-4 flex flex-col gap-2">
                     <p className="tabular text-xl font-bold tracking-[-0.02em] text-brand">
                         {price && price > 0 ? formatInrCompact(price) : "Price not set"}
                     </p>
@@ -420,8 +426,8 @@ export function LiveSummaryPanel({
             </article>
 
             {stepIndex >= 2 ? (
-                <article className="overflow-hidden rounded-card border border-border-warm bg-surface">
-                    <div className="flex items-start justify-between gap-3 px-3.5 py-3">
+                <article className="overflow-hidden rounded-card bg-surface px-4 py-5 shadow-sm">
+                    <div className="mbe-4 flex items-start justify-between gap-3">
                         <div className="min-inline-0">
                             <p className="text-sm font-semibold text-ink">
                                 {isSale ? "Sale deal summary" : "Rent deal summary"}
@@ -439,15 +445,18 @@ export function LiveSummaryPanel({
                         </span>
                     </div>
 
-                    <div className="mx-3.5 rounded-control bg-brand-soft/50 px-3.5 py-3">
-                        <p className="text-xs font-medium text-brand-text">You earn</p>
+                    <div className="rounded-control bg-brand-soft/50 px-4 py-3">
+                        <p className="text-xs font-medium text-brand-text">Estimated commission</p>
                         <AnimatedMoney
                             value={money(brokerAfterSplit)}
                             className="mts-1 block text-2xl tracking-[-0.02em] text-brand"
                         />
+                        <p className="mbs-2 text-xs text-brand-text">
+                            Before applicable taxes and deductions.
+                        </p>
                     </div>
 
-                    <div className="flex flex-col gap-2 px-3.5 py-3">
+                    <div className="flex flex-col gap-2 py-4">
                         {isSale && "ownerNet" in result ? (
                             <>
                                 <MoneyRow
@@ -511,14 +520,12 @@ export function LiveSummaryPanel({
                     </div>
                 </article>
             ) : (
-                <div
-                    className="
-                      rounded-card border border-dashed border-brand/30 bg-brand-soft/30 px-3.5 py-4
-                    "
-                >
+                <div className="rounded-card bg-surface px-4 py-5 shadow-sm">
                     <p className="text-sm font-semibold text-ink">Live deal summary</p>
                     <p className="mbs-1 text-sm/5 text-ink-muted">
-                        Add the price on Price & deal to see what you earn.
+                        {audience === "owner"
+                            ? "Add the price on Price & deal to see the broker commission."
+                            : "Add the price on Price & deal to see what you earn."}
                     </p>
                 </div>
             )}

@@ -38,8 +38,8 @@ function PublicPropertyView({ listing }: { listing: PublicPropertyListing }) {
     return (
         <div className={`${styles.page} ${styles.publicPage}`}>
             <header className={styles.header}>
-                <h1 className={styles.publicTitle}>{item.title}</h1>
-                <div className={styles.locationLine}>
+                <div className={styles.headerContent}>
+                    <h1 className={styles.publicTitle}>{item.title}</h1>
                     <div className={styles.propertyMeta}>
                         {location ? (
                             <span className={styles.location}>
@@ -69,30 +69,30 @@ function PublicPropertyView({ listing }: { listing: PublicPropertyListing }) {
                             Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
                         </span>
                     </div>
-                    <div className={styles.headerActions}>
-                        <PropertySharePopover
-                            iconOnly
-                            className={styles.circleButton}
-                            listing={{
-                                id: item.id,
-                                title: item.title,
-                                locality: item.locality,
-                                city: item.city,
-                                priceLabel:
-                                    (isRent ? item.rentAmountInr : item.saleAmountInr) == null
-                                        ? "Price on request"
-                                        : isRent
-                                          ? formatRentInr(amountInr)
-                                          : formatPriceInr(amountInr),
-                                imageSrc: item.imageSrc,
-                                propertyTypeLabel: item.propertyTypeLabel,
-                                configLabel: item.configLabel,
-                                areaSqft: item.areaSqft,
-                                bhk: item.bhk,
-                                listingKind: isRent ? "rent" : "sale",
-                            }}
-                        />
-                    </div>
+                </div>
+                <div className={styles.headerActions}>
+                    <PropertySharePopover
+                        iconOnly
+                        className={styles.circleButton}
+                        listing={{
+                            id: item.id,
+                            title: item.title,
+                            locality: item.locality,
+                            city: item.city,
+                            priceLabel:
+                                (isRent ? item.rentAmountInr : item.saleAmountInr) == null
+                                    ? "Price on request"
+                                    : isRent
+                                      ? formatRentInr(amountInr)
+                                      : formatPriceInr(amountInr),
+                            imageSrc: item.imageSrc,
+                            propertyTypeLabel: item.propertyTypeLabel,
+                            configLabel: item.configLabel,
+                            areaSqft: item.areaSqft,
+                            bhk: item.bhk,
+                            listingKind: isRent ? "rent" : "sale",
+                        }}
+                    />
                 </div>
             </header>
             <div className={styles.fullWidthGallery}>

@@ -22,8 +22,13 @@ export function PropertyCardSkeleton({
                 )}
                 aria-hidden
             >
-                <div className="aspect-4/3 shrink-0 bg-border-warm inline-full">
+                <div className="relative aspect-4/3 shrink-0 bg-border-warm inline-full">
                     <Skeleton className="rounded-none bg-ink/3 block-full inline-full" />
+                    <div className="absolute inset-x-3 inset-bs-3 flex items-start gap-1.5">
+                        <Skeleton className="rounded-full bg-surface/60 block-5 inline-24" />
+                        <Skeleton className="rounded-full bg-surface/60 block-5 inline-16" />
+                        <Skeleton className="ms-auto rounded-full bg-surface/60 block-10 inline-10" />
+                    </div>
                 </div>
                 <div className="flex flex-1 flex-col gap-4 p-4">
                     <Skeleton className="block-7 inline-1/3" />

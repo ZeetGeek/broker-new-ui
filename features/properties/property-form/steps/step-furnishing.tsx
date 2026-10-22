@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { AnimatePresence, motion } from "motion/react";
 
-import { Plus, Search, Sofa, Sparkles, X } from "@/components/shared/icons";
+import { AnimatePresence, motion } from "motion/react";
 
 import { duration, ease } from "@/lib/motion/tokens";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
@@ -12,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
+import { Plus, Search, X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -165,14 +165,17 @@ function stripAmenity(
     return next;
 }
 
-function rebuildAmenities(values: string[]): PropertyDraftValues["amenities"] {
+function rebuildAmenities(
+    values: string[],
+    customBucket: AmenityBucket = "society",
+): PropertyDraftValues["amenities"] {
     const next = createEmptyAmenities();
     const seen = new Set<string>();
     for (const raw of values) {
         const value = normalizeAmenityValue(raw);
         if (!value || seen.has(value)) continue;
         seen.add(value);
-        const bucket = AMENITY_BUCKET_BY_VALUE[value] ?? "society";
+        const bucket = AMENITY_BUCKET_BY_VALUE[value] ?? customBucket;
         next[bucket] = [...next[bucket], value];
     }
     return next;
@@ -180,7 +183,11 @@ function rebuildAmenities(values: string[]): PropertyDraftValues["amenities"] {
 
 export function StepFurnishing() {
     const { watch, setValue, getValues } = useFormContext<PropertyDraftValues>();
-    const { derived } = useFieldRules();
+    const { derived, isVisible } = useFieldRules();
+    const visibleBuckets = useMemo(
+        () => AMENITY_BUCKETS.filter((bucket) => isVisible(`amenities.${bucket}`)),
+        [isVisible],
+    );
     const isCommercial = derived.isCommercial || derived.isIndustrial;
     const amenities = watch("amenities") ?? createEmptyAmenities();
     const [query, setQuery] = useState("");
@@ -189,7 +196,7 @@ export function StepFurnishing() {
     // Dedupe / normalize draft leftovers once so remove + clear always hit real values.
     useEffect(() => {
         const current = getValues("amenities") ?? createEmptyAmenities();
-        const cleaned = rebuildAmenities(collectSelected(current));
+        const cleaned = rebuildAmenities(collectSelected(current), visibleBuckets[0]);
         const changed = AMENITY_BUCKETS.some((bucket) => {
             const left = (current[bucket] ?? []).map(String);
             const right = cleaned[bucket];
@@ -200,7 +207,7 @@ export function StepFurnishing() {
         if (changed) {
             setValue("amenities", cleaned, { shouldDirty: false, shouldTouch: false });
         }
-    }, [getValues, setValue]);
+    }, [getValues, setValue, visibleBuckets]);
 
     const catalog = useMemo(() => {
         const values = isCommercial
@@ -211,8 +218,12 @@ export function StepFurnishing() {
                   ...CONVENIENCE_AMENITIES,
                   ...FLAT_FEATURES,
               ];
-        return optionList([...new Set(values)]);
-    }, [isCommercial]);
+        return optionList(
+            [...new Set(values)].filter((value) =>
+                visibleBuckets.includes(AMENITY_BUCKET_BY_VALUE[value] ?? "society"),
+            ),
+        );
+    }, [isCommercial, visibleBuckets]);
 
     const popularSet = useMemo(() => {
         const preferred = isCommercial ? POPULAR_COMMERCIAL : POPULAR_RESIDENTIAL;
@@ -220,7 +231,15 @@ export function StepFurnishing() {
         return new Set<string>(preferred.filter((value) => available.has(value)));
     }, [catalog, isCommercial]);
 
-    const selected = useMemo(() => collectSelected(amenities), [amenities]);
+    const selected = useMemo(
+        () =>
+            collectSelected(
+                Object.fromEntries(
+                    visibleBuckets.map((bucket) => [bucket, amenities[bucket] ?? []]),
+                ) as PropertyDraftValues["amenities"],
+            ),
+        [amenities, visibleBuckets],
+    );
     const selectedSet = useMemo(() => new Set(selected), [selected]);
 
     const trimmedQuery = query.trim();
@@ -276,7 +295,8 @@ export function StepFurnishing() {
         }
         if (selectedNow.length >= MAX_AMENITIES) return;
 
-        const bucket = AMENITY_BUCKET_BY_VALUE[value] ?? "society";
+        const bucket = AMENITY_BUCKET_BY_VALUE[value] ?? visibleBuckets[0];
+        if (!bucket || !visibleBuckets.includes(bucket)) return;
         const cleaned = stripAmenity(current, value);
         writeAmenities({
             ...cleaned,
@@ -341,8 +361,8 @@ export function StepFurnishing() {
                 className={cn(
                     `
                       gap-1.5 rounded-control border-2 px-3 py-2 text-sm font-medium
-                      transition-[background-color,border-color,color,transform]
-                      duration-160 min-block-11
+                      transition-[background-color,border-color,color,transform] duration-160
+                      min-block-11
                       focus-visible:ring-3 focus-visible:ring-ring/30
                       sm:min-block-10
                     `,
@@ -361,24 +381,24 @@ export function StepFurnishing() {
                     {icon}
                 </span>
                 {label}
-                {removable ? <X className="block-3.5 inline-3.5 shrink-0" aria-hidden /> : null}
+                {removable ? <X className="shrink-0 block-3.5 inline-3.5" aria-hidden /> : null}
             </Button>
+        );
+    }
+
+    if (derived.isPlot) {
+        return (
+            <p className="text-sm text-ink-muted">
+                Furnishing and building amenities do not apply to this land listing. Continue to add
+                photos.
+            </p>
         );
     }
 
     return (
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title={
-                    <>
-                        <Sofa
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Furnishing
-                    </>
-                }
+                title={<>Furnishing</>}
                 description="Pick how the property is handed over."
             >
                 <ChoiceField
@@ -391,16 +411,7 @@ export function StepFurnishing() {
             </WizardSection>
 
             <WizardSection
-                title={
-                    <>
-                        <Sparkles
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Amenities
-                    </>
-                }
+                title={<>Amenities</>}
                 description="Search what’s on site, or add your own. Keep it to what’s really there."
             >
                 <div className={FORM_STACK_CLASS}>
@@ -412,7 +423,7 @@ export function StepFurnishing() {
                             startIcon={Search}
                             placeholder="e.g. Lift, gym, power backup…"
                             aria-label="Search or add amenity"
-                            className="min-inline-0 flex-1"
+                            className="flex-1 min-inline-0"
                             onKeyDown={(event) => {
                                 if (event.key === "Enter") {
                                     event.preventDefault();
@@ -435,8 +446,8 @@ export function StepFurnishing() {
                             onClick={addCustom}
                             disabled={!canAddCustom}
                             className="
-                              shrink-0 rounded-control border-2 border-border-warm bg-surface
-                              px-4 text-sm font-semibold text-ink
+                              shrink-0 rounded-control border-2 border-border-warm bg-surface px-4
+                              text-sm font-semibold text-ink
                               hover:bg-surface-muted
                               focus-visible:ring-3 focus-visible:ring-ring/30
                               disabled:opacity-40
@@ -536,16 +547,15 @@ export function StepFurnishing() {
                             variant="outline"
                             onClick={addCustom}
                             className="
-                              flex inline-full items-center justify-start gap-2 rounded-control
-                              border-2 border-dashed border-brand/35 bg-brand-soft/40 px-3
-                              py-2.5 text-start text-sm font-medium text-brand-text
-                              transition-colors
+                              flex items-center justify-start gap-2 rounded-control border-2
+                              border-dashed border-brand/35 bg-brand-soft/40 px-3 py-2.5 text-start
+                              text-sm font-medium text-brand-text transition-colors inline-full
+                              min-block-11
                               hover:bg-brand-soft
                               focus-visible:ring-3 focus-visible:ring-ring/30
-                              min-block-11
                             "
                         >
-                            <Plus className="block-4 inline-4 shrink-0" aria-hidden />
+                            <Plus className="shrink-0 block-4 inline-4" aria-hidden />
                             Add “{trimmedQuery}” as custom
                         </Button>
                     ) : null}
@@ -607,7 +617,7 @@ export function StepFurnishing() {
                                 size="xs"
                                 aria-expanded={browseAll}
                                 onClick={() => setBrowseAll((open) => !open)}
-                                className="t-acc-head mt-1 shrink-0 gap-1.5 px-0 text-brand"
+                                className="t-acc-head mbs-1 shrink-0 gap-1.5 px-0 text-brand"
                             >
                                 {browseAll
                                     ? "Show fewer"

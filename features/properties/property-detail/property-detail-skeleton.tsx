@@ -13,19 +13,24 @@ export function PropertyDetailSkeleton({ isPublic = false }: { isPublic?: boolea
             <span className="sr-only">Loading property details</span>
             <div aria-hidden>
                 <header className={styles.header}>
-                    <h1>
-                        <Skeleton className={styles.skeletonHeading} />
-                    </h1>
-                    <div className={styles.locationLine}>
+                    <div className={styles.headerContent}>
+                        {!isPublic ? (
+                            <div className="flex items-center block-11">
+                                <Skeleton className="block-4 inline-40" />
+                            </div>
+                        ) : null}
+                        <h1>
+                            <Skeleton className={styles.skeletonHeading} />
+                        </h1>
                         <div className={styles.propertyMeta}>
                             <Skeleton className="block-5 inline-52 max-inline-full" />
                             <Skeleton className="rounded-full block-5 inline-24" />
                             <Skeleton className="block-5 inline-28" />
                         </div>
-                        <div className={styles.headerActions}>
-                            <Skeleton className={styles.circleButton} />
-                            {!isPublic ? <Skeleton className={styles.circleButton} /> : null}
-                        </div>
+                    </div>
+                    <div className={styles.headerActions}>
+                        <Skeleton className={styles.circleButton} />
+                        {!isPublic ? <Skeleton className={styles.circleButton} /> : null}
                     </div>
                 </header>
                 <div className={styles.fullWidthGallery}>

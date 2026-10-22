@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 import { createClientId } from "@/lib/client-id";
 import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
+import { MAX_PROPERTY_PHOTOS } from "@/lib/properties/form-media";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 
 export type DraftPhoto = PropertyDraftValues["media"]["photos"][number];
@@ -129,6 +130,12 @@ export async function replaceCoverPhoto({
     commitPhotos: (next: DraftPhoto[]) => void;
     patchPhoto: (photoId: string, patch: Partial<DraftPhoto>) => void;
 }): Promise<void> {
+    if (!photos.some((photo) => photo.isCover) && photos.length >= MAX_PROPERTY_PHOTOS) {
+        toast.error(
+            `Remove a photo before adding a cover. The limit is ${MAX_PROPERTY_PHOTOS} photos in total.`,
+        );
+        return;
+    }
     const portrait = await isPortraitImage(file);
     if (!portrait) {
         toast.error("Cover works best as a vertical photo (taller than wide).");

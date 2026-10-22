@@ -2,11 +2,10 @@
 
 import { useRef, useState } from "react";
 
-import { Download, ExternalLink, FileText, Pause, Play } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
+import { Download, ExternalLink, FileText, Pause, Play } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import type { ChatAttachment, ChatMedia } from "@/features/chat/types";
@@ -15,12 +14,11 @@ import type { ChatAttachment, ChatMedia } from "@/features/chat/types";
 const MEDIA_TILE_LIMIT = 4;
 
 /**
- * Actions sitting inside a brand-green bubble. Translucent white keeps them
- * legible without introducing a second green into the palette.
+ * Outgoing attachments sit on the same soft green as outgoing text.
  */
 const ATTACHMENT_BUTTON_OWN = `
-  border-surface/25 bg-surface/15 text-surface
-  hover:bg-surface/25 hover:text-surface
+  border-brand/15 bg-surface/70 text-brand-ink
+  hover:bg-surface hover:text-brand-ink
 `;
 
 const ATTACHMENT_BUTTON_PEER = `
@@ -40,12 +38,12 @@ function FileAttachment({
     isOwn: boolean;
 }) {
     const buttonClass = isOwn ? ATTACHMENT_BUTTON_OWN : ATTACHMENT_BUTTON_PEER;
-    const iconWrap = isOwn ? "bg-surface/15 text-surface" : "bg-brand-soft text-brand";
-    const titleClass = isOwn ? "text-surface" : "text-ink";
-    const metaClass = isOwn ? "text-surface/70" : "text-ink-muted";
+    const iconWrap = isOwn ? "bg-surface/70 text-brand" : "bg-brand-soft text-brand";
+    const titleClass = isOwn ? "text-brand-ink" : "text-ink";
+    const metaClass = isOwn ? "text-brand-ink/65" : "text-ink/65";
 
     return (
-        <div className="flex flex-col gap-3 min-inline-52">
+        <div className="flex flex-col gap-3 min-inline-0 sm:min-inline-52">
             <div className="flex items-center gap-3">
                 <span
                     className={cn(
@@ -58,7 +56,9 @@ function FileAttachment({
 
                 <div className="min-inline-0">
                     <p className={cn("body-sm truncate font-semibold", titleClass)}>{name}</p>
-                    {sizeLabel ? <p className={cn("body-xs", metaClass)}>{sizeLabel}</p> : null}
+                    {sizeLabel ? (
+                        <p className={cn("body-xs font-medium", metaClass)}>{sizeLabel}</p>
+                    ) : null}
                 </div>
             </div>
 
@@ -118,7 +118,7 @@ function AudioAttachment({ url, durationLabel }: { url: string; durationLabel?: 
     };
 
     return (
-        <div className="flex items-center gap-3 pe-1 min-inline-52">
+        <div className="flex items-center gap-3 pe-1 min-inline-0 sm:min-inline-52">
             <audio
                 ref={audioRef}
                 src={url || undefined}
@@ -133,10 +133,10 @@ function AudioAttachment({ url, durationLabel }: { url: string; durationLabel?: 
                 onClick={toggle}
                 aria-label={isPlaying ? "Pause voice note" : "Play voice note"}
                 className="
-                  flex shrink-0 items-center justify-center rounded-control bg-surface/20 text-surface
-                  transition-colors duration-160 block-9 inline-9
-                  hover:bg-surface/30
-                  focus-visible:ring-2 focus-visible:ring-surface/60 focus-visible:outline-none
+                  flex shrink-0 items-center justify-center rounded-full bg-brand-ink text-surface
+                  transition-colors duration-160 block-control-lg inline-control-lg
+                  hover:bg-brand-deep
+                  focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none
                 "
             >
                 {isPlaying ? (
@@ -146,18 +146,20 @@ function AudioAttachment({ url, durationLabel }: { url: string; durationLabel?: 
                 )}
             </button>
 
-            <div aria-hidden className="flex flex-1 items-center gap-[3px] block-7 min-inline-32">
+            <div aria-hidden className="flex flex-1 items-center gap-[3px] block-7 min-inline-12">
                 {WAVEFORM_BARS.map((height, index) => (
                     <span
                         key={index}
                         style={{ height: `${height}%` }}
-                        className="flex-1 rounded-full bg-surface/45 min-inline-[2px]"
+                        className="flex-1 rounded-full bg-brand/35 min-inline-[2px]"
                     />
                 ))}
             </div>
 
             {durationLabel ? (
-                <span className="body-xs tabular shrink-0 text-surface/70">{durationLabel}</span>
+                <span className="body-xs tabular shrink-0 font-medium text-ink/65">
+                    {durationLabel}
+                </span>
             ) : null}
         </div>
     );
@@ -246,7 +248,7 @@ function MediaAttachment({ items, isOwn }: { items: ChatMedia[]; isOwn: boolean 
     if (items.length === 1) {
         const item = items[0];
         return (
-            <div className="flex flex-col gap-2 max-inline-64 min-inline-52">
+            <div className="flex flex-col gap-2 max-inline-64 min-inline-0 sm:min-inline-52">
                 <MediaTile item={item} className="aspect-4/3 block-48 inline-full max-block-72" />
                 <div className="flex flex-wrap items-center gap-2">
                     <Button
@@ -287,7 +289,7 @@ function MediaAttachment({ items, isOwn }: { items: ChatMedia[]; isOwn: boolean 
     const hidden = items.length - visible.length;
 
     return (
-        <div className="grid grid-cols-2 gap-2 min-inline-52">
+        <div className="grid grid-cols-2 gap-2 min-inline-0 sm:min-inline-52">
             {visible.map((item, index) => (
                 <MediaTile
                     key={item.id}

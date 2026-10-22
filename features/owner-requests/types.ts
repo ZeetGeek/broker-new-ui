@@ -1,4 +1,12 @@
-export type OwnerRequestsTab = "requests" | "invitations";
+export type OwnerRequestsTab = "requests" | "invitations" | "accepted" | "rejected" | "cancelled";
+
+export const OWNER_REQUESTS_TABS: readonly OwnerRequestsTab[] = [
+    "requests",
+    "invitations",
+    "accepted",
+    "rejected",
+    "cancelled",
+];
 
 export type OwnerRepStatus =
     | "pending"
@@ -22,6 +30,12 @@ export const CLOSED_OWNER_REP_STATUSES: readonly OwnerRepStatus[] = [
 export type OwnerRequestsSummary = {
     incomingPending: number;
     invitesPending: number;
+    /** Brokers currently representing a listing. */
+    accepted: number;
+    /** Requests you turned down plus invites brokers turned down. */
+    rejected: number;
+    /** Accepted deals later cancelled by you or the broker. */
+    cancelled: number;
 };
 
 export type OwnerDealListing = {
@@ -44,6 +58,10 @@ export type OwnerDealListing = {
 export type OwnerRequestCardItem = OwnerDealListing & {
     id: string;
     status: OwnerRepStatus;
+    /** `owner` = you invited the broker, `broker` = the broker asked. */
+    initiatedBy?: "owner" | "broker";
+    /** Reason given when the representation was cancelled. */
+    cancelReason?: string;
     message: string | null;
     createdAt: string;
     brokerName: string;
