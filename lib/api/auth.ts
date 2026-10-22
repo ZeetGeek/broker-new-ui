@@ -28,7 +28,7 @@ export type RegisterResponse = {
 };
 
 export const authApi = {
-    login(email: string, password: string) {
+    login(email: string, password: string, rememberMe: boolean) {
         if (isMockMode()) {
             return Promise.resolve({
                 user: MOCK_AUTH_USER,
@@ -37,7 +37,7 @@ export const authApi = {
         }
         return apiFetch<LoginResponse>("/auth/login", {
             method: "POST",
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, rememberMe }),
             skipAuth: true,
             credentials: "include",
         });

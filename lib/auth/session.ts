@@ -32,16 +32,24 @@ const LEGACY_REFRESH_TOKEN_KEY = "broker_refresh_token";
 let memoryAccessToken: string | null = null;
 let memoryUser: AuthUser | null = null;
 
+/**
+ * "Remember me" sessions live in localStorage (survive tab/browser close).
+ * Otherwise they live in sessionStorage, which the browser drops when the tab closes.
+ */
+function activeStorage(): Storage {
+    return sessionStorage.getItem(TOKEN_KEY) ? sessionStorage : localStorage;
+}
+
 export function getAccessToken(): string | null {
     if (memoryAccessToken) return memoryAccessToken;
     if (typeof window === "undefined") return null;
-    return localStorage.getItem(TOKEN_KEY);
+    return activeStorage().getItem(TOKEN_KEY);
 }
 
 export function getStoredUser(): AuthUser | null {
     if (memoryUser) return memoryUser;
     if (typeof window === "undefined") return null;
-    const raw = localStorage.getItem(USER_KEY);
+    const raw = activeStorage().getItem(USER_KEY);
     if (!raw) return null;
     try {
         return JSON.parse(raw) as AuthUser;
@@ -50,12 +58,21 @@ export function getStoredUser(): AuthUser | null {
     }
 }
 
-export function setSession(session: AuthSession) {
+/**
+ * `persist` picks the storage on login; when omitted (token refresh, profile
+ * update) the session stays in whichever storage it already uses.
+ */
+export function setSession(session: AuthSession, options?: { persist?: boolean }) {
     memoryAccessToken = session.accessToken;
     memoryUser = session.user;
     if (typeof window === "undefined") return;
-    localStorage.setItem(TOKEN_KEY, session.accessToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(session.user));
+    const persist = options?.persist ?? activeStorage() === localStorage;
+    const target = persist ? localStorage : sessionStorage;
+    const other = persist ? sessionStorage : localStorage;
+    target.setItem(TOKEN_KEY, session.accessToken);
+    target.setItem(USER_KEY, JSON.stringify(session.user));
+    other.removeItem(TOKEN_KEY);
+    other.removeItem(USER_KEY);
     localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
 }
 
@@ -63,8 +80,10 @@ export function clearSession() {
     memoryAccessToken = null;
     memoryUser = null;
     if (typeof window === "undefined") return;
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    for (const storage of [localStorage, sessionStorage]) {
+        storage.removeItem(TOKEN_KEY);
+        storage.removeItem(USER_KEY);
+    }
     localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
 }
 

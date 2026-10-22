@@ -81,7 +81,11 @@ export function LoginForm() {
 
         try {
             const result = await dispatch(
-                login({ email: values.email.trim(), password: values.password }),
+                login({
+                    email: values.email.trim(),
+                    password: values.password,
+                    rememberMe: values.rememberMe,
+                }),
             ).unwrap();
             setIsRedirecting(true);
             toast.success("Signed in successfully");
