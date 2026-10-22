@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -28,6 +28,7 @@ import { PropertyDeleteDialog } from "@/features/properties/property-detail/prop
 import { PropertyDetailLayout } from "@/features/properties/property-detail/property-detail-layout";
 import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
 import type { MyListingItem, MyListingStatus } from "@/features/properties/your-listings/types";
+import { useAppSelector } from "@/store/hooks";
 
 const STATUS_LABEL: Record<MyListingStatus, string> = {
     draft: "Draft",
@@ -219,20 +220,15 @@ function BrowsePropertyFallback({
 export function PropertyDetailPage({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const params = useParams<{ id: string }>();
     const propertyId = params.id;
-    const [listing, setListing] = useState<MyListingItem | null | undefined>(undefined);
+    const userId = useAppSelector((state) => state.auth.user?.id);
+    const query = useQuery({
+        queryKey: ["owned-property-detail", userId, portal, propertyId],
+        queryFn: () => myListingsApi.get(propertyId),
+        staleTime: 0,
+    });
 
-    useEffect(() => {
-        let cancelled = false;
-        void myListingsApi.get(propertyId).then((item) => {
-            if (!cancelled) setListing(item);
-        });
-        return () => {
-            cancelled = true;
-        };
-    }, [propertyId]);
+    if (query.isPending) return <PropertyDetailSkeleton />;
+    if (!query.data) return <BrowsePropertyFallback propertyId={propertyId} portal={portal} />;
 
-    if (listing === undefined) return <PropertyDetailSkeleton />;
-    if (!listing) return <BrowsePropertyFallback propertyId={propertyId} portal={portal} />;
-
-    return <OwnedPropertyDetail listing={listing} portal={portal} />;
+    return <OwnedPropertyDetail key={propertyId} listing={query.data} portal={portal} />;
 }

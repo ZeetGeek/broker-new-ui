@@ -280,12 +280,14 @@ export function PropertyDetailLayout({
     );
 }
 
-function PropertyDetailContent({
+export function PropertyDetailContent({
     item,
     revealAddress,
+    locationHint = "Exact address is shared after representation is approved.",
 }: {
     item: MyListingItem;
     revealAddress: boolean;
+    locationHint?: string;
 }) {
     const [expanded, setExpanded] = useState(false);
     const facts = buildPropertyFacts(item);
@@ -468,11 +470,7 @@ function PropertyDetailContent({
                             {address || "Location not provided"}
                             {revealAddress && item.pinCode ? `, ${item.pinCode}` : ""}
                         </p>
-                        <small>
-                            {!revealAddress
-                                ? "Exact address is shared after representation is approved."
-                                : ""}
-                        </small>
+                        <small>{!revealAddress ? locationHint : ""}</small>
                     </div>
                 </div>
                 {locationFacts.length > 0 ? (

@@ -1,252 +1,192 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useMemo } from "react";
 import { useParams } from "next/navigation";
 
 import { useQuery } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api/client";
-import { type PublicPropertyListing, propertiesApi } from "@/lib/api/properties";
-import { offersRent, offersSale } from "@/lib/format/listing-availability";
-import { cn } from "@/lib/utils";
-import { amenityLabel } from "@/lib/validation/property";
+import { propertiesApi, type PublicPropertyListing } from "@/lib/api/properties";
+import { toLegacyAmountFields } from "@/lib/format/listing-availability";
+import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 
-import { Building2, MapPin, UserRound } from "@/components/shared/icons";
-import { Logo } from "@/components/shared/logo";
+import { Building2, Clock, MapPin, MessageCircle } from "@/components/shared/icons";
+import { PropertySharePopover } from "@/components/shared/property-share-popover";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import {
-    buildPropertyFacts,
-    factColumnsClass,
-    listedAgoLabel,
-} from "@/features/properties/property-detail/property-detail-facts";
+import { listedAgoLabel } from "@/features/properties/property-detail/property-detail-facts";
+import { PropertyDetailContent } from "@/features/properties/property-detail/property-detail-layout";
 import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
 import { PropertyGallery } from "@/features/properties/property-detail/property-gallery";
 import { PropertyPriceBlock } from "@/features/properties/property-detail/property-price-block";
 import { mapPropertyListingToMyItem } from "@/features/properties/your-listings/map-my-listing";
 
-function PublicHeader() {
-    return (
-        <header className="border-be border-border-warm bg-surface">
-            <div className="mx-auto flex items-center justify-between gap-4 px-4 py-3 max-inline-6xl sm:px-6">
-                <Logo size="sm" />
-                <Button variant="outline" size="sm" render={<Link href="/login" />}>
-                    Sign in
-                </Button>
-            </div>
-        </header>
-    );
-}
+import { PublicPropertyShell } from "./public-property-shell";
 
-function ListedByCard({ listing }: { listing: PublicPropertyListing }) {
-    const listedBy = listing.listedBy;
-    const isBroker = listedBy?.type === "broker";
-    const name = isBroker ? listedBy?.name?.trim() || "Broker" : "Property owner";
-
-    return (
-        <aside className="flex flex-col gap-4 rounded-card border border-border-warm bg-surface p-5 sm:p-6 lg:sticky lg:inset-bs-6 lg:self-start">
-            <p className="eyebrow">Listed by</p>
-            <div className="flex items-center gap-3 min-inline-0">
-                {isBroker ? (
-                    <UserAvatar
-                        name={name}
-                        imageUrl={listedBy?.avatarUrl ?? undefined}
-                        size="md"
-                        className="shrink-0"
-                    />
-                ) : (
-                    <span className="flex shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand block-10 inline-10">
-                        <UserRound aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
-                    </span>
-                )}
-                <div className="min-inline-0">
-                    <p className="body truncate font-semibold text-ink">{name}</p>
-                    <p className="body-sm text-ink-muted">
-                        {isBroker ? "Broker on YesBroker" : "Listed directly by the owner"}
-                    </p>
-                </div>
-            </div>
-            <p className="body-sm text-ink-muted">
-                Interested? Reply to the person who shared this link, or sign in to YesBroker to
-                connect.
-            </p>
-            <Button variant="accent" size="lg" render={<Link href="/login" />}>
-                Sign in to YesBroker
-            </Button>
-        </aside>
-    );
-}
-
-function NotFoundState() {
-    return (
-        <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <Building2 aria-hidden className="text-brand block-8 inline-8" strokeWidth={1.75} />
-            <h1 className="h3">This property is not available</h1>
-            <p className="body max-w-prose text-ink-muted">
-                The link may be old, or the listing is no longer published.
-            </p>
-            <Button variant="outline" render={<Link href="/" />}>
-                Go to YesBroker
-            </Button>
-        </div>
-    );
-}
+import styles from "@/features/properties/property-detail/property-detail.module.css";
 
 function PublicPropertyView({ listing }: { listing: PublicPropertyListing }) {
     const item = useMemo(() => mapPropertyListingToMyItem(listing), [listing]);
-    const facts = useMemo(() => buildPropertyFacts(item), [item]);
-    const [descriptionOpen, setDescriptionOpen] = useState(false);
-    const isLongDescription = item.description.length > 320;
-    const isSold = Boolean(listing.isSold);
-
+    const { amountInr, isRent } = toLegacyAmountFields(item);
+    const sold = Boolean(listing.isSold || item.isSold);
+    const name = listing.listedBy?.name?.trim();
+    const location = [...new Set([item.locality, item.city, item.country].filter(Boolean))].join(
+        ", ",
+    );
     return (
-        <div className="flex flex-col gap-6">
-            <PropertyGallery
-                title={item.title}
-                imageSrcs={item.imageSrcs}
-                overlay={
-                    <>
-                        {isSold ? (
-                            <Badge color="red" blur="dark">
-                                Sold
-                            </Badge>
-                        ) : null}
-                        {offersSale(item) ? (
-                            <Badge color="emerald" blur="dark">
-                                For sale
-                            </Badge>
-                        ) : null}
-                        {offersRent(item) ? (
-                            <Badge color="orange" blur="dark">
-                                For rent
-                            </Badge>
-                        ) : null}
-                        <Badge color="sky" blur="dark">
-                            Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
-                        </Badge>
-                    </>
-                }
-            />
-
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,1fr)] lg:gap-10">
-                <div className="flex flex-col gap-8 min-inline-0">
-                    <header className="flex flex-col gap-3">
-                        <h1 className="h2 text-ink">{item.title}</h1>
-                        <p className="body flex items-start gap-1.5 text-ink-muted">
-                            <MapPin
-                                aria-hidden
-                                className="mbs-0.5 shrink-0 block-4 inline-4"
-                                strokeWidth={1.75}
-                            />
-                            <span>
-                                {item.locality}
-                                {item.city ? `, ${item.city}` : ""}
+        <div className={`${styles.page} ${styles.publicPage}`}>
+            <header className={styles.header}>
+                <h1 className={styles.publicTitle}>{item.title}</h1>
+                <div className={styles.locationLine}>
+                    <div className={styles.propertyMeta}>
+                        {location ? (
+                            <span className={styles.location}>
+                                <MapPin size={18} strokeWidth={1.75} aria-hidden />
+                                {location}
                             </span>
-                        </p>
-                    </header>
-
-                    <section className="rounded-card border border-border-warm bg-surface p-5 sm:p-6">
-                        <PropertyPriceBlock item={item} hideCommission />
-                    </section>
-
-                    {facts.length > 0 ? (
-                        <section className="flex flex-col gap-4">
-                            <h2 className="eyebrow">Property details</h2>
-                            <dl
-                                className={cn(
-                                    "grid grid-cols-2 overflow-hidden rounded-card border border-border-warm bg-surface",
-                                    factColumnsClass(facts.length),
-                                )}
-                            >
-                                {facts.map((fact) => (
-                                    <div
-                                        key={fact.key}
-                                        className="flex flex-col gap-1 bg-surface p-4 shadow-[inset_-1px_-1px_0_0_var(--color-border-warm)]"
-                                    >
-                                        <dt className="body-xs text-ink-muted">{fact.label}</dt>
-                                        <dd className="body font-semibold text-ink">
-                                            {fact.value}
-                                        </dd>
-                                    </div>
-                                ))}
-                            </dl>
-                        </section>
-                    ) : null}
-
-                    {item.description.trim() ? (
-                        <section className="flex flex-col gap-3">
-                            <h2 className="eyebrow">About this property</h2>
-                            <p
-                                className={cn(
-                                    "body whitespace-pre-wrap text-ink-muted",
-                                    isLongDescription && !descriptionOpen && "line-clamp-5",
-                                )}
-                            >
-                                {item.description}
-                            </p>
-                            {isLongDescription ? (
-                                <button
-                                    type="button"
-                                    onClick={() => setDescriptionOpen((open) => !open)}
-                                    className="body-sm font-semibold text-brand underline-offset-4 inline-fit hover:underline"
-                                >
-                                    {descriptionOpen ? "Show less" : "Read more"}
-                                </button>
-                            ) : null}
-                        </section>
-                    ) : null}
-
-                    {item.amenities.length > 0 ? (
-                        <section className="flex flex-col gap-3">
-                            <h2 className="eyebrow">Amenities</h2>
-                            <ul className="flex flex-wrap gap-2">
-                                {item.amenities.map((amenity) => (
-                                    <li
-                                        key={amenity}
-                                        className="body-sm rounded-control border border-border-warm bg-surface px-3.5 py-1.5 font-medium text-ink"
-                                    >
-                                        {amenityLabel(amenity)}
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
-                    ) : null}
+                        ) : null}
+                        <Badge
+                            color={
+                                sold
+                                    ? "stone"
+                                    : item.transactionType === "rent"
+                                      ? "orange"
+                                      : "emerald"
+                            }
+                        >
+                            {sold
+                                ? "Sold"
+                                : item.transactionType === "both"
+                                  ? "For sale & rent"
+                                  : item.transactionType === "rent"
+                                    ? "For rent"
+                                    : "For sale"}
+                        </Badge>
+                        <span className={styles.listed}>
+                            <Clock size={15} aria-hidden />
+                            Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
+                        </span>
+                    </div>
+                    <div className={styles.headerActions}>
+                        <PropertySharePopover
+                            iconOnly
+                            className={styles.circleButton}
+                            listing={{
+                                id: item.id,
+                                title: item.title,
+                                locality: item.locality,
+                                city: item.city,
+                                priceLabel:
+                                    (isRent ? item.rentAmountInr : item.saleAmountInr) == null
+                                        ? "Price on request"
+                                        : isRent
+                                          ? formatRentInr(amountInr)
+                                          : formatPriceInr(amountInr),
+                                imageSrc: item.imageSrc,
+                                propertyTypeLabel: item.propertyTypeLabel,
+                                configLabel: item.configLabel,
+                                areaSqft: item.areaSqft,
+                                bhk: item.bhk,
+                                listingKind: isRent ? "rent" : "sale",
+                            }}
+                        />
+                    </div>
                 </div>
-
-                <ListedByCard listing={listing} />
+            </header>
+            <div className={styles.fullWidthGallery}>
+                <PropertyGallery title={item.title} imageSrcs={item.imageSrcs} />
+            </div>
+            <div className={styles.bodyGrid}>
+                <PropertyDetailContent
+                    item={item}
+                    revealAddress={false}
+                    locationHint="For the exact address or a viewing, contact the person who shared this property with you."
+                />
+                <aside className={styles.rail} aria-label="Property price and enquiries">
+                    <section className={styles.actionCard}>
+                        <p className={styles.priceLabel}>
+                            {item.transactionType === "rent" ? "Monthly rent" : "Asking price"}
+                        </p>
+                        <PropertyPriceBlock item={item} compact hideCommission />
+                        {sold ? (
+                            <p className={styles.publicNotice}>
+                                This property has been sold. Ask the person who shared it about
+                                other available properties.
+                            </p>
+                        ) : null}
+                    </section>
+                    <section className={styles.contact}>
+                        <h2>Interested in this property?</h2>
+                        {name ? (
+                            <div className={styles.contactIdentity}>
+                                <UserAvatar
+                                    name={name}
+                                    imageUrl={listing.listedBy?.avatarUrl ?? undefined}
+                                    size="md"
+                                />
+                                <div>
+                                    <strong>{name}</strong>
+                                    <p>
+                                        {listing.listedBy?.type === "broker"
+                                            ? "Listed by a broker"
+                                            : "Listed by the owner"}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : null}
+                        <div className={styles.publicEnquiry}>
+                            <MessageCircle size={22} strokeWidth={1.75} aria-hidden />
+                            <p>
+                                Reply to the person who sent you this link to ask a question or
+                                arrange a viewing.
+                            </p>
+                        </div>
+                    </section>
+                </aside>
             </div>
         </div>
     );
 }
 
-/** No-login page behind a shared property link (`/property/:id`). */
+/** Buyer/tenant preview: no account required and no CRM or commission information. */
 export function PublicPropertyPage() {
-    const params = useParams<{ id: string }>();
-    const propertyId = params.id;
-
+    const { id } = useParams<{ id: string }>();
     const query = useQuery({
-        queryKey: ["public-property", propertyId],
-        queryFn: ({ signal }) => propertiesApi.getPublic(propertyId, signal),
-        retry: (failureCount, error) =>
-            !(error instanceof ApiError && (error.status === 404 || error.status === 400)) &&
-            failureCount < 1,
+        queryKey: ["public-property", id],
+        queryFn: ({ signal }) => propertiesApi.getPublic(id, signal),
+        retry: (count, error) =>
+            !(error instanceof ApiError && [400, 404].includes(error.status)) && count < 1,
     });
-
+    const unavailable =
+        query.isError && query.error instanceof ApiError && [400, 404].includes(query.error.status);
     return (
-        <div className="flex min-block-dvh flex-col bg-canvas">
-            <PublicHeader />
-            <main className="mx-auto inline-full max-inline-6xl px-4 py-6 sm:px-6 sm:py-8">
-                {query.isPending ? (
-                    <PropertyDetailSkeleton />
-                ) : query.isError || !query.data ? (
-                    <NotFoundState />
-                ) : (
-                    <PublicPropertyView listing={query.data} />
-                )}
-            </main>
-        </div>
+        <PublicPropertyShell>
+            {query.isPending ? (
+                <PropertyDetailSkeleton isPublic />
+            ) : query.isError ? (
+                <div className={styles.publicError} role={unavailable ? "status" : "alert"}>
+                    <Building2 size={32} strokeWidth={1.75} aria-hidden />
+                    <h1>
+                        {unavailable
+                            ? "This property is no longer available"
+                            : "Couldn't load this property"}
+                    </h1>
+                    <p>
+                        {unavailable
+                            ? "Ask the person who sent this link for an updated property."
+                            : "Check your connection and try again."}
+                    </p>
+                    {!unavailable ? (
+                        <Button variant="outline" onClick={() => void query.refetch()}>
+                            Try again
+                        </Button>
+                    ) : null}
+                </div>
+            ) : (
+                <PublicPropertyView key={id} listing={query.data} />
+            )}
+        </PublicPropertyShell>
     );
 }

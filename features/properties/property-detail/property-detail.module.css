@@ -4,6 +4,95 @@
     padding-block: 4px 0;
     color: var(--color-ink);
 }
+.skeletonHeading {
+    block-size: 1.2em;
+    inline-size: min(75%, 560px);
+}
+.loadingPage .header h1 > .skeletonHeading {
+    flex: none;
+}
+.skeletonLines {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.loadingPage .carouselViewport .photo {
+    background: var(--color-border-warm);
+}
+.loadingPage .headerActions > span {
+    border: 0;
+    background: var(--color-border-warm);
+}
+.loadingPage :is(.header, .carouselFooter) [aria-hidden="true"] {
+    background: var(--color-border-warm);
+}
+.publicShell {
+    min-block-size: 100dvh;
+    background: var(--color-surface-muted);
+}
+.publicMasthead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 32px;
+    border-block-end: 1px solid var(--color-border-warm);
+}
+.publicMasthead > span {
+    color: var(--color-ink-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+.publicMain {
+    padding: 28px 32px 32px;
+}
+.publicPage .publicTitle {
+    display: block;
+    white-space: normal;
+    text-wrap: balance;
+}
+.publicEnquiry {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-block-start: 18px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--color-ink-muted);
+    font-weight: 500;
+}
+.publicEnquiry svg {
+    flex-shrink: 0;
+    margin-block-start: 2px;
+    color: var(--color-brand);
+}
+.publicNotice {
+    margin-block-start: 18px;
+    color: var(--color-ink-muted);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.7;
+}
+.publicError {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-inline-size: 560px;
+    margin: 64px auto;
+    text-align: center;
+}
+.publicError svg {
+    color: var(--color-brand);
+}
+.publicError h1 {
+    font-size: 24px;
+    font-weight: 600;
+}
+.publicError p {
+    color: var(--color-ink-muted);
+    line-height: 1.7;
+}
 
 :global([data-portal-content]):has(.page) {
     overflow: visible;
@@ -217,7 +306,7 @@
     margin-inline-start: -16px;
 }
 .carouselSlide {
-    flex: 0 0 50%;
+    flex: 0 0 33.333333%;
     min-inline-size: 0;
     padding-inline-start: 16px;
 }
@@ -226,8 +315,25 @@
 }
 .carouselSlide .photo {
     inline-size: 100%;
-    block-size: clamp(300px, 34vw, 560px);
+    block-size: clamp(280px, 27vw, 440px);
     border-radius: var(--radius-card);
+}
+.parallaxImage {
+    position: absolute;
+    inset-block: 0;
+    inset-inline: -12%;
+    pointer-events: none;
+    will-change: transform;
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+    .carouselSlide {
+        flex-basis: 45%;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .parallaxImage {
+        will-change: auto;
+    }
 }
 .carouselFooter {
     display: grid;
@@ -317,6 +423,12 @@
 .photo img {
     transition: filter 160ms ease-out;
 }
+.photoLoading {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+}
 .photo:hover img {
     filter: brightness(0.92);
 }
@@ -367,7 +479,7 @@
     grid-template-columns: minmax(0, 1fr) 350px;
     gap: 28px;
     align-items: start;
-    margin-block-start: 36px;
+    margin-block-start: 20px;
 }
 .content {
     min-inline-size: 0;
@@ -937,6 +1049,18 @@
 }
 
 @media (max-width: 767px) {
+    .publicMain {
+        padding: 24px 16px;
+    }
+    .publicMasthead {
+        padding: 16px;
+    }
+    .publicPage {
+        padding-block-end: 0;
+    }
+    .publicMain .page:not(.publicPage) {
+        padding-block-end: 0;
+    }
     .carouselFooter {
         grid-template-columns: auto minmax(0, 1fr) auto;
         gap: 16px;
@@ -1012,7 +1136,7 @@
         display: flex;
         flex-direction: column;
         gap: 16px;
-        margin-block-start: 28px;
+        margin-block-start: 20px;
     }
     .content,
     .rail {

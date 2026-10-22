@@ -987,6 +987,23 @@ matching form field for some selections — if yes, the filter must hide too.
 
 ### 5.8 Property details: scoped presentation
 
+Loading placeholders reuse the live header, carousel slide widths/heights, controls,
+content and rail classes. Public and authenticated route fallbacks share those
+placeholders; the public masthead stays mounted in both states. Keep animation
+decorative and respect reduced motion. Photos retain their frame while decoding;
+buyer loading reserves an avatar row and attach-action slot. Carousel progress
+updates stay in the controls component, and parallax batches geometry reads before
+transform writes in animation frames. Loading changes must preserve loaded styling.
+
+Public shared links (`/property/:id`) reuse the detail content, full-width gallery
+and compact price card. They serve buyers and tenants without requiring sign-in.
+Use the actual property title and sale/rent/sold status, a quiet logo masthead,
+and guidance to reply to the sender for questions or viewings. Do not show CRM
+actions, attached buyers, representation states or commission information. Only
+show the public API's listed-by identity; never fetch private contact details.
+The location section shows the public area and refers exact-address requests to
+the sender. Sold and unavailable links explain the state without a signup prompt.
+
 The property-detail routes use the user's pinned Airbnb reference for composition
 within the existing app identity. They keep the portal's warm canvas and surface
 language so moving from Owner listings or My Deals into a property feels continuous.
