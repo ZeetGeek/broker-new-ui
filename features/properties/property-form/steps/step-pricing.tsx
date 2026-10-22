@@ -12,7 +12,7 @@ import {
     Ruler,
     Users,
     Utensils,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { areaToSqft } from "@/lib/calc/area";
 import { calculateSaleCommission } from "@/lib/calc/commission";

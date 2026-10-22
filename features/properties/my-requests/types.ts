@@ -1,3 +1,5 @@
+import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
+
 /**
  * Lifecycle of a "request to represent" from the broker's side.
  *
@@ -5,7 +7,17 @@
  * replied, so the broker may not approach them again on this property. The
  * owner can still start a conversation from their side.
  */
-export type RequestStage = "pending" | "approved" | "declined" | "locked" | "cancelled";
+export type RequestStage =
+    | "pending"
+    | "approved"
+    | "declined"
+    | "locked"
+    | "cancelled"
+    /** Was approved, then the owner or the broker cancelled the representation. */
+    | "ended";
+
+/** Who ended an approved representation. */
+export type RepresentationEndedBy = "owner" | "broker";
 
 export type RequestStageFilter = "all" | RequestStage;
 
@@ -41,6 +53,16 @@ export type RequestItem = {
     city: string;
     areaSqft: number;
     bhk: number;
+    bathrooms?: number | null;
+    balconies?: number | null;
+    parkingSpaces?: number | null;
+    floorNumber?: number | null;
+    facing?: string | null;
+    propertyCondition?: string | null;
+    propertyAge?: string | null;
+    suitableFor?: string[] | null;
+    furnishing?: string | null;
+    listedAt?: string | null;
     /** Ask in INR — rent when `isRent`, else sale. */
     amountInr: number;
     isRent: boolean;
@@ -84,8 +106,14 @@ export type RequestItem = {
     nudgedAt: string | null;
     /** Owner's reason, when they gave one on decline. */
     declineReason?: string;
+    /** Set when `stage` is "ended". */
+    endedBy?: RepresentationEndedBy;
+    /** Reason given when the representation was cancelled. */
+    cancelReason?: string;
     imageSrc: string;
     timeline: RequestTimelineStep[];
+    /** Unread owner chat messages for this representation. Omitted or 0 when none. */
+    unreadMessageCount?: number;
 };
 
 /**
@@ -102,6 +130,7 @@ export type RequestsViewFilter =
 export type DealListingType = "" | "sale" | "rent";
 
 export type RequestsFilters = {
+    propertyFilters?: import("@/lib/properties/list-criteria").PropertyListCriteria;
     q: string;
     view: RequestsViewFilter;
     sort: RequestSort;
@@ -150,5 +179,5 @@ export const DEFAULT_REQUESTS_FILTERS: RequestsFilters = {
  */
 export const ATTEMPT_LIMIT = 3;
 
-/** Reminders allowed per pending attempt. Raised in one place when product asks. */
-export const REMINDER_LIMIT = 2;
+/** Reminders allowed per pending attempt. */
+export const REMINDER_LIMIT = REPRESENTATION_REMINDER_LIMIT;

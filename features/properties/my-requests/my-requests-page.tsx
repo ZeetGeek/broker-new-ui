@@ -15,6 +15,7 @@ import {
     type InvitesSummary,
 } from "@/features/properties/my-requests/invite-types";
 import { AcceptedPanel } from "@/features/properties/my-requests/accepted-panel";
+import { CancelledPanel } from "@/features/properties/my-requests/cancelled-panel";
 import { InvitesPanel } from "@/features/properties/my-requests/invites-panel";
 import { RejectedPanel } from "@/features/properties/my-requests/rejected-panel";
 import { RequestCard } from "@/features/properties/my-requests/request-card";
@@ -22,7 +23,10 @@ import {
     RequestsFilteredEmpty,
     RequestsFirstRunEmpty,
 } from "@/features/properties/my-requests/requests-empty";
-import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
+import {
+    REQUESTS_GRID_BREAKPOINTS,
+    REQUESTS_GRID_CLASS,
+} from "@/features/properties/my-requests/requests-grid-class";
 import { MyDealsHeader } from "@/features/properties/my-requests/requests-header";
 import { MyDealsIntro } from "@/features/properties/my-requests/requests-intro";
 import {
@@ -30,7 +34,11 @@ import {
     RequestsPageSkeleton,
 } from "@/features/properties/my-requests/requests-skeleton";
 import type { RequestsTab } from "@/features/properties/my-requests/requests-tabs";
-import type { RequestsResult, RequestsSummary } from "@/features/properties/my-requests/types";
+import {
+    REMINDER_LIMIT,
+    type RequestsResult,
+    type RequestsSummary,
+} from "@/features/properties/my-requests/types";
 import { useRequestsFilters } from "@/features/properties/my-requests/use-requests-filters";
 
 function SentRequestsPanel({
@@ -118,9 +126,15 @@ function SentRequestsPanel({
 
     const handleNudge = useCallback(
         (id: string) => {
-            void runMutation(id, () => myRequestsApi.nudge(id), "Reminder sent to the owner");
+            const item = result?.items.find((row) => row.id === id);
+            const nextUsed = (item?.reminderCount ?? 0) + 1;
+            const successMessage =
+                nextUsed >= REMINDER_LIMIT
+                    ? `Reminder sent. You've used all ${REMINDER_LIMIT} reminders.`
+                    : `Reminder sent to the owner (${nextUsed} of ${REMINDER_LIMIT} used).`;
+            void runMutation(id, () => myRequestsApi.nudge(id), successMessage);
         },
-        [runMutation],
+        [result?.items, runMutation],
     );
 
     const handleWithdraw = useCallback(
@@ -156,7 +170,12 @@ function SentRequestsPanel({
     let body: ReactNode;
 
     if (!result && isFetching) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="sent"
+                count={Math.max(1, Math.min(10, sentSummary?.counts.pending || 5))}
+            />
+        );
     } else if (sentSummary != null && sentSummary.counts.all === 0) {
         body = <RequestsFirstRunEmpty />;
     } else if (
@@ -168,8 +187,8 @@ function SentRequestsPanel({
             <div className="flex flex-col items-center gap-4 py-12 text-center">
                 <p className="h6 text-ink">Nothing waiting right now</p>
                 <p className="body-sm max-w-prose text-ink-muted">
-                    Accepted requests are under Accepted. Send a new request from owner listings
-                    when you need more.
+                    Properties you can sell are under Representing. Send a new request from owner
+                    listings when you need more.
                 </p>
             </div>
         );
@@ -188,7 +207,12 @@ function SentRequestsPanel({
             </div>
         );
     } else if (!result) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="sent"
+                count={Math.max(1, Math.min(10, sentSummary?.counts.pending || 5))}
+            />
+        );
     } else if (result.items.length === 0) {
         const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
         body = (
@@ -206,6 +230,7 @@ function SentRequestsPanel({
                     estimateRowHeight={520}
                     gap={24}
                     breakpoints={REQUESTS_GRID_BREAKPOINTS}
+                    gridClassName={REQUESTS_GRID_CLASS}
                     ariaLabel="Waiting representation requests"
                     renderItem={(item) => (
                         <RequestCard
@@ -257,7 +282,7 @@ export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
     }, []);
 
     if (!summariesReady) {
-        return <RequestsPageSkeleton />;
+        return <RequestsPageSkeleton activeTab={activeTab} />;
     }
 
     return (
@@ -286,6 +311,13 @@ export function MyRequestsPage({ activeTab }: { activeTab: RequestsTab }) {
                 />
             ) : activeTab === "rejected" ? (
                 <RejectedPanel
+                    sentSummary={sentSummary}
+                    inviteSummary={inviteSummary}
+                    onSentSummary={setSentSummary}
+                    onInviteSummary={setInviteSummary}
+                />
+            ) : activeTab === "cancelled" ? (
+                <CancelledPanel
                     sentSummary={sentSummary}
                     inviteSummary={inviteSummary}
                     onSentSummary={setSentSummary}

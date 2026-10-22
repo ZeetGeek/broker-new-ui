@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { Bell } from "lucide-react";
+import { Bell } from "@/components/shared/icons";
 
 import { profileApi, type UserProfile } from "@/lib/api/profile";
 import { cn } from "@/lib/utils";

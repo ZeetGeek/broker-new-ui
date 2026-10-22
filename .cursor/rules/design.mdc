@@ -38,6 +38,13 @@ Six rules restated here because they are the expensive ones to get wrong:
 6. **Every screen is composed at 360px first.** Single column, bottom nav, what the user
    must act on above the fold. Three-column grids and the drag-and-drop Kanban are
    desktop-only enhancements, never the starting layout.
+7. **Marketplace top search band only on Owner listings (property pool).** Other
+   lists (My Deals, Your listings, Pipeline, Visits) use a Filters button/sheet —
+   see `AGENTS.md` and `docs/DESIGN.md` §5.6.
+8. **Property filters are condition-based** (match Add Property). Land/plot →
+   hide BHK, furnishing, bathrooms, etc.; clear values when hidden. Authority:
+   `lib/visibility/derive.ts` + `FIELD_RULES`. See `AGENTS.md` and
+   `docs/DESIGN.md` §5.7.
 
 Assume the user is on a cheap Android phone on Indian mobile data. If a screen was only
 ever checked on a laptop, it has not been checked.

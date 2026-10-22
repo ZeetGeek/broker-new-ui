@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
 import {
     CalendarCheck,
     CircleCheck,
@@ -6,7 +6,7 @@ import {
     Handshake,
     PhoneCall,
     Sparkles,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import type { DealLostReason, DealOutcome, DealStage, DealStatus } from "@/features/pipeline/types";
 
@@ -15,7 +15,7 @@ export type StageMeta = {
     label: string;
     /** One line saying what this stage means and what comes next. */
     hint: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     /**
      * The stage token that fills the column dot and progress bar. One
      * Tailwind hue per stage, pipeline-only — see docs/DESIGN.md §1.3.
@@ -102,7 +102,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
 export type OutcomeMeta = {
     label: string;
     hint: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     badgeVariant: "brand" | "neutral";
     toneClass: string;
 };

@@ -33,6 +33,7 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         bhk: item.bhk,
         bathrooms: item.bathrooms ?? null,
         status: item.status,
+        isSold: Boolean(item.isSold),
         inboundRequestCount: item.inboundRequestCount,
         listedDaysAgo: item.listedDaysAgo,
         saleAmountInr: item.saleAmountInr,
@@ -40,6 +41,7 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         commissionPercent: item.commissionPercent,
         commissionAmount: item.commissionAmount,
         ownerName: item.ownerName,
+        ownerPhoneDigits: item.ownerPhoneDigits,
         visibility: item.visibility,
         attachedClients: item.attachedClients ?? [],
     };

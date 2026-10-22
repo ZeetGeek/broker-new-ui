@@ -2,7 +2,7 @@
 
 import { type SyntheticEvent, useCallback, useEffect, useRef, useState } from "react";
 
-import { CropIcon } from "lucide-react";
+import { CropIcon } from "@/components/shared/icons";
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop";
 
 import { Button } from "@/components/ui/button";

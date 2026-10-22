@@ -1,12 +1,18 @@
-import type { LucideIcon } from "lucide-react";
-import { CircleCheck, CircleX, Clock, Hourglass } from "lucide-react";
+import {
+    type AppIcon,
+    Ban,
+    CircleCheck,
+    CircleX,
+    Clock,
+    Hourglass,
+} from "@/components/shared/icons";
 
 import type { InviteStage } from "@/features/properties/my-requests/invite-types";
 
 export type InviteStageMeta = {
     label: string;
     hint: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     badgeVariant: "brand" | "urgent" | "danger" | "neutral" | "outline";
 };
 
@@ -35,6 +41,18 @@ export const INVITE_STAGE_META: Record<InviteStage, InviteStageMeta> = {
         icon: Clock,
         badgeVariant: "outline",
     },
+    ended: {
+        label: "Representation cancelled",
+        hint: "You were representing this property, then it was cancelled. Its open deals were closed as lost.",
+        icon: Ban,
+        badgeVariant: "neutral",
+    },
 };
 
-export const INVITE_STAGE_ORDER: InviteStage[] = ["pending", "accepted", "declined", "expired"];
+export const INVITE_STAGE_ORDER: InviteStage[] = [
+    "pending",
+    "accepted",
+    "declined",
+    "expired",
+    "ended",
+];

@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formatInTimeZone } from "date-fns-tz";
-import { Clock3, Plus, Trash2 } from "lucide-react";
+import { Clock3, Plus, Trash2 } from "@/components/shared/icons";
 
 import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
 import {

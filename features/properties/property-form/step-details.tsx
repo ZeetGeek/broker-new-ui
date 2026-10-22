@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Building2, IndianRupee, MapPin } from "lucide-react";
+import { Building2, IndianRupee, MapPin } from "@/components/shared/icons";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { buildPropertyTitle } from "@/lib/format/property-title";

@@ -58,6 +58,8 @@ export type RequestRowItem = {
     title: string;
     amountInr: number;
     isRent: boolean;
+    commissionPercent?: number | null;
+    commissionAmount?: number | null;
     note: string;
     action: { label: string; href: string };
     /** Present when type is approved / approved_untouched. */

@@ -4,7 +4,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Bookmark, Clock3, MapPin, Users } from "lucide-react";
+import { Bookmark, Clock3, MapPin, Users } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
@@ -121,7 +121,8 @@ function PropertyRow({
                             commissionPercent={property.commissionPercent}
                             commissionAmountInr={property.commissionAmountInr}
                             audience="broker"
-                            className="body font-semibold"
+                            size="md"
+                            showEmptyTip
                         />
                         <Badge color={property.isRent ? "orange" : "emerald"}>
                             {property.isRent ? "Rent" : "Sale"}

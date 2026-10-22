@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
-import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
+import { DEAL_CARD_CLASS } from "@/features/properties/my-requests/requests-grid-class";
 import tablerContactIcons from "@/features/properties/my-requests/tabler-contact.json";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
@@ -173,16 +174,28 @@ export function DealCardPhotoToolbar({
     isSaved = false,
     onToggleSave,
     contact,
+    onAddBuyer,
+    onRemind,
+    canRemind,
+    remindersUsed,
+    remindersLimit,
     onOpenTimeline,
     onCancelRequest,
+    onStopRepresenting,
     tone = "overlay",
 }: {
     listing: DealCardListing;
     isSaved?: boolean;
     onToggleSave?: () => void;
     contact?: PropertyCardMenuContact;
+    onAddBuyer?: () => void;
+    onRemind?: () => void;
+    canRemind?: boolean;
+    remindersUsed?: number;
+    remindersLimit?: number;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
+    onStopRepresenting?: () => void;
     tone?: "overlay" | "plain";
 }) {
     return (
@@ -191,8 +204,14 @@ export function DealCardPhotoToolbar({
             isSaved={isSaved}
             onToggleSave={onToggleSave}
             contact={contact}
+            onAddBuyer={onAddBuyer}
+            onRemind={onRemind}
+            canRemind={canRemind}
+            remindersUsed={remindersUsed}
+            remindersLimit={remindersLimit}
             onOpenTimeline={onOpenTimeline}
             onCancelRequest={onCancelRequest}
+            onStopRepresenting={onStopRepresenting}
             tone={tone}
         />
     );
@@ -217,8 +236,9 @@ export function DealOverlayCard({
 }: {
     listing: DealCardListing;
     configLabel: string;
-    statusLabel: string;
-    statusTone: DealStatusTone;
+    /** Omit to match a fresh owner-listing card (only For sale / For rent). */
+    statusLabel?: string;
+    statusTone?: DealStatusTone;
     muted?: boolean;
     isBusy?: boolean;
     actions?: ReactNode;
@@ -236,6 +256,7 @@ export function DealOverlayCard({
         }) ||
         configLabel ||
         listing.title;
+    const tone = statusTone ?? "closed";
 
     return (
         <OverlayCard
@@ -244,16 +265,21 @@ export function DealOverlayCard({
             imageAlt={listing.title}
             imageSizes={OVERLAY_IMAGE_SIZES}
             muted={muted}
-            className={cn(isBusy && "pointer-events-none opacity-60")}
+            className={cn(
+                audience === "broker" && DEAL_CARD_CLASS,
+                isBusy && "pointer-events-none opacity-60",
+            )}
             chips={
                 <>
-                    <Badge
-                        color={STATUS_BADGE_COLOR[statusTone]}
-                        blur="dark"
-                        pulse={statusTone === "action"}
-                    >
-                        {statusLabel}
-                    </Badge>
+                    {statusLabel ? (
+                        <Badge
+                            color={STATUS_BADGE_COLOR[tone]}
+                            blur="dark"
+                            pulse={tone === "action"}
+                        >
+                            {statusLabel}
+                        </Badge>
+                    ) : null}
                     <Badge color={listing.isRent ? "orange" : "emerald"} blur="dark">
                         {listing.isRent ? "For rent" : "For sale"}
                     </Badge>
@@ -270,7 +296,8 @@ export function DealOverlayCard({
                         commissionPercent={listing.commissionPercent}
                         commissionAmountInr={listing.commissionAmount}
                         audience={audience}
-                        className="h5 font-semibold tracking-wide"
+                        size="lg"
+                        showEmptyTip
                     />
                 }
                 headline={headline}
@@ -281,62 +308,37 @@ export function DealOverlayCard({
     );
 }
 
-/** Owner line under the summary. Call shows when the number is shared. */
+/** Owner line under the summary. Call lives in the ⋯ menu. */
 export function DealOverlayStats({
     ownerName,
     ownerAvatarUrl,
-    ownerPhoneDigits,
     personLabel = "Owner",
 }: {
     listing: DealCardListing;
     ownerName: string;
     ownerAvatarUrl?: string;
+    /** Kept for callers; Call moved to the card ⋯ menu. */
     ownerPhoneDigits?: string;
     /** Owner-side cards pass "Broker". */
     personLabel?: string;
 }) {
-    const phoneLabel = ownerPhoneDigits ? formatPhoneIn(ownerPhoneDigits) : null;
+    return <OverlayPersonLine label={personLabel} name={ownerName} avatarUrl={ownerAvatarUrl} />;
+}
+
+function ChatUnreadBadge({ count }: { count: number }) {
+    if (count <= 0) return null;
 
     return (
-        <OverlayPersonLine
-            label={personLabel}
-            name={ownerName}
-            avatarUrl={ownerAvatarUrl}
-            action={
-                ownerPhoneDigits && phoneLabel ? (
-                    <span onClick={(event) => event.stopPropagation()}>
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <Button
-                                        variant="link"
-                                        size="sm"
-                                        nativeButton={false}
-                                        className="h-auto gap-1 px-0 text-brand hover:text-brand/85"
-                                        render={
-                                            <a
-                                                href={formatTelUrl(ownerPhoneDigits)}
-                                                aria-label={`Call ${ownerName} at ${phoneLabel}`}
-                                            />
-                                        }
-                                    />
-                                }
-                            >
-                                <Icon
-                                    icon="tabler:phone"
-                                    width={14}
-                                    height={14}
-                                    className="shrink-0 block-3.5 inline-3.5"
-                                    aria-hidden
-                                />
-                                Call
-                            </TooltipTrigger>
-                            <TooltipContent side="top">{phoneLabel}</TooltipContent>
-                        </Tooltip>
-                    </span>
-                ) : null
-            }
-        />
+        <span
+            aria-hidden
+            className="
+              tabular body-xs absolute -inset-e-1.5 -inset-bs-1.5 flex items-center justify-center
+              rounded-full bg-surface px-1 font-semibold text-brand ring-2 ring-brand/40 block-5
+              min-inline-5
+            "
+        >
+            {count > 9 ? "9+" : count}
+        </span>
     );
 }
 
@@ -347,12 +349,15 @@ export function DealContactSplitBar({
     ownerName,
     ownerPhoneDigits,
     onChat,
+    unreadMessageCount = 0,
 }: {
     ownerName: string;
     ownerPhoneDigits: string;
     onChat: () => void;
+    unreadMessageCount?: number;
 }) {
     const phoneLabel = formatPhoneIn(ownerPhoneDigits);
+    const unread = Math.max(0, unreadMessageCount);
 
     return (
         <div
@@ -394,9 +399,13 @@ export function DealContactSplitBar({
                 variant="accent"
                 size="md"
                 type="button"
-                className="flex-1 min-inline-0"
+                className="relative flex-1 min-inline-0"
                 onClick={onChat}
-                aria-label={`Chat with ${ownerName}`}
+                aria-label={
+                    unread > 0
+                        ? `Chat with ${ownerName}, ${unread} unread`
+                        : `Chat with ${ownerName}`
+                }
             >
                 <Icon
                     icon="tabler:message"
@@ -406,20 +415,21 @@ export function DealContactSplitBar({
                     aria-hidden
                 />
                 Chat
+                <ChatUnreadBadge count={unread} />
             </Button>
         </div>
     );
 }
 
-/** Attached buyers on an approved deal — tap opens the buyers modal. */
+/** Buyers on an approved deal — empty shows link "Attach buyers". */
 export function DealAttachedBuyers({
     buyers,
-    onManage,
+    onAttach,
 }: {
     buyers: Array<{ id: string; name: string; avatarUrl?: string }>;
-    onManage?: () => void;
+    onAttach?: () => void;
 }) {
-    return <AttachedBuyersRow buyers={buyers} onManage={onManage} />;
+    return <AttachedBuyersRow buyers={buyers} onAttach={onAttach} />;
 }
 
 /** Exclusive owner attached to a broker listing — tap opens the owner picker. */

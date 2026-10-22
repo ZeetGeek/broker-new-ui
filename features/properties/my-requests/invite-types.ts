@@ -1,11 +1,20 @@
-import type { DealListingType } from "@/features/properties/my-requests/types";
+import type {
+    DealListingType,
+    RepresentationEndedBy,
+} from "@/features/properties/my-requests/types";
 
 /**
  * An owner inviting a specific broker to represent their property — the other
  * direction of the same consent gate. The broker answers rather than asks, so
  * there is no attempt counter, no reminder and no lockout here.
  */
-export type InviteStage = "pending" | "accepted" | "declined" | "expired";
+export type InviteStage =
+    | "pending"
+    | "accepted"
+    | "declined"
+    | "expired"
+    /** Was accepted, then the owner or the broker cancelled the representation. */
+    | "ended";
 
 export type InviteStageFilter = "all" | InviteStage;
 
@@ -22,6 +31,16 @@ export type InviteItem = {
     city: string;
     areaSqft: number;
     bhk: number;
+    bathrooms?: number | null;
+    balconies?: number | null;
+    parkingSpaces?: number | null;
+    floorNumber?: number | null;
+    facing?: string | null;
+    propertyCondition?: string | null;
+    propertyAge?: string | null;
+    suitableFor?: string[] | null;
+    furnishing?: string | null;
+    listedAt?: string | null;
     /** Ask in INR — rent when `isRent`, else sale. */
     amountInr: number;
     isRent: boolean;
@@ -48,10 +67,17 @@ export type InviteItem = {
     attachedClients: { id: string; name: string; avatarUrl?: string }[];
     brokerSlotsOpen: number;
     brokerSlotsTotal: number;
+    /** Set when `stage` is "ended". */
+    endedBy?: RepresentationEndedBy;
+    /** Reason given when the representation was cancelled. */
+    cancelReason?: string;
     imageSrc: string;
+    /** Unread owner chat messages for this representation. Omitted or 0 when none. */
+    unreadMessageCount?: number;
 };
 
 export type InvitesFilters = {
+    propertyFilters?: import("@/lib/properties/list-criteria").PropertyListCriteria;
     q: string;
     stage: InviteStageFilter;
     sort: InviteSort;

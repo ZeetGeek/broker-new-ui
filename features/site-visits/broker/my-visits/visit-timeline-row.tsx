@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 
-import { MessageCircle, Navigation, Phone } from "lucide-react";
+import { CallIcon, Navigation, WhatsAppIcon } from "@/components/shared/icons";
 
 import { APP_NAME } from "@/config";
 import { cn } from "@/lib/utils";
@@ -83,7 +83,7 @@ export const VisitTimelineRow = memo(function VisitTimelineRow({
                                 size="sm"
                                 className="px-2"
                             >
-                                <Phone aria-hidden className="block-3.5 inline-3.5" />
+                                <CallIcon aria-hidden className="block-3.5 inline-3.5" />
                                 Call
                             </Button>
                         ) : null}
@@ -101,7 +101,7 @@ export const VisitTimelineRow = memo(function VisitTimelineRow({
                                 size="sm"
                                 className="px-2"
                             >
-                                <MessageCircle aria-hidden className="block-3.5 inline-3.5" />
+                                <WhatsAppIcon aria-hidden className="block-3.5 inline-3.5" />
                                 WhatsApp
                             </Button>
                         ) : null}

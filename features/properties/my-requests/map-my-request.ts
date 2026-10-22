@@ -1,6 +1,7 @@
 import type { RepresentationItem } from "@/lib/api/representative";
 import { calendarDaysBetween } from "@/lib/format/date";
 
+import { mapApiPropertyType } from "@/features/properties/owner-listings/map-browse-listing";
 import {
     ATTEMPT_LIMIT,
     REMINDER_LIMIT,
@@ -61,11 +62,19 @@ function configLabel(rep: RepresentationItem): string {
 }
 
 function propertyTypeLabel(rep: RepresentationItem): string {
-    const subtype = rep.propertySubtype?.trim();
-    if (subtype && SUBTYPE_LABELS[subtype]) return SUBTYPE_LABELS[subtype];
-    const type = rep.propertyType?.trim();
-    if (type) return titleCase(type.replace(/_/g, " "));
-    return "Property";
+    return mapApiPropertyType(rep.propertySubtype, rep.propertyType);
+}
+
+/** Bedrooms first, then the BHK key — same order as the owner-listings card. */
+function bhkCount(rep: RepresentationItem): number {
+    if (rep.propertyBedrooms != null && rep.propertyBedrooms > 0) return rep.propertyBedrooms;
+    return rep.propertyBhkConfig ? (BHK_CONFIG_TO_NUMBER[rep.propertyBhkConfig] ?? 0) : 0;
+}
+
+function bathroomCount(rep: RepresentationItem): number | null {
+    return rep.propertyBathrooms != null && rep.propertyBathrooms > 0
+        ? rep.propertyBathrooms
+        : null;
 }
 
 function mapStage(
@@ -82,11 +91,23 @@ function mapStage(
     if (status === "withdrawn") {
         return requestsRemaining <= 0 || attemptNumber >= ATTEMPT_LIMIT ? "locked" : "cancelled";
     }
+    if (status === "owner_cancelled" || status === "broker_cancelled") return "ended";
     if (status === "revoked") return "declined";
     return "cancelled";
 }
 
-function buildTimeline(
+/** Who ended an approved representation, from the API status. */
+export function representationEndedBy(
+    status: string | null | undefined,
+): "owner" | "broker" | undefined {
+    const value = status?.toLowerCase();
+    if (value === "owner_cancelled") return "owner";
+    if (value === "broker_cancelled") return "broker";
+    return undefined;
+}
+
+/** Shared by My Deals cards and owner-listing request timeline. */
+export function buildRepresentationTimeline(
     rep: RepresentationItem,
     stage: RequestStage,
     attemptNumber: number,
@@ -134,6 +155,18 @@ function buildTimeline(
             label: "No attempts left — owner never approved",
             at: resolvedAt,
         });
+    } else if (stage === "ended") {
+        steps.push({ key: "approved", label: "Owner approved", at: resolvedAt });
+        const reason = rep.cancelReason?.trim();
+        const who =
+            representationEndedBy(rep.status) === "owner"
+                ? "Owner cancelled the representation"
+                : "You stopped selling this property";
+        steps.push({
+            key: "cancelled",
+            label: reason ? `${who}: ${reason}` : who,
+            at: rep.cancelledAt ?? rep.updatedAt ?? resolvedAt,
+        });
     }
 
     return steps;
@@ -169,16 +202,21 @@ export function mapRepresentationToRequestItem(
         [config, locality || city].filter(Boolean).join(" · ") ||
         "Property";
     const requestedAt = rep.createdAt ?? new Date().toISOString();
-    const resolvedAt = stage === "pending" ? null : (rep.decidedAt ?? rep.updatedAt ?? requestedAt);
+    const resolvedAt =
+        stage === "pending"
+            ? null
+            : stage === "ended"
+              ? (rep.cancelledAt ?? rep.updatedAt ?? requestedAt)
+              : (rep.decidedAt ?? rep.updatedAt ?? requestedAt);
     const photos = (rep.propertyPhotos ?? []).filter(Boolean);
-    const bhk = rep.propertyBhkConfig
-        ? (BHK_CONFIG_TO_NUMBER[rep.propertyBhkConfig] ?? rep.propertyBedrooms ?? 0)
-        : (rep.propertyBedrooms ?? 0);
+    const bhk = bhkCount(rep);
 
     return {
         id: rep.id,
         propertyId: rep.propertyId,
         stage,
+        endedBy: stage === "ended" ? representationEndedBy(rep.status) : undefined,
+        cancelReason: stage === "ended" ? rep.cancelReason?.trim() || undefined : undefined,
         title,
         configLabel: config,
         propertyTypeLabel: typeLabel,
@@ -186,6 +224,16 @@ export function mapRepresentationToRequestItem(
         city,
         areaSqft: rep.propertyAreaSqft ?? 0,
         bhk,
+        bathrooms: bathroomCount(rep),
+        balconies: rep.propertyBalconies ?? null,
+        parkingSpaces: rep.propertyParkingSpaces ?? null,
+        floorNumber: rep.propertyFloorNumber ?? null,
+        facing: rep.propertyFacing ?? null,
+        propertyCondition: rep.propertyCondition ?? null,
+        propertyAge: rep.propertyAge ?? null,
+        suitableFor: rep.propertySuitableFor ?? null,
+        furnishing: rep.propertyFurnishing ?? null,
+        listedAt: rep.propertyListedAt ?? null,
         amountInr,
         isRent,
         commissionPercent: toNumber(rep.propertyCommissionPercent),
@@ -208,6 +256,10 @@ export function mapRepresentationToRequestItem(
         nudgedAt: rep.lastRemindedAt ?? null,
         declineReason: stage === "declined" ? (rep.message ?? undefined) : undefined,
         imageSrc: photos[0] ?? "",
-        timeline: buildTimeline(rep, stage, attemptNumber),
+        timeline: buildRepresentationTimeline(rep, stage, attemptNumber),
+        unreadMessageCount:
+            typeof rep.unreadMessageCount === "number" && rep.unreadMessageCount > 0
+                ? rep.unreadMessageCount
+                : undefined,
     };
 }

@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { ArrowDownUp, ChevronDown, Plus, Search, SlidersHorizontal } from "lucide-react";
+import {
+    ArrowDownUp,
+    ChevronDown,
+    Plus,
+    Search,
+    SlidersHorizontal,
+} from "@/components/shared/icons";
 
 import type { MyListingsSummary } from "@/lib/api/my-listings";
 import { formatSortLabel } from "@/lib/format/owner-listings-labels";
@@ -34,49 +40,24 @@ import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
-import type {
-    MyListingsFilters,
-    MyListingSort,
-    MyListingStatus,
-} from "@/features/properties/your-listings/types";
+import type { MyListingsFilters, MyListingSort } from "@/features/properties/your-listings/types";
 
-type ChipKey = "sale" | "rent" | "published" | "draft" | "unpublished";
+type StatusTab = "published" | "draft";
 
-const QUICK_CHIPS: {
-    key: ChipKey;
+const STATUS_TABS: {
+    key: StatusTab;
     label: string;
-    mobileLabel: string;
     description: string;
 }[] = [
     {
-        key: "sale",
-        label: "For sale",
-        mobileLabel: "Sale",
-        description: "Listings offered for sale",
-    },
-    {
-        key: "rent",
-        label: "For rent",
-        mobileLabel: "Rent",
-        description: "Listings offered for rent",
-    },
-    {
         key: "published",
         label: "Published",
-        mobileLabel: "Live",
         description: "Visible listings",
     },
     {
         key: "draft",
         label: "Draft",
-        mobileLabel: "Draft",
         description: "Not published yet",
-    },
-    {
-        key: "unpublished",
-        label: "Unpublished",
-        mobileLabel: "Off",
-        description: "Taken off the market",
     },
 ];
 
@@ -88,12 +69,7 @@ const SORT_OPTIONS: { value: MyListingSort; label: string }[] = [
 
 const BHK_OPTIONS = ["1", "2", "3", "4"];
 
-function chipIsActive(filters: MyListingsFilters, key: ChipKey): boolean {
-    if (key === "sale" || key === "rent") return filters.type === key;
-    return filters.status === key;
-}
-
-function chipCount(summary: MyListingsSummary | null, key: ChipKey): number {
+function tabCount(summary: MyListingsSummary | null, key: StatusTab): number {
     if (!summary) return 0;
     return summary[key];
 }
@@ -103,7 +79,6 @@ function countSheetFilters(filters: MyListingsFilters): number {
     if (filters.propertyType) count += 1;
     if (filters.bhk.length > 0) count += 1;
     if (filters.type) count += 1;
-    if (filters.status) count += 1;
     return count;
 }
 
@@ -283,34 +258,6 @@ function MyListingsFilterDialog({
                             })}
                         </div>
                     </div>
-
-                    <div className="flex flex-col gap-2">
-                        <p className="body-sm font-semibold text-ink">Status</p>
-                        <div className="flex flex-wrap gap-2">
-                            {(
-                                [
-                                    ["", "Any"],
-                                    ["published", "Published"],
-                                    ["draft", "Draft"],
-                                    ["unpublished", "Unpublished"],
-                                ] as const
-                            ).map(([value, label]) => (
-                                <button
-                                    key={value || "any-status"}
-                                    type="button"
-                                    className={ownerListingsChipClassName(draft.status === value)}
-                                    onClick={() =>
-                                        setDraft({
-                                            ...draft,
-                                            status: value as MyListingStatus | "",
-                                        })
-                                    }
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
                 </div>
                 <div className="border-bs border-border-warm/40 bg-surface px-5 py-4">
                     <AppModalFooter
@@ -320,7 +267,6 @@ function MyListingsFilterDialog({
                                 ...draft,
                                 type: "",
                                 bhk: [],
-                                status: "",
                                 propertyType: "",
                             })
                         }
@@ -388,18 +334,11 @@ export function MyListingsHeader({
     const [sheetOpen, setSheetOpen] = useState(false);
     const sheetFilterCount = useMemo(() => countSheetFilters(filters), [filters]);
 
-    function toggleChip(key: ChipKey) {
-        if (key === "sale" || key === "rent") {
-            onFiltersChange({
-                ...filters,
-                type: filters.type === key ? "" : key,
-                page: 1,
-            });
-            return;
-        }
+    function selectStatusTab(key: StatusTab) {
+        if (filters.status === key) return;
         onFiltersChange({
             ...filters,
-            status: filters.status === key ? "" : key,
+            status: key,
             page: 1,
         });
     }
@@ -425,27 +364,24 @@ export function MyListingsHeader({
                                             propertyType: "",
                                             bhk: [],
                                             type: "",
-                                            status: "",
                                             page: 1,
                                         })
                                     }
-                                    description="Sale/rent, BHK, and status filters"
+                                    description="Sale/rent and BHK filters"
                                 />
                             </OwnerListingsChipsCarouselSlide>
 
-                            {QUICK_CHIPS.map((chip) => {
-                                const active = chipIsActive(filters, chip.key);
+                            {STATUS_TABS.map((tab) => {
+                                const active = filters.status === tab.key;
                                 return (
-                                    <OwnerListingsChipsCarouselSlide key={chip.key}>
+                                    <OwnerListingsChipsCarouselSlide key={tab.key}>
                                         <FilterChip
-                                            label={chip.label}
-                                            mobileLabel={chip.mobileLabel}
-                                            count={chipCount(summary, chip.key)}
+                                            label={tab.label}
+                                            count={tabCount(summary, tab.key)}
                                             isLoading={isLoading}
                                             isActive={active}
-                                            clearable
-                                            onClick={() => toggleChip(chip.key)}
-                                            description={chip.description}
+                                            onClick={() => selectStatusTab(tab.key)}
+                                            description={tab.description}
                                         />
                                     </OwnerListingsChipsCarouselSlide>
                                 );

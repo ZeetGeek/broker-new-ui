@@ -20,8 +20,8 @@ import {
     Trash2,
     UserRound,
     X,
-    type LucideIcon,
-} from "lucide-react";
+    type AppIcon,
+} from "@/components/shared/icons";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatIndianPrice } from "@/lib/format/price";
@@ -58,7 +58,7 @@ type IconFact = {
     value?: ReactNode;
     empty?: boolean;
     wide?: boolean;
-    icon: LucideIcon;
+    icon: AppIcon;
 };
 
 function IconFactGrid({ facts, onAdd }: { facts: IconFact[]; onAdd?: () => void }) {

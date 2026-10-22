@@ -1,17 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import toast from "react-hot-toast";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 
-import { Bell, Send, UserPlus } from "lucide-react";
+import { addCollection, Icon } from "@iconify/react/offline";
+import { Send } from "@/components/shared/icons";
 
-import { ApiError } from "@/lib/api/client";
-import { propertiesApi } from "@/lib/api/properties";
 import { formatRelativePast } from "@/lib/format/date";
-import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -25,6 +22,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
+import { CancelledNote } from "@/features/properties/my-requests/cancelled-note";
+import { CancelRepresentationDialog } from "@/features/representation/cancel-representation-dialog";
 import { attemptActions } from "@/features/properties/my-requests/attempt-rules";
 import {
     DealCardPhotoToolbar,
@@ -36,19 +35,25 @@ import {
     dealSecondaryButtonClass,
     type DealStatusTone,
 } from "@/features/properties/my-requests/deal-card-chrome";
-import { REQUEST_STAGE_META } from "@/features/properties/my-requests/request-stage-meta";
+import {
+    endedStageLabel,
+    REQUEST_STAGE_META,
+} from "@/features/properties/my-requests/request-stage-meta";
 import { RequestTimeline } from "@/features/properties/my-requests/request-timeline";
 import {
     REMINDER_LIMIT,
     type RequestItem,
     type RequestStage,
 } from "@/features/properties/my-requests/types";
+
+addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 const STATUS_TONE: Record<RequestStage, DealStatusTone> = {
     pending: "waiting",
     approved: "success",
     declined: "danger",
     cancelled: "closed",
     locked: "closed",
+    ended: "closed",
 };
 
 function chatPeerFor(item: RequestItem): ChatPeer {
@@ -60,7 +65,8 @@ function chatPeerFor(item: RequestItem): ChatPeer {
         isOnline: item.stage === "approved",
         representationId: item.id,
         mySide: "broker",
-        canSend: true,
+        // Chat opens once the broker has sent a request — approval not required.
+        canSend: item.stage === "pending" || item.stage === "approved",
         closed: item.stage === "declined" || item.stage === "cancelled" || item.stage === "locked",
     };
 }
@@ -72,60 +78,68 @@ function ownerPhoneFor(item: RequestItem): string | undefined {
 
 function RequestCardFooter({
     item,
-    onNudge,
+    onWithdraw,
     onRetry,
-    onAddBuyers,
     isBusy,
     pin = true,
 }: {
     item: RequestItem;
-    onNudge: (id: string) => void;
+    onWithdraw: (id: string) => void;
     onRetry: (id: string) => void;
-    onAddBuyers: () => void;
     isBusy: boolean;
     pin?: boolean;
 }) {
     const actions = attemptActions(item);
     const secondaryClass = dealSecondaryButtonClass();
 
-    // Card tap already opens the listing — footer only keeps the stage action.
+    // Pending: match owner-listing request card — remind is in ⋯; footer is cancel.
     if (item.stage === "pending") {
         return (
             <DealOverlayFooter pin={pin}>
-                <Tooltip>
-                    <TooltipTrigger
-                        render={
-                            <span className="inline-flex inline-full">
-                                <Button
-                                    size="md"
-                                    variant={actions.canRemind ? "accent" : "outline"}
-                                    disabled={!actions.canRemind || isBusy}
-                                    onClick={() => onNudge(item.id)}
-                                    className={cn(
-                                        "inline-full",
-                                        !actions.canRemind && secondaryClass,
-                                    )}
-                                >
-                                    <Bell
-                                        aria-hidden
-                                        className="block-4 inline-4"
-                                        strokeWidth={1.75}
-                                    />
-                                    {actions.canRemind ? "Send reminder" : "Reminders used"}
-                                </Button>
-                            </span>
-                        }
-                    />
-                    <TooltipContent>
-                        {actions.canRemind
-                            ? `Send the owner a reminder (${actions.remindersLeft} of ${REMINDER_LIMIT} left).`
-                            : "You already used both reminders for this attempt."}
-                    </TooltipContent>
-                </Tooltip>
+                <div className="flex flex-col gap-1.5 inline-full">
+                    <p className="body-xs text-center font-medium tracking-wide text-ink-muted">
+                        Waiting for the owner
+                    </p>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <span className="inline-flex inline-full">
+                                    <Button
+                                        size="md"
+                                        variant="outline"
+                                        disabled={isBusy}
+                                        loading={isBusy}
+                                        onClick={() => onWithdraw(item.id)}
+                                        className={cn("inline-full", secondaryClass)}
+                                    >
+                                        {isBusy ? (
+                                            "Cancelling…"
+                                        ) : (
+                                            <>
+                                                <Icon
+                                                    icon="tabler:x"
+                                                    width={16}
+                                                    height={16}
+                                                    className="shrink-0 block-4 inline-4"
+                                                    aria-hidden
+                                                />
+                                                Cancel request
+                                            </>
+                                        )}
+                                    </Button>
+                                </span>
+                            }
+                        />
+                        <TooltipContent>
+                            Cancel this request. You can ask again later.
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
             </DealOverlayFooter>
         );
     }
 
+    // Rejected / cancelled with attempts left — same CTA as a fresh owner listing.
     if (actions.canRetry) {
         return (
             <DealOverlayFooter pin={pin}>
@@ -137,46 +151,19 @@ function RequestCardFooter({
                     className="inline-full"
                 >
                     <Send aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    Ask again
+                    Ask to sell
                 </Button>
             </DealOverlayFooter>
         );
     }
 
+    // Approved: attach buyers lives on the Buyers row (link), not a footer CTA.
     if (item.stage === "approved") {
-        // Buyers already on the card open the modal — no duplicate button.
-        if (item.attachedClients.length > 0) return null;
-
-        return (
-            <DealOverlayFooter pin={pin}>
-                <Button
-                    size="md"
-                    variant="accent"
-                    type="button"
-                    disabled={isBusy}
-                    onClick={onAddBuyers}
-                    className="inline-full"
-                >
-                    <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                    Add buyer
-                </Button>
-            </DealOverlayFooter>
-        );
+        return null;
     }
 
-    return (
-        <DealOverlayFooter pin={pin}>
-            <Button
-                size="md"
-                variant="outline"
-                nativeButton={false}
-                className={cn("inline-full", secondaryClass)}
-                render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
-            >
-                Find similar
-            </Button>
-        </DealOverlayFooter>
-    );
+    // Locked / ended with no retry — no Find similar; card stays quiet.
+    return null;
 }
 
 export function RequestCard({
@@ -185,6 +172,7 @@ export function RequestCard({
     onWithdraw,
     onRetry,
     onBuyersChanged,
+    onRepresentationCancelled,
     isBusy = false,
 }: {
     item: RequestItem;
@@ -192,41 +180,48 @@ export function RequestCard({
     onWithdraw: (id: string) => void;
     onRetry: (id: string) => void;
     onBuyersChanged: () => void;
+    /** Approved deal ended from the ⋯ menu — refresh so the card leaves the tab. */
+    onRepresentationCancelled?: () => void;
     isBusy?: boolean;
 }) {
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
+    const [isStopOpen, setIsStopOpen] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);
-    const [isSaved, setIsSaved] = useState(false);
+    const [unreadMessageCount, setUnreadMessageCount] = useState(item.unreadMessageCount ?? 0);
     const { openChat } = useChat();
     const actions = attemptActions(item);
     const ownerPhoneDigits = ownerPhoneFor(item);
 
-    async function toggleSave() {
-        const next = !isSaved;
-        setIsSaved(next);
-        try {
-            if (next) {
-                await propertiesApi.bookmark(item.propertyId);
-            } else {
-                await propertiesApi.unbookmark(item.propertyId);
-            }
-        } catch (error) {
-            setIsSaved(!next);
-            toast.error(error instanceof ApiError ? error.message : "Could not update save");
-        }
+    useEffect(() => {
+        setUnreadMessageCount(item.unreadMessageCount ?? 0);
+    }, [item.id, item.unreadMessageCount]);
+
+    function openOwnerChat() {
+        setUnreadMessageCount(0);
+        openChat(chatPeerFor(item));
     }
+
+    const canChat = item.stage === "pending" || item.stage === "approved";
 
     const cardMenu = (
         <DealCardPhotoToolbar
             listing={item}
-            isSaved={isSaved}
-            onToggleSave={() => void toggleSave()}
-            contact={{
-                name: item.ownerName,
-                onMessage: () => openChat(chatPeerFor(item)),
-            }}
+            contact={
+                canChat
+                    ? {
+                          name: item.ownerName,
+                          phoneDigits: ownerPhoneDigits,
+                          onMessage: openOwnerChat,
+                      }
+                    : undefined
+            }
+            onRemind={item.stage === "pending" ? () => onNudge(item.id) : undefined}
+            canRemind={item.stage === "pending" ? actions.canRemind : undefined}
+            remindersUsed={item.stage === "pending" ? actions.remindersUsed : undefined}
+            remindersLimit={item.stage === "pending" ? REMINDER_LIMIT : undefined}
+            onAddBuyer={item.stage === "approved" ? () => setIsBuyersOpen(true) : undefined}
             onOpenTimeline={() => setIsTimelineOpen(true)}
-            onCancelRequest={actions.canCancel ? () => onWithdraw(item.id) : undefined}
+            onStopRepresenting={item.stage === "approved" ? () => setIsStopOpen(true) : undefined}
             tone="overlay"
         />
     );
@@ -236,46 +231,54 @@ export function RequestCard({
             <DealOverlayCard
                 listing={item}
                 configLabel={item.configLabel}
-                statusLabel={REQUEST_STAGE_META[item.stage].label}
+                statusLabel={
+                    item.stage === "ended"
+                        ? endedStageLabel(item.endedBy)
+                        : REQUEST_STAGE_META[item.stage].label
+                }
                 statusTone={STATUS_TONE[item.stage]}
                 muted={item.stage !== "pending" && item.stage !== "approved" && !actions.canRetry}
                 isBusy={isBusy}
                 actions={cardMenu}
             >
-                <DealOverlayStats
-                    listing={item}
-                    ownerName={item.ownerName}
-                    ownerAvatarUrl={item.ownerAvatarUrl}
-                    ownerPhoneDigits={ownerPhoneDigits}
-                />
-                {item.stage === "approved" && item.attachedClients.length > 0 ? (
-                    <DealAttachedBuyers
-                        buyers={item.attachedClients}
-                        onManage={() => setIsBuyersOpen(true)}
+                <div className="flex flex-col gap-3.5 min-inline-0">
+                    <DealOverlayStats
+                        listing={item}
+                        ownerName={item.ownerName}
+                        ownerAvatarUrl={item.ownerAvatarUrl}
+                        ownerPhoneDigits={ownerPhoneDigits}
                     />
-                ) : null}
+                    {item.stage === "approved" ? (
+                        <DealAttachedBuyers
+                            buyers={item.attachedClients}
+                            onAttach={() => setIsBuyersOpen(true)}
+                        />
+                    ) : null}
+                    {item.stage === "ended" ? (
+                        <CancelledNote endedBy={item.endedBy} reason={item.cancelReason} />
+                    ) : null}
+                </div>
                 {ownerPhoneDigits ? (
                     <div className="mbs-auto flex flex-col gap-3 inline-full">
                         <RequestCardFooter
                             item={item}
-                            onNudge={onNudge}
+                            onWithdraw={onWithdraw}
                             onRetry={onRetry}
-                            onAddBuyers={() => setIsBuyersOpen(true)}
                             isBusy={isBusy}
                             pin={false}
                         />
                         <DealContactSplitBar
                             ownerName={item.ownerName}
                             ownerPhoneDigits={ownerPhoneDigits}
-                            onChat={() => openChat(chatPeerFor(item))}
+                            unreadMessageCount={unreadMessageCount}
+                            onChat={openOwnerChat}
                         />
                     </div>
                 ) : (
                     <RequestCardFooter
                         item={item}
-                        onNudge={onNudge}
+                        onWithdraw={onWithdraw}
                         onRetry={onRetry}
-                        onAddBuyers={() => setIsBuyersOpen(true)}
                         isBusy={isBusy}
                     />
                 )}
@@ -284,7 +287,7 @@ export function RequestCard({
             <Dialog open={isTimelineOpen} onOpenChange={setIsTimelineOpen}>
                 <DialogPopup className="gap-0 p-0 max-inline-md">
                     <DialogHeader className="border-be border-border-warm px-5 py-4">
-                        <DialogTitle>What happened</DialogTitle>
+                        <DialogTitle>Request timeline</DialogTitle>
                         <DialogClose />
                     </DialogHeader>
                     <div className="px-5 py-4">
@@ -297,12 +300,23 @@ export function RequestCard({
             </Dialog>
 
             {item.stage === "approved" ? (
-                <AttachBuyersModal
-                    open={isBuyersOpen}
-                    onOpenChange={setIsBuyersOpen}
-                    request={item}
-                    onSaved={onBuyersChanged}
-                />
+                <>
+                    <AttachBuyersModal
+                        open={isBuyersOpen}
+                        onOpenChange={setIsBuyersOpen}
+                        request={item}
+                        onSaved={onBuyersChanged}
+                    />
+                    <CancelRepresentationDialog
+                        open={isStopOpen}
+                        onOpenChange={setIsStopOpen}
+                        representationId={item.id}
+                        side="broker"
+                        propertyTitle={item.title}
+                        counterpartName={item.ownerName}
+                        onCancelled={onRepresentationCancelled ?? onBuyersChanged}
+                    />
+                </>
             ) : null}
         </TooltipProvider>
     );

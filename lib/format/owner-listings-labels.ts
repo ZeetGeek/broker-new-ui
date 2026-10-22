@@ -1,15 +1,19 @@
+import { toLabel } from "@/constants/property";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 
 import type {
+    OwnerListingCategory,
     OwnerListingFurnishing,
-    OwnerListingPropertyType,
     OwnerListingsBandFilters,
     OwnerListingsFilters,
     OwnerListingSort,
     OwnerListingsSheetFilters,
     OwnerListingTransactionType,
 } from "@/features/properties/owner-listings/types";
-import { OWNER_LISTING_PROPERTY_TYPES } from "@/features/properties/owner-listings/types";
+import {
+    OWNER_LISTING_CATEGORY_OPTIONS,
+    OWNER_LISTING_PROPERTY_TYPES,
+} from "@/features/properties/owner-listings/types";
 
 /** Title-case a place name for UI (handles spaces, hyphens, underscores). */
 export function formatPlaceName(value: string): string {
@@ -141,9 +145,18 @@ export function formatBhkLabel(bhk: string[]): string {
     return `${sorted.join(", ")} BHK`;
 }
 
-export function formatPropertyTypeLabel(propertyType: OwnerListingPropertyType | ""): string {
+export function formatCategoryLabel(category: OwnerListingCategory | ""): string {
+    if (!category) return "Any";
+    return (
+        OWNER_LISTING_CATEGORY_OPTIONS.find((option) => option.value === category)?.label ?? "Any"
+    );
+}
+
+export function formatPropertyTypeLabel(propertyType: string): string {
+    if (!propertyType) return "Any type";
     const match = OWNER_LISTING_PROPERTY_TYPES.find((option) => option.value === propertyType);
-    return match?.label ?? "Any type";
+    if (match) return match.label;
+    return toLabel(propertyType);
 }
 
 export function formatFurnishingLabel(furnishing: OwnerListingFurnishing | ""): string {
@@ -191,25 +204,34 @@ export function extractBandFilters(filters: OwnerListingsFilters): OwnerListings
         states: filters.states ?? [],
         cities: filters.cities ?? [],
         localities: filters.localities ?? [],
-        bhk: filters.bhk,
         type: filters.type,
         min: filters.min,
         max: filters.max,
+        minAreaSqft: filters.minAreaSqft,
+        maxAreaSqft: filters.maxAreaSqft,
+        category: filters.category,
         propertyType: filters.propertyType,
-        furnishing: filters.furnishing,
         yourAreas: filters.yourAreas,
     };
 }
 
 export function extractSheetFilters(filters: OwnerListingsFilters): OwnerListingsSheetFilters {
     return {
-        minAreaSqft: filters.minAreaSqft,
-        maxAreaSqft: filters.maxAreaSqft,
         listedWithinDays: filters.listedWithinDays,
         minCommissionPercent: filters.minCommissionPercent,
         maxCommissionPercent: filters.maxCommissionPercent,
         minCommissionAmount: filters.minCommissionAmount,
         maxCommissionAmount: filters.maxCommissionAmount,
+        bhk: filters.bhk,
+        bathrooms: filters.bathrooms,
+        balconies: filters.balconies,
+        parking: filters.parking,
+        floors: filters.floors,
+        facing: filters.facing,
+        propertyConditions: filters.propertyConditions,
+        propertyAges: filters.propertyAges,
+        suitableFor: filters.suitableFor,
+        furnishing: filters.furnishing,
         yourAreas: filters.yourAreas,
         newToday: filters.newToday,
         slotsOpen: filters.slotsOpen,

@@ -1,6 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
 
 import {
     Combobox,
@@ -40,7 +40,7 @@ export function OptionCombobox({
     onBlur?: () => void;
     options: readonly ComboboxOption[];
     placeholder?: string;
-    startIcon?: LucideIcon;
+    startIcon?: AppIcon;
     /** Shows a spinner and blocks input while the options are being fetched. */
     loading?: boolean;
     disabled?: boolean;

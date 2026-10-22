@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { ArrowRight, IndianRupee, Lock, Rocket, ShieldCheck } from "lucide-react";
+import { ArrowRight, IndianRupee, Lock, Rocket, ShieldCheck } from "@/components/shared/icons";
 
 import { ProgressiveBlur } from "@/components/motion-primitives/progressive-blur";
 import { Logo } from "@/components/shared/logo";

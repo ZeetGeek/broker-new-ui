@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Inbox } from "lucide-react";
+import { Inbox } from "@/components/shared/icons";
 
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 

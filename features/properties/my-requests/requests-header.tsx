@@ -3,20 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "lucide-react";
-
+import {
+    EMPTY_PROPERTY_CRITERIA,
+    normalizePropertyCriteria,
+    propertyCriteriaCount,
+    type PropertyListCriteria,
+} from "@/lib/properties/list-criteria";
 import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { FilterChip, FilterChipCount } from "@/components/shared/filter-chip";
-import {
-    Dialog,
-    DialogClose,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -43,6 +40,11 @@ import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
+import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
+import {
+    DEFAULT_OWNER_LISTINGS_FILTERS,
+    type OwnerListingsFilters,
+} from "@/features/properties/owner-listings/types";
 
 const SENT_SORT_OPTIONS: { value: RequestSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
@@ -51,6 +53,11 @@ const SENT_SORT_OPTIONS: { value: RequestSort; label: string }[] = [
     { value: "price_desc", label: "Price high" },
     { value: "price_asc", label: "Price low" },
 ];
+
+export const DEALS_TOOLBAR_CLASS = "flex flex-wrap items-center justify-between gap-3 sm:gap-4";
+export const DEALS_SEARCH_CLASS =
+    "min-inline-44 inline-44 shadow-sm sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64";
+export const DEALS_SORT_CLASS = "justify-between inline-24 sm:inline-40";
 
 const INVITE_SORT_OPTIONS: { value: InviteSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
@@ -87,11 +94,7 @@ function DealsQueryInput({ value, onChange }: { value: string; onChange: (q: str
             aria-label="Search your deals"
             startIcon={Search}
             clearable
-            wrapperClassName="
-              min-inline-44 inline-44 shadow-sm
-              sm:min-inline-52 sm:inline-52
-              lg:min-inline-64 lg:inline-64
-            "
+            wrapperClassName={DEALS_SEARCH_CLASS}
             className="
               rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
               block-[38px]!
@@ -123,6 +126,7 @@ function DealsSortMenu({
                         className={cn(
                             ownerListingsChipClassName(!isDefaultSort),
                             "gap-2",
+                            DEALS_SORT_CLASS,
                             isDefaultSort && "text-ink-muted",
                         )}
                     >
@@ -156,36 +160,67 @@ function DealsSortMenu({
     );
 }
 
-function LookingForRow({
-    type,
-    onChange,
-}: {
-    type: DealListingType;
-    onChange: (type: DealListingType) => void;
-}) {
-    return (
-        <div className="flex flex-col gap-2">
-            <p className="body-sm font-semibold text-ink">Looking for</p>
-            <div className="flex flex-wrap gap-2">
-                {(
-                    [
-                        ["", "Any"],
-                        ["sale", "Sale"],
-                        ["rent", "Rent"],
-                    ] as const
-                ).map(([value, label]) => (
-                    <button
-                        key={value || "any"}
-                        type="button"
-                        className={ownerListingsChipClassName(type === value)}
-                        onClick={() => onChange(value)}
-                    >
-                        {label}
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
+function ownerSheetFilters(
+    criteria: Partial<PropertyListCriteria> | undefined,
+    type: DealListingType,
+): OwnerListingsFilters {
+    const value = normalizePropertyCriteria({ ...criteria, type });
+    return {
+        ...DEFAULT_OWNER_LISTINGS_FILTERS,
+        type: value.type,
+        min: value.min,
+        max: value.max,
+        minAreaSqft: value.minAreaSqft,
+        maxAreaSqft: value.maxAreaSqft,
+        category: value.category,
+        propertyType: value.propertyType,
+        bhk: value.bhk,
+        bathrooms: value.bathrooms,
+        balconies: value.balconies,
+        parking: value.parking,
+        floors: value.floors,
+        facing: value.facing,
+        propertyConditions: value.propertyConditions,
+        propertyAges: value.propertyAges,
+        suitableFor: value.suitableFor,
+        furnishing: value.furnishing,
+        listedWithinDays: value.listedWithinDays,
+        minCommissionPercent: value.minCommissionPercent,
+        maxCommissionPercent: value.maxCommissionPercent,
+        minCommissionAmount: value.minCommissionAmount,
+        maxCommissionAmount: value.maxCommissionAmount,
+    };
+}
+
+function criteriaFromSheet(
+    patch: Partial<OwnerListingsFilters>,
+    discovery: PropertyListCriteria | undefined,
+) {
+    return normalizePropertyCriteria({
+        ...discovery,
+        type: patch.type ?? discovery?.type,
+        min: patch.min ?? discovery?.min,
+        max: patch.max ?? discovery?.max,
+        minAreaSqft: patch.minAreaSqft ?? discovery?.minAreaSqft,
+        maxAreaSqft: patch.maxAreaSqft ?? discovery?.maxAreaSqft,
+        category: patch.category ?? discovery?.category,
+        propertyType: patch.propertyType ?? discovery?.propertyType,
+        bhk: patch.bhk,
+        bathrooms: patch.bathrooms,
+        balconies: patch.balconies,
+        parking: patch.parking,
+        floors: patch.floors,
+        facing: patch.facing,
+        propertyConditions: patch.propertyConditions,
+        propertyAges: patch.propertyAges,
+        suitableFor: patch.suitableFor,
+        furnishing: patch.furnishing,
+        listedWithinDays: patch.listedWithinDays,
+        minCommissionPercent: patch.minCommissionPercent,
+        maxCommissionPercent: patch.maxCommissionPercent,
+        minCommissionAmount: patch.minCommissionAmount,
+        maxCommissionAmount: patch.maxCommissionAmount,
+    });
 }
 
 function SentFilterDialog({
@@ -199,46 +234,27 @@ function SentFilterDialog({
     filters: RequestsFilters;
     onApply: (next: Partial<RequestsFilters>) => void;
 }) {
-    const [draft, setDraft] = useState(filters);
-    const [wasOpen, setWasOpen] = useState(open);
-    const [syncedFilters, setSyncedFilters] = useState(filters);
-
-    if (open) {
-        if (!wasOpen || filters !== syncedFilters) {
-            setWasOpen(true);
-            setSyncedFilters(filters);
-            setDraft(filters);
-        }
-    } else if (wasOpen) {
-        setWasOpen(false);
-    }
+    const appliedFilters = useMemo(
+        () => ownerSheetFilters(filters.propertyFilters, filters.type),
+        [filters.propertyFilters, filters.type],
+    );
+    const discoveryFilters = useMemo(
+        () => ({ ...filters.propertyFilters, type: filters.type }),
+        [filters.propertyFilters, filters.type],
+    );
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup className="gap-0 p-0 max-inline-lg sm:max-inline-lg">
-                <DialogHeader className="border-be border-border-warm px-5 py-4">
-                    <DialogTitle>Filters</DialogTitle>
-                    <DialogClose />
-                </DialogHeader>
-                <div className="flex flex-col gap-5 p-5">
-                    <LookingForRow
-                        type={draft.type}
-                        onChange={(type) => setDraft({ ...draft, type })}
-                    />
-                </div>
-                <div className="border-bs border-border-warm/40 bg-surface px-5 py-4">
-                    <AppModalFooter
-                        secondaryLabel="Reset filter"
-                        onSecondary={() => setDraft({ ...draft, type: "" })}
-                        primaryLabel="Apply filters"
-                        onPrimary={() => {
-                            onApply({ type: draft.type, page: 1 });
-                            onOpenChange(false);
-                        }}
-                    />
-                </div>
-            </DialogPopup>
-        </Dialog>
+        <OwnerListingsFilterSheet
+            open={open}
+            onOpenChange={onOpenChange}
+            appliedFilters={appliedFilters}
+            discoveryFilters={discoveryFilters}
+            showDiscoveryFilters
+            onApply={(patch, discovery) => {
+                const next = criteriaFromSheet(patch, discovery);
+                onApply({ type: next.type, propertyFilters: { ...next, type: "" }, page: 1 });
+            }}
+        />
     );
 }
 
@@ -253,46 +269,27 @@ function InviteFilterDialog({
     filters: InvitesFilters;
     onApply: (next: Partial<InvitesFilters>) => void;
 }) {
-    const [draft, setDraft] = useState(filters);
-    const [wasOpen, setWasOpen] = useState(open);
-    const [syncedFilters, setSyncedFilters] = useState(filters);
-
-    if (open) {
-        if (!wasOpen || filters !== syncedFilters) {
-            setWasOpen(true);
-            setSyncedFilters(filters);
-            setDraft(filters);
-        }
-    } else if (wasOpen) {
-        setWasOpen(false);
-    }
+    const appliedFilters = useMemo(
+        () => ownerSheetFilters(filters.propertyFilters, filters.type),
+        [filters.propertyFilters, filters.type],
+    );
+    const discoveryFilters = useMemo(
+        () => ({ ...filters.propertyFilters, type: filters.type }),
+        [filters.propertyFilters, filters.type],
+    );
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup className="gap-0 p-0 max-inline-lg sm:max-inline-lg">
-                <DialogHeader className="border-be border-border-warm px-5 py-4">
-                    <DialogTitle>Filters</DialogTitle>
-                    <DialogClose />
-                </DialogHeader>
-                <div className="flex flex-col gap-5 p-5">
-                    <LookingForRow
-                        type={draft.type}
-                        onChange={(type) => setDraft({ ...draft, type })}
-                    />
-                </div>
-                <div className="border-bs border-border-warm/40 bg-surface px-5 py-4">
-                    <AppModalFooter
-                        secondaryLabel="Reset filter"
-                        onSecondary={() => setDraft({ ...draft, type: "" })}
-                        primaryLabel="Apply filters"
-                        onPrimary={() => {
-                            onApply({ type: draft.type, page: 1 });
-                            onOpenChange(false);
-                        }}
-                    />
-                </div>
-            </DialogPopup>
-        </Dialog>
+        <OwnerListingsFilterSheet
+            open={open}
+            onOpenChange={onOpenChange}
+            appliedFilters={appliedFilters}
+            discoveryFilters={discoveryFilters}
+            showDiscoveryFilters
+            onApply={(patch, discovery) => {
+                const next = criteriaFromSheet(patch, discovery);
+                onApply({ type: next.type, propertyFilters: { ...next, type: "" }, page: 1 });
+            }}
+        />
     );
 }
 
@@ -322,11 +319,18 @@ export function MyDealsHeader({
     const isInvites = activeTab === "invites";
     const isAccepted = activeTab === "accepted";
     const isRejected = activeTab === "rejected";
+    const isCancelled = activeTab === "cancelled";
 
     const sheetFilterCount = useMemo(() => {
-        if (isInvites) return countTypeFilter(inviteFilters.type);
-        return countTypeFilter(sentFilters.type);
-    }, [inviteFilters.type, isInvites, sentFilters.type]);
+        if (isInvites)
+            return (
+                countTypeFilter(inviteFilters.type) +
+                propertyCriteriaCount(inviteFilters.propertyFilters)
+            );
+        return (
+            countTypeFilter(sentFilters.type) + propertyCriteriaCount(sentFilters.propertyFilters)
+        );
+    }, [inviteFilters, isInvites, sentFilters]);
 
     const sentWaitingCount = sentSummary?.counts.pending ?? 0;
     const inviteWaitingCount = inviteSummary?.waitingOnYouCount ?? 0;
@@ -334,12 +338,13 @@ export function MyDealsHeader({
         (sentSummary?.counts.approved ?? 0) + (inviteSummary?.counts.accepted ?? 0);
     const rejectedCount =
         (sentSummary?.counts.declined ?? 0) + (inviteSummary?.counts.declined ?? 0);
+    const cancelledCount = (sentSummary?.counts.ended ?? 0) + (inviteSummary?.counts.ended ?? 0);
 
     const clearType = () => {
         if (isInvites) {
-            onPatchInvites({ type: "", page: 1 });
+            onPatchInvites({ type: "", propertyFilters: { ...EMPTY_PROPERTY_CRITERIA }, page: 1 });
         } else {
-            onPatchSent({ type: "", page: 1 });
+            onPatchSent({ type: "", propertyFilters: { ...EMPTY_PROPERTY_CRITERIA }, page: 1 });
         }
     };
 
@@ -347,13 +352,14 @@ export function MyDealsHeader({
         <>
             <div className="sticky inset-bs-0 z-10">
                 <TooltipProvider>
-                    <div className="flex items-center justify-between gap-3 sm:gap-4">
+                    <div className={DEALS_TOOLBAR_CLASS}>
                         <OwnerListingsChipsCarousel>
                             <OwnerListingsChipsCarouselSlide>
                                 <FilterChip
                                     label="Filters"
                                     icon={SlidersHorizontal}
-                                    count={sheetFilterCount}
+                                    count={sheetFilterCount || undefined}
+                                    reserveCountSpace
                                     isLoading={isLoading}
                                     isActive={sheetFilterCount > 0}
                                     clearable={sheetFilterCount > 0}
@@ -369,6 +375,33 @@ export function MyDealsHeader({
                                         render={
                                             <Link
                                                 href={BROKER_MY_DEALS_HREF}
+                                                aria-current={isAccepted ? "page" : undefined}
+                                                className={ownerListingsChipClassName(isAccepted)}
+                                            >
+                                                Representing
+                                                <FilterChipCount
+                                                    reserveSpace
+                                                    count={acceptedCount}
+                                                    isActive={isAccepted}
+                                                    isLoading={
+                                                        isLoading && !sentSummary && !inviteSummary
+                                                    }
+                                                />
+                                            </Link>
+                                        }
+                                    />
+                                    <TooltipContent side="bottom">
+                                        Properties you can sell for the owner
+                                    </TooltipContent>
+                                </Tooltip>
+                            </OwnerListingsChipsCarouselSlide>
+
+                            <OwnerListingsChipsCarouselSlide>
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Link
+                                                href={`${BROKER_MY_DEALS_HREF}?tab=sent`}
                                                 aria-current={isSent ? "page" : undefined}
                                                 className={ownerListingsChipClassName(isSent)}
                                             >
@@ -377,6 +410,7 @@ export function MyDealsHeader({
                                                     Sent by you
                                                 </span>
                                                 <FilterChipCount
+                                                    reserveSpace
                                                     count={sentWaitingCount}
                                                     isActive={isSent}
                                                     isLoading={isLoading && !sentSummary}
@@ -407,6 +441,7 @@ export function MyDealsHeader({
                                                     Owner invitations
                                                 </span>
                                                 <FilterChipCount
+                                                    reserveSpace
                                                     count={inviteWaitingCount}
                                                     isActive={isInvites}
                                                     isLoading={isLoading && !inviteSummary}
@@ -425,38 +460,13 @@ export function MyDealsHeader({
                                     <TooltipTrigger
                                         render={
                                             <Link
-                                                href={`${BROKER_MY_DEALS_HREF}?tab=accepted`}
-                                                aria-current={isAccepted ? "page" : undefined}
-                                                className={ownerListingsChipClassName(isAccepted)}
-                                            >
-                                                Accepted
-                                                <FilterChipCount
-                                                    count={acceptedCount}
-                                                    isActive={isAccepted}
-                                                    isLoading={
-                                                        isLoading && !sentSummary && !inviteSummary
-                                                    }
-                                                />
-                                            </Link>
-                                        }
-                                    />
-                                    <TooltipContent side="bottom">
-                                        Accepted requests and invites you can sell
-                                    </TooltipContent>
-                                </Tooltip>
-                            </OwnerListingsChipsCarouselSlide>
-
-                            <OwnerListingsChipsCarouselSlide>
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={
-                                            <Link
                                                 href={`${BROKER_MY_DEALS_HREF}?tab=rejected`}
                                                 aria-current={isRejected ? "page" : undefined}
                                                 className={ownerListingsChipClassName(isRejected)}
                                             >
                                                 Rejected
                                                 <FilterChipCount
+                                                    reserveSpace
                                                     count={rejectedCount}
                                                     isActive={isRejected}
                                                     isLoading={
@@ -471,9 +481,35 @@ export function MyDealsHeader({
                                     </TooltipContent>
                                 </Tooltip>
                             </OwnerListingsChipsCarouselSlide>
+
+                            <OwnerListingsChipsCarouselSlide>
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Link
+                                                href={`${BROKER_MY_DEALS_HREF}?tab=cancelled`}
+                                                aria-current={isCancelled ? "page" : undefined}
+                                                className={ownerListingsChipClassName(isCancelled)}
+                                            >
+                                                Cancelled
+                                                <FilterChipCount
+                                                    count={cancelledCount}
+                                                    isActive={isCancelled}
+                                                    isLoading={
+                                                        isLoading && !sentSummary && !inviteSummary
+                                                    }
+                                                />
+                                            </Link>
+                                        }
+                                    />
+                                    <TooltipContent side="bottom">
+                                        Representations you or the owner cancelled
+                                    </TooltipContent>
+                                </Tooltip>
+                            </OwnerListingsChipsCarouselSlide>
                         </OwnerListingsChipsCarousel>
 
-                        <div className="flex shrink-0 items-center gap-2.5">
+                        <div className="flex shrink-0 items-center gap-2.5 max-inline-full">
                             {isInvites ? (
                                 <DealsQueryInput
                                     value={inviteFilters.q}

@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
 import {
     BadgeCheck,
     Bell,
@@ -11,7 +11,7 @@ import {
     ShieldCheck,
     UserPlus,
     XCircle,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import type { NotificationItem, NotificationType } from "@/lib/api/notifications";
 import { formatActivityDayLabel, formatDateIso } from "@/lib/format/date";
@@ -24,7 +24,7 @@ export type NotificationActor = {
 };
 
 export type NotificationVisual = {
-    Icon: LucideIcon;
+    Icon: AppIcon;
     colorClass: string;
 };
 
@@ -66,6 +66,7 @@ const ALL_NOTIFICATION_TYPES = new Set<NotificationType>([
     ...VISIT_TYPES,
     "lead_added",
     "deal_closed",
+    "property_sold",
     "team_joined",
     "referral_rewarded",
     "property_assigned",
@@ -272,6 +273,8 @@ export function getRepresentationDecisionLabel(item: NotificationItem): string |
     if (status === "rejected") return "Declined";
     if (status === "withdrawn") return "Withdrawn";
     if (status === "revoked") return "Revoked";
+    if (status === "owner_cancelled") return "Cancelled by owner";
+    if (status === "broker_cancelled") return "Cancelled by broker";
     return status.charAt(0).toUpperCase() + status.slice(1);
 }
 

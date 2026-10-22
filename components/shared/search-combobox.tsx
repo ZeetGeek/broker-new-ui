@@ -2,7 +2,7 @@
 
 import { type ReactNode, type Ref, useId, useMemo, useState } from "react";
 
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
@@ -44,7 +44,7 @@ type CommonProps = {
     helperText?: ReactNode;
     /** Shown when the list is empty and nothing has been typed. */
     emptyText?: string;
-    startIcon?: LucideIcon;
+    startIcon?: AppIcon;
     size?: "default" | "lg";
     inputRef?: Ref<HTMLInputElement>;
 };

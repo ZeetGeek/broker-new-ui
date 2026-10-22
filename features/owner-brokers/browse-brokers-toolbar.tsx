@@ -1,7 +1,7 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
-import { ArrowDownUp, BadgeCheck, Briefcase, ChevronDown, Tags } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
+import { ArrowDownUp, BadgeCheck, Briefcase, ChevronDown, Tags } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
@@ -44,7 +44,7 @@ function ChipMenu<T extends string | number>({
     onChange,
     align = "start",
 }: {
-    icon: LucideIcon;
+    icon: AppIcon;
     label: string;
     activeLabel?: string;
     value: T;

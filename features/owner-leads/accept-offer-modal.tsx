@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Check, MapPin } from "lucide-react";
+import { AlertCircle, Check, MapPin } from "@/components/shared/icons";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
@@ -165,6 +165,8 @@ export function AcceptOfferModal({
                                 commissionPercent={facts.commissionPercent}
                                 commissionAmountInr={facts.commissionAmountInr}
                                 audience="owner"
+                                size="md"
+                                showEmptyTip
                                 className="text-ink"
                             />
                         </DetailRow>

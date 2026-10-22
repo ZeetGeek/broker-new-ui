@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Check, XCircle } from "lucide-react";
+import { AlertTriangle, Check, XCircle } from "@/components/shared/icons";
 
 import type { ConflictResult } from "@/lib/visits/conflicts";
 

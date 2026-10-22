@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-import { Check, Clock, Send, X } from "lucide-react";
+import { Check, Clock, Send, X } from "@/components/shared/icons";
 
 import { formatDateShort } from "@/lib/format/date";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 import { Button } from "@/components/ui/button";
@@ -121,10 +121,15 @@ function RequestRow({ item }: { item: RequestRowItem }) {
                             {item.title}
                         </PropertyTitleLink>
                         <span aria-hidden> · </span>
-                        <Price
+                        <PriceWithCommission
                             amountInr={item.amountInr}
                             isRent={item.isRent}
-                            className="font-semibold text-ink"
+                            commissionPercent={item.commissionPercent}
+                            commissionAmountInr={item.commissionAmount}
+                            audience="broker"
+                            size="md"
+                            showEmptyTip
+                            className="text-ink"
                         />
                     </p>
                     <p

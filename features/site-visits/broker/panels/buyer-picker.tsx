@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { Check, Plus, Search } from "lucide-react";
+import { Check, Plus, Search } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 import { MAX_BUYERS_PER_VISIT } from "@/lib/visits/constants";

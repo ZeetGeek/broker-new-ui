@@ -130,11 +130,11 @@ export type UpdateNotificationsInput = {
 };
 
 export const profileApi = {
-    get() {
+    get(signal?: AbortSignal) {
         if (isMockMode()) {
             return Promise.resolve(MOCK_PROFILE);
         }
-        return apiFetch<UserProfile>("/profile");
+        return apiFetch<UserProfile>("/profile", { signal });
     },
 
     /**

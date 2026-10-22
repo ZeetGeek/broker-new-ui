@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Info } from "lucide-react";
+import { Info } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

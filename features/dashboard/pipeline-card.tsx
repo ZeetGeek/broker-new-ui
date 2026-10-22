@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { AlertCircle, Navigation, Users } from "lucide-react";
+import { AlertCircle, Navigation, Users } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

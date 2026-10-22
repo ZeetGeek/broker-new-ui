@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark } from "lucide-react";
+import { Bookmark } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

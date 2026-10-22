@@ -64,6 +64,7 @@ type ApiLead = {
         email?: string | null;
         avatarUrl?: string | null;
         isRepresentationActive?: boolean;
+        representationId?: string | null;
         origin?: "platform" | "exclusive";
     } | null;
     exclusiveOwner?: {
@@ -282,6 +283,8 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             isRepresentationActive:
                 ownerOrigin === "exclusive" ? true : Boolean(lead.owner?.isRepresentationActive),
             origin: ownerOrigin,
+            representationId:
+                ownerOrigin === "platform" ? (lead.owner?.representationId ?? null) : null,
         },
         stageEnteredAt: stageEnteredAt(lead),
         lastContactedAt: lead.updatedAt ?? null,

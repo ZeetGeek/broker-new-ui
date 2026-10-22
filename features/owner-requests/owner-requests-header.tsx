@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { ArrowDownUp, ChevronDown, Search } from "lucide-react";
+import { ArrowDownUp, ChevronDown, Search } from "@/components/shared/icons";
 
 import { ownerRequestsHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";

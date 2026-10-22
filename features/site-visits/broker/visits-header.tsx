@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { formatInTimeZone } from "date-fns-tz";
-import { CircleAlert, Clock3 } from "lucide-react";
+import { CircleAlert, Clock3 } from "@/components/shared/icons";
 
 import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
 

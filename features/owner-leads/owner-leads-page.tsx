@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { HandCoins } from "lucide-react";
+import { HandCoins } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import { ownerLeadsApi, type PropertyLead } from "@/lib/api/owner-leads";

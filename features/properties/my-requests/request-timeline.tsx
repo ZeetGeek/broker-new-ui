@@ -1,12 +1,12 @@
-import type { LucideIcon } from "lucide-react";
-import { Ban, Bell, CircleCheck, CircleX, Eye, Lock, Send } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
+import { Ban, Bell, CircleCheck, CircleX, Eye, Lock, Send } from "@/components/shared/icons";
 
 import { formatRelativePast } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import type { RequestTimelineStep } from "@/features/properties/my-requests/types";
 
-const STEP_ICONS: Record<RequestTimelineStep["key"], LucideIcon> = {
+const STEP_ICONS: Record<RequestTimelineStep["key"], AppIcon> = {
     sent: Send,
     seen: Eye,
     nudged: Bell,

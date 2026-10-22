@@ -2,7 +2,7 @@
 
 import { type DragEvent, useId, useRef, useState } from "react";
 
-import { ImageUp } from "lucide-react";
+import { ImageUp } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

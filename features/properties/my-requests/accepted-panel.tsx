@@ -1,10 +1,10 @@
 "use client";
-
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { myRequestsApi } from "@/lib/api/my-requests";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
+import { propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -13,7 +13,10 @@ import { InviteCard } from "@/features/properties/my-requests/invite-card";
 import type { InviteItem, InvitesSummary } from "@/features/properties/my-requests/invite-types";
 import { RequestCard } from "@/features/properties/my-requests/request-card";
 import { RequestsFilteredEmpty } from "@/features/properties/my-requests/requests-empty";
-import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
+import {
+    REQUESTS_GRID_BREAKPOINTS,
+    REQUESTS_GRID_CLASS,
+} from "@/features/properties/my-requests/requests-grid-class";
 import { MyDealsHeader } from "@/features/properties/my-requests/requests-header";
 import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 import type { RequestItem, RequestsSummary } from "@/features/properties/my-requests/types";
@@ -61,6 +64,7 @@ export function AcceptedPanel({
                 sort: (filters.sort === "waiting_longest" ? "recent" : filters.sort) as
                     "recent" | "oldest" | "price_desc" | "price_asc",
                 type: filters.type,
+                propertyFilters: filters.propertyFilters,
                 page: 1,
                 limit: filters.limit,
             };
@@ -101,7 +105,9 @@ export function AcceptedPanel({
                     setRows(next);
                 })
                 .catch(() => {
-                    if (!cancelled) setError("Could not load accepted deals. Try again.");
+                    if (!cancelled) {
+                        setError("Could not load properties you represent. Try again.");
+                    }
                 })
                 .finally(() => {
                     if (!cancelled) setIsFetching(false);
@@ -168,7 +174,10 @@ export function AcceptedPanel({
         [runMutation],
     );
 
-    const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
+    const narrowFilters =
+        filters.q.trim().length > 0 ||
+        Boolean(filters.type) ||
+        propertyCriteriaCount(filters.propertyFilters) > 0;
 
     const acceptedTotal = useMemo(
         () => (sentSummary?.counts.approved ?? 0) + (inviteSummary?.counts.accepted ?? 0),
@@ -189,6 +198,7 @@ export function AcceptedPanel({
                         ? "recent"
                         : (filters.sort as "recent" | "oldest" | "price_desc" | "price_asc"),
                 type: filters.type,
+                propertyFilters: filters.propertyFilters,
                 page: 1,
                 limit: filters.limit,
             }}
@@ -200,11 +210,16 @@ export function AcceptedPanel({
     let body: ReactNode;
 
     if (!rows && isFetching) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="accepted"
+                count={Math.max(1, Math.min(10, acceptedTotal || 5))}
+            />
+        );
     } else if (error) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load accepted deals</p>
+                <p className="h6 text-ink">Could not load properties you represent</p>
                 <p className="body-sm text-ink-muted">{error}</p>
                 <button
                     type="button"
@@ -216,11 +231,16 @@ export function AcceptedPanel({
             </div>
         );
     } else if (!rows) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="accepted"
+                count={Math.max(1, Math.min(10, acceptedTotal || 5))}
+            />
+        );
     } else if (acceptedTotal === 0 && !narrowFilters) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">No accepted deals yet</p>
+                <p className="h6 text-ink">Nothing to represent yet</p>
                 <p className="body-sm max-w-prose text-ink-muted">
                     When an owner accepts your request, or you accept their invite, it shows up
                     here.
@@ -243,7 +263,8 @@ export function AcceptedPanel({
                     estimateRowHeight={520}
                     gap={24}
                     breakpoints={REQUESTS_GRID_BREAKPOINTS}
-                    ariaLabel="Accepted deals"
+                    gridClassName={REQUESTS_GRID_CLASS}
+                    ariaLabel="Properties you represent"
                     renderItem={(row) =>
                         row.kind === "request" ? (
                             <RequestCard
@@ -252,6 +273,7 @@ export function AcceptedPanel({
                                 onWithdraw={handleWithdraw}
                                 onRetry={handleRetry}
                                 onBuyersChanged={handleRefresh}
+                                onRepresentationCancelled={handleRefresh}
                                 isBusy={busyId === row.item.id}
                             />
                         ) : (
@@ -260,6 +282,7 @@ export function AcceptedPanel({
                                 onAccept={() => undefined}
                                 onDecline={() => undefined}
                                 onBuyersChanged={handleRefresh}
+                                onRepresentationCancelled={handleRefresh}
                                 isBusy={busyId === row.item.id}
                             />
                         )

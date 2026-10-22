@@ -28,8 +28,22 @@ function isPaged(
 
 async function fetchAllInvitations(): Promise<RepresentationItem[]> {
     // `all` so stage chips / summary see pending + decided + closed invites.
-    const response = await representativeApi.brokerInvitationList({ status: "all" });
-    return isPaged(response) ? response.items : response;
+    const response = await representativeApi.brokerInvitationList({
+        status: "all",
+        page: 1,
+        limit: 100,
+    });
+    if (!isPaged(response)) return response;
+    const items = [...response.items];
+    for (let page = 2; page <= response.totalPages; page++) {
+        const next = await representativeApi.brokerInvitationList({
+            status: "all",
+            page,
+            limit: 100,
+        });
+        items.push(...(isPaged(next) ? next.items : next));
+    }
+    return items;
 }
 
 function withClients(

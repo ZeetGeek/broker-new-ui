@@ -1,10 +1,11 @@
 "use client";
-
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { myRequestsApi } from "@/lib/api/my-requests";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
+import { representativeApi } from "@/lib/api/representative";
+import { propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -13,7 +14,10 @@ import { InviteCard } from "@/features/properties/my-requests/invite-card";
 import type { InviteItem, InvitesSummary } from "@/features/properties/my-requests/invite-types";
 import { RequestCard } from "@/features/properties/my-requests/request-card";
 import { RequestsFilteredEmpty } from "@/features/properties/my-requests/requests-empty";
-import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
+import {
+    REQUESTS_GRID_BREAKPOINTS,
+    REQUESTS_GRID_CLASS,
+} from "@/features/properties/my-requests/requests-grid-class";
 import { MyDealsHeader } from "@/features/properties/my-requests/requests-header";
 import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 import type {
@@ -71,6 +75,7 @@ export function RejectedPanel({
                 stage: "declined" as const,
                 sort: inviteSortFromRequestSort(filters.sort),
                 type: filters.type,
+                propertyFilters: filters.propertyFilters,
                 page: 1,
                 limit: filters.limit,
             };
@@ -178,7 +183,20 @@ export function RejectedPanel({
         [runMutation],
     );
 
-    const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
+    const handleAskToSell = useCallback(
+        (propertyId: string) => {
+            void runMutation(propertyId, async () => {
+                await representativeApi.requestRepresentation(propertyId);
+                toast.success("Request sent to the owner");
+            });
+        },
+        [runMutation],
+    );
+
+    const narrowFilters =
+        filters.q.trim().length > 0 ||
+        Boolean(filters.type) ||
+        propertyCriteriaCount(filters.propertyFilters) > 0;
 
     const rejectedTotal = useMemo(
         () => (sentSummary?.counts.declined ?? 0) + (inviteSummary?.counts.declined ?? 0),
@@ -196,6 +214,7 @@ export function RejectedPanel({
                 stage: "declined",
                 sort: inviteSortFromRequestSort(filters.sort),
                 type: filters.type,
+                propertyFilters: filters.propertyFilters,
                 page: 1,
                 limit: filters.limit,
             }}
@@ -207,7 +226,12 @@ export function RejectedPanel({
     let body: ReactNode;
 
     if (!rows && isFetching) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="rejected"
+                count={Math.max(1, Math.min(10, rejectedTotal || 5))}
+            />
+        );
     } else if (error) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -223,7 +247,12 @@ export function RejectedPanel({
             </div>
         );
     } else if (!rows) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="rejected"
+                count={Math.max(1, Math.min(10, rejectedTotal || 5))}
+            />
+        );
     } else if (rejectedTotal === 0 && !narrowFilters) {
         body = (
             <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -250,6 +279,7 @@ export function RejectedPanel({
                     estimateRowHeight={520}
                     gap={24}
                     breakpoints={REQUESTS_GRID_BREAKPOINTS}
+                    gridClassName={REQUESTS_GRID_CLASS}
                     ariaLabel="Rejected deals"
                     renderItem={(row) =>
                         row.kind === "request" ? (
@@ -266,8 +296,9 @@ export function RejectedPanel({
                                 item={row.item}
                                 onAccept={() => undefined}
                                 onDecline={() => undefined}
+                                onAskToSell={handleAskToSell}
                                 onBuyersChanged={handleRefresh}
-                                isBusy={busyId === row.item.id}
+                                isBusy={busyId === row.item.id || busyId === row.item.propertyId}
                             />
                         )
                     }

@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
-import { Ban, CircleCheck, CircleX, Hourglass, Lock } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
+import { Ban, CircleCheck, CircleX, Hourglass, Lock } from "@/components/shared/icons";
 
 import type { RequestStage } from "@/features/properties/my-requests/types";
 
@@ -8,7 +8,7 @@ export type RequestStageMeta = {
     label: string;
     /** One line explaining what the broker should expect next. */
     hint: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     badgeVariant: "brand" | "urgent" | "danger" | "neutral" | "outline";
     /** Text tone class for icons rendered outside a badge. */
     toneClass: string;
@@ -50,6 +50,13 @@ export const REQUEST_STAGE_META: Record<RequestStage, RequestStageMeta> = {
         badgeVariant: "outline",
         toneClass: "text-ink-muted",
     },
+    ended: {
+        label: "Representation cancelled",
+        hint: "You were representing this property, then it was cancelled. Its open deals were closed as lost.",
+        icon: Ban,
+        badgeVariant: "neutral",
+        toneClass: "text-ink-muted",
+    },
 };
 
 export const REQUEST_STAGE_ORDER: RequestStage[] = [
@@ -58,4 +65,12 @@ export const REQUEST_STAGE_ORDER: RequestStage[] = [
     "declined",
     "cancelled",
     "locked",
+    "ended",
 ];
+
+/** Status chip on a cancelled card — who ended it. */
+export function endedStageLabel(endedBy: "owner" | "broker" | undefined): string {
+    if (endedBy === "owner") return "Cancelled by owner";
+    if (endedBy === "broker") return "You stopped selling";
+    return "Representation cancelled";
+}

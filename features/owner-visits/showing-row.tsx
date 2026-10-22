@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock3 } from "lucide-react";
+import { Clock3 } from "@/components/shared/icons";
 
 import type { ShowingStatus, VisitShowing } from "@/lib/api/owner-slots";
 import { formatDateIn, formatTimeIn, parseApiInstant } from "@/lib/format/date";

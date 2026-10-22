@@ -42,6 +42,8 @@ export type MyListingItem = {
     title: string;
     configLabel: string;
     category: MyListingCategory;
+    /** False only when the API omitted both category and subtype. */
+    categoryProvided?: boolean;
     propertyType: MyListingPropertyType;
     /** API subtype as stored (e.g. `cold_storage`); null on older listings. */
     subtype?: string | null;
@@ -49,7 +51,11 @@ export type MyListingItem = {
     bhk: number;
     locality: string;
     city: string;
+    country?: string | null;
+    state?: string | null;
     address: string;
+    unitNumber?: string | null;
+    streetOrRoad?: string | null;
     pinCode: string;
     landmark: string;
     society: string;
@@ -57,14 +63,19 @@ export type MyListingItem = {
     saleAmountInr: number | null;
     rentAmountInr: number | null;
     areaSqft: number;
+    carpetAreaSqft?: number | null;
     furnishing: MyListingFurnishing;
     furnishingLabel: string;
     bathrooms: number | null;
     balconies: number | null;
     floorNumber: number | null;
     totalFloors: number | null;
+    propertyAge?: string | number | null;
+    propertyCondition?: string | null;
     facing: MyListingFacing | null;
     parking: MyListingParking;
+    /** Exact API count; null means it wasn't supplied. Legacy fixtures use parking. */
+    parkingSpaces?: number | null;
     maintenanceInr: number | null;
     /** Sale commission percent (null when unset / rent-only). */
     commissionPercent: number | null;
@@ -85,6 +96,10 @@ export type MyListingItem = {
     virtualTourUrl: string;
     availableFrom: string | null;
     status: MyListingStatus;
+    /** Owner marked it sold. Its deals are closed and it left the broker feed. */
+    isSold?: boolean;
+    soldAt?: string | null;
+    soldReason?: string | null;
     inboundRequestCount: number;
     listedDaysAgo: number;
     photoCount: number;
@@ -96,6 +111,8 @@ export type MyListingItem = {
     ownerId?: string | null;
     ownerOrigin?: "platform" | "custom" | null;
     ownerName?: string | null;
+    /** Exclusive owner mobile digits for Call / WhatsApp on inventory cards. */
+    ownerPhoneDigits?: string | null;
     exclusiveOwnerId?: string | null;
     visibility?: "private" | "marketplace";
     interestedBuyerIds?: string[];
@@ -127,7 +144,7 @@ export const DEFAULT_MY_LISTINGS_FILTERS: MyListingsFilters = {
     type: "",
     propertyType: "",
     bhk: [],
-    status: "",
+    status: "published",
     sort: "newest",
     page: 1,
 };
@@ -144,6 +161,10 @@ export type BrokerRequestItem = {
     title: string;
     amountInr: number;
     isRent: boolean;
+    /** Sale commission percent when the owner set one. */
+    commissionPercent?: number | null;
+    /** Fixed rent brokerage in INR when the owner set one. */
+    commissionAmount?: number | null;
     note: string;
     action: { label: string; href: string; kind?: "remind" | "open" | "view" };
     /** Pending only — reminders already sent on this attempt. */

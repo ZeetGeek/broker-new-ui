@@ -1,16 +1,17 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { extractBandFilters } from "@/lib/format/owner-listings-labels";
 
+import { X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
+import { stripHiddenOwnerListingsFilters } from "@/features/properties/owner-listings/filter-visibility";
+import { OwnerListingsAreaMenu } from "@/features/properties/owner-listings/owner-listings-area-menu";
 import { OwnerListingsBandDivider } from "@/features/properties/owner-listings/owner-listings-band-segment";
-import { OwnerListingsBhkMenu } from "@/features/properties/owner-listings/owner-listings-bhk-menu";
 import { OwnerListingsBudgetMenu } from "@/features/properties/owner-listings/owner-listings-budget-menu";
-import { OwnerListingsFurnishingMenu } from "@/features/properties/owner-listings/owner-listings-furnishing-menu";
+import { OwnerListingsCategoryMenu } from "@/features/properties/owner-listings/owner-listings-category-menu";
 import { OwnerListingsLookingForMenu } from "@/features/properties/owner-listings/owner-listings-looking-for-menu";
 import { OwnerListingsPropertyTypeMenu } from "@/features/properties/owner-listings/owner-listings-property-type-menu";
 import { OwnerListingsWhereMenu } from "@/features/properties/owner-listings/owner-listings-where-menu";
@@ -25,7 +26,13 @@ const EMPTY_BAND_FILTERS = extractBandFilters(DEFAULT_OWNER_LISTINGS_FILTERS);
 
 export type OwnerListingsSearchBandProps = {
     appliedFilters: OwnerListingsFilters;
+    /** Location tree stubs for the Where menu. */
     listings: OwnerListingItem[];
+    /** Owner listings inside the broker's service areas, from the cities API. */
+    serviceableListingCount?: number;
+    locationsLoading?: boolean;
+    locationsError?: boolean;
+    onRetryLocations?: () => void;
     serviceAreas?: string[];
     onApplyBand: (band: OwnerListingsBandFilters) => void;
 };
@@ -37,18 +44,23 @@ function bandSignature(band: OwnerListingsBandFilters): string {
         band.cities.join(","),
         band.localities.join(","),
         band.yourAreas ? "1" : "0",
-        band.bhk.join(","),
         band.type,
         band.min,
         band.max,
+        band.minAreaSqft,
+        band.maxAreaSqft,
+        band.category,
         band.propertyType,
-        band.furnishing,
     ].join("|");
 }
 
 export function OwnerListingsSearchBand({
     appliedFilters,
     listings,
+    serviceableListingCount,
+    locationsLoading,
+    locationsError,
+    onRetryLocations,
     serviceAreas = [],
     onApplyBand,
 }: OwnerListingsSearchBandProps) {
@@ -92,23 +104,6 @@ export function OwnerListingsSearchBand({
         [],
     );
 
-    const toggleBhk = useCallback((value: string) => {
-        const prev = draftRef.current;
-        const exists = prev.bhk.includes(value);
-        const next = {
-            ...prev,
-            bhk: exists ? prev.bhk.filter((item) => item !== value) : [...prev.bhk, value],
-        };
-        draftRef.current = next;
-        setDraft(next);
-    }, []);
-
-    const clearBhk = useCallback(() => {
-        const next = { ...draftRef.current, bhk: [] as string[] };
-        draftRef.current = next;
-        setDraft(next);
-    }, []);
-
     const applyDraftIfChanged = useCallback(() => {
         const current = draftRef.current;
         const applied = extractBandFilters(appliedFilters);
@@ -146,12 +141,16 @@ export function OwnerListingsSearchBand({
                 <div className="flex flex-1 p-0.5 min-inline-36">
                     <OwnerListingsWhereMenu
                         listings={listings}
+                        isLoading={locationsLoading}
+                        hasError={locationsError}
+                        onRetry={onRetryLocations}
                         selectedCountries={draft.countries}
                         selectedStates={draft.states}
                         selectedCities={draft.cities}
                         selectedLocalities={draft.localities}
                         yourAreas={draft.yourAreas}
                         serviceAreas={serviceAreas}
+                        serviceableListingCount={serviceableListingCount}
                         onWhereChange={setWhereFilters}
                         onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
@@ -192,11 +191,35 @@ export function OwnerListingsSearchBand({
 
                 <OwnerListingsBandDivider className="hidden md:block" />
 
-                <div className="hidden flex-1 p-0.5 min-inline-28 md:block">
-                    <OwnerListingsBhkMenu
-                        value={draft.bhk}
-                        onToggle={toggleBhk}
-                        onClear={clearBhk}
+                <div className="hidden flex-1 p-0.5 min-inline-32 md:block">
+                    <OwnerListingsAreaMenu
+                        minAreaSqft={draft.minAreaSqft}
+                        maxAreaSqft={draft.maxAreaSqft}
+                        onAreaChange={({ minAreaSqft, maxAreaSqft }) =>
+                            updateDraft({ minAreaSqft, maxAreaSqft })
+                        }
+                        onCommit={applyDraftIfChanged}
+                        onOpenChange={handleMenuOpenChange}
+                        className="inline-full"
+                    />
+                </div>
+
+                <OwnerListingsBandDivider className="hidden md:block" />
+
+                <div className="hidden flex-1 p-0.5 min-inline-32 md:block">
+                    <OwnerListingsCategoryMenu
+                        value={draft.category}
+                        onValueChange={(category) => {
+                            const stripped = stripHiddenOwnerListingsFilters({
+                                ...DEFAULT_OWNER_LISTINGS_FILTERS,
+                                ...draft,
+                                category,
+                            });
+                            updateDraft({
+                                category: stripped.category,
+                                propertyType: stripped.propertyType,
+                            });
+                        }}
                         onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"
@@ -208,19 +231,8 @@ export function OwnerListingsSearchBand({
                 <div className="hidden flex-1 p-0.5 min-inline-32 lg:block">
                     <OwnerListingsPropertyTypeMenu
                         value={draft.propertyType}
+                        category={draft.category}
                         onValueChange={(propertyType) => updateDraft({ propertyType })}
-                        onCommit={applyDraftIfChanged}
-                        onOpenChange={handleMenuOpenChange}
-                        className="inline-full"
-                    />
-                </div>
-
-                <OwnerListingsBandDivider className="hidden lg:block" />
-
-                <div className="hidden flex-1 p-0.5 min-inline-36 lg:block">
-                    <OwnerListingsFurnishingMenu
-                        value={draft.furnishing}
-                        onValueChange={(furnishing) => updateDraft({ furnishing })}
                         onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}
                         className="inline-full"

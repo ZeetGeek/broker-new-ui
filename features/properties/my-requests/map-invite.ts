@@ -2,6 +2,8 @@ import type { RepresentationItem } from "@/lib/api/representative";
 import { calendarDaysBetween } from "@/lib/format/date";
 
 import type { InviteItem, InviteStage } from "@/features/properties/my-requests/invite-types";
+import { representationEndedBy } from "@/features/properties/my-requests/map-my-request";
+import { mapApiPropertyType } from "@/features/properties/owner-listings/map-browse-listing";
 
 const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
     one_rk: 1,
@@ -55,11 +57,19 @@ function configLabel(rep: RepresentationItem): string {
 }
 
 function propertyTypeLabel(rep: RepresentationItem): string {
-    const subtype = rep.propertySubtype?.trim();
-    if (subtype && SUBTYPE_LABELS[subtype]) return SUBTYPE_LABELS[subtype];
-    const type = rep.propertyType?.trim();
-    if (type) return titleCase(type.replace(/_/g, " "));
-    return "Property";
+    return mapApiPropertyType(rep.propertySubtype, rep.propertyType);
+}
+
+/** Bedrooms first, then the BHK key — same order as the owner-listings card. */
+function bhkCount(rep: RepresentationItem): number {
+    if (rep.propertyBedrooms != null && rep.propertyBedrooms > 0) return rep.propertyBedrooms;
+    return rep.propertyBhkConfig ? (BHK_CONFIG_TO_NUMBER[rep.propertyBhkConfig] ?? 0) : 0;
+}
+
+function bathroomCount(rep: RepresentationItem): number | null {
+    return rep.propertyBathrooms != null && rep.propertyBathrooms > 0
+        ? rep.propertyBathrooms
+        : null;
 }
 
 function mapStage(status: string | undefined): InviteStage {
@@ -67,6 +77,8 @@ function mapStage(status: string | undefined): InviteStage {
     if (value === "pending") return "pending";
     if (value === "accepted") return "accepted";
     if (value === "rejected") return "declined";
+    // Accepted, then the owner or the broker cancelled it.
+    if (value === "owner_cancelled" || value === "broker_cancelled") return "ended";
     // Owner revoked / broker withdrew without a decision → invite closed.
     if (value === "withdrawn" || value === "revoked") return "expired";
     return "expired";
@@ -97,16 +109,21 @@ export function mapRepresentationToInviteItem(
         [config, locality || city].filter(Boolean).join(" · ") ||
         "Property";
     const invitedAt = rep.createdAt ?? new Date().toISOString();
-    const respondedAt = stage === "pending" ? null : (rep.decidedAt ?? rep.updatedAt ?? invitedAt);
+    const respondedAt =
+        stage === "pending"
+            ? null
+            : stage === "ended"
+              ? (rep.cancelledAt ?? rep.updatedAt ?? invitedAt)
+              : (rep.decidedAt ?? rep.updatedAt ?? invitedAt);
     const photos = (rep.propertyPhotos ?? []).filter(Boolean);
-    const bhk = rep.propertyBhkConfig
-        ? (BHK_CONFIG_TO_NUMBER[rep.propertyBhkConfig] ?? rep.propertyBedrooms ?? 0)
-        : (rep.propertyBedrooms ?? 0);
+    const bhk = bhkCount(rep);
 
     return {
         id: rep.id,
         propertyId: rep.propertyId,
         stage,
+        endedBy: stage === "ended" ? representationEndedBy(rep.status) : undefined,
+        cancelReason: stage === "ended" ? rep.cancelReason?.trim() || undefined : undefined,
         title,
         configLabel: config,
         propertyTypeLabel: typeLabel,
@@ -114,6 +131,16 @@ export function mapRepresentationToInviteItem(
         city,
         areaSqft: rep.propertyAreaSqft ?? 0,
         bhk,
+        bathrooms: bathroomCount(rep),
+        balconies: rep.propertyBalconies ?? null,
+        parkingSpaces: rep.propertyParkingSpaces ?? null,
+        floorNumber: rep.propertyFloorNumber ?? null,
+        facing: rep.propertyFacing ?? null,
+        propertyCondition: rep.propertyCondition ?? null,
+        propertyAge: rep.propertyAge ?? null,
+        suitableFor: rep.propertySuitableFor ?? null,
+        furnishing: rep.propertyFurnishing ?? null,
+        listedAt: rep.propertyListedAt ?? null,
         amountInr,
         isRent,
         commissionPercent: toNumber(rep.propertyCommissionPercent),
@@ -130,5 +157,9 @@ export function mapRepresentationToInviteItem(
         brokerSlotsOpen: 0,
         brokerSlotsTotal: 3,
         imageSrc: photos[0] ?? "",
+        unreadMessageCount:
+            typeof rep.unreadMessageCount === "number" && rep.unreadMessageCount > 0
+                ? rep.unreadMessageCount
+                : undefined,
     };
 }

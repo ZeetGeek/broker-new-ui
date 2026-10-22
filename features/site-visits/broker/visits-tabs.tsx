@@ -1,6 +1,6 @@
 "use client";
 
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "@/components/shared/icons";
 
 import { FilterChip, FilterChipCount, filterChipClassName } from "@/components/shared/filter-chip";
 import { TooltipProvider } from "@/components/ui/tooltip";

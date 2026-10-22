@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { AlertTriangle, KeyRound, MessageCircle, UserRound } from "lucide-react";
+import { AlertTriangle, KeyRound, WhatsAppIcon, UserRound } from "@/components/shared/icons";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
@@ -116,7 +116,8 @@ function PropertyRow({ property }: { property: RepresentedPropertyItem }) {
                             commissionPercent={property.commissionPercent}
                             commissionAmountInr={property.commissionAmountInr}
                             audience="broker"
-                            className="body font-semibold"
+                            size="md"
+                            showEmptyTip
                         />
                         <Badge color={property.isRent ? "orange" : "emerald"}>
                             {property.isRent ? "Rent" : "Sale"}
@@ -161,7 +162,7 @@ function PropertyRow({ property }: { property: RepresentedPropertyItem }) {
                         }
                         className="gap-1.5 border-2 border-border-warm"
                     >
-                        <MessageCircle
+                        <WhatsAppIcon
                             aria-hidden
                             className="block-3.5 inline-3.5"
                             strokeWidth={1.75}

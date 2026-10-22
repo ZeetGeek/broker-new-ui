@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import { Search, SlidersHorizontal } from "lucide-react";
-
 import { FilterChip } from "@/components/shared/filter-chip";
+import { Search, SlidersHorizontal } from "@/components/shared/icons";
 import { Input } from "@/components/ui/input";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -12,6 +11,7 @@ import type {
     QuickChipCounts,
     QuickChipKey,
 } from "@/features/properties/owner-listings/build-quick-chip-counts";
+import { ownerListingsFilterVisibility } from "@/features/properties/owner-listings/filter-visibility";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
@@ -41,9 +41,11 @@ const QUICK_CHIPS: QuickChipConfig[] = [
 
 export type OwnerListingsQuickChipsProps = {
     filters: OwnerListingsFilters;
-    chipCounts: QuickChipCounts;
+    chipCounts?: QuickChipCounts;
+    readyToMoveCount?: number;
+    isReadyToMoveCountLoading?: boolean;
     sheetFilterCount: number;
-    /** Matching listings — same N as “Show N properties” in the sheet. */
+    /** Total matching the applied filters, supplied by the API. */
     filtersMatchCount: number;
     isLoading?: boolean;
     onToggleQuickChip: (key: QuickChipKey) => void;
@@ -101,6 +103,8 @@ function OwnerListingsQueryInput({
 export function OwnerListingsQuickChips({
     filters,
     chipCounts,
+    readyToMoveCount,
+    isReadyToMoveCountLoading = false,
     sheetFilterCount,
     filtersMatchCount,
     isLoading = false,
@@ -110,9 +114,14 @@ export function OwnerListingsQuickChips({
     onQueryChange,
     onSortChange,
 }: OwnerListingsQuickChipsProps) {
+    const visibility = ownerListingsFilterVisibility(filters);
+    const visibleQuickChips = QUICK_CHIPS.filter(
+        (chip) => chip.key !== "readyToMove" || visibility.showReadyToMove,
+    );
+
     return (
         <TooltipProvider>
-            <div className="flex items-center justify-between gap-3 sm:gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
                 <OwnerListingsChipsCarousel>
                     <OwnerListingsChipsCarouselSlide>
                         <FilterChip
@@ -120,21 +129,31 @@ export function OwnerListingsQuickChips({
                             icon={SlidersHorizontal}
                             count={filtersMatchCount}
                             isLoading={isLoading}
+                            reserveCountSpace
                             isActive={sheetFilterCount > 0}
                             clearable={sheetFilterCount > 0 && Boolean(onClearSheetFilters)}
                             onClick={onOpenFilters}
                             onClear={onClearSheetFilters}
-                            description="Advanced filters — area, timing, and commission"
+                            description="Advanced filters — layout, timing, and commission"
                         />
                     </OwnerListingsChipsCarouselSlide>
 
-                    {QUICK_CHIPS.map((chip) => (
+                    {visibleQuickChips.map((chip) => (
                         <OwnerListingsChipsCarouselSlide key={chip.key}>
                             <FilterChip
                                 label={chip.label}
                                 mobileLabel={chip.mobileLabel}
-                                count={chipCounts[chip.key]}
-                                isLoading={isLoading}
+                                count={
+                                    chip.key === "readyToMove"
+                                        ? readyToMoveCount
+                                        : chipCounts?.[chip.key]
+                                }
+                                reserveCountSpace
+                                isLoading={
+                                    chip.key === "readyToMove"
+                                        ? isReadyToMoveCountLoading
+                                        : isLoading
+                                }
                                 isActive={filters[chip.key]}
                                 clearable
                                 onClick={() => onToggleQuickChip(chip.key)}
@@ -144,7 +163,7 @@ export function OwnerListingsQuickChips({
                     ))}
                 </OwnerListingsChipsCarousel>
 
-                <div className="flex shrink-0 items-center gap-2.5">
+                <div className="flex shrink-0 items-center gap-2.5 max-inline-full">
                     <OwnerListingsQueryInput value={filters.q} onChange={onQueryChange} />
                     <OwnerListingsSortMenu filters={filters} onSortChange={onSortChange} />
                 </div>

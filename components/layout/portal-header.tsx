@@ -61,8 +61,8 @@ export function PortalHeader({
     const homeHref = navItems[0]?.href ?? "/";
 
     return (
-        <div className="bg-surface-muted min-block-screen">
-            <div className="overflow-x-hidden px-4 md:px-8">
+        <div data-portal-shell className="bg-surface-muted min-block-screen">
+            <div data-portal-content className="overflow-x-hidden px-4 md:px-8">
                 <header>
                     <div
                         className="

@@ -1,5 +1,13 @@
-import type { LucideIcon } from "lucide-react";
-import { CalendarClock, Check, CircleCheck, Clock3, RotateCcw, UserRoundX, X } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
+import {
+    CalendarClock,
+    Check,
+    CircleCheck,
+    Clock3,
+    RotateCcw,
+    UserRoundX,
+    X,
+} from "@/components/shared/icons";
 
 import { isTooSoon } from "@/lib/visits/time";
 
@@ -13,7 +21,7 @@ export type VisitStatusMeta = {
     label: string;
     tone: string;
     bar: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     primaryAction?: "outcome" | "reschedule" | "withdraw";
     awaitingOwner?: boolean;
     cancelled?: boolean;

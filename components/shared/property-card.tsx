@@ -3,12 +3,14 @@
 import { type MouseEvent, type PointerEvent, useEffect, useState } from "react";
 import Link from "next/link";
 
+import { addCollection, Icon } from "@iconify/react/offline";
 import useEmblaCarousel from "embla-carousel-react";
 import {
     Bath,
     BedDouble,
     Building2,
     Calendar,
+    CallIcon,
     Camera,
     Check,
     ChevronLeft,
@@ -17,14 +19,14 @@ import {
     Clock,
     MapPin,
     Maximize2,
-    MessageCircle,
     Send,
     Trash2,
     UserPlus,
     UserRound,
     Users,
+    WhatsAppIcon,
     X,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import {
@@ -34,7 +36,7 @@ import {
     offersRent,
     offersSale,
 } from "@/lib/format/listing-availability";
-import { formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
 import { formatPropertyCardArea, formatPropertyCardName } from "@/lib/format/property-card-name";
@@ -45,7 +47,6 @@ import { AppImage } from "@/components/shared/app-image";
 import {
     AttachedBrokersRow,
     AttachedBuyersRow,
-    AttachedOwnerRow,
     InvitedBrokersRow,
 } from "@/components/shared/attached-people-row";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
@@ -54,21 +55,26 @@ import {
     OverlayCard,
     OverlayCardActions,
     OverlayCardSummary,
+    OverlayPersonAttachLine,
     OverlayPersonLine,
 } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
-import { Price } from "@/components/shared/price";
 import {
     type CommissionAudience,
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
+import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
+
+addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 
 const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted h-40 w-full";
 
@@ -99,8 +105,6 @@ const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
 
 const BROWSE_ASK_LABEL = "Ask to sell";
 const BROWSE_ASK_PENDING_LABEL = "Sending…";
-const BROWSE_WITHDRAW_LABEL = "Cancel request";
-const BROWSE_WITHDRAWING_LABEL = "Cancelling…";
 const BROWSE_REPRESENTING_LABEL = "You're representing";
 const BROWSE_INVITE_ACCEPT_LABEL = "Accept";
 const BROWSE_INVITE_ACCEPTING_LABEL = "Accepting…";
@@ -124,13 +128,16 @@ const BROWSE_STATUS = {
 const BROWSE_REQUEST_TOOLTIP = {
     idle: "Ask the owner for permission to sell this property",
     pending: "Sending your request…",
+    remind: "Send the owner a reminder about your request",
+    remindersUsed: "You already used both reminders for this request",
     withdraw: "Cancel this request. You can ask again later.",
-    withdrawing: "Cancelling your request…",
     representing: "The owner already approved you for this listing",
     inviteAccept: "Accept the invite and get the owner's number",
     inviteDecline: "Cancel this invite. The owner can ask someone else",
 } as const;
 
+const BROWSE_WITHDRAW_LABEL = "Cancel request";
+const BROWSE_WITHDRAWING_LABEL = "Cancelling…";
 function BrowseActionHint({ children }: { children: string }) {
     return (
         <p className="body-xs text-center font-medium tracking-wide text-ink-muted">{children}</p>
@@ -142,6 +149,8 @@ function BrowseRequestAction({
     isRepresenting,
     isInvitePending,
     isRequestPending,
+    isCancelPending = false,
+    isRemindPending = false,
     inviteActionPending,
     onRequest,
     onCancelRequest,
@@ -153,6 +162,8 @@ function BrowseRequestAction({
     isRepresenting?: boolean;
     isInvitePending?: boolean;
     isRequestPending: boolean;
+    isCancelPending?: boolean;
+    isRemindPending?: boolean;
     inviteActionPending?: "accept" | "cancel";
     onRequest?: () => void;
     onCancelRequest?: () => void;
@@ -162,6 +173,7 @@ function BrowseRequestAction({
     tone?: "light" | "overlay";
 }) {
     const canWithdraw = Boolean(hasRequested && onCancelRequest);
+    const waitingBusy = isCancelPending || isRemindPending;
     const canRespondToInvite = Boolean(isInvitePending && onAcceptInvite && onCancelInvite);
     const inviteBusy = Boolean(inviteActionPending);
     const outlineClass =
@@ -273,6 +285,7 @@ function BrowseRequestAction({
     }
 
     if (canWithdraw) {
+        // Remind lives in the photo ⋯ menu under Chat here.
         return (
             <TooltipProvider>
                 <div className="flex flex-col gap-1.5 inline-full">
@@ -286,18 +299,20 @@ function BrowseRequestAction({
                                         size="md"
                                         variant="outline"
                                         className={cn("inline-full", outlineClass)}
-                                        disabled={isRequestPending}
-                                        loading={isRequestPending}
+                                        disabled={waitingBusy}
+                                        loading={isCancelPending}
                                         onClick={onCancelRequest}
                                     >
-                                        {isRequestPending ? (
+                                        {isCancelPending ? (
                                             BROWSE_WITHDRAWING_LABEL
                                         ) : (
                                             <>
-                                                <X
+                                                <Icon
+                                                    icon="tabler:x"
+                                                    width={16}
+                                                    height={16}
+                                                    className="shrink-0 block-4 inline-4"
                                                     aria-hidden
-                                                    className="block-4 inline-4"
-                                                    strokeWidth={2}
                                                 />
                                                 {BROWSE_WITHDRAW_LABEL}
                                             </>
@@ -307,9 +322,7 @@ function BrowseRequestAction({
                             }
                         />
                         <TooltipContent side="top" className="text-center max-inline-xs">
-                            {isRequestPending
-                                ? BROWSE_REQUEST_TOOLTIP.withdrawing
-                                : BROWSE_REQUEST_TOOLTIP.withdraw}
+                            {BROWSE_REQUEST_TOOLTIP.withdraw}
                         </TooltipContent>
                     </Tooltip>
                 </div>
@@ -415,6 +428,8 @@ export type RepresentedPropertyCardListing = PropertyCardBase & {
     sharedBrokerCount: number;
     visitsBookedCount: number;
     clientsMatchedCount: number;
+    commissionPercent?: number | null;
+    commissionAmount?: number | null;
 };
 
 export type OwnedPropertyCardStatus = "draft" | "published" | "unpublished";
@@ -426,6 +441,8 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     bhk: number;
     bathrooms?: number | null;
     status: OwnedPropertyCardStatus;
+    /** Owner marked it sold — shows a Sold chip and hides selling actions. */
+    isSold?: boolean;
     inboundRequestCount: number;
     listedDaysAgo: number;
     saleAmountInr: number | null;
@@ -435,6 +452,8 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     /** Fixed rent brokerage in INR. Null or 0 when unset. */
     commissionAmount?: number | null;
     ownerName?: string | null;
+    /** Exclusive owner mobile — enables WhatsApp / Call on the card footer. */
+    ownerPhoneDigits?: string | null;
     visibility?: "private" | "marketplace";
     /** Buyers linked to this listing — shown as the My deals avatar stack. */
     attachedClients?: Array<{ id: string; name: string; avatarUrl?: string }>;
@@ -446,9 +465,25 @@ export type PropertyCardProps = {
     priority?: boolean;
     imageSizes?: string;
     onRequest?: () => void;
-    /** Withdraw a pending broker request. Shown whenever the request is still pending. */
+    /** Withdraw a pending broker request — ⋯ menu while waiting. */
     onCancelRequest?: () => void;
+    /** Remind the owner on a pending request. */
+    onRemind?: () => void;
+    /** When false, reminder stays visible but disabled. */
+    canRemind?: boolean;
+    /** Reminders already sent on this pending request. */
+    remindersUsed?: number;
+    /** Max reminders for this request. Defaults to REPRESENTATION_REMINDER_LIMIT. */
+    remindersLimit?: number;
+    /** Open chat with the owner — ⋯ menu once a request is sent. */
+    onChat?: () => void;
+    /** Open request timeline — ⋯ menu once a request is sent. */
+    onOpenTimeline?: () => void;
     isRequestPending?: boolean;
+    /** Cancel button loading — do not share with remind. */
+    isCancelPending?: boolean;
+    /** Remind button loading — do not share with cancel. */
+    isRemindPending?: boolean;
     onAcceptInvite?: () => void;
     onCancelInvite?: () => void;
     inviteActionPending?: "accept" | "cancel";
@@ -468,6 +503,8 @@ export type PropertyCardProps = {
     brokerSummaryState?: "loading" | "error" | "ready";
     /** Owned cards: ask to delete this listing (caller shows confirm). */
     onDelete?: () => void;
+    /** Owner cards: mark this listing as sold (caller shows confirm). */
+    onMarkSold?: () => void;
     /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
     isSaved?: boolean;
     onToggleSave?: () => void;
@@ -905,15 +942,14 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
 function BrowseOverlayPrices({
     listing,
     audience = "broker",
-    showNoRentCommission = false,
+    showEmptyTip = true,
 }: {
     listing: BrowsePropertyCardListing;
     audience?: CommissionAudience;
-    showNoRentCommission?: boolean;
+    showEmptyTip?: boolean;
 }) {
     const isRentOnly = offersRent(listing) && !offersSale(listing);
     const both = offersBoth(listing);
-    const priceClass = "h5 font-semibold tracking-wide";
 
     if (isRentOnly) {
         return (
@@ -922,26 +958,21 @@ function BrowseOverlayPrices({
                 isRent
                 commissionAmountInr={listing.commissionAmount}
                 audience={audience}
-                showNoRentCommission={showNoRentCommission}
-                className={priceClass}
+                showEmptyTip={showEmptyTip}
+                size="lg"
             />
         );
     }
 
     if (both) {
         return (
-            <p
-                className={cn(
-                    priceClass,
-                    "flex flex-wrap items-baseline gap-x-1.5 text-brand tabular-nums min-inline-0",
-                )}
-            >
+            <p className="flex flex-wrap items-baseline gap-x-1.5 text-brand tabular-nums min-inline-0">
                 <PriceWithCommission
                     amountInr={listing.saleAmountInr ?? 0}
                     commissionPercent={listing.commissionPercent}
                     audience={audience}
-                    showNoRentCommission={showNoRentCommission}
-                    className={priceClass}
+                    showEmptyTip={showEmptyTip}
+                    size="lg"
                 />
                 <span className="font-medium text-ink-subtle" aria-hidden>
                     /
@@ -953,8 +984,9 @@ function BrowseOverlayPrices({
                         isRent
                         commissionAmountInr={listing.commissionAmount}
                         audience={audience}
-                        showNoRentCommission={showNoRentCommission}
-                        className="font-semibold text-ink"
+                        showEmptyTip={showEmptyTip}
+                        size="sm"
+                        className="text-ink"
                     />
                 </span>
             </p>
@@ -966,8 +998,8 @@ function BrowseOverlayPrices({
             amountInr={listing.saleAmountInr ?? 0}
             commissionPercent={listing.commissionPercent}
             audience={audience}
-            showNoRentCommission={showNoRentCommission}
-            className={priceClass}
+            showEmptyTip={showEmptyTip}
+            size="lg"
         />
     );
 }
@@ -980,7 +1012,15 @@ function BrowseOverlayPropertyCard({
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     onRequest,
     onCancelRequest,
+    onRemind,
+    canRemind = true,
+    remindersUsed = 0,
+    remindersLimit = REPRESENTATION_REMINDER_LIMIT,
+    onChat,
+    onOpenTimeline,
     isRequestPending = false,
+    isCancelPending = false,
+    isRemindPending = false,
     onAcceptInvite,
     onCancelInvite,
     inviteActionPending,
@@ -1045,13 +1085,23 @@ function BrowseOverlayPropertyCard({
                     }}
                     isSaved={isSaved}
                     onToggleSave={onToggleSave}
+                    contact={
+                        listing.hasRequested && onChat
+                            ? { name: listing.owner.name, onMessage: onChat }
+                            : undefined
+                    }
+                    onRemind={listing.hasRequested ? onRemind : undefined}
+                    canRemind={canRemind}
+                    remindersUsed={remindersUsed}
+                    remindersLimit={remindersLimit}
+                    onOpenTimeline={listing.hasRequested ? onOpenTimeline : undefined}
                 />
             }
         >
             <div className="flex flex-1 flex-col gap-3.5 min-inline-0">
                 <OverlayCardSummary
                     href={detailsHref}
-                    price={<BrowseOverlayPrices listing={listing} showNoRentCommission />}
+                    price={<BrowseOverlayPrices listing={listing} showEmptyTip />}
                     headline={headline}
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />
@@ -1070,6 +1120,8 @@ function BrowseOverlayPropertyCard({
                     isRepresenting={listing.isRepresenting}
                     isInvitePending={listing.isInvitePending}
                     isRequestPending={isRequestPending}
+                    isCancelPending={isCancelPending}
+                    isRemindPending={isRemindPending}
                     inviteActionPending={inviteActionPending}
                     onRequest={onRequest}
                     onCancelRequest={onCancelRequest}
@@ -1191,7 +1243,7 @@ function PropertyCardOwnerBlock({
                     />
                 }
             >
-                <MessageCircle aria-hidden strokeWidth={1.75} />
+                <WhatsAppIcon aria-hidden strokeWidth={1.75} />
             </Button>
         </div>
     );
@@ -1280,10 +1332,13 @@ function RepresentedPropertyCard({
 
             <div className="flex flex-1 flex-col gap-3 p-4">
                 <div className="flex items-start justify-between gap-3">
-                    <Price
+                    <PriceWithCommission
                         amountInr={listing.amountInr}
                         isRent={listing.isRent}
-                        className="h6 font-semibold"
+                        commissionPercent={listing.commissionPercent}
+                        commissionAmountInr={listing.commissionAmount}
+                        audience="broker"
+                        size="md"
                     />
                     <TransactionBadge isRent={listing.isRent} />
                 </div>
@@ -1547,20 +1602,110 @@ const OWNED_STATUS_COLOR: Record<OwnedPropertyCardStatus, "emerald" | "amber" | 
     unpublished: "red",
 };
 
-function formatListedLabel(listedDaysAgo: number): string {
-    if (listedDaysAgo <= 0) return "Today";
-    if (listedDaysAgo === 1) return "1 day";
-    if (listedDaysAgo < 30) return `${listedDaysAgo} days`;
-    const months = Math.round(listedDaysAgo / 30);
-    return months === 1 ? "1 month" : `${months} months`;
+/** Bottom bar for broker inventory: WhatsApp (outline) + Call (brand). */
+function OwnedContactSplitBar({
+    ownerName,
+    ownerPhoneDigits,
+}: {
+    ownerName: string;
+    ownerPhoneDigits?: string | null;
+}) {
+    const digits = ownerPhoneDigits?.replace(/\D/g, "") ?? "";
+    const canContact = digits.length >= 10;
+    const phoneLabel = canContact ? formatPhoneIn(digits) : null;
+    const tip = phoneLabel ?? "Attach an owner with a phone number first";
+
+    return (
+        <div
+            className="pointer-events-auto flex gap-2 inline-full"
+            onClick={(event) => event.stopPropagation()}
+        >
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        canContact ? (
+                            <Button
+                                variant="outline"
+                                size="md"
+                                nativeButton={false}
+                                className="flex-1 min-inline-0"
+                                render={
+                                    <a
+                                        href={formatWhatsAppUrl(digits)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label={`WhatsApp ${ownerName} at ${phoneLabel}`}
+                                    />
+                                }
+                            />
+                        ) : (
+                            <Button
+                                variant="outline"
+                                size="md"
+                                type="button"
+                                disabled
+                                className="flex-1 min-inline-0"
+                                aria-label="WhatsApp unavailable — attach an owner first"
+                            />
+                        )
+                    }
+                >
+                    <WhatsAppIcon
+                        aria-hidden
+                        strokeWidth={1.75}
+                        className="shrink-0 block-4.5 inline-4.5"
+                    />
+                    WhatsApp
+                </TooltipTrigger>
+                <TooltipContent side="top">{tip}</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        canContact ? (
+                            <Button
+                                variant="accent"
+                                size="md"
+                                nativeButton={false}
+                                className="flex-1 min-inline-0"
+                                render={
+                                    <a
+                                        href={formatTelUrl(digits)}
+                                        aria-label={`Call owner ${ownerName} at ${phoneLabel}`}
+                                    />
+                                }
+                            />
+                        ) : (
+                            <Button
+                                variant="accent"
+                                size="md"
+                                type="button"
+                                disabled
+                                className="flex-1 min-inline-0"
+                                aria-label="Call owner unavailable — attach an owner first"
+                            />
+                        )
+                    }
+                >
+                    <CallIcon
+                        aria-hidden
+                        strokeWidth={1.75}
+                        className="shrink-0 block-4.5 inline-4.5"
+                    />
+                    Call Owner
+                </TooltipTrigger>
+                <TooltipContent side="top">{tip}</TooltipContent>
+            </Tooltip>
+        </div>
+    );
 }
 
-function formatRequestsValue(inboundRequestCount: number): string {
-    if (inboundRequestCount === 0) return "None yet";
-    return inboundRequestCount === 1 ? "1 broker" : `${inboundRequestCount} brokers`;
-}
-
-/** Grid owned card: clear photo on top, essentials in a solid panel below. */
+/**
+ * Broker/owner inventory card — same overlay chrome as Owner listings and My
+ * Deals. Empty Owner / Buyers rows use link "Attach owner" / "Attach buyers";
+ * the ⋯ menu still offers those actions. Footer is WhatsApp + Call.
+ */
 function OwnedOverlayPropertyCard({
     listing,
     detailsHref,
@@ -1573,11 +1718,13 @@ function OwnedOverlayPropertyCard({
     brokerSummary,
     brokerSummaryState,
     onDelete,
+    onMarkSold,
     isSaved = false,
     onToggleSave,
     audience = "broker",
     className,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
+    const isSold = Boolean(listing.isSold);
     const browse = ownedToBrowseListing(listing);
     const isRentOnly = offersRent(browse) && !offersSale(browse);
     const sharePriceLabel = isRentOnly
@@ -1588,186 +1735,180 @@ function OwnedOverlayPropertyCard({
             bhk: listing.bhk,
             bathrooms: listing.bathrooms,
         }) || listing.title;
-    const metaParts = [
-        listing.inboundRequestCount === 0
-            ? "No requests"
-            : formatRequestsValue(listing.inboundRequestCount),
-        `Listed ${formatListedLabel(listing.listedDaysAgo)}`,
-    ];
     const buyers = listing.attachedClients ?? [];
-    const hasOwner = Boolean(listing.ownerName?.trim());
+    const ownerName = listing.ownerName?.trim() ?? "";
+    const ownerPhoneDigits = listing.ownerPhoneDigits?.replace(/\D/g, "") ?? "";
+    const hasOwner = ownerName.length > 0;
     const hasBuyers = buyers.length > 0;
-    const showAttachOwnerButton = Boolean(onAttachOwner && !hasOwner);
-    const showAddBuyerButton = Boolean(onAddBuyer && !hasBuyers);
+    const hasOwnerPhone = ownerPhoneDigits.length >= 10;
     const hasWorkingBrokers = (brokerSummary?.brokers.length ?? 0) > 0;
+    /** Broker inventory only — owner portal uses Invite broker instead. */
+    const showContactBar = Boolean(onAttachOwner || onAddBuyer);
 
     return (
-        <OverlayCard
-            href={detailsHref}
-            imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
-            images={listing.imageSrcs}
-            imageAlt={listing.title}
-            imageSizes={imageSizes}
-            priority={priority}
-            // A listing nobody can see yet reads as inactive while scanning.
-            muted={listing.status !== "published"}
-            className={className}
-            chips={
-                <>
-                    <Badge color={OWNED_STATUS_COLOR[listing.status]} blur="dark">
-                        {OWNED_STATUS_LABEL[listing.status]}
-                    </Badge>
-                    {offersSale(browse) ? (
-                        <Badge color="emerald" blur="dark">
-                            For sale
-                        </Badge>
-                    ) : null}
-                    {offersRent(browse) ? (
-                        <Badge color="orange" blur="dark">
-                            For rent
-                        </Badge>
-                    ) : null}
-                    {listing.visibility === "private" ? (
-                        <Badge color="violet" blur="dark">
-                            Private
-                        </Badge>
-                    ) : null}
-                </>
-            }
-            actions={
-                <PropertyCardMenu
-                    listing={{
-                        id: listing.id,
-                        title: listing.title,
-                        locality: listing.locality,
-                        city: listing.city,
-                        priceLabel: sharePriceLabel,
-                        imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
-                        configLabel: listing.configLabel,
-                        propertyTypeLabel: listing.propertyTypeLabel,
-                        areaSqft: listing.areaSqft,
-                        bhk: listing.bhk,
-                        listingKind: offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
-                    }}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    isSaved={isSaved}
-                    onToggleSave={onToggleSave}
-                />
-            }
-        >
-            <div className="flex flex-col gap-3.5 min-inline-0">
-                <OverlayCardSummary
-                    href={detailsHref}
-                    price={<BrowseOverlayPrices listing={browse} audience={audience} />}
-                    headline={headline}
-                    locationLabel={`${listing.locality}, ${listing.city}`}
-                />
-
-                <p className="body-sm tracking-wide text-ink-muted">{metaParts.join(" · ")}</p>
-            </div>
-
-            <OverlayCardActions className="flex-col gap-2">
-                {onInviteBroker ? (
+        <TooltipProvider>
+            <OverlayCard
+                href={detailsHref}
+                imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
+                images={listing.imageSrcs}
+                imageAlt={listing.title}
+                imageSizes={imageSizes}
+                priority={priority}
+                // A listing nobody can see yet, or one already sold, reads as inactive.
+                muted={isSold || listing.status !== "published"}
+                className={className}
+                chips={
                     <>
-                        {brokerSummaryState === "loading" ? (
-                            <p className="body-sm text-ink-muted" role="status">
-                                Loading brokers…
-                            </p>
-                        ) : brokerSummaryState === "error" ? (
-                            <p className="body-sm text-danger" role="status">
-                                Couldn&apos;t load brokers
-                            </p>
+                        {isSold ? (
+                            <Badge color="red" blur="dark">
+                                Sold
+                            </Badge>
+                        ) : (
+                            <Badge color={OWNED_STATUS_COLOR[listing.status]} blur="dark">
+                                {OWNED_STATUS_LABEL[listing.status]}
+                            </Badge>
+                        )}
+                        {offersSale(browse) ? (
+                            <Badge color="emerald" blur="dark">
+                                For sale
+                            </Badge>
                         ) : null}
-                        {brokerSummaryState === "ready" &&
-                        (brokerSummary?.pendingInvitations.length ?? 0) > 0 ? (
-                            <InvitedBrokersRow
-                                brokers={brokerSummary!.pendingInvitations}
-                                onManage={onInviteBroker}
-                            />
+                        {offersRent(browse) ? (
+                            <Badge color="orange" blur="dark">
+                                For rent
+                            </Badge>
                         ) : null}
-                        {brokerSummaryState === "ready" && brokerSummary?.brokers.length ? (
-                            <AttachedBrokersRow
-                                brokers={brokerSummary.brokers}
-                                onManage={onInviteBroker}
-                            />
-                        ) : null}
-                        {!hasWorkingBrokers && listing.status !== "published" ? (
-                            <p
-                                className="
-                                  body-xs rounded-control bg-amber-50 px-3 py-2 font-medium
-                                  text-pending
-                                "
-                            >
-                                Publish this property to invite brokers
-                            </p>
-                        ) : null}
-                        {!hasWorkingBrokers ? (
-                            <Button
-                                size="md"
-                                variant="accent"
-                                type="button"
-                                className="inline-full min-block-12"
-                                disabled={listing.status !== "published"}
-                                onClick={onInviteBroker}
-                            >
-                                <UserPlus aria-hidden strokeWidth={1.75} />
-                                Invite broker
-                            </Button>
+                        {listing.visibility === "private" ? (
+                            <Badge color="violet" blur="dark">
+                                Private
+                            </Badge>
                         ) : null}
                     </>
-                ) : null}
-                {hasOwner && onAttachOwner ? (
-                    <AttachedOwnerRow name={listing.ownerName!} onManage={onAttachOwner} />
-                ) : null}
+                }
+                actions={
+                    <PropertyCardMenu
+                        listing={{
+                            id: listing.id,
+                            title: listing.title,
+                            locality: listing.locality,
+                            city: listing.city,
+                            priceLabel: sharePriceLabel,
+                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                            configLabel: listing.configLabel,
+                            propertyTypeLabel: listing.propertyTypeLabel,
+                            areaSqft: listing.areaSqft,
+                            bhk: listing.bhk,
+                            listingKind:
+                                offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
+                        }}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                        onMarkSold={isSold ? undefined : onMarkSold}
+                        isSaved={isSaved}
+                        onToggleSave={onToggleSave}
+                        onAttachOwner={onAttachOwner}
+                        attachOwnerLabel={
+                            hasOwner ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL
+                        }
+                        onAddBuyer={onAddBuyer}
+                        contact={
+                            hasOwnerPhone
+                                ? {
+                                      name: ownerName || "Owner",
+                                      phoneDigits: ownerPhoneDigits,
+                                  }
+                                : undefined
+                        }
+                    />
+                }
+            >
+                <div className="flex flex-col gap-3.5 min-inline-0">
+                    <OverlayCardSummary
+                        href={detailsHref}
+                        price={<BrowseOverlayPrices listing={browse} audience={audience} />}
+                        headline={headline}
+                        locationLabel={`${listing.locality}, ${listing.city}`}
+                    />
 
-                {hasBuyers && onAddBuyer ? (
-                    <AttachedBuyersRow buyers={buyers} onManage={onAddBuyer} />
-                ) : null}
+                    {hasOwner ? (
+                        <OverlayPersonLine label="Owner" name={ownerName} />
+                    ) : onAttachOwner ? (
+                        <OverlayPersonAttachLine
+                            label="Owner"
+                            actionLabel={OWNED_ATTACH_OWNER_LABEL}
+                            onAttach={onAttachOwner}
+                        />
+                    ) : null}
 
-                {showAttachOwnerButton || showAddBuyerButton ? (
-                    <div className="flex gap-2">
-                        {showAttachOwnerButton ? (
-                            <Button
-                                size="md"
-                                variant="outline"
-                                type="button"
-                                className={cn(
-                                    showAddBuyerButton ? "flex-1 min-inline-0" : "inline-full",
-                                    OVERLAY_GLASS_BUTTON_CLASS,
-                                )}
-                                onClick={onAttachOwner}
-                            >
-                                <UserRound
-                                    aria-hidden
-                                    className="block-4 inline-4"
-                                    strokeWidth={1.75}
+                    {hasBuyers || onAddBuyer ? (
+                        <AttachedBuyersRow buyers={buyers} onAttach={onAddBuyer} />
+                    ) : null}
+                </div>
+
+                <OverlayCardActions className="flex-col gap-2">
+                    {isSold ? (
+                        <p className="body-sm rounded-control bg-surface-muted px-3 py-2 text-center font-medium text-ink-muted">
+                            Sold — no longer shown to brokers
+                        </p>
+                    ) : onInviteBroker ? (
+                        <>
+                            {brokerSummaryState === "loading" ? (
+                                <p className="body-sm text-ink-muted" role="status">
+                                    Loading brokers…
+                                </p>
+                            ) : brokerSummaryState === "error" ? (
+                                <p className="body-sm text-danger" role="status">
+                                    Couldn&apos;t load brokers
+                                </p>
+                            ) : null}
+                            {brokerSummaryState === "ready" &&
+                            (brokerSummary?.pendingInvitations.length ?? 0) > 0 ? (
+                                <InvitedBrokersRow
+                                    brokers={brokerSummary!.pendingInvitations}
+                                    onManage={onInviteBroker}
                                 />
-                                {OWNED_ATTACH_OWNER_LABEL}
-                            </Button>
-                        ) : null}
-                        {showAddBuyerButton ? (
-                            <Button
-                                size="md"
-                                variant="accent"
-                                type="button"
-                                className={
-                                    showAttachOwnerButton ? "flex-1 min-inline-0" : "inline-full"
-                                }
-                                onClick={onAddBuyer}
-                            >
-                                <UserPlus
-                                    aria-hidden
-                                    className="block-4 inline-4"
-                                    strokeWidth={1.75}
+                            ) : null}
+                            {brokerSummaryState === "ready" && brokerSummary?.brokers.length ? (
+                                <AttachedBrokersRow
+                                    brokers={brokerSummary.brokers}
+                                    onManage={onInviteBroker}
                                 />
-                                {OWNED_ADD_BUYER_LABEL}
-                            </Button>
-                        ) : null}
-                    </div>
-                ) : null}
-            </OverlayCardActions>
-        </OverlayCard>
+                            ) : null}
+                            {!hasWorkingBrokers && listing.status !== "published" ? (
+                                <p
+                                    className="
+                                      body-xs rounded-control bg-amber-50 px-3 py-2 font-medium
+                                      text-pending
+                                    "
+                                >
+                                    Publish this property to invite brokers
+                                </p>
+                            ) : null}
+                            {!hasWorkingBrokers ? (
+                                <Button
+                                    size="md"
+                                    variant="accent"
+                                    type="button"
+                                    className="inline-full min-block-12"
+                                    disabled={listing.status !== "published"}
+                                    onClick={onInviteBroker}
+                                >
+                                    <UserPlus aria-hidden strokeWidth={1.75} />
+                                    Invite broker
+                                </Button>
+                            ) : null}
+                        </>
+                    ) : null}
+
+                    {showContactBar ? (
+                        <OwnedContactSplitBar
+                            ownerName={ownerName || "Owner"}
+                            ownerPhoneDigits={hasOwnerPhone ? ownerPhoneDigits : null}
+                        />
+                    ) : null}
+                </OverlayCardActions>
+            </OverlayCard>
+        </TooltipProvider>
     );
 }
 

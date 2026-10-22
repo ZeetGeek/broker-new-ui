@@ -1,13 +1,14 @@
 "use client";
 
-import { Building2 } from "lucide-react";
+import { Building2 } from "@/components/shared/icons";
 
 import { formatRelativePast } from "@/lib/format/date";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPriceInr } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge, type BadgeColor } from "@/components/ui/badge";
@@ -41,22 +42,40 @@ function stageColor(stage: string): BadgeColor {
     return "sky";
 }
 
-function moneyLine(lead: BuyerLead): string | null {
+function LeadMoney({ lead }: { lead: BuyerLead }) {
     if (lead.closedAmountInr != null) {
-        return `Closed at ${formatPriceInr(lead.closedAmountInr)}`;
+        return (
+            <span className="body-xs tabular text-ink-muted">
+                Closed at {formatPriceInr(lead.closedAmountInr)}
+            </span>
+        );
     }
     if (lead.offerAmountInr != null) {
-        return `Offer ${formatPriceInr(lead.offerAmountInr)}`;
+        return (
+            <span className="body-xs tabular text-ink-muted">
+                Offer {formatPriceInr(lead.offerAmountInr)}
+            </span>
+        );
     }
     if (lead.listPriceInr != null && lead.listPriceInr > 0) {
-        return lead.isRent ? formatRentInr(lead.listPriceInr) : formatPriceInr(lead.listPriceInr);
+        return (
+            <PriceWithCommission
+                amountInr={lead.listPriceInr}
+                isRent={lead.isRent}
+                commissionPercent={lead.commissionPercent}
+                commissionAmountInr={lead.commissionAmountInr}
+                audience="broker"
+                size="xs"
+                showEmptyTip
+                className="text-ink-muted"
+            />
+        );
     }
-    return null;
+    return <span className="body-xs text-ink-muted">No price yet</span>;
 }
 
 function LeadRow({ lead }: { lead: BuyerLead }) {
     const tone = stageColor(lead.stage);
-    const money = moneyLine(lead);
 
     return (
         <article className="flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-3">
@@ -76,7 +95,7 @@ function LeadRow({ lead }: { lead: BuyerLead }) {
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="body-xs tabular text-ink-muted">{money ?? "No price yet"}</p>
+                <LeadMoney lead={lead} />
                 <p className="body-xs text-ink-subtle">
                     {lead.updatedAt
                         ? `Updated ${formatRelativePast(new Date(lead.updatedAt), new Date())}`

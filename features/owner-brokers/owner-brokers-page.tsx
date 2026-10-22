@@ -131,7 +131,15 @@ export function OwnerBrokersPage() {
                     gap={24}
                     breakpoints={OWNER_BROKERS_GRID_BREAKPOINTS}
                     ariaLabel="Active brokers"
-                    renderItem={(item) => <ActiveBrokerCard item={item} />}
+                    renderItem={(item) => (
+                        <ActiveBrokerCard
+                            item={item}
+                            onRemoved={() => {
+                                setRevision((prev) => prev + 1);
+                                void queue.refetch();
+                            }}
+                        />
+                    )}
                 />
                 <InfiniteListStatus
                     hasNextPage={Boolean(queue.hasNextPage)}

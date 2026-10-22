@@ -9,14 +9,31 @@ export type OwnerListingTransactionType = "sale" | "rent";
 export type OwnerListingPropertyType =
     "apartment" | "villa" | "penthouse" | "shop" | "office" | "plot";
 
+/** Add Property category — browse filter + API `propertyType`. */
+export type OwnerListingCategory =
+    "residential" | "commercial" | "land" | "industrial" | "agricultural";
+
 export type OwnerListingItem = {
     id: string;
     title?: string;
     configLabel: string;
+    /** Coarse type for cards (legacy browse mapping). */
     propertyTypeLabel: OwnerListingPropertyType;
+    /** API category when known (`residential`, `commercial`, …). */
+    category?: OwnerListingCategory | "";
+    /** API subtype when known (`apartment`, `office_space`, …). */
+    subtype?: string;
     bhk: number;
     /** Bathrooms when the listing has them. Absent/null when unset. */
     bathrooms?: number | null;
+    /** Design / future browse fields — null until the API sends them. */
+    balconies?: number | null;
+    parkingSpaces?: number | null;
+    floorNumber?: number | null;
+    facing?: string | null;
+    propertyCondition?: string | null;
+    propertyAge?: string | null;
+    suitableFor?: string[] | null;
     locality: string;
     city: string;
     /** Indian state or union territory. Supplied by API when available. */
@@ -84,26 +101,47 @@ export type OwnerListingsFilters = {
     cities: string[];
     /** Band — multi-select localities */
     localities: string[];
-    /** Band — multi-select BHK values */
+    /** Sheet — multi-select BHK (residential only; cleared when hidden) */
     bhk: string[];
+    /** Sheet — bathroom counts (`1`…`4`, `5` = 5+) */
+    bathrooms: string[];
+    /** Sheet — balcony counts (`1`…`3`, `4` = 4+) */
+    balconies: string[];
+    /** Sheet — parking spaces (`1`…`3`, `4` = 4+) */
+    parking: string[];
+    /** Sheet — floor buckets: `ground` | `low` | `mid` | `high` */
+    floors: string[];
+    /** Sheet — facing directions (form FACING_OPTIONS values) */
+    facing: string[];
+    /** Sheet — property condition (form PROPERTY_CONDITION_OPTIONS values) */
+    propertyConditions: string[];
+    /** Sheet — property age (form PROPERTY_AGE_OPTIONS values) */
+    propertyAges: string[];
+    /** Sheet — commercial suitable-for tags */
+    suitableFor: string[];
     /** Band — sale or rent */
     type: OwnerListingTransactionType | "";
     min: string;
     max: string;
-    /** Band — furnishing */
+    /** Sheet — furnishing (hidden for plot/land) */
     furnishing: OwnerListingFurnishing | "";
-    /** Band — property type */
-    propertyType: OwnerListingPropertyType | "";
-    /** Sheet — carpet / built-up area lower bound (sqft) */
+    /** Band — category (API `propertyType`) */
+    category: OwnerListingCategory | "";
+    /**
+     * Band — subtype (API `subtype`). Coarse legacy values (`apartment`, `office`,
+     * `plot`) still parse; form subtypes (`office_space`, …) preferred.
+     */
+    propertyType: OwnerListingPropertyType | string | "";
+    /** Band — carpet / built-up area lower bound (sqft) */
     minAreaSqft: string;
-    /** Sheet — carpet / built-up area upper bound (sqft) */
+    /** Band — carpet / built-up area upper bound (sqft) */
     maxAreaSqft: string;
     /** Sheet — listed within N days (`7` | `30` | "") */
     listedWithinDays: string;
     /** Sheet — sale commission range in percent ("" = open end) */
     minCommissionPercent: string;
     maxCommissionPercent: string;
-    /** Sheet — rent commission range in INR ("" = open end) */
+    /** Sheet — rent commission range in INR / fixed brokerage ("" = open end) */
     minCommissionAmount: string;
     maxCommissionAmount: string;
     /** Quick chips / sheet — instant toggles */
@@ -119,30 +157,41 @@ export type OwnerListingsFilters = {
     limit: number;
 };
 
+/** Global discovery dims — apply to every listing kind. */
 export type OwnerListingsBandFilters = Pick<
     OwnerListingsFilters,
     | "countries"
     | "states"
     | "cities"
     | "localities"
-    | "bhk"
     | "type"
     | "min"
     | "max"
+    | "minAreaSqft"
+    | "maxAreaSqft"
+    | "category"
     | "propertyType"
-    | "furnishing"
     | "yourAreas"
 >;
 
+/** Advanced + type-specific dims (layout, timing, commission when visible). */
 export type OwnerListingsSheetFilters = Pick<
     OwnerListingsFilters,
-    | "minAreaSqft"
-    | "maxAreaSqft"
     | "listedWithinDays"
     | "minCommissionPercent"
     | "maxCommissionPercent"
     | "minCommissionAmount"
     | "maxCommissionAmount"
+    | "bhk"
+    | "bathrooms"
+    | "balconies"
+    | "parking"
+    | "floors"
+    | "facing"
+    | "propertyConditions"
+    | "propertyAges"
+    | "suitableFor"
+    | "furnishing"
     | "yourAreas"
     | "newToday"
     | "slotsOpen"
@@ -171,10 +220,19 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     cities: [],
     localities: [],
     bhk: [],
+    bathrooms: [],
+    balconies: [],
+    parking: [],
+    floors: [],
+    facing: [],
+    propertyConditions: [],
+    propertyAges: [],
+    suitableFor: [],
     type: "",
     min: "",
     max: "",
     furnishing: "",
+    category: "",
     propertyType: "",
     minAreaSqft: "",
     maxAreaSqft: "",
@@ -193,6 +251,17 @@ export const DEFAULT_OWNER_LISTINGS_FILTERS: OwnerListingsFilters = {
     cursor: "",
     limit: 10,
 };
+
+export const OWNER_LISTING_CATEGORY_OPTIONS: {
+    value: OwnerListingCategory;
+    label: string;
+}[] = [
+    { value: "residential", label: "Residential" },
+    { value: "commercial", label: "Commercial" },
+    { value: "land", label: "Land" },
+    { value: "industrial", label: "Industrial" },
+    { value: "agricultural", label: "Agricultural" },
+];
 
 /** Sale commission slider bounds (owners must share 0.1–5 %). */
 export const SALE_COMMISSION_RANGE = { min: 0.1, max: 5, step: 0.1 } as const;

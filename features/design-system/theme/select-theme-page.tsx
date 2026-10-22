@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Building2, MapPin } from "lucide-react";
+import { Building2, MapPin } from "@/components/shared/icons";
 
 import {
     Select,

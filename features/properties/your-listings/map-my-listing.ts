@@ -1,3 +1,4 @@
+import { exclusiveOwnerPhoneDigits } from "@/lib/api/exclusive-owners";
 import type { PropertyListing } from "@/lib/api/properties";
 import { buildPropertyTitle } from "@/lib/format/property-title";
 import {
@@ -252,8 +253,8 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
     const { saleAmountInr, rentAmountInr } = mapPricing(listing);
     const furnishing = mapFurnishing(listing.furnishingStatus);
     const photos = listingPhotoUrls(listing.photos);
-    const locality = listing.address?.trim() || listing.city?.trim() || "Locality";
-    const city = listing.city?.trim() || "City";
+    const locality = listing.address?.trim() || listing.city?.trim() || "";
+    const city = listing.city?.trim() || "";
     const listedAt = listing.publishedAt ?? listing.createdAt;
     const title =
         listing.title?.trim() ||
@@ -269,6 +270,7 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         title,
         configLabel: configLabel(bhk, propertyType),
         category,
+        categoryProvided: Boolean(listing.propertyType?.trim() || listing.subtype?.trim()),
         propertyType,
         subtype: listing.subtype?.trim() || null,
         propertyTypeLabel:
@@ -278,22 +280,33 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         bhk,
         locality,
         city,
+        country: listing.country?.trim() || null,
+        state: listing.state?.trim() || null,
         address: listing.address?.trim() || locality,
+        unitNumber: (listing.unitNumber ?? listing.flatNumber)?.trim() || null,
+        streetOrRoad: listing.streetOrRoad?.trim() || null,
         pinCode: listing.postalCode?.trim() || "",
         landmark: listing.landmark?.trim() || "",
-        society: listing.society?.trim() || "",
+        society: (listing.projectOrSociety ?? listing.society)?.trim() || "",
         transactionType: mapTransactionType(listing.transactionType),
         saleAmountInr,
         rentAmountInr,
         areaSqft: listing.areaSqft ?? 0,
+        carpetAreaSqft: (() => {
+            const value = Number(listing.carpetArea);
+            return Number.isFinite(value) && value > 0 ? value : null;
+        })(),
         furnishing,
-        furnishingLabel: FURNISHING_LABELS[furnishing],
+        furnishingLabel: listing.furnishingStatus?.trim() ? FURNISHING_LABELS[furnishing] : "",
         bathrooms: listing.bathrooms ?? null,
         balconies: listing.balconyCount ?? null,
         floorNumber: listing.floorNumber ?? null,
         totalFloors: listing.totalFloors ?? null,
+        propertyAge: listing.propertyAge ?? null,
+        propertyCondition: listing.propertyCondition?.trim() || null,
         facing: mapFacing(listing.facingDirection),
         parking: mapParking(listing.parkingSpaces),
+        parkingSpaces: listing.parkingSpaces ?? null,
         maintenanceInr: (() => {
             const raw = toNumber(listing.maintenanceCharges);
             return raw > 0 ? raw : null;
@@ -328,6 +341,9 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         virtualTourUrl: listing.virtualTourUrl?.trim() || "",
         availableFrom: listing.availableFrom ?? null,
         status: mapStatus(listing),
+        isSold: listing.status === "sold",
+        soldAt: listing.soldAt ?? null,
+        soldReason: listing.soldReason?.trim() || null,
         inboundRequestCount: 0,
         listedDaysAgo: daysAgo(listedAt),
         photoCount: photos.length,
@@ -337,9 +353,21 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         updatedAt: listing.updatedAt ?? listing.createdAt ?? new Date().toISOString(),
         exclusiveOwnerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
         ownerName: listing.exclusiveOwner?.fullName ?? listing.ownerName ?? null,
+        ownerPhoneDigits: (() => {
+            const phone = listing.exclusiveOwner?.phone?.trim();
+            if (!phone) return null;
+            const digits = exclusiveOwnerPhoneDigits(phone);
+            return digits.length === 10 ? digits : null;
+        })(),
         ownerOrigin: listing.exclusiveOwnerId || listing.exclusiveOwner?.id ? "custom" : null,
         ownerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
         isBookmarked: Boolean(listing.isBookmarked),
+        visibility:
+            listing.visibility === "private"
+                ? "private"
+                : listing.visibility === "public"
+                  ? "marketplace"
+                  : undefined,
     };
 }
 

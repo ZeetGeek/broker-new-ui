@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Circle, Gift, Lock, Mail } from "lucide-react";
+import { CheckCircle2, Circle, Gift, Lock, Mail } from "@/components/shared/icons";
 import { AnimatePresence, motion } from "motion/react";
 
 import { authApi } from "@/lib/api/auth";

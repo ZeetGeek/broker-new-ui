@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Clock, type LucideIcon, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Clock, type AppIcon, Shield, ShieldAlert, ShieldCheck } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ const CHIP: Record<
     {
         label: string;
         variant: "brand" | "neutral" | "urgent" | "outline";
-        icon: LucideIcon;
+        icon: AppIcon;
         href?: string;
     }
 > = {

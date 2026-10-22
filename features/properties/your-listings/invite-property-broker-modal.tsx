@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Search } from "lucide-react";
+import { Search } from "@/components/shared/icons";
 
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";

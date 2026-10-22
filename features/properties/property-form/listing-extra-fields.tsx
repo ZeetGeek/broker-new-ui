@@ -3,7 +3,7 @@
 import { type ChangeEvent, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Sofa, Sparkles } from "lucide-react";
+import { Sofa, Sparkles } from "@/components/shared/icons";
 
 import {
     amenityLabel,

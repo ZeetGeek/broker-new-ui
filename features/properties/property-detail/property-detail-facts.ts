@@ -1,8 +1,17 @@
 import { formatAreaSqft } from "@/lib/format/area";
-import { formatDateShort } from "@/lib/format/date";
+import { formatDateIn } from "@/lib/format/date";
 import { formatPriceInr } from "@/lib/format/price";
+import { normalizePropertySubtype } from "@/lib/properties/list-criteria";
+import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
 import { PROPERTY_FACING_OPTIONS, PROPERTY_PARKING_OPTIONS } from "@/lib/validation/property";
+import { derive } from "@/lib/visibility/derive";
+import { FIELD_RULES, type FieldRule } from "@/lib/visibility/rules";
 
+import {
+    PROPERTY_AGE_OPTIONS,
+    PROPERTY_CATEGORY_OPTIONS,
+    PROPERTY_CONDITION_OPTIONS,
+} from "@/constants/property";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 export type PropertyFact = {
@@ -28,14 +37,20 @@ function parkingLabel(parking: MyListingItem["parking"]): string | null {
 function availableFromLabel(availableFrom: string | null): string | null {
     if (!availableFrom) return null;
 
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(availableFrom.trim());
-    if (!match) return availableFrom;
+    const match = /^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/.exec(availableFrom.trim());
+    if (!match) return null;
 
     const [, year, month, day] = match;
     const date = new Date(Number(year), Number(month) - 1, Number(day));
-    if (Number.isNaN(date.getTime())) return availableFrom;
+    if (
+        Number.isNaN(date.getTime()) ||
+        date.getFullYear() !== Number(year) ||
+        date.getMonth() !== Number(month) - 1 ||
+        date.getDate() !== Number(day)
+    )
+        return null;
 
-    return formatDateShort(date);
+    return formatDateIn(date);
 }
 
 function floorLabel(item: MyListingItem): string | null {
@@ -51,39 +66,106 @@ function floorLabel(item: MyListingItem): string | null {
  */
 export function buildPropertyFacts(item: MyListingItem): PropertyFact[] {
     const facts: PropertyFact[] = [];
+    const visible = (path: keyof typeof FIELD_RULES) => propertyDetailFieldVisible(item, path);
 
-    if (item.bhk > 0) {
+    if (visible("details.bedrooms") && item.bhk > 0) {
         facts.push({ key: "bhk", label: "Configuration", value: item.configLabel });
     }
-    if (item.bathrooms != null && item.bathrooms > 0) {
+    if (visible("details.bathrooms") && item.bathrooms != null && item.bathrooms > 0) {
         facts.push({
             key: "bathrooms",
             label: "Bathrooms",
             value: String(item.bathrooms),
         });
     }
-    if (item.balconies != null && item.balconies > 0) {
+    if (visible("details.balconies") && item.balconies != null && item.balconies >= 0) {
         facts.push({
             key: "balconies",
             label: "Balconies",
-            value: String(item.balconies),
+            value: item.balconies === 0 ? "None" : String(item.balconies),
         });
     }
 
-    facts.push({ key: "area", label: "Area", value: formatAreaSqft(item.areaSqft) });
+    const category = PROPERTY_CATEGORY_OPTIONS.find(
+        (option) => option.value === item.category,
+    )?.label;
+    if (category && item.categoryProvided !== false)
+        facts.push({ key: "category", label: "Category", value: category });
+
+    if (item.areaSqft > 0)
+        facts.push({ key: "area", label: "Area", value: formatAreaSqft(item.areaSqft) });
+    if (item.carpetAreaSqft != null && item.carpetAreaSqft > 0)
+        facts.push({
+            key: "carpetArea",
+            label: "Carpet area",
+            value: formatAreaSqft(item.carpetAreaSqft),
+        });
     facts.push({ key: "type", label: "Property type", value: item.propertyTypeLabel });
-    facts.push({ key: "furnishing", label: "Furnishing", value: item.furnishingLabel });
+    if (visible("furnishing.status") && item.furnishingLabel)
+        facts.push({ key: "furnishing", label: "Furnishing", value: item.furnishingLabel });
 
     const floor = floorLabel(item);
-    if (floor) facts.push({ key: "floor", label: "Floor", value: floor });
+    if (visible("details.floorNumber") && floor)
+        facts.push({ key: "floor", label: "Floor", value: floor });
+    if (
+        !visible("details.floorNumber") &&
+        visible("details.totalFloors") &&
+        item.totalFloors != null &&
+        item.totalFloors > 0
+    )
+        facts.push({
+            key: "totalFloors",
+            label: "Floors in the property",
+            value: String(item.totalFloors),
+        });
 
     const facing = facingLabel(item.facing);
     if (facing) facts.push({ key: "facing", label: "Facing", value: facing });
 
-    const parking = parkingLabel(item.parking);
-    if (parking) facts.push({ key: "parking", label: "Parking", value: parking });
+    if (
+        visible("details.propertyAge") &&
+        item.propertyAge != null &&
+        String(item.propertyAge).trim() !== ""
+    ) {
+        const numericAge = Number(item.propertyAge);
+        const ageOption = PROPERTY_AGE_OPTIONS.find(
+            (option) => option.value === String(item.propertyAge),
+        )?.label;
+        facts.push({
+            key: "propertyAge",
+            label: "Property age",
+            value:
+                Number.isFinite(numericAge) && numericAge >= 0
+                    ? numericAge === 0
+                        ? "New property"
+                        : `${numericAge} ${numericAge === 1 ? "year" : "years"} old`
+                    : (ageOption ?? String(item.propertyAge).replaceAll("_", " ")),
+        });
+    }
 
-    if (item.maintenanceInr != null && item.maintenanceInr > 0) {
+    if (visible("details.propertyCondition") && item.propertyCondition) {
+        const condition =
+            PROPERTY_CONDITION_OPTIONS.find((option) => option.value === item.propertyCondition)
+                ?.label ?? item.propertyCondition.replaceAll("_", " ");
+        facts.push({ key: "condition", label: "Property condition", value: condition });
+    }
+
+    const parking =
+        item.parkingSpaces === null
+            ? null
+            : item.parkingSpaces != null
+              ? item.parkingSpaces === 0
+                  ? "None"
+                  : String(item.parkingSpaces)
+              : parkingLabel(item.parking);
+    if (visible("details.coveredParking") && parking)
+        facts.push({ key: "parking", label: "Parking", value: parking });
+
+    if (
+        (visible("sale.maintenanceCharge") || visible("rent.maintenanceAmount")) &&
+        item.maintenanceInr != null &&
+        item.maintenanceInr > 0
+    ) {
         facts.push({
             key: "maintenance",
             label: "Maintenance",
@@ -92,11 +174,69 @@ export function buildPropertyFacts(item: MyListingItem): PropertyFact[] {
     }
 
     const availableFrom = availableFromLabel(item.availableFrom);
-    if (availableFrom) {
+    if (visible("rent.availableFrom") && availableFrom) {
         facts.push({ key: "available", label: "Available from", value: availableFrom });
     }
 
+    if (
+        visible("rent.securityDeposit") &&
+        item.securityDeposit != null &&
+        item.securityDeposit > 0
+    ) {
+        facts.push({
+            key: "securityDeposit",
+            label: "Security deposit",
+            value:
+                item.securityDepositMode === "months_of_rent"
+                    ? `${item.securityDeposit} ${item.securityDeposit === 1 ? "month" : "months"} of rent`
+                    : formatPriceInr(item.securityDeposit),
+        });
+    }
+
+    for (const [key, path, label, value] of [
+        ["cabins", "details.commercial.cabins", "Cabins", item.cabins],
+        ["meetingRooms", "details.commercial.meetingRooms", "Meeting rooms", item.meetingRooms],
+        ["workstations", "details.commercial.workstations", "Workstations", item.workstations],
+        [
+            "ceilingHeight",
+            "details.commercial.ceilingHeightFt",
+            "Ceiling height",
+            item.ceilingHeightFt,
+        ],
+    ] as const) {
+        if (visible(path) && value != null && value > 0)
+            facts.push({
+                key,
+                label,
+                value: key === "ceilingHeight" ? `${value} ft` : String(value),
+            });
+    }
+
     return facts;
+}
+
+/** Reuse form rules so stale fields never turn into impossible property facts. */
+export function propertyDetailFieldVisible(item: MyListingItem, path: keyof typeof FIELD_RULES) {
+    const propertyType = normalizePropertySubtype(item.subtype || item.propertyType);
+    const values: PropertyDraftValues = {
+        ...DEFAULT_PROPERTY_DRAFT,
+        basics: {
+            ...DEFAULT_PROPERTY_DRAFT.basics,
+            category: item.category,
+            propertyType,
+            listingFor: item.transactionType === "sale" ? "sell" : item.transactionType,
+        },
+        details: {
+            ...DEFAULT_PROPERTY_DRAFT.details,
+            propertyAge:
+                item.propertyAge != null && Number.isFinite(Number(item.propertyAge))
+                    ? Number(item.propertyAge)
+                    : null,
+            propertyCondition: item.propertyCondition ?? "",
+        },
+    };
+    const rule = FIELD_RULES[path] as FieldRule;
+    return rule.visible?.(derive(values), values) ?? true;
 }
 
 /** "Today" / "Yesterday" / "N days ago" for the listing age line. */

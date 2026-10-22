@@ -14,7 +14,10 @@ import {
     InvitesFirstRunEmpty,
     RequestsFilteredEmpty,
 } from "@/features/properties/my-requests/requests-empty";
-import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
+import {
+    REQUESTS_GRID_BREAKPOINTS,
+    REQUESTS_GRID_CLASS,
+} from "@/features/properties/my-requests/requests-grid-class";
 import { MyDealsHeader } from "@/features/properties/my-requests/requests-header";
 import { RequestsListSkeleton } from "@/features/properties/my-requests/requests-skeleton";
 import {
@@ -126,7 +129,12 @@ export function InvitesPanel({
     let body: ReactNode;
 
     if (!result && isFetching) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="invites"
+                count={Math.max(1, Math.min(10, inviteSummary?.waitingOnYouCount || 5))}
+            />
+        );
     } else if (inviteSummary && inviteSummary.counts.all === 0) {
         body = <InvitesFirstRunEmpty />;
     } else if (
@@ -138,12 +146,17 @@ export function InvitesPanel({
             <div className="flex flex-col items-center gap-4 py-12 text-center">
                 <p className="h6 text-ink">No invitations waiting</p>
                 <p className="body-sm max-w-prose text-ink-muted">
-                    Invites you already answered are under Accepted.
+                    Invites you already answered are under Representing.
                 </p>
             </div>
         );
     } else if (!result) {
-        body = <RequestsListSkeleton />;
+        body = (
+            <RequestsListSkeleton
+                activeTab="invites"
+                count={Math.max(1, Math.min(10, inviteSummary?.waitingOnYouCount || 5))}
+            />
+        );
     } else if (result.items.length === 0) {
         const narrowFilters = filters.q.trim().length > 0 || Boolean(filters.type);
         body = (
@@ -161,6 +174,7 @@ export function InvitesPanel({
                     estimateRowHeight={520}
                     gap={24}
                     breakpoints={REQUESTS_GRID_BREAKPOINTS}
+                    gridClassName={REQUESTS_GRID_CLASS}
                     ariaLabel="Owner invitations"
                     renderItem={(item) => (
                         <InviteCard

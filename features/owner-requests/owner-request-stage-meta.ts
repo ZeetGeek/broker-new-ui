@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
-import { Ban, CircleCheck, CircleX, Hourglass, Undo2 } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
+import { Ban, CircleCheck, CircleX, Hourglass, Undo2 } from "@/components/shared/icons";
 
 import type { DealStatusTone } from "@/features/properties/my-requests/deal-card-chrome";
 import type { OwnerRepStatus } from "@/features/owner-requests/types";
@@ -7,7 +7,7 @@ import type { OwnerRepStatus } from "@/features/owner-requests/types";
 export type OwnerRequestStageMeta = {
     label: string;
     hint: string;
-    icon: LucideIcon;
+    icon: AppIcon;
     tone: DealStatusTone;
 };
 
@@ -39,6 +39,18 @@ export const OWNER_REQUEST_STAGE_META: Record<OwnerRepStatus, OwnerRequestStageM
     revoked: {
         label: "Ended",
         hint: "This representation is no longer active.",
+        icon: Ban,
+        tone: "closed",
+    },
+    owner_cancelled: {
+        label: "You removed",
+        hint: "You ended this broker's representation.",
+        icon: Ban,
+        tone: "closed",
+    },
+    broker_cancelled: {
+        label: "Broker stopped",
+        hint: "The broker stopped selling this property.",
         icon: Ban,
         tone: "closed",
     },

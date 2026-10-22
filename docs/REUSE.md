@@ -167,7 +167,8 @@ This is where reuse actually pays on this platform. Each of these exists
 
 | Component               | Why it must be one component                                                                                                                                                      |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<Price>`               | INR lakh/crore formatting. Appears on cards, forms, pipeline, share page, dashboards. Duplicated, one place will eventually render `₹4500000`.                                    |
+| `<PriceWithCommission>` | **Listing ask prices** (sale / monthly rent). Hover tip for brokerage — broker "You get" / owner "Broker gets", or the empty-commission copy. Never reimplement this tip.         |
+| `<Price>`               | Non-listing money only: buyer offers, budgets, totals, form previews. INR lakh/crore formatting without a commission tip.                                                         |
 | `<PropertyStatusBadge>` | Status → label + color mapping in one place. Adding a status must not mean editing six files.                                                                                     |
 | `<PhoneNumber>`         | **Contact masking is a product rule.** Owner contact is hidden until a representation is approved. If masking is written by hand anywhere, that is a data leak waiting to happen. |
 | `<DateDisplay>`         | dd/mm/yyyy everywhere, with relative form ("2 days ago") in one place.                                                                                                            |
@@ -178,6 +179,7 @@ This is where reuse actually pays on this platform. Each of these exists
 | `<UserAvatar>`          | Photo or avvvatars-react shape/character fallback.                                                                                                                                |
 | `<VerifiedBadge>`       | The trust signal on the approve screen. Its meaning must never drift.                                                                                                             |
 | `<LoadingSkeleton>`     | Per-shape skeletons. No blank white flashes.                                                                                                                                      |
+| Icons (`icons.tsx`)     | **One Tabler registry.** Import `WhatsAppIcon` / `CallIcon` / `MailIcon` (and other aliases) from `components/shared/icons` — never `lucide-react` or raw `@tabler/icons-react`.  |
 
 Use `<AppImage>` for every rendered raster photo, including property photos,
 avatars, upload previews, and remote media. A `fill` image must sit in a
@@ -186,23 +188,35 @@ breakpoints. Use `preload` only for the single likely LCP image; everything
 else stays lazy. SVG logos and browser/video metadata attributes are the only
 normal exceptions.
 
-The `<Price>` pattern generalizes to all of them — a thin component wrapping a
-pure function:
+Listing asks use the commission-aware component; other money uses `<Price>`.
+Both wrap pure formatters:
 
 ```tsx
 // lib/format/price.ts — pure, testable, no React
 export function formatPriceInr(rupees: number): string { ... }
 
-// components/shared/price.tsx — the only thing pages import
-export function Price({ amountInr, size = "default" }: PriceProps) {
-  return <span className={size === "lg" ? "text-price-lg" : "text-price"}>
-    {formatPriceInr(amountInr)}
-  </span>;
-}
+// Listing ask — cards, pipeline, visits, detail, dashboards
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
+<PriceWithCommission
+  amountInr={listing.amountInr}
+  isRent={listing.isRent}
+  commissionPercent={listing.commissionPercent}
+  commissionAmountInr={listing.commissionAmount}
+  audience="broker" // or "owner"
+  size="lg" // xs | sm | md | lg | xl | 2xl — prefer over type classes in className
+  // showEmptyTip show underline tip when commission unset (default true)
+  // underline="auto" | "never"
+  // tooltipSide="top" | "bottom" | …
+/>
+
+// Non-listing money — offers, budgets, totals
+import { Price } from "@/components/shared/price";
+<Price amountInr={offerInr} isRent={false} />
 ```
 
 Logic in `lib/`, presentation in the component. The function is unit-testable
-with no DOM; the component is the only thing pages ever touch.
+with no DOM; pages never call `formatPriceInr` / `formatRentInr` in JSX for a
+listing ask.
 
 ---
 
@@ -291,6 +305,8 @@ today and diverge completely once approval state and contact masking land.
   unmaintainable CSS Tailwind exists to avoid. Make a component instead.
 - ❌ A raw hex or arbitrary value where a token exists — `bg-[#2563eb]`
 - ❌ Formatting a price, phone, or date inline instead of using the component
+- ❌ Rendering a listing ask with bare `<Price>` or `formatPriceInr` instead of
+  `<PriceWithCommission>`
 - ❌ Copying a card's markup into a second page "just to change one thing"
 - ❌ Editing `components/ui/` to change a shadcn primitive — wrap it instead
 - ❌ Boolean props where a `variant` union belongs
@@ -310,6 +326,6 @@ Do not build a design system up front for screens that don't exist. In order:
 3. **`lib/format/`** — `formatPriceInr` before the first price is rendered
    anywhere. This one is genuinely urgent; INR formatting duplicated even twice
    is how `₹4500000` reaches a screen.
-4. **`<Price>`, `<PropertyStatusBadge>`, `<EmptyState>`** — the first three
-   components worth having, because all three appear on the very first screen.
+4. **`<PriceWithCommission>`, `<Price>`, `<PropertyStatusBadge>`, `<EmptyState>`**
+   — listing asks first; then the other three that appear on the first screen.
 5. **Everything else** — when the third use appears.

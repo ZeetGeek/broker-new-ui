@@ -3,7 +3,7 @@
 import { type RefObject, useEffect, useRef } from "react";
 import Link from "next/link";
 
-import { CircleCheck, MapPin, Phone } from "lucide-react";
+import { CircleCheck, MapPin, Phone } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

@@ -547,7 +547,8 @@ Standard control radius (`rounded-control`), 2px `border-warm`, `surface` fill. 
 carries no shadow — `shadow-xs` is reserved for the rare case an input sits
 directly on `canvas` rather than inside a card that already separates it.
 
-**Icon slots.** `startIcon` and `endIcon` accept a Lucide icon component.
+**Icon slots.** `startIcon` and `endIcon` accept an `AppIcon` from
+`components/shared/icons` (Tabler).
 Only one thing occupies the end
 slot at a time — `loading`, `success`, `clearable`, and `type="password"`
 each claim it automatically, in that priority order, ahead of a plain
@@ -925,6 +926,110 @@ Skeletons matching the real layout — a card skeleton with a photo block and tw
 bars, not a spinner and not a blank screen. Skeleton fill is `surface-muted` with a
 subtle pulse, wrapped in `@media (prefers-reduced-motion: no-preference)`.
 
+### 5.6 List filter chrome — marketplace band vs Filters sheet
+
+Product rule (also in `AGENTS.md`): **same filter language, different chrome.**
+
+**Marketplace browse** (broker Owner listings / property pool) is the only list that
+gets the multi-segment **top search band**:
+
+- Where · Looking for · Budget · Area · Category · Property type (global dims only)
+- Band commits on menu close; Reset clears band only
+- Second row: **Filters** (Advanced — BHK / furnishing / ready-to-move when they
+  apply; listed age, commission) · quick chips · search · sort
+
+Reference implementation: `features/properties/owner-listings/`
+(`owner-listings-search-band.tsx`, `owner-listings-filter-sheet.tsx`,
+`owner-listings-quick-chips.tsx`).
+
+**Every other property-related list** (My Deals, Your listings, Pipeline, Visits,
+and owner mirrors) is a normal / CRM page:
+
+- Use a **Filters** button that opens a sheet (or equivalent dense toolbar)
+- Include **only** the dimensions that page needs — often sale/rent + search +
+  sort, plus job-specific tabs/chips (status, stage, date range, buyer/owner)
+- Do **not** paste the six-segment marketplace band onto these screens
+
+Why: the band signals “browse a large unknown pool.” Putting it on inventory and
+pipeline screens makes every page feel like a marketplace, crowds the 360px
+first viewport, and duplicates controls brokers will not use on small lists.
+
+When adding filters to a new list: ask “is this marketplace discovery?” If no →
+Filters sheet / toolbar, not the Owner listings band.
+
+### 5.7 Conditional property filters (match Add Property)
+
+Product rule (also in `AGENTS.md`): **filter controls are condition-based.**
+
+The Add Property wizard already decides which fields exist for a given category /
+property type / listing-for via:
+
+- `lib/visibility/derive.ts`
+- `lib/visibility/rules.ts` (`FIELD_RULES`)
+
+List and marketplace filters must follow the **same visibility**. Example: user
+selects land / plot → **do not show BHK**, furnishing, bathrooms, parking, floor,
+or ready-to-move. Hide the control and **clear** its value so it cannot keep
+narrowing results invisibly.
+
+| Rule                  | Detail                                                                     |
+| --------------------- | -------------------------------------------------------------------------- |
+| Hide, don’t grey out  | Irrelevant dims leave the band / sheet entirely                            |
+| Clear on hide         | Changing category/type/Looking for strips now-invalid filter keys          |
+| One matrix            | Reuse form derive/rules (or a shared helper) — no second hard-coded matrix |
+| Options follow parent | Property types limited by category; budget steps by sale vs rent           |
+
+Canonical examples live in `AGENTS.md` → “UI conventions (conditional property
+filters)”. When adding a new filter dim, check whether `FIELD_RULES` hides the
+matching form field for some selections — if yes, the filter must hide too.
+
+---
+
+### 5.8 Property details: scoped presentation
+
+The property-detail routes use the user's pinned Airbnb reference for composition
+within the existing app identity. They keep the portal's warm canvas and surface
+language so moving from Owner listings or My Deals into a property feels continuous.
+
+- Use a centred 1120px container. Put the property title, location and status above
+  the gallery, then place details in one white surface card and actions in matching
+  rail cards. Group sections with generous spacing rather than horizontal rules.
+  Keep the established fonts, green actions, icons, canvas and global tokens. Reuse
+  shared Button and Badge components for actions and explicit status labels.
+- Adapt the gallery to the actual photo count, with a 432px maximum height on
+  larger screens and one 4:3 photo on phones. Round each photo individually using
+  the control-radius token. Four photos use a large left image and three right
+  tiles over two rows, with the lower tile spanning the right column pair.
+  Use real listing photos, a deliberate missing-photo state, and a full-screen
+  gallery with keyboard navigation, Escape dismissal and focus restoration.
+  Do not add generated listing imagery.
+- On desktop, pair the broad detail column with a sticky 350px price/action rail;
+  the rail narrows to 310px on tablet and stacks below the details on phones.
+  Phone utility controls have at least 44px targets; primary actions remain 48px.
+  Below 768px, the fixed price/action bar replaces portal bottom navigation and
+  accounts for the safe-area inset. The surrounding portal otherwise stays intact.
+- Preserve three action contexts: owners manage publication and broker requests;
+  brokers viewing owner supply request representation, answer invitations or open
+  approved deals; brokers viewing custom inventory edit it and contact the linked
+  owner. Owner-supply contact details and exact address remain consent-gated until
+  representation is approved. Approval carries the property into the CRM without
+  manual re-entry.
+- Listing asks use `PriceWithCommission` with the correct audience, including the
+  fixed phone bar. Detail facts reuse `derive` and `FIELD_RULES` through
+  `property-detail-facts.ts`; show only applicable, API-supplied facts with Tabler
+  icons. Facts and sections have no divider lines. Category, state, unit/street,
+  property age, condition and carpet area render only when the API supplies them;
+  accepted brokers come from the representation API. Costs, availability and
+  suitable-use details appear only when supplied and applicable. Preserve missing
+  parking/furnishing as missing rather than guessing. Keep location textual and
+  media links data-driven. Do not fabricate maps, reviews, booking calendars,
+  people, amenities or property claims from the reference.
+
+Source: `features/properties/property-detail/` and
+`features/properties/owner-listings/owner-listing-detail-page.tsx`. The surface
+brief records verification status separately; this section does not imply visual
+verification.
+
 ---
 
 ## 6. India formatting
@@ -1003,3 +1108,8 @@ Things that will be rejected in review:
 - An empty state that says "No data"
 - Meaning carried by colour alone with no text label
 - Desktop-first layouts that stack awkwardly instead of being composed mobile-first
+- The Owner listings marketplace **top search band** copied onto My Deals, Your
+  listings, Pipeline, Visits, or other CRM/inventory lists — those use a
+  **Filters** sheet / dense toolbar instead (see §5.6)
+- Property filters that stay visible when they cannot apply (e.g. BHK on land /
+  plot) — hide and clear per §5.7 / Add Property `FIELD_RULES`

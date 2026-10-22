@@ -1,4 +1,4 @@
-import { CircleCheck, CircleSlash, Clock } from "lucide-react";
+import { CircleCheck, CircleSlash, Clock } from "@/components/shared/icons";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { parseInr } from "@/lib/format/inr";

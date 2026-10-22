@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check } from "@/components/shared/icons";
 
 import { AvatarStack } from "@/components/shared/avatar-stack";
 import { UserAvatar } from "@/components/shared/user-avatar";

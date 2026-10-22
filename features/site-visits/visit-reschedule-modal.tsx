@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { CircleAlert, TriangleAlert, Zap } from "lucide-react";
+import { CircleAlert, TriangleAlert, Zap } from "@/components/shared/icons";
 
 import { formatShowingWhen } from "@/lib/format/date";
 import { cn } from "@/lib/utils";

@@ -2,7 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 
-import { XIcon } from "lucide-react";
+import { XIcon } from "@/components/shared/icons";
 import SimpleBar from "simplebar-react";
 
 import { cn } from "@/lib/utils";

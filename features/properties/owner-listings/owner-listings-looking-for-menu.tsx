@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { HandCoins, KeyRound, Layers, type LucideIcon, Tags } from "lucide-react";
+import { HandCoins, KeyRound, Layers, type AppIcon, Tags } from "@/components/shared/icons";
 
 import { formatTransactionTypeLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ const LOOKING_FOR_OPTIONS: {
     radioValue: string;
     label: string;
     description: string;
-    icon: LucideIcon;
+    icon: AppIcon;
 }[] = [
     {
         value: "",

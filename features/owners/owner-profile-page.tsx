@@ -13,17 +13,17 @@ import {
     MapPin,
     Phone,
     UserRound,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { type BrokerOwnerProfile, type OwnerProfileProperty, ownersApi } from "@/lib/api/owners";
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { formatPhoneIn } from "@/lib/format/phone";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { AppImage } from "@/components/shared/app-image";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
@@ -33,20 +33,23 @@ function listingCountLabel(count: number): string {
     return count === 1 ? "1 property listed" : `${count} properties listed`;
 }
 
-function propertyPrice(property: OwnerProfileProperty): string | null {
+function propertyAsk(property: OwnerProfileProperty): {
+    amountInr: number;
+    isRent: boolean;
+} | null {
     const rent = Number(property.monthlyRent);
-    if (property.transactionType === "rent" && Number.isFinite(rent) && rent > 0) {
-        return formatRentInr(rent);
-    }
     const sale = Number(property.salePrice);
-    if (Number.isFinite(sale) && sale > 0) return formatPriceInr(sale);
-    if (Number.isFinite(rent) && rent > 0) return formatRentInr(rent);
+    if (property.transactionType === "rent" && Number.isFinite(rent) && rent > 0) {
+        return { amountInr: rent, isRent: true };
+    }
+    if (Number.isFinite(sale) && sale > 0) return { amountInr: sale, isRent: false };
+    if (Number.isFinite(rent) && rent > 0) return { amountInr: rent, isRent: true };
     return null;
 }
 
 function PropertyCard({ property }: { property: OwnerProfileProperty }) {
     const photo = property.photos[0];
-    const price = propertyPrice(property);
+    const ask = propertyAsk(property);
     const place = [property.address, property.city].filter(Boolean).join(", ");
     const name =
         formatPropertyCardName(property.propertyType ?? "", property.areaSqft, {
@@ -71,7 +74,17 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
             <div className="flex flex-col gap-1 p-4">
                 <p className="body truncate font-semibold text-ink">{name}</p>
                 {place ? <p className="body-sm truncate text-ink-muted">{place}</p> : null}
-                {price ? <p className="body-sm font-semibold text-brand">{price}</p> : null}
+                {ask ? (
+                    <PriceWithCommission
+                        amountInr={ask.amountInr}
+                        isRent={ask.isRent}
+                        commissionPercent={property.commissionPercent}
+                        commissionAmountInr={property.commissionAmount}
+                        audience="broker"
+                        size="sm"
+                        showEmptyTip
+                    />
+                ) : null}
             </div>
         </Link>
     );

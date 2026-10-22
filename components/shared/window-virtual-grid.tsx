@@ -29,6 +29,7 @@ export function WindowVirtualGrid<T>({
     overscan = 3,
     virtualizeAfter = 40,
     ariaLabel,
+    gridClassName,
 }: {
     items: T[];
     getKey: (item: T) => string;
@@ -39,10 +40,13 @@ export function WindowVirtualGrid<T>({
     overscan?: number;
     virtualizeAfter?: number;
     ariaLabel?: string;
+    /** CSS grid columns for the first paint, before JavaScript measures the viewport. */
+    gridClassName?: string;
 }) {
     const parentRef = useRef<HTMLDivElement>(null);
     const [columnCount, setColumnCount] = useState(1);
     const [scrollMargin, setScrollMargin] = useState(0);
+    const measuredRowHeight = useRef(estimateRowHeight);
 
     useLayoutEffect(() => {
         const measure = () => {
@@ -76,9 +80,22 @@ export function WindowVirtualGrid<T>({
     }, [columnCount, items]);
     const shouldVirtualize = items.length > virtualizeAfter;
 
+    useLayoutEffect(() => {
+        if (!gridClassName || shouldVirtualize) return;
+        const children = parentRef.current?.children;
+        if (!children?.length) return;
+        // Reuse the real first row when pagination crosses the virtualization threshold.
+        const height = Math.max(
+            ...Array.from(children)
+                .slice(0, columnCount)
+                .map((child) => child.getBoundingClientRect().height),
+        );
+        if (height > 0) measuredRowHeight.current = height;
+    }, [columnCount, gridClassName, items, shouldVirtualize]);
+
     const virtualizer = useWindowVirtualizer({
         count: shouldVirtualize ? rows.length : 0,
-        estimateSize: () => estimateRowHeight + gap,
+        estimateSize: () => (gridClassName ? measuredRowHeight.current : estimateRowHeight) + gap,
         overscan,
         scrollMargin,
     });
@@ -89,9 +106,11 @@ export function WindowVirtualGrid<T>({
                 ref={parentRef}
                 role="list"
                 aria-label={ariaLabel}
-                className="grid inline-full"
+                className={gridClassName ?? "grid inline-full"}
                 style={{
-                    gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+                    gridTemplateColumns: gridClassName
+                        ? undefined
+                        : `repeat(${columnCount}, minmax(0, 1fr))`,
                     gap,
                 }}
             >

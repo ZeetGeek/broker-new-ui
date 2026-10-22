@@ -8,7 +8,7 @@ import {
     Navigation,
     Phone,
     User,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
 import { OWNER_VISITS_HREF } from "@/lib/routes/owner";
@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { PhoneNumber } from "@/components/shared/phone-number";
-import { Price } from "@/components/shared/price";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,8 @@ export type NextShowing = {
     address: string;
     amountInr: number;
     isRent: boolean;
+    commissionPercent?: number | null;
+    commissionAmountInr?: number | null;
     meetNote: string;
     distanceKm: number;
     brokerNote: string;
@@ -307,10 +309,14 @@ export function NextShowingCard({
                                     ) : null}
                                     <span className="leading-0 text-pretty min-inline-0">
                                         {hasPrice ? (
-                                            <Price
+                                            <PriceWithCommission
                                                 amountInr={showing.amountInr}
                                                 isRent={showing.isRent}
-                                                className="font-semibold text-brand"
+                                                commissionPercent={showing.commissionPercent}
+                                                commissionAmountInr={showing.commissionAmountInr}
+                                                audience={isOwner ? "owner" : "broker"}
+                                                size="sm"
+                                                showEmptyTip
                                             />
                                         ) : null}
                                         {hasPrice && showing.meetNote ? (

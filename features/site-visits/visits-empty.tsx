@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CalendarCheck, CalendarPlus, CircleCheck, Search } from "lucide-react";
+import { CalendarCheck, CalendarPlus, CircleCheck, Search } from "@/components/shared/icons";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";

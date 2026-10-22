@@ -32,7 +32,7 @@ export function parseMyListingsFilters(
     const status: MyListingStatus | "" =
         statusRaw === "draft" || statusRaw === "published" || statusRaw === "unpublished"
             ? statusRaw
-            : "";
+            : DEFAULT_MY_LISTINGS_FILTERS.status;
 
     const typeRaw = first(params.type);
     const type = typeRaw === "sale" || typeRaw === "rent" ? typeRaw : "";
@@ -68,12 +68,12 @@ export function serializeMyListingsFilters(filters: MyListingsFilters): URLSearc
 }
 
 export function hasActiveMyListingsFilters(filters: MyListingsFilters): boolean {
+    // Status is a page tab (Published / Draft), not a filter chip.
     return (
         Boolean(filters.q.trim()) ||
         Boolean(filters.type) ||
         Boolean(filters.propertyType) ||
         filters.bhk.length > 0 ||
-        Boolean(filters.status) ||
         filters.sort !== DEFAULT_MY_LISTINGS_FILTERS.sort
     );
 }

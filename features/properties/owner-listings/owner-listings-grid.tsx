@@ -18,7 +18,16 @@ import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
+import { useChat } from "@/features/chat/chat-provider";
+import type { ChatPeer } from "@/features/chat/types";
+import { REMINDER_LIMIT } from "@/features/properties/my-requests/types";
+import {
+    PENDING_REMINDER_COUNTS_QUERY_KEY,
+    usePendingReminderCounts,
+} from "@/features/properties/my-requests/use-pending-reminder-counts";
+import { BrowseRequestTimelineDialog } from "@/features/properties/owner-listings/browse-request-timeline-dialog";
 import { isNewInServiceAreas } from "@/features/properties/owner-listings/count-new-listings-this-week";
+import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 import { SAVED_PROPERTIES_QUERY_KEY } from "@/features/properties/saved-properties/saved-properties-query";
@@ -43,7 +52,7 @@ type RequestOverride = string | false | true;
 /** `false` declined; `"accepted"` accepted; a string is the pending invitation id. */
 type InviteOverride = string | false | "accepted";
 
-type BusyKind = "request" | "cancel" | "accept" | "invite-cancel" | "bookmark";
+type BusyKind = "request" | "cancel" | "remind" | "accept" | "invite-cancel" | "bookmark";
 
 function mutationErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof ApiError) return error.message;
@@ -67,11 +76,25 @@ function initialInviteOverrides(items: OwnerListingItem[]): Record<string, Invit
     );
 }
 
+function browseChatPeer(item: OwnerListingItem, representationId: string): ChatPeer {
+    return {
+        id: representationId,
+        name: item.ownerName,
+        avatarUrl: item.ownerAvatarUrl,
+        roleLabel: item.title,
+        representationId,
+        mySide: "broker",
+        canSend: true,
+        closed: false,
+    };
+}
+
 export function OwnerListingsGrid({
     items,
     serviceAreas = NO_SERVICE_AREAS,
 }: OwnerListingsGridProps) {
     const queryClient = useQueryClient();
+    const { openChat } = useChat();
     const serviceAreaSet = useMemo(() => new Set(serviceAreas), [serviceAreas]);
     const [busyId, setBusyId] = useState<string | null>(null);
     const [busyKind, setBusyKind] = useState<BusyKind | null>(null);
@@ -83,6 +106,19 @@ export function OwnerListingsGrid({
     );
     // Optimistic overrides until the next browse refetch.
     const [savedOverrides, setSavedOverrides] = useState<Record<string, boolean>>({});
+    const serverReminderCounts = usePendingReminderCounts();
+    /** Reminder counts changed on this page, until the server list refetches. */
+    const [remindCounts, setRemindCounts] = useState<Record<string, number>>({});
+    const remindersUsedFor = useCallback(
+        (item: OwnerListingItem): number =>
+            remindCounts[item.id] ?? serverReminderCounts.get(item.id) ?? 0,
+        [remindCounts, serverReminderCounts],
+    );
+    const [timelineTarget, setTimelineTarget] = useState<{
+        propertyId: string;
+        representationId?: string;
+        ownerName: string;
+    } | null>(null);
 
     const isSaved = useCallback(
         (item: OwnerListingItem): boolean => savedOverrides[item.id] ?? item.isBookmarked,
@@ -179,6 +215,8 @@ export function OwnerListingsGrid({
                     ...prev,
                     [item.id]: representation.id || true,
                 }));
+                setRemindCounts((prev) => ({ ...prev, [item.id]: 0 }));
+                void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
                 toast.success("Request sent. The owner will be notified.");
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not send request"));
@@ -187,7 +225,7 @@ export function OwnerListingsGrid({
                 setBusyKind(null);
             }
         },
-        [busyId, hasRequested, isInvitePending, isRepresenting],
+        [busyId, hasRequested, isInvitePending, isRepresenting, queryClient],
     );
 
     const handleCancelRequest = useCallback(
@@ -211,6 +249,8 @@ export function OwnerListingsGrid({
                 }
                 await representativeApi.withdraw(representationId);
                 setRequestOverrides((prev) => ({ ...prev, [item.id]: false }));
+                setRemindCounts((prev) => ({ ...prev, [item.id]: 0 }));
+                void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
                 toast.success("Request cancelled");
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not cancel request"));
@@ -219,7 +259,68 @@ export function OwnerListingsGrid({
                 setBusyKind(null);
             }
         },
-        [busyId, hasRequested, representationIdFor],
+        [busyId, hasRequested, queryClient, representationIdFor],
+    );
+
+    const handleRemind = useCallback(
+        async (item: OwnerListingItem) => {
+            if (busyId || !hasRequested(item)) return;
+            const used = remindersUsedFor(item);
+            if (used >= REMINDER_LIMIT) return;
+
+            setBusyId(item.id);
+            setBusyKind("remind");
+            try {
+                let representationId = representationIdFor(item);
+                if (!representationId) {
+                    representationId = await findPendingBrokerRepresentationId(item.id);
+                    if (representationId) {
+                        const pendingId = representationId;
+                        setRequestOverrides((prev) => ({ ...prev, [item.id]: pendingId }));
+                    }
+                }
+                if (!representationId) {
+                    toast.error("Could not send reminder");
+                    return;
+                }
+                const updated = await representativeApi.remind(representationId);
+                const nextUsed = Math.min(REMINDER_LIMIT, updated.reminderCount ?? used + 1);
+                setRemindCounts((prev) => ({ ...prev, [item.id]: nextUsed }));
+                void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
+                toast.success(
+                    nextUsed >= REMINDER_LIMIT
+                        ? `Reminder sent. You've used all ${REMINDER_LIMIT} reminders.`
+                        : `Reminder sent to the owner (${nextUsed} of ${REMINDER_LIMIT} used).`,
+                );
+            } catch (error) {
+                toast.error(mutationErrorMessage(error, "Could not send reminder"));
+            } finally {
+                setBusyId(null);
+                setBusyKind(null);
+            }
+        },
+        [busyId, hasRequested, queryClient, remindersUsedFor, representationIdFor],
+    );
+
+    const handleOpenChat = useCallback(
+        async (item: OwnerListingItem) => {
+            if (!hasRequested(item)) return;
+
+            let representationId = representationIdFor(item);
+            if (!representationId) {
+                representationId = await findPendingBrokerRepresentationId(item.id);
+                if (representationId) {
+                    const pendingId = representationId;
+                    setRequestOverrides((prev) => ({ ...prev, [item.id]: pendingId }));
+                }
+            }
+            if (!representationId) {
+                toast.error("Could not open chat");
+                return;
+            }
+            openChat(browseChatPeer(item, representationId));
+        },
+        [hasRequested, openChat, representationIdFor],
     );
 
     const resolveInvitationId = useCallback(
@@ -288,60 +389,87 @@ export function OwnerListingsGrid({
     );
 
     return (
-        <WindowVirtualGrid
-            items={items}
-            getKey={(item) => item.id}
-            estimateRowHeight={520}
-            gap={24}
-            breakpoints={GRID_BREAKPOINTS}
-            ariaLabel="Owner listings"
-            renderItem={(item, index) => {
-                const listing = toBrowsePropertyCardListing(item);
-                const requested = hasRequested(item);
-                const invitePending = isInvitePending(item);
-                const representing = isRepresenting(item);
-                const pendingRepresentationId = representationIdFor(item);
-                const isBusy = busyId === item.id;
-                const inviteActionPending =
-                    isBusy && busyKind === "accept"
-                        ? "accept"
-                        : isBusy && busyKind === "invite-cancel"
-                          ? "cancel"
-                          : undefined;
+        <>
+            <WindowVirtualGrid
+                gridClassName={OWNER_LISTINGS_GRID_CLASS}
+                items={items}
+                getKey={(item) => item.id}
+                estimateRowHeight={520}
+                gap={24}
+                breakpoints={GRID_BREAKPOINTS}
+                ariaLabel="Owner listings"
+                renderItem={(item, index) => {
+                    const listing = toBrowsePropertyCardListing(item);
+                    const requested = hasRequested(item);
+                    const invitePending = isInvitePending(item);
+                    const representing = isRepresenting(item);
+                    const pendingRepresentationId = representationIdFor(item);
+                    const isBusy = busyId === item.id;
+                    const inviteActionPending =
+                        isBusy && busyKind === "accept"
+                            ? "accept"
+                            : isBusy && busyKind === "invite-cancel"
+                              ? "cancel"
+                              : undefined;
 
-                return (
-                    <PropertyCard
-                        variant="browse"
-                        listing={{
-                            ...listing,
-                            hasRequested: requested,
-                            isInvitePending: invitePending,
-                            isRepresenting: representing,
-                            pendingRepresentationId,
-                        }}
-                        detailsHref={brokerOwnerListingDetailHref(item.id)}
-                        priority={index === 0}
-                        imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
-                        isRequestPending={
-                            isBusy && (busyKind === "request" || busyKind === "cancel")
-                        }
-                        inviteActionPending={inviteActionPending}
-                        onRequest={() => void handleRequest(item)}
-                        onCancelRequest={
-                            requested ? () => void handleCancelRequest(item) : undefined
-                        }
-                        onAcceptInvite={
-                            invitePending ? () => void handleAcceptInvite(item) : undefined
-                        }
-                        onCancelInvite={
-                            invitePending ? () => void handleCancelInvite(item) : undefined
-                        }
-                        isSaved={isSaved(item)}
-                        onToggleSave={() => handleToggleSave(item)}
-                        isNewInYourArea={isNewInServiceAreas(item, serviceAreaSet)}
-                    />
-                );
-            }}
-        />
+                    return (
+                        <PropertyCard
+                            variant="browse"
+                            listing={{
+                                ...listing,
+                                hasRequested: requested,
+                                isInvitePending: invitePending,
+                                isRepresenting: representing,
+                                pendingRepresentationId,
+                            }}
+                            detailsHref={brokerOwnerListingDetailHref(item.id)}
+                            priority={index === 0}
+                            imageSizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+                            isRequestPending={isBusy && busyKind === "request"}
+                            isCancelPending={isBusy && busyKind === "cancel"}
+                            isRemindPending={isBusy && busyKind === "remind"}
+                            inviteActionPending={inviteActionPending}
+                            onRequest={() => void handleRequest(item)}
+                            onCancelRequest={
+                                requested ? () => void handleCancelRequest(item) : undefined
+                            }
+                            onRemind={requested ? () => void handleRemind(item) : undefined}
+                            canRemind={remindersUsedFor(item) < REMINDER_LIMIT}
+                            remindersUsed={remindersUsedFor(item)}
+                            remindersLimit={REMINDER_LIMIT}
+                            onChat={requested ? () => void handleOpenChat(item) : undefined}
+                            onOpenTimeline={
+                                requested
+                                    ? () =>
+                                          setTimelineTarget({
+                                              propertyId: item.id,
+                                              representationId: pendingRepresentationId,
+                                              ownerName: item.ownerName,
+                                          })
+                                    : undefined
+                            }
+                            onAcceptInvite={
+                                invitePending ? () => void handleAcceptInvite(item) : undefined
+                            }
+                            onCancelInvite={
+                                invitePending ? () => void handleCancelInvite(item) : undefined
+                            }
+                            isSaved={isSaved(item)}
+                            onToggleSave={() => handleToggleSave(item)}
+                            isNewInYourArea={isNewInServiceAreas(item, serviceAreaSet)}
+                        />
+                    );
+                }}
+            />
+            <BrowseRequestTimelineDialog
+                open={timelineTarget != null}
+                onOpenChange={(open) => {
+                    if (!open) setTimelineTarget(null);
+                }}
+                propertyId={timelineTarget?.propertyId ?? ""}
+                representationId={timelineTarget?.representationId}
+                ownerName={timelineTarget?.ownerName}
+            />
+        </>
     );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CircleSlash, Search, Users } from "lucide-react";
+import { CircleSlash, Search, Users } from "@/components/shared/icons";
 
 import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 

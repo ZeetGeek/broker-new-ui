@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
 import {
     Building,
     Building2,
@@ -8,14 +8,14 @@ import {
     Repeat,
     Store,
     Trees,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import type { BuyerPropertyKind, BuyerSource } from "@/lib/validation/buyer";
 
 export type Option<T extends string> = {
     value: T;
     label: string;
-    icon?: LucideIcon;
+    icon?: AppIcon;
     /** Plain-English expansion shown on hover where the label is terse. */
     hint?: string;
 };

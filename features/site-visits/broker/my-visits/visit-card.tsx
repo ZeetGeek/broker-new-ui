@@ -15,7 +15,7 @@ import {
     Phone,
     Route,
     Trash2,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
@@ -150,7 +150,9 @@ export const VisitCard = memo(function VisitCard({
                         commissionPercent={visit.property.commissionPercent}
                         commissionAmountInr={visit.property.commissionAmountInr}
                         audience="broker"
-                        className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
+                        size="lg"
+                        showEmptyTip
+                        className="mbs-3 mbe-0.5 leading-none"
                     />
 
                     <p

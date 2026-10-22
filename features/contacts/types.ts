@@ -15,6 +15,8 @@ export type BuyerLead = {
     listPriceInr: number | null;
     closedAmountInr: number | null;
     isRent: boolean;
+    commissionPercent?: number | null;
+    commissionAmountInr?: number | null;
 };
 
 /**

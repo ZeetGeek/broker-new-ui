@@ -7,10 +7,10 @@ import {
 
 import { buildOwnerListingsLocationTree } from "@/features/properties/owner-listings/build-owner-listings-location-tree";
 import { commissionRanges } from "@/features/properties/owner-listings/filter-owner-listings";
+import { browseApiTypeFilters } from "@/features/properties/owner-listings/filter-visibility";
 import {
     bhkValuesToApiConfig,
     mapBrowseListingToOwnerItem,
-    propertyTypeToApiFilters,
 } from "@/features/properties/owner-listings/map-browse-listing";
 import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
 import type {
@@ -35,7 +35,10 @@ function filterMockOwnerListings(
     const min = filters.min ? Number(filters.min) : null;
     const max = filters.max ? Number(filters.max) : null;
     const minArea = filters.minAreaSqft ? Number(filters.minAreaSqft) : null;
-    const maxArea = filters.maxAreaSqft ? Number(filters.maxAreaSqft) : null;
+    const maxArea =
+        filters.maxAreaSqft && !filters.maxAreaSqft.endsWith("+")
+            ? Number(filters.maxAreaSqft)
+            : null;
     const listedWithin = filters.listedWithinDays ? Number(filters.listedWithinDays) : null;
     const commission = commissionRanges(filters);
     const serviceAreas = (context.serviceAreas ?? []).map((area) => area.toLowerCase());
@@ -54,7 +57,16 @@ function filterMockOwnerListings(
         if (filters.cities.length && !filters.cities.includes(item.city)) return false;
         if (filters.localities.length && !filters.localities.includes(item.locality)) return false;
         if (filters.bhk.length && !filters.bhk.includes(String(item.bhk))) return false;
-        if (filters.propertyType && item.propertyTypeLabel !== filters.propertyType) return false;
+        if (filters.category && item.category && item.category !== filters.category) return false;
+        if (filters.propertyType) {
+            const subtype = item.subtype || item.propertyTypeLabel;
+            const matches =
+                subtype === filters.propertyType ||
+                item.propertyTypeLabel === filters.propertyType ||
+                (filters.propertyType === "office" && subtype === "office_space") ||
+                (filters.propertyType === "office_space" && item.propertyTypeLabel === "office");
+            if (!matches) return false;
+        }
         if (filters.furnishing && item.furnishing !== filters.furnishing) return false;
         if (filters.type === "sale" && item.saleAmountInr == null) return false;
         if (filters.type === "rent" && item.rentAmountInr == null) return false;
@@ -171,7 +183,7 @@ async function fetchBrowsePage({
     limit,
     signal,
 }: BrowsePageInput): Promise<OwnerListingsResult> {
-    const typeFilters = propertyTypeToApiFilters(filters.propertyType);
+    const typeFilters = browseApiTypeFilters(filters.category, filters.propertyType);
 
     const listedWithinDays = filters.listedWithinDays
         ? Number(filters.listedWithinDays)
@@ -193,7 +205,10 @@ async function fetchBrowsePage({
             minPrice: filters.min ? Number(filters.min) : undefined,
             maxPrice: filters.max ? Number(filters.max) : undefined,
             minAreaSqft: filters.minAreaSqft ? Number(filters.minAreaSqft) : undefined,
-            maxAreaSqft: filters.maxAreaSqft ? Number(filters.maxAreaSqft) : undefined,
+            maxAreaSqft:
+                filters.maxAreaSqft && !filters.maxAreaSqft.endsWith("+")
+                    ? Number(filters.maxAreaSqft)
+                    : undefined,
             listedWithinDays:
                 listedWithinDays != null && !Number.isNaN(listedWithinDays)
                     ? listedWithinDays
@@ -292,9 +307,9 @@ export async function fetchOwnerListings(
     });
 }
 
-export async function fetchOwnerListingCities() {
+export async function fetchOwnerListingCities(signal?: AbortSignal) {
     if (isMockMode()) {
         return mockOwnerListingsCities();
     }
-    return propertiesApi.browseCities();
+    return propertiesApi.browseCities(signal);
 }

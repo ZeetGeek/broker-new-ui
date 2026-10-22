@@ -3,7 +3,14 @@
 import { memo } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { CalendarClock, Clock3, MapPin, PanelRight, RotateCcw, Trash2 } from "lucide-react";
+import {
+    CalendarClock,
+    Clock3,
+    MapPin,
+    PanelRight,
+    RotateCcw,
+    Trash2,
+} from "@/components/shared/icons";
 
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
@@ -126,7 +133,9 @@ export const RequestRow = memo(function RequestRow({
                         commissionPercent={request.property.commissionPercent}
                         commissionAmountInr={request.property.commissionAmountInr}
                         audience="broker"
-                        className="h5 mbs-3 mbe-0.5 leading-none font-semibold tracking-wide"
+                        size="lg"
+                        showEmptyTip
+                        className="mbs-3 mbe-0.5 leading-none"
                     />
 
                     <p

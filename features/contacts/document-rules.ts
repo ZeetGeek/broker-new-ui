@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
-import { File as FileIcon, FileImage, FileSpreadsheet, FileText } from "lucide-react";
+import type { AppIcon } from "@/components/shared/icons";
+import { File as FileIcon, FileImage, FileSpreadsheet, FileText } from "@/components/shared/icons";
 
 /**
  * What a buyer document is for. Kept deliberately short — a broker filing a
@@ -82,7 +82,7 @@ export function formatFileSize(sizeBytes: number): string {
 }
 
 /** Icon standing in for the file, since documents have no thumbnail. */
-export function documentIcon(mimeType: string): LucideIcon {
+export function documentIcon(mimeType: string): AppIcon {
     if (mimeType.startsWith("image/")) return FileImage;
     if (mimeType === "application/pdf") return FileText;
     if (mimeType.includes("word")) return FileSpreadsheet;

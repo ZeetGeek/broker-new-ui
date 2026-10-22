@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api/client";
+import { ApiError, apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
 
 import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
@@ -28,9 +28,14 @@ export type PropertyBrowseListing = {
     bathrooms?: number | null;
     areaSqft?: number | null;
     city?: string | null;
+    state?: string | null;
     address?: string | null;
     country?: string | null;
+    /** `available` | `sold` | `unavailable`. */
     status?: string | null;
+    /** When the owner marked it sold. */
+    soldAt?: string | null;
+    soldReason?: string | null;
     salePrice?: string | number | null;
     monthlyRent?: string | number | null;
     /** Deposit value: INR when mode is `amount`, months when `months_of_rent`. */
@@ -74,16 +79,35 @@ export type PropertyBrowseListing = {
 };
 
 /** Inventory listing returned by `GET /properties` (and get/create/update). */
+/** `GET /properties/public/:id` — listing facts plus who offers it, no contact details. */
+export type PublicPropertyListing = PropertyListing & {
+    isSold?: boolean;
+    listedBy?: {
+        type: "owner" | "broker";
+        name: string | null;
+        avatarUrl: string | null;
+    };
+};
+
 export type PropertyListing = PropertyBrowseListing & {
     visibility?: "public" | "private" | string | null;
     publishStatus?: PropertyPublishStatus | string | null;
     isDraft?: boolean;
     postalCode?: string | null;
     society?: string | null;
+    /** Newer detail payloads use the form field name; older ones use `society`. */
+    projectOrSociety?: string | null;
+    unitNumber?: string | null;
+    /** Compatibility alias used by some property imports. */
+    flatNumber?: string | null;
+    streetOrRoad?: string | null;
     landmark?: string | null;
     balconyCount?: number | null;
     floorNumber?: number | null;
     totalFloors?: number | null;
+    propertyAge?: string | number | null;
+    propertyCondition?: string | null;
+    carpetArea?: string | number | null;
     facingDirection?: string | null;
     parkingSpaces?: number | null;
     amenities?: string[] | null;
@@ -162,6 +186,11 @@ export type PropertyBrowseCountry = {
 /** Country → state → city → locality tree of owner-listed places. */
 export type PropertyBrowseCitiesResponse = {
     items: PropertyBrowseCountry[];
+    /** The broker's service areas and how many owner listings fall inside them. */
+    serviceableAreas?: {
+        areas: string[];
+        listingCount: number;
+    };
 };
 
 export type PropertyListingOptions = {
@@ -525,16 +554,16 @@ export const propertiesApi = {
         });
     },
 
-    browseCities() {
-        return apiFetch<PropertyBrowseCitiesResponse>("/properties/browse/cities");
+    browseCities(signal?: AbortSignal) {
+        return apiFetch<PropertyBrowseCitiesResponse>("/properties/browse/cities", { signal });
     },
 
     /** One public owner listing for the Owner-listings detail page. */
-    browseById(id: string) {
+    browseById(id: string, signal?: AbortSignal) {
         if (isMockMode()) {
             const listing = mockListingById(id);
             if (!listing) {
-                return Promise.reject(new Error("Listing not found"));
+                return Promise.reject(new ApiError("Listing not found", 404));
             }
             return Promise.resolve(listing);
         }
@@ -543,7 +572,7 @@ export const propertiesApi = {
                 representation?: PropertyRepresentationStanding | null;
                 ownerPhone?: string | null;
             }
-        >(`/properties/browse/${id}`);
+        >(`/properties/browse/${id}`, { signal });
     },
 
     /** Caller's inventory listings (My listings). */
@@ -651,6 +680,25 @@ export const propertiesApi = {
     remove(id: string) {
         return apiFetch<{ id: string; deleted: boolean }>(`/properties/${id}`, {
             method: "DELETE",
+        });
+    },
+
+    /** No-login detail for a shared link (`/property/:id`). Listing facts only. */
+    getPublic(id: string, signal?: AbortSignal) {
+        return apiFetch<PublicPropertyListing>(`/properties/public/${id}`, {
+            skipAuth: true,
+            signal,
+        });
+    },
+
+    /**
+     * Owner marks their listing as sold. Open deals on it close as lost (with
+     * `reason` in their note) and representing brokers are notified.
+     */
+    markSold(id: string, reason?: string) {
+        return apiFetch<PropertyListing>(`/properties/${id}/mark-sold`, {
+            method: "POST",
+            body: JSON.stringify({ reason: reason?.trim() || undefined }),
         });
     },
 };

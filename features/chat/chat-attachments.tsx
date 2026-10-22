@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-import { Download, ExternalLink, FileText, Pause, Play } from "lucide-react";
+import { Download, ExternalLink, FileText, Pause, Play } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 

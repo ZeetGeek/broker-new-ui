@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useInfiniteScrollTrigger } from "@/hooks/use-infinite-scroll-trigger";
 
 import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/shared/loading-spinner";
 
 export function InfiniteListStatus({
     hasNextPage,
@@ -39,7 +40,7 @@ export function InfiniteListStatus({
             ref={triggerRef}
             className={cn(
                 "flex items-center justify-center text-center",
-                reachedEnd ? endSpacing : "py-3 min-block-12",
+                reachedEnd ? endSpacing : isFetchingNextPage ? "pt-10 pb-4" : "py-3 min-block-12",
             )}
             aria-live="polite"
             aria-busy={isFetchingNextPage}
@@ -52,7 +53,10 @@ export function InfiniteListStatus({
                     </Button>
                 </div>
             ) : isFetchingNextPage ? (
-                <p className="body-sm text-ink-muted">Loading more…</p>
+                <div className="flex items-center justify-center gap-2.5">
+                    <LoadingSpinner size="sm" label="Loading more" />
+                    <p className="body-sm text-ink-muted">Loading more…</p>
+                </div>
             ) : hasNextPage ? (
                 <span className="sr-only">More results load as you scroll.</span>
             ) : (

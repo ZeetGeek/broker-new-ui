@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-import { ChevronLeft, Lock, MapPin, MessageCircle, Phone } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api/client";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
@@ -16,28 +16,25 @@ import {
     representativeApi,
 } from "@/lib/api/representative";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatPriceInr } from "@/lib/format/price";
 import {
     BROKER_MY_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
     brokerOwnerProfileHref,
 } from "@/lib/routes/broker";
-import { cn } from "@/lib/utils";
-import { amenityLabel } from "@/lib/validation/property";
 
+import { CallIcon, Lock, WhatsAppIcon } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import {
-    buildPropertyFacts,
-    factColumnsClass,
-    listedAgoLabel,
-} from "@/features/properties/property-detail/property-detail-facts";
-import { PropertyGallery } from "@/features/properties/property-detail/property-gallery";
+import { OwnerListingDetailSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
+import { PropertyBuyersCard } from "@/features/properties/property-detail/property-buyers-card";
+import { PropertyDetailLayout } from "@/features/properties/property-detail/property-detail-layout";
 import { PropertyPriceBlock } from "@/features/properties/property-detail/property-price-block";
 import { mapPropertyListingToMyItem } from "@/features/properties/your-listings/map-my-listing";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
+import { useAppSelector } from "@/store/hooks";
+
+import styles from "@/features/properties/property-detail/property-detail.module.css";
 
 type RepresentationStanding = {
     id: string;
@@ -75,101 +72,57 @@ function standingLabel(standing: RepresentationStanding | null): string {
     return "Available to request";
 }
 
-function standingColor(standing: RepresentationStanding | null) {
-    if (standing?.status === "accepted") return "emerald" as const;
-    if (standing?.status === "pending") return "amber" as const;
-    return "sky" as const;
-}
-
 function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
     const accepted = detail.representation?.status === "accepted";
     const phone = accepted ? detail.ownerPhoneDigits : undefined;
-
     return (
-        <section
-            className="
-          flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-5
-        "
-        >
-            <h2 className="eyebrow">Owner contact</h2>
-            <div className="flex items-center gap-3">
-                <UserAvatar name={detail.ownerName} imageUrl={detail.ownerAvatarUrl} size="lg" />
-                <div className="flex flex-col gap-0.5 min-inline-0">
+        <section className={styles.contact}>
+            <h2>Listed by the owner</h2>
+            <div className={styles.contactIdentity}>
+                <UserAvatar name={detail.ownerName} imageUrl={detail.ownerAvatarUrl} size="md" />
+                <div>
                     {detail.ownerUserId ? (
-                        <Link
-                            href={brokerOwnerProfileHref(detail.ownerUserId)}
-                            className="
-                              body truncate font-semibold text-ink underline-offset-4
-                              hover:underline
-                            "
-                        >
+                        <Link href={brokerOwnerProfileHref(detail.ownerUserId)}>
                             {detail.ownerName}
                         </Link>
                     ) : (
-                        <p className="body truncate font-semibold text-ink">{detail.ownerName}</p>
+                        <strong>{detail.ownerName}</strong>
                     )}
-                    {accepted ? (
-                        <p className="body-sm text-brand">Contact unlocked</p>
-                    ) : (
-                        <p className="body-sm text-ink-muted">
-                            Unlocks after the owner approves you
-                        </p>
-                    )}
+                    <p>
+                        {phone
+                            ? formatPhoneIn(phone)
+                            : accepted
+                              ? "Representation approved"
+                              : "Contact shared after approval"}
+                    </p>
                 </div>
             </div>
-
-            {accepted && phone ? (
-                <div className="flex flex-col gap-2">
-                    <p className="body tabular text-ink">{formatPhoneIn(phone)}</p>
-                    <div className="flex flex-wrap gap-2">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-border-warm"
-                            render={<a href={`tel:+91${phone}`} />}
-                        >
-                            <Phone
-                                aria-hidden
-                                className="block-3.5 inline-3.5"
-                                strokeWidth={1.75}
+            {phone ? (
+                <div className={styles.contactActions}>
+                    <Button variant="outline" size="md" render={<a href={`tel:+91${phone}`} />}>
+                        <CallIcon size={17} aria-hidden />
+                        Call
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="md"
+                        render={
+                            <a
+                                href={formatWhatsAppUrl(phone)}
+                                target="_blank"
+                                rel="noopener noreferrer"
                             />
-                            Call
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-border-warm"
-                            render={
-                                <a
-                                    href={formatWhatsAppUrl(phone)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                />
-                            }
-                        >
-                            <MessageCircle
-                                aria-hidden
-                                className="block-3.5 inline-3.5"
-                                strokeWidth={1.75}
-                            />
-                            WhatsApp
-                        </Button>
-                    </div>
+                        }
+                    >
+                        <WhatsAppIcon size={17} aria-hidden />
+                        WhatsApp
+                    </Button>
                 </div>
             ) : accepted ? (
-                <p className="body-sm text-ink-muted">
-                    Representation accepted — contact details will appear once the owner has a phone
-                    on file.
+                <p className={styles.actionDescription}>
+                    Owner contact details aren&apos;t available right now.
                 </p>
-            ) : (
-                <div className="flex flex-col gap-2 rounded-control bg-surface-muted p-3">
-                    <p className="body-sm inline-flex items-center gap-1.5 text-ink-muted">
-                        <Lock aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-                        Phone hidden — unlocks after approval
-                    </p>
-                    <p className="body-sm text-ink-muted">Email hidden — unlocks after approval</p>
-                </div>
-            )}
+            ) : null}
         </section>
     );
 }
@@ -191,134 +144,124 @@ function OwnerListingActionRail({
     onAcceptInvite?: () => void;
     onCancelInvite?: () => void;
 }) {
-    const standing = detail.representation;
-    const status = standing?.status;
-    const accepted = status === "accepted";
-    const pending = status === "pending";
-    const ownerInvite = pending && standing?.initiatedBy === "owner";
-    const inviteBusy = Boolean(inviteActionPending);
-
+    const accepted = detail.representation?.status === "accepted";
+    const pending = detail.representation?.status === "pending";
+    const ownerInvite = pending && detail.representation?.initiatedBy === "owner";
     return (
-        <aside className="flex flex-col gap-4 self-start lg:sticky lg:inset-bs-24">
-            <div
-                className={cn(
-                    "flex flex-col gap-4 rounded-card border p-5",
-                    accepted
-                        ? "border-brand/20 bg-brand-soft"
-                        : "border-border-warm bg-surface-muted",
-                )}
-            >
-                <div className="flex flex-col gap-1">
-                    <p className="h6 text-ink">{standingLabel(standing)}</p>
-                    <p className="body-sm text-ink-muted">
-                        {accepted
-                            ? "You represent this listing. Owner contact is unlocked."
-                            : ownerInvite
-                              ? "The owner invited you to represent this listing. Accept to unlock contact."
-                              : pending
-                                ? "Your request is with the owner. We’ll notify you when they respond."
-                                : "Ask the owner for representation to unlock contact details."}
+        <>
+            <section className={styles.actionCard}>
+                <div className={styles.price}>
+                    <p className={styles.priceLabel}>
+                        {detail.listing.transactionType === "rent"
+                            ? "Monthly rent"
+                            : "Asking price"}
                     </p>
+                    <PropertyPriceBlock
+                        item={{
+                            ...detail.listing,
+                            commissionPercent: detail.commissionPercent,
+                            commissionAmount: detail.commissionAmount,
+                        }}
+                        compact
+                    />
                 </div>
-
-                {accepted ? (
-                    <Button
-                        size="lg"
-                        className="rounded-control bg-brand text-surface hover:bg-brand-text"
-                        render={<Link href={BROKER_MY_DEALS_HREF} />}
-                    >
-                        Open in My Deals
-                    </Button>
-                ) : ownerInvite ? (
-                    <div className="flex flex-col gap-2">
+                <h2 className={styles.actionTitle}>
+                    {accepted
+                        ? "You represent this property"
+                        : ownerInvite
+                          ? "The owner invited you"
+                          : pending
+                            ? "Your request is with the owner"
+                            : "Represent this property"}
+                </h2>
+                <p className={styles.actionDescription}>
+                    {accepted
+                        ? "This property is ready to work in My Deals."
+                        : ownerInvite
+                          ? "Accept the invitation to start working with this owner."
+                          : pending
+                            ? "We’ll notify you when the owner responds."
+                            : "Interested in working this property? Send the owner a request to represent it."}
+                </p>
+                <div className={styles.actionButtons}>
+                    {accepted ? (
                         <Button
+                            variant="accent"
                             size="lg"
-                            disabled={inviteBusy}
-                            loading={inviteActionPending === "accept"}
-                            onClick={onAcceptInvite}
-                            className="rounded-control bg-brand text-surface hover:bg-brand-text"
+                            render={<Link href={BROKER_MY_DEALS_HREF} />}
                         >
-                            {inviteActionPending === "accept" ? "Accepting…" : "Accept"}
+                            Open in My Deals
                         </Button>
+                    ) : ownerInvite ? (
+                        <>
+                            <Button
+                                variant="accent"
+                                size="lg"
+                                disabled={Boolean(inviteActionPending)}
+                                loading={inviteActionPending === "accept"}
+                                onClick={onAcceptInvite}
+                            >
+                                Accept invitation
+                            </Button>
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                disabled={Boolean(inviteActionPending)}
+                                loading={inviteActionPending === "cancel"}
+                                onClick={onCancelInvite}
+                            >
+                                Decline invitation
+                            </Button>
+                        </>
+                    ) : pending ? (
                         <Button
                             size="lg"
                             variant="outline"
-                            disabled={inviteBusy}
-                            loading={inviteActionPending === "cancel"}
-                            onClick={onCancelInvite}
-                            className="
-                              rounded-control border-2 border-brand bg-brand-soft font-semibold
-                              text-brand-text
-                              hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
-                            "
+                            disabled={busy}
+                            loading={busy}
+                            onClick={onCancelRequest}
                         >
-                            {inviteActionPending === "cancel" ? "Cancelling…" : "Cancel invitation"}
+                            Cancel request
                         </Button>
-                    </div>
-                ) : pending ? (
-                    <Button
-                        size="lg"
-                        variant="outline"
-                        disabled={busy}
-                        loading={busy}
-                        onClick={onCancelRequest}
-                        className="
-                          rounded-control border-2 border-brand bg-brand-soft font-semibold
-                          text-brand-text
-                          hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
-                        "
-                    >
-                        {busy ? "Cancelling…" : "Cancel request"}
-                    </Button>
-                ) : (
-                    <Button
-                        size="lg"
-                        disabled={busy}
-                        onClick={onRequest}
-                        className="rounded-control bg-brand text-surface hover:bg-brand-text"
-                    >
-                        {busy ? "Sending…" : "Request to represent"}
-                    </Button>
-                )}
-            </div>
-
+                    ) : (
+                        <Button
+                            variant="accent"
+                            size="lg"
+                            disabled={busy}
+                            loading={busy}
+                            onClick={onRequest}
+                        >
+                            {busy ? "Sending request…" : "Request to represent"}
+                        </Button>
+                    )}
+                </div>
+                {!accepted ? (
+                    <p className={styles.railNote}>
+                        <Lock size={14} aria-hidden />
+                        Owner contact details unlock after approval.
+                    </p>
+                ) : null}
+            </section>
             <OwnerContactCard detail={detail} />
-
-            {detail.commissionPercent != null && detail.commissionPercent > 0 ? (
-                <div className="rounded-card border border-border-warm bg-surface p-5">
-                    <p className="eyebrow">Sale commission</p>
-                    <p className="h5 tabular mbs-1 text-ink">{detail.commissionPercent}%</p>
-                    <p className="body-sm mbs-1 text-ink-muted">
-                        Shared by the owner for this listing.
-                    </p>
-                </div>
-            ) : null}
-            {detail.commissionAmount != null && detail.commissionAmount > 0 ? (
-                <div className="rounded-card border border-border-warm bg-surface p-5">
-                    <p className="eyebrow">Rent commission</p>
-                    <p className="h5 tabular mbs-1 text-ink">
-                        {formatPriceInr(detail.commissionAmount)}
-                    </p>
-                    <p className="body-sm mbs-1 text-ink-muted">
-                        Fixed brokerage shared by the owner.
-                    </p>
-                </div>
-            ) : null}
-        </aside>
+            {accepted ? <PropertyBuyersCard item={detail.listing} /> : null}
+        </>
     );
 }
 
-function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
+function OwnerListingDetailView({
+    initial,
+    onRefresh,
+}: {
+    initial: OwnerListingDetail;
+    onRefresh: () => Promise<OwnerListingDetail | undefined>;
+}) {
     const [detail, setDetail] = useState(initial);
     const [busy, setBusy] = useState(false);
     const [inviteActionPending, setInviteActionPending] = useState<"accept" | "cancel" | null>(
         null,
     );
-    const [descriptionOpen, setDescriptionOpen] = useState(false);
 
     const item = detail.listing;
-    const facts = useMemo(() => buildPropertyFacts(item), [item]);
-    const isLongDescription = item.description.length > 320;
 
     const handleRequest = useCallback(async () => {
         if (busy) return;
@@ -373,7 +316,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
         } finally {
             setBusy(false);
         }
-    }, [busy, detail.representation?.id, item.id]);
+    }, [busy, detail.representation, item.id]);
 
     const handleAcceptInvite = useCallback(async () => {
         if (busy || inviteActionPending) return;
@@ -396,6 +339,9 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
                     initiatedBy: "owner",
                 },
             }));
+            const refreshed = await onRefresh();
+            if (refreshed) setDetail(refreshed);
+            else toast.error("Invitation accepted. Reload the page to load owner contact details.");
             toast.success("Invite accepted — you can sell this property");
         } catch (error) {
             const message =
@@ -408,7 +354,7 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
         } finally {
             setInviteActionPending(null);
         }
-    }, [busy, detail.representation?.id, inviteActionPending, item.id]);
+    }, [busy, detail.representation, inviteActionPending, item.id, onRefresh]);
 
     const handleCancelInvite = useCallback(async () => {
         if (busy || inviteActionPending) return;
@@ -436,244 +382,80 @@ function OwnerListingDetailView({ initial }: { initial: OwnerListingDetail }) {
         } finally {
             setInviteActionPending(null);
         }
-    }, [busy, detail.representation?.id, inviteActionPending, item.id]);
+    }, [busy, detail.representation, inviteActionPending, item.id]);
 
     const canRequest =
         !detail.representation || !["pending", "accepted"].includes(detail.representation.status);
 
     return (
-        <div className="flex flex-col gap-6 pbe-24 lg:pbe-8">
-            <Link
-                href={BROKER_OWNER_LISTINGS_HREF}
-                className="
-                  body-sm inline-flex items-center gap-1 font-medium text-ink-muted
-                  transition-colors duration-160 inline-fit
-                  hover:text-ink
-                "
-            >
-                <ChevronLeft aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                Owner listings
-            </Link>
-
-            <PropertyGallery
-                title={item.title}
-                imageSrcs={item.imageSrcs}
-                overlay={
-                    <>
-                        <Badge color={standingColor(detail.representation)} blur="dark">
-                            {standingLabel(detail.representation)}
-                        </Badge>
-                        <Badge color="sky" blur="dark">
-                            Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
-                        </Badge>
-                    </>
-                }
-            />
-
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,1fr)] lg:gap-10">
-                <div className="flex flex-col gap-8 min-inline-0">
-                    <header className="flex flex-col gap-3">
-                        <h1 className="h2 text-ink">{item.title}</h1>
-                        <p className="body flex items-start gap-1.5 text-ink-muted">
-                            <MapPin
-                                aria-hidden
-                                className="mbs-0.5 shrink-0 block-4 inline-4"
-                                strokeWidth={1.75}
-                            />
-                            <span>
-                                {item.locality}
-                                {item.city ? `, ${item.city}` : ""}
-                            </span>
-                        </p>
-                    </header>
-
-                    <section
-                        className="
-                      rounded-card border border-border-warm bg-surface p-5
-                      sm:p-6
-                    "
-                    >
-                        <PropertyPriceBlock item={item} />
-                    </section>
-
-                    <section className="flex flex-col gap-4">
-                        <h2 className="eyebrow">Property details</h2>
-                        <dl
-                            className={cn(
-                                `
-                                  grid grid-cols-2 overflow-hidden rounded-card border
-                                  border-border-warm bg-surface
-                                `,
-                                factColumnsClass(facts.length),
-                            )}
-                        >
-                            {facts.map((fact) => (
-                                <div
-                                    key={fact.key}
-                                    className="
-                                      flex flex-col gap-1 bg-surface p-4
-                                      shadow-[inset_-1px_-1px_0_0_var(--color-border-warm)]
-                                    "
-                                >
-                                    <dt className="body-xs text-ink-muted">{fact.label}</dt>
-                                    <dd className="body font-semibold text-ink">{fact.value}</dd>
-                                </div>
-                            ))}
-                        </dl>
-                    </section>
-
-                    {item.description.trim() ? (
-                        <section className="flex flex-col gap-3">
-                            <h2 className="eyebrow">About this property</h2>
-                            <p
-                                className={
-                                    isLongDescription && !descriptionOpen
-                                        ? "body line-clamp-5 whitespace-pre-wrap text-ink-muted"
-                                        : "body whitespace-pre-wrap text-ink-muted"
-                                }
-                            >
-                                {item.description}
-                            </p>
-                            {isLongDescription ? (
-                                <button
-                                    type="button"
-                                    onClick={() => setDescriptionOpen((open) => !open)}
-                                    className="
-                                      body-sm font-semibold text-brand underline-offset-4 inline-fit
-                                      hover:underline
-                                    "
-                                >
-                                    {descriptionOpen ? "Show less" : "Read more"}
-                                </button>
-                            ) : null}
-                        </section>
-                    ) : null}
-
-                    {item.amenities.length > 0 ? (
-                        <section className="flex flex-col gap-3">
-                            <h2 className="eyebrow">Amenities</h2>
-                            <ul className="flex flex-wrap gap-2">
-                                {item.amenities.map((amenity) => (
-                                    <li
-                                        key={amenity}
-                                        className="
-                                          body-sm rounded-control border border-border-warm
-                                          bg-surface px-3.5 py-1.5 font-medium text-ink
-                                        "
-                                    >
-                                        {amenityLabel(amenity)}
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
-                    ) : null}
-                </div>
-
+        <PropertyDetailLayout
+            item={item}
+            audience="broker"
+            statusColor={
+                detail.representation?.status === "accepted"
+                    ? "emerald"
+                    : detail.representation?.status === "pending"
+                      ? "amber"
+                      : "stone"
+            }
+            backHref={BROKER_OWNER_LISTINGS_HREF}
+            backLabel="Owner listings"
+            status={standingLabel(detail.representation)}
+            revealAddress={detail.representation?.status === "accepted"}
+            rail={
                 <OwnerListingActionRail
                     detail={detail}
                     busy={busy}
                     inviteActionPending={inviteActionPending ?? undefined}
                     onRequest={() => void handleRequest()}
-                    onCancelRequest={
-                        detail.representation?.status === "pending" &&
-                        detail.representation.initiatedBy !== "owner"
-                            ? () => void handleCancelRequest()
-                            : undefined
-                    }
-                    onAcceptInvite={
-                        detail.representation?.status === "pending" &&
-                        detail.representation.initiatedBy === "owner"
-                            ? () => void handleAcceptInvite()
-                            : undefined
-                    }
-                    onCancelInvite={
-                        detail.representation?.status === "pending" &&
-                        detail.representation.initiatedBy === "owner"
-                            ? () => void handleCancelInvite()
-                            : undefined
-                    }
+                    onCancelRequest={() => void handleCancelRequest()}
+                    onAcceptInvite={() => void handleAcceptInvite()}
+                    onCancelInvite={() => void handleCancelInvite()}
                 />
-            </div>
-
-            <div
-                className="
-                  fixed inset-x-0 inset-be-0 z-30 flex items-center gap-3 border-bs
-                  border-border-warm bg-surface/95 p-3 backdrop-blur-sm
-                  lg:hidden
-                "
-            >
-                {canRequest ? (
+            }
+            mobileAction={
+                canRequest ? (
                     <Button
-                        type="button"
+                        variant="accent"
                         size="lg"
                         disabled={busy}
+                        loading={busy}
                         onClick={() => void handleRequest()}
-                        className="flex-1 rounded-control bg-brand text-surface hover:bg-brand-text"
                     >
-                        {busy ? "Sending…" : "Request to represent"}
+                        Request to represent
                     </Button>
                 ) : detail.representation?.status === "pending" &&
                   detail.representation.initiatedBy === "owner" ? (
-                    <>
-                        <Button
-                            type="button"
-                            size="lg"
-                            disabled={Boolean(inviteActionPending)}
-                            loading={inviteActionPending === "accept"}
-                            onClick={() => void handleAcceptInvite()}
-                            className="
-                              flex-1 rounded-control bg-brand text-surface
-                              hover:bg-brand-text
-                            "
-                        >
-                            {inviteActionPending === "accept" ? "Accepting…" : "Accept"}
-                        </Button>
-                        <Button
-                            type="button"
-                            size="lg"
-                            variant="outline"
-                            disabled={Boolean(inviteActionPending)}
-                            loading={inviteActionPending === "cancel"}
-                            onClick={() => void handleCancelInvite()}
-                            className="
-                              flex-1 rounded-control border-2 border-brand bg-brand-soft
-                              font-semibold text-brand-text
-                              hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
-                            "
-                        >
-                            {inviteActionPending === "cancel" ? "Cancelling…" : "Cancel invitation"}
-                        </Button>
-                    </>
-                ) : detail.representation?.status === "pending" &&
-                  detail.representation.initiatedBy !== "owner" ? (
                     <Button
-                        type="button"
+                        variant="accent"
+                        size="lg"
+                        disabled={Boolean(inviteActionPending)}
+                        loading={inviteActionPending === "accept"}
+                        onClick={() => void handleAcceptInvite()}
+                    >
+                        Accept invitation
+                    </Button>
+                ) : detail.representation?.status === "pending" ? (
+                    <Button
                         size="lg"
                         variant="outline"
                         disabled={busy}
                         loading={busy}
                         onClick={() => void handleCancelRequest()}
-                        className="
-                          flex-1 rounded-control border-2 border-brand bg-brand-soft font-semibold
-                          text-brand-text
-                          hover:border-brand hover:bg-brand-soft-hover hover:text-brand-text
-                        "
                     >
-                        {busy ? "Cancelling…" : "Cancel request"}
+                        Cancel request
                     </Button>
                 ) : (
                     <Button
+                        variant="accent"
                         size="lg"
-                        className="flex-1 rounded-control bg-brand text-surface hover:bg-brand-text"
                         render={<Link href={BROKER_MY_DEALS_HREF} />}
                     >
-                        {detail.representation?.status === "accepted"
-                            ? "Open in My Deals"
-                            : "View request"}
+                        Open in My Deals
                     </Button>
-                )}
-            </div>
-        </div>
+                )
+            }
+        />
     );
 }
 
@@ -685,6 +467,7 @@ function NotFoundState() {
                 This owner listing may be private, unpublished, or no longer available.
             </p>
             <Button
+                variant="accent"
                 className="bg-brand-ink text-surface hover:bg-brand-ink/90"
                 render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
             >
@@ -697,50 +480,69 @@ function NotFoundState() {
 export function OwnerListingDetailPage() {
     const params = useParams<{ id: string }>();
     const propertyId = params.id;
-    const [detail, setDetail] = useState<OwnerListingDetail | null | undefined>(undefined);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        void propertiesApi
-            .browseById(propertyId)
-            .then((raw) => {
-                if (cancelled) return;
-                const listing = mapPropertyListingToMyItem(raw);
-                const commissionRaw = Number(raw.commissionPercent);
-                const commissionAmountRaw = Number(raw.commissionAmount);
-                setDetail({
-                    listing,
-                    ownerUserId: raw.ownerUserId ?? raw.owner?.userId ?? undefined,
-                    ownerName: raw.ownerName?.trim() || raw.organizationName?.trim() || "Owner",
-                    ownerAvatarUrl: raw.ownerAvatarUrl ?? undefined,
-                    ownerPhoneDigits: normalizePhoneDigits(raw.ownerPhone),
-                    representation: raw.representation
-                        ? {
-                              id: raw.representation.id,
-                              status: raw.representation.status,
-                              initiatedBy: raw.representation.initiatedBy,
-                          }
+    const userId = useAppSelector((state) => state.auth.user?.id);
+    const query = useQuery({
+        queryKey: ["owner-listing-detail", userId, propertyId],
+        queryFn: async ({ signal }): Promise<OwnerListingDetail> => {
+            const raw = await propertiesApi.browseById(propertyId, signal);
+            const commissionRaw = Number(raw.commissionPercent);
+            const commissionAmountRaw = Number(raw.commissionAmount);
+            return {
+                listing: mapPropertyListingToMyItem(raw),
+                ownerUserId: raw.ownerUserId ?? raw.owner?.userId ?? undefined,
+                ownerName: raw.ownerName?.trim() || raw.organizationName?.trim() || "Owner",
+                ownerAvatarUrl: raw.ownerAvatarUrl ?? undefined,
+                ownerPhoneDigits: normalizePhoneDigits(raw.ownerPhone),
+                representation: raw.representation
+                    ? {
+                          id: raw.representation.id,
+                          status: raw.representation.status,
+                          initiatedBy: raw.representation.initiatedBy,
+                      }
+                    : null,
+                commissionPercent:
+                    Number.isFinite(commissionRaw) && commissionRaw > 0 ? commissionRaw : null,
+                commissionAmount:
+                    Number.isFinite(commissionAmountRaw) && commissionAmountRaw > 0
+                        ? commissionAmountRaw
                         : null,
-                    commissionPercent:
-                        Number.isFinite(commissionRaw) && commissionRaw > 0 ? commissionRaw : null,
-                    commissionAmount:
-                        Number.isFinite(commissionAmountRaw) && commissionAmountRaw > 0
-                            ? commissionAmountRaw
-                            : null,
-                });
-            })
-            .catch(() => {
-                if (!cancelled) setDetail(null);
-            });
+            };
+        },
+        retry: (failureCount, error) =>
+            !(error instanceof ApiError && error.status === 404) && failureCount < 1,
+        // The view owns optimistic representation actions; always load fresh standing on return.
+        staleTime: 0,
+        gcTime: 0,
+    });
 
-        return () => {
-            cancelled = true;
-        };
-    }, [propertyId]);
+    if (query.isPending) return <OwnerListingDetailSkeleton />;
+    if (query.isError) {
+        if (query.error instanceof ApiError && query.error.status === 404) return <NotFoundState />;
+        return (
+            <div role="alert" className="flex flex-col items-center gap-4 py-16 text-center">
+                <h1 className="h3 text-ink">Could not load this property</h1>
+                <p className="body text-ink-muted">Check your connection and try again.</p>
+                <Button variant="outline" onClick={() => void query.refetch()}>
+                    Try again
+                </Button>
+                <Link
+                    href={BROKER_OWNER_LISTINGS_HREF}
+                    className="body-sm inline-flex items-center text-brand min-block-11"
+                >
+                    Back to owner listings
+                </Link>
+            </div>
+        );
+    }
 
-    if (detail === undefined) return null;
-    if (!detail) return <NotFoundState />;
-
-    return <OwnerListingDetailView initial={detail} />;
+    return (
+        <OwnerListingDetailView
+            key={propertyId}
+            initial={query.data}
+            onRefresh={async () => {
+                const result = await query.refetch();
+                return result.isSuccess ? result.data : undefined;
+            }}
+        />
+    );
 }

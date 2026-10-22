@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { Building2, Check, Eye, MapPin, MoreHorizontal, Phone, X } from "lucide-react";
+import { Building2, Check, Eye, MapPin, MoreHorizontal, Phone, X } from "@/components/shared/icons";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
@@ -344,7 +344,8 @@ export function OwnerLeadBoardCard({
                                 commissionPercent={facts.commissionPercent}
                                 commissionAmountInr={facts.commissionAmountInr}
                                 audience="owner"
-                                className="h5 font-semibold tracking-wide"
+                                size="lg"
+                                showEmptyTip
                             />
                         ) : null}
                         <h3 className="body truncate font-semibold tracking-wide text-ink capitalize">

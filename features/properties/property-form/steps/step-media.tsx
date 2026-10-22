@@ -14,7 +14,7 @@ import {
     Video,
     View,
     X,
-} from "lucide-react";
+} from "@/components/shared/icons";
 
 import { createClientId } from "@/lib/client-id";
 import {

@@ -2,7 +2,7 @@
 
 import { useFormContext } from "react-hook-form";
 
-import { BadgePercent, Wallet } from "lucide-react";
+import { BadgePercent, Wallet } from "@/components/shared/icons";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
 import { formatInr } from "@/lib/format/inr";

@@ -73,6 +73,8 @@ function mapStatus(status: string | undefined): OwnerRepStatus {
     if (value === "rejected") return "rejected";
     if (value === "withdrawn") return "withdrawn";
     if (value === "revoked") return "revoked";
+    if (value === "owner_cancelled") return "owner_cancelled";
+    if (value === "broker_cancelled") return "broker_cancelled";
     return "unknown";
 }
 

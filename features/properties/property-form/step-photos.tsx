@@ -3,7 +3,7 @@
 import { type MutableRefObject, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Camera, X } from "lucide-react";
+import { Camera, X } from "@/components/shared/icons";
 
 import {
     MAX_LISTING_PHOTOS,

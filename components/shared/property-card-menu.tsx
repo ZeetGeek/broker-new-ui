@@ -9,13 +9,15 @@ import {
     Ellipsis,
     History,
     Link2,
-    MessageCircle,
     Pencil,
+    Phone,
     Share2,
     Trash2,
-    X,
-} from "lucide-react";
+    UserPlus,
+    UserRound,
+} from "@/components/shared/icons";
 
+import { formatPhoneIn, formatTelUrl } from "@/lib/format/phone";
 import {
     buildEmailShareUrl,
     buildFacebookShareUrl,
@@ -28,8 +30,13 @@ import {
 import { cn } from "@/lib/utils";
 
 import { OVERLAY_ICON_BUTTON_CLASS } from "@/components/shared/overlay-card";
+import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import shareBrands from "@/components/shared/thesvg-color-share.json";
 import { Button } from "@/components/ui/button";
+
+import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
+
+addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -62,7 +69,7 @@ type ShareChannel = {
 
 export type PropertyCardMenuContact = {
     name: string;
-    /** @deprecated Prefer call / WhatsApp on the card owner section. Kept optional for callers. */
+    /** Shared phone — "Call …" in the ⋯ menu. */
     phoneDigits?: string;
     onMessage?: () => void;
 };
@@ -71,14 +78,32 @@ export type PropertyCardMenuProps = {
     listing: PropertyShareInput;
     isSaved?: boolean;
     onToggleSave?: () => void;
-    /** Message / WhatsApp the owner (or broker). */
+    /** Call / message the owner (or broker). */
     contact?: PropertyCardMenuContact;
+    /** Open the attach-buyers flow. */
+    onAddBuyer?: () => void;
+    /** Owned inventory: attach or change the exclusive owner. */
+    onAttachOwner?: () => void;
+    /** Defaults to "Attach owner". */
+    attachOwnerLabel?: string;
+    /** Nudge the owner on a pending request to represent. */
+    onRemind?: () => void;
+    /** When false, reminder stays visible but disabled. Default true when `onRemind` is set. */
+    canRemind?: boolean;
+    /** Reminders already sent — shown as Remind used/limit under Chat. */
+    remindersUsed?: number;
+    /** Max reminders for this request. Defaults to REPRESENTATION_REMINDER_LIMIT. */
+    remindersLimit?: number;
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
+    /** Accepted representation: end it ("Stop selling this property"). */
+    onStopRepresenting?: () => void;
     /** Owned cards: open the edit form. */
     onEdit?: () => void;
     /** Owned cards: ask to delete this listing. */
     onDelete?: () => void;
+    /** Owner cards: mark this listing as sold. */
+    onMarkSold?: () => void;
     /** Extra items after the standard actions. */
     extraItems?: ReactNode;
     /** `overlay` = glass circle on photo. `plain` = muted icon in list rows. */
@@ -147,10 +172,19 @@ export function PropertyCardMenu({
     isSaved = false,
     onToggleSave,
     contact,
+    onAddBuyer,
+    onAttachOwner,
+    attachOwnerLabel = "Attach owner",
+    onRemind,
+    canRemind = true,
+    remindersUsed = 0,
+    remindersLimit = REPRESENTATION_REMINDER_LIMIT,
     onOpenTimeline,
     onCancelRequest,
+    onStopRepresenting,
     onEdit,
     onDelete,
+    onMarkSold,
     extraItems,
     tone = "overlay",
     className,
@@ -241,10 +275,20 @@ export function PropertyCardMenu({
         [shareText, shareUrl],
     );
 
-    const hasContact = Boolean(contact?.onMessage);
+    const hasContact = Boolean(contact?.onMessage || contact?.phoneDigits || onRemind);
     const hasDealExtras = Boolean(
-        onOpenTimeline || onCancelRequest || onEdit || onDelete || extraItems,
+        onAddBuyer ||
+        onOpenTimeline ||
+        onCancelRequest ||
+        onStopRepresenting ||
+        onAttachOwner ||
+        onEdit ||
+        onMarkSold ||
+        onDelete ||
+        extraItems,
     );
+    const remindUsed = Math.max(0, Math.min(remindersUsed, remindersLimit));
+    const contactPhoneLabel = contact?.phoneDigits ? formatPhoneIn(contact.phoneDigits) : null;
 
     return (
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>
@@ -381,6 +425,19 @@ export function PropertyCardMenu({
 
                 {hasContact ? <DropdownMenuSeparator className={SEPARATOR_CLASS} /> : null}
 
+                {contact?.phoneDigits && contactPhoneLabel ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        onClick={() => {
+                            window.location.href = formatTelUrl(contact.phoneDigits!);
+                            setOpen(false);
+                        }}
+                    >
+                        <Phone aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        Call owner
+                    </DropdownMenuItem>
+                ) : null}
+
                 {contact?.onMessage ? (
                     <DropdownMenuItem
                         className={ITEM_CLASS}
@@ -389,17 +446,81 @@ export function PropertyCardMenu({
                             setOpen(false);
                         }}
                     >
-                        <MessageCircle aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Message {contact.name.split(" ")[0]}
+                        <Icon
+                            icon="tabler:message"
+                            width={16}
+                            height={16}
+                            className={ICON_CLASS}
+                            aria-hidden
+                        />
+                        Chat here
+                    </DropdownMenuItem>
+                ) : null}
+
+                {onRemind ? (
+                    <DropdownMenuItem
+                        className={cn(ITEM_CLASS, "justify-between gap-3")}
+                        disabled={!canRemind}
+                        onClick={() => {
+                            if (!canRemind) return;
+                            onRemind();
+                            setOpen(false);
+                        }}
+                    >
+                        <span className="flex min-inline-0 items-center gap-3">
+                            <Icon
+                                icon="tabler:bell"
+                                width={16}
+                                height={16}
+                                className={ICON_CLASS}
+                                aria-hidden
+                            />
+                            Remind owner
+                        </span>
+                        <span
+                            className={cn(
+                                "tabular body-xs shrink-0 font-semibold tracking-wide",
+                                canRemind ? "text-ink-muted" : "text-ink-subtle",
+                            )}
+                            aria-label={`${remindUsed} of ${remindersLimit} reminders used`}
+                        >
+                            {remindUsed}/{remindersLimit}
+                        </span>
                     </DropdownMenuItem>
                 ) : null}
 
                 {hasDealExtras ? <DropdownMenuSeparator className={SEPARATOR_CLASS} /> : null}
 
+                {onAttachOwner ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        onClick={() => {
+                            onAttachOwner();
+                            setOpen(false);
+                        }}
+                    >
+                        <UserRound aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        {attachOwnerLabel}
+                    </DropdownMenuItem>
+                ) : null}
+
+                {onAddBuyer ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        onClick={() => {
+                            onAddBuyer();
+                            setOpen(false);
+                        }}
+                    >
+                        <UserPlus aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        Attach buyer
+                    </DropdownMenuItem>
+                ) : null}
+
                 {onOpenTimeline ? (
                     <DropdownMenuItem className={ITEM_CLASS} onClick={onOpenTimeline}>
                         <History aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        What happened
+                        View timeline
                     </DropdownMenuItem>
                 ) : null}
 
@@ -418,12 +539,43 @@ export function PropertyCardMenu({
                         )}
                         onClick={onCancelRequest}
                     >
-                        <X
-                            aria-hidden
+                        <Icon
+                            icon="tabler:cancel"
+                            width={16}
+                            height={16}
                             className="menu-stroke-icon is-danger block-4 inline-4 shrink-0"
-                            strokeWidth={1.75}
+                            aria-hidden
                         />
                         Cancel request
+                    </DropdownMenuItem>
+                ) : null}
+
+                {onStopRepresenting ? (
+                    <DropdownMenuItem
+                        variant="destructive"
+                        className={cn(
+                            ITEM_CLASS,
+                            `
+                              text-danger!
+                              focus:bg-danger-soft! focus:text-danger!
+                              data-highlighted:bg-danger-soft! data-highlighted:text-danger!
+                              focus:[&>svg]:text-danger!
+                              data-highlighted:[&>svg]:text-danger!
+                            `,
+                        )}
+                        onClick={() => {
+                            onStopRepresenting();
+                            setOpen(false);
+                        }}
+                    >
+                        <Icon
+                            icon="tabler:cancel"
+                            width={16}
+                            height={16}
+                            className="menu-stroke-icon is-danger block-4 inline-4 shrink-0"
+                            aria-hidden
+                        />
+                        Stop selling this property
                     </DropdownMenuItem>
                 ) : null}
 
@@ -437,6 +589,19 @@ export function PropertyCardMenu({
                     >
                         <Pencil aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                         Edit property
+                    </DropdownMenuItem>
+                ) : null}
+
+                {onMarkSold ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        onClick={() => {
+                            onMarkSold();
+                            setOpen(false);
+                        }}
+                    >
+                        <Check aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        Mark as sold
                     </DropdownMenuItem>
                 ) : null}
 

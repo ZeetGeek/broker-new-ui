@@ -2,7 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 
-import { FileText, Gift, type LucideIcon, Sparkles } from "lucide-react";
+import { FileText, Gift, type AppIcon, Sparkles } from "@/components/shared/icons";
 
 import { formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 import type { CreditEntry, CreditEntryKind } from "@/features/referrals/types";
 
-const ENTRY_ICON: Record<CreditEntryKind, LucideIcon> = {
+const ENTRY_ICON: Record<CreditEntryKind, AppIcon> = {
     referral_qualified: Sparkles,
     bonus: Gift,
     listing_published: FileText,

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Search, UserRound } from "lucide-react";
+import { Search, UserRound } from "@/components/shared/icons";
 
 import {
     type ExclusiveOwnerItem,
