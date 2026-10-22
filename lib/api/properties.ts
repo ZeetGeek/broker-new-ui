@@ -78,6 +78,16 @@ export type PropertyBrowseListing = {
 };
 
 /** Inventory listing returned by `GET /properties` (and get/create/update). */
+/** `GET /properties/public/:id` — listing facts plus who offers it, no contact details. */
+export type PublicPropertyListing = PropertyListing & {
+    isSold?: boolean;
+    listedBy?: {
+        type: "owner" | "broker";
+        name: string | null;
+        avatarUrl: string | null;
+    };
+};
+
 export type PropertyListing = PropertyBrowseListing & {
     visibility?: "public" | "private" | string | null;
     publishStatus?: PropertyPublishStatus | string | null;
@@ -660,6 +670,14 @@ export const propertiesApi = {
     remove(id: string) {
         return apiFetch<{ id: string; deleted: boolean }>(`/properties/${id}`, {
             method: "DELETE",
+        });
+    },
+
+    /** No-login detail for a shared link (`/property/:id`). Listing facts only. */
+    getPublic(id: string, signal?: AbortSignal) {
+        return apiFetch<PublicPropertyListing>(`/properties/public/${id}`, {
+            skipAuth: true,
+            signal,
         });
     },
 

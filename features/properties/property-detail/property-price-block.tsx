@@ -26,13 +26,20 @@ import type { MyListingItem } from "@/features/properties/your-listings/types";
  * toggle, and keep the other as a quiet secondary line.
  */
 export function PropertyPriceBlock({
-    item,
+    item: rawItem,
     audience = "broker",
+    hideCommission = false,
 }: {
     item: MyListingItem;
     /** Owner portal: "Broker gets". Broker portal: "You get". */
     audience?: CommissionAudience;
+    /** Public share page: price only, no broker commission line or tip. */
+    hideCommission?: boolean;
 }) {
+    const item = hideCommission
+        ? { ...rawItem, commissionPercent: null, commissionAmount: null }
+        : rawItem;
+    const showEmptyTip = !hideCommission;
     const [mode, setMode] = useState<ListingPriceMode>(defaultPriceMode(item));
     const both = offersBoth(item);
 
@@ -94,7 +101,7 @@ export function PropertyPriceBlock({
                             commissionAmountInr={item.commissionAmount}
                             audience={audience}
                             size="2xl"
-                            showEmptyTip
+                            showEmptyTip={showEmptyTip}
                         />
                     )}
                     {!both ? (
@@ -122,7 +129,7 @@ export function PropertyPriceBlock({
                                 commissionAmountInr={item.commissionAmount}
                                 audience={audience}
                                 size="sm"
-                                showEmptyTip
+                                showEmptyTip={showEmptyTip}
                                 className="text-ink"
                             />
                         </span>
