@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 import { Check, Send, X } from "@/components/shared/icons";
 
-import { ApiError } from "@/lib/api/client";
-import { propertiesApi } from "@/lib/api/properties";
 import { formatRelativePast } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
@@ -231,7 +228,6 @@ export function InviteCard({
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
     const [isStopOpen, setIsStopOpen] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);
-    const [isSaved, setIsSaved] = useState(false);
     const [unreadMessageCount, setUnreadMessageCount] = useState(item.unreadMessageCount ?? 0);
     const { openChat } = useChat();
     const ownerPhoneDigits = ownerPhoneFor(item);
@@ -246,26 +242,9 @@ export function InviteCard({
         openChat(chatPeerFor(item));
     }
 
-    async function toggleSave() {
-        const next = !isSaved;
-        setIsSaved(next);
-        try {
-            if (next) {
-                await propertiesApi.bookmark(item.propertyId);
-            } else {
-                await propertiesApi.unbookmark(item.propertyId);
-            }
-        } catch (error) {
-            setIsSaved(!next);
-            toast.error(error instanceof ApiError ? error.message : "Could not update save");
-        }
-    }
-
     const cardMenu = (
         <DealCardPhotoToolbar
             listing={item}
-            isSaved={isSaved}
-            onToggleSave={() => void toggleSave()}
             contact={
                 canChat
                     ? {
