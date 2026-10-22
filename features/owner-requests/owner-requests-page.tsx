@@ -24,7 +24,11 @@ import {
     type OwnerRequestsSort,
 } from "@/features/owner-requests/owner-requests-header";
 import { OwnerRequestsIntro } from "@/features/owner-requests/owner-requests-intro";
-import type { OwnerRequestsSummary, OwnerRequestsTab } from "@/features/owner-requests/types";
+import {
+    OWNER_REQUESTS_TABS,
+    type OwnerRequestsSummary,
+    type OwnerRequestsTab,
+} from "@/features/owner-requests/types";
 import { useOwnerRepQueue } from "@/features/owner-requests/use-owner-rep-queue";
 import { REQUESTS_GRID_BREAKPOINTS } from "@/features/properties/my-requests/requests-grid-class";
 import {
@@ -33,7 +37,7 @@ import {
 } from "@/features/properties/my-requests/requests-skeleton";
 
 function isRequestsTab(value: string | null): value is OwnerRequestsTab {
-    return value === "requests" || value === "invitations";
+    return OWNER_REQUESTS_TABS.includes(value as OwnerRequestsTab);
 }
 
 function apiMessage(error: unknown, fallback: string): string {
@@ -79,12 +83,18 @@ export function OwnerRequestsPage() {
         void Promise.all([
             representativeApi.ownerRequestPage({ status: "pending", limit: 1 }),
             representativeApi.ownerInvitationPage({ status: "pending", limit: 1 }),
+            representativeApi.ownerAllPage({ status: "accepted", limit: 1 }),
+            representativeApi.ownerAllPage({ status: "rejected", limit: 1 }),
+            representativeApi.ownerAllPage({ status: "cancelled", limit: 1 }),
         ])
-            .then(([incoming, invites]) => {
+            .then(([incoming, invites, accepted, rejected, cancelledReps]) => {
                 if (cancelled) return;
                 setSummary({
                     incomingPending: incoming.total,
                     invitesPending: invites.total,
+                    accepted: accepted.total,
+                    rejected: rejected.total,
+                    cancelled: cancelledReps.total,
                 });
             })
             .catch(() => {
@@ -129,7 +139,12 @@ export function OwnerRequestsPage() {
         return <RequestsPageSkeleton />;
     }
 
-    const cardActions = tab === "requests" ? "respond" : "withdraw";
+    const cardActions =
+        tab === "requests" ? "respond" : tab === "invitations" ? "withdraw" : "none";
+    const handleRemoved = () => {
+        setRevision((v) => v + 1);
+        void refetchQueue();
+    };
 
     let body: ReactNode;
 
@@ -206,6 +221,7 @@ export function OwnerRequestsPage() {
                                     "Invitation withdrawn",
                                 )
                             }
+                            onRemoved={tab === "accepted" ? handleRemoved : undefined}
                         />
                     )}
                 />

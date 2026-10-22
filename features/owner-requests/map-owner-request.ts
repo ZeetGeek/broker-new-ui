@@ -134,6 +134,11 @@ export function mapRepresentationToOwnerCard(rep: RepresentationItem): OwnerRequ
         ...listing,
         id: rep.id,
         status,
+        initiatedBy:
+            rep.initiatedBy === "owner" || rep.initiatedBy === "broker"
+                ? rep.initiatedBy
+                : undefined,
+        cancelReason: rep.cancelReason?.trim() || undefined,
         message: rep.message?.trim() || null,
         createdAt: rep.createdAt ?? new Date().toISOString(),
         brokerName,

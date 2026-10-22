@@ -98,6 +98,8 @@ export type PropertyCardMenuProps = {
     onCancelRequest?: () => void;
     /** Accepted representation: end it ("Stop selling this property"). */
     onStopRepresenting?: () => void;
+    /** Menu text for `onStopRepresenting`. Owner side says "Remove broker". */
+    stopRepresentingLabel?: string;
     /** Owned cards: open the edit form. */
     onEdit?: () => void;
     /** Owned cards: ask to delete this listing. */
@@ -182,6 +184,7 @@ export function PropertyCardMenu({
     onOpenTimeline,
     onCancelRequest,
     onStopRepresenting,
+    stopRepresentingLabel = "Stop selling this property",
     onEdit,
     onDelete,
     onMarkSold,
@@ -575,7 +578,7 @@ export function PropertyCardMenu({
                             className="menu-stroke-icon is-danger block-4 inline-4 shrink-0"
                             aria-hidden
                         />
-                        Stop selling this property
+                        {stopRepresentingLabel}
                     </DropdownMenuItem>
                 ) : null}
 

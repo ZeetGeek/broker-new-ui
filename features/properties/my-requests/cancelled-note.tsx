@@ -4,11 +4,21 @@ import { Ban } from "@/components/shared/icons";
 export function CancelledNote({
     endedBy,
     reason,
+    viewer = "broker",
 }: {
     endedBy?: "owner" | "broker";
     reason?: string;
+    /** Whose card this is — wording is "you" for the viewer's own side. */
+    viewer?: "owner" | "broker";
 }) {
-    const who = endedBy === "owner" ? "The owner cancelled" : "You stopped selling";
+    const who =
+        viewer === "owner"
+            ? endedBy === "owner"
+                ? "You removed this broker"
+                : "The broker stopped selling"
+            : endedBy === "owner"
+              ? "The owner cancelled"
+              : "You stopped selling";
 
     return (
         <p className="body-sm flex items-start gap-1.5 text-ink-muted">

@@ -328,6 +328,28 @@ export const representativeApi = {
         return apiFetch<RepresentationItem[]>(`/representative/owner/list${qs}`);
     },
 
+    /**
+     * Owner: requests and invitations together, cursor-paged. `status` is
+     * `accepted`, `rejected`, `cancelled` (either side), `closed`, `all`, …
+     */
+    ownerAllPage(params?: OwnerRepQueueQuery, signal?: AbortSignal) {
+        if (isMockMode()) {
+            return Promise.resolve<RepresentationListPage>({
+                items: [],
+                total: 0,
+                page: 1,
+                limit: 12,
+                totalPages: 0,
+                nextCursor: null,
+                hasMore: false,
+            });
+        }
+        return apiFetch<RepresentationListPage>(
+            `/representative/owner/list?${queueQuery(params)}`,
+            { signal },
+        );
+    },
+
     ownerRequestList(status?: string) {
         if (isMockMode()) return Promise.resolve([]);
         const qs = status ? `?status=${encodeURIComponent(status)}` : "";
