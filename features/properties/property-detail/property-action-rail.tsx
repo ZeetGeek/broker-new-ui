@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 
 import type { MyListingItem } from "../your-listings/types";
 
+import { PropertyBuyersCard } from "./property-buyers-card";
 import { listedAgoLabel } from "./property-detail-facts";
 import { PropertyPriceBlock } from "./property-price-block";
 
@@ -205,6 +206,7 @@ export function PropertyActionRail({
                     ) : null}
                 </section>
             ) : null}
+            {!isOwner ? <PropertyBuyersCard item={item} /> : null}
             <section className={styles.management} aria-label="Listing management">
                 <div className={styles.managementRow}>
                     <span>Added</span>

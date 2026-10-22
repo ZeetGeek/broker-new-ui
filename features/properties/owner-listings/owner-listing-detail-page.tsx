@@ -27,6 +27,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
 import { OwnerListingDetailSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
+import { PropertyBuyersCard } from "@/features/properties/property-detail/property-buyers-card";
 import { PropertyDetailLayout } from "@/features/properties/property-detail/property-detail-layout";
 import { PropertyPriceBlock } from "@/features/properties/property-detail/property-price-block";
 import { mapPropertyListingToMyItem } from "@/features/properties/your-listings/map-my-listing";
@@ -241,6 +242,7 @@ function OwnerListingActionRail({
                 ) : null}
             </section>
             <OwnerContactCard detail={detail} />
+            {accepted ? <PropertyBuyersCard item={detail.listing} /> : null}
         </>
     );
 }

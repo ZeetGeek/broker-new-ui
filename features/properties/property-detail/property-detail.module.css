@@ -703,6 +703,44 @@
     font-weight: 600;
     margin-block-end: 18px;
 }
+.buyerList {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-block-size: 280px;
+    overflow-y: auto;
+    padding: 4px;
+    margin: -4px;
+}
+.buyersSummary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.buyerList li {
+    display: flex;
+    flex-shrink: 0;
+    min-block-size: 36px;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.buyersEmpty {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-ink-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+.buyersEmpty svg {
+    flex-shrink: 0;
+    color: var(--color-brand);
+}
 .contactIdentity {
     display: flex;
     align-items: center;

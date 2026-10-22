@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Search, UserPlus, Users } from "@/components/shared/icons";
-
 import { clientsApi } from "@/lib/api/clients";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
@@ -12,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Search, UserPlus, Users } from "@/components/shared/icons";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
@@ -21,6 +20,8 @@ import { Input } from "@/components/ui/input";
 
 import type { ClientItem } from "@/features/clients/types";
 import type { RequestItem } from "@/features/properties/my-requests/types";
+
+type BuyerProperty = Pick<RequestItem, "propertyId" | "title" | "isRent" | "amountInr" | "bhk">;
 
 function matchesQuery(client: ClientItem, q: string): boolean {
     const needle = q.trim().toLowerCase();
@@ -37,7 +38,7 @@ function matchesQuery(client: ClientItem, q: string): boolean {
  * Why this buyer may not suit the property. Shown as a quiet warning rather
  * than a block — the broker knows their buyers better than we do.
  */
-function mismatchReason(client: ClientItem, request: RequestItem): string | null {
+function mismatchReason(client: ClientItem, request: BuyerProperty): string | null {
     const wantsRent = client.lookingFor === "rent";
     if (wantsRent !== request.isRent) {
         return wantsRent ? "Wants to rent" : "Wants to buy";
@@ -70,7 +71,7 @@ function BuyerRow({
     onToggle,
 }: {
     client: ClientItem;
-    request: RequestItem;
+    request: BuyerProperty;
     isSelected: boolean;
     onToggle: () => void;
 }) {
@@ -138,7 +139,7 @@ export function AttachBuyersModal({
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    request: RequestItem;
+    request: BuyerProperty;
     onSaved: () => void;
 }) {
     const [clients, setClients] = useState<ClientItem[]>([]);
