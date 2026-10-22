@@ -2,166 +2,237 @@
 
 import Link from "next/link";
 
-import { Eye, EyeOff, Inbox, Pencil, Trash2 } from "@/components/shared/icons";
+import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
+import type { PropertyBroker } from "@/lib/format/property-brokers";
 
-import { cn } from "@/lib/utils";
-
-import { PropertySharePopover } from "@/components/shared/property-share-popover";
+import { AttachedBrokersRow } from "@/components/shared/attached-people-row";
+import {
+    CallIcon,
+    Eye,
+    EyeOff,
+    Inbox,
+    Lock,
+    Pencil,
+    Trash2,
+    WhatsAppIcon,
+} from "@/components/shared/icons";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
-import { listedAgoLabel } from "@/features/properties/property-detail/property-detail-facts";
-import type { MyListingItem } from "@/features/properties/your-listings/types";
+import type { MyListingItem } from "../your-listings/types";
+
+import { listedAgoLabel } from "./property-detail-facts";
+import { PropertyPriceBlock } from "./property-price-block";
+
+import styles from "./property-detail.module.css";
 
 export type PropertyActionRailProps = {
     item: MyListingItem;
+    portal: "owner" | "broker";
     busy: boolean;
     onTogglePublish: () => void;
     onRequestDelete: () => void;
-    shareListing: React.ComponentProps<typeof PropertySharePopover>["listing"];
     editHref: string;
     requestsHref?: string;
+    brokers?: PropertyBroker[];
+    brokersState?: "loading" | "ready" | "error";
+    onRetryBrokers?: () => void;
 };
 
-/**
- * The rail answers one question: is this property working for me right now?
- * Publish state leads, inbound requests follow, edit and delete sit last.
- */
 export function PropertyActionRail({
     item,
+    portal,
     busy,
     onTogglePublish,
     onRequestDelete,
-    shareListing,
     editHref,
     requestsHref,
+    brokers = [],
+    brokersState = "ready",
+    onRetryBrokers,
 }: PropertyActionRailProps) {
+    const isOwner = portal === "owner";
     const isPublished = item.status === "published";
-
-    // `self-start` matters: a stretched grid item cannot stick, and it leaves a
-    // tall empty box under the last button.
+    const phone = item.ownerPhoneDigits?.replace(/\D/g, "");
     return (
-        <aside className="flex flex-col gap-4 self-start lg:sticky lg:inset-bs-24">
-            <div
-                className={cn(
-                    "flex flex-col gap-4 rounded-card border p-5",
-                    isPublished
-                        ? "border-brand/20 bg-brand-soft"
-                        : "border-border-warm bg-surface-muted",
+        <>
+            <section className={styles.actionCard}>
+                <div className={styles.price}>
+                    <p className={styles.priceLabel}>
+                        {item.transactionType === "rent" ? "Monthly rent" : "Asking price"}
+                    </p>
+                    <PropertyPriceBlock item={item} audience={portal} compact />
+                </div>
+                {isOwner ? (
+                    <>
+                        <div className="flex items-center gap-2">
+                            {isPublished ? (
+                                <Eye size={20} aria-hidden />
+                            ) : (
+                                <EyeOff size={20} aria-hidden />
+                            )}
+                            <h2 className={styles.actionTitle}>
+                                {item.isSold
+                                    ? "Property sold"
+                                    : isPublished
+                                      ? "Your listing is live"
+                                      : item.status === "draft"
+                                        ? "Your listing is a draft"
+                                        : "Your listing is unpublished"}
+                            </h2>
+                        </div>
+                        <p className={styles.actionDescription}>
+                            {item.isSold
+                                ? "This property is no longer available in owner listings."
+                                : isPublished
+                                  ? "Brokers can discover your property and ask to represent it."
+                                  : "Publish your property when you are ready to receive broker requests."}
+                        </p>
+                        <div className={styles.actionButtons}>
+                            {!item.isSold ? (
+                                <Button
+                                    size="lg"
+                                    disabled={busy}
+                                    loading={busy}
+                                    variant={isPublished ? "outline" : "accent"}
+                                    onClick={onTogglePublish}
+                                >
+                                    {isPublished ? "Unpublish property" : "Publish property"}
+                                </Button>
+                            ) : null}
+                            {requestsHref ? (
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    render={<Link href={requestsHref} />}
+                                >
+                                    <Inbox size={18} aria-hidden />
+                                    Broker requests
+                                    {item.inboundRequestCount > 0
+                                        ? ` (${item.inboundRequestCount})`
+                                        : ""}
+                                </Button>
+                            ) : null}
+                        </div>
+                        <p className={styles.railNote}>
+                            <Lock size={14} aria-hidden />
+                            You choose which brokers can represent this property.
+                        </p>
+                    </>
+                ) : (
+                    <>
+                        <h2 className={styles.actionTitle}>Your custom property</h2>
+                        <p className={styles.actionDescription}>
+                            {item.visibility === "marketplace"
+                                ? "Manage the property details and the owner linked to this listing."
+                                : "A private property in your inventory. Keep its details up to date as you work the deal."}
+                        </p>
+                        <div className={styles.actionButtons}>
+                            <Button variant="accent" size="lg" render={<Link href={editHref} />}>
+                                <Pencil size={18} aria-hidden />
+                                Edit property
+                            </Button>
+                        </div>
+                        <p className={styles.railNote}>
+                            <Lock size={14} aria-hidden />
+                            {item.visibility === "marketplace"
+                                ? "Marketplace listing"
+                                : "Private inventory"}
+                        </p>
+                    </>
                 )}
-            >
-                <div className="flex items-start gap-3">
-                    <span
-                        className={cn(
-                            `
-                              flex shrink-0 items-center justify-center rounded-control block-9
-                              inline-9
-                            `,
-                            isPublished ? "bg-brand text-surface" : "bg-surface text-ink-muted",
-                        )}
-                    >
-                        {isPublished ? (
-                            <Eye aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        ) : (
-                            <EyeOff aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        )}
-                    </span>
-                    <div className="flex flex-col gap-0.5 min-inline-0">
-                        <p className="h6 text-ink">
-                            {isPublished ? "Live to brokers" : "Not visible to brokers"}
-                        </p>
-                        <p className="body-sm text-ink-muted">
-                            {isPublished
-                                ? "Brokers can find this and ask to represent it."
-                                : "Publish it so brokers can find it and send requests."}
-                        </p>
-                    </div>
-                </div>
-
-                <Button
-                    type="button"
-                    size="lg"
-                    disabled={busy}
-                    onClick={onTogglePublish}
-                    className={cn(
-                        "rounded-control inline-full",
-                        isPublished
-                            ? "border border-border-warm bg-surface text-ink hover:bg-surface-muted"
-                            : "bg-brand text-surface hover:bg-brand-text",
-                    )}
-                >
-                    {isPublished ? "Unpublish" : "Publish this property"}
-                </Button>
-            </div>
-
-            <div
-                className="
-                  flex flex-col gap-4 rounded-card border border-border-warm bg-surface p-5
-                "
-            >
-                <div className="flex items-center justify-between gap-3">
-                    <span className="body-sm flex items-center gap-2 font-medium text-ink-muted">
-                        <Inbox aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        Broker requests
-                    </span>
-                    {requestsHref ? (
-                        <Link
-                            href={requestsHref}
-                            className="h5 tabular font-semibold text-ink underline-offset-2 hover:underline"
-                        >
-                            {item.inboundRequestCount}
-                        </Link>
+            </section>
+            {isOwner ? (
+                <section className={styles.peopleCard}>
+                    <h2>Brokers attached</h2>
+                    {brokersState === "loading" ? (
+                        <div
+                            className={styles.peopleLoading}
+                            aria-label="Loading attached brokers"
+                        />
+                    ) : brokersState === "error" ? (
+                        <div className={styles.peopleEmpty}>
+                            <p>Couldn&apos;t load attached brokers.</p>
+                            {onRetryBrokers ? (
+                                <Button type="button" variant="link" onClick={onRetryBrokers}>
+                                    Try again
+                                </Button>
+                            ) : null}
+                        </div>
+                    ) : brokers.length > 0 ? (
+                        <AttachedBrokersRow brokers={brokers} />
                     ) : (
-                        <span className="h5 tabular font-semibold text-ink">
-                            {item.inboundRequestCount}
-                        </span>
+                        <p className={styles.peopleEmpty}>
+                            No broker is representing this property yet.
+                        </p>
                     )}
+                </section>
+            ) : null}
+            {!isOwner ? (
+                <section className={styles.contact}>
+                    <h2>Property owner</h2>
+                    <div className={styles.contactIdentity}>
+                        <UserAvatar name={item.ownerName || "Owner"} size="lg" />
+                        <div>
+                            <strong>{item.ownerName || "No owner linked yet"}</strong>
+                            <p>
+                                {phone
+                                    ? formatPhoneIn(phone)
+                                    : "Add owner details by editing this property."}
+                            </p>
+                        </div>
+                    </div>
+                    {phone ? (
+                        <div className={styles.contactActions}>
+                            <Button variant="outline" render={<a href={`tel:+91${phone}`} />}>
+                                <CallIcon size={17} aria-hidden />
+                                Call
+                            </Button>
+                            <Button
+                                variant="outline"
+                                render={
+                                    <a
+                                        href={formatWhatsAppUrl(phone)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    />
+                                }
+                            >
+                                <WhatsAppIcon size={17} aria-hidden />
+                                WhatsApp
+                            </Button>
+                        </div>
+                    ) : null}
+                </section>
+            ) : null}
+            <section className={styles.management} aria-label="Listing management">
+                <div className={styles.managementRow}>
+                    <span>Added</span>
+                    <strong>{listedAgoLabel(item.listedDaysAgo)}</strong>
                 </div>
-
-                <div
-                    className="
-                      body-sm flex items-center justify-between gap-3 border-bs border-border-warm
-                      pbs-3 text-ink-muted
-                    "
-                >
-                    <span>Listed</span>
-                    <span className="font-medium text-ink">
-                        {listedAgoLabel(item.listedDaysAgo)}
-                    </span>
-                </div>
-
-                {item.photoCount > 0 ? (
-                    <div className="body-sm flex items-center justify-between gap-3 text-ink-muted">
-                        <span>Photos</span>
-                        <span className="tabular font-medium text-ink">{item.photoCount}</span>
+                {isOwner ? (
+                    <div className={styles.secondaryActions}>
+                        <Button variant="outline" render={<Link href={editHref} />}>
+                            <Pencil size={17} aria-hidden />
+                            Edit property
+                        </Button>
                     </div>
                 ) : null}
-            </div>
-
-            <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1 border-border-warm"
-                        render={<Link href={editHref} />}
-                    >
-                        <Pencil aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                        Edit
-                    </Button>
-                    <PropertySharePopover listing={shareListing} />
-                </div>
-
                 <Button
                     type="button"
                     variant="ghost"
                     disabled={busy}
                     onClick={onRequestDelete}
-                    className="justify-start text-danger hover:bg-danger-soft hover:text-danger"
+                    className={`
+              ${styles.delete}
+              text-danger
+              hover:bg-danger-soft hover:text-danger
+            `}
                 >
-                    <Trash2 aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                    <Trash2 size={17} aria-hidden />
                     Delete property
                 </Button>
-            </div>
-        </aside>
+            </section>
+        </>
     );
 }

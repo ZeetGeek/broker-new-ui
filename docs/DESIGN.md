@@ -985,6 +985,53 @@ matching form field for some selections — if yes, the filter must hide too.
 
 ---
 
+### 5.8 Property details: scoped presentation
+
+The property-detail routes use the user's pinned Airbnb reference for composition
+within the existing app identity. This is a route-specific exception to the cream
+page canvas, two-tone screen heading and general mobile control floor above; it
+does not replace the global design system or change other portal screens.
+
+- Use a centred 1120px white reading surface. Put the property title, location and
+  status above the gallery, then open information sections separated by warm
+  hairlines. Keep the established fonts, green actions, icons and global tokens.
+  Scoped secondary copy mixes the existing ink and surface tokens:
+  `color-mix(in oklch, var(--color-ink) 70%, var(--color-surface))`.
+  Reuse shared Button and Badge components for actions and explicit status labels.
+- Adapt the gallery to the actual photo count, with a 432px maximum height on
+  larger screens and one 4:3 photo on phones. Round each photo individually using
+  the control-radius token. Four photos use a large left image and three right
+  tiles over two rows, with the lower tile spanning the right column pair.
+  Use real listing photos, a deliberate missing-photo state, and a full-screen
+  gallery with keyboard navigation, Escape dismissal and focus restoration.
+  Do not add generated listing imagery.
+- On desktop, pair the broad detail column with a sticky 350px price/action rail;
+  the rail narrows to 310px on tablet and stacks below the details on phones.
+  Phone utility controls have at least 44px targets; primary actions remain 48px.
+  Below 768px, the fixed price/action bar replaces portal bottom navigation and
+  accounts for the safe-area inset. The surrounding portal otherwise stays intact.
+- Preserve three action contexts: owners manage publication and broker requests;
+  brokers viewing owner supply request representation, answer invitations or open
+  approved deals; brokers viewing custom inventory edit it and contact the linked
+  owner. Owner-supply contact details and exact address remain consent-gated until
+  representation is approved. Approval carries the property into the CRM without
+  manual re-entry.
+- Listing asks use `PriceWithCommission` with the correct audience, including the
+  fixed phone bar. Detail facts reuse `derive` and `FIELD_RULES` through
+  `property-detail-facts.ts`; show only applicable, API-supplied facts with Tabler
+  icons. Facts form an open grid without per-fact dividers; section dividers remain.
+  Costs, availability and suitable-use details appear only when supplied and
+  applicable. Preserve missing parking/furnishing as missing rather than guessing.
+  Keep location textual and media links data-driven. Do not fabricate maps,
+  reviews, booking calendars, amenities or property claims from the reference.
+
+Source: `features/properties/property-detail/` and
+`features/properties/owner-listings/owner-listing-detail-page.tsx`. The surface
+brief records verification status separately; this section does not imply visual
+verification.
+
+---
+
 ## 6. India formatting
 
 These are display rules and are non-negotiable — a price rendered as `4500000` is a

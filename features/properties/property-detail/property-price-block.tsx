@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 import {
     type CommissionAudience,
+    listingCommissionTip,
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
 
@@ -29,12 +30,14 @@ export function PropertyPriceBlock({
     item: rawItem,
     audience = "broker",
     hideCommission = false,
+    compact = false,
 }: {
     item: MyListingItem;
     /** Owner portal: "Broker gets". Broker portal: "You get". */
     audience?: CommissionAudience;
     /** Public share page: price only, no broker commission line or tip. */
     hideCommission?: boolean;
+    compact?: boolean;
 }) {
     const item = hideCommission
         ? { ...rawItem, commissionPercent: null, commissionAmount: null }
@@ -43,7 +46,9 @@ export function PropertyPriceBlock({
     const [mode, setMode] = useState<ListingPriceMode>(defaultPriceMode(item));
     const both = offersBoth(item);
 
-    const showsSale = both ? mode === "sale" : offersSale(item);
+    const showsSale = both
+        ? mode === "sale"
+        : offersSale(item) || (!offersRent(item) && item.transactionType !== "rent");
     const amount = showsSale ? item.saleAmountInr : item.rentAmountInr;
 
     const perSqft =
@@ -60,7 +65,13 @@ export function PropertyPriceBlock({
     ].filter((stat): stat is { label: string; value: string } => stat != null);
 
     return (
-        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between md:gap-8">
+        <div
+            className={
+                compact
+                    ? "flex flex-col gap-4"
+                    : `flex flex-col gap-5 md:flex-row md:items-center md:justify-between md:gap-8`
+            }
+        >
             <div className="flex flex-col gap-3">
                 {both ? (
                     <div
@@ -74,6 +85,8 @@ export function PropertyPriceBlock({
                                 key={value}
                                 type="button"
                                 onClick={() => setMode(value)}
+                                aria-pressed={mode === value}
+                                style={compact ? { minHeight: 44 } : undefined}
                                 className={cn(
                                     `
                                       body-sm rounded-control px-4 py-1.5 font-semibold
@@ -92,7 +105,13 @@ export function PropertyPriceBlock({
 
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     {amount == null ? (
-                        <span className="display-3 tabular text-brand">Price on request</span>
+                        <span
+                            className={
+                                compact ? "h4 tabular text-brand" : "display-3 tabular text-brand"
+                            }
+                        >
+                            Price on request
+                        </span>
                     ) : (
                         <PriceWithCommission
                             amountInr={amount}
@@ -100,7 +119,7 @@ export function PropertyPriceBlock({
                             commissionPercent={item.commissionPercent}
                             commissionAmountInr={item.commissionAmount}
                             audience={audience}
-                            size="2xl"
+                            size={compact ? "xl" : "2xl"}
                             showEmptyTip={showEmptyTip}
                         />
                     )}
@@ -140,22 +159,50 @@ export function PropertyPriceBlock({
                         </span>
                     ) : null}
                 </div>
+                {compact && !hideCommission && amount != null
+                    ? (() => {
+                          const tip = listingCommissionTip({
+                              amountInr: amount ?? 0,
+                              isRent: !showsSale,
+                              commissionPercent: item.commissionPercent,
+                              commissionAmountInr: item.commissionAmount,
+                              audience,
+                          });
+                          return tip ? (
+                              <div
+                                  className={cn(
+                                      "body-sm flex flex-col gap-1 rounded-control p-3",
+                                      tip.plain
+                                          ? "bg-surface-muted text-ink-muted"
+                                          : "bg-brand-soft text-brand-text",
+                                  )}
+                              >
+                                  <span>{tip.headline}</span>
+                                  {tip.detail ? (
+                                      <span className="body-xs opacity-80">{tip.detail}</span>
+                                  ) : null}
+                              </div>
+                          ) : null;
+                      })()
+                    : null}
             </div>
 
-            <dl
-                className="
-                  md:border-is md:pis-8
-                  flex shrink-0 gap-6 border-bs border-border-warm pbs-4
-                  md:border-bs-0 md:pbs-0
-                "
-            >
-                {headlineStats.map((stat) => (
-                    <div key={stat.label} className="flex flex-col gap-1">
-                        <dt className="body-xs text-ink-muted">{stat.label}</dt>
-                        <dd className="body font-semibold text-ink">{stat.value}</dd>
-                    </div>
-                ))}
-            </dl>
+            {!compact ? (
+                <dl
+                    className="
+                      md:border-is md:pis-8
+                      flex shrink-0 gap-6 border-bs border-border-warm pbs-4
+                      md:border-bs-0 md:pbs-0
+                    "
+                >
+                    {headlineStats.map((stat) => (
+                        <div key={stat.label} className="flex flex-col gap-1">
+                            <dt className="body-xs text-ink-muted">{stat.label}</dt>
+                            <dd className="body font-semibold text-ink">{stat.value}</dd>
+                        </div>
+                    ))}
+                </dl>
+            ) : null}
         </div>
     );
 }

@@ -28,6 +28,7 @@ export type PropertyBrowseListing = {
     bathrooms?: number | null;
     areaSqft?: number | null;
     city?: string | null;
+    state?: string | null;
     address?: string | null;
     country?: string | null;
     /** `available` | `sold` | `unavailable`. */
@@ -94,10 +95,19 @@ export type PropertyListing = PropertyBrowseListing & {
     isDraft?: boolean;
     postalCode?: string | null;
     society?: string | null;
+    /** Newer detail payloads use the form field name; older ones use `society`. */
+    projectOrSociety?: string | null;
+    unitNumber?: string | null;
+    /** Compatibility alias used by some property imports. */
+    flatNumber?: string | null;
+    streetOrRoad?: string | null;
     landmark?: string | null;
     balconyCount?: number | null;
     floorNumber?: number | null;
     totalFloors?: number | null;
+    propertyAge?: string | number | null;
+    propertyCondition?: string | null;
+    carpetArea?: string | number | null;
     facingDirection?: string | null;
     parkingSpaces?: number | null;
     amenities?: string[] | null;

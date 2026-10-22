@@ -1,18 +1,20 @@
 "use client";
 
+import { formatSortLabel } from "@/lib/format/owner-listings-labels";
+
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { filterChipClassName } from "@/components/shared/filter-chip";
 import { PropertyCardSkeleton } from "@/components/shared/property-card-skeleton";
 import { Skeleton } from "@/components/shared/skeleton";
 
+import { ownerListingsFilterVisibility } from "@/features/properties/owner-listings/filter-visibility";
 import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/owner-listings-grid-class";
 import { OwnerListingsIntroSkeleton } from "@/features/properties/owner-listings/owner-listings-intro";
-import { ownerListingsFilterVisibility } from "@/features/properties/owner-listings/filter-visibility";
 import {
     DEFAULT_OWNER_LISTINGS_FILTERS,
     type OwnerListingsFilters,
 } from "@/features/properties/owner-listings/types";
-import { formatSortLabel } from "@/lib/format/owner-listings-labels";
+import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
 
 const intro = <OwnerListingsIntroSkeleton />;
 
@@ -50,7 +52,14 @@ function OwnerListingsToolbarSkeleton({ filters }: { filters: OwnerListingsFilte
                 ) : null}
             </div>
             <div className="flex shrink-0 items-center gap-2.5 max-inline-full">
-                <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] min-inline-44 inline-44 sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64">
+                <div
+                    className="
+                      flex items-center gap-2 rounded-control border border-border-warm bg-surface
+                      px-3 shadow-sm block-[38px] inline-44 min-inline-44
+                      sm:inline-52 sm:min-inline-52
+                      lg:inline-64 lg:min-inline-64
+                    "
+                >
                     <Skeleton className="shrink-0 block-4 inline-4" />
                     <Skeleton className="block-3 inline-24" />
                 </div>
@@ -123,51 +132,5 @@ export function OwnerListingsPageSkeleton({
 }
 
 export function OwnerListingDetailSkeleton() {
-    return (
-        <div role="status" aria-busy="true" className="flex flex-col gap-6 pbe-24 lg:pbe-8">
-            <span className="sr-only">Loading property details</span>
-            <Skeleton className="block-5 inline-28" />
-            <Skeleton
-                className="
-                  aspect-4/3 rounded-card inline-full
-                  md:aspect-auto md:block-104
-                  lg:block-120
-                "
-            />
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,1fr)] lg:gap-10">
-                <div className="flex flex-col gap-8 min-inline-0">
-                    <div className="flex flex-col gap-3">
-                        <Skeleton className="block-9 inline-3/4" />
-                        <Skeleton className="block-6 inline-1/2" />
-                    </div>
-                    <Skeleton className="rounded-card block-28 inline-full" />
-                    <div className="grid grid-cols-2 gap-4">
-                        {Array.from({ length: 6 }, (_, index) => (
-                            <Skeleton key={index} className="block-20" />
-                        ))}
-                    </div>
-                    <Skeleton className="block-24 inline-full" />
-                </div>
-                <div
-                    className="
-                      flex flex-col gap-4 self-start rounded-card border border-border-warm
-                      bg-surface p-5
-                    "
-                >
-                    <Skeleton className="block-12 inline-48" />
-                    <Skeleton className="block-20 inline-full" />
-                    <Skeleton className="block-11 inline-full" />
-                </div>
-            </div>
-            <div
-                aria-hidden
-                className="
-                  fixed inset-x-0 inset-be-0 z-30 border-bs border-border-warm bg-surface p-3
-                  lg:hidden
-                "
-            >
-                <Skeleton className="block-11 inline-full" />
-            </div>
-        </div>
-    );
+    return <PropertyDetailSkeleton />;
 }

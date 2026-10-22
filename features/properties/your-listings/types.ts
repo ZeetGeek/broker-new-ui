@@ -42,6 +42,8 @@ export type MyListingItem = {
     title: string;
     configLabel: string;
     category: MyListingCategory;
+    /** False only when the API omitted both category and subtype. */
+    categoryProvided?: boolean;
     propertyType: MyListingPropertyType;
     /** API subtype as stored (e.g. `cold_storage`); null on older listings. */
     subtype?: string | null;
@@ -49,7 +51,11 @@ export type MyListingItem = {
     bhk: number;
     locality: string;
     city: string;
+    country?: string | null;
+    state?: string | null;
     address: string;
+    unitNumber?: string | null;
+    streetOrRoad?: string | null;
     pinCode: string;
     landmark: string;
     society: string;
@@ -57,14 +63,19 @@ export type MyListingItem = {
     saleAmountInr: number | null;
     rentAmountInr: number | null;
     areaSqft: number;
+    carpetAreaSqft?: number | null;
     furnishing: MyListingFurnishing;
     furnishingLabel: string;
     bathrooms: number | null;
     balconies: number | null;
     floorNumber: number | null;
     totalFloors: number | null;
+    propertyAge?: string | number | null;
+    propertyCondition?: string | null;
     facing: MyListingFacing | null;
     parking: MyListingParking;
+    /** Exact API count; null means it wasn't supplied. Legacy fixtures use parking. */
+    parkingSpaces?: number | null;
     maintenanceInr: number | null;
     /** Sale commission percent (null when unset / rent-only). */
     commissionPercent: number | null;
