@@ -40,7 +40,7 @@ export function PropertyBuyersCard({ item }: { item: MyListingItem }) {
                 </div>
             ) : query.data.length ? (
                 <div className={styles.buyersSummary}>
-                    <AvatarStack people={query.data} max={3} size="2xs" />
+                    <AvatarStack people={query.data} max={3} size="md" />
                     <span>
                         {query.data.length} {query.data.length === 1 ? "buyer" : "buyers"}
                     </span>
@@ -52,8 +52,8 @@ export function PropertyBuyersCard({ item }: { item: MyListingItem }) {
                 </div>
             )}
             {!query.isPending && !query.isError ? (
-                <div className={styles.actionButtons}>
-                    <Button variant="outline" onClick={() => setOpen(true)}>
+                <div className={styles.contactActions}>
+                    <Button variant="outline" size="md" onClick={() => setOpen(true)}>
                         <UserPlus size={18} aria-hidden />
                         Attach buyers
                     </Button>

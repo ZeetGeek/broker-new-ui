@@ -185,12 +185,17 @@ export function PropertyActionRail({
                     </div>
                     {phone ? (
                         <div className={styles.contactActions}>
-                            <Button variant="outline" render={<a href={`tel:+91${phone}`} />}>
+                            <Button
+                                variant="outline"
+                                size="md"
+                                render={<a href={`tel:+91${phone}`} />}
+                            >
                                 <CallIcon size={17} aria-hidden />
                                 Call
                             </Button>
                             <Button
                                 variant="outline"
+                                size="md"
                                 render={
                                     <a
                                         href={formatWhatsAppUrl(phone)}

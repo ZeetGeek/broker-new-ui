@@ -18,7 +18,7 @@ export type AvatarStackProps = {
     /** Tooltip text for the overflow chip. Defaults to listing the names. */
     overflowLabel?: string;
     /** Compact faces for inline metadata; existing people rows keep 36px faces. */
-    size?: "sm" | "2xs";
+    size?: "sm" | "md" | "2xs";
     className?: string;
 };
 
@@ -104,7 +104,9 @@ export function AvatarStack({
                                         `,
                                         compact
                                             ? "-ms-1.5 block-6 inline-6"
-                                            : "-ms-2.5 block-9 inline-9",
+                                            : size === "md"
+                                              ? "-ms-2.5 block-10 inline-10"
+                                              : "-ms-2.5 block-9 inline-9",
                                     )}
                                 >
                                     +{overflow.length}
