@@ -218,13 +218,18 @@ function ChoiceChip({
             {Icon ? (
                 <Icon
                     className={tile ? "block-6 inline-6" : "block-5 inline-5"}
+                    style={{ width: tile ? 24 : 20, height: tile ? 24 : 20 }}
                     strokeWidth={1.6}
                     aria-hidden
                 />
             ) : null}
             {label}
             {tile && active ? (
-                <Check className="absolute inset-e-2 inset-bs-2 block-3.5 inline-3.5" aria-hidden />
+                <Check
+                    className="absolute inset-e-2 inset-bs-2 block-3.5 inline-3.5"
+                    style={{ width: 14, height: 14 }}
+                    aria-hidden
+                />
             ) : null}
         </Button>
     );
@@ -257,9 +262,9 @@ function CountFilter({
 
     return (
         <div role="group" aria-label={label} className="flex items-center justify-between gap-3">
-            <span className="flex items-center gap-2.5 text-sm font-medium text-ink">
+            <span className="flex items-center gap-2.5 text-sm font-medium text-ink min-inline-0">
                 <Icon className="shrink-0 block-5 inline-5" strokeWidth={1.5} aria-hidden />
-                {label}
+                <span>{label}</span>
             </span>
             <div className="flex shrink-0 items-center gap-1">
                 <Button
@@ -276,13 +281,21 @@ function CountFilter({
                 >
                     <Minus aria-hidden />
                 </Button>
-                <span
+                <output
                     aria-live="polite"
                     aria-atomic="true"
-                    className="text-center text-sm text-ink tabular-nums inline-16"
+                    aria-label={`${label}: ${
+                        selected.length > 1
+                            ? options
+                                  .filter((option) => selected.includes(option.value))
+                                  .map((option) => option.label)
+                                  .join(", ")
+                            : current
+                    }`}
+                    className="text-center text-sm text-ink tabular-nums inline-14 sm:inline-16"
                 >
                     {current}
-                </span>
+                </output>
                 <Button
                     type="button"
                     variant="outline"
@@ -328,7 +341,7 @@ function CommissionRange({
             <div className="px-1 py-2">{children}</div>
             <dl className="flex items-center justify-between gap-4">
                 <div className="flex flex-col gap-1.5">
-                    <dt className="text-xs text-ink-muted">Minimum</dt>
+                    <dt className="text-xs text-ink/65">Minimum</dt>
                     <dd
                         className="
                           rounded-full border border-border-warm px-5 py-2.5 text-sm font-medium
@@ -339,7 +352,7 @@ function CommissionRange({
                     </dd>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
-                    <dt className="text-xs text-ink-muted">Maximum</dt>
+                    <dt className="text-xs text-ink/65">Maximum</dt>
                     <dd
                         className="
                           rounded-full border border-border-warm px-5 py-2.5 text-sm font-medium
@@ -377,14 +390,19 @@ function FilterAccordionTrigger({
             <span className="flex flex-1 flex-col items-start gap-1.5 min-inline-0">
                 <span className="font-display text-lg font-semibold tracking-tight">{title}</span>
                 {description ? (
-                    <span className="hidden text-xs/relaxed font-normal text-ink-muted group-aria-expanded/accordion-trigger:block">
+                    <span
+                        className="
+                      hidden text-xs/relaxed font-normal text-ink/65
+                      group-aria-expanded/accordion-trigger:block
+                    "
+                    >
                         {description}
                     </span>
                 ) : null}
                 {summary ? (
                     <span
                         className="
-                          body-sm font-normal text-ink-muted
+                          body-sm font-normal text-ink/65
                           group-aria-expanded/accordion-trigger:hidden
                         "
                     >
@@ -797,8 +815,8 @@ export function OwnerListingsFilterSheet({
                     viewportRef={scrollRef}
                     className="
                       flex-1 bg-surface min-block-0
-                      [&_[data-slot=scroll-area-viewport]]:overscroll-contain
-                      [&_[data-slot=scroll-area-scrollbar]]:inset-e-1.5
+                      **:data-[slot=scroll-area-scrollbar]:inset-e-1.5
+                      **:data-[slot=scroll-area-viewport]:overscroll-contain
                     "
                 >
                     <div className="px-5 pbe-3 sm:px-8">
