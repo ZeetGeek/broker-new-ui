@@ -43,6 +43,7 @@ import {
     XIcon,
 } from "@/components/shared/icons";
 import { PropertyFilterFields } from "@/components/shared/property-filter-fields";
+import { RangeValuePill } from "@/components/shared/range-value-pill";
 import {
     Accordion,
     AccordionContent,
@@ -359,24 +360,14 @@ function CommissionRange({
             <dl className="flex items-center justify-between gap-4">
                 <div className="flex flex-col gap-1.5">
                     <dt className="text-xs text-ink/65">Minimum</dt>
-                    <dd
-                        className="
-                          rounded-full border border-border-warm px-5 py-2.5 text-sm font-medium
-                          text-ink tabular-nums
-                        "
-                    >
-                        {minLabel}
+                    <dd className="flex">
+                        <RangeValuePill value={minLabel} />
                     </dd>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
                     <dt className="text-xs text-ink/65">Maximum</dt>
-                    <dd
-                        className="
-                          rounded-full border border-border-warm px-5 py-2.5 text-sm font-medium
-                          text-ink tabular-nums
-                        "
-                    >
-                        {maxLabel}
+                    <dd className="flex">
+                        <RangeValuePill value={maxLabel} />
                     </dd>
                 </div>
             </dl>

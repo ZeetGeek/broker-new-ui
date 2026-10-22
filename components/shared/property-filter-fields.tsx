@@ -23,6 +23,7 @@ import {
     Search,
     Trees,
 } from "@/components/shared/icons";
+import { EditableRangeValuePill } from "@/components/shared/range-value-pill";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -52,7 +53,6 @@ import {
     buildAreaHistogram,
     OWNER_LISTINGS_AREA_RANGE,
 } from "@/features/properties/owner-listings/owner-listings-area-presets";
-import { BudgetRotaryKnob } from "@/features/properties/owner-listings/owner-listings-budget-knob";
 import {
     findBudgetStepIndex,
     getBudgetSteps,
@@ -119,33 +119,28 @@ function DiscoveryWhereMenu({
             <DropdownMenuContent
                 align="start"
                 sideOffset={8}
-                className="rounded-card border-border-warm p-3 inline-[min(22rem,calc(100vw-2rem))]"
+                className="
+                  rounded-card border border-border-warm bg-surface p-4 shadow-lg ring-0
+                  inline-(--anchor-width)! min-inline-0!
+                "
             >
                 <p className="px-1 pbe-3 text-sm text-ink-muted">Pick a city or locality</p>
-                <div className="relative">
-                    <Search
-                        aria-hidden
-                        className="
-                          inset-is-3 absolute inset-bs-1/2 z-10 -translate-y-1/2 text-ink-subtle
-                          block-4 inline-4
-                        "
-                    />
-                    <Input
-                        autoFocus
-                        value={draft}
-                        onValueChange={setDraft}
-                        placeholder="Search places"
-                        aria-label="Search city or locality"
-                        className="pis-9"
-                        onKeyDown={(event) => {
-                            event.stopPropagation();
-                            if (event.key === "Enter") {
-                                event.preventDefault();
-                                commit();
-                            }
-                        }}
-                    />
-                </div>
+                <Input
+                    autoFocus
+                    size="md"
+                    startIcon={Search}
+                    value={draft}
+                    onValueChange={setDraft}
+                    placeholder="Search places"
+                    aria-label="Search city or locality"
+                    onKeyDown={(event) => {
+                        event.stopPropagation();
+                        if (event.key === "Enter") {
+                            event.preventDefault();
+                            commit();
+                        }
+                    }}
+                />
                 <button
                     type="button"
                     onClick={() => {
@@ -155,8 +150,8 @@ function DiscoveryWhereMenu({
                     }}
                     className={cn(
                         `
-                          mbs-3 mbe-1 flex items-center gap-3 rounded-inner border p-3 text-start
-                          transition-colors duration-160 inline-full
+                          mbs-4 mbe-1 flex items-center gap-3 rounded-inner border p-4 text-start
+                          transition-colors duration-160 inline-full min-block-14
                         `,
                         value
                             ? "border-transparent hover:bg-surface-muted"
@@ -287,25 +282,14 @@ function OwnerListingsPropertySearchFields({
             {fields.includes("budget") ? (
                 <div className="flex flex-col gap-4 border-0">
                     <div className="flex items-center justify-between gap-3">
-                        <span className="flex items-center gap-2.5 text-sm font-medium text-ink">
-                            <HandCoins aria-hidden className="block-5 inline-5" strokeWidth={1.5} />
+                        <span className="text-sm font-medium text-ink">
                             {v.type === "rent" ? "Monthly rent" : "Budget"}
                         </span>
                         <span className="text-sm font-semibold text-brand-text">
                             {budgetStep.label}
                         </span>
                     </div>
-                    <BudgetRotaryKnob
-                        stepCount={budgetSteps.length - 1}
-                        value={budgetIndex}
-                        onValueChange={(index) => {
-                            const next = budgetSteps[index] ?? budgetSteps[0];
-                            patch({ min: next.min, max: next.max });
-                        }}
-                        displayValue={budgetStep.shortLabel}
-                        displayHint={budgetStep.label}
-                    />
-                    <div className="flex flex-wrap justify-center gap-2 border-0">
+                    <div className="flex flex-wrap gap-2 border-0">
                         {budgetSteps.map((option, index) => (
                             <button
                                 key={`${v.type}-${option.label}`}
@@ -314,8 +298,8 @@ function OwnerListingsPropertySearchFields({
                                 onClick={() => patch({ min: option.min, max: option.max })}
                                 className={cn(
                                     `
-                                      rounded-full border px-3.5 py-2 text-xs font-medium
-                                      transition-colors duration-160 min-block-9
+                                      rounded-full border px-4 py-3 text-sm font-medium
+                                      transition-colors duration-160 min-block-11
                                     `,
                                     index === budgetIndex
                                         ? "border-brand bg-brand-soft text-brand-text"
@@ -389,29 +373,25 @@ function OwnerListingsPropertySearchFields({
                             "
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                        <label className="flex flex-col gap-1.5 text-xs text-ink-muted">
+                    <div className="flex items-start justify-between gap-4">
+                        <label className="flex flex-col items-start gap-1.5 text-xs text-ink-muted">
                             Minimum
-                            <Input
-                                inputMode="numeric"
-                                type="number"
-                                min={0}
+                            <EditableRangeValuePill
+                                ariaLabel="Minimum area in square feet"
                                 value={v.minAreaSqft}
                                 placeholder="200 sq ft"
                                 onValueChange={(minAreaSqft) => patch({ minAreaSqft })}
-                                className="rounded-full text-center shadow-none"
+                                className="px-3 inline-24"
                             />
                         </label>
-                        <label className="flex flex-col gap-1.5 text-xs text-ink-muted">
+                        <label className="flex flex-col items-end gap-1.5 text-xs text-ink-muted">
                             Maximum
-                            <Input
-                                inputMode="numeric"
-                                type="number"
-                                min={0}
+                            <EditableRangeValuePill
+                                ariaLabel="Maximum area in square feet"
                                 value={v.maxAreaSqft}
                                 placeholder="5,000+ sq ft"
                                 onValueChange={(maxAreaSqft) => patch({ maxAreaSqft })}
-                                className="rounded-full text-center shadow-none"
+                                className="px-3 inline-28"
                             />
                         </label>
                     </div>
