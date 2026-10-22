@@ -1,7 +1,8 @@
-import { daysSince, isStalled } from "@/lib/api/pipeline";
+import { daysSince } from "@/lib/api/pipeline";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { matchesPropertyCriteria } from "@/lib/properties/list-criteria";
 
-import type { DealItem, DealStage } from "@/features/pipeline/types";
+import type { DealItem, DealsFilters, DealStage } from "@/features/pipeline/types";
 import { isLiveStage, SLOW_AFTER_DAYS, STALLED_AFTER_DAYS } from "@/features/pipeline/types";
 
 export type AttentionTone = "healthy" | "slow" | "quiet";
@@ -57,17 +58,20 @@ export function otherBuyersOnProperty(deal: DealItem, all: DealItem[]): OtherBuy
 
 export function matchesClientFilters(
     deal: DealItem,
-    filters: { dealType: "" | "rent" | "sale"; locality: string; ownerName: string },
+    filters: Pick<DealsFilters, "dealType" | "locality" | "ownerName" | "propertyFilters">,
 ): boolean {
-    if (filters.dealType === "rent" && !deal.property.isRent) return false;
-    if (filters.dealType === "sale" && deal.property.isRent) return false;
-    if (filters.locality && deal.property.locality !== filters.locality) return false;
-    if (filters.ownerName && deal.owner.name !== filters.ownerName) return false;
-    return true;
-}
-
-export function isQuietDeal(deal: DealItem): boolean {
-    return isStalled(deal);
+    return matchesPropertyCriteria(
+        {
+            ...deal.property,
+            commissionAmount: deal.property.commissionAmountInr,
+            ...deal.property.filterFacts,
+        },
+        {
+            ...filters.propertyFilters,
+            type: filters.dealType,
+            where: filters.propertyFilters?.where ?? filters.locality,
+        },
+    );
 }
 
 export function uniqueLocalities(deals: DealItem[]): string[] {

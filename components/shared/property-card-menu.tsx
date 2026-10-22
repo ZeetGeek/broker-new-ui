@@ -1,21 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import {
-    Bookmark,
-    Check,
-    Ellipsis,
-    History,
-    Link2,
-    Pencil,
-    Phone,
-    Share2,
-    Trash2,
-    UserPlus,
-    UserRound,
-} from "@/components/shared/icons";
 
 import { formatPhoneIn, formatTelUrl } from "@/lib/format/phone";
 import {
@@ -29,6 +16,19 @@ import {
 } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
 
+import {
+    Bookmark,
+    Check,
+    Ellipsis,
+    History,
+    Link2,
+    Pencil,
+    Phone,
+    Share2,
+    Trash2,
+    UserPlus,
+    UserRound,
+} from "@/components/shared/icons";
 import { OVERLAY_ICON_BUTTON_CLASS } from "@/components/shared/overlay-card";
 import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import shareBrands from "@/components/shared/thesvg-color-share.json";
@@ -82,6 +82,7 @@ export type PropertyCardMenuProps = {
     contact?: PropertyCardMenuContact;
     /** Open the attach-buyers flow. */
     onAddBuyer?: () => void;
+    isAddBuyerBlocked?: boolean;
     /** Owned inventory: attach or change the exclusive owner. */
     onAttachOwner?: () => void;
     /** Defaults to "Attach owner". */
@@ -173,6 +174,7 @@ export function PropertyCardMenu({
     onToggleSave,
     contact,
     onAddBuyer,
+    isAddBuyerBlocked = false,
     onAttachOwner,
     attachOwnerLabel = "Attach owner",
     onRemind,
@@ -324,14 +326,16 @@ export function PropertyCardMenu({
                         Share
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent
-                        className={cn(MENU_SURFACE_CLASS, "before:hidden block-auto min-inline-48")}
+                        className={cn(MENU_SURFACE_CLASS, "block-auto min-inline-48 before:hidden")}
                         sideOffset={4}
                         alignOffset={-4}
                     >
                         {channels.map((channel) => {
                             const mark = channel.icon ? (
                                 <span
-                                    className="flex shrink-0 items-center justify-center block-4 inline-4"
+                                    className="
+                                      flex shrink-0 items-center justify-center block-4 inline-4
+                                    "
                                     aria-hidden
                                 >
                                     <Icon
@@ -467,7 +471,7 @@ export function PropertyCardMenu({
                             setOpen(false);
                         }}
                     >
-                        <span className="flex min-inline-0 items-center gap-3">
+                        <span className="flex items-center gap-3 min-inline-0">
                             <Icon
                                 icon="tabler:bell"
                                 width={16}
@@ -506,7 +510,11 @@ export function PropertyCardMenu({
 
                 {onAddBuyer ? (
                     <DropdownMenuItem
-                        className={ITEM_CLASS}
+                        className={cn(
+                            ITEM_CLASS,
+                            isAddBuyerBlocked && "cursor-not-allowed opacity-50",
+                        )}
+                        aria-disabled={isAddBuyerBlocked || undefined}
                         onClick={() => {
                             onAddBuyer();
                             setOpen(false);
@@ -543,7 +551,7 @@ export function PropertyCardMenu({
                             icon="tabler:cancel"
                             width={16}
                             height={16}
-                            className="menu-stroke-icon is-danger block-4 inline-4 shrink-0"
+                            className="menu-stroke-icon is-danger shrink-0 block-4 inline-4"
                             aria-hidden
                         />
                         Cancel request
@@ -572,7 +580,7 @@ export function PropertyCardMenu({
                             icon="tabler:cancel"
                             width={16}
                             height={16}
-                            className="menu-stroke-icon is-danger block-4 inline-4 shrink-0"
+                            className="menu-stroke-icon is-danger shrink-0 block-4 inline-4"
                             aria-hidden
                         />
                         Stop selling this property
@@ -625,7 +633,7 @@ export function PropertyCardMenu({
                     >
                         <Trash2
                             aria-hidden
-                            className="menu-stroke-icon is-danger block-4 inline-4 shrink-0"
+                            className="menu-stroke-icon is-danger shrink-0 block-4 inline-4"
                             strokeWidth={1.75}
                         />
                         Delete listing

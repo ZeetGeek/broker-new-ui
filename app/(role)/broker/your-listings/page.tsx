@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
+import { MyListingsPageSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
 import { YourListingsPage } from "@/features/properties/your-listings/your-listings-page";
 import { type YourListingsTab } from "@/features/properties/your-listings-tabs";
 
@@ -17,7 +18,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
         : "representing";
 
     return (
-        <Suspense fallback={null}>
+        <Suspense fallback={<MyListingsPageSkeleton />}>
             <YourListingsPage activeTab={activeTab} />
         </Suspense>
     );

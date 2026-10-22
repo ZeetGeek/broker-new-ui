@@ -36,12 +36,14 @@ function GalleryPhoto({
     photoIndex,
     count,
     onOpen,
+    firstSlide,
 }: {
     src: string;
     title: string;
     photoIndex: number;
     count: number;
     onOpen: (index: number) => void;
+    firstSlide: boolean;
 }) {
     const [readySource, setReadySource] = useState<string>();
     const loading = readySource !== src;
@@ -58,7 +60,7 @@ function GalleryPhoto({
                     src={src}
                     alt={`${title} — photo ${photoIndex + 1}`}
                     fill
-                    priority={photoIndex === 0}
+                    priority={firstSlide}
                     sizes={
                         count === 1
                             ? "124vw"
@@ -75,6 +77,11 @@ function GalleryPhoto({
 }
 
 export function PropertyGallery({ title, imageSrcs, editHref, overlay }: PropertyGalleryProps) {
+    // Small sets need extra instances of their real photos to fill a looping track.
+    const carouselPhotos =
+        imageSrcs.length > 1 && imageSrcs.length <= 4
+            ? Array.from({ length: Math.ceil(6 / imageSrcs.length) }, () => imageSrcs).flat()
+            : imageSrcs;
     const [emblaRef, emblaApi] = useEmblaCarousel({
         align: "start",
         dragFree: true,
@@ -173,14 +180,15 @@ export function PropertyGallery({ title, imageSrcs, editHref, overlay }: Propert
                 aria-label="Property photos"
             >
                 <div className={styles.carouselTrack}>
-                    {imageSrcs.map((src, photoIndex) => (
-                        <div className={styles.carouselSlide} key={src + photoIndex}>
+                    {carouselPhotos.map((src, slideIndex) => (
+                        <div className={styles.carouselSlide} key={src + slideIndex}>
                             <GalleryPhoto
                                 src={src}
                                 title={title}
-                                photoIndex={photoIndex}
+                                photoIndex={slideIndex % imageSrcs.length}
                                 count={imageSrcs.length}
                                 onOpen={setIndex}
+                                firstSlide={slideIndex === 0}
                             />
                         </div>
                     ))}

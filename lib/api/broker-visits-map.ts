@@ -1,5 +1,6 @@
 import type { PropertyListing } from "@/lib/api/properties";
 import type { RepresentationItem } from "@/lib/api/representative";
+import type { PropertyFilterRecord } from "@/lib/properties/list-criteria";
 
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 import type {
@@ -24,23 +25,28 @@ export type ApiShowing = {
     createdAt: string | null;
     updatedAt?: string | null;
     durationMin?: number;
-    property?: {
-        id: string;
-        title: string | null;
-        city: string;
-        address: string | null;
-        salePrice?: string | null;
-        monthlyRent?: string | null;
-        transactionType?: string | null;
-        propertyType?: string | null;
-        subtype?: string | null;
-        bhkConfig?: string | null;
-        bedrooms?: number | null;
-        areaSqft?: number | null;
-        photos?: string[] | null;
-        commissionPercent?: string | number | null;
-        commissionAmount?: string | number | null;
-    } | null;
+    property?:
+        | ({
+              id: string;
+              title: string | null;
+              city: string;
+              address: string | null;
+              salePrice?: string | null;
+              monthlyRent?: string | null;
+              transactionType?: string | null;
+              propertyType?: string | null;
+              subtype?: string | null;
+              bhkConfig?: string | null;
+              bedrooms?: number | null;
+              areaSqft?: number | null;
+              photos?: string[] | null;
+              commissionPercent?: string | number | null;
+              commissionAmount?: string | number | null;
+          } & Omit<
+              PropertyFilterRecord,
+              "commissionPercent" | "commissionAmount" | "salePrice" | "monthlyRent"
+          >)
+        | null;
     owner?: {
         id: string;
         fullName: string | null;
@@ -238,6 +244,20 @@ function mapShowingProperty(showing: ApiShowing): VisitPropertySummary {
     const p = showing.property;
     const amount = moneyNumber(p?.salePrice) || moneyNumber(p?.monthlyRent) || 0;
     return {
+        filterFacts: {
+            ...p,
+            bhk:
+                (p?.bedrooms ??
+                    Number(
+                        configLabel(p?.bhkConfig, p?.bedrooms, p?.subtype).match(
+                            /(\d+)\s*BHK/i,
+                        )?.[1],
+                    )) ||
+                undefined,
+            commissionPercent:
+                p?.commissionPercent == null ? undefined : Number(p.commissionPercent),
+            commissionAmount: p?.commissionAmount == null ? undefined : Number(p.commissionAmount),
+        },
         id: showing.propertyId,
         title: p?.title?.trim() || "Property",
         configLabel: configLabel(p?.bhkConfig, p?.bedrooms, p?.subtype),

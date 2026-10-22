@@ -56,9 +56,10 @@ function RangeSlider({
 /** Single-value slider using the same track and outlined thumb as range filters. */
 function Slider({
     className,
+    indicatorClassName,
     label,
     ...props
-}: SliderPrimitive.Root.Props<number> & { label: string }) {
+}: SliderPrimitive.Root.Props<number> & { label: string; indicatorClassName?: string }) {
     return (
         <SliderPrimitive.Root
             data-slot="slider"
@@ -75,8 +76,11 @@ function Slider({
                   relative rounded-full bg-border-warm block-1.5 inline-full
                 "
                 >
-                    <SliderPrimitive.Indicator className="rounded-full bg-brand" />
+                    <SliderPrimitive.Indicator
+                        className={cn("rounded-full bg-brand", indicatorClassName)}
+                    />
                     <SliderPrimitive.Thumb
+                        data-slot="slider-thumb"
                         aria-label={label}
                         className="
                           rounded-full border-2 border-brand bg-surface outline-none block-5

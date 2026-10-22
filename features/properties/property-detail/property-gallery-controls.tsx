@@ -27,8 +27,9 @@ export function PropertyGalleryControls({
         let frame = 0;
         const update = () => {
             frame = 0;
-            setSelected(api.selectedScrollSnap());
-            setProgress(Math.max(0, Math.min(1, api.scrollProgress())));
+            const photoIndex = api.selectedScrollSnap() % Math.max(1, count);
+            setSelected(photoIndex);
+            setProgress(count > 1 ? photoIndex / (count - 1) : 0);
             setCanPrev(api.canScrollPrev());
             setCanNext(api.canScrollNext());
         };
@@ -41,7 +42,7 @@ export function PropertyGalleryControls({
             cancelAnimationFrame(frame);
             api.off("select", schedule).off("scroll", schedule).off("reInit", schedule);
         };
-    }, [api]);
+    }, [api, count]);
     return (
         <div className={styles.carouselFooter}>
             <div className={styles.carouselControls}>
@@ -71,22 +72,23 @@ export function PropertyGalleryControls({
                 </div>
             </div>
             <Slider
+                className={styles.galleryProgress}
+                indicatorClassName="t-resize"
                 min={0}
                 max={1}
-                step={0.001}
+                step={count > 1 ? 1 / (count - 1) : 1}
                 label="Scroll property photos"
                 value={progress}
                 disabled={count < 2}
                 onValueChange={(value) => {
                     if (!api) return;
-                    const engine = api.internalEngine();
-                    engine.animation.stop();
-                    const distance =
-                        (value - engine.scrollProgress.get(engine.target.get())) *
-                        engine.limit.length *
-                        -1;
-                    engine.scrollBody.useDuration(0);
-                    engine.scrollTo.distance(distance, false);
+                    const photoIndex = Math.min(
+                        count - 1,
+                        Math.max(0, Math.round(value * (count - 1))),
+                    );
+                    const current = api.selectedScrollSnap();
+                    const cycleStart = current - (current % count);
+                    api.scrollTo(cycleStart + photoIndex);
                 }}
             />
             <span

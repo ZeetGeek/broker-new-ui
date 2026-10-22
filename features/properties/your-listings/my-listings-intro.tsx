@@ -1,95 +1,16 @@
 "use client";
 
-import { type ReactNode, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import type { MyListingsSummary } from "@/lib/api/my-listings";
+import { buildMyListingsSummaryLines } from "@/lib/format/my-listings-summary";
 import { cn } from "@/lib/utils";
 
-import { TextLoop } from "@/components/motion-primitives/text-loop";
 import { AddFab } from "@/components/shared/add-fab";
-import { Badge, type BadgeColor } from "@/components/ui/badge";
+import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
+import { Skeleton } from "@/components/shared/skeleton";
 
-const SUMMARY_LOOP_INTERVAL_S = 6.5;
-const META_TEXT = "body-sm font-medium text-ink-muted";
-const STATUS_COLOR: Record<string, BadgeColor> = {
-    published: "emerald",
-    draft: "amber",
-};
-
-function countLabel(count: number, singular: string, plural: string) {
-    return `${count} ${count === 1 ? singular : plural}`;
-}
-
-function buildMyListingsSummaryLines({
-    summary,
-    resultTotal,
-    hasActiveFilters,
-    isLoading,
-}: {
-    summary: MyListingsSummary | null;
-    resultTotal: number;
-    hasActiveFilters: boolean;
-    isLoading: boolean;
-}): ReactNode[] {
-    if (isLoading && !summary) {
-        return ["Getting your listings…"];
-    }
-
-    const lines: ReactNode[] = [];
-    const total = summary?.total ?? 0;
-
-    if (hasActiveFilters) {
-        if (resultTotal === 0) {
-            lines.push("No properties match these filters — try clearing a few");
-        } else {
-            lines.push(
-                <>{countLabel(resultTotal, "listing matches", "listings match")} your filters</>,
-            );
-        }
-    } else if (total === 0) {
-        lines.push("No properties yet — add your first one");
-    } else {
-        lines.push(<>{countLabel(total, "listing", "listings")} in your inventory</>);
-    }
-
-    if (summary && summary.published > 0) {
-        lines.push(<>{countLabel(summary.published, "listing is", "listings are")} published</>);
-    }
-
-    if (summary && summary.draft > 0) {
-        lines.push(<>{countLabel(summary.draft, "draft", "drafts")} waiting to publish</>);
-    }
-
-    return lines.length > 0 ? lines : ["Your inventory"];
-}
-
-function InventoryStatusMeta({ summary }: { summary: MyListingsSummary | null }) {
-    if (!summary || summary.total === 0) {
-        return null;
-    }
-
-    const chips: { key: string; label: string; count: number }[] = [
-        { key: "published", label: "Published", count: summary.published },
-        { key: "draft", label: "Draft", count: summary.draft },
-    ].filter((chip) => chip.count > 0);
-
-    if (chips.length === 0) {
-        return null;
-    }
-
-    return (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-                <span className={META_TEXT}>Status</span>
-                {chips.map((chip) => (
-                    <Badge key={chip.key} color={STATUS_COLOR[chip.key] ?? "stone"}>
-                        {chip.label} · {chip.count}
-                    </Badge>
-                ))}
-            </div>
-        </div>
-    );
-}
+import type { MyListingStatus } from "@/features/properties/your-listings/types";
 
 /**
  * Mobile-only floating add. Desktop uses the toolbar CTA in MyListingsHeader —
@@ -115,6 +36,8 @@ export function MyListingsAddFab({
 export type MyListingsIntroProps = {
     summary: MyListingsSummary | null;
     resultTotal: number;
+    status: MyListingStatus | "";
+    hasError?: boolean;
     hasActiveFilters: boolean;
     isLoading?: boolean;
 };
@@ -122,43 +45,50 @@ export type MyListingsIntroProps = {
 export function MyListingsIntro({
     summary,
     resultTotal,
+    status,
+    hasError = false,
     hasActiveFilters,
     isLoading = false,
 }: MyListingsIntroProps) {
-    const [isPaused, setIsPaused] = useState(false);
-
     const lines = useMemo(
         () =>
             buildMyListingsSummaryLines({
                 summary,
                 resultTotal,
                 hasActiveFilters,
-                isLoading,
+                status,
             }),
-        [summary, resultTotal, hasActiveFilters, isLoading],
+        [summary, resultTotal, hasActiveFilters, status],
     );
 
     return (
-        <div className="flex flex-wrap items-center justify-between gap-3 text-start">
-            <h1 className="h3 min-inline-0">
-                <span className="text-ink">Your listings</span>
-                <span className="text-ink">.</span>{" "}
-                <span
-                    aria-live="polite"
-                    aria-atomic="true"
-                    className="text-ink-muted"
-                    onMouseEnter={() => setIsPaused(true)}
-                    onMouseLeave={() => setIsPaused(false)}
-                >
-                    <TextLoop interval={SUMMARY_LOOP_INTERVAL_S} trigger={!isPaused}>
-                        {lines.map((line, index) => (
-                            <span key={index}>{line}</span>
-                        ))}
-                    </TextLoop>
+        <h1 className="h2 text-start min-inline-0">
+            {isLoading ? (
+                <span aria-hidden className="relative inline-block align-bottom">
+                    <span className="invisible">Your listings.</span>
+                    <span
+                        className="
+                      absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control
+                      bg-border-warm block-[0.8em] inline-full
+                    "
+                    >
+                        <Skeleton className="bg-ink/3 block-full inline-full" />
+                    </span>
                 </span>
-            </h1>
-
-            <InventoryStatusMeta summary={summary} />
-        </div>
+            ) : (
+                <span className="text-ink">Your listings.</span>
+            )}{" "}
+            <RotatingHeaderSummary
+                key={`${status}:${lines.join("|")}`}
+                lines={lines}
+                isLoading={isLoading}
+                loadingLabel="Loading your listing counts"
+                loadingPlaceholder="Finish your property details, then publish when ready"
+                errorMessage={
+                    hasError ? "Could not load your listings. Please try again." : undefined
+                }
+                reservePlaceholder
+            />
+        </h1>
     );
 }
