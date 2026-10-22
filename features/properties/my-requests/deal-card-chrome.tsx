@@ -182,6 +182,7 @@ export function DealCardPhotoToolbar({
     onOpenTimeline,
     onCancelRequest,
     onStopRepresenting,
+    stopRepresentingLabel,
     tone = "overlay",
 }: {
     listing: DealCardListing;
@@ -196,6 +197,7 @@ export function DealCardPhotoToolbar({
     onOpenTimeline?: () => void;
     onCancelRequest?: () => void;
     onStopRepresenting?: () => void;
+    stopRepresentingLabel?: string;
     tone?: "overlay" | "plain";
 }) {
     return (
@@ -212,6 +214,7 @@ export function DealCardPhotoToolbar({
             onOpenTimeline={onOpenTimeline}
             onCancelRequest={onCancelRequest}
             onStopRepresenting={onStopRepresenting}
+            stopRepresentingLabel={stopRepresentingLabel}
             tone={tone}
         />
     );

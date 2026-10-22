@@ -48,6 +48,45 @@ export function OwnerRequestsEmpty({ tab }: { tab: OwnerRequestsTab }) {
         );
     }
 
+    if (tab === "accepted") {
+        return (
+            <EmptyState
+                icon={Inbox}
+                heading="No broker is selling your listings yet"
+                description="When you accept a broker's request, or a broker accepts your invite, they show up here."
+            >
+                <Button
+                    size="lg"
+                    variant="accent"
+                    nativeButton={false}
+                    render={<Link href={ownerBrokersHref()} />}
+                >
+                    Browse brokers
+                </Button>
+            </EmptyState>
+        );
+    }
+
+    if (tab === "rejected") {
+        return (
+            <EmptyState
+                icon={Inbox}
+                heading="Nothing was turned down"
+                description="Requests you said no to, and invites a broker turned down, show up here."
+            />
+        );
+    }
+
+    if (tab === "cancelled") {
+        return (
+            <EmptyState
+                icon={Inbox}
+                heading="No cancelled representations"
+                description="When you remove a broker, or a broker stops selling your property, it shows up here with the reason."
+            />
+        );
+    }
+
     return null;
 }
 

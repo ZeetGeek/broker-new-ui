@@ -56,6 +56,34 @@ function buildLines(
         return lines;
     }
 
+    if (tab === "accepted") {
+        return [
+            summary.accepted > 0 ? (
+                <>
+                    {countLabel(summary.accepted, "broker is", "brokers are")} selling your listings
+                </>
+            ) : (
+                "No broker is selling your listings yet"
+            ),
+        ];
+    }
+
+    if (tab === "rejected") {
+        return [
+            summary.rejected > 0
+                ? `${countLabel(summary.rejected, "request was", "requests were")} turned down`
+                : "Nothing was turned down",
+        ];
+    }
+
+    if (tab === "cancelled") {
+        return [
+            summary.cancelled > 0
+                ? `${countLabel(summary.cancelled, "representation was", "representations were")} cancelled`
+                : "No representation was cancelled",
+        ];
+    }
+
     return ["Every broker request for your listings"];
 }
 
@@ -150,7 +178,9 @@ export function OwnerRequestsIntro({
                     </span>
                 </h1>
 
-                <RequestsStatusMeta summary={summary} />
+                {activeTab === "requests" || activeTab === "invitations" ? (
+                    <RequestsStatusMeta summary={summary} />
+                ) : null}
             </div>
         </TooltipProvider>
     );

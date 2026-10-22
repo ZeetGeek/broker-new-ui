@@ -22,7 +22,9 @@ export function ownerBrokersHref(tab?: "browse" | "active"): string {
     return `${OWNER_BROKERS_HREF}?tab=${tab}`;
 }
 
-export function ownerRequestsHref(tab?: "requests" | "invitations"): string {
+export function ownerRequestsHref(
+    tab?: "requests" | "invitations" | "accepted" | "rejected" | "cancelled",
+): string {
     if (!tab || tab === "requests") return OWNER_REQUESTS_HREF;
     return `${OWNER_REQUESTS_HREF}?tab=${tab}`;
 }

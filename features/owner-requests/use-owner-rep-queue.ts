@@ -11,7 +11,8 @@ import { mapRepresentationToOwnerCard } from "@/features/owner-requests/map-owne
 import type { OwnerRequestCardItem } from "@/features/owner-requests/types";
 
 /** Which owner-side representation queue to scroll. */
-export type OwnerRepQueueKind = "requests" | "invitations" | "active";
+export type OwnerRepQueueKind =
+    "requests" | "invitations" | "active" | "accepted" | "rejected" | "cancelled";
 
 const QUEUE_PAGE_SIZE = 20;
 
@@ -31,6 +32,10 @@ function loadPage(
     }
     if (kind === "invitations") {
         return representativeApi.ownerInvitationPage({ status: "pending", ...params }, signal);
+    }
+    if (kind === "accepted" || kind === "rejected" || kind === "cancelled") {
+        // Both directions: broker requests and the owner's own invitations.
+        return representativeApi.ownerAllPage({ status: kind, ...params }, signal);
     }
     return representativeApi.ownerActivePage(params, signal);
 }
