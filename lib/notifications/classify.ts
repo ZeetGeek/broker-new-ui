@@ -66,6 +66,7 @@ const ALL_NOTIFICATION_TYPES = new Set<NotificationType>([
     ...VISIT_TYPES,
     "lead_added",
     "deal_closed",
+    "property_sold",
     "team_joined",
     "referral_rewarded",
     "property_assigned",

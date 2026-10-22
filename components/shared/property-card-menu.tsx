@@ -102,6 +102,8 @@ export type PropertyCardMenuProps = {
     onEdit?: () => void;
     /** Owned cards: ask to delete this listing. */
     onDelete?: () => void;
+    /** Owner cards: mark this listing as sold. */
+    onMarkSold?: () => void;
     /** Extra items after the standard actions. */
     extraItems?: ReactNode;
     /** `overlay` = glass circle on photo. `plain` = muted icon in list rows. */
@@ -182,6 +184,7 @@ export function PropertyCardMenu({
     onStopRepresenting,
     onEdit,
     onDelete,
+    onMarkSold,
     extraItems,
     tone = "overlay",
     className,
@@ -280,6 +283,7 @@ export function PropertyCardMenu({
         onStopRepresenting ||
         onAttachOwner ||
         onEdit ||
+        onMarkSold ||
         onDelete ||
         extraItems,
     );
@@ -585,6 +589,19 @@ export function PropertyCardMenu({
                     >
                         <Pencil aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
                         Edit property
+                    </DropdownMenuItem>
+                ) : null}
+
+                {onMarkSold ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        onClick={() => {
+                            onMarkSold();
+                            setOpen(false);
+                        }}
+                    >
+                        <Check aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        Mark as sold
                     </DropdownMenuItem>
                 ) : null}
 

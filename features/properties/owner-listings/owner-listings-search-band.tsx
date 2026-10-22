@@ -28,6 +28,8 @@ export type OwnerListingsSearchBandProps = {
     appliedFilters: OwnerListingsFilters;
     /** Location tree stubs for the Where menu. */
     listings: OwnerListingItem[];
+    /** Owner listings inside the broker's service areas, from the cities API. */
+    serviceableListingCount?: number;
     locationsLoading?: boolean;
     locationsError?: boolean;
     onRetryLocations?: () => void;
@@ -55,6 +57,7 @@ function bandSignature(band: OwnerListingsBandFilters): string {
 export function OwnerListingsSearchBand({
     appliedFilters,
     listings,
+    serviceableListingCount,
     locationsLoading,
     locationsError,
     onRetryLocations,
@@ -147,6 +150,7 @@ export function OwnerListingsSearchBand({
                         selectedLocalities={draft.localities}
                         yourAreas={draft.yourAreas}
                         serviceAreas={serviceAreas}
+                        serviceableListingCount={serviceableListingCount}
                         onWhereChange={setWhereFilters}
                         onCommit={applyDraftIfChanged}
                         onOpenChange={handleMenuOpenChange}

@@ -19,6 +19,7 @@ export type NotificationType =
     | "visit_cancelled"
     | "lead_added"
     | "deal_closed"
+    | "property_sold"
     | "team_joined"
     | "referral_rewarded"
     | "property_assigned"

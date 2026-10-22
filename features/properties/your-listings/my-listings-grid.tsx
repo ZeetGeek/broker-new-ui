@@ -22,6 +22,8 @@ export type MyListingsGridProps = {
     onAttachOwner?: (listing: MyListingItem) => void;
     /** When set, each card offers delete (caller shows confirm). */
     onDeleteListing?: (listing: MyListingItem) => void;
+    /** Owner portal: each unsold card offers "Mark as sold" (caller shows confirm). */
+    onMarkSold?: (listing: MyListingItem) => void;
     onInviteBroker?: (listing: MyListingItem) => void;
     brokersByProperty?: Map<string, PropertyBrokersSummary>;
     brokerSummaryState?: "loading" | "error" | "ready";
@@ -44,6 +46,7 @@ export function MyListingsGrid({
     onAddBuyer,
     onAttachOwner,
     onDeleteListing,
+    onMarkSold,
     onInviteBroker,
     brokersByProperty,
     brokerSummaryState,
@@ -75,6 +78,11 @@ export function MyListingsGrid({
                         onAddBuyer={onAddBuyer ? () => onAddBuyer(item) : undefined}
                         onAttachOwner={onAttachOwner ? () => onAttachOwner(item) : undefined}
                         onDelete={onDeleteListing ? () => onDeleteListing(item) : undefined}
+                        onMarkSold={
+                            portal === "owner" && onMarkSold && !item.isSold
+                                ? () => onMarkSold(item)
+                                : undefined
+                        }
                         onInviteBroker={
                             portal === "owner" && onInviteBroker
                                 ? () => onInviteBroker(item)

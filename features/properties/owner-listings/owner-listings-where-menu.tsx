@@ -413,6 +413,8 @@ export type OwnerListingsWhereMenuProps = {
     selectedLocalities: string[];
     yourAreas: boolean;
     serviceAreas?: string[];
+    /** Owner listings inside the service areas. Badge hidden while unknown. */
+    serviceableListingCount?: number;
     onWhereChange: (next: OwnerListingsWhereSelection) => void;
     /** Apply the reset to the results while the menu stays open. */
     onCommit?: () => void;
@@ -431,6 +433,7 @@ export function OwnerListingsWhereMenu({
     selectedLocalities,
     yourAreas,
     serviceAreas = [],
+    serviceableListingCount,
     onWhereChange,
     onCommit,
     onOpenChange,
@@ -693,8 +696,13 @@ export function OwnerListingsWhereMenu({
                 >
                     <LocationIcon icon={MapPinned} />
                     <span className="flex flex-1 flex-col gap-1 text-start min-inline-0">
-                        <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
-                            Serviceable areas
+                        <span className="flex items-center gap-2 min-inline-0">
+                            <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
+                                Serviceable areas
+                            </span>
+                            {serviceAreas.length > 0 && serviceableListingCount != null ? (
+                                <WhereListingCountBadge count={serviceableListingCount} />
+                            ) : null}
                         </span>
                         <WhereLocationMeta pathLabel={serviceableMeta} />
                     </span>

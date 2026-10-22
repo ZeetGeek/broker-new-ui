@@ -24,6 +24,7 @@ import { SAVED_PROPERTIES_QUERY_KEY } from "@/features/properties/saved-properti
 import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
 import { InvitePropertyBrokerModal } from "@/features/properties/your-listings/invite-property-broker-modal";
 import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
+import { MarkSoldDialog } from "@/features/properties/your-listings/mark-sold-dialog";
 import { MyListingsGrid } from "@/features/properties/your-listings/my-listings-grid";
 import { MyListingsHeader } from "@/features/properties/your-listings/my-listings-header";
 import {
@@ -94,6 +95,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     const [editingListing, setEditingListing] = useState<MyListingItem | null>(null);
     const [deletingListing, setDeletingListing] = useState<MyListingItem | null>(null);
     const [deleteBusy, setDeleteBusy] = useState(false);
+    const [sellingListing, setSellingListing] = useState<MyListingItem | null>(null);
     /** Kept after close so the modal can animate out with its listing intact. */
     const [buyersListing, setBuyersListing] = useState<MyListingItem | null>(null);
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
@@ -281,6 +283,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                         }
                         onEditListing={setEditingListing}
                         onDeleteListing={setDeletingListing}
+                        onMarkSold={isOwnerPortal ? setSellingListing : undefined}
                         onAddBuyer={
                             isOwnerPortal
                                 ? undefined
@@ -349,6 +352,23 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     setRefreshToken((token) => token + 1);
                 }}
             />
+            {sellingListing ? (
+                <MarkSoldDialog
+                    open
+                    onOpenChange={(next) => {
+                        if (!next) setSellingListing(null);
+                    }}
+                    propertyId={sellingListing.id}
+                    propertyTitle={sellingListing.title || "This property"}
+                    onSold={() => {
+                        setSellingListing(null);
+                        setRefreshToken((token) => token + 1);
+                        void queryClient.invalidateQueries({
+                            queryKey: ["owner-property-representations"],
+                        });
+                    }}
+                />
+            ) : null}
             <PropertyDeleteDialog
                 open={deletingListing != null}
                 onOpenChange={(next) => {
