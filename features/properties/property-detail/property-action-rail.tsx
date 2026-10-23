@@ -13,7 +13,6 @@ import {
     Inbox,
     Lock,
     Pencil,
-    Trash2,
     WhatsAppIcon,
 } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -21,6 +20,7 @@ import { Button } from "@/components/ui/button";
 
 import type { MyListingItem } from "../your-listings/types";
 
+import { HoldToDeleteProperty } from "./hold-to-delete-property";
 import { PropertyBuyersCard } from "./property-buyers-card";
 import { listedAgoLabel } from "./property-detail-facts";
 import { PropertyPriceBlock } from "./property-price-block";
@@ -32,7 +32,7 @@ export type PropertyActionRailProps = {
     portal: "owner" | "broker";
     busy: boolean;
     onTogglePublish: () => void;
-    onRequestDelete: () => void;
+    onRequestDelete: () => Promise<void>;
     editHref: string;
     requestsHref?: string;
     brokers?: PropertyBroker[];
@@ -225,20 +225,12 @@ export function PropertyActionRail({
                         </Button>
                     </div>
                 ) : null}
-                <Button
-                    type="button"
-                    variant="ghost"
-                    disabled={busy}
-                    onClick={onRequestDelete}
-                    className={`
-              ${styles.delete}
-              text-danger
-              hover:bg-danger-soft hover:text-danger
-            `}
-                >
-                    <Trash2 size={17} aria-hidden />
-                    Delete property
-                </Button>
+                <div className={styles.deleteArea}>
+                    <HoldToDeleteProperty disabled={busy} onComplete={onRequestDelete} />
+                    <p id="property-delete-hint" className={styles.deleteHint}>
+                        This cannot be undone. Release early to cancel.
+                    </p>
+                </div>
             </section>
         </>
     );

@@ -43,6 +43,7 @@ export type DealOwner = {
 
 /** The property side, also denormalized from the owner's listing. */
 export type DealProperty = {
+    filterFacts?: import("@/lib/properties/list-criteria").PropertyFilterRecord;
     id: string;
     title: string;
     configLabel: string;
@@ -157,6 +158,7 @@ export type DealDetail = DealItem & {
 };
 
 export type DealsFilters = {
+    propertyFilters?: import("@/lib/properties/list-criteria").PropertyListCriteria;
     q: string;
     /** "" means every live stage. Terminal states use the `done` view. */
     stage: DealStage | "";
@@ -169,8 +171,6 @@ export type DealsFilters = {
 export type DealSort = "recent" | "stalled" | "price_desc" | "price_asc" | "visit_soon";
 
 export type DealsView = "board" | "done";
-
-export type PipelineSummaryChip = "running" | "in_play" | "quiet" | "finished";
 
 export type DealTypeFilter = "" | "rent" | "sale";
 

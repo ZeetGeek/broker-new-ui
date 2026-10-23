@@ -1,32 +1,11 @@
 "use client";
 
 import { type MouseEvent, type PointerEvent, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 import useEmblaCarousel from "embla-carousel-react";
-import {
-    Bath,
-    BedDouble,
-    Building2,
-    Calendar,
-    CallIcon,
-    Camera,
-    Check,
-    ChevronLeft,
-    ChevronRight,
-    CircleCheck,
-    Clock,
-    MapPin,
-    Maximize2,
-    Send,
-    Trash2,
-    UserPlus,
-    UserRound,
-    Users,
-    WhatsAppIcon,
-    X,
-} from "@/components/shared/icons";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import {
@@ -50,6 +29,28 @@ import {
     InvitedBrokersRow,
 } from "@/components/shared/attached-people-row";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
+import {
+    Bath,
+    BedDouble,
+    Building2,
+    Calendar,
+    CallIcon,
+    Camera,
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    CircleCheck,
+    Clock,
+    MapPin,
+    Maximize2,
+    Send,
+    Trash2,
+    UserPlus,
+    UserRound,
+    Users,
+    WhatsAppIcon,
+    X,
+} from "@/components/shared/icons";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
     OverlayCard,
@@ -821,7 +822,11 @@ function BrowsePropertyCardOwner({ owner }: { owner: PropertyCardOwner }) {
                 </Button>
             </div>
             {owner.locationLabel ? (
-                <p className="body-xs flex items-center gap-1 tracking-wide text-ink-muted min-inline-0">
+                <p
+                    className="
+                      body-xs flex items-center gap-1 tracking-wide text-ink-muted min-inline-0
+                    "
+                >
                     <MapPin aria-hidden className="shrink-0 block-3 inline-3" strokeWidth={1.75} />
                     <span className="truncate capitalize">{owner.locationLabel}</span>
                 </p>
@@ -966,7 +971,11 @@ function BrowseOverlayPrices({
 
     if (both) {
         return (
-            <p className="flex flex-wrap items-baseline gap-x-1.5 text-brand tabular-nums min-inline-0">
+            <p
+                className="
+                  flex flex-wrap items-baseline gap-x-1.5 text-brand tabular-nums min-inline-0
+                "
+            >
                 <PriceWithCommission
                     amountInr={listing.saleAmountInr ?? 0}
                     commissionPercent={listing.commissionPercent}
@@ -1380,7 +1389,10 @@ function RepresentedPropertyCard({
                             prefetch={false}
                             className={cn(
                                 buttonVariants({ size: "sm" }),
-                                "flex-1 bg-brand-ink text-surface hover:bg-brand-ink/90 min-inline-0",
+                                `
+                                  flex-1 bg-brand-ink text-surface min-inline-0
+                                  hover:bg-brand-ink/90
+                                `,
                             )}
                         >
                             Open in CRM
@@ -1389,7 +1401,10 @@ function RepresentedPropertyCard({
                         <Button
                             type="button"
                             size="sm"
-                            className="flex-1 bg-brand-ink text-surface hover:bg-brand-ink/90 min-inline-0"
+                            className="
+                              flex-1 bg-brand-ink text-surface min-inline-0
+                              hover:bg-brand-ink/90
+                            "
                             onClick={onOpenCrm}
                         >
                             Open in CRM
@@ -1743,7 +1758,19 @@ function OwnedOverlayPropertyCard({
     const hasOwnerPhone = ownerPhoneDigits.length >= 10;
     const hasWorkingBrokers = (brokerSummary?.brokers.length ?? 0) > 0;
     /** Broker inventory only — owner portal uses Invite broker instead. */
-    const showContactBar = Boolean(onAttachOwner || onAddBuyer);
+    const showContactBar = hasOwner && Boolean(onAttachOwner || onAddBuyer);
+    const isAddBuyerBlocked = audience === "broker" && !hasOwner;
+    const handleAddBuyer = onAddBuyer
+        ? () => {
+              if (isAddBuyerBlocked) {
+                  toast.error("Attach an owner first to enable attaching buyers.", {
+                      id: "listing-owner-required",
+                  });
+                  return;
+              }
+              onAddBuyer();
+          }
+        : undefined;
 
     return (
         <TooltipProvider>
@@ -1810,7 +1837,8 @@ function OwnedOverlayPropertyCard({
                         attachOwnerLabel={
                             hasOwner ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL
                         }
-                        onAddBuyer={onAddBuyer}
+                        onAddBuyer={handleAddBuyer}
+                        isAddBuyerBlocked={isAddBuyerBlocked}
                         contact={
                             hasOwnerPhone
                                 ? {
@@ -1841,13 +1869,22 @@ function OwnedOverlayPropertyCard({
                     ) : null}
 
                     {hasBuyers || onAddBuyer ? (
-                        <AttachedBuyersRow buyers={buyers} onAttach={onAddBuyer} />
+                        <AttachedBuyersRow
+                            buyers={buyers}
+                            onAttach={handleAddBuyer}
+                            isAttachBlocked={isAddBuyerBlocked}
+                        />
                     ) : null}
                 </div>
 
                 <OverlayCardActions className="flex-col gap-2">
                     {isSold ? (
-                        <p className="body-sm rounded-control bg-surface-muted px-3 py-2 text-center font-medium text-ink-muted">
+                        <p
+                            className="
+                              body-sm rounded-control bg-surface-muted px-3 py-2 text-center
+                              font-medium text-ink-muted
+                            "
+                        >
                             Sold — no longer shown to brokers
                         </p>
                     ) : onInviteBroker ? (
@@ -1905,6 +1942,15 @@ function OwnedOverlayPropertyCard({
                             ownerName={ownerName || "Owner"}
                             ownerPhoneDigits={hasOwnerPhone ? ownerPhoneDigits : null}
                         />
+                    ) : audience === "broker" && !hasOwner && (onAttachOwner || onAddBuyer) ? (
+                        <p
+                            className="
+                          body-xs flex items-center justify-center rounded-control bg-surface-muted
+                          px-3 py-2 text-center font-medium text-ink/70 inline-full min-block-11
+                        "
+                        >
+                            Attach an owner to enable calls and WhatsApp.
+                        </p>
                     ) : null}
                 </OverlayCardActions>
             </OverlayCard>

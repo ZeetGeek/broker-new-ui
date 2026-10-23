@@ -5,7 +5,9 @@ import { useMemo, useState } from "react";
 import { addDays, addMonths } from "date-fns";
 
 import { formatPriceInr } from "@/lib/format/price";
+import { propertyCriteriaCount, type PropertyListCriteria } from "@/lib/properties/list-criteria";
 import { groupVisitsByDay } from "@/lib/visits/grouping";
+import { matchesVisitProperty } from "@/lib/visits/property-filters";
 import { isVisitCancelled } from "@/lib/visits/status";
 import { formatVisitDayHeading, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
@@ -140,6 +142,7 @@ function VisitGroup({
 
 export function MyVisitsTab({
     visits,
+    propertyFilters,
     isLoading,
     focus,
     query = "",
@@ -155,6 +158,7 @@ export function MyVisitsTab({
     onClearFilters,
 }: {
     visits: BrokerSiteVisit[];
+    propertyFilters?: PropertyListCriteria;
     isLoading: boolean;
     focus?: SummaryFilter;
     query?: string;
@@ -173,15 +177,24 @@ export function MyVisitsTab({
     const filtered = useMemo(() => {
         const bounds = rangeBounds(range, customFrom, customTo, now);
         return applyFocus(visits, focus).filter((visit) => {
+            if (!matchesVisitProperty(visit.property, propertyFilters)) return false;
             if (!matchesQuery(visit, query)) return false;
             if (!bounds) return true;
             const day = istDateKey(visit.startsAt);
             return day >= bounds.from && day <= bounds.to;
         });
-    }, [customFrom, customTo, focus, now, query, range, visits]);
+    }, [customFrom, customTo, focus, now, query, range, visits, propertyFilters]);
     const groups = useMemo(() => groupVisitsByDay(filtered), [filtered]);
     const chips = useMemo(() => {
         const next: VisitsFilterChip[] = [];
+        const propertyCount = propertyCriteriaCount(propertyFilters);
+        if (propertyCount && onClearFilters) {
+            next.push({
+                key: "property",
+                label: `Property filters (${propertyCount})`,
+                clear: onClearFilters,
+            });
+        }
         const trimmed = query.trim();
         if (trimmed && onClearQuery) {
             next.push({ key: "query", label: `“${trimmed}”`, clear: onClearQuery });
@@ -197,7 +210,18 @@ export function MyVisitsTab({
             next.push({ key: "focus", label: FOCUS_CHIP_LABEL[focus], clear: onClearFocus });
         }
         return next;
-    }, [customFrom, customTo, focus, onClearFocus, onClearQuery, onClearRange, query, range]);
+    }, [
+        customFrom,
+        customTo,
+        focus,
+        onClearFocus,
+        onClearQuery,
+        onClearRange,
+        query,
+        range,
+        propertyFilters,
+        onClearFilters,
+    ]);
     const nextVisit = useMemo(
         () =>
             visits

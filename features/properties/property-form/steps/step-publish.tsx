@@ -1,24 +1,24 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { Check, Search, UserRound, Users, X } from "@/components/shared/icons";
-
+import { clientsApi } from "@/lib/api/clients";
 import { contactsApi } from "@/lib/api/contacts";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
+import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
+import { Check, Search, UserRound, Users, X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { DEFAULT_CONTACTS_FILTERS } from "@/features/contacts/types";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
+import { DEFAULT_CONTACTS_FILTERS } from "@/features/contacts/types";
 import {
     FORM_SECTIONS_CLASS,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
-import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 type AttachedBuyer = PropertyDraftValues["attachedBuyers"][number];
 
@@ -28,11 +28,34 @@ function formatPhone(digits?: string): string {
     return digits;
 }
 
-export function StepPublish() {
+export function StepPublish({ propertyId }: { propertyId?: string }) {
     const { watch, setValue, getValues } = useFormContext<PropertyDraftValues>();
     const values = watch();
     const attachedOwnerId = values.owner.contactId;
     const attachedBuyers = values.attachedBuyers ?? [];
+    const [existingBuyers, setExistingBuyers] = useState<{ id: string; name: string }[]>([]);
+    const [buyerLoadError, setBuyerLoadError] = useState(false);
+    useEffect(() => {
+        if (!propertyId) return;
+        let cancelled = false;
+        void clientsApi
+            .listForProperty(propertyId)
+            .then(({ clients, attachedIds }) => {
+                if (!cancelled)
+                    setExistingBuyers(
+                        attachedIds.map((id) => ({
+                            id,
+                            name: clients.find((client) => client.id === id)?.name ?? "Buyer",
+                        })),
+                    );
+            })
+            .catch(() => {
+                if (!cancelled) setBuyerLoadError(true);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [propertyId]);
 
     function attachOwner(owner: OwnerRow) {
         const phone = owner.phoneDigits?.replace(/\D/g, "").slice(-10) ?? "";
@@ -51,6 +74,7 @@ export function StepPublish() {
     }
 
     function toggleBuyer(buyer: BuyerRow) {
+        if (existingBuyers.some((existing) => existing.id === buyer.id)) return;
         const current = getValues("attachedBuyers") ?? [];
         const exists = current.some((item) => item.id === buyer.id);
         const next: AttachedBuyer[] = exists
@@ -78,16 +102,7 @@ export function StepPublish() {
     return (
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title={
-                    <>
-                        <UserRound
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Attach owner
-                    </>
-                }
+                title={<>Attach owner</>}
                 description="Optional. Pick an exclusive owner from your contacts. One owner per listing."
                 tone="private"
             >
@@ -108,19 +123,22 @@ export function StepPublish() {
             </WizardSection>
 
             <WizardSection
-                title={
-                    <>
-                        <Users
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Attach buyers
-                    </>
-                }
-                description="Optional. Add one or more buyers from contacts who should see this property."
+                title={<>Attach buyers</>}
+                description="Optional. Link buyers from your contacts to this property in your CRM."
                 tone="private"
             >
+                {existingBuyers.length ? (
+                    <p className="mbe-4 text-sm text-ink-muted">
+                        Already attached: {existingBuyers.map((buyer) => buyer.name).join(", ")}.
+                        Manage existing links from the property page.
+                    </p>
+                ) : null}
+                {buyerLoadError ? (
+                    <p role="alert" className="mbe-4 text-sm text-danger">
+                        Existing buyers could not be loaded. Saving new selections will keep
+                        existing links.
+                    </p>
+                ) : null}
                 {attachedBuyers.length ? (
                     <div className="mbe-4 space-y-2">
                         <div className="flex items-baseline justify-between gap-3">
@@ -175,7 +193,10 @@ export function StepPublish() {
                 <ContactSearchPanel
                     mode="buyer"
                     selectedId={null}
-                    selectedIds={attachedBuyers.map((buyer) => buyer.id)}
+                    selectedIds={[
+                        ...existingBuyers.map((buyer) => buyer.id),
+                        ...attachedBuyers.map((buyer) => buyer.id),
+                    ]}
                     selectedLabel={null}
                     onSelectBuyer={toggleBuyer}
                     onClear={() => undefined}
@@ -232,8 +253,8 @@ function ContactSearchPanel({
             {mode === "owner" && selectedLabel ? (
                 <div
                     className="
-                      flex items-center justify-between gap-3 rounded-control border
-                      border-brand/25 bg-brand-soft px-4 py-3
+                      flex items-center justify-between gap-3 rounded-control border border-brand/25
+                      bg-brand-soft px-4 py-3
                     "
                 >
                     <div className="flex items-center gap-3 min-inline-0">
@@ -283,8 +304,8 @@ function ContactSearchPanel({
 
                     <div
                         className="
-                          max-block-72 space-y-1 overflow-y-auto rounded-control border
-                          border-border-warm bg-surface p-2
+                          space-y-1 overflow-y-auto rounded-control border border-border-warm
+                          bg-surface p-2 max-block-72
                         "
                         role="listbox"
                         aria-label={mode === "owner" ? "Owner contacts" : "Buyer contacts"}
@@ -315,10 +336,9 @@ function ContactSearchPanel({
                                         onClick={() => onSelectOwner?.(owner)}
                                         className={cn(
                                             `
-                                              flex inline-full items-center gap-3 rounded-control
-                                              px-3 py-2.5 text-start transition-colors
+                                              flex items-center gap-3 rounded-control px-3 py-2.5
+                                              text-start transition-colors inline-full min-block-12
                                               focus-visible:ring-3 focus-visible:ring-ring/30
-                                              min-block-12
                                             `,
                                             active
                                                 ? "bg-brand-soft text-brand-text"
@@ -329,8 +349,12 @@ function ContactSearchPanel({
                                             className="shrink-0 text-ink-muted block-4 inline-4"
                                             aria-hidden
                                         />
-                                        <span className="min-inline-0 flex-1">
-                                            <span className="block truncate text-sm font-semibold text-ink">
+                                        <span className="flex-1 min-inline-0">
+                                            <span
+                                                className="
+                                                  block truncate text-sm font-semibold text-ink
+                                                "
+                                            >
                                                 {owner.name}
                                             </span>
                                             <span className="block text-xs text-ink-muted">
@@ -361,10 +385,9 @@ function ContactSearchPanel({
                                         onClick={() => onSelectBuyer?.(buyer)}
                                         className={cn(
                                             `
-                                              flex inline-full items-center gap-3 rounded-control
-                                              px-3 py-2.5 text-start transition-colors
+                                              flex items-center gap-3 rounded-control px-3 py-2.5
+                                              text-start transition-colors inline-full min-block-12
                                               focus-visible:ring-3 focus-visible:ring-ring/30
-                                              min-block-12
                                             `,
                                             active
                                                 ? "bg-brand-soft text-brand-text"
@@ -375,8 +398,12 @@ function ContactSearchPanel({
                                             className="shrink-0 text-ink-muted block-4 inline-4"
                                             aria-hidden
                                         />
-                                        <span className="min-inline-0 flex-1">
-                                            <span className="block truncate text-sm font-semibold text-ink">
+                                        <span className="flex-1 min-inline-0">
+                                            <span
+                                                className="
+                                                  block truncate text-sm font-semibold text-ink
+                                                "
+                                            >
                                                 {buyer.name}
                                             </span>
                                             <span className="block text-xs text-ink-muted">

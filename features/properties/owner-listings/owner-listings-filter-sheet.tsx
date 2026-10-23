@@ -528,6 +528,7 @@ export type OwnerListingsFilterSheetProps = {
     ) => void;
     showDiscoveryFilters?: boolean;
     discoveryFilters?: Partial<PropertyListCriteria>;
+    discoveryDescription?: string;
 };
 
 export function OwnerListingsFilterSheet({
@@ -537,6 +538,7 @@ export function OwnerListingsFilterSheet({
     onApply,
     showDiscoveryFilters = false,
     discoveryFilters,
+    discoveryDescription = "Narrow these deals by location, budget and property type.",
 }: OwnerListingsFilterSheetProps) {
     const [draft, setDraft] = useState(() => extractSheetFilters(appliedFilters));
     const [draftDiscovery, setDraftDiscovery] = useState(() =>
@@ -915,7 +917,7 @@ export function OwnerListingsFilterSheet({
                                 >
                                     <FilterAccordionTrigger
                                         title="Property search"
-                                        description="Narrow these deals by location, budget and property type."
+                                        description={discoveryDescription}
                                     />
                                     <AccordionContent className="px-0 pbe-0">
                                         <div className="border-0 pbe-6">

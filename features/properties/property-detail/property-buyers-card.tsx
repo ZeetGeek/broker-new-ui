@@ -7,8 +7,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { attachedClientsFor } from "@/lib/api/clients";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
 
-import { UserPlus, Users } from "@/components/shared/icons";
 import { AvatarStack } from "@/components/shared/avatar-stack";
+import { UserPlus, Users } from "@/components/shared/icons";
+import { Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
 
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
@@ -28,9 +29,16 @@ export function PropertyBuyersCard({ item }: { item: MyListingItem }) {
         <section className={styles.contact} aria-label="Attached buyers">
             <h2>Buyers</h2>
             {query.isPending ? (
-                <p className={styles.actionDescription} role="status">
-                    Loading buyers…
-                </p>
+                <div role="status" aria-busy="true">
+                    <span className="sr-only">Loading attached buyers</span>
+                    <div className={styles.buyersSummary} aria-hidden>
+                        <Skeleton className="rounded-full block-10 inline-10" />
+                        <Skeleton className="block-4 inline-24" />
+                    </div>
+                    <div className={styles.contactActions} aria-hidden>
+                        <Skeleton className="block-11 inline-full" />
+                    </div>
+                </div>
             ) : query.isError ? (
                 <div>
                     <p className={styles.actionDescription}>Couldn’t load attached buyers.</p>

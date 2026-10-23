@@ -1,15 +1,15 @@
 "use client";
 
-import { useMemo, useState, type MouseEvent } from "react";
+import { type MouseEvent, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { AnimatePresence, motion } from "motion/react";
 
-import { Plus, Search, X } from "@/components/shared/icons";
+import { AnimatePresence, motion } from "motion/react";
 
 import { duration, ease } from "@/lib/motion/tokens";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 
+import { ChevronDown, Plus, Search, X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -51,21 +51,6 @@ const chipMotion = {
     transition: { duration: duration.base, ease: ease.smoothOut },
 } as const;
 
-function AccordionChevron() {
-    return (
-        <span className="t-acc-chevron" aria-hidden>
-            <svg viewBox="0 0 16 16" className="block-4 inline-4" fill="none" stroke="currentColor">
-                <path
-                    d="M4 6.5L8 10.5L12 6.5"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    vectorEffect="non-scaling-stroke"
-                />
-            </svg>
-        </span>
-    );
-}
-
 function toPlaceValue(label: string): string {
     return label
         .trim()
@@ -102,11 +87,11 @@ function dedupePlaces(values: string[]): string[] {
 
 export function NearbyPlacesField() {
     const { watch, setValue, getValues } = useFormContext<PropertyDraftValues>();
-    const nearbyPlaces = watch("location.nearbyPlaces") ?? [];
+    const nearbyPlaces = watch("location.nearbyPlaces");
     const [query, setQuery] = useState("");
     const [browseAll, setBrowseAll] = useState(false);
 
-    const selected = useMemo(() => dedupePlaces(nearbyPlaces.map(String)), [nearbyPlaces]);
+    const selected = useMemo(() => dedupePlaces((nearbyPlaces ?? []).map(String)), [nearbyPlaces]);
     const selectedSet = useMemo(() => new Set(selected), [selected]);
 
     const popularSet = useMemo(() => new Set<string>(POPULAR_NEARBY), []);
@@ -212,7 +197,8 @@ export function NearbyPlacesField() {
             <Button
                 type="button"
                 variant="outline"
-                size="md"
+                size="default"
+                disabled={!isOn && selected.length >= MAX_NEARBY_PLACES}
                 aria-pressed={removable ? undefined : active}
                 aria-label={removable ? `Remove ${label}` : undefined}
                 onClick={(event) => {
@@ -221,11 +207,10 @@ export function NearbyPlacesField() {
                 }}
                 className={cn(
                     `
-                      gap-1.5 rounded-control border-2 px-3 py-2 text-sm font-medium
-                      transition-[background-color,border-color,color,transform]
-                      duration-160 min-block-11
+                      gap-2 rounded-full border px-4 text-sm font-medium
+                      transition-[background-color,border-color,color,transform] duration-160
+                      min-block-10
                       focus-visible:ring-3 focus-visible:ring-ring/30
-                      sm:min-block-10
                     `,
                     isOn
                         ? `
@@ -233,8 +218,8 @@ export function NearbyPlacesField() {
                           hover:bg-brand-soft-hover hover:text-brand-text
                         `
                         : `
-                          border-border-warm bg-surface text-ink-muted
-                          hover:border-brand/40 hover:bg-surface hover:text-ink-muted
+                          border-border-warm bg-surface text-ink
+                          hover:border-brand/40 hover:bg-brand-soft/40 hover:text-brand-text
                         `,
                 )}
             >
@@ -242,7 +227,7 @@ export function NearbyPlacesField() {
                     {icon}
                 </span>
                 {label}
-                {removable ? <X className="block-3.5 inline-3.5 shrink-0" aria-hidden /> : null}
+                {removable ? <X className="shrink-0 block-3.5 inline-3.5" aria-hidden /> : null}
             </Button>
         );
     }
@@ -255,9 +240,10 @@ export function NearbyPlacesField() {
                     value={query}
                     onValueChange={setQuery}
                     startIcon={Search}
-                    placeholder="e.g. school, hospital, VR Mall…"
+                    placeholder="Search places or add a name"
                     aria-label="Search or add nearby place"
-                    className="min-inline-0 flex-1"
+                    className="flex-1 min-inline-0"
+                    maxLength={48}
                     onKeyDown={(event) => {
                         if (event.key === "Enter") {
                             event.preventDefault();
@@ -272,19 +258,17 @@ export function NearbyPlacesField() {
                 />
                 <Button
                     type="button"
-                    variant="outline"
+                    variant="accent"
                     size="lg"
                     onClick={addCustom}
                     disabled={!canAddCustom}
                     className="
-                      shrink-0 rounded-control border-2 border-border-warm bg-surface
-                      px-4 text-sm font-semibold text-ink
-                      hover:bg-surface-muted
+                      shrink-0 rounded-control px-5 text-sm font-semibold
                       focus-visible:ring-3 focus-visible:ring-ring/30
                       disabled:opacity-40
                     "
                 >
-                    <Plus className="me-1 inline block-4 inline-4" aria-hidden />
+                    <Plus aria-hidden />
                     Add
                 </Button>
             </div>
@@ -334,57 +318,30 @@ export function NearbyPlacesField() {
                             </AnimatePresence>
                         </motion.div>
                     </motion.div>
-                ) : (
-                    <motion.p
-                        key="nearby-empty"
-                        className="text-sm text-ink-muted"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: duration.fast, ease: ease.smoothOut }}
-                    >
-                        Nothing selected yet. Pick a few common ones below.
-                    </motion.p>
-                )}
+                ) : null}
             </AnimatePresence>
 
             {!trimmedQuery ? (
                 <div className="space-y-2">
-                    <p className="text-sm font-semibold text-ink">Suggested</p>
+                    <p className="text-xs font-medium text-ink-muted">
+                        {browseAll ? "All places" : "Suggested places"}
+                    </p>
                     <div
                         className="flex flex-wrap gap-2"
                         role="group"
                         aria-label="Suggested nearby places"
                     >
-                        {suggested.map((option) => (
-                            <ChipButton
-                                key={option.value}
-                                option={option}
-                                active={selectedSet.has(option.value)}
-                            />
-                        ))}
+                        {(browseAll ? catalog : suggested)
+                            .filter((option) => !selectedSet.has(option.value))
+                            .map((option) => (
+                                <ChipButton
+                                    key={option.value}
+                                    option={option}
+                                    active={selectedSet.has(option.value)}
+                                />
+                            ))}
                     </div>
                 </div>
-            ) : null}
-
-            {trimmedQuery && canAddCustom && !exactInCatalog ? (
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={addCustom}
-                    className="
-                      flex inline-full items-center justify-start gap-2 rounded-control
-                      border-2 border-dashed border-brand/35 bg-brand-soft/40 px-3
-                      py-2.5 text-start text-sm font-medium text-brand-text
-                      transition-colors
-                      hover:bg-brand-soft
-                      focus-visible:ring-3 focus-visible:ring-ring/30
-                      min-block-11
-                    "
-                >
-                    <Plus className="block-4 inline-4 shrink-0" aria-hidden />
-                    Add “{trimmedQuery}” as custom
-                </Button>
             ) : null}
 
             {trimmedQuery && filtered.length ? (
@@ -413,37 +370,20 @@ export function NearbyPlacesField() {
             ) : null}
 
             {!trimmedQuery && morePlaces.length ? (
-                <div className="t-acc" data-open={browseAll ? "true" : "false"}>
-                    <div className="t-acc-panel">
-                        <div className="t-acc-panel-inner">
-                            <div className="space-y-2 pbe-1">
-                                <p className="text-sm font-semibold text-ink">More places</p>
-                                <div
-                                    className="flex flex-wrap gap-2"
-                                    role="group"
-                                    aria-label="More nearby places"
-                                >
-                                    {morePlaces.map((option) => (
-                                        <ChipButton
-                                            key={option.value}
-                                            option={option}
-                                            active={selectedSet.has(option.value)}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div>
                     <Button
                         type="button"
                         variant="link"
                         size="xs"
                         aria-expanded={browseAll}
                         onClick={() => setBrowseAll((open) => !open)}
-                        className="t-acc-head mt-1 shrink-0 gap-1.5 px-0 text-brand"
+                        className="shrink-0 gap-1.5 px-0 text-brand"
                     >
                         {browseAll ? "Show fewer" : `Browse all ${catalog.length} places`}
-                        <AccordionChevron />
+                        <ChevronDown
+                            aria-hidden
+                            className={cn("block-4 inline-4", browseAll && "rotate-180")}
+                        />
                     </Button>
                 </div>
             ) : null}

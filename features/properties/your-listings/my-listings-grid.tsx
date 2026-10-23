@@ -7,6 +7,7 @@ import { ownerPropertyDetailHref, ownerPropertyEditHref } from "@/lib/routes/own
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
+import { MY_LISTINGS_GRID_CLASS } from "@/features/properties/your-listings/my-listings-grid-class";
 import { toOwnedPropertyCardListing } from "@/features/properties/your-listings/to-owned-property-card";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
@@ -64,6 +65,7 @@ export function MyListingsGrid({
             gap={24}
             breakpoints={GRID_BREAKPOINTS}
             ariaLabel="Your listings"
+            gridClassName={MY_LISTINGS_GRID_CLASS}
             renderItem={(item, index) => {
                 const listing = toOwnedPropertyCardListing(item);
 
@@ -93,7 +95,7 @@ export function MyListingsGrid({
                         isSaved={isSaved?.(item) ?? false}
                         onToggleSave={onToggleSave ? () => onToggleSave(item) : undefined}
                         priority={index === 0}
-                        imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
+                        imageSizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                     />
                 );
             }}

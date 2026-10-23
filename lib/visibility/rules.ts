@@ -1,3 +1,4 @@
+import { isUsablePropertyPhoto } from "@/lib/properties/form-media";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { derive, type DerivedPropertyFlags } from "@/lib/visibility/derive";
 
@@ -74,7 +75,11 @@ export const FIELD_RULES = {
         level: (d) => (d.isResidential ? "required" : "optional"),
     },
     "details.balconies": { visible: (d) => d.isResidential && !d.isPlot },
-    "details.floorNumber": { visible: (d) => d.isInBuilding, level: required },
+    "details.floorNumber": {
+        visible: (d) => d.isInBuilding,
+        level: required,
+        isEmpty: (v) => v.details.floorNumber == null,
+    },
     "details.totalFloors": {
         visible: (d) => !d.isPlot,
         level: (d) => (d.isInBuilding ? "required" : "optional"),
@@ -87,6 +92,7 @@ export const FIELD_RULES = {
     "details.propertyAge": {
         visible: (d) => !d.isPlot && !d.isUnderConstruction,
         level: required,
+        isEmpty: (v) => v.details.propertyAge == null,
     },
     "details.propertyCondition": { visible: (d) => !d.isPlot, level: required },
     "details.coveredParking": {
@@ -143,7 +149,7 @@ export const FIELD_RULES = {
     // Always sq ft, so the picker is hidden; the value still ships with the listing.
     "area.unit": { visible: () => false, keepWhenHidden: true, level: required },
     "area.carpetArea": {
-        visible: () => true,
+        visible: (d) => !d.isPlot,
         level: required,
         label: () => "Carpet area",
     },
@@ -169,7 +175,11 @@ export const FIELD_RULES = {
     "rent.monthlyRent": { visible: (d) => d.isRentLike && !d.isPg, level: required },
     "rent.rentNegotiable": { visible: () => false },
     "rent.securityDepositMode": { visible: (d) => d.isRentLike, level: required },
-    "rent.securityDeposit": { visible: (d) => d.isRentLike, level: required },
+    "rent.securityDeposit": {
+        visible: (d) => d.isRentLike,
+        level: required,
+        isEmpty: (v) => v.rent.securityDeposit == null,
+    },
     "rent.maintenanceMode": { visible: () => false, keepWhenHidden: true },
     // One UI field only — shown under rent when rent-only; under sale when selling
     // (including sell+rent). Values stay mirrored in the form.
@@ -208,7 +218,11 @@ export const FIELD_RULES = {
         level: required,
         label: () => "Sale commission mode",
     },
-    "commission.sale.value": { visible: (d) => d.isSell, level: required },
+    "commission.sale.value": {
+        visible: (d) => d.isSell,
+        level: required,
+        isEmpty: (v) => v.commission.sale.value == null,
+    },
     // The owner always pays the full brokerage; both fields ship as fixed values.
     "commission.sale.paidBy": { visible: () => false, keepWhenHidden: true, level: required },
     "commission.sale.ownerSharePercent": {
@@ -264,14 +278,14 @@ export const FIELD_RULES = {
         label: () => "Cover image",
         keepWhenHidden: true,
         isEmpty: (values) =>
-            !values.media.photos.some((photo) => photo.isCover && photo.status !== "error"),
+            !values.media.photos.some((photo) => photo.isCover && isUsablePropertyPhoto(photo)),
     },
     "media.photos": {
         level: required,
         minItems: 3,
         label: () => "Property photos",
         isEmpty: (values) =>
-            values.media.photos.filter((photo) => !photo.isCover && photo.status !== "error")
+            values.media.photos.filter((photo) => !photo.isCover && isUsablePropertyPhoto(photo))
                 .length < 3,
     },
     "media.videoUploadName": { visible: () => false },
@@ -429,7 +443,7 @@ export function valueAtPath(values: PropertyDraftValues, path: string): unknown 
 }
 
 export function isEmptyFieldValue(value: unknown, rule?: FieldRule): boolean {
-    if (value == null || value === "") return true;
+    if (value == null || (typeof value === "string" && value.trim() === "")) return true;
     if (typeof value === "number") return !Number.isFinite(value) || value <= 0;
     if (Array.isArray(value)) return value.length < (rule?.minItems ?? 1);
     if (typeof value === "object") {

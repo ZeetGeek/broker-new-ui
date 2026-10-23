@@ -2,10 +2,9 @@
 
 import type { ReactNode } from "react";
 
-import { type AppIcon, MapPin, Maximize2, UserPlus } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { type AppIcon, MapPin, Maximize2, UserPlus } from "@/components/shared/icons";
 import { MarqueeText } from "@/components/shared/marquee-text";
 import { OverlayCardPhotos } from "@/components/shared/overlay-card-photos";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
@@ -174,7 +173,7 @@ export function OverlayPersonLine({
     return (
         <div className={cn(PERSON_CLASS, "inline-full")}>
             <span className={OVERLAY_PERSON_LABEL_CLASS}>{label}</span>
-            <span className="flex min-inline-0 flex-1 items-center gap-1.5">
+            <span className="flex flex-1 items-center gap-1.5 min-inline-0">
                 <UserAvatar name={name} imageUrl={avatarUrl} size="2xs" className="shrink-0" />
                 <span className="truncate font-semibold text-ink capitalize">{name}</span>
                 {hint ? (
@@ -200,11 +199,14 @@ export function OverlayPersonAttachLine({
     actionLabel,
     onAttach,
     icon: Icon = UserPlus,
+    isBlocked = false,
 }: {
     label: string;
     actionLabel: string;
     onAttach: () => void;
     icon?: AppIcon;
+    /** Keep clickable so the caller can explain the prerequisite. */
+    isBlocked?: boolean;
 }) {
     return (
         <div className={cn(PERSON_CLASS, "inline-full")}>
@@ -214,10 +216,13 @@ export function OverlayPersonAttachLine({
                 variant="link"
                 size="sm"
                 onClick={onAttach}
+                aria-disabled={isBlocked || undefined}
                 className="
-                  body-sm block-auto! min-block-0 flex-1 justify-start gap-1.5 px-0 py-0
-                  font-semibold text-brand underline-offset-4
+                  body-sm flex-1 justify-start gap-1.5 p-0 font-semibold text-brand
+                  underline-offset-4 block-auto! min-block-0
                   hover:text-brand-text hover:underline
+                  aria-disabled:cursor-not-allowed aria-disabled:text-ink-muted
+                  aria-disabled:hover:no-underline
                 "
             >
                 <Icon aria-hidden strokeWidth={1.75} className="block-3.5 inline-3.5" />

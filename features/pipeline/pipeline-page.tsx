@@ -5,17 +5,15 @@ import toast from "react-hot-toast";
 
 import { pipelineApi } from "@/lib/api/pipeline";
 import { PREF_KEYS } from "@/lib/prefs/keys";
+import { EMPTY_PROPERTY_CRITERIA, propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import {
-    isQuietDeal,
     matchesClientFilters,
     type OtherBuyer,
     otherBuyersOnProperty,
-    uniqueLocalities,
-    uniqueOwners,
 } from "@/features/pipeline/deal-attention";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DealDetailModal } from "@/features/pipeline/deal-detail-modal";
@@ -27,8 +25,8 @@ import {
     PipelineFilteredEmpty,
     PipelineFirstRunEmpty,
 } from "@/features/pipeline/pipeline-empty";
+import { PipelineFinishedToggle } from "@/features/pipeline/pipeline-finished-toggle";
 import { PipelineBoardSkeleton } from "@/features/pipeline/pipeline-skeleton";
-import { PipelineSummaryStrip } from "@/features/pipeline/pipeline-summary-strip";
 import { PipelineToolbar } from "@/features/pipeline/pipeline-toolbar";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { type StageMoveRequest, StageNoteModal } from "@/features/pipeline/stage-note-modal";
@@ -44,7 +42,6 @@ import {
     type DealsView,
     DEFAULT_DEALS_FILTERS,
     isLiveStage,
-    type PipelineSummaryChip,
 } from "@/features/pipeline/types";
 import { useStageSwipe } from "@/features/pipeline/use-stage-swipe";
 import { CancelRepresentationDialog } from "@/features/representation/cancel-representation-dialog";
@@ -59,7 +56,6 @@ type PipelinePrefs = {
     view: DealsView;
     mobileStage: DealStage;
     pinnedDealIds: string[];
-    summaryChip: PipelineSummaryChip;
 };
 
 const DEFAULT_PIPELINE_PREFS: PipelinePrefs = {
@@ -67,7 +63,6 @@ const DEFAULT_PIPELINE_PREFS: PipelinePrefs = {
     view: "board",
     mobileStage: "new",
     pinnedDealIds: [],
-    summaryChip: "running",
 };
 
 function isDealStage(value: unknown): value is DealStage {
@@ -84,11 +79,7 @@ function isPipelinePrefs(value: unknown): value is PipelinePrefs {
         typeof filters.q === "string" &&
         (v.view === "board" || v.view === "done") &&
         isDealStage(v.mobileStage) &&
-        Array.isArray(v.pinnedDealIds) &&
-        (v.summaryChip === "running" ||
-            v.summaryChip === "in_play" ||
-            v.summaryChip === "quiet" ||
-            v.summaryChip === "finished")
+        Array.isArray(v.pinnedDealIds)
     );
 }
 
@@ -106,7 +97,7 @@ export function PipelinePage() {
         DEFAULT_PIPELINE_PREFS,
         { isValid: isPipelinePrefs },
     );
-    const { filters, view, mobileStage, pinnedDealIds, summaryChip } = prefs;
+    const { filters, view, mobileStage, pinnedDealIds } = prefs;
 
     const setFilters = useCallback(
         (next: DealsFilters | ((prev: DealsFilters) => DealsFilters)) => {
@@ -121,21 +112,6 @@ export function PipelinePage() {
     const setMobileStage = useCallback(
         (next: DealStage) => {
             setPrefs((prev) => ({ ...prev, mobileStage: next }));
-        },
-        [setPrefs],
-    );
-
-    const setSummaryChip = useCallback(
-        (next: PipelineSummaryChip) => {
-            setPrefs((prev) => ({
-                ...prev,
-                summaryChip: next,
-                view: next === "finished" ? "done" : "board",
-                filters: {
-                    ...prev.filters,
-                    sort: next === "in_play" ? "price_desc" : prev.filters.sort,
-                },
-            }));
         },
         [setPrefs],
     );
@@ -445,8 +421,9 @@ export function PipelinePage() {
             dealType: "",
             locality: "",
             ownerName: "",
+            propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
         }));
-        setPrefs((prev) => ({ ...prev, summaryChip: "running", view: "board" }));
+        setPrefs((prev) => ({ ...prev, view: "board" }));
     }, [setFilters, setPrefs]);
 
     const filteredDeals = useMemo(() => {
@@ -456,9 +433,8 @@ export function PipelinePage() {
 
     const liveDeals = useMemo(() => {
         const live = filteredDeals.filter((deal) => isLiveStage(deal.status));
-        const scoped = summaryChip === "quiet" ? live.filter(isQuietDeal) : live;
-        return [...scoped].sort(pinSort(pinnedDealIds));
-    }, [filteredDeals, pinnedDealIds, summaryChip]);
+        return [...live].sort(pinSort(pinnedDealIds));
+    }, [filteredDeals, pinnedDealIds]);
 
     const doneDeals = useMemo(
         () => filteredDeals.filter((deal) => !isLiveStage(deal.status)),
@@ -485,9 +461,6 @@ export function PipelinePage() {
         return map;
     }, [deals]);
 
-    const localities = useMemo(() => uniqueLocalities(deals ?? []), [deals]);
-    const owners = useMemo(() => uniqueOwners(deals ?? []), [deals]);
-
     const moveDeal =
         moveRequest != null
             ? ((deals ?? []).find((deal) => deal.id === moveRequest.dealId) ?? null)
@@ -508,8 +481,7 @@ export function PipelinePage() {
         filters.q.trim().length > 0 ||
         filters.dealType !== "" ||
         filters.locality !== "" ||
-        filters.ownerName !== "" ||
-        summaryChip === "quiet";
+        propertyCriteriaCount(filters.propertyFilters) > 0;
     const isFirstRun =
         !hasSearch &&
         summary != null &&
@@ -532,15 +504,18 @@ export function PipelinePage() {
             {!isFirstRun ? (
                 <PipelineToolbar
                     filters={filters}
-                    localities={localities}
-                    owners={owners}
                     onPatch={handlePatch}
-                    trailing={
+                    leading={
                         summary ? (
-                            <PipelineSummaryStrip
-                                summary={summary}
-                                active={summaryChip}
-                                onChange={setSummaryChip}
+                            <PipelineFinishedToggle
+                                count={summary.closedCount + summary.lostCount}
+                                active={view === "done"}
+                                onChange={(active) =>
+                                    setPrefs((prev) => ({
+                                        ...prev,
+                                        view: active ? "done" : "board",
+                                    }))
+                                }
                             />
                         ) : null
                     }

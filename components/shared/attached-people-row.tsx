@@ -54,7 +54,7 @@ function PartyMeetPerson({ side }: { side: PartyMeetSide }) {
     const content = (
         <>
             <UserAvatar name={side.name} imageUrl={side.avatarUrl} size="xs" className="shrink-0" />
-            <span className="flex min-inline-0 flex-col gap-0.5 text-start">
+            <span className="flex flex-col gap-0.5 text-start min-inline-0">
                 <span className="body-sm truncate font-semibold tracking-wide text-ink capitalize">
                     {side.name}
                 </span>
@@ -63,7 +63,7 @@ function PartyMeetPerson({ side }: { side: PartyMeetSide }) {
         </>
     );
 
-    const className = "flex min-inline-0 flex-1 items-center gap-2.5 px-3 py-2.5";
+    const className = "flex flex-1 items-center gap-2.5 px-3 py-2.5 min-inline-0";
 
     if (side.onOpen) {
         return (
@@ -75,7 +75,7 @@ function PartyMeetPerson({ side }: { side: PartyMeetSide }) {
                     `
                       transition-colors duration-160
                       hover:bg-surface-muted
-                      focus-visible:outline-2 focus-visible:outline-offset-[-2px]
+                      focus-visible:outline-2 focus-visible:-outline-offset-2
                       focus-visible:outline-ring
                     `,
                 )}
@@ -102,7 +102,7 @@ function AttachedPeopleShell({
     const content = (
         <>
             <AvatarStack people={people} max={3} className="shrink-0" />
-            <span className="flex min-inline-0 flex-col gap-0.5">
+            <span className="flex flex-col gap-0.5 min-inline-0">
                 <span className="body-sm font-semibold tracking-wide text-ink">{title}</span>
                 <span className="body-xs truncate tracking-wide text-ink-muted capitalize">
                     {names}
@@ -118,8 +118,8 @@ function AttachedPeopleShell({
                 onClick={onManage}
                 className={cn(
                     `
-                      flex items-center gap-2.5 px-3 py-2.5 text-start transition-colors
-                      duration-160 inline-full rounded-control
+                      flex items-center gap-2.5 rounded-control px-3 py-2.5 text-start
+                      transition-colors duration-160 inline-full
                     `,
                     OVERLAY_GLASS_BUTTON_CLASS,
                 )}
@@ -132,7 +132,7 @@ function AttachedPeopleShell({
     return (
         <div
             className={cn(
-                "flex items-center gap-2.5 px-3 py-2.5 rounded-control",
+                "flex items-center gap-2.5 rounded-control px-3 py-2.5",
                 OVERLAY_GLASS_BUTTON_CLASS,
             )}
         >
@@ -148,10 +148,12 @@ function AttachedPeopleShell({
 export function AttachedBuyersRow({
     buyers,
     onAttach,
+    isAttachBlocked = false,
 }: {
     buyers: AttachedPerson[];
     /** Opens the buyer picker when the row is empty. */
     onAttach?: () => void;
+    isAttachBlocked?: boolean;
 }) {
     if (buyers.length === 0) {
         if (!onAttach) return null;
@@ -160,6 +162,7 @@ export function AttachedBuyersRow({
                 label="Buyers"
                 actionLabel="Attach buyers"
                 onAttach={onAttach}
+                isBlocked={isAttachBlocked}
                 icon={UserPlus}
             />
         );
@@ -168,9 +171,13 @@ export function AttachedBuyersRow({
     const title = buyers.length === 1 ? "1 buyer" : `${buyers.length} buyers`;
 
     return (
-        <div className="body-sm flex items-center gap-2 tracking-wide text-ink-muted inline-full min-inline-0">
+        <div
+            className="
+          body-sm flex items-center gap-2 tracking-wide text-ink-muted inline-full min-inline-0
+        "
+        >
             <span className={OVERLAY_PERSON_LABEL_CLASS}>Buyers</span>
-            <span className="flex min-inline-0 flex-1 items-center gap-1.5">
+            <span className="flex flex-1 items-center gap-1.5 min-inline-0">
                 <AvatarStack people={buyers} size="2xs" max={3} className="shrink-0" />
                 <span className="truncate font-semibold text-ink">{title}</span>
             </span>
@@ -221,7 +228,10 @@ export function InvitedBrokersRow({
             onClick={onManage}
             className={cn(
                 rowClassName,
-                "rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
+                `
+                  rounded-sm
+                  focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring
+                `,
             )}
         >
             {content}

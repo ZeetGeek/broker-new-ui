@@ -10,7 +10,7 @@ export type ChatPeer = {
     id: string;
     name: string;
     avatarUrl?: string;
-    /** Shown under the name. Falsy means the presence line is hidden. */
+    /** Presence badge: true is online, false is offline; undefined hides the badge. */
     isOnline?: boolean;
     /** Optional context line — "Owner", the property title. */
     roleLabel?: string;

@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -15,6 +16,7 @@ import { amenityLabel } from "@/lib/validation/property";
 import {
     type AppIcon,
     Armchair,
+    ArrowLeft,
     Bath,
     BedDouble,
     Bookmark,
@@ -52,6 +54,12 @@ import { PropertySharePopover } from "@/components/shared/property-share-popover
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+
+import { NEARBY_PLACE_TYPE_OPTIONS, toLabel } from "@/constants/property";
+import {
+    NEARBY_PLACE_FALLBACK_ICON,
+    NEARBY_PLACE_ICONS,
+} from "@/features/properties/property-form/option-icons";
 
 import { SAVED_PROPERTIES_QUERY_KEY } from "../saved-properties/saved-properties-query";
 import type { MyListingItem } from "../your-listings/types";
@@ -125,6 +133,8 @@ function PropertyFactsList({ facts }: { facts: ReturnType<typeof buildPropertyFa
 
 export function PropertyDetailLayout({
     item,
+    backHref,
+    backLabel,
     status,
     statusColor = "stone",
     actions,
@@ -183,15 +193,24 @@ export function PropertyDetailLayout({
     return (
         <div className={styles.page} data-property-detail>
             <header className={styles.header}>
-                <h1>
-                    <span>Property details.</span>{" "}
-                    <RotatingHeaderSummary
-                        key={item.id}
-                        lines={[...new Set(summaryLines)]}
-                        loadingPlaceholder={item.title}
-                    />
-                </h1>
-                <div className={styles.locationLine}>
+                <div className={styles.headerContent}>
+                    <Button
+                        variant="link"
+                        size="md"
+                        className={styles.back}
+                        render={<Link href={backHref} />}
+                    >
+                        <ArrowLeft aria-hidden />
+                        Back to {backLabel.toLowerCase()}
+                    </Button>
+                    <h1>
+                        <span>Property details.</span>{" "}
+                        <RotatingHeaderSummary
+                            key={item.id}
+                            lines={[...new Set(summaryLines)]}
+                            loadingPlaceholder={item.title}
+                        />
+                    </h1>
                     <div className={styles.propertyMeta}>
                         <span className={styles.location}>
                             <span className={styles.locationIcon}>
@@ -205,44 +224,40 @@ export function PropertyDetailLayout({
                             Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
                         </span>
                     </div>
-                    <div className={styles.headerActions}>
-                        <PropertySharePopover
-                            iconOnly
-                            className={styles.circleButton}
-                            listing={{
-                                id: item.id,
-                                title: item.title,
-                                locality: item.locality,
-                                city: item.city,
-                                priceLabel: isRent
-                                    ? formatRentInr(amountInr)
-                                    : formatPriceInr(amountInr),
-                                imageSrc: item.imageSrc,
-                                configLabel: item.configLabel,
-                                propertyTypeLabel: item.propertyTypeLabel,
-                                areaSqft: item.areaSqft,
-                                bhk: item.bhk,
-                                listingKind: isRent ? "rent" : "sale",
-                            }}
-                        />
-                        <Button
-                            type="button"
-                            variant="surface"
-                            size="icon"
-                            className={styles.circleButton}
-                            aria-label={saved ? "Unsave property" : "Save property"}
-                            aria-pressed={saved}
-                            disabled={saving}
-                            onClick={() => void toggleSave()}
-                        >
-                            <Bookmark
-                                aria-hidden
-                                size={20}
-                                fill={saved ? "currentColor" : "none"}
-                            />
-                        </Button>
-                        {actions}
-                    </div>
+                </div>
+                <div className={styles.headerActions}>
+                    <PropertySharePopover
+                        iconOnly
+                        className={styles.circleButton}
+                        listing={{
+                            id: item.id,
+                            title: item.title,
+                            locality: item.locality,
+                            city: item.city,
+                            priceLabel: isRent
+                                ? formatRentInr(amountInr)
+                                : formatPriceInr(amountInr),
+                            imageSrc: item.imageSrc,
+                            configLabel: item.configLabel,
+                            propertyTypeLabel: item.propertyTypeLabel,
+                            areaSqft: item.areaSqft,
+                            bhk: item.bhk,
+                            listingKind: isRent ? "rent" : "sale",
+                        }}
+                    />
+                    <Button
+                        type="button"
+                        variant="surface"
+                        size="icon"
+                        className={styles.circleButton}
+                        aria-label={saved ? "Unsave property" : "Save property"}
+                        aria-pressed={saved}
+                        disabled={saving}
+                        onClick={() => void toggleSave()}
+                    >
+                        <Bookmark aria-hidden size={20} fill={saved ? "currentColor" : "none"} />
+                    </Button>
+                    {actions}
                 </div>
             </header>
             <div className={styles.fullWidthGallery}>
@@ -280,12 +295,14 @@ export function PropertyDetailLayout({
     );
 }
 
-function PropertyDetailContent({
+export function PropertyDetailContent({
     item,
     revealAddress,
+    locationHint = "Exact address is shared after representation is approved.",
 }: {
     item: MyListingItem;
     revealAddress: boolean;
+    locationHint?: string;
 }) {
     const [expanded, setExpanded] = useState(false);
     const facts = buildPropertyFacts(item);
@@ -456,6 +473,26 @@ function PropertyDetailContent({
                     </ul>
                 </section>
             ) : null}
+            {propertyDetailFieldVisible(item, "location.nearbyPlaces") &&
+            item.nearbyPlaces.length > 0 ? (
+                <section className={styles.section}>
+                    <h2>Nearby places</h2>
+                    <ul className={styles.nearby}>
+                        {item.nearbyPlaces.map((place) => (
+                            <li key={place}>
+                                <span className={styles.nearbyIcon} aria-hidden>
+                                    {NEARBY_PLACE_ICONS[place] ?? NEARBY_PLACE_FALLBACK_ICON}
+                                </span>
+                                <span>
+                                    {NEARBY_PLACE_TYPE_OPTIONS.find(
+                                        (option) => option.value === place,
+                                    )?.label ?? toLabel(place)}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            ) : null}
             <section className={styles.section}>
                 <h2>Location</h2>
                 <div className={styles.address}>
@@ -468,11 +505,7 @@ function PropertyDetailContent({
                             {address || "Location not provided"}
                             {revealAddress && item.pinCode ? `, ${item.pinCode}` : ""}
                         </p>
-                        <small>
-                            {!revealAddress
-                                ? "Exact address is shared after representation is approved."
-                                : ""}
-                        </small>
+                        <small>{!revealAddress ? locationHint : ""}</small>
                     </div>
                 </div>
                 {locationFacts.length > 0 ? (
@@ -487,14 +520,6 @@ function PropertyDetailContent({
                             </div>
                         ))}
                     </dl>
-                ) : null}
-                {propertyDetailFieldVisible(item, "location.nearbyPlaces") &&
-                item.nearbyPlaces.length > 0 ? (
-                    <ul className={styles.nearby}>
-                        {item.nearbyPlaces.map((place) => (
-                            <li key={place}>{place}</li>
-                        ))}
-                    </ul>
                 ) : null}
             </section>
             {media.length > 0 ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -24,10 +24,10 @@ import {
 import { Button } from "@/components/ui/button";
 
 import { PropertyActionRail } from "@/features/properties/property-detail/property-action-rail";
-import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyDetailLayout } from "@/features/properties/property-detail/property-detail-layout";
 import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
 import type { MyListingItem, MyListingStatus } from "@/features/properties/your-listings/types";
+import { useAppSelector } from "@/store/hooks";
 
 const STATUS_LABEL: Record<MyListingStatus, string> = {
     draft: "Draft",
@@ -45,7 +45,6 @@ function OwnedPropertyDetail({
     const router = useRouter();
     const [item, setItem] = useState(listing);
     const [busy, setBusy] = useState(false);
-    const [deleteOpen, setDeleteOpen] = useState(false);
     const brokersQuery = useQuery({
         queryKey: ["owner-property-representations"],
         queryFn: () => representativeApi.ownerList(),
@@ -87,7 +86,6 @@ function OwnedPropertyDetail({
         setBusy(true);
         try {
             await myListingsApi.remove(item.id);
-            setDeleteOpen(false);
             toast.success("Property removed");
             router.push(listHref);
         } catch (error) {
@@ -121,7 +119,7 @@ function OwnedPropertyDetail({
                         portal={portal}
                         busy={busy}
                         onTogglePublish={() => void togglePublish()}
-                        onRequestDelete={() => setDeleteOpen(true)}
+                        onRequestDelete={handleDelete}
                         editHref={editHref}
                         requestsHref={portal === "owner" ? requestsHref : undefined}
                         brokers={brokerSummary?.brokers}
@@ -152,13 +150,6 @@ function OwnedPropertyDetail({
                         </Button>
                     )
                 }
-            />
-            <PropertyDeleteDialog
-                open={deleteOpen}
-                onOpenChange={setDeleteOpen}
-                title={item.title}
-                busy={busy}
-                onConfirm={() => void handleDelete()}
             />
         </>
     );
@@ -219,20 +210,15 @@ function BrowsePropertyFallback({
 export function PropertyDetailPage({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const params = useParams<{ id: string }>();
     const propertyId = params.id;
-    const [listing, setListing] = useState<MyListingItem | null | undefined>(undefined);
+    const userId = useAppSelector((state) => state.auth.user?.id);
+    const query = useQuery({
+        queryKey: ["owned-property-detail", userId, portal, propertyId],
+        queryFn: () => myListingsApi.get(propertyId),
+        staleTime: 0,
+    });
 
-    useEffect(() => {
-        let cancelled = false;
-        void myListingsApi.get(propertyId).then((item) => {
-            if (!cancelled) setListing(item);
-        });
-        return () => {
-            cancelled = true;
-        };
-    }, [propertyId]);
+    if (query.isPending) return <PropertyDetailSkeleton />;
+    if (!query.data) return <BrowsePropertyFallback propertyId={propertyId} portal={portal} />;
 
-    if (listing === undefined) return <PropertyDetailSkeleton />;
-    if (!listing) return <BrowsePropertyFallback propertyId={propertyId} portal={portal} />;
-
-    return <OwnedPropertyDetail listing={listing} portal={portal} />;
+    return <OwnedPropertyDetail key={propertyId} listing={query.data} portal={portal} />;
 }

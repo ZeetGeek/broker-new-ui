@@ -2,6 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import type { MyListingsSummary } from "@/lib/api/my-listings";
+import { formatSortLabel } from "@/lib/format/owner-listings-labels";
+import {
+    EMPTY_PROPERTY_CRITERIA,
+    normalizePropertyCriteria,
+    propertyCriteriaCount,
+} from "@/lib/properties/list-criteria";
+import { getShortcut } from "@/lib/shortcuts";
+import { cn } from "@/lib/utils";
+
+import { FilterChip } from "@/components/shared/filter-chip";
 import {
     ArrowDownUp,
     ChevronDown,
@@ -9,22 +20,8 @@ import {
     Search,
     SlidersHorizontal,
 } from "@/components/shared/icons";
-
-import type { MyListingsSummary } from "@/lib/api/my-listings";
-import { formatSortLabel } from "@/lib/format/owner-listings-labels";
-import { getShortcut } from "@/lib/shortcuts";
-import { cn } from "@/lib/utils";
-
-import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { FilterChip } from "@/components/shared/filter-chip";
+import { Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogClose,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -33,16 +30,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ownerListingsChipClassName } from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,
 } from "@/features/properties/owner-listings/owner-listings-chips-carousel";
+import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
+import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
 import type { MyListingsFilters, MyListingSort } from "@/features/properties/your-listings/types";
 
 type StatusTab = "published" | "draft";
+
+const SEARCH_WIDTH_CLASS =
+    "flex-1 min-inline-0 inline-full shadow-sm sm:flex-none sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64";
 
 const STATUS_TABS: {
     key: StatusTab;
@@ -67,15 +69,13 @@ const SORT_OPTIONS: { value: MyListingSort; label: string }[] = [
     { value: "price_desc", label: "Price high" },
 ];
 
-const BHK_OPTIONS = ["1", "2", "3", "4"];
-
-function tabCount(summary: MyListingsSummary | null, key: StatusTab): number {
-    if (!summary) return 0;
+function tabCount(summary: MyListingsSummary | null, key: StatusTab): number | undefined {
+    if (!summary) return undefined;
     return summary[key];
 }
 
 function countSheetFilters(filters: MyListingsFilters): number {
-    let count = 0;
+    let count = propertyCriteriaCount(filters.propertyFilters);
     if (filters.propertyType) count += 1;
     if (filters.bhk.length > 0) count += 1;
     if (filters.type) count += 1;
@@ -113,11 +113,7 @@ function MyListingsQueryInput({
             aria-label="Search your listings"
             startIcon={Search}
             clearable
-            wrapperClassName="
-              min-inline-44 inline-44 shadow-sm
-              sm:min-inline-52 sm:inline-52
-              lg:min-inline-64 lg:inline-64
-            "
+            wrapperClassName={SEARCH_WIDTH_CLASS}
             className="
               rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
               block-[38px]!
@@ -190,95 +186,46 @@ function MyListingsFilterDialog({
     filters: MyListingsFilters;
     onApply: (next: MyListingsFilters) => void;
 }) {
-    const [draft, setDraft] = useState(filters);
-    const [wasOpen, setWasOpen] = useState(open);
-    const [syncedFilters, setSyncedFilters] = useState(filters);
-
-    // Reset draft when the sheet opens, or when applied filters change while open.
-    if (open) {
-        if (!wasOpen || filters !== syncedFilters) {
-            setWasOpen(true);
-            setSyncedFilters(filters);
-            setDraft(filters);
-        }
-    } else if (wasOpen) {
-        setWasOpen(false);
-    }
+    const discoveryFilters = useMemo(
+        () =>
+            normalizePropertyCriteria({
+                ...filters.propertyFilters,
+                type: filters.type,
+                ...(filters.propertyType ? { propertyType: filters.propertyType } : {}),
+                ...(filters.bhk.length ? { bhk: filters.bhk } : {}),
+            }),
+        [filters.propertyFilters, filters.type, filters.propertyType, filters.bhk],
+    );
+    const appliedFilters = useMemo(
+        () => ({ ...DEFAULT_OWNER_LISTINGS_FILTERS, ...discoveryFilters }),
+        [discoveryFilters],
+    );
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup className="gap-0 p-0 max-inline-lg sm:max-inline-lg">
-                <DialogHeader className="border-be border-border-warm px-5 py-4">
-                    <DialogTitle>Filters</DialogTitle>
-                    <DialogClose />
-                </DialogHeader>
-                <div className="flex flex-col gap-5 p-5">
-                    <div className="flex flex-col gap-2">
-                        <p className="body-sm font-semibold text-ink">Looking for</p>
-                        <div className="flex flex-wrap gap-2">
-                            {(
-                                [
-                                    ["", "Any"],
-                                    ["sale", "Sale"],
-                                    ["rent", "Rent"],
-                                ] as const
-                            ).map(([value, label]) => (
-                                <button
-                                    key={value || "any"}
-                                    type="button"
-                                    className={ownerListingsChipClassName(draft.type === value)}
-                                    onClick={() => setDraft({ ...draft, type: value })}
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                        <p className="body-sm font-semibold text-ink">BHK</p>
-                        <div className="flex flex-wrap gap-2">
-                            {BHK_OPTIONS.map((value) => {
-                                const active = draft.bhk.includes(value);
-                                return (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        className={ownerListingsChipClassName(active)}
-                                        onClick={() => {
-                                            const bhk = active
-                                                ? draft.bhk.filter((item) => item !== value)
-                                                : [...draft.bhk, value];
-                                            setDraft({ ...draft, bhk });
-                                        }}
-                                    >
-                                        {value} BHK
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-                <div className="border-bs border-border-warm/40 bg-surface px-5 py-4">
-                    <AppModalFooter
-                        secondaryLabel="Reset filter"
-                        onSecondary={() =>
-                            setDraft({
-                                ...draft,
-                                type: "",
-                                bhk: [],
-                                propertyType: "",
-                            })
-                        }
-                        primaryLabel="Apply filters"
-                        onPrimary={() => {
-                            onApply({ ...draft, page: 1 });
-                            onOpenChange(false);
-                        }}
-                    />
-                </div>
-            </DialogPopup>
-        </Dialog>
+        <OwnerListingsFilterSheet
+            open={open}
+            onOpenChange={onOpenChange}
+            appliedFilters={appliedFilters}
+            discoveryFilters={discoveryFilters}
+            showDiscoveryFilters
+            discoveryDescription="Narrow your listings by location, budget and property type."
+            onApply={(patch, discovery) => {
+                const criteriaPatch = Object.fromEntries(
+                    Object.keys(EMPTY_PROPERTY_CRITERIA)
+                        .filter((key) => key in patch)
+                        .map((key) => [key, patch[key as keyof typeof patch]]),
+                );
+                const next = normalizePropertyCriteria({ ...discovery, ...criteriaPatch });
+                onApply({
+                    ...filters,
+                    type: next.type,
+                    propertyType: "",
+                    bhk: [],
+                    propertyFilters: { ...next, type: "" },
+                    page: 1,
+                });
+            }}
+        />
     );
 }
 
@@ -303,8 +250,7 @@ function AddPropertyToolbarButton({ onClick }: { onClick: () => void }) {
                             key={key}
                             className="
                               border-surface/25 bg-surface/15 px-1.5 text-[10px] text-surface
-                              min-inline-4
-                              [box-shadow:none]
+                              [box-shadow:none] min-inline-4
                             "
                         >
                             {key}
@@ -321,18 +267,127 @@ export type MyListingsHeaderProps = {
     onFiltersChange: (next: MyListingsFilters) => void;
     summary: MyListingsSummary | null;
     isLoading?: boolean;
+    isInitialLoading?: boolean;
     onAddProperty?: () => void;
 };
+
+export const MY_LISTINGS_TOOLBAR_CLASS =
+    "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4";
+
+function SkeletonLabel({ children }: { children: React.ReactNode }) {
+    return (
+        <span className="relative inline-block">
+            <span className="invisible">{children}</span>
+            <Skeleton className="absolute inset-x-0 inset-bs-1/2 -translate-y-1/2 block-3" />
+        </span>
+    );
+}
+
+export function MyListingsToolbarSkeleton({
+    showAddProperty = true,
+}: {
+    showAddProperty?: boolean;
+}) {
+    const shortcut = getShortcut("add_property");
+
+    return (
+        <div role="status" aria-busy="true" className="sticky inset-bs-0 z-10">
+            <span className="sr-only">Loading listing controls</span>
+            <div aria-hidden className={MY_LISTINGS_TOOLBAR_CLASS}>
+                <div
+                    className="
+                  -my-1.5 flex flex-1 gap-2.5 overflow-hidden px-0.5 py-1.5 min-inline-0
+                "
+                >
+                    <div className={ownerListingsChipClassName(false)}>
+                        <Skeleton className="shrink-0 block-4 inline-4" />
+                        <SkeletonLabel>Filters</SkeletonLabel>
+                    </div>
+                    {STATUS_TABS.map((tab) => (
+                        <div key={tab.key} className={ownerListingsChipClassName(false)}>
+                            <SkeletonLabel>{tab.label}</SkeletonLabel>
+                            <span
+                                className="
+                              inline-flex shrink-0 items-center justify-center block-5 inline-8
+                            "
+                            >
+                                <Skeleton className="block-4 inline-7" />
+                            </span>
+                        </div>
+                    ))}
+                </div>
+                <div className="flex shrink-0 items-center gap-2.5 min-inline-0">
+                    <div
+                        className={cn(
+                            SEARCH_WIDTH_CLASS,
+                            `
+                      flex items-center gap-2 rounded-control border border-border-warm bg-surface
+                      px-3 block-[38px]
+                    `,
+                        )}
+                    >
+                        <Skeleton className="shrink-0 block-4 inline-4" />
+                        <SkeletonLabel>Search listings</SkeletonLabel>
+                    </div>
+                    <div className={cn(ownerListingsChipClassName(false), "gap-2")}>
+                        <Skeleton className="shrink-0 block-4 inline-4" />
+                        <SkeletonLabel>
+                            <span className="hidden sm:inline">Newest first</span>
+                            <span
+                                className="
+                          sm:hidden
+                        "
+                            >
+                                Sort
+                            </span>
+                        </SkeletonLabel>
+                        <Skeleton className="shrink-0 block-3.5 inline-3.5" />
+                    </div>
+                    {showAddProperty ? (
+                        <div
+                            className="
+                          hidden items-center gap-2 rounded-control bg-surface px-3.5 text-sm
+                          font-semibold shadow-sm block-[38px]
+                          md:inline-flex
+                        "
+                        >
+                            <Skeleton className="shrink-0 block-4 inline-4" />
+                            <SkeletonLabel>Add property</SkeletonLabel>
+                            {shortcut ? (
+                                <KbdGroup className="gap-0.5">
+                                    {shortcut.displayKeys.map((key) => (
+                                        <Kbd
+                                            key={key}
+                                            className="
+                              invisible px-1.5 text-[10px] min-inline-4
+                            "
+                                        >
+                                            {key}
+                                        </Kbd>
+                                    ))}
+                                </KbdGroup>
+                            ) : null}
+                        </div>
+                    ) : null}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export function MyListingsHeader({
     filters,
     onFiltersChange,
     summary,
     isLoading = false,
+    isInitialLoading = false,
     onAddProperty,
 }: MyListingsHeaderProps) {
     const [sheetOpen, setSheetOpen] = useState(false);
     const sheetFilterCount = useMemo(() => countSheetFilters(filters), [filters]);
+
+    if (isInitialLoading)
+        return <MyListingsToolbarSkeleton showAddProperty={Boolean(onAddProperty)} />;
 
     function selectStatusTab(key: StatusTab) {
         if (filters.status === key) return;
@@ -347,14 +402,13 @@ export function MyListingsHeader({
         <>
             <div className="sticky inset-bs-0 z-10">
                 <TooltipProvider>
-                    <div className="flex items-center justify-between gap-3 sm:gap-4">
+                    <div className={MY_LISTINGS_TOOLBAR_CLASS}>
                         <OwnerListingsChipsCarousel>
                             <OwnerListingsChipsCarouselSlide>
                                 <FilterChip
                                     label="Filters"
                                     icon={SlidersHorizontal}
                                     count={sheetFilterCount}
-                                    isLoading={isLoading}
                                     isActive={sheetFilterCount > 0}
                                     clearable={sheetFilterCount > 0}
                                     onClick={() => setSheetOpen(true)}
@@ -362,12 +416,13 @@ export function MyListingsHeader({
                                         onFiltersChange({
                                             ...filters,
                                             propertyType: "",
+                                            propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
                                             bhk: [],
                                             type: "",
                                             page: 1,
                                         })
                                     }
-                                    description="Sale/rent and BHK filters"
+                                    description="Location, budget and property filters"
                                 />
                             </OwnerListingsChipsCarouselSlide>
 
@@ -379,6 +434,7 @@ export function MyListingsHeader({
                                             label={tab.label}
                                             count={tabCount(summary, tab.key)}
                                             isLoading={isLoading}
+                                            reserveCountSpace
                                             isActive={active}
                                             onClick={() => selectStatusTab(tab.key)}
                                             description={tab.description}
@@ -388,7 +444,7 @@ export function MyListingsHeader({
                             })}
                         </OwnerListingsChipsCarousel>
 
-                        <div className="flex shrink-0 items-center gap-2.5">
+                        <div className="flex shrink-0 items-center gap-2.5 min-inline-0">
                             <MyListingsQueryInput
                                 value={filters.q}
                                 onChange={(q) => onFiltersChange({ ...filters, q, page: 1 })}

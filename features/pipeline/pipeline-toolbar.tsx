@@ -1,11 +1,16 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
-import { ArrowDownUp, ChevronDown, Search } from "@/components/shared/icons";
-
+import {
+    EMPTY_PROPERTY_CRITERIA,
+    normalizePropertyCriteria,
+    propertyCriteriaCount,
+} from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
+import { FilterChip, filterChipClassName } from "@/components/shared/filter-chip";
+import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,7 +20,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import type { DealsFilters, DealSort, DealTypeFilter } from "@/features/pipeline/types";
+import type { DealsFilters, DealSort } from "@/features/pipeline/types";
+import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
+import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
 
 const SORT_OPTIONS: { value: DealSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
@@ -25,21 +32,9 @@ const SORT_OPTIONS: { value: DealSort; label: string }[] = [
     { value: "price_asc", label: "Cheapest first" },
 ];
 
-const TYPE_OPTIONS: { value: DealTypeFilter; label: string }[] = [
-    { value: "", label: "All types" },
-    { value: "sale", label: "Sale" },
-    { value: "rent", label: "Rent" },
-];
-
 function sortLabel(sort: DealSort): string {
     return SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Newest first";
 }
-
-const CHIP_CLASS = `
-  body-sm flex shrink-0 items-center gap-1.5 rounded-control border border-border-warm bg-surface
-  px-3 font-medium text-ink transition-colors duration-160 block-control-md
-  hover:border-ink/25
-`;
 
 function PipelineQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
     const [draft, setDraft] = useState(value);
@@ -58,16 +53,17 @@ function PipelineQueryInput({ value, onChange }: { value: string; onChange: (q: 
 
     return (
         <Input
-            size="default"
+            size="sm"
             value={draft}
             onValueChange={setDraft}
             placeholder="Search buyer, owner or area"
             aria-label="Search your deals"
             startIcon={Search}
             clearable
-            wrapperClassName="min-inline-44 inline-44 sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64"
+            wrapperClassName="rounded-control shadow-sm min-inline-44 inline-44 sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64"
             className="
-              rounded-control border! border-border-warm bg-surface font-medium shadow-sm
+              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
+              block-[38px]!
               hover:border-ink/25!
               focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
             "
@@ -75,178 +71,126 @@ function PipelineQueryInput({ value, onChange }: { value: string; onChange: (q: 
     );
 }
 
-function FilterMenu({
-    label,
-    valueLabel,
-    isDefault,
-    children,
-}: {
-    label: string;
-    valueLabel: string;
-    isDefault: boolean;
-    children: ReactNode;
-}) {
-    return (
-        <DropdownMenu>
-            <Tooltip>
-                <TooltipTrigger
-                    render={
-                        <DropdownMenuTrigger
-                            render={
-                                <button
-                                    type="button"
-                                    className={cn(CHIP_CLASS, isDefault && "text-ink-muted")}
-                                />
-                            }
-                        >
-                            <span className="hidden sm:inline">{valueLabel}</span>
-                            <span className="sm:hidden">{label}</span>
-                            <ChevronDown
-                                aria-hidden
-                                className="block-4 inline-4"
-                                strokeWidth={1.75}
-                            />
-                        </DropdownMenuTrigger>
-                    }
-                />
-                <TooltipContent side="bottom">{label}</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="start">{children}</DropdownMenuContent>
-        </DropdownMenu>
-    );
-}
-
 export function PipelineToolbar({
     filters,
-    localities,
-    owners,
     onPatch,
-    trailing,
+    leading,
 }: {
     filters: DealsFilters;
-    localities: string[];
-    owners: string[];
     onPatch: (patch: Partial<DealsFilters>) => void;
-    /**
-     * Sits with search on the right of the same row. Summary chips live here
-     * so the board opens with one control line instead of two.
-     */
-    trailing?: ReactNode;
+    /** Page-specific controls beside Filters on the left. */
+    leading?: ReactNode;
 }) {
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const discoveryFilters = useMemo(
+        () =>
+            normalizePropertyCriteria({
+                ...filters.propertyFilters,
+                type: filters.dealType,
+                where: filters.propertyFilters?.where ?? filters.locality,
+            }),
+        [filters.propertyFilters, filters.dealType, filters.locality],
+    );
+    const appliedFilters = useMemo(
+        () => ({ ...DEFAULT_OWNER_LISTINGS_FILTERS, ...discoveryFilters }),
+        [discoveryFilters],
+    );
+    const filterCount = propertyCriteriaCount(discoveryFilters);
+
     return (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <FilterMenu
-                label="Deal type"
-                valueLabel={
-                    TYPE_OPTIONS.find((option) => option.value === filters.dealType)?.label ??
-                    "All types"
-                }
-                isDefault={filters.dealType === ""}
-            >
-                {TYPE_OPTIONS.map((option) => (
-                    <DropdownMenuItem
-                        key={option.value || "all"}
-                        onClick={() => onPatch({ dealType: option.value })}
-                        className={cn(filters.dealType === option.value && "font-semibold")}
-                    >
-                        {option.label}
-                    </DropdownMenuItem>
-                ))}
-            </FilterMenu>
-
-            <FilterMenu
-                label="Area"
-                valueLabel={filters.locality || "Area"}
-                isDefault={!filters.locality}
-            >
-                <DropdownMenuItem
-                    onClick={() => onPatch({ locality: "" })}
-                    className={cn(!filters.locality && "font-semibold")}
-                >
-                    All areas
-                </DropdownMenuItem>
-                {localities.map((locality) => (
-                    <DropdownMenuItem
-                        key={locality}
-                        onClick={() => onPatch({ locality })}
-                        className={cn(filters.locality === locality && "font-semibold")}
-                    >
-                        {locality}
-                    </DropdownMenuItem>
-                ))}
-            </FilterMenu>
-
-            <FilterMenu
-                label="Owner"
-                valueLabel={filters.ownerName || "Owner"}
-                isDefault={!filters.ownerName}
-            >
-                <DropdownMenuItem
-                    onClick={() => onPatch({ ownerName: "" })}
-                    className={cn(!filters.ownerName && "font-semibold")}
-                >
-                    All owners
-                </DropdownMenuItem>
-                {owners.map((owner) => (
-                    <DropdownMenuItem
-                        key={owner}
-                        onClick={() => onPatch({ ownerName: owner })}
-                        className={cn(filters.ownerName === owner && "font-semibold")}
-                    >
-                        {owner}
-                    </DropdownMenuItem>
-                ))}
-            </FilterMenu>
-
-            <DropdownMenu>
-                <Tooltip>
-                    <TooltipTrigger
-                        render={
-                            <DropdownMenuTrigger
+        <>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <FilterChip
+                    label="Filters"
+                    icon={SlidersHorizontal}
+                    count={filterCount}
+                    isActive={filterCount > 0}
+                    clearable={filterCount > 0}
+                    onClick={() => setSheetOpen(true)}
+                    onClear={() =>
+                        onPatch({
+                            propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
+                            dealType: "",
+                            locality: "",
+                            ownerName: "",
+                        })
+                    }
+                    description="Location, budget and property filters"
+                />
+                {leading}
+                <div className="ms-auto flex items-center gap-2">
+                    <PipelineQueryInput value={filters.q} onChange={(q) => onPatch({ q })} />
+                    <DropdownMenu>
+                        <Tooltip>
+                            <TooltipTrigger
                                 render={
-                                    <button
-                                        type="button"
-                                        className={cn(
-                                            CHIP_CLASS,
-                                            filters.sort === "recent" && "text-ink-muted",
-                                        )}
-                                    />
+                                    <DropdownMenuTrigger
+                                        render={
+                                            <button
+                                                type="button"
+                                                className={cn(
+                                                    filterChipClassName(filters.sort !== "recent"),
+                                                    filters.sort === "recent" && "text-ink-muted",
+                                                )}
+                                            />
+                                        }
+                                    >
+                                        <ArrowDownUp
+                                            aria-hidden
+                                            className="text-brand block-4 inline-4"
+                                            strokeWidth={1.75}
+                                        />
+                                        <span className="hidden sm:inline">
+                                            {sortLabel(filters.sort)}
+                                        </span>
+                                        <span className="sm:hidden">Sort</span>
+                                        <ChevronDown
+                                            aria-hidden
+                                            className="block-4 inline-4"
+                                            strokeWidth={1.75}
+                                        />
+                                    </DropdownMenuTrigger>
                                 }
-                            >
-                                <ArrowDownUp
-                                    aria-hidden
-                                    className="text-brand block-4 inline-4"
-                                    strokeWidth={1.75}
-                                />
-                                <span className="hidden sm:inline">{sortLabel(filters.sort)}</span>
-                                <span className="sm:hidden">Sort</span>
-                                <ChevronDown
-                                    aria-hidden
-                                    className="block-4 inline-4"
-                                    strokeWidth={1.75}
-                                />
-                            </DropdownMenuTrigger>
-                        }
-                    />
-                    <TooltipContent side="bottom">Change the order of the cards.</TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="end">
-                    {SORT_OPTIONS.map((option) => (
-                        <DropdownMenuItem
-                            key={option.value}
-                            onClick={() => onPatch({ sort: option.value })}
-                            className={cn(filters.sort === option.value && "font-semibold")}
-                        >
-                            {option.label}
-                        </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
-            </DropdownMenu>
-
-            <div className="ms-auto flex flex-wrap items-center gap-2">
-                <PipelineQueryInput value={filters.q} onChange={(q) => onPatch({ q })} />
-                {trailing}
+                            />
+                            <TooltipContent side="bottom">
+                                Change the order of the cards.
+                            </TooltipContent>
+                        </Tooltip>
+                        <DropdownMenuContent align="end">
+                            {SORT_OPTIONS.map((option) => (
+                                <DropdownMenuItem
+                                    key={option.value}
+                                    onClick={() => onPatch({ sort: option.value })}
+                                    className={cn(filters.sort === option.value && "font-semibold")}
+                                >
+                                    {option.label}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
-        </div>
+            <OwnerListingsFilterSheet
+                open={sheetOpen}
+                onOpenChange={setSheetOpen}
+                appliedFilters={appliedFilters}
+                discoveryFilters={discoveryFilters}
+                showDiscoveryFilters
+                onApply={(patch, discovery) => {
+                    const criteriaPatch = Object.fromEntries(
+                        Object.keys(EMPTY_PROPERTY_CRITERIA)
+                            .filter((key) => key in patch)
+                            .map((key) => [key, patch[key as keyof typeof patch]]),
+                    );
+                    const next = normalizePropertyCriteria({ ...discovery, ...criteriaPatch });
+                    onPatch({
+                        propertyFilters: { ...next, type: "" },
+                        dealType: next.type,
+                        locality: "",
+                        ownerName: "",
+                    });
+                }}
+            />
+        </>
     );
 }

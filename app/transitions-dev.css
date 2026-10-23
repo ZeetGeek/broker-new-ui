@@ -1,6 +1,9 @@
 /* transitions-dev — semantic tokens + the installed recipes. */
 
 :root {
+    /* Card resize — progress line width changes */
+    --resize-dur: 300ms;
+    --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
     /* Text states swap */
     --text-swap-dur: 200ms;
     --text-swap-translate-y: 8px;
@@ -166,6 +169,19 @@
     --hold-logout-reset-dur: 220ms;
     --hold-logout-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --hold-logout-fill: color-mix(in oklch, var(--color-danger-mid) 35%, var(--color-danger-soft));
+}
+
+.t-resize {
+    transition:
+        width var(--resize-dur) var(--resize-ease),
+        height var(--resize-dur) var(--resize-ease);
+    will-change: width, height;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .t-resize {
+        transition: none !important;
+    }
 }
 
 .dark {

@@ -1,3 +1,8 @@
+import {
+    parsePropertyCriteria,
+    propertyCriteriaCount,
+    serializePropertyCriteria,
+} from "@/lib/properties/list-criteria";
 import { PROPERTY_TYPE_OPTIONS, type PropertyType } from "@/lib/validation/property";
 
 import type {
@@ -46,6 +51,7 @@ export function parseMyListingsFilters(
 
     return {
         q: first(params.q),
+        propertyFilters: parsePropertyCriteria(first(params.propertyFilters)),
         type,
         propertyType,
         bhk: all(params.bhk),
@@ -57,6 +63,7 @@ export function parseMyListingsFilters(
 
 export function serializeMyListingsFilters(filters: MyListingsFilters): URLSearchParams {
     const q = new URLSearchParams();
+    serializePropertyCriteria(q, filters.propertyFilters);
     if (filters.q.trim()) q.set("q", filters.q.trim());
     if (filters.type) q.set("type", filters.type);
     if (filters.propertyType) q.set("propertyType", filters.propertyType);
@@ -71,6 +78,7 @@ export function hasActiveMyListingsFilters(filters: MyListingsFilters): boolean 
     // Status is a page tab (Published / Draft), not a filter chip.
     return (
         Boolean(filters.q.trim()) ||
+        propertyCriteriaCount(filters.propertyFilters) > 0 ||
         Boolean(filters.type) ||
         Boolean(filters.propertyType) ||
         filters.bhk.length > 0 ||
