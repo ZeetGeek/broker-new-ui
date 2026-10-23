@@ -390,9 +390,9 @@ export function StepMedia({
                             {galleryPhotos.length ? (
                                 <Button
                                     type="button"
-                                    variant="accent"
+                                    variant="link"
                                     size="md"
-                                    className="self-start"
+                                    className="self-start text-brand underline"
                                     disabled={galleryPhotos.length >= maxGallery}
                                     onClick={() =>
                                         document.getElementById("property-gallery-upload")?.click()

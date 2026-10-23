@@ -397,10 +397,10 @@ export function LiveSummaryPanel({
                                     />
                                     <Button
                                         type="button"
-                                        variant="accent"
+                                        variant="link"
                                         size="sm"
                                         onClick={() => coverInputRef.current?.click()}
-                                        className="gap-1.5"
+                                        className="gap-1.5 text-brand underline"
                                     >
                                         <Upload className="block-3.5 inline-3.5" aria-hidden />
                                         Upload photo
@@ -409,10 +409,10 @@ export function LiveSummaryPanel({
                             ) : onGoToMedia ? (
                                 <Button
                                     type="button"
-                                    variant="accent"
+                                    variant="link"
                                     size="sm"
                                     onClick={onGoToMedia}
-                                    className="gap-1.5"
+                                    className="gap-1.5 text-brand underline"
                                 >
                                     <Upload className="block-3.5 inline-3.5" aria-hidden />
                                     Upload photo

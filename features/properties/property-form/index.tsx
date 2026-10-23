@@ -1185,7 +1185,7 @@ function PropertyFormHeader({
             <PopoverTrigger
                 type="button"
                 className="
-                  rounded-full
+                  inline-flex items-center justify-center rounded-full
                   focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand
                 "
                 aria-label="About details saved on this device"
@@ -1205,14 +1205,14 @@ function PropertyFormHeader({
         <header
             className="
               flex shrink-0 flex-wrap items-center justify-between gap-3 border-be
-              border-border-warm bg-surface p-4 shadow-xs
-              sm:flex-nowrap sm:px-6 sm:py-5
+              border-border-warm bg-surface px-4 py-3 shadow-xs
+              sm:flex-nowrap sm:px-6
             "
         >
             {showClose ? (
                 <DialogHeader
                     className="
-                      flex flex-1 flex-row flex-wrap items-center gap-2.5 pe-0 text-start
+                      flex flex-1 flex-row flex-wrap items-center! gap-2.5 pe-0 text-start
                       min-inline-0
                     "
                 >
