@@ -1,5 +1,6 @@
 import type { PropertyListing } from "@/lib/api/properties";
 import type { RepresentationItem } from "@/lib/api/representative";
+import { formatPrice } from "@/lib/format/price";
 import type { PropertyFilterRecord } from "@/lib/properties/list-criteria";
 
 import type { MyListingItem } from "@/features/properties/your-listings/types";
@@ -582,12 +583,7 @@ export function mapClientToPerson(client: {
     if (client.preferredLocalities?.length)
         parts.push(client.preferredLocalities.slice(0, 2).join(" or "));
     if (client.budgetMaxInr) {
-        const lakhs = client.budgetMaxInr / 100_000;
-        parts.push(
-            lakhs >= 100
-                ? `up to ₹${(lakhs / 100).toFixed(1)} Cr`
-                : `up to ₹${Math.round(lakhs)} L`,
-        );
+        parts.push(`up to ${formatPrice(client.budgetMaxInr)}`);
     }
     if (client.lookingFor === "rent" && !parts.some((p) => p.includes("rent"))) {
         parts.push("rent");

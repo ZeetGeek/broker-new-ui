@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { clientsApi } from "@/lib/api/clients";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
@@ -59,8 +59,8 @@ function budgetLabel(client: ClientItem): string | null {
     if (client.budgetMaxInr === null) return null;
     const amount =
         client.lookingFor === "rent"
-            ? formatRentInr(client.budgetMaxInr)
-            : formatPriceInr(client.budgetMaxInr);
+            ? formatRent(client.budgetMaxInr)
+            : formatPrice(client.budgetMaxInr);
     return `Up to ${amount}`;
 }
 

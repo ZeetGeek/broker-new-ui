@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import type { Currency } from "@/lib/format/currency";
 
 export type CountryItem = {
     id: string;
@@ -12,6 +13,8 @@ export type CountryItem = {
     isSupported: boolean;
     /** True when states + cities are fully stored server-side. */
     isReady: boolean;
+    /** What listings in this country are priced in. */
+    currency?: Currency | null;
 };
 
 export type StateItem = {
@@ -56,6 +59,7 @@ const MOCK_COUNTRIES: CountryItem[] = [
         emoji: "🇮🇳",
         isSupported: true,
         isReady: true,
+        currency: { code: "INR", symbol: "₹", name: "Indian Rupee", decimalDigits: 2 },
     },
 ];
 
@@ -128,8 +132,10 @@ export const locationsApi = {
         if (options.supportedOnly) search.set("supportedOnly", "true");
         const query = search.toString();
 
+        // Public endpoint: the signup form needs it before there is a session.
         const response = await apiFetch<CountriesResponse>(
             `/locations/countries${query ? `?${query}` : ""}`,
+            { skipAuth: true },
         );
         return response.items ?? [];
     },

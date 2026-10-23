@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { propertiesApi } from "@/lib/api/properties";
 import { formatAreaSqft } from "@/lib/format/area";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
@@ -234,9 +234,7 @@ export function PropertyDetailLayout({
                             title: item.title,
                             locality: item.locality,
                             city: item.city,
-                            priceLabel: isRent
-                                ? formatRentInr(amountInr)
-                                : formatPriceInr(amountInr),
+                            priceLabel: isRent ? formatRent(amountInr) : formatPrice(amountInr),
                             imageSrc: item.imageSrc,
                             configLabel: item.configLabel,
                             propertyTypeLabel: item.propertyTypeLabel,

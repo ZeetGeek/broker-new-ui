@@ -21,12 +21,21 @@ import { establishSession } from "@/store/slices/auth-slice";
 import { AuthFormFrame } from "./auth-back-link";
 import { AuthBusyState } from "./auth-busy-state";
 import { AuthHeading } from "./auth-heading";
+import { CountryPicker, useSuggestedCountryIso2 } from "./country-picker";
 import { type Portal } from "./portal";
 import { PortalPicker } from "./portal-picker";
 export function GoogleRolePickerPanel() {
     const router = useRouter();
     const dispatch = useAppDispatch();
     const currentRole = useAppSelector((state) => state.auth.user?.role);
+    // Google tells us no country. Ask only when the account has none yet —
+    // a register-page signup already carried it through.
+    const hasCountry = useAppSelector((state) => Boolean(state.auth.user?.country));
+    const suggestedCountryIso2 = useSuggestedCountryIso2();
+    // `null` until the user touches the picker, so clearing it stays cleared.
+    const [pickedCountryIso2, setCountryIso2] = React.useState<string | null>(null);
+    const countryIso2 = pickedCountryIso2 ?? suggestedCountryIso2;
+    const [countryError, setCountryError] = React.useState<string | undefined>();
     const [portal, setPortal] = React.useState<Portal>(() => {
         const storedRole = getStoredUser()?.role;
         return storedRole === "owner" ? "owner" : "broker";
@@ -45,18 +54,23 @@ export function GoogleRolePickerPanel() {
     }, [router, currentRole]);
 
     async function handleContinue() {
+        if (!hasCountry && !countryIso2) {
+            setCountryError("Choose the country you work in");
+            return;
+        }
         setIsSubmitting(true);
         try {
             const current = currentRole === "owner" ? "owner" : "broker";
-            if (portal === current) {
+            if (portal === current && hasCountry) {
                 sessionStorage.removeItem(GOOGLE_ONBOARDING_KEY);
                 setIsRedirecting(true);
                 router.replace(portalHomeForRole(portal));
                 return;
             }
-            console.log("portal", portal);
-            const result = await authApi.completeGoogleRole(portal);
-            console.log("result", result);
+            const result = await authApi.completeGoogleRole(
+                portal,
+                hasCountry ? undefined : countryIso2,
+            );
             dispatch(
                 establishSession({
                     accessToken: result.accessToken,
@@ -92,6 +106,26 @@ export function GoogleRolePickerPanel() {
                 </div>
 
                 <PortalPicker value={portal} onChange={setPortal} ariaLabel="Sign in as" />
+
+                {hasCountry ? null : (
+                    <div className="mx-auto flex flex-col gap-2 inline-full max-inline-96">
+                        <label htmlFor="google-country" className="body font-medium text-ink">
+                            Country{" "}
+                            <span className="text-brand" aria-hidden="true">
+                                *
+                            </span>
+                        </label>
+                        <CountryPicker
+                            id="google-country"
+                            value={countryIso2}
+                            onValueChange={(next) => {
+                                setCountryIso2(next);
+                                setCountryError(undefined);
+                            }}
+                            errorText={countryError}
+                        />
+                    </div>
+                )}
 
                 <div className="mx-auto flex flex-col gap-6 inline-full max-inline-96">
                     <Button

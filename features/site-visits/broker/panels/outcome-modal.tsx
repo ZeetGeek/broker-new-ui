@@ -5,7 +5,8 @@ import { useForm, useWatch } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { formatInrInput, inrWordHint, parseInr } from "@/lib/format/inr";
+import { getActiveCurrency } from "@/lib/format/currency";
+import { formatMoneyInput, moneyWordHint, parseMoney } from "@/lib/format/money";
 import { cn } from "@/lib/utils";
 import { dateAtIstOffset, inputValueInIst } from "@/lib/visits/time";
 
@@ -257,18 +258,18 @@ export default function OutcomeModal({
                         </span>
                         <input
                             inputMode="numeric"
-                            value={formatInrInput(offerAmount)}
+                            value={formatMoneyInput(offerAmount)}
                             onChange={(event) =>
                                 form.setValue(
                                     "offerAmount",
-                                    parseInr(event.target.value) ?? undefined,
+                                    parseMoney(event.target.value) ?? undefined,
                                 )
                             }
                             className="
               body-sm tabular mbs-2 rounded-control border border-border-warm bg-surface px-3
               text-ink inline-full min-block-11
             "
-                            placeholder="₹0"
+                            placeholder={`${getActiveCurrency().symbol}0`}
                         />
                         {offerAmount ? (
                             <span
@@ -276,7 +277,7 @@ export default function OutcomeModal({
               body-xs mbs-1 block text-brand-text
             "
                             >
-                                {inrWordHint(offerAmount)}
+                                {moneyWordHint(offerAmount)}
                             </span>
                         ) : null}
                     </label>

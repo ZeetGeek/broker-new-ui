@@ -1,3 +1,6 @@
+import { type Currency, getActiveCurrency, usesIndianNumbering } from "@/lib/format/currency";
+import { formatMoneyCompact } from "@/lib/format/money";
+
 import type { OwnerListingTransactionType } from "@/features/properties/owner-listings/types";
 
 export type OwnerListingsBudgetPreset = {
@@ -40,12 +43,77 @@ export const OWNER_LISTINGS_RENT_BUDGET_STEPS: OwnerListingsBudgetPreset[] = [
 /** @deprecated Use getBudgetSteps — kept for any stray sale-only imports. */
 export const OWNER_LISTINGS_BUDGET_STEPS = OWNER_LISTINGS_SALE_BUDGET_STEPS;
 
+/** Round sale / rent buckets for currencies read in K / M rather than lakh / crore. */
+const INTERNATIONAL_SALE_BOUNDS: [number | null, number | null][] = [
+    [null, 100_000],
+    [null, 250_000],
+    [null, 500_000],
+    [null, 1_000_000],
+    [null, 2_000_000],
+    [300_000, 500_000],
+    [1_000_000, 2_000_000],
+    [2_000_000, null],
+];
+const INTERNATIONAL_RENT_BOUNDS: [number | null, number | null][] = [
+    [null, 1_000],
+    [null, 1_500],
+    [null, 2_000],
+    [null, 3_000],
+    [null, 5_000],
+    [1_000, 2_000],
+    [2_000, 3_000],
+    [5_000, null],
+];
+
+function internationalSteps(
+    bounds: [number | null, number | null][],
+    currency: Currency,
+    perMonth: boolean,
+): OwnerListingsBudgetPreset[] {
+    const money = (amount: number) => formatMoneyCompact(amount, currency);
+    const suffix = perMonth ? "/mo" : "";
+    return [
+        { min: "", max: "", label: "Any budget", shortLabel: "Any" },
+        ...bounds.map(([min, max]) => {
+            const label =
+                min == null
+                    ? `Under ${money(max!)}${suffix}`
+                    : max == null
+                      ? `${money(min)}+${suffix}`
+                      : `${money(min)} – ${money(max)}${suffix}`;
+            const shortLabel =
+                min == null
+                    ? money(max!)
+                    : max == null
+                      ? `${money(min)}+`
+                      : `${money(min)}–${money(max)}`;
+            return {
+                min: min == null ? "" : String(min),
+                max: max == null ? "" : String(max),
+                label,
+                shortLabel,
+            };
+        }),
+    ];
+}
+
 /**
- * Budget presets for the Looking-for mode.
- * `rent` → monthly rent steps. Sale and Any → purchase (lakh/crore) steps.
+ * Budget presets for the Looking-for mode, in the user's market currency.
+ * `rent` → monthly rent steps. Sale and Any → purchase steps — lakh / crore
+ * buckets for INR, K / M buckets for every other currency.
  */
-export function getBudgetSteps(kind: OwnerListingsBudgetKind): OwnerListingsBudgetPreset[] {
-    return kind === "rent" ? OWNER_LISTINGS_RENT_BUDGET_STEPS : OWNER_LISTINGS_SALE_BUDGET_STEPS;
+export function getBudgetSteps(
+    kind: OwnerListingsBudgetKind,
+    currency: Currency = getActiveCurrency(),
+): OwnerListingsBudgetPreset[] {
+    if (usesIndianNumbering(currency)) {
+        return kind === "rent"
+            ? OWNER_LISTINGS_RENT_BUDGET_STEPS
+            : OWNER_LISTINGS_SALE_BUDGET_STEPS;
+    }
+    return kind === "rent"
+        ? internationalSteps(INTERNATIONAL_RENT_BOUNDS, currency, true)
+        : internationalSteps(INTERNATIONAL_SALE_BOUNDS, currency, false);
 }
 
 export function findBudgetStepIndex(

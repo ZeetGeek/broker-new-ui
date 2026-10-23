@@ -2,7 +2,8 @@
 
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import type { Currency } from "@/lib/format/currency";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -48,6 +49,8 @@ type TipInput = {
     audience?: CommissionAudience;
     /** When commission is unset, still show a hover tip. Defaults on. */
     showEmptyTip?: boolean;
+    /** The listing's currency. Defaults to the signed-in user's market currency. */
+    currency?: Currency | null;
 };
 
 export type PriceWithCommissionProps = TipInput & {
@@ -138,7 +141,9 @@ export function listingCommissionTip({
     commissionAmountInr,
     audience = "broker",
     showEmptyTip = true,
+    currency,
 }: TipInput): CommissionTip | null {
+    const money = currency ?? undefined;
     const lead = audience === "owner" ? "Broker gets" : "You get";
 
     if (isRent) {
@@ -147,7 +152,7 @@ export function listingCommissionTip({
             return showEmptyTip ? noCommissionTip(audience) : null;
         }
         return {
-            headline: `${lead} ${formatPriceInr(brokerageInr)}`,
+            headline: `${lead} ${formatPrice(brokerageInr, money)}`,
             detail: "Fixed amount",
         };
     }
@@ -163,8 +168,8 @@ export function listingCommissionTip({
     if (cutInr <= 0) return null;
 
     return {
-        headline: `${lead} ${formatPriceInr(cutInr)}`,
-        detail: `${formatPercent(percent)} of ${formatPriceInr(priceInr)}`,
+        headline: `${lead} ${formatPrice(cutInr, money)}`,
+        detail: `${formatPercent(percent)} of ${formatPrice(priceInr, money)}`,
     };
 }
 
@@ -185,10 +190,12 @@ export function PriceWithCommission({
     size = "lg",
     underline = "auto",
     tooltipSide = "top",
+    currency,
     className,
 }: PriceWithCommissionProps) {
     const emptyTip = resolveShowEmptyTip({ showEmptyTip, showNoRentCommission });
-    const priceLabel = isRent ? formatRentInr(amountInr) : formatPriceInr(amountInr);
+    const money = currency ?? undefined;
+    const priceLabel = isRent ? formatRent(amountInr, money) : formatPrice(amountInr, money);
     const tip = listingCommissionTip({
         amountInr,
         isRent,
@@ -196,6 +203,7 @@ export function PriceWithCommission({
         commissionAmountInr,
         audience,
         showEmptyTip: emptyTip,
+        currency,
     });
 
     const showUnderline = Boolean(tip && !tip.plain) && underline === "auto";

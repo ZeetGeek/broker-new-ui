@@ -18,7 +18,7 @@ import {
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
-import { parseInr } from "@/lib/format/inr";
+import { parseMoney } from "@/lib/format/money";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
@@ -86,7 +86,7 @@ export function OwnerLeadCard({
     const location = [facts.locality, facts.city === facts.locality ? null : facts.city]
         .filter(Boolean)
         .join(", ");
-    const offerAmount = parseInr(lead.offerAmount);
+    const offerAmount = parseMoney(lead.offerAmount);
     const updatedAt = lead.updatedAt || lead.createdAt;
     const when = updatedAt ? parseApiInstant(updatedAt) : null;
     const brokerPhone = lead.broker?.phone?.trim();

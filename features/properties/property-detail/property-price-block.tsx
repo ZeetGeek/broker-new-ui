@@ -10,7 +10,7 @@ import {
     offersRent,
     offersSale,
 } from "@/lib/format/listing-availability";
-import { formatPriceInr } from "@/lib/format/price";
+import { formatPrice } from "@/lib/format/price";
 
 import { HandCoins } from "@/components/shared/icons";
 import {
@@ -118,7 +118,7 @@ export function PropertyPriceBlock({
 
                 <div className="body-sm flex flex-wrap items-center gap-x-4 gap-y-1 text-ink-muted">
                     {perSqft ? (
-                        <span className="tabular">{formatPriceInr(perSqft)} per sq ft</span>
+                        <span className="tabular">{formatPrice(perSqft)} per sq ft</span>
                     ) : null}
                     {both ? (
                         <span className="tabular">
@@ -141,7 +141,7 @@ export function PropertyPriceBlock({
                     ) : null}
                     {item.maintenanceInr != null && item.maintenanceInr > 0 ? (
                         <span className="tabular">
-                            + {formatPriceInr(item.maintenanceInr)}/mo maintenance
+                            + {formatPrice(item.maintenanceInr)}/mo maintenance
                         </span>
                     ) : null}
                 </div>

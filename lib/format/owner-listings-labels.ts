@@ -1,5 +1,6 @@
 import { toLabel } from "@/constants/property";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { getActiveCurrency } from "@/lib/format/currency";
+import { formatPrice, formatRent } from "@/lib/format/price";
 
 import type {
     OwnerListingCategory,
@@ -111,11 +112,13 @@ export function formatBudgetLabel(
 ): string {
     const minInr = min ? Number(min) : null;
     const maxInr = max ? Number(max) : null;
-    const format = kind === "rent" ? formatRentInr : formatPriceInr;
+    const format = kind === "rent" ? formatRent : formatPrice;
     const stripMo = (value: string) => value.replace(/\/mo$/, "");
 
     if (minInr !== null && !Number.isNaN(minInr) && maxInr !== null && !Number.isNaN(maxInr)) {
-        const left = stripMo(format(minInr)).replace("₹", "");
+        // One symbol per range: "25 L – ₹50 L", "100K – $250K".
+        const symbol = getActiveCurrency().symbol;
+        const left = stripMo(format(minInr)).replace(symbol, "").trim();
         const right = format(maxInr);
         return `${left} – ${right}`;
     }

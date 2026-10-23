@@ -1,5 +1,6 @@
 import { exclusiveOwnerPhoneDigits } from "@/lib/api/exclusive-owners";
 import type { PropertyListing } from "@/lib/api/properties";
+import { sessionCountryName } from "@/lib/auth/session";
 import { buildPropertyTitle } from "@/lib/format/property-title";
 import {
     categoryForPropertyType,
@@ -406,7 +407,8 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
         postalCode: input.pinCode.trim() || undefined,
         society: input.society?.trim() || undefined,
         landmark: input.landmark?.trim() || undefined,
-        country: "India",
+        // Informational: the API always files the listing under the holder's country.
+        country: sessionCountryName(),
         salePrice: input.saleAmountInr ?? undefined,
         monthlyRent: input.rentAmountInr ?? undefined,
         securityDeposit: input.securityDeposit ?? undefined,

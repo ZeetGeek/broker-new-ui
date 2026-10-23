@@ -2,8 +2,15 @@
 
 import { useEffect } from "react";
 
-import { type Portal, portalForRole, portalHomeForRole } from "@/lib/auth/session";
+import {
+    GOOGLE_ONBOARDING_KEY,
+    type Portal,
+    portalForRole,
+    portalHomeForRole,
+} from "@/lib/auth/session";
 import { usePathname, useRouter } from "@/lib/navigation";
+
+import { MarketCurrencyScope } from "@/components/auth/market-currency-scope";
 
 import { useAppSelector } from "@/store/hooks";
 
@@ -13,6 +20,9 @@ export function AuthGuard({ children, portal }: { children: React.ReactNode; por
     const { user, accessToken, hydrated } = useAppSelector((state) => state.auth);
     const isAuthenticated = Boolean(accessToken && user);
     const wrongPortal = isAuthenticated && portalForRole(user?.role) !== portal;
+    // Every portal screen is scoped to a country. A Google signup that skipped
+    // the choice is sent to pick one before seeing an empty marketplace.
+    const needsCountry = isAuthenticated && !wrongPortal && user?.country === null;
 
     useEffect(() => {
         if (!hydrated) return;
@@ -23,10 +33,15 @@ export function AuthGuard({ children, portal }: { children: React.ReactNode; por
         }
         if (wrongPortal) {
             router.replace(portalHomeForRole(user?.role));
+            return;
         }
-    }, [hydrated, isAuthenticated, router, pathname, wrongPortal, user?.role]);
+        if (needsCountry) {
+            sessionStorage.setItem(GOOGLE_ONBOARDING_KEY, "1");
+            router.replace("/auth/choose-role");
+        }
+    }, [hydrated, isAuthenticated, router, pathname, wrongPortal, needsCountry, user?.role]);
 
-    if (!hydrated || !isAuthenticated || wrongPortal) {
+    if (!hydrated || !isAuthenticated || wrongPortal || needsCountry) {
         return (
             <div
                 className="bg-canvas p-4 min-block-screen md:p-8"
@@ -61,5 +76,5 @@ export function AuthGuard({ children, portal }: { children: React.ReactNode; por
         );
     }
 
-    return <>{children}</>;
+    return <MarketCurrencyScope>{children}</MarketCurrencyScope>;
 }

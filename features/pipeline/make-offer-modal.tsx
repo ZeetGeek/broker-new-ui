@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Handshake } from "@/components/shared/icons";
 
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
@@ -23,7 +23,7 @@ function amountHint(raw: string, isRent: boolean): string | null {
     if (!digits) return null;
     const n = Number(digits);
     if (!Number.isFinite(n) || n < 1) return null;
-    return isRent ? formatRentInr(n) : formatPriceInr(n);
+    return isRent ? formatRent(n) : formatPrice(n);
 }
 
 function seedAmount(deal: DealItem): string {

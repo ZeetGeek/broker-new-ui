@@ -5,8 +5,8 @@ import { type ComponentProps, type ReactNode, useEffect, useMemo, useRef, useSta
 import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
 import { tinykeys } from "tinykeys";
 
-import { formatInrInput, parseInr } from "@/lib/format/inr";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatMoneyInput, parseMoney } from "@/lib/format/money";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
@@ -27,6 +27,8 @@ import { Input, type InputProps } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { useMarketCurrency } from "@/hooks/use-market";
+import { currencyIcon } from "@/components/shared/icons";
 
 /** Same control height as Add property (`size="lg"` → 48px). */
 export const nativeControlClass = `
@@ -35,14 +37,6 @@ export const nativeControlClass = `
   hover:border-ink-subtle focus:border-ring focus:ring-3 focus:ring-ring/30
   disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-60
 `;
-
-function IndianRupeeIcon(props: ComponentProps<"svg">) {
-    return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
-            <path d="M6 4h12M6 8h12M7 4c5 0 7 2 7 5s-2 5-7 5h-1l8 7" />
-        </svg>
-    );
-}
 
 export function FormField({
     label,
@@ -492,7 +486,7 @@ export function ToggleRow({
     );
 }
 
-/** Same ₹ money control as Add property Expected price / Society maintenance. */
+/** Same money control as Add property Expected price / Society maintenance. */
 function ContactCurrencyInput({
     id,
     valueDigits,
@@ -506,15 +500,16 @@ function ContactCurrencyInput({
     error?: string;
     placeholder?: string;
 }) {
+    const CurrencyIcon = currencyIcon(useMarketCurrency().code);
     const numericValue =
         valueDigits && Number.isFinite(Number(valueDigits)) && Number(valueDigits) > 0
             ? Number(valueDigits)
             : null;
-    const [display, setDisplay] = useState(() => formatInrInput(numericValue));
+    const [display, setDisplay] = useState(() => formatMoneyInput(numericValue));
     const [focused, setFocused] = useState(false);
 
     useEffect(() => {
-        if (!focused) setDisplay(formatInrInput(numericValue));
+        if (!focused) setDisplay(formatMoneyInput(numericValue));
     }, [focused, numericValue]);
 
     return (
@@ -522,22 +517,22 @@ function ContactCurrencyInput({
             id={id}
             inputMode="text"
             size="lg"
-            value={focused ? display : formatInrInput(numericValue)}
+            value={focused ? display : formatMoneyInput(numericValue)}
             placeholder={placeholder}
-            startIcon={IndianRupeeIcon}
+            startIcon={CurrencyIcon}
             errorText={error}
             onFocus={() => {
-                setDisplay(formatInrInput(numericValue));
+                setDisplay(formatMoneyInput(numericValue));
                 setFocused(true);
             }}
             onValueChange={(next) => {
                 setDisplay(next);
-                const parsed = parseInr(next);
+                const parsed = parseMoney(next);
                 onChangeDigits(parsed != null && parsed > 0 ? String(parsed) : "");
             }}
             onBlur={() => {
                 setFocused(false);
-                setDisplay(formatInrInput(numericValue));
+                setDisplay(formatMoneyInput(numericValue));
             }}
         />
     );
@@ -565,8 +560,8 @@ export function BudgetRangeField({
     const preview =
         previewInr > 0
             ? isRent
-                ? `Up to ${formatRentInr(previewInr)}`
-                : `Up to ${formatPriceInr(previewInr)}`
+                ? `Up to ${formatRent(previewInr)}`
+                : `Up to ${formatPrice(previewInr)}`
             : null;
 
     return (

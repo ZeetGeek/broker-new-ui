@@ -6,7 +6,7 @@ import Link from "next/link";
 import { GripVertical, Plus } from "@/components/shared/icons";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { ownerBrokersHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
@@ -60,8 +60,8 @@ function columnValue(leads: PropertyLead[]): { sale: string | null; rent: string
     }
 
     return {
-        sale: sale > 0 ? formatPriceInr(sale) : null,
-        rent: rent > 0 ? formatRentInr(rent) : null,
+        sale: sale > 0 ? formatPrice(sale) : null,
+        rent: rent > 0 ? formatRent(rent) : null,
     };
 }
 

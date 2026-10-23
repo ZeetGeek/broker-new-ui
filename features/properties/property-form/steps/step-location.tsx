@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { MAX_PROPERTY_ADDRESS_LENGTH } from "@/lib/properties/form-limits";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { useLocationOptions } from "@/hooks/use-locations";
+import { useMarket } from "@/hooks/use-market";
 
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
@@ -99,6 +100,18 @@ export function StepLocation() {
     const lng = location.lng;
     const fullAddress = location.fullAddress;
     const lastAutoAddress = useRef("");
+    const market = useMarket();
+
+    // The API places every listing in its holder's country, so the field is
+    // fixed to it. A draft saved under another country is moved over, and its
+    // state / city / locality — which belonged to that country — are cleared.
+    useEffect(() => {
+        if (!market || country === market.name) return;
+        setValue("location.country", market.name, { shouldDirty: true });
+        setValue("location.state", "", { shouldDirty: true });
+        setValue("location.city", "", { shouldDirty: true });
+        setValue("location.locality", "", { shouldDirty: true });
+    }, [market, country, setValue]);
     const [editingAddress, setEditingAddress] = useState(false);
     const addressFieldId = "location-fullAddress";
 
@@ -235,6 +248,12 @@ export function StepLocation() {
                             loading={countriesLoading}
                             emptyText="No countries match"
                             limit={50}
+                            disabled={Boolean(market)}
+                            hint={
+                                market
+                                    ? "Listings are offered in your account's country"
+                                    : undefined
+                            }
                             onValueChange={() => {
                                 // State, city and locality belong to the old country.
                                 setValue("location.state", "", { shouldDirty: true });

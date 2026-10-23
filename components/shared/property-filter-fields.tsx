@@ -8,6 +8,7 @@ import {
     type PropertyListCriteria,
 } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
+import { useMarketCurrency } from "@/hooks/use-market";
 
 import {
     type AppIcon,
@@ -188,6 +189,7 @@ function OwnerListingsPropertySearchFields({
     fields: readonly ("where" | "type" | "budget" | "area" | "category" | "propertyType")[];
 }) {
     const v = normalizePropertyCriteria(value);
+    const currency = useMarketCurrency();
     const patch = (next: Partial<PropertyListCriteria>) =>
         onChange(normalizePropertyCriteria({ ...v, ...next }));
     const transactionOptions = [
@@ -195,7 +197,7 @@ function OwnerListingsPropertySearchFields({
         { value: "sale" as const, label: "Sale", icon: HandCoins },
         { value: "rent" as const, label: "Rent", icon: KeyRound },
     ];
-    const budgetSteps = getBudgetSteps(v.type);
+    const budgetSteps = getBudgetSteps(v.type, currency);
     const budgetIndex = findBudgetStepIndex(v.min, v.max, budgetSteps);
     const budgetStep = budgetSteps[budgetIndex] ?? budgetSteps[0];
     const areaRange = areaDraftToRange(v.minAreaSqft, v.maxAreaSqft);
@@ -535,6 +537,7 @@ export function PropertyFilterFields({
     fields?: readonly ("where" | "type" | "budget" | "area" | "category" | "propertyType")[];
     presentation?: "form" | "owner-listings";
 }) {
+    const currency = useMarketCurrency();
     if (presentation === "owner-listings") {
         return (
             <OwnerListingsPropertySearchFields value={value} onChange={onChange} fields={fields} />
@@ -627,7 +630,12 @@ export function PropertyFilterFields({
                 </div>
             ) : null}
             {fields.includes("budget")
-                ? range(v.type === "rent" ? "Monthly rent" : "Budget", "min", "max", "₹")
+                ? range(
+                      v.type === "rent" ? "Monthly rent" : "Budget",
+                      "min",
+                      "max",
+                      currency.symbol,
+                  )
                 : null}
             {fields.includes("area") ? range("Area", "minAreaSqft", "maxAreaSqft", "sq ft") : null}
             {fields.includes("category") ? (

@@ -1,8 +1,7 @@
+import { sessionCountryName } from "@/lib/auth/session";
 import { formatLocationPathLabel, formatPlaceName } from "@/lib/format/owner-listings-labels";
 
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
-
-const DEFAULT_COUNTRY = "India";
 
 const CITY_STATE_MAP: Record<string, string> = {
     Surat: "Gujarat",
@@ -88,7 +87,7 @@ function resolveStateForCity(city: string, state?: string): string {
 }
 
 function resolveListingRegion(item: OwnerListingItem) {
-    const country = item.country?.trim() || DEFAULT_COUNTRY;
+    const country = item.country?.trim() || sessionCountryName();
     const state = resolveStateForCity(item.city, item.state);
     return {
         country,

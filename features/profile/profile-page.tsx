@@ -57,6 +57,7 @@ import { NotificationPreferences } from "@/features/profile/notification-prefere
 import { ProfilePhotoField } from "@/features/profile/profile-photo-field";
 import { ProfileStats } from "@/features/profile/profile-stats";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { refreshProfile } from "@/store/slices/auth-slice";
 import { setProfile } from "@/store/slices/dashboard-slice";
 
 /**
@@ -203,7 +204,7 @@ function toFormValues(profile: UserProfile): ProfileFormValues {
         phone: normalizeProfilePhone(profile.phone ?? ""),
         city: profile.city ?? "",
         state: profile.state ?? "",
-        country: profile.country ?? "India",
+        country: profile.country ?? profile.market?.name ?? "",
         locality: profile.locality?.trim() || profile.owner?.locality?.trim() || "",
         orgName: profile.orgName ?? "",
         bio: owner ? (profile.owner?.bio ?? "") : (profile.broker?.bio ?? ""),
@@ -383,9 +384,18 @@ export function ProfilePage() {
                     payload.specializations = parseCommaList(values.specializations);
                 }
 
+                const countryChanged =
+                    values.country.trim().toLowerCase() !==
+                    (profile?.country ?? "").trim().toLowerCase();
+
                 const updated = await profileApi.update(payload);
 
                 handleProfileReplaced(updated);
+                // The country decides which listings, brokers and currency the
+                // whole portal shows, and lives on the session — re-read it.
+                if (countryChanged) {
+                    await dispatch(refreshProfile());
+                }
                 // Reset to what the server stored, not to what was typed, so
                 // the form stops being dirty and shows any value the server
                 // adjusted on the way in.
@@ -399,7 +409,7 @@ export function ProfilePage() {
                 );
             }
         },
-        [handleProfileReplaced, profile, reset],
+        [dispatch, handleProfileReplaced, profile, reset],
     );
 
     if (isLoading && !profile) {

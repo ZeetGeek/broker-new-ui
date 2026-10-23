@@ -1,3 +1,5 @@
+import { type Currency, usesIndianNumbering } from "@/lib/format/currency";
+
 export type OwnerListingStatus = "active" | "pending";
 
 export type OwnerListingFurnishing = "furnished" | "semi" | "unfurnished";
@@ -267,7 +269,20 @@ export const OWNER_LISTING_CATEGORY_OPTIONS: {
 export const SALE_COMMISSION_RANGE = { min: 0.1, max: 5, step: 0.1 } as const;
 
 /** Rent commission slider bounds in INR. The top end means "and above". */
-export const RENT_COMMISSION_RANGE = { min: 0, max: 200_000, step: 5_000 } as const;
+/**
+ * Fixed rent commission slider bounds, in the market currency. INR runs to
+ * ₹2,00,000 in ₹5,000 steps; other currencies are read in far smaller
+ * numbers, so they get a matching scale.
+ */
+export function rentCommissionRange(currency: Currency): {
+    min: number;
+    max: number;
+    step: number;
+} {
+    return usesIndianNumbering(currency)
+        ? { min: 0, max: 200_000, step: 5_000 }
+        : { min: 0, max: 10_000, step: 250 };
+}
 
 export const OWNER_LISTING_PROPERTY_TYPES: { value: OwnerListingPropertyType; label: string }[] = [
     { value: "apartment", label: "Apartment" },

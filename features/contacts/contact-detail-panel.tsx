@@ -8,7 +8,7 @@ import {
     Building2,
     Globe2,
     Home,
-    IndianRupee,
+    currencyIcon,
     Link2,
     Lock,
     Mail,
@@ -24,7 +24,7 @@ import {
 } from "@/components/shared/icons";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatIndianPrice } from "@/lib/format/price";
+import { formatListingPrice } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +43,7 @@ import type { BuyerContactForm, OwnerContactForm } from "@/features/contacts/con
 import { CONTACT_LOCATION_FALLBACK } from "@/features/contacts/contact-location-defaults";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
+import { useMarketCurrency } from "@/hooks/use-market";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
 
@@ -427,6 +428,7 @@ function BuyerPanel({
     onQuickUpdate,
     propertiesRef,
 }: BuyerPanelProps) {
+    const CurrencyIcon = currencyIcon(useMarketCurrency().code);
     const model = toBuyerContactCardModel(buyer);
     const [notes, setNotes] = useState(buyer.details?.notes || buyer.notes || "");
     const [saved, setSaved] = useState(false);
@@ -441,7 +443,7 @@ function BuyerPanel({
 
     const budget = [buyer.budgetMinInr, buyer.budgetMaxInr]
         .filter((value): value is number => value != null)
-        .map((value) => formatIndianPrice(value, buyer.lookingFor))
+        .map((value) => formatListingPrice(value, buyer.lookingFor))
         .join(" to ");
 
     const areasLabel = model.localities.join(", ");
@@ -489,7 +491,7 @@ function BuyerPanel({
                         },
                         {
                             label: "Budget",
-                            icon: IndianRupee,
+                            icon: CurrencyIcon,
                             value: budget || model.budgetLabel,
                             wide: true,
                             empty: !budget && model.budgetLabel === "Budget not set",
