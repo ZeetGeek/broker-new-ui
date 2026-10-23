@@ -185,9 +185,19 @@ export function ChatModal({
             });
         };
 
+        const onDeleted = (payload: { id?: string; representationId?: string }) => {
+            if (!payload?.id || payload.representationId !== representationId) return;
+            pendingLiveRef.current = pendingLiveRef.current.filter(
+                (item) => item.id !== payload.id,
+            );
+            setMessages((prev) => prev.filter((item) => item.id !== payload.id));
+        };
+
         socket.on("representation.message", onMessage);
+        socket.on("representation.message.deleted", onDeleted);
         return () => {
             socket.off("representation.message", onMessage);
+            socket.off("representation.message.deleted", onDeleted);
         };
     }, [open, representationId, accessToken, mySide]);
 
@@ -221,6 +231,24 @@ export function ChatModal({
             }
         },
         [peer, canSend, sending, mySide],
+    );
+
+    const handleDelete = useCallback(
+        async (messageId: string) => {
+            if (!peer?.representationId) return;
+            const previous = messages;
+            setMessages((current) => current.filter((item) => item.id !== messageId));
+            pendingLiveRef.current = pendingLiveRef.current.filter((item) => item.id !== messageId);
+            try {
+                await representativeApi.deleteMessage(peer.representationId, messageId);
+            } catch (error) {
+                setMessages(previous);
+                toast.error(
+                    error instanceof ApiError ? error.message : "Failed to delete message",
+                );
+            }
+        },
+        [peer, messages],
     );
 
     const isStale = Boolean(representationId) && loadedKey !== representationId;
@@ -350,7 +378,13 @@ export function ChatModal({
                                                         <DateSeparatorWave />
                                                     </li>
                                                 ) : null}
-                                                <ChatMessageRow message={message} peer={peer} />
+                                                <ChatMessageRow
+                                                    message={message}
+                                                    peer={peer}
+                                                    onDelete={
+                                                        message.isOwn ? handleDelete : undefined
+                                                    }
+                                                />
                                             </Fragment>
                                         );
                                     })}

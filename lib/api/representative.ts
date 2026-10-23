@@ -321,6 +321,13 @@ export const representativeApi = {
         });
     },
 
+    deleteMessage(representationId: string, messageId: string) {
+        return apiFetch<{ id: string; representationId: string }>(
+            `/representative/${representationId}/messages/${messageId}`,
+            { method: "DELETE" },
+        );
+    },
+
     /** Owner: full representation list (badge counts). */
     ownerList(status?: string) {
         if (isMockMode()) return Promise.resolve([]);
