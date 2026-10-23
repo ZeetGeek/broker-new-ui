@@ -12,7 +12,11 @@ import {
     parseVideoEmbed,
 } from "@/lib/media/embed-url";
 import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
-import { MAX_PROPERTY_PHOTOS } from "@/lib/properties/form-media";
+import {
+    isUsablePropertyPhoto,
+    MAX_PROPERTY_PHOTOS,
+    PROPERTY_COVER_SIZE_GUIDANCE,
+} from "@/lib/properties/form-media";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +28,6 @@ import {
     ExternalLink,
     ImageIcon,
     ImagePlus,
-    Images,
     RefreshCw,
     Video,
     View,
@@ -88,9 +91,8 @@ export function StepMedia({
     const tourEmbed = useMemo(() => parseTourEmbed(virtualTourUrl), [virtualTourUrl]);
     const coverPhoto = photos.find((photo) => photo.isCover) ?? null;
     const galleryPhotos = photos.filter((photo) => !photo.isCover);
-    const usableGalleryCount = galleryPhotos.filter((photo) => photo.status !== "error").length;
-    const hasUsableCover = coverPhoto != null && coverPhoto.status !== "error";
-    const publishReady = hasUsableCover && usableGalleryCount >= 3;
+    const usableGalleryCount = galleryPhotos.filter(isUsablePropertyPhoto).length;
+    const hasUsableCover = coverPhoto != null && isUsablePropertyPhoto(coverPhoto);
     const maxGallery = MAX_PHOTOS - (coverPhoto ? 1 : 0);
     const coverError =
         typeof formState.errors.media === "object" &&
@@ -261,13 +263,13 @@ export function StepMedia({
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
                 title={<>Property photos</>}
-                description="Upload one vertical cover for the listing card, then at least 3 property photos. Both are required to publish."
+                description="Add one cover image and at least 3 property photos. Both are required to publish."
             >
                 <div className={FORM_STACK_CLASS}>
                     <div
                         className="
                           grid gap-4
-                          md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] md:items-stretch
+                          md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] md:items-stretch
                         "
                     >
                         <div className="flex flex-col gap-3">
@@ -277,20 +279,7 @@ export function StepMedia({
                                       flex items-center gap-2 text-sm font-semibold text-ink
                                     "
                                 >
-                                    <ImageIcon
-                                        className="shrink-0 text-brand block-4 inline-4"
-                                        strokeWidth={1.75}
-                                        aria-hidden
-                                    />
                                     <FieldLabel path="media.cover">Cover image</FieldLabel>
-                                </p>
-                                <p
-                                    className={cn(
-                                        "text-sm font-medium",
-                                        hasUsableCover ? "text-brand-text" : "text-ink-muted",
-                                    )}
-                                >
-                                    {hasUsableCover ? "Added" : "1 only"}
                                 </p>
                             </div>
 
@@ -305,7 +294,7 @@ export function StepMedia({
                                 <Label
                                     htmlFor="property-cover-upload"
                                     className="
-                                      flex aspect-3/4 flex-1 cursor-pointer flex-col items-center
+                                      flex aspect-4/3 shrink-0 cursor-pointer flex-col items-center
                                       justify-center rounded-card border-2 border-dashed
                                       border-brand/35 bg-brand-soft/40 px-4 py-6 text-center
                                       focus-within:ring-3 focus-within:ring-ring/30
@@ -316,9 +305,6 @@ export function StepMedia({
                                     </DropzoneIcon>
                                     <span className="mbs-3 text-base font-bold text-ink">
                                         Upload cover
-                                    </span>
-                                    <span className="mbs-1 text-sm text-ink-muted">
-                                        Portrait · JPG, PNG, WebP or HEIC · up to 10 MB
                                     </span>
                                     <Input
                                         id="property-cover-upload"
@@ -346,39 +332,10 @@ export function StepMedia({
                                       flex items-center gap-2 text-sm font-semibold text-ink
                                     "
                                 >
-                                    <Images
-                                        className="shrink-0 text-brand block-4 inline-4"
-                                        strokeWidth={1.75}
-                                        aria-hidden
-                                    />
                                     <FieldLabel path="media.photos">Property photos</FieldLabel>
                                 </p>
-                                <p
-                                    className={cn(
-                                        "text-sm font-medium",
-                                        usableGalleryCount >= 3
-                                            ? "text-brand-text"
-                                            : "text-ink-muted",
-                                    )}
-                                >
-                                    {usableGalleryCount} added · up to {maxGallery}
-                                </p>
                             </div>
-                            {galleryPhotos.length ? (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="md"
-                                    className="self-start"
-                                    disabled={galleryPhotos.length >= maxGallery}
-                                    onClick={() =>
-                                        document.getElementById("property-gallery-upload")?.click()
-                                    }
-                                >
-                                    <ImagePlus aria-hidden />
-                                    Add more photos
-                                </Button>
-                            ) : (
+                            {!galleryPhotos.length ? (
                                 <Label
                                     htmlFor="property-gallery-upload"
                                     className="
@@ -399,11 +356,12 @@ export function StepMedia({
                                         Multiple allowed · JPG, PNG, WebP or HEIC · up to 10 MB each
                                     </span>
                                 </Label>
-                            )}
+                            ) : null}
                             <Input
                                 id="property-gallery-upload"
                                 type="file"
                                 aria-label="Add property photos"
+                                wrapperClassName="sr-only"
                                 multiple
                                 accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
                                 className="sr-only"
@@ -429,6 +387,21 @@ export function StepMedia({
                                     ))}
                                 </div>
                             ) : null}
+                            {galleryPhotos.length ? (
+                                <Button
+                                    type="button"
+                                    variant="accent"
+                                    size="md"
+                                    className="self-start"
+                                    disabled={galleryPhotos.length >= maxGallery}
+                                    onClick={() =>
+                                        document.getElementById("property-gallery-upload")?.click()
+                                    }
+                                >
+                                    <ImagePlus aria-hidden />
+                                    Add more photos
+                                </Button>
+                            ) : null}
                             {photosError ? (
                                 <p role="alert" className="text-sm text-danger">
                                     {photosError}
@@ -437,19 +410,71 @@ export function StepMedia({
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p
-                            className={cn(
-                                "text-sm font-semibold",
-                                publishReady ? "text-brand-text" : "text-ink-muted",
-                            )}
-                        >
-                            {publishReady ? (
-                                <Check className="me-1.5 inline block-4 inline-4" aria-hidden />
-                            ) : null}
-                            Cover {hasUsableCover ? "✓" : "–"} · Gallery {usableGalleryCount}/3 ·{" "}
-                            {photos.length}/{MAX_PHOTOS} total
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-xs/5 text-ink-muted">
+                        <p>
+                            <span className="font-medium text-ink">
+                                {PROPERTY_COVER_SIZE_GUIDANCE}
+                            </span>
+                            <span className="ms-2">Keep the property centered.</span>
                         </p>
+                        <p>JPG, PNG, WebP, HEIC · Max 10 MB per photo</p>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-3" role="status" aria-live="polite">
+                        <div
+                            className="
+                              space-y-1 rounded-control border border-border-warm bg-surface p-4
+                            "
+                        >
+                            <p className="text-xs text-ink-muted">Cover image · 1 required</p>
+                            <p
+                                className={cn(
+                                    "flex items-center gap-1.5 text-sm font-medium",
+                                    hasUsableCover ? "text-brand-text" : "text-ink",
+                                )}
+                            >
+                                {hasUsableCover ? (
+                                    <Check className="block-4 inline-4" aria-hidden />
+                                ) : null}
+                                {hasUsableCover
+                                    ? "Done"
+                                    : coverPhoto?.status === "processing"
+                                      ? "Preparing image…"
+                                      : "Add a cover image"}
+                            </p>
+                        </div>
+                        <div
+                            className="
+                              space-y-1 rounded-control border border-border-warm bg-surface p-4
+                            "
+                        >
+                            <p className="text-xs text-ink-muted">Property photos · minimum 3</p>
+                            <p
+                                className={cn(
+                                    "flex items-center gap-1.5 text-sm font-medium",
+                                    usableGalleryCount >= 3 ? "text-brand-text" : "text-ink",
+                                )}
+                            >
+                                {usableGalleryCount >= 3 ? (
+                                    <Check className="block-4 inline-4" aria-hidden />
+                                ) : null}
+                                {usableGalleryCount >= 3
+                                    ? `Done · ${usableGalleryCount} added`
+                                    : `${usableGalleryCount} added · ${3 - usableGalleryCount} more needed`}
+                            </p>
+                        </div>
+                        <div
+                            className="
+                              space-y-1 rounded-control border border-border-warm bg-surface p-4
+                            "
+                        >
+                            <p className="text-xs text-ink-muted">
+                                Maximum {MAX_PHOTOS} images, including cover
+                            </p>
+                            <p className="text-sm font-medium text-ink">
+                                {photos.length} of {MAX_PHOTOS} added
+                            </p>
+                        </div>
                     </div>
                 </div>
             </WizardSection>
@@ -549,7 +574,7 @@ function CoverPreview({
     return (
         <div
             className="
-              group relative aspect-3/4 flex-1 overflow-hidden rounded-card bg-surface-muted
+              group relative aspect-4/3 shrink-0 overflow-hidden rounded-card bg-surface-muted
               min-block-0
             "
         >
@@ -558,7 +583,7 @@ function CoverPreview({
                     src={photo.url}
                     alt={photo.alt || photo.name || "Cover image"}
                     fill
-                    sizes="224px"
+                    sizes="(max-width: 767px) 100vw, 288px"
                     className="object-cover"
                     unoptimized={
                         photo.url.startsWith("blob:") ||

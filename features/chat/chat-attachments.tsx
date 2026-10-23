@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
-import { FileText, Pause, Play } from "@/components/shared/icons";
+import { ExternalLink, FileText, Pause, Play } from "@/components/shared/icons";
 
 import type { ChatAttachment, ChatMedia } from "@/features/chat/types";
 
@@ -26,9 +26,8 @@ function FileAttachment({
     url: string;
     isOwn: boolean;
 }) {
-    const iconWrap = isOwn ? "bg-surface/70 text-brand" : "bg-brand-soft text-brand";
-    const titleClass = isOwn ? "text-brand-ink" : "text-ink";
-    const metaClass = isOwn ? "text-brand-ink/65" : "text-ink/65";
+    const extension = name.includes(".") ? name.split(".").pop() : undefined;
+    const fileType = extension && extension.length <= 8 ? extension.toUpperCase() : "File";
 
     return (
         <a
@@ -37,42 +36,50 @@ function FileAttachment({
             rel="noopener noreferrer"
             aria-label={`Open ${name} in a new tab`}
             title={name}
-            className="
-              group/file flex items-center gap-3 rounded-inner border border-transparent p-2
-              min-inline-0
-              hover:border-brand/35
+            className={cn(
+                `
+              group/file flex items-center gap-3 rounded-inner border bg-brand-soft/40 px-4 py-3.5
+              inline-72 max-inline-full min-inline-0
+              hover:border-brand/45 hover:bg-brand-soft/65
               focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand
               focus-visible:outline-none
-              sm:min-inline-52
-            "
+            `,
+                isOwn ? "border-brand/20" : "border-border-warm",
+            )}
         >
-            <span
-                className={cn(
-                    `flex shrink-0 items-center justify-center rounded-inner block-10 inline-10`,
-                    iconWrap,
-                )}
-            >
-                <FileText aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
-            </span>
+            <FileText
+                aria-hidden
+                className="shrink-0 text-brand block-7 inline-7"
+                strokeWidth={1.5}
+            />
 
-            <div className="min-inline-0">
+            <div className="flex flex-1 flex-col gap-1 min-inline-0">
                 <p
                     className={cn(
                         `
-                      body-sm truncate font-semibold underline decoration-transparent
-                      underline-offset-4
-                      group-hover/file:decoration-current
-                      group-focus-visible/file:decoration-current
-                    `,
-                        titleClass,
+                          body-sm line-clamp-2 font-semibold wrap-anywhere text-ink underline
+                          decoration-transparent underline-offset-4
+                          group-hover/file:decoration-current
+                          group-focus-visible/file:decoration-current
+                        `,
                     )}
                 >
                     {name}
                 </p>
-                {sizeLabel ? (
-                    <p className={cn("body-xs font-medium", metaClass)}>{sizeLabel}</p>
-                ) : null}
+                <p className="body-xs font-medium text-ink/65">
+                    {fileType}
+                    {sizeLabel ? ` · ${sizeLabel}` : ""}
+                </p>
             </div>
+            <ExternalLink
+                aria-hidden
+                className="
+              shrink-0 text-ink/45 block-4 inline-4
+              group-hover/file:text-brand
+              group-focus-visible/file:text-brand
+            "
+                strokeWidth={1.75}
+            />
         </a>
     );
 }

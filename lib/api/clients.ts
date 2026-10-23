@@ -815,8 +815,7 @@ export const clientsApi = {
 
     /**
      * Link the selected buyers to the property. Already-linked ids are skipped
-     * server-side. Unchecking a previously linked buyer does not detach them
-     * (no detach endpoint yet) — the next open still shows them as attached.
+     * server-side. This is additive; use detachClientFromProperty to unlink a buyer.
      */
     async setPropertyClients(propertyId: string, clientIds: string[]): Promise<void> {
         if (isMockMode()) {
@@ -853,6 +852,26 @@ export const clientsApi = {
                 }),
             ),
         );
+    },
+
+    /** Unlink only this buyer/property pair, leaving the contact and other properties intact. */
+    async detachClientFromProperty(propertyId: string, clientId: string): Promise<void> {
+        if (isMockMode()) {
+            const leads = MOCK_DEALS.filter(
+                (deal) => deal.property.id === propertyId && deal.buyer.id === clientId,
+            );
+            for (const lead of leads) await clientsApi.removeLead(lead.id);
+            MOCK_PROPERTY_CLIENTS[propertyId] = (MOCK_PROPERTY_CLIENTS[propertyId] ?? []).filter(
+                (id) => id !== clientId,
+            );
+            return;
+        }
+        const leads = await fetchLeadsForProperty(propertyId);
+        const matching = leads.filter(
+            (lead) =>
+                lead.propertyId === propertyId && (lead.client?.id ?? lead.clientId) === clientId,
+        );
+        for (const lead of matching) await clientsApi.removeLead(lead.id);
     },
 
     /** Unlink a buyer from one property (deletes the lead). */
