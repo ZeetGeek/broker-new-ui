@@ -26,6 +26,13 @@ export type PropertyBrowseListing = {
     bhkConfig?: string | null;
     bedrooms?: number | null;
     bathrooms?: number | null;
+    balconyCount?: number | null;
+    parkingSpaces?: number | null;
+    floorNumber?: number | null;
+    facingDirection?: string | null;
+    propertyCondition?: string | null;
+    propertyAge?: string | number | null;
+    suitableFor?: string[] | null;
     areaSqft?: number | null;
     city?: string | null;
     state?: string | null;
@@ -232,6 +239,21 @@ export type PropertyBrowseQuery = {
     maxCommissionAmount?: number;
     commissionSet?: boolean;
     readyToMove?: boolean;
+    /** Bathroom chips. `5` means 5 or more. */
+    bathrooms?: string[];
+    /** Balcony chips. `4` means 4 or more. */
+    balconies?: string[];
+    /** Parking chips. `4` means 4 or more. */
+    parking?: string[];
+    /** `ground` | `low` | `mid` | `high`. */
+    floors?: string[];
+    facing?: string[];
+    propertyCondition?: string[];
+    /** Age buckets (`new`, `1_5`, `20_plus`, …). The API matches stored years. */
+    propertyAge?: string[];
+    suitableFor?: string[];
+    /** Several subtypes for one chip, such as plot. */
+    subtypes?: string[];
     /** Only listings the caller has bookmarked. */
     bookmarked?: boolean;
     furnishingStatus?: "furnished" | "semi" | "unfurnished";
@@ -323,6 +345,7 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     if (params.transactionType) q.set("transactionType", params.transactionType);
     if (params.propertyType) q.set("propertyType", params.propertyType);
     if (params.subtype) q.set("subtype", params.subtype);
+    appendList(q, "subtypes", params.subtypes);
     appendList(q, "bhkConfig", params.bhkConfig);
     if (params.minPrice != null && !Number.isNaN(params.minPrice)) {
         q.set("minPrice", String(params.minPrice));
@@ -353,6 +376,14 @@ function buildBrowseQuery(params?: PropertyBrowseQuery) {
     }
     if (params.commissionSet) q.set("commissionSet", "1");
     if (params.readyToMove) q.set("readyToMove", "1");
+    appendList(q, "bathrooms", params.bathrooms);
+    appendList(q, "balconies", params.balconies);
+    appendList(q, "parking", params.parking);
+    appendList(q, "floors", params.floors);
+    appendList(q, "facing", params.facing);
+    appendList(q, "propertyCondition", params.propertyCondition);
+    appendList(q, "propertyAge", params.propertyAge);
+    appendList(q, "suitableFor", params.suitableFor);
     if (params.bookmarked) q.set("bookmarked", "1");
     if (params.furnishingStatus) q.set("furnishingStatus", params.furnishingStatus);
     if (params.sort) q.set("sort", params.sort);

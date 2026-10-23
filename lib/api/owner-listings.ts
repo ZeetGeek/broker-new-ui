@@ -201,6 +201,7 @@ async function fetchBrowsePage({
             transactionType: filters.type || undefined,
             propertyType: typeFilters.propertyType,
             subtype: typeFilters.subtype,
+            subtypes: typeFilters.subtypes,
             bhkConfig: filters.bhk.length ? bhkValuesToApiConfig(filters.bhk) : undefined,
             minPrice: filters.min ? Number(filters.min) : undefined,
             maxPrice: filters.max ? Number(filters.max) : undefined,
@@ -218,8 +219,21 @@ async function fetchBrowsePage({
             minCommissionAmount: commission.minAmount ?? undefined,
             maxCommissionAmount: commission.maxAmount ?? undefined,
             commissionSet: filters.commissionSet || undefined,
-            readyToMove: filters.readyToMove || undefined,
+            readyToMove:
+                filters.readyToMove && !filters.propertyConditions.includes("ready_to_move")
+                    ? true
+                    : undefined,
             furnishingStatus: filters.furnishing || undefined,
+            bathrooms: filters.bathrooms.length ? filters.bathrooms : undefined,
+            balconies: filters.balconies.length ? filters.balconies : undefined,
+            parking: filters.parking.length ? filters.parking : undefined,
+            floors: filters.floors.length ? filters.floors : undefined,
+            facing: filters.facing.length ? filters.facing : undefined,
+            propertyCondition: filters.propertyConditions.length
+                ? filters.propertyConditions
+                : undefined,
+            propertyAge: filters.propertyAges.length ? filters.propertyAges : undefined,
+            suitableFor: filters.suitableFor.length ? filters.suitableFor : undefined,
             sort: filters.sort,
             cursor: cursor || undefined,
             limit,
