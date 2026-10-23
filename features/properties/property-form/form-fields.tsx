@@ -1349,8 +1349,18 @@ export function WizardSection({
     return (
         <details open className={cn("group/section", tone === "private" && "text-brand-text")}>
             <summary
+                onClick={(event) => {
+                    // Keep native keyboard activation, but limit pointer toggles to the controls.
+                    if (event.detail === 0 && event.target === event.currentTarget) return;
+                    if (
+                        !(event.target instanceof Element) ||
+                        !event.target.closest("[data-section-toggle]")
+                    ) {
+                        event.preventDefault();
+                    }
+                }}
                 className="
-                  flex cursor-pointer list-none items-center justify-between gap-4
+                  flex cursor-default list-none items-center justify-between gap-4
                   focus-visible:outline-2 focus-visible:-outline-offset-2
                   focus-visible:outline-brand
                   [&::-webkit-details-marker]:hidden
@@ -1360,9 +1370,11 @@ export function WizardSection({
                     <span
                         role="heading"
                         aria-level={2}
+                        data-section-toggle
                         className="
-                          flex items-center gap-2.5 font-display text-xl font-semibold
-                          tracking-[-0.02em] text-ink
+                          flex cursor-pointer items-center gap-2.5 font-display text-xl
+                          font-semibold tracking-[-0.02em] text-ink underline-offset-4 inline-fit
+                          hover:underline
                         "
                     >
                         {title}
@@ -1373,13 +1385,19 @@ export function WizardSection({
                         </span>
                     ) : null}
                 </span>
-                <ChevronDown
-                    aria-hidden
+                <span
+                    data-section-toggle
                     className="
-                      shrink-0 text-ink-muted block-5 inline-5
-                      group-open/section:rotate-180
+                      -me-1.5 flex shrink-0 cursor-pointer items-center justify-center rounded-lg
+                      text-ink-muted block-8 inline-8
+                      hover:bg-surface-muted
                     "
-                />
+                >
+                    <ChevronDown
+                        aria-hidden
+                        className="block-5 inline-5 group-open/section:rotate-180"
+                    />
+                </span>
             </summary>
             <div className="pbs-5">{children}</div>
         </details>

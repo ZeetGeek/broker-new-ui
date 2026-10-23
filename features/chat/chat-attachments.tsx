@@ -1,24 +1,19 @@
 "use client";
 
 import { useRef, useState } from "react";
+import dynamic from "next/dynamic";
 
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Download, ExternalLink, FileText, Pause, Play } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
+import { FileText, Pause, Play } from "@/components/shared/icons";
 
 import type { ChatAttachment, ChatMedia } from "@/features/chat/types";
 
+const ChatLightbox = dynamic(() => import("./chat-lightbox"), { ssr: false });
+
 /** Past this many tiles the rest collapse behind a "+N" overlay. */
 const MEDIA_TILE_LIMIT = 4;
-
-const ATTACHMENT_BUTTON_CLASS = `
-  flex-1 border-border-warm bg-surface px-3 text-xs text-ink/75
-  hover:bg-surface-muted hover:text-ink
-  focus-visible:border-ink/25 focus-visible:ring-ink/10
-  sm:block-control-sm
-`;
 
 function FileAttachment({
     name,
@@ -36,53 +31,49 @@ function FileAttachment({
     const metaClass = isOwn ? "text-brand-ink/65" : "text-ink/65";
 
     return (
-        <div className="flex flex-col gap-3 min-inline-0 sm:min-inline-52">
-            <div className="flex items-center gap-3">
-                <span
+        <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open ${name} in a new tab`}
+            title={name}
+            className="
+              group/file flex items-center gap-3 rounded-inner border border-transparent p-2
+              min-inline-0
+              hover:border-brand/35
+              focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand
+              focus-visible:outline-none
+              sm:min-inline-52
+            "
+        >
+            <span
+                className={cn(
+                    `flex shrink-0 items-center justify-center rounded-inner block-10 inline-10`,
+                    iconWrap,
+                )}
+            >
+                <FileText aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
+            </span>
+
+            <div className="min-inline-0">
+                <p
                     className={cn(
-                        `flex shrink-0 items-center justify-center rounded-inner block-10 inline-10`,
-                        iconWrap,
+                        `
+                      body-sm truncate font-semibold underline decoration-transparent
+                      underline-offset-4
+                      group-hover/file:decoration-current
+                      group-focus-visible/file:decoration-current
+                    `,
+                        titleClass,
                     )}
                 >
-                    <FileText aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
-                </span>
-
-                <div className="min-inline-0">
-                    <p className={cn("body-sm truncate font-semibold", titleClass)}>{name}</p>
-                    {sizeLabel ? (
-                        <p className={cn("body-xs font-medium", metaClass)}>{sizeLabel}</p>
-                    ) : null}
-                </div>
+                    {name}
+                </p>
+                {sizeLabel ? (
+                    <p className={cn("body-xs font-medium", metaClass)}>{sizeLabel}</p>
+                ) : null}
             </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-                <Button
-                    size="md"
-                    variant="outline"
-                    className={ATTACHMENT_BUTTON_CLASS}
-                    render={<a href={url} download aria-label={`Download ${name}`} />}
-                >
-                    <Download aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-                    Download
-                </Button>
-                <Button
-                    size="md"
-                    variant="outline"
-                    className={ATTACHMENT_BUTTON_CLASS}
-                    render={
-                        <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Open ${name}`}
-                        />
-                    }
-                >
-                    <ExternalLink aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-                    Open
-                </Button>
-            </div>
-        </div>
+        </a>
     );
 }
 
@@ -167,6 +158,53 @@ function MediaTile({
     overlayCount?: number;
     className?: string;
 }) {
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+
+    if (item.kind === "image") {
+        return (
+            <>
+                <div className={cn("group/tile relative rounded-inner", className)}>
+                    <button
+                        type="button"
+                        onClick={() => setLightboxOpen(true)}
+                        aria-label={
+                            overlayCount ? `Show ${overlayCount} more photos` : "Open photo"
+                        }
+                        className="
+                          relative block cursor-zoom-in overflow-hidden rounded-inner block-full
+                          inline-full
+                          focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none
+                          focus-visible:ring-inset
+                        "
+                    >
+                        <AppImage
+                            src={item.src}
+                            alt="Photo attachment"
+                            fill
+                            sizes="256px"
+                            quality={75}
+                            unoptimized
+                            className="object-cover"
+                        />
+                        {overlayCount ? (
+                            <span
+                                className="
+                                  absolute inset-0 flex items-center justify-center bg-ink/60
+                                  text-lg font-semibold text-surface
+                                "
+                            >
+                                +{overlayCount}
+                            </span>
+                        ) : null}
+                    </button>
+                </div>
+                {lightboxOpen ? (
+                    <ChatLightbox src={item.src} onClose={() => setLightboxOpen(false)} />
+                ) : null}
+            </>
+        );
+    }
+
     return (
         <a
             href={item.src}
@@ -243,37 +281,6 @@ function MediaAttachment({ items }: { items: ChatMedia[] }) {
         return (
             <div className="flex flex-col gap-2 max-inline-64 min-inline-0 sm:min-inline-52">
                 <MediaTile item={item} className="aspect-4/3 block-48 inline-full max-block-72" />
-                <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                        size="md"
-                        variant="outline"
-                        className={ATTACHMENT_BUTTON_CLASS}
-                        render={
-                            <a
-                                href={item.src}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="Open attachment"
-                            />
-                        }
-                    >
-                        <ExternalLink
-                            aria-hidden
-                            className="block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                        Open
-                    </Button>
-                    <Button
-                        size="md"
-                        variant="outline"
-                        className={ATTACHMENT_BUTTON_CLASS}
-                        render={<a href={item.src} download aria-label="Download attachment" />}
-                    >
-                        <Download aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-                        Download
-                    </Button>
-                </div>
             </div>
         );
     }

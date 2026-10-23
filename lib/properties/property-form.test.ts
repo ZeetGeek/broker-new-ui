@@ -491,6 +491,34 @@ test("Quick add rejects invalid area, price and title using the full form rules"
     assert.deepEqual(quickAddValidationIssues(values, "broker"), []);
 });
 
+test("Sale commission uses the same 0.1–5% limits for full details and owner quick add", () => {
+    for (const value of [0, 0.05, 5.1, 10]) {
+        const values = listing();
+        values.commission.sale.value = value;
+        assert.equal(stepSchemas.pricing.safeParse(values).success, false);
+        assert.ok(
+            propertyDraftValidationIssues(values).some(
+                (issue) => issue.path === "commission.sale.value",
+            ),
+        );
+        assert.ok(
+            quickAddValidationIssues(values, "owner").some(
+                (issue) => issue.path === "commission.sale.value",
+            ),
+        );
+    }
+    for (const value of [0.1, 2, 5]) {
+        const values = listing();
+        values.commission.sale.value = value;
+        assert.equal(stepSchemas.pricing.safeParse(values).success, true);
+        assert.ok(
+            !quickAddValidationIssues(values, "owner").some(
+                (issue) => issue.path === "commission.sale.value",
+            ),
+        );
+    }
+});
+
 test("Quick add validates its visible choices without demanding unrelated full-form fields", () => {
     const values = listing();
     values.basics.listingFor = "rent";

@@ -18,8 +18,8 @@ import {
     Landmark,
     Map,
     Pencil,
+    RotateCcw,
     Route,
-    X,
 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
@@ -325,7 +325,7 @@ export function StepLocation() {
                             hint={
                                 <div className="flex flex-wrap items-start justify-between gap-2">
                                     <span>
-                                        Auto-built as one line. Edit to customize, Clear to restore
+                                        Auto-built as one line. Edit to customize, Reset to restore
                                         the generated address.
                                     </span>
                                     <span
@@ -355,8 +355,8 @@ export function StepLocation() {
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        aria-label="Clear custom address and restore generated address"
-                                        title="Clear custom address"
+                                        aria-label="Restore generated address"
+                                        title="Restore generated address"
                                         onMouseDown={(event) => event.preventDefault()}
                                         onClick={resetToGeneratedAddress}
                                         className="
@@ -365,7 +365,7 @@ export function StepLocation() {
                                           hover:bg-surface-muted hover:text-ink
                                         "
                                     >
-                                        <X aria-hidden />
+                                        <RotateCcw aria-hidden />
                                     </Button>
                                     {editingAddress ? (
                                         <Button

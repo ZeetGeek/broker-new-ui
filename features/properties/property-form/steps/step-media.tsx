@@ -21,6 +21,7 @@ import { AppImage } from "@/components/shared/app-image";
 import {
     Check,
     CircleAlert,
+    ExternalLink,
     ImageIcon,
     ImagePlus,
     Images,
@@ -363,36 +364,71 @@ export function StepMedia({
                                     {usableGalleryCount} added · up to {maxGallery}
                                 </p>
                             </div>
-                            <Label
-                                htmlFor="property-gallery-upload"
-                                className="
-                                  flex flex-1 cursor-pointer flex-col items-center justify-center
-                                  rounded-card border-2 border-dashed border-brand/35
-                                  bg-brand-soft/40 px-6 py-8 text-center min-block-36
-                                  focus-within:ring-3 focus-within:ring-ring/30
-                                "
-                            >
-                                <DropzoneIcon>
-                                    <ImagePlus className="block-5 inline-5" aria-hidden />
-                                </DropzoneIcon>
-                                <span className="mbs-3 text-base font-bold text-ink">
-                                    Add property photos
-                                </span>
-                                <span className="mbs-1 text-sm text-ink-muted">
-                                    Multiple allowed · JPG, PNG, WebP or HEIC · up to 10 MB each
-                                </span>
-                                <Input
-                                    id="property-gallery-upload"
-                                    type="file"
-                                    multiple
-                                    accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                                    className="sr-only"
-                                    onChange={(event) => {
-                                        addGalleryPhotos(event.target.files);
-                                        event.currentTarget.value = "";
-                                    }}
-                                />
-                            </Label>
+                            {galleryPhotos.length ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="md"
+                                    className="self-start"
+                                    disabled={galleryPhotos.length >= maxGallery}
+                                    onClick={() =>
+                                        document.getElementById("property-gallery-upload")?.click()
+                                    }
+                                >
+                                    <ImagePlus aria-hidden />
+                                    Add more photos
+                                </Button>
+                            ) : (
+                                <Label
+                                    htmlFor="property-gallery-upload"
+                                    className="
+                                      flex flex-1 cursor-pointer flex-col items-center
+                                      justify-center rounded-card border-2 border-dashed
+                                      border-brand/35 bg-brand-soft/40 px-6 py-8 text-center
+                                      min-block-36
+                                      focus-within:ring-3 focus-within:ring-ring/30
+                                    "
+                                >
+                                    <DropzoneIcon>
+                                        <ImagePlus className="block-5 inline-5" aria-hidden />
+                                    </DropzoneIcon>
+                                    <span className="mbs-3 text-base font-bold text-ink">
+                                        Add property photos
+                                    </span>
+                                    <span className="mbs-1 text-sm text-ink-muted">
+                                        Multiple allowed · JPG, PNG, WebP or HEIC · up to 10 MB each
+                                    </span>
+                                </Label>
+                            )}
+                            <Input
+                                id="property-gallery-upload"
+                                type="file"
+                                aria-label="Add property photos"
+                                multiple
+                                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                                className="sr-only"
+                                disabled={galleryPhotos.length >= maxGallery}
+                                onChange={(event) => {
+                                    addGalleryPhotos(event.target.files);
+                                    event.currentTarget.value = "";
+                                }}
+                            />
+                            {galleryPhotos.length ? (
+                                <div
+                                    className="grid grid-cols-1 gap-3 lg:grid-cols-2"
+                                    role="list"
+                                    aria-label="Property photos"
+                                >
+                                    {galleryPhotos.map((photo) => (
+                                        <PhotoAttachment
+                                            key={photo.id}
+                                            photo={photo}
+                                            onRemove={() => removePhotoById(photo.id)}
+                                            onRetry={() => retryPhoto(photo.id)}
+                                        />
+                                    ))}
+                                </div>
+                            ) : null}
                             {photosError ? (
                                 <p role="alert" className="text-sm text-danger">
                                     {photosError}
@@ -400,23 +436,6 @@ export function StepMedia({
                             ) : null}
                         </div>
                     </div>
-
-                    {galleryPhotos.length ? (
-                        <div
-                            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
-                            role="list"
-                            aria-label="Property photos"
-                        >
-                            {galleryPhotos.map((photo) => (
-                                <PhotoAttachment
-                                    key={photo.id}
-                                    photo={photo}
-                                    onRemove={() => removePhotoById(photo.id)}
-                                    onRetry={() => retryPhoto(photo.id)}
-                                />
-                            ))}
-                        </div>
-                    ) : null}
 
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <p
@@ -430,9 +449,6 @@ export function StepMedia({
                             ) : null}
                             Cover {hasUsableCover ? "✓" : "–"} · Gallery {usableGalleryCount}/3 ·{" "}
                             {photos.length}/{MAX_PHOTOS} total
-                        </p>
-                        <p className="text-sm text-ink-muted">
-                            Photos stay queued locally until the current API upload runs.
                         </p>
                     </div>
                 </div>
@@ -483,7 +499,7 @@ export function StepMedia({
 
 function MediaEmbedPreview({ embed }: { embed: MediaEmbed }) {
     return (
-        <div className="overflow-hidden rounded-card border border-border-warm bg-surface">
+        <div className="overflow-hidden rounded-lg border border-border-warm bg-surface">
             <div className="relative aspect-video bg-surface-muted">
                 <iframe
                     title={embed.title}
@@ -495,19 +511,22 @@ function MediaEmbedPreview({ embed }: { embed: MediaEmbed }) {
                     referrerPolicy="strict-origin-when-cross-origin"
                 />
             </div>
-            <div className="flex items-center justify-between gap-3 px-3 py-2">
-                <p className="truncate text-sm font-medium text-ink">{embed.title}</p>
-                <a
-                    href={embed.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="
-                      shrink-0 text-sm font-semibold text-brand
-                      hover:text-brand-text hover:underline
-                    "
+            <div
+                className="
+                  flex items-center justify-between gap-3 border-bs border-border-warm px-5 py-1.5
+                "
+            >
+                <p className="truncate text-sm font-medium text-ink-muted">{embed.title}</p>
+                <Button
+                    variant="link"
+                    size="sm"
+                    nativeButton={false}
+                    render={<a href={embed.sourceUrl} target="_blank" rel="noopener noreferrer" />}
+                    className="px-0 text-xs"
                 >
                     Open
-                </a>
+                    <ExternalLink className="block-3.5 inline-3.5" aria-hidden />
+                </Button>
             </div>
         </div>
     );
@@ -530,8 +549,8 @@ function CoverPreview({
     return (
         <div
             className="
-              group relative aspect-3/4 flex-1 overflow-hidden rounded-card border-2
-              border-border-warm bg-surface-muted min-block-0
+              group relative aspect-3/4 flex-1 overflow-hidden rounded-card bg-surface-muted
+              min-block-0
             "
         >
             {hasImage ? (
@@ -611,14 +630,14 @@ function CoverPreview({
                 </div>
             </div>
 
-            {photo.status === "queued" || photo.status === "processing" ? (
+            {photo.status === "processing" ? (
                 <p
                     className="
                       inset-inline-2 absolute inset-be-2 rounded-control bg-ink/70 px-2 py-1
                       text-center text-[11px] font-medium text-surface
                     "
                 >
-                    {photo.status === "processing" ? "Compressing…" : "Queued"}
+                    Compressing…
                 </p>
             ) : null}
         </div>

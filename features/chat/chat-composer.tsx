@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 
 import { cn } from "@/lib/utils";
 
-import { FileText, Plus, Smile, X } from "@/components/shared/icons";
+import { FileText, ImagePlus, Plus, Smile, X } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
 import {
     Attachment,
@@ -240,9 +240,13 @@ export function ChatComposer({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="top" align="start">
                         <DropdownMenuItem onClick={() => chooseFile("image/*")}>
+                            <ImagePlus aria-hidden strokeWidth={1.75} />
                             Add a photo
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => chooseFile()}>Add a file</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => chooseFile()}>
+                            <FileText aria-hidden strokeWidth={1.75} />
+                            Add a file
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
