@@ -8,7 +8,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { brokerVisitsApi } from "@/lib/api/broker-visits";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
+import { parsePropertyCriteria, propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { slotListFiltersFromParams } from "@/lib/visits/filters";
+import { matchesVisitProperty } from "@/lib/visits/property-filters";
 import { buildVisitSummary } from "@/lib/visits/summary";
 import { istDateKey } from "@/lib/visits/time";
 import { useSiteVisits } from "@/hooks/use-site-visits";
@@ -30,8 +32,8 @@ import { BookingDrawer } from "@/features/site-visits/broker/panels/booking-draw
 import { RescheduleModal } from "@/features/site-visits/broker/panels/reschedule-modal";
 import { VisitDetailPanel } from "@/features/site-visits/broker/panels/visit-detail-panel";
 import { RequestsTab } from "@/features/site-visits/broker/requests/requests-tab";
-import { VisitsFocusFiltersDialog } from "@/features/site-visits/broker/visits-focus-filters";
 import { BrokerVisitsHeader } from "@/features/site-visits/broker/visits-header";
+import { VisitsPropertyFiltersDialog } from "@/features/site-visits/broker/visits-property-filters";
 import { VisitsTabs } from "@/features/site-visits/broker/visits-tabs";
 
 const OutcomeModal = dynamic(() => import("@/features/site-visits/broker/panels/outcome-modal"), {
@@ -81,6 +83,11 @@ export function BrokerSiteVisitsPage() {
     const [now, setNow] = useState(() => new Date());
     const [slotFiltersOpen, setSlotFiltersOpen] = useState(false);
     const [visitFiltersOpen, setVisitFiltersOpen] = useState(false);
+    const propertyFiltersParam = searchParams.get("propertyFilters");
+    const propertyFilters = useMemo(
+        () => parsePropertyCriteria(propertyFiltersParam ?? undefined),
+        [propertyFiltersParam],
+    );
     const updateUrl = useCallback(
         (patch: Record<string, string | undefined>) => {
             const next = new URLSearchParams(searchParams.toString());
@@ -331,7 +338,8 @@ export function BrokerSiteVisitsPage() {
         () => countOpenSlotFilters(openSlotFilters, buyerId, slotFilters.propertyId),
         [buyerId, openSlotFilters, slotFilters.propertyId],
     );
-    const filtersCount = tab === "slots" ? openSlotFilterCount : focus ? 1 : 0;
+    const filtersCount =
+        tab === "slots" ? openSlotFilterCount : propertyCriteriaCount(propertyFilters);
     const slotQuery = searchParams.get("q") ?? "";
     const visitDateRange =
         searchParams.get("range") === "today" ||
@@ -370,7 +378,7 @@ export function BrokerSiteVisitsPage() {
                             owner: undefined,
                         });
                     } else {
-                        updateUrl({ focus: undefined });
+                        updateUrl({ focus: undefined, propertyFilters: undefined });
                     }
                 }}
                 rangeToolbar={{
@@ -435,6 +443,7 @@ export function BrokerSiteVisitsPage() {
                 {tab === "visits" ? (
                     <MyVisitsTab
                         visits={visitsQuery.data ?? []}
+                        propertyFilters={propertyFilters}
                         isLoading={visitsQuery.isLoading}
                         focus={focus}
                         query={slotQuery}
@@ -462,6 +471,7 @@ export function BrokerSiteVisitsPage() {
                                 from: undefined,
                                 to: undefined,
                                 focus: undefined,
+                                propertyFilters: undefined,
                             })
                         }
                     />
@@ -492,7 +502,9 @@ export function BrokerSiteVisitsPage() {
                     />
                 ) : (
                     <RequestsTab
-                        requests={requestsQuery.data ?? []}
+                        requests={(requestsQuery.data ?? []).filter((request) =>
+                            matchesVisitProperty(request.property, propertyFilters),
+                        )}
                         isLoading={requestsQuery.isLoading}
                         query={slotQuery}
                         range={visitDateRange}
@@ -519,18 +531,25 @@ export function BrokerSiteVisitsPage() {
                                 range: undefined,
                                 from: undefined,
                                 to: undefined,
+                                propertyFilters: undefined,
                             })
                         }
                     />
                 )}
             </div>
 
-            <VisitsFocusFiltersDialog
+            <VisitsPropertyFiltersDialog
                 open={visitFiltersOpen}
                 onOpenChange={setVisitFiltersOpen}
-                summary={summary}
-                active={focus}
-                onApply={(next) => updateUrl({ tab: "visits", focus: next })}
+                filters={propertyFilters}
+                onApply={(next) =>
+                    updateUrl({
+                        focus: undefined,
+                        propertyFilters: propertyCriteriaCount(next)
+                            ? JSON.stringify(next)
+                            : undefined,
+                    })
+                }
             />
 
             <BookingDrawer

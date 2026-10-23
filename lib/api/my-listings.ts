@@ -8,6 +8,11 @@ import {
     type PropertyListQuery,
     type UpdatePropertyInput,
 } from "@/lib/api/properties";
+import {
+    collectPropertyPages,
+    matchesPropertyCriteria,
+    propertyCriteriaCount,
+} from "@/lib/properties/list-criteria";
 
 import type { OwnerContactForm } from "@/features/contacts/contact-form-model";
 import { moneyToRupees } from "@/features/contacts/contact-form-model";
@@ -67,6 +72,7 @@ function filterMockMyListings(filters: MyListingsFilters): MyListingItem[] {
         }
         if (filters.bhk.length && !filters.bhk.includes(String(item.bhk))) return false;
         if (filters.status && item.status !== filters.status) return false;
+        if (!matchesListingCriteria(item, filters)) return false;
         return true;
     });
 
@@ -79,6 +85,20 @@ function filterMockMyListings(filters: MyListingsFilters): MyListingItem[] {
     });
 
     return items;
+}
+
+function matchesListingCriteria(item: MyListingItem, filters: MyListingsFilters) {
+    return matchesPropertyCriteria(
+        {
+            ...item,
+            propertyAge: item.propertyAge == null ? null : String(item.propertyAge),
+            listedAt: item.createdAt,
+            parkingSpaces:
+                item.parkingSpaces ??
+                (item.parking === "3plus" ? 3 : item.parking === "none" ? 0 : Number(item.parking)),
+        },
+        { ...filters.propertyFilters, type: filters.type },
+    );
 }
 
 function mockMyListingsSummary(): MyListingsSummary {
@@ -168,14 +188,28 @@ export const myListingsApi = {
         }
 
         const [page, attachedByProperty] = await Promise.all([
-            propertiesApi.list(query, signal),
+            propertyCriteriaCount(merged.propertyFilters)
+                ? collectPropertyPages((page) =>
+                      propertiesApi.list({ ...query, page }, signal),
+                  ).then((listings) =>
+                      paginateItems(
+                          listings
+                              .map(mapPropertyListingToMyItem)
+                              .filter((item) => matchesListingCriteria(item, merged)),
+                          merged.page,
+                          PAGE_SIZE,
+                      ),
+                  )
+                : propertiesApi.list(query, signal).then((page) => ({
+                      ...page,
+                      items: page.items.map(mapPropertyListingToMyItem),
+                  })),
             withAttachedClients
                 ? attachedClientsByProperty()
                 : Promise.resolve(new Map<string, AttachedClientRef[]>()),
         ]);
         return {
-            items: page.items.map((listing) => {
-                const item = mapPropertyListingToMyItem(listing);
+            items: page.items.map((item) => {
                 const attached = attachedByProperty.get(item.id) ?? [];
                 return {
                     ...item,

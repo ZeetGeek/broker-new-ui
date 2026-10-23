@@ -122,6 +122,7 @@ export type MyListingItem = {
 };
 
 export type MyListingsFilters = {
+    propertyFilters?: import("@/lib/properties/list-criteria").PropertyListCriteria;
     q: string;
     type: "" | "sale" | "rent";
     /** Broad UI type (`office`) or exact subtype (`cold_storage`). */

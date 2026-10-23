@@ -2,8 +2,6 @@
 
 import { useFormContext } from "react-hook-form";
 
-import { BadgePercent, Wallet } from "@/components/shared/icons";
-
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
 import { formatInr } from "@/lib/format/inr";
 import {
@@ -13,6 +11,8 @@ import {
 } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
+
+import { BadgePercent } from "@/components/shared/icons";
 
 import {
     CurrencyField,
@@ -42,9 +42,9 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
         value: salePercent,
         paidBy: "owner",
         ownerSharePercent: 100,
-        gstApplicable: values.commission.tax.gstApplicable,
+        gstApplicable: false,
         gstMode: values.commission.tax.gstMode,
-        tdsApplicable: values.commission.tax.tdsApplicable,
+        tdsApplicable: false,
         tdsRate: values.commission.tax.tdsRate,
     });
     const rentResult = calculateRentCommission({
@@ -59,9 +59,9 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
         value: rentAmount,
         paidBy: "owner",
         ownerSharePercent: 100,
-        gstApplicable: values.commission.tax.gstApplicable,
+        gstApplicable: false,
         gstMode: values.commission.tax.gstMode,
-        tdsApplicable: values.commission.tax.tdsApplicable,
+        tdsApplicable: false,
         tdsRate: values.commission.tax.tdsRate,
     });
 
@@ -81,17 +81,20 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
     const commissionLabel = primaryIsSale
         ? `Commission at ${salePercent}%`
         : `Brokerage · ${formatInr(rentAmount)}`;
+    const allInPrice =
+        expectedPrice +
+        (values.sale.plcCharge ?? 0) +
+        (values.sale.floorRiseCharge ?? 0) +
+        (values.sale.maintenanceCharge ?? 0);
+    const coBrokerPercent = values.deal.coBrokerSharePercent ?? 0;
+    const coBrokerShare = (result.gross * coBrokerPercent) / 100;
+    const estimatedCommission = isOwner ? result.gross : Math.max(0, result.gross - coBrokerShare);
 
     return (
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
                 title={
                     <>
-                        <BadgePercent
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
                         {showSale && showRent
                             ? "Broker commission"
                             : showSale
@@ -112,15 +115,15 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                             name="commission.sale.value"
                             label="Sale commission (%)"
                             step={0.1}
-                            min={isOwner ? OWNER_SALE_COMMISSION_MIN : 0}
-                            max={isOwner ? OWNER_SALE_COMMISSION_MAX : 10}
+                            min={OWNER_SALE_COMMISSION_MIN}
+                            max={OWNER_SALE_COMMISSION_MAX}
                             placeholder="e.g. 2"
                             visibility={isOwner ? "public" : "private"}
                             startIcon={BadgePercent}
                             hint={
                                 isOwner
                                     ? `Percent of the sale price. Between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}%.`
-                                    : "Percent of the sale price, charged to the owner."
+                                    : `Percent of the sale price, charged to the owner. Between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}%.`
                             }
                         />
                     ) : null}
@@ -142,25 +145,25 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
             </WizardSection>
 
             <WizardSection
-                title={
-                    <>
-                        <Wallet
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Broker income
-                    </>
+                title="Commission summary"
+                description={
+                    isOwner
+                        ? "Estimated fee paid to the broker who closes the deal."
+                        : "Live estimate from the rate above. Broker-only."
                 }
-                description="Live estimate from the rate above. Broker-only."
             >
                 {earned ? (
                     <div
                         className="
-                          overflow-hidden rounded-control border-2 border-border-warm bg-surface
+                          overflow-hidden rounded-card border border-border-warm bg-surface
                         "
                     >
-                        <div className="grid sm:grid-cols-3">
+                        <div
+                            className={cn(
+                                "grid grid-cols-2 gap-x-6 gap-y-4 p-5",
+                                primaryIsSale ? "lg:grid-cols-4" : "sm:grid-cols-3",
+                            )}
+                        >
                             <IncomeFact
                                 label={primaryIsSale ? "Property price" : "Monthly rent"}
                                 value={formatInr(primaryIsSale ? expectedPrice : monthlyRent)}
@@ -183,58 +186,53 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                                         : formatInr(rentResult.annualRent)
                                 }
                             />
+                            {primaryIsSale ? (
+                                <IncomeFact label="All-in price" value={formatInr(allInPrice)} />
+                            ) : null}
                         </div>
 
-                        <div className="border-bs-2 border-border-warm p-5">
-                            <p className="text-xs font-medium text-ink-muted">Money in bank</p>
-                            <p className="tabular mbs-1 text-3xl font-bold tracking-tight text-brand-text">
-                                {formatInr(result.brokerReceives)}
-                            </p>
-                            <div className="mbs-3 flex flex-wrap gap-2">
-                                <IncomeChip label="Gross" value={formatInr(result.gross)} />
-                                {result.gst > 0 ? (
-                                    <IncomeChip
-                                        label="+ GST"
-                                        value={formatInr(result.gst)}
-                                        tone="success"
-                                    />
-                                ) : null}
-                                {result.tds > 0 ? (
-                                    <IncomeChip
-                                        label="− TDS"
-                                        value={formatInr(result.tds)}
-                                        tone="danger"
-                                    />
-                                ) : null}
+                        <div className="flex flex-wrap items-center justify-between gap-4 border-bs border-border-warm bg-surface p-5">
+                            <div className="min-inline-0">
+                                <p className="text-sm font-medium text-brand-text">
+                                    Estimated commission
+                                </p>
+                                <p className="mbs-2 text-sm text-ink">
+                                    {commissionLabel}
+                                    {!isOwner && coBrokerShare > 0
+                                        ? ` · After ${coBrokerPercent}% co-broker share`
+                                        : ""}
+                                </p>
+                                <p className="mbs-1 text-xs text-ink-muted">
+                                    Before applicable taxes and deductions.
+                                </p>
                             </div>
+                            <p className="tabular ms-auto text-2xl font-bold tracking-tight text-brand-text">
+                                {formatInr(estimatedCommission)}
+                            </p>
                         </div>
 
-                        <dl className="border-bs-2 border-border-warm">
-                            <IncomeRow label={commissionLabel} value={formatInr(result.gross)} />
-                            {showSale && showRent ? (
+                        {showSale && showRent ? (
+                            <dl className="border-bs border-border-warm px-5 py-2">
                                 <IncomeRow
                                     label={`Rent brokerage · ${formatInr(rentAmount)}`}
                                     value={formatInr(rentResult.gross)}
                                     muted
                                 />
-                            ) : null}
-                            <IncomeRow
-                                label="Charged to the owner"
-                                value={formatInr(result.invoiceTotal)}
-                                muted
-                            />
-                        </dl>
+                            </dl>
+                        ) : null}
                     </div>
                 ) : (
                     <p
                         className="
-                          rounded-control border-2 border-dashed border-border-warm bg-surface p-5
-                          text-sm text-ink-muted
+                          rounded-card border border-border-warm bg-surface p-5 text-sm
+                          text-ink-muted
                         "
                     >
-                        {showSale
-                            ? "Add the expected price above to see what you earn."
-                            : "Add the monthly rent above to see what you earn."}
+                        {isOwner
+                            ? "Add the price above to see the broker commission."
+                            : showSale
+                              ? "Add the expected price above to see what you earn."
+                              : "Add the monthly rent above to see what you earn."}
                     </p>
                 )}
             </WizardSection>
@@ -244,40 +242,12 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
 
 function IncomeFact({ label, value }: { label: string; value: string }) {
     return (
-        <div
-            className="
-              border-bs-2 border-border-warm p-4
-              first:border-bs-0
-              sm:border-e-2 sm:border-bs-0
-              sm:last:border-e-0
-            "
-        >
+        <div className="min-inline-0">
             <p className="text-xs text-ink-muted">{label}</p>
-            <p className="tabular mbs-1 text-base font-bold text-ink">{value}</p>
+            <p className="tabular mbs-1 text-base font-semibold wrap-break-word text-ink">
+                {value}
+            </p>
         </div>
-    );
-}
-
-function IncomeChip({
-    label,
-    value,
-    tone = "default",
-}: {
-    label: string;
-    value: string;
-    tone?: "default" | "success" | "danger";
-}) {
-    return (
-        <span
-            className={cn(
-                "inline-flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium",
-                tone === "success" && "bg-success-soft text-success",
-                tone === "danger" && "bg-danger-soft text-danger",
-                tone === "default" && "bg-surface-muted text-ink-muted",
-            )}
-        >
-            {label} <span className="tabular font-semibold">{value}</span>
-        </span>
     );
 }
 
@@ -285,7 +255,7 @@ function IncomeRow({ label, value, muted }: { label: string; value: string; mute
     return (
         <div
             className="
-              flex items-center justify-between gap-4 border-bs-2 border-border-warm px-4 py-3.5
+              flex items-start justify-between gap-4 border-bs border-border-warm py-3
               first:border-bs-0
             "
         >

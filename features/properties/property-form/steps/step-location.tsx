@@ -4,41 +4,37 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { MAX_PROPERTY_ADDRESS_LENGTH } from "@/lib/properties/form-limits";
+import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { useLocationOptions } from "@/hooks/use-locations";
+
+import { ConditionalField } from "@/components/property/fields/conditional-field";
+import { FieldLabel } from "@/components/property/fields/field-label";
 import {
     Building2,
     Check,
-    Crosshair,
     Globe2,
     Hash,
     Landmark,
     Map,
-    MapPin,
     Pencil,
     RotateCcw,
     Route,
 } from "@/components/shared/icons";
-
-import type { PropertyDraftValues } from "@/lib/schemas/property";
-
-import { ConditionalField } from "@/components/property/fields/conditional-field";
-import { FieldLabel } from "@/components/property/fields/field-label";
 import { Button } from "@/components/ui/button";
 
 import {
-    FORM_GRID_CLASS,
     FORM_GRID_3_CLASS,
+    FORM_GRID_CLASS,
     FORM_SECTIONS_CLASS,
     FORM_STACK_CLASS,
     LocalityField,
-    NumberField,
     SelectField,
     TextAreaField,
     TextField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 import { NearbyPlacesField } from "@/features/properties/property-form/nearby-places-field";
-
-import { useLocationOptions } from "@/hooks/use-locations";
 
 function normalizeAddress(value: string): string {
     return value
@@ -225,20 +221,11 @@ export function StepLocation() {
     return (
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title={
-                    <>
-                        <MapPin
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Where is the property?
-                    </>
-                }
+                title={<>Where is the property?</>}
                 description="Start broad, then add the details people use to find it."
             >
                 <div className={FORM_STACK_CLASS}>
-                    <div className={FORM_GRID_3_CLASS}>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <SelectField
                             name="location.country"
                             label="Country"
@@ -287,14 +274,14 @@ export function StepLocation() {
                                 setValue("location.locality", "", { shouldDirty: true });
                             }}
                         />
-                    </div>
-                    <div className={FORM_GRID_CLASS}>
                         <LocalityField
                             name="location.locality"
                             label="Locality"
                             cityId={selectedCity?.id}
                             placeholder="Search a locality, e.g. Vesu"
                         />
+                    </div>
+                    <div className={FORM_GRID_3_CLASS}>
                         <TextField
                             name="location.pincode"
                             label="PIN code"
@@ -317,6 +304,8 @@ export function StepLocation() {
                             visibility="private"
                             startIcon={Hash}
                         />
+                    </div>
+                    <div className={FORM_GRID_CLASS}>
                         <TextField
                             name="location.streetOrRoad"
                             label="Street or road"
@@ -333,10 +322,29 @@ export function StepLocation() {
                             name="location.fullAddress"
                             label="Full address"
                             placeholder="Fills from the fields above — tap Edit to customize"
-                            hint="Auto-built as one line. Edit to customize, Clear to restore the generated address."
+                            hint={
+                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                    <span>
+                                        Auto-built as one line. Edit to customize, Reset to restore
+                                        the generated address.
+                                    </span>
+                                    <span
+                                        className={
+                                            fullAddress.length > MAX_PROPERTY_ADDRESS_LENGTH
+                                                ? "tabular text-danger"
+                                                : "tabular"
+                                        }
+                                    >
+                                        {fullAddress.length} / {MAX_PROPERTY_ADDRESS_LENGTH}{" "}
+                                        characters
+                                    </span>
+                                </div>
+                            }
                             visibility="private"
                             className="md:col-span-2"
                             rows={3}
+                            maxLength={MAX_PROPERTY_ADDRESS_LENGTH}
+                            textareaClassName="read-only:bg-surface"
                             readOnly={!editingAddress}
                             onBlur={() => {
                                 if (editingAddress) finishEditingAddress();
@@ -346,48 +354,51 @@ export function StepLocation() {
                                     <Button
                                         type="button"
                                         variant="ghost"
-                                        size="sm"
+                                        size="icon"
+                                        aria-label="Restore generated address"
+                                        title="Restore generated address"
                                         onMouseDown={(event) => event.preventDefault()}
                                         onClick={resetToGeneratedAddress}
                                         className="
-                                          gap-1.5 rounded-control bg-surface px-2.5 font-semibold
-                                          text-ink-muted shadow-sm
+                                          rounded-full border-border-warm bg-surface font-semibold
+                                          text-ink shadow-sm
                                           hover:bg-surface-muted hover:text-ink
                                         "
                                     >
-                                        <RotateCcw className="block-3.5 inline-3.5" aria-hidden />
-                                        Clear
+                                        <RotateCcw aria-hidden />
                                     </Button>
                                     {editingAddress ? (
                                         <Button
                                             type="button"
                                             variant="ghost"
-                                            size="sm"
+                                            size="icon"
+                                            aria-label="Finish editing address"
+                                            title="Done"
                                             onMouseDown={(event) => event.preventDefault()}
                                             onClick={finishEditingAddress}
                                             className="
-                                              gap-1.5 rounded-control bg-surface px-2.5 font-semibold
-                                              text-brand-text shadow-sm
+                                              rounded-full border-border-warm bg-surface
+                                              font-semibold text-brand-text shadow-sm
                                               hover:bg-brand-soft hover:text-brand-text
                                             "
                                         >
                                             <Check className="block-3.5 inline-3.5" aria-hidden />
-                                            Done
                                         </Button>
                                     ) : (
                                         <Button
                                             type="button"
                                             variant="ghost"
-                                            size="sm"
+                                            size="icon"
+                                            aria-label="Edit full address"
+                                            title="Edit address"
                                             onClick={startEditingAddress}
                                             className="
-                                              gap-1.5 rounded-control bg-surface px-2.5 font-semibold
-                                              text-brand-text shadow-sm
+                                              rounded-full border-border-warm bg-surface
+                                              font-semibold text-brand-text shadow-sm
                                               hover:bg-brand-soft hover:text-brand-text
                                             "
                                         >
                                             <Pencil className="block-3.5 inline-3.5" aria-hidden />
-                                            Edit
                                         </Button>
                                     )}
                                 </div>
@@ -497,15 +508,10 @@ export function StepLocation() {
                 <WizardSection
                     title={
                         <>
-                            <Landmark
-                                className="shrink-0 text-brand block-5 inline-5"
-                                strokeWidth={1.75}
-                                aria-hidden
-                            />
                             <FieldLabel path="location.nearbyPlaces">Nearby places</FieldLabel>
                         </>
                     }
-                    description="Search what’s nearby, or add your own. Keep it to places that actually help."
+                    description="Choose nearby places or add a specific name."
                 >
                     <NearbyPlacesField />
                 </WizardSection>

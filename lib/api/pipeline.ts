@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import type { PropertyFilterRecord } from "@/lib/properties/list-criteria";
 
 import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 import {
@@ -37,26 +38,31 @@ type ApiLead = {
     createdAt?: string | null;
     updatedAt?: string | null;
     nextVisitAt?: string | null;
-    property?: {
-        id: string;
-        title?: string | null;
-        city?: string | null;
-        address?: string | null;
-        salePrice?: string | null;
-        monthlyRent?: string | null;
-        transactionType?: string | null;
-        propertyType?: string | null;
-        subtype?: string | null;
-        bhkConfig?: string | null;
-        bedrooms?: number | null;
-        areaSqft?: number | null;
-        photos?: string[] | null;
-        commissionPercent?: string | number | null;
-        commissionAmount?: string | number | null;
-        exclusiveOwnerId?: string | null;
-        isBrokerInventory?: boolean;
-        isExclusiveProperty?: boolean;
-    } | null;
+    property?:
+        | ({
+              id: string;
+              title?: string | null;
+              city?: string | null;
+              address?: string | null;
+              salePrice?: string | null;
+              monthlyRent?: string | null;
+              transactionType?: string | null;
+              propertyType?: string | null;
+              subtype?: string | null;
+              bhkConfig?: string | null;
+              bedrooms?: number | null;
+              areaSqft?: number | null;
+              photos?: string[] | null;
+              commissionPercent?: string | number | null;
+              commissionAmount?: string | number | null;
+              exclusiveOwnerId?: string | null;
+              isBrokerInventory?: boolean;
+              isExclusiveProperty?: boolean;
+          } & Omit<
+              PropertyFilterRecord,
+              "commissionPercent" | "commissionAmount" | "salePrice" | "monthlyRent"
+          >)
+        | null;
     owner?: {
         id: string;
         fullName?: string | null;
@@ -251,6 +257,18 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             budgetMaxInr: client.budgetMax != null ? toNumber(client.budgetMax) : null,
         },
         property: {
+            filterFacts: {
+                ...property,
+                bhk,
+                amountInr,
+                isRent,
+                commissionPercent:
+                    property.commissionPercent == null
+                        ? null
+                        : toNumber(property.commissionPercent),
+                commissionAmount:
+                    property.commissionAmount == null ? null : toNumber(property.commissionAmount),
+            },
             id: property.id,
             title,
             configLabel,

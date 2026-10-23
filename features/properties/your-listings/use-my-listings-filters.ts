@@ -2,8 +2,8 @@
 
 import { useCallback } from "react";
 
-import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
 import { PREF_KEYS } from "@/lib/prefs/keys";
+import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
 
 import {
     hasActiveMyListingsFilters,
@@ -13,7 +13,15 @@ import {
 import type { MyListingsFilters } from "@/features/properties/your-listings/types";
 import { DEFAULT_MY_LISTINGS_FILTERS } from "@/features/properties/your-listings/types";
 
-const MY_LISTINGS_URL_KEYS = ["q", "type", "propertyType", "bhk", "status", "sort"] as const;
+const MY_LISTINGS_URL_KEYS = [
+    "q",
+    "type",
+    "propertyType",
+    "bhk",
+    "status",
+    "sort",
+    "propertyFilters",
+] as const;
 
 function isMyListingsFilters(value: unknown): value is MyListingsFilters {
     if (typeof value !== "object" || value === null) return false;

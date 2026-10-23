@@ -1,27 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 
-import {
-    BedDouble,
-    CircleDollarSign,
-    Clock3,
-    HandCoins,
-    Receipt,
-    Ruler,
-    Users,
-    Utensils,
-} from "@/components/shared/icons";
-
 import { areaToSqft } from "@/lib/calc/area";
-import { calculateSaleCommission } from "@/lib/calc/commission";
-import { formatInr, formatInrCompact } from "@/lib/format/inr";
+import { formatInr } from "@/lib/format/inr";
+import { MAX_DEPOSIT_MONTHS } from "@/lib/properties/form-limits";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
+import { BedDouble, Clock3, Ruler, Users, Utensils } from "@/components/shared/icons";
 
 import { HOUSEKEEPING_OPTIONS, PG_BED_TYPE_OPTIONS, PG_GENDER_OPTIONS } from "@/constants/property";
 import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
@@ -83,16 +73,7 @@ function RentAndDepositSection({
 
     return (
         <WizardSection
-            title={
-                <>
-                    <HandCoins
-                        className="shrink-0 text-brand block-5 inline-5"
-                        strokeWidth={1.75}
-                        aria-hidden
-                    />
-                    {isPg ? "PG rent" : "Rent details"}
-                </>
-            }
+            title={<>{isPg ? "PG rent" : "Rent details"}</>}
             description="What the tenant pays each month, the deposit to move in, and when they can start."
         >
             <div className={FORM_STACK_CLASS}>
@@ -152,22 +133,26 @@ function RentAndDepositSection({
                                 <CounterField
                                     name="rent.securityDeposit"
                                     label="Months of rent"
-                                    min={1}
-                                    max={12}
-                                    className="block-full [&_.t-acc-panel]:block-full [&_.t-acc-panel-inner]:block-full"
+                                    min={0}
+                                    max={MAX_DEPOSIT_MONTHS}
+                                    className="
+                                      block-full
+                                      [&_.t-acc-panel]:block-full
+                                      [&_.t-acc-panel-inner]:block-full
+                                    "
                                 />
                                 <div
                                     className="
-                                      flex flex-row items-center justify-between gap-3 rounded-control
-                                      border-2 border-dashed border-border-warm bg-surface px-3 py-2
-                                      block-full min-block-14
+                                      flex flex-row items-center justify-between gap-3
+                                      rounded-control border-2 border-dashed border-border-warm
+                                      bg-surface px-3 py-2 block-full min-block-14
                                     "
                                 >
                                     <p className="text-xs text-ink-muted min-inline-0">
                                         Tenant pays upfront
                                     </p>
                                     <p className="tabular shrink-0 text-base font-bold text-ink">
-                                        {depositInRupees
+                                        {depositInRupees != null
                                             ? formatInr(depositInRupees)
                                             : "Add rent to see total"}
                                     </p>
@@ -177,6 +162,7 @@ function RentAndDepositSection({
                             <CurrencyField
                                 name="rent.securityDeposit"
                                 label="Deposit amount"
+                                allowZero
                                 placeholder="e.g. 50,000"
                                 helperText="Exact rupees collected as deposit"
                             />
@@ -225,63 +211,6 @@ export function StepPricing() {
         setValue("rent.maintenanceAmount", value, { shouldDirty: true, shouldValidate: true });
     }
 
-    const fixedCharges = SELL_EXTRA_CHARGES.reduce((total, [name]) => {
-        const key = name.split(".")[1] as keyof PropertyDraftValues["sale"];
-        const amount = values.sale[key];
-        return total + (typeof amount === "number" ? amount : 0);
-    }, 0);
-    const allInPrice =
-        (expectedPrice ?? 0) +
-        fixedCharges +
-        (typeof values.sale.maintenanceCharge === "number" ? values.sale.maintenanceCharge : 0);
-
-    const coBrokerPercent = values.deal.coBrokerSharePercent ?? 0;
-    const saleDeal = useMemo(() => {
-        if (!sale || expectedPrice == null || expectedPrice <= 0) return null;
-        return calculateSaleCommission({
-            salePrice: expectedPrice,
-            areaSqft,
-            mode: values.commission.sale.mode,
-            value: values.commission.sale.value ?? 0,
-            paidBy: "owner",
-            ownerSharePercent: 100,
-            separateRates: values.commission.sale.separateRates
-                ? {
-                      ownerPercent: values.commission.sale.ownerPercent ?? 0,
-                      buyerPercent: values.commission.sale.buyerPercent ?? 0,
-                  }
-                : undefined,
-            gstApplicable: values.commission.tax.gstApplicable,
-            gstMode: values.commission.tax.gstMode,
-            tdsApplicable: values.commission.tax.tdsApplicable,
-            tdsRate: values.commission.tax.tdsRate,
-            otherOwnerDeductions: 0,
-            buyerSideCharges: fixedCharges,
-        });
-    }, [
-        areaSqft,
-        expectedPrice,
-        fixedCharges,
-        sale,
-        values.commission.sale.buyerPercent,
-        values.commission.sale.mode,
-        values.commission.sale.ownerPercent,
-        values.commission.sale.separateRates,
-        values.commission.sale.value,
-        values.commission.tax.gstApplicable,
-        values.commission.tax.gstMode,
-        values.commission.tax.tdsApplicable,
-        values.commission.tax.tdsRate,
-    ]);
-
-    const brokerGross = saleDeal?.gross ?? 0;
-    const brokerGst = saleDeal?.gst ?? 0;
-    const brokerTds = saleDeal?.tds ?? 0;
-    const brokerReal = saleDeal?.brokerRealIncome ?? 0;
-    const coBrokerShare = (brokerReal * coBrokerPercent) / 100;
-    const brokerNet = Math.max(0, brokerReal - coBrokerShare);
-    const brokerBank = Math.max(0, (saleDeal?.brokerReceives ?? 0) * (1 - coBrokerPercent / 100));
-
     // Keep normalised sq ft in sync even if user left the area step earlier.
     useEffect(() => {
         const source = listingArea != null && listingArea > 0 ? listingArea : carpet;
@@ -324,16 +253,7 @@ export function StepPricing() {
         return (
             <div className={FORM_SECTIONS_CLASS}>
                 <WizardSection
-                    title={
-                        <>
-                            <CircleDollarSign
-                                className="shrink-0 text-brand block-5 inline-5"
-                                strokeWidth={1.75}
-                                aria-hidden
-                            />
-                            Asking price
-                        </>
-                    }
+                    title={<>Asking price</>}
                     description="The asking price is public. The owner's floor stays in the broker file."
                 >
                     <div className={FORM_GRID_CLASS}>
@@ -358,77 +278,6 @@ export function StepPricing() {
                             onValueChange={handlePricePerSqftChange}
                         />
                     </div>
-                    <div
-                        className="
-                          mbs-4 overflow-hidden rounded-control border-2 border-border-warm
-                          bg-surface
-                        "
-                    >
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-4">
-                            <PriceFact
-                                label="Property price"
-                                value={
-                                    expectedPrice != null && expectedPrice > 0
-                                        ? formatInr(expectedPrice)
-                                        : "Add a price"
-                                }
-                            />
-                            <PriceFact
-                                label="Area"
-                                value={
-                                    areaSqft > 0
-                                        ? `${areaSqft.toLocaleString("en-IN")} sq ft`
-                                        : "Area not added"
-                                }
-                            />
-                            <PriceFact
-                                label="Per sq ft"
-                                value={formatInr(values.sale.pricePerSqft)}
-                            />
-                            <PriceFact label="All-in price" value={formatInrCompact(allInPrice)} />
-                        </div>
-
-                        <div className="border-bs-2 border-border-warm p-4">
-                            <div className="flex flex-wrap items-end justify-between gap-3">
-                                <div>
-                                    <p className="text-xs text-ink-muted">Broker earns (live)</p>
-                                    <p className="tabular mbs-1 text-xl font-bold text-brand-text">
-                                        {saleDeal ? formatInr(brokerNet) : "— — —"}
-                                    </p>
-                                </div>
-                                {saleDeal ? (
-                                    <p className="tabular text-sm text-ink-muted">
-                                        Bank receipt {formatInr(brokerBank)}
-                                    </p>
-                                ) : null}
-                            </div>
-                            {saleDeal ? (
-                                <div className="mbs-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-                                    <span>Gross {formatInr(brokerGross)}</span>
-                                    {brokerGst > 0 ? (
-                                        <span className="text-success">
-                                            + GST {formatInr(brokerGst)}
-                                        </span>
-                                    ) : null}
-                                    {brokerTds > 0 ? (
-                                        <span className="text-danger">
-                                            − TDS {formatInr(brokerTds)}
-                                        </span>
-                                    ) : null}
-                                    {coBrokerShare > 0 ? (
-                                        <span className="text-danger">
-                                            − Co-broker ({coBrokerPercent}%){" "}
-                                            {formatInr(coBrokerShare)}
-                                        </span>
-                                    ) : null}
-                                </div>
-                            ) : (
-                                <p className="mbs-2 text-xs text-ink-muted">
-                                    Enter an expected price to calculate brokerage in real time.
-                                </p>
-                            )}
-                        </div>
-                    </div>
                 </WizardSection>
 
                 {showSaleMaintenance ||
@@ -437,11 +286,6 @@ export function StepPricing() {
                     <WizardSection
                         title={
                             <>
-                                <Receipt
-                                    className="shrink-0 text-brand block-5 inline-5"
-                                    strokeWidth={1.75}
-                                    aria-hidden
-                                />
                                 {showSaleMaintenance &&
                                 !isVisible("sale.plcCharge") &&
                                 !isVisible("sale.floorRiseCharge")
@@ -504,16 +348,7 @@ export function StepPricing() {
 
             {derived.isPg ? (
                 <WizardSection
-                    title={
-                        <>
-                            <BedDouble
-                                className="shrink-0 text-brand block-5 inline-5"
-                                strokeWidth={1.75}
-                                aria-hidden
-                            />
-                            PG details
-                        </>
-                    }
+                    title={<>PG details</>}
                     description="Record the service and price per bed."
                 >
                     <div className={FORM_STACK_CLASS}>
@@ -558,22 +393,6 @@ export function StepPricing() {
                     </div>
                 </WizardSection>
             ) : null}
-        </div>
-    );
-}
-
-function PriceFact({ label, value }: { label: string; value: string }) {
-    return (
-        <div
-            className="
-              border-bs-2 border-border-warm p-4
-              first:border-bs-0
-              sm:border-e-2 sm:border-bs-0
-              sm:last:border-e-0
-            "
-        >
-            <p className="text-xs text-ink-muted">{label}</p>
-            <p className="tabular mbs-1 text-base font-bold text-ink">{value || "— — —"}</p>
         </div>
     );
 }

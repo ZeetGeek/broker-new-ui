@@ -3,13 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { ArrowRightLeft, Hash, Ruler, Scale } from "@/components/shared/icons";
-
 import { areaToSqft, convertArea } from "@/lib/calc/area";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ArrowRightLeft, Hash, Ruler, Scale } from "@/components/shared/icons";
 import {
     Combobox,
     ComboboxContent,
@@ -18,6 +15,8 @@ import {
     ComboboxItem,
     ComboboxList,
 } from "@/components/ui/combobox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { AREA_UNIT_OPTIONS } from "@/constants/property";
 import {
@@ -64,16 +63,7 @@ export function StepArea() {
     return (
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title={
-                    <>
-                        <Ruler
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Measure once, compare everywhere
-                    </>
-                }
+                title={<>Measure once, compare everywhere</>}
                 description="Enter areas in sq ft. The same unit powers listing filters."
             >
                 <div className={FORM_GRID_CLASS}>
@@ -95,11 +85,7 @@ export function StepArea() {
                     />
                 </div>
 
-                <div
-                    className="
-                      mbs-4 rounded-control border border-border-warm bg-surface-muted p-4
-                    "
-                >
+                <div className="mbs-4 rounded-control border border-border-warm bg-surface p-4">
                     <p className="text-xs text-ink-muted">Normalised area</p>
                     <p className="tabular mbs-1 text-xl font-bold text-ink">
                         {areaSqft > 0 ? `${areaSqft.toLocaleString()} sq ft` : "Area not added"}
@@ -108,16 +94,7 @@ export function StepArea() {
             </WizardSection>
 
             <WizardSection
-                title={
-                    <>
-                        <ArrowRightLeft
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Unit converter
-                    </>
-                }
+                title={<>Unit converter</>}
                 description="Check another unit without changing the saved property area."
             >
                 <div className="grid items-end gap-4 md:grid-cols-[1fr_1fr_auto_1fr]">
@@ -180,11 +157,7 @@ export function StepArea() {
                         className="mbe-3 hidden text-ink-muted block-5 inline-5 md:block"
                         aria-hidden
                     />
-                    <div
-                        className="
-                          rounded-control bg-brand px-4 py-3 text-surface min-block-12
-                        "
-                    >
+                    <div className="rounded-control bg-brand px-4 py-3 text-surface min-block-12">
                         <p className="text-xs text-surface/70">Sq ft equivalent</p>
                         <p className="tabular text-lg font-bold">
                             {(

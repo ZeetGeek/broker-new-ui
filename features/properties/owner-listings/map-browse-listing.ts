@@ -296,14 +296,16 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         subtype,
         bhk,
         bathrooms: listing.bathrooms != null && listing.bathrooms > 0 ? listing.bathrooms : null,
-        // Extra layout dims — browse payload may not send these yet.
-        balconies: null,
-        parkingSpaces: null,
-        floorNumber: null,
-        facing: null,
-        propertyCondition: null,
-        propertyAge: null,
-        suitableFor: null,
+        balconies: listing.balconyCount != null ? listing.balconyCount : null,
+        parkingSpaces: listing.parkingSpaces != null ? listing.parkingSpaces : null,
+        floorNumber: listing.floorNumber != null ? listing.floorNumber : null,
+        facing: listing.facingDirection?.trim() || null,
+        propertyCondition: listing.propertyCondition?.trim() || null,
+        propertyAge:
+            listing.propertyAge != null && String(listing.propertyAge).trim()
+                ? String(listing.propertyAge).trim()
+                : null,
+        suitableFor: listing.suitableFor?.length ? listing.suitableFor : null,
         locality,
         city,
         country: listing.country?.trim() || "India",

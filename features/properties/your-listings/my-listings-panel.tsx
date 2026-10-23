@@ -15,6 +15,7 @@ import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
+import { Button } from "@/components/ui/button";
 
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import type { RequestItem } from "@/features/properties/my-requests/types";
@@ -22,9 +23,10 @@ import { PropertyDeleteDialog } from "@/features/properties/property-detail/prop
 import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
 import { SAVED_PROPERTIES_QUERY_KEY } from "@/features/properties/saved-properties/saved-properties-query";
 import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
+import { hasActiveMyListingsFilters } from "@/features/properties/your-listings/filter-my-listings";
 import { InvitePropertyBrokerModal } from "@/features/properties/your-listings/invite-property-broker-modal";
-import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import { MarkSoldDialog } from "@/features/properties/your-listings/mark-sold-dialog";
+import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import { MyListingsGrid } from "@/features/properties/your-listings/my-listings-grid";
 import { MyListingsHeader } from "@/features/properties/your-listings/my-listings-header";
 import {
@@ -89,8 +91,8 @@ function asRequestShape(item: MyListingItem): RequestItem {
 
 export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const queryClient = useQueryClient();
-    const { filters, setFilters, clearFilters, hasActiveFilters } = useMyListingsFilters();
-    const [summary, setSummary] = useState<MyListingsSummary | null>(null);
+    const { filters, setFilters, clearFilters, hasActiveFilters, scopeReady } =
+        useMyListingsFilters();
     const [addOpen, setAddOpen] = useState(false);
     const [editingListing, setEditingListing] = useState<MyListingItem | null>(null);
     const [deletingListing, setDeletingListing] = useState<MyListingItem | null>(null);
@@ -104,8 +106,6 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     const [brokerListing, setBrokerListing] = useState<MyListingItem | null>(null);
     const [isBrokerInviteOpen, setIsBrokerInviteOpen] = useState(false);
     const [brokerInviteSession, setBrokerInviteSession] = useState(0);
-    /** Bumped after a save so the list refetches without changing filters. */
-    const [refreshToken, setRefreshToken] = useState(0);
     const [savedOverrides, setSavedOverrides] = useState<Record<string, boolean>>({});
 
     const isOwnerPortal = portal === "owner";
@@ -113,7 +113,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         queryKey: [...SAVED_PROPERTIES_QUERY_KEY, "lookup"],
         queryFn: ({ signal }) => propertiesApi.listBookmarks({ page: 1, limit: 100 }, signal),
         enabled: !isOwnerPortal,
-        staleTime: 0,
+        staleTime: 30_000,
     });
     const savedIds = useMemo(
         () => new Set((savedLookup.data?.items ?? []).map((item) => item.id)),
@@ -163,7 +163,8 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
 
     const infiniteFilters = useMemo(() => ({ ...filters, page: 1 }), [filters]);
     const query = useInfiniteItems({
-        queryKey: ["my-listings", infiniteFilters, refreshToken],
+        queryKey: ["my-listings", portal, infiniteFilters],
+        enabled: scopeReady,
         queryFn: async ({ cursor, signal }) => {
             const result = await myListingsApi.list(
                 { ...infiniteFilters, page: cursor ? Number(cursor) : 1 },
@@ -177,17 +178,15 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         },
     });
 
-    useEffect(() => {
-        let cancelled = false;
-        void myListingsApi.summary().then((next) => {
-            if (!cancelled) setSummary(next);
-        });
-        return () => {
-            cancelled = true;
-        };
-        // refreshToken: an edit can flip a listing's status without changing the
-        // total, and the summary counts published/draft separately.
-    }, [query.total, refreshToken]);
+    const summaryQuery = useQuery<MyListingsSummary>({
+        queryKey: ["my-listings-summary", portal],
+        queryFn: () => myListingsApi.summary(),
+    });
+    const summary = summaryQuery.data ?? null;
+    const refreshListings = useCallback(() => {
+        void queryClient.invalidateQueries({ queryKey: ["my-listings"] });
+        void queryClient.invalidateQueries({ queryKey: ["my-listings-summary"] });
+    }, [queryClient]);
 
     useEffect(() => {
         const shortcut = getShortcut("add_property");
@@ -220,15 +219,15 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             await myListingsApi.remove(deletingListing.id);
             setDeletingListing(null);
             toast.success("Property removed");
-            setRefreshToken((token) => token + 1);
+            refreshListings();
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Couldn't remove property");
         } finally {
             setDeleteBusy(false);
         }
-    }, [deletingListing]);
+    }, [deletingListing, refreshListings]);
 
-    const loading = query.isFetching && !query.isFetchingNextPage;
+    const loading = !scopeReady || query.isPending;
 
     return (
         <div className="flex flex-col gap-6">
@@ -236,8 +235,10 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 <MyListingsIntro
                     summary={summary}
                     resultTotal={query.total}
-                    hasActiveFilters={hasActiveFilters}
-                    isLoading={loading}
+                    status={filters.status}
+                    hasActiveFilters={hasActiveMyListingsFilters({ ...filters, sort: "newest" })}
+                    isLoading={loading || summaryQuery.isPending}
+                    hasError={query.isError}
                 />
             </PortalSectionNav>
 
@@ -245,74 +246,110 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 filters={filters}
                 onFiltersChange={setFilters}
                 summary={summary}
-                isLoading={loading}
+                isLoading={summaryQuery.isPending}
+                isInitialLoading={loading}
                 onAddProperty={() => setAddOpen(true)}
             />
 
-            {query.isError && query.items.length === 0 ? (
-                <p className="body-sm text-danger" role="alert">
-                    Couldn&apos;t load your listings. Try again.
-                </p>
-            ) : null}
-
-            {query.isError && query.items.length === 0 ? null : query.isPending ? (
-                <MyListingsResultsSkeleton />
-            ) : query.items.length === 0 ? (
-                <MyListingsEmpty
-                    variant={hasActiveFilters ? "filtered" : "first_run"}
-                    searchQuery={filters.q}
-                    onClearFilters={hasActiveFilters ? clearFilters : undefined}
-                    onAddProperty={() => setAddOpen(true)}
-                />
-            ) : (
-                <div className={loading ? "opacity-60 transition-opacity duration-160" : undefined}>
-                    <MyListingsGrid
-                        items={query.items}
-                        portal={portal}
-                        brokersByProperty={isOwnerPortal ? brokersByProperty : undefined}
-                        brokerSummaryState={isOwnerPortal ? brokerSummaryState : undefined}
-                        onInviteBroker={
-                            isOwnerPortal
-                                ? (listing) => {
-                                      setBrokerListing(listing);
-                                      setBrokerInviteSession((session) => session + 1);
-                                      setIsBrokerInviteOpen(true);
-                                      void representations.refetch();
-                                  }
-                                : undefined
-                        }
-                        onEditListing={setEditingListing}
-                        onDeleteListing={setDeletingListing}
-                        onMarkSold={isOwnerPortal ? setSellingListing : undefined}
-                        onAddBuyer={
-                            isOwnerPortal
-                                ? undefined
-                                : (listing) => {
-                                      setBuyersListing(listing);
-                                      setIsBuyersOpen(true);
-                                  }
-                        }
-                        onAttachOwner={
-                            isOwnerPortal
-                                ? undefined
-                                : (listing) => {
-                                      setOwnerListing(listing);
-                                      setIsOwnerAttachOpen(true);
-                                  }
-                        }
-                        onToggleSave={
-                            isOwnerPortal ? undefined : (listing) => void handleToggleSave(listing)
-                        }
-                        isSaved={isOwnerPortal ? undefined : isListingSaved}
+            <section aria-label="Your listings results" aria-busy={loading || query.isFetching}>
+                {loading ? (
+                    <MyListingsResultsSkeleton portal={portal} />
+                ) : query.isError && query.items.length === 0 ? (
+                    <div
+                        role="alert"
+                        className="flex flex-col items-center gap-4 py-12 text-center"
+                    >
+                        <p className="body-sm text-danger">
+                            Couldn&apos;t load your listings. Check your connection and try again.
+                        </p>
+                        <Button variant="outline" onClick={() => void query.refetch()}>
+                            Try again
+                        </Button>
+                    </div>
+                ) : query.items.length === 0 ? (
+                    <MyListingsEmpty
+                        variant={hasActiveFilters ? "filtered" : "first_run"}
+                        searchQuery={filters.q}
+                        onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                        onAddProperty={() => setAddOpen(true)}
                     />
-                    <InfiniteListStatus
-                        hasNextPage={Boolean(query.hasNextPage)}
-                        isFetchingNextPage={query.isFetchingNextPage}
-                        error={query.isFetchNextPageError ? query.error : null}
-                        onLoadMore={() => void query.fetchNextPage()}
-                    />
-                </div>
-            )}
+                ) : (
+                    <div>
+                        {query.isRefetchError && !query.isFetchNextPageError ? (
+                            <div
+                                role="alert"
+                                className="
+                                  body-sm flex flex-wrap items-center gap-3 py-3 text-ink-muted
+                                "
+                            >
+                                Could not refresh listings. Showing the last loaded results.
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => void query.refetch()}
+                                >
+                                    Try again
+                                </Button>
+                            </div>
+                        ) : null}
+                        <MyListingsGrid
+                            items={query.items}
+                            portal={portal}
+                            brokersByProperty={isOwnerPortal ? brokersByProperty : undefined}
+                            brokerSummaryState={isOwnerPortal ? brokerSummaryState : undefined}
+                            onInviteBroker={
+                                isOwnerPortal
+                                    ? (listing) => {
+                                          setBrokerListing(listing);
+                                          setBrokerInviteSession((session) => session + 1);
+                                          setIsBrokerInviteOpen(true);
+                                          void representations.refetch();
+                                      }
+                                    : undefined
+                            }
+                            onEditListing={setEditingListing}
+                            onDeleteListing={setDeletingListing}
+                            onMarkSold={isOwnerPortal ? setSellingListing : undefined}
+                            onAddBuyer={
+                                isOwnerPortal
+                                    ? undefined
+                                    : (listing) => {
+                                          setBuyersListing(listing);
+                                          setIsBuyersOpen(true);
+                                      }
+                            }
+                            onAttachOwner={
+                                isOwnerPortal
+                                    ? undefined
+                                    : (listing) => {
+                                          setOwnerListing(listing);
+                                          setIsOwnerAttachOpen(true);
+                                      }
+                            }
+                            onToggleSave={
+                                isOwnerPortal
+                                    ? undefined
+                                    : (listing) => void handleToggleSave(listing)
+                            }
+                            isSaved={isOwnerPortal ? undefined : isListingSaved}
+                        />
+                        {query.isFetchingNextPage ? (
+                            <div className="pbs-6">
+                                <MyListingsResultsSkeleton
+                                    portal={portal}
+                                    label="Loading more listings"
+                                />
+                            </div>
+                        ) : null}
+                        <InfiniteListStatus
+                            hasNextPage={Boolean(query.hasNextPage)}
+                            isFetchingNextPage={query.isFetchingNextPage}
+                            error={query.isFetchNextPageError ? query.error : null}
+                            onLoadMore={() => void query.fetchNextPage()}
+                        />
+                    </div>
+                )}
+            </section>
             <MyListingsAddFab onClick={() => setAddOpen(true)} />
             {isOwnerPortal && brokerListing ? (
                 <InvitePropertyBrokerModal
@@ -337,7 +374,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 onOpenChange={setAddOpen}
                 onSaved={() => {
                     setAddOpen(false);
-                    setRefreshToken((token) => token + 1);
+                    refreshListings();
                 }}
             />
             <PropertyFormDialog
@@ -349,7 +386,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 }}
                 onSaved={() => {
                     setEditingListing(null);
-                    setRefreshToken((token) => token + 1);
+                    refreshListings();
                 }}
             />
             {sellingListing ? (
@@ -362,7 +399,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     propertyTitle={sellingListing.title || "This property"}
                     onSold={() => {
                         setSellingListing(null);
-                        setRefreshToken((token) => token + 1);
+                        refreshListings();
                         void queryClient.invalidateQueries({
                             queryKey: ["owner-property-representations"],
                         });
@@ -383,14 +420,14 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     open={isBuyersOpen}
                     onOpenChange={setIsBuyersOpen}
                     request={asRequestShape(buyersListing)}
-                    onSaved={() => setRefreshToken((token) => token + 1)}
+                    onSaved={refreshListings}
                 />
             ) : null}
             <AttachExclusiveOwnerModal
                 open={isOwnerAttachOpen}
                 onOpenChange={setIsOwnerAttachOpen}
                 listing={ownerListing}
-                onAttached={() => setRefreshToken((token) => token + 1)}
+                onAttached={refreshListings}
             />
         </div>
     );

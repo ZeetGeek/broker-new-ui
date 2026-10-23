@@ -1,26 +1,13 @@
 "use client";
 
-import { type MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
+import { type MutableRefObject, useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
-
-import {
-    BadgePercent,
-    ImageIcon,
-    ImagePlus,
-    Images,
-    MapPin,
-    RefreshCw,
-    Ruler,
-    Sparkles,
-    Tag,
-    Upload,
-    X,
-} from "@/components/shared/icons";
 
 import { createClientId } from "@/lib/client-id";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
+import { MAX_PROPERTY_PHOTOS } from "@/lib/properties/form-media";
 import {
     DEFAULT_PROPERTY_DRAFT,
     OWNER_SALE_COMMISSION_MAX,
@@ -32,6 +19,16 @@ import { useFieldRules } from "@/lib/visibility/use-field-rules";
 import { useLocationOptions } from "@/hooks/use-locations";
 
 import { AppImage } from "@/components/shared/app-image";
+import {
+    BadgePercent,
+    ImageIcon,
+    ImagePlus,
+    Images,
+    RefreshCw,
+    Sparkles,
+    Upload,
+    X,
+} from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,10 +40,10 @@ import {
     propertyTypeOptions,
 } from "@/constants/property";
 import {
+    type DraftPhoto,
     normalizePhotoOrder,
     removeCoverPhoto,
     replaceCoverPhoto,
-    type DraftPhoto,
 } from "@/features/properties/property-form/cover-photo";
 import {
     ChoiceField,
@@ -59,7 +56,7 @@ import {
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
 
-const MAX_PHOTOS = 30;
+const MAX_PHOTOS = MAX_PROPERTY_PHOTOS;
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const PHOTO_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif";
@@ -101,26 +98,17 @@ export function QuickAdd({
                   (formState.errors.media as { cover?: { message?: string } }).cover?.message ?? "",
               )
             : "";
+    const galleryError = formState.errors.media?.photos?.message;
 
     const [titleTouched, setTitleTouched] = useState(() =>
         Boolean(getValues("basics.title")?.trim()),
     );
-    const suggestedTitle = useMemo(
-        () =>
-            buildBasicsSuggestedTitle({
-                bedrooms: showBhk ? values.details.bedrooms : undefined,
-                propertyType: values.basics.propertyType,
-                locality: values.location.locality,
-                city: values.location.city,
-            }),
-        [
-            showBhk,
-            values.basics.propertyType,
-            values.details.bedrooms,
-            values.location.city,
-            values.location.locality,
-        ],
-    );
+    const suggestedTitle = buildBasicsSuggestedTitle({
+        bedrooms: showBhk ? values.details.bedrooms : undefined,
+        propertyType: values.basics.propertyType,
+        locality: values.location.locality,
+        city: values.location.city,
+    });
 
     useEffect(() => {
         if (titleTouched || !suggestedTitle) return;
@@ -268,20 +256,13 @@ export function QuickAdd({
                 </p>
             </header>
 
-            <WizardSection
-                title={
-                    <>
-                        <Tag
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Deal type
-                    </>
-                }
-                description="What kind of listing is this?"
-            >
-                <div className="flex flex-col gap-4">
+            <WizardSection title={<>Deal type</>} description="What kind of listing is this?">
+                <div
+                    id="media-photos"
+                    tabIndex={-1}
+                    aria-describedby={galleryError ? "quick-gallery-error" : undefined}
+                    className="flex flex-col gap-4"
+                >
                     <ChoiceField
                         name="basics.listingFor"
                         label="Listing for"
@@ -326,16 +307,7 @@ export function QuickAdd({
             </WizardSection>
 
             <WizardSection
-                title={
-                    <>
-                        <MapPin
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Location
-                    </>
-                }
+                title={<>Location</>}
                 description="Where buyers will find this property."
             >
                 <div className={FORM_GRID_CLASS}>
@@ -381,16 +353,7 @@ export function QuickAdd({
             </WizardSection>
 
             <WizardSection
-                title={
-                    <>
-                        <Ruler
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Size, price & title
-                    </>
-                }
+                title={<>Size, price & title</>}
                 description="Enough for a usable draft listing."
             >
                 <div className={FORM_GRID_CLASS}>
@@ -455,7 +418,7 @@ export function QuickAdd({
                             suggestedTitle ? (
                                 <Button
                                     type="button"
-                                    variant="ghost"
+                                    variant="link"
                                     size="sm"
                                     onClick={() => {
                                         setValue("basics.title", suggestedTitle, {
@@ -464,10 +427,7 @@ export function QuickAdd({
                                         });
                                         setTitleTouched(false);
                                     }}
-                                    className="
-                                      gap-1.5 rounded-control px-2.5 font-semibold text-brand-text
-                                      hover:bg-brand-soft hover:text-brand-text
-                                    "
+                                    className="px-2.5 text-brand"
                                 >
                                     <Sparkles className="block-3.5 inline-3.5" aria-hidden />
                                     <span className="hidden sm:inline">Use suggested title</span>
@@ -480,23 +440,23 @@ export function QuickAdd({
             </WizardSection>
 
             <WizardSection
-                title={
-                    <>
-                        <Images
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Photos
-                    </>
-                }
+                title={<>Photos</>}
                 description="Add a cover for the listing card, then optional property photos. Cover is required to save."
             >
                 <div className="flex flex-col gap-4">
-                    <div className="grid gap-4 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] md:items-stretch">
+                    <div
+                        className="
+                          grid gap-4
+                          md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] md:items-stretch
+                        "
+                    >
                         <div className="flex flex-col gap-2">
                             <div className="flex items-baseline justify-between gap-2">
-                                <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+                                <p
+                                    className="
+                                      flex items-center gap-2 text-sm font-semibold text-ink
+                                    "
+                                >
                                     <ImageIcon
                                         className="shrink-0 text-brand block-4 inline-4"
                                         strokeWidth={1.75}
@@ -526,7 +486,12 @@ export function QuickAdd({
                                 }}
                             />
                             {cover?.url ? (
-                                <div className="group relative flex-1 overflow-hidden rounded-card bg-surface-muted aspect-3/4 min-block-48">
+                                <div
+                                    className="
+                                      group relative aspect-3/4 flex-1 overflow-hidden rounded-card
+                                      bg-surface-muted min-block-48
+                                    "
+                                >
                                     <AppImage
                                         src={cover.url}
                                         alt={cover.alt || "Cover photo"}
@@ -541,10 +506,11 @@ export function QuickAdd({
                                     <div
                                         className="
                                           absolute inset-0 flex flex-col items-center justify-center
-                                          gap-2 bg-ink/50 p-3 opacity-100
-                                          transition-opacity duration-160
-                                          md:opacity-0 md:group-hover:opacity-100
+                                          gap-2 bg-ink/50 p-3 opacity-100 transition-opacity
+                                          duration-160
+                                          md:opacity-0
                                           md:group-focus-within:opacity-100
+                                          md:group-hover:opacity-100
                                         "
                                     >
                                         <Button
@@ -578,11 +544,10 @@ export function QuickAdd({
                                     onClick={() => coverInputRef.current?.click()}
                                     className={cn(
                                         `
-                                          flex flex-1 cursor-pointer flex-col items-center
-                                          justify-center rounded-card border-2 border-dashed
-                                          bg-brand-soft/40 px-4 py-6 text-center aspect-3/4
-                                          min-block-48
-                                          transition-colors duration-160
+                                          flex aspect-3/4 flex-1 cursor-pointer flex-col
+                                          items-center justify-center rounded-card border-2
+                                          border-dashed bg-brand-soft/40 px-4 py-6 text-center
+                                          transition-colors duration-160 min-block-48
                                           hover:border-brand/50 hover:bg-brand-soft/55
                                           focus-visible:ring-3 focus-visible:ring-ring/30
                                           focus-visible:outline-none
@@ -616,7 +581,11 @@ export function QuickAdd({
 
                         <div className="flex flex-col gap-2 min-inline-0">
                             <div className="flex items-baseline justify-between gap-2">
-                                <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+                                <p
+                                    className="
+                                      flex items-center gap-2 text-sm font-semibold text-ink
+                                    "
+                                >
                                     <Images
                                         className="shrink-0 text-brand block-4 inline-4"
                                         strokeWidth={1.75}
@@ -633,10 +602,10 @@ export function QuickAdd({
                                 className="
                                   flex flex-1 cursor-pointer flex-col items-center justify-center
                                   rounded-card border-2 border-dashed border-brand/35
-                                  bg-brand-soft/40 px-6 py-8 text-center min-block-48
-                                  transition-colors duration-160
-                                  hover:border-brand/50 hover:bg-brand-soft/55
+                                  bg-brand-soft/40 px-6 py-8 text-center transition-colors
+                                  duration-160 min-block-48
                                   focus-within:ring-3 focus-within:ring-ring/30
+                                  hover:border-brand/50 hover:bg-brand-soft/55
                                 "
                             >
                                 <span
@@ -671,7 +640,7 @@ export function QuickAdd({
 
                     {galleryPhotos.length ? (
                         <div
-                            className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+                            className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
                             role="list"
                             aria-label="Property photos"
                         >
@@ -680,8 +649,8 @@ export function QuickAdd({
                                     key={photo.id}
                                     role="listitem"
                                     className="
-                                      group relative overflow-hidden rounded-control border
-                                      border-border-warm bg-surface-muted aspect-square
+                                      group relative aspect-square overflow-hidden rounded-control
+                                      border border-border-warm bg-surface-muted
                                     "
                                 >
                                     {photo.url ? (
@@ -697,7 +666,12 @@ export function QuickAdd({
                                             }
                                         />
                                     ) : (
-                                        <div className="flex items-center justify-center block-full text-ink-muted">
+                                        <div
+                                            className="
+                                              flex items-center justify-center text-ink-muted
+                                              block-full
+                                            "
+                                        >
                                             <ImageIcon className="block-6 inline-6" aria-hidden />
                                         </div>
                                     )}
@@ -718,6 +692,11 @@ export function QuickAdd({
                                 </div>
                             ))}
                         </div>
+                    ) : null}
+                    {galleryError ? (
+                        <p id="quick-gallery-error" role="alert" className="text-sm text-danger">
+                            {galleryError}
+                        </p>
                     ) : null}
                 </div>
             </WizardSection>

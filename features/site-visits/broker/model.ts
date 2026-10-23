@@ -21,6 +21,7 @@ export type PersonSummary = {
 };
 
 export type VisitPropertySummary = {
+    filterFacts?: import("@/lib/properties/list-criteria").PropertyFilterRecord;
     id: string;
     title: string;
     configLabel: string;

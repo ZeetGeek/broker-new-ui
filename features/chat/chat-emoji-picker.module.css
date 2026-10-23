@@ -1,0 +1,67 @@
+.popover {
+    inline-size: min(21rem, calc(100vw - 2rem));
+    max-block-size: var(--available-height);
+    box-shadow:
+        0 16px 48px -12px color-mix(in srgb, var(--color-ink) 24%, transparent),
+        0 4px 12px -4px color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+
+.popover .picker:global(.EmojiPickerReact) {
+    --epr-bg-color: var(--color-surface);
+    --epr-text-color: var(--color-ink);
+    --epr-picker-border-color: transparent;
+    --epr-picker-border-radius: 0;
+    --epr-highlight-color: var(--color-ink);
+    --epr-hover-bg-color: var(--color-surface-muted);
+    --epr-hover-bg-color-reduced-opacity: var(--color-surface-muted);
+    --epr-focus-bg-color: var(--color-canvas);
+    --epr-search-border-color: var(--color-border-warm);
+    --epr-search-border-color-active: color-mix(in srgb, var(--color-ink) 25%, transparent);
+    --epr-search-input-bg-color: var(--color-surface-muted);
+    --epr-search-input-bg-color-active: var(--color-surface);
+    --epr-search-input-text-color: var(--color-ink);
+    --epr-search-input-placeholder-color: color-mix(in srgb, var(--color-ink) 60%, transparent);
+    --epr-search-input-border-radius: var(--radius-control);
+    --epr-search-input-height: var(--size-control-lg);
+    --epr-search-input-padding: 0 32px;
+    --epr-header-padding: 16px 16px 8px;
+    --epr-horizontal-padding: 12px;
+    --epr-category-navigation-button-size: 28px;
+    --epr-category-icon-active-color: var(--color-ink);
+    --epr-category-label-bg-color: var(--color-surface);
+    --epr-category-label-text-color: color-mix(in srgb, var(--color-ink) 65%, transparent);
+    --epr-category-label-padding: 12px 4px 8px;
+    --epr-category-padding: 0 4px;
+    --epr-emoji-size: 28px;
+    --epr-emoji-padding: 6px;
+
+    border: 0;
+    flex-shrink: 1;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    min-block-size: 0;
+}
+
+.popover .picker :global(.epr-emoji-category-label) {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.popover .picker :global(input:focus-visible) {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-ink) 5%, transparent);
+}
+
+.popover .picker :global(input) {
+    font-weight: 500;
+}
+
+.popover .picker :global(button:focus-visible) {
+    outline: 2px solid color-mix(in srgb, var(--color-ink) 40%, transparent);
+    outline-offset: -2px;
+}
+
+.popover .picker :global(.epr-body) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-warm) transparent;
+    overscroll-behavior: contain;
+}

@@ -156,7 +156,7 @@ function DealCardSkeleton({ activeTab }: { activeTab: RequestsTab }) {
 }
 
 export function RequestsListSkeleton({
-    count = 5,
+    count = 10,
     activeTab = "accepted",
 }: {
     count?: number;

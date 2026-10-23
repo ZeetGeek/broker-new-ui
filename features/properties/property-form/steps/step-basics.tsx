@@ -4,9 +4,9 @@ import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { Building2 } from "@/components/shared/icons";
-
 import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
+
+import { Home, LayoutGrid, Tag } from "@/components/shared/icons";
 
 import {
     LISTING_FOR_OPTIONS,
@@ -14,9 +14,8 @@ import {
     propertyTypeOptions,
 } from "@/constants/property";
 import {
-    ChoiceField,
+    FORM_GRID_3_CLASS,
     FORM_SECTIONS_CLASS,
-    FORM_STACK_CLASS,
     SelectField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
@@ -30,35 +29,26 @@ export function StepBasics() {
     return (
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
-                title={
-                    <>
-                        <Building2
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
-                        Listing type
-                    </>
-                }
+                title={<>Listing type</>}
                 description="Start with the property and the kind of deal the owner wants."
             >
-                <div className={FORM_STACK_CLASS}>
-                    <ChoiceField
+                <div className={FORM_GRID_3_CLASS}>
+                    <SelectField
                         name="basics.listingFor"
                         label="Listing for"
+                        startIcon={Tag}
                         options={LISTING_FOR_OPTIONS}
-                        columns={3}
                         onValueChange={() => {
                             if (dealSwitchNotified.current) return;
                             dealSwitchNotified.current = true;
                             toast("Sale and rent details are kept if you switch back.");
                         }}
                     />
-                    <ChoiceField
+                    <SelectField
                         name="basics.category"
                         label="Category"
+                        startIcon={LayoutGrid}
                         options={PROPERTY_CATEGORY_OPTIONS}
-                        columns={5}
                         onValueChange={() => {
                             setValue("basics.propertyType", "", { shouldDirty: true });
                             setValue("basics.propertySubType", "", { shouldDirty: true });
@@ -81,6 +71,7 @@ export function StepBasics() {
                     <SelectField
                         name="basics.propertyType"
                         label="Property type"
+                        startIcon={Home}
                         options={propertyTypeOptions(category)}
                         onValueChange={() => {
                             setValue(

@@ -3,8 +3,6 @@
 import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { Controller, type FieldPath, useFormContext } from "react-hook-form";
 
-import { Check, type AppIcon, Minus, Plus, X } from "@/components/shared/icons";
-
 import { formatInrInput, inrWordHint, parseInr } from "@/lib/format/inr";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
@@ -14,6 +12,7 @@ import { useFieldRules } from "@/lib/visibility/use-field-rules";
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { type AppIcon, Check, ChevronDown, Minus, Plus, X } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { Button } from "@/components/ui/button";
 import {
@@ -169,6 +168,9 @@ export function TextAreaField({
     onBlur: onInputBlur,
     endAction,
     readOnly,
+    minLength,
+    maxLength,
+    textareaClassName,
 }: {
     name: Path;
     label: string;
@@ -180,6 +182,9 @@ export function TextAreaField({
     onBlur?: () => void;
     endAction?: ReactNode;
     readOnly?: boolean;
+    minLength?: number;
+    maxLength?: number;
+    textareaClassName?: string;
 }) {
     const {
         register,
@@ -187,15 +192,30 @@ export function TextAreaField({
     } = useFormContext<PropertyDraftValues>();
     const error = errorAt(errors, name);
     const messageId = `${name.replace(/\./g, "-")}-message`;
-    const registration = register(name);
+    const hintId = `${name.replace(/\./g, "-")}-hint`;
+    const registration = register(name, {
+        validate: (value) => {
+            const text = String(value ?? "");
+            if (minLength != null && text.trim().length < minLength)
+                return `Write at least ${minLength} characters`;
+            if (maxLength != null && text.length > maxLength)
+                return `Use ${maxLength.toLocaleString("en-IN")} characters or fewer`;
+            return true;
+        },
+    });
     const textarea = (
         <Textarea
             id={name.replace(/\./g, "-")}
             rows={rows}
             placeholder={placeholder}
             readOnly={readOnly}
+            minLength={minLength}
+            maxLength={maxLength}
             aria-invalid={Boolean(error) || undefined}
-            aria-describedby={error ? messageId : undefined}
+            aria-describedby={
+                [hint ? hintId : null, error ? messageId : null].filter(Boolean).join(" ") ||
+                undefined
+            }
             className={cn(
                 `
                   field-sizing-fixed resize-y rounded-control border-2 border-border-warm bg-surface
@@ -208,6 +228,7 @@ export function TextAreaField({
                   aria-invalid:border-danger-mid
                 `,
                 endAction && "pe-4 pbe-12",
+                textareaClassName,
             )}
             {...registration}
             onBlur={(event) => {
@@ -220,7 +241,7 @@ export function TextAreaField({
         <FieldShell
             name={name}
             label={label}
-            hint={hint}
+            hint={hint ? <div id={hintId}>{hint}</div> : undefined}
             visibility={visibility}
             className={className}
         >
@@ -718,9 +739,7 @@ export function ChoiceField({
                                         `,
                                         icon || !hasDescription ? "items-center" : "items-start",
                                         active
-                                            ? `
-                                              border-brand bg-brand-soft text-brand-text shadow-xs
-                                            `
+                                            ? `border-brand bg-brand-soft text-brand-text shadow-xs`
                                             : `
                                               border-border-warm bg-surface-muted text-ink
                                               hover:border-brand/40 hover:bg-surface
@@ -886,7 +905,8 @@ export function MultiChipField({
                                             onClick={() => toggle(option.value)}
                                             className={cn(
                                                 `
-                                                  rounded-control border px-3 py-2 text-sm font-medium
+                                                  rounded-control border px-3 py-2 text-sm
+                                                  font-medium
                                                   transition-[background-color,border-color,color]
                                                   duration-160 min-block-11
                                                   focus-visible:ring-3 focus-visible:ring-ring/30
@@ -924,8 +944,8 @@ export function MultiChipField({
                                         aria-pressed
                                         onClick={() => toggle(value)}
                                         className="
-                                          rounded-control border border-brand bg-brand-soft px-3 py-2
-                                          text-sm font-medium text-brand-text min-block-11
+                                          rounded-control border border-brand bg-brand-soft px-3
+                                          py-2 text-sm font-medium text-brand-text min-block-11
                                           focus-visible:ring-3 focus-visible:ring-ring/30
                                           sm:min-block-10
                                         "
@@ -951,7 +971,7 @@ export function MultiChipField({
                                         onValueChange={setDraft}
                                         placeholder={customPlaceholder}
                                         aria-label={`Add custom ${label.toLowerCase()}`}
-                                        className="min-inline-0 flex-1"
+                                        className="flex-1 min-inline-0"
                                         onKeyDown={(event) => {
                                             if (event.key === "Enter") {
                                                 event.preventDefault();
@@ -1189,9 +1209,15 @@ export function CounterField({
     storeAsString?: boolean;
     className?: string;
 }) {
-    const { control } = useFormContext<PropertyDraftValues>();
+    const {
+        control,
+        clearErrors,
+        formState: { errors },
+    } = useFormContext<PropertyDraftValues>();
     const { labelOf } = useFieldRules();
     const resolvedLabel = labelOf(name, label);
+    const error = errorAt(errors, name);
+    const id = name.replace(/\./g, "-");
     return (
         <ConditionalField path={name} className={className}>
             <Controller
@@ -1199,15 +1225,31 @@ export function CounterField({
                 control={control}
                 render={({ field }) => {
                     const value = counterNumericValue(field.value);
+                    const unset = field.value == null || field.value === "";
                     function commit(next: number) {
-                        field.onChange(storeAsString ? String(next) : next);
+                        const bounded = Math.min(max, Math.max(min, Math.round(next)));
+                        field.onChange(storeAsString ? String(bounded) : bounded);
+                        clearErrors(name);
                     }
                     return (
                         <div
-                            className="
-                              flex items-center justify-between gap-3 rounded-control border-2
-                              border-border-warm bg-surface px-3 py-2 block-full min-block-14
-                            "
+                            id={id}
+                            ref={field.ref}
+                            role="group"
+                            tabIndex={-1}
+                            onBlur={field.onBlur}
+                            aria-labelledby={`${id}-label`}
+                            aria-describedby={error ? `${id}-error` : undefined}
+                            aria-invalid={Boolean(error)}
+                            className={cn(
+                                `
+                                  flex flex-wrap items-center justify-between gap-3 rounded-control
+                                  border-2 border-border-warm bg-surface px-3 py-2 outline-none
+                                  block-full min-block-14
+                                  focus-visible:ring-3 focus-visible:ring-ring/30
+                                `,
+                                error && "border-danger-mid",
+                            )}
                         >
                             <div className="flex items-center gap-2.5 min-inline-0">
                                 {StartIcon ? (
@@ -1218,7 +1260,10 @@ export function CounterField({
                                     />
                                 ) : null}
                                 <div className="min-inline-0">
-                                    <p className="text-sm font-semibold text-ink">
+                                    <p
+                                        id={`${id}-label`}
+                                        className="text-sm font-semibold text-ink"
+                                    >
                                         <FieldLabel path={name}>{resolvedLabel}</FieldLabel>
                                     </p>
                                     <VisibilityMark
@@ -1231,8 +1276,12 @@ export function CounterField({
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    aria-label={`Decrease ${resolvedLabel}`}
-                                    disabled={value <= min}
+                                    aria-label={
+                                        unset
+                                            ? `Set ${resolvedLabel} to ${min}`
+                                            : `Decrease ${resolvedLabel}`
+                                    }
+                                    disabled={!unset && value <= min}
                                     onClick={() => commit(Math.max(min, value - 1))}
                                     className="
                                       flex items-center justify-center rounded-control
@@ -1249,7 +1298,7 @@ export function CounterField({
                                       tabular text-center text-sm font-bold text-ink min-inline-6
                                     "
                                 >
-                                    {value}
+                                    {unset ? "—" : value}
                                 </span>
                                 <Button
                                     type="button"
@@ -1269,6 +1318,15 @@ export function CounterField({
                                     <Plus className="block-3.5 inline-3.5" strokeWidth={2} />
                                 </Button>
                             </div>
+                            {error ? (
+                                <p
+                                    id={`${id}-error`}
+                                    role="alert"
+                                    className="text-sm text-danger inline-full"
+                                >
+                                    {error}
+                                </p>
+                            ) : null}
                         </div>
                     );
                 }}
@@ -1289,39 +1347,67 @@ export function WizardSection({
     tone?: "default" | "private";
 }) {
     return (
-        <section
-            className={cn(
-                tone === "private"
-                    ? "rounded-card border border-brand/20 bg-brand-soft/40 p-5 sm:p-6"
-                    : "border-be border-border-warm/80 pbe-8 last:border-be-0 last:pbe-0",
-            )}
-        >
-            <div className="mbe-5 flex items-start justify-between gap-4">
-                <div>
-                    <h2
+        <details open className={cn("group/section", tone === "private" && "text-brand-text")}>
+            <summary
+                onClick={(event) => {
+                    // Keep native keyboard activation, but limit pointer toggles to the controls.
+                    if (event.detail === 0 && event.target === event.currentTarget) return;
+                    if (
+                        !(event.target instanceof Element) ||
+                        !event.target.closest("[data-section-toggle]")
+                    ) {
+                        event.preventDefault();
+                    }
+                }}
+                className="
+                  flex cursor-default list-none items-center justify-between gap-4
+                  focus-visible:outline-2 focus-visible:-outline-offset-2
+                  focus-visible:outline-brand
+                  [&::-webkit-details-marker]:hidden
+                "
+            >
+                <span className="min-inline-0">
+                    <span
+                        role="heading"
+                        aria-level={2}
+                        data-section-toggle
                         className="
-                          flex items-center gap-2.5 font-display text-xl font-semibold
-                          tracking-[-0.02em] text-ink
+                          flex cursor-pointer items-center gap-2.5 font-display text-xl
+                          font-semibold tracking-[-0.02em] text-ink underline-offset-4 inline-fit
+                          hover:underline
                         "
                     >
                         {title}
-                    </h2>
+                    </span>
                     {description ? (
-                        <p className="mbs-1.5 text-sm/6 text-ink-muted max-inline-2xl">
+                        <span className="mbs-1.5 block text-sm/6 text-ink-muted max-inline-2xl">
                             {description}
-                        </p>
+                        </span>
                     ) : null}
-                </div>
-                {tone === "private" ? <VisibilityMark visibility="private" /> : null}
-            </div>
-            {children}
-        </section>
+                </span>
+                <span
+                    data-section-toggle
+                    className="
+                      -me-1.5 flex shrink-0 cursor-pointer items-center justify-center rounded-lg
+                      text-ink-muted block-8 inline-8
+                      hover:bg-surface-muted
+                    "
+                >
+                    <ChevronDown
+                        aria-hidden
+                        className="block-5 inline-5 group-open/section:rotate-180"
+                    />
+                </span>
+            </summary>
+            <div className="pbs-5">{children}</div>
+        </details>
     );
 }
 
 /** Field groups inside a section. */
 export const FORM_STACK_CLASS = "flex flex-col gap-4";
-/** Space between wizard sections — no divider lines. */
-export const FORM_SECTIONS_CLASS = "flex flex-col gap-8";
+/** Consistent spacing and subtle dividers between wizard sections. */
+export const FORM_SECTIONS_CLASS =
+    "flex flex-col divide-y divide-border-warm [&>*:not(:last-child)]:pbe-6 [&>*+*]:pbs-6";
 export const FORM_GRID_CLASS = "grid gap-4 md:grid-cols-2";
 export const FORM_GRID_3_CLASS = "grid gap-4 sm:grid-cols-3";

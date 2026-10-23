@@ -1,32 +1,19 @@
 "use client";
 
 import { useRef, useState } from "react";
-
-import { Download, ExternalLink, FileText, Pause, Play } from "@/components/shared/icons";
+import dynamic from "next/dynamic";
 
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Button } from "@/components/ui/button";
+import { FileText, Pause, Play } from "@/components/shared/icons";
 
 import type { ChatAttachment, ChatMedia } from "@/features/chat/types";
 
+const ChatLightbox = dynamic(() => import("./chat-lightbox"), { ssr: false });
+
 /** Past this many tiles the rest collapse behind a "+N" overlay. */
 const MEDIA_TILE_LIMIT = 4;
-
-/**
- * Actions sitting inside a brand-green bubble. Translucent white keeps them
- * legible without introducing a second green into the palette.
- */
-const ATTACHMENT_BUTTON_OWN = `
-  border-surface/25 bg-surface/15 text-surface
-  hover:bg-surface/25 hover:text-surface
-`;
-
-const ATTACHMENT_BUTTON_PEER = `
-  border-border-warm bg-surface-muted text-ink
-  hover:bg-surface hover:text-ink
-`;
 
 function FileAttachment({
     name,
@@ -39,57 +26,54 @@ function FileAttachment({
     url: string;
     isOwn: boolean;
 }) {
-    const buttonClass = isOwn ? ATTACHMENT_BUTTON_OWN : ATTACHMENT_BUTTON_PEER;
-    const iconWrap = isOwn ? "bg-surface/15 text-surface" : "bg-brand-soft text-brand";
-    const titleClass = isOwn ? "text-surface" : "text-ink";
-    const metaClass = isOwn ? "text-surface/70" : "text-ink-muted";
+    const iconWrap = isOwn ? "bg-surface/70 text-brand" : "bg-brand-soft text-brand";
+    const titleClass = isOwn ? "text-brand-ink" : "text-ink";
+    const metaClass = isOwn ? "text-brand-ink/65" : "text-ink/65";
 
     return (
-        <div className="flex flex-col gap-3 min-inline-52">
-            <div className="flex items-center gap-3">
-                <span
+        <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open ${name} in a new tab`}
+            title={name}
+            className="
+              group/file flex items-center gap-3 rounded-inner border border-transparent p-2
+              min-inline-0
+              hover:border-brand/35
+              focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand
+              focus-visible:outline-none
+              sm:min-inline-52
+            "
+        >
+            <span
+                className={cn(
+                    `flex shrink-0 items-center justify-center rounded-inner block-10 inline-10`,
+                    iconWrap,
+                )}
+            >
+                <FileText aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
+            </span>
+
+            <div className="min-inline-0">
+                <p
                     className={cn(
-                        `flex shrink-0 items-center justify-center rounded-inner block-10 inline-10`,
-                        iconWrap,
+                        `
+                      body-sm truncate font-semibold underline decoration-transparent
+                      underline-offset-4
+                      group-hover/file:decoration-current
+                      group-focus-visible/file:decoration-current
+                    `,
+                        titleClass,
                     )}
                 >
-                    <FileText aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
-                </span>
-
-                <div className="min-inline-0">
-                    <p className={cn("body-sm truncate font-semibold", titleClass)}>{name}</p>
-                    {sizeLabel ? <p className={cn("body-xs", metaClass)}>{sizeLabel}</p> : null}
-                </div>
+                    {name}
+                </p>
+                {sizeLabel ? (
+                    <p className={cn("body-xs font-medium", metaClass)}>{sizeLabel}</p>
+                ) : null}
             </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-                <Button
-                    size="xs"
-                    variant="secondary"
-                    className={buttonClass}
-                    render={<a href={url} download aria-label={`Download ${name}`} />}
-                >
-                    <Download aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-                    Download
-                </Button>
-                <Button
-                    size="xs"
-                    variant="secondary"
-                    className={buttonClass}
-                    render={
-                        <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Open ${name}`}
-                        />
-                    }
-                >
-                    <ExternalLink aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-                    Open
-                </Button>
-            </div>
-        </div>
+        </a>
     );
 }
 
@@ -118,7 +102,7 @@ function AudioAttachment({ url, durationLabel }: { url: string; durationLabel?: 
     };
 
     return (
-        <div className="flex items-center gap-3 pe-1 min-inline-52">
+        <div className="flex items-center gap-3 pe-1 min-inline-0 sm:min-inline-52">
             <audio
                 ref={audioRef}
                 src={url || undefined}
@@ -133,10 +117,10 @@ function AudioAttachment({ url, durationLabel }: { url: string; durationLabel?: 
                 onClick={toggle}
                 aria-label={isPlaying ? "Pause voice note" : "Play voice note"}
                 className="
-                  flex shrink-0 items-center justify-center rounded-control bg-surface/20 text-surface
-                  transition-colors duration-160 block-9 inline-9
-                  hover:bg-surface/30
-                  focus-visible:ring-2 focus-visible:ring-surface/60 focus-visible:outline-none
+                  flex shrink-0 items-center justify-center rounded-full bg-brand-ink text-surface
+                  transition-colors duration-160 block-control-lg inline-control-lg
+                  hover:bg-brand-deep
+                  focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none
                 "
             >
                 {isPlaying ? (
@@ -146,18 +130,20 @@ function AudioAttachment({ url, durationLabel }: { url: string; durationLabel?: 
                 )}
             </button>
 
-            <div aria-hidden className="flex flex-1 items-center gap-[3px] block-7 min-inline-32">
+            <div aria-hidden className="flex flex-1 items-center gap-[3px] block-7 min-inline-12">
                 {WAVEFORM_BARS.map((height, index) => (
                     <span
                         key={index}
                         style={{ height: `${height}%` }}
-                        className="flex-1 rounded-full bg-surface/45 min-inline-[2px]"
+                        className="flex-1 rounded-full bg-brand/35 min-inline-[2px]"
                     />
                 ))}
             </div>
 
             {durationLabel ? (
-                <span className="body-xs tabular shrink-0 text-surface/70">{durationLabel}</span>
+                <span className="body-xs tabular shrink-0 font-medium text-ink/65">
+                    {durationLabel}
+                </span>
             ) : null}
         </div>
     );
@@ -172,6 +158,53 @@ function MediaTile({
     overlayCount?: number;
     className?: string;
 }) {
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+
+    if (item.kind === "image") {
+        return (
+            <>
+                <div className={cn("group/tile relative rounded-inner", className)}>
+                    <button
+                        type="button"
+                        onClick={() => setLightboxOpen(true)}
+                        aria-label={
+                            overlayCount ? `Show ${overlayCount} more photos` : "Open photo"
+                        }
+                        className="
+                          relative block cursor-zoom-in overflow-hidden rounded-inner block-full
+                          inline-full
+                          focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none
+                          focus-visible:ring-inset
+                        "
+                    >
+                        <AppImage
+                            src={item.src}
+                            alt="Photo attachment"
+                            fill
+                            sizes="256px"
+                            quality={75}
+                            unoptimized
+                            className="object-cover"
+                        />
+                        {overlayCount ? (
+                            <span
+                                className="
+                                  absolute inset-0 flex items-center justify-center bg-ink/60
+                                  text-lg font-semibold text-surface
+                                "
+                            >
+                                +{overlayCount}
+                            </span>
+                        ) : null}
+                    </button>
+                </div>
+                {lightboxOpen ? (
+                    <ChatLightbox src={item.src} onClose={() => setLightboxOpen(false)} />
+                ) : null}
+            </>
+        );
+    }
+
     return (
         <a
             href={item.src}
@@ -242,43 +275,12 @@ function MediaTile({
     );
 }
 
-function MediaAttachment({ items, isOwn }: { items: ChatMedia[]; isOwn: boolean }) {
+function MediaAttachment({ items }: { items: ChatMedia[] }) {
     if (items.length === 1) {
         const item = items[0];
         return (
-            <div className="flex flex-col gap-2 max-inline-64 min-inline-52">
+            <div className="flex flex-col gap-2 max-inline-64 min-inline-0 sm:min-inline-52">
                 <MediaTile item={item} className="aspect-4/3 block-48 inline-full max-block-72" />
-                <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                        size="xs"
-                        variant="secondary"
-                        className={isOwn ? ATTACHMENT_BUTTON_OWN : ATTACHMENT_BUTTON_PEER}
-                        render={
-                            <a
-                                href={item.src}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="Open attachment"
-                            />
-                        }
-                    >
-                        <ExternalLink
-                            aria-hidden
-                            className="block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                        Open
-                    </Button>
-                    <Button
-                        size="xs"
-                        variant="secondary"
-                        className={isOwn ? ATTACHMENT_BUTTON_OWN : ATTACHMENT_BUTTON_PEER}
-                        render={<a href={item.src} download aria-label="Download attachment" />}
-                    >
-                        <Download aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-                        Download
-                    </Button>
-                </div>
             </div>
         );
     }
@@ -287,7 +289,7 @@ function MediaAttachment({ items, isOwn }: { items: ChatMedia[]; isOwn: boolean 
     const hidden = items.length - visible.length;
 
     return (
-        <div className="grid grid-cols-2 gap-2 min-inline-52">
+        <div className="grid grid-cols-2 gap-2 min-inline-0 sm:min-inline-52">
             {visible.map((item, index) => (
                 <MediaTile
                     key={item.id}
@@ -322,5 +324,5 @@ export function ChatAttachmentBlock({
         return <AudioAttachment url={attachment.url} durationLabel={attachment.durationLabel} />;
     }
 
-    return <MediaAttachment items={attachment.items} isOwn={isOwn} />;
+    return <MediaAttachment items={attachment.items} />;
 }

@@ -1,8 +1,20 @@
 import { z } from "zod";
 
+import { formatDateIso } from "@/lib/format/date";
+import { parseVideoEmbed } from "@/lib/media/embed-url";
+import {
+    MAX_DEPOSIT_MONTHS,
+    MAX_PROPERTY_ADDRESS_LENGTH,
+    MAX_PROPERTY_AGE_YEARS,
+    MAX_PROPERTY_DESCRIPTION_LENGTH,
+    MAX_PROPERTY_FLOORS,
+    MIN_PROPERTY_DESCRIPTION_LENGTH,
+} from "@/lib/properties/form-limits";
+import { isUsablePropertyPhoto, MAX_PROPERTY_PHOTOS } from "@/lib/properties/form-media";
 import { labelOf, missingRequiredFields } from "@/lib/visibility/rules";
 
 import {
+    BEDROOM_OPTIONS,
     FORM_STEPS,
     PAYMENT_MILESTONE_TEMPLATE,
     PROPERTY_TYPES,
@@ -11,10 +23,51 @@ import {
 
 const optionalText = z.string().max(3000).optional().default("");
 const optionalNumber = z.number().finite().nonnegative().nullable();
+const optionalCount = z.number().finite().int("Enter a whole number").nonnegative().nullable();
+const floorCount = z
+    .number()
+    .finite()
+    .int("Enter a whole number of floors")
+    .min(0)
+    .max(MAX_PROPERTY_FLOORS, `Enter ${MAX_PROPERTY_FLOORS} floors or fewer`)
+    .nullable();
 const stringArray = z.array(z.string());
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const todayIso = () => formatDateIso(new Date());
 const isPastDate = (value: string) =>
     Boolean(value && (value.length === 7 ? value < todayIso().slice(0, 7) : value < todayIso()));
+
+function isCalendarDate(value: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function isWebUrl(value: string): boolean {
+    try {
+        const url = new URL(value);
+        return (
+            (url.protocol === "http:" || url.protocol === "https:") &&
+            Boolean(url.hostname) &&
+            !url.username &&
+            !url.password
+        );
+    } catch {
+        return false;
+    }
+}
+
+const videoUrlSchema = optionalText
+    .transform((value) => value.trim())
+    .refine(
+        (value) => !value || (isWebUrl(value) && Boolean(parseVideoEmbed(value))),
+        "Enter a full YouTube or Vimeo video link, or leave this blank",
+    );
+const tourUrlSchema = optionalText
+    .transform((value) => value.trim())
+    .refine(
+        (value) => !value || isWebUrl(value),
+        "Enter a full http:// or https:// tour link, or leave this blank",
+    );
 
 const listingCopySchema = z.object({
     title: z
@@ -25,8 +78,8 @@ const listingCopySchema = z.object({
     description: z
         .string()
         .trim()
-        .min(50, "Write at least 50 characters")
-        .max(3000, "Keep the description under 3,000 characters"),
+        .min(MIN_PROPERTY_DESCRIPTION_LENGTH, "Write at least 50 characters")
+        .max(MAX_PROPERTY_DESCRIPTION_LENGTH, "Use 3,000 characters or fewer"),
 });
 
 /** Basics without title/description requirements — those belong on the Property step. */
@@ -38,7 +91,10 @@ const basicsStepSchema = z
         propertySubType: optionalText,
         transactionType: z.enum(["new_booking", "resale"]),
         title: z.string().trim().max(120, "Keep the title under 120 characters"),
-        description: z.string().trim().max(3000, "Keep the description under 3,000 characters"),
+        description: z
+            .string()
+            .trim()
+            .max(MAX_PROPERTY_DESCRIPTION_LENGTH, "Use 3,000 characters or fewer"),
     })
     .superRefine((value, context) => {
         if (!PROPERTY_TYPES[value.category].includes(value.propertyType as never)) {
@@ -58,7 +114,10 @@ const basicsSchema = basicsStepSchema.superRefine((value, context) => {
             message: "Enter a title",
         });
     }
-    if (value.description.length > 0 && value.description.length < 50) {
+    if (
+        value.description.length > 0 &&
+        value.description.length < MIN_PROPERTY_DESCRIPTION_LENGTH
+    ) {
         context.addIssue({
             code: "custom",
             path: ["description"],
@@ -68,9 +127,9 @@ const basicsSchema = basicsStepSchema.superRefine((value, context) => {
 });
 
 const locationSchema = z.object({
-    country: z.string().min(1),
-    state: z.string().min(1, "Choose a state"),
-    city: z.string().min(1, "Choose a city"),
+    country: z.string().trim().min(1, "Choose a country"),
+    state: z.string().trim().min(1, "Choose a state"),
+    city: z.string().trim().min(1, "Choose a city"),
     locality: z.string().trim().min(1, "Enter the locality"),
     subLocality: optionalText,
     projectOrSociety: optionalText,
@@ -78,7 +137,14 @@ const locationSchema = z.object({
     unitNumber: optionalText,
     streetOrRoad: optionalText,
     pincode: z.string().regex(/^[1-9]\d{5}$/, "Enter a valid 6 digit pincode"),
-    fullAddress: optionalText,
+    fullAddress: z
+        .string()
+        .max(
+            MAX_PROPERTY_ADDRESS_LENGTH,
+            `Keep the full address to ${MAX_PROPERTY_ADDRESS_LENGTH} characters or fewer`,
+        )
+        .optional()
+        .default(""),
     landmark: z.string().trim().min(1, "Add a nearby landmark"),
     nearbyPlaces: stringArray,
     lat: z.number().finite().min(-90).max(90).nullable(),
@@ -98,10 +164,10 @@ const locationSchema = z.object({
 // });
 
 const commercialDetailsSchema = z.object({
-    cabins: optionalNumber,
-    meetingRooms: optionalNumber,
-    workstations: optionalNumber,
-    seats: optionalNumber,
+    cabins: optionalCount,
+    meetingRooms: optionalCount,
+    workstations: optionalCount,
+    seats: optionalCount,
     washroomType: optionalText,
     pantryType: optionalText,
     centralAc: z.boolean(),
@@ -130,17 +196,33 @@ const landDetailsSchema = z.object({
 
 const detailsSchema = z
     .object({
-        bedrooms: z.string(),
-        bathrooms: optionalNumber,
-        balconies: optionalNumber,
-        floorNumber: optionalNumber,
-        totalFloors: optionalNumber,
+        bedrooms: z
+            .string()
+            .refine(
+                (value) => value === "" || BEDROOM_OPTIONS.some((option) => option.value === value),
+                "Choose a valid BHK",
+            ),
+        bathrooms: z.number().int("Enter a whole number of bathrooms").min(0).max(10).nullable(),
+        balconies: z.number().int("Enter a whole number of balconies").min(0).max(5).nullable(),
+        floorNumber: floorCount,
+        totalFloors: floorCount,
         facing: optionalText,
         roadWidthFt: optionalNumber,
-        propertyAge: optionalNumber,
+        propertyAge: z
+            .number()
+            .finite()
+            .int("Enter the age in whole years")
+            .min(0)
+            .max(MAX_PROPERTY_AGE_YEARS, `Enter ${MAX_PROPERTY_AGE_YEARS} years or fewer`)
+            .nullable(),
         propertyCondition: optionalText,
-        coveredParking: optionalNumber,
-        openParking: optionalNumber,
+        coveredParking: z
+            .number()
+            .int("Enter a whole number of parking spaces")
+            .min(0)
+            .max(10)
+            .nullable(),
+        openParking: optionalCount,
         electricityLoadKva: optionalNumber,
         commercial: commercialDetailsSchema,
         land: landDetailsSchema,
@@ -170,6 +252,17 @@ const areaSchema = z
         loadingPercent: optionalNumber,
     })
     .superRefine((value, context) => {
+        if (
+            value.carpetArea != null &&
+            value.plotArea != null &&
+            value.carpetArea > value.plotArea
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["carpetArea"],
+                message: "Carpet area cannot be more than the total area",
+            });
+        }
         if (
             value.carpetArea != null &&
             value.builtUpArea != null &&
@@ -240,7 +333,10 @@ const rentSchema = z
                 return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
             }),
         rentEscalationPercent: optionalNumber,
-        availableFrom: optionalText,
+        availableFrom: optionalText.refine(
+            (value) => !value || isCalendarDate(value),
+            "Choose a valid date",
+        ),
         preferredTenant: stringArray,
         nonVegAllowed: z.boolean(),
         petsAllowed: z.boolean(),
@@ -263,15 +359,15 @@ const rentSchema = z
         if (
             value.securityDepositMode === "months_of_rent" &&
             value.securityDeposit != null &&
-            value.securityDeposit > 24
+            (!Number.isInteger(value.securityDeposit) || value.securityDeposit > MAX_DEPOSIT_MONTHS)
         ) {
             context.addIssue({
                 code: "custom",
                 path: ["securityDeposit"],
-                message: "Deposit months must be between 0 and 24",
+                message: `Deposit months must be a whole number between 0 and ${MAX_DEPOSIT_MONTHS}`,
             });
         }
-        if (isPastDate(value.availableFrom ?? "")) {
+        if (isCalendarDate(value.availableFrom ?? "") && isPastDate(value.availableFrom ?? "")) {
             context.addIssue({
                 code: "custom",
                 path: ["availableFrom"],
@@ -393,10 +489,12 @@ const photoSchema = z.object({
 });
 
 const mediaSchema = z.object({
-    photos: z.array(photoSchema).max(30),
+    photos: z
+        .array(photoSchema)
+        .max(MAX_PROPERTY_PHOTOS, `Add up to ${MAX_PROPERTY_PHOTOS} photos`),
     videoUploadName: optionalText,
-    videoUrl: optionalText,
-    virtualTourUrl: optionalText,
+    videoUrl: videoUrlSchema,
+    virtualTourUrl: tourUrlSchema,
     floorPlanFiles: z.array(z.string()),
     brochureFileName: optionalText,
     agencyWatermark: z.boolean(),
@@ -471,12 +569,13 @@ export const stepSchemas = {
                 if (
                     sale.mode === "percent" &&
                     sale.value != null &&
-                    ((sale.value > 0 && sale.value < 0.1) || sale.value > 10)
+                    (sale.value < OWNER_SALE_COMMISSION_MIN ||
+                        sale.value > OWNER_SALE_COMMISSION_MAX)
                 ) {
                     context.addIssue({
                         code: "custom",
                         path: ["commission", "sale", "value"],
-                        message: "Commission looks too high. Please check.",
+                        message: `Sale commission must be between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}%`,
                     });
                 }
             }
@@ -506,7 +605,7 @@ export const stepSchemas = {
             publish: publishSchema,
         })
         .superRefine((value, context) => {
-            const usable = value.media.photos.filter((photo) => photo.status !== "error");
+            const usable = value.media.photos.filter(isUsablePropertyPhoto);
             const hasCover = usable.some((photo) => photo.isCover);
             const galleryCount = usable.filter((photo) => !photo.isCover).length;
 
@@ -554,7 +653,10 @@ export function ownerCommissionIssues(
     const listingFor = values.basics.listingFor;
     const sells = listingFor === "sell" || listingFor === "both";
     const rents =
-        listingFor === "rent" || listingFor === "lease" || listingFor === "pg" || listingFor === "both";
+        listingFor === "rent" ||
+        listingFor === "lease" ||
+        listingFor === "pg" ||
+        listingFor === "both";
     const issues: { path: string; message: string }[] = [];
 
     if (sells) {
@@ -793,7 +895,7 @@ export const DEFAULT_PROPERTY_DRAFT: PropertyDraftValues = {
             renewalFeeApplicable: false,
             renewalFeeValue: 0.5,
         },
-        tax: { gstApplicable: true, gstMode: "exclusive", tdsApplicable: true, tdsRate: 2 },
+        tax: { gstApplicable: false, gstMode: "exclusive", tdsApplicable: false, tdsRate: 2 },
         notes: "",
     },
     deal: {

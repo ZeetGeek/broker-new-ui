@@ -198,20 +198,33 @@ export function stripHiddenOwnerListingsFilters(
     return next;
 }
 
+const PLOT_SUBTYPES = [
+    "residential_plot",
+    "commercial_plot",
+    "industrial_plot",
+    "na_plot",
+] as const;
+
 export function browseApiTypeFilters(
     category: OwnerListingCategory | "",
     subtype: string,
 ): {
     propertyType?: string;
     subtype?: string;
+    subtypes?: string[];
 } {
     const resolvedCategory = category || categoryForSubtype(subtype) || undefined;
     let apiSubtype = subtype || undefined;
 
     if (apiSubtype === "office") apiSubtype = "office_space";
-    if (apiSubtype === "plot") apiSubtype = undefined;
     if (apiSubtype === "1rk") apiSubtype = "one_rk";
-    if (apiSubtype === "farm_house") apiSubtype = "farmhouse";
+    if (apiSubtype === "farmhouse") apiSubtype = "farm_house";
+    if (apiSubtype === "plot") {
+        return {
+            ...(resolvedCategory ? { propertyType: resolvedCategory } : { propertyType: "land" }),
+            subtypes: [...PLOT_SUBTYPES],
+        };
+    }
 
     return {
         ...(resolvedCategory ? { propertyType: resolvedCategory } : {}),

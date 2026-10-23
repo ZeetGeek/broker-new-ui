@@ -13,13 +13,28 @@ import {
 import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { ChevronDown, RotateCcw, X } from "@/components/shared/icons";
-
+import { clientsApi } from "@/lib/api/clients";
 import { myListingsApi } from "@/lib/api/my-listings";
+import { getStoredUser } from "@/lib/auth/session";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import { useListingScore } from "@/lib/hooks/use-listing-score";
 import { useRouter } from "@/lib/navigation";
+import {
+    loadPropertyDraft,
+    type PendingBuyerAttachment,
+    propertyDraftKey,
+    removePropertyDraft,
+    savePropertyDraft,
+    type StoredPropertyDraft,
+} from "@/lib/properties/form-draft-storage";
+import { isUsablePropertyPhoto, MAX_PROPERTY_PHOTOS } from "@/lib/properties/form-media";
+import {
+    propertyDraftValidationIssues,
+    QUICK_ADD_VALIDATION_FIELDS,
+    quickAddValidationIssues,
+} from "@/lib/properties/form-validation";
 import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { OWNER_PROPERTIES_HREF, ownerPropertyDetailHref } from "@/lib/routes/owner";
 import {
     DEFAULT_PROPERTY_DRAFT,
     fieldRuleSchemas,
@@ -36,6 +51,8 @@ import {
 } from "@/lib/visibility/rules";
 import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
+import { ArrowRight, Check, ChevronDown, RotateCcw, X } from "@/components/shared/icons";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -46,6 +63,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress, ProgressLabel } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -135,18 +153,24 @@ export function PropertyForm({
     const [completedSteps, setCompletedSteps] = useState<Set<PropertyFormStep>>(new Set());
     const [entryMode, setEntryMode] = useState<"full" | "quick">("full");
     const [savedAt, setSavedAt] = useState<Date | null>(null);
-    const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
+    const [draftSavePending, setDraftSavePending] = useState(false);
     const [formBanner, setFormBanner] = useState<ReactNode>(null);
     const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
     const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const [savingIntent, setSavingIntent] = useState<"draft" | "publish" | null>(null);
+    const [restoringDraft, setRestoringDraft] = useState(true);
+    const [storageError, setStorageError] = useState<string | null>(null);
+    const [attachmentRetry, setAttachmentRetry] = useState<PendingBuyerAttachment | null>(null);
+    const pendingAttachmentRef = useRef<PendingBuyerAttachment | null>(null);
     const photoFilesRef = useRef<Map<string, File>>(new Map());
     const autosaveReadyRef = useRef(false);
-    const recoveryCheckedRef = useRef(false);
+    const recoveryRef = useRef<Promise<StoredPropertyDraft | null> | null>(null);
     const persistInFlightRef = useRef(false);
     const pendingFocusPathRef = useRef<string | null>(null);
-    const localStorageKey = `property-draft:v${LOCAL_DRAFT_VERSION}:${propertyId ?? "new"}`;
+    const accountId = getStoredUser()?.id ?? "device";
+    const localStorageKey = propertyDraftKey(accountId, portal, propertyId);
+    const extraStorageKey = propertyDraftKey(accountId, portal, propertyId, "extra");
 
     const defaultValues = useMemo(
         () => (initialListing ? listingToDraft(initialListing, portal) : cloneDefaultDraft(portal)),
@@ -170,15 +194,16 @@ export function PropertyForm({
     );
 
     const writeLocalDraft = useCallback(
-        (nextValues: PropertyDraftValues, ui = draftUiState) => {
-            window.localStorage.setItem(
+        async (nextValues: PropertyDraftValues, ui = draftUiState) => {
+            await savePropertyDraft(
                 localStorageKey,
-                JSON.stringify({
-                    version: LOCAL_DRAFT_VERSION,
+                {
                     savedAt: new Date().toISOString(),
-                    values: draftForStorage(nextValues),
+                    values: nextValues,
                     ui,
-                }),
+                    pendingAttachment: pendingAttachmentRef.current,
+                },
+                photoFilesRef.current,
             );
         },
         [draftUiState, localStorageKey],
@@ -198,102 +223,100 @@ export function PropertyForm({
     }, [listingScore.score, methods, values.publish.listingScore]);
 
     useEffect(() => {
-        if (mode !== "edit" || !initialListing || !propertyId) return;
-        try {
-            const stored = window.localStorage.getItem(
-                `property-extra:v${LOCAL_DRAFT_VERSION}:${propertyId}`,
-            );
-            if (!stored) return;
-            const parsed = JSON.parse(stored) as { values?: Partial<PropertyDraftValues> };
-            if (parsed.values)
-                methods.reset(mergeDraft(listingToDraft(initialListing, portal), parsed.values));
-        } catch {
-            window.localStorage.removeItem(`property-extra:v${LOCAL_DRAFT_VERSION}:${propertyId}`);
-        }
-    }, [initialListing, methods, mode, portal, propertyId]);
+        if (!formIsActive) return;
+        let cancelled = false;
+        recoveryRef.current ??= loadPropertyDraft(localStorageKey, photoFilesRef.current);
+        void recoveryRef.current
+            .then(async (parsed) => {
+                if (cancelled) return;
+                let base = defaultValues;
+                if (mode === "edit") {
+                    try {
+                        const scoped = await loadPropertyDraft(extraStorageKey, new Map());
+                        const legacy = scoped
+                            ? null
+                            : window.localStorage.getItem(
+                                  `property-extra:v${LOCAL_DRAFT_VERSION}:${propertyId}`,
+                              );
+                        const extras =
+                            scoped ??
+                            (legacy
+                                ? (JSON.parse(legacy) as { values?: Partial<PropertyDraftValues> })
+                                : null);
+                        if (extras?.values) base = mergeLocalExtras(base, extras.values);
+                    } catch {
+                        // Use the server values if local-only extras cannot be read.
+                    }
+                }
+                if (cancelled) return;
+                methods.reset(parsed?.values ? mergeDraft(base, parsed.values) : base);
+                if (parsed?.pendingAttachment) {
+                    pendingAttachmentRef.current = parsed.pendingAttachment;
+                    setAttachmentRetry(parsed.pendingAttachment);
+                }
+                if (!parsed?.values) return;
+                const restoredStep = resolveDraftStep(parsed.ui?.step);
+                if (restoredStep) setStep(restoredStep);
+                if (typeof parsed.ui?.highestUnlocked === "number") {
+                    // Old drafts unlocked up to 9; clamp to the new 5-step range.
+                    setHighestUnlocked(
+                        Math.min(Math.max(parsed.ui.highestUnlocked, 0), FORM_STEPS.length - 1),
+                    );
+                }
+                if (parsed.ui?.entryMode === "full" || parsed.ui?.entryMode === "quick") {
+                    setEntryMode(parsed.ui.entryMode);
+                }
+                if (Array.isArray(parsed.ui?.completedSteps)) {
+                    const mapped = parsed.ui.completedSteps
+                        .map((item) => resolveDraftStep(item))
+                        .filter((item): item is PropertyFormStep => Boolean(item));
+                    setCompletedSteps(new Set(mapped));
+                }
+                setSavedAt(parsed.savedAt ? new Date(parsed.savedAt) : new Date());
+                toast.success("Picked up where you left off.");
+            })
+            .catch(() => {
+                if (!cancelled) setStorageError("Couldn't restore the saved draft on this device.");
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    autosaveReadyRef.current = true;
+                    setRestoringDraft(false);
+                }
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [defaultValues, extraStorageKey, formIsActive, localStorageKey, methods, mode, propertyId]);
 
     useEffect(() => {
-        if (!formIsActive || recoveryCheckedRef.current) return;
-        recoveryCheckedRef.current = true;
-        if (mode !== "create") {
-            autosaveReadyRef.current = true;
-            return;
-        }
-        try {
-            const legacyKey = `property-draft:v6:${propertyId ?? "new"}`;
-            const stored =
-                window.localStorage.getItem(localStorageKey) ??
-                window.localStorage.getItem(legacyKey);
-            if (!stored) {
-                autosaveReadyRef.current = true;
-                return;
-            }
-            const parsed = JSON.parse(stored) as {
-                values?: Partial<PropertyDraftValues>;
-                ui?: {
-                    step?: string;
-                    highestUnlocked?: number;
-                    entryMode?: "full" | "quick";
-                    completedSteps?: string[];
-                };
-                savedAt?: string;
-            };
-            if (!parsed.values) {
-                autosaveReadyRef.current = true;
-                return;
-            }
-            const recovered = mergeDraft(cloneDefaultDraft(portal), parsed.values);
-            methods.reset(recovered);
-            const restoredStep = resolveDraftStep(parsed.ui?.step);
-            if (restoredStep) setStep(restoredStep);
-            if (typeof parsed.ui?.highestUnlocked === "number") {
-                // Old drafts unlocked up to 9; clamp to the new 5-step range.
-                setHighestUnlocked(
-                    Math.min(Math.max(parsed.ui.highestUnlocked, 0), FORM_STEPS.length - 1),
-                );
-            }
-            if (parsed.ui?.entryMode === "full" || parsed.ui?.entryMode === "quick") {
-                setEntryMode(parsed.ui.entryMode);
-            }
-            if (Array.isArray(parsed.ui?.completedSteps)) {
-                const mapped = parsed.ui.completedSteps
-                    .map((item) => resolveDraftStep(item))
-                    .filter((item): item is PropertyFormStep => Boolean(item));
-                setCompletedSteps(new Set(mapped));
-            }
-            setHasRestoredDraft(true);
-            setSavedAt(parsed.savedAt ? new Date(parsed.savedAt) : new Date());
-            toast.success("Picked up where you left off.");
-            window.localStorage.removeItem(legacyKey);
-            autosaveReadyRef.current = true;
-        } catch {
-            window.localStorage.removeItem(localStorageKey);
-            autosaveReadyRef.current = true;
-        }
-    }, [formIsActive, localStorageKey, methods, mode]);
-
-    useEffect(() => {
-        if (!formIsActive || !autosaveReadyRef.current || mode !== "create") return;
-        const timer = window.setTimeout(() => {
+        if (!formIsActive || restoringDraft || !autosaveReadyRef.current) return;
+        setDraftSavePending(true);
+        const timer = window.setTimeout(async () => {
+            if (!autosaveReadyRef.current) return;
             try {
-                writeLocalDraft(values);
+                await writeLocalDraft(values);
                 setSavedAt(new Date());
-            } catch {
-                // A private browser mode may reject storage; the form itself remains usable.
+                setStorageError(null);
+            } catch (error) {
+                setSavedAt(null);
+                setStorageError(
+                    error instanceof Error
+                        ? error.message
+                        : "Couldn't save this draft on your device.",
+                );
+            } finally {
+                setDraftSavePending(false);
             }
         }, 500);
         return () => window.clearTimeout(timer);
-    }, [draftUiState, formIsActive, mode, values, writeLocalDraft]);
+    }, [draftUiState, formIsActive, restoringDraft, values, writeLocalDraft]);
 
     useEffect(() => {
-        if (!formIsActive || mode !== "create") return;
+        if (!formIsActive) return;
         function flushDraft() {
             if (!autosaveReadyRef.current) return;
-            try {
-                writeLocalDraft(methods.getValues());
-            } catch {
-                // Ignore storage failures while the tab is closing.
-            }
+            void writeLocalDraft(methods.getValues()).catch(() => {});
         }
         function onVisibilityChange() {
             if (document.visibilityState === "hidden") flushDraft();
@@ -305,14 +328,24 @@ export function PropertyForm({
             window.removeEventListener("beforeunload", flushDraft);
             document.removeEventListener("visibilitychange", onVisibilityChange);
         };
-    }, [formIsActive, methods, mode, writeLocalDraft]);
+    }, [formIsActive, methods, writeLocalDraft]);
+
+    useEffect(() => {
+        const files = photoFilesRef.current;
+        return () => {
+            for (const url of files.keys()) {
+                if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+            }
+            files.clear();
+        };
+    }, []);
 
     useEffect(() => {
         function onKeyDown(event: KeyboardEvent) {
             if (isDialog && !open) return;
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
                 event.preventDefault();
-                saveDraftLocally();
+                void saveDraftLocally();
                 return;
             }
             const target = event.target as HTMLElement | null;
@@ -341,28 +374,48 @@ export function PropertyForm({
             if (focusFieldByPath(path)) pendingFocusPathRef.current = null;
         });
         return () => cancelAnimationFrame(frame);
-    }, [step]);
+    }, [entryMode, step]);
 
-    function saveDraftLocally() {
+    async function saveDraftLocally() {
         try {
-            writeLocalDraft(methods.getValues());
+            await writeLocalDraft(methods.getValues());
             setSavedAt(new Date());
+            setStorageError(null);
             toast.success("Draft saved on this device.");
         } catch {
             toast.error("Couldn't save the local draft.");
         }
     }
 
-    function startFreshListing() {
-        window.localStorage.removeItem(localStorageKey);
+    async function startFreshListing() {
+        if (
+            methods.formState.isDirty &&
+            !window.confirm(
+                "Start fresh? This removes the current draft and its photos from this device.",
+            )
+        )
+            return;
+        autosaveReadyRef.current = false;
+        try {
+            await removePropertyDraft(localStorageKey);
+        } catch {
+            autosaveReadyRef.current = true;
+            toast.error("Couldn't remove the saved draft. Please try again.");
+            return;
+        }
+        for (const url of photoFilesRef.current.keys()) {
+            if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+        }
+        photoFilesRef.current.clear();
         methods.reset(defaultValues);
         setStep("basics");
         setHighestUnlocked(mode === "edit" ? FORM_STEPS.length - 1 : 0);
         setCompletedSteps(new Set());
         setEntryMode("full");
-        setHasRestoredDraft(false);
         setSavedAt(null);
         setFormBanner(null);
+        setStorageError(null);
+        autosaveReadyRef.current = true;
         toast.success("Started a fresh listing.");
     }
 
@@ -448,9 +501,9 @@ export function PropertyForm({
         changeStep(next.id);
     }
 
-    function saveSilent() {
+    async function saveSilent() {
         try {
-            writeLocalDraft(methods.getValues());
+            await writeLocalDraft(methods.getValues());
             setSavedAt(new Date());
         } catch {
             // Keep navigating even if storage is unavailable.
@@ -458,7 +511,7 @@ export function PropertyForm({
     }
 
     async function persistProperty(intent: "draft" | "publish") {
-        if (persistInFlightRef.current) return;
+        if (persistInFlightRef.current || restoringDraft || attachmentRetry) return;
         persistInFlightRef.current = true;
         setFormBanner(null);
         const forceDraft = intent === "draft";
@@ -468,9 +521,75 @@ export function PropertyForm({
             ...methods.getValues(),
             publish: { ...methods.getValues().publish, status: publishStatus },
         };
-        // Quick add only validates its own fields (draft and publish). Full details
-        // still runs the full step schemas on publish — leave that path alone.
-        if (entryMode === "quick") {
+        if (current.media.photos.some((photo) => photo.status === "processing")) {
+            setFormBanner("Your photos are still being prepared. Please wait before saving.");
+            persistInFlightRef.current = false;
+            return;
+        }
+        if (current.media.photos.filter(isUsablePropertyPhoto).length > MAX_PROPERTY_PHOTOS) {
+            setEntryMode("full");
+            setStep("media");
+            setHighestUnlocked(FORM_STEPS.length - 1);
+            setFormBanner(
+                `Keep up to ${MAX_PROPERTY_PHOTOS} photos before saving. No photos have been removed.`,
+            );
+            persistInFlightRef.current = false;
+            return;
+        }
+        if (
+            mode === "edit" &&
+            initialListing &&
+            initialListing.society &&
+            !current.location.projectOrSociety?.trim()
+        ) {
+            setEntryMode("full");
+            setStep("basics");
+            setFormBanner(
+                "Removing a saved society is not supported yet. Keep its name, or replace it with the correct name.",
+            );
+            persistInFlightRef.current = false;
+            return;
+        }
+        if (
+            mode === "edit" &&
+            initialListing?.exclusiveOwnerId &&
+            !current.owner.contactId &&
+            portal === "broker"
+        ) {
+            setEntryMode("full");
+            setStep("media");
+            setFormBanner(
+                "Removing a saved owner is not supported yet. Keep this owner or choose a replacement.",
+            );
+            persistInFlightRef.current = false;
+            return;
+        }
+        if (forceDraft && entryMode === "full") {
+            const issues = propertyDraftValidationIssues(current);
+            const first = issues[0];
+            if (first) {
+                for (const issue of issues)
+                    methods.setError(issue.path as FieldPath<PropertyDraftValues>, {
+                        type: "draft",
+                        message: issue.message,
+                    });
+                setStep(first.step);
+                setHighestUnlocked((value) =>
+                    Math.max(
+                        value,
+                        FORM_STEPS.findIndex((item) => item.id === first.step),
+                    ),
+                );
+                pendingFocusPathRef.current = first.path;
+                requestAnimationFrame(() => {
+                    if (focusFieldByPath(first.path)) pendingFocusPathRef.current = null;
+                });
+                persistInFlightRef.current = false;
+                return;
+            }
+        }
+        // Quick add is a draft shortcut. Publishing always uses the same full checks.
+        if (entryMode === "quick" && forceDraft) {
             if (!validateQuickAdd(methods, current, portal)) {
                 persistInFlightRef.current = false;
                 return;
@@ -493,6 +612,7 @@ export function PropertyForm({
                 return;
             }
         } else if (!forceDraft) {
+            if (entryMode === "quick") setEntryMode("full");
             const required = activeSteps.map((item) => item.id);
             for (const requiredStep of required) {
                 if (!validateStep(requiredStep)) {
@@ -527,16 +647,16 @@ export function PropertyForm({
                     setFormBanner("Couldn't find that property.");
                     return;
                 }
-                finishSave(updated, forceDraft);
+                await attachBuyersAndFinish(updated, current, forceDraft);
                 return;
             }
             const created = await myListingsApi.create(input);
-            finishSave(created, forceDraft);
+            await attachBuyersAndFinish(created, current, forceDraft);
         } catch (error) {
             setFormBanner(
                 error instanceof Error
                     ? error.message
-                    : "Couldn't save to the current API. Your complete draft is still saved on this device.",
+                    : "Couldn't save the property. Your changes are still in this form. Please try again.",
             );
         } finally {
             persistInFlightRef.current = false;
@@ -545,9 +665,61 @@ export function PropertyForm({
         }
     }
 
-    function finishSave(listing: MyListingItem, draft: boolean) {
+    async function attachBuyersAndFinish(
+        listing: MyListingItem,
+        current: PropertyDraftValues,
+        draft: boolean,
+    ) {
+        const buyerIds =
+            portal === "broker"
+                ? [...new Set(current.attachedBuyers.map((buyer) => buyer.id))]
+                : [];
+        if (buyerIds.length) {
+            try {
+                await clientsApi.setPropertyClients(listing.id, buyerIds);
+            } catch {
+                const pending = { listing, buyerIds, draft };
+                pendingAttachmentRef.current = pending;
+                setAttachmentRetry(pending);
+                await writeLocalDraft(current).catch(() => {
+                    setStorageError(
+                        "The property is saved, but the pending buyer links could not be saved on this device. Please retry before leaving.",
+                    );
+                });
+                setFormBanner(
+                    "The property was saved, but its buyers could not be attached. Retry below; this will not create another property.",
+                );
+                return;
+            }
+        }
+        await finishSave(listing, draft);
+    }
+
+    async function retryBuyerAttachments() {
+        if (!attachmentRetry || persistInFlightRef.current) return;
+        persistInFlightRef.current = true;
+        setSaving(true);
+        try {
+            await clientsApi.setPropertyClients(
+                attachmentRetry.listing.id,
+                attachmentRetry.buyerIds,
+            );
+            await finishSave(attachmentRetry.listing, attachmentRetry.draft);
+            setAttachmentRetry(null);
+        } catch {
+            setFormBanner(
+                "The property is saved. Buyers still could not be attached. Please retry.",
+            );
+        } finally {
+            persistInFlightRef.current = false;
+            setSaving(false);
+        }
+    }
+
+    async function finishSave(listing: MyListingItem, draft: boolean) {
         // Stop autosave so it cannot rewrite the local draft after we clear it.
         autosaveReadyRef.current = false;
+        pendingAttachmentRef.current = null;
         try {
             const stored = draftForStorage(methods.getValues());
             if (listing.imageSrcs.length > 0) {
@@ -562,24 +734,24 @@ export function PropertyForm({
                     status: "ready" as const,
                 }));
             }
-            window.localStorage.setItem(
-                `property-extra:v${LOCAL_DRAFT_VERSION}:${listing.id}`,
-                JSON.stringify({
+            await savePropertyDraft(
+                propertyDraftKey(accountId, portal, listing.id, "extra"),
+                {
                     savedAt: new Date().toISOString(),
                     values: stored,
-                }),
+                },
+                new Map(),
             );
         } catch {
-            // The existing API save still succeeded; unsupported fields remain best-effort local data.
+            toast.error("Property saved, but this device could not keep the device-only details.");
         }
-        window.localStorage.removeItem(localStorageKey);
+        await removePropertyDraft(localStorageKey).catch(() => {});
         if (mode === "create") {
             methods.reset(cloneDefaultDraft(portal));
             setStep("basics");
             setHighestUnlocked(0);
             setCompletedSteps(new Set());
             setEntryMode("full");
-            setHasRestoredDraft(false);
             setSavedAt(null);
             setFormBanner(null);
             photoFilesRef.current.clear();
@@ -591,7 +763,11 @@ export function PropertyForm({
             onSaved(listing);
             return;
         }
-        router.push(brokerPropertyDetailHref(listing.id));
+        router.push(
+            portal === "owner"
+                ? ownerPropertyDetailHref(listing.id)
+                : brokerPropertyDetailHref(listing.id),
+        );
     }
 
     function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
@@ -629,24 +805,55 @@ export function PropertyForm({
         goNext();
     }
 
-    function requestClose() {
-        if (mode === "create" && autosaveReadyRef.current) {
+    async function requestClose() {
+        if (saving || persistInFlightRef.current) return;
+        if (attachmentRetry) {
+            toast.error("Please retry attaching buyers before closing this form.");
+            return;
+        }
+        let locallySaved = false;
+        if (autosaveReadyRef.current) {
             try {
-                writeLocalDraft(methods.getValues());
+                await writeLocalDraft(methods.getValues());
                 setSavedAt(new Date());
+                locallySaved = true;
             } catch {
                 // Still allow closing if storage is unavailable.
             }
         }
         if (
             methods.formState.isDirty &&
-            !window.confirm("Close this form? Your latest changes are saved as a local draft.")
+            !window.confirm(
+                locallySaved
+                    ? "Close this form? Your latest changes and photos are saved on this device."
+                    : "This device could not save your latest changes. Close and lose those changes?",
+            )
         )
             return;
         onOpenChange?.(false);
         onCancel?.();
-        if (!isDialog && !onCancel) router.push(BROKER_YOUR_LISTINGS_HREF);
+        if (!isDialog && !onCancel)
+            router.push(portal === "owner" ? OWNER_PROPERTIES_HREF : BROKER_YOUR_LISTINGS_HREF);
     }
+
+    const formActions = (
+        <PropertyFormActions
+            entryMode={entryMode}
+            stepIndex={stepIndex}
+            stepCount={activeSteps.length}
+            isLastStep={isLastStep}
+            isSubmitting={saving}
+            showStartFresh={mode === "create"}
+            onStartFresh={() => void startFreshListing()}
+            onBack={goBack}
+            onSaveDraft={() => void persistProperty("draft")}
+            onNext={() => {
+                if (entryMode === "quick") void persistProperty("draft");
+                else if (isLastStep) void persistProperty("publish");
+                else goNext();
+            }}
+        />
+    );
 
     const surface = (
         <FormProvider {...methods}>
@@ -660,63 +867,44 @@ export function PropertyForm({
                         className,
                     )}
                 >
-                    <PropertyFormHeader
-                        mode={mode}
-                        entryMode={entryMode}
-                        onEntryModeChange={setEntryMode}
-                        isSaved={Boolean(savedAt)}
-                        savingIntent={savingIntent}
-                        onSaveDraft={() => {
-                            void persistProperty("draft");
-                        }}
-                        onPublish={() => {
-                            void persistProperty("publish");
-                        }}
-                        onClose={requestClose}
-                        showClose={isDialog}
-                    />
+                    <fieldset
+                        disabled={restoringDraft || saving || attachmentRetry != null}
+                        className="contents"
+                    >
+                        <PropertyFormHeader
+                            mode={mode}
+                            entryMode={entryMode}
+                            onEntryModeChange={setEntryMode}
+                            isSaved={Boolean(savedAt) && !draftSavePending && !storageError}
+                            savingIntent={savingIntent}
+                            onSaveDraft={() => {
+                                void persistProperty("draft");
+                            }}
+                            onPublish={() => {
+                                void persistProperty("publish");
+                            }}
+                            onClose={() => {
+                                void requestClose();
+                            }}
+                            showClose={isDialog}
+                        />
+                        {restoringDraft ? (
+                            <p role="status" className="px-4 py-2 text-sm text-ink-muted">
+                                Loading your saved draft…
+                            </p>
+                        ) : null}
+                        {storageError ? (
+                            <p role="alert" className="px-4 py-2 text-sm text-danger">
+                                {storageError}
+                            </p>
+                        ) : null}
 
-                    {entryMode === "full" ? (
-                        <>
-                            <div
-                                className="
-                                  shrink-0 border-be border-border-warm bg-surface
-                                  xl:hidden
-                                "
-                            >
-                                <StepNav
-                                    steps={activeSteps}
-                                    activeStep={step}
-                                    highestUnlocked={highestUnlocked}
-                                    completedSteps={completedSteps}
-                                    onStepChange={changeStep}
-                                />
-                                <MobileListingScore
-                                    score={listingScore.score}
-                                    tips={listingScore.tips}
-                                    open={mobileScoreOpen}
-                                    onOpenChange={(next) => {
-                                        setMobileScoreOpen(next);
-                                        if (next) setMobileSummaryOpen(false);
-                                    }}
-                                    onTip={(tipStep) => {
-                                        setHighestUnlocked(FORM_STEPS.length - 1);
-                                        setStep(tipStep);
-                                        setMobileScoreOpen(false);
-                                    }}
-                                />
-                            </div>
-                            <div
-                                className="
-                                  grid flex-1 min-block-0
-                                  xl:grid-cols-[272px_minmax(0,1fr)_336px]
-                                "
-                            >
-                                <aside
+                        {entryMode === "full" ? (
+                            <>
+                                <div
                                     className="
-                                      hidden flex-col border-e border-border-warm bg-surface px-4
-                                      py-5 min-block-0
-                                      xl:flex xl:block-full
+                                      shrink-0 border-be border-border-warm bg-surface
+                                      xl:hidden
                                     "
                                 >
                                     <StepNav
@@ -726,191 +914,256 @@ export function PropertyForm({
                                         completedSteps={completedSteps}
                                         onStepChange={changeStep}
                                     />
-                                </aside>
-                                <main
+                                    <MobileListingScore
+                                        score={listingScore.score}
+                                        tips={listingScore.tips}
+                                        open={mobileScoreOpen}
+                                        onOpenChange={(next) => {
+                                            setMobileScoreOpen(next);
+                                            if (next) setMobileSummaryOpen(false);
+                                        }}
+                                        onTip={(tipStep) => {
+                                            setHighestUnlocked(FORM_STEPS.length - 1);
+                                            setStep(tipStep);
+                                            setMobileScoreOpen(false);
+                                        }}
+                                    />
+                                </div>
+                                <div
                                     className="
-                                      overflow-y-auto bg-surface-muted p-4 min-block-0 min-inline-0
-                                      sm:p-5
-                                      xl:p-6
+                                      grid flex-1 bg-surface-muted min-block-0
+                                      xl:grid-cols-[272px_minmax(0,1fr)_336px]
                                     "
                                 >
-                                    <div
+                                    <aside
                                         className="
-                                          rounded-card border border-border-warm bg-surface p-5
-                                          shadow-sm min-block-full
-                                          sm:p-6
-                                          xl:p-7
+                                          my-6 ms-4 hidden flex-col rounded-card bg-surface px-4
+                                          py-5 shadow-sm min-block-0
+                                          xl:flex
                                         "
                                     >
-                                        <div className="-m-1 p-1 pbe-2">
-                                            <h1 className="sr-only">
-                                                {activeSteps[stepIndex]?.label}
-                                            </h1>
-                                            {formBanner ? (
-                                                <div
-                                                    role="alert"
-                                                    className="
-                                                      mbe-5 rounded-control border border-danger/30
-                                                      bg-danger-soft px-4 py-3 text-sm font-medium
-                                                      text-danger
-                                                    "
-                                                >
-                                                    {formBanner}
-                                                </div>
-                                            ) : null}
-                                            <StepTransition step={step}>
-                                                <StepContent
-                                                    step={step}
-                                                    portal={portal}
-                                                    photoFilesRef={photoFilesRef}
-                                                />
-                                            </StepTransition>
-                                        </div>
-                                    </div>
-                                </main>
-                                <aside
-                                    className="
-                                      hidden overflow-y-auto bg-surface-muted ps-0 pe-4 pbs-6 pbe-4
-                                      min-block-0 min-inline-0
-                                      xl:block
-                                    "
-                                >
-                                    <div className="flex flex-col gap-4">
-                                        <LiveSummaryPanel
-                                            values={values}
-                                            stepIndex={stepIndex}
-                                            photoFilesRef={photoFilesRef}
-                                            onGoToMedia={() => {
-                                                setHighestUnlocked(FORM_STEPS.length - 1);
-                                                setStep("media");
-                                            }}
+                                        <StepNav
+                                            steps={activeSteps}
+                                            activeStep={step}
+                                            highestUnlocked={highestUnlocked}
+                                            completedSteps={completedSteps}
+                                            onStepChange={changeStep}
                                         />
-                                        <article
+                                        <div className="shrink-0 border-bs border-border-warm pbs-5">
+                                            {formActions}
+                                        </div>
+                                    </aside>
+                                    <main
+                                        className="
+                                          overflow-y-auto bg-surface-muted p-4 min-block-0
+                                          min-inline-0
+                                          sm:p-5
+                                          xl:p-6
+                                        "
+                                    >
+                                        <div
                                             className="
-                                              overflow-hidden rounded-card border border-border-warm
-                                              bg-surface
+                                              rounded-card border border-border-warm bg-surface p-5
+                                              shadow-sm min-block-full
+                                              sm:p-6
+                                              xl:p-7
                                             "
                                         >
-                                            <div className="flex items-center gap-3.5 p-3.5">
-                                                <ListingScoreRing score={listingScore.score} />
-                                                <div className="min-inline-0">
-                                                    <p className="text-sm font-semibold text-ink">
-                                                        Listing score
-                                                    </p>
-                                                    <p className="mbs-0.5 text-xs/5 text-ink-muted">
-                                                        Finish these to raise broker confidence.
-                                                    </p>
-                                                </div>
+                                            <div className="-m-1 p-1 pbe-2">
+                                                <h1 className="sr-only">
+                                                    {activeSteps[stepIndex]?.label}
+                                                </h1>
+                                                {formBanner ? (
+                                                    <div
+                                                        role="alert"
+                                                        className="
+                                                          mbe-5 rounded-control border
+                                                          border-danger/30 bg-danger-soft px-4 py-3
+                                                          text-sm font-medium text-danger
+                                                        "
+                                                    >
+                                                        {formBanner}
+                                                    </div>
+                                                ) : null}
+                                                <StepTransition step={step}>
+                                                    <StepContent
+                                                        propertyId={propertyId}
+                                                        step={step}
+                                                        portal={portal}
+                                                        photoFilesRef={photoFilesRef}
+                                                    />
+                                                </StepTransition>
                                             </div>
-                                            {listingScore.tips.length ? (
-                                                <div
-                                                    className="
-                                                  flex flex-col gap-1.5 px-3.5 pbe-3.5
+                                            <div
+                                                className="
+                                                  mbs-6 border-bs border-border-warm pbs-5
+                                                  xl:hidden
                                                 "
-                                                >
-                                                    {listingScore.tips.map((tip) => (
-                                                        <Button
-                                                            key={tip.label}
-                                                            type="button"
-                                                            variant="ghost"
-                                                            onClick={() => {
-                                                                setHighestUnlocked(
-                                                                    FORM_STEPS.length - 1,
-                                                                );
-                                                                setStep(tip.step);
-                                                            }}
-                                                            className="
-                                                              flex items-center justify-between
-                                                              gap-3 rounded-control border
-                                                              border-border-warm bg-surface-muted
-                                                              px-3 text-start text-xs text-ink
-                                                              inline-full min-block-10
-                                                              hover:border-brand/35
-                                                              hover:bg-brand-soft/50
-                                                              focus-visible:ring-3
-                                                              focus-visible:ring-ring/30
-                                                            "
-                                                        >
-                                                            <span className="min-inline-0">
-                                                                {tip.label}
-                                                            </span>
-                                                            <span
-                                                                className="
-                                                                  tabular shrink-0 rounded-control
-                                                                  bg-brand-soft px-2 py-0.5
-                                                                  font-semibold text-brand-text
-                                                                "
-                                                            >
-                                                                +{tip.points}
-                                                            </span>
-                                                        </Button>
-                                                    ))}
-                                                </div>
-                                            ) : null}
-                                        </article>
-                                    </div>
-                                </aside>
-                            </div>
-                            <MobileDealSummary
-                                values={values}
-                                stepIndex={stepIndex}
-                                photoFilesRef={photoFilesRef}
-                                open={mobileSummaryOpen}
-                                onOpenChange={(next) => {
-                                    setMobileSummaryOpen(next);
-                                    if (next) setMobileScoreOpen(false);
-                                }}
-                            />
-                        </>
-                    ) : (
-                        <main
-                            className="
-                              flex flex-1 flex-col overflow-y-auto bg-surface-muted p-4 min-block-0
-                              min-inline-0
-                              sm:p-5
-                            "
-                        >
-                            <div
-                                className="
-                                  flex flex-1 flex-col rounded-card border border-border-warm
-                                  bg-surface p-5 shadow-sm
-                                  sm:p-6 sm:py-7
-                                  xl:p-8
-                                "
-                            >
-                                {formBanner ? (
-                                    <div
-                                        role="alert"
+                                            >
+                                                {formActions}
+                                            </div>
+                                        </div>
+                                    </main>
+                                    <aside
                                         className="
-                                          mbe-5 rounded-control border border-danger/30
-                                          bg-danger-soft px-4 py-3 text-sm font-medium text-danger
+                                          hidden overflow-y-auto bg-surface-muted ps-0 pe-4 pbs-6
+                                          pbe-4 min-block-0 min-inline-0
+                                          xl:block
                                         "
                                     >
-                                        {formBanner}
+                                        <div className="flex flex-col gap-4">
+                                            <LiveSummaryPanel
+                                                audience={portal}
+                                                values={values}
+                                                stepIndex={stepIndex}
+                                                photoFilesRef={photoFilesRef}
+                                                onGoToMedia={() => {
+                                                    setHighestUnlocked(FORM_STEPS.length - 1);
+                                                    setStep("media");
+                                                }}
+                                            />
+                                            <article
+                                                className="
+                                                  overflow-hidden rounded-card bg-surface px-4 py-5
+                                                  shadow-sm
+                                                "
+                                            >
+                                                <div className="flex items-center gap-3.5">
+                                                    <ListingScoreRing score={listingScore.score} />
+                                                    <div className="min-inline-0">
+                                                        <p
+                                                            className="
+                                                              text-sm font-semibold text-ink
+                                                            "
+                                                        >
+                                                            Listing score
+                                                        </p>
+                                                        <p
+                                                            className="
+                                                              mbs-0.5 text-xs/5 text-ink-muted
+                                                            "
+                                                        >
+                                                            Finish these to raise broker confidence.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {listingScore.tips.length ? (
+                                                    <div className="mbs-4 flex flex-col gap-1.5">
+                                                        {listingScore.tips.map((tip) => (
+                                                            <Button
+                                                                key={tip.label}
+                                                                type="button"
+                                                                variant="ghost"
+                                                                onClick={() => {
+                                                                    setHighestUnlocked(
+                                                                        FORM_STEPS.length - 1,
+                                                                    );
+                                                                    setStep(tip.step);
+                                                                }}
+                                                                className="
+                                                                  flex items-center justify-between
+                                                                  gap-3 rounded-control border
+                                                                  border-border-warm
+                                                                  bg-surface-muted px-3 text-start
+                                                                  text-xs text-ink inline-full
+                                                                  min-block-10
+                                                                  hover:border-brand/35
+                                                                  hover:bg-brand-soft/50
+                                                                  focus-visible:ring-3
+                                                                  focus-visible:ring-ring/30
+                                                                "
+                                                            >
+                                                                <span className="min-inline-0">
+                                                                    {tip.label}
+                                                                </span>
+                                                                <span
+                                                                    className="
+                                                                      tabular shrink-0
+                                                                      rounded-control bg-brand-soft
+                                                                      px-2 py-0.5 font-semibold
+                                                                      text-brand-text
+                                                                    "
+                                                                >
+                                                                    +{tip.points}
+                                                                </span>
+                                                            </Button>
+                                                        ))}
+                                                    </div>
+                                                ) : null}
+                                            </article>
+                                        </div>
+                                    </aside>
+                                </div>
+                                <MobileDealSummary
+                                    audience={portal}
+                                    values={values}
+                                    stepIndex={stepIndex}
+                                    photoFilesRef={photoFilesRef}
+                                    open={mobileSummaryOpen}
+                                    onOpenChange={(next) => {
+                                        setMobileSummaryOpen(next);
+                                        if (next) setMobileScoreOpen(false);
+                                    }}
+                                />
+                            </>
+                        ) : (
+                            <main
+                                className="
+                                  flex flex-1 flex-col overflow-y-auto bg-surface-muted p-4
+                                  min-block-0 min-inline-0
+                                  sm:p-5
+                                "
+                            >
+                                <div
+                                    className="
+                                      flex flex-1 flex-col rounded-card border border-border-warm
+                                      bg-surface p-5 shadow-sm
+                                      sm:p-6 sm:py-7
+                                      xl:p-8
+                                    "
+                                >
+                                    {formBanner ? (
+                                        <div
+                                            role="alert"
+                                            className="
+                                              mbe-5 rounded-control border border-danger/30
+                                              bg-danger-soft px-4 py-3 text-sm font-medium
+                                              text-danger
+                                            "
+                                        >
+                                            {formBanner}
+                                        </div>
+                                    ) : null}
+                                    <QuickAdd photoFilesRef={photoFilesRef} portal={portal} />
+                                    <div className="mbs-6 border-bs border-border-warm pbs-5">
+                                        {formActions}
                                     </div>
-                                ) : null}
-                                <QuickAdd photoFilesRef={photoFilesRef} portal={portal} />
-                            </div>
-                        </main>
-                    )}
-
-                    <PropertyFormFooter
-                        entryMode={entryMode}
-                        stepIndex={stepIndex}
-                        stepCount={activeSteps.length}
-                        isLastStep={isLastStep}
-                        isSubmitting={saving}
-                        showStartFresh={mode === "create"}
-                        onStartFresh={startFreshListing}
-                        onBack={goBack}
-                        onNext={() => {
-                            if (entryMode === "quick") {
-                                void persistProperty("draft");
-                                return;
-                            }
-                            goNext();
-                        }}
-                    />
+                                </div>
+                            </main>
+                        )}
+                    </fieldset>
+                    {attachmentRetry ? (
+                        <div
+                            role="alert"
+                            className="
+                              flex flex-wrap items-center gap-3 border-bs border-border-warm px-4
+                              py-3
+                            "
+                        >
+                            <p className="flex-1 text-sm text-danger">
+                                Property saved. Buyer attachment is pending.
+                            </p>
+                            <Button
+                                type="button"
+                                onClick={() => {
+                                    void retryBuyerAttachments();
+                                }}
+                                loading={saving}
+                            >
+                                Retry attaching buyers
+                            </Button>
+                        </div>
+                    ) : null}
                 </form>
             </FieldRulesProvider>
         </FormProvider>
@@ -932,7 +1185,7 @@ export function PropertyForm({
         <Dialog
             open={open}
             onOpenChange={(next) => {
-                if (!next) requestClose();
+                if (!next) void requestClose();
             }}
         >
             <DialogPopup
@@ -992,27 +1245,45 @@ function PropertyFormHeader({
 }) {
     const title = mode === "edit" ? "Edit property" : "Add property";
     const isBusy = savingIntent != null;
-    const savedHint = isSaved ? (
-        <span className="body-xs hidden text-ink-subtle sm:inline" aria-live="polite">
-            Saved on this device
-        </span>
-    ) : null;
+    const savedHint = (
+        <Popover>
+            <PopoverTrigger
+                type="button"
+                className="
+                  rounded-full
+                  focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand
+                "
+                aria-label="About details saved on this device"
+            >
+                <Badge color={isSaved ? "emerald" : "amber"} aria-live="polite">
+                    {isSaved ? "Saved on this device" : "Not saved yet"}
+                </Badge>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="text-sm text-ink max-inline-xs">
+                Unit number, carpet area, property age, condition and seats are currently saved only
+                on this device.
+            </PopoverContent>
+        </Popover>
+    );
 
     return (
         <header
             className="
-              flex shrink-0 items-center justify-between gap-3 border-be border-border-warm
-              bg-surface px-4 py-2.5 shadow-xs
-              sm:px-6
+              flex shrink-0 flex-wrap items-center justify-between gap-3 border-be
+              border-border-warm bg-surface p-4 shadow-xs
+              sm:flex-nowrap sm:px-6 sm:py-5
             "
         >
             {showClose ? (
                 <DialogHeader
                     className="
-                      flex flex-1 flex-row items-baseline gap-2.5 pe-0 text-start min-inline-0
+                      flex flex-1 flex-row flex-wrap items-center gap-2.5 pe-0 text-start
+                      min-inline-0
                     "
                 >
-                    <DialogTitle className="truncate">{title}</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold min-inline-0">
+                        {title}. <span className="text-ink-muted">Add the property details.</span>
+                    </DialogTitle>
                     <DialogDescription className="sr-only">
                         Property and commission details. Full details walks through every step;
                         Quick add saves the essentials as a draft.
@@ -1020,23 +1291,30 @@ function PropertyFormHeader({
                     {savedHint}
                 </DialogHeader>
             ) : (
-                <div className="flex flex-1 items-baseline gap-2.5 min-inline-0">
-                    <h1 className="truncate font-display text-lg font-medium text-ink">{title}</h1>
+                <div className="flex flex-1 flex-wrap items-center gap-2.5 min-inline-0">
+                    <h1 className="font-display text-2xl font-bold text-ink min-inline-0">
+                        {title}. <span className="text-ink-muted">Add the property details.</span>
+                    </h1>
                     {savedHint}
                 </div>
             )}
             <TooltipProvider>
-                <div className="flex shrink-0 items-center gap-2">
+                <div
+                    className="
+                      flex shrink-0 items-center justify-end gap-2 inline-full
+                      sm:inline-auto
+                    "
+                >
                     <SlidingTabs
                         value={entryMode}
                         onValueChange={onEntryModeChange}
                         ariaLabel="Entry mode"
                         options={ENTRY_MODE_TABS}
-                        className="t-tabs-compact"
                     />
                     <Button
                         type="button"
                         variant="outline"
+                        size="md"
                         loading={savingIntent === "draft"}
                         disabled={isBusy}
                         onClick={(event) => {
@@ -1051,6 +1329,7 @@ function PropertyFormHeader({
                     <Button
                         type="button"
                         variant="accent"
+                        size="md"
                         loading={savingIntent === "publish"}
                         disabled={isBusy}
                         onClick={(event) => {
@@ -1059,7 +1338,7 @@ function PropertyFormHeader({
                             onPublish();
                         }}
                     >
-                        Publish
+                        {entryMode === "quick" ? "Review & publish" : "Publish"}
                     </Button>
                     {showClose ? (
                         <Tooltip>
@@ -1074,7 +1353,7 @@ function PropertyFormHeader({
                                             <Button
                                                 type="button"
                                                 variant="outline"
-                                                size="icon"
+                                                size="icon-md"
                                                 aria-label="Close"
                                                 className="shrink-0"
                                             />
@@ -1097,7 +1376,7 @@ function PropertyFormHeader({
     );
 }
 
-function PropertyFormFooter({
+function PropertyFormActions({
     entryMode,
     stepIndex,
     stepCount,
@@ -1106,6 +1385,7 @@ function PropertyFormFooter({
     showStartFresh,
     onStartFresh,
     onBack,
+    onSaveDraft,
     onNext,
 }: {
     entryMode: "full" | "quick";
@@ -1116,53 +1396,54 @@ function PropertyFormFooter({
     showStartFresh: boolean;
     onStartFresh: () => void;
     onBack: () => void;
+    onSaveDraft: () => void;
     onNext: () => void;
 }) {
     const showBack = entryMode === "full" && stepIndex > 0;
-    const showPrimary = entryMode === "quick" || !isLastStep;
+    const showPrimary = true;
     const progressPct = stepCount ? Math.round(((stepIndex + 1) / stepCount) * 100) : 0;
-    const primaryLabel = entryMode === "quick" ? "Save as draft" : "Continue";
+    const primaryLabel =
+        entryMode === "quick" ? "Save as draft" : isLastStep ? "Publish" : "Continue";
 
     return (
-        <footer
-            className="
-              flex shrink-0 items-center gap-3 border-bs border-border-warm bg-surface px-4 py-2.5
-              pbe-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-xs
-              sm:px-6
-            "
-        >
-            <div className="flex flex-1 items-center gap-3 min-inline-0 md:gap-4">
+        <div className="flex flex-col gap-4 pbe-[env(safe-area-inset-bottom)] text-center">
+            <div className="flex flex-col gap-4 min-inline-0">
                 {showStartFresh ? (
                     <Button
                         type="button"
                         variant="outline"
+                        size="md"
                         onClick={onStartFresh}
-                        className="shrink-0"
+                        aria-label="Start fresh"
+                        className="order-last text-ink-muted inline-full"
                     >
-                        <RotateCcw aria-hidden /> Start fresh
+                        <RotateCcw aria-hidden />
+                        <span>Start fresh</span>
                     </Button>
                 ) : null}
                 {entryMode === "full" ? (
-                    <div className="hidden items-center gap-4 min-inline-0 md:flex">
+                    <div className="flex flex-col gap-3 min-inline-0">
                         <Progress
                             value={progressPct}
                             className="
-                              flex-row flex-nowrap items-center gap-2 max-inline-56 min-inline-40
+                              flex-col items-stretch gap-2 inline-full
                               **:data-[slot=progress-indicator]:bg-brand
-                              **:data-[slot=progress-track]:flex-1
                               **:data-[slot=progress-track]:bg-surface-muted
                               **:data-[slot=progress-track]:block-1.5
+                              **:data-[slot=progress-track]:inline-full
                             "
                         >
-                            <ProgressLabel
-                                className="
-                              body-xs tabular shrink-0 font-medium text-ink-subtle
-                            "
-                            >
-                                {stepIndex + 1} of {stepCount}
+                            <ProgressLabel className="body-xs tabular font-medium text-ink-muted">
+                                Step {stepIndex + 1} of {stepCount}
                             </ProgressLabel>
                         </Progress>
-                        <p className="body-xs flex flex-wrap items-center gap-1.5 text-ink-subtle">
+                        <p
+                            className="
+                              body-xs hidden flex-wrap items-center justify-center gap-1.5
+                              text-ink-muted
+                              xl:flex
+                            "
+                        >
                             Press
                             <KbdGroup className="gap-1">
                                 <Kbd className="px-1.5 text-[10px] min-inline-4">1</Kbd>
@@ -1174,9 +1455,25 @@ function PropertyFormFooter({
                     </div>
                 ) : null}
             </div>
-            <div className="ms-auto flex shrink-0 items-center gap-2">
+            <div className="flex flex-col gap-2">
+                {entryMode === "full" ? (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isSubmitting}
+                        onClick={onSaveDraft}
+                        className="inline-full sm:hidden"
+                    >
+                        Save draft
+                    </Button>
+                ) : null}
                 {showBack ? (
-                    <Button type="button" variant="ghost" onClick={onBack}>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onBack}
+                        className="order-2 inline-full"
+                    >
                         Back
                     </Button>
                 ) : null}
@@ -1184,49 +1481,45 @@ function PropertyFormFooter({
                     <Button
                         type="button"
                         variant="accent"
+                        size="md"
                         loading={isSubmitting}
                         disabled={isSubmitting}
                         onClick={onNext}
+                        className="inline-full"
                     >
                         {primaryLabel}
-                        <KbdGroup className="hidden gap-0.5 md:inline-flex">
-                            <Kbd
-                                className="
-                              bg-surface/20 px-1.5 text-[10px] text-surface min-inline-4
-                            "
-                            >
-                                Ctrl
-                            </Kbd>
-                            <span className="text-[10px] text-surface/70" aria-hidden>
-                                +
-                            </span>
-                            <Kbd
-                                className="
-                              bg-surface/20 px-1.5 text-[10px] text-surface min-inline-4
-                            "
-                            >
-                                Enter
-                            </Kbd>
-                        </KbdGroup>
+                        {entryMode === "quick" || isLastStep ? (
+                            <Check aria-hidden />
+                        ) : (
+                            <ArrowRight aria-hidden />
+                        )}
                     </Button>
                 ) : null}
             </div>
-        </footer>
+        </div>
     );
 }
 
 function StepContent({
+    propertyId,
     step,
     portal,
     photoFilesRef,
 }: {
+    propertyId?: string;
     step: PropertyFormStep;
     portal: "broker" | "owner";
     photoFilesRef: MutableRefObject<Map<string, File>>;
 }) {
     if (step === "basics") {
         return (
-            <div className="flex flex-col gap-8">
+            <div
+                className="
+              flex flex-col divide-y divide-border-warm
+              [&>*+*]:pbs-6
+              [&>*:not(:last-child)]:pbe-6
+            "
+            >
                 <StepBasics />
                 <StepLocation />
             </div>
@@ -1234,7 +1527,13 @@ function StepContent({
     }
     if (step === "details") {
         return (
-            <div className="flex flex-col gap-8">
+            <div
+                className="
+              flex flex-col divide-y divide-border-warm
+              [&>*+*]:pbs-6
+              [&>*:not(:last-child)]:pbe-6
+            "
+            >
                 <StepDetails />
                 <StepArea />
             </div>
@@ -1242,7 +1541,13 @@ function StepContent({
     }
     if (step === "pricing") {
         return (
-            <div className="flex flex-col gap-8">
+            <div
+                className="
+              flex flex-col divide-y divide-border-warm
+              [&>*+*]:pbs-6
+              [&>*:not(:last-child)]:pbe-6
+            "
+            >
                 <StepPricing />
                 <StepCommission portal={portal} />
             </div>
@@ -1252,9 +1557,15 @@ function StepContent({
         return <StepFurnishing />;
     }
     return (
-        <div className="flex flex-col gap-8">
+        <div
+            className="
+          flex flex-col divide-y divide-border-warm
+          [&>*+*]:pbs-6
+          [&>*:not(:last-child)]:pbe-6
+        "
+        >
             <StepMedia photoFilesRef={photoFilesRef} />
-            {portal === "broker" ? <StepPublish /> : null}
+            {portal === "broker" ? <StepPublish propertyId={propertyId} /> : null}
         </div>
     );
 }
@@ -1371,12 +1682,14 @@ function MobileListingScore({
 }
 
 function MobileDealSummary({
+    audience,
     values,
     stepIndex,
     photoFilesRef,
     open,
     onOpenChange,
 }: {
+    audience: "owner" | "broker";
     values: PropertyDraftValues;
     stepIndex: number;
     photoFilesRef: MutableRefObject<Map<string, File>>;
@@ -1399,7 +1712,12 @@ function MobileDealSummary({
                 "
             >
                 <div className="flex-1 min-inline-0">
-                    <LiveSummaryPanel values={values} stepIndex={stepIndex} compact />
+                    <LiveSummaryPanel
+                        audience={audience}
+                        values={values}
+                        stepIndex={stepIndex}
+                        compact
+                    />
                 </div>
                 <ChevronDown
                     className={cn(
@@ -1421,6 +1739,7 @@ function MobileDealSummary({
                 >
                     <div className="mx-auto p-4 max-inline-md">
                         <LiveSummaryPanel
+                            audience={audience}
                             values={values}
                             stepIndex={stepIndex}
                             photoFilesRef={photoFilesRef}
@@ -1455,17 +1774,7 @@ function mergeDraft(
             };
         }
     }
-    merged.media.photos = (merged.media.photos ?? []).filter(
-        (photo) => Boolean(photo.url) && !photo.url.startsWith("blob:"),
-    );
-    // Local extras often strip blob previews after upload, leaving photos: [].
-    // Never let that wipe server photos already on the listing.
-    const basePhotos = (base.media?.photos ?? []).filter(
-        (photo) => Boolean(photo.url) && !photo.url.startsWith("blob:"),
-    );
-    if (merged.media.photos.length === 0 && basePhotos.length > 0) {
-        merged.media.photos = basePhotos;
-    }
+    merged.media.photos = (merged.media.photos ?? []).filter((photo) => Boolean(photo.url));
     merged.attachedBuyers = Array.isArray(merged.attachedBuyers) ? merged.attachedBuyers : [];
     if (!merged.owner.contactId) merged.owner.contactId = "";
     // Legacy drafts may still store removed commission pickers ("months", etc.).
@@ -1474,6 +1783,22 @@ function mergeDraft(
     merged.commission.rent.mode = "flat";
     merged.commission.rent.paidBy = "owner";
     return merged;
+}
+
+/** Local-only extras must never overwrite newer server prices, photos or contacts. */
+function mergeLocalExtras(
+    base: PropertyDraftValues,
+    saved: Partial<PropertyDraftValues>,
+): PropertyDraftValues {
+    const next = structuredClone(base);
+    next.location.unitNumber = saved.location?.unitNumber ?? next.location.unitNumber;
+    next.location.fullAddress = saved.location?.fullAddress ?? next.location.fullAddress;
+    next.area.carpetArea = saved.area?.carpetArea ?? next.area.carpetArea;
+    next.details.propertyAge = saved.details?.propertyAge ?? next.details.propertyAge;
+    next.details.propertyCondition =
+        saved.details?.propertyCondition ?? next.details.propertyCondition;
+    next.details.commercial.seats = saved.details?.commercial?.seats ?? null;
+    return next;
 }
 
 function draftForStorage(values: PropertyDraftValues): PropertyDraftValues {
@@ -1510,8 +1835,11 @@ function listingToDraft(
     draft.basics.title = listing.title;
     draft.basics.description = listing.description;
     draft.location.city = listing.city;
+    draft.location.country = listing.country || "India";
+    draft.location.state = listing.state || "Gujarat";
     draft.location.locality = listing.locality;
-    draft.location.streetOrRoad = listing.address;
+    draft.location.unitNumber = listing.unitNumber || "";
+    draft.location.streetOrRoad = listing.streetOrRoad || "";
     draft.location.landmark = listing.landmark || listing.address || listing.locality;
     draft.location.pincode = listing.pinCode;
     draft.location.projectOrSociety = listing.society || "";
@@ -1520,10 +1848,13 @@ function listingToDraft(
     draft.details.balconies = listing.balconies;
     draft.details.floorNumber = listing.floorNumber ?? null;
     draft.details.totalFloors = listing.totalFloors;
+    draft.details.propertyAge = listing.propertyAge == null ? null : Number(listing.propertyAge);
+    draft.details.propertyCondition = listing.propertyCondition || "";
     draft.details.facing = listing.facing ?? "";
     draft.details.coveredParking =
         listing.parking === "none" ? 0 : listing.parking === "3plus" ? 3 : Number(listing.parking);
-    draft.area.carpetArea = listing.areaSqft;
+    draft.area.carpetArea = listing.carpetAreaSqft ?? null;
+    draft.area.plotArea = listing.areaSqft || null;
     draft.area.areaSqft = listing.areaSqft;
     draft.sale.expectedPrice = listing.saleAmountInr;
     draft.sale.pricePerSqft =
@@ -1538,7 +1869,7 @@ function listingToDraft(
     draft.commission.sale.value = listing.commissionPercent ?? draft.commission.sale.value;
     draft.commission.rent.mode = "flat";
     draft.commission.rent.value = listing.commissionAmount ?? (portal === "owner" ? null : 0);
-    draft.rent.availableFrom = listing.availableFrom ?? "";
+    draft.rent.availableFrom = listing.availableFrom?.slice(0, 10) ?? "";
     draft.furnishing.status =
         listing.furnishing === "furnished"
             ? "fully_furnished"
@@ -1554,6 +1885,11 @@ function listingToDraft(
     draft.details.commercial.ceilingHeightFt = listing.ceilingHeightFt ?? null;
     draft.media.videoUrl = listing.videoUrl ?? "";
     draft.media.virtualTourUrl = listing.virtualTourUrl ?? "";
+    if (portal === "broker") {
+        draft.owner.contactId = listing.exclusiveOwnerId || "";
+        draft.owner.name = listing.ownerName || "";
+        draft.owner.phone = listing.ownerPhoneDigits || "";
+    }
     draft.media.photos = listing.imageSrcs.map((url, index) => ({
         id: `existing-${index}`,
         url,
@@ -1628,14 +1964,11 @@ function draftToLegacyInput(
 ): CreateMyListingInput {
     const propertyType = draftPropertyTypeToLegacy(values);
     const bhk = values.details.bedrooms === "1rk" ? 1 : Number(values.details.bedrooms) || 0;
-    const usablePhotos = values.media.photos.filter(
-        (photo) => photo.status !== "error" && Boolean(photo.url),
-    );
+    const usablePhotos = values.media.photos.filter(isUsablePropertyPhoto);
     const imageSrcs = usablePhotos.map((photo) => photo.url);
     const photoFiles = usablePhotos
         .map((photo) => photoFilesRef.current.get(photo.url) ?? photoFilesRef.current.get(photo.id))
-        .filter((file): file is File => Boolean(file))
-        .slice(0, 10);
+        .filter((file): file is File => Boolean(file));
     const listingFor = values.basics.listingFor;
     const transactionType =
         listingFor === "sell" ? "sale" : listingFor === "both" ? "both" : "rent";
@@ -1739,6 +2072,12 @@ function focusFieldByPath(path: string): boolean {
     const root = byId ?? byName ?? byLabel;
     if (!root) return false;
 
+    // Reveal collapsed sections before scrolling to a validation error.
+    let section = root.closest("details");
+    while (section) {
+        section.open = true;
+        section = section.parentElement?.closest("details") ?? null;
+    }
     root.scrollIntoView({ behavior: "smooth", block: "center" });
     const focusable = root.matches("input, select, textarea, button, [tabindex]")
         ? root
@@ -1754,18 +2093,8 @@ function focusFieldByPath(path: string): boolean {
 const MEDIA_COVER_ERROR_PATH = "media.cover" as FieldPath<PropertyDraftValues>;
 
 const QUICK_ADD_ERROR_FIELDS = [
-    "basics.listingFor",
-    "basics.category",
-    "basics.propertyType",
-    "location.city",
-    "location.locality",
-    "area.plotArea",
-    "sale.expectedPrice",
-    "rent.monthlyRent",
-    "commission.sale.value",
-    "commission.rent.value",
-    MEDIA_COVER_ERROR_PATH,
-] as const satisfies readonly FieldPath<PropertyDraftValues>[];
+    ...QUICK_ADD_VALIDATION_FIELDS,
+] as readonly FieldPath<PropertyDraftValues>[];
 
 /** Field-level validation for Quick add — same inline errors as Full details. */
 function validateQuickAdd(
@@ -1774,65 +2103,15 @@ function validateQuickAdd(
     portal: "broker" | "owner",
 ): boolean {
     methods.clearErrors([...QUICK_ADD_ERROR_FIELDS]);
-    const issues: { path: FieldPath<PropertyDraftValues>; message: string }[] = [];
-
-    if (!values.basics.listingFor) {
-        issues.push({
-            path: "basics.listingFor",
-            message: "Choose listing for (sale, rent, or both)",
-        });
-    }
-    if (!values.basics.category) {
-        issues.push({ path: "basics.category", message: "Choose a category" });
-    }
-    if (!values.basics.propertyType) {
-        issues.push({ path: "basics.propertyType", message: "Choose a property type" });
-    }
-    if (!values.location.city.trim()) {
-        issues.push({ path: "location.city", message: "Choose a city" });
-    }
-    if (!values.location.locality.trim()) {
-        issues.push({ path: "location.locality", message: "Enter the locality" });
-    }
-    const area = values.area.areaSqft || values.area.plotArea || values.area.carpetArea;
-    if (!area) {
-        issues.push({ path: "area.plotArea", message: "Enter the area" });
-    }
-    const listingFor = values.basics.listingFor;
-    if ((listingFor === "sell" || listingFor === "both") && !values.sale.expectedPrice) {
-        issues.push({ path: "sale.expectedPrice", message: "Enter the sale price" });
-    }
-    if (
-        (listingFor === "rent" ||
-            listingFor === "lease" ||
-            listingFor === "pg" ||
-            listingFor === "both") &&
-        !values.rent.monthlyRent
-    ) {
-        issues.push({ path: "rent.monthlyRent", message: "Enter the monthly rent" });
-    }
-    if (portal === "owner") {
-        for (const issue of ownerCommissionIssues(values)) {
-            issues.push({
-                path: issue.path as FieldPath<PropertyDraftValues>,
-                message: issue.message,
-            });
-        }
-    }
-    const hasCover = values.media.photos.some(
-        (photo) => photo.isCover && photo.status !== "error" && Boolean(photo.url),
-    );
-    const hasAnyPhoto = values.media.photos.some(
-        (photo) => photo.status !== "error" && Boolean(photo.url),
-    );
-    if (!hasCover && !hasAnyPhoto) {
-        issues.push({ path: MEDIA_COVER_ERROR_PATH, message: "Add a cover photo" });
-    }
+    const issues = quickAddValidationIssues(values, portal);
 
     if (!issues.length) return true;
 
     for (const issue of issues) {
-        methods.setError(issue.path, { type: "quick", message: issue.message });
+        methods.setError(issue.path as FieldPath<PropertyDraftValues>, {
+            type: "quick",
+            message: issue.message,
+        });
     }
     const firstPath = issues[0]!.path;
     requestAnimationFrame(() => {
