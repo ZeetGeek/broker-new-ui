@@ -21,6 +21,7 @@ import { AppImage } from "@/components/shared/app-image";
 import {
     Check,
     CircleAlert,
+    ExternalLink,
     ImageIcon,
     ImagePlus,
     Images,
@@ -483,7 +484,7 @@ export function StepMedia({
 
 function MediaEmbedPreview({ embed }: { embed: MediaEmbed }) {
     return (
-        <div className="overflow-hidden rounded-card border border-border-warm bg-surface">
+        <div className="overflow-hidden rounded-lg border border-border-warm bg-surface">
             <div className="relative aspect-video bg-surface-muted">
                 <iframe
                     title={embed.title}
@@ -495,19 +496,22 @@ function MediaEmbedPreview({ embed }: { embed: MediaEmbed }) {
                     referrerPolicy="strict-origin-when-cross-origin"
                 />
             </div>
-            <div className="flex items-center justify-between gap-3 px-3 py-2">
-                <p className="truncate text-sm font-medium text-ink">{embed.title}</p>
-                <a
-                    href={embed.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="
-                      shrink-0 text-sm font-semibold text-brand
-                      hover:text-brand-text hover:underline
-                    "
+            <div
+                className="
+              flex items-center justify-between gap-3 border-bs border-border-warm px-5 py-1.5
+            "
+            >
+                <p className="truncate text-sm font-medium text-ink-muted">{embed.title}</p>
+                <Button
+                    variant="link"
+                    size="sm"
+                    nativeButton={false}
+                    render={<a href={embed.sourceUrl} target="_blank" rel="noopener noreferrer" />}
+                    className="px-0 text-xs"
                 >
                     Open
-                </a>
+                    <ExternalLink className="block-3.5 inline-3.5" aria-hidden />
+                </Button>
             </div>
         </div>
     );

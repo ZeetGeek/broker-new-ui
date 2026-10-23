@@ -115,15 +115,15 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                             name="commission.sale.value"
                             label="Sale commission (%)"
                             step={0.1}
-                            min={isOwner ? OWNER_SALE_COMMISSION_MIN : 0}
-                            max={isOwner ? OWNER_SALE_COMMISSION_MAX : 10}
+                            min={OWNER_SALE_COMMISSION_MIN}
+                            max={OWNER_SALE_COMMISSION_MAX}
                             placeholder="e.g. 2"
                             visibility={isOwner ? "public" : "private"}
                             startIcon={BadgePercent}
                             hint={
                                 isOwner
                                     ? `Percent of the sale price. Between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}%.`
-                                    : "Percent of the sale price, charged to the owner."
+                                    : `Percent of the sale price, charged to the owner. Between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}%.`
                             }
                         />
                     ) : null}

@@ -569,12 +569,13 @@ export const stepSchemas = {
                 if (
                     sale.mode === "percent" &&
                     sale.value != null &&
-                    ((sale.value > 0 && sale.value < 0.1) || sale.value > 10)
+                    (sale.value < OWNER_SALE_COMMISSION_MIN ||
+                        sale.value > OWNER_SALE_COMMISSION_MAX)
                 ) {
                     context.addIssue({
                         code: "custom",
                         path: ["commission", "sale", "value"],
-                        message: "Commission looks too high. Please check.",
+                        message: `Sale commission must be between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}%`,
                     });
                 }
             }

@@ -21,11 +21,36 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ChatComposer } from "@/features/chat/chat-composer";
 import { ChatMessageRow } from "@/features/chat/chat-message";
+import { ChatSkeleton } from "@/features/chat/chat-skeleton";
 import { mapRepresentationMessage } from "@/features/chat/map-representation-message";
 import type { ChatMessage, ChatPeer } from "@/features/chat/types";
 import { useAppSelector } from "@/store/hooks";
 
 import "simplebar-react/dist/simplebar.min.css";
+
+const DATE_SEPARATOR_WAVE = `M0 4 q3 -3 6 0 ${"t6 0 ".repeat(39)}`;
+
+function DateSeparatorWave() {
+    return (
+        <svg
+            aria-hidden="true"
+            focusable="false"
+            viewBox="0 0 240 8"
+            preserveAspectRatio="none"
+            className="flex-1 text-border-warm block-2 min-inline-0"
+        >
+            <path
+                d={DATE_SEPARATOR_WAVE}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.25}
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+            />
+        </svg>
+    );
+}
+
 /** Name, presence and role — no call buttons, by product decision. */
 function ChatHeader({ peer }: { peer: ChatPeer }) {
     return (
@@ -262,30 +287,7 @@ export function ChatModal({
                             autoHide
                         >
                             {showLoading ? (
-                                <div role="status" className="space-y-5 px-5 py-8">
-                                    <span className="sr-only">Loading conversation…</span>
-                                    <div
-                                        aria-hidden
-                                        className="space-y-5 motion-safe:animate-pulse"
-                                    >
-                                        <div
-                                            className="
-                                              rounded-inner bg-surface-muted block-14 inline-3/4
-                                            "
-                                        />
-                                        <div
-                                            className="
-                                              ms-auto rounded-inner bg-brand-soft block-10
-                                              inline-1/2
-                                            "
-                                        />
-                                        <div
-                                            className="
-                                              rounded-inner bg-surface-muted block-20 inline-2/3
-                                            "
-                                        />
-                                    </div>
-                                </div>
+                                <ChatSkeleton />
                             ) : showEmpty ? (
                                 <div
                                     role="status"
@@ -331,17 +333,21 @@ export function ChatModal({
                                                 {showDate ? (
                                                     <li
                                                         className="
-                                                      flex items-center justify-center py-3
-                                                    "
+                                                          flex items-center justify-center gap-4
+                                                          py-3
+                                                        "
                                                     >
+                                                        <DateSeparatorWave />
                                                         <time
                                                             dateTime={message.sentAt}
                                                             className="
-                                                              body-xs font-semibold text-ink/65
+                                                              body-xs shrink-0 font-semibold
+                                                              text-ink/65
                                                             "
                                                         >
                                                             {formatDateShort(date)}
                                                         </time>
+                                                        <DateSeparatorWave />
                                                     </li>
                                                 ) : null}
                                                 <ChatMessageRow message={message} peer={peer} />
