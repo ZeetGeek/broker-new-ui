@@ -1,11 +1,17 @@
 "use client";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { ContactsSummary, ContactsTab } from "@/features/contacts/types";
 
 function buildMeaning(summary: ContactsSummary | null, tab: ContactsTab): string {
     if (!summary) return "Everyone on both sides of your deals.";
 
     if (tab === "owners") {
+        if (!FEATURE_PLATFORM_OWNER) {
+            return summary.ownerCount === 0
+                ? "Add the owners whose properties you sell."
+                : "Owners you added yourself.";
+        }
         if (summary.ownerCount === 0) return "They appear once one accepts you.";
         if (summary.lapsedOwnerCount > 0) {
             return `${summary.lapsedOwnerCount} no longer represented.`;

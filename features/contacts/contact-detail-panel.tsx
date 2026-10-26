@@ -39,6 +39,7 @@ import {
     toOwnerContactCardModel,
     type ContactPropertyCardItem,
 } from "@/features/contacts/contact-card-model";
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { BuyerContactForm, OwnerContactForm } from "@/features/contacts/contact-form-model";
 import { CONTACT_LOCATION_FALLBACK } from "@/features/contacts/contact-location-defaults";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
@@ -860,7 +861,7 @@ export function ContactDetailPanel({
     const isBuyer = contact.type === "buyer";
     const edit = () =>
         isBuyer ? onEditBuyer(contact.row as BuyerRow) : onEditOwner(contact.row as OwnerRow);
-    const badge = owner ? (
+    const badge = owner && FEATURE_PLATFORM_OWNER ? (
         owner.origin === "platform" ? (
             <span
                 className="
