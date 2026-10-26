@@ -52,6 +52,7 @@ import {
 import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
 import { ArrowRight, Check, ChevronDown, RotateCcw, X } from "@/components/shared/icons";
+import { Skeleton } from "@/components/shared/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,6 +72,7 @@ import { FORM_STEPS, PROPERTY_TYPES, type PropertyFormStep, toLabel } from "@/co
 import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import { ListingScoreCard } from "@/features/properties/property-form/listing-score-card";
 import { LiveSummaryPanel } from "@/features/properties/property-form/live-summary-panel";
+import { PropertyFormSkeleton } from "@/features/properties/property-form/property-form-skeleton";
 import { QuickAdd } from "@/features/properties/property-form/quick-add";
 import { StepNav } from "@/features/properties/property-form/step-nav";
 import { StepArea } from "@/features/properties/property-form/steps/step-area";
@@ -862,6 +864,7 @@ export function PropertyForm({
                     onSubmit={handleFormSubmit}
                     onKeyDown={handleFormKeyDown}
                     noValidate
+                    aria-busy={restoringDraft || undefined}
                     className={cn(
                         `relative flex flex-1 flex-col overflow-hidden bg-surface min-block-0`,
                         className,
@@ -887,20 +890,17 @@ export function PropertyForm({
                                 void requestClose();
                             }}
                             showClose={isDialog}
+                            restoring={restoringDraft}
                         />
                         {restoringDraft ? (
-                            <p role="status" className="px-4 py-2 text-sm text-ink-muted">
-                                Loading your saved draft…
-                            </p>
-                        ) : null}
-                        {storageError ? (
-                            <p role="alert" className="px-4 py-2 text-sm text-danger">
-                                {storageError}
-                            </p>
-                        ) : null}
-
-                        {entryMode === "full" ? (
+                            <PropertyFormSkeleton />
+                        ) : entryMode === "full" ? (
                             <>
+                                {storageError ? (
+                                    <p role="alert" className="px-4 py-2 text-sm text-danger">
+                                        {storageError}
+                                    </p>
+                                ) : null}
                                 <div
                                     className="
                                       shrink-0 border-be border-border-warm bg-surface
@@ -1049,6 +1049,11 @@ export function PropertyForm({
                                   min-block-0 min-inline-0
                                 "
                             >
+                                {storageError ? (
+                                    <p role="alert" className="mbe-4 text-sm text-danger">
+                                        {storageError}
+                                    </p>
+                                ) : null}
                                 <div
                                     className="
                                       flex flex-1 flex-col rounded-card border border-border-warm
@@ -1167,6 +1172,7 @@ function PropertyFormHeader({
     onPublish,
     onClose,
     showClose,
+    restoring,
 }: {
     mode: "create" | "edit";
     entryMode: "full" | "quick";
@@ -1177,28 +1183,36 @@ function PropertyFormHeader({
     onPublish: () => void;
     onClose: () => void;
     showClose: boolean;
+    restoring: boolean;
 }) {
     const title = mode === "edit" ? "Edit property" : "Add property";
     const isBusy = savingIntent != null;
     const savedHint = (
-        <Popover>
-            <PopoverTrigger
-                type="button"
-                className="
-                  inline-flex items-center justify-center rounded-full
-                  focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand
-                "
-                aria-label="About details saved on this device"
-            >
-                <Badge color={isSaved ? "emerald" : "amber"} aria-live="polite">
-                    {isSaved ? "Saved on this device" : "Not saved yet"}
-                </Badge>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="text-sm text-ink max-inline-xs">
-                Unit number, carpet area, property age, condition and seats are currently saved only
-                on this device.
-            </PopoverContent>
-        </Popover>
+        <div className="flex items-center min-block-5 min-inline-34">
+            {restoring ? (
+                <Skeleton className="rounded-full block-5 inline-full" />
+            ) : (
+                <Popover>
+                    <PopoverTrigger
+                        type="button"
+                        className="
+                          inline-flex items-center justify-center rounded-full
+                          focus-visible:outline-2 focus-visible:outline-offset-4
+                          focus-visible:outline-brand
+                        "
+                        aria-label="About details saved on this device"
+                    >
+                        <Badge color={isSaved ? "emerald" : "amber"} aria-live="polite">
+                            {isSaved ? "Saved on this device" : "Not saved yet"}
+                        </Badge>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="text-sm text-ink max-inline-xs">
+                        Unit number, carpet area, property age, condition and seats are currently
+                        saved only on this device.
+                    </PopoverContent>
+                </Popover>
+            )}
+        </div>
     );
 
     return (
