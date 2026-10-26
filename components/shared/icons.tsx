@@ -87,6 +87,7 @@ import {
     IconCommand,
     IconCompass,
     IconCopy,
+    IconCreditCardOff,
     IconCrop,
     IconCrosshair,
     IconCurrencyDollar,
@@ -297,6 +298,7 @@ export const Command = IconCommand;
 export const Compass = IconCompass;
 export const Contact = IconAddressBook;
 export const Copy = IconCopy;
+export const CreditCardOff = IconCreditCardOff;
 export const CropIcon = IconCrop;
 export const Crosshair = IconCrosshair;
 export const DoorClosed = IconDoor;

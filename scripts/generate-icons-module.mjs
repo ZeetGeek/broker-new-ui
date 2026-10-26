@@ -72,6 +72,7 @@ const MAP = {
     Compass: "IconCompass",
     Contact: "IconAddressBook",
     Copy: "IconCopy",
+    CreditCardOff: "IconCreditCardOff",
     CropIcon: "IconCrop",
     Crosshair: "IconCrosshair",
     DoorClosed: "IconDoor",

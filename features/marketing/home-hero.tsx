@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { ArrowRight, IndianRupee, Lock, Rocket, ShieldCheck } from "@/components/shared/icons";
+import { ArrowRight, CreditCardOff, Gift, Lock, Rocket } from "@/components/shared/icons";
 
 import { ProgressiveBlur } from "@/components/motion-primitives/progressive-blur";
 import { Logo } from "@/components/shared/logo";
@@ -11,11 +11,20 @@ import { Button } from "@/components/ui/button";
 
 import { HeroBg } from "./hero-bg";
 
-const TRUST_ITEMS = [
-    { icon: ShieldCheck, label: "RERA-verified brokers" },
-    { icon: IndianRupee, label: "No listing fee" },
-    { icon: Lock, label: "Your number stays private" },
-];
+const BROKER_SIGNUP_HREF = "/register?portal=broker";
+
+const HERO_COPY = {
+    title: "Stop losing leads in WhatsApp",
+    lede: "Track every client, never miss a follow-up, manage showings from your phone. Built for independent brokers.",
+    primary: { label: "Start free for 3 months", href: BROKER_SIGNUP_HREF },
+    secondary: { label: "See how it works", href: BROKER_SIGNUP_HREF },
+    trust: [
+        { icon: Gift, label: "Free for first 20 brokers" },
+        { icon: CreditCardOff, label: "No card required" },
+        { icon: Lock, label: "Your data stays yours" },
+    ],
+    note: "Coming soon: property owners list directly, and you apply to represent them.",
+};
 
 export function HomeHero() {
     return (
@@ -98,7 +107,7 @@ export function HomeHero() {
                           [text-shadow:0_2px_24px_var(--color-brand-ink)]
                         "
                     >
-                        Sell your property through a broker you trust.
+                        {HERO_COPY.title}
                     </h1>
 
                     <p
@@ -107,7 +116,7 @@ export function HomeHero() {
                           [text-shadow:0_1px_16px_var(--color-brand-ink)] max-inline-[420px]
                         "
                     >
-                        List it free. Verified brokers ask to sell it. You approve the one you like.
+                        {HERO_COPY.lede}
                     </p>
 
                     <div
@@ -119,17 +128,19 @@ export function HomeHero() {
                         <Button
                             size="lg"
                             variant="highlight"
-                            render={<Link href="/register?portal=owner" />}
+                            nativeButton={false}
+                            render={<Link href={HERO_COPY.primary.href} />}
                         >
-                            List my property free
+                            {HERO_COPY.primary.label}
                         </Button>
                         <Button
                             size="lg"
                             variant="highlight-outline"
                             className="bg-canvas/10 backdrop-blur-lg hover:bg-canvas/15"
-                            render={<Link href="/register?portal=broker" />}
+                            nativeButton={false}
+                            render={<Link href={HERO_COPY.secondary.href} />}
                         >
-                            I&apos;m a broker
+                            {HERO_COPY.secondary.label}
                             <ArrowRight aria-hidden="true" data-icon="inline-end" />
                         </Button>
                     </div>
@@ -140,7 +151,7 @@ export function HomeHero() {
                           sm:flex-row sm:gap-0 sm:divide-x sm:divide-canvas/15
                         "
                     >
-                        {TRUST_ITEMS.map(({ icon: Icon, label }) => (
+                        {HERO_COPY.trust.map(({ icon: Icon, label }) => (
                             <li key={label} className="flex items-center gap-2 sm:px-5">
                                 <span
                                     className="
@@ -155,6 +166,15 @@ export function HomeHero() {
                             </li>
                         ))}
                     </ul>
+
+                    <p
+                        className="
+                          body-sm relative text-canvas/80
+                          [text-shadow:0_1px_16px_var(--color-brand-ink)]
+                        "
+                    >
+                        {HERO_COPY.note}
+                    </p>
                 </div>
             </div>
         </section>
