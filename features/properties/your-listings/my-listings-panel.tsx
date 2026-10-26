@@ -309,7 +309,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                             }
                             onEditListing={setEditingListing}
                             onDeleteListing={setDeletingListing}
-                            onMarkSold={isOwnerPortal ? setSellingListing : undefined}
+                            onMarkSold={setSellingListing}
                             onAddBuyer={
                                 isOwnerPortal
                                     ? undefined
@@ -397,12 +397,14 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     }}
                     propertyId={sellingListing.id}
                     propertyTitle={sellingListing.title || "This property"}
+                    portal={portal}
                     onSold={() => {
                         setSellingListing(null);
                         refreshListings();
                         void queryClient.invalidateQueries({
                             queryKey: ["owner-property-representations"],
                         });
+                        void queryClient.invalidateQueries({ queryKey: ["pipeline"] });
                     }}
                 />
             ) : null}

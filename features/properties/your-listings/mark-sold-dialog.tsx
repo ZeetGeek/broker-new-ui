@@ -14,20 +14,23 @@ import { Textarea } from "@/components/ui/textarea";
 const REASON_MAX = 500;
 
 /**
- * Owner confirm for "Mark as sold". Closing every open deal and notifying the
- * brokers happens right away, so the dialog says so before the owner commits.
+ * Confirm "Mark as sold". Open deals close immediately, so the dialog says so
+ * before the caller commits. Owner listings also notify representing brokers.
+ * A broker exclusive listing does not — only that broker listed it.
  */
 export function MarkSoldDialog({
     open,
     onOpenChange,
     propertyId,
     propertyTitle,
+    portal = "owner",
     onSold,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     propertyId: string;
     propertyTitle: string;
+    portal?: "owner" | "broker";
     onSold?: () => void;
 }) {
     const [reason, setReason] = useState("");
@@ -96,8 +99,16 @@ export function MarkSoldDialog({
                         <p className="body-sm font-semibold text-ink">This happens right away</p>
                         <ul className="body-sm flex list-disc flex-col gap-1 ps-4 text-ink">
                             <li>Every open deal on this property is closed as lost</li>
-                            <li>Brokers representing it get a notification</li>
-                            <li>It stops showing to brokers looking for listings</li>
+                            {portal === "owner" ? (
+                                <li>Brokers representing it get a notification</li>
+                            ) : (
+                                <li>The note is saved on each closed deal</li>
+                            )}
+                            <li>
+                                {portal === "owner"
+                                    ? "It stops showing to brokers looking for listings"
+                                    : "The listing is marked sold"}
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -116,8 +127,10 @@ export function MarkSoldDialog({
                         className="border-2 border-border-warm bg-surface"
                     />
                     <span className="body-xs text-ink-muted">
-                        Shared with your brokers and saved on the closed deals. {reason.length}/
-                        {REASON_MAX}
+                        {portal === "owner"
+                            ? "Shared with your brokers and saved on the closed deals."
+                            : "Saved on the closed deals."}{" "}
+                        {reason.length}/{REASON_MAX}
                     </span>
                 </label>
             </div>

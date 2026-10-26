@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 import { PropertyActionRail } from "@/features/properties/property-detail/property-action-rail";
+import { MarkSoldDialog } from "@/features/properties/your-listings/mark-sold-dialog";
 import { PropertyDetailLayout } from "@/features/properties/property-detail/property-detail-layout";
 import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
 import type { MyListingItem, MyListingStatus } from "@/features/properties/your-listings/types";
@@ -45,6 +46,7 @@ function OwnedPropertyDetail({
     const router = useRouter();
     const [item, setItem] = useState(listing);
     const [busy, setBusy] = useState(false);
+    const [soldOpen, setSoldOpen] = useState(false);
     const brokersQuery = useQuery({
         queryKey: ["owner-property-representations"],
         queryFn: () => representativeApi.ownerList(),
@@ -120,6 +122,9 @@ function OwnedPropertyDetail({
                         busy={busy}
                         onTogglePublish={() => void togglePublish()}
                         onRequestDelete={handleDelete}
+                        onMarkSold={
+                            portal === "broker" && !item.isSold ? () => setSoldOpen(true) : undefined
+                        }
                         editHref={editHref}
                         requestsHref={portal === "owner" ? requestsHref : undefined}
                         brokers={brokerSummary?.brokers}
@@ -151,6 +156,21 @@ function OwnedPropertyDetail({
                     )
                 }
             />
+            {portal === "broker" ? (
+                <MarkSoldDialog
+                    open={soldOpen}
+                    onOpenChange={setSoldOpen}
+                    portal="broker"
+                    propertyId={item.id}
+                    propertyTitle={item.title || "This property"}
+                    onSold={() => {
+                        void myListingsApi.get(item.id).then((updated) => {
+                            if (updated) setItem(updated);
+                            else setItem((current) => ({ ...current, isSold: true }));
+                        });
+                    }}
+                />
+            ) : null}
         </>
     );
 }
