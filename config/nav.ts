@@ -15,6 +15,8 @@ import {
 } from "@/lib/routes/owner";
 import type { ShortcutId } from "@/lib/shortcuts";
 
+import { FEATURE_MARKETPLACE } from "@/config/index";
+
 export type NavItem = {
     label: string;
     href: string;
@@ -49,8 +51,7 @@ export const OWNER_NAV_ITEMS: NavItem[] = [
     { label: "Leads", href: OWNER_LEADS_HREF, mobileLabel: "Offers" },
 ];
 
-export const BROKER_NAV_ITEMS: NavItem[] = [
-    { label: "Dashboard", href: "/broker/dashboard", shortcutId: "dashboard" },
+const BROKER_MARKETPLACE_NAV_ITEMS: NavItem[] = [
     {
         label: "Owner listings",
         mobileLabel: "Owners",
@@ -67,6 +68,11 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
         shortcutId: "my_deals",
         activePrefixes: ["/broker/requests"],
     },
+];
+
+export const BROKER_NAV_ITEMS: NavItem[] = [
+    { label: "Dashboard", href: "/broker/dashboard", shortcutId: "dashboard" },
+    ...(FEATURE_MARKETPLACE ? BROKER_MARKETPLACE_NAV_ITEMS : []),
     {
         label: "Your listings",
         mobileLabel: "Yours",

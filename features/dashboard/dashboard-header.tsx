@@ -12,6 +12,8 @@ import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_MARKETPLACE } from "@/config/index";
+
 import { DashboardContactLine, hasPhoneNumber } from "./dashboard-contact-line";
 import {
     countPhrase,
@@ -63,17 +65,21 @@ function buildSummaryLines({
         ) : (
             <>You have {countPhrase(siteVisitCount, "site visit today", "site visits today")}</>
         ),
-        requestsWaitingCount === 0 ? (
-            "No owner replies waiting on you"
-        ) : (
-            <>
-                {countPhrase(
-                    requestsWaitingCount,
-                    "owner hasn't replied yet",
-                    "owners haven't replied yet",
-                )}
-            </>
-        ),
+        ...(FEATURE_MARKETPLACE
+            ? [
+                  requestsWaitingCount === 0 ? (
+                      "No owner replies waiting on you"
+                  ) : (
+                      <>
+                          {countPhrase(
+                              requestsWaitingCount,
+                              "owner hasn't replied yet",
+                              "owners haven't replied yet",
+                          )}
+                      </>
+                  ),
+              ]
+            : []),
         pipelineActiveTotal === 0 ? (
             "Add a client when a deal comes in"
         ) : (
@@ -226,18 +232,20 @@ export function DashboardHeader({
             }
             actions={
                 <>
-                    <ShortcutTooltip shortcutId="owner_listings">
-                        <Button
-                            variant="outline-dark"
-                            size="md"
-                            nativeButton={false}
-                            render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
-                            aria-label="Owner listings"
-                        >
-                            <Search aria-hidden strokeWidth={1.75} />
-                            <span className="hidden md:inline">Owner listings</span>
-                        </Button>
-                    </ShortcutTooltip>
+                    {FEATURE_MARKETPLACE ? (
+                        <ShortcutTooltip shortcutId="owner_listings">
+                            <Button
+                                variant="outline-dark"
+                                size="md"
+                                nativeButton={false}
+                                render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
+                                aria-label="Owner listings"
+                            >
+                                <Search aria-hidden strokeWidth={1.75} />
+                                <span className="hidden md:inline">Owner listings</span>
+                            </Button>
+                        </ShortcutTooltip>
+                    ) : null}
                     <ShortcutTooltip shortcutId="pipeline" label="Pipeline">
                         <Button
                             variant="accent"

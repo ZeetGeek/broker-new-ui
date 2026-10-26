@@ -30,6 +30,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export type ShortcutsCheatsheetProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    /** Shortcuts whose destination is turned off for this portal. */
+    hiddenIds?: readonly ShortcutId[];
 };
 
 const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<IconProps>> = {
@@ -50,9 +52,10 @@ const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<IconProps>> = {
     add_contact: Contact,
 };
 
-function groupShortcuts(): Map<string, ShortcutDef[]> {
+function groupShortcuts(hiddenIds: readonly ShortcutId[]): Map<string, ShortcutDef[]> {
     const groups = new Map<string, ShortcutDef[]>();
     for (const shortcut of SHORTCUTS) {
+        if (hiddenIds.includes(shortcut.id)) continue;
         const list = groups.get(shortcut.group) ?? [];
         list.push(shortcut);
         groups.set(shortcut.group, list);
@@ -109,8 +112,12 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutDef }) {
     );
 }
 
-export function ShortcutsCheatsheet({ open, onOpenChange }: ShortcutsCheatsheetProps) {
-    const groups = groupShortcuts();
+export function ShortcutsCheatsheet({
+    open,
+    onOpenChange,
+    hiddenIds = [],
+}: ShortcutsCheatsheetProps) {
+    const groups = groupShortcuts(hiddenIds);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

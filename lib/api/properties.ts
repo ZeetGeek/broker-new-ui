@@ -728,8 +728,9 @@ export const propertiesApi = {
     },
 
     /**
-     * Owner marks their listing as sold. Open deals on it close as lost (with
-     * `reason` in their note) and representing brokers are notified.
+     * Mark an owner listing or a broker exclusive listing as sold. Open deals
+     * close as lost with `reason` in their note. Representing brokers are
+     * notified only for owner listings.
      */
     markSold(id: string, reason?: string) {
         return apiFetch<PropertyListing>(`/properties/${id}/mark-sold`, {

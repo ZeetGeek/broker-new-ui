@@ -33,6 +33,8 @@ export type PropertyActionRailProps = {
     busy: boolean;
     onTogglePublish: () => void;
     onRequestDelete: () => Promise<void>;
+    /** Broker exclusive listings. Caller opens the sold confirm. */
+    onMarkSold?: () => void;
     editHref: string;
     requestsHref?: string;
     brokers?: PropertyBroker[];
@@ -46,6 +48,7 @@ export function PropertyActionRail({
     busy,
     onTogglePublish,
     onRequestDelete,
+    onMarkSold,
     editHref,
     requestsHref,
     brokers = [],
@@ -122,17 +125,31 @@ export function PropertyActionRail({
                     </>
                 ) : (
                     <>
-                        <h2 className={styles.actionTitle}>Your custom property</h2>
+                        <h2 className={styles.actionTitle}>
+                            {item.isSold ? "Property sold" : "Your custom property"}
+                        </h2>
                         <p className={styles.actionDescription}>
-                            {item.visibility === "marketplace"
-                                ? "Manage the property details and the owner linked to this listing."
-                                : "A private property in your inventory. Keep its details up to date as you work the deal."}
+                            {item.isSold
+                                ? "This exclusive listing is sold. Open deals on it were closed."
+                                : item.visibility === "marketplace"
+                                  ? "Manage the property details and the owner linked to this listing."
+                                  : "A private property in your inventory. Keep its details up to date as you work the deal."}
                         </p>
                         <div className={styles.actionButtons}>
                             <Button variant="accent" size="lg" render={<Link href={editHref} />}>
                                 <Pencil size={18} aria-hidden />
                                 Edit property
                             </Button>
+                            {!item.isSold && onMarkSold ? (
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    disabled={busy}
+                                    onClick={onMarkSold}
+                                >
+                                    Mark as sold
+                                </Button>
+                            ) : null}
                         </div>
                         <p className={styles.railNote}>
                             <Lock size={14} aria-hidden />
