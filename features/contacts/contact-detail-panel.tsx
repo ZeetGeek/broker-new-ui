@@ -440,9 +440,13 @@ function BuyerPanel({
         window.setTimeout(() => setSaved(false), 1400);
     };
 
-    const budget = [buyer.budgetMinInr, buyer.budgetMaxInr]
+    const saleBudget = [buyer.budgetMinInr, buyer.budgetMaxInr]
         .filter((value): value is number => value != null)
-        .map((value) => formatIndianPrice(value, buyer.lookingFor))
+        .map((value) => formatIndianPrice(value, "buy"))
+        .join(" to ");
+    const rentBudget = [buyer.rentBudgetMinInr, buyer.rentBudgetMaxInr]
+        .filter((value): value is number => value != null)
+        .map((value) => formatIndianPrice(value, "rent"))
         .join(" to ");
 
     const areasLabel = model.localities.join(", ");
@@ -488,13 +492,28 @@ function BuyerPanel({
                             icon: MapPin,
                             value: areasLabel || "—",
                         },
-                        {
-                            label: "Budget",
-                            icon: IndianRupee,
-                            value: budget || model.budgetLabel,
-                            wide: true,
-                            empty: !budget && model.budgetLabel === "Budget not set",
-                        },
+                        ...(buyer.lookingFor !== "rent"
+                            ? [
+                                  {
+                                      label: "Sale budget",
+                                      icon: IndianRupee,
+                                      value: saleBudget || "—",
+                                      wide: true,
+                                      empty: !saleBudget,
+                                  },
+                              ]
+                            : []),
+                        ...(buyer.lookingFor !== "buy"
+                            ? [
+                                  {
+                                      label: "Rent budget",
+                                      icon: IndianRupee,
+                                      value: rentBudget || "—",
+                                      wide: true,
+                                      empty: !rentBudget,
+                                  },
+                              ]
+                            : []),
                     ]}
                 />
             </section>

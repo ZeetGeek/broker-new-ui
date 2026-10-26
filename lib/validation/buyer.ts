@@ -47,6 +47,18 @@ export const buyerSourceSchema = z.enum([
 export type BuyerPropertyKind = z.infer<typeof buyerPropertyKindSchema>;
 export type BuyerSource = z.infer<typeof buyerSourceSchema>;
 
+const budgetAmount = z.string().refine((value) => {
+    const digits = normalizeBuyerBudget(value);
+    return digits === "" || Number(digits) > 0;
+}, "Enter an amount above zero");
+
+function budgetPairInOrder(min: string, max: string) {
+    const low = normalizeBuyerBudget(min);
+    const high = normalizeBuyerBudget(max);
+    if (low === "" || high === "") return true;
+    return Number(high) >= Number(low);
+}
+
 /**
  * Validation only — deliberately no output transforms.
  *
@@ -82,27 +94,30 @@ export const buyerFormSchema = z
             .string()
             .refine((value) => parseBuyerLocalities(value).length > 0, "Add at least one area"),
         /** Empty is allowed — a buyer who has not named a number is still worth saving. */
-        budgetMin: z.string().refine((value) => {
-            const digits = normalizeBuyerBudget(value);
-            return digits === "" || Number(digits) > 0;
-        }, "Enter an amount above zero"),
-        budgetMax: z.string().refine((value) => {
-            const digits = normalizeBuyerBudget(value);
-            return digits === "" || Number(digits) > 0;
-        }, "Enter an amount above zero"),
+        saleBudgetMin: budgetAmount,
+        saleBudgetMax: budgetAmount,
+        rentBudgetMin: budgetAmount,
+        rentBudgetMax: budgetAmount,
         /** Empty string means "any" — kept for API; not shown on the create form. */
         bhk: z.string(),
         source: buyerSourceSchema,
         note: z.string().max(300, "Note is too long"),
     })
-    .refine(
-        (values) => {
-            const min = normalizeBuyerBudget(values.budgetMin);
-            const max = normalizeBuyerBudget(values.budgetMax);
-            if (min === "" || max === "") return true;
-            return Number(max) >= Number(min);
-        },
-        { message: "Highest must be more than lowest", path: ["budgetMax"] },
-    );
+    .superRefine((values, ctx) => {
+        if (values.lookingFor !== "rent" && !budgetPairInOrder(values.saleBudgetMin, values.saleBudgetMax)) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Highest must be more than lowest",
+                path: ["saleBudgetMax"],
+            });
+        }
+        if (values.lookingFor !== "buy" && !budgetPairInOrder(values.rentBudgetMin, values.rentBudgetMax)) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Highest must be more than lowest",
+                path: ["rentBudgetMax"],
+            });
+        }
+    });
 
 export type BuyerFormValues = z.infer<typeof buyerFormSchema>;

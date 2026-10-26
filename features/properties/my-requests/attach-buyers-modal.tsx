@@ -39,12 +39,11 @@ function matchesQuery(client: ClientItem, q: string): boolean {
  * than a block — the broker knows their buyers better than we do.
  */
 function mismatchReason(client: ClientItem, request: BuyerProperty): string | null {
-    const wantsRent = client.lookingFor === "rent";
-    if (wantsRent !== request.isRent) {
-        return wantsRent ? "Wants to rent" : "Wants to buy";
-    }
+    if (client.lookingFor === "rent" && !request.isRent) return "Wants to rent";
+    if (client.lookingFor === "buy" && request.isRent) return "Wants to buy";
 
-    if (client.budgetMaxInr !== null && request.amountInr > client.budgetMaxInr) {
+    const budgetMax = request.isRent ? (client.rentBudgetMaxInr ?? null) : client.budgetMaxInr;
+    if (budgetMax !== null && request.amountInr > budgetMax) {
         return "Over budget";
     }
 
@@ -56,12 +55,12 @@ function mismatchReason(client: ClientItem, request: BuyerProperty): string | nu
 }
 
 function budgetLabel(client: ClientItem): string | null {
-    if (client.budgetMaxInr === null) return null;
-    const amount =
-        client.lookingFor === "rent"
-            ? formatRentInr(client.budgetMaxInr)
-            : formatPriceInr(client.budgetMaxInr);
-    return `Up to ${amount}`;
+    const sale = client.budgetMaxInr != null ? `Sale up to ${formatPriceInr(client.budgetMaxInr)}` : null;
+    const rent =
+        client.rentBudgetMaxInr != null ? `Rent up to ${formatRentInr(client.rentBudgetMaxInr)}` : null;
+    if (client.lookingFor === "rent") return rent;
+    if (client.lookingFor === "both") return [sale, rent].filter(Boolean).join(" · ") || null;
+    return sale;
 }
 
 function BuyerRow({

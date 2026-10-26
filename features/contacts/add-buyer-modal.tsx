@@ -51,8 +51,10 @@ function emptyValues(location = contactLocationDefaults()): BuyerFormValues {
         state: location.state,
         city: location.city,
         localities: "",
-        budgetMin: "",
-        budgetMax: "",
+        saleBudgetMin: "",
+        saleBudgetMax: "",
+        rentBudgetMin: "",
+        rentBudgetMax: "",
         bhk: "",
         source: "walk_in",
         note: "",
@@ -76,17 +78,24 @@ function valuesFromBuyer(
         state: buyer.state?.trim() || location.state,
         city: buyer.city?.trim() || location.city,
         localities: buyer.preferredLocalities.join(", "),
-        budgetMin: buyer.budgetMinInr ? String(buyer.budgetMinInr) : "",
-        budgetMax: buyer.budgetMaxInr ? String(buyer.budgetMaxInr) : "",
+        saleBudgetMin: buyer.budgetMinInr ? String(buyer.budgetMinInr) : "",
+        saleBudgetMax: buyer.budgetMaxInr ? String(buyer.budgetMaxInr) : "",
+        rentBudgetMin: buyer.rentBudgetMinInr ? String(buyer.rentBudgetMinInr) : "",
+        rentBudgetMax: buyer.rentBudgetMaxInr ? String(buyer.rentBudgetMaxInr) : "",
         bhk: buyer.bhk ? String(buyer.bhk) : "",
         source: buyer.source ?? "walk_in",
         note: buyer.notes ?? "",
     };
 }
 
+function amountOrNull(value: string): number | null {
+    const digits = normalizeBuyerBudget(value);
+    return digits ? Number(digits) : null;
+}
+
 function toNewBuyerInput(values: BuyerFormValues): NewBuyerInput {
-    const minDigits = normalizeBuyerBudget(values.budgetMin);
-    const maxDigits = normalizeBuyerBudget(values.budgetMax);
+    const wantsSale = values.lookingFor !== "rent";
+    const wantsRent = values.lookingFor !== "buy";
     return {
         name: values.name.trim(),
         phoneDigits: normalizeBuyerPhone(values.phone),
@@ -97,8 +106,10 @@ function toNewBuyerInput(values: BuyerFormValues): NewBuyerInput {
         country: values.country.trim() || null,
         state: values.state.trim() || null,
         city: values.city.trim() || null,
-        budgetMinInr: minDigits ? Number(minDigits) : null,
-        budgetMaxInr: maxDigits ? Number(maxDigits) : null,
+        budgetMinInr: wantsSale ? amountOrNull(values.saleBudgetMin) : null,
+        budgetMaxInr: wantsSale ? amountOrNull(values.saleBudgetMax) : null,
+        rentBudgetMinInr: wantsRent ? amountOrNull(values.rentBudgetMin) : null,
+        rentBudgetMaxInr: wantsRent ? amountOrNull(values.rentBudgetMax) : null,
         bhk: values.bhk ? Number(values.bhk) || null : null,
         source: values.source,
         notes: values.note.trim() || null,
@@ -405,25 +416,52 @@ export function AddBuyerModal({
                     />
                 </FormField>
 
-                <BudgetRangeField
-                    lookingFor={values.lookingFor ?? "buy"}
-                    minInr={values.budgetMin ?? ""}
-                    maxInr={values.budgetMax ?? ""}
-                    onMinChange={(budgetMin) =>
-                        form.setValue("budgetMin", budgetMin, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                        })
-                    }
-                    onMaxChange={(budgetMax) =>
-                        form.setValue("budgetMax", budgetMax, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                        })
-                    }
-                    minError={form.formState.errors.budgetMin?.message}
-                    maxError={form.formState.errors.budgetMax?.message}
-                />
+                {values.lookingFor !== "rent" ? (
+                    <BudgetRangeField
+                        title="Sale budget"
+                        idPrefix="buyer-sale-budget"
+                        lookingFor="buy"
+                        minInr={values.saleBudgetMin ?? ""}
+                        maxInr={values.saleBudgetMax ?? ""}
+                        onMinChange={(saleBudgetMin) =>
+                            form.setValue("saleBudgetMin", saleBudgetMin, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                            })
+                        }
+                        onMaxChange={(saleBudgetMax) =>
+                            form.setValue("saleBudgetMax", saleBudgetMax, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                            })
+                        }
+                        minError={form.formState.errors.saleBudgetMin?.message}
+                        maxError={form.formState.errors.saleBudgetMax?.message}
+                    />
+                ) : null}
+                {values.lookingFor !== "buy" ? (
+                    <BudgetRangeField
+                        title="Rent budget"
+                        idPrefix="buyer-rent-budget"
+                        lookingFor="rent"
+                        minInr={values.rentBudgetMin ?? ""}
+                        maxInr={values.rentBudgetMax ?? ""}
+                        onMinChange={(rentBudgetMin) =>
+                            form.setValue("rentBudgetMin", rentBudgetMin, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                            })
+                        }
+                        onMaxChange={(rentBudgetMax) =>
+                            form.setValue("rentBudgetMax", rentBudgetMax, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                            })
+                        }
+                        minError={form.formState.errors.rentBudgetMin?.message}
+                        maxError={form.formState.errors.rentBudgetMax?.message}
+                    />
+                ) : null}
 
                 {isEdit && onAttach ? (
                     <div className="space-y-2">
