@@ -62,6 +62,7 @@ import {
 import { PhoneNumber } from "@/components/shared/phone-number";
 import {
     type CommissionAudience,
+    ListingAskPrices,
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
@@ -944,75 +945,6 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
     );
 }
 
-function BrowseOverlayPrices({
-    listing,
-    audience = "broker",
-    showEmptyTip = true,
-}: {
-    listing: BrowsePropertyCardListing;
-    audience?: CommissionAudience;
-    showEmptyTip?: boolean;
-}) {
-    const isRentOnly = offersRent(listing) && !offersSale(listing);
-    const both = offersBoth(listing);
-
-    if (isRentOnly) {
-        return (
-            <PriceWithCommission
-                amountInr={listing.rentAmountInr ?? 0}
-                isRent
-                commissionAmountInr={listing.commissionAmount}
-                audience={audience}
-                showEmptyTip={showEmptyTip}
-                size="lg"
-            />
-        );
-    }
-
-    if (both) {
-        return (
-            <p
-                className="
-                  flex flex-wrap items-baseline gap-x-1.5 text-brand tabular-nums min-inline-0
-                "
-            >
-                <PriceWithCommission
-                    amountInr={listing.saleAmountInr ?? 0}
-                    commissionPercent={listing.commissionPercent}
-                    audience={audience}
-                    showEmptyTip={showEmptyTip}
-                    size="lg"
-                />
-                <span className="font-medium text-ink-subtle" aria-hidden>
-                    /
-                </span>
-                <span className="body-sm font-medium tracking-wide text-ink-muted">
-                    Also{" "}
-                    <PriceWithCommission
-                        amountInr={listing.rentAmountInr ?? 0}
-                        isRent
-                        commissionAmountInr={listing.commissionAmount}
-                        audience={audience}
-                        showEmptyTip={showEmptyTip}
-                        size="sm"
-                        className="text-ink"
-                    />
-                </span>
-            </p>
-        );
-    }
-
-    return (
-        <PriceWithCommission
-            amountInr={listing.saleAmountInr ?? 0}
-            commissionPercent={listing.commissionPercent}
-            audience={audience}
-            showEmptyTip={showEmptyTip}
-            size="lg"
-        />
-    );
-}
-
 /** Grid browse card: clear photo on top, essentials in a solid panel below. */
 function BrowseOverlayPropertyCard({
     listing,
@@ -1110,7 +1042,7 @@ function BrowseOverlayPropertyCard({
             <div className="flex flex-1 flex-col gap-3.5 min-inline-0">
                 <OverlayCardSummary
                     href={detailsHref}
-                    price={<BrowseOverlayPrices listing={listing} showEmptyTip />}
+                    price={<ListingAskPrices listing={listing} />}
                     headline={headline}
                     locationLabel={`${listing.locality}, ${listing.city}`}
                 />
@@ -1853,7 +1785,7 @@ function OwnedOverlayPropertyCard({
                 <div className="flex flex-col gap-3.5 min-inline-0">
                     <OverlayCardSummary
                         href={detailsHref}
-                        price={<BrowseOverlayPrices listing={browse} audience={audience} />}
+                        price={<ListingAskPrices listing={browse} audience={audience} />}
                         headline={headline}
                         locationLabel={`${listing.locality}, ${listing.city}`}
                     />

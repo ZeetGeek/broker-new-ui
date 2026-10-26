@@ -39,9 +39,13 @@ function matchesView(item: RequestItem, view: RequestsFilters["view"]): boolean 
     }
 }
 
-function matchesType(isRent: boolean, type: RequestsFilters["type"]): boolean {
+function matchesType(
+    item: Pick<RequestItem, "isRent" | "transactionType">,
+    type: RequestsFilters["type"],
+): boolean {
     if (!type) return true;
-    return type === "rent" ? isRent : !isRent;
+    if (item.transactionType === "both") return true;
+    return type === "rent" ? item.isRent : !item.isRent;
 }
 
 export function filterRequests(items: RequestItem[], filters: RequestsFilters): RequestItem[] {
@@ -49,7 +53,7 @@ export function filterRequests(items: RequestItem[], filters: RequestsFilters): 
         (item) =>
             matchesView(item, filters.view) &&
             matchesQuery(item, filters.q) &&
-            matchesType(item.isRent, filters.type) &&
+            matchesType(item, filters.type) &&
             matchesPropertyCriteria(item, filters.propertyFilters),
     );
 }

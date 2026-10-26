@@ -27,6 +27,11 @@ export type InviteItem = {
     title: string;
     configLabel: string;
     propertyTypeLabel: string;
+    category?: string | null;
+    subtype?: string | null;
+    transactionType?: string | null;
+    saleAmountInr?: number | null;
+    rentAmountInr?: number | null;
     locality: string;
     city: string;
     areaSqft: number;

@@ -49,6 +49,14 @@ export type RequestItem = {
     title: string;
     configLabel: string;
     propertyTypeLabel: string;
+    /** Listing category from the API (`residential`, `commercial`, …). */
+    category?: string | null;
+    /** Listing subtype (`apartment`, `farm_house`, …). */
+    subtype?: string | null;
+    /** `sale`, `rent`, or `both`. */
+    transactionType?: string | null;
+    saleAmountInr?: number | null;
+    rentAmountInr?: number | null;
     locality: string;
     city: string;
     areaSqft: number;

@@ -1,5 +1,9 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import {
+    appendDealListingQuery,
+    type DealListingApiQuery,
+} from "@/lib/properties/deal-listing-query";
 
 export type RepresentationRespondStatus = "accepted" | "rejected";
 
@@ -57,13 +61,16 @@ export type RepresentationItem = {
     propertyBedrooms?: number | null;
     propertyBathrooms?: number | null;
     propertyBalconies?: number | null;
+    propertyBalconyCount?: number | null;
     propertyParkingSpaces?: number | null;
     propertyFloorNumber?: number | null;
     propertyFacing?: string | null;
+    propertyFacingDirection?: string | null;
     propertyCondition?: string | null;
     propertyAge?: string | null;
     propertySuitableFor?: string[] | null;
     propertyFurnishing?: string | null;
+    propertyFurnishingStatus?: string | null;
     propertyListedAt?: string | null;
     propertyAreaSqft?: number | null;
     propertySalePrice?: string | number | null;
@@ -133,7 +140,7 @@ export type RepresentationListPage = {
 
 export type OwnerRepQueueSort = "recent" | "oldest";
 
-export type BrokerInvitationListQuery = {
+export type BrokerInvitationListQuery = DealListingApiQuery & {
     /** `pending` (default server-side), `accepted`, `rejected`, `closed`, or `all`. */
     status?: string;
     search?: string;
@@ -203,10 +210,13 @@ export const representativeApi = {
     },
 
     /** Broker-side representations (outbound requests + inbound invites). */
-    brokerList(status?: string) {
+    brokerList(status?: string, deal?: DealListingApiQuery) {
         if (isMockMode()) return Promise.resolve([]);
-        const qs = status ? `?status=${encodeURIComponent(status)}` : "";
-        return apiFetch<RepresentationItem[]>(`/representative/broker/list${qs}`);
+        const q = new URLSearchParams();
+        if (status) q.set("status", status);
+        appendDealListingQuery(q, deal);
+        const qs = q.toString();
+        return apiFetch<RepresentationItem[]>(`/representative/broker/list${qs ? `?${qs}` : ""}`);
     },
 
     /**
@@ -220,6 +230,7 @@ export const representativeApi = {
         if (params?.search) q.set("search", params.search);
         if (params?.page != null && params.page > 1) q.set("page", String(params.page));
         if (params?.limit != null) q.set("limit", String(params.limit));
+        appendDealListingQuery(q, params);
         const qs = q.toString();
         return apiFetch<RepresentationItem[] | RepresentationListPage>(
             `/representative/broker/invitation/list${qs ? `?${qs}` : ""}`,

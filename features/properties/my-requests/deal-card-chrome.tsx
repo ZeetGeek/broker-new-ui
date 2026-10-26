@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
+import { offersRent, offersSale } from "@/lib/format/listing-availability";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
@@ -21,7 +22,8 @@ import {
 } from "@/components/shared/overlay-card";
 import {
     type CommissionAudience,
-    PriceWithCommission,
+    ListingAskPrices,
+    type ListingAskPricesListing,
 } from "@/components/shared/price-with-commission";
 import {
     PropertyCardMenu,
@@ -51,11 +53,33 @@ export type DealCardListing = {
     configLabel?: string;
     amountInr: number;
     isRent: boolean;
+    /** Both set when the listing is for sale and for rent. */
+    saleAmountInr?: number | null;
+    rentAmountInr?: number | null;
     commissionPercent: number;
     /** Fixed rent brokerage in INR. Absent or 0 when the owner left it blank. */
     commissionAmount?: number | null;
     imageSrc: string;
 };
+
+/** Sale / rent asks for the card, falling back to the single `amountInr`. */
+function dealPricing(listing: DealCardListing): ListingAskPricesListing {
+    const hasSplit = listing.saleAmountInr != null || listing.rentAmountInr != null;
+    return {
+        saleAmountInr: hasSplit
+            ? (listing.saleAmountInr ?? null)
+            : listing.isRent
+              ? null
+              : listing.amountInr,
+        rentAmountInr: hasSplit
+            ? (listing.rentAmountInr ?? null)
+            : listing.isRent
+              ? listing.amountInr
+              : null,
+        commissionPercent: listing.commissionPercent,
+        commissionAmount: listing.commissionAmount,
+    };
+}
 
 const BARE_ICON_BUTTON_CLASS =
     "shrink-0 bg-transparent p-0 hover:bg-transparent block-6! inline-6!";
@@ -260,6 +284,7 @@ export function DealOverlayCard({
         configLabel ||
         listing.title;
     const tone = statusTone ?? "closed";
+    const pricing = dealPricing(listing);
 
     return (
         <OverlayCard
@@ -283,26 +308,23 @@ export function DealOverlayCard({
                             {statusLabel}
                         </Badge>
                     ) : null}
-                    <Badge color={listing.isRent ? "orange" : "emerald"} blur="dark">
-                        {listing.isRent ? "For rent" : "For sale"}
-                    </Badge>
+                    {offersSale(pricing) ? (
+                        <Badge color="emerald" blur="dark">
+                            For sale
+                        </Badge>
+                    ) : null}
+                    {offersRent(pricing) ? (
+                        <Badge color="orange" blur="dark">
+                            For rent
+                        </Badge>
+                    ) : null}
                 </>
             }
             actions={actions}
         >
             <OverlayCardSummary
                 href={href}
-                price={
-                    <PriceWithCommission
-                        amountInr={listing.amountInr}
-                        isRent={listing.isRent}
-                        commissionPercent={listing.commissionPercent}
-                        commissionAmountInr={listing.commissionAmount}
-                        audience={audience}
-                        size="lg"
-                        showEmptyTip
-                    />
-                }
+                price={<ListingAskPrices listing={pricing} audience={audience} />}
                 headline={headline}
                 locationLabel={`${listing.locality}, ${listing.city}`}
             />
