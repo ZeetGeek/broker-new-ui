@@ -28,7 +28,8 @@ function guarded(handler: (event: KeyboardEvent) => void) {
 
 export type GlobalShortcutRoutes = {
     dashboard: string;
-    ownerListings: string;
+    /** Omitted when the broker marketplace is turned off. */
+    ownerListings?: string;
     /** Broker-only — the owner portal has no deal tracker. */
     deals?: string;
     yourListings: string;
@@ -63,7 +64,9 @@ export function useGlobalShortcuts({
     useEffect(() => {
         const unsubscribe = tinykeys(window, {
             "g d": guarded(() => router.push(routes.dashboard)),
-            "g o": guarded(() => router.push(routes.ownerListings)),
+            "g o": guarded(() => {
+                if (routes.ownerListings) router.push(routes.ownerListings);
+            }),
             "g q": guarded(() => {
                 if (routes.deals) router.push(routes.deals);
             }),

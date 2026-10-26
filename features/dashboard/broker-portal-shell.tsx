@@ -3,6 +3,7 @@
 import { type ReactNode, useCallback, useState } from "react";
 
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
+import type { ShortcutId } from "@/lib/shortcuts";
 import {
     BROKER_MY_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
@@ -17,6 +18,7 @@ import {
 } from "@/components/layout/portal-section-nav";
 import { BROKER_SEARCH_HINTS } from "@/components/layout/search-placeholder-loop";
 
+import { FEATURE_MARKETPLACE } from "@/config/index";
 import { BROKER_NAV_ITEMS } from "@/config/nav";
 import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
 import { BrokerProfileMenu } from "@/features/broker/profile-menu";
@@ -30,8 +32,9 @@ const BROKER_NOTIFICATIONS_HREF = "/broker/notifications";
 
 const BROKER_SHORTCUT_ROUTES = {
     dashboard: "/broker/dashboard",
-    ownerListings: BROKER_OWNER_LISTINGS_HREF,
-    deals: BROKER_MY_DEALS_HREF,
+    ...(FEATURE_MARKETPLACE
+        ? { ownerListings: BROKER_OWNER_LISTINGS_HREF, deals: BROKER_MY_DEALS_HREF }
+        : {}),
     yourListings: BROKER_YOUR_LISTINGS_HREF,
     pipeline: "/broker/pipeline",
     contacts: "/broker/contacts",
@@ -41,6 +44,10 @@ const BROKER_SHORTCUT_ROUTES = {
     profile: "/broker/profile",
     settings: "/broker/settings",
 };
+
+const BROKER_HIDDEN_SHORTCUTS: ShortcutId[] = FEATURE_MARKETPLACE
+    ? []
+    : ["owner_listings", "my_deals"];
 
 export function BrokerPortalShell({ children }: { children: ReactNode }) {
     return (
@@ -103,7 +110,11 @@ function BrokerPortalShellInner({ children }: { children: ReactNode }) {
                 >
                     {children}
                 </PortalHeader>
-                <ShortcutsCheatsheet open={isShortcutsOpen} onOpenChange={setIsShortcutsOpen} />
+                <ShortcutsCheatsheet
+                    open={isShortcutsOpen}
+                    onOpenChange={setIsShortcutsOpen}
+                    hiddenIds={BROKER_HIDDEN_SHORTCUTS}
+                />
             </ChatProvider>
         </NotificationProvider>
     );

@@ -4,6 +4,8 @@ import { useEffect } from "react";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 
+import { FEATURE_MARKETPLACE } from "@/config/index";
+
 import {
     mapBrokerDashboardView,
     mapBrokerDashboardViewFromMock,
@@ -73,16 +75,28 @@ export function BrokerDashboard() {
         >
             <NextShowingCard showing={view.nextShowing} now={now} className="md:col-span-4" />
             <TodayCard agenda={view.today} now={now} className="md:col-span-4" />
-            <RequestsCard data={view.requests} className="md:col-span-4" />
+            {FEATURE_MARKETPLACE ? (
+                <RequestsCard data={view.requests} className="md:col-span-4" />
+            ) : null}
             <PipelineCard data={view.pipelineCard} className="md:col-span-4" />
-            <FollowUpsCard data={view.followUps} className="md:col-span-4" />
-            <ActivityCard data={view.activity} className="md:col-span-4" />
-            <YouRepresentCard data={view.youRepresent} className="md:col-span-6" />
-            <NewInAreas
-                properties={view.newInAreas}
-                serviceAreas={view.serviceAreas}
-                className="md:col-span-6"
+            <FollowUpsCard
+                data={view.followUps}
+                className={FEATURE_MARKETPLACE ? "md:col-span-4" : "md:col-span-6"}
             />
+            <ActivityCard
+                data={view.activity}
+                className={FEATURE_MARKETPLACE ? "md:col-span-4" : "md:col-span-6"}
+            />
+            {FEATURE_MARKETPLACE ? (
+                <>
+                    <YouRepresentCard data={view.youRepresent} className="md:col-span-6" />
+                    <NewInAreas
+                        properties={view.newInAreas}
+                        serviceAreas={view.serviceAreas}
+                        className="md:col-span-6"
+                    />
+                </>
+            ) : null}
         </DashboardPage>
     );
 }
