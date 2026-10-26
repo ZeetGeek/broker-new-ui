@@ -7,9 +7,9 @@ import { Building2, Check, Eye, MapPin, MoreHorizontal, Phone, X } from "@/compo
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
-import { parseInr } from "@/lib/format/inr";
+import { parseMoney } from "@/lib/format/money";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatPriceInr } from "@/lib/format/price";
+import { formatPrice } from "@/lib/format/price";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { useRouter } from "@/lib/navigation";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
@@ -118,7 +118,7 @@ function LeadCoverImage({
 
 function OfferBlock({ lead }: { lead: PropertyLead }) {
     const facts = leadPropertyFacts(lead);
-    const offerAmount = parseInr(lead.offerAmount);
+    const offerAmount = parseMoney(lead.offerAmount);
     const updatedAt = lead.updatedAt || lead.createdAt;
     const when = updatedAt ? parseApiInstant(updatedAt) : null;
     const ask = facts.askingInr;
@@ -141,7 +141,7 @@ function OfferBlock({ lead }: { lead: PropertyLead }) {
         ask != null && ask > 0
             ? (() => {
                   const delta = offerAmount - ask;
-                  const abs = formatPriceInr(Math.abs(delta));
+                  const abs = formatPrice(Math.abs(delta));
                   if (delta === 0) return { text: "matches ask", isGap: false };
                   return {
                       text: delta > 0 ? `${abs} over ask` : `${abs} under ask`,
@@ -153,7 +153,7 @@ function OfferBlock({ lead }: { lead: PropertyLead }) {
     return (
         <div className="flex flex-col gap-0.5">
             <p className="body-xs text-ink">
-                Offer <span className="tabular font-semibold">{formatPriceInr(offerAmount)}</span>
+                Offer <span className="tabular font-semibold">{formatPrice(offerAmount)}</span>
                 {gap ? (
                     <>
                         {" · "}

@@ -8,9 +8,15 @@ function normalizeReferralCode(value: string | undefined): string {
 export default async function Page({
     searchParams,
 }: {
-    searchParams: Promise<{ portal?: string; role?: string; ref?: string; step?: string }>;
+    searchParams: Promise<{
+        portal?: string;
+        role?: string;
+        ref?: string;
+        step?: string;
+        country?: string;
+    }>;
 }) {
-    const { portal, role, ref, step } = await searchParams;
+    const { portal, role, ref, step, country } = await searchParams;
     const chosenPortal = readPortal(portal) ?? readPortal(role);
     // console.log("portal=>",portal)
 
@@ -19,6 +25,7 @@ export default async function Page({
             initialPortal={chosenPortal}
             initialStep={chosenPortal && step === "account" ? "account" : "role"}
             initialReferralCode={normalizeReferralCode(ref)}
+            initialCountryIso2={/^[A-Za-z]{2}$/.test(country ?? "") ? country : undefined}
         />
     );
 }

@@ -8,8 +8,9 @@ import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi, type PublicPropertyListing } from "@/lib/api/properties";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 
+import { CurrencyScope } from "@/components/auth/market-currency-scope";
 import { Building2, Clock, MapPin, MessageCircle } from "@/components/shared/icons";
 import { PropertySharePopover } from "@/components/shared/property-share-popover";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -83,8 +84,8 @@ function PublicPropertyView({ listing }: { listing: PublicPropertyListing }) {
                                 (isRent ? item.rentAmountInr : item.saleAmountInr) == null
                                     ? "Price on request"
                                     : isRent
-                                      ? formatRentInr(amountInr)
-                                      : formatPriceInr(amountInr),
+                                      ? formatRent(amountInr)
+                                      : formatPrice(amountInr),
                             imageSrc: item.imageSrc,
                             propertyTypeLabel: item.propertyTypeLabel,
                             configLabel: item.configLabel,
@@ -185,7 +186,11 @@ export function PublicPropertyPage() {
                     ) : null}
                 </div>
             ) : (
-                <PublicPropertyView key={id} listing={query.data} />
+                // A shared link opens for anyone, signed in or not, from any
+                // country — so prices follow the listing, not the viewer.
+                <CurrencyScope currency={query.data.currency}>
+                    <PublicPropertyView key={id} listing={query.data} />
+                </CurrencyScope>
             )}
         </PublicPropertyShell>
     );

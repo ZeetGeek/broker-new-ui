@@ -4,6 +4,7 @@ import type {
     PropertyBrowseListing,
     PropertyRepresentationStanding,
 } from "@/lib/api/properties";
+import { sessionCountryName } from "@/lib/auth/session";
 
 import type {
     OwnerListingCategory,
@@ -308,7 +309,7 @@ export function mapBrowseListingToOwnerItem(listing: PropertyBrowseListing): Own
         suitableFor: listing.suitableFor?.length ? listing.suitableFor : null,
         locality,
         city,
-        country: listing.country?.trim() || "India",
+        country: listing.country?.trim() || sessionCountryName(),
         saleAmountInr,
         rentAmountInr,
         areaSqft: listing.areaSqft ?? 0,

@@ -1,11 +1,11 @@
 import { daysSince } from "@/lib/api/pipeline";
-import { formatPriceInr } from "@/lib/format/price";
+import { formatPrice } from "@/lib/format/price";
 
 import type { DealItem } from "@/features/pipeline/types";
 
 function offerGap(askInr: number, offerInr: number): { text: string; isGap: boolean } {
     const delta = offerInr - askInr;
-    const abs = formatPriceInr(Math.abs(delta));
+    const abs = formatPrice(Math.abs(delta));
     if (delta === 0) return { text: "matches ask", isGap: false };
     return {
         text: delta > 0 ? `${abs} over ask` : `${abs} under ask`,
@@ -35,7 +35,7 @@ export function NegotiationStageBlock({ deal }: { deal: DealItem }) {
     return (
         <div className="flex flex-col gap-0.5">
             <p className="body-xs text-ink">
-                Offer <span className="tabular font-semibold">{formatPriceInr(offer)}</span>
+                Offer <span className="tabular font-semibold">{formatPrice(offer)}</span>
                 {" · "}
                 <span className={gap.isGap ? "tabular font-medium text-urgent" : "text-ink"}>
                     {gap.text}

@@ -1,4 +1,4 @@
-import { formatIndianPrice } from "@/lib/format/price";
+import { formatListingPrice } from "@/lib/format/price";
 
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 
@@ -38,7 +38,7 @@ export type OwnerContactCardModel = {
 function buyerBudgetLabel(buyer: BuyerRow): string {
     if (buyer.budgetMaxInr == null && buyer.budgetMinInr == null) return "Budget not set";
     const value = buyer.budgetMaxInr ?? buyer.budgetMinInr ?? 0;
-    const amount = formatIndianPrice(value, buyer.lookingFor);
+    const amount = formatListingPrice(value, buyer.lookingFor);
     return buyer.budgetMaxInr != null ? `Up to ${amount}` : `From ${amount}`;
 }
 
@@ -62,7 +62,7 @@ export function toBuyerContactCardModel(buyer: BuyerRow): BuyerContactCardModel 
                 priceLabel:
                     property.priceLabel ||
                     (lead?.listPriceInr
-                        ? formatIndianPrice(lead.listPriceInr, lead.isRent ? "rent" : "buy")
+                        ? formatListingPrice(lead.listPriceInr, lead.isRent ? "rent" : "buy")
                         : "Price on request"),
                 coverUrl: property.coverUrl,
                 propertyType: property.propertyType || "Property",
@@ -87,7 +87,7 @@ export function toOwnerContactCardModel(owner: OwnerRow): OwnerContactCardModel 
     const details = owner.details;
     const askingPrice =
         owner.totalValueInr > 0
-            ? formatIndianPrice(
+            ? formatListingPrice(
                   owner.totalValueInr,
                   owner.propertyIntent ?? (owner.isAllRent ? "rent" : "sell"),
               )

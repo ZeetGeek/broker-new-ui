@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { AuthFormFrame } from "./auth-back-link";
 import { AuthBusyState } from "./auth-busy-state";
 import { AuthHeading } from "./auth-heading";
+import { CountryPicker, useSuggestedCountryIso2 } from "./country-picker";
 import { OrDivider } from "./or-divider";
 import { type Portal, PORTAL_OPTIONS } from "./portal";
 import { PortalPicker } from "./portal-picker";
@@ -116,17 +117,29 @@ export function RegisterWizard({
     initialPortal,
     initialStep = "role",
     initialReferralCode = "",
+    initialCountryIso2 = "",
 }: {
     /** Set when the address already names a role (`?portal=` or `?role=`). */
     initialPortal?: Portal;
     initialStep?: Step;
     /** From `/register?ref=CODE` — same as the old frontend invite links. */
     initialReferralCode?: string;
+    /** From `/register?country=IN` — kept across the two steps. */
+    initialCountryIso2?: string;
 }) {
     const router = useRouter();
     const [portal, setPortal] = React.useState<Portal>(initialPortal ?? "owner");
     const [step, setStep] = React.useState<Step>(initialStep);
     const [isRedirecting, setIsRedirecting] = React.useState(false);
+    // The market the account will work in: listings, brokers and prices.
+    // Until the user picks one, the browser's region is offered.
+    const suggestedCountryIso2 = useSuggestedCountryIso2();
+    // `null` until the user touches the picker, so clearing it stays cleared.
+    const [pickedCountryIso2, setCountryIso2] = React.useState<string | null>(
+        initialCountryIso2 ? initialCountryIso2.toUpperCase() : null,
+    );
+    const countryIso2 = pickedCountryIso2 ?? suggestedCountryIso2;
+    const [countryError, setCountryError] = React.useState<string | undefined>();
     const [referralCode, setReferralCode] = React.useState(() =>
         normalizeReferralCode(initialReferralCode),
     );
@@ -185,11 +198,12 @@ export function RegisterWizard({
         });
         observer.observe(active);
         return () => observer.disconnect();
-    }, [pageId, portal, password, errors, isSubmitting, submitError]);
+    }, [pageId, portal, password, errors, isSubmitting, submitError, countryError]);
 
     function writeRegisterParams(next: { portal?: Portal; step?: Step }) {
         const params = new URLSearchParams(window.location.search);
         if (next.portal) params.set("portal", next.portal);
+        if (countryIso2) params.set("country", countryIso2);
         if (next.step === "account") params.set("step", "account");
         else params.delete("step");
         const qs = params.toString();
@@ -201,7 +215,16 @@ export function RegisterWizard({
         writeRegisterParams({ portal: next, step });
     }
 
+    function chooseCountry(next: string) {
+        setCountryIso2(next);
+        setCountryError(undefined);
+    }
+
     function goToAccount() {
+        if (!countryIso2) {
+            setCountryError("Choose the country you work in");
+            return;
+        }
         writeRegisterParams({ portal, step: "account" });
         setStep("account");
     }
@@ -228,11 +251,19 @@ export function RegisterWizard({
     async function onSubmit(values: RegisterValues) {
         clearErrors("root");
 
+        // Reachable without a country through a shared `?step=account` link.
+        if (!countryIso2) {
+            setCountryError("Choose the country you work in");
+            goToRole();
+            return;
+        }
+
         try {
             await authApi.register({
                 email: values.email.trim(),
                 password: values.password,
                 role: values.portal,
+                countryIso2,
                 ...(resolvedReferralCode ? { referralCode: resolvedReferralCode } : {}),
             });
             toast.success("Account created. Check your email to verify.");
@@ -290,6 +321,21 @@ export function RegisterWizard({
                             ariaLabel="Sign up as"
                         />
 
+                        <div className="mx-auto flex flex-col gap-2 inline-full max-inline-96">
+                            <label htmlFor="register-country" className="body font-medium text-ink">
+                                Country{" "}
+                                <span className="text-brand" aria-hidden="true">
+                                    *
+                                </span>
+                            </label>
+                            <CountryPicker
+                                id="register-country"
+                                value={countryIso2}
+                                onValueChange={chooseCountry}
+                                errorText={countryError}
+                            />
+                        </div>
+
                         <div className="mx-auto flex flex-col gap-6 inline-full max-inline-96">
                             <Button
                                 size="lg"
@@ -340,6 +386,7 @@ export function RegisterWizard({
                             action="Sign up"
                             role={portal}
                             referralCode={resolvedReferralCode || undefined}
+                            countryIso2={countryIso2 || undefined}
                         />
 
                         <OrDivider />

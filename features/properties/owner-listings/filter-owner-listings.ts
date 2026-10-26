@@ -1,3 +1,4 @@
+import { sessionCountryName } from "@/lib/auth/session";
 import { listingCompareAmountInr } from "@/lib/format/listing-availability";
 
 import { normalizeAreaFilterStrings } from "@/features/properties/owner-listings/owner-listings-area-presets";
@@ -407,7 +408,7 @@ export function filterOwnerListings(
             filters.localities.length > 0;
 
         if (hasPlaceFilter) {
-            const itemCountry = item.country?.trim() || "India";
+            const itemCountry = item.country?.trim() || sessionCountryName();
             const itemState = item.state?.trim() || item.city;
             const itemCity = item.city.toLowerCase();
             const stateKey = `${itemCountry}|${itemState}`.toLowerCase();

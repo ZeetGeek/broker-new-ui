@@ -1,4 +1,18 @@
+import type { Currency } from "@/lib/format/currency";
+
 export const GOOGLE_ONBOARDING_KEY = "google_onboarding_pending";
+
+/**
+ * The country an account operates in. Listings, broker discovery and every
+ * price the user sees are scoped to it.
+ */
+export type UserMarket = {
+    id: string;
+    name: string;
+    iso2: string;
+    emoji: string | null;
+    currency: Currency | null;
+};
 
 export type AuthUser = {
     id: string;
@@ -13,6 +27,11 @@ export type AuthUser = {
     authProvider?: string | null;
     isEmailVerified: boolean | null;
     createdAt?: string | null;
+    /**
+     * `null` — a Google signup that has not picked a country yet.
+     * `undefined` — a session stored before country scoping; refresh it.
+     */
+    country?: UserMarket | null;
 };
 
 export type AuthSession = {
@@ -44,6 +63,14 @@ export function getAccessToken(): string | null {
     if (memoryAccessToken) return memoryAccessToken;
     if (typeof window === "undefined") return null;
     return activeStorage().getItem(TOKEN_KEY);
+}
+
+/**
+ * Name of the signed-in user's country — the fallback for a listing or
+ * contact that arrives without one. India until a session says otherwise.
+ */
+export function sessionCountryName(): string {
+    return getStoredUser()?.country?.name ?? "India";
 }
 
 export function getStoredUser(): AuthUser | null {

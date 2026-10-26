@@ -1,5 +1,5 @@
 import { daysSince } from "@/lib/api/pipeline";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { matchesPropertyCriteria } from "@/lib/properties/list-criteria";
 
 import type { DealItem, DealsFilters, DealStage } from "@/features/pipeline/types";
@@ -43,8 +43,8 @@ export function columnValue(deals: DealItem[]): ColumnValue {
         .reduce((sum, deal) => sum + deal.property.amountInr, 0);
 
     return {
-        sale: sale > 0 ? formatPriceInr(sale) : null,
-        rent: rent > 0 ? formatRentInr(rent) : null,
+        sale: sale > 0 ? formatPrice(sale) : null,
+        rent: rent > 0 ? formatRent(rent) : null,
     };
 }
 

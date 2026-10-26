@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { IndianRupee } from "@/components/shared/icons";
+import { currencyIcon } from "@/components/shared/icons";
 
 import { formatBudgetLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ import {
     getBudgetSteps,
     isBudgetInSteps,
 } from "@/features/properties/owner-listings/owner-listings-budget-presets";
+import { useMarketCurrency } from "@/hooks/use-market";
 import type { OwnerListingTransactionType } from "@/features/properties/owner-listings/types";
 
 export type OwnerListingsBudgetMenuProps = {
@@ -50,7 +51,8 @@ export function OwnerListingsBudgetMenu({
     className,
 }: OwnerListingsBudgetMenuProps) {
     const [open, setOpen] = useState(false);
-    const steps = useMemo(() => getBudgetSteps(lookingFor), [lookingFor]);
+    const currency = useMarketCurrency();
+    const steps = useMemo(() => getBudgetSteps(lookingFor, currency), [lookingFor, currency]);
     const syncedIndex = findBudgetStepIndex(min, max, steps);
     const [stepIndex, setStepIndex] = useState(syncedIndex);
     const [prevSyncedIndex, setPrevSyncedIndex] = useState(syncedIndex);
@@ -100,7 +102,7 @@ export function OwnerListingsBudgetMenu({
                     render={
                         <OwnerListingsBandSegment
                             label="Budget"
-                            icon={IndianRupee}
+                            icon={currencyIcon(currency.code)}
                             value={formatBudgetLabel(min, max, lookingFor)}
                             className="inline-full"
                             isOpen={open}

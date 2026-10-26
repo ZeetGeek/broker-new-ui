@@ -5,7 +5,7 @@ import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
-import { formatInr, formatInrCompact } from "@/lib/format/inr";
+import { formatMoney, formatMoneyCompact } from "@/lib/format/money";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
@@ -156,25 +156,25 @@ export function LiveSummaryPanel({
     const dealSheetLines =
         isSale && "ownerNet" in result
             ? [
-                  `Sale price: ${formatInr(values.sale.expectedPrice)}`,
+                  `Sale price: ${formatMoney(values.sale.expectedPrice)}`,
                   values.area.areaSqft
-                      ? `Rate per sq ft: ${formatInr(result.effectiveRatePerSqft)}`
+                      ? `Rate per sq ft: ${formatMoney(result.effectiveRatePerSqft)}`
                       : null,
-                  `Gross commission: ${formatInr(result.gross)}`,
+                  `Gross commission: ${formatMoney(result.gross)}`,
                   coBrokerShare > 0
-                      ? `Co-broker (${coBrokerPercent}%): ${formatInr(coBrokerShare)}`
+                      ? `Co-broker (${coBrokerPercent}%): ${formatMoney(coBrokerShare)}`
                       : null,
-                  `Estimated commission: ${formatInr(brokerAfterSplit)}`,
+                  `Estimated commission: ${formatMoney(brokerAfterSplit)}`,
               ].filter((line): line is string => Boolean(line))
             : "ownerFirstPayout" in result
               ? [
-                    `Monthly rent: ${formatInr(values.rent.monthlyRent)}`,
-                    deposit > 0 ? `Deposit: ${formatInr(deposit)}` : null,
-                    `Gross brokerage: ${formatInr(result.gross)}`,
+                    `Monthly rent: ${formatMoney(values.rent.monthlyRent)}`,
+                    deposit > 0 ? `Deposit: ${formatMoney(deposit)}` : null,
+                    `Gross brokerage: ${formatMoney(result.gross)}`,
                     coBrokerShare > 0
-                        ? `Co-broker (${coBrokerPercent}%): ${formatInr(coBrokerShare)}`
+                        ? `Co-broker (${coBrokerPercent}%): ${formatMoney(coBrokerShare)}`
                         : null,
-                    `Estimated commission: ${formatInr(brokerAfterSplit)}`,
+                    `Estimated commission: ${formatMoney(brokerAfterSplit)}`,
                 ].filter((line): line is string => Boolean(line))
               : [];
     const summaryText = [title, ...dealSheetLines, "Before applicable taxes and deductions."].join(
@@ -238,7 +238,7 @@ export function LiveSummaryPanel({
                     </p>
                 </div>
                 <p className="truncate text-xs text-surface/70">
-                    {price ? formatInrCompact(price) : "Add a price to calculate"}
+                    {price ? formatMoneyCompact(price) : "Add a price to calculate"}
                 </p>
             </div>
         );
@@ -390,7 +390,7 @@ export function LiveSummaryPanel({
 
                 <div className="mbs-4 flex flex-col gap-2">
                     <p className="tabular text-xl font-bold tracking-[-0.02em] text-brand">
-                        {price && price > 0 ? formatInrCompact(price) : "Price not set"}
+                        {price && price > 0 ? formatMoneyCompact(price) : "Price not set"}
                     </p>
                     <p className="line-clamp-2 text-sm/5 font-semibold text-ink">{title}</p>
                     <p className="flex items-center gap-1.5 text-xs text-ink-muted">
@@ -534,7 +534,7 @@ export function LiveSummaryPanel({
 }
 
 function AnimatedMoney({ value, className }: { value: number | null; className?: string }) {
-    const text = formatInr(value);
+    const text = formatMoney(value);
     return (
         <span key={text} className={cn("t-digit-group is-animating tabular font-bold", className)}>
             {text.split("").map((character, index) => (
@@ -601,7 +601,7 @@ function MoneyRow({
                 </Popover>
             </span>
             <span className="tabular whitespace-nowrap text-ink">
-                {value == null ? "— — —" : `${prefix ? `${prefix} ` : ""}${formatInr(value)}`}
+                {value == null ? "— — —" : `${prefix ? `${prefix} ` : ""}${formatMoney(value)}`}
             </span>
         </div>
     );

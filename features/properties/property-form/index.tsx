@@ -1753,6 +1753,14 @@ function MobileDealSummary({
 
 function cloneDefaultDraft(portal: "broker" | "owner" = "broker"): PropertyDraftValues {
     const draft = JSON.parse(JSON.stringify(DEFAULT_PROPERTY_DRAFT)) as PropertyDraftValues;
+    // A listing is always offered in the holder's country. The Surat / Gujarat
+    // starting place only makes sense for the launch market.
+    const marketName = getStoredUser()?.country?.name;
+    if (marketName && marketName !== draft.location.country) {
+        draft.location.country = marketName;
+        draft.location.state = "";
+        draft.location.city = "";
+    }
     // Owners must type the commission themselves; no pre-filled rate.
     if (portal === "owner") {
         draft.commission.sale.value = null;
@@ -1835,8 +1843,8 @@ function listingToDraft(
     draft.basics.title = listing.title;
     draft.basics.description = listing.description;
     draft.location.city = listing.city;
-    draft.location.country = listing.country || "India";
-    draft.location.state = listing.state || "Gujarat";
+    draft.location.country = listing.country || draft.location.country;
+    draft.location.state = listing.state || draft.location.state;
     draft.location.locality = listing.locality;
     draft.location.unitNumber = listing.unitNumber || "";
     draft.location.streetOrRoad = listing.streetOrRoad || "";

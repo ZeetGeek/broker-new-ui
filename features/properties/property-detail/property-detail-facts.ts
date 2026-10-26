@@ -1,6 +1,6 @@
 import { formatAreaSqft } from "@/lib/format/area";
 import { formatDateIn } from "@/lib/format/date";
-import { formatPriceInr } from "@/lib/format/price";
+import { formatPrice } from "@/lib/format/price";
 import { normalizePropertySubtype } from "@/lib/properties/list-criteria";
 import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
 import { PROPERTY_FACING_OPTIONS, PROPERTY_PARKING_OPTIONS } from "@/lib/validation/property";
@@ -169,7 +169,7 @@ export function buildPropertyFacts(item: MyListingItem): PropertyFact[] {
         facts.push({
             key: "maintenance",
             label: "Maintenance",
-            value: `${formatPriceInr(item.maintenanceInr)}/mo`,
+            value: `${formatPrice(item.maintenanceInr)}/mo`,
         });
     }
 
@@ -189,7 +189,7 @@ export function buildPropertyFacts(item: MyListingItem): PropertyFact[] {
             value:
                 item.securityDepositMode === "months_of_rent"
                     ? `${item.securityDeposit} ${item.securityDeposit === 1 ? "month" : "months"} of rent`
-                    : formatPriceInr(item.securityDeposit),
+                    : formatPrice(item.securityDeposit),
         });
     }
 

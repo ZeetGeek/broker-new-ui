@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Building2, IndianRupee, MapPin } from "@/components/shared/icons";
+import { Building2, MapPin } from "@/components/shared/icons";
+import { MarketCurrencyIcon } from "@/components/shared/market-currency-icon";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { buildPropertyTitle } from "@/lib/format/property-title";
@@ -32,6 +33,7 @@ import {
     TRANSACTION_TYPE_ICONS,
 } from "@/features/properties/property-form/option-icons";
 import { SelectionChip } from "@/features/properties/property-form/selection-chip";
+import { useMarketCurrency } from "@/hooks/use-market";
 
 export function StepDetails({
     titleTouched,
@@ -40,6 +42,7 @@ export function StepDetails({
     titleTouched: boolean;
     onTitleTouched: () => void;
 }) {
+    const currency = useMarketCurrency();
     const {
         control,
         register,
@@ -337,7 +340,7 @@ export function StepDetails({
 
             <FormSection
                 title="Price"
-                icon={<IndianRupee />}
+                icon={<MarketCurrencyIcon />}
                 description="Enter the asking price for this listing."
                 hasError={errors.saleAmountInr != null || errors.rentAmountInr != null}
             >
@@ -351,7 +354,7 @@ export function StepDetails({
                         {needsSale ? (
                             <Field>
                                 <FieldLabel htmlFor="saleAmountInr" className="body-sm text-ink">
-                                    Sale price (₹)
+                                    Sale price ({currency.symbol})
                                 </FieldLabel>
                                 <Controller
                                     name="saleAmountInr"
@@ -380,7 +383,7 @@ export function StepDetails({
                         {needsRent ? (
                             <Field>
                                 <FieldLabel htmlFor="rentAmountInr" className="body-sm text-ink">
-                                    Monthly rent (₹)
+                                    Monthly rent ({currency.symbol})
                                 </FieldLabel>
                                 <Controller
                                     name="rentAmountInr"

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { formatInr } from "@/lib/format/inr";
+import { formatMoney } from "@/lib/format/money";
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
 import {
     EMPTY_PROPERTY_CRITERIA,
@@ -11,6 +11,7 @@ import {
     type PropertyListCriteria,
 } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
+import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import {
@@ -76,7 +77,7 @@ import {
     type OwnerListingFurnishing,
     type OwnerListingsFilters,
     type OwnerListingsSheetFilters,
-    RENT_COMMISSION_RANGE,
+    rentCommissionRange,
     SALE_COMMISSION_RANGE,
 } from "@/features/properties/owner-listings/types";
 
@@ -563,6 +564,7 @@ export function OwnerListingsFilterSheet({
         };
     }, []);
     const [draftSource, setDraftSource] = useState({ open: false, appliedFilters });
+    const currency = useMarketCurrency();
     const lookingFor = showDiscoveryFilters ? draftDiscovery.type : appliedFilters.type;
     const showSaleCommission = lookingFor !== "rent";
     const showRentCommission = lookingFor !== "sale";
@@ -599,6 +601,7 @@ export function OwnerListingsFilterSheet({
         ],
     );
 
+    const rentCommissionBounds = useMemo(() => rentCommissionRange(currency), [currency]);
     const saleRange = draftToRange(
         draft.minCommissionPercent,
         draft.maxCommissionPercent,
@@ -607,7 +610,7 @@ export function OwnerListingsFilterSheet({
     const rentRange = draftToRange(
         draft.minCommissionAmount,
         draft.maxCommissionAmount,
-        RENT_COMMISSION_RANGE,
+        rentCommissionBounds,
     );
 
     const hasDraftFilters = useMemo(() => {
@@ -697,10 +700,10 @@ export function OwnerListingsFilterSheet({
         }
         if (showRentCommission && (draft.minCommissionAmount || draft.maxCommissionAmount)) {
             const maxLabel =
-                rentRange[1] >= RENT_COMMISSION_RANGE.max
-                    ? `${formatInr(RENT_COMMISSION_RANGE.max)}+`
-                    : formatInr(rentRange[1]);
-            parts.push(`${formatInr(rentRange[0])}–${maxLabel} rent`);
+                rentRange[1] >= rentCommissionBounds.max
+                    ? `${formatMoney(rentCommissionBounds.max)}+`
+                    : formatMoney(rentRange[1]);
+            parts.push(`${formatMoney(rentRange[0])}–${maxLabel} rent`);
         }
         return parts.length > 0 ? parts.join(" · ") : undefined;
     }, [
@@ -709,6 +712,7 @@ export function OwnerListingsFilterSheet({
         draft.maxCommissionPercent,
         draft.minCommissionAmount,
         draft.minCommissionPercent,
+        rentCommissionBounds,
         rentRange,
         saleRange,
         showRentCommission,
@@ -1177,24 +1181,24 @@ export function OwnerListingsFilterSheet({
                                         ) : null}
                                         {showRentCommission ? (
                                             <CommissionRange
-                                                label="Rent commission (fixed ₹)"
-                                                minLabel={formatInr(rentRange[0])}
+                                                label={`Rent commission (fixed ${currency.symbol})`}
+                                                minLabel={formatMoney(rentRange[0])}
                                                 maxLabel={
-                                                    rentRange[1] >= RENT_COMMISSION_RANGE.max
-                                                        ? `${formatInr(RENT_COMMISSION_RANGE.max)}+`
-                                                        : formatInr(rentRange[1])
+                                                    rentRange[1] >= rentCommissionBounds.max
+                                                        ? `${formatMoney(rentCommissionBounds.max)}+`
+                                                        : formatMoney(rentRange[1])
                                                 }
                                                 isAny={
                                                     !draft.minCommissionAmount &&
                                                     !draft.maxCommissionAmount
                                                 }
-                                                boundsLabel={`${formatInr(RENT_COMMISSION_RANGE.min)} – ${formatInr(RENT_COMMISSION_RANGE.max)}+`}
+                                                boundsLabel={`${formatMoney(rentCommissionBounds.min)} – ${formatMoney(rentCommissionBounds.max)}+`}
                                             >
                                                 <RangeSlider
                                                     value={rentRange}
-                                                    min={RENT_COMMISSION_RANGE.min}
-                                                    max={RENT_COMMISSION_RANGE.max}
-                                                    step={RENT_COMMISSION_RANGE.step}
+                                                    min={rentCommissionBounds.min}
+                                                    max={rentCommissionBounds.max}
+                                                    step={rentCommissionBounds.step}
                                                     thumbAlignment="edge"
                                                     thumbLabels={[
                                                         "Minimum rent commission",
@@ -1203,7 +1207,7 @@ export function OwnerListingsFilterSheet({
                                                     onValueChange={(next) => {
                                                         const [min, max] = rangeToDraft(
                                                             next,
-                                                            RENT_COMMISSION_RANGE,
+                                                            rentCommissionBounds,
                                                             0,
                                                         );
                                                         updateDraft({

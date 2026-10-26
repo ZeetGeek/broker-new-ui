@@ -16,7 +16,7 @@ import {
     Trash2,
 } from "@/components/shared/icons";
 
-import { formatInrCompact } from "@/lib/format/inr";
+import { formatMoneyCompact } from "@/lib/format/money";
 import { VISIT_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
 
@@ -250,7 +250,7 @@ export function VisitDetailPanel({
                             >
                                 {visit.property.configLabel} ·{" "}
                                 {visit.property.areaSqft.toLocaleString("en-IN")} sqft ·{" "}
-                                {formatInrCompact(visit.property.amountInr)}
+                                {formatMoneyCompact(visit.property.amountInr)}
                             </p>
                             <p
                                 className="

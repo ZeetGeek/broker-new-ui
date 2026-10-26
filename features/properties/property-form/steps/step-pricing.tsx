@@ -4,10 +4,11 @@ import { useEffect, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 
 import { areaToSqft } from "@/lib/calc/area";
-import { formatInr } from "@/lib/format/inr";
+import { formatMoney } from "@/lib/format/money";
 import { MAX_DEPOSIT_MONTHS } from "@/lib/properties/form-limits";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
+import { useMarketCurrency } from "@/hooks/use-market";
 
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
@@ -34,10 +35,12 @@ const SELL_EXTRA_CHARGES = [
     ["sale.floorRiseCharge", "Floor-rise charge"],
 ] as const;
 
-const DEPOSIT_MODE_TABS = [
-    { value: "months_of_rent" as const, label: "In months" },
-    { value: "amount" as const, label: "Fixed ₹" },
-];
+function depositModeTabs(symbol: string) {
+    return [
+        { value: "months_of_rent" as const, label: "In months" },
+        { value: "amount" as const, label: `Fixed ${symbol}` },
+    ];
+}
 
 function RentAndDepositSection({
     isPg,
@@ -48,6 +51,7 @@ function RentAndDepositSection({
     showMaintenance: boolean;
     onMaintenanceChange: (value: number | null) => void;
 }) {
+    const currency = useMarketCurrency();
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const depositMode = watch("rent.securityDepositMode");
     const monthlyRent = watch("rent.monthlyRent");
@@ -123,7 +127,7 @@ function RentAndDepositSection({
                                 value={depositMode}
                                 onValueChange={changeDepositMode}
                                 ariaLabel="How to set the deposit"
-                                options={DEPOSIT_MODE_TABS}
+                                options={depositModeTabs(currency.symbol)}
                                 className="t-tabs-compact shrink-0"
                             />
                         </div>
@@ -153,7 +157,7 @@ function RentAndDepositSection({
                                     </p>
                                     <p className="tabular shrink-0 text-base font-bold text-ink">
                                         {depositInRupees != null
-                                            ? formatInr(depositInRupees)
+                                            ? formatMoney(depositInRupees)
                                             : "Add rent to see total"}
                                     </p>
                                 </div>

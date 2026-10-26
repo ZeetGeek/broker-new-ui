@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
-import { formatInr } from "@/lib/format/inr";
+import { formatMoney } from "@/lib/format/money";
 import {
     OWNER_SALE_COMMISSION_MAX,
     OWNER_SALE_COMMISSION_MIN,
@@ -80,7 +80,7 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
 
     const commissionLabel = primaryIsSale
         ? `Commission at ${salePercent}%`
-        : `Brokerage · ${formatInr(rentAmount)}`;
+        : `Brokerage · ${formatMoney(rentAmount)}`;
     const allInPrice =
         expectedPrice +
         (values.sale.plcCharge ?? 0) +
@@ -166,7 +166,7 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                         >
                             <IncomeFact
                                 label={primaryIsSale ? "Property price" : "Monthly rent"}
-                                value={formatInr(primaryIsSale ? expectedPrice : monthlyRent)}
+                                value={formatMoney(primaryIsSale ? expectedPrice : monthlyRent)}
                             />
                             <IncomeFact
                                 label="Area"
@@ -181,13 +181,13 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                                 value={
                                     primaryIsSale
                                         ? ratePerSqft > 0
-                                            ? formatInr(ratePerSqft)
+                                            ? formatMoney(ratePerSqft)
                                             : "— — —"
-                                        : formatInr(rentResult.annualRent)
+                                        : formatMoney(rentResult.annualRent)
                                 }
                             />
                             {primaryIsSale ? (
-                                <IncomeFact label="All-in price" value={formatInr(allInPrice)} />
+                                <IncomeFact label="All-in price" value={formatMoney(allInPrice)} />
                             ) : null}
                         </div>
 
@@ -207,15 +207,15 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                                 </p>
                             </div>
                             <p className="tabular ms-auto text-2xl font-bold tracking-tight text-brand-text">
-                                {formatInr(estimatedCommission)}
+                                {formatMoney(estimatedCommission)}
                             </p>
                         </div>
 
                         {showSale && showRent ? (
                             <dl className="border-bs border-border-warm px-5 py-2">
                                 <IncomeRow
-                                    label={`Rent brokerage · ${formatInr(rentAmount)}`}
-                                    value={formatInr(rentResult.gross)}
+                                    label={`Rent brokerage · ${formatMoney(rentAmount)}`}
+                                    value={formatMoney(rentResult.gross)}
                                     muted
                                 />
                             </dl>

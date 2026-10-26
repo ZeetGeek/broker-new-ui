@@ -1,4 +1,4 @@
-import { formatPriceInr } from "@/lib/format/price";
+import { formatPrice } from "@/lib/format/price";
 import { isVisitCancelled } from "@/lib/visits/status";
 import { istDateKey } from "@/lib/visits/time";
 
@@ -23,7 +23,7 @@ export function groupVisitsByDay(visits: BrokerSiteVisit[]) {
             key,
             items,
             totalValue,
-            totalLabel: formatPriceInr(totalValue),
+            totalLabel: formatPrice(totalValue),
         };
     });
 }

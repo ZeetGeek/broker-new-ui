@@ -16,7 +16,7 @@ import {
     offersSale,
 } from "@/lib/format/listing-availability";
 import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
 import { formatPropertyCardArea, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
@@ -863,8 +863,8 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
 
     const priceLabel =
         activeMode === "rent"
-            ? formatRentInr(listing.rentAmountInr ?? 0)
-            : formatPriceInr(listing.saleAmountInr ?? 0);
+            ? formatRent(listing.rentAmountInr ?? 0)
+            : formatPrice(listing.saleAmountInr ?? 0);
 
     const baseAmountInr =
         activeMode === "rent" ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0);
@@ -875,7 +875,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
             : 0;
     const commissionInr = activeMode === "rent" ? rentCommissionInr : saleCommissionInr;
     // Rent brokerage is a fixed fee — same formatter as sale cut, never `/mo`.
-    const commissionLabel = formatPriceInr(commissionInr);
+    const commissionLabel = formatPrice(commissionInr);
     const hasCommission = commissionInr > 0 && (activeMode === "rent" || baseAmountInr > 0);
 
     const commissionBadge = (
@@ -886,7 +886,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
             )}
         >
             {activeMode === "rent"
-                ? formatPriceInr(rentCommissionInr)
+                ? formatPrice(rentCommissionInr)
                 : `(${listing.commissionPercent}%)`}
         </span>
     );
@@ -907,7 +907,7 @@ function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListi
                                     className="inline-flex border-0 bg-transparent p-0"
                                     aria-label={
                                         activeMode === "rent"
-                                            ? `Commission ${formatPriceInr(rentCommissionInr)}`
+                                            ? `Commission ${formatPrice(rentCommissionInr)}`
                                             : `${listing.commissionPercent}% commission`
                                     }
                                 >
@@ -972,8 +972,8 @@ function BrowseOverlayPropertyCard({
 }: Extract<PropertyCardProps, { variant: "browse" }>) {
     const isRentOnly = offersRent(listing) && !offersSale(listing);
     const priceLabel = isRentOnly
-        ? formatRentInr(listing.rentAmountInr ?? 0)
-        : formatPriceInr(listing.saleAmountInr ?? 0);
+        ? formatRent(listing.rentAmountInr ?? 0)
+        : formatPrice(listing.saleAmountInr ?? 0);
     const headline =
         formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
             bhk: listing.bhk,
@@ -1675,8 +1675,8 @@ function OwnedOverlayPropertyCard({
     const browse = ownedToBrowseListing(listing);
     const isRentOnly = offersRent(browse) && !offersSale(browse);
     const sharePriceLabel = isRentOnly
-        ? formatRentInr(listing.rentAmountInr ?? 0)
-        : formatPriceInr(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
+        ? formatRent(listing.rentAmountInr ?? 0)
+        : formatPrice(listing.saleAmountInr ?? listing.rentAmountInr ?? 0);
     const headline =
         formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
             bhk: listing.bhk,
@@ -1897,8 +1897,8 @@ function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing
     const activeMode: ListingPriceMode = both ? mode : offersSale(browse) ? "sale" : "rent";
     const priceLabel =
         activeMode === "rent"
-            ? formatRentInr(listing.rentAmountInr ?? 0)
-            : formatPriceInr(listing.saleAmountInr ?? 0);
+            ? formatRent(listing.rentAmountInr ?? 0)
+            : formatPrice(listing.saleAmountInr ?? 0);
 
     const requestLabel =
         listing.inboundRequestCount === 0
