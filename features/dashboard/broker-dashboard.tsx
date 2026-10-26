@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 
-import { FEATURE_MARKETPLACE } from "@/config/index";
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 
 import {
     mapBrokerDashboardView,
@@ -75,19 +75,19 @@ export function BrokerDashboard() {
         >
             <NextShowingCard showing={view.nextShowing} now={now} className="md:col-span-4" />
             <TodayCard agenda={view.today} now={now} className="md:col-span-4" />
-            {FEATURE_MARKETPLACE ? (
+            {FEATURE_PLATFORM_OWNER ? (
                 <RequestsCard data={view.requests} className="md:col-span-4" />
             ) : null}
             <PipelineCard data={view.pipelineCard} className="md:col-span-4" />
             <FollowUpsCard
                 data={view.followUps}
-                className={FEATURE_MARKETPLACE ? "md:col-span-4" : "md:col-span-6"}
+                className={FEATURE_PLATFORM_OWNER ? "md:col-span-4" : "md:col-span-6"}
             />
             <ActivityCard
                 data={view.activity}
-                className={FEATURE_MARKETPLACE ? "md:col-span-4" : "md:col-span-6"}
+                className={FEATURE_PLATFORM_OWNER ? "md:col-span-4" : "md:col-span-6"}
             />
-            {FEATURE_MARKETPLACE ? (
+            {FEATURE_PLATFORM_OWNER ? (
                 <>
                     <YouRepresentCard data={view.youRepresent} className="md:col-span-6" />
                     <NewInAreas
