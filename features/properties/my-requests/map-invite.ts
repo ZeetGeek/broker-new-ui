@@ -130,8 +130,14 @@ export function mapRepresentationToInviteItem(
         category: rep.propertyType ?? null,
         subtype: rep.propertySubtype ?? null,
         transactionType: rep.propertyTransactionType ?? null,
-        saleAmountInr: toNumber(rep.propertySalePrice) || null,
-        rentAmountInr: toNumber(rep.propertyMonthlyRent) || null,
+        saleAmountInr:
+            rep.propertyTransactionType === "rent"
+                ? null
+                : toNumber(rep.propertySalePrice) || null,
+        rentAmountInr:
+            rep.propertyTransactionType === "sale"
+                ? null
+                : toNumber(rep.propertyMonthlyRent) || null,
         locality: locality || city,
         city,
         areaSqft: rep.propertyAreaSqft ?? 0,

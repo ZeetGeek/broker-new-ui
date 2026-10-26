@@ -2,6 +2,7 @@
 
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { offersBoth, offersRent, offersSale } from "@/lib/format/listing-availability";
 import { formatPriceInr, formatRentInr } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
@@ -257,5 +258,84 @@ export function PriceWithCommission({
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
+    );
+}
+
+export type ListingAskPricesListing = {
+    saleAmountInr: number | null;
+    rentAmountInr: number | null;
+    commissionPercent?: number | null;
+    commissionAmount?: number | null;
+};
+
+/**
+ * Card price line for a listing that may be for sale, rent, or both.
+ * Both: sale ask first, then "/ Also ₹…/mo" — each with its own commission tip.
+ */
+export function ListingAskPrices({
+    listing,
+    audience = "broker",
+    showEmptyTip = true,
+}: {
+    listing: ListingAskPricesListing;
+    audience?: CommissionAudience;
+    showEmptyTip?: boolean;
+}) {
+    const isRentOnly = offersRent(listing) && !offersSale(listing);
+
+    if (isRentOnly) {
+        return (
+            <PriceWithCommission
+                amountInr={listing.rentAmountInr ?? 0}
+                isRent
+                commissionAmountInr={listing.commissionAmount}
+                audience={audience}
+                showEmptyTip={showEmptyTip}
+                size="lg"
+            />
+        );
+    }
+
+    if (offersBoth(listing)) {
+        return (
+            <p
+                className="
+                  flex flex-wrap items-baseline gap-x-1.5 text-brand tabular-nums min-inline-0
+                "
+            >
+                <PriceWithCommission
+                    amountInr={listing.saleAmountInr ?? 0}
+                    commissionPercent={listing.commissionPercent}
+                    audience={audience}
+                    showEmptyTip={showEmptyTip}
+                    size="lg"
+                />
+                <span className="font-medium text-ink-subtle" aria-hidden>
+                    /
+                </span>
+                <span className="body-sm font-medium tracking-wide text-ink-muted">
+                    Also{" "}
+                    <PriceWithCommission
+                        amountInr={listing.rentAmountInr ?? 0}
+                        isRent
+                        commissionAmountInr={listing.commissionAmount}
+                        audience={audience}
+                        showEmptyTip={showEmptyTip}
+                        size="sm"
+                        className="text-ink"
+                    />
+                </span>
+            </p>
+        );
+    }
+
+    return (
+        <PriceWithCommission
+            amountInr={listing.saleAmountInr ?? 0}
+            commissionPercent={listing.commissionPercent}
+            audience={audience}
+            showEmptyTip={showEmptyTip}
+            size="lg"
+        />
     );
 }

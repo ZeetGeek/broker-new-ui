@@ -44,8 +44,6 @@ import {
     isLiveStage,
 } from "@/features/pipeline/types";
 import { useStageSwipe } from "@/features/pipeline/use-stage-swipe";
-import { CancelRepresentationDialog } from "@/features/representation/cancel-representation-dialog";
-
 const DONE_GRID_BREAKPOINTS = [
     { minWidth: 640, columns: 2 },
     { minWidth: 1024, columns: 3 },
@@ -133,8 +131,6 @@ export function PipelinePage() {
     const [viewError, setViewError] = useState<string | null>(null);
     const [noteDealId, setNoteDealId] = useState<string | null>(null);
     const [isSavingNote, setIsSavingNote] = useState(false);
-    const [stopDealId, setStopDealId] = useState<string | null>(null);
-
     useEffect(() => {
         let cancelled = false;
 
@@ -395,16 +391,8 @@ export function PipelinePage() {
             onNote: (dealId) => {
                 setNoteDealId(dealId);
             },
-            onStopRepresenting: (dealId) => {
-                setStopDealId(dealId);
-            },
         }),
         [openLeadView, requestMove, setPrefs],
-    );
-
-    const stopDeal = useMemo(
-        () => (stopDealId ? ((deals ?? []).find((deal) => deal.id === stopDealId) ?? null) : null),
-        [deals, stopDealId],
     );
 
     const handlePatch = useCallback(
@@ -639,23 +627,6 @@ export function PipelinePage() {
                     if (!isSavingOffer) setOfferDealId(null);
                 }}
             />
-
-            {stopDeal?.owner.representationId ? (
-                <CancelRepresentationDialog
-                    open={stopDealId != null}
-                    onOpenChange={(open) => {
-                        if (!open) setStopDealId(null);
-                    }}
-                    representationId={stopDeal.owner.representationId}
-                    side="broker"
-                    propertyTitle={stopDeal.property.title}
-                    counterpartName={stopDeal.owner.name}
-                    onCancelled={() => {
-                        setStopDealId(null);
-                        setRevision((prev) => prev + 1);
-                    }}
-                />
-            ) : null}
 
             <DealNoteModal
                 open={noteDealId != null}
