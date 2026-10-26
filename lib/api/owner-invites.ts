@@ -19,6 +19,10 @@ import type {
 } from "@/features/properties/my-requests/invite-types";
 import { mapRepresentationToInviteItem } from "@/features/properties/my-requests/map-invite";
 import { MOCK_INVITES } from "@/features/properties/my-requests/mock-invites";
+import {
+    dealListingApiQuery,
+    type DealListingApiQuery,
+} from "@/lib/properties/deal-listing-query";
 
 function isPaged(
     value: RepresentationItem[] | RepresentationListPage,
@@ -26,12 +30,13 @@ function isPaged(
     return !Array.isArray(value) && Array.isArray(value.items);
 }
 
-async function fetchAllInvitations(): Promise<RepresentationItem[]> {
+async function fetchAllInvitations(deal?: DealListingApiQuery): Promise<RepresentationItem[]> {
     // `all` so stage chips / summary see pending + decided + closed invites.
     const response = await representativeApi.brokerInvitationList({
         status: "all",
         page: 1,
         limit: 100,
+        ...deal,
     });
     if (!isPaged(response)) return response;
     const items = [...response.items];
@@ -40,6 +45,7 @@ async function fetchAllInvitations(): Promise<RepresentationItem[]> {
             status: "all",
             page,
             limit: 100,
+            ...deal,
         });
         items.push(...(isPaged(next) ? next.items : next));
     }
@@ -58,9 +64,9 @@ function withClients(
     };
 }
 
-async function loadInvites(): Promise<InviteItem[]> {
+async function loadInvites(filters?: InvitesFilters): Promise<InviteItem[]> {
     const [rows, attachedByProperty] = await Promise.all([
-        fetchAllInvitations(),
+        fetchAllInvitations(dealListingApiQuery(filters)),
         attachedClientsByProperty(),
     ]);
     return rows
@@ -80,7 +86,7 @@ export const ownerInvitesApi = {
                 totalPages: 1,
             };
         }
-        const items = await loadInvites();
+        const items = await loadInvites(filters);
         const matched = sortInvites(filterInvites(items, filters), filters.sort);
         return {
             items: matched,

@@ -250,11 +250,34 @@ function matchesFloor(values: string[], floor: number | null | undefined) {
     if (values.length === 0) return true;
     if (floor == null) return false;
     return values.some((value) => {
-        if (value === "ground") return floor === 0;
+        if (value === "ground") return floor <= 0;
         if (value === "low") return floor >= 1 && floor <= 5;
         if (value === "mid") return floor >= 6 && floor <= 15;
         if (value === "high") return floor >= 16;
         return false;
+    });
+}
+
+/** Age chips are buckets. Listings store whole years ("5"), and a boundary year matches both buckets. */
+function matchesAge(selected: string[], actual: string | null | undefined) {
+    if (selected.length === 0) return true;
+    if (!actual) return false;
+    const age = normalizeFacet(actual);
+    if (selected.map(normalizeFacet).includes(age)) return true;
+    const year = Number(age);
+    if (!Number.isInteger(year)) return false;
+    const ranges: Record<string, [number, number]> = {
+        new: [0, 0],
+        "0_1": [0, 0],
+        "1_5": [1, 5],
+        "5_10": [5, 10],
+        "10_15": [10, 15],
+        "15_20": [15, 20],
+        "20_plus": [20, 100],
+    };
+    return selected.some((bucket) => {
+        const range = ranges[normalizeFacet(bucket)];
+        return range != null && year >= range[0] && year <= range[1];
     });
 }
 
@@ -330,12 +353,7 @@ export function matchesPropertyCriteria(
                 .includes(normalizeFacet(item.propertyCondition)))
     )
         return false;
-    if (
-        v.propertyAges.length > 0 &&
-        (!item.propertyAge ||
-            !v.propertyAges.map(normalizeFacet).includes(normalizeFacet(item.propertyAge)))
-    )
-        return false;
+    if (!matchesAge(v.propertyAges, item.propertyAge)) return false;
     if (
         v.suitableFor.length > 0 &&
         (!item.suitableFor ||

@@ -16,9 +16,13 @@ function matchesQuery(item: InviteItem, q: string): boolean {
     );
 }
 
-function matchesType(isRent: boolean, type: InvitesFilters["type"]): boolean {
+function matchesType(
+    item: Pick<InviteItem, "isRent" | "transactionType">,
+    type: InvitesFilters["type"],
+): boolean {
     if (!type) return true;
-    return type === "rent" ? isRent : !isRent;
+    if (item.transactionType === "both") return true;
+    return type === "rent" ? item.isRent : !item.isRent;
 }
 
 export function filterInvites(items: InviteItem[], filters: InvitesFilters): InviteItem[] {
@@ -26,7 +30,7 @@ export function filterInvites(items: InviteItem[], filters: InvitesFilters): Inv
         (item) =>
             (filters.stage === "all" || item.stage === filters.stage) &&
             matchesQuery(item, filters.q) &&
-            matchesType(item.isRent, filters.type) &&
+            matchesType(item, filters.type) &&
             matchesPropertyCriteria(item, filters.propertyFilters),
     );
 }

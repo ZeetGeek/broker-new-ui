@@ -3,6 +3,7 @@ import { dashboardApi, type DashboardRequestQuota } from "@/lib/api/dashboard";
 import { isMockMode } from "@/lib/api/mock-mode";
 import { representativeApi } from "@/lib/api/representative";
 import { formatDateIso } from "@/lib/format/date";
+import { dealListingApiQuery } from "@/lib/properties/deal-listing-query";
 
 import {
     filterRequests,
@@ -21,8 +22,8 @@ import type {
     RequestsSummary,
 } from "@/features/properties/my-requests/types";
 
-async function loadOutboundRequests() {
-    const rows = await representativeApi.brokerList();
+async function loadOutboundRequests(filters?: RequestsFilters) {
+    const rows = await representativeApi.brokerList(undefined, dealListingApiQuery(filters));
     return rows
         .map((row) => mapRepresentationToRequestItem(row))
         .filter((item): item is NonNullable<typeof item> => item != null);
@@ -75,7 +76,7 @@ export const myRequestsApi = {
             };
         }
         const [items, attachedByProperty] = await Promise.all([
-            loadOutboundRequests(),
+            loadOutboundRequests(filters),
             attachedClientsByProperty(),
         ]);
         const live = items.map((item) => withClientCount(item, attachedByProperty));
