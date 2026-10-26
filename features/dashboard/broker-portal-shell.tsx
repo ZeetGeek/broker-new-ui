@@ -18,7 +18,7 @@ import {
 } from "@/components/layout/portal-section-nav";
 import { BROKER_SEARCH_HINTS } from "@/components/layout/search-placeholder-loop";
 
-import { FEATURE_MARKETPLACE } from "@/config/index";
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { BROKER_NAV_ITEMS } from "@/config/nav";
 import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
 import { BrokerProfileMenu } from "@/features/broker/profile-menu";
@@ -32,7 +32,7 @@ const BROKER_NOTIFICATIONS_HREF = "/broker/notifications";
 
 const BROKER_SHORTCUT_ROUTES = {
     dashboard: "/broker/dashboard",
-    ...(FEATURE_MARKETPLACE
+    ...(FEATURE_PLATFORM_OWNER
         ? { ownerListings: BROKER_OWNER_LISTINGS_HREF, deals: BROKER_MY_DEALS_HREF }
         : {}),
     yourListings: BROKER_YOUR_LISTINGS_HREF,
@@ -45,7 +45,7 @@ const BROKER_SHORTCUT_ROUTES = {
     settings: "/broker/settings",
 };
 
-const BROKER_HIDDEN_SHORTCUTS: ShortcutId[] = FEATURE_MARKETPLACE
+const BROKER_HIDDEN_SHORTCUTS: ShortcutId[] = FEATURE_PLATFORM_OWNER
     ? []
     : ["owner_listings", "my_deals"];
 

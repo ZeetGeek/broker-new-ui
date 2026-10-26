@@ -12,7 +12,7 @@ import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { FEATURE_MARKETPLACE } from "@/config/index";
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 
 import { DashboardContactLine, hasPhoneNumber } from "./dashboard-contact-line";
 import {
@@ -65,7 +65,7 @@ function buildSummaryLines({
         ) : (
             <>You have {countPhrase(siteVisitCount, "site visit today", "site visits today")}</>
         ),
-        ...(FEATURE_MARKETPLACE
+        ...(FEATURE_PLATFORM_OWNER
             ? [
                   requestsWaitingCount === 0 ? (
                       "No owner replies waiting on you"
@@ -232,7 +232,7 @@ export function DashboardHeader({
             }
             actions={
                 <>
-                    {FEATURE_MARKETPLACE ? (
+                    {FEATURE_PLATFORM_OWNER ? (
                         <ShortcutTooltip shortcutId="owner_listings">
                             <Button
                                 variant="outline-dark"

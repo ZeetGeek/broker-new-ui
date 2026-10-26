@@ -15,7 +15,7 @@ export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "YesBroker";
  * Broker marketplace: Owner listings, My Deals, and the dashboard's My deals,
  * You represent and New in your areas sections. On unless set to `false`.
  */
-export const FEATURE_MARKETPLACE = process.env.NEXT_PUBLIC_FEATURE_MARKETPLACE !== "false";
+export const FEATURE_PLATFORM_OWNER = process.env.NEXT_PUBLIC_FEATURE_PLATFORM_OWNER !== "false";
 
 export const SITE_URL =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "http://localhost:3000";
