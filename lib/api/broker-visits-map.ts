@@ -360,6 +360,8 @@ export type ApiPropertyOption = {
     title: string;
     locality: string;
     city: string;
+    /** Exclusive slots only: broker-added owner on this listing. */
+    exclusiveOwnerId?: string | null;
 };
 
 export type ApiOwnerOption = {

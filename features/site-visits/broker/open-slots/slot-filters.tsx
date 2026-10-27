@@ -102,6 +102,14 @@ export function SlotFilters({
     propertyId?: string;
     onPropertyChange?: (id?: string) => void;
 }) {
+    const shownPropertyOptions = value.owner
+        ? propertyOptions.filter(
+              (option) =>
+                  option.exclusiveOwnerId === undefined ||
+                  option.exclusiveOwnerId === value.owner,
+          )
+        : propertyOptions;
+
     return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <label className="space-y-1.5">
@@ -142,7 +150,17 @@ export function SlotFilters({
                         value: owner.id,
                         label: owner.name,
                     }))}
-                    onChange={(owner) => onChange({ ...value, owner })}
+                    onChange={(owner) => {
+                        onChange({ ...value, owner });
+                        const selected = propertyOptions.find((option) => option.id === propertyId);
+                        if (
+                            owner &&
+                            selected?.exclusiveOwnerId !== undefined &&
+                            selected.exclusiveOwnerId !== owner
+                        ) {
+                            onPropertyChange?.(undefined);
+                        }
+                    }}
                 />
             ) : null}
             <label className="space-y-1.5">
@@ -164,7 +182,7 @@ export function SlotFilters({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All properties</SelectItem>
-                        {propertyOptions.map((option) => (
+                        {shownPropertyOptions.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
                                 {propertyOptionLabel(option)}
                             </SelectItem>

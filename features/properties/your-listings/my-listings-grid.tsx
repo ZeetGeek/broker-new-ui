@@ -1,7 +1,12 @@
 "use client";
 
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
-import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
+import { useRouter } from "@/lib/navigation";
+import {
+    brokerPropertyAnalyticsHref,
+    brokerPropertyDetailHref,
+    brokerPropertyEditHref,
+} from "@/lib/routes/broker";
 import { ownerPropertyDetailHref, ownerPropertyEditHref } from "@/lib/routes/owner";
 
 import { PropertyCard } from "@/components/shared/property-card";
@@ -54,6 +59,7 @@ export function MyListingsGrid({
     onToggleSave,
     isSaved,
 }: MyListingsGridProps) {
+    const router = useRouter();
     const detailHref = portal === "owner" ? ownerPropertyDetailHref : brokerPropertyDetailHref;
     const editHref = portal === "owner" ? ownerPropertyEditHref : brokerPropertyEditHref;
 
@@ -79,6 +85,11 @@ export function MyListingsGrid({
                         onEdit={onEditListing ? () => onEditListing(item) : undefined}
                         onAddBuyer={onAddBuyer ? () => onAddBuyer(item) : undefined}
                         onAttachOwner={onAttachOwner ? () => onAttachOwner(item) : undefined}
+                        onAnalytics={
+                            portal === "broker"
+                                ? () => router.push(brokerPropertyAnalyticsHref(item.id))
+                                : undefined
+                        }
                         onDelete={onDeleteListing ? () => onDeleteListing(item) : undefined}
                         onMarkSold={
                             onMarkSold && !item.isSold ? () => onMarkSold(item) : undefined

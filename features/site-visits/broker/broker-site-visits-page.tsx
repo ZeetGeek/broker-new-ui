@@ -388,6 +388,7 @@ export function BrokerSiteVisitsPage() {
                         book: undefined,
                         focus: undefined,
                         owner: undefined,
+                        propertyId: undefined,
                     })
                 }
                 value={tab}

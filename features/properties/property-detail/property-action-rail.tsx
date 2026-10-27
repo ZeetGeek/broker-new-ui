@@ -8,6 +8,7 @@ import type { PropertyBroker } from "@/lib/format/property-brokers";
 import { AttachedBrokersRow } from "@/components/shared/attached-people-row";
 import {
     CallIcon,
+    ChartBar,
     Eye,
     EyeOff,
     Inbox,
@@ -36,6 +37,8 @@ export type PropertyActionRailProps = {
     /** Broker exclusive listings. Caller opens the sold confirm. */
     onMarkSold?: () => void;
     editHref: string;
+    /** Broker inventory: lead analytics for this listing. */
+    analyticsHref?: string;
     requestsHref?: string;
     brokers?: PropertyBroker[];
     brokersState?: "loading" | "ready" | "error";
@@ -50,6 +53,7 @@ export function PropertyActionRail({
     onRequestDelete,
     onMarkSold,
     editHref,
+    analyticsHref,
     requestsHref,
     brokers = [],
     brokersState = "ready",
@@ -140,6 +144,16 @@ export function PropertyActionRail({
                                 <Pencil size={18} aria-hidden />
                                 Edit property
                             </Button>
+                            {analyticsHref ? (
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    render={<Link href={analyticsHref} />}
+                                >
+                                    <ChartBar size={18} aria-hidden />
+                                    Analytics
+                                </Button>
+                            ) : null}
                             {!item.isSold && onMarkSold ? (
                                 <Button
                                     size="lg"
