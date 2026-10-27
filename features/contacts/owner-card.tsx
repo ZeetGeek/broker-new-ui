@@ -10,6 +10,7 @@ import { OVERLAY_GLASS_BUTTON_CLASS } from "@/components/shared/overlay-card";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { AttachedPropertiesRow } from "@/features/contacts/attached-properties-row";
 import { toOwnerContactCardModel } from "@/features/contacts/contact-card-model";
 import { ContactCardActions } from "@/features/contacts/contact-card-actions";
@@ -93,7 +94,7 @@ export function OwnerCard({
         >
             <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-1.5 min-inline-0">
-                    <OriginPill origin={owner.origin} />
+                    {FEATURE_PLATFORM_OWNER ? <OriginPill origin={owner.origin} /> : null}
                 </div>
                 <div onClick={(event) => event.stopPropagation()}>
                     <ContactCardActions

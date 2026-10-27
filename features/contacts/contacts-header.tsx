@@ -26,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type {
     ContactsFilters,
     ContactsSort,
@@ -124,7 +125,9 @@ export function ContactsHeader({
                                     mobileLabel: "Owners",
                                     icon: UserRound,
                                     count: summary?.ownerCount ?? 0,
-                                    description: "Owners you represent or added yourself",
+                                    description: FEATURE_PLATFORM_OWNER
+                                        ? "Owners you represent or added yourself"
+                                        : "Owners you added yourself",
                                 },
                             ] as const
                         ).map((chip) => {
@@ -145,7 +148,7 @@ export function ContactsHeader({
                             );
                         })}
 
-                        {!isBuyers
+                        {!isBuyers && FEATURE_PLATFORM_OWNER
                             ? (
                                   [
                                       {

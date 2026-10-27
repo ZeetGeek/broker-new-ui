@@ -241,6 +241,25 @@ export const brokerVisitsApi = {
         };
     },
 
+    async exclusiveSlots(filters: SlotListFilters = {}): Promise<BrokerOpenSlotsPage> {
+        const response = await requestData<
+            Paged<ApiBrokerOpenSlotItem> & {
+                propertyOptions?: ApiPropertyOption[];
+                ownerOptions?: ApiOwnerOption[];
+            }
+        >(`/slots/broker/exclusive/open?${buildOpenSlotsQuery(filters)}`);
+
+        return {
+            items: (response.items ?? []).map(mapBrokerOpenSlotItem),
+            total: response.total ?? 0,
+            page: response.page ?? filters.page ?? 1,
+            limit: response.limit ?? filters.limit ?? 20,
+            totalPages: Math.max(1, response.totalPages ?? 1),
+            propertyOptions: response.propertyOptions ?? [],
+            ownerOptions: response.ownerOptions ?? [],
+        };
+    },
+
     /** Visit requests use existing broker bookings/showings API. */
     async requests(): Promise<TimeRequest[]> {
         if (USE_MOCK_VISITS) return structuredClone(MOCK_TIME_REQUESTS);
@@ -250,6 +269,7 @@ export const brokerVisitsApi = {
             fetchAllBookings({ status: ["cancelled_by_owner"] }),
         ]);
         return [...scheduled, ...confirmed, ...cancelled]
+            .filter((showing) => showing.listingSource !== "exclusive")
             .map(mapShowingToTimeRequest)
             .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     },
@@ -305,6 +325,7 @@ export const brokerVisitsApi = {
 
         try {
             const leadId = await resolveLeadIdForBuyer(input.item.property.id, primaryBuyer.id);
+            const exclusive = input.item.propertySource === "own_listing";
             const result = await requestData<{
                 slot: ApiVisitSlot;
                 showing: {
@@ -317,7 +338,18 @@ export const brokerVisitsApi = {
                     notes: string | null;
                     createdAt: string;
                 };
-            }>(`/slots/${input.slot.id}/book`, "POST", { leadId });
+            }>(
+                exclusive ? "/slots/broker/exclusive/book" : `/slots/${input.slot.id}/book`,
+                "POST",
+                exclusive
+                    ? {
+                          leadId,
+                          propertyId: input.item.property.id,
+                          startAt: input.slot.startsAt,
+                          endAt: input.slot.endsAt,
+                      }
+                    : { leadId },
+            );
 
             const now = new Date().toISOString();
             return {

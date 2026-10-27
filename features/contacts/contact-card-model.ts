@@ -1,4 +1,4 @@
-import { formatListingPrice } from "@/lib/format/price";
+import { formatListingPrice, formatPrice, formatRent } from "@/lib/format/price";
 
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 
@@ -35,11 +35,27 @@ export type OwnerContactCardModel = {
     properties: ContactPropertyCardItem[];
 };
 
+function rangeLabel(
+    min: number | null | undefined,
+    max: number | null | undefined,
+    kind: "buy" | "rent",
+): string | null {
+    if (min == null && max == null) return null;
+    const format = kind === "rent" ? formatRent : formatPrice;
+    if (min != null && max != null) return `${format(min)} – ${format(max)}`;
+    if (max != null) return `Up to ${format(max)}`;
+    return `From ${format(min ?? 0)}`;
+}
+
 function buyerBudgetLabel(buyer: BuyerRow): string {
-    if (buyer.budgetMaxInr == null && buyer.budgetMinInr == null) return "Budget not set";
-    const value = buyer.budgetMaxInr ?? buyer.budgetMinInr ?? 0;
-    const amount = formatListingPrice(value, buyer.lookingFor);
-    return buyer.budgetMaxInr != null ? `Up to ${amount}` : `From ${amount}`;
+    const sale = rangeLabel(buyer.budgetMinInr, buyer.budgetMaxInr, "buy");
+    const rent = rangeLabel(buyer.rentBudgetMinInr, buyer.rentBudgetMaxInr, "rent");
+    if (buyer.lookingFor === "rent") return rent ?? "Budget not set";
+    if (buyer.lookingFor === "both") {
+        const parts = [sale && `Sale ${sale}`, rent && `Rent ${rent}`].filter(Boolean);
+        return parts.length ? parts.join(" · ") : "Budget not set";
+    }
+    return sale ?? "Budget not set";
 }
 
 export function toBuyerContactCardModel(buyer: BuyerRow): BuyerContactCardModel {

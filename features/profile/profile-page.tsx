@@ -753,29 +753,27 @@ export function ProfilePage() {
                                 />
                             )}
 
-                            <Controller
-                                name="orgName"
-                                control={control}
-                                render={({ field, fieldState }) => (
-                                    <div className="flex flex-col gap-2 min-inline-0">
-                                        <FieldLabel htmlFor="profile-org">
-                                            {ownerAccount ? "Organization" : "Agency"}
-                                        </FieldLabel>
-                                        <Input
-                                            {...field}
-                                            id="profile-org"
-                                            size="lg"
-                                            startIcon={Building2}
-                                            placeholder={
-                                                ownerAccount
-                                                    ? "Leave blank if you list as an individual"
-                                                    : "Leave blank if you work independently"
-                                            }
-                                            errorText={fieldState.error?.message}
-                                        />
-                                    </div>
-                                )}
-                            />
+                            {ownerAccount ? (
+                                <Controller
+                                    name="orgName"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <div className="flex flex-col gap-2 min-inline-0">
+                                            <FieldLabel htmlFor="profile-org">
+                                                Organization
+                                            </FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="profile-org"
+                                                size="lg"
+                                                startIcon={Building2}
+                                                placeholder="Leave blank if you list as an individual"
+                                                errorText={fieldState.error?.message}
+                                            />
+                                        </div>
+                                    )}
+                                />
+                            ) : null}
                         </div>
                     </Section>
 

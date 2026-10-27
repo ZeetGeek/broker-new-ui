@@ -39,6 +39,7 @@ import {
     toOwnerContactCardModel,
     type ContactPropertyCardItem,
 } from "@/features/contacts/contact-card-model";
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { BuyerContactForm, OwnerContactForm } from "@/features/contacts/contact-form-model";
 import { CONTACT_LOCATION_FALLBACK } from "@/features/contacts/contact-location-defaults";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
@@ -441,9 +442,13 @@ function BuyerPanel({
         window.setTimeout(() => setSaved(false), 1400);
     };
 
-    const budget = [buyer.budgetMinInr, buyer.budgetMaxInr]
+    const saleBudget = [buyer.budgetMinInr, buyer.budgetMaxInr]
         .filter((value): value is number => value != null)
-        .map((value) => formatListingPrice(value, buyer.lookingFor))
+        .map((value) => formatListingPrice(value, "buy"))
+        .join(" to ");
+    const rentBudget = [buyer.rentBudgetMinInr, buyer.rentBudgetMaxInr]
+        .filter((value): value is number => value != null)
+        .map((value) => formatListingPrice(value, "rent"))
         .join(" to ");
 
     const areasLabel = model.localities.join(", ");
@@ -489,13 +494,28 @@ function BuyerPanel({
                             icon: MapPin,
                             value: areasLabel || "—",
                         },
-                        {
-                            label: "Budget",
-                            icon: CurrencyIcon,
-                            value: budget || model.budgetLabel,
-                            wide: true,
-                            empty: !budget && model.budgetLabel === "Budget not set",
-                        },
+                        ...(buyer.lookingFor !== "rent"
+                            ? [
+                                  {
+                                      label: "Sale budget",
+                                      icon: CurrencyIcon,
+                                      value: saleBudget || "—",
+                                      wide: true,
+                                      empty: !saleBudget,
+                                  },
+                              ]
+                            : []),
+                        ...(buyer.lookingFor !== "buy"
+                            ? [
+                                  {
+                                      label: "Rent budget",
+                                      icon: CurrencyIcon,
+                                      value: rentBudget || "—",
+                                      wide: true,
+                                      empty: !rentBudget,
+                                  },
+                              ]
+                            : []),
                     ]}
                 />
             </section>
@@ -862,7 +882,7 @@ export function ContactDetailPanel({
     const isBuyer = contact.type === "buyer";
     const edit = () =>
         isBuyer ? onEditBuyer(contact.row as BuyerRow) : onEditOwner(contact.row as OwnerRow);
-    const badge = owner ? (
+    const badge = owner && FEATURE_PLATFORM_OWNER ? (
         owner.origin === "platform" ? (
             <span
                 className="

@@ -204,15 +204,17 @@ export const PropertyRow = memo(function PropertyRow({
                     ) : null}
                 </div>
 
-                <Button
-                    variant="outline"
-                    size="md"
-                    onClick={onRequest}
-                    className="hidden shrink-0 sm:inline-flex"
-                >
-                    <CalendarClock aria-hidden />
-                    Request another time
-                </Button>
+                {item.propertySource === "own_listing" ? null : (
+                    <Button
+                        variant="outline"
+                        size="md"
+                        onClick={onRequest}
+                        className="hidden shrink-0 sm:inline-flex"
+                    >
+                        <CalendarClock aria-hidden />
+                        Request another time
+                    </Button>
+                )}
             </div>
 
             <div aria-hidden className="mx-4 border-bs border-border-warm sm:mx-5" />
@@ -290,19 +292,23 @@ export const PropertyRow = memo(function PropertyRow({
                             </div>
                         ) : (
                             <p className="body-sm mbs-3 text-ink-muted">
-                                The owner hasn’t published any bookable times.
+                                {item.propertySource === "own_listing"
+                                    ? "No open times left in this range."
+                                    : "The owner hasn’t published any bookable times."}
                             </p>
                         )}
 
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            onClick={onRequest}
-                            className="mbs-1 inline-full sm:hidden"
-                        >
-                            <CalendarClock aria-hidden />
-                            Request another time
-                        </Button>
+                        {item.propertySource === "own_listing" ? null : (
+                            <Button
+                                variant="outline"
+                                size="lg"
+                                onClick={onRequest}
+                                className="mbs-1 inline-full sm:hidden"
+                            >
+                                <CalendarClock aria-hidden />
+                                Request another time
+                            </Button>
+                        )}
 
                         {dates.length > 5 ? (
                             <Button

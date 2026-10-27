@@ -22,10 +22,14 @@ export type ClientItem = {
     country?: string | null;
     state?: string | null;
     city?: string | null;
-    /** Lower bound of what they will pay, in INR. Null when not stated. */
+    /** Sale budget lower bound, in INR. Null when not stated. */
     budgetMinInr: number | null;
-    /** Upper bound of what they will pay, in INR. Null when not stated. */
+    /** Sale budget upper bound, in INR. Null when not stated. */
     budgetMaxInr: number | null;
+    /** Monthly rent budget lower bound, in INR. Null when not stated. */
+    rentBudgetMinInr?: number | null;
+    /** Monthly rent budget upper bound, in INR. Null when not stated. */
+    rentBudgetMaxInr?: number | null;
     /** BHK they want. Null for plots, shops and offices. Kept for API; not collected on create. */
     bhk: number | null;
     source: BuyerSource | null;

@@ -355,6 +355,8 @@ export function ContactsPage() {
                 city: buyer.city,
                 budgetMinInr: buyer.budgetMinInr,
                 budgetMaxInr: buyer.budgetMaxInr,
+                rentBudgetMinInr: buyer.rentBudgetMinInr ?? null,
+                rentBudgetMaxInr: buyer.rentBudgetMaxInr ?? null,
                 bhk: buyer.bhk,
                 source: buyer.source ?? "walk_in",
                 notes,

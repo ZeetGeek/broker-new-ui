@@ -33,6 +33,8 @@ export type NewBuyerInput = {
     city?: string | null;
     budgetMinInr: number | null;
     budgetMaxInr: number | null;
+    rentBudgetMinInr: number | null;
+    rentBudgetMaxInr: number | null;
     bhk: number | null;
     source: BuyerSource;
     notes?: string | null;
@@ -77,6 +79,8 @@ type ApiClientContact = {
     city?: string | null;
     budgetMin?: string | null;
     budgetMax?: string | null;
+    rentBudgetMin?: string | null;
+    rentBudgetMax?: string | null;
     bhk?: number | null;
     source?: string | null;
     notes?: string | null;
@@ -407,6 +411,8 @@ function mapContact(contact: ApiClientContact): ClientItem {
         city: contact.city?.trim() || null,
         budgetMinInr: contact.budgetMin != null ? Number(contact.budgetMin) : null,
         budgetMaxInr: contact.budgetMax != null ? Number(contact.budgetMax) : null,
+        rentBudgetMinInr: contact.rentBudgetMin != null ? Number(contact.rentBudgetMin) : null,
+        rentBudgetMaxInr: contact.rentBudgetMax != null ? Number(contact.rentBudgetMax) : null,
         bhk: contact.bhk ?? null,
         source: asSource(contact.source),
         notes: contact.notes ?? null,
@@ -706,6 +712,8 @@ export const clientsApi = {
                 city: input.city ?? null,
                 budgetMinInr: input.budgetMinInr,
                 budgetMaxInr: input.budgetMaxInr,
+                rentBudgetMinInr: input.rentBudgetMinInr,
+                rentBudgetMaxInr: input.rentBudgetMaxInr,
                 bhk: input.bhk,
                 source: input.source,
                 notes: input.notes ?? null,
@@ -741,6 +749,8 @@ export const clientsApi = {
                     city: input.city ?? null,
                     budgetMinInr: input.budgetMinInr,
                     budgetMaxInr: input.budgetMaxInr,
+                    rentBudgetMinInr: input.rentBudgetMinInr,
+                    rentBudgetMaxInr: input.rentBudgetMaxInr,
                     bhk: input.bhk,
                     source: input.source,
                     notes: input.notes ?? null,
@@ -762,6 +772,8 @@ export const clientsApi = {
                 city: input.city ?? null,
                 budgetMinInr: input.budgetMinInr,
                 budgetMaxInr: input.budgetMaxInr,
+                rentBudgetMinInr: input.rentBudgetMinInr,
+                rentBudgetMaxInr: input.rentBudgetMaxInr,
                 bhk: input.bhk,
                 source: input.source,
                 notes: input.notes ?? null,
@@ -892,8 +904,10 @@ function toClientPayload(input: NewBuyerInput) {
         country: input.country?.trim() || undefined,
         state: input.state?.trim() || undefined,
         city: input.city?.trim() || undefined,
-        budgetMin: input.budgetMinInr ?? undefined,
-        budgetMax: input.budgetMaxInr ?? undefined,
+        budgetMin: input.lookingFor === "rent" ? null : input.budgetMinInr,
+        budgetMax: input.lookingFor === "rent" ? null : input.budgetMaxInr,
+        rentBudgetMin: input.lookingFor === "buy" ? null : input.rentBudgetMinInr,
+        rentBudgetMax: input.lookingFor === "buy" ? null : input.rentBudgetMaxInr,
         bhk: input.bhk ?? undefined,
         source: input.source,
         notes: input.notes?.trim() || undefined,

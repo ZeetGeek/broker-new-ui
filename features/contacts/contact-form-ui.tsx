@@ -539,6 +539,8 @@ function ContactCurrencyInput({
 }
 
 export function BudgetRangeField({
+    title,
+    idPrefix,
     lookingFor,
     minInr,
     maxInr,
@@ -547,6 +549,8 @@ export function BudgetRangeField({
     minError,
     maxError,
 }: {
+    title: string;
+    idPrefix: string;
     lookingFor: "buy" | "rent" | "both";
     minInr: string;
     maxInr: string;
@@ -567,17 +571,17 @@ export function BudgetRangeField({
     return (
         <div className="space-y-3">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField label="Budget min">
+                <FormField label={`${title} min`}>
                     <ContactCurrencyInput
-                        id="buyer-budget-min"
+                        id={`${idPrefix}-min`}
                         valueDigits={minInr}
                         onChangeDigits={onMinChange}
                         error={minError}
                     />
                 </FormField>
-                <FormField label="Budget max">
+                <FormField label={`${title} max`}>
                     <ContactCurrencyInput
-                        id="buyer-budget-max"
+                        id={`${idPrefix}-max`}
                         valueDigits={maxInr}
                         onChangeDigits={onMaxChange}
                         error={maxError}

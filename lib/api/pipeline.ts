@@ -90,6 +90,7 @@ type ApiLead = {
         phone?: string;
         email?: string | null;
         budgetMax?: string | null;
+        rentBudgetMax?: string | null;
     } | null;
 };
 
@@ -254,7 +255,10 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             id: client.id,
             name: client.name,
             phoneDigits: normalizedPhone,
-            budgetMaxInr: client.budgetMax != null ? toNumber(client.budgetMax) : null,
+            budgetMaxInr: (() => {
+                const cap = isRent ? client.rentBudgetMax : client.budgetMax;
+                return cap != null ? toNumber(cap) : null;
+            })(),
         },
         property: {
             filterFacts: {

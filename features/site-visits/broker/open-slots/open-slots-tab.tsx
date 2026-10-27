@@ -113,6 +113,7 @@ export function OpenSlotsTab({
     onRefresh,
     onLoadMore,
     rowErrors = {},
+    mode = "platform",
 }: {
     items: PropertyWithSlots[];
     propertyOptions?: ApiPropertyOption[];
@@ -135,6 +136,7 @@ export function OpenSlotsTab({
     onRefresh: () => void;
     onLoadMore?: () => void;
     rowErrors?: Record<string, string>;
+    mode?: "platform" | "exclusive";
 }) {
     const router = useRouter();
     const pathname = usePathname();
@@ -329,9 +331,9 @@ export function OpenSlotsTab({
 
             {shown.length === 0 ? (
                 <EmptyState
-                    kind="no-slots"
+                    kind={mode === "exclusive" ? "no-exclusive-slots" : "no-slots"}
                     onPrimary={() => setFilters(DEFAULT_SLOT_FILTERS)}
-                    onSecondary={() => onRequest()}
+                    onSecondary={mode === "exclusive" ? undefined : () => onRequest()}
                 />
             ) : shown.length > 40 ? (
                 <VirtualStack

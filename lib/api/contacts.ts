@@ -14,6 +14,8 @@ import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
 import type { ExclusiveOwnerFormValues } from "@/lib/validation/exclusive-owner";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
+
 import {
     type BuyerContactForm,
     emptyBuyerForm,
@@ -582,6 +584,11 @@ async function listOwners(
     };
 }
 
+/** With platform owners off, a saved "Platform" / "All" filter falls back to broker-added owners. */
+function ownerFiltersForFeature(filters: ContactsFilters): ContactsFilters {
+    return FEATURE_PLATFORM_OWNER ? filters : { ...filters, ownerOrigin: "custom" };
+}
+
 export type ContactsResult = {
     buyers: BuyerRow[];
     owners: OwnerRow[];
@@ -632,7 +639,7 @@ export const contactsApi = {
         signal?: AbortSignal,
     ): Promise<InfinitePage<OwnerRow>> {
         const page = cursor ? Number(cursor) || 1 : 1;
-        const result = await listOwners(filters, page, 20, signal);
+        const result = await listOwners(ownerFiltersForFeature(filters), page, 20, signal);
         return {
             items: result.owners,
             total: result.total,
@@ -645,7 +652,11 @@ export const contactsApi = {
         const [buyers, owners, platform] = await Promise.all([
             listClientsPageWithLeadSummary({ page: 1, limit: 1, signal }),
             listOwners({ ...base, ownerOrigin: "custom" }, 1, 1, signal),
-            listOwners({ ...base, ownerOrigin: "platform" }, 1, 1, signal),
+            FEATURE_PLATFORM_OWNER
+                ? listOwners({ ...base, ownerOrigin: "platform" }, 1, 1, signal)
+                : Promise.resolve({
+                      summary: { lapsedOwnerCount: 0, platformOwnerCount: 0 },
+                  }),
         ]);
         return {
             buyerCount: buyers.total,
@@ -665,7 +676,7 @@ export const contactsApi = {
         const [allClients, searchedClients, ownersResult] = await Promise.all([
             listClientsWithLeadSummary(),
             search ? listClientsWithLeadSummary({ search }) : Promise.resolve(null),
-            listOwners(filters),
+            listOwners(ownerFiltersForFeature(filters)),
         ]);
 
         const buyersAll = allClients.map(toBuyerRow);

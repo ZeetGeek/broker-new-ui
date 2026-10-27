@@ -231,12 +231,20 @@ export function EmptyState({
     onPrimary,
     onSecondary,
     detail,
+    primary,
 }: {
     kind:
-        "no-visits" | "no-today" | "no-slots" | "no-property-slots" | "no-requests" | "slots-error";
+        | "no-visits"
+        | "no-today"
+        | "no-slots"
+        | "no-exclusive-slots"
+        | "no-property-slots"
+        | "no-requests"
+        | "slots-error";
     onPrimary?: () => void;
     onSecondary?: () => void;
     detail?: string;
+    primary?: string;
 }) {
     const content = {
         "no-visits": {
@@ -257,6 +265,12 @@ export function EmptyState({
             detail: "Clear filters or ask an owner for a time that works.",
             primary: "Clear filters",
             secondary: "Request another time",
+        },
+        "no-exclusive-slots": {
+            icon: SlidersHorizontal,
+            title: "No open times in this range.",
+            detail: "Booked times stay hidden. Clear filters or pick another week.",
+            primary: "Clear filters",
         },
         "no-property-slots": {
             icon: Clock3,
@@ -297,8 +311,8 @@ export function EmptyState({
             <h2 className="h5 text-ink">{content.title}</h2>
             <p className="body-sm mbs-1 text-ink-muted max-inline-md">{detail ?? content.detail}</p>
             <div className="mbs-5 flex flex-wrap justify-center gap-2">
-                {content.primary && onPrimary ? (
-                    <Button onClick={onPrimary}>{content.primary}</Button>
+                {(primary ?? content.primary) && onPrimary ? (
+                    <Button onClick={onPrimary}>{primary ?? content.primary}</Button>
                 ) : null}
                 {content.secondary && onSecondary ? (
                     <Button variant="surface" onClick={onSecondary}>

@@ -75,6 +75,7 @@ export type ApiShowing = {
         endAt: string;
         status: string;
     } | null;
+    listingSource?: "platform" | "exclusive";
 };
 
 export type ApiVisitSlot = {
@@ -221,10 +222,10 @@ export function mapShowingToVisit(showing: ApiShowing): BrokerSiteVisit {
 
     return {
         id: showing.id,
-        source: "slot",
+        source: showing.listingSource === "exclusive" ? "broker_created" : "slot",
         slotId: showing.visitSlotId ?? showing.visitSlot?.id ?? undefined,
         propertyId: showing.propertyId,
-        propertySource: "marketplace",
+        propertySource: showing.listingSource === "exclusive" ? "own_listing" : "marketplace",
         ownerId: owner.id,
         brokerId: showing.broker?.id ?? "broker_me",
         buyerIds: [buyer.id],
