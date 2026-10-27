@@ -133,6 +133,8 @@ export type SlotListFilters = {
     timeBuckets?: string[];
     ownerId?: string;
     buyerId?: string;
+    /** Broker property lead id — one buyer on one property. */
+    leadId?: string;
     q?: string;
     cursor?: string;
     page?: number;

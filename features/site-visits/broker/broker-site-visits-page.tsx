@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 
 import { useQuery } from "@tanstack/react-query";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { brokerVisitsApi } from "@/lib/api/broker-visits";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { parsePropertyCriteria, propertyCriteriaCount } from "@/lib/properties/list-criteria";
@@ -55,7 +56,9 @@ export function BrokerSiteVisitsPage() {
     const tabValue = searchParams.get("tab");
     const focusValue = searchParams.get("focus");
     const inventory: VisitInventory =
-        searchParams.get("inventory") === "exclusive" ? "exclusive" : "platform";
+        !FEATURE_PLATFORM_OWNER || searchParams.get("inventory") === "exclusive"
+            ? "exclusive"
+            : "platform";
     const rawTab: BrokerVisitsTab = isTab(tabValue) ? tabValue : "visits";
     const tab: BrokerVisitsTab =
         inventory === "exclusive" && rawTab === "requests" ? "slots" : rawTab;
@@ -66,7 +69,7 @@ export function BrokerSiteVisitsPage() {
         () => slotListFiltersFromParams(new URLSearchParams(searchParams.toString())),
         [searchParams],
     );
-    const slotsQuery = useSlots(true, slotFilters);
+    const slotsQuery = useSlots(FEATURE_PLATFORM_OWNER, slotFilters);
     const exclusiveSlotsQuery = useSlots(inventory === "exclusive", slotFilters, "exclusive");
     const slotItems = useMemo(
         () => slotsQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -80,8 +83,10 @@ export function BrokerSiteVisitsPage() {
     const activeSlotItems = inventory === "exclusive" ? exclusiveSlotItems : slotItems;
     const propertyOptions = activeSlotQuery.data?.pages[0]?.propertyOptions ?? [];
     const ownerOptions = activeSlotQuery.data?.pages[0]?.ownerOptions ?? [];
-    const requestsQuery = useTimeRequests();
-    useVisitSummary();
+    const leadOptions = activeSlotQuery.data?.pages[0]?.leadOptions ?? [];
+    const selectedLead = leadOptions.find((option) => option.id === slotFilters.leadId);
+    const requestsQuery = useTimeRequests(FEATURE_PLATFORM_OWNER);
+    useVisitSummary(FEATURE_PLATFORM_OWNER);
     const visitActions = useVisitActions();
     const buyersQuery = useQuery({
         queryKey: ["visitBuyers"],
@@ -228,6 +233,10 @@ export function BrokerSiteVisitsPage() {
         for (const visit of inventoryVisits) {
             if (
                 propertyIds.has(visit.propertyId) ||
+                (slotFilters.propertyId && visit.propertyId !== slotFilters.propertyId) ||
+                (slotFilters.leadId && visit.propertyId !== selectedLead?.propertyId) ||
+                (slotFilters.ownerId && visit.ownerId !== slotFilters.ownerId) ||
+                (slotFilters.buyerId && !visit.buyerIds.includes(slotFilters.buyerId)) ||
                 visit.status === "cancelled_by_broker" ||
                 visit.status === "cancelled_by_owner" ||
                 visit.status === "expired"
@@ -276,7 +285,7 @@ export function BrokerSiteVisitsPage() {
         }
 
         return mergedItems;
-    }, [inventoryVisits, now, slotFilters.from, slotFilters.to, slotItems]);
+    }, [inventoryVisits, now, selectedLead?.propertyId, slotFilters, slotItems]);
     const selectedVisit = allVisits.find((visit) => visit.id === visitId);
     const outcomeVisit = allVisits.find((visit) => visit.id === outcomeId);
     const rescheduleVisit = allVisits.find((visit) => visit.id === rescheduleId);
@@ -358,8 +367,14 @@ export function BrokerSiteVisitsPage() {
         [searchParams],
     );
     const openSlotFilterCount = useMemo(
-        () => countOpenSlotFilters(openSlotFilters, buyerId, slotFilters.propertyId),
-        [buyerId, openSlotFilters, slotFilters.propertyId],
+        () =>
+            countOpenSlotFilters(
+                openSlotFilters,
+                buyerId,
+                slotFilters.propertyId,
+                slotFilters.leadId,
+            ),
+        [buyerId, openSlotFilters, slotFilters.leadId, slotFilters.propertyId],
     );
     const filtersCount =
         tab === "slots" ? openSlotFilterCount : propertyCriteriaCount(propertyFilters);
@@ -389,6 +404,7 @@ export function BrokerSiteVisitsPage() {
                         focus: undefined,
                         owner: undefined,
                         propertyId: undefined,
+                        lead: undefined,
                     })
                 }
                 value={tab}
@@ -410,6 +426,7 @@ export function BrokerSiteVisitsPage() {
                             buyer: undefined,
                             propertyId: undefined,
                             owner: undefined,
+                            lead: undefined,
                         });
                     } else {
                         updateUrl({ focus: undefined, propertyFilters: undefined });
@@ -532,7 +549,9 @@ export function BrokerSiteVisitsPage() {
                         items={inventory === "exclusive" ? exclusiveSlotItems : displaySlotItems}
                         propertyOptions={propertyOptions}
                         ownerOptions={ownerOptions}
+                        leadOptions={leadOptions}
                         selectedPropertyId={slotFilters.propertyId}
+                        leadId={slotFilters.leadId}
                         buyers={buyers}
                         buyerId={buyerId}
                         isLoading={activeSlotQuery.isLoading}
@@ -544,6 +563,7 @@ export function BrokerSiteVisitsPage() {
                         onFiltersOpenChange={setSlotFiltersOpen}
                         onBuyerChange={(id) => updateUrl({ buyer: id })}
                         onPropertyChange={(id) => updateUrl({ propertyId: id, tab: "slots" })}
+                        onLeadChange={(id) => updateUrl({ lead: id, tab: "slots" })}
                         onBook={(slot) => updateUrl({ book: slot.id })}
                         onOpenVisit={(id) => updateUrl({ tab: "visits", visit: id })}
                         onRequest={() => updateUrl({ tab: "slots", book: "ready" })}
@@ -609,7 +629,7 @@ export function BrokerSiteVisitsPage() {
                 slot={selectedBooking?.slot}
                 buyers={buyers}
                 visits={visitsQuery.data ?? []}
-                preselectedBuyerId={buyerId}
+                preselectedBuyerId={buyerId ?? selectedLead?.clientId ?? undefined}
                 onClose={() => updateUrl({ book: undefined })}
                 onOpenVisit={(id) => updateUrl({ book: undefined, tab: "visits", visit: id })}
                 onChooseAlternative={(slotId) => updateUrl({ book: slotId })}

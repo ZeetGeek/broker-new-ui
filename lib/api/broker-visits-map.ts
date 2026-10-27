@@ -360,13 +360,23 @@ export type ApiPropertyOption = {
     title: string;
     locality: string;
     city: string;
-    /** Exclusive slots only: broker-added owner on this listing. */
-    exclusiveOwnerId?: string | null;
 };
 
 export type ApiOwnerOption = {
     id: string;
     name: string;
+};
+
+/** One open lead (buyer × property) for the open-slots Lead filter. */
+export type ApiLeadOption = {
+    id: string;
+    /** Buyer contact id; matches `PersonSummary.id` in the Buyer filter. */
+    clientId: string | null;
+    buyerName: string;
+    propertyId: string;
+    propertyTitle: string;
+    /** Matches an `ApiOwnerOption.id`; null when the listing has no owner. */
+    ownerOptionId: string | null;
 };
 
 export function mapBrokerOpenSlotItem(item: ApiBrokerOpenSlotItem): PropertyWithSlots {

@@ -17,7 +17,7 @@ export function useSlots(
             source === "exclusive"
                 ? brokerVisitsApi.exclusiveSlots(filters)
                 : brokerVisitsApi.slots(filters),
-        enabled: source === "platform" || active,
+        enabled: active,
         initialPageParam: 1,
         getNextPageParam: () => undefined,
         staleTime: 30_000,

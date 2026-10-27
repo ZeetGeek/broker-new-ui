@@ -4,7 +4,11 @@ import { useCallback, useMemo, useState } from "react";
 
 import { formatDistanceToNowStrict } from "date-fns";
 
-import type { ApiOwnerOption, ApiPropertyOption } from "@/lib/api/broker-visits-map";
+import type {
+    ApiLeadOption,
+    ApiOwnerOption,
+    ApiPropertyOption,
+} from "@/lib/api/broker-visits-map";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { sortSlotsForBuyer } from "@/lib/visits/grouping";
 
@@ -28,6 +32,7 @@ import type {
 import { PropertyRow } from "@/features/site-visits/broker/open-slots/property-row";
 import {
     DEFAULT_SLOT_FILTERS,
+    leadOptionLabel,
     SlotFilters,
     type SlotFilterState,
 } from "@/features/site-visits/broker/open-slots/slot-filters";
@@ -83,8 +88,14 @@ export function countOpenSlotFilters(
     filters: SlotFilterState,
     buyerId?: string,
     propertyId?: string,
+    leadId?: string,
 ) {
-    return Number(Boolean(filters.owner)) + Number(Boolean(buyerId)) + Number(Boolean(propertyId));
+    return (
+        Number(Boolean(filters.owner)) +
+        Number(Boolean(buyerId)) +
+        Number(Boolean(propertyId)) +
+        Number(Boolean(leadId))
+    );
 }
 
 export function readOpenSlotFilters(params: URLSearchParams): SlotFilterState {
@@ -95,7 +106,9 @@ export function OpenSlotsTab({
     items,
     propertyOptions = [],
     ownerOptions = [],
+    leadOptions = [],
     selectedPropertyId,
+    leadId,
     buyers,
     buyerId,
     isLoading,
@@ -107,6 +120,7 @@ export function OpenSlotsTab({
     onFiltersOpenChange,
     onBuyerChange,
     onPropertyChange,
+    onLeadChange,
     onBook,
     onOpenVisit,
     onRequest,
@@ -118,7 +132,9 @@ export function OpenSlotsTab({
     items: PropertyWithSlots[];
     propertyOptions?: ApiPropertyOption[];
     ownerOptions?: ApiOwnerOption[];
+    leadOptions?: ApiLeadOption[];
     selectedPropertyId?: string;
+    leadId?: string;
     buyers: PersonSummary[];
     buyerId?: string;
     isLoading: boolean;
@@ -130,6 +146,7 @@ export function OpenSlotsTab({
     onFiltersOpenChange?: (open: boolean) => void;
     onBuyerChange: (id?: string) => void;
     onPropertyChange?: (id?: string) => void;
+    onLeadChange?: (id?: string) => void;
     onBook: (slot: VisitSlot) => void;
     onOpenVisit: (id: string) => void;
     onRequest: (propertyId?: string) => void;
@@ -147,7 +164,7 @@ export function OpenSlotsTab({
     );
     const [draftFilters, setDraftFilters] = useState(filters);
     const [draftBuyerId, setDraftBuyerId] = useState(buyerId);
-    const [draftPropertyId, setDraftPropertyId] = useState(selectedPropertyId);
+    const [draftLeadId, setDraftLeadId] = useState(leadId);
     const setFiltersOpen = onFiltersOpenChange ?? (() => undefined);
 
     const replaceParams = useCallback(
@@ -198,9 +215,21 @@ export function OpenSlotsTab({
         ...(buyerId
             ? [
                   {
-                      key: "lead",
-                      label: buyers.find((buyer) => buyer.id === buyerId)?.name ?? "Selected lead",
+                      key: "buyer",
+                      label: buyers.find((buyer) => buyer.id === buyerId)?.name ?? "Selected buyer",
                       clear: () => onBuyerChange(undefined),
+                  },
+              ]
+            : []),
+        ...(leadId
+            ? [
+                  {
+                      key: "lead",
+                      label: (() => {
+                          const lead = leadOptions.find((option) => option.id === leadId);
+                          return lead ? leadOptionLabel(lead) : "Selected lead";
+                      })(),
+                      clear: () => onLeadChange?.(undefined),
                   },
               ]
             : []),
@@ -238,7 +267,7 @@ export function OpenSlotsTab({
                 if (open) {
                     setDraftFilters(filters);
                     setDraftBuyerId(buyerId);
-                    setDraftPropertyId(selectedPropertyId);
+                    setDraftLeadId(leadId);
                 }
                 setFiltersOpen(open);
             }}
@@ -247,7 +276,8 @@ export function OpenSlotsTab({
                 <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
                     <DialogTitle>Filter open slots</DialogTitle>
                     <DialogDescription>
-                        Filter open slots by lead, owner, or property.
+                        Pick a buyer or owner to narrow the leads, then pick a lead to see its
+                        property.
                     </DialogDescription>
                     <DialogClose />
                 </DialogHeader>
@@ -259,9 +289,9 @@ export function OpenSlotsTab({
                         buyerId={draftBuyerId}
                         onBuyerChange={setDraftBuyerId}
                         ownerOptions={ownerOptions}
-                        propertyOptions={propertyOptions}
-                        propertyId={draftPropertyId}
-                        onPropertyChange={setDraftPropertyId}
+                        leadOptions={leadOptions}
+                        leadId={draftLeadId}
+                        onLeadChange={setDraftLeadId}
                     />
                 </div>
                 <footer className="border-bs border-border-warm bg-surface px-5 py-4">
@@ -270,13 +300,20 @@ export function OpenSlotsTab({
                         onSecondary={() => {
                             setDraftFilters(DEFAULT_SLOT_FILTERS);
                             setDraftBuyerId(undefined);
-                            setDraftPropertyId(undefined);
+                            setDraftLeadId(undefined);
                         }}
                         primaryLabel="Apply filters"
                         onPrimary={() => {
-                            setFilters(draftFilters);
-                            onBuyerChange(draftBuyerId);
-                            onPropertyChange?.(draftPropertyId);
+                            // One URL write: separate buyer / lead callbacks would
+                            // each patch stale searchParams and undo each other.
+                            replaceParams((params) => {
+                                writeFilters(params, draftFilters);
+                                if (draftBuyerId) params.set("buyer", draftBuyerId);
+                                else params.delete("buyer");
+                                if (draftLeadId) params.set("lead", draftLeadId);
+                                else params.delete("lead");
+                                params.delete("propertyId");
+                            });
                             setFiltersOpen(false);
                         }}
                     />
@@ -314,6 +351,7 @@ export function OpenSlotsTab({
                         writeFilters(params, DEFAULT_SLOT_FILTERS);
                         params.delete("q");
                         params.delete("buyer");
+                        params.delete("lead");
                         params.delete("propertyId");
                     });
                 }}
