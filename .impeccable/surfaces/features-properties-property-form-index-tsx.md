@@ -20,3 +20,17 @@ FIRST VIEWPORT: Header and footer stay white on cream. Left step rail is muted c
 FORM: Warm workspace (user-locked, code-led). Signature interaction: step content soft-enters; live deal figures re-enter as pricing changes.
 
 FINISH: Code-led finish review completed 2026-10-06 against the Warm workspace contract. Authenticated screenshot captures were unavailable (route gated). Material fixes applied: Draft badge → neutral, mobile listing-score chrome → surface, FormSection nested card flattened, SectionLabel sentence case. Live brand-ink deal summary kept as the one private-income attention card. `docs/DESIGN.md` remains system source of truth; no new global tokens.
+
+## Deal summary card refinement
+
+THESIS: Read the deal breakdown first and finish on the estimated commission. Keep the calculation together in one surface.
+
+OWN-WORLD: Existing white surface, warm canvas, brand-deep total section, brand-soft supporting text, shared radius and shadow tokens. Preserve the listing preview and surrounding form.
+
+STORY: Check price and fees, understand the commission after any co-broker split, and copy the summary.
+
+FIRST VIEWPORT: Compact title and private indicator above aligned monetary rows. A full-width deep-green footer contains the commission, tax caveat and copy action. Rows wrap within narrow containers; help and copy targets are at least 44px.
+
+FORM: Local extension of the established warm workspace, code-led; no world-selection seed required. Existing digit animation remains the sole authored motion. Copy success stays visible until the summary changes.
+
+FINISH: Verify source, typecheck and scoped lint. Browser inventory is empty and IAB unavailable, so desktop/mobile screenshots and clipboard interaction cannot be verified in this session. Independent finish review is scoped to source. No new raster assets or global tokens.

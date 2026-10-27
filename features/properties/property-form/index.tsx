@@ -52,6 +52,7 @@ import {
 import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
 import { ArrowRight, Check, ChevronDown, RotateCcw, X } from "@/components/shared/icons";
+import { Skeleton } from "@/components/shared/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,8 +70,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import { FORM_STEPS, PROPERTY_TYPES, type PropertyFormStep, toLabel } from "@/constants/property";
 import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
-import { ListingScoreRing } from "@/features/properties/property-form/listing-score-ring";
+import { ListingScoreCard } from "@/features/properties/property-form/listing-score-card";
 import { LiveSummaryPanel } from "@/features/properties/property-form/live-summary-panel";
+import { PropertyFormSkeleton } from "@/features/properties/property-form/property-form-skeleton";
 import { QuickAdd } from "@/features/properties/property-form/quick-add";
 import { StepNav } from "@/features/properties/property-form/step-nav";
 import { StepArea } from "@/features/properties/property-form/steps/step-area";
@@ -862,6 +864,7 @@ export function PropertyForm({
                     onSubmit={handleFormSubmit}
                     onKeyDown={handleFormKeyDown}
                     noValidate
+                    aria-busy={restoringDraft || undefined}
                     className={cn(
                         `relative flex flex-1 flex-col overflow-hidden bg-surface min-block-0`,
                         className,
@@ -887,20 +890,17 @@ export function PropertyForm({
                                 void requestClose();
                             }}
                             showClose={isDialog}
+                            restoring={restoringDraft}
                         />
                         {restoringDraft ? (
-                            <p role="status" className="px-4 py-2 text-sm text-ink-muted">
-                                Loading your saved draft…
-                            </p>
-                        ) : null}
-                        {storageError ? (
-                            <p role="alert" className="px-4 py-2 text-sm text-danger">
-                                {storageError}
-                            </p>
-                        ) : null}
-
-                        {entryMode === "full" ? (
+                            <PropertyFormSkeleton />
+                        ) : entryMode === "full" ? (
                             <>
+                                {storageError ? (
+                                    <p role="alert" className="px-4 py-2 text-sm text-danger">
+                                        {storageError}
+                                    </p>
+                                ) : null}
                                 <div
                                     className="
                                       shrink-0 border-be border-border-warm bg-surface
@@ -931,14 +931,14 @@ export function PropertyForm({
                                 </div>
                                 <div
                                     className="
-                                      grid flex-1 bg-surface-muted min-block-0
-                                      xl:grid-cols-[272px_minmax(0,1fr)_336px]
+                                      grid flex-1 gap-4 bg-surface-muted p-4 min-block-0
+                                      xl:grid-cols-[256px_minmax(0,1fr)_320px]
                                     "
                                 >
                                     <aside
                                         className="
-                                          my-6 ms-4 hidden flex-col rounded-card bg-surface px-4
-                                          py-5 shadow-sm min-block-0
+                                          hidden flex-col rounded-card bg-surface px-4 py-5
+                                          shadow-sm min-block-0
                                           xl:flex
                                         "
                                     >
@@ -955,10 +955,7 @@ export function PropertyForm({
                                     </aside>
                                     <main
                                         className="
-                                          overflow-y-auto bg-surface-muted p-4 min-block-0
-                                          min-inline-0
-                                          sm:p-5
-                                          xl:p-6
+                                          overflow-y-auto bg-surface-muted min-block-0 min-inline-0
                                         "
                                     >
                                         <div
@@ -1006,8 +1003,8 @@ export function PropertyForm({
                                     </main>
                                     <aside
                                         className="
-                                          hidden overflow-y-auto bg-surface-muted ps-0 pe-4 pbs-6
-                                          pbe-4 min-block-0 min-inline-0
+                                          hidden overflow-y-auto bg-surface-muted min-block-0
+                                          min-inline-0
                                           xl:block
                                         "
                                     >
@@ -1022,75 +1019,14 @@ export function PropertyForm({
                                                     setStep("media");
                                                 }}
                                             />
-                                            <article
-                                                className="
-                                                  overflow-hidden rounded-card bg-surface px-4 py-5
-                                                  shadow-sm
-                                                "
-                                            >
-                                                <div className="flex items-center gap-3.5">
-                                                    <ListingScoreRing score={listingScore.score} />
-                                                    <div className="min-inline-0">
-                                                        <p
-                                                            className="
-                                                              text-sm font-semibold text-ink
-                                                            "
-                                                        >
-                                                            Listing score
-                                                        </p>
-                                                        <p
-                                                            className="
-                                                              mbs-0.5 text-xs/5 text-ink-muted
-                                                            "
-                                                        >
-                                                            Finish these to raise broker confidence.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                {listingScore.tips.length ? (
-                                                    <div className="mbs-4 flex flex-col gap-1.5">
-                                                        {listingScore.tips.map((tip) => (
-                                                            <Button
-                                                                key={tip.label}
-                                                                type="button"
-                                                                variant="ghost"
-                                                                onClick={() => {
-                                                                    setHighestUnlocked(
-                                                                        FORM_STEPS.length - 1,
-                                                                    );
-                                                                    setStep(tip.step);
-                                                                }}
-                                                                className="
-                                                                  flex items-center justify-between
-                                                                  gap-3 rounded-control border
-                                                                  border-border-warm
-                                                                  bg-surface-muted px-3 text-start
-                                                                  text-xs text-ink inline-full
-                                                                  min-block-10
-                                                                  hover:border-brand/35
-                                                                  hover:bg-brand-soft/50
-                                                                  focus-visible:ring-3
-                                                                  focus-visible:ring-ring/30
-                                                                "
-                                                            >
-                                                                <span className="min-inline-0">
-                                                                    {tip.label}
-                                                                </span>
-                                                                <span
-                                                                    className="
-                                                                      tabular shrink-0
-                                                                      rounded-control bg-brand-soft
-                                                                      px-2 py-0.5 font-semibold
-                                                                      text-brand-text
-                                                                    "
-                                                                >
-                                                                    +{tip.points}
-                                                                </span>
-                                                            </Button>
-                                                        ))}
-                                                    </div>
-                                                ) : null}
-                                            </article>
+                                            <ListingScoreCard
+                                                score={listingScore.score}
+                                                tips={listingScore.tips}
+                                                onTip={(tipStep) => {
+                                                    setHighestUnlocked(FORM_STEPS.length - 1);
+                                                    setStep(tipStep);
+                                                }}
+                                            />
                                         </div>
                                     </aside>
                                 </div>
@@ -1111,9 +1047,13 @@ export function PropertyForm({
                                 className="
                                   flex flex-1 flex-col overflow-y-auto bg-surface-muted p-4
                                   min-block-0 min-inline-0
-                                  sm:p-5
                                 "
                             >
+                                {storageError ? (
+                                    <p role="alert" className="mbe-4 text-sm text-danger">
+                                        {storageError}
+                                    </p>
+                                ) : null}
                                 <div
                                     className="
                                       flex flex-1 flex-col rounded-card border border-border-warm
@@ -1232,6 +1172,7 @@ function PropertyFormHeader({
     onPublish,
     onClose,
     showClose,
+    restoring,
 }: {
     mode: "create" | "edit";
     entryMode: "full" | "quick";
@@ -1242,42 +1183,50 @@ function PropertyFormHeader({
     onPublish: () => void;
     onClose: () => void;
     showClose: boolean;
+    restoring: boolean;
 }) {
     const title = mode === "edit" ? "Edit property" : "Add property";
     const isBusy = savingIntent != null;
     const savedHint = (
-        <Popover>
-            <PopoverTrigger
-                type="button"
-                className="
-                  rounded-full
-                  focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand
-                "
-                aria-label="About details saved on this device"
-            >
-                <Badge color={isSaved ? "emerald" : "amber"} aria-live="polite">
-                    {isSaved ? "Saved on this device" : "Not saved yet"}
-                </Badge>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="text-sm text-ink max-inline-xs">
-                Unit number, carpet area, property age, condition and seats are currently saved only
-                on this device.
-            </PopoverContent>
-        </Popover>
+        <div className="flex items-center min-block-5 min-inline-34">
+            {restoring ? (
+                <Skeleton className="rounded-full block-5 inline-full" />
+            ) : (
+                <Popover>
+                    <PopoverTrigger
+                        type="button"
+                        className="
+                          inline-flex items-center justify-center rounded-full
+                          focus-visible:outline-2 focus-visible:outline-offset-4
+                          focus-visible:outline-brand
+                        "
+                        aria-label="About details saved on this device"
+                    >
+                        <Badge color={isSaved ? "emerald" : "amber"} aria-live="polite">
+                            {isSaved ? "Saved on this device" : "Not saved yet"}
+                        </Badge>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="text-sm text-ink max-inline-xs">
+                        Unit number, carpet area, property age, condition and seats are currently
+                        saved only on this device.
+                    </PopoverContent>
+                </Popover>
+            )}
+        </div>
     );
 
     return (
         <header
             className="
               flex shrink-0 flex-wrap items-center justify-between gap-3 border-be
-              border-border-warm bg-surface p-4 shadow-xs
-              sm:flex-nowrap sm:px-6 sm:py-5
+              border-border-warm bg-surface px-4 py-3 shadow-xs
+              sm:flex-nowrap sm:px-6
             "
         >
             {showClose ? (
                 <DialogHeader
                     className="
-                      flex flex-1 flex-row flex-wrap items-center gap-2.5 pe-0 text-start
+                      flex flex-1 flex-row flex-wrap items-center! gap-2.5 pe-0 text-start
                       min-inline-0
                     "
                 >
@@ -1515,10 +1464,10 @@ function StepContent({
         return (
             <div
                 className="
-              flex flex-col divide-y divide-border-warm
-              [&>*+*]:pbs-6
-              [&>*:not(:last-child)]:pbe-6
-            "
+                  flex flex-col divide-y divide-border-warm
+                  [&>*+*]:pbs-6
+                  [&>*:not(:last-child)]:pbe-6
+                "
             >
                 <StepBasics />
                 <StepLocation />
@@ -1529,10 +1478,10 @@ function StepContent({
         return (
             <div
                 className="
-              flex flex-col divide-y divide-border-warm
-              [&>*+*]:pbs-6
-              [&>*:not(:last-child)]:pbe-6
-            "
+                  flex flex-col divide-y divide-border-warm
+                  [&>*+*]:pbs-6
+                  [&>*:not(:last-child)]:pbe-6
+                "
             >
                 <StepDetails />
                 <StepArea />
@@ -1543,10 +1492,10 @@ function StepContent({
         return (
             <div
                 className="
-              flex flex-col divide-y divide-border-warm
-              [&>*+*]:pbs-6
-              [&>*:not(:last-child)]:pbe-6
-            "
+                  flex flex-col divide-y divide-border-warm
+                  [&>*+*]:pbs-6
+                  [&>*:not(:last-child)]:pbe-6
+                "
             >
                 <StepPricing />
                 <StepCommission portal={portal} />
@@ -1559,10 +1508,10 @@ function StepContent({
     return (
         <div
             className="
-          flex flex-col divide-y divide-border-warm
-          [&>*+*]:pbs-6
-          [&>*:not(:last-child)]:pbe-6
-        "
+              flex flex-col divide-y divide-border-warm
+              [&>*+*]:pbs-6
+              [&>*:not(:last-child)]:pbe-6
+            "
         >
             <StepMedia photoFilesRef={photoFilesRef} />
             {portal === "broker" ? <StepPublish propertyId={propertyId} /> : null}
@@ -1620,7 +1569,7 @@ function MobileListingScore({
                 </span>
                 <span className="flex items-center gap-2 text-xs text-ink-muted min-inline-0">
                     <span className="hidden truncate sm:block">
-                        {tips[0]?.label ?? "Ready to publish"}
+                        {tips[0]?.label ?? "Score complete"}
                     </span>
                     <ChevronDown
                         className={cn(
@@ -1642,38 +1591,12 @@ function MobileListingScore({
                     "
                 >
                     <div className="mx-auto max-inline-md">
-                        <div className="flex items-center gap-4">
-                            <ListingScoreRing score={score} />
-                            <div>
-                                <p className="font-bold text-ink">Listing score</p>
-                                <p className="mbs-1 text-sm/5 text-ink-muted">
-                                    Add useful details to improve broker confidence.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="mbs-4 space-y-2">
-                            {tips.map((tip) => (
-                                <Button
-                                    key={tip.label}
-                                    type="button"
-                                    variant="outline"
-                                    size="md"
-                                    onClick={() => onTip(tip.step)}
-                                    className="
-                                      flex items-center justify-between gap-3 rounded-control border
-                                      border-border-warm bg-surface-muted px-3 text-start text-sm
-                                      text-ink inline-full min-block-11
-                                      hover:border-brand/40 hover:bg-brand-soft
-                                      focus-visible:ring-3 focus-visible:ring-ring/30
-                                    "
-                                >
-                                    <span>{tip.label}</span>
-                                    <span className="tabular font-semibold text-brand-text">
-                                        +{tip.points}
-                                    </span>
-                                </Button>
-                            ))}
-                        </div>
+                        <ListingScoreCard
+                            score={score}
+                            tips={tips}
+                            onTip={onTip}
+                            className="p-0 shadow-none"
+                        />
                     </div>
                 </div>
             ) : null}
