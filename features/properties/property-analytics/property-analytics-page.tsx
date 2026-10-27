@@ -4,35 +4,42 @@ import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
 
-import type { PropertyAnalyticsLead } from "@/lib/api/property-analytics";
-import { propertyAnalyticsApi } from "@/lib/api/property-analytics";
-import { formatDateShort, formatRelativePast } from "@/lib/format/date";
-import { formatPhoneIn } from "@/lib/format/phone";
+import { type PropertyAnalytics, propertyAnalyticsApi } from "@/lib/api/property-analytics";
 import { useParams } from "@/lib/navigation";
-import {
-    BROKER_YOUR_LISTINGS_HREF,
-    brokerPropertyDetailHref,
-    brokerYourListingsHref,
-} from "@/lib/routes/broker";
+import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
 
-import { ArrowLeft, ChartBar, Users } from "@/components/shared/icons";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, ChartBar, MapPin } from "@/components/shared/icons";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
 
-import { amountLabel, listingPriceLabel } from "./format";
+import { amountLabel, listingAsk } from "./format";
+import { LeadList } from "./lead-list";
 import { LeadStageBar, LeadStageLegend } from "./stage-bar";
-import { OFFER_STATUS_LABEL, SHOWING_STATUS_LABEL, STAGE_BADGE_COLOR, STAGE_LABEL } from "./stage-meta";
 
-function placeLabel(address?: string | null, city?: string | null): string {
-    return [address, city].filter(Boolean).join(", ");
+const CARD_CLASS = "rounded-card border border-border-warm bg-surface shadow-sm";
+
+function count(value: number, one: string, many: string): string {
+    return `${value} ${value === 1 ? one : many}`;
 }
 
-function whenLabel(iso: string | null): string | null {
-    if (!iso) return null;
-    const date = new Date(iso);
-    if (Number.isNaN(date.getTime())) return null;
-    return formatRelativePast(date, new Date());
+function headlineSummary(summary: PropertyAnalytics["summary"]): string {
+    if (summary.totalLeads === 0) return "No leads yet.";
+    const visits =
+        summary.showings > 0 ? count(summary.showings, "visit", "visits") : "no visits yet";
+    const offers =
+        summary.closedWon > 0
+            ? `${summary.closedWon} sold`
+            : summary.pendingOffers > 0
+              ? `${count(summary.pendingOffers, "offer", "offers")} pending`
+              : "no offers yet";
+    return `${count(summary.totalLeads, "lead", "leads")}, ${visits}, ${offers}.`;
+}
+
+function withFullStop(text: string): string {
+    const trimmed = text.trim().replace(/[.\s]+$/, "");
+    return `${trimmed}.`;
 }
 
 export function PropertyAnalyticsPage() {
@@ -48,215 +55,194 @@ export function PropertyAnalyticsPage() {
     const data = query.data?.summary ? query.data : null;
 
     return (
-        <div className="flex flex-col gap-6">
-            <Link
-                href={BROKER_YOUR_LISTINGS_HREF}
-                className="inline-flex items-center gap-1.5 body-sm font-medium text-ink-muted hover:text-ink"
+        <div className="flex flex-col gap-6 pbe-24 md:gap-8 md:pbe-10">
+            <Button
+                variant="link"
+                size="md"
+                className="self-start px-0 text-ink-muted hover:text-ink"
+                render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
             >
-                <ArrowLeft aria-hidden className="block-4 inline-4" />
-                Your listings
-            </Link>
+                <ArrowLeft aria-hidden />
+                Back to your listings
+            </Button>
 
             {query.isPending ? (
-                <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading property analytics">
-                    <div className="rounded-card bg-surface-muted block-16 inline-64" />
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                        {Array.from({ length: 4 }, (_, index) => (
-                            <div
-                                key={index}
-                                className="rounded-card border border-border-warm bg-surface-muted block-20"
-                            />
-                        ))}
-                    </div>
-                </div>
+                <AnalyticsSkeleton />
             ) : query.isError || !data ? (
-                <div role="alert" className="flex flex-col items-center gap-4 py-12 text-center">
-                    <p className="body-sm text-danger">
-                        Couldn&apos;t load analytics for this listing.
-                    </p>
-                    <Button variant="outline" onClick={() => void query.refetch()}>
+                <div role="alert" className={`${CARD_CLASS} flex flex-col items-start gap-4 p-5`}>
+                    <div className="flex flex-col gap-1">
+                        <h1 className="h5 text-ink">Couldn&apos;t load this listing&apos;s leads</h1>
+                        <p className="body-sm text-ink-muted">
+                            Check your connection and try again.
+                        </p>
+                    </div>
+                    <Button variant="outline" size="md" onClick={() => void query.refetch()}>
                         Try again
                     </Button>
                 </div>
             ) : (
-                <PropertyAnalyticsBody data={data} />
+                <AnalyticsBody data={data} />
             )}
         </div>
     );
 }
 
-function PropertyAnalyticsBody({
-    data,
-}: {
-    data: NonNullable<Awaited<ReturnType<typeof propertyAnalyticsApi.property>>>;
-}) {
+function AnalyticsBody({ data }: { data: PropertyAnalytics }) {
     const { property, summary, byStage, leads } = data;
-    const price = listingPriceLabel(property);
-    const place = placeLabel(property.address, property.city);
+    const ask = listingAsk(property);
+    const place = [property.address, property.city].filter(Boolean).join(", ");
     const wonAmount = amountLabel(summary.closedWonAmount);
-    const wonRate =
-        summary.totalLeads === 0
-            ? null
-            : Math.round((summary.closedWon / summary.totalLeads) * 100);
+
+    const metrics = [
+        {
+            label: "Open leads",
+            value: summary.openLeads,
+            hint: summary.totalLeads > 0 ? `of ${summary.totalLeads}` : null,
+        },
+        { label: "Visits", value: summary.showings, hint: null },
+        { label: "Offers pending", value: summary.pendingOffers, hint: null },
+        { label: "Sold", value: summary.closedWon, hint: wonAmount },
+    ];
 
     return (
         <>
-            <header className="flex flex-wrap items-end justify-between gap-3">
-                <div className="min-inline-0">
-                    <h1 className="h2 text-ink">{property.title?.trim() || "Untitled listing"}</h1>
-                    <p className="body-sm mt-1 text-ink-muted">
-                        {[place, price].filter(Boolean).join(" · ") || "Lead analytics"}
-                    </p>
+            <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex flex-col gap-2 min-inline-0">
+                    <h1 className="h3">
+                        <span className="text-ink">
+                            {withFullStop(property.title?.trim() || "Untitled listing")}
+                        </span>{" "}
+                        <span className="text-ink-muted">{headlineSummary(summary)}</span>
+                    </h1>
+                    <div className="
+                      body-sm flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-muted
+                    ">
+                        {place ? (
+                            <span className="flex items-center gap-1 min-inline-0">
+                                <MapPin
+                                    aria-hidden
+                                    className="shrink-0 block-4 inline-4"
+                                    strokeWidth={1.75}
+                                />
+                                <span className="truncate capitalize">{place}</span>
+                            </span>
+                        ) : null}
+                        {ask ? (
+                            <PriceWithCommission
+                                amountInr={ask.amountInr}
+                                isRent={ask.isRent}
+                                audience="broker"
+                                size="sm"
+                                showEmptyTip={false}
+                            />
+                        ) : null}
+                    </div>
                 </div>
                 <Button
                     variant="outline"
+                    size="md"
+                    className="self-start sm:self-auto"
                     render={<Link href={brokerPropertyDetailHref(property.id)} />}
                 >
                     View listing
                 </Button>
             </header>
 
-            <section aria-label="Lead totals" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <Stat
-                    label="Leads"
-                    value={summary.totalLeads}
-                    hint={summary.openLeads === 1 ? "1 still open" : `${summary.openLeads} still open`}
-                />
-                <Stat
-                    label="Won"
-                    value={summary.closedWon}
-                    hint={
-                        wonAmount
-                            ? `${wonAmount} closed`
-                            : wonRate == null
-                              ? undefined
-                              : `${wonRate}% of leads`
-                    }
-                />
-                <Stat
-                    label="Lost"
-                    value={summary.closedLost}
-                    hint={
-                        summary.pendingOffers > 0
-                            ? `${summary.pendingOffers} pending ${summary.pendingOffers === 1 ? "offer" : "offers"}`
-                            : undefined
-                    }
-                />
-                <Stat
-                    label="Visits"
-                    value={summary.showings}
-                    hint={
-                        summary.acceptedOffers + summary.rejectedOffers > 0
-                            ? `${summary.acceptedOffers} accepted · ${summary.rejectedOffers} rejected`
-                            : undefined
-                    }
-                />
+            <section aria-labelledby="analytics-overview" className={`${CARD_CLASS}
+              flex flex-col gap-5 p-4
+              md:p-5
+            `}>
+                <h2 id="analytics-overview" className="sr-only">
+                    Overview
+                </h2>
+                <dl className="
+                  grid grid-cols-2 gap-px overflow-hidden rounded-inner bg-border-warm
+                  sm:grid-cols-4
+                ">
+                    {metrics.map((metric) => (
+                        <div key={metric.label} className="
+                          flex flex-col gap-1 bg-surface-muted px-4 py-3
+                        ">
+                            <dt className="body-xs text-ink-muted">{metric.label}</dt>
+                            <dd className="flex flex-wrap items-baseline gap-x-1.5">
+                                {metric.value > 0 ? (
+                                    <span className="h4 text-ink tabular-nums">{metric.value}</span>
+                                ) : (
+                                    <span className="h4 text-ink-subtle">None</span>
+                                )}
+                                {metric.hint && metric.value > 0 ? (
+                                    <span className="body-sm text-ink-muted tabular-nums">
+                                        {metric.hint}
+                                    </span>
+                                ) : null}
+                            </dd>
+                        </div>
+                    ))}
+                </dl>
+
+                {summary.totalLeads > 0 ? (
+                    <div className="flex flex-col gap-3">
+                        <h3 className="body-sm font-semibold text-ink">Where your leads are</h3>
+                        <LeadStageBar counts={byStage} />
+                        <LeadStageLegend counts={byStage} />
+                    </div>
+                ) : null}
             </section>
 
-            <section
-                aria-label="Leads by stage"
-                className="flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-4 shadow-sm"
-            >
-                <div className="flex items-center justify-between gap-3">
-                    <h2 className="h6 text-ink">Pipeline</h2>
-                    <Link
-                        href={brokerYourListingsHref()}
-                        className="body-sm font-medium text-ink-muted hover:text-ink"
-                    >
-                        All listings
-                    </Link>
-                </div>
-                <LeadStageBar counts={byStage} />
-                <LeadStageLegend counts={byStage} />
-            </section>
-
-            <section aria-label="Leads" className="flex flex-col gap-3">
-                <h2 className="h6 text-ink">Each lead</h2>
+            <section aria-labelledby="analytics-leads" className="flex flex-col gap-3">
+                <h2 id="analytics-leads" className="h5 text-ink">
+                    Leads
+                    {leads.length > 0 ? (
+                        <span className="text-ink-muted tabular-nums"> {leads.length}</span>
+                    ) : null}
+                </h2>
                 {leads.length === 0 ? (
                     <EmptyState
                         icon={ChartBar}
-                        heading="No leads on this listing"
-                        description="Attach a buyer from the listing card. Their stage will show up here."
+                        heading="No leads on this listing yet"
+                        description="Add a buyer to this listing from Your listings. Their progress shows up here."
                     >
-                        <Button variant="outline" render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}>
-                            <Users aria-hidden className="block-4 inline-4" />
-                            Back to your listings
+                        <Button variant="outline" size="md" render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}>
+                            Go to your listings
                         </Button>
                     </EmptyState>
                 ) : (
-                    <ul className="flex flex-col gap-3">
-                        {leads.map((lead) => (
-                            <li key={lead.id}>
-                                <LeadRow lead={lead} />
-                            </li>
-                        ))}
-                    </ul>
+                    <LeadList leads={leads} />
                 )}
             </section>
         </>
     );
 }
 
-function LeadRow({ lead }: { lead: PropertyAnalyticsLead }) {
-    const phone = lead.buyerPhone ? formatPhoneIn(lead.buyerPhone) : null;
-    const updated = whenLabel(lead.updatedAt);
-    const offer = amountLabel(lead.offerAmount);
-    const closed = amountLabel(lead.closedAmount);
-    const visitStatus = lead.latestShowing?.status
-        ? (SHOWING_STATUS_LABEL[lead.latestShowing.status] ?? lead.latestShowing.status)
-        : null;
-    const visitWhen = lead.latestShowing?.scheduledDate
-        ? formatDateShort(new Date(lead.latestShowing.scheduledDate))
-        : null;
-
+function AnalyticsSkeleton() {
     return (
-        <article className="flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-4 shadow-sm">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-inline-0">
-                    <p className="font-semibold text-ink">{lead.buyerName?.trim() || "Unnamed buyer"}</p>
-                    <p className="body-sm text-ink-muted">
-                        {[phone, lead.buyerEmail, updated ? `Updated ${updated}` : null]
-                            .filter(Boolean)
-                            .join(" · ") || "No contact details"}
-                    </p>
-                </div>
-                <Badge color={STAGE_BADGE_COLOR[lead.stage]}>{STAGE_LABEL[lead.stage]}</Badge>
+        <div aria-busy="true" aria-label="Loading this listing's leads" className="
+          flex flex-col gap-6
+          md:gap-8
+        ">
+            <div className="flex flex-col gap-2">
+                <Skeleton className="block-8 inline-full max-inline-lg" />
+                <Skeleton className="block-4 inline-48" />
             </div>
-
-            <p className="body-sm text-ink">
-                {offer ? (
-                    <>
-                        Offer {offer}
-                        {lead.offerStatus ? ` · ${OFFER_STATUS_LABEL[lead.offerStatus]}` : ""}
-                    </>
-                ) : closed ? (
-                    <>Closed at {closed}</>
-                ) : (
-                    <span className="text-ink-muted">No offer yet</span>
-                )}
-                {lead.showings > 0 ? (
-                    <span className="text-ink-muted">
-                        {" "}
-                        · {lead.showings} {lead.showings === 1 ? "visit" : "visits"}
-                        {visitStatus ? ` · ${visitStatus}` : ""}
-                        {visitWhen ? ` ${visitWhen}` : ""}
-                    </span>
-                ) : null}
-            </p>
-
-            {lead.notes?.trim() ? (
-                <p className="body-sm text-ink-muted">{lead.notes.trim()}</p>
-            ) : null}
-        </article>
-    );
-}
-
-function Stat({ label, value, hint }: { label: string; value: number; hint?: string }) {
-    return (
-        <div className="rounded-card border border-border-warm bg-surface px-4 py-3 shadow-sm">
-            <p className="body-xs font-medium text-ink-muted">{label}</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-ink">{value}</p>
-            {hint ? <p className="body-xs text-ink-subtle">{hint}</p> : null}
+            <div className={`${CARD_CLASS} flex flex-col gap-5 p-4 md:p-5`}>
+                <div className="
+                  grid grid-cols-2 gap-px overflow-hidden rounded-inner
+                  sm:grid-cols-4
+                ">
+                    {Array.from({ length: 4 }, (_, index) => (
+                        <Skeleton key={index} className="rounded-none block-16" />
+                    ))}
+                </div>
+                <Skeleton className="rounded-full block-3" />
+            </div>
+            <div className={`${CARD_CLASS} divide-y divide-border-warm`}>
+                {Array.from({ length: 3 }, (_, index) => (
+                    <div key={index} className="flex flex-col gap-2 p-4 md:p-5">
+                        <Skeleton className="block-5 inline-40" />
+                        <Skeleton className="block-4 inline-64" />
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

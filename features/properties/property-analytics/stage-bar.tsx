@@ -1,25 +1,16 @@
-import type { LeadStageKey, StageCounts } from "@/lib/api/property-analytics";
-
+import type { LeadStageKey } from "@/lib/api/property-analytics";
 import { cn } from "@/lib/utils";
 
 import { STAGE_BAR_CLASS, STAGE_LABEL, stageParts } from "./stage-meta";
 
-export function LeadStageBar({
-    counts,
-    className,
-}: {
-    counts: Partial<Record<LeadStageKey, number>>;
-    className?: string;
-}) {
-    const parts = stageParts(counts);
-    const total = parts.reduce((sum, part) => sum + part.count, 0);
+type Counts = Partial<Record<LeadStageKey, number>>;
 
-    if (total === 0) {
+export function LeadStageBar({ counts, className }: { counts: Counts; className?: string }) {
+    const parts = stageParts(counts);
+
+    if (parts.length === 0) {
         return (
-            <div
-                className={cn("block-2 rounded-full bg-surface-muted", className)}
-                aria-hidden
-            />
+            <div aria-hidden className={cn("rounded-full bg-surface-muted block-3", className)} />
         );
     }
 
@@ -28,13 +19,13 @@ export function LeadStageBar({
     return (
         <div
             role="img"
-            aria-label={label}
-            className={cn("flex block-2 overflow-hidden rounded-full", className)}
+            aria-label={`Leads by stage: ${label}`}
+            className={cn("flex gap-0.5 overflow-hidden rounded-full block-3", className)}
         >
             {parts.map((part) => (
                 <div
                     key={part.key}
-                    className={cn("min-inline-0", STAGE_BAR_CLASS[part.key])}
+                    className={cn("min-inline-1", STAGE_BAR_CLASS[part.key])}
                     style={{ flexGrow: part.count, flexBasis: 0 }}
                 />
             ))}
@@ -42,20 +33,20 @@ export function LeadStageBar({
     );
 }
 
-export function LeadStageLegend({ counts }: { counts: StageCounts }) {
+export function LeadStageLegend({ counts }: { counts: Counts }) {
     const parts = stageParts(counts);
     if (parts.length === 0) return null;
 
     return (
-        <ul className="flex flex-wrap gap-x-4 gap-y-1.5">
+        <ul className="flex flex-wrap gap-x-5 gap-y-2">
             {parts.map((part) => (
-                <li key={part.key} className="flex items-center gap-1.5 body-xs text-ink-muted">
+                <li key={part.key} className="body-sm flex items-center gap-2">
                     <span
                         aria-hidden
-                        className={cn("block-2 inline-2 rounded-full", STAGE_BAR_CLASS[part.key])}
+                        className={cn("shrink-0 rounded-full block-2 inline-2", STAGE_BAR_CLASS[part.key])}
                     />
-                    <span className="text-ink">{STAGE_LABEL[part.key]}</span>
-                    <span className="tabular">{part.count}</span>
+                    <span className="text-ink-muted">{STAGE_LABEL[part.key]}</span>
+                    <span className="font-semibold text-ink tabular-nums">{part.count}</span>
                 </li>
             ))}
         </ul>

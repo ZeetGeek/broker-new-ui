@@ -1,20 +1,20 @@
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPriceInr } from "@/lib/format/price";
 
-export function listingPriceLabel(input: {
+/** The listing's ask, for `<PriceWithCommission>`. Rent-only listings show the monthly rent. */
+export function listingAsk(input: {
     transactionType?: string | null;
     salePrice?: string | null;
     monthlyRent?: string | null;
-}): string | null {
+}): { amountInr: number; isRent: boolean } | null {
     const sale = amount(input.salePrice);
     const rent = amount(input.monthlyRent);
-    if (input.transactionType === "rent") {
-        return rent == null ? null : formatRentInr(rent);
-    }
-    if (sale != null) return formatPriceInr(sale);
-    if (rent != null) return formatRentInr(rent);
+    if (input.transactionType === "rent") return rent == null ? null : { amountInr: rent, isRent: true };
+    if (sale != null) return { amountInr: sale, isRent: false };
+    if (rent != null) return { amountInr: rent, isRent: true };
     return null;
 }
 
+/** Offers and closed amounts — not a listing ask, so plain price formatting. */
 export function amountLabel(value: string | null | undefined): string | null {
     const parsed = amount(value);
     return parsed == null ? null : formatPriceInr(parsed);
