@@ -134,6 +134,7 @@ export function VisitRescheduleModal({
                     <input
                         id="visit-when"
                         type="datetime-local"
+                        min={toLocalInputValue(now)}
                         value={value}
                         onChange={(event) => setValue(event.target.value)}
                         className="

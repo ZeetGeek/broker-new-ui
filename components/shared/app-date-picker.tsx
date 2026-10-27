@@ -4,7 +4,7 @@ import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { addMonths } from "date-fns";
+import { addMonths, startOfDay } from "date-fns";
 import {
     CalendarIcon,
     ChevronLeftIcon,
@@ -94,13 +94,15 @@ const captionSelectTriggerClassName = `
   [&>span:last-child]:hidden
 `;
 
-function calendarBounds(now = new Date()) {
-    const startYear = now.getFullYear() - 10;
+function calendarBounds(allowPast: boolean, now = new Date()) {
+    const startYear = allowPast ? now.getFullYear() - 10 : now.getFullYear();
     const endYear = now.getFullYear() + 20;
     return {
         startYear,
         endYear,
-        startMonth: new Date(startYear, 0, 1),
+        startMonth: allowPast
+            ? new Date(startYear, 0, 1)
+            : new Date(now.getFullYear(), now.getMonth(), 1),
         endMonth: new Date(endYear, 11, 1),
     };
 }
@@ -147,10 +149,12 @@ function DatePickerDayButton({
                 `,
                 modifiers.today && !modifiers.selected && "bg-surface-muted font-medium text-ink",
                 modifiers.outside && "text-ink-subtle/60 hover:text-ink-subtle",
+                modifiers.disabled && "text-ink-muted hover:bg-transparent disabled:opacity-80",
                 defaultClassNames.day,
                 className,
             )}
             {...props}
+            disabled={modifiers.disabled || props.disabled}
         >
             {children}
         </Button>
@@ -179,6 +183,7 @@ function CalendarCaption({
 
     const canGoPrev = month.getTime() > startMonth.getTime();
     const canGoNext = month.getTime() < endMonth.getTime();
+    const clampMonth = (next: Date) => (next < startMonth ? startMonth : next);
 
     return (
         <div className="flex items-center justify-between gap-1">
@@ -203,7 +208,7 @@ function CalendarCaption({
                     value={String(month.getMonth())}
                     onValueChange={(next) => {
                         if (next == null) return;
-                        onMonthChange(new Date(month.getFullYear(), Number(next), 1));
+                        onMonthChange(clampMonth(new Date(month.getFullYear(), Number(next), 1)));
                     }}
                 >
                     <SelectTrigger
@@ -225,7 +230,14 @@ function CalendarCaption({
                     </SelectTrigger>
                     <SelectContent align="center" className="min-inline-28 inline-auto">
                         {MONTH_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
+                            <SelectItem
+                                key={option.value}
+                                value={option.value}
+                                disabled={
+                                    new Date(month.getFullYear(), Number(option.value), 1) <
+                                    startMonth
+                                }
+                            >
                                 {option.label}
                             </SelectItem>
                         ))}
@@ -236,7 +248,7 @@ function CalendarCaption({
                     value={String(month.getFullYear())}
                     onValueChange={(next) => {
                         if (next == null) return;
-                        onMonthChange(new Date(Number(next), month.getMonth(), 1));
+                        onMonthChange(clampMonth(new Date(Number(next), month.getMonth(), 1)));
                     }}
                 >
                     <SelectTrigger
@@ -286,6 +298,7 @@ function CalendarCaption({
 /**
  * Date field matching the shared control height. Value is a `yyyy-MM-dd`
  * calendar string; the trigger shows `dd/mm/yyyy` per the project date format.
+ * Days before today are disabled unless `allowPast` is set (filters only).
  *
  * Compact light popover with Button nav + Select month/year. Do not re-compose
  * Popover + Button + Calendar at call sites.
@@ -298,6 +311,7 @@ export function AppDatePicker({
     placeholder = "Pick a date",
     disabled,
     invalid,
+    allowPast = false,
     size = "lg",
     className,
 }: {
@@ -308,10 +322,15 @@ export function AppDatePicker({
     placeholder?: string;
     disabled?: boolean;
     invalid?: boolean;
+    allowPast?: boolean;
     className?: string;
 } & VariantProps<typeof datePickerTriggerVariants>) {
     const [open, setOpen] = useState(false);
-    const { startYear, endYear, startMonth, endMonth } = useMemo(() => calendarBounds(), []);
+    const { startYear, endYear, startMonth, endMonth } = useMemo(
+        () => calendarBounds(allowPast),
+        [allowPast],
+    );
+    const today = useMemo(() => startOfDay(new Date()), []);
 
     const selected = value ? new Date(`${value}T00:00:00`) : undefined;
     const hasValidDate = selected != null && !Number.isNaN(selected.getTime());
@@ -387,6 +406,7 @@ export function AppDatePicker({
                         month={month}
                         onMonthChange={setMonth}
                         hideNavigation
+                        disabled={allowPast ? undefined : { before: today }}
                         selected={hasValidDate ? selected : undefined}
                         onSelect={(next) => {
                             onChange(next ? formatDateIso(next) : null);
