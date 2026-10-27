@@ -133,16 +133,18 @@ export function SlotFilters({
                     </SelectContent>
                 </Select>
             </label>
-            <FilterSelect
-                label="Owner"
-                value={value.owner}
-                placeholder="All owners"
-                options={ownerOptions.map((owner) => ({
-                    value: owner.id,
-                    label: owner.name,
-                }))}
-                onChange={(owner) => onChange({ ...value, owner })}
-            />
+            {ownerOptions.length > 0 ? (
+                <FilterSelect
+                    label="Owner"
+                    value={value.owner}
+                    placeholder="All owners"
+                    options={ownerOptions.map((owner) => ({
+                        value: owner.id,
+                        label: owner.name,
+                    }))}
+                    onChange={(owner) => onChange({ ...value, owner })}
+                />
+            ) : null}
             <label className="space-y-1.5">
                 <span className="body-xs font-semibold text-ink-muted">Property</span>
                 <Select

@@ -6,10 +6,18 @@ import { brokerVisitsApi } from "@/lib/api/broker-visits";
 
 import type { SlotListFilters } from "@/features/site-visits/broker/model";
 
-export function useSlots(active: boolean, filters: SlotListFilters) {
+export function useSlots(
+    active: boolean,
+    filters: SlotListFilters,
+    source: "platform" | "exclusive" = "platform",
+) {
     return useInfiniteQuery({
-        queryKey: ["slots", filters],
-        queryFn: () => brokerVisitsApi.slots(filters),
+        queryKey: ["slots", source, filters],
+        queryFn: () =>
+            source === "exclusive"
+                ? brokerVisitsApi.exclusiveSlots(filters)
+                : brokerVisitsApi.slots(filters),
+        enabled: source === "platform" || active,
         initialPageParam: 1,
         getNextPageParam: () => undefined,
         staleTime: 30_000,

@@ -13,13 +13,27 @@ import type { BrokerVisitsTab } from "@/features/site-visits/broker/model";
 import type { SlotDateRange } from "@/features/site-visits/broker/open-slots/slot-filters";
 import { VisitsRangeMenu } from "@/features/site-visits/broker/visits-range-menu";
 
-const TABS = [
+export type VisitInventory = "platform" | "exclusive";
+
+const PLATFORM_TABS = [
     { value: "slots", label: "Open slots", mobileLabel: "Slots" },
     { value: "visits", label: "My visits", mobileLabel: "Visits" },
     { value: "requests", label: "Requests", mobileLabel: "Requests" },
 ] as const;
 
+const EXCLUSIVE_TABS = [
+    { value: "slots", label: "Book slots", mobileLabel: "Book" },
+    { value: "visits", label: "My visits", mobileLabel: "Visits" },
+] as const;
+
+const INVENTORY = [
+    { value: "platform", label: "Owner listings" },
+    { value: "exclusive", label: "Exclusive listings" },
+] as const;
+
 export function VisitsTabs({
+    inventory,
+    onInventoryChange,
     value,
     counts,
     filtersCount = 0,
@@ -28,6 +42,8 @@ export function VisitsTabs({
     onClearFilters,
     rangeToolbar,
 }: {
+    inventory: VisitInventory;
+    onInventoryChange: (next: VisitInventory) => void;
     value: BrokerVisitsTab;
     counts: Record<BrokerVisitsTab, number>;
     filtersCount?: number;
@@ -52,9 +68,27 @@ export function VisitsTabs({
     };
 }) {
     const filtersActive = filtersCount > 0;
+    const tabs = inventory === "exclusive" ? EXCLUSIVE_TABS : PLATFORM_TABS;
 
     return (
-        <div className="sticky inset-bs-0 z-10">
+        <div className="sticky inset-bs-0 z-10 flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Listing source">
+                {INVENTORY.map((item) => {
+                    const active = inventory === item.value;
+                    return (
+                        <button
+                            key={item.value}
+                            type="button"
+                            role="tab"
+                            aria-selected={active}
+                            onClick={() => onInventoryChange(item.value)}
+                            className={filterChipClassName(active)}
+                        >
+                            {item.label}
+                        </button>
+                    );
+                })}
+            </div>
             <TooltipProvider>
                 <div className="flex items-center justify-between gap-3 sm:gap-4">
                     <OwnerListingsChipsCarousel>
@@ -71,7 +105,7 @@ export function VisitsTabs({
                             />
                         </OwnerListingsChipsCarouselSlide>
 
-                        {TABS.map((tab) => {
+                        {tabs.map((tab) => {
                             const active = value === tab.value;
                             return (
                                 <OwnerListingsChipsCarouselSlide key={tab.value}>

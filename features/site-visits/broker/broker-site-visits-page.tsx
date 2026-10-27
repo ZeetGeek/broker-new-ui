@@ -34,7 +34,7 @@ import { VisitDetailPanel } from "@/features/site-visits/broker/panels/visit-det
 import { RequestsTab } from "@/features/site-visits/broker/requests/requests-tab";
 import { BrokerVisitsHeader } from "@/features/site-visits/broker/visits-header";
 import { VisitsPropertyFiltersDialog } from "@/features/site-visits/broker/visits-property-filters";
-import { VisitsTabs } from "@/features/site-visits/broker/visits-tabs";
+import { VisitsTabs, type VisitInventory } from "@/features/site-visits/broker/visits-tabs";
 
 const OutcomeModal = dynamic(() => import("@/features/site-visits/broker/panels/outcome-modal"), {
     ssr: false,
@@ -54,7 +54,11 @@ export function BrokerSiteVisitsPage() {
     const searchParams = useSearchParams();
     const tabValue = searchParams.get("tab");
     const focusValue = searchParams.get("focus");
-    const tab: BrokerVisitsTab = isTab(tabValue) ? tabValue : "visits";
+    const inventory: VisitInventory =
+        searchParams.get("inventory") === "exclusive" ? "exclusive" : "platform";
+    const rawTab: BrokerVisitsTab = isTab(tabValue) ? tabValue : "visits";
+    const tab: BrokerVisitsTab =
+        inventory === "exclusive" && rawTab === "requests" ? "slots" : rawTab;
     const focus: SummaryFilter | undefined = isSummaryFilter(focusValue) ? focusValue : undefined;
     const buyerId = searchParams.get("buyer") ?? undefined;
     const visitsQuery = useSiteVisits();
@@ -63,12 +67,19 @@ export function BrokerSiteVisitsPage() {
         [searchParams],
     );
     const slotsQuery = useSlots(true, slotFilters);
+    const exclusiveSlotsQuery = useSlots(inventory === "exclusive", slotFilters, "exclusive");
     const slotItems = useMemo(
         () => slotsQuery.data?.pages.flatMap((page) => page.items) ?? [],
         [slotsQuery.data],
     );
-    const propertyOptions = slotsQuery.data?.pages[0]?.propertyOptions ?? [];
-    const ownerOptions = slotsQuery.data?.pages[0]?.ownerOptions ?? [];
+    const exclusiveSlotItems = useMemo(
+        () => exclusiveSlotsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+        [exclusiveSlotsQuery.data],
+    );
+    const activeSlotQuery = inventory === "exclusive" ? exclusiveSlotsQuery : slotsQuery;
+    const activeSlotItems = inventory === "exclusive" ? exclusiveSlotItems : slotItems;
+    const propertyOptions = activeSlotQuery.data?.pages[0]?.propertyOptions ?? [];
+    const ownerOptions = activeSlotQuery.data?.pages[0]?.ownerOptions ?? [];
     const requestsQuery = useTimeRequests();
     useVisitSummary();
     const visitActions = useVisitActions();
@@ -103,7 +114,7 @@ export function BrokerSiteVisitsPage() {
     const bookValue = searchParams.get("book");
     const selectedBooking = (() => {
         if (!bookValue || bookValue === "ready") return undefined;
-        for (const item of slotItems) {
+        for (const item of activeSlotItems) {
             const slot = item.slots.find((candidate) => candidate.id === bookValue);
             if (slot) return { item, slot };
         }
@@ -113,10 +124,19 @@ export function BrokerSiteVisitsPage() {
     const outcomeId = searchParams.get("outcome") ?? undefined;
     const rescheduleId = searchParams.get("reschedule") ?? undefined;
     const allVisits = useMemo(() => visitsQuery.data ?? [], [visitsQuery.data]);
+    const inventoryVisits = useMemo(
+        () =>
+            allVisits.filter((visit) =>
+                inventory === "exclusive"
+                    ? visit.propertySource === "own_listing"
+                    : visit.propertySource !== "own_listing",
+            ),
+        [allVisits, inventory],
+    );
     const displaySlotItems = useMemo(() => {
-        const visitsById = new Map(allVisits.map((visit) => [visit.id, visit]));
+        const visitsById = new Map(inventoryVisits.map((visit) => [visit.id, visit]));
         const visitsBySlot = new Map(
-            allVisits
+            inventoryVisits
                 .filter((visit) => visit.slotId)
                 .map((visit) => [visit.slotId as string, visit]),
         );
@@ -128,7 +148,7 @@ export function BrokerSiteVisitsPage() {
                 const visit =
                     (slot.bookedVisitId ? visitsById.get(slot.bookedVisitId) : undefined) ??
                     visitsBySlot.get(slot.id) ??
-                    allVisits.find(
+                    inventoryVisits.find(
                         (candidate) =>
                             candidate.propertyId === item.property.id &&
                             candidate.startsAt === slot.startsAt &&
@@ -151,7 +171,7 @@ export function BrokerSiteVisitsPage() {
                 };
             });
 
-            for (const visit of allVisits) {
+            for (const visit of inventoryVisits) {
                 if (
                     visit.propertyId !== item.property.id ||
                     visit.status === "cancelled_by_broker" ||
@@ -205,7 +225,7 @@ export function BrokerSiteVisitsPage() {
         });
 
         // Properties with a booked visit but no remaining open slots still need a card.
-        for (const visit of allVisits) {
+        for (const visit of inventoryVisits) {
             if (
                 propertyIds.has(visit.propertyId) ||
                 visit.status === "cancelled_by_broker" ||
@@ -256,7 +276,7 @@ export function BrokerSiteVisitsPage() {
         }
 
         return mergedItems;
-    }, [allVisits, now, slotFilters.from, slotFilters.to, slotItems]);
+    }, [inventoryVisits, now, slotFilters.from, slotFilters.to, slotItems]);
     const selectedVisit = allVisits.find((visit) => visit.id === visitId);
     const outcomeVisit = allVisits.find((visit) => visit.id === outcomeId);
     const rescheduleVisit = allVisits.find((visit) => visit.id === rescheduleId);
@@ -264,8 +284,11 @@ export function BrokerSiteVisitsPage() {
         (item) => item.property.id === rescheduleVisit?.property.id,
     );
     const summary = useMemo(() => {
-        return buildVisitSummary(allVisits, slotItems, requestsQuery.data ?? [], now);
-    }, [allVisits, now, requestsQuery.data, slotItems]);
+        if (inventory === "exclusive") {
+            return buildVisitSummary(inventoryVisits, exclusiveSlotItems, [], now);
+        }
+        return buildVisitSummary(inventoryVisits, slotItems, requestsQuery.data ?? [], now);
+    }, [exclusiveSlotItems, inventory, inventoryVisits, now, requestsQuery.data, slotItems]);
 
     useEffect(() => {
         const timer = window.setInterval(() => setNow(new Date()), 60_000);
@@ -357,6 +380,16 @@ export function BrokerSiteVisitsPage() {
             </PortalSectionNav>
 
             <VisitsTabs
+                inventory={inventory}
+                onInventoryChange={(next) =>
+                    updateUrl({
+                        inventory: next === "exclusive" ? "exclusive" : undefined,
+                        tab: next === "exclusive" && tab === "requests" ? "slots" : tab,
+                        book: undefined,
+                        focus: undefined,
+                        owner: undefined,
+                    })
+                }
                 value={tab}
                 counts={counts}
                 filtersCount={filtersCount}
@@ -404,6 +437,15 @@ export function BrokerSiteVisitsPage() {
                                 next.range === "custom" ? next.customFrom || undefined : undefined,
                             to: next.range === "custom" ? next.customTo || undefined : undefined,
                         }),
+                    ...(inventory === "exclusive" && tab === "slots"
+                        ? {
+                              searchId: "exclusive-slot-search",
+                              searchPlaceholder: "Search slots",
+                              searchAriaLabel: "Search exclusive visit slots",
+                              customDescription:
+                                  "Choose a start date and an end date for bookable times.",
+                          }
+                        : {}),
                     ...(tab === "visits"
                         ? {
                               searchId: "visit-search",
@@ -437,12 +479,18 @@ export function BrokerSiteVisitsPage() {
             <div
                 role="tabpanel"
                 aria-label={
-                    tab === "visits" ? "My visits" : tab === "slots" ? "Open slots" : "Requests"
+                    tab === "visits"
+                        ? "My visits"
+                        : tab === "slots"
+                          ? inventory === "exclusive"
+                              ? "Book slots"
+                              : "Open slots"
+                          : "Requests"
                 }
             >
                 {tab === "visits" ? (
                     <MyVisitsTab
-                        visits={visitsQuery.data ?? []}
+                        visits={inventoryVisits}
                         propertyFilters={propertyFilters}
                         isLoading={visitsQuery.isLoading}
                         focus={focus}
@@ -453,6 +501,7 @@ export function BrokerSiteVisitsPage() {
                         onOpen={(id) => updateUrl({ visit: id })}
                         onAction={handleVisitAction}
                         onBrowseSlots={() => updateUrl({ tab: "slots" })}
+                        browseLabel={inventory === "exclusive" ? "Book a slot" : undefined}
                         onClearQuery={() => updateUrl({ tab: "visits", q: undefined })}
                         onClearRange={() =>
                             updateUrl({
@@ -478,17 +527,18 @@ export function BrokerSiteVisitsPage() {
                 ) : tab === "slots" ? (
                     <OpenSlotsTab
                         key={searchParams.get("q") ?? ""}
-                        items={displaySlotItems}
+                        mode={inventory === "exclusive" ? "exclusive" : "platform"}
+                        items={inventory === "exclusive" ? exclusiveSlotItems : displaySlotItems}
                         propertyOptions={propertyOptions}
                         ownerOptions={ownerOptions}
                         selectedPropertyId={slotFilters.propertyId}
                         buyers={buyers}
                         buyerId={buyerId}
-                        isLoading={slotsQuery.isLoading}
-                        isError={slotsQuery.isError}
-                        isFetchingMore={slotsQuery.isFetchingNextPage}
-                        hasMore={Boolean(slotsQuery.hasNextPage)}
-                        updatedAt={slotsQuery.dataUpdatedAt}
+                        isLoading={activeSlotQuery.isLoading}
+                        isError={activeSlotQuery.isError}
+                        isFetchingMore={activeSlotQuery.isFetchingNextPage}
+                        hasMore={Boolean(activeSlotQuery.hasNextPage)}
+                        updatedAt={activeSlotQuery.dataUpdatedAt}
                         filtersOpen={slotFiltersOpen}
                         onFiltersOpenChange={setSlotFiltersOpen}
                         onBuyerChange={(id) => updateUrl({ buyer: id })}
@@ -496,8 +546,8 @@ export function BrokerSiteVisitsPage() {
                         onBook={(slot) => updateUrl({ book: slot.id })}
                         onOpenVisit={(id) => updateUrl({ tab: "visits", visit: id })}
                         onRequest={() => updateUrl({ tab: "slots", book: "ready" })}
-                        onRefresh={() => void slotsQuery.refetch()}
-                        onLoadMore={() => void slotsQuery.fetchNextPage()}
+                        onRefresh={() => void activeSlotQuery.refetch()}
+                        onLoadMore={() => void activeSlotQuery.fetchNextPage()}
                         rowErrors={rowErrors}
                     />
                 ) : (

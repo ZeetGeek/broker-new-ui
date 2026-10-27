@@ -152,6 +152,7 @@ export function MyVisitsTab({
     onOpen,
     onAction,
     onBrowseSlots,
+    browseLabel,
     onClearQuery,
     onClearRange,
     onClearFocus,
@@ -168,6 +169,7 @@ export function MyVisitsTab({
     onOpen: (id: string) => void;
     onAction: (action: "outcome" | "reschedule" | "withdraw", id: string) => void;
     onBrowseSlots: () => void;
+    browseLabel?: string;
     onClearQuery?: () => void;
     onClearRange?: () => void;
     onClearFocus?: () => void;
@@ -240,7 +242,8 @@ export function MyVisitsTab({
         : undefined;
 
     if (isLoading && visits.length === 0) return <VisitsTabSkeleton />;
-    if (visits.length === 0) return <EmptyState kind="no-visits" onPrimary={onBrowseSlots} />;
+    if (visits.length === 0)
+        return <EmptyState kind="no-visits" onPrimary={onBrowseSlots} primary={browseLabel} />;
 
     return (
         <section className="space-y-4">
