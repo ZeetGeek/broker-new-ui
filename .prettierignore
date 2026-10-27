@@ -23,6 +23,20 @@ pnpm-lock.yaml
 yarn.lock
 *.log
 
+# diagnostic output and temporary files
+/detect-band-*.json
+*.err
+*.tmp
+*.temp
+*.bak
+/tmp/
+/.tmp/
+
+# installed agent skills (managed by their installers)
+.agents/skills/
+.claude/skills/
+.cursor/skills/
+
 # env and machine-local tool state
 .env*
 .claude/settings.local.json
