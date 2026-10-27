@@ -11,7 +11,7 @@ import {
     MIN_PROPERTY_DESCRIPTION_LENGTH,
 } from "@/lib/properties/form-limits";
 import { isUsablePropertyPhoto, MAX_PROPERTY_PHOTOS } from "@/lib/properties/form-media";
-import { labelOf, missingRequiredFields } from "@/lib/visibility/rules";
+import { missingRequiredFields, requiredFieldMessage } from "@/lib/visibility/rules";
 
 import {
     BEDROOM_OPTIONS,
@@ -634,7 +634,7 @@ function makeFieldRuleSchema(step: PropertyFormStep) {
                 context.addIssue({
                     code: "custom",
                     path: missing.path.split("."),
-                    message: `Enter ${labelOf(missing.path, values).toLowerCase()}`,
+                    message: requiredFieldMessage(missing.path, values),
                 });
             }
         });
