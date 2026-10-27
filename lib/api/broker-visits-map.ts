@@ -228,6 +228,7 @@ export function mapShowingToVisit(showing: ApiShowing): BrokerSiteVisit {
         ownerId: owner.id,
         brokerId: showing.broker?.id ?? "broker_me",
         buyerIds: [buyer.id],
+        leadId: showing.leadId,
         startsAt,
         endsAt,
         status: mapShowingStatus(showing.status, startsAt),

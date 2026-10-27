@@ -283,12 +283,14 @@ export function OpenSlotsTab({
                 </DialogHeader>
                 <div className="overflow-y-auto p-5 max-block-[68dvh]">
                     <SlotFilters
-                        value={draftFilters}
-                        onChange={setDraftFilters}
                         buyers={buyers}
                         buyerId={draftBuyerId}
                         onBuyerChange={setDraftBuyerId}
                         ownerOptions={ownerOptions}
+                        ownerId={draftFilters.owner || undefined}
+                        onOwnerChange={(owner) =>
+                            setDraftFilters((current) => ({ ...current, owner: owner ?? "" }))
+                        }
                         leadOptions={leadOptions}
                         leadId={draftLeadId}
                         onLeadChange={setDraftLeadId}

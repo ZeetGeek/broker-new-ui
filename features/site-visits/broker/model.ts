@@ -61,6 +61,8 @@ export type BrokerSiteVisit = {
     ownerId: string;
     brokerId: string;
     buyerIds: string[];
+    /** Broker property lead this visit belongs to (one buyer on one property). */
+    leadId?: string;
     startsAt: string;
     endsAt: string;
     status: BrokerVisitStatus;

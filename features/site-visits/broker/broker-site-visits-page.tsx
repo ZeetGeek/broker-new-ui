@@ -25,6 +25,12 @@ import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import type { BrokerVisitsTab, SummaryFilter } from "@/features/site-visits/broker/model";
 import { MyVisitsTab } from "@/features/site-visits/broker/my-visits/my-visits-tab";
 import {
+    countVisitPeopleFilters,
+    visitFilterOptions,
+    type VisitPeopleFilter,
+} from "@/features/site-visits/broker/my-visits/visit-filter-options";
+import { VisitFiltersDialog } from "@/features/site-visits/broker/my-visits/visit-filters-dialog";
+import {
     countOpenSlotFilters,
     OpenSlotsTab,
     readOpenSlotFilters,
@@ -99,6 +105,7 @@ export function BrokerSiteVisitsPage() {
     const [now, setNow] = useState(() => new Date());
     const [slotFiltersOpen, setSlotFiltersOpen] = useState(false);
     const [visitFiltersOpen, setVisitFiltersOpen] = useState(false);
+    const [peopleFiltersOpen, setPeopleFiltersOpen] = useState(false);
     const propertyFiltersParam = searchParams.get("propertyFilters");
     const propertyFilters = useMemo(
         () => parsePropertyCriteria(propertyFiltersParam ?? undefined),
@@ -376,8 +383,20 @@ export function BrokerSiteVisitsPage() {
             ),
         [buyerId, openSlotFilters, slotFilters.leadId, slotFilters.propertyId],
     );
+    const peopleFilter = useMemo<VisitPeopleFilter>(
+        () => ({ buyerId, ownerId: slotFilters.ownerId, leadId: slotFilters.leadId }),
+        [buyerId, slotFilters.leadId, slotFilters.ownerId],
+    );
+    const peopleFilterOptions = useMemo(
+        () => visitFilterOptions(inventoryVisits),
+        [inventoryVisits],
+    );
     const filtersCount =
-        tab === "slots" ? openSlotFilterCount : propertyCriteriaCount(propertyFilters);
+        tab === "slots"
+            ? openSlotFilterCount
+            : tab === "visits"
+              ? propertyCriteriaCount(propertyFilters) + countVisitPeopleFilters(peopleFilter)
+              : propertyCriteriaCount(propertyFilters);
     const slotQuery = searchParams.get("q") ?? "";
     const visitDateRange =
         searchParams.get("range") === "today" ||
@@ -413,10 +432,12 @@ export function BrokerSiteVisitsPage() {
                 onChange={(next) => {
                     setSlotFiltersOpen(false);
                     setVisitFiltersOpen(false);
+                    setPeopleFiltersOpen(false);
                     updateUrl({ tab: next, focus: undefined });
                 }}
                 onFilters={() => {
                     if (tab === "slots") setSlotFiltersOpen(true);
+                    else if (tab === "visits") setPeopleFiltersOpen(true);
                     else setVisitFiltersOpen(true);
                 }}
                 onClearFilters={() => {
@@ -425,6 +446,14 @@ export function BrokerSiteVisitsPage() {
                             tab: "slots",
                             buyer: undefined,
                             propertyId: undefined,
+                            owner: undefined,
+                            lead: undefined,
+                        });
+                    } else if (tab === "visits") {
+                        updateUrl({
+                            focus: undefined,
+                            propertyFilters: undefined,
+                            buyer: undefined,
                             owner: undefined,
                             lead: undefined,
                         });
@@ -510,6 +539,14 @@ export function BrokerSiteVisitsPage() {
                     <MyVisitsTab
                         visits={inventoryVisits}
                         propertyFilters={propertyFilters}
+                        peopleFilter={peopleFilter}
+                        onClearPeople={(key) =>
+                            updateUrl({
+                                tab: "visits",
+                                [key === "buyerId" ? "buyer" : key === "ownerId" ? "owner" : "lead"]:
+                                    undefined,
+                            })
+                        }
                         isLoading={visitsQuery.isLoading}
                         focus={focus}
                         query={slotQuery}
@@ -539,6 +576,9 @@ export function BrokerSiteVisitsPage() {
                                 to: undefined,
                                 focus: undefined,
                                 propertyFilters: undefined,
+                                buyer: undefined,
+                                owner: undefined,
+                                lead: undefined,
                             })
                         }
                     />
@@ -608,6 +648,24 @@ export function BrokerSiteVisitsPage() {
                     />
                 )}
             </div>
+
+            <VisitFiltersDialog
+                open={peopleFiltersOpen}
+                onOpenChange={setPeopleFiltersOpen}
+                value={peopleFilter}
+                onApply={(next) =>
+                    updateUrl({
+                        tab: "visits",
+                        focus: undefined,
+                        buyer: next.buyerId,
+                        owner: next.ownerId,
+                        lead: next.leadId,
+                    })
+                }
+                buyers={peopleFilterOptions.buyers}
+                ownerOptions={peopleFilterOptions.ownerOptions}
+                leadOptions={peopleFilterOptions.leadOptions}
+            />
 
             <VisitsPropertyFiltersDialog
                 open={visitFiltersOpen}

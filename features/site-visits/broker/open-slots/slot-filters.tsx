@@ -108,30 +108,29 @@ function FilterSelect({
     );
 }
 
+/** Buyer → Owner → Lead filter fields, shared by Open slots and My visits. */
 export function SlotFilters({
-    value,
-    onChange,
     buyers = [],
     buyerId,
     onBuyerChange,
     ownerOptions = [],
+    ownerId,
+    onOwnerChange,
     leadOptions = [],
     leadId,
     onLeadChange,
 }: {
-    value: SlotFilterState;
-    onChange: (next: SlotFilterState) => void;
     buyers?: PersonSummary[];
     buyerId?: string;
     onBuyerChange?: (id?: string) => void;
     ownerOptions?: ApiOwnerOption[];
+    ownerId?: string;
+    onOwnerChange?: (id?: string) => void;
     leadOptions?: ApiLeadOption[];
     leadId?: string;
     onLeadChange?: (id?: string) => void;
 }) {
-    const shownLeads = leadOptions.filter((option) =>
-        leadMatches(option, buyerId, value.owner || undefined),
-    );
+    const shownLeads = leadOptions.filter((option) => leadMatches(option, buyerId, ownerId));
     const shownOwners = ownersForBuyer(ownerOptions, leadOptions, buyerId);
 
     // Drop the chosen lead when a new buyer / owner no longer includes it.
@@ -142,11 +141,11 @@ export function SlotFilters({
     };
 
     const leadEmptyLabel =
-        buyerId && value.owner
+        buyerId && ownerId
             ? "This buyer has no leads with this owner"
             : buyerId
               ? "This buyer has no leads yet"
-              : value.owner
+              : ownerId
                 ? "No leads on this owner's properties"
                 : "No leads yet";
 
@@ -161,24 +160,24 @@ export function SlotFilters({
                 onChange={(next) => {
                     onBuyerChange?.(next);
                     const ownerStays =
-                        !value.owner ||
+                        !ownerId ||
                         ownersForBuyer(ownerOptions, leadOptions, next).some(
-                            (owner) => owner.id === value.owner,
+                            (owner) => owner.id === ownerId,
                         );
-                    if (!ownerStays) onChange({ ...value, owner: "" });
-                    keepLeadIfMatches(next, ownerStays ? value.owner || undefined : undefined);
+                    if (!ownerStays) onOwnerChange?.(undefined);
+                    keepLeadIfMatches(next, ownerStays ? ownerId : undefined);
                 }}
             />
             {ownerOptions.length > 0 ? (
                 <FilterSelect
                     label="Owner"
                     icon={Home}
-                    value={value.owner}
+                    value={ownerId}
                     placeholder="All owners"
                     options={shownOwners.map((owner) => ({ value: owner.id, label: owner.name }))}
                     emptyLabel="This buyer has no leads on an owner's property"
                     onChange={(next) => {
-                        onChange({ ...value, owner: next ?? "" });
+                        onOwnerChange?.(next);
                         keepLeadIfMatches(buyerId, next);
                     }}
                 />

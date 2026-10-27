@@ -5,7 +5,6 @@ import { memo } from "react";
 import { addCollection, Icon } from "@iconify/react/offline";
 import {
     CalendarClock,
-    CircleCheck,
     Clock3,
     Copy,
     ExternalLink,
@@ -69,15 +68,10 @@ export const VisitCard = memo(function VisitCard({
     const status = VISIT_STATUS[visit.status];
     const StatusIcon = status.icon;
     const cancelled = isVisitCancelled(visit.status);
-    const primary = visitPrimaryAction(visit.status, visit.startsAt, Boolean(visit.outcome));
-    const primaryLabel =
-        primary === "outcome"
-            ? "Log outcome"
-            : primary === "withdraw"
-              ? "Cancel request"
-              : "Reschedule";
-    const PrimaryIcon =
-        primary === "outcome" ? CircleCheck : primary === "withdraw" ? Trash2 : CalendarClock;
+    const action = visitPrimaryAction(visit.status, visit.startsAt, Boolean(visit.outcome));
+    const primary = action === "outcome" ? null : action;
+    const primaryLabel = primary === "withdraw" ? "Cancel request" : "Reschedule";
+    const PrimaryIcon = primary === "withdraw" ? Trash2 : CalendarClock;
     const buyer = visit.buyers[0];
     const broker = useAppSelector((state) => state.auth.user);
     const brokerName = broker?.fullName?.trim() || broker?.email || "Your broker";
