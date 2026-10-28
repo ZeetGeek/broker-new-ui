@@ -1,5 +1,7 @@
 "use client";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
+
 import { SlidersHorizontal } from "@/components/shared/icons";
 
 import { FilterChip, FilterChipCount, filterChipClassName } from "@/components/shared/filter-chip";
@@ -72,23 +74,29 @@ export function VisitsTabs({
 
     return (
         <div className="sticky inset-bs-0 z-10 flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Listing source">
-                {INVENTORY.map((item) => {
-                    const active = inventory === item.value;
-                    return (
-                        <button
-                            key={item.value}
-                            type="button"
-                            role="tab"
-                            aria-selected={active}
-                            onClick={() => onInventoryChange(item.value)}
-                            className={filterChipClassName(active)}
-                        >
-                            {item.label}
-                        </button>
-                    );
-                })}
-            </div>
+            {FEATURE_PLATFORM_OWNER ? (
+                <div
+                    className="flex flex-wrap items-center gap-2"
+                    role="tablist"
+                    aria-label="Listing source"
+                >
+                    {INVENTORY.map((item) => {
+                        const active = inventory === item.value;
+                        return (
+                            <button
+                                key={item.value}
+                                type="button"
+                                role="tab"
+                                aria-selected={active}
+                                onClick={() => onInventoryChange(item.value)}
+                                className={filterChipClassName(active)}
+                            >
+                                {item.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            ) : null}
             <TooltipProvider>
                 <div className="flex items-center justify-between gap-3 sm:gap-4">
                     <OwnerListingsChipsCarousel>

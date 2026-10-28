@@ -328,15 +328,24 @@ export default function OutcomeModal({
                         />
                     </div>
                     {nextStep === "schedule_followup" ? (
-                        <input
-                            type="datetime-local"
-                            step={900}
-                            {...form.register("followUpAt")}
-                            className="
+                        <>
+                            <input
+                                type="datetime-local"
+                                step={900}
+                                min={inputValueInIst(new Date())}
+                                aria-invalid={Boolean(form.formState.errors.followUpAt)}
+                                {...form.register("followUpAt")}
+                                className="
               body-sm mbs-3 rounded-control border border-border-warm bg-surface px-3 text-ink
               inline-full min-block-11
             "
-                        />
+                            />
+                            {form.formState.errors.followUpAt ? (
+                                <p role="alert" className="body-sm mbs-1.5 text-danger">
+                                    {form.formState.errors.followUpAt.message}
+                                </p>
+                            ) : null}
+                        </>
                     ) : null}
                 </fieldset>
             </form>

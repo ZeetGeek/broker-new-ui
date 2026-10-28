@@ -11,10 +11,11 @@ import type {
     TimeRequest,
 } from "@/features/site-visits/broker/model";
 
-export function useTimeRequests() {
+export function useTimeRequests(enabled = true) {
     return useQuery({
         queryKey: ["timeRequests", "all"],
         queryFn: () => brokerVisitsApi.requests(),
+        enabled,
         staleTime: 60_000,
         refetchOnMount: "always",
         refetchOnWindowFocus: true,

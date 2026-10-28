@@ -61,6 +61,8 @@ export type BrokerSiteVisit = {
     ownerId: string;
     brokerId: string;
     buyerIds: string[];
+    /** Broker property lead this visit belongs to (one buyer on one property). */
+    leadId?: string;
     startsAt: string;
     endsAt: string;
     status: BrokerVisitStatus;
@@ -133,6 +135,8 @@ export type SlotListFilters = {
     timeBuckets?: string[];
     ownerId?: string;
     buyerId?: string;
+    /** Broker property lead id — one buyer on one property. */
+    leadId?: string;
     q?: string;
     cursor?: string;
     page?: number;

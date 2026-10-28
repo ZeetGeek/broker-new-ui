@@ -31,6 +31,7 @@ export function slotListFiltersFromParams(
         propertyId: params.get("propertyId") ?? undefined,
         ownerId: params.get("owner") ?? undefined,
         buyerId: params.get("buyer") ?? undefined,
+        leadId: params.get("lead") ?? undefined,
         q: params.get("q")?.trim() || undefined,
         cursor: params.get("cursor") ?? undefined,
     };

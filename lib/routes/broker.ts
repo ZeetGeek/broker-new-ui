@@ -18,6 +18,11 @@ export function brokerPropertyEditHref(propertyId: string): string {
     return `/broker/properties/${propertyId}/edit`;
 }
 
+/** Lead analytics for one of the broker's own listings. */
+export function brokerPropertyAnalyticsHref(propertyId: string): string {
+    return `${BROKER_YOUR_LISTINGS_HREF}/${propertyId}/analytics`;
+}
+
 export function brokerYourListingsHref(tab?: "representing" | "requests"): string {
     if (!tab || tab === "representing") return BROKER_YOUR_LISTINGS_HREF;
     return `${BROKER_YOUR_LISTINGS_HREF}?tab=${tab}`;

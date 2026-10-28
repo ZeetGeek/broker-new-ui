@@ -13,6 +13,7 @@ import { useParams, useRouter } from "@/lib/navigation";
 import {
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
+    brokerPropertyAnalyticsHref,
     brokerPropertyEditHref,
 } from "@/lib/routes/broker";
 import {
@@ -126,6 +127,9 @@ function OwnedPropertyDetail({
                             portal === "broker" && !item.isSold ? () => setSoldOpen(true) : undefined
                         }
                         editHref={editHref}
+                        analyticsHref={
+                            portal === "broker" ? brokerPropertyAnalyticsHref(item.id) : undefined
+                        }
                         requestsHref={portal === "owner" ? requestsHref : undefined}
                         brokers={brokerSummary?.brokers}
                         brokersState={

@@ -4,7 +4,12 @@ import {
     type PropertyDraftValues,
     stepSchemas,
 } from "@/lib/schemas/property";
-import { isVisible, missingRequiredFields, valueAtPath } from "@/lib/visibility/rules";
+import {
+    isVisible,
+    missingRequiredFields,
+    requiredFieldMessage,
+    valueAtPath,
+} from "@/lib/visibility/rules";
 
 /** Drafts can be incomplete, but values already entered must satisfy their constraints. */
 export function propertyDraftValidationIssues(values: PropertyDraftValues) {
@@ -75,7 +80,7 @@ export function quickAddValidationIssues(
         if (!issues.has(missing.path))
             issues.set(missing.path, {
                 path: missing.path,
-                message: `Enter ${missing.label.toLowerCase()}`,
+                message: requiredFieldMessage(missing.path, values),
             });
     }
     if (portal === "owner") {

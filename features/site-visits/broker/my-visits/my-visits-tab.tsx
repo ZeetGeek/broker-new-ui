@@ -15,6 +15,10 @@ import { VirtualStack } from "@/components/shared/virtual-stack";
 
 import type { BrokerSiteVisit, SummaryFilter } from "@/features/site-visits/broker/model";
 import { VisitCard } from "@/features/site-visits/broker/my-visits/visit-card";
+import {
+    matchesVisitPeople,
+    type VisitPeopleFilter,
+} from "@/features/site-visits/broker/my-visits/visit-filter-options";
 import type { SlotDateRange } from "@/features/site-visits/broker/open-slots/slot-filters";
 import {
     type VisitsFilterChip,
@@ -22,6 +26,8 @@ import {
     visitsRangeChipLabel,
 } from "@/features/site-visits/broker/visits-filter-chips";
 import { EmptyState, VisitsTabSkeleton } from "@/features/site-visits/broker/visits-states";
+
+const NO_PEOPLE_FILTER: VisitPeopleFilter = {};
 
 const FOCUS_CHIP_LABEL: Record<SummaryFilter, string> = {
     today: "Today",
@@ -143,6 +149,8 @@ function VisitGroup({
 export function MyVisitsTab({
     visits,
     propertyFilters,
+    peopleFilter = NO_PEOPLE_FILTER,
+    onClearPeople,
     isLoading,
     focus,
     query = "",
@@ -160,6 +168,8 @@ export function MyVisitsTab({
 }: {
     visits: BrokerSiteVisit[];
     propertyFilters?: PropertyListCriteria;
+    peopleFilter?: VisitPeopleFilter;
+    onClearPeople?: (key: keyof VisitPeopleFilter) => void;
     isLoading: boolean;
     focus?: SummaryFilter;
     query?: string;
@@ -179,16 +189,48 @@ export function MyVisitsTab({
     const filtered = useMemo(() => {
         const bounds = rangeBounds(range, customFrom, customTo, now);
         return applyFocus(visits, focus).filter((visit) => {
+            if (!matchesVisitPeople(visit, peopleFilter)) return false;
             if (!matchesVisitProperty(visit.property, propertyFilters)) return false;
             if (!matchesQuery(visit, query)) return false;
             if (!bounds) return true;
             const day = istDateKey(visit.startsAt);
             return day >= bounds.from && day <= bounds.to;
         });
-    }, [customFrom, customTo, focus, now, query, range, visits, propertyFilters]);
+    }, [customFrom, customTo, focus, now, query, range, visits, propertyFilters, peopleFilter]);
     const groups = useMemo(() => groupVisitsByDay(filtered), [filtered]);
     const chips = useMemo(() => {
         const next: VisitsFilterChip[] = [];
+        if (onClearPeople) {
+            const { buyerId, ownerId, leadId } = peopleFilter;
+            if (buyerId) {
+                const name = visits
+                    .flatMap((visit) => visit.buyers)
+                    .find((buyer) => buyer.id === buyerId)?.name;
+                next.push({
+                    key: "buyer",
+                    label: name ?? "Selected buyer",
+                    clear: () => onClearPeople("buyerId"),
+                });
+            }
+            if (ownerId) {
+                const name = visits.find((visit) => visit.ownerId === ownerId)?.owner.name;
+                next.push({
+                    key: "owner",
+                    label: name ?? "Selected owner",
+                    clear: () => onClearPeople("ownerId"),
+                });
+            }
+            if (leadId) {
+                const visit = visits.find((item) => item.leadId === leadId);
+                next.push({
+                    key: "lead",
+                    label: visit
+                        ? `${visit.buyers[0]?.name ?? "Buyer"} · ${visit.property.title}`
+                        : "Selected lead",
+                    clear: () => onClearPeople("leadId"),
+                });
+            }
+        }
         const propertyCount = propertyCriteriaCount(propertyFilters);
         if (propertyCount && onClearFilters) {
             next.push({
@@ -223,6 +265,9 @@ export function MyVisitsTab({
         range,
         propertyFilters,
         onClearFilters,
+        onClearPeople,
+        peopleFilter,
+        visits,
     ]);
     const nextVisit = useMemo(
         () =>

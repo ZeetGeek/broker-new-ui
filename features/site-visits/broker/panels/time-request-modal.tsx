@@ -263,6 +263,7 @@ export function TimeRequestModal({
                         <input
                             type="datetime-local"
                             step={900}
+                            min={inputValueInIst(new Date())}
                             {...form.register("preferredStartsAt")}
                             className="
                   body-sm mbs-2 block rounded-control border border-border-warm bg-surface px-3
@@ -355,6 +356,7 @@ export function TimeRequestModal({
                             <input
                                 type="datetime-local"
                                 step={900}
+                                min={inputValueInIst(new Date())}
                                 value={value}
                                 onChange={(event) =>
                                     form.setValue(

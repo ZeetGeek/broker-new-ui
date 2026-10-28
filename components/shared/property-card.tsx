@@ -503,6 +503,8 @@ export type PropertyCardProps = {
     onInviteBroker?: () => void;
     brokerSummary?: PropertyBrokersSummary;
     brokerSummaryState?: "loading" | "error" | "ready";
+    /** Owned cards: open lead analytics for this listing. */
+    onAnalytics?: () => void;
     /** Owned cards: ask to delete this listing (caller shows confirm). */
     onDelete?: () => void;
     /** Owner cards: mark this listing as sold (caller shows confirm). */
@@ -1664,6 +1666,7 @@ function OwnedOverlayPropertyCard({
     onInviteBroker,
     brokerSummary,
     brokerSummaryState,
+    onAnalytics,
     onDelete,
     onMarkSold,
     isSaved = false,
@@ -1761,6 +1764,7 @@ function OwnedOverlayPropertyCard({
                                 offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
                         }}
                         onEdit={onEdit}
+                        onAnalytics={onAnalytics}
                         onDelete={onDelete}
                         onMarkSold={isSold ? undefined : onMarkSold}
                         isSaved={isSaved}

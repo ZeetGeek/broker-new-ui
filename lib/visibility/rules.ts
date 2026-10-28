@@ -14,6 +14,8 @@ export type FieldRule = {
     keepWhenHidden?: boolean;
     /** When set, overrides the default empty check for required-field validation. */
     isEmpty?: (values: PropertyDraftValues) => boolean;
+    /** When set, overrides the default "Enter …" message for a missing required field. */
+    missingMessage?: (values: PropertyDraftValues) => string;
 };
 
 type RuleMap = Record<string, FieldRule>;
@@ -287,6 +289,14 @@ export const FIELD_RULES = {
         isEmpty: (values) =>
             values.media.photos.filter((photo) => !photo.isCover && isUsablePropertyPhoto(photo))
                 .length < 3,
+        missingMessage: (values) => {
+            const added = values.media.photos.filter(
+                (photo) => !photo.isCover && isUsablePropertyPhoto(photo),
+            ).length;
+            const left = 3 - added;
+            if (added === 0) return "Add at least 3 property photos besides the cover image";
+            return `Add ${left} more property ${left === 1 ? "photo" : "photos"}. You need 3 besides the cover image`;
+        },
     },
     "media.videoUploadName": { visible: () => false },
     "media.videoUrl": {},
@@ -456,6 +466,15 @@ export function isEmptyFieldValue(value: unknown, rule?: FieldRule): boolean {
 }
 
 export type MissingRequiredField = { path: string; label: string; step: PropertyFormStep };
+
+/** What to tell the user when a required field is missing or below its minimum count. */
+export function requiredFieldMessage(path: string, values: PropertyDraftValues): string {
+    const rule = ruleFor(path);
+    if (rule?.missingMessage) return rule.missingMessage(values);
+    const label = labelOf(path, values).toLowerCase();
+    if (rule?.minItems && rule.minItems > 1) return `Add at least ${rule.minItems} ${label}`;
+    return `Enter ${label}`;
+}
 
 export function missingRequiredFields(
     values: PropertyDraftValues,

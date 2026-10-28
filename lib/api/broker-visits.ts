@@ -2,6 +2,7 @@ import { ApiError, apiFetch } from "@/lib/api/client";
 import { clientsApi } from "@/lib/api/clients";
 import {
     type ApiBrokerOpenSlotItem,
+    type ApiLeadOption,
     type ApiOwnerOption,
     type ApiPropertyOption,
     type ApiShowing,
@@ -40,7 +41,30 @@ export type BrokerOpenSlotsPage = {
     totalPages: number;
     propertyOptions: ApiPropertyOption[];
     ownerOptions: ApiOwnerOption[];
+    leadOptions: ApiLeadOption[];
 };
+
+type ApiOpenSlotsResponse = Paged<ApiBrokerOpenSlotItem> & {
+    propertyOptions?: ApiPropertyOption[];
+    ownerOptions?: ApiOwnerOption[];
+    leadOptions?: ApiLeadOption[];
+};
+
+function toOpenSlotsPage(
+    response: ApiOpenSlotsResponse,
+    filters: SlotListFilters,
+): BrokerOpenSlotsPage {
+    return {
+        items: (response.items ?? []).map(mapBrokerOpenSlotItem),
+        total: response.total ?? 0,
+        page: response.page ?? filters.page ?? 1,
+        limit: response.limit ?? filters.limit ?? 20,
+        totalPages: Math.max(1, response.totalPages ?? 1),
+        propertyOptions: response.propertyOptions ?? [],
+        ownerOptions: response.ownerOptions ?? [],
+        leadOptions: response.leadOptions ?? [],
+    };
+}
 
 async function requestData<T>(
     url: string,
@@ -124,6 +148,7 @@ function buildOpenSlotsQuery(filters: SlotListFilters): string {
     if (filters.to) params.set("to", filters.to.slice(0, 10));
     if (filters.ownerId) params.set("ownerId", filters.ownerId);
     if (filters.buyerId) params.set("clientId", filters.buyerId);
+    if (filters.leadId) params.set("leadId", filters.leadId);
     if (filters.q) params.set("search", filters.q);
     return params.toString();
 }
@@ -220,44 +245,21 @@ export const brokerVisitsApi = {
                         ]),
                     ).values(),
                 ],
+                leadOptions: [],
             };
         }
 
-        const response = await requestData<
-            Paged<ApiBrokerOpenSlotItem> & {
-                propertyOptions?: ApiPropertyOption[];
-                ownerOptions?: ApiOwnerOption[];
-            }
-        >(`/slots/broker/open?${buildOpenSlotsQuery(filters)}`);
-
-        return {
-            items: (response.items ?? []).map(mapBrokerOpenSlotItem),
-            total: response.total ?? 0,
-            page: response.page ?? filters.page ?? 1,
-            limit: response.limit ?? filters.limit ?? 20,
-            totalPages: Math.max(1, response.totalPages ?? 1),
-            propertyOptions: response.propertyOptions ?? [],
-            ownerOptions: response.ownerOptions ?? [],
-        };
+        const response = await requestData<ApiOpenSlotsResponse>(
+            `/slots/broker/open?${buildOpenSlotsQuery(filters)}`,
+        );
+        return toOpenSlotsPage(response, filters);
     },
 
     async exclusiveSlots(filters: SlotListFilters = {}): Promise<BrokerOpenSlotsPage> {
-        const response = await requestData<
-            Paged<ApiBrokerOpenSlotItem> & {
-                propertyOptions?: ApiPropertyOption[];
-                ownerOptions?: ApiOwnerOption[];
-            }
-        >(`/slots/broker/exclusive/open?${buildOpenSlotsQuery(filters)}`);
-
-        return {
-            items: (response.items ?? []).map(mapBrokerOpenSlotItem),
-            total: response.total ?? 0,
-            page: response.page ?? filters.page ?? 1,
-            limit: response.limit ?? filters.limit ?? 20,
-            totalPages: Math.max(1, response.totalPages ?? 1),
-            propertyOptions: response.propertyOptions ?? [],
-            ownerOptions: response.ownerOptions ?? [],
-        };
+        const response = await requestData<ApiOpenSlotsResponse>(
+            `/slots/broker/exclusive/open?${buildOpenSlotsQuery(filters)}`,
+        );
+        return toOpenSlotsPage(response, filters);
     },
 
     /** Visit requests use existing broker bookings/showings API. */

@@ -69,6 +69,7 @@ import {
     IconCalendarWeek,
     IconCamera,
     IconCar,
+    IconChartBar,
     IconCheck,
     IconChecks,
     IconChevronDown,
@@ -280,6 +281,7 @@ export const CalendarPlus = IconCalendarPlus;
 export const CalendarRange = IconCalendarStats;
 export const Camera = IconCamera;
 export const Car = IconCar;
+export const ChartBar = IconChartBar;
 export const Check = IconCheck;
 export const CheckCheck = IconChecks;
 export const CheckCircle2 = IconCircleCheck;

@@ -1,7 +1,9 @@
 "use client";
 
-import { Building2, UserRound } from "@/components/shared/icons";
+import type { ApiLeadOption, ApiOwnerOption } from "@/lib/api/broker-visits-map";
 
+import type { AppIcon } from "@/components/shared/icons";
+import { Building2, Home, UserRound } from "@/components/shared/icons";
 import {
     Select,
     SelectContent,
@@ -11,7 +13,6 @@ import {
 } from "@/components/ui/select";
 
 import type { PersonSummary } from "@/features/site-visits/broker/model";
-import type { ApiOwnerOption, ApiPropertyOption } from "@/lib/api/broker-visits-map";
 
 export type SlotDateRange = "today" | "tomorrow" | "week" | "month" | "custom";
 
@@ -29,149 +30,170 @@ export const DEFAULT_SLOT_FILTERS: SlotFilterState = {
     owner: "",
 };
 
-function propertyOptionLabel(option: ApiPropertyOption): string {
-    const title = option.title?.trim() ?? "";
-    const locality = option.locality?.trim() ?? "";
-    if (title && locality) return `${title} · ${locality}`;
-    return title || locality || "Property";
+export function leadOptionLabel(option: ApiLeadOption): string {
+    return `${option.buyerName} · ${option.propertyTitle}`;
+}
+
+/** With a buyer chosen, only owners whose properties have a lead for that buyer. */
+function ownersForBuyer(
+    ownerOptions: ApiOwnerOption[],
+    leadOptions: ApiLeadOption[],
+    buyerId?: string,
+): ApiOwnerOption[] {
+    if (!buyerId) return ownerOptions;
+    const ownerIds = new Set(
+        leadOptions
+            .filter((option) => option.clientId === buyerId)
+            .map((option) => option.ownerOptionId),
+    );
+    return ownerOptions.filter((owner) => ownerIds.has(owner.id));
+}
+
+/** Lead fits the chosen buyer and owner (either may be unset). */
+export function leadMatches(option: ApiLeadOption, buyerId?: string, ownerOptionId?: string) {
+    if (buyerId && option.clientId !== buyerId) return false;
+    if (ownerOptionId && option.ownerOptionId !== ownerOptionId) return false;
+    return true;
 }
 
 function FilterSelect({
     label,
+    icon,
     value,
     placeholder,
     options,
+    emptyLabel,
     onChange,
 }: {
     label: string;
-    value: string;
+    icon: AppIcon;
+    value?: string;
     placeholder: string;
     options: { value: string; label: string }[];
-    onChange: (value: string) => void;
+    emptyLabel?: string;
+    onChange: (value?: string) => void;
 }) {
-    const current = value || "any";
     return (
         <label className="space-y-1.5">
             <span className="body-xs font-semibold text-ink-muted">{label}</span>
             <Select
-                value={current}
-                onValueChange={(next) => onChange(!next || next === "any" ? "" : next)}
+                value={value || "all"}
+                onValueChange={(next) => onChange(!next || next === "all" ? undefined : next)}
             >
-                <SelectTrigger size="md">
+                <SelectTrigger size="md" startIcon={icon}>
                     <SelectValue placeholder={placeholder}>
-                        {(selected: string | null) => {
-                            if (!selected || selected === "any") return placeholder;
-                            return (
-                                options.find((option) => option.value === selected)?.label ??
-                                placeholder
-                            );
-                        }}
+                        {(selected: string | null) => (
+                            <span className="truncate">
+                                {(selected &&
+                                    selected !== "all" &&
+                                    options.find((option) => option.value === selected)?.label) ||
+                                    placeholder}
+                            </span>
+                        )}
                     </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="any">{placeholder}</SelectItem>
+                    <SelectItem value="all">{placeholder}</SelectItem>
                     {options.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                             {option.label}
                         </SelectItem>
                     ))}
+                    {options.length === 0 && emptyLabel ? (
+                        <p className="body-sm px-2 py-1.5 text-ink-muted">{emptyLabel}</p>
+                    ) : null}
                 </SelectContent>
             </Select>
         </label>
     );
 }
 
+/** Buyer → Owner → Lead filter fields, shared by Open slots and My visits. */
 export function SlotFilters({
-    value,
-    onChange,
     buyers = [],
     buyerId,
     onBuyerChange,
     ownerOptions = [],
-    propertyOptions = [],
-    propertyId,
-    onPropertyChange,
+    ownerId,
+    onOwnerChange,
+    leadOptions = [],
+    leadId,
+    onLeadChange,
 }: {
-    value: SlotFilterState;
-    onChange: (next: SlotFilterState) => void;
     buyers?: PersonSummary[];
     buyerId?: string;
     onBuyerChange?: (id?: string) => void;
     ownerOptions?: ApiOwnerOption[];
-    propertyOptions?: ApiPropertyOption[];
-    propertyId?: string;
-    onPropertyChange?: (id?: string) => void;
+    ownerId?: string;
+    onOwnerChange?: (id?: string) => void;
+    leadOptions?: ApiLeadOption[];
+    leadId?: string;
+    onLeadChange?: (id?: string) => void;
 }) {
+    const shownLeads = leadOptions.filter((option) => leadMatches(option, buyerId, ownerId));
+    const shownOwners = ownersForBuyer(ownerOptions, leadOptions, buyerId);
+
+    // Drop the chosen lead when a new buyer / owner no longer includes it.
+    const keepLeadIfMatches = (nextBuyerId?: string, nextOwner?: string) => {
+        if (!leadId) return;
+        const lead = leadOptions.find((option) => option.id === leadId);
+        if (!lead || !leadMatches(lead, nextBuyerId, nextOwner)) onLeadChange?.(undefined);
+    };
+
+    const leadEmptyLabel =
+        buyerId && ownerId
+            ? "This buyer has no leads with this owner"
+            : buyerId
+              ? "This buyer has no leads yet"
+              : ownerId
+                ? "No leads on this owner's properties"
+                : "No leads yet";
+
     return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <label className="space-y-1.5">
-                <span className="body-xs font-semibold text-ink-muted">Lead</span>
-                <Select
-                    value={buyerId ?? "all"}
-                    onValueChange={(next) =>
-                        onBuyerChange?.(next && next !== "all" ? next : undefined)
-                    }
-                >
-                    <SelectTrigger size="md" startIcon={UserRound}>
-                        <SelectValue placeholder="All leads">
-                            {(selected: string | null) => {
-                                if (!selected || selected === "all") return "All leads";
-                                return (
-                                    buyers.find((buyer) => buyer.id === selected)?.name ??
-                                    "Selected lead"
-                                );
-                            }}
-                        </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All leads</SelectItem>
-                        {buyers.map((buyer) => (
-                            <SelectItem key={buyer.id} value={buyer.id}>
-                                {buyer.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </label>
+            <FilterSelect
+                label="Buyer"
+                icon={UserRound}
+                value={buyerId}
+                placeholder="All buyers"
+                options={buyers.map((buyer) => ({ value: buyer.id, label: buyer.name }))}
+                onChange={(next) => {
+                    onBuyerChange?.(next);
+                    const ownerStays =
+                        !ownerId ||
+                        ownersForBuyer(ownerOptions, leadOptions, next).some(
+                            (owner) => owner.id === ownerId,
+                        );
+                    if (!ownerStays) onOwnerChange?.(undefined);
+                    keepLeadIfMatches(next, ownerStays ? ownerId : undefined);
+                }}
+            />
             {ownerOptions.length > 0 ? (
                 <FilterSelect
                     label="Owner"
-                    value={value.owner}
+                    icon={Home}
+                    value={ownerId}
                     placeholder="All owners"
-                    options={ownerOptions.map((owner) => ({
-                        value: owner.id,
-                        label: owner.name,
-                    }))}
-                    onChange={(owner) => onChange({ ...value, owner })}
+                    options={shownOwners.map((owner) => ({ value: owner.id, label: owner.name }))}
+                    emptyLabel="This buyer has no leads on an owner's property"
+                    onChange={(next) => {
+                        onOwnerChange?.(next);
+                        keepLeadIfMatches(buyerId, next);
+                    }}
                 />
             ) : null}
-            <label className="space-y-1.5">
-                <span className="body-xs font-semibold text-ink-muted">Property</span>
-                <Select
-                    value={propertyId ?? "all"}
-                    onValueChange={(next) =>
-                        onPropertyChange?.(!next || next === "all" ? undefined : next)
-                    }
-                >
-                    <SelectTrigger size="md" startIcon={Building2}>
-                        <SelectValue placeholder="All properties">
-                            {(selected: string | null) => {
-                                if (!selected || selected === "all") return "All properties";
-                                const option = propertyOptions.find((item) => item.id === selected);
-                                return option ? propertyOptionLabel(option) : "Selected property";
-                            }}
-                        </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All properties</SelectItem>
-                        {propertyOptions.map((option) => (
-                            <SelectItem key={option.id} value={option.id}>
-                                {propertyOptionLabel(option)}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </label>
+            <FilterSelect
+                label="Lead"
+                icon={Building2}
+                value={leadId}
+                placeholder="All leads"
+                options={shownLeads.map((option) => ({
+                    value: option.id,
+                    label: leadOptionLabel(option),
+                }))}
+                emptyLabel={leadEmptyLabel}
+                onChange={(next) => onLeadChange?.(next)}
+            />
         </div>
     );
 }

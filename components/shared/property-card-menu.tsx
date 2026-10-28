@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 import {
     Bookmark,
+    ChartBar,
     Check,
     Ellipsis,
     History,
@@ -101,6 +102,8 @@ export type PropertyCardMenuProps = {
     onStopRepresenting?: () => void;
     /** Menu text for `onStopRepresenting`. Owner side says "Remove broker". */
     stopRepresentingLabel?: string;
+    /** Owned cards: open lead analytics for this listing. */
+    onAnalytics?: () => void;
     /** Owned cards: open the edit form. */
     onEdit?: () => void;
     /** Owned cards: ask to delete this listing. */
@@ -187,6 +190,7 @@ export function PropertyCardMenu({
     onCancelRequest,
     onStopRepresenting,
     stopRepresentingLabel = "Stop selling this property",
+    onAnalytics,
     onEdit,
     onDelete,
     onMarkSold,
@@ -287,6 +291,7 @@ export function PropertyCardMenu({
         onCancelRequest ||
         onStopRepresenting ||
         onAttachOwner ||
+        onAnalytics ||
         onEdit ||
         onMarkSold ||
         onDelete ||
@@ -587,6 +592,19 @@ export function PropertyCardMenu({
                             aria-hidden
                         />
                         {stopRepresentingLabel}
+                    </DropdownMenuItem>
+                ) : null}
+
+                {onAnalytics ? (
+                    <DropdownMenuItem
+                        className={ITEM_CLASS}
+                        onClick={() => {
+                            onAnalytics();
+                            setOpen(false);
+                        }}
+                    >
+                        <ChartBar aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
+                        Analytics
                     </DropdownMenuItem>
                 ) : null}
 

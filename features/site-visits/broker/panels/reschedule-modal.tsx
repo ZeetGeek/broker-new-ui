@@ -35,6 +35,10 @@ export function RescheduleModal({
     const save = async () => {
         const slot = propertySlots?.slots.find((item) => item.id === selected);
         const startsAt = slot?.startsAt ?? inputValueToUtc(custom);
+        if (new Date(startsAt).getTime() <= Date.now()) {
+            setSaveError("Pick a time later than now.");
+            return;
+        }
         const endsAt =
             slot?.endsAt ?? new Date(new Date(startsAt).getTime() + 45 * 60_000).toISOString();
         setSaveError(undefined);
@@ -128,6 +132,7 @@ export function RescheduleModal({
                 <input
                     type="datetime-local"
                     step={900}
+                    min={inputValueInIst(new Date())}
                     value={custom}
                     onChange={(event) => {
                         setCustom(event.target.value);
