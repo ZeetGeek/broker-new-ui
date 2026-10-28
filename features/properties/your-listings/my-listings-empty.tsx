@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 
 export type MyListingsEmptyProps = {
-    variant: "filtered" | "first_run";
+    variant: "filtered" | "first_run" | "no_sold";
     searchQuery?: string;
     onClearFilters?: () => void;
     onAddProperty?: () => void;
@@ -40,6 +40,16 @@ export function MyListingsEmpty({
                     </button>
                 ) : null}
             </div>
+        );
+    }
+
+    if (variant === "no_sold") {
+        return (
+            <EmptyState
+                icon={Building2}
+                heading="No sold properties yet"
+                description="When you mark a listing as sold, it moves here."
+            />
         );
     }
 

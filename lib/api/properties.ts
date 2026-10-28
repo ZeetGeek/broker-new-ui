@@ -212,6 +212,8 @@ export type PropertyListingOptions = {
         unassigned: number;
         draft: number;
         published: number;
+        /** Listings marked as sold. Not part of `draft` / `published`. */
+        sold?: number;
     };
     capabilities?: {
         canView?: boolean;
@@ -278,6 +280,10 @@ export type PropertyListQuery = {
     subtype?: string;
     bhkConfig?: string[];
     publishStatus?: PropertyPublishStatus;
+    /** Availability. `sold` lists only listings marked as sold. */
+    status?: "sold";
+    /** Leave sold listings out (Published / Draft tabs). */
+    excludeSold?: boolean;
     sort?: PropertyBrowseSort | "title";
     page?: number;
     limit?: number;
@@ -410,6 +416,8 @@ function buildListQuery(params?: PropertyListQuery) {
     if (params.subtype) q.set("subtype", params.subtype);
     appendList(q, "bhkConfig", params.bhkConfig);
     if (params.publishStatus) q.set("publishStatus", params.publishStatus);
+    if (params.status) q.set("status", params.status);
+    if (params.excludeSold) q.set("excludeSold", "true");
     if (params.sort) q.set("sort", params.sort);
     if (params.page != null && params.page > 1) q.set("page", String(params.page));
     if (params.limit != null) q.set("limit", String(params.limit));
