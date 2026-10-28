@@ -37,6 +37,8 @@ export const QUICK_ADD_VALIDATION_FIELDS = [
     "basics.propertyType",
     "basics.title",
     "details.bedrooms",
+    "location.country",
+    "location.state",
     "location.city",
     "location.locality",
     "location.pincode",

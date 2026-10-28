@@ -104,6 +104,8 @@ function Section({
     );
 }
 
+const COUNTRY_LOCKED_HELPER = "Chosen when you registered. Contact support to change this.";
+
 /** Matches property-form TextAreaField — same height language as Input size="lg". */
 const PROFILE_TEXTAREA_CLASS = `
   field-sizing-fixed resize-y rounded-control border-2 border-border-warm bg-surface
@@ -593,6 +595,9 @@ export function ProfilePage() {
                                                     size="lg"
                                                     autoComplete="country-name"
                                                     startIcon={Globe2}
+                                                    readOnly
+                                                    disabled
+                                                    helperText={COUNTRY_LOCKED_HELPER}
                                                     errorText={fieldState.error?.message}
                                                 />
                                             </div>
@@ -619,6 +624,8 @@ export function ProfilePage() {
                                                     loading={countriesLoading}
                                                     emptyText="No countries match"
                                                     limit={50}
+                                                    disabled
+                                                    helperText={COUNTRY_LOCKED_HELPER}
                                                     errorText={fieldState.error?.message}
                                                     onBlur={field.onBlur}
                                                     onValueChange={(next) => {

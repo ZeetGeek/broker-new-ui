@@ -323,7 +323,9 @@ export function SelectField({
                 render={({ field }) => (
                     <Combobox
                         value={String(field.value ?? "") || null}
+                        disabled={disabled}
                         onValueChange={(value) => {
+                            if (disabled) return;
                             const next = value ?? "";
                             field.onChange(next);
                             onValueChange?.(next);

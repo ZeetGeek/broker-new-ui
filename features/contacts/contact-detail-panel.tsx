@@ -41,7 +41,7 @@ import {
 } from "@/features/contacts/contact-card-model";
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { BuyerContactForm, OwnerContactForm } from "@/features/contacts/contact-form-model";
-import { CONTACT_LOCATION_FALLBACK } from "@/features/contacts/contact-location-defaults";
+import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 import { useMarketCurrency } from "@/hooks/use-market";
@@ -453,9 +453,10 @@ function BuyerPanel({
 
     const areasLabel = model.localities.join(", ");
     const source = sourceLabel(buyer.details?.source || buyer.source);
-    const country = buyer.country?.trim() || CONTACT_LOCATION_FALLBACK.country;
-    const state = buyer.state?.trim() || CONTACT_LOCATION_FALLBACK.state;
-    const city = buyer.city?.trim() || CONTACT_LOCATION_FALLBACK.city;
+    const fallback = contactLocationDefaults();
+    const country = buyer.country?.trim() || fallback.country;
+    const state = buyer.state?.trim() || fallback.state;
+    const city = buyer.city?.trim() || fallback.city;
 
     return (
         <>
@@ -654,10 +655,10 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
     const source = sourceLabel(details?.source);
     const ownerType = ownerTypeLabel(details?.ownerType);
     const isPlatform = owner.origin === "platform";
-    const country =
-        details?.country?.trim() || (isPlatform ? "" : CONTACT_LOCATION_FALLBACK.country);
-    const state = details?.state?.trim() || (isPlatform ? "" : CONTACT_LOCATION_FALLBACK.state);
-    const city = details?.city?.trim() || (isPlatform ? "" : CONTACT_LOCATION_FALLBACK.city);
+    const fallback = contactLocationDefaults();
+    const country = details?.country?.trim() || (isPlatform ? "" : fallback.country);
+    const state = details?.state?.trim() || (isPlatform ? "" : fallback.state);
+    const city = details?.city?.trim() || (isPlatform ? "" : fallback.city);
     const fullAddress = details?.fullAddress?.trim() || details?.address?.trim() || "";
     const reraNumber = details?.reraNumber?.trim() || "";
 

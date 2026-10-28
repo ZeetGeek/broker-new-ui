@@ -17,13 +17,17 @@ import {
 import { cn } from "@/lib/utils";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 import { useLocationOptions } from "@/hooks/use-locations";
+import { useMarket } from "@/hooks/use-market";
 
 import { AppImage } from "@/components/shared/app-image";
 import {
     BadgePercent,
+    Building2,
+    Globe2,
     ImageIcon,
     ImagePlus,
     Images,
+    Map as MapIcon,
     RefreshCw,
     Sparkles,
     Upload,
@@ -77,11 +81,33 @@ export function QuickAdd({
     const { derived } = useFieldRules();
     const values = watch();
     const coverInputRef = useRef<HTMLInputElement>(null);
-    const { cityOptions, citiesLoading, selectedState, selectedCity } = useLocationOptions({
+    const {
+        countryOptions,
+        stateOptions,
+        cityOptions,
+        countriesLoading,
+        statesLoading,
+        citiesLoading,
+        selectedCountry,
+        selectedState,
+        selectedCity,
+    } = useLocationOptions({
         countryName: values.location.country,
         stateName: values.location.state,
         cityName: values.location.city,
     });
+    const market = useMarket();
+    const country = values.location.country;
+
+    // Same as Full details: the listing sits in the holder's country. A draft saved
+    // under another country is moved over and its state / city / locality cleared.
+    useEffect(() => {
+        if (!market || country === market.name) return;
+        setValue("location.country", market.name, { shouldDirty: true });
+        setValue("location.state", "", { shouldDirty: true });
+        setValue("location.city", "", { shouldDirty: true });
+        setValue("location.locality", "", { shouldDirty: true });
+    }, [market, country, setValue]);
     const photos = values.media.photos;
     const cover = photos.find((photo) => photo.isCover) ?? null;
     const galleryPhotos = photos.filter((photo) => !photo.isCover);
@@ -312,10 +338,44 @@ export function QuickAdd({
             >
                 <div className={FORM_GRID_CLASS}>
                     <SelectField
+                        name="location.country"
+                        label="Country"
+                        options={countryOptions}
+                        placeholder="Choose a country"
+                        startIcon={Globe2}
+                        loading={countriesLoading}
+                        emptyText="No countries match"
+                        limit={50}
+                        disabled={Boolean(market)}
+                        hint={market ? "Listings are offered in your account's country" : undefined}
+                        onValueChange={() => {
+                            setValue("location.state", "", { shouldDirty: true });
+                            setValue("location.city", "", { shouldDirty: true });
+                            setValue("location.locality", "", { shouldDirty: true });
+                        }}
+                    />
+                    <SelectField
+                        name="location.state"
+                        label="State"
+                        options={stateOptions}
+                        placeholder={selectedCountry ? "Choose a state" : "Choose a country first"}
+                        startIcon={MapIcon}
+                        loading={statesLoading}
+                        disabled={!selectedCountry}
+                        emptyText={statesLoading ? "Loading states…" : "No states match"}
+                        limit={100}
+                        onValueChange={() => {
+                            // Cities and localities are per state.
+                            setValue("location.city", "", { shouldDirty: true });
+                            setValue("location.locality", "", { shouldDirty: true });
+                        }}
+                    />
+                    <SelectField
                         name="location.city"
                         label="City"
                         options={cityOptions}
-                        placeholder={selectedState ? "Choose a city" : "Loading cities…"}
+                        placeholder={selectedState ? "Choose a city" : "Choose a state first"}
+                        startIcon={Building2}
                         loading={citiesLoading}
                         disabled={!selectedState}
                         emptyText={citiesLoading ? "Loading cities…" : "No cities match"}
