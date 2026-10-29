@@ -202,9 +202,14 @@ export type CreateMyListingInput = {
     pinCode: string;
     landmark: string;
     society: string;
+    unitNumber?: string;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
     areaSqft: number;
+    carpetAreaSqft?: number | null;
+    /** Whole years. */
+    propertyAge?: number | null;
+    propertyCondition?: string;
     furnishing: MyListingFurnishing;
     imageSrcs: string[];
     /** Newly picked files (blob previews in imageSrcs). */

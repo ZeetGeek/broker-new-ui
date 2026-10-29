@@ -280,12 +280,6 @@ export function StepDetails() {
                             startIcon={Monitor}
                         />
                         <NumberField
-                            name="details.commercial.seats"
-                            label="Seats"
-                            placeholder="e.g. 40"
-                            startIcon={Users}
-                        />
-                        <NumberField
                             name="details.commercial.ceilingHeightFt"
                             label="Ceiling height (ft)"
                             step={0.1}
