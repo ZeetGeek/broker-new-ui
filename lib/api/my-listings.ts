@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api/client";
+import { ApiError, apiFetch } from "@/lib/api/client";
 import { type AttachedClientRef, attachedClientsByProperty } from "@/lib/api/clients";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { PropertyListing } from "@/lib/api/properties";
@@ -247,8 +247,9 @@ export const myListingsApi = {
         try {
             const listing = await propertiesApi.get(propertyId);
             return mapPropertyListingToMyItem(listing);
-        } catch {
-            return null;
+        } catch (error) {
+            if (error instanceof ApiError && error.status === 404) return null;
+            throw error;
         }
     },
 

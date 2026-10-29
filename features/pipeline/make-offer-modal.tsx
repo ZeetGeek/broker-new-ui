@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 
-import { Handshake } from "@/components/shared/icons";
-
 import { formatPrice, formatRent } from "@/lib/format/price";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { Handshake } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -93,7 +92,7 @@ export function MakeOfferModal({
             }}
             size="sm"
             title={isRevise ? "Revise offer" : "Make offer"}
-            description={`${deal.buyer.name} on ${deal.property.title}. The owner will be notified.`}
+            description={`${deal.buyer.name} on ${deal.property.title}. Add the offer amount and any negotiation notes.`}
             footer={
                 <AppModalFooter
                     primaryLabel={

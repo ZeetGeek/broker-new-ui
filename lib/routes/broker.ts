@@ -6,6 +6,13 @@ export const BROKER_MY_DEALS_HREF = "/broker/my-deals";
 export const BROKER_PIPELINE_HREF = "/broker/pipeline";
 export const BROKER_CONTACTS_HREF = "/broker/contacts";
 export const BROKER_PROPERTIES_NEW_HREF = "/broker/properties/new";
+export const BROKER_ADD_BUYER_HREF = "/broker/contacts?add=buyer";
+export const BROKER_ADD_DEAL_HREF = "/broker/contacts?flow=add-deal";
+export const BROKER_VISIT_SLOTS_HREF = "/broker/visits?tab=slots";
+
+export function brokerVisitHref(visitId: string): string {
+    return `/broker/visits?tab=visits&visit=${encodeURIComponent(visitId)}`;
+}
 
 export function brokerPropertyDetailHref(propertyId: string): string {
     return `/broker/properties/${propertyId}`;

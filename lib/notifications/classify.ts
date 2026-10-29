@@ -1,3 +1,6 @@
+import type { NotificationItem, NotificationType } from "@/lib/api/notifications";
+import { formatActivityDayLabel, formatDateIso } from "@/lib/format/date";
+
 import type { AppIcon } from "@/components/shared/icons";
 import {
     BadgeCheck,
@@ -13,8 +16,7 @@ import {
     XCircle,
 } from "@/components/shared/icons";
 
-import type { NotificationItem, NotificationType } from "@/lib/api/notifications";
-import { formatActivityDayLabel, formatDateIso } from "@/lib/format/date";
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 
 export type NotificationTab = "all" | "requests" | "visits" | "updates";
 
@@ -105,7 +107,7 @@ function isKnownNotificationType(type: string | null): type is NotificationType 
 /** Classify a notification into a filter tab (excluding "all"). */
 export function getNotificationTab(item: NotificationItem): Exclude<NotificationTab, "all"> {
     if (isKnownNotificationType(item.type)) {
-        if (REQUEST_TYPES.has(item.type)) return "requests";
+        if (REQUEST_TYPES.has(item.type)) return FEATURE_PLATFORM_OWNER ? "requests" : "updates";
         if (VISIT_TYPES.has(item.type)) return "visits";
         return "updates";
     }
@@ -113,7 +115,7 @@ export function getNotificationTab(item: NotificationItem): Exclude<Notification
     const key = notificationKey(item);
 
     if (matchesAny(key, ["represent", "request", "invite", "offer"])) {
-        return "requests";
+        return FEATURE_PLATFORM_OWNER ? "requests" : "updates";
     }
 
     if (matchesAny(key, ["visit", "showing", "schedule"])) {
@@ -283,6 +285,7 @@ export function isActionableRequest(
     item: NotificationItem,
     role: "owner" | "broker" | string | null | undefined,
 ): boolean {
+    if (!FEATURE_PLATFORM_OWNER) return false;
     if (!item.relatedRepresentationId) return false;
     if (!isPendingRequest(item)) return false;
     if (!isKnownNotificationType(item.type)) return false;

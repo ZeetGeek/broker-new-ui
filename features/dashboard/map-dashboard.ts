@@ -18,6 +18,10 @@ import {
     isSameCalendarDay,
 } from "@/lib/format/date";
 import { parseMoney } from "@/lib/format/money";
+import { isLaunchEventVisible } from "@/lib/notifications/launch-policy";
+import { brokerVisitHref } from "@/lib/routes/broker";
+
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 
 import type {
     ActivityData,
@@ -120,6 +124,12 @@ function visitStateLabel(visit: DashboardVisit, portal: "broker" | "owner" = "br
         if (visit.status === "completed") return "Done";
         return visit.statusLabel || "Scheduled";
     }
+    if (!FEATURE_PLATFORM_OWNER) {
+        if (visit.status === "confirmed") return "Visit confirmed";
+        if (visit.status === "cancelled") return "Visit cancelled";
+        if (visit.status === "completed") return "Visit done";
+        return "Awaiting confirmation";
+    }
     if (visit.status === "confirmed") return "Owner confirmed the slot";
     if (visit.status === "cancelled") return "Visit cancelled";
     if (visit.status === "completed") return "Visit done";
@@ -150,7 +160,7 @@ function mapTodayAgenda(
                 clientName: person,
                 subtitle: visitStateLabel(visit, portal),
                 state: scheduledAt.getTime() < now.getTime() ? "done" : "upcoming",
-                href: portal === "owner" ? `/owner/visits` : `/broker/visits/${visit.id}`,
+                href: portal === "owner" ? `/owner/visits` : brokerVisitHref(visit.id),
             };
             return item;
         })
@@ -369,16 +379,24 @@ function mapActivity(activity: DashboardActivity | undefined): ActivityData {
     }
 
     return {
-        items: (activity.items ?? []).map((item) => ({
-            id: item.id,
-            type: mapActivityEventType(item.category, item.action),
-            occurredAt: item.createdAt,
-            href: item.href,
-            title: item.title,
-            subtitle: item.detail ?? "",
-            actorKind: "owner",
-        })),
-        remainingCount: activity.remainingCount ?? 0,
+        items: (activity.items ?? [])
+            .filter((item) =>
+                isLaunchEventVisible({
+                    type: `${item.category} ${item.action}`,
+                    referenceType: item.entityType,
+                    href: item.href,
+                }),
+            )
+            .map((item) => ({
+                id: item.id,
+                type: mapActivityEventType(item.category, item.action),
+                occurredAt: item.createdAt,
+                href: item.href,
+                title: item.title,
+                subtitle: item.detail ?? "",
+                actorKind: FEATURE_PLATFORM_OWNER ? "owner" : "system",
+            })),
+        remainingCount: FEATURE_PLATFORM_OWNER ? (activity.remainingCount ?? 0) : 0,
     };
 }
 
@@ -536,7 +554,14 @@ export function mapBrokerDashboardViewFromMock(
         requests: mock.requests,
         pipelineCard: mock.pipelineCard,
         followUps: mock.followUps,
-        activity: mock.activity,
+        activity: FEATURE_PLATFORM_OWNER
+            ? mock.activity
+            : {
+                  items: mock.activity.items.filter((item) =>
+                      isLaunchEventVisible({ type: item.type, href: item.href }),
+                  ),
+                  remainingCount: 0,
+              },
         youRepresent: mock.youRepresent,
         newInAreas: mock.newInAreas,
         userName: fullName,

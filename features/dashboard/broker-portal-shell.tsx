@@ -3,12 +3,12 @@
 import { type ReactNode, useCallback, useState } from "react";
 
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
-import type { ShortcutId } from "@/lib/shortcuts";
 import {
     BROKER_MY_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
+import type { ShortcutId } from "@/lib/shortcuts";
 
 import { PortalHeader } from "@/components/layout/portal-header";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
@@ -39,15 +39,14 @@ const BROKER_SHORTCUT_ROUTES = {
     pipeline: "/broker/pipeline",
     contacts: "/broker/contacts",
     visits: "/broker/visits",
-    referrals: "/broker/referrals",
+    ...(FEATURE_PLATFORM_OWNER ? { referrals: "/broker/referrals" } : {}),
     notifications: BROKER_NOTIFICATIONS_HREF,
     profile: "/broker/profile",
-    settings: "/broker/settings",
 };
 
 const BROKER_HIDDEN_SHORTCUTS: ShortcutId[] = FEATURE_PLATFORM_OWNER
-    ? []
-    : ["owner_listings", "my_deals"];
+    ? ["settings"]
+    : ["owner_listings", "my_deals", "referrals", "settings"];
 
 export function BrokerPortalShell({ children }: { children: ReactNode }) {
     return (

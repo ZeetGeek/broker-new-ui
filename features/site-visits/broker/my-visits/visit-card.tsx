@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { memo } from "react";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 import {
@@ -69,7 +70,8 @@ export const VisitCard = memo(function VisitCard({
     const StatusIcon = status.icon;
     const cancelled = isVisitCancelled(visit.status);
     const action = visitPrimaryAction(visit.status, visit.startsAt, Boolean(visit.outcome));
-    const primary = action === "outcome" ? null : action;
+    const primary =
+        action === "outcome" || (action === "reschedule" && !USE_MOCK_VISITS) ? null : action;
     const primaryLabel = primary === "withdraw" ? "Cancel request" : "Reschedule";
     const PrimaryIcon = primary === "withdraw" ? Trash2 : CalendarClock;
     const buyer = visit.buyers[0];

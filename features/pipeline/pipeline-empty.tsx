@@ -2,28 +2,22 @@ import Link from "next/link";
 
 import { CircleSlash, Search, Users } from "@/components/shared/icons";
 
-import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
+import { BROKER_ADD_DEAL_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 
-/**
- * First run. An invitation, not an apology — see docs/EMPTY_STATES.md. The
- * action points at Deals because that is genuinely where a deal starts: a
- * buyer can only be added to a property whose owner already approved you.
- * Sending the broker straight to "add a buyer" would be a CTA they cannot
- * complete yet.
- */
+/** A deal starts by linking a buyer to a property in Contacts. */
 export function PipelineFirstRunEmpty() {
     return (
         <EmptyState
             icon={Users}
             heading="No deals yet"
-            description="A deal starts when you add a buyer to a property you represent. Open one an owner accepted and add the buyer there."
+            description="Add a property to Your listings, then link a buyer to it from Contacts. The deal will appear here automatically."
             className="py-16"
         >
-            <Button size="lg" nativeButton={false} render={<Link href={BROKER_MY_DEALS_HREF} />}>
-                Go to My Deals
+            <Button size="lg" nativeButton={false} render={<Link href={BROKER_ADD_DEAL_HREF} />}>
+                Link a buyer to a property
             </Button>
         </EmptyState>
     );

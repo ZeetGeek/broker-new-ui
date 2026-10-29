@@ -14,6 +14,7 @@ import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
 import type { BrokerSiteVisit, PropertyWithSlots } from "@/features/site-visits/broker/model";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 
 export function RescheduleModal({
     open,
@@ -32,6 +33,23 @@ export function RescheduleModal({
     const [custom, setCustom] = useState(() => (visit ? inputValueInIst(visit.startsAt) : ""));
     const [saveError, setSaveError] = useState<string>();
     if (!visit) return null;
+    if (!USE_MOCK_VISITS) {
+        return (
+            <AppModal
+                open={open}
+                onOpenChange={(next) => {
+                    if (!next) onClose();
+                }}
+                title="Change visit time"
+                size="sm"
+            >
+                <p className="body-sm text-ink-muted">
+                    Rescheduling is not available yet. Check open slots, then cancel this visit and
+                    book another time. Your current booking has not changed.
+                </p>
+            </AppModal>
+        );
+    }
     const save = async () => {
         const slot = propertySlots?.slots.find((item) => item.id === selected);
         const startsAt = slot?.startsAt ?? inputValueToUtc(custom);

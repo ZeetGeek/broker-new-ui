@@ -16,7 +16,6 @@ import Link from "next/link";
 
 import { BellIcon, type BellIconHandle } from "@animateicons/react/lucide/bell-icon";
 import { BellRingIcon, type BellRingIconHandle } from "@animateicons/react/lucide/bell-ring-icon";
-import { Bell, Building2, CalendarClock, CheckCheck, Clock3 } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import { ApiError } from "@/lib/api/client";
@@ -38,6 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { Bell, Building2, CalendarClock, CheckCheck, Clock3 } from "@/components/shared/icons";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +50,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { useNotifications } from "@/providers/notification-provider";
 import { useAppSelector } from "@/store/hooks";
 
@@ -361,7 +362,9 @@ function NotificationFilterTabs({
         >
             <div ref={barRef} className="t-notif-filter-tabs">
                 <span ref={pillRef} className="t-notif-filter-tabs-pill" aria-hidden="true" />
-                {NOTIFICATION_TABS.map((tab) => {
+                {NOTIFICATION_TABS.filter(
+                    (tab) => FEATURE_PLATFORM_OWNER || tab.value !== "requests",
+                ).map((tab) => {
                     const count = tabCounts[tab.value];
                     const isActive = activeTab === tab.value;
 

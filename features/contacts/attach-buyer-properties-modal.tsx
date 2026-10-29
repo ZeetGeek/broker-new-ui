@@ -3,61 +3,22 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Building2, Link2, Search } from "@/components/shared/icons";
-
+import { type AttachableProperty, listAttachableProperties } from "@/lib/api/attachable-properties";
 import { clientsApi } from "@/lib/api/clients";
-import { type RepresentationItem, representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Building2, Link2, Search } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 
 import type { BuyerRow } from "@/features/contacts/types";
-
-type AttachableProperty = {
-    id: string;
-    title: string;
-    city: string;
-    isRent: boolean;
-    amountInr: number;
-    commissionPercent: number | null;
-    commissionAmount: number | null;
-};
-
-function toNumber(value: string | number | null | undefined): number {
-    if (value == null || value === "") return 0;
-    const n = typeof value === "number" ? value : Number(value);
-    return Number.isFinite(n) ? n : 0;
-}
-
-function mapRepresentation(rep: RepresentationItem): AttachableProperty | null {
-    if (!rep.propertyId) return null;
-    const rent = toNumber(rep.propertyMonthlyRent);
-    const sale = toNumber(rep.propertySalePrice);
-    const isRent =
-        rep.propertyTransactionType === "rent" ||
-        (rep.propertyTransactionType !== "sale" && rent > 0 && sale <= 0);
-    const title =
-        rep.propertyTitle?.trim() ||
-        [rep.propertyAddress, rep.propertyCity].filter(Boolean).join(", ") ||
-        "Property";
-
-    return {
-        id: rep.propertyId,
-        title,
-        city: rep.propertyCity?.trim() || "",
-        isRent,
-        amountInr: isRent ? rent : sale,
-        commissionPercent: toNumber(rep.propertyCommissionPercent) || null,
-        commissionAmount: toNumber(rep.propertyCommissionAmount) || null,
-    };
-}
 
 /** Minimal buyer shape — works after create before the list row is refetched. */
 export type AttachBuyerTarget = {
@@ -83,33 +44,32 @@ export function AttachBuyerPropertiesModal({
     const [query, setQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [loadError, setLoadError] = useState(false);
+    const [retryVersion, setRetryVersion] = useState(0);
 
     useEffect(() => {
         if (!open) return undefined;
 
         let cancelled = false;
+        const controller = new AbortController();
         const timer = window.setTimeout(() => {
             if (cancelled) return;
             setIsLoading(true);
+            setLoadError(false);
             setQuery("");
+            setProperties([]);
+            const already = (buyer.attachedProperties ?? []).map((item) => item.id);
+            setAttachedIds(already);
+            setSelectedIds(already);
 
-            void representativeApi
-                .brokerList("accepted")
+            void listAttachableProperties(controller.signal)
                 .then((rows) => {
                     if (cancelled) return;
-                    const mapped = rows
-                        .map(mapRepresentation)
-                        .filter((item): item is AttachableProperty => item != null);
-                    // Dedupe by property id.
-                    const unique = [...new Map(mapped.map((item) => [item.id, item])).values()];
-                    const already = (buyer.attachedProperties ?? []).map((item) => item.id);
-                    setProperties(unique);
-                    setAttachedIds(already);
-                    setSelectedIds(already);
+                    setProperties(rows);
                 })
                 .catch(() => {
                     if (cancelled) return;
-                    toast.error("Could not load properties. Try again.");
+                    setLoadError(true);
                     setProperties([]);
                 })
                 .finally(() => {
@@ -119,9 +79,10 @@ export function AttachBuyerPropertiesModal({
 
         return () => {
             cancelled = true;
+            controller.abort();
             window.clearTimeout(timer);
         };
-    }, [buyer.attachedProperties, open]);
+    }, [buyer.id, buyer.attachedProperties, open, retryVersion]);
 
     const visible = useMemo(() => {
         const needle = query.trim().toLowerCase();
@@ -142,6 +103,7 @@ export function AttachBuyerPropertiesModal({
     }, []);
 
     const handleSave = useCallback(() => {
+        if (isLoading || isSaving || loadError) return;
         const toAttach = selectedIds.filter((id) => !attachedIds.includes(id));
         if (toAttach.length === 0) {
             onOpenChange(false);
@@ -168,15 +130,17 @@ export function AttachBuyerPropertiesModal({
                 );
             })
             .finally(() => setIsSaving(false));
-    }, [attachedIds, buyer.id, onOpenChange, onSaved, selectedIds]);
+    }, [attachedIds, buyer.id, onOpenChange, onSaved, selectedIds, isLoading, isSaving, loadError]);
 
     return (
         <AppModal
             open={open}
-            onOpenChange={onOpenChange}
+            onOpenChange={(next) => {
+                if (!isSaving) onOpenChange(next);
+            }}
             size="lg"
             title="Attach properties"
-            description={`Choose accepted listings to show ${buyer.name}.`}
+            description={`Choose properties to link to ${buyer.name}. Existing links will be kept.`}
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <Input
@@ -199,21 +163,39 @@ export function AttachBuyerPropertiesModal({
                     primaryLabel={isSaving ? "Saving…" : "Save links"}
                     primaryIcon={<Link2 aria-hidden strokeWidth={1.75} />}
                     onPrimary={handleSave}
-                    primaryDisabled={isLoading || isSaving}
+                    primaryDisabled={isLoading || isSaving || loadError}
                     secondaryLabel="Cancel"
                     onSecondary={() => onOpenChange(false)}
                     secondaryDisabled={isSaving}
                 />
             }
         >
-            {isLoading ? null : visible.length === 0 ? (
+            {isLoading ? (
+                <p role="status" className="body-sm text-ink-muted">
+                    Loading properties…
+                </p>
+            ) : loadError ? (
+                <div
+                    role="alert"
+                    className="
+              flex flex-col gap-3
+            "
+                >
+                    <p className="body-sm text-danger">Could not load properties. Try again.</p>
+                    <Button variant="outline" onClick={() => setRetryVersion((value) => value + 1)}>
+                        Retry
+                    </Button>
+                </div>
+            ) : visible.length === 0 ? (
                 <EmptyState
                     icon={Building2}
-                    heading={query ? "No properties match your search" : "No accepted listings yet"}
+                    heading={
+                        query ? "No properties match your search" : "No available properties yet"
+                    }
                     description={
                         query
                             ? "Try a different title or city."
-                            : "Once an owner accepts your request, you can link buyers here."
+                            : "Add a property to Your listings, then link this buyer here."
                     }
                 />
             ) : (
@@ -261,8 +243,15 @@ export function AttachBuyerPropertiesModal({
                                             {alreadyLinked ? (
                                                 <Badge color="emerald">Already linked</Badge>
                                             ) : null}
+                                            {property.isDraft ? (
+                                                <Badge color="stone">Draft</Badge>
+                                            ) : null}
                                         </div>
-                                        <p className="body-xs flex flex-wrap items-center gap-x-1 text-ink-muted">
+                                        <p
+                                            className="
+                                          body-xs flex flex-wrap items-center gap-x-1 text-ink-muted
+                                        "
+                                        >
                                             {property.city ? (
                                                 <>
                                                     <span>{property.city}</span>

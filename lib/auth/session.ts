@@ -51,6 +51,12 @@ const LEGACY_REFRESH_TOKEN_KEY = "broker_refresh_token";
  */
 let memoryAccessToken: string | null = null;
 let memoryUser: AuthUser | null = null;
+let sessionVersion = 0;
+
+/** Changes at identity boundaries, but not routine token rotation. */
+export function getSessionVersion(): number {
+    return sessionVersion;
+}
 
 /**
  * "Remember me" sessions live in localStorage (survive tab/browser close).
@@ -91,6 +97,8 @@ export function getStoredUser(): AuthUser | null {
  * update) the session stays in whichever storage it already uses.
  */
 export function setSession(session: AuthSession, options?: { persist?: boolean }) {
+    const previous = getStoredUser();
+    if (previous?.id !== session.user.id || previous?.role !== session.user.role) sessionVersion++;
     memoryAccessToken = session.accessToken;
     memoryUser = session.user;
     if (typeof window === "undefined") return;
@@ -105,6 +113,7 @@ export function setSession(session: AuthSession, options?: { persist?: boolean }
 }
 
 export function clearSession() {
+    sessionVersion++;
     memoryAccessToken = null;
     memoryUser = null;
     if (typeof window === "undefined") return;

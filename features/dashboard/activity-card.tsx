@@ -1,21 +1,20 @@
 import Link from "next/link";
 
+import { formatActivityDayLabel, formatCompactRelative, formatDateIso } from "@/lib/format/date";
+import { cn } from "@/lib/utils";
+
+import { EmptyState } from "@/components/shared/empty-state";
 import {
     Activity,
+    type AppIcon,
     BadgeCheck,
     Ban,
     Check,
     Eye,
     Link2,
-    type AppIcon,
     TrendingDown,
     X,
 } from "@/components/shared/icons";
-
-import { formatActivityDayLabel, formatCompactRelative, formatDateIso } from "@/lib/format/date";
-import { cn } from "@/lib/utils";
-
-import { EmptyState } from "@/components/shared/empty-state";
 import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
 
 import { CardLabel } from "./card-label";
@@ -85,7 +84,7 @@ function EmptyActivity({ portal }: { portal: "broker" | "owner" }) {
             description={
                 portal === "owner"
                     ? "Broker requests, visit bookings, and offer updates will appear here."
-                    : "Owner approvals, views, and updates will appear here."
+                    : "Updates to your properties, clients, and visits will appear here."
             }
         >
             <ShortcutKbdMessage shortcutId="notifications">to view all activity</ShortcutKbdMessage>

@@ -5,6 +5,43 @@
 **Scope:** Frontend broker portal, authentication entry points, owner-feature hiding, shared property pages, and the broker CRM workflow.  
 **Deliverable:** Review only. No application fixes or backend changes were made.
 
+## Frontend follow-up: B09–B12 (29 October 2026)
+
+- **B09 — unavailable action gated:** Live visit cards, timeline rows, and detail panels no longer offer Reschedule. The detail panel explains checking availability, cancelling, and booking another open slot. Legacy reschedule URLs show a read-only explanation instead of an editable form. Removed the optimistic time change from the reschedule mutation. Mock previews retain their existing operation.
+- **B10 — single-buyer contract enforced:** Booking schemas and the buyer picker now allow one buyer per visit; selecting another buyer replaces the selection. The live adapter rejects zero/multiple buyers before resolving a lead or sending a booking, so local attendees cannot exceed submitted attendees. No unsupported multi-lead payload or extra booking operation was invented.
+- **B11 — session isolation:** Query clients and their mounted consumers are keyed by account/role/session epoch. Old clients cancel queries, clear caches, and disconnect the notification socket on disposal. Logout drops private access immediately; identity changes and forced sign-out reset Redux dashboard/profile synchronously. Dashboard request IDs discard stale completions. HTTP session-version guards discard responses/retries from previous sessions, and stale token-refresh responses cannot restore an old session. Routine token rotation within an account preserves its cache.
+- **B12 — truthful load failures:** Inventory detail returns null only for an API 404. Offline, permission, and server errors propagate to an error/Retry state; the missing-property fallback returns to Your listings and hides marketplace navigation in broker-only mode. The edit screen also handles propagated errors and offers Retry. Sold-property refresh failures are handled without undoing a successful sold action.
+
+All changes are frontend-only. Added regression tests for single-buyer validation, unavailable rescheduling, 404 versus failed loads, dashboard reset/stale completions, and HTTP responses crossing account boundaries. The restricted shell still cannot access the installed Node/npm runtime, so these tests, TypeScript, lint/format checks, and the production build have not been executed for this follow-up. Source checks are not a substitute for a two-account browser test or live booking/reload verification.
+
+## Frontend follow-up: B05–B08 (29 October 2026)
+
+- **B05:** Pipeline first-run and column Add deal actions now open Contacts in a buyer-linking flow, with instructions to use Attach properties and a link to Your listings. The launch no longer depends on the gated My Deals screen or an owner approval. The action does not claim to create a deal directly in the clicked column.
+- **B06:** Dashboard visit-booking actions use `/broker/visits?tab=slots`; agenda entries and Next showing use the supported `?tab=visits&visit=<id>` detail panel. Next showing says View visit rather than advertising unsupported rescheduling. Mock dashboard visit links use the same supported query shape.
+- **B07:** Dashboard Add buyer opens the existing Contacts creation modal through `?add=buyer`, including when navigating from a persisted Owners tab. Legacy `/broker/pipeline/new` redirects there. Lead deep links now load the existing Pipeline page and open its API-backed lead-details modal, with loading/error states, replacing the placeholder. Closing returns to Pipeline.
+- **B08:** Verification & RERA opens the existing profile RERA field. Public-profile preview is hidden until a public profile route exists. The unsupported broker Settings keyboard binding and cheatsheet entry are omitted. No new account screens were added.
+
+All changes are frontend-only and reuse existing API operations. Regression tests were added for route/query construction, buyer-linking entry points, legacy lead URLs, and unavailable account destinations. Automated execution for this follow-up is currently blocked because the restricted shell cannot access the installed Node/npm runtime under `C:\nvm`; typecheck, tests, build, and formatting must be rerun in a shell with runtime access. Authenticated click-through remains unverified.
+
+## Frontend follow-up: B01–B04 (29 October 2026)
+
+- **B01 — false success blocked; saving deferred:** No verified real outcome persistence operation exists in the frontend adapters. The real adapter now rejects instead of returning a simulated transaction, and the mutation no longer optimistically completes a visit. Live outcome buttons are hidden, and old outcome URLs show an explicit unavailable message. The mock form states that changes are a preview and no longer promises visit/pipeline/follow-up persistence. Existing saved outcomes remain readable.
+- **B02 — simulated completion removed:** Removed the dashboard completion checkbox, delayed local removal, success toast, and local-only Undo. Follow-ups remain readable with client navigation and Call/WhatsApp actions. Rows and overdue counts now use incoming dashboard data directly, including after refresh. Completion remains deferred until a supported operation is available.
+- **B03 — stage preserved:** Note edits and call logging fetch the lead's current API stage and resend that exact value with the note, preserving `closed_won`, `closed_lost`, and `offer_made` rather than substituting `contacted`. Missing-stage or failed reads stop the write. The existing status endpoint is retained; live server behavior for same-stage updates still needs verification.
+- **B04 — own inventory included:** The buyer picker loads all pages of the broker's inventory, omits sold/unavailable listings, labels drafts, and keeps existing links/additive linking. Accepted representations are added only when the owner phase is enabled. Loading failures show Retry and block Save rather than looking like empty inventory. Drafts are included for private CRM linking; actual API acceptance of draft/published inventory still requires authenticated verification. No backend eligibility rule was added or changed.
+
+All changes are frontend-only. Outcomes and follow-up completion are unavailable rather than falsely reported as saved. API adapter regressions cover outcome rejection, finished/offer-stage preservation, own-inventory pagination, additive linking, and failed inventory loading; no live backend writes were used for those tests.
+
+## Frontend follow-up: O08–O10 (29 October 2026)
+
+- **O08:** Added a shared launch policy for fetched notifications, socket/browser notification delivery, destinations, actions, and dashboard activity. Broker-only counts and pagination exclude deferred events; mark-all-read affects visible events only. CRM, offer, and visit events remain available. Request tabs and representation response actions are hidden/blocked. Hidden activity totals are no longer advertised.
+- **O09:** Hid the broker referrals menu and keyboard shortcut/cheatsheet entry, and redirected direct referral URLs to the dashboard while the owner phase is disabled. Reward rules and publishing-credit claims remain preserved behind the gate; no replacement commercial policy was invented.
+- **O10:** Removed owner-notification promises from the offer dialog and success message. Broker-only dashboard visit labels/tooltips use confirmation wording without attributing it to an owner. Offer endpoints, payloads, decisions, negotiations, and owner contacts are unchanged.
+
+These are frontend changes only. Backend event emission and actual offer/decision behavior remain unverified. Accurate filtered notification counts currently require reading all notification pages because the existing API totals include hidden events; large histories will incur extra requests. Live authenticated socket, browser notification, and offer-persistence acceptance checks are still required.
+
+The review below records the original findings and evidence.
+
 ## Verdict
 
 **The owner marketplace is partly hidden, but the owner side is not fully disabled. The broker portal also has several functional problems that should be fixed before launch.**

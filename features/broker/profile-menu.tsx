@@ -3,27 +3,25 @@
 import Link from "next/link";
 
 import {
+    PortalProfileMenu,
+    portalProfileMenuItemClass,
+    PortalProfileMenuSeparator,
+    PortalProfileShortcutHint,
+} from "@/components/layout/portal-profile-menu";
+import {
     BadgeCheck,
     Bookmark,
     Briefcase,
     Command,
-    ExternalLink,
     Gift,
     LifeBuoy,
     ShieldCheck,
     User,
 } from "@/components/shared/icons";
-
-import {
-    PortalProfileMenu,
-    PortalProfileMenuSeparator,
-    PortalProfileShortcutHint,
-    portalProfileMenuItemClass,
-} from "@/components/layout/portal-profile-menu";
 import { DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import { SUPPORT_WHATSAPP_URL } from "@/config/constants";
-import { SITE_URL } from "@/config/index";
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { BrokerVerificationState } from "@/features/broker/map-profile-menu";
 
 export type BrokerProfileMenuBroker = {
@@ -48,11 +46,7 @@ const PROFILE_HREF = "/broker/profile";
 const PROFILE_EDIT_HREF = "/broker/profile";
 const SAVED_PROPERTIES_HREF = "/broker/saved-properties";
 const REFERRALS_HREF = "/broker/referrals";
-const VERIFICATION_HREF = "/broker/verification";
-
-function brokerPublicProfileUrl(slug: string) {
-    return `${SITE_URL.replace(/\/$/, "")}/b/${slug}`;
-}
+const VERIFICATION_HREF = "/broker/profile#profile-rera";
 
 function VerificationStatus({
     state,
@@ -140,8 +134,6 @@ export function BrokerProfileMenu({
     open,
     onOpenChange,
 }: BrokerProfileMenuProps) {
-    const publicProfileUrl = broker.publicSlug ? brokerPublicProfileUrl(broker.publicSlug) : null;
-
     return (
         <PortalProfileMenu
             userName={broker.name}
@@ -179,22 +171,6 @@ export function BrokerProfileMenu({
                     <span className="flex-1 min-inline-0">Saved properties</span>
                 </DropdownMenuItem>
 
-                {publicProfileUrl ? (
-                    <DropdownMenuItem
-                        className={portalProfileMenuItemClass}
-                        render={
-                            <a href={publicProfileUrl} target="_blank" rel="noopener noreferrer" />
-                        }
-                    >
-                        <ExternalLink
-                            aria-hidden
-                            className="shrink-0 block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                        <span className="flex-1 min-inline-0">Preview public profile</span>
-                    </DropdownMenuItem>
-                ) : null}
-
                 {broker.verificationState !== "VERIFIED" ? (
                     <DropdownMenuItem
                         className={portalProfileMenuItemClass}
@@ -212,18 +188,24 @@ export function BrokerProfileMenu({
 
             <PortalProfileMenuSeparator />
 
-            <DropdownMenuGroup>
-                <DropdownMenuItem
-                    className={portalProfileMenuItemClass}
-                    render={<Link href={REFERRALS_HREF} />}
-                >
-                    <Gift aria-hidden className="shrink-0 block-4 inline-4" strokeWidth={1.75} />
-                    <span className="flex-1 min-inline-0">Referrals</span>
-                    <PortalProfileShortcutHint shortcutId="referrals" />
-                </DropdownMenuItem>
-            </DropdownMenuGroup>
+            {FEATURE_PLATFORM_OWNER ? (
+                <DropdownMenuGroup>
+                    <DropdownMenuItem
+                        className={portalProfileMenuItemClass}
+                        render={<Link href={REFERRALS_HREF} />}
+                    >
+                        <Gift
+                            aria-hidden
+                            className="shrink-0 block-4 inline-4"
+                            strokeWidth={1.75}
+                        />
+                        <span className="flex-1 min-inline-0">Referrals</span>
+                        <PortalProfileShortcutHint shortcutId="referrals" />
+                    </DropdownMenuItem>
+                </DropdownMenuGroup>
+            ) : null}
 
-            <PortalProfileMenuSeparator />
+            {FEATURE_PLATFORM_OWNER ? <PortalProfileMenuSeparator /> : null}
 
             <DropdownMenuGroup>
                 <DropdownMenuItem

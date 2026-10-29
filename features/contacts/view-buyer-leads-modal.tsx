@@ -1,13 +1,12 @@
 "use client";
 
-import { Building2 } from "@/components/shared/icons";
-
 import { formatRelativePast } from "@/lib/format/date";
 import { formatPrice } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Building2 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
@@ -78,7 +77,11 @@ function LeadRow({ lead }: { lead: BuyerLead }) {
     const tone = stageColor(lead.stage);
 
     return (
-        <article className="flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-3">
+        <article
+            className="
+          flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-3
+        "
+        >
             <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5 min-inline-0">
                     <PropertyTitleLink
@@ -133,7 +136,7 @@ export function ViewBuyerLeadsModal({
                 <EmptyState
                     icon={Building2}
                     heading="Not on any property yet"
-                    description="Use Attach to link this buyer to an accepted listing."
+                    description="Use Attach to link this buyer to a property from Your listings."
                 />
             ) : (
                 <VirtualListBox

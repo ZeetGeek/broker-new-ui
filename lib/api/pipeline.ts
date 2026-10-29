@@ -555,7 +555,7 @@ export const pipelineApi = {
     },
 
     /** Same-stage update used to log a call without moving the card. */
-    async logContact(dealId: string, currentStatus: DealStatus, note?: string): Promise<void> {
+    async logContact(dealId: string, _currentStatus: DealStatus, note?: string): Promise<void> {
         if (isMockMode()) {
             mockDeals = mockDeals.map((deal) =>
                 deal.id === dealId
@@ -568,11 +568,13 @@ export const pipelineApi = {
             );
             return;
         }
-        const status = isLiveStage(currentStatus) ? currentStatus : "contacted";
+        const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
+        if (!lead.stage?.trim())
+            throw new Error("Could not verify the current lead stage. Refresh and try again.");
         await apiFetch(`/clients/leads/${dealId}/status`, {
             method: "PATCH",
             body: JSON.stringify({
-                status: toApiStage(status),
+                status: lead.stage,
                 note: note?.trim() || "Call logged",
             }),
         });
@@ -582,18 +584,20 @@ export const pipelineApi = {
         // Visits are booked through the slots/showings flow — not editable here yet.
     },
 
-    async setNote(dealId: string, currentStatus: DealStatus, note: string): Promise<void> {
+    async setNote(dealId: string, _currentStatus: DealStatus, note: string): Promise<void> {
         if (isMockMode()) {
             mockDeals = mockDeals.map((deal) =>
                 deal.id === dealId ? { ...deal, note: note.trim() } : deal,
             );
             return;
         }
-        const status = isLiveStage(currentStatus) ? currentStatus : "contacted";
+        const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
+        if (!lead.stage?.trim())
+            throw new Error("Could not verify the current lead stage. Refresh and try again.");
         await apiFetch(`/clients/leads/${dealId}/status`, {
             method: "PATCH",
             body: JSON.stringify({
-                status: toApiStage(status),
+                status: lead.stage,
                 note: note.trim(),
             }),
         });

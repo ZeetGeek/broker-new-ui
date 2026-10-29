@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useRouter } from "@/lib/navigation";
 
 import { pipelineApi } from "@/lib/api/pipeline";
 import { PREF_KEYS } from "@/lib/prefs/keys";
@@ -89,7 +90,8 @@ function pinSort(pinnedDealIds: string[]) {
     };
 }
 
-export function PipelinePage() {
+export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
+    const router = useRouter();
     const [prefs, setPrefs] = usePersistedJson<PipelinePrefs>(
         PREF_KEYS.broker.pipeline.prefs,
         DEFAULT_PIPELINE_PREFS,
@@ -196,6 +198,12 @@ export function PipelinePage() {
             .finally(() => setIsLoadingView(false));
     }, []);
 
+    useEffect(() => {
+        if (!initialLeadId) return;
+        const timer = window.setTimeout(() => openLeadView(initialLeadId), 0);
+        return () => window.clearTimeout(timer);
+    }, [initialLeadId, openLeadView]);
+
     const applyLocalStage = useCallback((dealId: string, status: DealStatus) => {
         setDeals((prev) =>
             (prev ?? []).map((deal) =>
@@ -297,7 +305,7 @@ export function PipelinePage() {
                 await pipelineApi.makeOffer(offerDealId, offerAmount, notes);
                 setOfferDealId(null);
                 setRevision((prev) => prev + 1);
-                toast.success("Offer submitted to owner");
+                toast.success("Offer saved");
             } catch (offerError) {
                 toast.error(
                     offerError instanceof Error
@@ -649,6 +657,7 @@ export function PipelinePage() {
                     setViewDealId(null);
                     setViewDetail(null);
                     setViewError(null);
+                    if (initialLeadId) router.replace("/broker/pipeline");
                 }}
             />
         </div>

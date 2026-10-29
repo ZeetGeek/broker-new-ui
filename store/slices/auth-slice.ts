@@ -17,6 +17,7 @@ type AuthState = {
     hydrated: boolean;
     status: "idle" | "loading" | "failed";
     error: string | null;
+    sessionEpoch: number;
 };
 
 export type AuthRejectPayload = {
@@ -25,6 +26,7 @@ export type AuthRejectPayload = {
 };
 
 const initialState: AuthState = {
+    sessionEpoch: 0,
     user: null,
     accessToken: null,
     hydrated: false,
@@ -70,11 +72,9 @@ export const login = createAsyncThunk(
 );
 
 export const logout = createAsyncThunk("auth/logout", async () => {
-    try {
-        await authApi.logout();
-    } finally {
-        clearSession();
-    }
+    // Logout uses the refresh cookie, so drop private access immediately.
+    clearSession();
+    await authApi.logout();
 });
 
 export const refreshProfile = createAsyncThunk("auth/refreshProfile", async () => {
@@ -138,13 +138,21 @@ const authSlice = createSlice({
                 const payload = action.payload as AuthRejectPayload | undefined;
                 state.error = payload?.message ?? action.error.message ?? "Login failed";
             })
+            .addCase(logout.pending, (state) => {
+                state.user = null;
+                state.accessToken = null;
+                state.error = null;
+                state.status = "idle";
+            })
             .addCase(logout.fulfilled, (state) => {
+                if (state.accessToken) return;
                 state.user = null;
                 state.accessToken = null;
                 state.error = null;
                 state.status = "idle";
             })
             .addCase(logout.rejected, (state) => {
+                if (state.accessToken) return;
                 state.user = null;
                 state.accessToken = null;
                 state.error = null;

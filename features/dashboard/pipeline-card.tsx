@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertCircle, Navigation, Users } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
+import { BROKER_ADD_BUYER_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
@@ -207,7 +208,7 @@ function EmptyPipeline({ className }: { className?: string }) {
                 heading="No buyers yet"
                 description="Add a buyer or tenant to start tracking deals."
             >
-                <TextLinkButton href="/broker/pipeline/new">Add buyer</TextLinkButton>
+                <TextLinkButton href={BROKER_ADD_BUYER_HREF}>Add buyer</TextLinkButton>
             </EmptyState>
         </section>
     );

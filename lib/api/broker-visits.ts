@@ -1,5 +1,3 @@
-import { ApiError, apiFetch } from "@/lib/api/client";
-import { clientsApi } from "@/lib/api/clients";
 import {
     type ApiBrokerOpenSlotItem,
     type ApiLeadOption,
@@ -7,12 +5,14 @@ import {
     type ApiPropertyOption,
     type ApiShowing,
     type ApiVisitSlot,
-    type Paged,
     mapBrokerOpenSlotItem,
     mapClientToPerson,
     mapShowingToTimeRequest,
     mapShowingToVisit,
+    type Paged,
 } from "@/lib/api/broker-visits-map";
+import { ApiError, apiFetch } from "@/lib/api/client";
+import { clientsApi } from "@/lib/api/clients";
 import { buildVisitSummary } from "@/lib/visits/summary";
 
 import type {
@@ -322,6 +322,7 @@ export const brokerVisitsApi = {
             };
         }
 
+        if (input.buyers.length !== 1) throw new Error("Choose exactly one buyer per visit.");
         const primaryBuyer = input.buyers[0];
         if (!primaryBuyer) throw new Error("Select a buyer to book this visit.");
 
@@ -482,13 +483,17 @@ export const brokerVisitsApi = {
         visit: BrokerSiteVisit,
         outcome: NonNullable<BrokerSiteVisit["outcome"]>,
     ): Promise<OutcomeTransactionResult> {
+        if (!USE_MOCK_VISITS) {
+            throw new Error(
+                "Saving visit outcomes is not available yet. Manage buyer notes and stages in Pipeline.",
+            );
+        }
         return {
             id: visit.id,
             outcome,
             buyerIds: visit.buyerIds,
             pipelineUpdated: false,
-            followUpCreated:
-                outcome.nextStep === "schedule_followup" && Boolean(outcome.followUpAt),
+            followUpCreated: false,
         };
     },
 

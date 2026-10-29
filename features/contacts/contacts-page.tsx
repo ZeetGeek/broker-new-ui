@@ -82,13 +82,27 @@ function isEditable(el: EventTarget | null): boolean {
     );
 }
 
-export function ContactsPage() {
+export function ContactsPage({
+    initialAddBuyer = false,
+    addDealFlow = false,
+}: {
+    initialAddBuyer?: boolean;
+    addDealFlow?: boolean;
+}) {
     const [filters, setFilters] = usePersistedJson<ContactsFilters>(
         PREF_KEYS.broker.contacts.prefs,
         DEFAULT_CONTACTS_FILTERS,
         { isValid: isContactsFilters },
     );
-    const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isAddOpen, setIsAddOpen] = useState(initialAddBuyer);
+    useEffect(() => {
+        if (!initialAddBuyer && !addDealFlow) return;
+        const timer = window.setTimeout(
+            () => setFilters((previous) => ({ ...previous, tab: "buyers", q: "" })),
+            0,
+        );
+        return () => window.clearTimeout(timer);
+    }, [initialAddBuyer, addDealFlow, setFilters]);
     const [isOwnerAddOpen, setIsOwnerAddOpen] = useState(false);
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
     const [editingOwner, setEditingOwner] = useState<OwnerRow | null>(null);
@@ -400,6 +414,20 @@ export function ContactsPage() {
         <TooltipProvider>
             <div className="flex flex-col gap-6">
                 <ContactsIntro summary={summary} tab={filters.tab} />
+                {addDealFlow ? (
+                    <div className="flex flex-wrap items-center gap-3 rounded-inner border border-border-warm p-4">
+                        <p className="body-sm text-ink-muted">
+                            Choose a buyer and use Attach properties to start a deal. Add a buyer
+                            first if needed. New deals start in New.
+                        </p>
+                        <Button variant="outline" onClick={() => setIsAddOpen(true)}>
+                            Add buyer
+                        </Button>
+                        <a href="/broker/your-listings" className="body-sm font-medium underline">
+                            Your listings
+                        </a>
+                    </div>
+                ) : null}
 
                 <ContactsHeader
                     filters={filters}

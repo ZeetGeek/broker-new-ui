@@ -28,7 +28,7 @@ const HERO_COPY = {
 
 export function HomeHero() {
     return (
-        <section className="relative overflow-hidden rounded-card block-full">
+        <section className="relative overflow-hidden block-full">
             <div className="absolute inset-0 bg-brand-ink" aria-hidden="true">
                 <HeroBg />
 

@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { Check, Plus, Search } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
-import { MAX_BUYERS_PER_VISIT } from "@/lib/visits/constants";
 
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,7 @@ export function BuyerPicker({
 
     const toggle = (id: string) => {
         if (selected.includes(id)) onChange(selected.filter((item) => item !== id));
-        else if (selected.length < MAX_BUYERS_PER_VISIT) onChange([...selected, id]);
+        else onChange([id]);
     };
 
     return (
@@ -46,7 +45,7 @@ export function BuyerPicker({
               body-sm font-bold text-ink
             "
                 >
-                    Buyer <span className="font-normal text-ink-muted">· up to 3</span>
+                    Buyer <span className="font-normal text-ink-muted">· one per visit</span>
                 </label>
                 <Button type="button" variant="ghost" size="sm" onClick={() => setAddOpen(true)}>
                     <Plus aria-hidden /> Add new buyer
@@ -80,7 +79,6 @@ export function BuyerPicker({
                       border-border-warm bg-surface
                       hover:bg-surface-muted
                     `,
-                                !checked && selected.length >= MAX_BUYERS_PER_VISIT && `opacity-55`,
                             )}
                         >
                             <UserAvatar name={buyer.name} imageUrl={buyer.avatarUrl} size="sm" />
@@ -133,7 +131,7 @@ export function BuyerPicker({
                     };
                     if (onBuyerCreated) onBuyerCreated(buyer);
                     else setCreated((current) => [buyer, ...current]);
-                    onChange([...selected, buyer.id].slice(0, MAX_BUYERS_PER_VISIT));
+                    onChange([buyer.id]);
                     setAddOpen(false);
                 }}
             />

@@ -6,7 +6,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { GripVertical, Plus } from "@/components/shared/icons";
 
-import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
+import { BROKER_ADD_DEAL_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
@@ -107,9 +107,9 @@ export function PipelineColumn({
                                 variant="ghost"
                                 size="icon-xs"
                                 nativeButton={false}
-                                aria-label={`Add a deal to ${meta.label}`}
+                                aria-label="Add a deal"
                                 className="shrink-0 text-ink-subtle hover:text-ink"
-                                render={<Link href={BROKER_MY_DEALS_HREF} />}
+                                render={<Link href={BROKER_ADD_DEAL_HREF} />}
                             />
                         }
                     >

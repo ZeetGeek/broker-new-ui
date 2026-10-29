@@ -36,10 +36,10 @@ export type GlobalShortcutRoutes = {
     pipeline: string;
     contacts: string;
     visits: string;
-    referrals: string;
+    referrals?: string;
     notifications: string;
     profile: string;
-    settings: string;
+    settings?: string;
 };
 
 export type UseGlobalShortcutsOptions = {
@@ -74,10 +74,14 @@ export function useGlobalShortcuts({
             "g c": guarded(() => router.push(routes.pipeline)),
             "g b": guarded(() => router.push(routes.contacts)),
             "g v": guarded(() => router.push(routes.visits)),
-            "g r": guarded(() => router.push(routes.referrals)),
+            "g r": guarded(() => {
+                if (routes.referrals) router.push(routes.referrals);
+            }),
             "g n": guarded(() => router.push(routes.notifications)),
             "g m": guarded(() => router.push(routes.profile)),
-            "g s": guarded(() => router.push(routes.settings)),
+            "g s": guarded(() => {
+                if (routes.settings) router.push(routes.settings);
+            }),
             "Shift+Slash": guarded(() => onShortcutsOpen()),
             "Shift+KeyQ": guarded(() => onLogoutFocus?.()),
         });

@@ -1,16 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
-import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { BellRing, CallIcon, WhatsAppIcon } from "@/components/shared/icons";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 
 import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { BellRing, CallIcon, WhatsAppIcon } from "@/components/shared/icons";
 import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
 import { Badge } from "@/components/ui/badge";
 
@@ -19,12 +17,9 @@ import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { FollowUp, FollowUpDue, FollowUpsData } from "./mock-data";
 
 const FOLLOW_UPS_INFO =
-    "Untimed tasks to chase — tick them done here, or jump straight into WhatsApp.";
+    "Follow-ups to review. Open a client or contact them directly. Completion is not available here yet.";
 
 const MAX_ROWS = 4;
-const UNDO_MS = 5000;
-/** Brief beat so strike-through reads before the row collapses. */
-const STRIKE_HOLD_MS = duration.instant * 1000;
 
 const DUE_CLASS: Record<FollowUpDue, string> = {
     overdue: "text-urgent",
@@ -59,14 +54,8 @@ const rowVariants = {
 
 export type FollowUpsCardProps = {
     data: FollowUpsData;
-    /** Persist completion. Animation starts immediately — do not await this. */
-    onComplete?: (id: string) => Promise<void>;
     className?: string;
 };
-
-async function defaultComplete(_id: string) {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-}
 
 function waMeUrl(phoneE164: string) {
     return `https://wa.me/${phoneE164.replace(/\D/g, "")}`;
@@ -113,15 +102,7 @@ function ChannelAction({ item }: { item: FollowUp }) {
     );
 }
 
-function FollowUpRow({
-    item,
-    completing,
-    onMarkDone,
-}: {
-    item: FollowUp;
-    completing: boolean;
-    onMarkDone: (id: string) => void;
-}) {
+function FollowUpRow({ item }: { item: FollowUp }) {
     return (
         <motion.li
             layout
@@ -129,30 +110,8 @@ function FollowUpRow({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className={cn(
-                "flex items-start gap-3 overflow-hidden py-3",
-                completing && "opacity-40",
-            )}
+            className="flex items-start gap-3 overflow-hidden py-3"
         >
-            <button
-                type="button"
-                aria-label={`Mark ${item.title} as done`}
-                className={cn(
-                    `
-                      mbs-0.5 flex shrink-0 items-center justify-center rounded-[5px] border-[1.5px]
-                      border-brand bg-transparent outline-none
-                      hover:border-brand-text
-                      focus-visible:ring-2 focus-visible:ring-ring
-                    `,
-                    "relative block-4.25 inline-4.25 after:absolute after:-inset-3",
-                )}
-                onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    onMarkDone(item.id);
-                }}
-            />
-
             <Link
                 href={item.href}
                 className="
@@ -161,14 +120,7 @@ function FollowUpRow({
                 "
             >
                 <div className="flex-1 min-inline-0">
-                    <p
-                        className={cn(
-                            "body truncate font-semibold text-ink",
-                            completing && "line-through",
-                        )}
-                    >
-                        {item.title}
-                    </p>
+                    <p className="body truncate font-semibold text-ink">{item.title}</p>
                     <p className="body-sm mbs-0.5 truncate text-ink-muted">{item.context}</p>
                 </div>
 
@@ -187,90 +139,17 @@ function EmptyFollowUps() {
         <EmptyState
             icon={BellRing}
             heading="No follow-ups yet"
-            description="Set a reminder to call a client back, and it'll show here."
+            description="Your scheduled follow-ups will appear here."
         >
-            <ShortcutKbdMessage shortcutId="pipeline">to add a follow-up</ShortcutKbdMessage>
+            <ShortcutKbdMessage shortcutId="pipeline">to open Pipeline</ShortcutKbdMessage>
         </EmptyState>
     );
 }
 
-type RemovedEntry = { item: FollowUp; index: number };
-
-export function FollowUpsCard({
-    data,
-    onComplete = defaultComplete,
-    className,
-}: FollowUpsCardProps) {
-    const [items, setItems] = useState(() => data.items.slice(0, MAX_ROWS));
-    const [completingIds, setCompletingIds] = useState<Set<string>>(() => new Set());
-    const removedRef = useRef<Map<string, RemovedEntry>>(new Map());
-
-    const overdueCount = items.filter((item) => item.due === "overdue").length;
+export function FollowUpsCard({ data, className }: FollowUpsCardProps) {
+    const items = data.items.slice(0, MAX_ROWS);
+    const overdueCount = data.overdueCount;
     const isEmpty = items.length === 0;
-
-    function restoreItem(id: string) {
-        const removed = removedRef.current.get(id);
-        if (!removed) return;
-        removedRef.current.delete(id);
-        setCompletingIds((prev) => {
-            const next = new Set(prev);
-            next.delete(id);
-            return next;
-        });
-        setItems((prev) => {
-            if (prev.some((item) => item.id === id)) return prev;
-            const next = [...prev];
-            next.splice(Math.min(removed.index, next.length), 0, removed.item);
-            return next.slice(0, MAX_ROWS);
-        });
-    }
-
-    function handleMarkDone(id: string) {
-        const index = items.findIndex((item) => item.id === id);
-        const target = items[index];
-        if (!target || completingIds.has(id)) return;
-
-        setCompletingIds((prev) => new Set(prev).add(id));
-        removedRef.current.set(id, { item: target, index });
-
-        window.setTimeout(() => {
-            setItems((prev) => prev.filter((item) => item.id !== id));
-            setCompletingIds((prev) => {
-                const next = new Set(prev);
-                next.delete(id);
-                return next;
-            });
-        }, STRIKE_HOLD_MS);
-
-        void onComplete(id)
-            .then(() => {
-                toast(
-                    (t) => (
-                        <span className="flex items-center gap-3">
-                            <span>Marked done</span>
-                            <button
-                                type="button"
-                                className="
-                                  font-semibold text-brand underline-offset-2
-                                  hover:underline
-                                "
-                                onClick={() => {
-                                    restoreItem(id);
-                                    toast.dismiss(t.id);
-                                }}
-                            >
-                                Undo
-                            </button>
-                        </span>
-                    ),
-                    { duration: UNDO_MS, id: `followup-done-${id}` },
-                );
-            })
-            .catch(() => {
-                restoreItem(id);
-                toast.error("Couldn't mark done. Try again.");
-            });
-    }
 
     return (
         <section
@@ -309,16 +188,9 @@ export function FollowUpsCard({
                             animate="visible"
                             variants={listVariants}
                         >
-                            <AnimatePresence initial={false}>
-                                {items.map((item) => (
-                                    <FollowUpRow
-                                        key={item.id}
-                                        item={item}
-                                        completing={completingIds.has(item.id)}
-                                        onMarkDone={handleMarkDone}
-                                    />
-                                ))}
-                            </AnimatePresence>
+                            {items.map((item) => (
+                                <FollowUpRow key={item.id} item={item} />
+                            ))}
                         </motion.ul>
                     </div>
                 </div>

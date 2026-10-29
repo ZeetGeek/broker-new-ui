@@ -2,16 +2,16 @@
 
 import { memo } from "react";
 
-import { CallIcon, Navigation, WhatsAppIcon } from "@/components/shared/icons";
-
-import { APP_NAME } from "@/config";
 import { cn } from "@/lib/utils";
 import { VISIT_STATUS, visitPrimaryAction } from "@/lib/visits/status";
 import { formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
 
+import { CallIcon, Navigation, WhatsAppIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
+import { APP_NAME } from "@/config";
 import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 import { useAppSelector } from "@/store/hooks";
 
 export const VisitTimelineRow = memo(function VisitTimelineRow({
@@ -43,12 +43,20 @@ export const VisitTimelineRow = memo(function VisitTimelineRow({
     );
 
     return (
-        <article className="group relative rounded-inner px-2 py-3 transition-colors duration-160 hover:bg-surface-muted/80">
+        <article
+            className="
+          group relative rounded-inner px-2 py-3 transition-colors duration-160
+          hover:bg-surface-muted/80
+        "
+        >
             <button
                 type="button"
                 onClick={() => onOpen(visit.id)}
                 aria-label={`Open visit at ${visit.property.title}`}
-                className="absolute inset-0 z-0 rounded-inner outline-none focus-visible:ring-3 focus-visible:ring-brand/30"
+                className="
+                  absolute inset-0 z-0 rounded-inner outline-none
+                  focus-visible:ring-3 focus-visible:ring-brand/30
+                "
             />
 
             <div className="relative z-10 flex items-start gap-3">
@@ -64,7 +72,7 @@ export const VisitTimelineRow = memo(function VisitTimelineRow({
                     </p>
                 </div>
 
-                <div className="min-inline-0 flex-1">
+                <div className="flex-1 min-inline-0">
                     <p className="body-sm truncate font-semibold text-ink">
                         {visit.property.title}
                     </p>
@@ -115,7 +123,8 @@ export const VisitTimelineRow = memo(function VisitTimelineRow({
                             <Navigation aria-hidden className="block-3.5 inline-3.5" />
                             Go
                         </Button>
-                        {primary ? (
+                        {primary &&
+                        (USE_MOCK_VISITS || (primary !== "outcome" && primary !== "reschedule")) ? (
                             <Button
                                 type="button"
                                 size="sm"

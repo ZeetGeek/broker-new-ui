@@ -6,8 +6,8 @@ import { inputValueToUtc } from "@/lib/visits/time";
 export const bookingSchema = z.object({
     buyerIds: z
         .array(z.string())
-        .min(1, "Choose at least one buyer.")
-        .max(MAX_BUYERS_PER_VISIT, `Choose up to ${MAX_BUYERS_PER_VISIT} buyers.`),
+        .min(1, "Choose one buyer.")
+        .max(MAX_BUYERS_PER_VISIT, "Choose one buyer per visit."),
     acceptTight: z.boolean(),
 });
 
@@ -41,7 +41,11 @@ export const outcomeSchema = z
     .superRefine((values, ctx) => {
         if (values.nextStep !== "schedule_followup") return;
         if (!values.followUpAt) {
-            ctx.addIssue({ code: "custom", path: ["followUpAt"], message: "Pick a follow-up time." });
+            ctx.addIssue({
+                code: "custom",
+                path: ["followUpAt"],
+                message: "Pick a follow-up time.",
+            });
             return;
         }
         if (new Date(inputValueToUtc(values.followUpAt)).getTime() <= Date.now()) {

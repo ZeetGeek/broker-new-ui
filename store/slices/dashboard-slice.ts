@@ -10,6 +10,7 @@ type DashboardState = {
     profile: UserProfile | null;
     status: "idle" | "loading" | "succeeded" | "failed";
     error: string | null;
+    requestId: string | null;
 };
 
 const initialState: DashboardState = {
@@ -17,6 +18,7 @@ const initialState: DashboardState = {
     profile: null,
     status: "idle",
     error: null,
+    requestId: null,
 };
 
 export const fetchBrokerDashboard = createAsyncThunk(
@@ -57,21 +59,25 @@ const dashboardSlice = createSlice({
             state.profile = null;
             state.status = "idle";
             state.error = null;
+            state.requestId = null;
         },
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchBrokerDashboard.pending, (state) => {
+            .addCase(fetchBrokerDashboard.pending, (state, action) => {
+                state.requestId = action.meta.requestId;
                 state.status = "loading";
                 state.error = null;
             })
             .addCase(fetchBrokerDashboard.fulfilled, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.status = "succeeded";
                 state.data = action.payload.data;
                 state.profile = action.payload.profile;
                 state.error = null;
             })
             .addCase(fetchBrokerDashboard.rejected, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.status = "failed";
                 state.error =
                     (typeof action.payload === "string" ? action.payload : null) ||
