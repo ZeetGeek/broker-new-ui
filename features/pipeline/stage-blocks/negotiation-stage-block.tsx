@@ -1,4 +1,3 @@
-import { daysSince } from "@/lib/api/pipeline";
 import { formatPrice } from "@/lib/format/price";
 
 import type { DealItem } from "@/features/pipeline/types";
@@ -16,7 +15,6 @@ function offerGap(askInr: number, offerInr: number): { text: string; isGap: bool
 export function NegotiationStageBlock({ deal }: { deal: DealItem }) {
     const ask = deal.property.amountInr;
     const offer = deal.offerAmountInr;
-    const pendingDays = daysSince(deal.stageEnteredAt) ?? 0;
 
     if (offer == null) {
         return <p className="body-xs text-ink">No offer yet</p>;
@@ -25,7 +23,7 @@ export function NegotiationStageBlock({ deal }: { deal: DealItem }) {
     const gap = offerGap(ask, offer);
     const statusLine =
         deal.offerStatus === "pending"
-            ? `Pending owner response · ${pendingDays} ${pendingDays === 1 ? "day" : "days"}`
+            ? "Pending owner response"
             : deal.offerStatus === "rejected"
               ? "Offer rejected · revise it"
               : deal.offerStatus === "accepted"

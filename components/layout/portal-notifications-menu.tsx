@@ -599,7 +599,7 @@ export function PortalNotificationsMenu({
             <NotificationIcon
                 name={hasUnread ? "bell-ring" : "bell"}
                 aria-hidden
-                className="block-4 inline-4"
+                className="block-5! inline-5!"
             />
             <UnreadBadge count={unreadCount} />
         </DropdownMenuTrigger>

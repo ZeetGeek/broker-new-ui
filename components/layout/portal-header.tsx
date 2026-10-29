@@ -23,11 +23,6 @@ export type PortalHeaderProps = {
     children?: ReactNode;
 };
 
-const headerControlClass = `
-  border-2 border-border-warm bg-surface!
-  hover:border-ink-subtle
-`;
-
 export function PortalHeader({
     navItems,
     notificationsHref,
@@ -57,13 +52,11 @@ export function PortalHeader({
                                 <PortalNotificationsMenu
                                     viewAllHref={notificationsHref}
                                     tooltipLabel="Notifications"
-                                    triggerClassName={cn(
-                                        headerControlClass,
-                                        `
-                                          relative border! text-ink-muted
-                                          hover:bg-transparent hover:text-ink-muted
-                                        `,
-                                    )}
+                                    triggerClassName="
+                                      relative rounded-2xl border-0 bg-surface text-ink-muted shadow-sm
+                                      hover:bg-gray-50 hover:text-ink-muted
+                                      aria-expanded:bg-gray-50 aria-expanded:text-ink-muted
+                                    "
                                 />
 
                                 {profileMenu}

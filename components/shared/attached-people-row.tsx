@@ -35,10 +35,10 @@ export function PartyMeetRow({ left, right }: { left: PartyMeetSide; right: Part
         <div
             role="group"
             aria-label={ariaLabel}
-            className={cn(
-                "flex items-stretch rounded-control inline-full",
-                OVERLAY_GLASS_BUTTON_CLASS,
-            )}
+            className="
+              flex items-stretch gap-2 overflow-hidden rounded-control border
+              border-ink/15 bg-surface p-1.5 font-semibold text-ink inline-full
+            "
         >
             <PartyMeetPerson side={left} />
             <div
@@ -63,7 +63,7 @@ function PartyMeetPerson({ side }: { side: PartyMeetSide }) {
         </>
     );
 
-    const className = "flex flex-1 items-center gap-2.5 px-3 py-2.5 min-inline-0";
+    const className = "flex flex-1 items-center gap-2.5 rounded-[8px] px-2 py-1.5 min-inline-0";
 
     if (side.onOpen) {
         return (
@@ -74,7 +74,7 @@ function PartyMeetPerson({ side }: { side: PartyMeetSide }) {
                     className,
                     `
                       transition-colors duration-160
-                      hover:bg-surface-muted
+                      hover:bg-surface-muted/60
                       focus-visible:outline-2 focus-visible:-outline-offset-2
                       focus-visible:outline-ring
                     `,

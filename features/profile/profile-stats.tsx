@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { BadgeCheck, Eye, ShieldCheck, ShieldQuestion } from "@/components/shared/icons";
 import { Badge } from "@/components/ui/badge";
 
+import { mapBrokerVerificationState } from "@/features/broker/map-profile-menu";
+
 type Metric = {
     label: string;
     value: string;
@@ -20,6 +22,30 @@ type VerificationState = {
 };
 
 function resolveVerification(profile: UserProfile, isOwner: boolean): VerificationState {
+    if (!isOwner) {
+        const status = mapBrokerVerificationState(profile);
+        if (status === "PROFILE_INCOMPLETE")
+            return {
+                label: "Not verified",
+                hint: "Add your RERA number to request verification.",
+                tone: "action",
+                Icon: ShieldQuestion,
+            };
+        if (status === "PENDING_VERIFICATION")
+            return {
+                label: "Under review",
+                hint: "We are checking your RERA number.",
+                tone: "pending",
+                Icon: ShieldQuestion,
+            };
+        return {
+            label: "Verified broker",
+            hint: "Owners see a verified badge on your requests.",
+            tone: "verified",
+            Icon: BadgeCheck,
+        };
+    }
+
     const isVerified = Boolean(
         isOwner
             ? (profile.owner?.verified ?? profile.verified)

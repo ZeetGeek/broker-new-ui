@@ -13,11 +13,7 @@ import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
-import {
-    matchesClientFilters,
-    type OtherBuyer,
-    otherBuyersOnProperty,
-} from "@/features/pipeline/deal-attention";
+import { matchesClientFilters } from "@/features/pipeline/deal-attention";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DealDetailModal } from "@/features/pipeline/deal-detail-modal";
 import { DealNoteModal } from "@/features/pipeline/deal-note-modal";
@@ -563,14 +559,6 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         return grouped;
     }, [liveDeals]);
 
-    const otherBuyersByDealId = useMemo(() => {
-        const map: Record<string, OtherBuyer[]> = {};
-        for (const deal of deals ?? []) {
-            map[deal.id] = otherBuyersOnProperty(deal, deals ?? []);
-        }
-        return map;
-    }, [deals]);
-
     const moveDeal =
         moveRequest != null
             ? ((deals ?? []).find((deal) => deal.id === moveRequest.dealId) ?? null)
@@ -605,7 +593,6 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 handlers={handlers}
                 isBusy={busyId === deal.id}
                 isPinned={pinnedDealIds.includes(deal.id)}
-                otherBuyers={otherBuyersByDealId[deal.id] ?? []}
             />
         );
     }
@@ -708,7 +695,6 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         handlers={handlers}
                         busyId={busyId}
                         pinnedDealIds={pinnedDealIds}
-                        otherBuyersByDealId={otherBuyersByDealId}
                         onDropDeal={moveOptimistically}
                     />
 

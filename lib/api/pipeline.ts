@@ -1,8 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
-import { isMockMode } from "@/lib/api/mock-mode";
 import type { PropertyFilterRecord } from "@/lib/properties/list-criteria";
 
-import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 import {
     DEAL_STAGE_ORDER,
     type DealDetail,
@@ -113,13 +111,6 @@ const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
 
 const DAY_MS = 86_400_000;
 
-let mockDeals: DealItem[] = MOCK_DEALS.map((deal) => ({
-    ...deal,
-    buyer: { ...deal.buyer },
-    property: { ...deal.property },
-    owner: { ...deal.owner },
-}));
-
 export function daysSince(iso: string | null): number | null {
     if (!iso) return null;
     return Math.floor((Date.now() - new Date(iso).getTime()) / DAY_MS);
@@ -195,7 +186,7 @@ export function fromApiStage(stage: string | null | undefined): DealStatus {
 function stageEnteredAt(lead: ApiLead): string {
     const history = Array.isArray(lead.stageHistory) ? lead.stageHistory : [];
     const last = [...history].reverse().find((entry) => entry.at);
-    return last?.at ?? lead.updatedAt ?? lead.createdAt ?? new Date().toISOString();
+    return last?.at ?? lead.updatedAt ?? lead.createdAt ?? "";
 }
 
 function mapHistory(lead: ApiLead): DealHistoryEntry[] {
@@ -223,7 +214,7 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
         ? (BHK_CONFIG_TO_NUMBER[property.bhkConfig] ?? property.bedrooms ?? 0)
         : (property.bedrooms ?? 0);
     const locality = titleCase(property.address?.trim() || property.city?.trim() || "");
-    const city = titleCase(property.city?.trim() || "City");
+    const city = titleCase(property.city?.trim() || "");
     const typeLabel = titleCase(
         (property.subtype ?? property.propertyType ?? "property").replace(/_/g, " "),
     );
@@ -309,14 +300,12 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
                 ownerOrigin === "platform" ? (lead.owner?.representationId ?? null) : null,
         },
         stageEnteredAt: stageEnteredAt(lead),
-        lastContactedAt: lead.updatedAt ?? null,
+        lastContactedAt: null,
         nextVisitAt: lead.nextVisitAt ?? null,
         note: lead.notes?.trim() || "",
         resolvedAt: resolved,
         closedAmountInr:
-            status === "closed"
-                ? toNumber(lead.closedAmount ?? lead.offerAmount) || amountInr
-                : null,
+            status === "closed" && lead.closedAmount != null ? toNumber(lead.closedAmount) : null,
         lostReason: status === "lost" ? undefined : undefined,
         offerAmountInr: lead.offerAmount != null ? toNumber(lead.offerAmount) : null,
         offerStatus:
@@ -443,16 +432,6 @@ export type SetStageOptions = {
 
 export const pipelineApi = {
     async list(filters: DealsFilters, signal?: AbortSignal): Promise<DealsResult> {
-        if (isMockMode()) {
-            const all = mockDeals;
-            let items = filters.q.trim()
-                ? all.filter((deal) => matchesQuery(deal, filters.q))
-                : all;
-            if (filters.stage) {
-                items = items.filter((deal) => deal.status === filters.stage);
-            }
-            return { items: sortDeals(items, filters.sort), summary: buildSummary(all) };
-        }
         const leads = await fetchAllLeads(filters.q || undefined, signal);
         const all = leads.map(mapLeadToDeal).filter((deal): deal is DealItem => deal != null);
 
@@ -465,28 +444,6 @@ export const pipelineApi = {
     },
 
     async get(dealId: string): Promise<DealDetail> {
-        if (isMockMode()) {
-            const deal = mockDeals.find((item) => item.id === dealId);
-            if (!deal) {
-                throw new Error("Lead is missing property or client details.");
-            }
-            return {
-                ...deal,
-                apiStage: deal.status,
-                listPriceInr: deal.property.amountInr,
-                createdAt: deal.stageEnteredAt,
-                updatedAt: deal.lastContactedAt,
-                buyerEmail: null,
-                history: [
-                    {
-                        status: deal.status,
-                        at: deal.stageEnteredAt,
-                        note: deal.note || null,
-                        by: null,
-                    },
-                ],
-            };
-        }
         const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
         const detail = mapLeadToDetail(lead);
         if (!detail) {
@@ -500,25 +457,6 @@ export const pipelineApi = {
         status: DealItem["status"],
         options: SetStageOptions = {},
     ): Promise<void> {
-        if (isMockMode()) {
-            mockDeals = mockDeals.map((deal) =>
-                deal.id === dealId
-                    ? {
-                          ...deal,
-                          status,
-                          stageEnteredAt: new Date().toISOString(),
-                          note: options.note?.trim() || deal.note,
-                          lostReason: options.lostReason ?? deal.lostReason,
-                          closedAmountInr: options.closedAmountInr ?? deal.closedAmountInr,
-                          resolvedAt:
-                              status === "closed" || status === "lost"
-                                  ? new Date().toISOString()
-                                  : deal.resolvedAt,
-                      }
-                    : deal,
-            );
-            return;
-        }
         await apiFetch(`/clients/leads/${dealId}/status`, {
             method: "PATCH",
             body: JSON.stringify({
@@ -530,21 +468,6 @@ export const pipelineApi = {
 
     /** Submit or revise an offer — moves the lead to offer_made (negotiation column). */
     async makeOffer(dealId: string, offerAmount: number, notes?: string): Promise<void> {
-        if (isMockMode()) {
-            mockDeals = mockDeals.map((deal) =>
-                deal.id === dealId
-                    ? {
-                          ...deal,
-                          status: "negotiation",
-                          offerAmountInr: offerAmount,
-                          offerStatus: "pending",
-                          note: notes?.trim() || deal.note,
-                          stageEnteredAt: new Date().toISOString(),
-                      }
-                    : deal,
-            );
-            return;
-        }
         await apiFetch(`/clients/leads/${dealId}/offer`, {
             method: "POST",
             body: JSON.stringify({
@@ -556,18 +479,6 @@ export const pipelineApi = {
 
     /** Same-stage update used to log a call without moving the card. */
     async logContact(dealId: string, _currentStatus: DealStatus, note?: string): Promise<void> {
-        if (isMockMode()) {
-            mockDeals = mockDeals.map((deal) =>
-                deal.id === dealId
-                    ? {
-                          ...deal,
-                          lastContactedAt: new Date().toISOString(),
-                          note: note?.trim() || deal.note,
-                      }
-                    : deal,
-            );
-            return;
-        }
         const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
         if (!lead.stage?.trim())
             throw new Error("Could not verify the current lead stage. Refresh and try again.");
@@ -585,12 +496,6 @@ export const pipelineApi = {
     },
 
     async setNote(dealId: string, _currentStatus: DealStatus, note: string): Promise<void> {
-        if (isMockMode()) {
-            mockDeals = mockDeals.map((deal) =>
-                deal.id === dealId ? { ...deal, note: note.trim() } : deal,
-            );
-            return;
-        }
         const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
         if (!lead.stage?.trim())
             throw new Error("Could not verify the current lead stage. Refresh and try again.");

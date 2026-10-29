@@ -26,7 +26,7 @@ import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-list
 
 const SORT_OPTIONS: { value: DealSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
-    { value: "stalled", label: "Quietest first" },
+    { value: "stalled", label: "Longest in stage" },
     { value: "visit_soon", label: "Visit soonest" },
     { value: "price_desc", label: "Costliest first" },
     { value: "price_asc", label: "Cheapest first" },

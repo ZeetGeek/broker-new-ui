@@ -9,7 +9,6 @@ import {
     DragOverlay,
 } from "@dnd-kit/core";
 
-import type { OtherBuyer } from "@/features/pipeline/deal-attention";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
 import { PipelineColumn } from "@/features/pipeline/pipeline-column";
 import { DEAL_STAGE_ORDER, type DealItem, type DealStage } from "@/features/pipeline/types";
@@ -63,7 +62,6 @@ export function PipelineBoard({
     handlers,
     busyId,
     pinnedDealIds,
-    otherBuyersByDealId,
     onDropDeal,
 }: {
     dealsByStage: Record<DealStage, DealItem[]>;
@@ -71,7 +69,6 @@ export function PipelineBoard({
     handlers: DealCardHandlers;
     busyId: string | null;
     pinnedDealIds: string[];
-    otherBuyersByDealId: Record<string, OtherBuyer[]>;
     onDropDeal: (dealId: string, stage: DealStage) => void;
 }) {
     const dnd = usePipelineDnd({
@@ -109,7 +106,6 @@ export function PipelineBoard({
                         handlers={handlers}
                         busyId={busyId}
                         pinnedDealIds={pinnedDealIds}
-                        otherBuyersByDealId={otherBuyersByDealId}
                         isDropTarget={dnd.overStage === stage}
                     />
                 ))}
@@ -125,7 +121,6 @@ export function PipelineBoard({
                             deal={dnd.activeDeal}
                             handlers={handlers}
                             isPinned={pinnedDealIds.includes(dnd.activeDeal.id)}
-                            otherBuyers={otherBuyersByDealId[dnd.activeDeal.id] ?? []}
                             isDragging
                         />
                     </div>

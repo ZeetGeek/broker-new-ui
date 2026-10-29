@@ -5,7 +5,6 @@ import { CSS } from "@dnd-kit/utilities";
 
 import { cn } from "@/lib/utils";
 
-import { type OtherBuyer } from "@/features/pipeline/deal-attention";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
 import type { DealItem } from "@/features/pipeline/types";
 
@@ -25,13 +24,11 @@ export function DraggableDealCard({
     handlers,
     isBusy,
     isPinned,
-    otherBuyers,
 }: {
     deal: DealItem;
     handlers: DealCardHandlers;
     isBusy: boolean;
     isPinned: boolean;
-    otherBuyers: OtherBuyer[];
 }) {
     const {
         attributes,
@@ -66,7 +63,6 @@ export function DraggableDealCard({
                 handlers={handlers}
                 isBusy={isBusy}
                 isPinned={isPinned}
-                otherBuyers={otherBuyers}
                 isDragging={isDragging}
                 dragHandleRef={setActivatorNodeRef}
                 dragHandleProps={{ ...attributes, ...listeners }}

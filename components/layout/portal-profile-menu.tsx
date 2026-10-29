@@ -9,7 +9,7 @@ import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { HoldToLogout } from "@/components/layout/hold-to-logout";
-import { ChevronDown } from "@/components/shared/icons";
+import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,16 +28,15 @@ import { logout } from "@/store/slices/auth-slice";
 import { resetDashboard } from "@/store/slices/dashboard-slice";
 
 export const portalProfileMenuItemClass = `
-  h-9 cursor-pointer gap-2.5 rounded-inner px-3 body-sm font-medium text-ink
+  min-block-11 cursor-pointer gap-3 rounded-inner px-3 body-sm font-medium text-ink
 `;
 
 export const portalProfileMenuSurfaceClass = `
-  t-dropdown t-profile-menu animate-none! min-inline-[16.25rem] rounded-inner border
-  border-border-warm bg-surface p-0 text-ink ring-0
+  t-dropdown t-profile-menu animate-none! rounded-card border inline-65 max-inline-[calc(100vw-1.5rem)]
+  border-border-warm bg-surface p-1.5 text-ink shadow-xl ring-0
   before:backdrop-blur-none
   data-closed:animate-none!
   data-open:animate-none!
-  p-3
   **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
   **:data-[slot$=-item]:data-highlighted:text-ink!
   **:data-[slot$=-item]:focus:bg-surface-muted!
@@ -49,7 +48,7 @@ export const portalProfileMenuSurfaceClass = `
 `;
 
 export function PortalProfileMenuSeparator() {
-    return <DropdownMenuSeparator className="mx-0! my-2.5 bg-border-warm inline-full!" />;
+    return <DropdownMenuSeparator className="m-1.5 bg-border-warm" />;
 }
 
 export function PortalProfileShortcutHint({
@@ -160,13 +159,19 @@ function DesktopProfileDropdown({
                         className="
                           gap-1 ps-0 pe-1 text-ink-muted
                           hover:bg-transparent hover:text-ink
-                          data-popup-open:text-ink
+                          focus:bg-transparent focus-visible:bg-transparent
+                          aria-expanded:bg-transparent data-popup-open:text-ink
+                          dark:hover:bg-transparent
                         "
                     />
                 }
             >
                 <UserAvatar name={userName} imageUrl={userAvatarUrl} size="md" />
-                <ChevronDown aria-hidden="true" className="block-4 inline-4" strokeWidth={1.75} />
+                <AccountMenuIcon
+                    name="chevron-down"
+                    aria-hidden="true"
+                    className="block-4 inline-4"
+                />
             </DropdownMenuTrigger>
         </div>
     );
@@ -189,24 +194,16 @@ function DesktopProfileDropdown({
                     className={cn(portalProfileMenuSurfaceClass)}
                 >
                     <DropdownMenuGroup>
-                        <DropdownMenuLabel
-                            className="
-                          flex flex-col gap-3 p-0! ps-[5px]! font-normal text-ink
-                        "
-                        >
-                            <div className="flex items-center gap-2.5">
+                        <DropdownMenuLabel className="flex flex-col gap-3 p-3! font-normal text-ink">
+                            <div className="flex items-center gap-3 min-inline-0">
                                 <UserAvatar
                                     name={userName}
                                     imageUrl={userAvatarUrl}
                                     size="md"
                                     className="shrink-0"
                                 />
-                                <div className="flex flex-col gap-1 min-inline-0">
-                                    <p
-                                        className="
-                                      truncate font-display text-sm font-medium text-ink capitalize
-                                    "
-                                    >
+                                <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
+                                    <p className="body-sm truncate font-semibold text-ink">
                                         {userName}
                                     </p>
                                     {headerStatus}

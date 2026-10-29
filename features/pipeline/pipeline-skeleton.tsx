@@ -7,7 +7,6 @@ function DealCardSkeleton() {
             <div className="flex flex-col gap-2.5 p-4">
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex gap-1.5">
-                        <div className="rounded-full bg-surface-muted block-5 inline-16" />
                         <div className="rounded-full bg-surface-muted block-5 inline-14" />
                     </div>
                     <div
@@ -22,7 +21,6 @@ function DealCardSkeleton() {
                         <div className="rounded-sm bg-surface-muted block-5 inline-24" />
                         <div className="rounded-sm bg-surface-muted block-3 inline-32" />
                         <div className="rounded-sm bg-surface-muted block-3 inline-28" />
-                        <div className="rounded-sm bg-surface-muted block-3 inline-20" />
                     </div>
                 </div>
                 <div className="rounded-control bg-surface-muted block-10" />
@@ -44,7 +42,6 @@ export function PipelineBoardSkeleton() {
                     >
                         <div className="flex items-center justify-between">
                             <div className="rounded-control bg-surface-muted block-5 inline-24" />
-                            <div className="rounded-full bg-surface-muted block-3 inline-3" />
                         </div>
                         <div className="flex flex-col gap-3">
                             {Array.from({ length: column === 0 ? 2 : 1 }).map((__, card) => (
