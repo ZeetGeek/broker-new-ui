@@ -107,8 +107,6 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         () => (urlStage ? { ...prefs.filters, stage: urlStage } : prefs.filters),
         [prefs.filters, urlStage],
     );
-    const view = urlStage ? "board" : prefs.view;
-    const filters = urlStage ? { ...prefs.filters, stage: urlStage } : prefs.filters;
     // "done" is the old combined Finished tab, still in some saved prefs.
     const view: DealsView = urlStage || (prefs.view as string) === "done" ? "board" : prefs.view;
     const mobileStage = urlStage ?? prefs.mobileStage;
