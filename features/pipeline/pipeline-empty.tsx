@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { CircleCheck, CircleSlash, Search, Users } from "@/components/shared/icons";
+
 import { BROKER_ADD_DEAL_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
@@ -45,6 +47,25 @@ export function PipelineDoneEmpty() {
             icon={CircleSlash}
             heading="Nothing finished yet"
             description="Deals you mark as sold or lost move here, so the board only shows what you are still working on."
+            className="py-16"
+        />
+    );
+}
+
+/** The Sold or Lost tab has nothing in it yet. Quiet — no button. */
+export function PipelineOutcomeEmpty({ outcome }: { outcome: "sold" | "lost" }) {
+    return outcome === "sold" ? (
+        <EmptyState
+            icon={CircleCheck}
+            heading="No sold deals yet"
+            description="When you mark a deal as sold, it moves here."
+            className="py-16"
+        />
+    ) : (
+        <EmptyState
+            icon={CircleSlash}
+            heading="No lost deals"
+            description="Deals you mark as lost move here, so the board only shows what you are still working on."
             className="py-16"
         />
     );

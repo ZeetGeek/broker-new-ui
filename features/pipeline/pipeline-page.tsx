@@ -27,8 +27,9 @@ import {
     PipelineDoneEmpty,
     PipelineFilteredEmpty,
     PipelineFirstRunEmpty,
+    PipelineOutcomeEmpty,
 } from "@/features/pipeline/pipeline-empty";
-import { PipelineFinishedToggle } from "@/features/pipeline/pipeline-finished-toggle";
+import { PipelineOutcomeTabs } from "@/features/pipeline/pipeline-outcome-tabs";
 import { PipelineBoardSkeleton } from "@/features/pipeline/pipeline-skeleton";
 import { PipelineToolbar } from "@/features/pipeline/pipeline-toolbar";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
@@ -78,7 +79,7 @@ function isPipelinePrefs(value: unknown): value is PipelinePrefs {
         typeof filters === "object" &&
         filters !== null &&
         typeof filters.q === "string" &&
-        (v.view === "board" || v.view === "done") &&
+        (v.view === "board" || v.view === "sold" || v.view === "lost" || v.view === "done") &&
         isDealStage(v.mobileStage) &&
         Array.isArray(v.pinnedDealIds)
     );
@@ -107,6 +108,9 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         [prefs.filters, urlStage],
     );
     const view = urlStage ? "board" : prefs.view;
+    const filters = urlStage ? { ...prefs.filters, stage: urlStage } : prefs.filters;
+    // "done" is the old combined Finished tab, still in some saved prefs.
+    const view: DealsView = urlStage || (prefs.view as string) === "done" ? "board" : prefs.view;
     const mobileStage = urlStage ?? prefs.mobileStage;
     const { pinnedDealIds } = prefs;
 
@@ -543,10 +547,11 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         return [...live].sort(pinSort(pinnedDealIds));
     }, [filteredDeals, pinnedDealIds]);
 
-    const doneDeals = useMemo(
-        () => filteredDeals.filter((deal) => !isLiveStage(deal.status)),
-        [filteredDeals],
-    );
+    const outcomeDeals = useMemo(() => {
+        if (view === "board") return [];
+        const status = view === "sold" ? "closed" : "lost";
+        return filteredDeals.filter((deal) => deal.status === status);
+    }, [filteredDeals, view]);
 
     const dealsByStage = useMemo(() => {
         const grouped = Object.fromEntries(
@@ -627,10 +632,11 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     onPatch={handlePatch}
                     leading={
                         summary ? (
-                            <PipelineFinishedToggle
-                                count={summary.closedCount + summary.lostCount}
-                                active={view === "done"}
-                                onChange={(active) => {
+                            <PipelineOutcomeTabs
+                                counts={{ sold: summary.closedCount, lost: summary.lostCount }}
+                                view={view}
+                                onChange={(next) => {
+                                    const active = next !== "board";
                                     if (active && searchParams.has("stage")) {
                                         const query = new URLSearchParams(searchParams.toString());
                                         query.delete("stage");
@@ -640,7 +646,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                     }
                                     setPrefs((prev) => ({
                                         ...prev,
-                                        view: active ? "done" : "board",
+                                        view: next,
                                         filters: active
                                             ? { ...prev.filters, stage: "" }
                                             : prev.filters,
@@ -662,12 +668,12 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 <PipelineBoardSkeleton />
             ) : isFirstRun ? (
                 <PipelineFirstRunEmpty />
-            ) : view === "done" ? (
-                doneDeals.length === 0 ? (
+            ) : view !== "board" ? (
+                outcomeDeals.length === 0 ? (
                     hasSearch ? (
                         <PipelineFilteredEmpty onClear={handleClearSearch} />
                     ) : (
-                        <PipelineDoneEmpty />
+                        <PipelineOutcomeEmpty outcome={view} />
                     )
                 ) : (
                     <div
@@ -676,12 +682,12 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         }
                     >
                         <WindowVirtualGrid
-                            items={doneDeals}
+                            items={outcomeDeals}
                             getKey={(deal) => deal.id}
                             estimateRowHeight={470}
                             gap={12}
                             breakpoints={DONE_GRID_BREAKPOINTS}
-                            ariaLabel="Completed and lost deals"
+                            ariaLabel={view === "sold" ? "Sold deals" : "Lost deals"}
                             renderItem={renderDealCard}
                         />
                     </div>

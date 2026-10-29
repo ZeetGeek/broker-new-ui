@@ -173,6 +173,9 @@ export function PropertyForm({
     const accountId = getStoredUser()?.id ?? "device";
     const localStorageKey = propertyDraftKey(accountId, portal, propertyId);
     const extraStorageKey = propertyDraftKey(accountId, portal, propertyId, "extra");
+    // Only a new listing keeps a draft on this device. An edit starts from the
+    // saved listing every time, and its changes are kept only by saving.
+    const keepsLocalDraft = mode === "create";
 
     const defaultValues = useMemo(
         () => (initialListing ? listingToDraft(initialListing, portal) : cloneDefaultDraft(portal)),
@@ -197,6 +200,7 @@ export function PropertyForm({
 
     const writeLocalDraft = useCallback(
         async (nextValues: PropertyDraftValues, ui = draftUiState) => {
+            if (!keepsLocalDraft) return;
             await savePropertyDraft(
                 localStorageKey,
                 {
@@ -208,7 +212,7 @@ export function PropertyForm({
                 photoFilesRef.current,
             );
         },
-        [draftUiState, localStorageKey],
+        [draftUiState, keepsLocalDraft, localStorageKey],
     );
     const activeSteps = useMemo(
         () => FORM_STEPS.filter((item) => ruleStepIsVisible(item.id, values)),
@@ -227,7 +231,13 @@ export function PropertyForm({
     useEffect(() => {
         if (!formIsActive) return;
         let cancelled = false;
-        recoveryRef.current ??= loadPropertyDraft(localStorageKey, photoFilesRef.current);
+        // An edit draft left on this device by an older version is dropped, not restored.
+        recoveryRef.current ??= keepsLocalDraft
+            ? loadPropertyDraft(localStorageKey, photoFilesRef.current)
+            : removePropertyDraft(localStorageKey).then(
+                  () => null,
+                  () => null,
+              );
         void recoveryRef.current
             .then(async (parsed) => {
                 if (cancelled) return;
@@ -289,10 +299,20 @@ export function PropertyForm({
         return () => {
             cancelled = true;
         };
-    }, [defaultValues, extraStorageKey, formIsActive, localStorageKey, methods, mode, propertyId]);
+    }, [
+        defaultValues,
+        extraStorageKey,
+        formIsActive,
+        keepsLocalDraft,
+        localStorageKey,
+        methods,
+        mode,
+        propertyId,
+    ]);
 
     useEffect(() => {
-        if (!formIsActive || restoringDraft || !autosaveReadyRef.current) return;
+        if (!keepsLocalDraft || !formIsActive || restoringDraft || !autosaveReadyRef.current)
+            return;
         setDraftSavePending(true);
         const timer = window.setTimeout(async () => {
             if (!autosaveReadyRef.current) return;
@@ -312,7 +332,7 @@ export function PropertyForm({
             }
         }, 500);
         return () => window.clearTimeout(timer);
-    }, [draftUiState, formIsActive, restoringDraft, values, writeLocalDraft]);
+    }, [draftUiState, formIsActive, keepsLocalDraft, restoringDraft, values, writeLocalDraft]);
 
     useEffect(() => {
         if (!formIsActive) return;
@@ -379,6 +399,7 @@ export function PropertyForm({
     }, [entryMode, step]);
 
     async function saveDraftLocally() {
+        if (!keepsLocalDraft) return;
         try {
             await writeLocalDraft(methods.getValues());
             setSavedAt(new Date());
@@ -504,6 +525,7 @@ export function PropertyForm({
     }
 
     async function saveSilent() {
+        if (!keepsLocalDraft) return;
         try {
             await writeLocalDraft(methods.getValues());
             setSavedAt(new Date());
@@ -814,7 +836,7 @@ export function PropertyForm({
             return;
         }
         let locallySaved = false;
-        if (autosaveReadyRef.current) {
+        if (keepsLocalDraft && autosaveReadyRef.current) {
             try {
                 await writeLocalDraft(methods.getValues());
                 setSavedAt(new Date());
@@ -826,9 +848,11 @@ export function PropertyForm({
         if (
             methods.formState.isDirty &&
             !window.confirm(
-                locallySaved
-                    ? "Close this form? Your latest changes and photos are saved on this device."
-                    : "This device could not save your latest changes. Close and lose those changes?",
+                !keepsLocalDraft
+                    ? "Close without saving? Your changes to this property will be lost."
+                    : locallySaved
+                      ? "Close this form? Your latest changes and photos are saved on this device."
+                      : "This device could not save your latest changes. Close and lose those changes?",
             )
         )
             return;
@@ -1187,33 +1211,35 @@ function PropertyFormHeader({
 }) {
     const title = mode === "edit" ? "Edit property" : "Add property";
     const isBusy = savingIntent != null;
-    const savedHint = (
-        <div className="flex items-center min-block-5 min-inline-34">
-            {restoring ? (
-                <Skeleton className="rounded-full block-5 inline-full" />
-            ) : (
-                <Popover>
-                    <PopoverTrigger
-                        type="button"
-                        className="
-                          inline-flex items-center justify-center rounded-full
-                          focus-visible:outline-2 focus-visible:outline-offset-4
-                          focus-visible:outline-brand
-                        "
-                        aria-label="About details saved on this device"
-                    >
-                        <Badge color={isSaved ? "emerald" : "amber"} aria-live="polite">
-                            {isSaved ? "Saved on this device" : "Not saved yet"}
-                        </Badge>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="text-sm text-ink max-inline-xs">
-                        Changes you have not saved yet are kept as a draft on this device. Saving
-                        the property sends every detail to your account.
-                    </PopoverContent>
-                </Popover>
-            )}
-        </div>
-    );
+    // Edits are not kept on the device, so only a new listing shows the draft badge.
+    const savedHint =
+        mode === "edit" ? null : (
+            <div className="flex items-center min-block-5 min-inline-34">
+                {restoring ? (
+                    <Skeleton className="rounded-full block-5 inline-full" />
+                ) : (
+                    <Popover>
+                        <PopoverTrigger
+                            type="button"
+                            className="
+                              inline-flex items-center justify-center rounded-full
+                              focus-visible:outline-2 focus-visible:outline-offset-4
+                              focus-visible:outline-brand
+                            "
+                            aria-label="About details saved on this device"
+                        >
+                            <Badge color={isSaved ? "emerald" : "amber"} aria-live="polite">
+                                {isSaved ? "Saved on this device" : "Not saved yet"}
+                            </Badge>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="text-sm text-ink max-inline-xs">
+                            Changes you have not saved yet are kept as a draft on this device.
+                            Saving the property sends every detail to your account.
+                        </PopoverContent>
+                    </Popover>
+                )}
+            </div>
+        );
 
     return (
         <header
