@@ -5,7 +5,7 @@ import {
 
 import { browseApiTypeFilters } from "@/features/properties/owner-listings/filter-visibility";
 
-/** Listing filters sent to the My Deals representation queues. */
+/** Listing filters sent to the Requests & Invitations representation queues. */
 export type DealListingApiQuery = {
     transactionType?: "sale" | "rent";
     propertyType?: string;

@@ -144,7 +144,7 @@ export function AttachOwnerToListingModal({
                     description={
                         query
                             ? "Try a different title or locality."
-                            : "Add a property in Your listings first, then attach this owner."
+                            : "Add a property in My Listings first, then attach this owner."
                     }
                 />
             ) : (
@@ -153,7 +153,7 @@ export function AttachOwnerToListingModal({
                         items={filtered}
                         getKey={(listing) => listing.id}
                         estimateItemHeight={80}
-                        ariaLabel="Your listings"
+                        ariaLabel="My Listings"
                         renderItem={(listing) => {
                             const selected = selectedId === listing.id;
                             return (

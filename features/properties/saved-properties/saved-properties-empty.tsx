@@ -15,8 +15,8 @@ export function SavedPropertiesEmpty() {
             heading="No saved properties yet"
             description={
                 FEATURE_PLATFORM_OWNER
-                    ? "Save a property from Owner listings or Your listings, and it will show up here."
-                    : "Save a property from Your listings, and it will show up here."
+                    ? "Save a property from Marketplace or My Listings, and it will show up here."
+                    : "Save a property from My Listings, and it will show up here."
             }
         >
             <Button
@@ -32,7 +32,7 @@ export function SavedPropertiesEmpty() {
                     />
                 }
             >
-                {FEATURE_PLATFORM_OWNER ? "Browse owner listings" : "View your listings"}
+                {FEATURE_PLATFORM_OWNER ? "Browse Marketplace" : "View My Listings"}
             </Button>
         </EmptyState>
     );

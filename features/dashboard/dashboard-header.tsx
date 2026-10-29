@@ -238,10 +238,10 @@ export function DashboardHeader({
                                 size="md"
                                 nativeButton={false}
                                 render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
-                                aria-label="Owner listings"
+                                aria-label="Marketplace"
                             >
                                 <Search aria-hidden strokeWidth={1.75} />
-                                <span className="hidden md:inline">Owner listings</span>
+                                <span className="hidden md:inline">Marketplace</span>
                             </Button>
                         </ShortcutTooltip>
                     ) : null}

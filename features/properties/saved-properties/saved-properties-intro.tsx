@@ -71,8 +71,8 @@ export function SavedPropertiesIntro({
             </h1>
             <p className="body hidden text-ink-muted max-inline-[52ch] sm:block">
                 {FEATURE_PLATFORM_OWNER
-                    ? "Properties you save from Owner listings and Your listings, in one place."
-                    : "Properties you save from Your listings, in one place."}
+                    ? "Properties you save from Marketplace and My Listings, in one place."
+                    : "Properties you save from My Listings, in one place."}
             </p>
         </div>
     );

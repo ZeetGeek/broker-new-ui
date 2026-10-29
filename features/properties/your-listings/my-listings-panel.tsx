@@ -279,7 +279,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 onAddProperty={() => setAddOpen(true)}
             />
 
-            <section aria-label="Your listings results" aria-busy={loading || query.isFetching}>
+            <section aria-label="My Listings results" aria-busy={loading || query.isFetching}>
                 {loading ? (
                     <MyListingsResultsSkeleton portal={portal} />
                 ) : query.isError && query.items.length === 0 ? (

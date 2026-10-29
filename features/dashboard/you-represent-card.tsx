@@ -192,7 +192,7 @@ function EmptyYouRepresent() {
             description="Once an owner approves your request, the property appears here."
         >
             <ShortcutKbdMessage shortcutId="owner_listings">
-                to browse owner listings
+                to browse Marketplace
             </ShortcutKbdMessage>
         </EmptyState>
     );

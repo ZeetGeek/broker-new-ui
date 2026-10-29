@@ -106,7 +106,7 @@ export function representationEndedBy(
     return undefined;
 }
 
-/** Shared by My Deals cards and owner-listing request timeline. */
+/** Shared by Requests & Invitations cards and owner-listing request timeline. */
 export function buildRepresentationTimeline(
     rep: RepresentationItem,
     stage: RequestStage,

@@ -132,7 +132,7 @@ export function ViewBuyerLeadsModal({
                 <EmptyState
                     icon={Building2}
                     heading="Not on any property yet"
-                    description="Use Attach to link this client to a property from Your listings."
+                    description="Use Attach to link this client to a property from My Listings."
                 />
             ) : (
                 <VirtualListBox

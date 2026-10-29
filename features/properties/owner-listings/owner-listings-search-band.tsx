@@ -28,7 +28,7 @@ export type OwnerListingsSearchBandProps = {
     appliedFilters: OwnerListingsFilters;
     /** Location tree stubs for the Where menu. */
     listings: OwnerListingItem[];
-    /** Owner listings inside the broker's service areas, from the cities API. */
+    /** Marketplace inside the broker's service areas, from the cities API. */
     serviceableListingCount?: number;
     locationsLoading?: boolean;
     locationsError?: boolean;

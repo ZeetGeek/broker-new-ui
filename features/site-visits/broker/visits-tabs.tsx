@@ -27,7 +27,7 @@ const EXCLUSIVE_TABS = [
 ] as const;
 
 const INVENTORY = [
-    { value: "platform", label: "Owner listings" },
+    { value: "platform", label: "Marketplace" },
     { value: "exclusive", label: "Exclusive listings" },
 ] as const;
 

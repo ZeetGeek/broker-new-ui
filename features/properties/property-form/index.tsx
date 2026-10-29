@@ -121,7 +121,7 @@ function resolveDraftStep(step: string | undefined): PropertyFormStep | null {
 
 export type PropertyFormProps = {
     mode: "create" | "edit";
-    /** Owner listings are the owner's own. Broker listings can attach a contact owner and buyers. */
+    /** Marketplace are the owner's own. Broker listings can attach a contact owner and buyers. */
     portal?: "broker" | "owner";
     propertyId?: string;
     initialListing?: MyListingItem | null;

@@ -101,7 +101,7 @@ function NotFoundState() {
                 className="bg-brand-ink text-surface hover:bg-brand-ink/90"
                 render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
             >
-                Back to owner listings
+                Back to Marketplace
             </Button>
         </EmptyState>
     );
@@ -123,7 +123,7 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                 "
             >
                 <ChevronLeft aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                Owner listings
+                Marketplace
             </Link>
 
             <section

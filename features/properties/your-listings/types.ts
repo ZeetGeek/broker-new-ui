@@ -2,7 +2,7 @@ import type { PropertyType } from "@/lib/validation/property";
 
 export type MyListingStatus = "draft" | "published" | "unpublished";
 
-/** Your listings tabs. `sold` is availability, not publish state, so it is tab-only. */
+/** My Listings tabs. `sold` is availability, not publish state, so it is tab-only. */
 export type MyListingsStatusTab = MyListingStatus | "sold";
 
 export type MyListingFurnishing = "furnished" | "semi" | "unfurnished";

@@ -408,7 +408,7 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     /** Exclusive owner mobile — enables WhatsApp / Call on the card footer. */
     ownerPhoneDigits?: string | null;
     visibility?: "private" | "marketplace";
-    /** Buyers linked to this listing — shown as the My deals avatar stack. */
+    /** Buyers linked to this listing — shown as the Requests & Invitations avatar stack. */
     attachedClients?: Array<{ id: string; name: string; avatarUrl?: string }>;
 };
 
@@ -915,12 +915,6 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
     };
 }
 
-const OWNED_STATUS_COLOR: Record<OwnedPropertyCardStatus, "emerald" | "amber" | "red"> = {
-    published: "emerald",
-    draft: "amber",
-    unpublished: "red",
-};
-
 /** Bottom bar for broker inventory: WhatsApp (outline) + Call (brand). */
 function OwnedContactSplitBar({
     ownerName,
@@ -1021,7 +1015,7 @@ function OwnedContactSplitBar({
 }
 
 /**
- * Broker/owner inventory card — same overlay chrome as Owner listings and My
+ * Broker/owner inventory card — same overlay chrome as Marketplace and My
  * Deals. Empty Owner / Buyers rows use link "Attach owner" / "Attach buyers";
  * the ⋯ menu still offers those actions. Footer is WhatsApp + Call.
  */
@@ -1091,15 +1085,11 @@ function OwnedOverlayPropertyCard({
                 className={className}
                 chips={
                     <>
-                        {isSold ? (
+                        {!isSold && listing.status === "unpublished" ? (
                             <Badge color="red" blur="dark">
-                                Sold
+                                {OWNED_STATUS_LABEL.unpublished}
                             </Badge>
-                        ) : (
-                            <Badge color={OWNED_STATUS_COLOR[listing.status]} blur="dark">
-                                {OWNED_STATUS_LABEL[listing.status]}
-                            </Badge>
-                        )}
+                        ) : null}
                         {offersSale(browse) ? (
                             <Badge color="emerald" blur="dark">
                                 For sale
@@ -1157,6 +1147,21 @@ function OwnedOverlayPropertyCard({
                 }
             >
                 <div className="flex flex-col gap-3.5 min-inline-0">
+                    <div className="flex items-center gap-2">
+                        <span className="body-sm text-ink-muted">Status</span>
+                        <Badge
+                            color={
+                                isSold || listing.status === "unpublished"
+                                    ? "red"
+                                    : listing.status === "published"
+                                      ? "emerald"
+                                      : "amber"
+                            }
+                        >
+                            {isSold ? "Sold" : OWNED_STATUS_LABEL[listing.status]}
+                        </Badge>
+                    </div>
+
                     <OverlayCardSummary
                         href={detailsHref}
                         price={<ListingAskPrices listing={browse} audience={audience} />}

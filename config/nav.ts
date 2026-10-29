@@ -53,8 +53,8 @@ export const OWNER_NAV_ITEMS: NavItem[] = [
 
 const BROKER_MARKETPLACE_NAV_ITEMS: NavItem[] = [
     {
-        label: "Owner listings",
-        mobileLabel: "Owners",
+        label: "Marketplace",
+        mobileLabel: "Marketplace",
         href: BROKER_OWNER_LISTINGS_HREF,
         shortcutId: "owner_listings",
         activePrefixes: ["/broker/browse-properties", "/broker/owner-listings", "/broker/owners"],
@@ -62,8 +62,8 @@ const BROKER_MARKETPLACE_NAV_ITEMS: NavItem[] = [
     {
         // Covers both directions — requests the broker sent and invites owners
         // sent them. "Requests" only named half the page.
-        label: "My Deals",
-        mobileLabel: "Deals",
+        label: "Requests & Invitations",
+        mobileLabel: "Requests",
         href: BROKER_MY_DEALS_HREF,
         shortcutId: "my_deals",
         activePrefixes: ["/broker/requests"],
@@ -74,8 +74,8 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", href: "/broker/dashboard", shortcutId: "dashboard" },
     ...(FEATURE_PLATFORM_OWNER ? BROKER_MARKETPLACE_NAV_ITEMS : []),
     {
-        label: "Your listings",
-        mobileLabel: "Yours",
+        label: "My Listings",
+        mobileLabel: "My Listings",
         href: BROKER_YOUR_LISTINGS_HREF,
         shortcutId: "your_listings",
         activePrefixes: ["/broker/my-properties", "/broker/properties"],

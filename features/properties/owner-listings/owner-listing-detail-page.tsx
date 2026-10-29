@@ -176,7 +176,7 @@ function OwnerListingActionRail({
                 </h2>
                 <p className={styles.actionDescription}>
                     {accepted
-                        ? "This property is ready to work in My Deals."
+                        ? "This property is ready to work in Requests & Invitations."
                         : ownerInvite
                           ? "Accept the invitation to start working with this owner."
                           : pending
@@ -190,7 +190,7 @@ function OwnerListingActionRail({
                             size="lg"
                             render={<Link href={BROKER_MY_DEALS_HREF} />}
                         >
-                            Open in My Deals
+                            Open in Requests & Invitations
                         </Button>
                     ) : ownerInvite ? (
                         <>
@@ -399,7 +399,7 @@ function OwnerListingDetailView({
                       : "stone"
             }
             backHref={BROKER_OWNER_LISTINGS_HREF}
-            backLabel="Owner listings"
+            backLabel="Marketplace"
             status={standingLabel(detail.representation)}
             revealAddress={detail.representation?.status === "accepted"}
             rail={
@@ -451,7 +451,7 @@ function OwnerListingDetailView({
                         size="lg"
                         render={<Link href={BROKER_MY_DEALS_HREF} />}
                     >
-                        Open in My Deals
+                        Open in Requests & Invitations
                     </Button>
                 )
             }
@@ -471,7 +471,7 @@ function NotFoundState() {
                 className="bg-brand-ink text-surface hover:bg-brand-ink/90"
                 render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
             >
-                Back to owner listings
+                Back to Marketplace
             </Button>
         </div>
     );
@@ -529,7 +529,7 @@ export function OwnerListingDetailPage() {
                     href={BROKER_OWNER_LISTINGS_HREF}
                     className="body-sm inline-flex items-center text-brand min-block-11"
                 >
-                    Back to owner listings
+                    Back to Marketplace
                 </Link>
             </div>
         );

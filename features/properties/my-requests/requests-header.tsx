@@ -90,8 +90,8 @@ function DealsQueryInput({ value, onChange }: { value: string; onChange: (q: str
             size="sm"
             value={draft}
             onValueChange={setDraft}
-            placeholder="Search deals"
-            aria-label="Search your deals"
+            placeholder="Search requests and invitations"
+            aria-label="Search requests and invitations"
             startIcon={Search}
             clearable
             wrapperClassName={DEALS_SEARCH_CLASS}

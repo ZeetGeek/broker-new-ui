@@ -23,7 +23,7 @@ export function PropertyEditPage({ portal = "broker" }: { portal?: "broker" | "o
     });
     const listing = query.data;
     const listHref = portal === "owner" ? OWNER_PROPERTIES_HREF : BROKER_YOUR_LISTINGS_HREF;
-    const backLabel = portal === "owner" ? "Back to properties" : "Back to your listings";
+    const backLabel = portal === "owner" ? "Back to properties" : "Back to My Listings";
 
     if (query.isPending) {
         return (

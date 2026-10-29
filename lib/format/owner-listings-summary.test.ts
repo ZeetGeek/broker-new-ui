@@ -28,7 +28,11 @@ test("qualifies partial new-property counts and suppresses incomplete feature to
     assert.ok(
         !lines.some((line) => line.includes("3 properties") || line.includes("8 properties")),
     );
-    assert.ok(lines.some((line) => line.includes("owner approves") && line.includes("My Deals")));
+    assert.ok(
+        lines.some(
+            (line) => line.includes("owner approves") && line.includes("Requests & Invitations"),
+        ),
+    );
 });
 
 test("shows complete result statistics and uses the selected transaction type", () => {

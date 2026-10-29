@@ -50,7 +50,7 @@ import {
     type OwnerRow,
 } from "@/features/contacts/types";
 
-/** Match Your listings grid: 1 → 2 → 3 → 4 → 5 columns. */
+/** Match My Listings grid: 1 → 2 → 3 → 4 → 5 columns. */
 const CONTACT_GRID_BREAKPOINTS = [
     { minWidth: 640, columns: 2 },
     { minWidth: 768, columns: 3 },
@@ -461,7 +461,7 @@ export function ContactsPage({
                             Add client
                         </Button>
                         <a href="/broker/your-listings" className="body-sm font-medium underline">
-                            Your listings
+                            My Listings
                         </a>
                     </div>
                 ) : null}

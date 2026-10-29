@@ -30,7 +30,7 @@ export function MyDealsIntro({
         <h1 className="h2 min-inline-0">
             {isLoading ? (
                 <span aria-hidden className="relative inline-block align-bottom">
-                    <span className="invisible">My deals.</span>
+                    <span className="invisible">Requests & Invitations.</span>
                     <span
                         className="
                       absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control
@@ -41,13 +41,13 @@ export function MyDealsIntro({
                     </span>
                 </span>
             ) : (
-                <span className="text-ink">My deals.</span>
+                <span className="text-ink">Requests & Invitations.</span>
             )}{" "}
             <RotatingHeaderSummary
                 key={activeTab}
                 lines={lines}
                 isLoading={isLoading}
-                loadingLabel="Loading your deal counts"
+                loadingLabel="Loading request and invitation counts"
                 loadingPlaceholder="Add interested clients or tenants to start working on a property"
                 reservePlaceholder
             />

@@ -237,7 +237,7 @@ export function OwnerListingsPage() {
                 onSortChange={handleSortChange}
             />
             <section
-                aria-label="Owner listings results"
+                aria-label="Marketplace results"
                 aria-busy={isInitialLoading || query.isFetching}
             >
                 {isInitialLoading ? (
@@ -247,7 +247,7 @@ export function OwnerListingsPage() {
                         role="alert"
                         className="flex flex-col items-center gap-4 py-12 text-center"
                     >
-                        <h2 className="h6 text-ink">Could not load owner listings</h2>
+                        <h2 className="h6 text-ink">Could not load Marketplace properties</h2>
                         <p className="body-sm text-ink-muted">
                             Check your connection and try again.
                         </p>

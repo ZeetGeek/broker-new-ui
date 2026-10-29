@@ -211,7 +211,7 @@ function EmptyNewInAreas() {
             description="We'll show properties added in the areas you work in."
         >
             <ShortcutKbdMessage shortcutId="owner_listings">
-                to browse owner listings
+                to browse Marketplace
             </ShortcutKbdMessage>
         </EmptyState>
     );

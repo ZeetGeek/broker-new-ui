@@ -65,7 +65,7 @@ export function MyListingsIntro({
         <h1 className="h2 text-start min-inline-0">
             {isLoading ? (
                 <span aria-hidden className="relative inline-block align-bottom">
-                    <span className="invisible">Your listings.</span>
+                    <span className="invisible">My Listings.</span>
                     <span
                         className="
                           absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control
@@ -76,7 +76,7 @@ export function MyListingsIntro({
                     </span>
                 </span>
             ) : (
-                <span className="text-ink">Your listings.</span>
+                <span className="text-ink">My Listings.</span>
             )}{" "}
             <RotatingHeaderSummary
                 key={`${status}:${lines.join("|")}`}

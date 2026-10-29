@@ -82,7 +82,7 @@ function OwnerListingsQueryInput({
             value={draft}
             onValueChange={setDraft}
             placeholder="Search listings"
-            aria-label="Search owner listings"
+            aria-label="Search Marketplace"
             startIcon={Search}
             clearable
             wrapperClassName="

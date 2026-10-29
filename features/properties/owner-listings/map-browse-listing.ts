@@ -89,7 +89,7 @@ function furnishingLabel(value: OwnerListingFurnishing): string {
     return "Unfurnished";
 }
 
-/** API `subtype` / `propertyType` → the card type. Shared with My deals so both name a listing alike. */
+/** API `subtype` / `propertyType` → the card type. Shared with Requests & Invitations so both name a listing alike. */
 export function mapApiPropertyType(
     subtypeRaw: string | null | undefined,
     propertyTypeRaw: string | null | undefined,

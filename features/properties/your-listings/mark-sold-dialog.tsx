@@ -15,7 +15,7 @@ const REASON_MAX = 500;
 
 /**
  * Confirm "Mark as sold". Open deals close immediately, so the dialog says so
- * before the caller commits. Owner listings also notify representing brokers.
+ * before the caller commits. Marketplace also notify representing brokers.
  * A broker exclusive listing does not — only that broker listed it.
  */
 export function MarkSoldDialog({

@@ -573,7 +573,7 @@ function StageMiddle({ deal }: { deal: DealItem }) {
 
 /**
  * Board deal card — same photo → price → people → CTA rhythm as owned
- * property cards (`OverlayCard`), so Pipeline and Your listings feel like
+ * property cards (`OverlayCard`), so Pipeline and My Listings feel like
  * one product. Field actions are labeled Call / WhatsApp; overflow + drag
  * sit on the photo like the property-card menu.
  */

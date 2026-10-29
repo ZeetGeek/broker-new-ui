@@ -51,7 +51,7 @@ export function VisitsFirstRunEmpty({
                 nativeButton={false}
                 render={<Link href={canSchedule ? SCHEDULE_HREF : BROWSE_HREF} />}
             >
-                {canSchedule ? "Schedule a visit" : "Browse owner listings"}
+                {canSchedule ? "Schedule a visit" : "Browse Marketplace"}
             </Button>
         </EmptyState>
     );

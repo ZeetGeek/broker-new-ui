@@ -167,7 +167,7 @@ export function RequestsListSkeleton({
 }) {
     return (
         <div role="status" aria-busy="true">
-            <span className="sr-only">Loading your deals</span>
+            <span className="sr-only">Loading requests and invitations</span>
             <div className={REQUESTS_GRID_CLASS}>
                 {Array.from({ length: count }, (_, index) => (
                     <DealCardSkeleton key={index} activeTab={activeTab} />

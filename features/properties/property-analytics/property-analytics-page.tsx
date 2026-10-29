@@ -63,7 +63,7 @@ export function PropertyAnalyticsPage() {
                 render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
             >
                 <ArrowLeft aria-hidden />
-                Back to your listings
+                Back to My Listings
             </Button>
 
             {query.isPending ? (
@@ -210,14 +210,14 @@ function AnalyticsBody({ data }: { data: PropertyAnalytics }) {
                     <EmptyState
                         icon={ChartBar}
                         heading="No leads on this listing yet"
-                        description="Add a client to this listing from Your listings. Their progress shows up here."
+                        description="Add a client to this listing from My Listings. Their progress shows up here."
                     >
                         <Button
                             variant="outline"
                             size="md"
                             render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
                         >
-                            Go to your listings
+                            Go to My Listings
                         </Button>
                     </EmptyState>
                 ) : (

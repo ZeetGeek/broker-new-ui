@@ -190,7 +190,7 @@ export function AttachBuyerPropertiesModal({
                     description={
                         query
                             ? "Try a different title or city."
-                            : "Add a property to Your listings, then link this client here."
+                            : "Add a property to My Listings, then link this client here."
                     }
                 />
             ) : (

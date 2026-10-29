@@ -46,7 +46,7 @@ export function DeleteOwnerDialog({
             }
         >
             <p className="body text-ink-muted">
-                This cannot be undone. Linked listings stay in Your listings — only this owner is
+                This cannot be undone. Linked listings stay in My Listings — only this owner is
                 removed.
             </p>
         </AppModal>

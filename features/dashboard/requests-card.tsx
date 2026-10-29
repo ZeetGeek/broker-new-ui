@@ -176,7 +176,7 @@ function EmptyRequests({ className }: { className?: string }) {
             aria-labelledby="requests-card-heading"
         >
             <CardLabel info={REQUESTS_INFO}>
-                <span id="requests-card-heading">My deals</span>
+                <span id="requests-card-heading">Requests & Invitations</span>
             </CardLabel>
 
             <EmptyState
@@ -184,7 +184,7 @@ function EmptyRequests({ className }: { className?: string }) {
                 heading="No requests sent yet"
                 description="Find a property you'd like to sell and ask the owner."
             >
-                <TextLinkButton href={BROKER_OWNER_LISTINGS_HREF}>Owner listings</TextLinkButton>
+                <TextLinkButton href={BROKER_OWNER_LISTINGS_HREF}>Marketplace</TextLinkButton>
             </EmptyState>
         </section>
     );
@@ -210,7 +210,7 @@ export function RequestsCard({ data, className }: RequestsCardProps) {
         >
             <div className="flex shrink-0 items-start justify-between gap-3">
                 <CardLabel info={REQUESTS_INFO}>
-                    <span id="requests-card-heading">My deals</span>
+                    <span id="requests-card-heading">Requests & Invitations</span>
                 </CardLabel>
                 <Tooltip>
                     <TooltipTrigger

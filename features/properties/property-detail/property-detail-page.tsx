@@ -63,7 +63,7 @@ function OwnedPropertyDetail({
         portal === "owner" ? ownerPropertyEditHref(item.id) : brokerPropertyEditHref(item.id);
     const requestsHref =
         portal === "owner" ? OWNER_REQUESTS_HREF : `${BROKER_YOUR_LISTINGS_HREF}?tab=requests`;
-    const backLabel = portal === "owner" ? "Properties" : "Your listings";
+    const backLabel = portal === "owner" ? "Properties" : "My Listings";
 
     const togglePublish = useCallback(async () => {
         if (busy || item.isSold) return;
@@ -229,7 +229,7 @@ function BrowsePropertyFallback({
                         className="bg-brand-ink text-surface hover:bg-brand-ink/90"
                         render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
                     >
-                        Browse owner listings
+                        Browse Marketplace
                     </Button>
                 ) : null}
                 <Button
@@ -237,7 +237,7 @@ function BrowsePropertyFallback({
                     className="border-border-warm"
                     render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
                 >
-                    Your listings
+                    My Listings
                 </Button>
             </div>
         </div>

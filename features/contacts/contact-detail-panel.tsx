@@ -600,7 +600,7 @@ function BuyerPanel({
                 }
             >
                 <p className="body text-ink-muted">
-                    The listing stays in Your listings. You can attach it again later.
+                    The listing stays in My Listings. You can attach it again later.
                 </p>
             </AppModal>
 

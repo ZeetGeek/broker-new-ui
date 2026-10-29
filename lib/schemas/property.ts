@@ -643,7 +643,7 @@ export const OWNER_SALE_COMMISSION_MIN = 0.1;
 export const OWNER_SALE_COMMISSION_MAX = 5;
 
 /**
- * Owner listings must state the commission they share: sale as 0.1–5 %, rent
+ * Marketplace must state the commission they share: sale as 0.1–5 %, rent
  * as a fixed amount (0 = no commission). Broker listings skip this check.
  */
 export function ownerCommissionIssues(

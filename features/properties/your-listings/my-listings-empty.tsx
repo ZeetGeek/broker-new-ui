@@ -81,7 +81,7 @@ export function MyListingsRequestsEmpty() {
                 className="bg-brand-ink text-surface hover:bg-brand-ink/90"
                 render={<Link href="/broker/owner-listings" />}
             >
-                Browse owner listings
+                Browse Marketplace
             </Button>
         </EmptyState>
     );
