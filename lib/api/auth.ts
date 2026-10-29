@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode, MOCK_ACCESS_TOKEN, MOCK_AUTH_USER } from "@/lib/api/mock-mode";
-import type { AuthUser } from "@/lib/auth/session";
+import { isOwnerUnavailable, signupPortal } from "@/lib/auth/launch-policy";
+import { type AuthUser, getStoredUser } from "@/lib/auth/session";
 
 import { API_URL } from "@/config";
 
@@ -48,7 +49,7 @@ export const authApi = {
     register(payload: RegisterPayload) {
         return apiFetch<RegisterResponse>("/auth/register", {
             method: "POST",
-            body: JSON.stringify(payload),
+            body: JSON.stringify({ ...payload, role: signupPortal(payload.role) }),
             skipAuth: true,
         });
     },
@@ -119,6 +120,11 @@ export const authApi = {
 
     /** Confirms the role and, when the account has none yet, its country. */
     completeGoogleRole(role: "owner" | "broker", countryIso2?: string) {
+        if (isOwnerUnavailable(role) || isOwnerUnavailable(getStoredUser()?.role)) {
+            return Promise.reject(
+                new Error("Owner accounts are not available during this launch."),
+            );
+        }
         return apiFetch<LoginResponse>("/auth/google/complete-role", {
             method: "POST",
             body: JSON.stringify({ role, ...(countryIso2 ? { countryIso2 } : {}) }),
@@ -141,7 +147,7 @@ export const authApi = {
         roleChosen?: boolean;
     }) {
         const params = new URLSearchParams();
-        params.set("role", options?.role ?? "broker");
+        params.set("role", signupPortal(options?.role ?? "broker"));
         if (options?.accountType) {
             params.set("accountType", options.accountType);
         }

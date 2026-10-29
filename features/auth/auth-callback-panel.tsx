@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { authApi } from "@/lib/api/auth";
+import { isOwnerUnavailable, OWNER_UNAVAILABLE_HREF } from "@/lib/auth/launch-policy";
 import { clearSession, GOOGLE_ONBOARDING_KEY, portalHomeForRole } from "@/lib/auth/session";
 import { useRouter, useSearchParams } from "@/lib/navigation";
 
@@ -32,6 +33,11 @@ export function AuthCallbackPanel() {
                 const user = await authApi.profile(token);
                 if (cancelled) return;
                 dispatch(establishSession({ accessToken: token, user }));
+                if (isOwnerUnavailable(user.role)) {
+                    sessionStorage.removeItem(GOOGLE_ONBOARDING_KEY);
+                    router.replace(OWNER_UNAVAILABLE_HREF);
+                    return;
+                }
 
                 // Backend sets this only for a new Google account from the login
                 // page. Register already chose a role, so those users skip this —

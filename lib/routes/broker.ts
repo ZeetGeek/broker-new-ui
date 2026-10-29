@@ -1,3 +1,5 @@
+import { FEATURE_PLATFORM_OWNER } from "@/config";
+
 export const BROKER_OWNER_LISTINGS_HREF = "/broker/owner-listings";
 export const BROKER_YOUR_LISTINGS_HREF = "/broker/your-listings";
 export const BROKER_MY_DEALS_HREF = "/broker/my-deals";
@@ -24,7 +26,7 @@ export function brokerPropertyAnalyticsHref(propertyId: string): string {
 }
 
 export function brokerYourListingsHref(tab?: "representing" | "requests"): string {
-    if (!tab || tab === "representing") return BROKER_YOUR_LISTINGS_HREF;
+    if (!FEATURE_PLATFORM_OWNER || !tab || tab === "representing") return BROKER_YOUR_LISTINGS_HREF;
     return `${BROKER_YOUR_LISTINGS_HREF}?tab=${tab}`;
 }
 

@@ -4,13 +4,20 @@ import { type ReactNode, useMemo, useState } from "react";
 
 import { TextLoop } from "@/components/motion-primitives/text-loop";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
+
 const SUMMARY_LOOP_INTERVAL_S = 6.5;
 
 function countLabel(count: number) {
     return count === 1 ? "1 saved property" : `${count} saved properties`;
 }
 
-function buildSummaryLines(total: number, isLoading: boolean, hasError: boolean): ReactNode[] {
+function buildSummaryLines(
+    total: number,
+    isLoading: boolean,
+    hasError: boolean,
+    hasMore: boolean,
+): ReactNode[] {
     if (isLoading && total === 0) {
         return ["Finding saved properties…"];
     }
@@ -23,22 +30,24 @@ function buildSummaryLines(total: number, isLoading: boolean, hasError: boolean)
         return ["Save a property to come back to it later"];
     }
 
-    return [countLabel(total)];
+    return [hasMore ? `${countLabel(total)} loaded` : countLabel(total)];
 }
 
 export function SavedPropertiesIntro({
     total,
     isLoading = false,
     hasError = false,
+    hasMore = false,
 }: {
     total: number;
     isLoading?: boolean;
     hasError?: boolean;
+    hasMore?: boolean;
 }) {
     const [isPaused, setIsPaused] = useState(false);
     const lines = useMemo(
-        () => buildSummaryLines(total, isLoading, hasError),
-        [hasError, isLoading, total],
+        () => buildSummaryLines(total, isLoading, hasError, hasMore),
+        [hasError, isLoading, total, hasMore],
     );
 
     return (
@@ -61,7 +70,9 @@ export function SavedPropertiesIntro({
                 </span>
             </h1>
             <p className="body hidden text-ink-muted max-inline-[52ch] sm:block">
-                Properties you save from Owner listings and Your listings, in one place.
+                {FEATURE_PLATFORM_OWNER
+                    ? "Properties you save from Owner listings and Your listings, in one place."
+                    : "Properties you save from Your listings, in one place."}
             </p>
         </div>
     );

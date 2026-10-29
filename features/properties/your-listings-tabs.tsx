@@ -3,6 +3,8 @@ import Link from "next/link";
 import { BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
+
 export type YourListingsTab = "representing" | "requests";
 
 const YOUR_LISTINGS_TABS: { value: YourListingsTab; label: string; href: string }[] = [
@@ -17,7 +19,9 @@ const YOUR_LISTINGS_TABS: { value: YourListingsTab; label: string; href: string 
 export function YourListingsTabs({ activeTab }: { activeTab: YourListingsTab }) {
     return (
         <div className="flex flex-wrap items-center gap-2">
-            {YOUR_LISTINGS_TABS.map((tab) => {
+            {YOUR_LISTINGS_TABS.filter(
+                (tab) => FEATURE_PLATFORM_OWNER || tab.value !== "requests",
+            ).map((tab) => {
                 const isActive = tab.value === activeTab;
 
                 return (

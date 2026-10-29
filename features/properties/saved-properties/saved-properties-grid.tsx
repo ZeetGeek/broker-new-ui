@@ -12,6 +12,7 @@ import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/ro
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { REMINDER_LIMIT } from "@/features/properties/my-requests/types";
@@ -54,13 +55,53 @@ function browseChatPeer(item: OwnerListingItem, representationId: string): ChatP
     };
 }
 
-export function SavedPropertiesGrid({
-    items,
-    onUnsave,
-}: {
+type SavedPropertiesGridProps = {
     items: SavedProperty[];
     onUnsave: (id: string) => void;
+};
+
+function SavedOwnPropertyCard({
+    item,
+    index,
+    onUnsave,
+}: {
+    item: Extract<SavedProperty, { source: "your-listing" }>;
+    index: number;
+    onUnsave: (id: string) => void;
 }) {
+    return (
+        <PropertyCard
+            variant="owned"
+            listing={toOwnedPropertyCardListing(item.listing)}
+            detailsHref={brokerPropertyDetailHref(item.id)}
+            priority={index === 0}
+            imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
+            isSaved
+            onToggleSave={() => onUnsave(item.id)}
+        />
+    );
+}
+
+export function SavedPropertiesGrid(props: SavedPropertiesGridProps) {
+    if (FEATURE_PLATFORM_OWNER) return <MarketplaceSavedPropertiesGrid {...props} />;
+
+    // Do not mount the marketplace's representation queries or chat hooks in this phase.
+    return (
+        <WindowVirtualGrid
+            items={props.items.filter((item) => item.source === "your-listing")}
+            getKey={(item) => item.id}
+            estimateRowHeight={520}
+            gap={24}
+            breakpoints={GRID_BREAKPOINTS}
+            ariaLabel="Saved properties"
+            renderItem={(item, index) => (
+                <SavedOwnPropertyCard item={item} index={index} onUnsave={props.onUnsave} />
+            )}
+        />
+    );
+}
+
+function MarketplaceSavedPropertiesGrid({ items, onUnsave }: SavedPropertiesGridProps) {
     const { openChat } = useChat();
     const queryClient = useQueryClient();
     const [busyId, setBusyId] = useState<string | null>(null);
@@ -228,15 +269,7 @@ export function SavedPropertiesGrid({
                 renderItem={(item, index) => {
                     if (item.source === "your-listing") {
                         return (
-                            <PropertyCard
-                                variant="owned"
-                                listing={toOwnedPropertyCardListing(item.listing)}
-                                detailsHref={brokerPropertyDetailHref(item.id)}
-                                priority={index === 0}
-                                imageSizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
-                                isSaved
-                                onToggleSave={() => onUnsave(item.id)}
-                            />
+                            <SavedOwnPropertyCard item={item} index={index} onUnsave={onUnsave} />
                         );
                     }
 

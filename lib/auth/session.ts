@@ -1,3 +1,4 @@
+import { isOwnerUnavailable, OWNER_UNAVAILABLE_HREF } from "@/lib/auth/launch-policy";
 import type { Currency } from "@/lib/format/currency";
 
 export const GOOGLE_ONBOARDING_KEY = "google_onboarding_pending";
@@ -125,6 +126,7 @@ export function portalForRole(role: string | null | undefined): Portal {
 }
 
 export function portalHomeForRole(role: string | null | undefined): string {
+    if (isOwnerUnavailable(role)) return OWNER_UNAVAILABLE_HREF;
     if (role === "owner") return "/owner";
     if (role === "admin") return "/broker/dashboard";
     return "/broker/dashboard";
@@ -143,6 +145,7 @@ export function portalForPath(path: string): Portal | null {
  */
 export function destinationForRole(role: string | null | undefined, next: string | null): string {
     const home = portalHomeForRole(role);
+    if (isOwnerUnavailable(role)) return home;
     if (!next || !next.startsWith("/") || next.startsWith("//")) return home;
     const portal = portalForPath(next);
     if (portal && portal !== portalForRole(role)) return home;
