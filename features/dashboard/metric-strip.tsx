@@ -28,8 +28,9 @@ export function MetricCell({
                         aria-label={`${label}: ${value}. ${hint}`}
                         className="
                           flex flex-1 flex-col items-start gap-0.5 rounded-inner px-2 text-start
-                          outline-none min-inline-0 sm:px-3
+                          outline-none min-inline-0
                           focus-visible:ring-2 focus-visible:ring-ring
+                          sm:px-3
                         "
                     >
                         <span className="body-xs font-medium text-ink-muted">{label}</span>

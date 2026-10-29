@@ -89,7 +89,11 @@ export function MarkSoldDialog({
             }
         >
             <div className="flex flex-col gap-4">
-                <div className="flex gap-3 rounded-inner border border-amber-300/60 bg-amber-50 p-3.5">
+                <div
+                    className="
+                  flex gap-3 rounded-inner border border-amber-300/60 bg-amber-50 p-3.5
+                "
+                >
                     <TriangleAlert
                         aria-hidden
                         className="mbs-0.5 shrink-0 text-pending block-5 inline-5"

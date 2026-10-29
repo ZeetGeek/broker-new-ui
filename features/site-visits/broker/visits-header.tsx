@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 
 import { formatInTimeZone } from "date-fns-tz";
-import { CircleAlert, Clock3 } from "@/components/shared/icons";
 
 import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
 
+import { CircleAlert, Clock3 } from "@/components/shared/icons";
 import { Badge } from "@/components/ui/badge";
 
 import type { BrokerVisitSummary } from "@/features/site-visits/broker/model";

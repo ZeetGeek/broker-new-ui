@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { buildPropertyHeadlineFacts } from "./property-detail-facts";
 import {
     defaultPriceMode,
     type ListingPriceMode,
@@ -21,6 +20,8 @@ import {
 
 import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
+
+import { buildPropertyHeadlineFacts } from "./property-detail-facts";
 
 import styles from "./property-detail.module.css";
 

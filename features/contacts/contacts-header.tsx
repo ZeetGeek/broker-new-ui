@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 
+import { getShortcut } from "@/lib/shortcuts";
+import { cn } from "@/lib/utils";
+
+import { FilterChip, filterChipClassName } from "@/components/shared/filter-chip";
 import {
     ArrowDownUp,
     ChevronDown,
@@ -10,13 +14,7 @@ import {
     UserRound,
     Users,
 } from "@/components/shared/icons";
-
-import { getShortcut } from "@/lib/shortcuts";
-import { cn } from "@/lib/utils";
-
-import { FilterChip, filterChipClassName } from "@/components/shared/filter-chip";
 import { Button } from "@/components/ui/button";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -24,6 +22,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
@@ -275,8 +274,7 @@ export function ContactsHeader({
                                             key={key}
                                             className="
                                               border-surface/25 bg-surface/15 px-1.5 text-[10px]
-                                              text-surface min-inline-4
-                                              [box-shadow:none]
+                                              text-surface [box-shadow:none] min-inline-4
                                             "
                                         >
                                             {key}

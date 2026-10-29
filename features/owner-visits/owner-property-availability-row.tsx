@@ -2,17 +2,16 @@
 
 import { memo, useMemo, useState } from "react";
 
-import { Building2, CalendarPlus, Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
-
 import type { VisitSlot } from "@/lib/api/owner-slots";
 import type { PropertyListing } from "@/lib/api/properties";
-import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { formatTime24, parseApiInstant } from "@/lib/format/date";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
+import { Building2, CalendarPlus, Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
 import { PriceWithCommission, toCommissionNumber } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
@@ -260,7 +259,10 @@ export const OwnerPropertyAvailabilityRow = memo(function OwnerPropertyAvailabil
                                                               focus-visible:ring-brand/30
                                                             `,
                                                             booked
-                                                                ? "border-brand bg-brand text-surface shadow-sm"
+                                                                ? `
+                                                                  border-brand bg-brand text-surface
+                                                                  shadow-sm
+                                                                `
                                                                 : `
                                                                   border-brand/20 bg-brand-soft
                                                                   text-brand-text
@@ -272,7 +274,9 @@ export const OwnerPropertyAvailabilityRow = memo(function OwnerPropertyAvailabil
                                                         {booked ? (
                                                             <Check
                                                                 aria-hidden
-                                                                className="shrink-0 block-3.5 inline-3.5"
+                                                                className="
+                                                                  shrink-0 block-3.5 inline-3.5
+                                                                "
                                                             />
                                                         ) : (
                                                             <X
@@ -287,7 +291,12 @@ export const OwnerPropertyAvailabilityRow = memo(function OwnerPropertyAvailabil
                                                             {formatVisitTime(slot.startAt)}
                                                         </span>
                                                         {booked ? (
-                                                            <span className="body-xs truncate leading-none font-medium opacity-90">
+                                                            <span
+                                                                className="
+                                                              body-xs truncate leading-none
+                                                              font-medium opacity-90
+                                                            "
+                                                            >
                                                                 · Booked
                                                             </span>
                                                         ) : null}

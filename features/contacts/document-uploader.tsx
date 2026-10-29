@@ -2,11 +2,10 @@
 
 import { type DragEvent, useCallback, useId, useRef, useState } from "react";
 
-import type { AppIcon } from "@/components/shared/icons";
-import { Paperclip, Trash2, Upload } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import type { AppIcon } from "@/components/shared/icons";
+import { Paperclip, Trash2, Upload } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -275,8 +274,8 @@ export function DocumentUploader({
                 <span
                     aria-hidden
                     className="
-                      flex items-center justify-center rounded-control bg-surface-muted text-ink-muted
-                      block-10 inline-10
+                      flex items-center justify-center rounded-control bg-surface-muted
+                      text-ink-muted block-10 inline-10
                     "
                 >
                     <Upload className="block-4.5 inline-4.5" strokeWidth={1.75} />

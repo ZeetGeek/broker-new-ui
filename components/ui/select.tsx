@@ -5,11 +5,12 @@ import * as React from "react";
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tailspin } from "ldrs/react";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@/components/shared/icons";
 
 import { clearInputError, shakeInput } from "@/lib/motion/shake-input";
 import { swapText } from "@/lib/motion/swap-text";
 import { cn } from "@/lib/utils";
+
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@/components/shared/icons";
 
 import "ldrs/react/Tailspin.css";
 
@@ -353,11 +354,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
             )}
             {...props}
         >
-            <SelectPrimitive.ItemText
-                className="
-              flex flex-1 items-center gap-2 truncate min-inline-0
-            "
-            >
+            <SelectPrimitive.ItemText className="flex flex-1 items-center gap-2 truncate min-inline-0">
                 {children}
             </SelectPrimitive.ItemText>
             <SelectPrimitive.ItemIndicator

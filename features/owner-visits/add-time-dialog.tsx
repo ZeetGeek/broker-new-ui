@@ -105,7 +105,9 @@ export function AddTimeDialog({
                                                     bg-surface-muted text-ink-muted
                                                   `
                                                   : openSlot
-                                                    ? "border-brand/40 bg-brand-soft text-brand-text"
+                                                    ? `
+                                                      border-brand/40 bg-brand-soft text-brand-text
+                                                    `
                                                     : `
                                                       border-border-warm bg-surface text-ink
                                                       hover:border-ink/25
@@ -115,7 +117,7 @@ export function AddTimeDialog({
                                     >
                                         {label12(time)}
                                         {booked ? (
-                                            <span className="body-xs mt-0.5 block font-medium">
+                                            <span className="body-xs mbs-0.5 block font-medium">
                                                 Booked
                                             </span>
                                         ) : null}

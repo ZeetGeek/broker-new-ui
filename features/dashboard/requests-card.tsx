@@ -1,12 +1,11 @@
 import Link from "next/link";
 
-import { Check, Clock, Send, X } from "@/components/shared/icons";
-
 import { formatDateShort } from "@/lib/format/date";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { Check, Clock, Send, X } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { TextLinkButton } from "@/components/shared/text-link-button";
@@ -15,8 +14,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
-import type { RequestRowItem, RequestsData } from "./mock-data";
 import { MetricCell, MetricDivider, MetricStrip } from "./metric-strip";
+import type { RequestRowItem, RequestsData } from "./mock-data";
 
 const REQUESTS_INFO =
     "Requests you've sent to owners to represent their properties, and where each one stands.";

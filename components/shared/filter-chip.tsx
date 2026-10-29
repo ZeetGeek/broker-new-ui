@@ -15,8 +15,8 @@ const CHIP_HOVER_TRANSITION = "transition-[background-color,border-color,color] 
 export function filterChipClassName(isActive: boolean) {
     return cn(
         `
-          touch-target inline-flex shrink-0 items-center gap-1.5 rounded-control border px-3.5 text-sm
-          font-semibold whitespace-nowrap block-[38px]
+          touch-target inline-flex shrink-0 items-center gap-1.5 rounded-control border px-3.5
+          text-sm font-semibold whitespace-nowrap block-[38px]
         `,
         CHIP_HOVER_TRANSITION,
         isActive

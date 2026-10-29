@@ -142,6 +142,8 @@ function filterVisits(visits: BrokerSiteVisit[], filters: VisitListFilters): Bro
 
 function buildOpenSlotsQuery(filters: SlotListFilters): string {
     const params = new URLSearchParams();
+    if (filters.page != null) params.set("page", String(filters.page));
+    if (filters.limit != null) params.set("limit", String(filters.limit));
     if (filters.propertyId) params.set("propertyId", filters.propertyId);
     else if (filters.propertyIds?.length === 1) params.set("propertyId", filters.propertyIds[0]!);
     if (filters.from) params.set("from", filters.from.slice(0, 10));
@@ -155,17 +157,21 @@ function buildOpenSlotsQuery(filters: SlotListFilters): string {
 
 async function resolveLeadIdForBuyer(propertyId: string, clientId: string): Promise<string> {
     await clientsApi.setPropertyClients(propertyId, [clientId]);
-    const params = new URLSearchParams({ propertyId, page: "1", limit: "100" });
-    const response = await requestData<{
-        items: Array<{ id: string; clientId?: string | null; client?: { id: string } | null }>;
-    }>(`/clients/leads?${params}`);
-    const lead = (response.items ?? []).find(
-        (item) => item.clientId === clientId || item.client?.id === clientId,
-    );
-    if (!lead) {
-        throw new Error("Could not link this buyer to the property. Try again from Contacts.");
+    let page = 1;
+    let totalPages = 1;
+    while (page <= totalPages) {
+        const params = new URLSearchParams({ propertyId, page: String(page), limit: "100" });
+        const response = await requestData<
+            Paged<{ id: string; clientId?: string | null; client?: { id: string } | null }>
+        >(`/clients/leads?${params}`);
+        const lead = (response.items ?? []).find(
+            (item) => item.clientId === clientId || item.client?.id === clientId,
+        );
+        if (lead) return lead.id;
+        totalPages = Math.max(1, response.totalPages ?? 1);
+        page += 1;
     }
-    return lead.id;
+    throw new Error("Could not link this buyer to the property. Try again from Contacts.");
 }
 
 export class SlotTakenError extends Error {

@@ -1,10 +1,9 @@
 "use client";
 
 import { type SyntheticEvent, useCallback, useRef, useState } from "react";
+import ReactCrop, { centerCrop, type Crop, makeAspectCrop, type PixelCrop } from "react-image-crop";
 
 import { CropIcon } from "@/components/shared/icons";
-import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop";
-
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -174,7 +173,12 @@ export function ProfileImageCropper({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex items-center justify-center bg-surface-muted p-4 min-block-72 sm:p-6">
+                <div
+                    className="
+                  flex items-center justify-center bg-surface-muted p-4 min-block-72
+                  sm:p-6
+                "
+                >
                     {imageUrl ? (
                         <ReactCrop
                             crop={crop}

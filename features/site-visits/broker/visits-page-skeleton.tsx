@@ -13,7 +13,7 @@ export function VisitsPageSkeleton() {
                 <div className="animate-pulse rounded-sm bg-surface-muted block-6 inline-20" />
             </div>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                <div className="animate-pulse rounded-control bg-surface-muted block-11 flex-1" />
+                <div className="flex-1 animate-pulse rounded-control bg-surface-muted block-11" />
                 <div className="animate-pulse rounded-control bg-surface-muted block-11 inline-36" />
                 <div className="animate-pulse rounded-control bg-surface-muted block-11 inline-40" />
             </div>

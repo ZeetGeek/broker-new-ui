@@ -3,9 +3,6 @@
 import { useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Building2, MapPin } from "@/components/shared/icons";
-import { MarketCurrencyIcon } from "@/components/shared/market-currency-icon";
-
 import { formatAreaSqft } from "@/lib/format/area";
 import { buildPropertyTitle } from "@/lib/format/property-title";
 import { cn } from "@/lib/utils";
@@ -19,7 +16,10 @@ import {
     type PropertyFormValues,
     type PropertyType,
 } from "@/lib/validation/property";
+import { useMarketCurrency } from "@/hooks/use-market";
 
+import { Building2, MapPin } from "@/components/shared/icons";
+import { MarketCurrencyIcon } from "@/components/shared/market-currency-icon";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
@@ -33,7 +33,6 @@ import {
     TRANSACTION_TYPE_ICONS,
 } from "@/features/properties/property-form/option-icons";
 import { SelectionChip } from "@/features/properties/property-form/selection-chip";
-import { useMarketCurrency } from "@/hooks/use-market";
 
 export function StepDetails({
     titleTouched,

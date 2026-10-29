@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useQuery } from "@tanstack/react-query";
-import { Search, UserPlus, UserRound, UserRoundPlus, Users } from "@/components/shared/icons";
 import { tinykeys } from "tinykeys";
 
 import { ApiError } from "@/lib/api/client";
@@ -17,6 +16,7 @@ import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { AddFab } from "@/components/shared/add-fab";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Search, UserPlus, UserRound, UserRoundPlus, Users } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
@@ -448,7 +448,11 @@ export function ContactsPage({
             <div className="flex flex-col gap-6">
                 <ContactsIntro summary={summary} tab={filters.tab} />
                 {addDealFlow ? (
-                    <div className="flex flex-wrap items-center gap-3 rounded-inner border border-border-warm p-4">
+                    <div
+                        className="
+                      flex flex-wrap items-center gap-3 rounded-inner border border-border-warm p-4
+                    "
+                    >
                         <p className="body-sm text-ink-muted">
                             Choose a buyer and use Attach properties to start a deal. Add a buyer
                             first if needed. New deals start in New.

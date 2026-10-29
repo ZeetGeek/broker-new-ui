@@ -3,8 +3,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { Eye, StickyNote } from "@/components/shared/icons";
-
 import { formatAreaSqft } from "@/lib/format/area";
 import { formatDateIn, formatRelativePast, formatTimeIn } from "@/lib/format/date";
 import { formatPrice, formatRent } from "@/lib/format/price";
@@ -13,6 +11,7 @@ import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { Eye, StickyNote } from "@/components/shared/icons";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";

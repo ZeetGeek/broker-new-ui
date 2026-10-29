@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { contactsApi } from "@/lib/api/contacts";
 import { brokerContactHref } from "@/lib/routes/broker";
+
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 
 test("duplicate links preserve contact identity and select the correct tab", () => {

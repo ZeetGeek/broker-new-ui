@@ -1,13 +1,13 @@
+import { QueryClient } from "@tanstack/react-query";
 import assert from "node:assert/strict";
 import test from "node:test";
-
-import { QueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api/client";
 import { myListingsApi } from "@/lib/api/my-listings";
 import { pipelineApi } from "@/lib/api/pipeline";
 import type { PropertyListing, PropertyListQuery } from "@/lib/api/properties";
 import { EMPTY_PROPERTY_CRITERIA } from "@/lib/properties/list-criteria";
+
 import { DEFAULT_DEALS_FILTERS } from "@/features/pipeline/types";
 
 test("inventory pages share collection/lead scans, refresh invalidates them, and a second session gets its own cache", async () => {

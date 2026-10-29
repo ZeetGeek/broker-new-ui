@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 
-import { StickyNote } from "@/components/shared/icons";
-
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { StickyNote } from "@/components/shared/icons";
 import { Textarea } from "@/components/ui/textarea";
 
 import type { DealItem } from "@/features/pipeline/types";

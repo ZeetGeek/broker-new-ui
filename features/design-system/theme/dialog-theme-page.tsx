@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 
-import { StickyNote } from "@/components/shared/icons";
-
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { StickyNote } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -118,7 +117,11 @@ function DestructiveDemo() {
                     </>
                 }
                 footer={
-                    <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
+                    <div
+                        className="
+                      flex flex-row flex-wrap items-center justify-end gap-2 inline-full
+                    "
+                    >
                         <Button
                             type="button"
                             variant="ghost"
@@ -166,7 +169,11 @@ export function DialogThemePage() {
                     <div className="mbs-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
                         {DIALOG_USES.map((use) => (
                             <Swatch key={use.name} label={use.label}>
-                                <div className="flex min-block-14 items-center justify-center inline-full">
+                                <div
+                                    className="
+                                  flex items-center justify-center inline-full min-block-14
+                                "
+                                >
                                     {use.name === "compound" ? <CompoundDemo /> : null}
                                     {use.name === "app-modal" ? <AppModalDemo /> : null}
                                     {use.name === "destructive" ? <DestructiveDemo /> : null}
@@ -187,7 +194,11 @@ export function DialogThemePage() {
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         {DIALOG_SIZES.map((size) => (
                             <Swatch key={size.name} label={size.label}>
-                                <div className="flex min-block-14 items-center justify-center inline-full">
+                                <div
+                                    className="
+                                  flex items-center justify-center inline-full min-block-14
+                                "
+                                >
                                     <AppModalDemo size={size.name} />
                                 </div>
                                 <p className="body-xs text-ink-subtle">{size.note}</p>

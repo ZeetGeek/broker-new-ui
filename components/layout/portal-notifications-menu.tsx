@@ -5,6 +5,7 @@ import {
     Fragment,
     type ReactNode,
     type RefObject,
+    useCallback,
     useEffect,
     useLayoutEffect,
     useMemo,
@@ -282,16 +283,19 @@ function NotificationFilterTabs({
     const pillRef = useRef<HTMLSpanElement>(null);
     const hasPainted = useRef(false);
 
-    function syncActiveTabScroll(animate: boolean) {
-        const scrollEl = scrollRef.current;
-        const bar = barRef.current;
-        if (!scrollEl || !bar) return;
+    const syncActiveTabScroll = useCallback(
+        (animate: boolean) => {
+            const scrollEl = scrollRef.current;
+            const bar = barRef.current;
+            if (!scrollEl || !bar) return;
 
-        const tabEl = bar.querySelector<HTMLElement>(`[data-tab-value="${activeTab}"]`);
-        if (!tabEl) return;
+            const tabEl = bar.querySelector<HTMLElement>(`[data-tab-value="${activeTab}"]`);
+            if (!tabEl) return;
 
-        scrollNotificationTabIntoView(scrollEl, tabEl, animate);
-    }
+            scrollNotificationTabIntoView(scrollEl, tabEl, animate);
+        },
+        [activeTab],
+    );
 
     useLayoutEffect(() => {
         const bar = barRef.current;
@@ -301,7 +305,7 @@ function NotificationFilterTabs({
         paintNotificationFilterPill(bar, pill, hasPainted.current);
         syncActiveTabScroll(hasPainted.current);
         hasPainted.current = true;
-    }, [activeTab, tabCounts]);
+    }, [activeTab, tabCounts, syncActiveTabScroll]);
 
     useLayoutEffect(() => {
         const bar = barRef.current;
@@ -333,7 +337,7 @@ function NotificationFilterTabs({
             observer.disconnect();
             window.removeEventListener("resize", onResize);
         };
-    }, [activeTab]);
+    }, [activeTab, syncActiveTabScroll]);
 
     function handleTabChange(tab: NotificationTab) {
         const bar = barRef.current;
@@ -831,10 +835,7 @@ export function PortalNotificationsMenu({
         () => filterNotificationsByTab(items, activeTab),
         [items, activeTab],
     );
-    const daySections = useMemo(
-        () => groupNotificationsByDay(filteredItems, now),
-        [filteredItems, now],
-    );
+    const daySections = groupNotificationsByDay(filteredItems, now);
 
     const trigger = (
         <DropdownMenuTrigger

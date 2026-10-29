@@ -2,19 +2,18 @@
 
 import { useState } from "react";
 
+import { formatCategoryLabel } from "@/lib/format/owner-listings-labels";
+import { cn } from "@/lib/utils";
+
 import {
+    type AppIcon,
     Building2,
     Factory,
     Home,
     LandPlot,
     Layers,
-    type AppIcon,
     Trees,
 } from "@/components/shared/icons";
-
-import { formatCategoryLabel } from "@/lib/format/owner-listings-labels";
-import { cn } from "@/lib/utils";
-
 import {
     DropdownMenu,
     DropdownMenuContent,

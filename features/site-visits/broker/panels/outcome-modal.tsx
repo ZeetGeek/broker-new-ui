@@ -121,8 +121,8 @@ export default function OutcomeModal({
             footer={
                 <div
                     className="
-                  flex flex-row flex-wrap items-center justify-between gap-2 inline-full
-                "
+                      flex flex-row flex-wrap items-center justify-between gap-2 inline-full
+                    "
                 >
                     <p className="body-xs text-ink-muted">
                         Preview only. Changes are not saved to your account.

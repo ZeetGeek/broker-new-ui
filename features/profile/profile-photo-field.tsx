@@ -2,13 +2,12 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import { Camera, CropIcon } from "@/components/shared/icons";
-
 import type { UserProfile } from "@/lib/api/profile";
 import { profileApi } from "@/lib/api/profile";
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
 import { cn } from "@/lib/utils";
 
+import { Camera, CropIcon } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 

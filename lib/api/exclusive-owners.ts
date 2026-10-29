@@ -1,8 +1,8 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
 import {
-    normalizeExclusiveOwnerPhone,
     type ExclusiveOwnerFormValues,
+    normalizeExclusiveOwnerPhone,
 } from "@/lib/validation/exclusive-owner";
 
 export type ExclusiveOwnerProperty = {

@@ -1,3 +1,5 @@
+import type { BuyerPropertyKind, BuyerSource } from "@/lib/validation/buyer";
+
 import type { AppIcon } from "@/components/shared/icons";
 import {
     Building,
@@ -9,8 +11,6 @@ import {
     Store,
     Trees,
 } from "@/components/shared/icons";
-
-import type { BuyerPropertyKind, BuyerSource } from "@/lib/validation/buyer";
 
 export type Option<T extends string> = {
     value: T;

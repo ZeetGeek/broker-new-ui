@@ -1,6 +1,5 @@
-import { MapPin, Search } from "@/components/shared/icons";
-
 import { EmptyState } from "@/components/shared/empty-state";
+import { MapPin, Search } from "@/components/shared/icons";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 
 export type OwnerListingsBlockedReason = "no_service_areas" | "profile_incomplete";

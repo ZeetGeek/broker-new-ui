@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { Mail, Phone, Search, User } from "@/components/shared/icons";
-
 import { Input } from "@/components/ui/input";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";

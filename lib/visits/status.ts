@@ -1,3 +1,5 @@
+import { isTooSoon } from "@/lib/visits/time";
+
 import type { AppIcon } from "@/components/shared/icons";
 import {
     CalendarClock,
@@ -8,8 +10,6 @@ import {
     UserRoundX,
     X,
 } from "@/components/shared/icons";
-
-import { isTooSoon } from "@/lib/visits/time";
 
 import type {
     BrokerVisitStatus,

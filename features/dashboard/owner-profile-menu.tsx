@@ -2,16 +2,15 @@
 
 import Link from "next/link";
 
-import { Command, Gift, Home, LifeBuoy, User } from "@/components/shared/icons";
-
 import { OWNER_PROFILE_HREF, OWNER_REFERRALS_HREF } from "@/lib/routes/owner";
 
 import {
     PortalProfileMenu,
+    portalProfileMenuItemClass,
     PortalProfileMenuSeparator,
     PortalProfileShortcutHint,
-    portalProfileMenuItemClass,
 } from "@/components/layout/portal-profile-menu";
+import { Command, Gift, Home, LifeBuoy, User } from "@/components/shared/icons";
 import { DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import { SUPPORT_WHATSAPP_URL } from "@/config/constants";

@@ -4,18 +4,19 @@ import test from "node:test";
 import { brokerVisitsApi } from "@/lib/api/broker-visits";
 import { api, ApiError } from "@/lib/api/client";
 import { myListingsApi } from "@/lib/api/my-listings";
-import { clearSession, getSessionVersion, setSession, type AuthUser } from "@/lib/auth/session";
-import { makeStore } from "@/store";
-import { clearAuth, establishSession } from "@/store/slices/auth-slice";
-import { fetchBrokerDashboard, setProfile } from "@/store/slices/dashboard-slice";
 import type { UserProfile } from "@/lib/api/profile";
-import { bookingSchema } from "@/schemas/visits";
+import { type AuthUser, clearSession, getSessionVersion, setSession } from "@/lib/auth/session";
+
 import type {
     PersonSummary,
     PropertyWithSlots,
     VisitSlot,
 } from "@/features/site-visits/broker/model";
 import { USE_MOCK_VISITS } from "@/mocks/visits";
+import { bookingSchema } from "@/schemas/visits";
+import { makeStore } from "@/store";
+import { clearAuth, establishSession } from "@/store/slices/auth-slice";
+import { fetchBrokerDashboard, setProfile } from "@/store/slices/dashboard-slice";
 
 test(
     "booking schema and live adapter reject multiple attendees before any lead or booking writes",

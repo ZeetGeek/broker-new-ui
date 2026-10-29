@@ -2,17 +2,16 @@
 
 import { useState } from "react";
 
-import { LayoutGrid, List } from "@/components/shared/icons";
-
 import { IconSegmentedToggle } from "@/components/shared/icon-segmented-toggle";
+import { LayoutGrid, List } from "@/components/shared/icons";
 import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
 import { ICON_SEGMENTED_TOGGLE_USES } from "@/features/design-system/theme/icon-segmented-toggle-tokens";
-import { TEXT_SEGMENTED_TOGGLE_USES } from "@/features/design-system/theme/text-segmented-toggle-tokens";
 import { SWITCH_SIZES } from "@/features/design-system/theme/switch-tokens";
+import { TEXT_SEGMENTED_TOGGLE_USES } from "@/features/design-system/theme/text-segmented-toggle-tokens";
 
 function Swatch({ label, children }: { label: string; children: React.ReactNode }) {
     return (
@@ -46,7 +45,7 @@ function PreferenceRow({
         <div
             className="
               flex items-center justify-between gap-4 rounded-control border border-border-warm
-              bg-surface px-4 py-3 min-block-14 inline-full
+              bg-surface px-4 py-3 inline-full min-block-14
             "
         >
             <div className="min-inline-0">
@@ -125,7 +124,7 @@ function LiveToggleDemo() {
 
     return (
         <div className="space-y-3 inline-full">
-            <label className="flex items-center justify-between gap-3 min-block-12 inline-full">
+            <label className="flex items-center justify-between gap-3 inline-full min-block-12">
                 <span className="body-sm font-semibold text-ink">Only my accepted properties</span>
                 <Switch
                     checked={acceptedOnly}
@@ -136,7 +135,7 @@ function LiveToggleDemo() {
                     "
                 />
             </label>
-            <label className="flex items-center justify-between gap-3 min-block-12 inline-full">
+            <label className="flex items-center justify-between gap-3 inline-full min-block-12">
                 <span className="body-sm font-semibold text-ink">Hide full slots</span>
                 <Switch
                     checked={hideFull}

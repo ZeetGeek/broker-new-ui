@@ -6,8 +6,8 @@ import { authApi } from "@/lib/api/auth";
 import { isOwnerUnavailable, OWNER_UNAVAILABLE_HREF } from "@/lib/auth/launch-policy";
 import { clearSession, GOOGLE_ONBOARDING_KEY, portalHomeForRole } from "@/lib/auth/session";
 import { useRouter, useSearchParams } from "@/lib/navigation";
-import { APP_NAME } from "@/config";
 
+import { APP_NAME } from "@/config";
 import { AuthFormFrame } from "@/features/auth/auth-back-link";
 import { AuthBusyState } from "@/features/auth/auth-busy-state";
 import { useAppDispatch } from "@/store/hooks";

@@ -410,7 +410,12 @@ export function StepMedia({
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-xs/5 text-ink-muted">
+                    <div
+                        className="
+                      flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-xs/5
+                      text-ink-muted
+                    "
+                    >
                         <p>
                             <span className="font-medium text-ink">
                                 {PROPERTY_COVER_SIZE_GUIDANCE}

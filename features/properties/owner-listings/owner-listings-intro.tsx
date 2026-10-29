@@ -152,7 +152,10 @@ function BrowseHeader({
                     <span className="invisible">{title}.</span>
                     <span
                         aria-hidden
-                        className="absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control bg-border-warm block-[0.8em] inline-full"
+                        className="
+                          absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control
+                          bg-border-warm block-[0.8em] inline-full
+                        "
                     >
                         <Skeleton className="bg-ink/3 block-full inline-full" />
                     </span>

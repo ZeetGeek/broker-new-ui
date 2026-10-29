@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 
-import { CalendarClock, Send } from "@/components/shared/icons";
-
 import type { DashboardOwnerSummary } from "@/lib/api/dashboard";
 import { formatRelativePast, formatShowingWhen } from "@/lib/format/date";
 import {
@@ -15,6 +13,7 @@ import {
 } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { CalendarClock, Send } from "@/components/shared/icons";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 
 import { CardLabel } from "./card-label";
@@ -179,7 +178,7 @@ export function GlanceCard({ summary, visits, invites, now, className }: GlanceC
                         <p className="eyebrow shrink-0 text-ink-muted">Coming up</p>
                         <div
                             className="
-                              mbs-1 flex-1 overflow-y-auto overscroll-contain scrollbar-none
+                              mbs-1 flex-1 scrollbar-none overflow-y-auto overscroll-contain
                               [-ms-overflow-style:none] min-block-0
                               [&::-webkit-scrollbar]:hidden
                             "
@@ -207,7 +206,7 @@ export function GlanceCard({ summary, visits, invites, now, className }: GlanceC
                         ) : null}
                     </>
                 ) : (
-                    <div className="mbs-auto flex flex-col gap-2 pt-2">
+                    <div className="mbs-auto flex flex-col gap-2 pbs-2">
                         <p className="body-sm text-pretty text-ink-muted">
                             Upcoming showings and broker invites will show here. Keep listings
                             current so brokers can represent them without calling you first.

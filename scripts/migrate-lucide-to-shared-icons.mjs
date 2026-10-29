@@ -6,7 +6,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const skipDirs = new Set(["node_modules", ".git", ".next", "components/ui"]);
 
 function shouldSkip(relPosix) {
     if (relPosix.startsWith("components/ui/") || relPosix === "components/ui") return true;

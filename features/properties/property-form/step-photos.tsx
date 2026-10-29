@@ -3,8 +3,6 @@
 import { type MutableRefObject, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Camera, X } from "@/components/shared/icons";
-
 import {
     MAX_LISTING_PHOTOS,
     MAX_PHOTO_SIZE_MB,
@@ -12,6 +10,7 @@ import {
 } from "@/lib/validation/property";
 
 import { AppImage } from "@/components/shared/app-image";
+import { Camera, X } from "@/components/shared/icons";
 import { PhotoDropzone, type PhotoRejection } from "@/components/shared/photo-dropzone";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 

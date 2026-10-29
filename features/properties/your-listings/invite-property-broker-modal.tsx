@@ -4,8 +4,6 @@ import { useEffect, useId, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Search } from "@/components/shared/icons";
-
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
 import { ownerRequestsHref } from "@/lib/routes/owner";
@@ -14,6 +12,7 @@ import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { Search } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -161,8 +160,8 @@ export function InvitePropertyBrokerModal({
                                         />
                                         <span
                                             className="
-                                          body-sm wrap-break-word text-ink min-inline-0
-                                        "
+                                              body-sm wrap-break-word text-ink min-inline-0
+                                            "
                                         >
                                             {broker.name}
                                         </span>
@@ -283,8 +282,8 @@ export function InvitePropertyBrokerModal({
                                         <span className="flex flex-col gap-0.5 min-inline-0">
                                             <span
                                                 className="
-                                              body-sm font-semibold wrap-break-word text-ink
-                                            "
+                                                  body-sm font-semibold wrap-break-word text-ink
+                                                "
                                             >
                                                 {name}
                                             </span>

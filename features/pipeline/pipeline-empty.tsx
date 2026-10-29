@@ -1,10 +1,9 @@
 import Link from "next/link";
 
-import { CircleSlash, Search, Users } from "@/components/shared/icons";
-
 import { BROKER_ADD_DEAL_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { CircleSlash, Search, Users } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 /** A deal starts by linking a buyer to a property in Contacts. */

@@ -1,12 +1,12 @@
 "use client";
 
-import type { AppIcon } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import { spring } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
+import type { AppIcon } from "@/components/shared/icons";
 
 export type IconSegmentedOption<T extends string = string> = {
     value: T;

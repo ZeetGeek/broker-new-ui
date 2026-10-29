@@ -4,8 +4,8 @@
  */
 export {
     FilterChip,
-    FilterChipCount,
     filterChipClassName,
+    FilterChipCount,
     formatChipCount,
     ownerListingsChipClassName,
     ownerListingsChipCountClassName,

@@ -6,19 +6,17 @@ import {
     type NewBuyerInput,
 } from "@/lib/api/clients";
 import {
+    type ExclusiveOwnerItem,
     exclusiveOwnerPhoneDigits,
     exclusiveOwnersApi,
-    type ExclusiveOwnerItem,
 } from "@/lib/api/exclusive-owners";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
 import type { ExclusiveOwnerFormValues } from "@/lib/validation/exclusive-owner";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
-
 import {
     type BuyerContactForm,
-    emptyBuyerForm,
     emptyOwnerForm,
     moneyToRupees,
     normalizeIndianPhone,
@@ -77,25 +75,6 @@ type ApiOwnersResponse = {
         platformOwnerCount?: number;
         customOwnerCount?: number;
     };
-};
-
-type ApiBuyerItem = Partial<BuyerContactForm> & {
-    id: string;
-    name: string;
-    phone?: string;
-    phoneDigits?: string;
-    email?: string | null;
-    intent?: "buy" | "rent";
-    createdAt?: string | null;
-    updatedAt?: string | null;
-    linkedListingIds?: string[];
-};
-
-type ApiBuyersResponse = {
-    items: ApiBuyerItem[];
-    total: number;
-    page: number;
-    totalPages: number;
 };
 
 const mockAdvancedBuyers = new Map<string, BuyerContactForm>();
@@ -266,53 +245,6 @@ function toBuyerRow(
             };
         }),
         details: mockAdvancedBuyers.get(client.id),
-    };
-}
-
-function apiBuyerToRow(item: ApiBuyerItem): BuyerRow {
-    const details: BuyerContactForm = { ...emptyBuyerForm(), ...item };
-    const firstType = details.propertyTypes[0]?.toLowerCase();
-    const propertyKind =
-        firstType === "apartment" || firstType === "plot" || firstType === "office"
-            ? firstType
-            : firstType === "villa" || firstType === "row house" || firstType === "bungalow"
-              ? "villa"
-              : firstType === "shop" || firstType === "showroom" || firstType === "warehouse"
-                ? "shop"
-                : "any";
-    const attachedProperties = (item.linkedListingIds ?? []).map((id) => ({
-        id,
-        leadId: `contact_${item.id}_${id}`,
-        title: "Private listing",
-    }));
-    return {
-        id: item.id,
-        name: item.name,
-        phoneDigits: normalizeIndianPhone(item.phoneDigits ?? item.phone ?? details.phone),
-        email: item.email?.trim() || null,
-        lookingFor: item.intent ?? details.intent,
-        propertyKind,
-        preferredLocalities: details.localities,
-        budgetMinInr: moneyToRupees(
-            details.budgetMin,
-            details.intent === "buy" ? details.budgetUnit : undefined,
-        ),
-        budgetMaxInr: moneyToRupees(
-            details.budgetMax,
-            details.intent === "buy" ? details.budgetUnit : undefined,
-        ),
-        bhk: Number(details.configurations[0]?.match(/\d+/)?.[0] ?? 0) || null,
-        source: details.source === "reference" ? "referral" : "other",
-        notes: details.notes || null,
-        lastContactedAt: details.lastSpokeAt || item.updatedAt || item.createdAt || null,
-        attachedPropertyCount: attachedProperties.length,
-        documents: [],
-        liveDealCount: attachedProperties.length,
-        closedDealCount: 0,
-        activePropertyTitles: attachedProperties.map((property) => property.title),
-        attachedProperties,
-        leads: [],
-        details,
     };
 }
 
@@ -848,75 +780,6 @@ export const contactsApi = {
         await exclusiveOwnersApi.remove(ownerId);
     },
 };
-
-function ownerPayload(values: OwnerContactForm) {
-    return {
-        name: values.name.trim(),
-        phone: normalizeIndianPhone(values.phone),
-        whatsapp: values.whatsappSame
-            ? normalizeIndianPhone(values.phone)
-            : normalizeIndianPhone(values.whatsapp),
-        altPhone: normalizeIndianPhone(values.altPhone),
-        email: values.email.trim() || null,
-        ownerType: values.ownerType,
-        address: values.address.trim() || null,
-        property: {
-            intent: values.intent,
-            propertyType: values.propertyType,
-            configuration: values.configuration || null,
-            societyName: values.societyName.trim(),
-            locality: values.locality,
-            fullAddress: values.fullAddress.trim() || null,
-            city: values.city.trim() || "Surat",
-            pincode: values.pincode || null,
-            lat: values.lat ? Number(values.lat) : null,
-            lng: values.lng ? Number(values.lng) : null,
-            carpetArea: Number(values.carpetArea),
-            builtUpArea: values.builtUpArea ? Number(values.builtUpArea) : null,
-            superBuiltUpArea: values.superBuiltUpArea ? Number(values.superBuiltUpArea) : null,
-            plotArea: values.plotArea ? Number(values.plotArea) : null,
-            areaUnit: values.areaUnit,
-            floorNumber: values.floorNumber ? Number(values.floorNumber) : null,
-            totalFloors: values.totalFloors ? Number(values.totalFloors) : null,
-            bathrooms: values.bathrooms ? Number(values.bathrooms) : null,
-            balconies: values.balconies ? Number(values.balconies) : null,
-            parkingType: values.parkingType,
-            parkingCount: Number(values.parkingCount) || 0,
-            facing: values.facing || null,
-            propertyAge: values.propertyAge || null,
-            availableFrom: values.availableFrom || null,
-            furnishing: values.furnishing || null,
-            amenities: values.amenities,
-            reraNumber: values.reraNumber.trim() || null,
-        },
-        price: {
-            expectedPrice:
-                values.intent === "sell"
-                    ? moneyToRupees(values.expectedPrice, values.priceUnit)
-                    : null,
-            expectedRent: values.intent !== "sell" ? moneyToRupees(values.expectedRent) : null,
-            deposit: moneyToRupees(values.deposit),
-            maintenance: moneyToRupees(values.maintenance),
-            negotiable: values.negotiable,
-        },
-        dealTerms: {
-            exclusive: values.exclusive,
-            agreementValidTill: values.agreementValidTill || null,
-            brokerageType: values.brokerageType,
-            brokerageValue: Number(values.brokerageValue) || 0,
-            brokeragePaidBy: values.brokeragePaidBy,
-            visitDays: values.visitDays,
-            visitFrom: values.visitFrom || null,
-            visitTo: values.visitTo || null,
-        },
-        source: values.source,
-        status: values.status,
-        lastSpokeAt: values.lastSpokeAt,
-        nextFollowUpAt: values.nextFollowUpAt || null,
-        tags: values.tags,
-        notes: values.notes.trim() || null,
-    };
-}
 
 function ownerRowFromValues(
     values: OwnerContactForm,

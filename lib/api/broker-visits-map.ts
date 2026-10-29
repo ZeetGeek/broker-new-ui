@@ -176,15 +176,13 @@ function configLabel(
 
 export function mapShowingStatus(
     status: string | null | undefined,
-    startsAt: string,
+    _startsAt: string,
 ): BrokerVisitStatus {
-    const now = Date.now();
-    const startMs = new Date(startsAt).getTime();
     switch (status) {
         case "scheduled":
             return "awaiting_owner";
         case "confirmed":
-            return startMs < now ? "completed" : "confirmed";
+            return "confirmed";
         case "completed":
             return "completed";
         case "cancelled":

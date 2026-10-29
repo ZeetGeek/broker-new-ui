@@ -1,8 +1,8 @@
 "use client";
 
-import { X } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
+
+import { X } from "@/components/shared/icons";
 
 export type OwnerLeadsSummaryChip = "running" | "pending" | "finished";
 

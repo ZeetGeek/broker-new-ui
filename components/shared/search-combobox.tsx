@@ -2,10 +2,9 @@
 
 import { type ReactNode, type Ref, useId, useMemo, useState } from "react";
 
-import type { AppIcon } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import type { AppIcon } from "@/components/shared/icons";
 import {
     Combobox,
     ComboboxChip,

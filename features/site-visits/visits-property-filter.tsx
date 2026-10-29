@@ -2,10 +2,9 @@
 
 import { useMemo, useState } from "react";
 
-import { Building2, Check, ChevronDown, Search } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { Building2, Check, ChevronDown, Search } from "@/components/shared/icons";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

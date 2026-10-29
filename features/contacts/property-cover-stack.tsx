@@ -2,11 +2,10 @@
 
 import type { KeyboardEvent } from "react";
 
-import { Plus } from "@/components/shared/icons";
-
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { Plus } from "@/components/shared/icons";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -66,7 +65,7 @@ export function PropertyCoverStack({
         <div
             data-property-stack
             className={cn(
-                "flex items-center overflow-x-auto px-0.5 py-1.5 [scrollbar-width:none]",
+                "flex scrollbar-none items-center overflow-x-auto px-0.5 py-1.5",
                 className,
             )}
             onClick={(event) => event.stopPropagation()}
@@ -135,7 +134,8 @@ export function PropertyCoverStack({
                                 className="
                                   property-cover-tile body-xs relative -ms-2.5 flex shrink-0
                                   items-center justify-center rounded-[8px] bg-surface-muted
-                                  font-semibold text-ink-muted ring-2 ring-surface block-12 inline-12
+                                  font-semibold text-ink-muted ring-2 ring-surface block-12
+                                  inline-12
                                 "
                                 style={{ zIndex: visible.length + 1 }}
                             >

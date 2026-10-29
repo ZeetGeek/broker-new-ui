@@ -6,13 +6,13 @@ import type {
 } from "@/lib/api/properties";
 import { sessionCountryName } from "@/lib/auth/session";
 
+import { isOwnerListingCategory } from "@/features/properties/owner-listings/filter-visibility";
 import type {
     OwnerListingCategory,
     OwnerListingFurnishing,
     OwnerListingItem,
     OwnerListingPropertyType,
 } from "@/features/properties/owner-listings/types";
-import { isOwnerListingCategory } from "@/features/properties/owner-listings/filter-visibility";
 
 const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
     one_rk: 1,

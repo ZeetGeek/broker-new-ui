@@ -5,11 +5,12 @@ import * as React from "react";
 import { Combobox as ComboboxPrimitive } from "@base-ui/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tailspin } from "ldrs/react";
-import { CheckIcon, ChevronDownIcon, XIcon } from "@/components/shared/icons";
 
 import { clearInputError, shakeInput } from "@/lib/motion/shake-input";
 import { swapText } from "@/lib/motion/swap-text";
 import { cn } from "@/lib/utils";
+
+import { CheckIcon, ChevronDownIcon, XIcon } from "@/components/shared/icons";
 
 import "ldrs/react/Tailspin.css";
 
@@ -22,9 +23,6 @@ const comboboxInputGroupVariants = cva(
       has-[[data-slot=combobox-input]:focus-visible]:border-ring
       has-[[data-slot=combobox-input]:focus-visible]:ring-3
       has-[[data-slot=combobox-input]:focus-visible]:ring-ring/30
-      data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:bg-surface-muted
-      data-disabled:opacity-50
-      data-disabled:hover:border-border-warm
       has-[[data-slot=combobox-input][aria-invalid=true]]:border-danger-mid
       has-[[data-slot=combobox-input][aria-invalid=true]]:hover:border-danger-mid
       has-[[data-slot=combobox-input][aria-invalid=true]:focus-visible]:ring-danger/20
@@ -33,6 +31,9 @@ const comboboxInputGroupVariants = cva(
       data-popup-open:border-ring
       data-success:border-success-mid
       data-success:hover:border-success-mid
+      data-disabled:pointer-events-none data-disabled:cursor-not-allowed
+      data-disabled:bg-surface-muted data-disabled:opacity-50
+      data-disabled:hover:border-border-warm
       [&_svg]:pointer-events-none [&_svg]:shrink-0
     `,
     {
@@ -284,7 +285,7 @@ function ComboboxInput({
                     suppressHydrationWarning
                     className={cn(
                         `
-                          min-inline-0 flex-1 bg-transparent text-start text-ink outline-none
+                          flex-1 bg-transparent text-start text-ink outline-none min-inline-0
                           placeholder:text-ink-subtle
                           disabled:cursor-not-allowed
                         `,
@@ -370,8 +371,8 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
             data-slot="combobox-list"
             className={cn(
                 `
-                  no-scrollbar flex max-h-[min(calc(--spacing(72)-(--spacing(9))),calc(var(--available-height)-(--spacing(9))))]
-                  flex-col scroll-py-1.5 overflow-y-auto overscroll-contain
+                  no-scrollbar flex scroll-py-1.5 flex-col overflow-y-auto overscroll-contain
+                  max-block-[min(calc(--spacing(72)-(--spacing(9))),calc(var(--available-height)-(--spacing(9))))]
                   data-empty:p-0
                 `,
                 className,
@@ -447,7 +448,7 @@ function ComboboxEmpty({ className, ...props }: ComboboxPrimitive.Empty.Props) {
             data-slot="combobox-empty"
             className={cn(
                 `
-                  hidden w-full justify-center py-2 text-center text-sm text-ink-subtle
+                  hidden justify-center py-2 text-center text-sm text-ink-subtle inline-full
                   group-data-empty/combobox-content:flex
                 `,
                 className,
@@ -476,9 +477,9 @@ function ComboboxChips({
             data-slot="combobox-chips"
             className={cn(
                 `
-                  flex min-h-9 flex-wrap items-center gap-1.5 rounded-control border-2
-                  border-border-warm bg-surface px-3 py-1.5 text-sm text-ink
-                  transition-[color,box-shadow,background-color]
+                  flex flex-wrap items-center gap-1.5 rounded-control border-2 border-border-warm
+                  bg-surface px-3 py-1.5 text-sm text-ink
+                  transition-[color,box-shadow,background-color] min-block-9
                   focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30
                   has-aria-invalid:border-danger-mid has-aria-invalid:ring-3
                   has-aria-invalid:ring-danger/20
@@ -504,9 +505,9 @@ function ComboboxChip({
             data-slot="combobox-chip"
             className={cn(
                 `
-                  flex h-[calc(--spacing(5.5))] w-fit items-center justify-center gap-1
-                  rounded-control bg-surface-muted px-2 text-xs font-medium whitespace-nowrap
-                  text-ink
+                  flex items-center justify-center gap-1 rounded-control bg-surface-muted px-2
+                  text-xs font-medium whitespace-nowrap text-ink block-[calc(--spacing(5.5))]
+                  inline-fit
                   has-disabled:pointer-events-none has-disabled:cursor-not-allowed
                   has-disabled:opacity-50
                   has-data-[slot=combobox-chip-remove]:pe-0
@@ -536,7 +537,7 @@ function ComboboxChipsInput({ className, ...props }: ComboboxPrimitive.Input.Pro
     return (
         <ComboboxPrimitive.Input
             data-slot="combobox-chip-input"
-            className={cn("min-w-16 flex-1 bg-transparent outline-none", className)}
+            className={cn("flex-1 bg-transparent outline-none min-inline-16", className)}
             {...props}
         />
     );
@@ -548,20 +549,20 @@ function useComboboxAnchor() {
 
 export {
     Combobox,
-    ComboboxInput,
-    ComboboxContent,
-    ComboboxList,
-    ComboboxItem,
-    ComboboxGroup,
-    ComboboxLabel,
-    ComboboxCollection,
-    ComboboxEmpty,
-    ComboboxSeparator,
-    ComboboxChips,
     ComboboxChip,
+    ComboboxChips,
     ComboboxChipsInput,
+    ComboboxClear,
+    ComboboxCollection,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxGroup,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxLabel,
+    ComboboxList,
+    ComboboxSeparator,
     ComboboxTrigger,
     ComboboxValue,
-    ComboboxClear,
     useComboboxAnchor,
 };

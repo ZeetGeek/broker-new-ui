@@ -1237,7 +1237,7 @@ export function CounterField({
                             onBlur={field.onBlur}
                             aria-labelledby={`${id}-label`}
                             aria-describedby={error ? `${id}-error` : undefined}
-                            aria-invalid={Boolean(error)}
+                            data-invalid={Boolean(error) || undefined}
                             className={cn(
                                 `
                                   flex flex-wrap items-center justify-between gap-3 rounded-control

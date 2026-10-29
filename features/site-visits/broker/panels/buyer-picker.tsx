@@ -2,10 +2,9 @@
 
 import { useId, useMemo, useState } from "react";
 
-import { Check, Plus, Search } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { Check, Plus, Search } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,12 +43,7 @@ export function BuyerPicker({
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-                <label
-                    htmlFor={searchId}
-                    className="
-              body-sm font-bold text-ink
-            "
-                >
+                <label htmlFor={searchId} className="body-sm font-bold text-ink">
                     Buyer <span className="font-normal text-ink-muted">· one per visit</span>
                 </label>
                 <Button type="button" variant="ghost" size="sm" onClick={() => setAddOpen(true)}>
@@ -81,52 +75,35 @@ export function BuyerPicker({
                             onClick={() => toggle(buyer.id)}
                             className={cn(
                                 `
-                      flex items-center gap-3 rounded-inner border px-3 py-2 text-start outline-none
-                      inline-full min-block-14
-                      focus-visible:ring-3 focus-visible:ring-brand/25
-                    `,
+                                  flex items-center gap-3 rounded-inner border px-3 py-2 text-start
+                                  outline-none inline-full min-block-14
+                                  focus-visible:ring-3 focus-visible:ring-brand/25
+                                `,
                                 checked
                                     ? `border-brand bg-brand-soft`
-                                    : `
-                      border-border-warm bg-surface
-                      hover:bg-surface-muted
-                    `,
+                                    : `border-border-warm bg-surface hover:bg-surface-muted`,
                             )}
                         >
                             <UserAvatar name={buyer.name} imageUrl={buyer.avatarUrl} size="sm" />
-                            <span
-                                className="
-                      flex-1 min-inline-0
-                    "
-                            >
+                            <span className="flex-1 min-inline-0">
                                 <span className="body-sm block truncate font-semibold text-ink">
                                     {buyer.name}
                                 </span>
-                                <span
-                                    className="
-                      body-xs block truncate text-ink-muted
-                    "
-                                >
+                                <span className="body-xs block truncate text-ink-muted">
                                     {buyer.requirement ?? "Buyer contact"}
                                 </span>
                             </span>
                             <span
                                 className={cn(
                                     `
-                      grid place-items-center rounded-full border border-border-warm block-5
-                      inline-5
-                    `,
+                                      grid place-items-center rounded-full border border-border-warm
+                                      block-5 inline-5
+                                    `,
                                     checked && `border-brand bg-brand text-surface`,
                                 )}
                                 aria-hidden
                             >
-                                {checked ? (
-                                    <Check
-                                        className="
-                      block-3 inline-3
-                    "
-                                    />
-                                ) : null}
+                                {checked ? <Check className="block-3 inline-3" /> : null}
                             </span>
                         </button>
                     );

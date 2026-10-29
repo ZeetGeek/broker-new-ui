@@ -4,13 +4,12 @@ import { type ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { ChevronDown } from "@/components/shared/icons";
-
 import { useRouter } from "@/lib/navigation";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { HoldToLogout } from "@/components/layout/hold-to-logout";
+import { ChevronDown } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -190,7 +189,11 @@ function DesktopProfileDropdown({
                     className={cn(portalProfileMenuSurfaceClass)}
                 >
                     <DropdownMenuGroup>
-                        <DropdownMenuLabel className="flex flex-col gap-3 p-0! ps-[5px]! font-normal text-ink">
+                        <DropdownMenuLabel
+                            className="
+                          flex flex-col gap-3 p-0! ps-[5px]! font-normal text-ink
+                        "
+                        >
                             <div className="flex items-center gap-2.5">
                                 <UserAvatar
                                     name={userName}
@@ -199,7 +202,11 @@ function DesktopProfileDropdown({
                                     className="shrink-0"
                                 />
                                 <div className="flex flex-col gap-1 min-inline-0">
-                                    <p className="truncate font-display text-sm font-medium text-ink capitalize">
+                                    <p
+                                        className="
+                                      truncate font-display text-sm font-medium text-ink capitalize
+                                    "
+                                    >
                                         {userName}
                                     </p>
                                     {headerStatus}

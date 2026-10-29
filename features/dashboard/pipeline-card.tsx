@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 
-import { AlertCircle, Navigation, Users } from "@/components/shared/icons";
-
-import { cn } from "@/lib/utils";
 import { BROKER_ADD_BUYER_HREF } from "@/lib/routes/broker";
+import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { AlertCircle, Navigation, Users } from "@/components/shared/icons";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

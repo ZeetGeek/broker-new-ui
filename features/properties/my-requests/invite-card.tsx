@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 
-import { Check, Send, X } from "@/components/shared/icons";
-
 import { formatRelativePast } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { Check, Send, X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -20,10 +19,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
-import { CancelRepresentationDialog } from "@/features/representation/cancel-representation-dialog";
+import { CancelledNote } from "@/features/properties/my-requests/cancelled-note";
 import {
-    DealCardPhotoToolbar,
     DealAttachedBuyers,
+    DealCardPhotoToolbar,
     DealContactSplitBar,
     DealOverlayCard,
     DealOverlayFooter,
@@ -32,11 +31,11 @@ import {
     type DealStatusTone,
 } from "@/features/properties/my-requests/deal-card-chrome";
 import { INVITE_STAGE_META } from "@/features/properties/my-requests/invite-stage-meta";
-import { CancelledNote } from "@/features/properties/my-requests/cancelled-note";
-import { endedStageLabel } from "@/features/properties/my-requests/request-stage-meta";
 import type { InviteItem, InviteStage } from "@/features/properties/my-requests/invite-types";
+import { endedStageLabel } from "@/features/properties/my-requests/request-stage-meta";
 import { RequestTimeline } from "@/features/properties/my-requests/request-timeline";
 import type { RequestItem, RequestTimelineStep } from "@/features/properties/my-requests/types";
+import { CancelRepresentationDialog } from "@/features/representation/cancel-representation-dialog";
 const STATUS_TONE: Record<InviteStage, DealStatusTone> = {
     // The owner is waiting on the broker — the one state here that needs action.
     pending: "action",
@@ -227,7 +226,6 @@ export function InviteCard({
     onRepresentationCancelled?: () => void;
     isBusy?: boolean;
 }) {
-    const isResetCard = item.stage === "declined" || item.stage === "expired";
     const [isBuyersOpen, setIsBuyersOpen] = useState(false);
     const [isStopOpen, setIsStopOpen] = useState(false);
     const [isTimelineOpen, setIsTimelineOpen] = useState(false);

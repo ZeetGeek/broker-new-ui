@@ -301,8 +301,8 @@ export function MyListingsToolbarSkeleton({
             <div aria-hidden className={MY_LISTINGS_TOOLBAR_CLASS}>
                 <div
                     className="
-                  -my-1.5 flex flex-1 gap-2.5 overflow-hidden px-0.5 py-1.5 min-inline-0
-                "
+                      -my-1.5 flex flex-1 gap-2.5 overflow-hidden px-0.5 py-1.5 min-inline-0
+                    "
                 >
                     <div className={ownerListingsChipClassName(false)}>
                         <Skeleton className="shrink-0 block-4 inline-4" />
@@ -313,8 +313,8 @@ export function MyListingsToolbarSkeleton({
                             <SkeletonLabel>{tab.label}</SkeletonLabel>
                             <span
                                 className="
-                              inline-flex shrink-0 items-center justify-center block-5 inline-8
-                            "
+                                  inline-flex shrink-0 items-center justify-center block-5 inline-8
+                                "
                             >
                                 <Skeleton className="block-4 inline-7" />
                             </span>
@@ -326,9 +326,9 @@ export function MyListingsToolbarSkeleton({
                         className={cn(
                             SEARCH_WIDTH_CLASS,
                             `
-                      flex items-center gap-2 rounded-control border border-border-warm bg-surface
-                      px-3 block-[38px]
-                    `,
+                              flex items-center gap-2 rounded-control border border-border-warm
+                              bg-surface px-3 block-[38px]
+                            `,
                         )}
                     >
                         <Skeleton className="shrink-0 block-4 inline-4" />
@@ -338,23 +338,17 @@ export function MyListingsToolbarSkeleton({
                         <Skeleton className="shrink-0 block-4 inline-4" />
                         <SkeletonLabel>
                             <span className="hidden sm:inline">Newest first</span>
-                            <span
-                                className="
-                          sm:hidden
-                        "
-                            >
-                                Sort
-                            </span>
+                            <span className="sm:hidden">Sort</span>
                         </SkeletonLabel>
                         <Skeleton className="shrink-0 block-3.5 inline-3.5" />
                     </div>
                     {showAddProperty ? (
                         <div
                             className="
-                          hidden items-center gap-2 rounded-control bg-surface px-3.5 text-sm
-                          font-semibold shadow-sm block-[38px]
-                          md:inline-flex
-                        "
+                              hidden items-center gap-2 rounded-control bg-surface px-3.5 text-sm
+                              font-semibold shadow-sm block-[38px]
+                              md:inline-flex
+                            "
                         >
                             <Skeleton className="shrink-0 block-4 inline-4" />
                             <SkeletonLabel>Add property</SkeletonLabel>
@@ -363,9 +357,7 @@ export function MyListingsToolbarSkeleton({
                                     {shortcut.displayKeys.map((key) => (
                                         <Kbd
                                             key={key}
-                                            className="
-                              invisible px-1.5 text-[10px] min-inline-4
-                            "
+                                            className="invisible px-1.5 text-[10px] min-inline-4"
                                         >
                                             {key}
                                         </Kbd>

@@ -3,10 +3,9 @@
 import { type RefObject, useEffect, useRef } from "react";
 import Link from "next/link";
 
-import { CircleCheck, MapPin, Phone } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { CircleCheck, MapPin, Phone } from "@/components/shared/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { TodayItem } from "./mock-data";

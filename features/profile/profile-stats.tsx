@@ -1,9 +1,8 @@
-import { BadgeCheck, Eye, ShieldCheck, ShieldQuestion } from "@/components/shared/icons";
-
 import type { UserProfile } from "@/lib/api/profile";
 import { formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { BadgeCheck, Eye, ShieldCheck, ShieldQuestion } from "@/components/shared/icons";
 import { Badge } from "@/components/ui/badge";
 
 type Metric = {
@@ -216,8 +215,8 @@ export function ProfileStats({
                                 </p>
                                 <p
                                     className="
-                                  mts-0.5 truncate text-[11px] font-medium text-ink-muted
-                                "
+                                      mts-0.5 truncate text-[11px] font-medium text-ink-muted
+                                    "
                                 >
                                     {metric.label}
                                 </p>

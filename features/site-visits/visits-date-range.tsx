@@ -3,11 +3,10 @@
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 
-import { CalendarRange } from "@/components/shared/icons";
-
 import { formatDateIso, formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { CalendarRange } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -125,8 +124,8 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
                             type="button"
                             className={cn(
                                 `
-                                  body-sm flex shrink-0 items-center gap-2 rounded-control border px-3
-                                  py-1.5 transition-colors duration-160
+                                  body-sm flex shrink-0 items-center gap-2 rounded-control border
+                                  px-3 py-1.5 transition-colors duration-160
                                 `,
                                 hasRange
                                     ? "border-brand-ink bg-brand-ink text-white"

@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Search, Building2 } from "@/components/shared/icons";
-
 import { myListingsApi } from "@/lib/api/my-listings";
 import { propertiesApi } from "@/lib/api/properties";
 import { cn } from "@/lib/utils";
@@ -12,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Building2, Search } from "@/components/shared/icons";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -161,8 +160,9 @@ export function AttachOwnerToListingModal({
                                 <label
                                     className={cn(
                                         `
-                                          flex cursor-pointer items-start gap-3 rounded-card border p-3
-                                          transition-[background-color,border-color] duration-160
+                                          flex cursor-pointer items-start gap-3 rounded-card border
+                                          p-3 transition-[background-color,border-color]
+                                          duration-160
                                         `,
                                         selected
                                             ? "border-brand bg-brand-soft/50"
@@ -177,7 +177,7 @@ export function AttachOwnerToListingModal({
                                         aria-label={`Attach to ${listing.title}`}
                                         className="mbs-1 shrink-0"
                                     />
-                                    <div className="min-inline-0 flex-1">
+                                    <div className="flex-1 min-inline-0">
                                         <p className="body-sm font-semibold text-ink">
                                             {listing.title}
                                         </p>

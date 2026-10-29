@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 
-import { CalendarDays, MapPin, Pencil, Plus } from "@/components/shared/icons";
-
 import {
     OWNER_PROFILE_HREF,
     OWNER_PROPERTIES_NEW_HREF,
@@ -11,6 +9,7 @@ import {
 } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { CalendarDays, MapPin, Pencil, Plus } from "@/components/shared/icons";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

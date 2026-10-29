@@ -93,14 +93,8 @@ const eslintConfig = defineConfig([
             },
         },
         rules: {
-            "better-tailwindcss/enforce-consistent-line-wrapping": [
-                "warn",
-                {
-                    printWidth: 100,
-                    group: "newLine",
-                    preferSingleLine: true,
-                },
-            ],
+            // Prettier owns wrapping; both formatters otherwise undo each other's JSX layout.
+            "better-tailwindcss/enforce-consistent-line-wrapping": "off",
             "better-tailwindcss/enforce-consistent-class-order": "warn",
             "better-tailwindcss/enforce-consistent-variant-order": "warn",
             "better-tailwindcss/enforce-consistent-variable-syntax": [

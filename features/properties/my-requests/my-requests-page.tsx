@@ -10,12 +10,12 @@ import { cn } from "@/lib/utils";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
+import { AcceptedPanel } from "@/features/properties/my-requests/accepted-panel";
+import { CancelledPanel } from "@/features/properties/my-requests/cancelled-panel";
 import {
     DEFAULT_INVITES_FILTERS,
     type InvitesSummary,
 } from "@/features/properties/my-requests/invite-types";
-import { AcceptedPanel } from "@/features/properties/my-requests/accepted-panel";
-import { CancelledPanel } from "@/features/properties/my-requests/cancelled-panel";
 import { InvitesPanel } from "@/features/properties/my-requests/invites-panel";
 import { RejectedPanel } from "@/features/properties/my-requests/rejected-panel";
 import { RequestCard } from "@/features/properties/my-requests/request-card";

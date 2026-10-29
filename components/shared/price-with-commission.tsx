@@ -2,8 +2,8 @@
 
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { offersBoth, offersRent, offersSale } from "@/lib/format/listing-availability";
 import type { Currency } from "@/lib/format/currency";
+import { offersBoth, offersRent, offersSale } from "@/lib/format/listing-availability";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 

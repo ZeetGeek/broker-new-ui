@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { Building2, MapPin } from "@/components/shared/icons";
-
 import {
     Combobox,
     ComboboxContent,

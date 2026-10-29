@@ -2,7 +2,6 @@
 
 import { useId, useState } from "react";
 
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import { spring } from "@/lib/motion/tokens";
@@ -10,6 +9,7 @@ import { getVisiblePages } from "@/lib/pagination/get-visible-pages";
 import { cn } from "@/lib/utils";
 
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
 import {
     Select,
     SelectContent,
@@ -33,8 +33,8 @@ const controlChipClass = cn(
 /** Outer shell — same as owner-listings view toggle. */
 const arrowGroupClass = cn(
     `
-      inline-flex shrink-0 items-center gap-1 rounded-control border border-border-warm bg-surface p-1
-      shadow-sm
+      inline-flex shrink-0 items-center gap-1 rounded-control border border-border-warm bg-surface
+      p-1 shadow-sm
     `,
 );
 
@@ -299,7 +299,7 @@ export function AppPagination({
                                 controlChipClass,
                                 `
                                   gap-1.5 border-border-warm bg-surface px-3 font-semibold text-ink
-                                  tabular-nums shadow-sm !inline-[4.75rem] block-9.5
+                                  tabular-nums shadow-sm block-9.5 inline-19!
                                   data-[size=sm]:block-9.5
                                 `,
                             )}

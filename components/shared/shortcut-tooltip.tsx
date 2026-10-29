@@ -68,9 +68,7 @@ export function ShortcutKbdMessage({ shortcutId, children, className }: Shortcut
     return (
         <p
             className={cn(
-                `
-          body-sm inline-flex flex-wrap items-center justify-center gap-1.5 text-ink-subtle
-        `,
+                `body-sm inline-flex flex-wrap items-center justify-center gap-1.5 text-ink-subtle`,
                 className,
             )}
         >

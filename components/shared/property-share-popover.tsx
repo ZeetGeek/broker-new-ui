@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { Check, Link2, Share2 } from "@/components/shared/icons";
 
 import {
     buildEmailShareUrl,
@@ -16,6 +15,7 @@ import {
 } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
 
+import { Check, Link2, Share2 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,

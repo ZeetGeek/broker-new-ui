@@ -3,8 +3,6 @@
 import { type ChangeEvent, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Sofa, Sparkles } from "@/components/shared/icons";
-
 import {
     amenityLabel,
     PROPERTY_AMENITY_OPTIONS,
@@ -15,6 +13,7 @@ import {
 import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { Sofa, Sparkles } from "@/components/shared/icons";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

@@ -1,7 +1,9 @@
 function ContactCardSkeleton() {
     return (
         <div
-            className="flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-4 shadow-md"
+            className="
+              flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-4 shadow-md
+            "
             aria-hidden
         >
             <div className="flex items-start justify-between gap-2">
@@ -20,7 +22,7 @@ function ContactCardSkeleton() {
                 <div className="rounded-sm bg-surface-muted block-3 inline-36" />
             </div>
 
-            <div className="mt-auto flex flex-col gap-2.5 border-bs border-border-warm pbs-3">
+            <div className="mbs-auto flex flex-col gap-2.5 border-bs border-border-warm pbs-3">
                 <div className="flex justify-between gap-2">
                     <div className="rounded-sm bg-surface-muted block-2.5 inline-20" />
                     <div className="rounded-sm bg-surface-muted block-2.5 inline-14" />
@@ -45,7 +47,8 @@ export function ContactsSkeleton({
     return (
         <div
             className="
-              grid grid-cols-1 gap-6 motion-safe:animate-pulse
+              grid grid-cols-1 gap-6
+              motion-safe:animate-pulse
               sm:grid-cols-2
               md:grid-cols-3
               lg:grid-cols-4

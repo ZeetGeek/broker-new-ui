@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 
+import { formatRelativePast, formatShowingWhen } from "@/lib/format/date";
+import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
+import { cn } from "@/lib/utils";
+
+import { AppModal } from "@/components/shared/app-modal";
 import {
     CalendarClock,
     Clock3,
@@ -10,12 +15,6 @@ import {
     PhoneCall,
     StickyNote,
 } from "@/components/shared/icons";
-
-import { formatRelativePast, formatShowingWhen } from "@/lib/format/date";
-import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
-import { cn } from "@/lib/utils";
-
-import { AppModal } from "@/components/shared/app-modal";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";

@@ -4,6 +4,7 @@ import test from "node:test";
 import type { DashboardResponse, DashboardVisit } from "@/lib/api/dashboard";
 import { pipelineStageFromQuery } from "@/lib/properties/pipeline-stage-query";
 import { agendaVisitState, isActiveDashboardVisit } from "@/lib/visits/dashboard-state";
+
 import { mapBrokerDashboardView } from "@/features/dashboard/map-dashboard";
 
 test("dashboard stage links normalize the existing API and UI vocabulary", () => {

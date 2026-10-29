@@ -1,8 +1,8 @@
 import type { AppIcon } from "@/components/shared/icons";
 import { Ban, CircleCheck, CircleX, Hourglass, Undo2 } from "@/components/shared/icons";
 
-import type { DealStatusTone } from "@/features/properties/my-requests/deal-card-chrome";
 import type { OwnerRepStatus } from "@/features/owner-requests/types";
+import type { DealStatusTone } from "@/features/properties/my-requests/deal-card-chrome";
 
 export type OwnerRequestStageMeta = {
     label: string;

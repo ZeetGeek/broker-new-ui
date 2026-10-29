@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-import { Search } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { Search } from "@/components/shared/icons";
 import { Input } from "@/components/ui/input";
 
 import type {

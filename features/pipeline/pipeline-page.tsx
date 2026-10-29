@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { StageOperationGate } from "@/lib/properties/stage-operation-gate";
 import toast from "react-hot-toast";
-import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
-import { pipelineStageFromQuery } from "@/lib/properties/pipeline-stage-query";
 
 import { pipelineApi } from "@/lib/api/pipeline";
+import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { PREF_KEYS } from "@/lib/prefs/keys";
 import { EMPTY_PROPERTY_CRITERIA, propertyCriteriaCount } from "@/lib/properties/list-criteria";
+import { pipelineStageFromQuery } from "@/lib/properties/pipeline-stage-query";
+import { StageOperationGate } from "@/lib/properties/stage-operation-gate";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -102,7 +102,10 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         DEFAULT_PIPELINE_PREFS,
         { isValid: isPipelinePrefs },
     );
-    const filters = urlStage ? { ...prefs.filters, stage: urlStage } : prefs.filters;
+    const filters = useMemo(
+        () => (urlStage ? { ...prefs.filters, stage: urlStage } : prefs.filters),
+        [prefs.filters, urlStage],
+    );
     const view = urlStage ? "board" : prefs.view;
     const mobileStage = urlStage ?? prefs.mobileStage;
     const { pinnedDealIds } = prefs;
@@ -607,7 +610,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     return (
         <div className="flex flex-col gap-5">
             {filters.stage ? (
-                <div className="flex flex-wrap items-center gap-3 body-sm text-ink-muted">
+                <div className="body-sm flex flex-wrap items-center gap-3 text-ink-muted">
                     <span>Showing {DEAL_STAGE_META[filters.stage].label} deals</span>
                     <button
                         type="button"

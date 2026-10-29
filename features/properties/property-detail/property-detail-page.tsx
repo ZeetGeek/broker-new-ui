@@ -23,12 +23,12 @@ import {
 } from "@/lib/routes/owner";
 
 import { Button } from "@/components/ui/button";
-import { FEATURE_PLATFORM_OWNER } from "@/config";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { PropertyActionRail } from "@/features/properties/property-detail/property-action-rail";
-import { MarkSoldDialog } from "@/features/properties/your-listings/mark-sold-dialog";
 import { PropertyDetailLayout } from "@/features/properties/property-detail/property-detail-layout";
 import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
+import { MarkSoldDialog } from "@/features/properties/your-listings/mark-sold-dialog";
 import type { MyListingItem, MyListingStatus } from "@/features/properties/your-listings/types";
 import { useAppSelector } from "@/store/hooks";
 

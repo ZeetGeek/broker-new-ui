@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { Building2, Check, Eye, MapPin, MoreHorizontal, Phone, X } from "@/components/shared/icons";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
@@ -17,6 +16,7 @@ import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
+import { Building2, Check, Eye, MapPin, MoreHorizontal, Phone, X } from "@/components/shared/icons";
 import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Button } from "@/components/ui/button";
@@ -84,7 +84,7 @@ function LeadCoverImage({
     return (
         <div
             className="
-              relative shrink-0 overflow-hidden rounded-[8px] bg-surface-muted aspect-square
+              relative aspect-square shrink-0 overflow-hidden rounded-[8px] bg-surface-muted
               inline-24
             "
             aria-hidden={!imageSrc}
@@ -98,15 +98,19 @@ function LeadCoverImage({
                     className={cn("object-cover", muted && "grayscale-60")}
                 />
             ) : (
-                <div className="flex items-center justify-center text-ink-subtle block-full inline-full">
+                <div
+                    className="
+                  flex items-center justify-center text-ink-subtle block-full inline-full
+                "
+                >
                     <Building2 className="block-6 inline-6" strokeWidth={1.5} />
                 </div>
             )}
             {extraCount > 0 ? (
                 <span
                     className="
-                      absolute inset-e-1 inset-be-1 rounded-full bg-ink/65 px-1.5 py-0.5 body-xs
-                      font-semibold tabular-nums text-surface
+                      body-xs absolute inset-e-1 inset-be-1 rounded-full bg-ink/65 px-1.5 py-0.5
+                      font-semibold text-surface tabular-nums
                     "
                 >
                     +{extraCount}
@@ -228,8 +232,9 @@ export function OwnerLeadBoardCard({
         >
             <div
                 className="
-                  pointer-events-none relative z-10 flex flex-1 flex-col gap-2.5 px-4 py-4 text-ink
-                  [&_a]:pointer-events-auto [&_button]:pointer-events-auto
+                  pointer-events-none relative z-10 flex flex-1 flex-col gap-2.5 p-4 text-ink
+                  [&_a]:pointer-events-auto
+                  [&_button]:pointer-events-auto
                 "
             >
                 <div className="flex items-start justify-between gap-2">
@@ -348,7 +353,11 @@ export function OwnerLeadBoardCard({
                                 showEmptyTip
                             />
                         ) : null}
-                        <h3 className="body truncate font-semibold tracking-wide text-ink capitalize">
+                        <h3
+                            className="
+                          body truncate font-semibold tracking-wide text-ink capitalize
+                        "
+                        >
                             {headline || propertyLabel}
                         </h3>
                         {locationLabel ? (
@@ -461,7 +470,7 @@ export function OwnerLeadBoardCard({
                                     disabled={busy}
                                     loading={busy}
                                     onClick={onAccept}
-                                    className="flex-1 min-inline-0 font-semibold"
+                                    className="flex-1 font-semibold min-inline-0"
                                 >
                                     <Check
                                         aria-hidden
@@ -476,7 +485,7 @@ export function OwnerLeadBoardCard({
                                 variant="accent"
                                 size="md"
                                 nativeButton={false}
-                                className="inline-full font-semibold"
+                                className="font-semibold inline-full"
                                 render={<Link href={detailHref} prefetch={false} />}
                             >
                                 View property

@@ -37,9 +37,10 @@ export function ContactsSpeedDial({
     return (
         <div
             className="
-          fixed inset-e-8 inset-be-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 block-40
-          inline-56 md:hidden
-        "
+              fixed inset-e-8 inset-be-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 block-40
+              inline-56
+              md:hidden
+            "
         >
             <div
                 ref={ref}

@@ -173,8 +173,8 @@ export function AttachedBuyersRow({
     return (
         <div
             className="
-          body-sm flex items-center gap-2 tracking-wide text-ink-muted inline-full min-inline-0
-        "
+              body-sm flex items-center gap-2 tracking-wide text-ink-muted inline-full min-inline-0
+            "
         >
             <span className={OVERLAY_PERSON_LABEL_CLASS}>Buyers</span>
             <span className="flex flex-1 items-center gap-1.5 min-inline-0">

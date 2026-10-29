@@ -426,9 +426,8 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
         facingDirection: input.facing ?? undefined,
         parkingSpaces: parkingToSpaces(input.parking),
         availableFrom: input.availableFrom || undefined,
-        description:
-            [input.address.trim(), input.description.trim()].filter(Boolean).join("\n\n") ||
-            undefined,
+        // Public copy must never include the separately entered private address.
+        description: input.description.trim() || undefined,
         amenities: input.amenities,
         nearbyPlaces: input.nearbyPlaces?.length ? input.nearbyPlaces : undefined,
         suitableFor: input.suitableFor?.length ? input.suitableFor : undefined,
@@ -518,10 +517,8 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
         payload.publishStatus = "draft";
     }
 
-    if (input.address != null || input.description != null) {
-        const street = input.address?.trim() ?? "";
-        const description = input.description?.trim() ?? "";
-        payload.description = [street, description].filter(Boolean).join("\n\n") || undefined;
+    if (input.description != null) {
+        payload.description = input.description.trim() || undefined;
     }
 
     return payload;

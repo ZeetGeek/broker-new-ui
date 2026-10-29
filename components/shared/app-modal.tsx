@@ -2,11 +2,11 @@
 
 import type { CSSProperties, ReactNode } from "react";
 
-import { XIcon } from "@/components/shared/icons";
 import SimpleBar from "simplebar-react";
 
 import { cn } from "@/lib/utils";
 
+import { XIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -188,7 +188,7 @@ export function AppModal({
                     {header}
                 </div>
 
-                <div className="relative min-block-0 flex-1 overflow-hidden">
+                <div className="relative flex-1 overflow-hidden min-block-0">
                     <SimpleBar
                         className="app-modal-simplebar block-full"
                         style={{ maxHeight: "100%" }}

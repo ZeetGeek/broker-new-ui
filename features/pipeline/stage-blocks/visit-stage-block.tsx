@@ -1,10 +1,9 @@
 import Link from "next/link";
 
-import { Calendar, Pencil } from "@/components/shared/icons";
-
 import { formatDateShort, formatTimeIn, isSameCalendarDay } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { Calendar, Pencil } from "@/components/shared/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { DealItem } from "@/features/pipeline/types";

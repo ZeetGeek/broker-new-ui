@@ -1,9 +1,9 @@
-import { Handshake, Search, UserRoundSearch } from "@/components/shared/icons";
 import Link from "next/link";
 
 import { ownerBrokersHref } from "@/lib/routes/owner";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { Handshake, Search, UserRoundSearch } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import type { OwnerBrokersTab } from "@/features/owner-brokers/types";

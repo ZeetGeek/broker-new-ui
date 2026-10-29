@@ -2,6 +2,10 @@
 
 import type { ReactNode } from "react";
 
+import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
+import { cn } from "@/lib/utils";
+
 import {
     Clock3,
     Lock,
@@ -10,11 +14,6 @@ import {
     PhoneCall,
     StickyNote,
 } from "@/components/shared/icons";
-
-import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
-import { formatPropertyCardName } from "@/lib/format/property-card-name";
-import { cn } from "@/lib/utils";
-
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";

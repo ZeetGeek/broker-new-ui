@@ -1,9 +1,16 @@
 ﻿"use client";
 
 import { memo } from "react";
-import { USE_MOCK_VISITS } from "@/mocks/visits";
 
 import { addCollection, Icon } from "@iconify/react/offline";
+
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
+import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { cn } from "@/lib/utils";
+import { isVisitCancelled, VISIT_STATUS, visitPrimaryAction } from "@/lib/visits/status";
+import { durationMinutes, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
+
+import { AppImage } from "@/components/shared/app-image";
 import {
     CalendarClock,
     Clock3,
@@ -16,14 +23,6 @@ import {
     Route,
     Trash2,
 } from "@/components/shared/icons";
-
-import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
-import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
-import { cn } from "@/lib/utils";
-import { isVisitCancelled, VISIT_STATUS, visitPrimaryAction } from "@/lib/visits/status";
-import { durationMinutes, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
-
-import { AppImage } from "@/components/shared/app-image";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +37,7 @@ import {
 import { APP_NAME } from "@/config";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 import { useAppSelector } from "@/store/hooks";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);

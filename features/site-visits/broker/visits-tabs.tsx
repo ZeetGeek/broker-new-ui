@@ -1,12 +1,10 @@
 "use client";
 
-import { FEATURE_PLATFORM_OWNER } from "@/config/index";
-
+import { FilterChip, filterChipClassName, FilterChipCount } from "@/components/shared/filter-chip";
 import { SlidersHorizontal } from "@/components/shared/icons";
-
-import { FilterChip, FilterChipCount, filterChipClassName } from "@/components/shared/filter-chip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import {
     OwnerListingsChipsCarousel,
     OwnerListingsChipsCarouselSlide,

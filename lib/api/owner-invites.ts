@@ -5,6 +5,7 @@ import {
     type RepresentationListPage,
     representativeApi,
 } from "@/lib/api/representative";
+import { type DealListingApiQuery, dealListingApiQuery } from "@/lib/properties/deal-listing-query";
 
 import {
     filterInvites,
@@ -19,7 +20,6 @@ import type {
 } from "@/features/properties/my-requests/invite-types";
 import { mapRepresentationToInviteItem } from "@/features/properties/my-requests/map-invite";
 import { MOCK_INVITES } from "@/features/properties/my-requests/mock-invites";
-import { dealListingApiQuery, type DealListingApiQuery } from "@/lib/properties/deal-listing-query";
 
 function isPaged(
     value: RepresentationItem[] | RepresentationListPage,

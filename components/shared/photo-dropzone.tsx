@@ -2,9 +2,9 @@
 
 import { type DragEvent, useId, useRef, useState } from "react";
 
-import { ImageUp } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
+
+import { ImageUp } from "@/components/shared/icons";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 

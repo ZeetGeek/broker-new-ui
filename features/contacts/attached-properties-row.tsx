@@ -19,7 +19,10 @@ function PropertyCoverTile({ property }: { property: ContactPropertyCardItem }) 
             sizes="36px"
             iconClassName="block-4 inline-4"
             sizeClassName="block-9 inline-9"
-            className="rounded-[8px] shadow-xs ring-2 ring-surface transition-transform duration-160 group-hover/tile:-translate-y-0.5"
+            className="
+              rounded-[8px] shadow-xs ring-2 ring-surface transition-transform duration-160
+              group-hover/tile:-translate-y-0.5
+            "
         />
     );
 }
@@ -75,9 +78,9 @@ export function AttachedPropertiesRow({
                                     <span
                                         className="
                                           body-xs relative -ms-2.5 inline-flex items-center
-                                          justify-center rounded-[8px] bg-ink font-sans font-semibold
-                                          text-surface shadow-xs ring-2 ring-surface block-9
-                                          inline-9
+                                          justify-center rounded-[8px] bg-ink font-sans
+                                          font-semibold text-surface shadow-xs ring-2 ring-surface
+                                          block-9 inline-9
                                         "
                                     >
                                         +{overflow.length}
@@ -92,7 +95,7 @@ export function AttachedPropertiesRow({
                 </div>
             </TooltipProvider>
 
-            <span className="body-sm min-inline-0 truncate font-semibold tracking-wide text-ink">
+            <span className="body-sm truncate font-semibold tracking-wide text-ink min-inline-0">
                 {title}
             </span>
         </>
@@ -105,8 +108,8 @@ export function AttachedPropertiesRow({
                 onClick={onManage}
                 className={cn(
                     `
-                      flex items-center gap-2.5 px-3 py-2.5 text-start transition-colors
-                      duration-160 inline-full rounded-control
+                      flex items-center gap-2.5 rounded-control px-3 py-2.5 text-start
+                      transition-colors duration-160 inline-full
                     `,
                     OVERLAY_GLASS_BUTTON_CLASS,
                 )}
@@ -119,7 +122,7 @@ export function AttachedPropertiesRow({
     return (
         <div
             className={cn(
-                "flex items-center gap-2.5 px-3 py-2.5 rounded-control",
+                "flex items-center gap-2.5 rounded-control px-3 py-2.5",
                 OVERLAY_GLASS_BUTTON_CLASS,
             )}
         >

@@ -1,8 +1,9 @@
-import { browseApiTypeFilters } from "@/features/properties/owner-listings/filter-visibility";
 import {
     normalizePropertyCriteria,
     type PropertyListCriteria,
 } from "@/lib/properties/list-criteria";
+
+import { browseApiTypeFilters } from "@/features/properties/owner-listings/filter-visibility";
 
 /** Listing filters sent to the My Deals representation queues. */
 export type DealListingApiQuery = {

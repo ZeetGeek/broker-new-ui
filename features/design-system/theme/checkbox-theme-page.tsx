@@ -41,17 +41,13 @@ function optionCardClassName(active: boolean, disabled?: boolean) {
     return cn(
         `
           flex cursor-pointer items-center gap-3 rounded-control border px-3 text-start
-          font-normal leading-normal
-          transition-[background-color,border-color,color] duration-160
+          leading-normal font-normal transition-[background-color,border-color,color] duration-160
           block-control-xl
           has-focus-visible:ring-3 has-focus-visible:ring-ring/30
         `,
         active
             ? "border-brand bg-brand-soft text-brand-text"
-            : `
-              border-border-warm bg-surface text-ink
-              hover:border-brand/40
-            `,
+            : `border-border-warm bg-surface text-ink hover:border-brand/40`,
         disabled && "pointer-events-none opacity-50",
     );
 }
@@ -79,9 +75,9 @@ function StackDemo() {
                         className="mts-0.5"
                     />
                     <span className="min-inline-0">
-                        <span className="block body-sm font-medium text-ink">{item.label}</span>
+                        <span className="body-sm block font-medium text-ink">{item.label}</span>
                         {"hint" in item && item.hint ? (
-                            <span className="mbs-0.5 block text-xs leading-4 text-ink-muted">
+                            <span className="mbs-0.5 block text-xs/4 text-ink-muted">
                                 {item.hint}
                             </span>
                         ) : null}
@@ -111,7 +107,7 @@ function CardsDemo({
         <div
             role="group"
             aria-label="Time of day"
-            aria-invalid={invalid || undefined}
+            data-invalid={invalid || undefined}
             className="grid gap-2 inline-full sm:grid-cols-1"
         >
             {TIME_BUCKETS.map((bucket) => {
@@ -166,7 +162,7 @@ function IndeterminateDemo() {
                 />
                 <span className="body-sm font-semibold text-ink">All localities</span>
             </label>
-            <div className="space-y-2 border-s border-border-warm ps-4 ms-2">
+            <div className="ms-2 space-y-2 border-s border-border-warm ps-4">
                 {(
                     [
                         { id: "vesu", label: "Vesu" },

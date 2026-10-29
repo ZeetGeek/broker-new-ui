@@ -38,12 +38,12 @@ function FileAttachment({
             title={name}
             className={cn(
                 `
-              group/file flex items-center gap-3 rounded-inner border bg-brand-soft/40 px-4 py-3.5
-              inline-72 max-inline-full min-inline-0
-              hover:border-brand/45 hover:bg-brand-soft/65
-              focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand
-              focus-visible:outline-none
-            `,
+                  group/file flex items-center gap-3 rounded-inner border bg-brand-soft/40 px-4
+                  py-3.5 inline-72 max-inline-full min-inline-0
+                  hover:border-brand/45 hover:bg-brand-soft/65
+                  focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand
+                  focus-visible:outline-none
+                `,
                 isOwn ? "border-brand/20" : "border-border-warm",
             )}
         >
@@ -74,10 +74,10 @@ function FileAttachment({
             <ExternalLink
                 aria-hidden
                 className="
-              shrink-0 text-ink/45 block-4 inline-4
-              group-hover/file:text-brand
-              group-focus-visible/file:text-brand
-            "
+                  shrink-0 text-ink/45 block-4 inline-4
+                  group-hover/file:text-brand
+                  group-focus-visible/file:text-brand
+                "
                 strokeWidth={1.75}
             />
         </a>

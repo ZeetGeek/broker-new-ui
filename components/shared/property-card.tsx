@@ -1,24 +1,16 @@
 "use client";
 
-import { type MouseEvent, type PointerEvent, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import useEmblaCarousel from "embla-carousel-react";
 
 import { formatAreaSqft } from "@/lib/format/area";
-import {
-    defaultPriceMode,
-    type ListingPriceMode,
-    offersBoth,
-    offersRent,
-    offersSale,
-} from "@/lib/format/listing-availability";
+import { offersRent, offersSale } from "@/lib/format/listing-availability";
 import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
-import { formatPropertyCardArea, formatPropertyCardName } from "@/lib/format/property-card-name";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
 import { cn } from "@/lib/utils";
 
@@ -30,23 +22,16 @@ import {
 } from "@/components/shared/attached-people-row";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import {
-    Bath,
-    BedDouble,
     Building2,
     Calendar,
     CallIcon,
     Camera,
     Check,
-    ChevronLeft,
-    ChevronRight,
     CircleCheck,
     Clock,
     MapPin,
-    Maximize2,
     Send,
-    Trash2,
     UserPlus,
-    UserRound,
     Users,
     WhatsAppIcon,
     X,
@@ -68,7 +53,6 @@ import {
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import tablerMenuIcons from "@/components/shared/tabler-menu.json";
-import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -80,31 +64,6 @@ addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 
 const PROPERTY_CARD_PHOTO_CLASS = "relative shrink-0 overflow-hidden bg-surface-muted h-40 w-full";
 
-const BROWSE_CARD_PHOTO_FRAME_CLASS =
-    "shrink-0 rounded-card p-1 shadow-md transition-[box-shadow,background] duration-160 group-hover:shadow-lg w-full";
-const BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS = "bg-surface";
-const BROWSE_CARD_PHOTO_FRAME_NEW_CLASS = `
-  bg-gradient-to-br from-highlight via-brand-soft to-brand/55
-  shadow-[0_0_0_1px_color-mix(in_oklch,var(--color-highlight)_35%,transparent),var(--shadow-md)]
-  group-hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--color-highlight)_50%,transparent),var(--shadow-lg)]
-`;
-
-const BROWSE_CARD_PHOTO_INNER_CLASS =
-    "relative overflow-hidden rounded-[calc(var(--radius-card)-4px)] bg-surface-muted aspect-[4/3] w-full";
-
-const BROWSE_CARD_PHOTO_NAV_BTN_CLASS = `
-  absolute z-10 flex -translate-y-1/2 items-center justify-center
-  rounded-control bg-surface/95 text-ink transition-[opacity,transform] duration-160
-  block-7 inline-7
-  shadow-[inset_0_-2px_0_0_rgba(111,123,144,0.1)]
-  hover:bg-surface
-  disabled:pointer-events-none disabled:opacity-0
-  focus-visible:opacity-100 focus-visible:outline-none
-  focus-visible:ring-2 focus-visible:ring-ring/40
-`;
-
-const RESIDENTIAL_PROPERTY_TYPES = new Set(["apartment", "villa", "penthouse"]);
-
 const BROWSE_ASK_LABEL = "Ask to sell";
 const BROWSE_ASK_PENDING_LABEL = "Sending…";
 const BROWSE_REPRESENTING_LABEL = "You're representing";
@@ -112,14 +71,6 @@ const BROWSE_INVITE_ACCEPT_LABEL = "Accept";
 const BROWSE_INVITE_ACCEPTING_LABEL = "Accepting…";
 const BROWSE_INVITE_DECLINE_LABEL = "Cancel";
 const BROWSE_INVITE_DECLINING_LABEL = "Cancelling…";
-
-const PROPERTY_CARD_TITLE_CLASS = "body truncate font-semibold tracking-wide text-ink capitalize";
-const PROPERTY_CARD_LOCATION_CLASS = `
-  body-sm flex items-center gap-1.5 tracking-wide text-ink-muted min-inline-0
-`;
-const PROPERTY_CARD_SPECS_CLASS = `
-  body-sm flex flex-nowrap items-center gap-x-1.5 overflow-hidden tracking-wide text-ink-muted
-`;
 
 const BROWSE_STATUS = {
     waiting: "Waiting for the owner",
@@ -525,428 +476,6 @@ export type PropertyCardProps = {
     | { variant: "owned"; listing: OwnedPropertyCardListing }
 );
 
-function formatBedLabel(bhk: number): string {
-    return bhk === 1 ? "1 Bed" : `${bhk} Bed`;
-}
-
-function formatBathLabel(bhk: number): string {
-    return bhk === 1 ? "1 Bath" : `${bhk} Bath`;
-}
-
-function BrowseSpecDivider() {
-    return (
-        <span aria-hidden className="text-ink-subtle/70">
-            ·
-        </span>
-    );
-}
-
-function BrowseSpecItem({ icon: Icon, label }: { icon: typeof Maximize2; label: string }) {
-    return (
-        <span className="inline-flex items-center gap-1 whitespace-nowrap">
-            <Icon aria-hidden className="shrink-0 block-3 inline-3" strokeWidth={1.75} />
-            {label}
-        </span>
-    );
-}
-
-function BrowsePropertyCardPhoto({
-    listing,
-    priority,
-    imageSizes,
-}: {
-    listing: BrowsePropertyCardListing;
-    priority: boolean;
-    imageSizes: string;
-}) {
-    const alt = listing.title;
-    const images =
-        listing.imageSrcs && listing.imageSrcs.length > 0
-            ? listing.imageSrcs
-            : listing.imageSrc
-              ? [listing.imageSrc]
-              : [];
-    const canCarousel = images.length > 1;
-    const [selectedIndex, setSelectedIndex] = useState(0);
-    const [preparedThrough, setPreparedThrough] = useState(0);
-    const [canScrollPrev, setCanScrollPrev] = useState(false);
-    const [canScrollNext, setCanScrollNext] = useState(false);
-
-    const [emblaRef, emblaApi] = useEmblaCarousel({
-        align: "start",
-        containScroll: "trimSnaps",
-        dragFree: false,
-        skipSnaps: false,
-        watchDrag: canCarousel,
-    });
-
-    useEffect(() => {
-        if (!emblaApi) return;
-        const onSelect = () => {
-            const nextIndex = emblaApi.selectedScrollSnap();
-            setSelectedIndex(nextIndex);
-            setPreparedThrough((current) => Math.max(current, nextIndex));
-            setCanScrollPrev(emblaApi.canScrollPrev());
-            setCanScrollNext(emblaApi.canScrollNext());
-        };
-        emblaApi.on("select", onSelect);
-        emblaApi.on("reInit", onSelect);
-        // Defer initial sync so we don't setState synchronously in the effect body.
-        const frame = requestAnimationFrame(onSelect);
-        return () => {
-            cancelAnimationFrame(frame);
-            emblaApi.off("select", onSelect);
-            emblaApi.off("reInit", onSelect);
-        };
-    }, [emblaApi]);
-
-    const stopLinkNav = (event: MouseEvent | PointerEvent) => {
-        event.preventDefault();
-        event.stopPropagation();
-    };
-
-    const scrollPrev = (event: MouseEvent) => {
-        stopLinkNav(event);
-        emblaApi?.scrollPrev();
-    };
-
-    const scrollNext = (event: MouseEvent) => {
-        stopLinkNav(event);
-        setPreparedThrough((current) => Math.max(current, selectedIndex + 1));
-        emblaApi?.scrollNext();
-    };
-
-    const prepareNextImage = () => {
-        if (!canScrollNext) return;
-        setPreparedThrough((current) => Math.max(current, selectedIndex + 1));
-    };
-
-    const dotCount = Math.min(images.length || 1, 5);
-    const activeDot =
-        images.length > dotCount
-            ? Math.min(
-                  Math.floor((selectedIndex / Math.max(images.length - 1, 1)) * (dotCount - 1)),
-                  dotCount - 1,
-              )
-            : selectedIndex;
-
-    return (
-        <div
-            className={cn(
-                BROWSE_CARD_PHOTO_FRAME_CLASS,
-                listing.isNew
-                    ? BROWSE_CARD_PHOTO_FRAME_NEW_CLASS
-                    : BROWSE_CARD_PHOTO_FRAME_DEFAULT_CLASS,
-            )}
-        >
-            <HoverScaleRoot className={cn(BROWSE_CARD_PHOTO_INNER_CLASS, "group/photo")}>
-                {images.length > 0 ? (
-                    <HoverScaleLayer className="absolute inset-0">
-                        <div
-                            ref={emblaRef}
-                            className="overflow-hidden block-full inline-full"
-                            onPointerEnter={prepareNextImage}
-                            onPointerDown={prepareNextImage}
-                            aria-roledescription="carousel"
-                            aria-label={`${alt} photos`}
-                        >
-                            <div className="flex touch-pan-y block-full">
-                                {images.map((src, index) => (
-                                    <div
-                                        key={`${src}-${index}`}
-                                        className="relative shrink-0 grow-0 basis-full min-inline-0"
-                                        role="group"
-                                        aria-roledescription="slide"
-                                        aria-label={`Photo ${index + 1} of ${images.length}`}
-                                    >
-                                        {index <= preparedThrough ? (
-                                            <AppImage
-                                                src={src}
-                                                alt={
-                                                    index === 0
-                                                        ? alt
-                                                        : `${alt} — photo ${index + 1}`
-                                                }
-                                                fill
-                                                sizes={imageSizes}
-                                                priority={priority && index === 0}
-                                                className="object-cover"
-                                            />
-                                        ) : null}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </HoverScaleLayer>
-                ) : (
-                    <div
-                        className="
-                          flex flex-col items-center justify-center gap-2 px-4 text-center
-                          block-full inline-full
-                        "
-                    >
-                        <Building2
-                            aria-hidden
-                            className="text-ink-subtle block-8 inline-8"
-                            strokeWidth={1.5}
-                        />
-                        <p className="body-xs text-ink-subtle">No photos yet</p>
-                    </div>
-                )}
-
-                <div
-                    className="
-                      absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap items-start gap-1.5
-                    "
-                >
-                    {offersSale(listing) ? (
-                        <Badge color="emerald" blur="dark">
-                            For sale
-                        </Badge>
-                    ) : null}
-                    {offersRent(listing) ? (
-                        <Badge color="orange" blur="dark">
-                            For rent
-                        </Badge>
-                    ) : null}
-                </div>
-
-                {listing.isNew ? (
-                    <Badge color="lime" blur="dark" className="absolute inset-e-3 inset-bs-3 z-10">
-                        New
-                    </Badge>
-                ) : null}
-
-                {canCarousel ? (
-                    <>
-                        <button
-                            type="button"
-                            aria-label="Previous photo"
-                            disabled={!canScrollPrev}
-                            onClick={scrollPrev}
-                            onPointerDown={stopLinkNav}
-                            className={cn(
-                                BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
-                                "inset-s-3.5 inset-bs-1/2",
-                                `
-                                  opacity-0
-                                  group-focus-within/photo:opacity-100
-                                  group-hover/photo:opacity-100
-                                `,
-                            )}
-                        >
-                            <ChevronLeft
-                                aria-hidden
-                                className="block-3.5 inline-3.5"
-                                strokeWidth={2}
-                            />
-                        </button>
-                        <button
-                            type="button"
-                            aria-label="Next photo"
-                            disabled={!canScrollNext}
-                            onClick={scrollNext}
-                            onPointerDown={(event) => {
-                                stopLinkNav(event);
-                                prepareNextImage();
-                            }}
-                            className={cn(
-                                BROWSE_CARD_PHOTO_NAV_BTN_CLASS,
-                                "inset-e-3.5 inset-bs-1/2",
-                                `
-                                  opacity-0
-                                  group-focus-within/photo:opacity-100
-                                  group-hover/photo:opacity-100
-                                `,
-                            )}
-                        >
-                            <ChevronRight
-                                aria-hidden
-                                className="block-3.5 inline-3.5"
-                                strokeWidth={2}
-                            />
-                        </button>
-
-                        <div
-                            className="
-                              absolute inset-x-0 inset-be-3 z-10 flex items-center justify-center
-                              gap-1.5
-                            "
-                            aria-hidden
-                        >
-                            {Array.from({ length: dotCount }).map((_, index) => (
-                                <span
-                                    key={index}
-                                    className={cn(
-                                        `
-                                          rounded-full bg-surface/90
-                                          transition-[inline-size,opacity] duration-160
-                                        `,
-                                        "block-1.5",
-                                        index === activeDot
-                                            ? "opacity-100 inline-4"
-                                            : "opacity-60 inline-1.5",
-                                    )}
-                                />
-                            ))}
-                        </div>
-                    </>
-                ) : null}
-            </HoverScaleRoot>
-        </div>
-    );
-}
-
-function BrowsePropertyCardOwner({ owner }: { owner: PropertyCardOwner }) {
-    return (
-        <div className="mbs-auto flex flex-col gap-1 py-1.5 min-inline-0">
-            <div className="flex items-center gap-1.5 min-inline-0">
-                <UserAvatar
-                    name={owner.name}
-                    imageUrl={owner.avatarUrl}
-                    size="2xs"
-                    className="shrink-0"
-                />
-                <Button
-                    variant="link"
-                    size="sm"
-                    nativeButton={owner.profileHref ? false : undefined}
-                    render={
-                        owner.profileHref ? (
-                            <Link href={owner.profileHref} prefetch={false} />
-                        ) : undefined
-                    }
-                    className="
-                      body-sm justify-start truncate p-0 font-medium tracking-wide text-ink
-                      capitalize block-auto max-inline-full min-inline-0
-                    "
-                >
-                    {owner.name}
-                </Button>
-            </div>
-            {owner.locationLabel ? (
-                <p
-                    className="
-                      body-xs flex items-center gap-1 tracking-wide text-ink-muted min-inline-0
-                    "
-                >
-                    <MapPin aria-hidden className="shrink-0 block-3 inline-3" strokeWidth={1.75} />
-                    <span className="truncate capitalize">{owner.locationLabel}</span>
-                </p>
-            ) : null}
-        </div>
-    );
-}
-
-function BrowsePropertyCardSpecs({ listing }: { listing: BrowsePropertyCardListing }) {
-    const showBedBath =
-        listing.bhk > 0 && RESIDENTIAL_PROPERTY_TYPES.has(listing.propertyTypeLabel);
-
-    return (
-        <div className={PROPERTY_CARD_SPECS_CLASS}>
-            <BrowseSpecItem icon={Maximize2} label={formatPropertyCardArea(listing.areaSqft)} />
-            {showBedBath ? (
-                <>
-                    <BrowseSpecDivider />
-                    <BrowseSpecItem icon={BedDouble} label={formatBedLabel(listing.bhk)} />
-                    <BrowseSpecDivider />
-                    <BrowseSpecItem icon={Bath} label={formatBathLabel(listing.bhk)} />
-                </>
-            ) : null}
-        </div>
-    );
-}
-
-function BrowsePropertyCardPrice({ listing }: { listing: BrowsePropertyCardListing }) {
-    const both = offersBoth(listing);
-    const [mode, setMode] = useState<ListingPriceMode>(() => defaultPriceMode(listing));
-
-    const activeMode: ListingPriceMode = both ? mode : offersSale(listing) ? "sale" : "rent";
-
-    const priceLabel =
-        activeMode === "rent"
-            ? formatRent(listing.rentAmountInr ?? 0)
-            : formatPrice(listing.saleAmountInr ?? 0);
-
-    const baseAmountInr =
-        activeMode === "rent" ? (listing.rentAmountInr ?? 0) : (listing.saleAmountInr ?? 0);
-    const rentCommissionInr = listing.commissionAmount > 0 ? listing.commissionAmount : 0;
-    const saleCommissionInr =
-        listing.commissionPercent > 0
-            ? Math.round((baseAmountInr * listing.commissionPercent) / 100)
-            : 0;
-    const commissionInr = activeMode === "rent" ? rentCommissionInr : saleCommissionInr;
-    // Rent brokerage is a fixed fee — same formatter as sale cut, never `/mo`.
-    const commissionLabel = formatPrice(commissionInr);
-    const hasCommission = commissionInr > 0 && (activeMode === "rent" || baseAmountInr > 0);
-
-    const commissionBadge = (
-        <span
-            className={cn(
-                "body-sm shrink-0 font-medium tracking-wide text-brand",
-                hasCommission && "cursor-help underline decoration-brand/30 underline-offset-2",
-            )}
-        >
-            {activeMode === "rent"
-                ? formatPrice(rentCommissionInr)
-                : `(${listing.commissionPercent}%)`}
-        </span>
-    );
-
-    return (
-        <div className="flex items-center gap-2 min-inline-0">
-            <div className="flex flex-1 items-baseline gap-1.5 min-inline-0">
-                <span className="h5 truncate font-semibold tracking-wide text-ink tabular-nums">
-                    {priceLabel}
-                </span>
-                {hasCommission ? (
-                    <Tooltip>
-                        <TooltipTrigger
-                            delay={200}
-                            render={
-                                <button
-                                    type="button"
-                                    className="inline-flex border-0 bg-transparent p-0"
-                                    aria-label={
-                                        activeMode === "rent"
-                                            ? `Commission ${formatPrice(rentCommissionInr)}`
-                                            : `${listing.commissionPercent}% commission`
-                                    }
-                                >
-                                    {commissionBadge}
-                                </button>
-                            }
-                        />
-                        <TooltipContent side="top" className="text-center max-inline-xs">
-                            <p className="font-semibold tabular-nums">You get {commissionLabel}</p>
-                            <p className="body-xs mbs-0.5 opacity-90">
-                                {activeMode === "rent"
-                                    ? "Fixed rent brokerage"
-                                    : `${listing.commissionPercent}% of ${priceLabel}`}
-                            </p>
-                        </TooltipContent>
-                    </Tooltip>
-                ) : (
-                    commissionBadge
-                )}
-            </div>
-
-            {both ? (
-                <TextSegmentedToggle
-                    size="sm"
-                    value={activeMode}
-                    onValueChange={setMode}
-                    ariaLabel="Price type"
-                    options={[
-                        { value: "sale", label: "Sale" },
-                        { value: "rent", label: "Rent" },
-                    ]}
-                />
-            ) : null}
-        </div>
-    );
-}
-
 /** Grid browse card: clear photo on top, essentials in a solid panel below. */
 function BrowseOverlayPropertyCard({
     listing,
@@ -1349,167 +878,8 @@ function RepresentedPropertyCard({
         </article>
     );
 }
-
-const OWNED_EDIT_LABEL = "Edit property";
-const OWNED_OPEN_LABEL = "Open";
-const OWNED_EDIT_TOOLTIP = "Update price, photos, and other listing details";
-const OWNED_OPEN_TOOLTIP = "View this listing's full details";
-const OWNED_ADD_BUYER_LABEL = "Add buyer";
-const OWNED_ADD_BUYER_TOOLTIP = "Pick which buyers you will show this property to";
 const OWNED_ATTACH_OWNER_LABEL = "Attach owner";
 const OWNED_CHANGE_OWNER_LABEL = "Change owner";
-const OWNED_ATTACH_OWNER_TOOLTIP = "Link one exclusive owner contact to this listing";
-const OWNED_CHANGE_OWNER_TOOLTIP = "Replace the exclusive owner on this listing";
-const OWNED_DELETE_LABEL = "Delete";
-const OWNED_DELETE_TOOLTIP = "Remove this listing permanently";
-
-function OwnedListingAction({
-    href,
-    isEdit,
-    onEdit,
-    onAddBuyer,
-    onAttachOwner,
-    hasAttachedOwner = false,
-    onDelete,
-}: {
-    href: string;
-    isEdit: boolean;
-    /** When set, editing opens in place instead of navigating to the edit page. */
-    onEdit?: () => void;
-    /** When set, a second button opens the buyer picker for this listing. */
-    onAddBuyer?: () => void;
-    /** When set, opens the exclusive-owner picker for this listing. */
-    onAttachOwner?: () => void;
-    /** True when an exclusive owner is already linked — button becomes Change owner. */
-    hasAttachedOwner?: boolean;
-    /** When set, shows a delete control; caller owns the confirm dialog. */
-    onDelete?: () => void;
-}) {
-    const opensInModal = isEdit && onEdit != null;
-    const attachLabel = hasAttachedOwner ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL;
-    const attachTooltip = hasAttachedOwner
-        ? OWNED_CHANGE_OWNER_TOOLTIP
-        : OWNED_ATTACH_OWNER_TOOLTIP;
-
-    return (
-        <TooltipProvider>
-            <div className="flex flex-col gap-2">
-                {onAttachOwner || onAddBuyer ? (
-                    <div className="-mis-2 flex flex-wrap items-center gap-x-1 gap-y-0.5">
-                        {onAttachOwner ? (
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            type="button"
-                                            className="text-ink-muted hover:text-ink"
-                                            onClick={onAttachOwner}
-                                        >
-                                            <UserRound
-                                                aria-hidden
-                                                className="block-3.5 inline-3.5"
-                                                strokeWidth={1.75}
-                                            />
-                                            {attachLabel}
-                                        </Button>
-                                    }
-                                />
-                                <TooltipContent side="top" className="text-center max-inline-xs">
-                                    {attachTooltip}
-                                </TooltipContent>
-                            </Tooltip>
-                        ) : null}
-
-                        {onAddBuyer ? (
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            type="button"
-                                            className="text-ink-muted hover:text-ink"
-                                            onClick={onAddBuyer}
-                                        >
-                                            <UserPlus
-                                                aria-hidden
-                                                className="block-3.5 inline-3.5"
-                                                strokeWidth={1.75}
-                                            />
-                                            {OWNED_ADD_BUYER_LABEL}
-                                        </Button>
-                                    }
-                                />
-                                <TooltipContent side="top" className="text-center max-inline-xs">
-                                    {OWNED_ADD_BUYER_TOOLTIP}
-                                </TooltipContent>
-                            </Tooltip>
-                        ) : null}
-                    </div>
-                ) : null}
-
-                <div className="flex gap-2">
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <span className="inline-flex flex-1 min-inline-0">
-                                    <Button
-                                        size="md"
-                                        variant="accent"
-                                        className="inline-full"
-                                        type={opensInModal ? "button" : undefined}
-                                        onClick={opensInModal ? onEdit : undefined}
-                                        render={
-                                            opensInModal ? undefined : (
-                                                <Link href={href} prefetch={false} />
-                                            )
-                                        }
-                                    >
-                                        {isEdit ? OWNED_EDIT_LABEL : OWNED_OPEN_LABEL}
-                                    </Button>
-                                </span>
-                            }
-                        />
-                        <TooltipContent side="top" className="text-center max-inline-xs">
-                            {isEdit ? OWNED_EDIT_TOOLTIP : OWNED_OPEN_TOOLTIP}
-                        </TooltipContent>
-                    </Tooltip>
-
-                    {onDelete ? (
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <Button
-                                        size="md"
-                                        variant="outline"
-                                        type="button"
-                                        aria-label={OWNED_DELETE_LABEL}
-                                        className="
-                                          shrink-0 border-border-warm text-danger
-                                          hover:bg-danger/10 hover:text-danger
-                                        "
-                                        onClick={onDelete}
-                                    >
-                                        <Trash2
-                                            aria-hidden
-                                            className="block-4 inline-4"
-                                            strokeWidth={1.75}
-                                        />
-                                    </Button>
-                                }
-                            />
-                            <TooltipContent side="top" className="text-center max-inline-xs">
-                                {OWNED_DELETE_TOOLTIP}
-                            </TooltipContent>
-                        </Tooltip>
-                    ) : null}
-                </div>
-            </div>
-        </TooltipProvider>
-    );
-}
 
 const OWNED_STATUS_LABEL: Record<OwnedPropertyCardStatus, string> = {
     draft: "Draft",
@@ -1881,9 +1251,10 @@ function OwnedOverlayPropertyCard({
                     ) : audience === "broker" && !hasOwner && (onAttachOwner || onAddBuyer) ? (
                         <p
                             className="
-                          body-xs flex items-center justify-center rounded-control bg-surface-muted
-                          px-3 py-2 text-center font-medium text-ink/70 inline-full min-block-11
-                        "
+                              body-xs flex items-center justify-center rounded-control
+                              bg-surface-muted px-3 py-2 text-center font-medium text-ink/70
+                              inline-full min-block-11
+                            "
                         >
                             Attach an owner to enable calls and WhatsApp.
                         </p>
@@ -1891,49 +1262,6 @@ function OwnedOverlayPropertyCard({
                 </OverlayCardActions>
             </OverlayCard>
         </TooltipProvider>
-    );
-}
-
-function OwnedPropertyCardPrice({ listing }: { listing: OwnedPropertyCardListing }) {
-    const browse = ownedToBrowseListing(listing);
-    const both = offersBoth(browse);
-    const [mode, setMode] = useState<ListingPriceMode>(() => defaultPriceMode(browse));
-    const activeMode: ListingPriceMode = both ? mode : offersSale(browse) ? "sale" : "rent";
-    const priceLabel =
-        activeMode === "rent"
-            ? formatRent(listing.rentAmountInr ?? 0)
-            : formatPrice(listing.saleAmountInr ?? 0);
-
-    const requestLabel =
-        listing.inboundRequestCount === 0
-            ? "(0 req)"
-            : listing.inboundRequestCount === 1
-              ? "(1 req)"
-              : `(${listing.inboundRequestCount} req)`;
-
-    return (
-        <div className="flex items-center gap-2 min-inline-0">
-            <div className="flex flex-1 items-baseline gap-1.5 min-inline-0">
-                <span className="h5 truncate font-semibold tracking-wide text-ink tabular-nums">
-                    {priceLabel}
-                </span>
-                <span className="body-sm shrink-0 font-medium tracking-wide text-brand">
-                    {requestLabel}
-                </span>
-            </div>
-            {both ? (
-                <TextSegmentedToggle
-                    size="sm"
-                    value={activeMode}
-                    onValueChange={setMode}
-                    ariaLabel="Price type"
-                    options={[
-                        { value: "sale", label: "Sale" },
-                        { value: "rent", label: "Rent" },
-                    ]}
-                />
-            ) : null}
-        </div>
     );
 }
 

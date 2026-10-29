@@ -2,38 +2,35 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { Bell } from "@/components/shared/icons";
-
-import { profileApi, type UserProfile } from "@/lib/api/profile";
+import type { UserProfile } from "@/lib/api/profile";
+import {
+    type NotificationChannel as Channel,
+    NotificationPreferencesWriter,
+} from "@/lib/profile/notification-preferences";
 import { cn } from "@/lib/utils";
 
+import { Bell } from "@/components/shared/icons";
 import { Switch } from "@/components/ui/switch";
-
-type Channel = "whatsapp" | "sms" | "email";
 
 const CHANNELS: {
     id: Channel;
     label: string;
     hint: string;
-    apiKey: "notifyWhatsapp" | "notifySms" | "notifyEmail";
 }[] = [
     {
         id: "whatsapp",
         label: "WhatsApp",
-        hint: "How most owners reply. Turning this off will cost you deals.",
-        apiKey: "notifyWhatsapp",
+        hint: "WhatsApp updates when available.",
     },
     {
         id: "sms",
         label: "SMS",
-        hint: "A text when WhatsApp does not reach you.",
-        apiKey: "notifySms",
+        hint: "SMS updates when available.",
     },
     {
         id: "email",
         label: "Email",
-        hint: "A daily summary of what needs you.",
-        apiKey: "notifyEmail",
+        hint: "Email updates about your account.",
     },
 ];
 
@@ -56,6 +53,7 @@ type NotificationPreferencesProps = {
  * Failures stay inline under the grid (docs/MESSAGES.md).
  */
 export function NotificationPreferences({ profile, onSaved }: NotificationPreferencesProps) {
+    const [writer] = useState(() => new NotificationPreferencesWriter());
     const [pendingChannel, setPendingChannel] = useState<Channel | null>(null);
     const [errorChannel, setErrorChannel] = useState<Channel | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -71,31 +69,14 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
 
     const handleToggle = useCallback(
         async (channel: Channel, next: boolean) => {
-            if (!profile) return;
-
-            const apiKey = CHANNELS.find((c) => c.id === channel)?.apiKey;
-            if (!apiKey) return;
+            if (!profile || writer.isSaving) return;
 
             setPendingChannel(channel);
             setErrorChannel(null);
             setErrorMessage(null);
             try {
-                await profileApi.updateNotifications({
-                    notifyWhatsapp: prefs.whatsapp,
-                    notifySms: prefs.sms,
-                    notifyEmail: prefs.email,
-                    [apiKey]: next,
-                });
-                onSaved({
-                    ...profile,
-                    notifications: {
-                        ...profile.notifications,
-                        unreadCount: profile.notifications?.unreadCount,
-                        whatsapp: channel === "whatsapp" ? next : prefs.whatsapp,
-                        sms: channel === "sms" ? next : prefs.sms,
-                        email: channel === "email" ? next : prefs.email,
-                    },
-                });
+                const updated = await writer.save(profile, channel, next);
+                if (updated) onSaved(updated);
             } catch {
                 setErrorChannel(channel);
                 setErrorMessage("Could not save that. Check your connection and try again.");
@@ -103,7 +84,7 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
                 setPendingChannel(null);
             }
         },
-        [onSaved, prefs, profile],
+        [onSaved, profile, writer],
     );
 
     return (
@@ -131,7 +112,7 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
             <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {CHANNELS.map((channel) => {
                     const on = prefs[channel.id];
-                    const isPending = pendingChannel === channel.id;
+                    const isPending = pendingChannel !== null;
                     const hasError = errorChannel === channel.id && Boolean(errorMessage);
 
                     return (
@@ -141,7 +122,8 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
                                 className={cn(
                                     `
                                       flex cursor-pointer items-start gap-3 rounded-control border-2
-                                      px-4 py-3.5 text-start leading-normal transition-[background-color,border-color,color,box-shadow]
+                                      px-4 py-3.5 text-start leading-normal
+                                      transition-[background-color,border-color,color,box-shadow]
                                       duration-160 min-block-12
                                       has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                     `,

@@ -12,7 +12,21 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+
+import { profileApi, type UpdateProfileInput, type UserProfile } from "@/lib/api/profile";
+import { cn } from "@/lib/utils";
 import {
+    BIO_MAX,
+    MAX_SERVICE_AREAS,
+    normalizeProfilePhone,
+    parseCommaList,
+    profileFormSchema,
+    type ProfileFormValues,
+} from "@/lib/validation/profile";
+import { useLocationOptions } from "@/hooks/use-locations";
+
+import {
+    type AppIcon,
     Award,
     BadgeCheck,
     Briefcase,
@@ -22,36 +36,20 @@ import {
     Home,
     Landmark,
     Link2,
-    type AppIcon,
     Mail,
     Map,
-    MapPinned,
     MapPin,
+    MapPinned,
     Phone,
     Receipt,
     Tags,
     UserRound,
 } from "@/components/shared/icons";
-
-import { cn } from "@/lib/utils";
-
-import { profileApi, type UpdateProfileInput, type UserProfile } from "@/lib/api/profile";
-import {
-    BIO_MAX,
-    MAX_SERVICE_AREAS,
-    normalizeProfilePhone,
-    parseCommaList,
-    profileFormSchema,
-    type ProfileFormValues,
-} from "@/lib/validation/profile";
-
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { OptionCombobox } from "@/components/shared/option-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-import { useLocationOptions } from "@/hooks/use-locations";
 
 import { NotificationPreferences } from "@/features/profile/notification-preferences";
 import { ProfilePhotoField } from "@/features/profile/profile-photo-field";
@@ -472,11 +470,11 @@ export function ProfilePage() {
             >
                 <div
                     className="
-                      flex flex-col gap-0 rounded-card border border-border-warm bg-surface p-5
-                      shadow-sm
+                      order-2 flex flex-col gap-0 rounded-card border border-border-warm bg-surface
+                      p-5 shadow-sm
                       sm:p-6
+                      lg:order-1
                       xl:p-7
-                      order-2 lg:order-1
                     "
                 >
                     {submitError ? (
@@ -1055,9 +1053,8 @@ export function ProfilePage() {
             {isDirty ? (
                 <div
                     className="
-                      fixed inset-x-0 z-30 border-bs border-border-warm bg-surface/95 p-3
-                      shadow-md backdrop-blur-sm
-                      inset-be-[calc(4.75rem+env(safe-area-inset-bottom))]
+                      fixed inset-x-0 inset-be-[calc(4.75rem+env(safe-area-inset-bottom))] z-30
+                      border-bs border-border-warm bg-surface/95 p-3 shadow-md backdrop-blur-sm
                       md:hidden
                     "
                 >
@@ -1067,7 +1064,7 @@ export function ProfilePage() {
                         size="lg"
                         loading={isSubmitting}
                         disabled={!isDirty}
-                        className="w-full"
+                        className="inline-full"
                     >
                         {isSubmitting ? "Saving…" : "Save changes"}
                     </Button>

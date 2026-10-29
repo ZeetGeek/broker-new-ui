@@ -3,8 +3,6 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { CalendarDays } from "@/components/shared/icons";
-
 import { ApiError } from "@/lib/api/client";
 import {
     type OwnerShowingFocus,
@@ -15,18 +13,14 @@ import {
     type VisitSlot,
 } from "@/lib/api/owner-slots";
 import { propertiesApi, type PropertyListing } from "@/lib/api/properties";
-import {
-    formatDateIso,
-    formatTime24,
-    parseApiInstant,
-    toApiInstantFromLocalParts,
-} from "@/lib/format/date";
+import { formatDateIso, formatTime24, toApiInstantFromLocalParts } from "@/lib/format/date";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { AppPagination } from "@/components/shared/app-pagination";
 import { EmptyState } from "@/components/shared/empty-state";
+import { CalendarDays } from "@/components/shared/icons";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { Button } from "@/components/ui/button";
 

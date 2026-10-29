@@ -84,11 +84,7 @@ function RequestRow({
     const isRemind = item.action.kind === "remind";
 
     return (
-        <article
-            className="
-          flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4
-        "
-        >
+        <article className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4">
             <RequestIcon type={item.type} />
             <div
                 className="

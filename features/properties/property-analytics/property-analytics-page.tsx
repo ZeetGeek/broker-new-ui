@@ -118,8 +118,8 @@ function AnalyticsBody({ data }: { data: PropertyAnalytics }) {
                     </h1>
                     <div
                         className="
-                      body-sm flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-muted
-                    "
+                          body-sm flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-muted
+                        "
                     >
                         {place ? (
                             <span className="flex items-center gap-1 min-inline-0">
@@ -164,16 +164,14 @@ function AnalyticsBody({ data }: { data: PropertyAnalytics }) {
                 </h2>
                 <dl
                     className="
-                  grid grid-cols-2 gap-px overflow-hidden rounded-inner bg-border-warm
-                  sm:grid-cols-4
-                "
+                      grid grid-cols-2 gap-px overflow-hidden rounded-inner bg-border-warm
+                      sm:grid-cols-4
+                    "
                 >
                     {metrics.map((metric) => (
                         <div
                             key={metric.label}
-                            className="
-                          flex flex-col gap-1 bg-surface-muted px-4 py-3
-                        "
+                            className="flex flex-col gap-1 bg-surface-muted px-4 py-3"
                         >
                             <dt className="body-xs text-ink-muted">{metric.label}</dt>
                             <dd className="flex flex-wrap items-baseline gap-x-1.5">
@@ -235,22 +233,14 @@ function AnalyticsSkeleton() {
         <div
             aria-busy="true"
             aria-label="Loading this listing's leads"
-            className="
-          flex flex-col gap-6
-          md:gap-8
-        "
+            className="flex flex-col gap-6 md:gap-8"
         >
             <div className="flex flex-col gap-2">
                 <Skeleton className="block-8 inline-full max-inline-lg" />
                 <Skeleton className="block-4 inline-48" />
             </div>
             <div className={`${CARD_CLASS} flex flex-col gap-5 p-4 md:p-5`}>
-                <div
-                    className="
-                  grid grid-cols-2 gap-px overflow-hidden rounded-inner
-                  sm:grid-cols-4
-                "
-                >
+                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-inner sm:grid-cols-4">
                     {Array.from({ length: 4 }, (_, index) => (
                         <Skeleton key={index} className="rounded-none block-16" />
                     ))}

@@ -4,11 +4,20 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
+
+import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatListingPrice } from "@/lib/format/price";
+import { brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { cn } from "@/lib/utils";
+import { useMarketCurrency } from "@/hooks/use-market";
+
+import { AppModal } from "@/components/shared/app-modal";
 import {
+    type AppIcon,
     Building2,
+    currencyIcon,
     Globe2,
     Home,
-    currencyIcon,
     Link2,
     Lock,
     Mail,
@@ -20,31 +29,22 @@ import {
     Trash2,
     UserRound,
     X,
-    type AppIcon,
 } from "@/components/shared/icons";
-
-import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatListingPrice } from "@/lib/format/price";
-import { brokerPropertyDetailHref } from "@/lib/routes/broker";
-import { cn } from "@/lib/utils";
-
-import { AppModal } from "@/components/shared/app-modal";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
 import {
+    type ContactPropertyCardItem,
     toBuyerContactCardModel,
     toOwnerContactCardModel,
-    type ContactPropertyCardItem,
 } from "@/features/contacts/contact-card-model";
-import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { BuyerContactForm, OwnerContactForm } from "@/features/contacts/contact-form-model";
 import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
-import { useMarketCurrency } from "@/hooks/use-market";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
 
@@ -70,7 +70,10 @@ function IconFactGrid({ facts, onAdd }: { facts: IconFact[]; onAdd?: () => void 
             <button
                 type="button"
                 onClick={onAdd}
-                className="body-sm flex items-center gap-2 font-semibold text-brand-text hover:underline"
+                className="
+                  body-sm flex items-center gap-2 font-semibold text-brand-text
+                  hover:underline
+                "
             >
                 <Plus aria-hidden className="block-4 inline-4" /> Add details
             </button>
@@ -99,9 +102,9 @@ function IconFactGrid({ facts, onAdd }: { facts: IconFact[]; onAdd?: () => void 
                             className="mbs-1 shrink-0 text-ink-muted block-5 inline-5"
                             strokeWidth={1.75}
                         />
-                        <div className="min-inline-0 flex-1">
+                        <div className="flex-1 min-inline-0">
                             <dt className="body-sm text-ink-muted">{fact.label}</dt>
-                            <dd className="body mbs-0.5 break-words font-semibold text-ink">
+                            <dd className="body mbs-0.5 font-semibold wrap-break-word text-ink">
                                 {fact.value}
                             </dd>
                         </div>
@@ -141,7 +144,7 @@ function DetailSection({
     const hasCustomContent = children != null;
 
     return (
-        <section ref={sectionRef} className="scroll-mt-5 pbe-6">
+        <section ref={sectionRef} className="scroll-mbs-5 pbe-6">
             <div className="mbe-4 flex items-center gap-2">
                 <h3 className="body font-bold text-ink">{title}</h3>
                 {locked ? (
@@ -167,7 +170,7 @@ function DetailSection({
                                 <dt className="text-[11px] font-medium text-ink-subtle">
                                     {entry.label}
                                 </dt>
-                                <dd className="body-xs mbs-1 break-words font-medium text-ink">
+                                <dd className="body-xs mbs-1 font-medium wrap-break-word text-ink">
                                     {present ? (
                                         entry.value
                                     ) : locked ? (
@@ -178,7 +181,11 @@ function DetailSection({
                                         <button
                                             type="button"
                                             onClick={onAdd}
-                                            className="inline-flex items-center gap-1 font-semibold text-brand-text hover:underline"
+                                            className="
+                                              inline-flex items-center gap-1 font-semibold
+                                              text-brand-text
+                                              hover:underline
+                                            "
                                         >
                                             <Plus aria-hidden className="block-3 inline-3" /> Add
                                         </button>
@@ -192,7 +199,10 @@ function DetailSection({
                 <button
                     type="button"
                     onClick={onAdd}
-                    className="body-xs flex items-center gap-2 font-semibold text-brand-text hover:underline"
+                    className="
+                      body-xs flex items-center gap-2 font-semibold text-brand-text
+                      hover:underline
+                    "
                 >
                     <Plus aria-hidden className="block-3.5 inline-3.5" /> Add {title.toLowerCase()}
                 </button>
@@ -234,7 +244,11 @@ function AttachedPropertyRows({
                 return (
                     <div
                         key={property.leadId || property.id}
-                        className="group/property flex items-center gap-2 rounded-inner border border-border-warm bg-surface p-2.5 shadow-xs hover:border-brand/35"
+                        className="
+                          group/property flex items-center gap-2 rounded-inner border
+                          border-border-warm bg-surface p-2.5 shadow-xs
+                          hover:border-brand/35
+                        "
                     >
                         <Link
                             href={brokerPropertyDetailHref(property.id)}
@@ -253,7 +267,11 @@ function AttachedPropertyRows({
                                     {property.title}
                                 </span>
                                 <span className="body-xs text-ink-muted">{property.locality}</span>
-                                <span className="tabular body-sm mbs-0.5 block font-semibold text-brand">
+                                <span
+                                    className="
+                                  tabular body-sm mbs-0.5 block font-semibold text-brand
+                                "
+                                >
                                     {property.priceLabel}
                                 </span>
                             </span>
@@ -279,7 +297,11 @@ function AttachedPropertyRows({
                 <button
                     type="button"
                     onClick={onAttach}
-                    className="body-sm flex items-center justify-center gap-2 rounded-inner border border-dashed border-brand/40 px-3 py-3.5 font-semibold text-brand-text hover:bg-brand-soft/50"
+                    className="
+                      body-sm flex items-center justify-center gap-2 rounded-inner border
+                      border-dashed border-brand/40 px-3 py-3.5 font-semibold text-brand-text
+                      hover:bg-brand-soft/50
+                    "
                 >
                     <Link2 aria-hidden className="block-4 inline-4" />
                     {attachLabel}
@@ -317,7 +339,7 @@ function PanelHeader({
             />
             <div className="flex-1 min-inline-0">
                 <span className="flex flex-wrap items-center gap-2">
-                    <span className="truncate font-display text-lg font-medium capitalize text-ink">
+                    <span className="truncate font-display text-lg font-medium text-ink capitalize">
                         {name}
                     </span>
                     {badge}
@@ -325,7 +347,10 @@ function PanelHeader({
                 {phone ? (
                     <a
                         href={`tel:+91${phone}`}
-                        className="body-sm tabular font-medium text-ink-muted hover:text-brand-text hover:underline"
+                        className="
+                          body-sm tabular font-medium text-ink-muted
+                          hover:text-brand-text hover:underline
+                        "
                     >
                         {formatPhoneIn(phone)}
                     </a>
@@ -460,7 +485,7 @@ function BuyerPanel({
 
     return (
         <>
-            <section className="scroll-mt-5 pbe-6">
+            <section className="scroll-mbs-5 pbe-6">
                 <h3 className="body mbe-4 font-bold text-ink">Requirement</h3>
                 <IconFactGrid
                     onAdd={onEdit}
@@ -543,7 +568,11 @@ function BuyerPanel({
                         : undefined
                 }
                 footer={
-                    <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
+                    <div
+                        className="
+                      flex flex-row flex-wrap items-center justify-end gap-2 inline-full
+                    "
+                    >
                         <Button
                             type="button"
                             variant="ghost"
@@ -575,7 +604,7 @@ function BuyerPanel({
                 </p>
             </AppModal>
 
-            <section className="scroll-mt-5 pbe-6">
+            <section className="scroll-mbs-5 pbe-6">
                 <h3 className="body mbe-4 font-bold text-ink">Contact details</h3>
                 <IconFactGrid
                     onAdd={onEdit}
@@ -601,7 +630,7 @@ function BuyerPanel({
                 />
             </section>
 
-            <section className="scroll-mt-5">
+            <section className="scroll-mbs-5">
                 <div className="mbe-4 flex items-center justify-between gap-2">
                     <h3 className="body flex items-center gap-2 font-bold text-ink">
                         <StickyNote
@@ -621,8 +650,9 @@ function BuyerPanel({
                     placeholder="Add useful context for the next conversation."
                     className="
                       body resize-none rounded-control border-2 border-border-warm bg-surface p-3.5
-                      leading-relaxed text-ink outline-none min-block-28 inline-full
-                      hover:border-ink-subtle focus:border-ring focus:ring-3 focus:ring-ring/30
+                      leading-relaxed text-ink outline-none inline-full min-block-28
+                      hover:border-ink-subtle
+                      focus:border-ring focus:ring-3 focus:ring-ring/30
                     "
                 />
             </section>
@@ -680,7 +710,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
 
     return (
         <>
-            <section className="scroll-mt-5 pbe-6">
+            <section className="scroll-mbs-5 pbe-6">
                 <h3 className="body mbe-4 font-bold text-ink">Details</h3>
                 <IconFactGrid
                     onAdd={isPlatform ? undefined : onEdit}
@@ -733,7 +763,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                 </DetailSection>
             ) : null}
 
-            <section className="scroll-mt-5 pbe-6">
+            <section className="scroll-mbs-5 pbe-6">
                 <h3 className="body mbe-4 font-bold text-ink">Contact details</h3>
                 <IconFactGrid
                     onAdd={isPlatform ? undefined : onEdit}
@@ -760,7 +790,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                 />
             </section>
 
-            <section className="scroll-mt-5">
+            <section className="scroll-mbs-5">
                 <div className="mbe-4 flex items-center justify-between gap-2">
                     <h3 className="body flex items-center gap-2 font-bold text-ink">
                         <StickyNote
@@ -789,9 +819,10 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                     }
                     className="
                       body resize-none rounded-control border-2 border-border-warm bg-surface p-3.5
-                      leading-relaxed text-ink outline-none min-block-28 inline-full
-                      hover:border-ink-subtle focus:border-ring focus:ring-3 focus:ring-ring/30
+                      leading-relaxed text-ink outline-none inline-full min-block-28
                       read-only:bg-surface-muted read-only:text-ink-muted
+                      hover:border-ink-subtle
+                      focus:border-ring focus:ring-3 focus:ring-ring/30
                     "
                 />
             </section>
@@ -905,18 +936,18 @@ export function ContactDetailPanel({
             owner.origin === "platform" ? (
                 <span
                     className="
-                  body-xs inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1
-                  font-semibold tracking-wide text-brand-text
-                "
+                      body-xs inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5
+                      py-1 font-semibold tracking-wide text-brand-text
+                    "
                 >
                     Platform
                 </span>
             ) : (
                 <span
                     className="
-                  body-xs inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1
-                  font-semibold tracking-wide text-brand-text
-                "
+                      body-xs inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5
+                      py-1 font-semibold tracking-wide text-brand-text
+                    "
                 >
                     <span
                         aria-hidden

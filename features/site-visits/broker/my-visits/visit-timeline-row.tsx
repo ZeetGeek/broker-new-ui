@@ -45,9 +45,9 @@ export const VisitTimelineRow = memo(function VisitTimelineRow({
     return (
         <article
             className="
-          group relative rounded-inner px-2 py-3 transition-colors duration-160
-          hover:bg-surface-muted/80
-        "
+              group relative rounded-inner px-2 py-3 transition-colors duration-160
+              hover:bg-surface-muted/80
+            "
         >
             <button
                 type="button"

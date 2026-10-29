@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, Mail } from "@/components/shared/icons";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -14,6 +13,7 @@ import { destinationForRole } from "@/lib/auth/session";
 import { useRouter, useSearchParams } from "@/lib/navigation";
 import { loginSchema, type LoginValues } from "@/lib/validation/auth";
 
+import { Lock, Mail } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";

@@ -6,15 +6,15 @@ import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarClock, MapPin } from "@/components/shared/icons";
 
-import { useBookSlot } from "@/hooks/use-book-slot";
-import { ApiError } from "@/lib/api/client";
 import { brokerVisitsApi, SlotTakenError } from "@/lib/api/broker-visits";
+import { ApiError } from "@/lib/api/client";
 import { checkVisitConflicts, type ConflictResult } from "@/lib/visits/conflicts";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
+import { useBookSlot } from "@/hooks/use-book-slot";
 
 import { AppImage } from "@/components/shared/app-image";
+import { CalendarClock, MapPin } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -240,17 +240,17 @@ export function BookingDrawer({
         >
             <DialogPopup
                 className="
-              inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0 overflow-hidden
-              rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
-              sm:inset-s-auto! sm:inset-e-0! sm:inset-bs-0! sm:rounded-none sm:block-full
-              sm:inline-[480px] sm:max-block-none sm:max-inline-[480px]
-            "
+                  inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0
+                  overflow-hidden rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
+                  sm:inset-s-auto! sm:inset-e-0! sm:inset-bs-0! sm:rounded-none sm:block-full
+                  sm:inline-[480px] sm:max-block-none sm:max-inline-[480px]
+                "
             >
                 <div
                     className="
-                  mx-auto mbs-2 rounded-full bg-border-warm block-1 inline-12
-                  sm:hidden
-                "
+                      mx-auto mbs-2 rounded-full bg-border-warm block-1 inline-12
+                      sm:hidden
+                    "
                     aria-hidden
                 />
                 <div className="shrink-0 border-be border-border-warm p-5 pe-14">
@@ -261,7 +261,11 @@ export function BookingDrawer({
                         </DialogDescription>
                     </DialogHeader>
                     <div className="mbs-4 flex gap-3 rounded-inner bg-surface-muted p-3">
-                        <div className="relative shrink-0 overflow-hidden rounded-[8px] block-14 inline-16">
+                        <div
+                            className="
+                          relative shrink-0 overflow-hidden rounded-[8px] block-14 inline-16
+                        "
+                        >
                             <AppImage
                                 src={item.property.coverUrl ?? "/properties/1.jpg"}
                                 alt=""
@@ -293,7 +297,10 @@ export function BookingDrawer({
                     {!hasBookingAccess ? (
                         <p
                             role="alert"
-                            className="body-sm rounded-inner bg-urgent-soft px-3 py-2 font-semibold text-pending"
+                            className="
+                              body-sm rounded-inner bg-urgent-soft px-3 py-2 font-semibold
+                              text-pending
+                            "
                         >
                             The owner must approve access before this time can be booked.
                         </p>
@@ -322,7 +329,12 @@ export function BookingDrawer({
                         <ConflictPanel result={conflict} onOpenVisit={onOpenVisit} />
                     ) : null}
                     {localConflict.level === "tight" && !apiConflict ? (
-                        <label className="flex cursor-pointer items-center gap-3 rounded-inner border border-pending/20 bg-urgent-soft px-3 text-pending min-block-11">
+                        <label
+                            className="
+                          flex cursor-pointer items-center gap-3 rounded-inner border
+                          border-pending/20 bg-urgent-soft px-3 text-pending min-block-11
+                        "
+                        >
                             <Checkbox
                                 checked={acceptTight}
                                 onCheckedChange={(checked) => form.setValue("acceptTight", checked)}
@@ -371,7 +383,12 @@ export function BookingDrawer({
                     ) : null}
                 </form>
 
-                <footer className="sticky inset-be-0 flex shrink-0 items-center justify-between gap-4 border-bs border-border-warm bg-surface p-4">
+                <footer
+                    className="
+                  sticky inset-be-0 flex shrink-0 items-center justify-between gap-4 border-bs
+                  border-border-warm bg-surface p-4
+                "
+                >
                     <p className="body-xs text-ink-muted max-inline-48">
                         Cancelling within 2 hours is marked as a late cancel.
                     </p>

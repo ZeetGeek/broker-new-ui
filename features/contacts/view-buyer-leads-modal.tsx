@@ -77,11 +77,7 @@ function LeadRow({ lead }: { lead: BuyerLead }) {
     const tone = stageColor(lead.stage);
 
     return (
-        <article
-            className="
-          flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-3
-        "
-        >
+        <article className="flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-3">
             <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5 min-inline-0">
                     <PropertyTitleLink

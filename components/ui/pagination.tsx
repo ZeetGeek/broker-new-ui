@@ -1,9 +1,8 @@
 import * as React from "react";
 
-import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {

@@ -2,12 +2,11 @@
 
 import { memo } from "react";
 
-import { Check, Clock3, Info, X } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 import { getSlotVisualState } from "@/lib/visits/status";
 import { formatVisitA11yDate, formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { Check, Clock3, Info, X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     Popover,

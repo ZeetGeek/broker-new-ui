@@ -1,9 +1,10 @@
 "use client";
 
 import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion";
-import { ChevronDownIcon, ChevronUpIcon } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
+
+import { ChevronDownIcon, ChevronUpIcon } from "@/components/shared/icons";
 
 function Accordion({ className, ...props }: AccordionPrimitive.Root.Props) {
     return (

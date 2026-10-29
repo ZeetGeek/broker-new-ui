@@ -31,7 +31,12 @@ export function MyDealsIntro({
             {isLoading ? (
                 <span aria-hidden className="relative inline-block align-bottom">
                     <span className="invisible">My deals.</span>
-                    <span className="absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control bg-border-warm block-[0.8em] inline-full">
+                    <span
+                        className="
+                      absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control
+                      bg-border-warm block-[0.8em] inline-full
+                    "
+                    >
                         <Skeleton className="bg-ink/3 block-full inline-full" />
                     </span>
                 </span>

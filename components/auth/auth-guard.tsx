@@ -67,7 +67,11 @@ export function AuthGuard({ children, portal }: { children: React.ReactNode; por
             >
                 <span className="sr-only">Loading your account</span>
                 <div className="mx-auto space-y-6 max-inline-[1280px]">
-                    <div className="animate-pulse rounded-card bg-surface-muted block-16 inline-full" />
+                    <div
+                        className="
+                      animate-pulse rounded-card bg-surface-muted block-16 inline-full
+                    "
+                    />
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
                         {Array.from({ length: 6 }, (_, index) => (
                             <div
@@ -76,7 +80,11 @@ export function AuthGuard({ children, portal }: { children: React.ReactNode; por
                             />
                         ))}
                     </div>
-                    <div className="animate-pulse rounded-card bg-surface-muted block-72 inline-full" />
+                    <div
+                        className="
+                      animate-pulse rounded-card bg-surface-muted block-72 inline-full
+                    "
+                    />
                 </div>
             </div>
         );

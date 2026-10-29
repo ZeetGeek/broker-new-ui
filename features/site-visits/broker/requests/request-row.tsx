@@ -3,14 +3,6 @@
 import { memo } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import {
-    CalendarClock,
-    Clock3,
-    MapPin,
-    PanelRight,
-    RotateCcw,
-    Trash2,
-} from "@/components/shared/icons";
 
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
@@ -19,6 +11,14 @@ import { REQUEST_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitTime, visitAge } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
+import {
+    CalendarClock,
+    Clock3,
+    MapPin,
+    PanelRight,
+    RotateCcw,
+    Trash2,
+} from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";

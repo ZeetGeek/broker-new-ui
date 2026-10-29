@@ -4,8 +4,6 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Bookmark, Clock3, MapPin, Users } from "@/components/shared/icons";
-
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
 import { representativeApi } from "@/lib/api/representative";
@@ -14,6 +12,7 @@ import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { Bookmark, Clock3, MapPin, Users } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";

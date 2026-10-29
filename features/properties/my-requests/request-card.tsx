@@ -3,11 +3,11 @@
 import { useState } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { Send } from "@/components/shared/icons";
 
 import { formatRelativePast } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { Send } from "@/components/shared/icons";
 import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +22,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
-import { CancelledNote } from "@/features/properties/my-requests/cancelled-note";
-import { CancelRepresentationDialog } from "@/features/representation/cancel-representation-dialog";
 import { attemptActions } from "@/features/properties/my-requests/attempt-rules";
+import { CancelledNote } from "@/features/properties/my-requests/cancelled-note";
 import {
-    DealCardPhotoToolbar,
     DealAttachedBuyers,
+    DealCardPhotoToolbar,
     DealContactSplitBar,
     DealOverlayCard,
     DealOverlayFooter,
@@ -45,6 +44,7 @@ import {
     type RequestItem,
     type RequestStage,
 } from "@/features/properties/my-requests/types";
+import { CancelRepresentationDialog } from "@/features/representation/cancel-representation-dialog";
 
 addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 const STATUS_TONE: Record<RequestStage, DealStatusTone> = {

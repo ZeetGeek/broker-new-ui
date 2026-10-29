@@ -5,24 +5,21 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link2 } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import type { NewBuyerInput } from "@/lib/api/clients";
 import { contactsApi } from "@/lib/api/contacts";
 import { brokerContactHref } from "@/lib/routes/broker";
 import {
-    type BuyerFormValues,
     buyerFormSchema,
+    type BuyerFormValues,
     normalizeBuyerBudget,
     normalizeBuyerPhone,
     parseBuyerLocalities,
 } from "@/lib/validation/buyer";
-
 import { useLocationOptions } from "@/hooks/use-locations";
 
-import { useAppSelector } from "@/store/hooks";
-
+import { Link2 } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { Button } from "@/components/ui/button";
 
@@ -40,6 +37,7 @@ import {
 import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
 import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
 import type { BuyerRow } from "@/features/contacts/types";
+import { useAppSelector } from "@/store/hooks";
 
 function emptyValues(location = contactLocationDefaults()): BuyerFormValues {
     return {

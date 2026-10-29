@@ -175,12 +175,7 @@ export function AttachBuyerPropertiesModal({
                     Loading properties…
                 </p>
             ) : loadError ? (
-                <div
-                    role="alert"
-                    className="
-              flex flex-col gap-3
-            "
-                >
+                <div role="alert" className="flex flex-col gap-3">
                     <p className="body-sm text-danger">Could not load properties. Try again.</p>
                     <Button variant="outline" onClick={() => setRetryVersion((value) => value + 1)}>
                         Retry
@@ -249,8 +244,9 @@ export function AttachBuyerPropertiesModal({
                                         </div>
                                         <p
                                             className="
-                                          body-xs flex flex-wrap items-center gap-x-1 text-ink-muted
-                                        "
+                                              body-xs flex flex-wrap items-center gap-x-1
+                                              text-ink-muted
+                                            "
                                         >
                                             {property.city ? (
                                                 <>

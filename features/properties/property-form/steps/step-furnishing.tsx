@@ -392,10 +392,7 @@ export function StepFurnishing() {
                     options={FURNISHING_OPTIONS}
                     columns={3}
                     icons={FURNISHING_ICONS}
-                    className="
-                      [&_label]:bg-surface
-                      [&_label>span[aria-hidden]]:text-ink-subtle
-                    "
+                    className="[&_label]:bg-surface [&_label>span[aria-hidden]]:text-ink-subtle"
                 />
             </WizardSection>
 

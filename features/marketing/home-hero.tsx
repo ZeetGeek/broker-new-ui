@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 
-import { ArrowRight, CreditCardOff, Gift, Lock, Rocket } from "@/components/shared/icons";
-
 import { ProgressiveBlur } from "@/components/motion-primitives/progressive-blur";
+import { ArrowRight, Calendar, Contact, MapPin, Rocket } from "@/components/shared/icons";
 import { Logo } from "@/components/shared/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,13 +14,13 @@ const BROKER_SIGNUP_HREF = "/register?portal=broker";
 
 const HERO_COPY = {
     title: "Stop losing leads in WhatsApp",
-    lede: "Track every client, never miss a follow-up, manage showings from your phone. Built for independent brokers.",
-    primary: { label: "Start free for 3 months", href: BROKER_SIGNUP_HREF },
-    secondary: { label: "See how it works", href: BROKER_SIGNUP_HREF },
+    lede: "Keep your listings, clients and site visits together. A CRM for brokers in Surat, ready to use from your phone.",
+    primary: { label: "Create broker account", href: BROKER_SIGNUP_HREF },
+    secondary: { label: "Log in", href: "/login" },
     trust: [
-        { icon: Gift, label: "Free for first 20 brokers" },
-        { icon: CreditCardOff, label: "No card required" },
-        { icon: Lock, label: "Your data stays yours" },
+        { icon: Contact, label: "Client records" },
+        { icon: Calendar, label: "Site visits" },
+        { icon: MapPin, label: "Starting in Surat" },
     ],
     note: "Coming soon: property owners list directly, and you apply to represent them.",
 };
@@ -98,7 +97,7 @@ export function HomeHero() {
 
                     <Badge color="lime" blur className="relative">
                         <Rocket aria-hidden="true" />
-                        Now onboarding brokers and owners
+                        Now onboarding brokers
                     </Badge>
 
                     <h1

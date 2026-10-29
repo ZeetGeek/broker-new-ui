@@ -1,8 +1,10 @@
+import { calendarDaysBetween } from "@/lib/format/date";
+
 import {
+    type AppIcon,
     Building2,
     CircleCheckBig,
     Hourglass,
-    type AppIcon,
     MailCheck,
     MailOpen,
     Send,
@@ -10,8 +12,6 @@ import {
     UserRound,
     UserRoundCheck,
 } from "@/components/shared/icons";
-
-import { calendarDaysBetween } from "@/lib/format/date";
 
 import {
     isNudgeable,

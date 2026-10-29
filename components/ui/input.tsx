@@ -5,7 +5,6 @@ import * as React from "react";
 import { Input as InputPrimitive } from "@base-ui/react/input";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tailspin } from "ldrs/react";
-import { AlertCircle, CheckCircle2, Eye, EyeOff, X } from "@/components/shared/icons";
 
 import {
     copyInputTypeMetrics,
@@ -15,6 +14,8 @@ import {
 import { clearInputError, shakeInput } from "@/lib/motion/shake-input";
 import { swapText } from "@/lib/motion/swap-text";
 import { cn } from "@/lib/utils";
+
+import { AlertCircle, CheckCircle2, Eye, EyeOff, X } from "@/components/shared/icons";
 
 import "ldrs/react/Tailspin.css";
 

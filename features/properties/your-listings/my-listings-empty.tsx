@@ -1,8 +1,7 @@
 import Link from "next/link";
 
-import { Building2, Search } from "@/components/shared/icons";
-
 import { EmptyState } from "@/components/shared/empty-state";
+import { Building2, Search } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 export type MyListingsEmptyProps = {

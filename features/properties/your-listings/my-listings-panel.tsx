@@ -6,13 +6,12 @@ import toast from "react-hot-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tinykeys } from "tinykeys";
 
-import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
 import { attachedClientsByProperty } from "@/lib/api/clients";
-import { collectPropertyPages } from "@/lib/properties/list-criteria";
-import { useAppSelector } from "@/store/hooks";
+import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
 import { propertiesApi } from "@/lib/api/properties";
 import { representativeApi } from "@/lib/api/representative";
 import { summarizePropertyBrokers } from "@/lib/format/property-brokers";
+import { collectPropertyPages } from "@/lib/properties/list-criteria";
 import { getShortcut } from "@/lib/shortcuts";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
@@ -39,6 +38,7 @@ import {
 import { MyListingsResultsSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
+import { useAppSelector } from "@/store/hooks";
 
 function isEditable(el: EventTarget | null): boolean {
     if (!(el instanceof HTMLElement)) return false;

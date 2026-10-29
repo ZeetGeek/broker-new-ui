@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { LogOut } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import { getShortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
+import { LogOut } from "@/components/shared/icons";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 
 const HOLD_MS = 900;

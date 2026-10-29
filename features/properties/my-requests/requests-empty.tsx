@@ -1,10 +1,9 @@
 import Link from "next/link";
 
-import { Inbox } from "@/components/shared/icons";
-
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { Inbox } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 /** No requests at all — point the broker at the pool, not at a filter. */

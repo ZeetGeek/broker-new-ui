@@ -1,7 +1,6 @@
 "use client";
 
 import { CalendarDays, Clock3, RotateCw, SlidersHorizontal } from "@/components/shared/icons";
-
 import { Button } from "@/components/ui/button";
 
 export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slots" | "requests" }) {
@@ -114,13 +113,13 @@ export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slot
                                         <div className="flex gap-1.5">
                                             <div
                                                 className="
-                                              rounded-lg bg-brand-soft block-6 inline-20
-                                            "
+                                                  rounded-lg bg-brand-soft block-6 inline-20
+                                                "
                                             />
                                             <div
                                                 className="
-                                              rounded-lg bg-surface-muted block-6 inline-28
-                                            "
+                                                  rounded-lg bg-surface-muted block-6 inline-28
+                                                "
                                             />
                                         </div>
                                         <div className="rounded-sm bg-brand-soft block-5 inline-20" />
@@ -145,8 +144,8 @@ export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slot
                                 <div className="flex gap-2 px-4 py-3 sm:px-5">
                                     <div
                                         className="
-                                      rounded-control bg-surface-muted block-8 inline-24
-                                    "
+                                          rounded-control bg-surface-muted block-8 inline-24
+                                        "
                                     />
                                 </div>
                             </div>
@@ -190,8 +189,8 @@ export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slot
                                         <div className="rounded-lg bg-danger-soft block-6 inline-28" />
                                         <div
                                             className="
-                                          rounded-lg bg-surface-muted block-6 inline-24
-                                        "
+                                              rounded-lg bg-surface-muted block-6 inline-24
+                                            "
                                         />
                                     </div>
                                     <div className="rounded-sm bg-brand-soft block-5 inline-20" />

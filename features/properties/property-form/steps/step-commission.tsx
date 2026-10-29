@@ -191,7 +191,12 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                             ) : null}
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-between gap-4 border-bs border-border-warm bg-surface p-5">
+                        <div
+                            className="
+                          flex flex-wrap items-center justify-between gap-4 border-bs
+                          border-border-warm bg-surface p-5
+                        "
+                        >
                             <div className="min-inline-0">
                                 <p className="text-sm font-medium text-brand-text">
                                     Estimated commission
@@ -206,7 +211,11 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                                     Before applicable taxes and deductions.
                                 </p>
                             </div>
-                            <p className="tabular ms-auto text-2xl font-bold tracking-tight text-brand-text">
+                            <p
+                                className="
+                              tabular ms-auto text-2xl font-bold tracking-tight text-brand-text
+                            "
+                            >
                                 {formatMoney(estimatedCommission)}
                             </p>
                         </div>

@@ -2,6 +2,12 @@
 
 import { memo, useMemo, useState } from "react";
 
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
+import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { cn } from "@/lib/utils";
+import { formatVisitDayHeading, istDateKey } from "@/lib/visits/time";
+
+import { AppImage } from "@/components/shared/app-image";
 import {
     BadgeCheck,
     Building2,
@@ -10,13 +16,6 @@ import {
     MapPin,
     Sparkles,
 } from "@/components/shared/icons";
-
-import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
-import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
-import { cn } from "@/lib/utils";
-import { formatVisitDayHeading, istDateKey } from "@/lib/visits/time";
-
-import { AppImage } from "@/components/shared/app-image";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";

@@ -4,11 +4,11 @@ import Link from "next/link";
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { GripVertical, Plus } from "@/components/shared/icons";
 
 import { BROKER_ADD_DEAL_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { GripVertical, Plus } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 

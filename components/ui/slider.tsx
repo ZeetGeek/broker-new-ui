@@ -23,16 +23,8 @@ function RangeSlider({
             className={cn("inline-full", className)}
             {...props}
         >
-            <SliderPrimitive.Control
-                className="
-              flex touch-none items-center py-2 select-none inline-full
-            "
-            >
-                <SliderPrimitive.Track
-                    className="
-                  relative rounded-full bg-border-warm block-1.5 inline-full
-                "
-                >
+            <SliderPrimitive.Control className="flex touch-none items-center py-2 select-none inline-full">
+                <SliderPrimitive.Track className="relative rounded-full bg-border-warm block-1.5 inline-full">
                     <SliderPrimitive.Indicator className="rounded-full bg-brand" />
                     {thumbLabels.map((label, index) => (
                         <SliderPrimitive.Thumb
@@ -66,16 +58,8 @@ function Slider({
             className={cn("inline-full", className)}
             {...props}
         >
-            <SliderPrimitive.Control
-                className="
-              flex touch-none items-center select-none inline-full min-block-11
-            "
-            >
-                <SliderPrimitive.Track
-                    className="
-                  relative rounded-full bg-border-warm block-1.5 inline-full
-                "
-                >
+            <SliderPrimitive.Control className="flex touch-none items-center select-none inline-full min-block-11">
+                <SliderPrimitive.Track className="relative rounded-full bg-border-warm block-1.5 inline-full">
                     <SliderPrimitive.Indicator
                         className={cn("rounded-full bg-brand", indicatorClassName)}
                     />

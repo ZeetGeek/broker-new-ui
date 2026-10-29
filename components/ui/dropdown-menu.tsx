@@ -3,9 +3,10 @@
 import * as React from "react";
 
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
-import { CheckIcon, ChevronRightIcon } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
+
+import { CheckIcon, ChevronRightIcon } from "@/components/shared/icons";
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
     return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;

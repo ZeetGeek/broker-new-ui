@@ -76,8 +76,9 @@ function ContactOption({
                 <span className="block truncate text-sm font-bold text-ink">{name}</span>
                 <span
                     className="
-                  flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-medium text-ink-muted
-                "
+                      flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-medium
+                      text-ink-muted
+                    "
                 >
                     <span className="tabular">{formatPhone(phone)}</span>
                     {detail ? (
@@ -518,10 +519,18 @@ function ContactSearchPanel({
                                 <span className="sr-only">Loading contacts…</span>
                                 {[0, 1, 2].map((item) => (
                                     <div key={item} className="flex items-center gap-3 p-3">
-                                        <Skeleton className="shrink-0 rounded-full block-10 inline-10" />
+                                        <Skeleton
+                                            className="
+                                          shrink-0 rounded-full block-10 inline-10
+                                        "
+                                        />
                                         <div className="flex-1 space-y-2">
                                             <Skeleton className="block-3 inline-28" />
-                                            <Skeleton className="block-2.5 inline-40 max-inline-full" />
+                                            <Skeleton
+                                                className="
+                                              block-2.5 inline-40 max-inline-full
+                                            "
+                                            />
                                         </div>
                                     </div>
                                 ))}

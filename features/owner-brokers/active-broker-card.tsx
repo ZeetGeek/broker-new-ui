@@ -5,11 +5,10 @@ import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
-import { MapPin, MoreHorizontal, Phone, UserMinus } from "@/components/shared/icons";
-
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
+import { MapPin, MoreHorizontal, Phone, UserMinus } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -48,8 +47,9 @@ export function ActiveBrokerCard({
         <article
             className={cn(
                 `
-                  contact-card group/card relative flex h-full flex-col gap-3 rounded-card border
-                  border-border-warm bg-surface p-4 shadow-md transition-[box-shadow] duration-160
+                  contact-card group/card relative flex flex-col gap-3 rounded-card border
+                  border-border-warm bg-surface p-4 shadow-md transition-shadow duration-160
+                  block-full
                   hover:shadow-lg
                 `,
             )}
@@ -61,13 +61,18 @@ export function ActiveBrokerCard({
                     size="md"
                     className="shrink-0"
                 />
-                <div className="min-inline-0 flex-1">
+                <div className="flex-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
-                        <h2 className="body truncate font-bold capitalize text-ink">
+                        <h2 className="body truncate font-bold text-ink capitalize">
                             {item.brokerName}
                         </h2>
                         {item.brokerVerified ? (
-                            <span className="body-xs shrink-0 rounded-md bg-brand-soft px-1.5 py-0.5 font-semibold text-brand-text">
+                            <span
+                                className="
+                              body-xs shrink-0 rounded-md bg-brand-soft px-1.5 py-0.5 font-semibold
+                              text-brand-text
+                            "
+                            >
                                 Verified
                             </span>
                         ) : null}
@@ -75,7 +80,10 @@ export function ActiveBrokerCard({
                     {hasPhone ? (
                         <a
                             href={`tel:+91${item.brokerPhoneDigits}`}
-                            className="body-sm mbs-0.5 block truncate tabular text-ink-muted hover:text-brand-text"
+                            className="
+                              body-sm tabular mbs-0.5 block truncate text-ink-muted
+                              hover:text-brand-text
+                            "
                         >
                             {formatPhoneIn(item.brokerPhoneDigits!)}
                         </a>
@@ -145,13 +153,14 @@ export function ActiveBrokerCard({
                 </p>
             </div>
 
-            <footer className="mt-auto flex flex-col gap-2.5">
+            <footer className="mbs-auto flex flex-col gap-2.5">
                 <Link
                     href={detailsHref}
                     prefetch={false}
                     className="
-                      flex items-center justify-between gap-2 rounded-inner border border-border-warm
-                      bg-surface-muted/60 px-2.5 py-2 transition-colors duration-160
+                      flex items-center justify-between gap-2 rounded-inner border
+                      border-border-warm bg-surface-muted/60 px-2.5 py-2 transition-colors
+                      duration-160
                       hover:bg-surface-muted
                     "
                 >

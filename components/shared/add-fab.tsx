@@ -1,9 +1,8 @@
 "use client";
 
-import { Plus } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { Plus } from "@/components/shared/icons";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**

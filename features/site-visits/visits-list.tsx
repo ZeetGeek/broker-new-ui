@@ -2,7 +2,6 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
-import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import {
@@ -16,6 +15,7 @@ import { spring } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
+import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -293,8 +293,8 @@ export function VisitsList({
                                     <section key={band.key} className="flex flex-col gap-1.5">
                                         <h3
                                             className="
-                                          body-xs flex items-center gap-2 text-ink-subtle
-                                        "
+                                              body-xs flex items-center gap-2 text-ink-subtle
+                                            "
                                         >
                                             <span className="tabular font-semibold text-ink">
                                                 {band.label}

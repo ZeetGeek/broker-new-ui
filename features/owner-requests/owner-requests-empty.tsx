@@ -1,10 +1,9 @@
 import Link from "next/link";
 
-import { Inbox, Mail } from "@/components/shared/icons";
-
 import { ownerBrokersHref } from "@/lib/routes/owner";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { Inbox, Mail } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import type { OwnerRequestsTab } from "@/features/owner-requests/types";

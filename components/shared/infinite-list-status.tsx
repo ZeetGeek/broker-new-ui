@@ -5,8 +5,8 @@ import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useInfiniteScrollTrigger } from "@/hooks/use-infinite-scroll-trigger";
 
-import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { Button } from "@/components/ui/button";
 
 export function InfiniteListStatus({
     hasNextPage,
@@ -40,7 +40,7 @@ export function InfiniteListStatus({
             ref={triggerRef}
             className={cn(
                 "flex items-center justify-center text-center",
-                reachedEnd ? endSpacing : isFetchingNextPage ? "pt-10 pb-4" : "py-3 min-block-12",
+                reachedEnd ? endSpacing : isFetchingNextPage ? "pbs-10 pbe-4" : "py-3 min-block-12",
             )}
             aria-live="polite"
             aria-busy={isFetchingNextPage}

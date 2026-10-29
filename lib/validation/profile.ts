@@ -23,7 +23,6 @@ export function parseCommaList(value: string): string[] {
 
 export const BIO_MAX = 400;
 export const MAX_SERVICE_AREAS = 12;
-const MAX_PREFERRED = 20;
 
 /**
  * A public slug is part of a URL, so it is the one field where the rules are

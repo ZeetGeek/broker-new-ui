@@ -24,7 +24,7 @@ function Swatch({ label, children }: { label: string; children: React.ReactNode 
 
 function SurfaceDemo() {
     return (
-        <Card className="inline-full shadow-sm ring-border-warm/60">
+        <Card className="shadow-sm ring-border-warm/60 inline-full">
             <CardHeader>
                 <CardTitle>3 BHK in Vesu</CardTitle>
                 <CardDescription>Listed 4 days ago · 2 requests</CardDescription>
@@ -38,7 +38,7 @@ function SurfaceDemo() {
 
 function DarkDemo() {
     return (
-        <Card className="inline-full border-0 bg-brand-deep shadow-none ring-0">
+        <Card className="border-0 bg-brand-deep shadow-none ring-0 inline-full">
             <CardHeader>
                 <p className="eyebrow text-highlight">Needs you</p>
                 <CardTitle className="text-white">3 brokers waiting</CardTitle>
@@ -57,7 +57,7 @@ function DarkDemo() {
 
 function SizeDemo({ size }: { size: "default" | "sm" }) {
     return (
-        <Card size={size} className="inline-full shadow-sm ring-border-warm/60">
+        <Card size={size} className="shadow-sm ring-border-warm/60 inline-full">
             <CardHeader>
                 <CardTitle>Priya Shah</CardTitle>
                 <CardDescription>Site visit · Tomorrow</CardDescription>

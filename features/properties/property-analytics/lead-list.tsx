@@ -81,9 +81,9 @@ function LeadRow({ lead }: { lead: PropertyAnalyticsLead }) {
             {lead.notes?.trim() ? (
                 <p
                     className="
-                  body-sm flex items-start gap-2 rounded-inner bg-surface-muted px-3 py-2
-                  text-ink-muted
-                "
+                      body-sm flex items-start gap-2 rounded-inner bg-surface-muted px-3 py-2
+                      text-ink-muted
+                    "
                 >
                     <StickyNote
                         aria-hidden
@@ -126,9 +126,9 @@ export function LeadList({ leads }: { leads: PropertyAnalyticsLead[] }) {
     return (
         <ul
             className="
-          divide-y divide-border-warm overflow-hidden rounded-card border border-border-warm
-          bg-surface shadow-sm
-        "
+              divide-y divide-border-warm overflow-hidden rounded-card border border-border-warm
+              bg-surface shadow-sm
+            "
         >
             {leads.map((lead) => (
                 <li key={lead.id}>

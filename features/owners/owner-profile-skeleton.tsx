@@ -7,7 +7,11 @@ export function OwnerProfileSkeleton() {
             <div className="animate-pulse rounded-sm bg-surface-muted block-4 inline-32" />
 
             <div className={`${CARD_SKELETON} flex items-center gap-4 p-5`}>
-                <div className="shrink-0 animate-pulse rounded-full bg-surface-muted block-16 inline-16" />
+                <div
+                    className="
+                  shrink-0 animate-pulse rounded-full bg-surface-muted block-16 inline-16
+                "
+                />
                 <div className="flex flex-1 flex-col gap-2 min-inline-0">
                     <div className="animate-pulse rounded-sm bg-surface-muted block-7 inline-48" />
                     <div className="animate-pulse rounded-sm bg-surface-muted block-4 inline-36" />

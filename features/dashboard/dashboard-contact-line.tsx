@@ -1,7 +1,6 @@
 "use client";
 
 import { Mail, Phone } from "@/components/shared/icons";
-
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 

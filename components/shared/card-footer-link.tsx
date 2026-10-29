@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { MoveRight } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { MoveRight } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 export type CardFooterLinkProps = {

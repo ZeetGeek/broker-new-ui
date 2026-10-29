@@ -1,15 +1,17 @@
 "use client";
 
-import { type ComponentProps, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
-import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
 import { tinykeys } from "tinykeys";
 
 import { formatMoneyInput, parseMoney } from "@/lib/format/money";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
+import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
+import { currencyIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -27,8 +29,6 @@ import { Input, type InputProps } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { useMarketCurrency } from "@/hooks/use-market";
-import { currencyIcon } from "@/components/shared/icons";
 
 /** Same control height as Add property (`size="lg"` → 48px). */
 export const nativeControlClass = `
@@ -339,7 +339,8 @@ export function ChoiceRadioField<T extends string>({
                             className={cn(
                                 `
                                   flex cursor-pointer gap-3 rounded-control border-2 px-4 py-3.5
-                                  text-start leading-normal font-normal transition-[background-color,border-color,color,box-shadow]
+                                  text-start leading-normal font-normal
+                                  transition-[background-color,border-color,color,box-shadow]
                                   duration-160 min-block-12
                                   has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                 `,
@@ -587,7 +588,7 @@ export function BudgetRangeField({
                 </FormField>
             </div>
 
-            {preview ? <p className="text-sm font-semibold tabular text-brand">{preview}</p> : null}
+            {preview ? <p className="tabular text-sm font-semibold text-brand">{preview}</p> : null}
         </div>
     );
 }
@@ -661,7 +662,8 @@ function TokenInput({
                             key={value}
                             className="
                               body-xs inline-flex items-center gap-1 rounded-control border
-                              border-brand/30 bg-brand-soft px-2.5 py-1.5 font-medium text-brand-text
+                              border-brand/30 bg-brand-soft px-2.5 py-1.5 font-medium
+                              text-brand-text
                             "
                         >
                             {value}
@@ -769,8 +771,8 @@ export function NotesField({
                     `
                       field-sizing-fixed resize-y rounded-control border-2 border-border-warm
                       bg-surface px-4 py-3 text-base text-ink shadow-none
-                      hover:border-ink-subtle focus-visible:border-ring focus-visible:ring-3
-                      focus-visible:ring-ring/30
+                      hover:border-ink-subtle
+                      focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
                       aria-invalid:border-danger-mid
                     `,
                 )}
@@ -827,21 +829,22 @@ export function MoreDetails({
                 onClick={() => onOpenChange(!open)}
                 aria-expanded={open}
                 className="
-                  body-sm flex items-center justify-between gap-2 px-3.5 py-3 font-medium
-                  text-ink inline-full hover:bg-surface-muted/60
+                  body-sm flex items-center justify-between gap-2 px-3.5 py-3 font-medium text-ink
+                  inline-full
+                  hover:bg-surface-muted/60
                 "
             >
                 More details
                 <ChevronDown
                     aria-hidden
                     className={cn(
-                        "block-4 inline-4 text-ink-muted transition-transform duration-160",
+                        "text-ink-muted transition-transform duration-160 block-4 inline-4",
                         open && "rotate-180",
                     )}
                 />
             </button>
             {open ? (
-                <div className="space-y-4 border-t border-border-warm px-3.5 py-4">{children}</div>
+                <div className="space-y-4 border-bs border-border-warm px-3.5 py-4">{children}</div>
             ) : null}
         </div>
     );
@@ -941,8 +944,8 @@ export function ContactFormDrawer({
                 size="lg"
                 padding="md"
                 className="
-                  contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0! rounded-none!
-                  block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
+                  contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0!
+                  rounded-none! block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
                   sm:inline-[min(46rem,100vw)]! sm:max-inline-184!
                 "
                 headerClassName="
@@ -957,7 +960,10 @@ export function ContactFormDrawer({
                         {footerError ? (
                             <p
                                 role="alert"
-                                className="body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger"
+                                className="
+                                  body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold
+                                  text-danger
+                                "
                             >
                                 {footerError}
                             </p>
@@ -998,7 +1004,11 @@ export function ContactFormDrawer({
                 title="Discard unsaved changes?"
                 description="What you typed will be lost if you leave now."
                 footer={
-                    <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
+                    <div
+                        className="
+                      flex flex-row flex-wrap items-center justify-end gap-2 inline-full
+                    "
+                    >
                         <Button type="button" variant="ghost" onClick={() => setDiscardOpen(false)}>
                             Keep editing
                         </Button>

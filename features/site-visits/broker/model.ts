@@ -183,6 +183,7 @@ export type BrokerVisitSummary = {
     awaitingOwner: number;
     needsOutcome: number;
     weekTotal: number;
+    /** Cancelled visits scheduled in the current Monday–Sunday week in India time. */
     cancelledThisWeek: number;
     openSlots: number;
     requestReplies: number;

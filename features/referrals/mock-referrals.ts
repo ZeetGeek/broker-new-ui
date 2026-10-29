@@ -1,5 +1,4 @@
 import { SITE_URL } from "@/config";
-
 import {
     type CreditEntry,
     LISTING_COST_CREDITS,

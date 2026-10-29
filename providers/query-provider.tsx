@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { disconnectNotificationSocket } from "@/lib/socket/notifications";
+
 import { useAppSelector } from "@/store/hooks";
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {

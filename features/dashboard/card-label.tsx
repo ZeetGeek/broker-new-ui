@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 
-import { Info } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { Info } from "@/components/shared/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type CardLabelProps = {
