@@ -67,7 +67,7 @@ export function checkVisitConflicts(
         const buyer = visit.buyers.find((person) => candidate.buyerIds.includes(person.id));
         reasons.push({
             code: "BUYER_BUSY",
-            message: `${buyer?.name ?? "This buyer"} already has a visit at ${visit.property.title}.`,
+            message: `${buyer?.name ?? "This client"} already has a visit at ${visit.property.title}.`,
             visitId: visit.id,
         });
     }

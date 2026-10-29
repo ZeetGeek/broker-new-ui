@@ -12,7 +12,7 @@ export function RequestsFirstRunEmpty() {
         <EmptyState
             icon={Inbox}
             heading="You have not sent any requests yet"
-            description="Browse what owners have listed, then send a request for the ones your buyers want."
+            description="Browse what owners have listed, then send a request for the ones your clients want."
         >
             <Button
                 size="lg"

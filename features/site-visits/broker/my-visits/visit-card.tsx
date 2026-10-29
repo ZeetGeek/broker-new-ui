@@ -90,7 +90,7 @@ export const VisitCard = memo(function VisitCard({
         `Hi ${buyer.name}, your site visit for ${visit.property.title}, ${visit.property.locality} is confirmed for ${formatVisitDayHeading(visit.startsAt)} at ${formatVisitTime(visit.startsAt)}. Address: ${visit.property.address}. I${APOSTROPHE}ll meet you there. ${EM_DASH} ${brokerName}, ${APP_NAME}`,
     );
     const buyerLabel =
-        visit.buyers.length > 1 ? `Buyers ${DOT} +${visit.buyers.length - 1}` : "Buyer";
+        visit.buyers.length > 1 ? `Clients ${DOT} +${visit.buyers.length - 1}` : "Client";
     const duration = durationMinutes(visit.startsAt, visit.endsAt);
     const metaName =
         formatPropertyCardName(visit.property.propertyType, visit.property.areaSqft, {
@@ -298,7 +298,7 @@ export const VisitCard = memo(function VisitCard({
                             variant="ghost"
                             size="sm"
                         >
-                            <Phone aria-hidden /> Call buyer
+                            <Phone aria-hidden /> Call client
                         </Button>
                         <Button
                             nativeButton={false}

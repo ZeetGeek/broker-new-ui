@@ -43,7 +43,7 @@ function CompoundDemo() {
                 <DialogHeader>
                     <DialogTitle>Approve this broker?</DialogTitle>
                     <DialogDescription>
-                        They can show &ldquo;3 BHK in Vesu&rdquo; to buyers. You can revoke later.
+                        They can show &ldquo;3 BHK in Vesu&rdquo; to clients. You can revoke later.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

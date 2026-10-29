@@ -142,9 +142,9 @@ export function SlotFilters({
 
     const leadEmptyLabel =
         buyerId && ownerId
-            ? "This buyer has no leads with this owner"
+            ? "This client has no leads with this owner"
             : buyerId
-              ? "This buyer has no leads yet"
+              ? "This client has no leads yet"
               : ownerId
                 ? "No leads on this owner's properties"
                 : "No leads yet";
@@ -152,10 +152,10 @@ export function SlotFilters({
     return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <FilterSelect
-                label="Buyer"
+                label="Client"
                 icon={UserRound}
                 value={buyerId}
-                placeholder="All buyers"
+                placeholder="All clients"
                 options={buyers.map((buyer) => ({ value: buyer.id, label: buyer.name }))}
                 onChange={(next) => {
                     onBuyerChange?.(next);
@@ -175,7 +175,7 @@ export function SlotFilters({
                     value={ownerId}
                     placeholder="All owners"
                     options={shownOwners.map((owner) => ({ value: owner.id, label: owner.name }))}
-                    emptyLabel="This buyer has no leads on an owner's property"
+                    emptyLabel="This client has no leads on an owner's property"
                     onChange={(next) => {
                         onOwnerChange?.(next);
                         keepLeadIfMatches(buyerId, next);

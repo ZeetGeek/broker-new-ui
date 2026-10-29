@@ -294,7 +294,7 @@ function buildChipCandidates(
         if (otherBuyers.length > 0) {
             items.push({
                 key: "buyers",
-                label: `${otherBuyers.length} more ${otherBuyers.length === 1 ? "buyer" : "buyers"}`,
+                label: `${otherBuyers.length} more ${otherBuyers.length === 1 ? "client" : "clients"}`,
                 tone: "neutral",
                 render: (
                     <MoreBuyersPopover

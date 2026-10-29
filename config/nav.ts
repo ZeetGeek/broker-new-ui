@@ -81,6 +81,6 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
         activePrefixes: ["/broker/my-properties", "/broker/properties"],
     },
     { label: "Pipeline", href: BROKER_PIPELINE_HREF, shortcutId: "pipeline" },
-    { label: "Contacts", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
+    { label: "Clients", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
     { label: "Visits", href: "/broker/visits", shortcutId: "visits" },
 ];

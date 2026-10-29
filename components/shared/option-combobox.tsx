@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import type { AppIcon } from "@/components/shared/icons";
 import {
     Combobox,
@@ -11,7 +13,7 @@ import {
     ComboboxList,
 } from "@/components/ui/combobox";
 
-export type ComboboxOption = { value: string; label: string };
+export type ComboboxOption = { value: string; label: string; displayLabel?: ReactNode };
 
 /**
  * Single-select dropdown over a list already in memory, filtered as the user
@@ -86,7 +88,8 @@ export function OptionCombobox({
                 <ComboboxList>
                     {(item: string) => (
                         <ComboboxItem key={item} value={item} className={textClassName}>
-                            {labelFor(item)}
+                            {options.find((option) => option.value === item)?.displayLabel ??
+                                labelFor(item)}
                         </ComboboxItem>
                     )}
                 </ComboboxList>

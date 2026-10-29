@@ -70,7 +70,7 @@ function budgetPairInOrder(min: string, max: string) {
  */
 export const buyerFormSchema = z
     .object({
-        name: z.string().trim().min(2, "Enter the buyer's name").max(80, "Name is too long"),
+        name: z.string().trim().min(2, "Enter the client's name").max(80, "Name is too long"),
         phone: z
             .string()
             .refine(

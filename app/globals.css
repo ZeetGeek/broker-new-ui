@@ -533,6 +533,7 @@
 /* Bundled flag glyphs: Windows does not render regional-indicator emoji. */
 @font-face {
     font-family: "Country Flags";
+    size-adjust: 120%;
     src: url("/fonts/TwemojiCountryFlags.woff2") format("woff2");
     font-display: swap;
     unicode-range: U+1F1E6-1F1FF;

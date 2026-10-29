@@ -208,7 +208,7 @@ export function mapShowingToVisit(showing: ApiShowing): BrokerSiteVisit {
               name: client.name,
               phoneDigits: phoneDigits(client.phone),
           }
-        : { id: showing.leadId, name: "Buyer" };
+        : { id: showing.leadId, name: "Client" };
     const owner: PersonSummary = showing.owner
         ? {
               id: showing.owner.id,

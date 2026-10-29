@@ -1068,7 +1068,7 @@ function OwnedOverlayPropertyCard({
     const handleAddBuyer = onAddBuyer
         ? () => {
               if (isAddBuyerBlocked) {
-                  toast.error("Attach an owner first to enable attaching buyers.", {
+                  toast.error("Attach an owner first to enable attaching clients.", {
                       id: "listing-owner-required",
                   });
                   return;

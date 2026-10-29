@@ -251,10 +251,10 @@ export function DashboardHeader({
                             size="md"
                             nativeButton={false}
                             render={<Link href="/broker/pipeline" />}
-                            aria-label="Add buyer"
+                            aria-label="Add client"
                         >
                             <UserRoundPlus aria-hidden strokeWidth={1.75} />
-                            <span className="hidden md:inline">Add buyers</span>
+                            <span className="hidden md:inline">Add client</span>
                         </Button>
                     </ShortcutTooltip>
                 </>

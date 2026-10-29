@@ -116,8 +116,8 @@ export function AttachBuyerPropertiesModal({
             .then(() => {
                 toast.success(
                     toAttach.length === 1
-                        ? "Buyer linked to the property."
-                        : `Buyer linked to ${toAttach.length} properties.`,
+                        ? "Client linked to the property."
+                        : `Client linked to ${toAttach.length} properties.`,
                 );
                 onSaved();
                 onOpenChange(false);
@@ -190,7 +190,7 @@ export function AttachBuyerPropertiesModal({
                     description={
                         query
                             ? "Try a different title or city."
-                            : "Add a property to Your listings, then link this buyer here."
+                            : "Add a property to Your listings, then link this client here."
                     }
                 />
             ) : (

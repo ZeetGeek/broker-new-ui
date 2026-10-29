@@ -334,7 +334,7 @@ export function QuickAdd({
 
             <WizardSection
                 title={<>Location</>}
-                description="Where buyers will find this property."
+                description="Where clients will find this property."
             >
                 <div className={FORM_GRID_CLASS}>
                     <SelectField

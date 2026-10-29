@@ -161,7 +161,7 @@ export function ContactsPage({
 
     const handleCreated = useCallback((name: string) => {
         setRevision((prev) => prev + 1);
-        toast.success(`${name} added to your buyers`);
+        toast.success(`${name} added to your clients`);
     }, []);
 
     const handleUpdated = useCallback((name: string) => {
@@ -202,7 +202,7 @@ export function ContactsPage({
                     };
                 });
                 setRevision((prev) => prev + 1);
-                toast.success("Property removed from this buyer");
+                toast.success("Property removed from this client");
             } catch (error) {
                 const message =
                     error instanceof ApiError
@@ -222,7 +222,7 @@ export function ContactsPage({
         setDeleteBusy(true);
         try {
             await clientsApi.remove(deletingBuyer.id);
-            toast.success(`${deletingBuyer.name} removed from your buyers`);
+            toast.success(`${deletingBuyer.name} removed from your clients`);
             setDeletingBuyer(null);
             setSelectedContact((current) =>
                 current?.type === "buyer" && current.row.id === deletingBuyer.id ? null : current,
@@ -234,7 +234,7 @@ export function ContactsPage({
                     ? error.message
                     : error instanceof Error
                       ? error.message
-                      : "Could not delete this buyer. Try again.",
+                      : "Could not delete this client. Try again.",
             );
         } finally {
             setDeleteBusy(false);
@@ -454,11 +454,11 @@ export function ContactsPage({
                     "
                     >
                         <p className="body-sm text-ink-muted">
-                            Choose a buyer and use Attach properties to start a deal. Add a buyer
+                            Choose a client and use Attach properties to start a deal. Add a client
                             first if needed. New deals start in New.
                         </p>
                         <Button variant="outline" onClick={() => setIsAddOpen(true)}>
-                            Add buyer
+                            Add client
                         </Button>
                         <a href="/broker/your-listings" className="body-sm font-medium underline">
                             Your listings
@@ -477,7 +477,7 @@ export function ContactsPage({
                 {activeQuery.isError && rows.length === 0 ? (
                     <div role="alert" className="flex flex-col items-start gap-3 py-12">
                         <p className="body-sm font-medium text-ink">
-                            Contacts could not load. Check your connection and try again.
+                            Clients could not load. Check your connection and try again.
                         </p>
                         <Button
                             variant="secondary"
@@ -510,13 +510,13 @@ export function ContactsPage({
                     ) : isBuyers ? (
                         <EmptyState
                             icon={Users}
-                            heading="No buyers yet"
+                            heading="No clients yet"
                             description="Add the people looking to buy or rent. You can link them to a property once they are on your list."
                             className="py-16"
                         >
                             <Button size="lg" onClick={() => setIsAddOpen(true)}>
                                 <UserPlus aria-hidden strokeWidth={1.75} />
-                                Add your first buyer
+                                Add your first client
                             </Button>
                         </EmptyState>
                     ) : (
@@ -541,7 +541,7 @@ export function ContactsPage({
                                 estimateRowHeight={320}
                                 gap={24}
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
-                                ariaLabel="Buyers"
+                                ariaLabel="Clients"
                                 renderItem={(buyer) => (
                                     <BuyerCard
                                         buyer={buyer}
@@ -588,7 +588,7 @@ export function ContactsPage({
 
                 <AddFab
                     onClick={openAdd}
-                    label={isBuyers ? "Add buyer" : "Add owner"}
+                    label={isBuyers ? "Add client" : "Add owner"}
                     hint={
                         isBuyers
                             ? "Add someone you’re helping find a property"
@@ -684,9 +684,9 @@ export function ContactsPage({
                     open={selectedContact != null || hasContactQuery}
                     loadError={
                         contactLookup.isError
-                            ? "Could not load this contact. Check your connection and try again."
+                            ? "Could not load this client. Check your connection and try again."
                             : requestedContact && contactLookup.isSuccess && !contactLookup.data
-                              ? "This contact could not be found in your account."
+                              ? "This client could not be found in your account."
                               : undefined
                     }
                     onRetryLoad={

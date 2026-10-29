@@ -468,7 +468,7 @@ export const pipelineApi = {
         if (isMockMode()) {
             const deal = mockDeals.find((item) => item.id === dealId);
             if (!deal) {
-                throw new Error("Lead is missing property or buyer details.");
+                throw new Error("Lead is missing property or client details.");
             }
             return {
                 ...deal,
@@ -490,7 +490,7 @@ export const pipelineApi = {
         const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
         const detail = mapLeadToDetail(lead);
         if (!detail) {
-            throw new Error("Lead is missing property or buyer details.");
+            throw new Error("Lead is missing property or client details.");
         }
         return detail;
     },

@@ -39,10 +39,10 @@ test("cited visit and notes fields have accessible names and phone targets use l
     assert.match(reschedule, /aria-describedby=/);
     assert.match(
         source("features/site-visits/broker/panels/buyer-picker.tsx"),
-        /aria-label="Search buyers"/,
+        /aria-label="Search clients"/,
     );
     const contact = source("features/contacts/contact-detail-panel.tsx");
-    assert.match(contact, /aria-label="Buyer notes"/);
+    assert.match(contact, /aria-label="Client notes"/);
     assert.match(contact, /aria-label="Owner notes"/);
     const css = source("app/globals.css");
     assert.match(css, /@media \(pointer: coarse\), \(max-width: 767px\)/);

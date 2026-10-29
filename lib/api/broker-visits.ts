@@ -171,7 +171,7 @@ async function resolveLeadIdForBuyer(propertyId: string, clientId: string): Prom
         totalPages = Math.max(1, response.totalPages ?? 1);
         page += 1;
     }
-    throw new Error("Could not link this buyer to the property. Try again from Contacts.");
+    throw new Error("Could not link this client to the property. Try again from Clients.");
 }
 
 export class SlotTakenError extends Error {
@@ -328,9 +328,9 @@ export const brokerVisitsApi = {
             };
         }
 
-        if (input.buyers.length !== 1) throw new Error("Choose exactly one buyer per visit.");
+        if (input.buyers.length !== 1) throw new Error("Choose exactly one client per visit.");
         const primaryBuyer = input.buyers[0];
-        if (!primaryBuyer) throw new Error("Select a buyer to book this visit.");
+        if (!primaryBuyer) throw new Error("Select a client to book this visit.");
 
         try {
             const leadId = await resolveLeadIdForBuyer(input.item.property.id, primaryBuyer.id);
@@ -491,7 +491,7 @@ export const brokerVisitsApi = {
     ): Promise<OutcomeTransactionResult> {
         if (!USE_MOCK_VISITS) {
             throw new Error(
-                "Saving visit outcomes is not available yet. Manage buyer notes and stages in Pipeline.",
+                "Saving visit outcomes is not available yet. Manage client notes and stages in Pipeline.",
             );
         }
         return {

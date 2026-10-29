@@ -99,7 +99,7 @@ export function StageNoteModal({
                     onChange={(event) => setNote(event.target.value)}
                     rows={4}
                     maxLength={500}
-                    placeholder="e.g. Buyer liked the balcony, wants a second visit"
+                    placeholder="e.g. Client liked the balcony, wants a second visit"
                     className="rounded-inner"
                     disabled={isSaving}
                 />

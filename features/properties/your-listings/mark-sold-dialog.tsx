@@ -127,7 +127,7 @@ export function MarkSoldDialog({
                         maxLength={REASON_MAX}
                         rows={3}
                         disabled={busy}
-                        placeholder="e.g. Sold to a buyer I found myself"
+                        placeholder="e.g. Sold to a client I found myself"
                         className="border-2 border-border-warm bg-surface"
                     />
                     <span className="body-xs text-ink-muted">

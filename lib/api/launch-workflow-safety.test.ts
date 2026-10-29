@@ -45,7 +45,7 @@ test(
                 slot: {} as VisitSlot,
                 buyers: [{ id: "one" }, { id: "two" }] as PersonSummary[],
             }),
-            /exactly one buyer/,
+            /exactly one client/,
         );
         assert.equal(requests, 0);
         await assert.rejects(

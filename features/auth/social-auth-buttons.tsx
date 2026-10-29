@@ -46,7 +46,7 @@ function SocialButton({
             disabled={disabled}
             className="
               gap-3 border-border-warm bg-surface font-medium text-ink shadow-sm inline-full
-              hover:bg-surface-muted
+              hover:border-gray-300 hover:bg-gray-50 hover:text-ink
             "
         >
             {loading ? null : mark}

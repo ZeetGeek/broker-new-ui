@@ -56,7 +56,7 @@ function PipelineQueryInput({ value, onChange }: { value: string; onChange: (q: 
             size="sm"
             value={draft}
             onValueChange={setDraft}
-            placeholder="Search buyer, owner or area"
+            placeholder="Search client, owner or area"
             aria-label="Search your deals"
             startIcon={Search}
             clearable

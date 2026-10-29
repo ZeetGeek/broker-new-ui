@@ -123,7 +123,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                     setExistingBuyers(
                         attachedIds.map((id) => ({
                             id,
-                            name: clients.find((client) => client.id === id)?.name ?? "Buyer",
+                            name: clients.find((client) => client.id === id)?.name ?? "Client",
                         })),
                     );
             })
@@ -192,12 +192,12 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
             removeBuyer(buyerToDetach.id);
             setBuyerToDetach(null);
             void queryClient.invalidateQueries();
-            toast.success("Buyer detached from this property.");
+            toast.success("Client detached from this property.");
         } catch (error) {
             toast.error(
                 error instanceof Error
                     ? error.message
-                    : "Couldn’t detach this buyer. Please try again.",
+                    : "Couldn’t detach this client. Please try again.",
             );
         } finally {
             setDetaching(false);
@@ -208,7 +208,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
                 title={<>Attach owner</>}
-                description="Optional. Pick an exclusive owner from your contacts. One owner per listing."
+                description="Optional. Pick an exclusive owner from your owner list. One owner per listing."
                 tone="private"
             >
                 <ContactSearchPanel
@@ -228,8 +228,8 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
             </WizardSection>
 
             <WizardSection
-                title={<>Attach buyers</>}
-                description="Optional. Link buyers from your contacts to this property in your CRM."
+                title={<>Attach clients</>}
+                description="Optional. Link clients from your client list to this property in your CRM."
                 tone="private"
             >
                 {existingBuyers.length ? (
@@ -240,7 +240,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                         <div
                             className="flex flex-wrap gap-2"
                             role="group"
-                            aria-label="Existing attached buyers"
+                            aria-label="Existing attached clients"
                         >
                             {existingBuyers.map((buyer) => (
                                 <Button
@@ -268,13 +268,13 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                             ))}
                         </div>
                         <p className="text-xs/5 text-ink-muted">
-                            Select an attached buyer to detach them, or add more buyers below.
+                            Select an attached client to detach them, or add more clients below.
                         </p>
                     </div>
                 ) : null}
                 {buyerLoadError ? (
                     <p role="alert" className="mbe-4 text-sm text-danger">
-                        Existing buyers could not be loaded. Saving new selections will keep
+                        Existing clients could not be loaded. Saving new selections will keep
                         existing links.
                     </p>
                 ) : null}
@@ -303,7 +303,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                         <div
                             className="flex flex-wrap gap-2"
                             role="group"
-                            aria-label="Attached buyers"
+                            aria-label="Attached clients"
                         >
                             {attachedBuyers.map((buyer) => (
                                 <Button
@@ -352,7 +352,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                 onOpenChange={(open) => {
                     if (!open && !detaching) setBuyerToDetach(null);
                 }}
-                title="Detach buyer?"
+                title="Detach client?"
                 size="sm"
                 footer={
                     <div className="flex justify-end gap-2">
@@ -370,7 +370,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                             loading={detaching}
                             onClick={() => void detachBuyer()}
                         >
-                            Detach buyer
+                            Detach client
                         </Button>
                     </div>
                 }
@@ -378,7 +378,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                 <p className="text-sm/6 text-ink-muted">
                     Detach <span className="font-semibold text-ink">{buyerToDetach?.name}</span>{" "}
                     from this property? This removes their deal for this property immediately. Their
-                    contact and other property links stay in your CRM.
+                    client record and other property links stay in your CRM.
                 </p>
             </AppModal>
         </div>
@@ -487,9 +487,9 @@ function ContactSearchPanel({
                         placeholder={
                             mode === "owner"
                                 ? "Search owners by name or phone"
-                                : "Search buyers by name or phone"
+                                : "Search clients by name or phone"
                         }
-                        aria-label={mode === "owner" ? "Search owners" : "Search buyers"}
+                        aria-label={mode === "owner" ? "Search owners" : "Search clients"}
                         clearable
                     />
 
@@ -498,8 +498,8 @@ function ContactSearchPanel({
                             {deferredQuery
                                 ? "Search results"
                                 : mode === "owner"
-                                  ? "Owner contacts"
-                                  : "Buyer contacts"}
+                                  ? "Owners"
+                                  : "Clients"}
                             {!activeQuery.isLoading && !activeQuery.isError
                                 ? ` · ${activeQuery.total}`
                                 : ""}
@@ -512,11 +512,11 @@ function ContactSearchPanel({
                           border-border-warm bg-surface p-1.5 max-block-80
                         "
                         role="group"
-                        aria-label={mode === "owner" ? "Owner contacts" : "Buyer contacts"}
+                        aria-label={mode === "owner" ? "Owners" : "Clients"}
                     >
                         {activeQuery.isLoading ? (
                             <div role="status" className="space-y-1">
-                                <span className="sr-only">Loading contacts…</span>
+                                <span className="sr-only">Loading clients…</span>
                                 {[0, 1, 2].map((item) => (
                                     <div key={item} className="flex items-center gap-3 p-3">
                                         <Skeleton
@@ -537,7 +537,7 @@ function ContactSearchPanel({
                             </div>
                         ) : activeQuery.isError ? (
                             <div role="alert" className="space-y-2 px-3 py-5 text-center">
-                                <p className="text-sm text-danger">Couldn’t load contacts.</p>
+                                <p className="text-sm text-danger">Couldn’t load clients.</p>
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -555,15 +555,15 @@ function ContactSearchPanel({
                                 />
                                 <p className="text-sm font-semibold text-ink">
                                     {deferredQuery
-                                        ? "No matches in your contacts."
+                                        ? "No matches in your clients."
                                         : mode === "owner"
-                                          ? "No owners in contacts yet."
-                                          : "No buyers in contacts yet."}
+                                          ? "No owners yet."
+                                          : "No clients yet."}
                                 </p>
                                 <p className="text-xs text-ink-muted">
                                     {deferredQuery
                                         ? "Try a different name or phone number."
-                                        : "Add a contact from Contacts, then select them here."}
+                                        : "Add a client from Clients, then select them here."}
                                 </p>
                             </div>
                         ) : mode === "owner" ? (

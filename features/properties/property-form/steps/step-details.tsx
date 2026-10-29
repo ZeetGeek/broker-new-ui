@@ -133,7 +133,7 @@ export function StepDetails() {
 
             <WizardSection
                 title={<>Title & description</>}
-                description="What buyers and tenants see on the listing."
+                description="What clients see on the listing."
             >
                 <div className={FORM_STACK_CLASS}>
                     <TextField

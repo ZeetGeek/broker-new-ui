@@ -147,7 +147,7 @@ export function ContactCardActions({
                             title={editLocked ? "Owner details come from the platform" : undefined}
                         >
                             {editLocked ? <Lock aria-hidden /> : <Pencil aria-hidden />}
-                            {editLocked ? "Edit tracking" : "Edit contact"}
+                            {editLocked ? "Edit tracking" : "Edit client"}
                         </DropdownMenuItem>
                     ) : null}
                     {onAttach ? (

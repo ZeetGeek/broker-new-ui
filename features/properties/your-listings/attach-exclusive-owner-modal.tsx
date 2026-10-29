@@ -189,7 +189,7 @@ export function AttachExclusiveOwnerModal({
                     description={
                         query
                             ? "Try a different name, phone, or society."
-                            : "Add an exclusive owner from Contacts, then attach them here."
+                            : "Add an exclusive owner from Clients, then attach them here."
                     }
                 />
             ) : (

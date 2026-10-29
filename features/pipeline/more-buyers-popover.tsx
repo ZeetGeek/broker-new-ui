@@ -14,7 +14,7 @@ export function MoreBuyersPopover({
     buyers: OtherBuyer[];
     onView: (dealId: string) => void;
 }) {
-    const label = `${count} more ${count === 1 ? "buyer" : "buyers"} on this property`;
+    const label = `${count} more ${count === 1 ? "client" : "clients"} on this property`;
 
     return (
         <Popover>
@@ -28,7 +28,7 @@ export function MoreBuyersPopover({
                 {label}
             </PopoverTrigger>
             <PopoverContent align="start" className="gap-2 p-3 inline-64">
-                <p className="body-xs font-semibold text-ink">Other buyers</p>
+                <p className="body-xs font-semibold text-ink">Other clients</p>
                 <ul className="flex flex-col gap-1.5">
                     {buyers.map((buyer) => (
                         <li key={buyer.dealId}>

@@ -89,14 +89,14 @@ export const VISIT_STATUS_META: Record<VisitStatus, VisitStatusMeta> = {
 export const VISIT_STATUS_HINT: Record<VisitStatus, Record<VisitViewer, string>> = {
     proposed: {
         broker: "Waiting for the owner to confirm this time.",
-        owner: "A broker wants to bring a buyer at this time. Confirm or suggest another slot.",
+        owner: "A broker wants to bring a client at this time. Confirm or suggest another slot.",
     },
     confirmed: {
         broker: "The owner has agreed to this time.",
-        owner: "You agreed to this visit. The broker will bring a buyer.",
+        owner: "You agreed to this visit. The broker will bring a client.",
     },
     completed: {
-        broker: "The visit happened. Record what the buyer thought.",
+        broker: "The visit happened. Record what the client thought.",
         owner: "This visit happened.",
     },
     cancelled: {
@@ -125,7 +125,7 @@ export const VISIT_OUTCOME_META: Record<
 
 /** Cancel reasons, in the words a broker or owner would actually say. */
 export const VISIT_CANCEL_REASON_LABEL: Record<VisitCancelReason, string> = {
-    buyer_unavailable: "The buyer could not make it",
+    buyer_unavailable: "The client could not make it",
     owner_unavailable: "The owner was not available",
     property_unavailable: "The property could not be shown",
     weather: "Weather",

@@ -413,7 +413,7 @@ export function ListingExtraFields() {
                             <Textarea
                                 id="description"
                                 rows={5}
-                                placeholder="Optional · a short note for buyers or tenants."
+                                placeholder="Optional · a short note for clients."
                                 className="
                                   rounded-card border-2 border-border-warm bg-surface px-3.5 py-3
                                   text-[15px] text-ink min-block-32

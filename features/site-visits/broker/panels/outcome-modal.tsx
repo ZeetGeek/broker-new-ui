@@ -100,7 +100,7 @@ export default function OutcomeModal({
                 size="sm"
             >
                 <p className="body-sm text-ink-muted">
-                    Saving visit outcomes is not available yet. You can manage buyer notes and
+                    Saving visit outcomes is not available yet. You can manage client notes and
                     stages in Pipeline.
                 </p>
             </AppModal>
@@ -178,7 +178,7 @@ export default function OutcomeModal({
                         <Choice
                             value="buyer_only"
                             current={attended}
-                            label="Only buyer came"
+                            label="Only client came"
                             onChange={(value) => form.setValue("attended", value)}
                         />
                         <Choice
@@ -285,7 +285,7 @@ export default function OutcomeModal({
                           body-sm mbs-2 resize-none rounded-control border border-border-warm
                           bg-surface px-3 py-2.5 text-ink inline-full
                         "
-                        placeholder="What the buyer said while it is fresh"
+                        placeholder="What the client said while it is fresh"
                     />
                 </label>
                 <fieldset>
@@ -312,7 +312,7 @@ export default function OutcomeModal({
                         <Choice
                             value="drop"
                             current={nextStep}
-                            label="Drop this buyer"
+                            label="Drop this client"
                             onChange={(value) => form.setValue("nextStep", value)}
                         />
                     </div>

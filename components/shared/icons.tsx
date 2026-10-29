@@ -18,7 +18,7 @@
 
 import { Icon as IconifyIcon, type IconProps as IconifyProps } from "@iconify/react";
 import type { IconProps, TablerIcon } from "@tabler/icons-react";
-import { IconBrandMailgun, IconPassword } from "@tabler/icons-react";
+import { IconBrandMailgun } from "@tabler/icons-react";
 
 // Social marks use the same Tabler glyph family through Iconify.
 type SocialIconProps = Omit<IconifyProps, "icon">;
@@ -35,7 +35,7 @@ export const LinkedInIcon = (props: SocialIconProps) => (
 /** Icon component type — use instead of LucideIcon. */
 export type AppIcon = TablerIcon;
 export const EmailFieldIcon = IconBrandMailgun;
-export const PasswordIcon = IconPassword;
+export const PasswordIcon = IconLock;
 export type { IconProps };
 
 import {

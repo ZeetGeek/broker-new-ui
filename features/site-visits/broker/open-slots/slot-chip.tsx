@@ -46,7 +46,7 @@ export const SlotChip = memo(function SlotChip({
         : state === "last"
           ? "1 spot left"
           : state === "booked"
-            ? `booked by you for ${slot.bookedBuyerName ?? "your buyer"}`
+            ? `booked by you for ${slot.bookedBuyerName ?? "your client"}`
             : state === "requested"
               ? "requested by you"
               : state === "full"

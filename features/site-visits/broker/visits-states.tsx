@@ -268,19 +268,19 @@ export function EmptyState({
         "no-exclusive-slots": {
             icon: SlidersHorizontal,
             title: "No open times in this range.",
-            detail: "Without filters, only listings with an open buyer lead show. Booked times stay hidden. Pick a property in Filters or try another week.",
+            detail: "Without filters, only listings with an open client lead show. Booked times stay hidden. Pick a property in Filters or try another week.",
             primary: "Clear filters",
         },
         "no-property-slots": {
             icon: Clock3,
             title: "This owner has not published any times.",
-            detail: "Ask for one that suits your buyer.",
+            detail: "Ask for one that suits your client.",
             primary: "Request another time",
         },
         "no-requests": {
             icon: Clock3,
             title: "No time requests.",
-            detail: "Ask an owner for a time that suits your buyer.",
+            detail: "Ask an owner for a time that suits your client.",
             primary: "Request another time",
         },
         "slots-error": {

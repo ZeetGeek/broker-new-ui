@@ -207,7 +207,7 @@ export function VisitDetailModal({
                         <div className="flex items-center gap-2.5">
                             <UserAvatar size="sm" name={visit.buyer.name} />
                             <span className="flex flex-col">
-                                <span className="body-xs text-ink-subtle">Buyer</span>
+                                <span className="body-xs text-ink-subtle">Client</span>
                                 <span className="body-sm font-medium text-ink">
                                     {visit.buyer.name}
                                 </span>

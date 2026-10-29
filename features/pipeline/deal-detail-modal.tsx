@@ -157,7 +157,7 @@ export function DealDetailModal({
             description={
                 deal
                     ? `${deal.property.locality}, ${deal.property.city}`
-                    : "Buyer, property, offer and stage history."
+                    : "Client, property, offer and stage history."
             }
             footer={
                 <AppModalFooter
@@ -238,7 +238,7 @@ export function DealDetailModal({
                         <div className="flex items-center gap-2.5 min-inline-0">
                             <UserAvatar name={deal.buyer.name} imageUrl={deal.buyer.avatarUrl} />
                             <div className="min-inline-0">
-                                <p className="eyebrow text-ink-subtle">Buyer</p>
+                                <p className="eyebrow text-ink-subtle">Client</p>
                                 <p className="body-sm truncate font-medium text-ink">
                                     {deal.buyer.name}
                                 </p>
@@ -302,7 +302,7 @@ export function DealDetailModal({
                         <DetailField label="Closed amount">
                             {formatMoney(deal.closedAmountInr, deal.property.isRent)}
                         </DetailField>
-                        <DetailField label="Buyer budget">
+                        <DetailField label="Client budget">
                             {deal.buyer.budgetMaxInr != null
                                 ? formatMoney(deal.buyer.budgetMaxInr, deal.property.isRent)
                                 : "—"}

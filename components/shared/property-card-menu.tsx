@@ -529,7 +529,7 @@ export function PropertyCardMenu({
                         }}
                     >
                         <UserPlus aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Attach buyer
+                        Attach client
                     </DropdownMenuItem>
                 ) : null}
 

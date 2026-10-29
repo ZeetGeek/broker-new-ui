@@ -24,15 +24,15 @@ function buildMeaning(summary: ContactsSummary | null, tab: ContactsTab): string
 }
 
 function buildFact(summary: ContactsSummary | null, tab: ContactsTab): string {
-    if (!summary) return "Contacts";
+    if (!summary) return "Clients";
 
     if (tab === "owners") {
         if (summary.ownerCount === 0) return "No owners yet";
         return `${summary.ownerCount} ${summary.ownerCount === 1 ? "owner" : "owners"}`;
     }
 
-    if (summary.buyerCount === 0) return "No buyers yet";
-    return `${summary.buyerCount} ${summary.buyerCount === 1 ? "buyer" : "buyers"}`;
+    if (summary.buyerCount === 0) return "No clients yet";
+    return `${summary.buyerCount} ${summary.buyerCount === 1 ? "client" : "clients"}`;
 }
 
 export function ContactsIntro({

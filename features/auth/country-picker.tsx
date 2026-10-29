@@ -56,7 +56,20 @@ export function CountryPicker({
                 .sort((a, b) => a.name.localeCompare(b.name, "en"))
                 .map((country) => ({
                     value: country.iso2,
-                    label: [country.emoji, country.name].filter(Boolean).join(" "),
+                    label: [country.emoji, country.name].filter(Boolean).join("\u2002"),
+                    displayLabel: (
+                        <span className="inline-flex items-center gap-2">
+                            {country.emoji ? (
+                                <span
+                                    aria-hidden="true"
+                                    className="inline-flex shrink-0 items-center leading-none"
+                                >
+                                    {country.emoji}
+                                </span>
+                            ) : null}
+                            <span>{country.name}</span>
+                        </span>
+                    ),
                 })),
         [countries],
     );

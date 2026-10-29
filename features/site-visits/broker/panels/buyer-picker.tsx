@@ -44,18 +44,18 @@ export function BuyerPicker({
         <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
                 <label htmlFor={searchId} className="body-sm font-bold text-ink">
-                    Buyer <span className="font-normal text-ink-muted">· one per visit</span>
+                    Client <span className="font-normal text-ink-muted">· one per visit</span>
                 </label>
                 <Button type="button" variant="ghost" size="sm" onClick={() => setAddOpen(true)}>
-                    <Plus aria-hidden /> Add new buyer
+                    <Plus aria-hidden /> Add new client
                 </Button>
             </div>
             <Input
                 id={searchId}
-                aria-label="Search buyers"
+                aria-label="Search clients"
                 value={query}
                 onValueChange={(value) => setQuery(value)}
-                placeholder="Search buyers"
+                placeholder="Search clients"
                 startIcon={Search}
                 clearable
             />
@@ -90,7 +90,7 @@ export function BuyerPicker({
                                     {buyer.name}
                                 </span>
                                 <span className="body-xs block truncate text-ink-muted">
-                                    {buyer.requirement ?? "Buyer contact"}
+                                    {buyer.requirement ?? "Client"}
                                 </span>
                             </span>
                             <span
@@ -116,7 +116,7 @@ export function BuyerPicker({
                     const buyer = {
                         id: savedId ?? `buyer_${Date.now()}`,
                         name,
-                        requirement: "New buyer · add requirements in Contacts",
+                        requirement: "New client · add requirements in Clients",
                     };
                     if (onBuyerCreated) onBuyerCreated(buyer);
                     else setCreated((current) => [buyer, ...current]);

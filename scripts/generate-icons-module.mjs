@@ -132,7 +132,7 @@ const MAP = {
     LogOut: "IconLogout",
     Mail: "IconMail",
     EmailFieldIcon: "IconBrandMailgun",
-    PasswordIcon: "IconPassword",
+    PasswordIcon: "IconLock",
     MailCheck: "IconMailCheck",
     MailOpen: "IconMailOpened",
     Map: "IconMap",

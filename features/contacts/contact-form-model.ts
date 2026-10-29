@@ -332,7 +332,7 @@ export function validateBuyerStep(values: BuyerContactForm, step: number): Error
     if (step === 3) {
         if (!values.source) errors.source = "Choose a lead source";
         if (values.source === "reference" && !values.referredBy.trim())
-            errors.referredBy = "Enter who referred this buyer";
+            errors.referredBy = "Enter who referred this client";
         if (!values.stage) errors.stage = "Choose a lead stage";
     }
     return errors;

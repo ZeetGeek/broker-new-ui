@@ -64,7 +64,7 @@ function ContactsQueryInput({ value, onChange }: { value: string; onChange: (q: 
             value={draft}
             onValueChange={setDraft}
             placeholder="Search name, number or area"
-            aria-label="Search your contacts"
+            aria-label="Search your clients"
             startIcon={Search}
             clearable
             wrapperClassName="
@@ -96,7 +96,7 @@ export function ContactsHeader({
     onAdd: () => void;
 }) {
     const isBuyers = filters.tab === "buyers";
-    const addLabel = isBuyers ? "Add buyer" : "Add owner";
+    const addLabel = isBuyers ? "Add client" : "Add owner";
     const addShortcut = getShortcut("add_contact");
 
     const setTab = (tab: ContactsTab) => {
@@ -112,8 +112,8 @@ export function ContactsHeader({
                             [
                                 {
                                     value: "buyers" as const,
-                                    label: "Buyers",
-                                    mobileLabel: "Buyers",
+                                    label: "Clients",
+                                    mobileLabel: "Clients",
                                     icon: Users,
                                     count: summary?.buyerCount ?? 0,
                                     description: "People you’re helping find a property",

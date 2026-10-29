@@ -231,7 +231,7 @@ export function AddBuyerModal({
     const save = form.handleSubmit(async (parsed) => {
         if (duplicate && !ignoreDuplicate && !isEdit) {
             setFormError(
-                "This mobile number is already saved. Open the existing contact, or continue anyway.",
+                "This mobile number is already saved. Open the existing client, or continue anyway.",
             );
             return;
         }
@@ -242,12 +242,12 @@ export function AddBuyerModal({
             if (isEdit && buyer) {
                 await contactsApi.saveBuyer(input, buyer.id);
                 onUpdated?.(input.name);
-                toast.success("Buyer updated");
+                toast.success("Client updated");
                 onOpenChange(false);
             } else {
                 const savedId = await contactsApi.saveBuyer(input);
                 onCreated(input.name, savedId);
-                toast.success("Buyer added");
+                toast.success("Client added");
                 form.reset(emptyValues(locationDefaults));
                 onOpenChange(false);
             }
@@ -257,7 +257,7 @@ export function AddBuyerModal({
                     ? error.message
                     : error instanceof Error
                       ? error.message
-                      : "Could not save this buyer. Try again.";
+                      : "Could not save this client. Try again.";
             setFormError(message);
         } finally {
             setBusy(false);
@@ -267,7 +267,7 @@ export function AddBuyerModal({
     const saveAnother = form.handleSubmit(async (parsed) => {
         if (duplicate && !ignoreDuplicate) {
             setFormError(
-                "This mobile number is already saved. Open the existing contact, or continue anyway.",
+                "This mobile number is already saved. Open the existing client, or continue anyway.",
             );
             return;
         }
@@ -277,7 +277,7 @@ export function AddBuyerModal({
             const input = toNewBuyerInput(parsed);
             const savedId = await contactsApi.saveBuyer(input);
             onCreated(input.name, savedId);
-            toast.success("Buyer added");
+            toast.success("Client added");
             form.reset(emptyValues(locationDefaults));
             setDuplicate(null);
             setIgnoreDuplicate(false);
@@ -288,7 +288,7 @@ export function AddBuyerModal({
                     ? error.message
                     : error instanceof Error
                       ? error.message
-                      : "Could not save this buyer. Try again.";
+                      : "Could not save this client. Try again.";
             setFormError(message);
         } finally {
             setBusy(false);
@@ -299,11 +299,11 @@ export function AddBuyerModal({
         <ContactFormDrawer
             open={open}
             onOpenChange={onOpenChange}
-            title={isEdit ? "Edit buyer" : "Add buyer"}
+            title={isEdit ? "Edit client" : "Add client"}
             description="Capture their requirement once, then match them to your private listings."
             isDirty={isDirty}
             busy={busy}
-            primaryLabel={isEdit ? "Save changes" : "Save buyer"}
+            primaryLabel={isEdit ? "Save changes" : "Save client"}
             onPrimary={() => void save()}
             onSaveAnother={isEdit ? undefined : () => void saveAnother()}
             footerError={formError}

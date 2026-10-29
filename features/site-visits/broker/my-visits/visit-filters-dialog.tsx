@@ -49,7 +49,7 @@ export function VisitFiltersDialog({
                 <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
                     <DialogTitle>Filter my visits</DialogTitle>
                     <DialogDescription>
-                        Pick a buyer or owner to narrow the leads, then pick a lead to see its
+                        Pick a client or owner to narrow the leads, then pick a lead to see its
                         visits.
                     </DialogDescription>
                     <DialogClose />

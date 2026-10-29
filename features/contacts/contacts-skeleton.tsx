@@ -55,7 +55,7 @@ export function ContactsSkeleton({
               xl:grid-cols-5
             "
             aria-busy="true"
-            aria-label="Loading your contacts"
+            aria-label="Loading your clients"
         >
             {Array.from({ length: count }).map((_, index) => (
                 <ContactCardSkeleton key={index} />

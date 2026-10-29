@@ -501,7 +501,7 @@ export function ProfilePage() {
                         description={
                             ownerAccount
                                 ? "How brokers reach you about your properties."
-                                : "How owners and buyers reach you."
+                                : "How owners and clients reach you."
                         }
                     >
                         <div className="grid gap-4 sm:grid-cols-2">

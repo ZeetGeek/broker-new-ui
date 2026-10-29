@@ -29,7 +29,7 @@ function Fact({ label, value, empty }: { label: string; value: string | null; em
 }
 
 function LeadRow({ lead }: { lead: PropertyAnalyticsLead }) {
-    const name = lead.buyerName?.trim() || "Unnamed buyer";
+    const name = lead.buyerName?.trim() || "Unnamed client";
     const phone = lead.buyerPhone?.trim() || null;
     const contact = [phone ? formatPhoneIn(phone) : null, lead.buyerEmail?.trim() || null]
         .filter(Boolean)

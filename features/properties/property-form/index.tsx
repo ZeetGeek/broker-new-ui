@@ -685,11 +685,11 @@ export function PropertyForm({
                 setAttachmentRetry(pending);
                 await writeLocalDraft(current).catch(() => {
                     setStorageError(
-                        "The property is saved, but the pending buyer links could not be saved on this device. Please retry before leaving.",
+                        "The property is saved, but the pending client links could not be saved on this device. Please retry before leaving.",
                     );
                 });
                 setFormBanner(
-                    "The property was saved, but its buyers could not be attached. Retry below; this will not create another property.",
+                    "The property was saved, but its clients could not be attached. Retry below; this will not create another property.",
                 );
                 return;
             }
@@ -710,7 +710,7 @@ export function PropertyForm({
             setAttachmentRetry(null);
         } catch {
             setFormBanner(
-                "The property is saved. Buyers still could not be attached. Please retry.",
+                "The property is saved. Clients still could not be attached. Please retry.",
             );
         } finally {
             persistInFlightRef.current = false;
@@ -810,7 +810,7 @@ export function PropertyForm({
     async function requestClose() {
         if (saving || persistInFlightRef.current) return;
         if (attachmentRetry) {
-            toast.error("Please retry attaching buyers before closing this form.");
+            toast.error("Please retry attaching clients before closing this form.");
             return;
         }
         let locallySaved = false;
@@ -1091,7 +1091,7 @@ export function PropertyForm({
                             "
                         >
                             <p className="flex-1 text-sm text-danger">
-                                Property saved. Buyer attachment is pending.
+                                Property saved. Client attachment is pending.
                             </p>
                             <Button
                                 type="button"
@@ -1100,7 +1100,7 @@ export function PropertyForm({
                                 }}
                                 loading={saving}
                             >
-                                Retry attaching buyers
+                                Retry attaching clients
                             </Button>
                         </div>
                     ) : null}

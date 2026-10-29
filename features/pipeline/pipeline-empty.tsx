@@ -12,11 +12,11 @@ export function PipelineFirstRunEmpty() {
         <EmptyState
             icon={Users}
             heading="No deals yet"
-            description="Add a property to Your listings, then link a buyer to it from Contacts. The deal will appear here automatically."
+            description="Add a property to Your listings, then link a client to it from Clients. The deal will appear here automatically."
             className="py-16"
         >
             <Button size="lg" nativeButton={false} render={<Link href={BROKER_ADD_DEAL_HREF} />}>
-                Link a buyer to a property
+                Link a client to a property
             </Button>
         </EmptyState>
     );

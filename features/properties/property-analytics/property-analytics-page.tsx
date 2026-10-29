@@ -210,7 +210,7 @@ function AnalyticsBody({ data }: { data: PropertyAnalytics }) {
                     <EmptyState
                         icon={ChartBar}
                         heading="No leads on this listing yet"
-                        description="Add a buyer to this listing from Your listings. Their progress shows up here."
+                        description="Add a client to this listing from Your listings. Their progress shows up here."
                     >
                         <Button
                             variant="outline"

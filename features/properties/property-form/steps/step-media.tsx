@@ -486,7 +486,7 @@ export function StepMedia({
 
             <WizardSection
                 title={<>Video and virtual tour</>}
-                description="Optional links for buyers. Paste a hosted URL — no file upload here."
+                description="Optional links for clients. Paste a hosted URL — no file upload here."
             >
                 <div className={FORM_GRID_CLASS}>
                     <div className="flex flex-col gap-3 min-inline-0">
