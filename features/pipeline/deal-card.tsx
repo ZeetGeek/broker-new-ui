@@ -10,6 +10,14 @@ import {
 } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
+
+import { isOverBudget } from "@/lib/api/pipeline";
+import { getStoredUser } from "@/lib/auth/session";
+import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
+import { cn } from "@/lib/utils";
+
+import { AppImage } from "@/components/shared/app-image";
 import {
     Building2,
     Check,
@@ -26,14 +34,6 @@ import {
     StickyNote,
     Undo2,
 } from "@/components/shared/icons";
-
-import { isOverBudget } from "@/lib/api/pipeline";
-import { getStoredUser } from "@/lib/auth/session";
-import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatPropertyCardName } from "@/lib/format/property-card-name";
-import { cn } from "@/lib/utils";
-
-import { AppImage } from "@/components/shared/app-image";
 import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Badge, type BadgeColor } from "@/components/ui/badge";
@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { ChipOverflowPopover, type ChipTone } from "@/features/pipeline/chip-overflow-popover";
 import {
     type AttentionTone,
@@ -212,8 +213,8 @@ function DealCoverImage({ property, muted = false }: { property: DealProperty; m
             ) : (
                 <div
                     className="
-                  flex items-center justify-center text-ink-subtle block-full inline-full
-                "
+                      flex items-center justify-center text-ink-subtle block-full inline-full
+                    "
                 >
                     <Building2 className="block-6 inline-6" strokeWidth={1.5} />
                 </div>
@@ -480,19 +481,23 @@ function DealCardMenu({
                             />
                             Log a call
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className={DEAL_MENU_ITEM_CLASS}
-                            onClick={(event) => act(event, () => handlers.onMakeOffer(deal.id))}
-                        >
-                            <Handshake
-                                aria-hidden
-                                className={DEAL_MENU_ICON_CLASS}
-                                strokeWidth={1.75}
-                            />
-                            {deal.offerStatus === "rejected" || deal.offerStatus === "pending"
-                                ? "Revise offer"
-                                : "Make offer"}
-                        </DropdownMenuItem>
+                        {FEATURE_PLATFORM_OWNER ? (
+                            <DropdownMenuItem
+                                className={DEAL_MENU_ITEM_CLASS}
+                                onClick={(event) =>
+                                    act(event, () => handlers.onMakeOffer(deal.id))
+                                }
+                            >
+                                <Handshake
+                                    aria-hidden
+                                    className={DEAL_MENU_ICON_CLASS}
+                                    strokeWidth={1.75}
+                                />
+                                {deal.offerStatus === "rejected" || deal.offerStatus === "pending"
+                                    ? "Revise offer"
+                                    : "Make offer"}
+                            </DropdownMenuItem>
+                        ) : null}
                         <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
                         {DEAL_STAGE_ORDER.filter((stage) => stage !== deal.status).map((stage) => (
                             <DropdownMenuItem
@@ -615,6 +620,7 @@ export function DealCard({
     const primary = (() => {
         if (!live) return null;
         if (deal.status === "negotiation") {
+            if (!FEATURE_PLATFORM_OWNER) return null;
             return {
                 label:
                     deal.offerStatus === "rejected" || deal.offerStatus === "pending"
@@ -749,8 +755,8 @@ export function DealCard({
                         />
                         <h3
                             className="
-                          body truncate font-semibold tracking-wide text-ink capitalize
-                        "
+                              body truncate font-semibold tracking-wide text-ink capitalize
+                            "
                         >
                             {headline || deal.property.title}
                         </h3>

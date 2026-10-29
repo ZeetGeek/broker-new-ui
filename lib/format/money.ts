@@ -1,3 +1,5 @@
+import { type Currency, getActiveCurrency, withCurrencySymbol } from "@/lib/format/currency";
+
 const intlNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const intlCompact = new Intl.NumberFormat("en-US", {
     notation: "compact",
@@ -5,18 +7,20 @@ const intlCompact = new Intl.NumberFormat("en-US", {
 });
 
 /**
- * Parses a typed money amount.
- * Accepts plain numbers and common short suffixes (k / m / b).
- * Legacy India suffixes (lakh / cr) still parse so older drafts keep working.
+ * Parses a typed money amount in any currency.
+ * Accepts plain numbers and common short suffixes (k / m / b). Lakh / crore
+ * suffixes still parse so Indian users and older drafts keep working.
+ * Currency symbols and a leading ISO code (`USD 500k`) are ignored.
  */
-export function parseInr(value: string | number | null | undefined): number | null {
+export function parseMoney(value: string | number | null | undefined): number | null {
     if (typeof value === "number") return Number.isFinite(value) ? Math.max(0, value) : null;
     if (!value) return null;
 
     const normalized = value
         .trim()
         .toLowerCase()
-        .replace(/[₹$€£,\s]/g, "");
+        .replace(/^[a-z]{3}(?=\s*[\d.])/, "")
+        .replace(/[^\d.a-z-]/g, "");
     if (!normalized) return null;
 
     const match = normalized.match(
@@ -42,23 +46,32 @@ export function parseInr(value: string | number | null | undefined): number | nu
     return Math.round(amount * multiplier);
 }
 
-export function formatInr(value: number | null | undefined): string {
+/** Full digits with the currency symbol, e.g. `₹8,500,000` / `$850,000`. */
+export function formatMoney(
+    value: number | null | undefined,
+    currency: Currency = getActiveCurrency(),
+): string {
     if (value == null || !Number.isFinite(value)) return "— — —";
-    return `₹${intlNumber.format(Math.round(value))}`;
+    return withCurrencySymbol(currency, intlNumber.format(Math.round(value)));
 }
 
-export function formatInrInput(value: number | null | undefined): string {
+/** Digits only, for a money input the user is editing. */
+export function formatMoneyInput(value: number | null | undefined): string {
     if (value == null || !Number.isFinite(value) || value === 0) return "";
     return intlNumber.format(Math.round(value));
 }
 
-export function formatInrCompact(value: number | null | undefined): string {
+/** International compact with the symbol, e.g. `₹1.2M` / `$850K`. */
+export function formatMoneyCompact(
+    value: number | null | undefined,
+    currency: Currency = getActiveCurrency(),
+): string {
     if (value == null || !Number.isFinite(value)) return "— — —";
-    return `₹${intlCompact.format(Math.max(0, value))}`;
+    return withCurrencySymbol(currency, intlCompact.format(Math.max(0, value)));
 }
 
-/** Short readable hint under money fields — international compact, never lakh/crore. */
-export function inrWordHint(value: number | null | undefined): string {
+/** Short readable hint under money fields — international compact, no symbol. */
+export function moneyWordHint(value: number | null | undefined): string {
     if (value == null || !Number.isFinite(value) || value <= 0) return "";
-    return formatInrCompact(value).replace(/^₹/, "");
+    return intlCompact.format(value);
 }

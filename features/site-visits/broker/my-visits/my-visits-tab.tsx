@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 import { addDays, addMonths } from "date-fns";
 
-import { formatPriceInr } from "@/lib/format/price";
+import { formatPrice } from "@/lib/format/price";
 import { propertyCriteriaCount, type PropertyListCriteria } from "@/lib/properties/list-criteria";
 import { groupVisitsByDay } from "@/lib/visits/grouping";
 import { matchesVisitProperty } from "@/lib/visits/property-filters";
@@ -115,7 +115,7 @@ function daySummary(items: BrokerSiteVisit[]) {
     const visitLabel = `${items.length} ${items.length === 1 ? "visit" : "visits"}`;
     if (active.length === 0) return `${visitLabel} · all cancelled`;
     if (saleTotal <= 0) return visitLabel;
-    return `${visitLabel} · ${formatPriceInr(saleTotal)} in play`;
+    return `${visitLabel} · ${formatPrice(saleTotal)} in play`;
 }
 
 function VisitGroup({

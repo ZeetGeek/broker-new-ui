@@ -20,6 +20,8 @@ export type RegisterPayload = {
     accountType?: "individual" | "organization";
     orgName?: string;
     referralCode?: string;
+    /** ISO2 of the market the account works in. Required by the API. */
+    countryIso2: string;
 };
 
 export type RegisterResponse = {
@@ -28,7 +30,7 @@ export type RegisterResponse = {
 };
 
 export const authApi = {
-    login(email: string, password: string) {
+    login(email: string, password: string, rememberMe: boolean) {
         if (isMockMode()) {
             return Promise.resolve({
                 user: MOCK_AUTH_USER,
@@ -37,7 +39,7 @@ export const authApi = {
         }
         return apiFetch<LoginResponse>("/auth/login", {
             method: "POST",
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, rememberMe }),
             skipAuth: true,
             credentials: "include",
         });
@@ -115,10 +117,11 @@ export const authApi = {
         }).catch(() => undefined);
     },
 
-    completeGoogleRole(role: "owner" | "broker") {
+    /** Confirms the role and, when the account has none yet, its country. */
+    completeGoogleRole(role: "owner" | "broker", countryIso2?: string) {
         return apiFetch<LoginResponse>("/auth/google/complete-role", {
             method: "POST",
-            body: JSON.stringify({ role }),
+            body: JSON.stringify({ role, ...(countryIso2 ? { countryIso2 } : {}) }),
             credentials: "include",
         });
     },
@@ -132,6 +135,8 @@ export const authApi = {
         accountType?: "individual" | "organization";
         orgName?: string;
         referralCode?: string;
+        /** ISO2 picked on the register page, carried through the OAuth state. */
+        countryIso2?: string;
         /** True when the register page already collected owner/broker. */
         roleChosen?: boolean;
     }) {
@@ -145,6 +150,9 @@ export const authApi = {
         }
         if (options?.referralCode?.trim()) {
             params.set("referralCode", options.referralCode.trim());
+        }
+        if (options?.countryIso2?.trim()) {
+            params.set("countryIso2", options.countryIso2.trim().toUpperCase());
         }
         if (options?.roleChosen) {
             params.set("roleChosen", "1");

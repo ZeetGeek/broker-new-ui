@@ -590,8 +590,9 @@ export function PropertyForm({
                 return;
             }
         }
-        // Quick add is a draft shortcut. Publishing always uses the same full checks.
-        if (entryMode === "quick" && forceDraft) {
+        // Quick add checks only its own fields, for both drafts and publishing, and
+        // never sends the user to Full details.
+        if (entryMode === "quick") {
             if (!validateQuickAdd(methods, current, portal)) {
                 persistInFlightRef.current = false;
                 return;
@@ -614,7 +615,6 @@ export function PropertyForm({
                 return;
             }
         } else if (!forceDraft) {
-            if (entryMode === "quick") setEntryMode("full");
             const required = activeSteps.map((item) => item.id);
             for (const requiredStep of required) {
                 if (!validateStep(requiredStep)) {
@@ -1287,7 +1287,7 @@ function PropertyFormHeader({
                             onPublish();
                         }}
                     >
-                        {entryMode === "quick" ? "Review & publish" : "Publish"}
+                        Publish
                     </Button>
                     {showClose ? (
                         <Tooltip>
@@ -1676,6 +1676,14 @@ function MobileDealSummary({
 
 function cloneDefaultDraft(portal: "broker" | "owner" = "broker"): PropertyDraftValues {
     const draft = JSON.parse(JSON.stringify(DEFAULT_PROPERTY_DRAFT)) as PropertyDraftValues;
+    // A listing is always offered in the holder's country. The Surat / Gujarat
+    // starting place only makes sense for the launch market.
+    const marketName = getStoredUser()?.country?.name;
+    if (marketName && marketName !== draft.location.country) {
+        draft.location.country = marketName;
+        draft.location.state = "";
+        draft.location.city = "";
+    }
     // Owners must type the commission themselves; no pre-filled rate.
     if (portal === "owner") {
         draft.commission.sale.value = null;
@@ -1758,8 +1766,8 @@ function listingToDraft(
     draft.basics.title = listing.title;
     draft.basics.description = listing.description;
     draft.location.city = listing.city;
-    draft.location.country = listing.country || "India";
-    draft.location.state = listing.state || "Gujarat";
+    draft.location.country = listing.country || draft.location.country;
+    draft.location.state = listing.state || draft.location.state;
     draft.location.locality = listing.locality;
     draft.location.unitNumber = listing.unitNumber || "";
     draft.location.streetOrRoad = listing.streetOrRoad || "";

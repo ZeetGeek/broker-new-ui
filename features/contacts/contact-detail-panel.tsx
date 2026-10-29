@@ -8,7 +8,7 @@ import {
     Building2,
     Globe2,
     Home,
-    IndianRupee,
+    currencyIcon,
     Link2,
     Lock,
     Mail,
@@ -24,7 +24,7 @@ import {
 } from "@/components/shared/icons";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatIndianPrice } from "@/lib/format/price";
+import { formatListingPrice } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
@@ -41,9 +41,10 @@ import {
 } from "@/features/contacts/contact-card-model";
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { BuyerContactForm, OwnerContactForm } from "@/features/contacts/contact-form-model";
-import { CONTACT_LOCATION_FALLBACK } from "@/features/contacts/contact-location-defaults";
+import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
+import { useMarketCurrency } from "@/hooks/use-market";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
 
@@ -428,6 +429,7 @@ function BuyerPanel({
     onQuickUpdate,
     propertiesRef,
 }: BuyerPanelProps) {
+    const CurrencyIcon = currencyIcon(useMarketCurrency().code);
     const model = toBuyerContactCardModel(buyer);
     const [notes, setNotes] = useState(buyer.details?.notes || buyer.notes || "");
     const [saved, setSaved] = useState(false);
@@ -442,18 +444,19 @@ function BuyerPanel({
 
     const saleBudget = [buyer.budgetMinInr, buyer.budgetMaxInr]
         .filter((value): value is number => value != null)
-        .map((value) => formatIndianPrice(value, "buy"))
+        .map((value) => formatListingPrice(value, "buy"))
         .join(" to ");
     const rentBudget = [buyer.rentBudgetMinInr, buyer.rentBudgetMaxInr]
         .filter((value): value is number => value != null)
-        .map((value) => formatIndianPrice(value, "rent"))
+        .map((value) => formatListingPrice(value, "rent"))
         .join(" to ");
 
     const areasLabel = model.localities.join(", ");
     const source = sourceLabel(buyer.details?.source || buyer.source);
-    const country = buyer.country?.trim() || CONTACT_LOCATION_FALLBACK.country;
-    const state = buyer.state?.trim() || CONTACT_LOCATION_FALLBACK.state;
-    const city = buyer.city?.trim() || CONTACT_LOCATION_FALLBACK.city;
+    const fallback = contactLocationDefaults();
+    const country = buyer.country?.trim() || fallback.country;
+    const state = buyer.state?.trim() || fallback.state;
+    const city = buyer.city?.trim() || fallback.city;
 
     return (
         <>
@@ -496,7 +499,7 @@ function BuyerPanel({
                             ? [
                                   {
                                       label: "Sale budget",
-                                      icon: IndianRupee,
+                                      icon: CurrencyIcon,
                                       value: saleBudget || "—",
                                       wide: true,
                                       empty: !saleBudget,
@@ -507,7 +510,7 @@ function BuyerPanel({
                             ? [
                                   {
                                       label: "Rent budget",
-                                      icon: IndianRupee,
+                                      icon: CurrencyIcon,
                                       value: rentBudget || "—",
                                       wide: true,
                                       empty: !rentBudget,
@@ -652,10 +655,10 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
     const source = sourceLabel(details?.source);
     const ownerType = ownerTypeLabel(details?.ownerType);
     const isPlatform = owner.origin === "platform";
-    const country =
-        details?.country?.trim() || (isPlatform ? "" : CONTACT_LOCATION_FALLBACK.country);
-    const state = details?.state?.trim() || (isPlatform ? "" : CONTACT_LOCATION_FALLBACK.state);
-    const city = details?.city?.trim() || (isPlatform ? "" : CONTACT_LOCATION_FALLBACK.city);
+    const fallback = contactLocationDefaults();
+    const country = details?.country?.trim() || (isPlatform ? "" : fallback.country);
+    const state = details?.state?.trim() || (isPlatform ? "" : fallback.state);
+    const city = details?.city?.trim() || (isPlatform ? "" : fallback.city);
     const fullAddress = details?.fullAddress?.trim() || details?.address?.trim() || "";
     const reraNumber = details?.reraNumber?.trim() || "";
 

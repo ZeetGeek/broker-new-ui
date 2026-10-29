@@ -3,7 +3,7 @@
 import { Building2 } from "@/components/shared/icons";
 
 import { formatRelativePast } from "@/lib/format/date";
-import { formatPriceInr } from "@/lib/format/price";
+import { formatPrice } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 
 import { AppModal } from "@/components/shared/app-modal";
@@ -46,14 +46,14 @@ function LeadMoney({ lead }: { lead: BuyerLead }) {
     if (lead.closedAmountInr != null) {
         return (
             <span className="body-xs tabular text-ink-muted">
-                Closed at {formatPriceInr(lead.closedAmountInr)}
+                Closed at {formatPrice(lead.closedAmountInr)}
             </span>
         );
     }
     if (lead.offerAmountInr != null) {
         return (
             <span className="body-xs tabular text-ink-muted">
-                Offer {formatPriceInr(lead.offerAmountInr)}
+                Offer {formatPrice(lead.offerAmountInr)}
             </span>
         );
     }

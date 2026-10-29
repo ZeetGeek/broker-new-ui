@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import { type Currency, getActiveCurrency, usesIndianNumbering } from "@/lib/format/currency";
+import { formatPrice } from "@/lib/format/price";
+
 export const propertyCategorySchema = z.enum([
     "residential",
     "commercial",
@@ -139,12 +142,15 @@ export const MAX_LISTING_PHOTOS = 10;
 /** Largest accepted upload per photo, in megabytes. */
 export const MAX_PHOTO_SIZE_MB = 5;
 
-/** ₹1 L — the floor below which a listing price is almost certainly a typo. */
-const MIN_SALE_INR = 100_000;
-/** ₹100 Cr. */
-const MAX_SALE_INR = 1_000_000_000;
-const MIN_RENT_INR = 1_000;
-const MAX_RENT_INR = 10_000_000;
+/**
+ * Plausible price bounds in the market currency — below the floor a price is
+ * almost certainly a typo. INR: ₹1 L – ₹100 Cr sale, ₹1,000 – ₹1 Cr rent.
+ */
+function priceBounds(currency: Currency) {
+    return usesIndianNumbering(currency)
+        ? { minSale: 100_000, maxSale: 1_000_000_000, minRent: 1_000, maxRent: 10_000_000 }
+        : { minSale: 1_000, maxSale: 10_000_000_000, minRent: 50, maxRent: 10_000_000 };
+}
 
 export const propertyFormSchema = z
     .object({
@@ -194,7 +200,7 @@ export const propertyFormSchema = z
         maintenanceInr: z
             .number()
             .min(0, "Maintenance cannot be negative")
-            .max(1_000_000, "Enter maintenance up to ₹10,00,000")
+            .max(1_000_000, "Enter a smaller maintenance amount")
             .nullable(),
         availableFrom: z.string().nullable(),
         description: z.string().trim().max(2000, "Keep the description under 2000 characters"),
@@ -221,6 +227,8 @@ export const propertyFormSchema = z
 
         const needsSale = data.transactionType === "sale" || data.transactionType === "both";
         const needsRent = data.transactionType === "rent" || data.transactionType === "both";
+        const bounds = priceBounds(getActiveCurrency());
+        const saleRangeMessage = `Enter a price between ${formatPrice(bounds.minSale)} and ${formatPrice(bounds.maxSale)}`;
 
         if (needsSale) {
             const sale = data.saleAmountInr;
@@ -228,13 +236,13 @@ export const propertyFormSchema = z
                 ctx.addIssue({
                     code: "custom",
                     path: ["saleAmountInr"],
-                    message: "Enter a price between ₹1 L and ₹100 Cr",
+                    message: saleRangeMessage,
                 });
-            } else if (sale < MIN_SALE_INR || sale > MAX_SALE_INR) {
+            } else if (sale < bounds.minSale || sale > bounds.maxSale) {
                 ctx.addIssue({
                     code: "custom",
                     path: ["saleAmountInr"],
-                    message: "Enter a price between ₹1 L and ₹100 Cr",
+                    message: saleRangeMessage,
                 });
             }
         }
@@ -244,13 +252,13 @@ export const propertyFormSchema = z
                 ctx.addIssue({
                     code: "custom",
                     path: ["rentAmountInr"],
-                    message: "Enter a monthly rent greater than ₹0",
+                    message: "Enter a monthly rent greater than 0",
                 });
-            } else if (rent < MIN_RENT_INR || rent > MAX_RENT_INR) {
+            } else if (rent < bounds.minRent || rent > bounds.maxRent) {
                 ctx.addIssue({
                     code: "custom",
                     path: ["rentAmountInr"],
-                    message: "Enter a monthly rent between ₹1,000 and ₹1 Cr",
+                    message: `Enter a monthly rent between ${formatPrice(bounds.minRent)} and ${formatPrice(bounds.maxRent)}`,
                 });
             }
         }

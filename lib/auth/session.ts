@@ -1,4 +1,18 @@
+import type { Currency } from "@/lib/format/currency";
+
 export const GOOGLE_ONBOARDING_KEY = "google_onboarding_pending";
+
+/**
+ * The country an account operates in. Listings, broker discovery and every
+ * price the user sees are scoped to it.
+ */
+export type UserMarket = {
+    id: string;
+    name: string;
+    iso2: string;
+    emoji: string | null;
+    currency: Currency | null;
+};
 
 export type AuthUser = {
     id: string;
@@ -13,6 +27,11 @@ export type AuthUser = {
     authProvider?: string | null;
     isEmailVerified: boolean | null;
     createdAt?: string | null;
+    /**
+     * `null` — a Google signup that has not picked a country yet.
+     * `undefined` — a session stored before country scoping; refresh it.
+     */
+    country?: UserMarket | null;
 };
 
 export type AuthSession = {
@@ -32,16 +51,32 @@ const LEGACY_REFRESH_TOKEN_KEY = "broker_refresh_token";
 let memoryAccessToken: string | null = null;
 let memoryUser: AuthUser | null = null;
 
+/**
+ * "Remember me" sessions live in localStorage (survive tab/browser close).
+ * Otherwise they live in sessionStorage, which the browser drops when the tab closes.
+ */
+function activeStorage(): Storage {
+    return sessionStorage.getItem(TOKEN_KEY) ? sessionStorage : localStorage;
+}
+
 export function getAccessToken(): string | null {
     if (memoryAccessToken) return memoryAccessToken;
     if (typeof window === "undefined") return null;
-    return localStorage.getItem(TOKEN_KEY);
+    return activeStorage().getItem(TOKEN_KEY);
+}
+
+/**
+ * Name of the signed-in user's country — the fallback for a listing or
+ * contact that arrives without one. India until a session says otherwise.
+ */
+export function sessionCountryName(): string {
+    return getStoredUser()?.country?.name ?? "India";
 }
 
 export function getStoredUser(): AuthUser | null {
     if (memoryUser) return memoryUser;
     if (typeof window === "undefined") return null;
-    const raw = localStorage.getItem(USER_KEY);
+    const raw = activeStorage().getItem(USER_KEY);
     if (!raw) return null;
     try {
         return JSON.parse(raw) as AuthUser;
@@ -50,12 +85,21 @@ export function getStoredUser(): AuthUser | null {
     }
 }
 
-export function setSession(session: AuthSession) {
+/**
+ * `persist` picks the storage on login; when omitted (token refresh, profile
+ * update) the session stays in whichever storage it already uses.
+ */
+export function setSession(session: AuthSession, options?: { persist?: boolean }) {
     memoryAccessToken = session.accessToken;
     memoryUser = session.user;
     if (typeof window === "undefined") return;
-    localStorage.setItem(TOKEN_KEY, session.accessToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(session.user));
+    const persist = options?.persist ?? activeStorage() === localStorage;
+    const target = persist ? localStorage : sessionStorage;
+    const other = persist ? sessionStorage : localStorage;
+    target.setItem(TOKEN_KEY, session.accessToken);
+    target.setItem(USER_KEY, JSON.stringify(session.user));
+    other.removeItem(TOKEN_KEY);
+    other.removeItem(USER_KEY);
     localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
 }
 
@@ -63,8 +107,10 @@ export function clearSession() {
     memoryAccessToken = null;
     memoryUser = null;
     if (typeof window === "undefined") return;
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    for (const storage of [localStorage, sessionStorage]) {
+        storage.removeItem(TOKEN_KEY);
+        storage.removeItem(USER_KEY);
+    }
     localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
 }
 

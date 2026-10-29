@@ -65,3 +65,6 @@ next-env.d.ts
 .impeccable/hook.cache.json
 .impeccable/hook.pending.json
 .impeccable/live/
+
+bun.lock
+package-lock.json

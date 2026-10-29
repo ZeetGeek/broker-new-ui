@@ -4,8 +4,8 @@ import { AlertCircle, Check, MapPin } from "@/components/shared/icons";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
-import { parseInr } from "@/lib/format/inr";
-import { formatPriceInr } from "@/lib/format/price";
+import { parseMoney } from "@/lib/format/money";
+import { formatPrice } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
@@ -32,7 +32,7 @@ function priceGap(
     if (diff === 0) return { label: "Matches your price", tone: "text-success" };
 
     const percent = Math.round((Math.abs(diff) / askingInr) * 100);
-    const amount = formatPriceInr(Math.abs(diff));
+    const amount = formatPrice(Math.abs(diff));
     const share = percent > 0 ? ` (${percent}%)` : "";
     return diff > 0
         ? { label: `${amount}${share} above your price`, tone: "text-success" }
@@ -81,7 +81,7 @@ export function AcceptOfferModal({
 
     const facts = leadPropertyFacts(lead);
     const propertyLabel = leadPropertyLabel(lead);
-    const offerInr = parseInr(lead.offerAmount);
+    const offerInr = parseMoney(lead.offerAmount);
     const gap = offerInr != null ? priceGap(offerInr, facts.askingInr) : null;
     const notes = lead.notes?.trim();
     const configLine = [
@@ -108,7 +108,7 @@ export function AcceptOfferModal({
                         isSaving
                             ? "Accepting…"
                             : offerInr != null
-                              ? `Accept ${formatPriceInr(offerInr)}`
+                              ? `Accept ${formatPrice(offerInr)}`
                               : "Accept offer"
                     }
                     primaryIcon={<Check aria-hidden strokeWidth={2} />}

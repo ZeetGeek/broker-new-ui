@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { clientsApi } from "@/lib/api/clients";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
@@ -55,9 +55,10 @@ function mismatchReason(client: ClientItem, request: BuyerProperty): string | nu
 }
 
 function budgetLabel(client: ClientItem): string | null {
-    const sale = client.budgetMaxInr != null ? `Sale up to ${formatPriceInr(client.budgetMaxInr)}` : null;
+    const sale =
+        client.budgetMaxInr != null ? `Sale up to ${formatPrice(client.budgetMaxInr)}` : null;
     const rent =
-        client.rentBudgetMaxInr != null ? `Rent up to ${formatRentInr(client.rentBudgetMaxInr)}` : null;
+        client.rentBudgetMaxInr != null ? `Rent up to ${formatRent(client.rentBudgetMaxInr)}` : null;
     if (client.lookingFor === "rent") return rent;
     if (client.lookingFor === "both") return [sale, rent].filter(Boolean).join(" · ") || null;
     return sale;

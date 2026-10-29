@@ -2,6 +2,9 @@ import type { PropertyType } from "@/lib/validation/property";
 
 export type MyListingStatus = "draft" | "published" | "unpublished";
 
+/** Your listings tabs. `sold` is availability, not publish state, so it is tab-only. */
+export type MyListingsStatusTab = MyListingStatus | "sold";
+
 export type MyListingFurnishing = "furnished" | "semi" | "unfurnished";
 
 export type MyListingSecurityDepositMode = "amount" | "months_of_rent";
@@ -128,7 +131,7 @@ export type MyListingsFilters = {
     /** Broad UI type (`office`) or exact subtype (`cold_storage`). */
     propertyType: PropertyType | "";
     bhk: string[];
-    status: MyListingStatus | "";
+    status: MyListingsStatusTab | "";
     sort: MyListingSort;
     page: number;
 };

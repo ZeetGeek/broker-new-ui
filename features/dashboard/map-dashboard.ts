@@ -17,7 +17,7 @@ import {
     formatTimeIn,
     isSameCalendarDay,
 } from "@/lib/format/date";
-import { parseInr } from "@/lib/format/inr";
+import { parseMoney } from "@/lib/format/money";
 
 import type {
     ActivityData,
@@ -395,8 +395,8 @@ function mapYouRepresent(youRepresent: DashboardResponse["youRepresent"]): YouRe
             locality: property.locality,
             amountInr: property.amountInr,
             isRent: property.isRent,
-            commissionPercent: parseInr(property.commissionPercent),
-            commissionAmountInr: parseInr(property.commissionAmount),
+            commissionPercent: parseMoney(property.commissionPercent),
+            commissionAmountInr: parseMoney(property.commissionAmount),
             areaSqft: property.areaSqft,
             furnishingLabel: property.furnishingLabel,
             ownerFirstName: property.ownerFirstName,
@@ -426,8 +426,8 @@ function mapNewInAreas(newInAreas: DashboardResponse["newInAreas"]): AreaPropert
         locality: property.locality,
         amountInr: property.amountInr,
         isRent: property.isRent,
-        commissionPercent: parseInr(property.commissionPercent),
-        commissionAmountInr: parseInr(property.commissionAmount),
+        commissionPercent: parseMoney(property.commissionPercent),
+        commissionAmountInr: parseMoney(property.commissionAmount),
         areaSqft: property.areaSqft,
         furnishingLabel: property.furnishingLabel,
         ...(property.detailLabel ? { detailLabel: property.detailLabel } : {}),

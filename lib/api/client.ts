@@ -118,6 +118,12 @@ let refreshPromise: Promise<string> | null = null;
  * session so AuthGuard can send the user to login.
  */
 async function refreshAccessToken(): Promise<string> {
+    // A tab with no session (e.g. a non-"remember me" login whose tab was
+    // closed) must not resurrect it from the still-present refresh cookie.
+    if (!getAccessToken()) {
+        forceLogout();
+        throw new ApiError("Not authenticated", 401);
+    }
     if (!refreshPromise) {
         refreshPromise = refreshClient
             .post<RefreshResponse>("/auth/refresh", {})

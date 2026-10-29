@@ -1,4 +1,4 @@
-import { formatPriceInr } from "@/lib/format/price";
+import { formatPrice } from "@/lib/format/price";
 
 /** The listing's ask, for `<PriceWithCommission>`. Rent-only listings show the monthly rent. */
 export function listingAsk(input: {
@@ -17,7 +17,7 @@ export function listingAsk(input: {
 /** Offers and closed amounts — not a listing ask, so plain price formatting. */
 export function amountLabel(value: string | null | undefined): string | null {
     const parsed = amount(value);
-    return parsed == null ? null : formatPriceInr(parsed);
+    return parsed == null ? null : formatPrice(parsed);
 }
 
 function amount(value: string | null | undefined): number | null {

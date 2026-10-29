@@ -12,6 +12,7 @@ import {
     PROPERTY_PARKING_OPTIONS,
     type PropertyFormValues,
 } from "@/lib/validation/property";
+import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -36,6 +37,7 @@ function optionalNumberRegister(
 }
 
 export function ListingExtraFields() {
+    const currency = useMarketCurrency();
     const {
         control,
         register,
@@ -269,7 +271,7 @@ export function ListingExtraFields() {
 
                         <Field>
                             <FieldLabel htmlFor="maintenanceInr" className="body-sm text-ink">
-                                Maintenance / month (₹)
+                                Maintenance / month ({currency.symbol})
                             </FieldLabel>
                             <Controller
                                 name="maintenanceInr"

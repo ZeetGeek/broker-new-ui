@@ -21,6 +21,13 @@ export const MOCK_AUTH_USER: AuthUser = {
     avatarUrl: null,
     authProvider: "email",
     isEmailVerified: true,
+    country: {
+        id: "country-in",
+        name: "India",
+        iso2: "IN",
+        emoji: "🇮🇳",
+        currency: { code: "INR", symbol: "₹", name: "Indian Rupee", decimalDigits: 2 },
+    },
 };
 
 /** Complete enough that owner-listings is not blocked on RERA / service areas. */

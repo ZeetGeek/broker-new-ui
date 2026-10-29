@@ -34,9 +34,12 @@ export function AuthCallbackPanel() {
                 dispatch(establishSession({ accessToken: token, user }));
 
                 // Backend sets this only for a new Google account from the login
-                // page. Register already chose a role, so those users skip this.
+                // page. Register already chose a role, so those users skip this —
+                // unless Google left the account without a country, which every
+                // portal screen is scoped to.
                 const isNewUser = searchParams.get("isNewUser") === "1";
-                if (isNewUser) {
+                const needsCountry = searchParams.get("needsCountry") === "1" || !user.country;
+                if (isNewUser || needsCountry) {
                     sessionStorage.setItem(GOOGLE_ONBOARDING_KEY, "1");
                     setMessage("Almost there. Pick how you want to use YesBroker.");
                     router.replace("/auth/choose-role");

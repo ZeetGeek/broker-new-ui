@@ -9,8 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { propertiesApi } from "@/lib/api/properties";
 import { formatAreaSqft } from "@/lib/format/area";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
-import { parseTourEmbed, parseVideoEmbed } from "@/lib/media/embed-url";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
@@ -32,6 +31,7 @@ import {
     DoorOpen,
     Droplets,
     Dumbbell,
+    ExternalLink,
     Fence,
     HandCoins,
     Hash,
@@ -234,9 +234,7 @@ export function PropertyDetailLayout({
                             title: item.title,
                             locality: item.locality,
                             city: item.city,
-                            priceLabel: isRent
-                                ? formatRentInr(amountInr)
-                                : formatPriceInr(amountInr),
+                            priceLabel: isRent ? formatRent(amountInr) : formatPrice(amountInr),
                             imageSrc: item.imageSrc,
                             configLabel: item.configLabel,
                             propertyTypeLabel: item.propertyTypeLabel,
@@ -370,33 +368,12 @@ export function PropertyDetailContent({
         } => fact != null,
     );
     const media = [
-        { label: "Property video", embed: parseVideoEmbed(item.videoUrl) },
-        { label: "Virtual tour", embed: parseTourEmbed(item.virtualTourUrl) },
-    ].flatMap(({ label, embed }) => (embed ? [{ label, embed }] : []));
+        { label: "Watch property video", href: item.videoUrl },
+        { label: "Take a virtual tour", href: item.virtualTourUrl },
+    ].filter(({ href }) => /^https?:\/\//i.test(href));
 
     return (
         <div className={styles.content}>
-            {media.length > 0 ? (
-                <section className={styles.explore}>
-                    <h2>Explore the property</h2>
-                    <div className={styles.mediaPreviews}>
-                        {media.map(({ label, embed }) => (
-                            <figure key={label} className={styles.mediaPreview}>
-                                <iframe
-                                    title={`${label}: ${item.title}`}
-                                    src={embed.embedUrl}
-                                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                                    allowFullScreen
-                                    loading="lazy"
-                                    referrerPolicy="strict-origin-when-cross-origin"
-                                    sandbox="allow-scripts allow-same-origin allow-presentation"
-                                />
-                                <figcaption>{label}</figcaption>
-                            </figure>
-                        ))}
-                    </div>
-                </section>
-            ) : null}
             <section className={styles.overview}>
                 <h2>
                     {item.propertyTypeLabel}
@@ -543,6 +520,19 @@ export function PropertyDetailContent({
                     </dl>
                 ) : null}
             </section>
+            {media.length > 0 ? (
+                <section className={styles.section}>
+                    <h2>Explore the property</h2>
+                    <div className={styles.mediaLinks}>
+                        {media.map(({ label, href }) => (
+                            <a key={label} href={href} target="_blank" rel="noopener noreferrer">
+                                {label}
+                                <ExternalLink size={18} aria-hidden />
+                            </a>
+                        ))}
+                    </div>
+                </section>
+            ) : null}
         </div>
     );
 }

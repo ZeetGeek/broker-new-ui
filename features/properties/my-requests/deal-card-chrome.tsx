@@ -6,7 +6,7 @@ import { addCollection, Icon } from "@iconify/react/offline";
 
 import { offersRent, offersSale } from "@/lib/format/listing-availability";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import type { PropertyShareInput } from "@/lib/share/property";
@@ -173,7 +173,7 @@ const STATUS_BADGE_COLOR: Record<DealStatusTone, BadgeColor> = {
 const OVERLAY_IMAGE_SIZES = "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw";
 
 export function dealPriceLabel(listing: DealCardListing): string {
-    return listing.isRent ? formatRentInr(listing.amountInr) : formatPriceInr(listing.amountInr);
+    return listing.isRent ? formatRent(listing.amountInr) : formatPrice(listing.amountInr);
 }
 
 export function dealShareInput(listing: DealCardListing): PropertyShareInput {

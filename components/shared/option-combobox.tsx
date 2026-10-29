@@ -57,7 +57,10 @@ export function OptionCombobox({
     return (
         <Combobox
             value={value || null}
-            onValueChange={(next: string | null) => onValueChange(next ?? "")}
+            disabled={disabled}
+            onValueChange={(next: string | null) => {
+                if (!disabled) onValueChange(next ?? "");
+            }}
             onOpenChange={(open) => {
                 if (!open) onBlur?.();
             }}

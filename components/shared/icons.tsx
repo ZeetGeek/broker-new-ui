@@ -91,8 +91,20 @@ import {
     IconCreditCardOff,
     IconCrop,
     IconCrosshair,
+    IconCurrency,
+    IconCurrencyDirham,
     IconCurrencyDollar,
+    IconCurrencyDollarAustralian,
+    IconCurrencyDollarCanadian,
+    IconCurrencyDollarSingapore,
+    IconCurrencyEuro,
+    IconCurrencyPound,
+    IconCurrencyRenminbi,
+    IconCurrencyRiyal,
     IconCurrencyRupee,
+    IconCurrencyRupeeNepalese,
+    IconCurrencyTaka,
+    IconCurrencyYen,
     IconDeviceDesktop,
     IconDeviceGamepad2,
     IconDoor,
@@ -463,3 +475,26 @@ export const X = IconX;
 export const XCircle = IconCircleX;
 export const XIcon = IconX;
 export const Zap = IconBolt;
+
+/** Money glyphs by ISO 4217 code. Anything unlisted gets the generic sign. */
+const CURRENCY_ICONS: Record<string, AppIcon> = {
+    AED: IconCurrencyDirham,
+    AUD: IconCurrencyDollarAustralian,
+    BDT: IconCurrencyTaka,
+    CAD: IconCurrencyDollarCanadian,
+    CNY: IconCurrencyRenminbi,
+    EUR: IconCurrencyEuro,
+    GBP: IconCurrencyPound,
+    INR: IconCurrencyRupee,
+    JPY: IconCurrencyYen,
+    NPR: IconCurrencyRupeeNepalese,
+    QAR: IconCurrencyRiyal,
+    SAR: IconCurrencyRiyal,
+    SGD: IconCurrencyDollarSingapore,
+    USD: IconCurrencyDollar,
+};
+
+/** The icon for a currency — use with `useMarketCurrency().code`. */
+export function currencyIcon(code: string | null | undefined): AppIcon {
+    return CURRENCY_ICONS[code?.toUpperCase() ?? ""] ?? IconCurrency;
+}

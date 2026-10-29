@@ -8,7 +8,7 @@ import { PROPERTY_TYPE_OPTIONS, type PropertyType } from "@/lib/validation/prope
 import type {
     MyListingsFilters,
     MyListingSort,
-    MyListingStatus,
+    MyListingsStatusTab,
 } from "@/features/properties/your-listings/types";
 import { DEFAULT_MY_LISTINGS_FILTERS } from "@/features/properties/your-listings/types";
 
@@ -34,8 +34,11 @@ export function parseMyListingsFilters(
             : "newest";
 
     const statusRaw = first(params.status);
-    const status: MyListingStatus | "" =
-        statusRaw === "draft" || statusRaw === "published" || statusRaw === "unpublished"
+    const status: MyListingsStatusTab | "" =
+        statusRaw === "draft" ||
+        statusRaw === "published" ||
+        statusRaw === "unpublished" ||
+        statusRaw === "sold"
             ? statusRaw
             : DEFAULT_MY_LISTINGS_FILTERS.status;
 

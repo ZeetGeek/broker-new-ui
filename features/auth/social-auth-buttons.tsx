@@ -59,11 +59,14 @@ export function SocialAuthButtons({
     action,
     role = "broker",
     referralCode,
+    countryIso2,
 }: {
     action: "Sign in" | "Sign up";
     role?: Portal;
     /** Passed through on Google sign-up so invite links still credit the referrer. */
     referralCode?: string;
+    /** Market picked on the register page, so a Google signup lands in it too. */
+    countryIso2?: string;
 }) {
     const [isOpeningGoogle, setIsOpeningGoogle] = React.useState(false);
 
@@ -76,6 +79,7 @@ export function SocialAuthButtons({
             ...(action === "Sign up" && referralCode?.trim()
                 ? { referralCode: referralCode.trim().toUpperCase() }
                 : {}),
+            ...(action === "Sign up" && countryIso2 ? { countryIso2 } : {}),
         });
     }
 

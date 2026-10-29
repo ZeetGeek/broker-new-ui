@@ -1,25 +1,23 @@
 "use client";
 
-import { type MutableRefObject, useMemo, useRef, useState } from "react";
+import { type MutableRefObject, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
-import { formatInr, formatInrCompact } from "@/lib/format/inr";
+import { formatMoney, formatMoneyCompact } from "@/lib/format/money";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
-import { isVisible } from "@/lib/visibility/rules";
 
 import { AppImage } from "@/components/shared/app-image";
 import {
     Bath,
     BedDouble,
-    Check,
     CircleHelp,
     Copy,
+    Eye,
     ImageIcon,
-    Images,
     LockKeyhole,
     MapPin,
     RefreshCw,
@@ -27,7 +25,6 @@ import {
     Upload,
     X,
 } from "@/components/shared/icons";
-import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -37,8 +34,6 @@ import {
     removeCoverPhoto,
     replaceCoverPhoto,
 } from "@/features/properties/property-form/cover-photo";
-
-import styles from "./deal-summary.module.css";
 
 function resolveDeposit(values: PropertyDraftValues): number {
     const rent = values.rent.monthlyRent ?? 0;
@@ -95,7 +90,6 @@ export function LiveSummaryPanel({
 }) {
     const { setValue, getValues } = useFormContext<PropertyDraftValues>();
     const coverInputRef = useRef<HTMLInputElement>(null);
-    const [copiedSummary, setCopiedSummary] = useState<string | null>(null);
     const isSale = values.basics.listingFor === "sell" || values.basics.listingFor === "both";
     const cover = values.media.photos.find((photo) => photo.isCover) ?? null;
     const price = isSale ? values.sale.expectedPrice : values.rent.monthlyRent;
@@ -162,25 +156,25 @@ export function LiveSummaryPanel({
     const dealSheetLines =
         isSale && "ownerNet" in result
             ? [
-                  `Sale price: ${formatInr(values.sale.expectedPrice)}`,
+                  `Sale price: ${formatMoney(values.sale.expectedPrice)}`,
                   values.area.areaSqft
-                      ? `Rate per sq ft: ${formatInr(result.effectiveRatePerSqft)}`
+                      ? `Rate per sq ft: ${formatMoney(result.effectiveRatePerSqft)}`
                       : null,
-                  `Gross commission: ${formatInr(result.gross)}`,
+                  `Gross commission: ${formatMoney(result.gross)}`,
                   coBrokerShare > 0
-                      ? `Co-broker (${coBrokerPercent}%): ${formatInr(coBrokerShare)}`
+                      ? `Co-broker (${coBrokerPercent}%): ${formatMoney(coBrokerShare)}`
                       : null,
-                  `Estimated commission: ${formatInr(brokerAfterSplit)}`,
+                  `Estimated commission: ${formatMoney(brokerAfterSplit)}`,
               ].filter((line): line is string => Boolean(line))
             : "ownerFirstPayout" in result
               ? [
-                    `Monthly rent: ${formatInr(values.rent.monthlyRent)}`,
-                    deposit > 0 ? `Deposit: ${formatInr(deposit)}` : null,
-                    `Gross brokerage: ${formatInr(result.gross)}`,
+                    `Monthly rent: ${formatMoney(values.rent.monthlyRent)}`,
+                    deposit > 0 ? `Deposit: ${formatMoney(deposit)}` : null,
+                    `Gross brokerage: ${formatMoney(result.gross)}`,
                     coBrokerShare > 0
-                        ? `Co-broker (${coBrokerPercent}%): ${formatInr(coBrokerShare)}`
+                        ? `Co-broker (${coBrokerPercent}%): ${formatMoney(coBrokerShare)}`
                         : null,
-                    `Estimated commission: ${formatInr(brokerAfterSplit)}`,
+                    `Estimated commission: ${formatMoney(brokerAfterSplit)}`,
                 ].filter((line): line is string => Boolean(line))
               : [];
     const summaryText = [title, ...dealSheetLines, "Before applicable taxes and deductions."].join(
@@ -190,7 +184,6 @@ export function LiveSummaryPanel({
     async function copySummary() {
         try {
             await navigator.clipboard.writeText(summaryText);
-            setCopiedSummary(summaryText);
             toast.success("Deal summary copied.");
         } catch {
             toast.error("Couldn't copy the summary.");
@@ -245,7 +238,7 @@ export function LiveSummaryPanel({
                     </p>
                 </div>
                 <p className="truncate text-xs text-surface/70">
-                    {price ? formatInrCompact(price) : "Add a price to calculate"}
+                    {price ? formatMoneyCompact(price) : "Add a price to calculate"}
                 </p>
             </div>
         );
@@ -253,17 +246,18 @@ export function LiveSummaryPanel({
 
     return (
         <aside className="flex flex-col gap-4">
-            <article className="overflow-hidden rounded-card bg-surface p-3 shadow-sm">
-                <div className="mbe-3 flex items-center justify-between gap-2 px-1">
-                    <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-muted">
+            <article className="overflow-hidden rounded-card bg-surface px-4 py-5 shadow-sm">
+                <div className="mbe-4 flex items-center justify-between gap-2">
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                        <Eye className="text-brand block-4 inline-4" aria-hidden />
                         Listing preview
                     </p>
-                    <Badge color="stone">Draft</Badge>
+                    <Badge color="amber">Draft</Badge>
                 </div>
 
                 <div
                     className="
-                      group relative aspect-4/3 overflow-hidden rounded-control bg-surface-muted
+                      group relative aspect-4/3 overflow-hidden rounded-inner bg-surface-muted
                     "
                 >
                     {cover ? (
@@ -280,34 +274,6 @@ export function LiveSummaryPanel({
                                     cover.url.startsWith("https://")
                                 }
                             />
-                            <span
-                                className="
-                              absolute inset-s-3 inset-bs-3 rounded-md bg-surface px-2 py-1 text-xs
-                              font-semibold text-ink
-                            "
-                            >
-                                {values.basics.listingFor === "both"
-                                    ? "Sale or rent"
-                                    : isSale
-                                      ? "For sale"
-                                      : values.basics.listingFor === "lease"
-                                        ? "For lease"
-                                        : values.basics.listingFor === "pg"
-                                          ? "Paying guest"
-                                          : "For rent"}
-                            </span>
-                            {values.media.photos.length > 1 ? (
-                                <span
-                                    className="
-                                  absolute inset-e-3 inset-be-3 inline-flex items-center gap-1
-                                  rounded-md bg-surface px-2 py-1 text-xs font-medium text-ink
-                                "
-                                >
-                                    <Images className="block-3.5 inline-3.5" aria-hidden />
-                                    {values.media.photos.length}
-                                    <span className="sr-only">photos</span>
-                                </span>
-                            ) : null}
                             {photoFilesRef ? (
                                 <>
                                     <input
@@ -397,10 +363,10 @@ export function LiveSummaryPanel({
                                     />
                                     <Button
                                         type="button"
-                                        variant="link"
+                                        variant="accent"
                                         size="sm"
                                         onClick={() => coverInputRef.current?.click()}
-                                        className="gap-1.5 text-brand underline"
+                                        className="gap-1.5"
                                     >
                                         <Upload className="block-3.5 inline-3.5" aria-hidden />
                                         Upload photo
@@ -409,10 +375,10 @@ export function LiveSummaryPanel({
                             ) : onGoToMedia ? (
                                 <Button
                                     type="button"
-                                    variant="link"
+                                    variant="accent"
                                     size="sm"
                                     onClick={onGoToMedia}
-                                    className="gap-1.5 text-brand underline"
+                                    className="gap-1.5"
                                 >
                                     <Upload className="block-3.5 inline-3.5" aria-hidden />
                                     Upload photo
@@ -422,114 +388,75 @@ export function LiveSummaryPanel({
                     )}
                 </div>
 
-                <div className="px-1 pbs-4">
-                    {price && price > 0 ? (
-                        <PriceWithCommission
-                            amountInr={price}
-                            isRent={!isSale}
-                            commissionPercent={values.commission.sale.value}
-                            commissionAmountInr={values.commission.rent.value}
-                            audience={audience}
-                            size="xl"
-                        />
-                    ) : (
-                        <p className="text-lg font-semibold text-ink-muted">Price not set</p>
-                    )}
-                    <p className="mbs-2 line-clamp-2 text-base/6 font-semibold text-ink">{title}</p>
-                    <p className="mbs-1.5 flex items-center gap-1.5 text-xs/5 text-ink-muted">
+                <div className="mbs-4 flex flex-col gap-2">
+                    <p className="tabular text-xl font-bold tracking-[-0.02em] text-brand">
+                        {price && price > 0 ? formatMoneyCompact(price) : "Price not set"}
+                    </p>
+                    <p className="line-clamp-2 text-sm/5 font-semibold text-ink">{title}</p>
+                    <p className="flex items-center gap-1.5 text-xs text-ink-muted">
                         <MapPin className="shrink-0 block-3.5 inline-3.5" aria-hidden />
                         <span className="truncate">{locationLabel}</span>
                     </p>
-                    <dl
+                    <div
                         className="
-                          mbs-4 flex divide-x divide-border-warm border-bs border-border-warm pbs-3
-                          pbe-1
+                          mts-1 grid grid-cols-3 gap-2 rounded-control bg-surface-muted px-2.5 py-2
+                          text-[11px] font-medium text-ink-muted
                         "
                     >
-                        {isVisible("details.bedrooms", values) ? (
-                            <div
-                                className="
-                              flex-1 px-2 text-center min-inline-0
-                              first:ps-0
-                              last:pe-0
-                            "
-                            >
-                                <dd
-                                    className="
-                                  flex items-center justify-center gap-1.5 text-sm font-semibold
-                                  text-ink
-                                "
-                                >
-                                    <BedDouble
-                                        className="shrink-0 text-ink-muted block-4 inline-4"
-                                        aria-hidden
-                                    />
-                                    {bedsLabel(values).replace(" Beds", "")}
-                                </dd>
-                                <dt className="mbs-1 text-[11px] text-ink-muted">Bedrooms</dt>
-                            </div>
-                        ) : null}
-                        {isVisible("details.bathrooms", values) ? (
-                            <div
-                                className="
-                              flex-1 px-2 text-center min-inline-0
-                              first:ps-0
-                              last:pe-0
-                            "
-                            >
-                                <dd
-                                    className="
-                                  flex items-center justify-center gap-1.5 text-sm font-semibold
-                                  text-ink
-                                "
-                                >
-                                    <Bath
-                                        className="shrink-0 text-ink-muted block-4 inline-4"
-                                        aria-hidden
-                                    />
-                                    {bathsLabel(values).replace(" Baths", "")}
-                                </dd>
-                                <dt className="mbs-1 text-[11px] text-ink-muted">Bathrooms</dt>
-                            </div>
-                        ) : null}
-                        <div className="flex-1 px-2 text-center min-inline-0 first:ps-0 last:pe-0">
-                            <dd
-                                className="
-                              flex items-center justify-center gap-1.5 text-sm font-semibold
-                              text-ink
-                            "
-                            >
-                                <Scaling
-                                    className="shrink-0 text-ink-muted block-4 inline-4"
-                                    aria-hidden
-                                />
+                        <span className="inline-flex items-center justify-center gap-1 min-inline-0">
+                            <BedDouble className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                            <span className="truncate">
+                                {bedsLabel(values).replace(" Beds", "")}
+                            </span>
+                        </span>
+                        <span className="inline-flex items-center justify-center gap-1 min-inline-0">
+                            <Bath className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                            <span className="truncate">
+                                {bathsLabel(values).replace(" Baths", "")}
+                            </span>
+                        </span>
+                        <span className="inline-flex items-center justify-center gap-1 min-inline-0">
+                            <Scaling className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                            <span className="truncate">
                                 {areaLabel(values).replace(" Sq ft", "")}
-                            </dd>
-                            <dt className="mbs-1 text-[11px] text-ink-muted">Sq ft</dt>
-                        </div>
-                    </dl>
+                            </span>
+                        </span>
+                    </div>
                 </div>
             </article>
 
             {stepIndex >= 2 ? (
-                <article
-                    className={styles.card}
-                    aria-label={isSale ? "Sale deal summary" : "Rent deal summary"}
-                >
-                    <div className={styles.header}>
+                <article className="overflow-hidden rounded-card bg-surface px-4 py-5 shadow-sm">
+                    <div className="mbe-4 flex items-start justify-between gap-3">
                         <div className="min-inline-0">
-                            <h2 className={styles.title}>
+                            <p className="text-sm font-semibold text-ink">
                                 {isSale ? "Sale deal summary" : "Rent deal summary"}
-                            </h2>
-                            <p className={styles.liveHint}>Updates as you type</p>
+                            </p>
+                            <p className="mbs-0.5 text-xs text-ink-muted">Updates as you type</p>
                         </div>
-                        <span className={styles.private}>
+                        <span
+                            className="
+                              inline-flex shrink-0 items-center gap-1 rounded-control bg-brand-soft
+                              px-2 py-1 text-xs font-medium text-brand-text
+                            "
+                        >
                             <LockKeyhole className="block-3.5 inline-3.5" aria-hidden />
                             Private
                         </span>
                     </div>
 
-                    <dl className={styles.breakdown}>
+                    <div className="rounded-control bg-brand-soft/50 px-4 py-3">
+                        <p className="text-xs font-medium text-brand-text">Estimated commission</p>
+                        <AnimatedMoney
+                            value={money(brokerAfterSplit)}
+                            className="mts-1 block text-2xl tracking-[-0.02em] text-brand"
+                        />
+                        <p className="mbs-2 text-xs text-brand-text">
+                            Before applicable taxes and deductions.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2 py-4">
                         {isSale && "ownerNet" in result ? (
                             <>
                                 <MoneyRow
@@ -574,32 +501,21 @@ export function LiveSummaryPanel({
                                 title="Share paid to the co-broker."
                             />
                         ) : null}
-                    </dl>
+                    </div>
 
-                    <div className={styles.total}>
-                        <h3 className={styles.totalLabel}>Estimated commission</h3>
-                        <AnimatedMoney
-                            value={money(brokerAfterSplit)}
-                            className={styles.totalAmount}
-                        />
-                        <p className={styles.totalNote}>
-                            {hasPrice
-                                ? "Before applicable taxes and deductions."
-                                : "Add a price to calculate the commission."}
-                        </p>
+                    <div className="border-bs border-border-warm px-2 py-1">
                         <Button
                             type="button"
                             variant="ghost"
                             onClick={() => void copySummary()}
-                            disabled={!hasPrice}
-                            className={styles.copyButton}
+                            className="
+                              flex items-center justify-center gap-2 text-xs font-semibold
+                              text-brand-text inline-full min-block-10
+                              hover:bg-brand-soft hover:text-brand-text
+                              focus-visible:ring-2 focus-visible:ring-brand
+                            "
                         >
-                            {copiedSummary === summaryText ? (
-                                <Check aria-hidden />
-                            ) : (
-                                <Copy aria-hidden />
-                            )}
-                            {copiedSummary === summaryText ? "Summary copied" : "Copy summary"}
+                            <Copy className="block-3.5 inline-3.5" aria-hidden /> Copy summary
                         </Button>
                     </div>
                 </article>
@@ -618,7 +534,7 @@ export function LiveSummaryPanel({
 }
 
 function AnimatedMoney({ value, className }: { value: number | null; className?: string }) {
-    const text = formatInr(value);
+    const text = formatMoney(value);
     return (
         <span key={text} className={cn("t-digit-group is-animating tabular font-bold", className)}>
             {text.split("").map((character, index) => (
@@ -654,8 +570,13 @@ function MoneyRow({
     title: string;
 }) {
     return (
-        <div className={cn(styles.row, strong && styles.strongRow)}>
-            <dt className={styles.rowLabel}>
+        <div
+            className={cn(
+                "flex items-baseline justify-between gap-4 py-1 text-xs",
+                strong ? "font-bold text-ink" : "text-ink-muted",
+            )}
+        >
+            <span className="flex items-center gap-1.5">
                 {label}
                 <Popover>
                     <PopoverTrigger
@@ -665,7 +586,10 @@ function MoneyRow({
                                 variant="ghost"
                                 size="icon-xs"
                                 aria-label={`Explain ${label}`}
-                                className={styles.helpButton}
+                                className="
+                                  text-ink-subtle
+                                  hover:bg-brand-soft hover:text-brand-text
+                                "
                             />
                         }
                     >
@@ -675,10 +599,10 @@ function MoneyRow({
                         {title}
                     </PopoverContent>
                 </Popover>
-            </dt>
-            <dd className={styles.rowValue}>
-                {value == null ? "—" : `${prefix ? `${prefix} ` : ""}${formatInr(value)}`}
-            </dd>
+            </span>
+            <span className="tabular whitespace-nowrap text-ink">
+                {value == null ? "— — —" : `${prefix ? `${prefix} ` : ""}${formatMoney(value)}`}
+            </span>
         </div>
     );
 }

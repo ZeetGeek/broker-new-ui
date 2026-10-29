@@ -10,7 +10,7 @@ import { AddFab } from "@/components/shared/add-fab";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Skeleton } from "@/components/shared/skeleton";
 
-import type { MyListingStatus } from "@/features/properties/your-listings/types";
+import type { MyListingsStatusTab } from "@/features/properties/your-listings/types";
 
 /**
  * Mobile-only floating add. Desktop uses the toolbar CTA in MyListingsHeader —
@@ -36,7 +36,7 @@ export function MyListingsAddFab({
 export type MyListingsIntroProps = {
     summary: MyListingsSummary | null;
     resultTotal: number;
-    status: MyListingStatus | "";
+    status: MyListingsStatusTab | "";
     hasError?: boolean;
     hasActiveFilters: boolean;
     isLoading?: boolean;

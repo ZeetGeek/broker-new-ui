@@ -3,16 +3,18 @@
 import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { Controller, type FieldPath, useFormContext } from "react-hook-form";
 
-import { formatInrInput, inrWordHint, parseInr } from "@/lib/format/inr";
+import { formatMoneyInput, moneyWordHint, parseMoney } from "@/lib/format/money";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { type FieldVisibility, visibilityForField } from "@/lib/visibility/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
+import { useMarketCurrency } from "@/hooks/use-market";
 
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { type AppIcon, Check, ChevronDown, Minus, Plus, X } from "@/components/shared/icons";
+import { currencyIcon } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { Button } from "@/components/ui/button";
 import {
@@ -321,7 +323,9 @@ export function SelectField({
                 render={({ field }) => (
                     <Combobox
                         value={String(field.value ?? "") || null}
+                        disabled={disabled}
                         onValueChange={(value) => {
+                            if (disabled) return;
                             const next = value ?? "";
                             field.onChange(next);
                             onValueChange?.(next);
@@ -505,9 +509,10 @@ function CurrencyControl({
     id: string;
     allowZero?: boolean;
 }) {
+    const CurrencyIcon = currencyIcon(useMarketCurrency().code);
     const numericValue = typeof value === "number" ? value : null;
     const format = (amount: number | null) =>
-        allowZero && amount === 0 ? "0" : formatInrInput(amount);
+        allowZero && amount === 0 ? "0" : formatMoneyInput(amount);
     const [display, setDisplay] = useState(() => format(numericValue));
     const [focused, setFocused] = useState(false);
 
@@ -524,29 +529,21 @@ function CurrencyControl({
             }}
             onValueChange={(next) => {
                 setDisplay(next);
-                onChange(parseInr(next));
+                onChange(parseMoney(next));
             }}
             onBlur={() => {
                 setFocused(false);
                 setDisplay(format(numericValue));
                 onBlur();
             }}
-            startIcon={IndianRupeeIcon}
+            startIcon={CurrencyIcon}
             errorText={error}
             helperText={
                 numericValue
-                    ? inrWordHint(numericValue)
+                    ? moneyWordHint(numericValue)
                     : (helperText ?? "Type 800000, 800k, or 1.2m")
             }
         />
-    );
-}
-
-function IndianRupeeIcon(props: ComponentProps<"svg">) {
-    return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
-            <path d="M6 4h12M6 8h12M7 4c5 0 7 2 7 5s-2 5-7 5h-1l8 7" />
-        </svg>
     );
 }
 

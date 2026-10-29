@@ -71,7 +71,11 @@ function filterMockMyListings(filters: MyListingsFilters): MyListingItem[] {
             return false;
         }
         if (filters.bhk.length && !filters.bhk.includes(String(item.bhk))) return false;
-        if (filters.status && item.status !== filters.status) return false;
+        if (filters.status === "sold") {
+            if (!item.isSold) return false;
+        } else if (filters.status) {
+            if (item.isSold || item.status !== filters.status) return false;
+        }
         if (!matchesListingCriteria(item, filters)) return false;
         return true;
     });
@@ -102,11 +106,13 @@ function matchesListingCriteria(item: MyListingItem, filters: MyListingsFilters)
 }
 
 function mockMyListingsSummary(): MyListingsSummary {
+    const live = mockMyListings.filter((item) => !item.isSold);
     return {
         total: mockMyListings.length,
-        published: mockMyListings.filter((item) => item.status === "published").length,
-        draft: mockMyListings.filter((item) => item.status === "draft").length,
-        unpublished: mockMyListings.filter((item) => item.status === "unpublished").length,
+        published: live.filter((item) => item.status === "published").length,
+        draft: live.filter((item) => item.status === "draft").length,
+        unpublished: live.filter((item) => item.status === "unpublished").length,
+        sold: mockMyListings.length - live.length,
         sale: mockMyListings.filter((item) => item.transactionType !== "rent").length,
         rent: mockMyListings.filter((item) => item.transactionType !== "sale").length,
     };
@@ -117,6 +123,8 @@ export type MyListingsSummary = {
     published: number;
     draft: number;
     unpublished: number;
+    /** Marked as sold. Not counted in `published` / `draft`. */
+    sold: number;
     sale: number;
     rent: number;
 };
@@ -137,6 +145,12 @@ function filtersToQuery(filters: MyListingsFilters): PropertyListQuery | null {
             filters.status === "draft" || filters.status === "published"
                 ? filters.status
                 : undefined,
+        // Sold listings live on their own tab, whatever their publish state.
+        ...(filters.status === "sold"
+            ? { status: "sold" as const }
+            : filters.status
+              ? { excludeSold: true }
+              : {}),
         sort: filters.sort,
         page: filters.page,
         limit: PAGE_SIZE,
@@ -159,6 +173,7 @@ export const myListingsApi = {
             published: options.counts.published,
             draft: options.counts.draft,
             unpublished: 0,
+            sold: options.counts.sold ?? 0,
             sale: salePage.total,
             rent: rentPage.total,
         };

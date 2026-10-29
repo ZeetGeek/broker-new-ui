@@ -1,5 +1,6 @@
 import { ApiError, apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import type { Currency } from "@/lib/format/currency";
 
 import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
 import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-my-listings";
@@ -38,6 +39,10 @@ export type PropertyBrowseListing = {
     state?: string | null;
     address?: string | null;
     country?: string | null;
+    /** ISO2 of the listing's market — always its holder's country. */
+    countryIso2?: string | null;
+    /** Every money field on the listing is in this currency. */
+    currency?: Currency | null;
     /** `available` | `sold` | `unavailable`. */
     status?: string | null;
     /** When the owner marked it sold. */
@@ -45,12 +50,12 @@ export type PropertyBrowseListing = {
     soldReason?: string | null;
     salePrice?: string | number | null;
     monthlyRent?: string | number | null;
-    /** Deposit value: INR when mode is `amount`, months when `months_of_rent`. */
+    /** Deposit value: an amount when mode is `amount`, months when `months_of_rent`. */
     securityDeposit?: string | number | null;
     securityDepositMode?: "amount" | "months_of_rent" | string | null;
     /** Owner-shared broker commission percent (sale / both). */
     commissionPercent?: string | number | null;
-    /** Fixed broker commission in INR (rent / both). */
+    /** Fixed broker commission in the listing currency (rent / both). */
     commissionAmount?: string | number | null;
     photos?: string[] | null;
     furnishingStatus?: "furnished" | "semi" | "unfurnished" | string | null;
@@ -207,6 +212,8 @@ export type PropertyListingOptions = {
         unassigned: number;
         draft: number;
         published: number;
+        /** Listings marked as sold. Not part of `draft` / `published`. */
+        sold?: number;
     };
     capabilities?: {
         canView?: boolean;
@@ -273,6 +280,10 @@ export type PropertyListQuery = {
     subtype?: string;
     bhkConfig?: string[];
     publishStatus?: PropertyPublishStatus;
+    /** Availability. `sold` lists only listings marked as sold. */
+    status?: "sold";
+    /** Leave sold listings out (Published / Draft tabs). */
+    excludeSold?: boolean;
     sort?: PropertyBrowseSort | "title";
     page?: number;
     limit?: number;
@@ -405,6 +416,8 @@ function buildListQuery(params?: PropertyListQuery) {
     if (params.subtype) q.set("subtype", params.subtype);
     appendList(q, "bhkConfig", params.bhkConfig);
     if (params.publishStatus) q.set("publishStatus", params.publishStatus);
+    if (params.status) q.set("status", params.status);
+    if (params.excludeSold) q.set("excludeSold", "true");
     if (params.sort) q.set("sort", params.sort);
     if (params.page != null && params.page > 1) q.set("page", String(params.page));
     if (params.limit != null) q.set("limit", String(params.limit));

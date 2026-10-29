@@ -1,7 +1,7 @@
 import { CircleCheck, CircleSlash, Clock } from "@/components/shared/icons";
 
 import type { PropertyLead } from "@/lib/api/owner-leads";
-import { parseInr } from "@/lib/format/inr";
+import { parseMoney } from "@/lib/format/money";
 import { cn } from "@/lib/utils";
 
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
@@ -83,8 +83,8 @@ export type LeadPropertyFacts = {
 export function leadPropertyFacts(lead: PropertyLead): LeadPropertyFacts {
     const property = lead.property;
     const photos = property?.photos?.filter(Boolean) ?? [];
-    const rent = parseInr(property?.monthlyRent);
-    const sale = parseInr(property?.salePrice);
+    const rent = parseMoney(property?.monthlyRent);
+    const sale = parseMoney(property?.salePrice);
     const isRent =
         property?.transactionType === "rent" ||
         (property?.transactionType !== "sale" && (rent ?? 0) > 0 && (sale ?? 0) <= 0);
@@ -103,10 +103,10 @@ export function leadPropertyFacts(lead: PropertyLead): LeadPropertyFacts {
         configLabel,
         propertyTypeLabel: typeLabel?.trim() || null,
         areaSqft: property?.areaSqft ?? null,
-        askingInr: (isRent ? rent : sale) ?? parseInr(lead.listPrice),
+        askingInr: (isRent ? rent : sale) ?? parseMoney(lead.listPrice),
         isRent,
-        commissionPercent: parseInr(property?.commissionPercent),
-        commissionAmountInr: parseInr(property?.commissionAmount),
+        commissionPercent: parseMoney(property?.commissionPercent),
+        commissionAmountInr: parseMoney(property?.commissionAmount),
     };
 }
 

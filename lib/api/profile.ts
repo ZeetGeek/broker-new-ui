@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode, MOCK_PROFILE } from "@/lib/api/mock-mode";
+import type { UserMarket } from "@/lib/auth/session";
 
 export type NotificationPreferences = {
     unreadCount?: number;
@@ -30,6 +31,10 @@ export type UserProfile = {
     city?: string | null;
     state?: string | null;
     country?: string | null;
+    /** ISO2 of `country`. */
+    countryIso2?: string | null;
+    /** The account's market and its currency. Changing country is refused while listings, open representations or a team tie the account to it. */
+    market?: UserMarket | null;
     locality?: string | null;
     accountType?: string | null;
     orgName?: string | null;

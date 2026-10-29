@@ -7,7 +7,7 @@ import { Eye, StickyNote } from "@/components/shared/icons";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { formatDateIn, formatRelativePast, formatTimeIn } from "@/lib/format/date";
-import { formatPriceInr, formatRentInr } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +45,7 @@ function stageLabel(status: string): string {
 
 function formatMoney(amountInr: number | null, isRent: boolean): string {
     if (amountInr == null || amountInr <= 0) return "—";
-    return isRent ? formatRentInr(amountInr) : formatPriceInr(amountInr);
+    return isRent ? formatRent(amountInr) : formatPrice(amountInr);
 }
 
 function formatWhen(iso: string | null, now: Date): string {

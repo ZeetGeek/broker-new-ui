@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
     CalendarClock,
     CalendarPlus,
-    IndianRupee,
     MapPin,
     Navigation,
     Phone,
@@ -15,6 +14,7 @@ import { OWNER_VISITS_HREF } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { MarketCurrencyIcon } from "@/components/shared/market-currency-icon";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { TextLinkButton } from "@/components/shared/text-link-button";
@@ -301,7 +301,7 @@ export function NextShowingCard({
                                     className="body-sm mbs-3! whitespace-normal max-inline-100"
                                 >
                                     {hasPrice ? (
-                                        <IndianRupee
+                                        <MarketCurrencyIcon
                                             aria-hidden
                                             className="shrink-0 text-brand block-3.5 inline-3.5"
                                             strokeWidth={1.75}

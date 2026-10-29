@@ -46,10 +46,13 @@ export const hydrateAuth = createAsyncThunk("auth/hydrate", async () => {
 
 export const login = createAsyncThunk(
     "auth/login",
-    async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
+    async (
+        { email, password, rememberMe }: { email: string; password: string; rememberMe: boolean },
+        { rejectWithValue },
+    ) => {
         try {
-            const res = await authApi.login(email, password);
-            setSession({ accessToken: res.accessToken, user: res.user });
+            const res = await authApi.login(email, password, rememberMe);
+            setSession({ accessToken: res.accessToken, user: res.user }, { persist: rememberMe });
             return res;
         } catch (err) {
             if (err instanceof ApiError) {
